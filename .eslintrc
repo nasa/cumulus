@@ -1,0 +1,21 @@
+{
+  "parser": "babel-eslint",
+  "extends": "airbnb",
+  "rules": {
+    "generator-star-spacing": "off",
+    "import/no-extraneous-dependencies": "off",
+    "no-console": "warn",
+    "spaced-comment": "off",
+    "prefer-template": "warn",
+    "no-underscore-dangle": "off",
+    "comma-dangle": ["warn", "never"],
+    "strict": "off",
+    "object-shorthand": "off",
+    "space-before-function-paren": ["error", "never"],
+    "brace-style": [2, "stroustrup"],
+    "max-len": [2, {
+      "code": 100,
+      "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+    }]
+  }
+}

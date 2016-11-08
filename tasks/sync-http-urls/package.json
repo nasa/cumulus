@@ -1,0 +1,22 @@
+{
+  "name": "gitc-http-sync",
+  "version": "0.0.0",
+  "description": "Synchronizes http links to s3",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "npm_config_prefix='../../tmp' npm link ../../lib"
+  },
+  "keywords": [
+    "GIBS"
+  ],
+  "repository": {
+    "type" : "git",
+    "url" : "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+  },
+  "author": "Patrick Quinn",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "async": "^2.0.0",
+    "lodash": "^4.13.1"
+  }
+}

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ColorMaps xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="http://gibs.earthdata.nasa.gov/schemas/ColorMap_v1.2.xsd">
+  <ColorMap title="No Data">
+    <Entries>
+      <ColorMapEntry rgb="0,0,0" transparent="true" label="No Data" nodata="true" />
+    </Entries>
+  </ColorMap>
+  <ColorMap title="Carbon Monoxide" units="mol/cm²">
+    <Entries minLabel="&lt; 0.00e+00 mol/cm²"  maxLabel="&gt;= 4.00e+18 mol/cm²">
+      <ColorMapEntry rgb="0,0,255" transparent="false" sourceValue="[-INF,0.00e+00)" value="[-INF,0.00e+00)" label="&lt; 0.00e+00 mol/cm²" ref="1" />
+      
+      <ColorMapEntry rgb="1,0,255" transparent="false" sourceValue="[0.00e+00,2.00e+16)" value="[0.00e+00,2.00e+16)" label="0.00e+00 - 2.00e+16 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="1,1,255" transparent="false" sourceValue="[2.00e+16,4.00e+16)" value="[2.00e+16,4.00e+16)" label="2.00e+16 - 4.00e+16 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="2,2,255" transparent="false" sourceValue="[4.00e+16,6.00e+16)" value="[4.00e+16,6.00e+16)" label="4.00e+16 - 6.00e+16 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="3,3,255" transparent="false" sourceValue="[6.00e+16,8.00e+16)" value="[6.00e+16,8.00e+16)" label="6.00e+16 - 8.00e+16 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="4,4,255" transparent="false" sourceValue="[8.00e+16,1.00e+17)" value="[8.00e+16,1.00e+17)" label="8.00e+16 - 1.00e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="5,5,255" transparent="false" sourceValue="[1.00e+17,1.20e+17)" value="[1.00e+17,1.20e+17)" label="1.00e+17 - 1.20e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="6,6,255" transparent="false" sourceValue="[1.20e+17,1.40e+17)" value="[1.20e+17,1.40e+17)" label="1.20e+17 - 1.40e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="7,7,255" transparent="false" sourceValue="[1.40e+17,1.60e+17)" value="[1.40e+17,1.60e+17)" label="1.40e+17 - 1.60e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="8,8,255" transparent="false" sourceValue="[1.60e+17,1.80e+17)" value="[1.60e+17,1.80e+17)" label="1.60e+17 - 1.80e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="9,9,255" transparent="false" sourceValue="[1.80e+17,2.00e+17)" value="[1.80e+17,2.00e+17)" label="1.80e+17 - 2.00e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="10,10,255" transparent="false" sourceValue="[2.00e+17,2.20e+17)" value="[2.00e+17,2.20e+17)" label="2.00e+17 - 2.20e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="11,11,255" transparent="false" sourceValue="[2.20e+17,2.40e+17)" value="[2.20e+17,2.40e+17)" label="2.20e+17 - 2.40e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="12,12,255" transparent="false" sourceValue="[2.40e+17,2.60e+17)" value="[2.40e+17,2.60e+17)" label="2.40e+17 - 2.60e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="13,13,255" transparent="false" sourceValue="[2.60e+17,2.80e+17)" value="[2.60e+17,2.80e+17)" label="2.60e+17 - 2.80e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="14,14,255" transparent="false" sourceValue="[2.80e+17,3.00e+17)" value="[2.80e+17,3.00e+17)" label="2.80e+17 - 3.00e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="15,15,255" transparent="false" sourceValue="[3.00e+17,3.20e+17)" value="[3.00e+17,3.20e+17)" label="3.00e+17 - 3.20e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="16,16,255" transparent="false" sourceValue="[3.20e+17,3.40e+17)" value="[3.20e+17,3.40e+17)" label="3.20e+17 - 3.40e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="17,17,255" transparent="false" sourceValue="[3.40e+17,3.60e+17)" value="[3.40e+17,3.60e+17)" label="3.40e+17 - 3.60e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="18,18,255" transparent="false" sourceValue="[3.60e+17,3.80e+17)" value="[3.60e+17,3.80e+17)" label="3.60e+17 - 3.80e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="19,19,255" transparent="false" sourceValue="[3.80e+17,4.00e+17)" value="[3.80e+17,4.00e+17)" label="3.80e+17 - 4.00e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="20,20,255" transparent="false" sourceValue="[4.00e+17,4.20e+17)" value="[4.00e+17,4.20e+17)" label="4.00e+17 - 4.20e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="21,21,255" transparent="false" sourceValue="[4.20e+17,4.40e+17)" value="[4.20e+17,4.40e+17)" label="4.20e+17 - 4.40e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="22,22,255" transparent="false" sourceValue="[4.40e+17,4.60e+17)" value="[4.40e+17,4.60e+17)" label="4.40e+17 - 4.60e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="23,23,255" transparent="false" sourceValue="[4.60e+17,4.80e+17)" value="[4.60e+17,4.80e+17)" label="4.60e+17 - 4.80e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="24,24,255" transparent="false" sourceValue="[4.80e+17,5.00e+17)" value="[4.80e+17,5.00e+17)" label="4.80e+17 - 5.00e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="25,25,255" transparent="false" sourceValue="[5.00e+17,5.20e+17)" value="[5.00e+17,5.20e+17)" label="5.00e+17 - 5.20e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="26,26,255" transparent="false" sourceValue="[5.20e+17,5.40e+17)" value="[5.20e+17,5.40e+17)" label="5.20e+17 - 5.40e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="27,27,255" transparent="false" sourceValue="[5.40e+17,5.60e+17)" value="[5.40e+17,5.60e+17)" label="5.40e+17 - 5.60e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="28,28,255" transparent="false" sourceValue="[5.60e+17,5.80e+17)" value="[5.60e+17,5.80e+17)" label="5.60e+17 - 5.80e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="29,29,255" transparent="false" sourceValue="[5.80e+17,6.00e+17)" value="[5.80e+17,6.00e+17)" label="5.80e+17 - 6.00e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="26,25,255" transparent="false" sourceValue="[6.00e+17,6.20e+17)" value="[6.00e+17,6.20e+17)" label="6.00e+17 - 6.20e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="27,26,255" transparent="false" sourceValue="[6.20e+17,6.40e+17)" value="[6.20e+17,6.40e+17)" label="6.20e+17 - 6.40e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="28,27,255" transparent="false" sourceValue="[6.40e+17,6.60e+17)" value="[6.40e+17,6.60e+17)" label="6.40e+17 - 6.60e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="29,28,255" transparent="false" sourceValue="[6.60e+17,6.80e+17)" value="[6.60e+17,6.80e+17)" label="6.60e+17 - 6.80e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="30,29,255" transparent="false" sourceValue="[6.80e+17,7.00e+17)" value="[6.80e+17,7.00e+17)" label="6.80e+17 - 7.00e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="30,30,255" transparent="false" sourceValue="[7.00e+17,7.20e+17)" value="[7.00e+17,7.20e+17)" label="7.00e+17 - 7.20e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="31,31,255" transparent="false" sourceValue="[7.20e+17,7.40e+17)" value="[7.20e+17,7.40e+17)" label="7.20e+17 - 7.40e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="32,32,255" transparent="false" sourceValue="[7.40e+17,7.60e+17)" value="[7.40e+17,7.60e+17)" label="7.40e+17 - 7.60e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="33,33,255" transparent="false" sourceValue="[7.60e+17,7.80e+17)" value="[7.60e+17,7.80e+17)" label="7.60e+17 - 7.80e+17 mol/cm²" ref="2" />
+      <ColorMapEntry rgb="34,34,255" transparent="false" sourceValue="[7.80e+17,8.00e+17)" value="[7.80e+17,8.00e+17)" label="7.80e+17 - 8.00e+17 mol/cm²" ref="2" />
+      
+      <ColorMapEntry rgb="50,50,255" transparent="false" sourceValue="[8.00e+17,8.20e+17)" value="[8.00e+17,8.20e+17)" label="8.00e+17 - 8.20e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="51,51,255" transparent="false" sourceValue="[8.20e+17,8.40e+17)" value="[8.20e+17,8.40e+17)" label="8.20e+17 - 8.40e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="52,52,255" transparent="false" sourceValue="[8.40e+17,8.60e+17)" value="[8.40e+17,8.60e+17)" label="8.40e+17 - 8.60e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="53,53,255" transparent="false" sourceValue="[8.60e+17,8.80e+17)" value="[8.60e+17,8.80e+17)" label="8.60e+17 - 8.80e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="54,54,255" transparent="false" sourceValue="[8.80e+17,9.00e+17)" value="[8.80e+17,9.00e+17)" label="8.80e+17 - 9.00e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="55,55,255" transparent="false" sourceValue="[9.00e+17,9.20e+17)" value="[9.00e+17,9.20e+17)" label="9.00e+17 - 9.20e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="56,56,255" transparent="false" sourceValue="[9.20e+17,9.40e+17)" value="[9.20e+17,9.40e+17)" label="9.20e+17 - 9.40e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="57,57,255" transparent="false" sourceValue="[9.40e+17,9.60e+17)" value="[9.40e+17,9.60e+17)" label="9.40e+17 - 9.60e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="58,58,255" transparent="false" sourceValue="[9.60e+17,9.80e+17)" value="[9.60e+17,9.80e+17)" label="9.60e+17 - 9.80e+17 mol/cm²" ref="3" />
+      <ColorMapEntry rgb="59,59,255" transparent="false" sourceValue="[9.80e+17,1.00e+18)" value="[9.80e+17,1.00e+18)" label="9.80e+17 - 1.00e+18 mol/cm²" ref="3" />
+      
+      <ColorMapEntry rgb="89,79,255" transparent="false" sourceValue="[1.00e+18,1.02e+18)" value="[1.00e+18,1.02e+18)" label="1.00e+18 - 1.02e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="90,80,255" transparent="false" sourceValue="[1.02e+18,1.04e+18)" value="[1.02e+18,1.04e+18)" label="1.02e+18 - 1.04e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="91,81,255" transparent="false" sourceValue="[1.04e+18,1.06e+18)" value="[1.04e+18,1.06e+18)" label="1.04e+18 - 1.06e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="92,82,255" transparent="false" sourceValue="[1.06e+18,1.08e+18)" value="[1.06e+18,1.08e+18)" label="1.06e+18 - 1.08e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="93,83,255" transparent="false" sourceValue="[1.08e+18,1.10e+18)" value="[1.08e+18,1.10e+18)" label="1.08e+18 - 1.10e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="94,84,255" transparent="false" sourceValue="[1.10e+18,1.12e+18)" value="[1.10e+18,1.12e+18)" label="1.10e+18 - 1.12e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="95,85,255" transparent="false" sourceValue="[1.12e+18,1.14e+18)" value="[1.12e+18,1.14e+18)" label="1.12e+18 - 1.14e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="96,86,255" transparent="false" sourceValue="[1.14e+18,1.16e+18)" value="[1.14e+18,1.16e+18)" label="1.14e+18 - 1.16e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="97,87,255" transparent="false" sourceValue="[1.16e+18,1.18e+18)" value="[1.16e+18,1.18e+18)" label="1.16e+18 - 1.18e+18 mol/cm²" ref="4" />
+      <ColorMapEntry rgb="98,88,255" transparent="false" sourceValue="[1.18e+18,1.20e+18)" value="[1.18e+18,1.20e+18)" label="1.18e+18 - 1.20e+18 mol/cm²" ref="4" />
+      
+      <ColorMapEntry rgb="127,122,255" transparent="false" sourceValue="[1.20e+18,1.22e+18)" value="[1.20e+18,1.22e+18)" label="1.20e+18 - 1.22e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="128,123,255" transparent="false" sourceValue="[1.22e+18,1.24e+18)" value="[1.22e+18,1.24e+18)" label="1.22e+18 - 1.24e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="129,124,255" transparent="false" sourceValue="[1.24e+18,1.26e+18)" value="[1.24e+18,1.26e+18)" label="1.24e+18 - 1.26e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="130,125,255" transparent="false" sourceValue="[1.26e+18,1.28e+18)" value="[1.26e+18,1.28e+18)" label="1.26e+18 - 1.28e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="131,126,255" transparent="false" sourceValue="[1.28e+18,1.30e+18)" value="[1.28e+18,1.30e+18)" label="1.28e+18 - 1.30e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="132,127,255" transparent="false" sourceValue="[1.30e+18,1.32e+18)" value="[1.30e+18,1.32e+18)" label="1.30e+18 - 1.32e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="133,128,255" transparent="false" sourceValue="[1.32e+18,1.34e+18)" value="[1.32e+18,1.34e+18)" label="1.32e+18 - 1.34e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="134,129,255" transparent="false" sourceValue="[1.34e+18,1.36e+18)" value="[1.34e+18,1.36e+18)" label="1.34e+18 - 1.36e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="135,130,255" transparent="false" sourceValue="[1.36e+18,1.38e+18)" value="[1.36e+18,1.38e+18)" label="1.36e+18 - 1.38e+18 mol/cm²" ref="5" />
+      <ColorMapEntry rgb="136,131,255" transparent="false" sourceValue="[1.38e+18,1.40e+18)" value="[1.38e+18,1.40e+18)" label="1.38e+18 - 1.40e+18 mol/cm²" ref="5" />
+      
+      <ColorMapEntry rgb="167,163,254" transparent="false" sourceValue="[1.40e+18,1.42e+18)" value="[1.40e+18,1.42e+18)" label="1.40e+18 - 1.42e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="168,164,254" transparent="false" sourceValue="[1.42e+18,1.44e+18)" value="[1.42e+18,1.44e+18)" label="1.42e+18 - 1.44e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="169,165,254" transparent="false" sourceValue="[1.44e+18,1.46e+18)" value="[1.44e+18,1.46e+18)" label="1.44e+18 - 1.46e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="170,166,254" transparent="false" sourceValue="[1.46e+18,1.48e+18)" value="[1.46e+18,1.48e+18)" label="1.46e+18 - 1.48e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="171,167,254" transparent="false" sourceValue="[1.48e+18,1.50e+18)" value="[1.48e+18,1.50e+18)" label="1.48e+18 - 1.50e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="172,168,254" transparent="false" sourceValue="[1.50e+18,1.52e+18)" value="[1.50e+18,1.52e+18)" label="1.50e+18 - 1.52e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="173,169,254" transparent="false" sourceValue="[1.52e+18,1.54e+18)" value="[1.52e+18,1.54e+18)" label="1.52e+18 - 1.54e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="174,170,254" transparent="false" sourceValue="[1.54e+18,1.56e+18)" value="[1.54e+18,1.56e+18)" label="1.54e+18 - 1.56e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="175,171,254" transparent="false" sourceValue="[1.56e+18,1.58e+18)" value="[1.56e+18,1.58e+18)" label="1.56e+18 - 1.58e+18 mol/cm²" ref="6" />
+      <ColorMapEntry rgb="176,172,254" transparent="false" sourceValue="[1.58e+18,1.60e+18)" value="[1.58e+18,1.60e+18)" label="1.58e+18 - 1.60e+18 mol/cm²" ref="6" />
+      
+      <ColorMapEntry rgb="211,209,254" transparent="false" sourceValue="[1.60e+18,1.62e+18)" value="[1.60e+18,1.62e+18)" label="1.60e+18 - 1.62e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="212,210,254" transparent="false" sourceValue="[1.62e+18,1.64e+18)" value="[1.62e+18,1.64e+18)" label="1.62e+18 - 1.64e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="213,211,254" transparent="false" sourceValue="[1.64e+18,1.66e+18)" value="[1.64e+18,1.66e+18)" label="1.64e+18 - 1.66e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="214,212,254" transparent="false" sourceValue="[1.66e+18,1.68e+18)" value="[1.66e+18,1.68e+18)" label="1.66e+18 - 1.68e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="215,213,254" transparent="false" sourceValue="[1.68e+18,1.70e+18)" value="[1.68e+18,1.70e+18)" label="1.68e+18 - 1.70e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="216,214,254" transparent="false" sourceValue="[1.70e+18,1.72e+18)" value="[1.70e+18,1.72e+18)" label="1.70e+18 - 1.72e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="217,215,254" transparent="false" sourceValue="[1.72e+18,1.74e+18)" value="[1.72e+18,1.74e+18)" label="1.72e+18 - 1.74e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="218,216,254" transparent="false" sourceValue="[1.74e+18,1.76e+18)" value="[1.74e+18,1.76e+18)" label="1.74e+18 - 1.76e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="219,217,254" transparent="false" sourceValue="[1.76e+18,1.78e+18)" value="[1.76e+18,1.78e+18)" label="1.76e+18 - 1.78e+18 mol/cm²" ref="7" />
+      <ColorMapEntry rgb="220,218,254" transparent="false" sourceValue="[1.78e+18,1.80e+18)" value="[1.78e+18,1.80e+18)" label="1.78e+18 - 1.80e+18 mol/cm²" ref="7" />
+      
+      <ColorMapEntry rgb="255,255,255" transparent="false" sourceValue="[1.80e+18,1.82e+18)" value="[1.80e+18,1.82e+18)" label="1.80e+18 - 1.82e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="254,254,254" transparent="false" sourceValue="[1.82e+18,1.84e+18)" value="[1.82e+18,1.84e+18)" label="1.82e+18 - 1.84e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="253,253,253" transparent="false" sourceValue="[1.84e+18,1.86e+18)" value="[1.84e+18,1.86e+18)" label="1.84e+18 - 1.86e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="252,252,252" transparent="false" sourceValue="[1.86e+18,1.88e+18)" value="[1.86e+18,1.88e+18)" label="1.86e+18 - 1.88e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="251,251,251" transparent="false" sourceValue="[1.88e+18,1.90e+18)" value="[1.88e+18,1.90e+18)" label="1.88e+18 - 1.90e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="250,250,250" transparent="false" sourceValue="[1.90e+18,1.92e+18)" value="[1.90e+18,1.92e+18)" label="1.90e+18 - 1.92e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="249,249,249" transparent="false" sourceValue="[1.92e+18,1.94e+18)" value="[1.92e+18,1.94e+18)" label="1.92e+18 - 1.94e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="248,248,248" transparent="false" sourceValue="[1.94e+18,1.96e+18)" value="[1.94e+18,1.96e+18)" label="1.94e+18 - 1.96e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="247,247,247" transparent="false" sourceValue="[1.96e+18,1.98e+18)" value="[1.96e+18,1.98e+18)" label="1.96e+18 - 1.98e+18 mol/cm²" ref="8" />
+      <ColorMapEntry rgb="246,246,246" transparent="false" sourceValue="[1.98e+18,2.00e+18)" value="[1.98e+18,2.00e+18)" label="1.98e+18 - 2.00e+18 mol/cm²" ref="8" />
+      
+      <ColorMapEntry rgb="247,219,219" transparent="false" sourceValue="[2.00e+18,2.02e+18)" value="[2.00e+18,2.02e+18)" label="2.00e+18 - 2.02e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,218,218" transparent="false" sourceValue="[2.02e+18,2.04e+18)" value="[2.02e+18,2.04e+18)" label="2.02e+18 - 2.04e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,217,217" transparent="false" sourceValue="[2.04e+18,2.06e+18)" value="[2.04e+18,2.06e+18)" label="2.04e+18 - 2.06e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,216,216" transparent="false" sourceValue="[2.06e+18,2.08e+18)" value="[2.06e+18,2.08e+18)" label="2.06e+18 - 2.08e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,215,215" transparent="false" sourceValue="[2.08e+18,2.10e+18)" value="[2.08e+18,2.10e+18)" label="2.08e+18 - 2.10e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,214,214" transparent="false" sourceValue="[2.10e+18,2.12e+18)" value="[2.10e+18,2.12e+18)" label="2.10e+18 - 2.12e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,213,213" transparent="false" sourceValue="[2.12e+18,2.14e+18)" value="[2.12e+18,2.14e+18)" label="2.12e+18 - 2.14e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,212,212" transparent="false" sourceValue="[2.14e+18,2.16e+18)" value="[2.14e+18,2.16e+18)" label="2.14e+18 - 2.16e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,211,211" transparent="false" sourceValue="[2.16e+18,2.18e+18)" value="[2.16e+18,2.18e+18)" label="2.16e+18 - 2.18e+18 mol/cm²" ref="9" />
+      <ColorMapEntry rgb="247,210,210" transparent="false" sourceValue="[2.18e+18,2.20e+18)" value="[2.18e+18,2.20e+18)" label="2.18e+18 - 2.20e+18 mol/cm²" ref="9" />
+      
+      <ColorMapEntry rgb="240,174,176" transparent="false" sourceValue="[2.20e+18,2.22e+18)" value="[2.20e+18,2.22e+18)" label="2.20e+18 - 2.22e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,173,175" transparent="false" sourceValue="[2.22e+18,2.24e+18)" value="[2.22e+18,2.24e+18)" label="2.22e+18 - 2.24e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,172,174" transparent="false" sourceValue="[2.24e+18,2.26e+18)" value="[2.24e+18,2.26e+18)" label="2.24e+18 - 2.26e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,171,173" transparent="false" sourceValue="[2.26e+18,2.28e+18)" value="[2.26e+18,2.28e+18)" label="2.26e+18 - 2.28e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,170,172" transparent="false" sourceValue="[2.28e+18,2.30e+18)" value="[2.28e+18,2.30e+18)" label="2.28e+18 - 2.30e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,169,171" transparent="false" sourceValue="[2.30e+18,2.32e+18)" value="[2.30e+18,2.32e+18)" label="2.30e+18 - 2.32e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,168,170" transparent="false" sourceValue="[2.32e+18,2.34e+18)" value="[2.32e+18,2.34e+18)" label="2.32e+18 - 2.34e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,167,169" transparent="false" sourceValue="[2.34e+18,2.36e+18)" value="[2.34e+18,2.36e+18)" label="2.34e+18 - 2.36e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,166,168" transparent="false" sourceValue="[2.36e+18,2.38e+18)" value="[2.36e+18,2.38e+18)" label="2.36e+18 - 2.38e+18 mol/cm²" ref="10" />
+      <ColorMapEntry rgb="240,165,167" transparent="false" sourceValue="[2.38e+18,2.40e+18)" value="[2.38e+18,2.40e+18)" label="2.38e+18 - 2.40e+18 mol/cm²" ref="10" />
+      
+      <ColorMapEntry rgb="235,132,136" transparent="false" sourceValue="[2.40e+18,2.42e+18)" value="[2.40e+18,2.42e+18)" label="2.40e+18 - 2.42e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,131,135" transparent="false" sourceValue="[2.42e+18,2.44e+18)" value="[2.42e+18,2.44e+18)" label="2.42e+18 - 2.44e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,130,134" transparent="false" sourceValue="[2.44e+18,2.46e+18)" value="[2.44e+18,2.46e+18)" label="2.44e+18 - 2.46e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,129,133" transparent="false" sourceValue="[2.46e+18,2.48e+18)" value="[2.46e+18,2.48e+18)" label="2.46e+18 - 2.48e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,128,132" transparent="false" sourceValue="[2.48e+18,2.50e+18)" value="[2.48e+18,2.50e+18)" label="2.48e+18 - 2.50e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,127,131" transparent="false" sourceValue="[2.50e+18,2.52e+18)" value="[2.50e+18,2.52e+18)" label="2.50e+18 - 2.52e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,126,130" transparent="false" sourceValue="[2.52e+18,2.54e+18)" value="[2.52e+18,2.54e+18)" label="2.52e+18 - 2.54e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,125,129" transparent="false" sourceValue="[2.54e+18,2.56e+18)" value="[2.54e+18,2.56e+18)" label="2.54e+18 - 2.56e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,124,128" transparent="false" sourceValue="[2.56e+18,2.58e+18)" value="[2.56e+18,2.58e+18)" label="2.56e+18 - 2.58e+18 mol/cm²" ref="11" />
+      <ColorMapEntry rgb="235,123,127" transparent="false" sourceValue="[2.58e+18,2.60e+18)" value="[2.58e+18,2.60e+18)" label="2.58e+18 - 2.60e+18 mol/cm²" ref="11" />
+      
+      <ColorMapEntry rgb="231,103,110" transparent="false" sourceValue="[2.60e+18,2.62e+18)" value="[2.60e+18,2.62e+18)" label="2.60e+18 - 2.62e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,102,109" transparent="false" sourceValue="[2.62e+18,2.64e+18)" value="[2.62e+18,2.64e+18)" label="2.62e+18 - 2.64e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,101,108" transparent="false" sourceValue="[2.64e+18,2.66e+18)" value="[2.64e+18,2.66e+18)" label="2.64e+18 - 2.66e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,100,107" transparent="false" sourceValue="[2.66e+18,2.68e+18)" value="[2.66e+18,2.68e+18)" label="2.66e+18 - 2.68e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,99,106" transparent="false" sourceValue="[2.68e+18,2.70e+18)" value="[2.68e+18,2.70e+18)" label="2.68e+18 - 2.70e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,98,105" transparent="false" sourceValue="[2.70e+18,2.72e+18)" value="[2.70e+18,2.72e+18)" label="2.70e+18 - 2.72e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,97,104" transparent="false" sourceValue="[2.72e+18,2.74e+18)" value="[2.72e+18,2.74e+18)" label="2.72e+18 - 2.74e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,96,103" transparent="false" sourceValue="[2.74e+18,2.76e+18)" value="[2.74e+18,2.76e+18)" label="2.74e+18 - 2.76e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,95,102" transparent="false" sourceValue="[2.76e+18,2.78e+18)" value="[2.76e+18,2.78e+18)" label="2.76e+18 - 2.78e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,94,101" transparent="false" sourceValue="[2.78e+18,2.80e+18)" value="[2.78e+18,2.80e+18)" label="2.78e+18 - 2.80e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,93,100" transparent="false" sourceValue="[2.80e+18,2.82e+18)" value="[2.80e+18,2.82e+18)" label="2.80e+18 - 2.82e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,92,99" transparent="false" sourceValue="[2.82e+18,2.84e+18)" value="[2.82e+18,2.84e+18)" label="2.82e+18 - 2.84e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,91,98" transparent="false" sourceValue="[2.84e+18,2.86e+18)" value="[2.84e+18,2.86e+18)" label="2.84e+18 - 2.86e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,90,97" transparent="false" sourceValue="[2.86e+18,2.88e+18)" value="[2.86e+18,2.88e+18)" label="2.86e+18 - 2.88e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,89,96" transparent="false" sourceValue="[2.88e+18,2.90e+18)" value="[2.88e+18,2.90e+18)" label="2.88e+18 - 2.90e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,88,95" transparent="false" sourceValue="[2.90e+18,2.92e+18)" value="[2.90e+18,2.92e+18)" label="2.90e+18 - 2.92e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,87,94" transparent="false" sourceValue="[2.92e+18,2.94e+18)" value="[2.92e+18,2.94e+18)" label="2.92e+18 - 2.94e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,86,93" transparent="false" sourceValue="[2.94e+18,2.96e+18)" value="[2.94e+18,2.96e+18)" label="2.94e+18 - 2.96e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,85,92" transparent="false" sourceValue="[2.96e+18,2.98e+18)" value="[2.96e+18,2.98e+18)" label="2.96e+18 - 2.98e+18 mol/cm²" ref="12" />
+      <ColorMapEntry rgb="231,84,91" transparent="false" sourceValue="[2.98e+18,3.00e+18)" value="[2.98e+18,3.00e+18)" label="2.98e+18 - 3.00e+18 mol/cm²" ref="12" />
+      
+      <ColorMapEntry rgb="229,94,106" transparent="false" sourceValue="[3.00e+18,3.02e+18)" value="[3.00e+18,3.02e+18)" label="3.00e+18 - 3.02e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,93,105" transparent="false" sourceValue="[3.02e+18,3.04e+18)" value="[3.02e+18,3.04e+18)" label="3.02e+18 - 3.04e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,92,104" transparent="false" sourceValue="[3.04e+18,3.06e+18)" value="[3.04e+18,3.06e+18)" label="3.04e+18 - 3.06e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,91,103" transparent="false" sourceValue="[3.06e+18,3.08e+18)" value="[3.06e+18,3.08e+18)" label="3.06e+18 - 3.08e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,90,102" transparent="false" sourceValue="[3.08e+18,3.10e+18)" value="[3.08e+18,3.10e+18)" label="3.08e+18 - 3.10e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,89,101" transparent="false" sourceValue="[3.10e+18,3.12e+18)" value="[3.10e+18,3.12e+18)" label="3.10e+18 - 3.12e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,88,100" transparent="false" sourceValue="[3.12e+18,3.14e+18)" value="[3.12e+18,3.14e+18)" label="3.12e+18 - 3.14e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,87,99" transparent="false" sourceValue="[3.14e+18,3.16e+18)" value="[3.14e+18,3.16e+18)" label="3.14e+18 - 3.16e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,86,98" transparent="false" sourceValue="[3.16e+18,3.18e+18)" value="[3.16e+18,3.18e+18)" label="3.16e+18 - 3.18e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,85,97" transparent="false" sourceValue="[3.18e+18,3.20e+18)" value="[3.18e+18,3.20e+18)" label="3.18e+18 - 3.20e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,84,96" transparent="false" sourceValue="[3.20e+18,3.22e+18)" value="[3.20e+18,3.22e+18)" label="3.20e+18 - 3.22e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,83,95" transparent="false" sourceValue="[3.22e+18,3.24e+18)" value="[3.22e+18,3.24e+18)" label="3.22e+18 - 3.24e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,82,94" transparent="false" sourceValue="[3.24e+18,3.26e+18)" value="[3.24e+18,3.26e+18)" label="3.24e+18 - 3.26e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,81,93" transparent="false" sourceValue="[3.26e+18,3.28e+18)" value="[3.26e+18,3.28e+18)" label="3.26e+18 - 3.28e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,80,92" transparent="false" sourceValue="[3.28e+18,3.30e+18)" value="[3.28e+18,3.30e+18)" label="3.28e+18 - 3.30e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,79,91" transparent="false" sourceValue="[3.30e+18,3.32e+18)" value="[3.30e+18,3.32e+18)" label="3.30e+18 - 3.32e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,78,90" transparent="false" sourceValue="[3.32e+18,3.34e+18)" value="[3.32e+18,3.34e+18)" label="3.32e+18 - 3.34e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,77,89" transparent="false" sourceValue="[3.34e+18,3.36e+18)" value="[3.34e+18,3.36e+18)" label="3.34e+18 - 3.36e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,76,88" transparent="false" sourceValue="[3.36e+18,3.38e+18)" value="[3.36e+18,3.38e+18)" label="3.36e+18 - 3.38e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,75,87" transparent="false" sourceValue="[3.38e+18,3.40e+18)" value="[3.38e+18,3.40e+18)" label="3.38e+18 - 3.40e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,74,86" transparent="false" sourceValue="[3.40e+18,3.42e+18)" value="[3.40e+18,3.42e+18)" label="3.40e+18 - 3.42e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,73,85" transparent="false" sourceValue="[3.42e+18,3.44e+18)" value="[3.42e+18,3.44e+18)" label="3.42e+18 - 3.44e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,72,84" transparent="false" sourceValue="[3.44e+18,3.46e+18)" value="[3.44e+18,3.46e+18)" label="3.44e+18 - 3.46e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,71,83" transparent="false" sourceValue="[3.46e+18,3.48e+18)" value="[3.46e+18,3.48e+18)" label="3.46e+18 - 3.48e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,70,82" transparent="false" sourceValue="[3.48e+18,3.50e+18)" value="[3.48e+18,3.50e+18)" label="3.48e+18 - 3.50e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,69,81" transparent="false" sourceValue="[3.50e+18,3.52e+18)" value="[3.50e+18,3.52e+18)" label="3.50e+18 - 3.52e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,68,80" transparent="false" sourceValue="[3.52e+18,3.54e+18)" value="[3.52e+18,3.54e+18)" label="3.52e+18 - 3.54e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,67,79" transparent="false" sourceValue="[3.54e+18,3.56e+18)" value="[3.54e+18,3.56e+18)" label="3.54e+18 - 3.56e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,66,78" transparent="false" sourceValue="[3.56e+18,3.58e+18)" value="[3.56e+18,3.58e+18)" label="3.56e+18 - 3.58e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,65,77" transparent="false" sourceValue="[3.58e+18,3.60e+18)" value="[3.58e+18,3.60e+18)" label="3.58e+18 - 3.60e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,64,76" transparent="false" sourceValue="[3.60e+18,3.62e+18)" value="[3.60e+18,3.62e+18)" label="3.60e+18 - 3.62e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,63,75" transparent="false" sourceValue="[3.62e+18,3.64e+18)" value="[3.62e+18,3.64e+18)" label="3.62e+18 - 3.64e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,62,74" transparent="false" sourceValue="[3.64e+18,3.66e+18)" value="[3.64e+18,3.66e+18)" label="3.64e+18 - 3.66e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,61,73" transparent="false" sourceValue="[3.66e+18,3.68e+18)" value="[3.66e+18,3.68e+18)" label="3.66e+18 - 3.68e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,60,72" transparent="false" sourceValue="[3.68e+18,3.70e+18)" value="[3.68e+18,3.70e+18)" label="3.68e+18 - 3.70e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,59,71" transparent="false" sourceValue="[3.70e+18,3.72e+18)" value="[3.70e+18,3.72e+18)" label="3.70e+18 - 3.72e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,58,70" transparent="false" sourceValue="[3.72e+18,3.74e+18)" value="[3.72e+18,3.74e+18)" label="3.72e+18 - 3.74e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,57,69" transparent="false" sourceValue="[3.74e+18,3.76e+18)" value="[3.74e+18,3.76e+18)" label="3.74e+18 - 3.76e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,56,68" transparent="false" sourceValue="[3.76e+18,3.78e+18)" value="[3.76e+18,3.78e+18)" label="3.76e+18 - 3.78e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,55,67" transparent="false" sourceValue="[3.78e+18,3.80e+18)" value="[3.78e+18,3.80e+18)" label="3.78e+18 - 3.80e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,54,66" transparent="false" sourceValue="[3.80e+18,3.82e+18)" value="[3.80e+18,3.82e+18)" label="3.80e+18 - 3.82e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,53,65" transparent="false" sourceValue="[3.82e+18,3.84e+18)" value="[3.82e+18,3.84e+18)" label="3.82e+18 - 3.84e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,52,64" transparent="false" sourceValue="[3.84e+18,3.86e+18)" value="[3.84e+18,3.86e+18)" label="3.84e+18 - 3.86e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,51,63" transparent="false" sourceValue="[3.86e+18,3.88e+18)" value="[3.86e+18,3.88e+18)" label="3.86e+18 - 3.88e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,50,62" transparent="false" sourceValue="[3.88e+18,3.90e+18)" value="[3.88e+18,3.90e+18)" label="3.88e+18 - 3.90e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,49,61" transparent="false" sourceValue="[3.90e+18,3.92e+18)" value="[3.90e+18,3.92e+18)" label="3.90e+18 - 3.92e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,48,60" transparent="false" sourceValue="[3.92e+18,3.94e+18)" value="[3.92e+18,3.94e+18)" label="3.92e+18 - 3.94e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,47,59" transparent="false" sourceValue="[3.94e+18,3.96e+18)" value="[3.94e+18,3.96e+18)" label="3.94e+18 - 3.96e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,46,58" transparent="false" sourceValue="[3.96e+18,3.98e+18)" value="[3.96e+18,3.98e+18)" label="3.96e+18 - 3.98e+18 mol/cm²" ref="13" />
+      <ColorMapEntry rgb="229,45,57" transparent="false" sourceValue="[3.98e+18,4.00e+18)" value="[3.98e+18,4.00e+18)" label="3.98e+18 - 4.00e+18 mol/cm²" ref="13" />
+      
+      <ColorMapEntry rgb="228,23,3" transparent="false" sourceValue="[4.00e+18,+INF)" value="[4.00e+18,+INF)" label="&gt;= 4.00e+18 mol/cm²" ref="14" />
+    </Entries>
+    <Legend type="continuous"  minLabel="&lt; 0.00e+00 mol/cm²"  maxLabel="&gt;= 4.00e+18 mol/cm²">
+      <LegendEntry rgb="0,0,255" id="1" />
+      <LegendEntry rgb="1,0,255" id="2" />
+      <LegendEntry rgb="50,50,255" id="3" />
+      <LegendEntry rgb="89,79,255" id="4" />
+      <LegendEntry rgb="127,122,255" id="5" />
+      <LegendEntry rgb="167,163,254" id="6" />
+      <LegendEntry rgb="211,209,254" id="7" />
+      <LegendEntry rgb="255,255,255" id="8" />
+      <LegendEntry rgb="247,219,219" id="9" />
+      <LegendEntry rgb="240,174,176" id="10" />
+      <LegendEntry rgb="235,132,136" id="11" />
+      <LegendEntry rgb="231,103,110" id="12" />
+      <LegendEntry rgb="229,94,106" id="13" />
+      <LegendEntry rgb="228,23,3" id="14" />
+    </Legend>    
+  </ColorMap>
+</ColorMaps>

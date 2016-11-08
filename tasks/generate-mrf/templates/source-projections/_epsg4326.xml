@@ -1,0 +1,4 @@
+  <extents>-180,-90,180,90</extents>
+  {{#isReprojection}}
+  <reprojection_resampling>average</reprojection_resampling>
+  {{/isReprojection}}

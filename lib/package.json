@@ -1,0 +1,21 @@
+{
+  "name": "gitc-common",
+  "version": "0.0.0",
+  "description": "Common utilities used across tasks",
+  "scripts": {},
+  "keywords": [
+    "GIBS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+  },
+  "author": "Patrick Quinn",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "async": "^2.0.0",
+    "aws-sdk": "^2.4.11",
+    "cwait": "^1.0.0",
+    "lodash": "^4.13.1"
+  }
+}

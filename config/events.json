@@ -1,0 +1,19 @@
+{
+  "listeners": {
+    "http-tile-ingest-needed": [{
+      "task": "task-discover-http-tiles"
+    }],
+    "cmr-ingest-needed": [{
+      "task": "task-discover-cmr-granules"
+    }],
+    "wms-map-found": [{
+      "task": "task-sync-wms"
+    }],
+    "resource-urls-found": [{
+      "task": "task-sync-http-urls"
+    }],
+    "sync-completed": [{
+      "queue": "pending-mrf-gen"
+    }]
+  }
+}

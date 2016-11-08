@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<mrfgen_configuration>
+  {{! Global job settings }}
+  <date_of_data>{{{productDate}}}</date_of_data>
+  <input_dir>{{{paths.input}}}</input_dir>
+  <output_dir>{{{paths.output}}}</output_dir>
+  <working_dir>{{{paths.work}}}</working_dir>
+  <logfile_dir>{{{paths.logs}}}</logfile_dir>
+  <mrf_name>{$parameter_name}%Y%j.mrf</mrf_name>
+  {{! Product-specific settings }}
+  {{> product }}
+  {{! Calculated settings }}
+  {{> calculated }}
+  {{! Projection-specific settings }}
+  {{> sourceProjection }}
+  {{> targetProjection }}
+</mrfgen_configuration>
