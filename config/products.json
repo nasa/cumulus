@@ -7,7 +7,6 @@
         "period_s": 600,
         "event": "http-tile-ingest-needed",
         "transactions": [
-          {"product": "VNGCR_LQD_C1", "parameterName": "VNGCR_LQD_I1-M4-M3_NRT", "epsg": 4326, "zoom": 9},
           {"product": "VNGCR_SQD_C1", "parameterName": "VNGCR_SQD_I1-M4-M3_NRT", "epsg": 3031, "zoom": 6},
           {"product": "VNGCR_NQD_C1", "parameterName": "VNGCR_NQD_I1-M4-M3_NRT", "epsg": 3413, "zoom": 6}
         ]
@@ -77,83 +76,6 @@
             "wms": {
               "layer": "MOP03J.006/RetrievedCOSurfaceMixingRatioDay",
               "style": "se_mopitt_threshold_retrievedcosurfacemixingratioday_mop03j"
-            }
-          },
-          {
-            "concept_id": "C191855459-LARC",
-            "product": "MOPITT_MCOSMR_LL_D_STD",
-            "colormap": "MOPITT_CO_Daily_Surface_Mixing_Ratio_Day.xml",
-            "epsg": 4326,
-            "zoom": 6,
-            "wms": {
-              "layer": "MOP03JM.006/RetrievedCOSurfaceMixingRatioDay",
-              "style": "se_mopitt_threshold_retrievedcosurfacemixingratioday_mop03jm"
-            }
-          },
-          {
-            "concept_id": "C190698050-LARC",
-            "product": "MOPITT_DCOSMR_LL_A_STD",
-            "colormap": "MOPITT_CO_Daily_Surface_Mixing_Ratio_Night.xml",
-            "epsg": 4326,
-            "zoom": 6,
-            "wms": {
-              "layer": "MOP03J.006/RetrievedCOSurfaceMixingRatioNight",
-              "style": "se_mopitt_threshold_retrievedcosurfacemixingrationight_mop03j"
-            }
-          },
-          {
-            "concept_id": "C191855459-LARC",
-            "product": "MOPITT_MCOSMR_LL_A_STD",
-            "colormap": "MOPITT_CO_Daily_Surface_Mixing_Ratio_Night.xml",
-            "epsg": 4326,
-            "zoom": 6,
-            "wms": {
-              "layer": "MOP03JM.006/RetrievedCOSurfaceMixingRatioNight",
-              "style": "se_mopitt_threshold_retrievedcosurfacemixingrationight_mop03jm"
-            }
-          },
-          {
-            "concept_id": "C190698050-LARC",
-            "product": "MOPITT_DCOTC_LL_D_STD",
-            "colormap": "MOPITT_CO_Daily_Total_Column_Day.xml",
-            "epsg": 4326,
-            "zoom": 6,
-            "wms": {
-              "layer": "MOP03J.006/RetrievedCOTotalColumnDay",
-              "style": "se_mopitt_threshold_retrievedcototalcolumnday_mop03j"
-            }
-          },
-          {
-            "concept_id": "C191855459-LARC",
-            "product": "MOPITT_MCOTC_LL_D_STD",
-            "colormap": "MOPITT_CO_Daily_Total_Column_Day.xml",
-            "epsg": 4326,
-            "zoom": 6,
-            "wms": {
-              "layer": "MOP03JM.006/RetrievedCOTotalColumnDay",
-              "style": "se_mopitt_threshold_retrievedcototalcolumnday_mop03jm"
-            }
-          },
-          {
-            "concept_id": "C190698050-LARC",
-            "product": "MOPITT_DCOTC_LL_A_STD",
-            "colormap": "MOPITT_CO_Daily_Total_Column_Night.xml",
-            "epsg": 4326,
-            "zoom": 6,
-            "wms": {
-              "layer": "MOP03J.006/RetrievedCOTotalColumnNight",
-              "style": "se_mopitt_threshold_retrievedcototalcolumnnight_mop03j"
-            }
-          },
-          {
-            "concept_id": "C191855459-LARC",
-            "product": "MOPITT_MCOTC_LL_A_STD",
-            "colormap": "MOPITT_CO_Daily_Total_Column_Night.xml",
-            "epsg": 4326,
-            "zoom": 6,
-            "wms": {
-              "layer": "MOP03JM.006/RetrievedCOTotalColumnNight",
-              "style": "se_mopitt_threshold_retrievedcototalcolumnnight_mop03jm"
             }
           }
         ]
