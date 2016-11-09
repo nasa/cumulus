@@ -1,0 +1,446 @@
+Description: GIBS/Cumulus - Ingest
+Parameters:
+  DeploymentS3Bucket:
+    Type: String
+    Description: S3 bucket that holds deployment artifacts
+  MRFS3Bucket:
+    Type: String
+    Description: S3 bucket that holds output from mrfgen
+  StackName:
+    Type: String
+    Description: Name of the (parent) stack name being created
+  IngestKeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to ingest ECS
+      instances.
+  AuthorizedKeys:
+    Type: CommaDelimitedList
+    Description: Comma-delimited list of SSH keys to authorize on EC2 instances.
+  IngestDesiredInstances:
+    Type: Number
+    Default: '1'
+    Description: Number of instances to launch in the ingest ECS cluster.
+  IngestMaxInstances:
+    Type: Number
+    Default: '5'
+    Description: Maximum number of instances in the ingest ECS cluster.
+  IngestInstanceType:
+    Description: The EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m4.large
+  ArtifactPath:
+    Type: String
+    Description: Path within the deployment bucket containing artifacts
+  VPC:
+    Type: String
+    Description: ID of the VPC into which we should deploy
+
+Resources:
+
+<%# [name, retries, processing-timeout] %>
+<% events = [['http-tile-ingest-needed', 1, 350],
+             ['cmr-ingest-needed', 1, 350],
+             ['wms-map-found', 1, 350],
+             ['resource-urls-found', 1, 350],
+             ['sync-completed', 30, 30],
+             ['pending-mrf-gen', 30, 1200]] %>
+
+<%# [task, description, memory, ecs-instance-count (nil to run in Lambda)] %>
+<% tasks = [['discover-http-tiles', 'Discovers tile files to ingest from HTTP', 256, nil],
+            ['discover-cmr-granules', 'Discovers tile files to ingest from HTTP', 256, nil],
+            ['sync-http-urls', 'Synchronizes HTTP files to S3', 256, nil],
+            ['sync-wms', 'Generates WMS URLs to sync', 256, nil],
+            ['generate-mrf', 'Generates an MRF from imported files', 256, 2],
+            ['dispatcher', 'Dispatches events from SQS', 256, 1],
+            ['scheduler', 'Runs scheduled ingests', 256, 1]] %>
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: TaskExecutionRolePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+
+          # Allow Lambda logging
+          - Effect: Allow
+            Action:
+            - logs:DescribeLogStreams
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+
+          # Allow writing to ingest buckets
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:ListBucket
+            - s3:ListObjects
+            Resource:
+            - !Sub arn:aws:s3:::${DeploymentS3Bucket}
+            - !Sub arn:aws:s3:::${DeploymentS3Bucket}/*
+            - !Sub arn:aws:s3:::${MRFS3Bucket}
+            - !Sub arn:aws:s3:::${MRFS3Bucket}/*
+            - !Sub arn:aws:s3:::${StackName}
+            - !Sub arn:aws:s3:::${StackName}/*
+
+          # Allow managing network interfaces (required to run Lambda in VPC)
+          - Effect: Allow
+            Action:
+            - ec2:CreateNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DeleteNetworkInterface
+            Resource:
+            - "*"
+
+          # Allow lambdas to call other lambdas
+          - Effect: Allow
+            Action:
+            - lambda:GetFunction
+            - lambda:invokeFunction
+            Resource:
+            - "*"
+
+          # Allow lambdas to send and receive messages on queues
+          - Effect: Allow
+            Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:ChangeMessageVisibility
+            - sqs:DeleteMessage
+            Resource:
+            - "*" # TODO
+
+          # Allow lambdas to find their corresponding ECS cluster
+          - Effect: Allow
+            Action:
+            - ecs:ListClusters
+            Resource:
+            - "*"
+
+          # Allow running tasks on ECS
+          - Effect: Allow
+            Action:
+            - ecs:ListTasks
+            - ecs:ListTaskDefinitions
+            - ecs:RunTask
+            Resource:
+            - "*" # TODO
+
+          # Allow use of dynamo
+          - Effect: Allow
+            Action:
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+            Resource:
+            - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${LockTable}
+
+          # Allow running within ECS
+          - Effect: Allow
+            Action:
+            - ecs:DeregisterContainerInstance
+            - ecs:DiscoverPollEndpoint
+            - ecs:Poll
+            - ecs:RegisterContainerInstance
+            - ecs:StartTelemetrySession
+            - ecs:Submit*
+            - ecr:BatchCheckLayerAvailability
+            - ecr:BatchGetImage
+            - ecr:GetDownloadUrlForLayer
+            - ecr:GetAuthorizationToken
+            Resource:
+            - "*"
+
+<% events.each do |event, max_receive, timeout| %>
+  <% queue_name = event.split('-').map(&:capitalize).join() + "Queue" %>
+  <%= queue_name %>:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${StackName}-<%= event %>-events
+      ReceiveMessageWaitTimeSeconds: 20
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt [Failed<%= queue_name %>, Arn]
+        maxReceiveCount: <%= max_receive %>
+      VisibilityTimeout: <%= timeout %>
+
+  Failed<%= queue_name %>:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${StackName}-failed-<%= event %>-events
+<% end %>
+
+<% tasks.each do |task, description, memory, ecsDesiredCount| %>
+  <% caps_name = task.split('-').map(&:capitalize).join() %>
+  <%= caps_name %>Fn:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${StackName}-task-<%= task %>
+      Code:
+        S3Bucket: !Ref DeploymentS3Bucket
+        S3Key: !Sub ${ArtifactPath}/lambda/<%= task %>.zip
+      Description: <%= description + (ecsDesiredCount.nil? ? '' : ' (runs as ECS service)')%>
+      Runtime: nodejs4.3
+      Timeout: 300
+      MemorySize: <%= memory %>
+      Handler: <%= task %>.handler
+      Role: !GetAtt [TaskExecutionRole, Arn]
+  <% unless ecsDesiredCount.nil? %>
+  <%= caps_name %>Logs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub ${StackName}-service-<%= task %>-ecs
+
+  <%= caps_name %>Service:
+    Type: AWS::ECS::Service
+    DependsOn:
+    - IngestECSAutoScalingGroup
+    - <%= caps_name %>Fn
+    Properties:
+      Cluster: !Ref IngestECSCluster
+      DesiredCount: <%= ecsDesiredCount %>
+      TaskDefinition: !Ref <%= caps_name %>Task
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+  <% end %>
+<% end %>
+
+  LockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: key
+        AttributeType: S
+      KeySchema:
+      - AttributeName: key
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Sub ${StackName}-locks
+
+  IngestECSCluster:
+    Type: AWS::ECS::Cluster
+
+  LambdaRunnerLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub ${StackName}-lambda-runner
+
+  LambdaRunnerTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: ecs-lambda-runner
+        Cpu: '10'
+        Essential: true
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Memory: '1024'
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref LambdaRunnerLogs
+            awslogs-region: !Ref AWS::Region
+
+  TransactionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub ${StackName}-transactions
+
+  DispatcherTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: dispatcher
+        Command:
+        - !GetAtt [DispatcherFn, Arn]
+        - "--eventJson"
+        - !Sub >-
+          {"prefix":"${StackName}",
+          "bucket":"${StackName}",
+          "events": {"Key": "ingest/events.json", "Bucket": "${DeploymentS3Bucket}"}}
+        Cpu: '10'
+        Essential: true
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Memory: '256'
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref DispatcherLogs
+            awslogs-region: !Ref AWS::Region
+
+  SchedulerTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: scheduler
+        Command:
+        - !GetAtt [SchedulerFn, Arn]
+        - "--eventJson"
+        - !Sub >-
+          {"prefix":"${StackName}",
+          "bucket":"${StackName}",
+          "mrf_bucket":"${MRFS3Bucket}",
+          "products": {"Key": "ingest/products.json", "Bucket": "${DeploymentS3Bucket}"}}
+        Cpu: '10'
+        Essential: true
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Memory: '256'
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref SchedulerLogs
+            awslogs-region: !Ref AWS::Region
+
+  GenerateMrfTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: generate-mrf
+        Command:
+        - !GetAtt [GenerateMrfFn, Arn]
+        - "--queue"
+        - !Ref PendingMrfGenQueue
+        - "--prefix"
+        - !Ref StackName
+        - "--bucket"
+        - !Ref StackName
+        Cpu: '512'
+        Essential: true
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Memory: '2048'
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref GenerateMrfLogs
+            awslogs-region: !Ref AWS::Region
+
+  IngestEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - !Ref TaskExecutionRole
+
+  IngestECSAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 0
+    Properties:
+      AvailabilityZones:
+      - !Sub ${AWS::Region}a
+      - !Sub ${AWS::Region}b
+      LaunchConfigurationName: !Ref IngestContainerInstanceLaunch
+      MinSize: '0'
+      MaxSize: !Ref IngestMaxInstances
+      DesiredCapacity: !Ref IngestDesiredInstances
+      Tags:
+      - Key: Name
+        Value: !Sub "${StackName} Ingest ECS"
+        PropagateAtLaunch: true
+
+  IngestContainerInstanceLaunch:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          commands:
+            01_add_instance_to_cluster:
+              command: !Sub |
+                #!/bin/bash
+                echo ECS_CLUSTER=${IngestECSCluster} >> /etc/ecs/ecs.config
+          files:
+            "/etc/cfn/cfn-hup.conf":
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+              mode: '000400'
+              owner: root
+              group: root
+            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.IngestContainerInstanceLaunch.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource IngestContainerInstanceLaunch --region ${AWS::Region}
+                runas=root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                - "/etc/cfn/cfn-hup.conf"
+                - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+    Properties:
+      SecurityGroups:
+      - !Ref IngestECSSecurityGroup
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMIID]
+      InstanceType: !Ref IngestInstanceType
+      IamInstanceProfile: !Ref IngestEC2InstanceProfile
+      BlockDeviceMappings:
+      - DeviceName: "/dev/xvdcz"
+        Ebs:
+          DeleteOnTermination: true
+          VolumeSize: 100
+      KeyName: !Ref IngestKeyName
+      UserData:
+        "Fn::Base64": !Join
+          - ""
+          - - "#cloud-config\n"
+            - "ssh_authorized_keys:\n - "
+            - !Join ["\n - ", !Ref AuthorizedKeys]
+            - "\nruncmd:\n"
+            - " - yum install -y aws-cfn-bootstrap\n"
+            - !Sub " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource IngestContainerInstanceLaunch --region ${AWS::Region}\n"
+            - !Sub " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource IngestECSAutoScalingGroup --region ${AWS::Region}\n"
+
+  IngestECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for GITC ingest
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        FromPort: "-1"
+        ToPort: "-1"
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
+
+Mappings:
+  AWSRegionToAMI:
+    DOCS:
+      LIST: http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+    us-west-2:
+      AMIID: ami-241bd844
