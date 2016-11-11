@@ -3,9 +3,6 @@ Parameters:
   DeploymentS3Bucket:
     Type: String
     Description: S3 bucket that holds deployment artifacts
-  MRFS3Bucket:
-    Type: String
-    Description: S3 bucket that holds output from mrfgen
   StackName:
     Type: String
     Description: Name of the (parent) stack name being created
@@ -44,12 +41,15 @@ Parameters:
 Resources:
 
 <%# [name, retries, processing-timeout] %>
-<% events = [['http-tile-ingest-needed', 1, 350],
-             ['cmr-ingest-needed', 1, 350],
-             ['wms-map-found', 1, 350],
-             ['resource-urls-found', 1, 350],
-             ['sync-completed', 30, 30],
+<% queues = [['ingest-needed_http-tiles-events', 1, 350],
+             ['ingest-needed_cmr-granules-events', 1, 350],
+             ['wms-map-found-events', 1, 350],
+             ['resource-urls-found-events', 1, 350],
+             ['sync-completed-events', 30, 30],
              ['pending-mrf-gen', 30, 1200]] %>
+<% queues.each { |q| q.push(q.first.split(/[-_]/).map(&:capitalize).join() + "Queue") } %>
+<% events = queues.reject { |q| !q.first.end_with?('-events') } %>
+
 
 <%# [task, description, memory, ecs-instance-count (nil to run in Lambda)] %>
 <% tasks = [['discover-http-tiles', 'Discovers tile files to ingest from HTTP', 256, nil],
@@ -97,17 +97,21 @@ Resources:
           # Allow writing to ingest buckets
           - Effect: Allow
             Action:
-            - s3:GetObject
-            - s3:PutObject
-            - s3:ListBucket
-            - s3:ListObjects
+            - s3:AbortMultipartUpload
+            - s3:Get*
+            - s3:Put*
+            - s3:List*
+            - s3:DeleteObject
+            - s3:DeleteObjectVersion
             Resource:
             - !Sub arn:aws:s3:::${DeploymentS3Bucket}
             - !Sub arn:aws:s3:::${DeploymentS3Bucket}/*
-            - !Sub arn:aws:s3:::${MRFS3Bucket}
-            - !Sub arn:aws:s3:::${MRFS3Bucket}/*
-            - !Sub arn:aws:s3:::${StackName}
-            - !Sub arn:aws:s3:::${StackName}/*
+            - !Sub arn:aws:s3:::${StackName}-public
+            - !Sub arn:aws:s3:::${StackName}-public/*
+            - !Sub arn:aws:s3:::${StackName}-protected
+            - !Sub arn:aws:s3:::${StackName}-protected/*
+            - !Sub arn:aws:s3:::${StackName}-private
+            - !Sub arn:aws:s3:::${StackName}-private/*
 
           # Allow managing network interfaces (required to run Lambda in VPC)
           - Effect: Allow
@@ -134,7 +138,7 @@ Resources:
             - sqs:ChangeMessageVisibility
             - sqs:DeleteMessage
             Resource:
-            - "*" # TODO
+            - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${StackName}-*"
 
           # Allow lambdas to find their corresponding ECS cluster
           - Effect: Allow
@@ -150,15 +154,26 @@ Resources:
             - ecs:ListTaskDefinitions
             - ecs:RunTask
             Resource:
-            - "*" # TODO
+            - "*"
+            Condition:
+              ArnLike:
+                ecs:cluster: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${StackName}-*"
 
           # Allow use of dynamo
           - Effect: Allow
             Action:
             - dynamodb:PutItem
             - dynamodb:DeleteItem
+            - dynamodb:BatchGetItem
+            - dynamodb:BatchWriteItem
+            - dynamodb:DeleteItem
+            - dynamodb:GetItem
+            - dynamodb:GetRecords
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:UpdateItem
             Resource:
-            - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${LockTable}
+            - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StackName}-*
 
           # Allow running within ECS
           - Effect: Allow
@@ -176,12 +191,23 @@ Resources:
             Resource:
             - "*"
 
-<% events.each do |event, max_receive, timeout| %>
-  <% queue_name = event.split('-').map(&:capitalize).join() + "Queue" %>
+  PrivateResources:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub ${StackName}-private
+
+  PublicResources:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub ${StackName}-public
+
+<% queues.each do |queue, max_receive, timeout, queue_name| %>
   <%= queue_name %>:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: !Sub ${StackName}-<%= event %>-events
+      QueueName: !Sub ${StackName}-<%= queue %>
       ReceiveMessageWaitTimeSeconds: 20
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt [Failed<%= queue_name %>, Arn]
@@ -191,7 +217,7 @@ Resources:
   Failed<%= queue_name %>:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: !Sub ${StackName}-failed-<%= event %>-events
+      QueueName: !Sub ${StackName}-failed-<%= queue %>
 <% end %>
 
 <% tasks.each do |task, description, memory, ecsDesiredCount| %>
@@ -272,18 +298,32 @@ Resources:
     Properties:
       LogGroupName: !Sub ${StackName}-transactions
 
-  DispatcherTask:
+<% ['dispatcher', 'scheduler'].each do |task| %>
+  <%= task.capitalize %>Task:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-      - Name: dispatcher
+      - Name: <%= task %>
         Command:
-        - !GetAtt [DispatcherFn, Arn]
+        - !GetAtt [<%= task.capitalize %>Fn, Arn]
         - "--eventJson"
         - !Sub >-
-          {"prefix":"${StackName}",
-          "bucket":"${StackName}",
-          "events": {"Key": "ingest/events.json", "Bucket": "${DeploymentS3Bucket}"}}
+          {
+            "resources": {
+              "stack":"${StackName}",
+              "eventQueues": {<%= events.map {|e| %Q("#{e.first.gsub(/-events$/, '')}": "${#{e.last}}")}.join(",") %>},
+              "buckets": {
+                "config": "${DeploymentS3Bucket}",
+                "private": "${StackName}-private",
+                "public": "${StackName}-public"
+              }
+            },
+            "config": {
+              "events": {"Key": "ingest/events.json", "Bucket": "${DeploymentS3Bucket}"},
+              "collections": {"Key": "ingest/collections.json", "Bucket": "${DeploymentS3Bucket}"},
+              "providers": {"Key": "ingest/providers.json", "Bucket": "${DeploymentS3Bucket}"}
+            }
+          }
         Cpu: '10'
         Essential: true
         Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
@@ -291,31 +331,9 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref DispatcherLogs
+            awslogs-group: !Ref <%= task.capitalize %>Logs
             awslogs-region: !Ref AWS::Region
-
-  SchedulerTask:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      ContainerDefinitions:
-      - Name: scheduler
-        Command:
-        - !GetAtt [SchedulerFn, Arn]
-        - "--eventJson"
-        - !Sub >-
-          {"prefix":"${StackName}",
-          "bucket":"${StackName}",
-          "mrf_bucket":"${MRFS3Bucket}",
-          "products": {"Key": "ingest/products.json", "Bucket": "${DeploymentS3Bucket}"}}
-        Cpu: '10'
-        Essential: true
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
-        Memory: '256'
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group: !Ref SchedulerLogs
-            awslogs-region: !Ref AWS::Region
+<% end %>
 
   GenerateMrfTask:
     Type: AWS::ECS::TaskDefinition

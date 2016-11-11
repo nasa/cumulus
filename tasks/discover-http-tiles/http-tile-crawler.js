@@ -29,8 +29,9 @@ module.exports = class HttpTileCrawler extends EventEmitter {
   _initCrawler() {
     const crawler = this._crawler = new Crawler(this.url);
     crawler.interval = 0;
-    crawler.maxConcurrency = 10;
+    crawler.maxConcurrency = 5;
     crawler.respectRobotsTxt = false;
+    crawler.userAgent = 'Cumulus-GIBS';
     this._forward('fetchstart');
     this._forward('fetchcomplete');
     this._forward('fetcherror', 'error');

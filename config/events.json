@@ -1,19 +1,28 @@
 {
   "listeners": {
-    "http-tile-ingest-needed": [{
-      "task": "task-discover-http-tiles"
-    }],
-    "cmr-ingest-needed": [{
-      "task": "task-discover-cmr-granules"
+    "ingest-needed": [{
+      "task": "task-discover-",
+      "prefix": true,
+      "configLocation": "ingest"
     }],
     "wms-map-found": [{
-      "task": "task-sync-wms"
+      "task": "task-sync-wms",
+      "configLocation": "ingest"
     }],
     "resource-urls-found": [{
-      "task": "task-sync-http-urls"
+      "task": "task-sync-http-urls",
+      "config": {
+        "ignoredErrorStatuses": "{collection.ingest.config.ignoredErrorStatuses}",
+        "output": {
+          "Bucket": "{resources.buckets.private}",
+          "Key": "sources/EPSG{meta.epsg}/{meta.key}"
+        }
+      }
     }],
     "sync-completed": [{
-      "queue": "pending-mrf-gen"
+      "queue": "pending-mrf-gen",
+      "prefix": true,
+      "configLocation": "process"
     }]
   }
 }
