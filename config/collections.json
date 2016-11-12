@@ -75,7 +75,7 @@
       "source": "cmr-granules",
       "config": {
         "root": "https://cmr.earthdata.nasa.gov",
-        "since": "20d",
+        "since": "5d",
         "event": "wms-map-found",
         "addMeta": {
           "key": "{meta.collection}/{granule.id}",

@@ -24,7 +24,8 @@ module.exports = class HttpTileCrawler extends EventEmitter {
     let intermediates = 0;
     this._crawler.on(event, (queueItem, opts) => {
       if (logLevel === 'error' || !lastLog || new Date() > 1000 + lastLog) {
-        log[logLevel](event, queueItem.path, intermediates > 0 ? `${intermediates} skipped` : '');
+        const suppression = intermediates > 0 ? `(${intermediates} messages supressed)` : '';
+        log[logLevel](event, queueItem.path, suppression);
         lastLog = +new Date();
         intermediates = 0;
       }

@@ -21,7 +21,6 @@
     }],
     "sync-completed": [{
       "queue": "pending-mrf-gen",
-      "prefix": true,
       "configLocation": "process"
     }]
   }

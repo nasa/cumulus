@@ -132,13 +132,19 @@ const startQueueDispatch = (fullEventName, queueUrl, globalListeners, invocation
           eventName: fullEventName,
           config: listener.config
         });
-        log.info(`Dispatching to queue ${listener.queue}`);
-        await aws.sqs().sendMessage({
-          MessageBody: JSON.stringify(payload),
-          QueueUrl: queueUrl.replace(fullEventName, listener.queue),
-          MessageAttributes: message.MessageAttributes
-        }).promise();
-        aws.sqs().deleteMessage(queueItem).promise();
+        const url = queueUrl.replace(`${fullEventName}-events`, listener.queue);
+        log.info(`Dispatching to queue ${listener.queue}: ${url}`);
+        try {
+          await aws.sqs().sendMessage({
+            MessageBody: JSON.stringify(payload),
+            QueueUrl: url,
+            MessageAttributes: message.MessageAttributes
+          }).promise();
+          aws.sqs().deleteMessage(queueItem).promise();
+        }
+        catch (e) {
+          log.error(e, e.stack);
+        }
       }
       else {
         log.error('Cannot dispatch', listener);

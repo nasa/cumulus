@@ -18,11 +18,24 @@ const updatedFiles = (existingKeys, updates) => {
   return _.values(_.omit(keyedUpdates, existingKeys));
 };
 
+let lastLog = null;
+let intermediates = 0;
 const syncFile = async (bucket, keypath, simulate, file) => {
   const destKey = path.join(keypath, file.name || path.basename(file.key || file.url));
-  log.debug(`Starting: ${file.url} -> s3://${bucket}/${destKey}`);
-  if (!simulate) {
-    await aws.syncUrl(file.url, bucket, destKey);
+  let didLog = false;
+  if (!lastLog || new Date() > 5000 + lastLog) {
+    const suppression = intermediates > 0 ? ` (${intermediates} messages supressed)` : '';
+    log.debug(`Starting: ${file.url} -> s3://${bucket}/${destKey}${suppression}`);
+    intermediates = 0;
+    lastLog = +new Date();
+    didLog = true;
+  }
+  else {
+    intermediates++;
+  }
+  await aws.syncUrl(file.url, bucket, destKey);
+  if (didLog) {
+    log.debug(`Completed: ${file.url}`);
   }
   return Object.assign({ Bucket: bucket, Key: destKey }, file);
 };

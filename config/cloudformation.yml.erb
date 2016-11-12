@@ -54,7 +54,7 @@ Resources:
 <%# [task, description, memory, ecs-instance-count (nil to run in Lambda)] %>
 <% tasks = [['discover-http-tiles', 'Discovers tile files to ingest from HTTP', 256, nil],
             ['discover-cmr-granules', 'Discovers tile files to ingest from HTTP', 256, nil],
-            ['sync-http-urls', 'Synchronizes HTTP files to S3', 256, nil],
+            ['sync-http-urls', 'Synchronizes HTTP files to S3', 512, nil],
             ['sync-wms', 'Generates WMS URLs to sync', 256, nil],
             ['generate-mrf', 'Generates an MRF from imported files', 256, 2],
             ['dispatcher', 'Dispatches events from SQS', 256, 1],
@@ -348,7 +348,7 @@ Resources:
         - "--prefix"
         - !Ref StackName
         - "--bucket"
-        - !Ref StackName
+        - !Sub ${StackName}-private
         Cpu: '512'
         Essential: true
         Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest

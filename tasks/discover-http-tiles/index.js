@@ -24,7 +24,7 @@ module.exports = class DiscoverHttpTilesTask extends Task {
       crawler.on('complete', (resources) => {
         const complete = this.excludeIncomplete(resources, config.required, event);
         const withMeta = this.addFileMeta(complete, config.file, event);
-        const events = this.buildEvents(withMeta, config.addMeta, event);
+        const events = this.buildEvents(withMeta, config.groupBy, config.addMeta, event);
 
         for (const event of events) {
           this.trigger('resource-urls-found', event.transaction.key, event);
@@ -70,12 +70,12 @@ module.exports = class DiscoverHttpTilesTask extends Task {
     return resources;
   }
 
-  buildEvents(resources, opts, fieldValues) {
+  buildEvents(resources, grouping, opts, fieldValues) {
     if (!opts) return resources;
 
     // Group everything by transaction key
-    const pattern = new FieldPattern(opts.key, fieldValues);
-    const groups = _.values(_.groupBy(resources, (r) => pattern.format(r.fields)));
+    const pattern = new FieldPattern(grouping, fieldValues);
+    const groups = _.values(_.groupBy(resources, (r) => pattern.format({ match: r.fields })));
 
     // Add transaction fields
     return groups.map((group) => {
@@ -83,7 +83,6 @@ module.exports = class DiscoverHttpTilesTask extends Task {
       for (const key of Object.keys(opts)) {
         const pattern = new FieldPattern(opts[key], fieldValues);
         transaction[key] = pattern.format({ match: group[0].fields });
-        console.log('KEY', transaction[key]);
       }
       return Object.assign({}, this.event, {
         transaction: transaction,
@@ -105,6 +104,6 @@ local.setupLocalRun(module.exports.handler, local.collectionEventInput('VNGCR_SQ
   const result = {
     config: input.collection.ingest.config
   };
-  //result.config.root += 'VNGCR_SQD_C1_r00c01/';
+  result.config.root += 'VNGCR_SQD_C1_r00c01/';
   return result;
 }));
