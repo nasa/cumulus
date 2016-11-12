@@ -1,6 +1,6 @@
 Description: GIBS/Cumulus - Ingest
 Parameters:
-  DeploymentS3Bucket:
+  ConfigS3Bucket:
     Type: String
     Description: S3 bucket that holds deployment artifacts
   StackName:
@@ -104,8 +104,8 @@ Resources:
             - s3:DeleteObject
             - s3:DeleteObjectVersion
             Resource:
-            - !Sub arn:aws:s3:::${DeploymentS3Bucket}
-            - !Sub arn:aws:s3:::${DeploymentS3Bucket}/*
+            - !Sub arn:aws:s3:::${ConfigS3Bucket}
+            - !Sub arn:aws:s3:::${ConfigS3Bucket}/*
             - !Sub arn:aws:s3:::${StackName}-public
             - !Sub arn:aws:s3:::${StackName}-public/*
             - !Sub arn:aws:s3:::${StackName}-protected
@@ -197,11 +197,12 @@ Resources:
     Properties:
       BucketName: !Sub ${StackName}-private
 
-  PublicResources:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    Properties:
-      BucketName: !Sub ${StackName}-public
+# TODO: This ought to be done here but can't now due to OnEarth triggers
+#  PublicResources:
+#    Type: AWS::S3::Bucket
+#    DeletionPolicy: Retain
+#    Properties:
+#      BucketName: !Sub ${StackName}-public
 
 <% queues.each do |queue, max_receive, timeout, queue_name| %>
   <%= queue_name %>:
@@ -227,7 +228,7 @@ Resources:
     Properties:
       FunctionName: !Sub ${StackName}-task-<%= task %>
       Code:
-        S3Bucket: !Ref DeploymentS3Bucket
+        S3Bucket: !Ref ConfigS3Bucket
         S3Key: !Sub ${ArtifactPath}/lambda/<%= task %>.zip
       Description: <%= description + (ecsDesiredCount.nil? ? '' : ' (runs as ECS service)')%>
       Runtime: nodejs4.3
@@ -313,15 +314,15 @@ Resources:
               "stack":"${StackName}",
               "eventQueues": {<%= events.map {|e| %Q("#{e.first.gsub(/-events$/, '')}": "${#{e.last}}")}.join(",") %>},
               "buckets": {
-                "config": "${DeploymentS3Bucket}",
+                "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
                 "public": "${StackName}-public"
               }
             },
             "config": {
-              "events": {"Key": "ingest/events.json", "Bucket": "${DeploymentS3Bucket}"},
-              "collections": {"Key": "ingest/collections.json", "Bucket": "${DeploymentS3Bucket}"},
-              "providers": {"Key": "ingest/providers.json", "Bucket": "${DeploymentS3Bucket}"}
+              "events": {"Key": "ingest/events.json", "Bucket": "${ConfigS3Bucket}"},
+              "collections": {"Key": "ingest/collections.json", "Bucket": "${ConfigS3Bucket}"},
+              "providers": {"Key": "ingest/providers.json", "Bucket": "${ConfigS3Bucket}"}
             }
           }
         Cpu: '10'

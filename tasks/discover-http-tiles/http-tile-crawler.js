@@ -20,8 +20,17 @@ module.exports = class HttpTileCrawler extends EventEmitter {
   }
 
   _forward(event, logLevel = 'debug') {
+    let lastLog = null;
+    let intermediates = 0;
     this._crawler.on(event, (queueItem, opts) => {
-      log[logLevel](event, queueItem.path);
+      if (logLevel === 'error' || !lastLog || new Date() > 1000 + lastLog) {
+        log[logLevel](event, queueItem.path, intermediates > 0 ? `${intermediates} skipped` : '');
+        lastLog = +new Date();
+        intermediates = 0;
+      }
+      else {
+        intermediates++;
+      }
       this.emit(event, queueItem, opts);
     });
   }
@@ -29,10 +38,10 @@ module.exports = class HttpTileCrawler extends EventEmitter {
   _initCrawler() {
     const crawler = this._crawler = new Crawler(this.url);
     crawler.interval = 0;
-    crawler.maxConcurrency = 5;
+    crawler.maxConcurrency = 10;
     crawler.respectRobotsTxt = false;
     crawler.userAgent = 'Cumulus-GIBS';
-    this._forward('fetchstart');
+    //this._forward('fetchstart');
     this._forward('fetchcomplete');
     this._forward('fetcherror', 'error');
 
