@@ -11,12 +11,12 @@ const PAGE_SIZE = 2000;
 module.exports = class DiscoverCmrGranulesTask extends Task {
   async run() {
     const since = new Date(Date.now() - parseDuration(this.config.since)).toISOString();
-    const conceptId = this.event.transaction.concept_id;
+    const conceptId = this.event.meta.concept_id;
     const granules = await this.cmrGranules(this.config.root, since, conceptId);
-    const events = this.buildEvents(granules, this.config.transaction, this.event.transaction);
+    const events = this.buildEvents(granules, this.config.addMeta, this.event.meta);
 
     for (const event of events) {
-      this.trigger(this.config.event, event.transaction.key, event);
+      this.trigger(this.config.event, event.meta.key, Object.assign({}, this.event, event));
     }
   }
 
@@ -35,6 +35,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
       const json = await response.json();
       granules.push(...json.feed.entry);
       const hits = parseInt(response.headers.get('CMR-Hits'), 10);
+      if (page === 1) log.info(`CMR Granule count: ${hits}`);
       done = hits <= page * PAGE_SIZE;
       page++;
     }
@@ -49,10 +50,10 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
       const transaction = Object.assign({}, fieldValues);
       for (const key of Object.keys(opts)) {
         const pattern = new FieldPattern(opts[key], fieldValues);
-        transaction[key] = pattern.format(granule);
+        transaction[key] = pattern.format({ granule: granule });
       }
       return {
-        config: this.event.config,
+        meta: transaction,
         transaction: transaction
       };
     });
@@ -64,23 +65,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 };
 
 // To run a small test:
-// node discover-cmr-granules local some-test-bucket
-const fs = require('fs');
+// node discover-cmr-granules local
 
-if (process.argv[2] === 'local') {
-  const group = JSON.parse(fs.readFileSync('../config/products.json'))[1];
-  module.exports.handler(
-    {
-      config: group.tasks,
-      transaction: Object.assign(
-        {
-          bucket: process.argv[3],
-          config_bucket: `${process.argv[3]}-deploy`,
-          mrf_bucket: `${process.argv[3]}-mrfs`
-        },
-        group.triggers[0].transactions[0]
-      )
-    },
-    {},
-    () => {});
-}
+const local = require('gitc-common/local-helpers');
+local.setupLocalRun(module.exports.handler, local.collectionEventInput('MOPITT_DCOSMR_LL_D_STD'));

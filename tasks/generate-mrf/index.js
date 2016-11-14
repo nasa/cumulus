@@ -22,7 +22,7 @@ module.exports = class GenerateMrfTask extends Task {
   async runExclusive() {
     const event = this.event;
 
-    if (event.files.length === 0) {
+    if (event.payload.length === 0) {
       log.info('No files to process');
       return this.complete(Object.assign({}, event, {
         files: []
@@ -57,9 +57,7 @@ module.exports = class GenerateMrfTask extends Task {
         paths
       );
 
-      const keys = event.files.map((f) => f.key);
-      const sourceBucket = event.files[0].bucket; // Assumed to be the same across all files
-      const destBucket = event.transaction.mrf_bucket;
+      const destBucket = this.config.output.Bucket;
       const destKey = this.config.output.Key;
 
       log.info("Writing mrfgen config", mrfConfig);
@@ -74,12 +72,12 @@ module.exports = class GenerateMrfTask extends Task {
           fs.writeFileSync(fullpath, file.contents, { mode: 0o600 });
         }
         else {
-          await aws.downloadS3Keys(file.Bucket, [file.Key], paths.input);
+          await aws.downloadS3Files([file], paths.input);
         }
       }
 
-      const eventInfo = `(${keys.length} files from ${this.transactionKey})`;
-      await aws.downloadS3Keys(sourceBucket, keys, paths.input);
+      const eventInfo = `(${event.payload.length} files from ${this.transactionKey})`;
+      await aws.downloadS3Files(event.payload, paths.input);
       this.logStageComplete(`Source Download ${eventInfo}`);
       await this.runMrfgen(paths.mrfgenConfig);
       this.logStageComplete(`MRF Generation ${eventInfo}`);
@@ -88,6 +86,9 @@ module.exports = class GenerateMrfTask extends Task {
       const destKeyFn = (filename) =>
         path.join(destKey, path.basename(filename).replace(/\.([^\.]*)$/, '_.$1'));
       await aws.uploadS3Files(fullPaths, destBucket, destKeyFn);
+    }
+    catch (e) {
+      console.log(e);
     }
     finally {
       execSync(`rm -rf ${tempDir}`);
@@ -123,9 +124,23 @@ if (['stdin', 'stdin-ecs'].indexOf(process.argv[2]) !== -1) {
     module.exports.delegate = null;
   }
   module.exports.handler({
-    config_bucket: process.argv[process.argv.length - 1],
     eventName: 'sync-completed',
     eventSource: 'stdin',
-    functionName: process.argv[3]
+    functionName: process.argv[3],
+    config: {
+      mrfgen: {
+        mrf_compression_type: "JPEG",
+        source_epsg: "{meta.epsg}",
+        mrf_merge: false,
+        mrf_nocopy: true,
+        overview_resampling: "average",
+        resize_resampling: "average",
+        parameter_name: "{meta.parameterName}"
+      },
+      output: {
+        Bucket: "{resources.buckets.public}",
+        Key: "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+      }
+    }
   }, {}, () => {});
 }
