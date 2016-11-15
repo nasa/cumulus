@@ -61,7 +61,7 @@
     "meta": {
       "collection": "VNGCR_NQD_C1",
       "parameterName": "VNGCR_NQD_I1-M4-M3_NRT",
-      "epsg": 3031,
+      "epsg": 3413,
       "zoom": 6
     }
   },
