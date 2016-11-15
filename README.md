@@ -18,7 +18,7 @@ $ bin/deploy my-stack-name create my-keyname
 The stack will be called "gitc-my-stack-name" and have two s3 buckets, "gitc-my-stack-name-deploy" for deployment
 artifacts and "gitc-my-stack-name" for working files. By default, the stacks are deployed into us-west-2 (Oregon)
 to separate them from the other projects that share our AWS space. 'my-keyname' will have access to its EC2
-instances
+instances.
 
 Redeploy an existing stack into AWS, required any time you make a code change.
 ```
