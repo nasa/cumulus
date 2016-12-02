@@ -88,7 +88,7 @@ module.exports = class GenerateMrfTask extends Task {
       await aws.uploadS3Files(fullPaths, destBucket, destKeyFn);
     }
     catch (e) {
-      console.log(e);
+      log.error(e);
     }
     finally {
       execSync(`rm -rf ${tempDir}`);

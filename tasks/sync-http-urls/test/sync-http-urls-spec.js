@@ -6,11 +6,11 @@ const http = require('http');
 //const sync = require('../tasks/sync/http-sync');
 //const s3util = require('../tasks/sync/http-sync/s3util');
 
-describe('http-sync.handler', function() {
-  it('pending', function(){});
+describe('sync-http-urls.handler', () => {
+  it('pending', () => null);
 });
 
-xdescribe('http-sync.handler', function() {
+xdescribe('sync-http-urls.handler', function() {
   const BUCKET_NAME = 'testbucket';
   const SOURCE_KEY = 'some/test/key';
   const DEST_KEY = 'some/test/key.synced';

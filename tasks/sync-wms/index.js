@@ -5,12 +5,15 @@ const Task = require('gitc-common/task');
 module.exports = class SyncWmsTask extends Task {
   run() {
     const meta = this.event.meta;
-    this.trigger('resource-urls-found', meta.key,
-                 Object.assign({},
-                               this.event,
-                               { payload: [{ name: this.config.filename,
-                                             url: this.config.getmap,
-                                             version: meta.version }] }));
+    const event = Object.assign(
+      {},
+      this.event,
+      { payload: [
+        { name: this.config.filename,
+          url: this.config.getmap,
+          version: meta.version }] });
+
+    this.trigger('resource-urls-found', meta.key, event);
     return null;
   }
 
