@@ -4,10 +4,10 @@
   "description": "GIBS-in-the-Cloud Prototype",
   "main": "index.js",
   "scripts": {
-    "test": "eslint . && mocha",
-    "ci": "./node_modules/.bin/eslint -o ../test-reports/eslint.xml . -f junit && ./node_modules/.bin/mocha test --reporter mocha-junit-reporter --reporter-options mochaFile=../test-reports/testreport.xml",
+    "test": "eslint . && mocha-webpack",
+    "ci": "./node_modules/.bin/eslint -o ../test-reports/eslint.xml . -f junit && ./node_modules/.bin/mocha-webpack --reporter mocha-junit-reporter --reporter-options mochaFile=../test-reports/testreport.xml",
     "start": "webpack -w --colors",
-    "prepublish": "find . -name package.json -not -path '*/node_modules/*' -not -path './package.json' -execdir npm install \\; && webpack"
+    "prepublish": "find . -name package.json -not -path './test/*' -not -path '*/node_modules/*' -not -path './package.json' -execdir npm install \\; && webpack"
   },
   "keywords": [
     "GIBS"
@@ -41,10 +41,12 @@
     "json-loader": "^0.5.4",
     "mocha": "^2.5.3",
     "mocha-junit-reporter": "^1.11.1",
+    "mocha-webpack": "^0.7.0",
     "prepend-loader": "0.0.2",
     "sinon": "^1.17.4",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
-    "webpack": "^1.13.1"
+    "webpack": "^1.13.3",
+    "webpack-node-externals": "^1.5.4"
   }
 }

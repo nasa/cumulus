@@ -1,10 +1,15 @@
 {
   "parser": "babel-eslint",
   "extends": "airbnb",
+  "env": {
+    "node": true,
+    "mocha": true
+  },
   "rules": {
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",
     "import/newline-after-import": "off",
+    "no-useless-escape": "off",
     "no-console": "warn",
     "spaced-comment": "off",
     "prefer-template": "warn",
