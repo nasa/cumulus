@@ -34,6 +34,9 @@ Parameters:
   ArtifactPath:
     Type: String
     Description: Path within the deployment bucket containing artifacts
+  DeployRegion:
+    Type: String
+    Description: AWS region used for S3 Bucket creation, services and ECS instances
   VPC:
     Type: String
     Description: ID of the VPC into which we should deploy
@@ -286,7 +289,7 @@ Resources:
       - Name: ecs-lambda-runner
         Cpu: '10'
         Essential: true
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '1024'
         LogConfiguration:
           LogDriver: awslogs
@@ -327,7 +330,7 @@ Resources:
           }
         Cpu: '10'
         Essential: true
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '256'
         LogConfiguration:
           LogDriver: awslogs
@@ -351,7 +354,7 @@ Resources:
         - !Sub ${StackName}-private
         Cpu: '512'
         Essential: true
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.us-west-2.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '2048'
         LogConfiguration:
           LogDriver: awslogs
@@ -374,7 +377,6 @@ Resources:
     Properties:
       AvailabilityZones:
       - !Sub ${AWS::Region}a
-      - !Sub ${AWS::Region}b
       LaunchConfigurationName: !Ref IngestContainerInstanceLaunch
       MinSize: '0'
       MaxSize: !Ref IngestMaxInstances
@@ -463,3 +465,5 @@ Mappings:
       LIST: http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
     us-west-2:
       AMIID: ami-241bd844
+    us-east-1:
+      AMIID: ami-e4c4cbf3
