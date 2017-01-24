@@ -377,8 +377,10 @@ Resources:
     Properties:
       AvailabilityZones:
       - !Sub ${AWS::Region}a # Might not want to hardcode this
+      <% if ENV['subnet'] && ENV['subnet'].size > 0 %>
       VPCZoneIdentifier:
-      - ***REMOVED***
+      - <%= ENV['subnet'] %>
+      <% end %>
       LaunchConfigurationName: !Ref IngestContainerInstanceLaunch
       MinSize: '0'
       MaxSize: !Ref IngestMaxInstances
@@ -459,7 +461,7 @@ Resources:
         FromPort: '22'
         ToPort: '22'
         CidrIp: 0.0.0.0/0
-      VpcId: ***REMOVED*** # !Ref VPC
+      VpcId: !Ref VPC
 
 Mappings:
   AWSRegionToAMI:
