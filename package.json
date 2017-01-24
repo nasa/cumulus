@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "eslint . && mocha-webpack",
-    "ci": "./node_modules/.bin/eslint -o ../test-reports/eslint.xml . -f junit && ./node_modules/.bin/mocha-webpack --reporter mocha-junit-reporter --reporter-options mochaFile=../test-reports/testreport.xml",
+    "ci": "./bin/npm/ci",
     "start": "webpack -w --colors",
-    "prepublish": "find . -name package.json -not -path './test/*' -not -path '*/node_modules/*' -not -path './package.json' -execdir npm install \\; && webpack",
-    "prune": "npm prune && find . -name package.json -not -path './test/*' -not -path '*/node_modules/*' -not -path './package.json' -execdir npm prune \\;",
-    "lock": "npm run prune && npm shrinkwrap --dev && find . -name package.json -not -path './test/*' -not -path '*/node_modules/*' -not -path './package.json' -execdir npm shrinkwrap --dev \\; && npm install"
+    "prepublish": "./bin/npm/prepublish",
+    "lock": "./bin/npm/lock",
+    "clean": "./bin/npm/clean"
   },
   "keywords": [
     "GIBS"
