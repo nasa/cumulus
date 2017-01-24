@@ -376,7 +376,9 @@ Resources:
         MinInstancesInService: 0
     Properties:
       AvailabilityZones:
-      - !Sub ${AWS::Region}a
+      - !Sub ${AWS::Region}a # Might not want to hardcode this
+      VPCZoneIdentifier:
+      - ***REMOVED***
       LaunchConfigurationName: !Ref IngestContainerInstanceLaunch
       MinSize: '0'
       MaxSize: !Ref IngestMaxInstances
@@ -457,7 +459,7 @@ Resources:
         FromPort: '22'
         ToPort: '22'
         CidrIp: 0.0.0.0/0
-      VpcId: !Ref VPC
+      VpcId: ***REMOVED*** # !Ref VPC
 
 Mappings:
   AWSRegionToAMI:
