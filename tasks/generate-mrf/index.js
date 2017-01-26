@@ -61,9 +61,6 @@ module.exports = class GenerateMrfTask extends Task {
       const destKey = this.config.output.Key;
 
       log.info("Writing mrfgen config", mrfConfig);
-      log.info('========');
-      log.info(mrfConfig);
-      log.info('========');
       fs.writeFileSync(paths.mrfgenConfig, mrfConfig, {
         mode: 0o600
       });
@@ -82,6 +79,9 @@ module.exports = class GenerateMrfTask extends Task {
       const eventInfo = `(${event.payload.length} files from ${this.transactionKey})`;
       await aws.downloadS3Files(event.payload, paths.input);
       this.logStageComplete(`Source Download ${eventInfo}`);
+      log.info('==== MRF CONFIG ====');
+      log.info(mrfConfig);
+      log.info('========');
       await this.runMrfgen(paths.mrfgenConfig);
       this.logStageComplete(`MRF Generation ${eventInfo}`);
       const fullPaths = fs.readdirSync(paths.output).map((f) => path.join(paths.output, f));
