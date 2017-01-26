@@ -61,6 +61,9 @@ module.exports = class GenerateMrfTask extends Task {
       const destKey = this.config.output.Key;
 
       log.info("Writing mrfgen config", mrfConfig);
+      log.info('========');
+      log.info(mrfConfig);
+      log.info('========');
       fs.writeFileSync(paths.mrfgenConfig, mrfConfig, {
         mode: 0o600
       });
