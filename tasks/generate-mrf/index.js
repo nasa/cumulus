@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const spawn = require('child_process').spawn;
+const spawnSync = require('child_process').spawnSync;
 
 const Task = require('gitc-common/task');
 const log = require('gitc-common/log');
@@ -99,6 +100,9 @@ module.exports = class GenerateMrfTask extends Task {
   }
 
   runMrfgen(configPath) {
+    log.info(`==== ${configPath} ====`);
+    spawnSync('cat', [configPath], { stdio: 'inherit' });
+    log.info('========');
     return new Promise((resolve, reject) => {
       const mrfgen = spawn('mrfgen', ['-c', configPath], {
         stdio: 'inherit',
