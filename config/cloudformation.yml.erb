@@ -44,12 +44,7 @@ Parameters:
 Resources:
 
 <%# [name, retries, processing-timeout] %>
-<% queues = [['ingest-needed_http-tiles-events', 1, 350],
-             ['ingest-needed_cmr-granules-events', 1, 350],
-             ['wms-map-found-events', 1, 350],
-             ['resource-urls-found-events', 1, 350],
-             ['sync-completed-events', 30, 30],
-             ['pending-mrf-gen', 30, 1200]] %>
+<% queues = [] %>
 <% queues.each { |q| q.push(q.first.split(/[-_]/).map(&:capitalize).join() + "Queue") } %>
 <% events = queues.reject { |q| !q.first.end_with?('-events') } %>
 
@@ -59,9 +54,9 @@ Resources:
             ['discover-cmr-granules', 'Discovers tile files to ingest from HTTP', 256, nil],
             ['sync-http-urls', 'Synchronizes HTTP files to S3', 512, nil],
             ['sync-wms', 'Generates WMS URLs to sync', 256, nil],
+            ['trigger-ingest', 'Triggers ingest for discovered granules', 256, nil],
             ['generate-mrf', 'Generates an MRF from imported files', 256, 2],
-            ['dispatcher', 'Dispatches events from SQS', 256, 1],
-            ['scheduler', 'Runs scheduled ingests', 256, 1]] %>
+            ['sfn-scheduler', 'Runs scheduled discovery / ingest', 256, 1]] %>
 
   TaskExecutionRole:
     Type: AWS::IAM::Role
@@ -79,6 +74,12 @@ Resources:
           Principal:
             Service:
             - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service:
+            - !Sub "states.${AWS::Region}.amazonaws.com"
           Action:
           - sts:AssumeRole
       Path: "/"
@@ -142,6 +143,15 @@ Resources:
             - sqs:DeleteMessage
             Resource:
             - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${StackName}-*"
+
+          # Allow lambdas to interact with their StepFunctions
+          - Effect: Allow
+            Action:
+            - "*"
+            Resource:
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StackName}-*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:${StackName}-*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:activity:${StackName}-*"
 
           # Allow lambdas to find their corresponding ECS cluster
           - Effect: Allow
@@ -302,20 +312,24 @@ Resources:
     Properties:
       LogGroupName: !Sub ${StackName}-transactions
 
-<% ['dispatcher', 'scheduler'].each do |task| %>
-  <%= task.capitalize %>Task:
+<% ['sfn-scheduler'].each do |task| %>
+  <% caps_name = task.split('-').map(&:capitalize).join() %>
+  <%= caps_name %>Task:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
       - Name: <%= task %>
         Command:
-        - !GetAtt [<%= task.capitalize %>Fn, Arn]
+        - !GetAtt [<%= caps_name %>Fn, Arn]
         - "--eventJson"
         - !Sub >-
           {
             "resources": {
               "stack":"${StackName}",
-              "eventQueues": {<%= events.map {|e| %Q("#{e.first.gsub(/-events$/, '')}": "${#{e.last}}")}.join(",") %>},
+              "stateMachines": {
+                "discover": "arn:aws:states:${DeployRegion}:${AWS::AccountId}:stateMachine:${StackName}-discover-granules",
+                "ingest": "arn:aws:states:${DeployRegion}:${AWS::AccountId}:stateMachine:${StackName}-ingest-granules"
+              },
               "buckets": {
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
@@ -335,7 +349,7 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref <%= task.capitalize %>Logs
+            awslogs-group: !Ref <%= caps_name %>Logs
             awslogs-region: !Ref AWS::Region
 <% end %>
 
@@ -346,12 +360,8 @@ Resources:
       - Name: generate-mrf
         Command:
         - !GetAtt [GenerateMrfFn, Arn]
-        - "--queue"
-        - !Ref PendingMrfGenQueue
-        - "--prefix"
-        - !Ref StackName
-        - "--bucket"
-        - !Sub ${StackName}-private
+        - "--activity"
+        - !Sub arn:aws:states:${DeployRegion}:${AWS::AccountId}:activity:${StackName}-mrf-gen
         Cpu: '512'
         Essential: true
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest

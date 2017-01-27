@@ -1,0 +1,41 @@
+{
+  "Comment": "Unified workflow for GitC ingest sources",
+  "StartAt": "ChooseIngestMethod",
+  "States": {
+    "ChooseIngestMethod": {
+      "Type" : "Choice",
+      "Choices": [
+        {
+          "Variable": "$.collection.discoveryType",
+          "StringEquals": "http-tiles",
+          "Next": "DiscoverHttpTiles"
+        },
+        {
+          "Variable": "$.collection.discoveryType",
+          "StringEquals": "cmr-granules",
+          "Next": "DiscoverCmrGranules"
+        }
+      ],
+      "Default": "MethodNotFound"
+    },
+    "DiscoverHttpTiles": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-west-2:***REMOVED***:function:gitc-ingest-pq-task-discover-http-tiles",
+      "Next": "TriggerIngest"
+    },
+    "DiscoverCmrGranules": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-west-2:***REMOVED***:function:gitc-ingest-pq-task-discover-cmr-granules",
+      "Next": "TriggerIngest"
+    },
+    "TriggerIngest": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-west-2:***REMOVED***:function:gitc-ingest-pq-task-trigger-ingest",
+      "End": true
+    },
+    "MethodNotFound": {
+      "Type": "Fail",
+      "Cause": "Ingest Method Not Found"
+    }
+  }
+}

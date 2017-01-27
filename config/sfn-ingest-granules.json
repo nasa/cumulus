@@ -1,0 +1,56 @@
+{
+  "Comment": "Unified workflow for GitC Granule Ingest",
+  "StartAt": "ChooseIngestMethod",
+  "States": {
+    "ChooseIngestMethod": {
+      "Type" : "Choice",
+      "Choices": [
+        {
+          "Variable": "$.collection.discoveryType",
+          "StringEquals": "http-tiles",
+          "Next": "SyncHttpUrls"
+        },
+        {
+          "Variable": "$.collection.discoveryType",
+          "StringEquals": "cmr-granules",
+          "Next": "CreateWmsUrls"
+        }
+      ],
+      "Default": "MethodNotFound"
+
+    },
+    "CreateWmsUrls": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-west-2:***REMOVED***:function:gitc-ingest-pq-task-sync-wms",
+      "Next": "SyncHttpUrls"
+    },
+    "SyncHttpUrls": {
+      "Type" : "Task",
+      "Resource": "arn:aws:lambda:us-west-2:***REMOVED***:function:gitc-ingest-pq-task-sync-http-urls",
+      "Next": "MRFGen",
+      "Catch": [
+        {
+          "ErrorEquals": ["Incomplete"],
+          "Next": "SyncHttpUrls"
+        },
+        {
+          "ErrorEquals": ["NotNeeded"],
+          "Next": "NoUpdates"
+        }
+      ]
+    },
+	  "MRFGen": {
+      "Type" : "Task",
+      "Resource": "arn:aws:states:us-west-2:***REMOVED***:activity:ecs-lambda-runner-test",
+      "End": true
+    },
+    "MethodNotFound": {
+      "Type": "Fail",
+      "Cause": "Ingest Method Not Found"
+    },
+    "NoUpdates": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}

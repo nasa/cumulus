@@ -91,9 +91,6 @@ module.exports = class GenerateMrfTask extends Task {
         path.join(destKey, path.basename(filename).replace(/\.([^\.]*)$/, '_.$1'));
       await aws.uploadS3Files(fullPaths, destBucket, destKeyFn);
     }
-    catch (e) {
-      log.error(e);
-    }
     finally {
       execSync(`rm -rf ${tempDir}`);
     }
@@ -123,8 +120,6 @@ module.exports = class GenerateMrfTask extends Task {
     return GenerateMrfTask.handle(...args);
   }
 };
-
-module.exports.delegate = 'ECS';
 
 if (['stdin', 'stdin-ecs'].indexOf(process.argv[2]) !== -1) {
   if (process.argv[2] === 'stdin') {

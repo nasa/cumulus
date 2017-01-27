@@ -5,33 +5,34 @@
     "providerId": "MODAPS",
     "meta": { "parent": "VIIRS" },
     "trigger": { "type": "timer", "period_s": 600 },
-    "ingest": {
-      "source": "http-tiles",
-      "config": {
+    "discoveryType": "http-tiles",
+    "stateConfig": {
+      "discover-http-tiles": {
         "type": "apache-index",
         "root": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/",
-        "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/{_}/{jday}/{file}.{ext}",
-        "required": [ { "group": "file", "prop": "ext", "values": [ "jgw", "jpg", "txt" ] }  ],
-        "groupBy": "{meta.parent}/{meta.collection}/{match.jday}",
-        "addMeta": {
-          "key": "{meta.parent}/{meta.collection}/{match.jday}",
-          "date": { "type": "date", "value": "{match.jday}" }
-        }
-      }
-    },
-    "process": {
-      "mrfgen": {
-        "mrf_compression_type": "JPEG",
-        "source_epsg": "{meta.epsg}",
-        "mrf_merge": false,
-        "mrf_nocopy": true,
-        "overview_resampling": "average",
-        "resize_resampling": "average",
-        "parameter_name": "{meta.parameterName}"
+        "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/{_}/{meta.jday}/{file}.{ext}",
+        "required": [ { "group": "file", "prop": "ext", "values": [ "jgw", "jpg", "txt" ] }  ]
       },
-      "output": {
-        "Bucket": "{resources.buckets.public}",
-        "Key": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+      "sync-http-urls": {
+        "output": {
+          "Bucket": "{resources.buckets.private}",
+          "Key": "sources/EPSG{meta.epsg}/{meta.key}"
+        }
+      },
+      "generate-mrf": {
+        "mrfgen": {
+          "mrf_compression_type": "JPEG",
+          "source_epsg": "{meta.epsg}",
+          "mrf_merge": false,
+          "mrf_nocopy": true,
+          "overview_resampling": "average",
+          "resize_resampling": "average",
+          "parameter_name": "{meta.parameterName}"
+        },
+        "output": {
+          "Bucket": "{resources.buckets.public}",
+          "Key": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+        }
       }
     }
   },
@@ -70,7 +71,7 @@
     "abstract": true,
     "providerId": "LARC",
     "meta": { "parent": "MOPITT" },
-    "trigger": { "type": "timer", "period_s": 600 },
+    "_trigger": { "type": "timer", "period_s": 600 },
     "ingest": {
       "source": "cmr-granules",
       "config": {

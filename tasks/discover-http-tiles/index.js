@@ -29,7 +29,7 @@ module.exports = class DiscoverHttpTilesTask extends Task {
         for (const event of events) {
           this.trigger('resource-urls-found', event.transaction.key, event);
         }
-        resolve(resources.length);
+        resolve(events);
       });
       crawler.crawl();
     });

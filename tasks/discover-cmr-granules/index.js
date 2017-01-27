@@ -15,9 +15,12 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     const granules = await this.cmrGranules(this.config.root, since, conceptId);
     const events = this.buildEvents(granules, this.config.addMeta, this.event.meta);
 
+    const result = [];
     for (const event of events) {
+      result.push(Object.assign({}, this.event, event));
       this.trigger(this.config.event, event.meta.key, Object.assign({}, this.event, event));
     }
+    return result;
   }
 
   async cmrGranules(root, since, id) {

@@ -18,7 +18,7 @@
           "Key": "sources/EPSG{meta.epsg}/{meta.key}"
         }
       }
-    }],
+    }],1
     "sync-completed": [{
       "queue": "pending-mrf-gen",
       "configLocation": "process"
