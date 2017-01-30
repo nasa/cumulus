@@ -64,7 +64,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
     const completedKeys = _.map(completed, (f) => f.url + f.version);
     this.state.files = _.values(_.keyBy(this.state.files.concat(completedFiles), 'Key'));
     this.state.completed = _.uniq(this.state.completed.concat(completedKeys));
-    const result = Object.assign({}, this.event);
+    const result = Object.assign({}, this.event, { payload: [] });
     if (isComplete) {
       log.info('Sync is complete');
       result.payload = this.state.files;
@@ -72,7 +72,6 @@ module.exports = class SyncHttpUrlsTask extends Task {
     }
     else {
       log.info('Sync is incomplete');
-      throw new Error('Incomplete');
     }
     if (errors) {
       if (this.config.ignoredErrorStatuses) {
@@ -87,7 +86,10 @@ module.exports = class SyncHttpUrlsTask extends Task {
         throw JSON.stringify(errors);
       }
     }
-    return result;
+    if (!isComplete) {
+      throw new Error('Incomplete');
+    }
+    return result.payload;
   }
 
   syncFiles(files, bucket, keypath, simulate = false) {

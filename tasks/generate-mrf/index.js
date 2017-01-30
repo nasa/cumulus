@@ -23,6 +23,8 @@ module.exports = class GenerateMrfTask extends Task {
   async runExclusive() {
     const event = this.event;
 
+    log.info(JSON.stringify(event));
+
     if (event.payload.length === 0) {
       log.info('No files to process');
       return this.complete(Object.assign({}, event, {

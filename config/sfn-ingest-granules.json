@@ -27,21 +27,36 @@
     "SyncHttpUrls": {
       "Type" : "Task",
       "Resource": "arn:aws:lambda:us-west-2:***REMOVED***:function:gitc-ingest-pq-task-sync-http-urls",
-      "Next": "MRFGen",
-      "Catch": [
+      "Next": "ChooseSyncContinuation"
+    },
+    "ChooseSyncContinuation": {
+      "Type" : "Choice",
+      "Choices": [
         {
-          "ErrorEquals": ["Incomplete"],
+          "Variable": "$.exception",
+          "StringEquals": "NotNeeded",
+          "Next": "NoUpdates"
+        },
+        {
+          "Variable": "$.exception",
+          "StringEquals": "Incomplete",
           "Next": "SyncHttpUrls"
         },
         {
-          "ErrorEquals": ["NotNeeded"],
-          "Next": "NoUpdates"
+          "Variable": "$.exception",
+          "StringEquals": "None",
+          "Next": "MRFGen"
         }
-      ]
+      ],
+      "Default": "UnhandledSyncError"
+    },
+    "UnhandledSyncError": {
+      "Type": "Fail",
+      "Cause": "Unhandled Sync Error"
     },
 	  "MRFGen": {
       "Type" : "Task",
-      "Resource": "arn:aws:states:us-west-2:***REMOVED***:activity:ecs-lambda-runner-test",
+      "Resource": "arn:aws:states:us-west-2:***REMOVED***:activity:gitc-ingest-pq-mrf-gen",
       "End": true
     },
     "MethodNotFound": {
@@ -50,6 +65,7 @@
     },
     "NoUpdates": {
       "Type": "Pass",
+      "Result": "No Updates Necessary",
       "End": true
     }
   }

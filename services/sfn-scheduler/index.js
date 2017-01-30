@@ -15,7 +15,8 @@ const startTimedIngest = (periodMs, offsetMs, invocation, collection) => {
         resources: invocation.resources,
         collection: collection,
         meta: Object.assign(meta, { startDate: startDate }),
-        transaction: Object.assign(meta, { startDate: startDate })
+        transaction: Object.assign(meta, { startDate: startDate }),
+        exception: 'None'
       };
       const stateMachine = invocation.resources.stateMachines.discover;
       const message = JSON.stringify(eventData);

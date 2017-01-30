@@ -10,8 +10,13 @@
       "discover-http-tiles": {
         "type": "apache-index",
         "root": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/",
-        "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/{_}/{meta.jday}/{file}.{ext}",
-        "required": [ { "group": "file", "prop": "ext", "values": [ "jgw", "jpg", "txt" ] }  ]
+        "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/{_}/{jday}/{file}.{ext}",
+        "required": [ { "group": "file", "prop": "ext", "values": [ "jgw", "jpg", "txt" ] }  ],
+        "groupBy": "{meta.parent}/{meta.collection}/{match.jday}",
+        "addMeta": {
+          "key": "{meta.parent}/{meta.collection}/{match.jday}",
+          "date": { "type": "date", "value": "{match.jday}" }
+        }
       },
       "sync-http-urls": {
         "output": {
@@ -38,7 +43,7 @@
   },
   {
     "id": "VNGCR_LQD_C1",
-    "parent": "VIIRS",
+    "_parent": "VIIRS",
     "meta": {
       "collection": "VNGCR_LQD_C1",
       "parameterName": "VNGCR_LQD_I1-M4-M3_NRT",

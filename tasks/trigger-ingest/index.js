@@ -1,34 +1,55 @@
 'use strict';
 
 const Task = require('gitc-common/task');
+const aws = require('gitc-common/aws');
+const log = require('gitc-common/log');
 
-module.exports = class SyncWmsTask extends Task {
-  run() {
-    const meta = this.event.meta;
-    const event = Object.assign(
-      {},
-      this.event,
-      { payload: [
-        { name: this.config.filename,
-          url: this.config.getmap,
-          version: meta.version }] });
+module.exports = class TriggerIngestTask extends Task {
+  async run() {
+    const s3Promises = [];
+    const executions = [];
+    const executionPromises = [];
+    const stateMachine = this.event.resources &&
+                         this.event.resources.stateMachines &&
+                         this.event.resources.stateMachines.ingest;
 
-    this.trigger('resource-urls-found', meta.key, event);
-    return event;
+    log.info('MY EVENT', JSON.stringify(this.event, null, 2));
+
+    if (!stateMachine) {
+      log.info('BUMMER');
+      return null;
+    }
+
+    const bucket = this.event.resources.buckets.private;
+
+    for (const e of this.event.payload) {
+      const date = (e.transaction && e.transaction.startDate) || (new Date().toISOString());
+      const noSpecialDate = date.split('.')[0].replace(/[:T]/g, '_');
+      const key = (e.transaction && e.transaction.key) || 'Unknown';
+      const name = `${key.replace(/\W+/g, '-')}-${noSpecialDate}`;
+      log.info(`Starting ingest of ${name}`);
+      const payload = { Bucket: bucket, Key: [key, noSpecialDate].join('/') };
+      const eventData = Object.assign({}, e, { payload: payload });
+      const s3Params = Object.assign({}, payload, { Body: JSON.stringify(e.payload) });
+
+      log.info('WILL TRIGGER', name, JSON.stringify(eventData, 0, 2));
+
+      s3Promises.push(aws.promiseS3Upload(s3Params));
+      executions.push({
+        stateMachineArn: stateMachine,
+        input: JSON.stringify(eventData),
+        name: name
+      });
+    }
+    await Promise.all(s3Promises);
+    for (const execution of executions) {
+      executionPromises.push(aws.sfn().startExecution(execution).promise());
+    }
+    await Promise.all(executionPromises);
+    return null;
   }
 
   static handler(...args) {
-    return SyncWmsTask.handle(...args);
+    return TriggerIngestTask.handle(...args);
   }
 };
-
-if (process.argv[2] === 'stdin') {
-  module.exports.handler({
-    eventName: 'wms-map-found',
-    eventSource: 'stdin',
-    config: {
-      filename: '{meta.key}.png',
-      getmap: 'https://opendap.larc.nasa.gov/ncWMS-2.0/wms?REQUEST=GetMap&VERSION=1.3.0&STYLES={meta.wms.style}&CRS=CRS:84&WIDTH=640&HEIGHT=320&FORMAT=image/png&TRANSPARENT=true&LAYERS={meta.wms.layer}&BBOX=-180,-90,180,90&&time={meta.date.isoDateTime}'
-    }
-  }, {}, () => {});
-}
