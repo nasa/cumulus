@@ -1,0 +1,16 @@
+{
+  "name": "gitc-http-sync",
+  "version": "0.0.0",
+  "dependencies": {
+    "async": {
+      "version": "2.1.4",
+      "from": "async@>=2.0.0 <3.0.0",
+      "resolved": "https://registry.npmjs.org/async/-/async-2.1.4.tgz"
+    },
+    "lodash": {
+      "version": "4.17.4",
+      "from": "lodash@>=4.13.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.4.tgz"
+    }
+  }
+}

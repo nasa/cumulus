@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const spawn = require('child_process').spawn;
+const spawnSync = require('child_process').spawnSync;
 
 const Task = require('gitc-common/task');
 const log = require('gitc-common/log');
@@ -79,6 +80,9 @@ module.exports = class GenerateMrfTask extends Task {
       const eventInfo = `(${event.payload.length} files from ${this.transactionKey})`;
       await aws.downloadS3Files(event.payload, paths.input);
       this.logStageComplete(`Source Download ${eventInfo}`);
+      log.info('==== MRF CONFIG ====');
+      log.info(mrfConfig);
+      log.info('========');
       await this.runMrfgen(paths.mrfgenConfig);
       this.logStageComplete(`MRF Generation ${eventInfo}`);
       const fullPaths = fs.readdirSync(paths.output).map((f) => path.join(paths.output, f));
@@ -96,6 +100,9 @@ module.exports = class GenerateMrfTask extends Task {
   }
 
   runMrfgen(configPath) {
+    log.info(`==== ${configPath} ====`);
+    spawnSync('cat', [configPath], { stdio: 'inherit' });
+    log.info('========');
     return new Promise((resolve, reject) => {
       const mrfgen = spawn('mrfgen', ['-c', configPath], {
         stdio: 'inherit',

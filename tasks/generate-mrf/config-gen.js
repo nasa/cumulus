@@ -68,9 +68,10 @@ exports.generateConfig = (projection, date, zoomLevels, mrfgenConfig, paths) => 
     fileExt: fileExt
   };
 
-  return Mustache.render(
+  const result = Mustache.render(
     fs.readFileSync(path.join(__dirname, 'templates', 'mrfgen_config.xml'), 'utf8'),
     templateParams,
     partials
   );
+  return `${result.trim()}\n`;
 };
