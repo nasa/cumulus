@@ -274,6 +274,20 @@ Resources:
         WriteCapacityUnits: 1
       TableName: !Sub ${StackName}-locks
 
+  LockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: key
+        AttributeType: S
+      KeySchema:
+      - AttributeName: key
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Sub ${StackName}-connections
+
   IngestECSCluster:
     Type: AWS::ECS::Cluster
 
@@ -320,6 +334,9 @@ Resources:
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
                 "public": "${StackName}-public"
+              },
+              "tables": {
+                "connections": "${StackName}-connections"
               }
             },
             "config": {

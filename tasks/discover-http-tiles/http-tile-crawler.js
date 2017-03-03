@@ -5,11 +5,12 @@ const Crawler = require('simplecrawler');
 const log = require('gitc-common/log');
 
 module.exports = class HttpTileCrawler extends EventEmitter {
-  constructor(product, url, pattern) {
+  constructor(product, url, pattern, connectionLimit = 10) {
     super();
     this.product = product;
     this.url = url;
     this.pattern = pattern;
+    this.connectionLimit = connectionLimit;
   }
 
   crawl() {
@@ -39,7 +40,7 @@ module.exports = class HttpTileCrawler extends EventEmitter {
   _initCrawler() {
     const crawler = this._crawler = new Crawler(this.url);
     crawler.interval = 0;
-    crawler.maxConcurrency = 10;
+    crawler.maxConcurrency = this.connectionLimit;
     crawler.respectRobotsTxt = false;
     crawler.userAgent = 'Cumulus-GIBS';
     //this._forward('fetchstart');
