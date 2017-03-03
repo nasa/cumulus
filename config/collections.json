@@ -9,6 +9,7 @@
       "source": "http-tiles",
       "config": {
         "type": "apache-index",
+        "connections": 10,
         "root": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/",
         "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/{meta.parent}/{meta.collection}/{_}/{jday}/{file}.{ext}",
         "required": [ { "group": "file", "prop": "ext", "values": [ "jgw", "jpg", "txt" ] }  ],

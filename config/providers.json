@@ -1,5 +1,5 @@
 {
   "MODAPS": {
-    "globalConnectionLimit": 10
+    "globalConnectionLimit": 50
   }
 }
