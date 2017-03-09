@@ -9,7 +9,6 @@
     "start": "webpack -w --colors",
     "prepublish": "./bin/npm/prepublish",
     "prepare": "./bin/npm/prepublish",
-    "postinstall": "webpack",
     "lock": "./bin/npm/lock",
     "clean": "./bin/npm/clean"
   },
