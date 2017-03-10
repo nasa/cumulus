@@ -393,7 +393,7 @@ Resources:
         MinInstancesInService: 0
     Properties:
       AvailabilityZones:
-      - !Sub ${AWS::Region}a # Might not want to hardcode this
+      - !Sub ${AWS::Region}b # Might not want to hardcode this
       <% if ENV['subnet'] && ENV['subnet'].size > 0 %>
       VPCZoneIdentifier:
       - <%= ENV['subnet'] %>
