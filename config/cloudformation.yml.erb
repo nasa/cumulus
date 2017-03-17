@@ -194,13 +194,13 @@ Resources:
             Resource:
             - "*"
 
-  PrivateResources:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    Properties:
-      BucketName: !Sub ${StackName}-private
-
-# TODO: This ought to be done here but can't now due to OnEarth triggers
+# TODO: This ought to be done here but can't now due to parent deployment
+#  PrivateResources:
+#    Type: AWS::S3::Bucket
+#    DeletionPolicy: Retain
+#    Properties:
+#      BucketName: !Sub ${StackName}-private
+#
 #  PublicResources:
 #    Type: AWS::S3::Bucket
 #    DeletionPolicy: Retain
