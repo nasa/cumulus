@@ -106,5 +106,6 @@ local.setupLocalRun(module.exports.handler, local.collectionEventInput('VNGCR_SQ
     config: input.collection.ingest.config
   };
   result.config.root += 'VNGCR_SQD_C1_r00c01/';
+  delete result.config.connections;
   return result;
 }));
