@@ -347,6 +347,9 @@ Resources:
           }
         Cpu: '10'
         Essential: true
+        Environment:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '256'
         LogConfiguration:
