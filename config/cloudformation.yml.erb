@@ -274,7 +274,7 @@ Resources:
         WriteCapacityUnits: 1
       TableName: !Sub ${StackName}-locks
 
-  LockTable:
+  ConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
