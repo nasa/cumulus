@@ -286,7 +286,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
-      TableName: !Sub ${StackName}-connections
+      TableName: !Sub ${StackName}-connects
 
   IngestECSCluster:
     Type: AWS::ECS::Cluster
@@ -336,7 +336,7 @@ Resources:
                 "public": "${StackName}-public"
               },
               "tables": {
-                "connections": "${StackName}-connections",
+                "connections": "${StackName}-connects",
                 "locks": "${StackName}-locks"
               }
             },
