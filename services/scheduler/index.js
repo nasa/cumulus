@@ -53,13 +53,9 @@ const startTimedIngest = (periodMs, offsetMs, invocation, collection) => {
 module.exports.handler = async (invocation) => {
   try {
     const config = invocation.config;
+    const collectionConfig = await aws.getPossiblyRemote(config.collections);
 
-    const [collectionConfig, providerConfig] = await Promise.all([
-      aws.getPossiblyRemote(config.collections),
-      aws.getPossiblyRemote(config.providers)
-    ]);
-
-    const providers = collectionUtil.parseCollectionsByProvider(collectionConfig, providerConfig);
+    const providers = collectionUtil.parseCollectionsByProvider(collectionConfig);
 
     for (const providerId of Object.keys(providers)) {
       const collections = providers[providerId];

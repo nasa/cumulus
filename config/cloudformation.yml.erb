@@ -356,8 +356,7 @@ Resources:
             },
             "config": {
               "events": {"Key": "ingest/events.json", "Bucket": "${ConfigS3Bucket}"},
-              "collections": {"Key": "ingest/collections.json", "Bucket": "${ConfigS3Bucket}"},
-              "providers": {"Key": "ingest/providers.json", "Bucket": "${ConfigS3Bucket}"}
+              "collections": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
             }
           }
         Cpu: '10'
