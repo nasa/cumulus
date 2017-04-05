@@ -30,9 +30,11 @@ const parseAndValidateArgs = (argv) => {
   // First two parameters are 'node' and the script name
   const args = (argv || []).slice(2);
 
-  const validKeys = ['--eventJson', '--contextJson',
-                     '--queue', '--prefix', '--bucket',
-                     '--activity'];
+  const validKeys = [
+    '--eventJson', '--contextJson',
+    '--queue', '--prefix', '--bucket',
+    '--activity'
+  ];
 
   const result = { fn: args.shift() };
   for (let i = 0; i < args.length; i += 2) {
