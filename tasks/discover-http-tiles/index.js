@@ -18,7 +18,8 @@ module.exports = class DiscoverHttpTilesTask extends Task {
     const root = this.config.root;
 
     const CrawlerClass = endpointsToCrawlers[config.type];
-    const crawler = new CrawlerClass(event.product, root, new FieldPattern(config.match));
+    const pattern = new FieldPattern(config.match);
+    const crawler = new CrawlerClass(event.product, root, pattern, config.connections || 10);
 
     return new Promise((resolve) => {
       crawler.on('complete', (resources) => {
@@ -105,5 +106,6 @@ local.setupLocalRun(module.exports.handler, local.collectionEventInput('VNGCR_SQ
     config: input.collection.ingest.config
   };
   result.config.root += 'VNGCR_SQD_C1_r00c01/';
+  delete result.config.connections;
   return result;
 }));

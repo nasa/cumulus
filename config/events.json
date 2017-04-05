@@ -13,6 +13,7 @@
       "task": "task-sync-http-urls",
       "config": {
         "ignoredErrorStatuses": "{collection.ingest.config.ignoredErrorStatuses}",
+        "connections": 5,
         "output": {
           "Bucket": "{resources.buckets.private}",
           "Key": "sources/EPSG{meta.epsg}/{meta.key}"

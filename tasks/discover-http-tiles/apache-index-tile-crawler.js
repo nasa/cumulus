@@ -11,6 +11,17 @@ class ApacheIndexTileCrawler extends HttpTileCrawler {
     });
   }
 
+  _splitOnTag(string, tagName) {
+    // Asssumes newlines are insignificant
+    const replaceRegex = new RegExp(`\\s*<${tagName}[^>]*>([\\s\\S]*?)<\/${tagName}>\\s*`, 'g');
+    const result = string
+      .replace(/\n/g, ' ')
+      .replace(replaceRegex, "$1\n")
+      .split("\n");
+    result.pop();
+    return result;
+  }
+
   // Simple crawling method for the default Apache directories set up to serve MODAPS.
   // If we need to crawl something more complex, we can do so easily using the Cheerio
   // library, but since that pulls in a ton of dependencies and is unnecessary at this
@@ -18,20 +29,29 @@ class ApacheIndexTileCrawler extends HttpTileCrawler {
   _parseUrls(buffer, queueItem) {
     const result = [];
     const str = buffer.toString("utf8");
-    const splitContents = str.split("<hr>");
-    if (splitContents.length !== 3) {
-      return this._bail("Unexpected Apache index format", queueItem);
+    const allRows = this._splitOnTag(str, 'tr');
+    if (!allRows) {
+      return this._bail(`Unexpected Apache index format ${str}`, queueItem);
     }
-    const lines = splitContents[1].trim().split("\n");
-    for (const line of lines) {
-      // Split on the whitespace around the central date
-      const split = line.trim().split(/\s+(\d{2}-\w{3}-\d{4}\s+\d\d:\d\d)\s+/);
-      if (split.length !== 3) {
-        return this._bail(`Unexpected Apache index line format ${line}`, queueItem);
+
+    const rows = [];
+    for (const row of allRows) {
+      if (row.indexOf('<th') === -1 && row.indexOf('Parent Directory') === -1) {
+        rows.push(row);
       }
-      const [link, date, size] = split;
+    }
+    for (const row of rows) {
+      // Split around the central date
+      const cells = this._splitOnTag(row, 'td');
+      if (cells.length !== 5) {
+        const err = `length ${cells.length}, ${JSON.stringify(cells)}`;
+        return this._bail(`Unexpected Apache index line format ${row}, ${err}`, queueItem);
+      }
+      const [, link, date, size] = cells.map((c) => c.trim());
       const pathMatch = link.match(/href="([^"]+)"/);
-      if (!pathMatch) return this._bail(`Unexpected Apache index line format ${line}`, queueItem);
+      if (!pathMatch) {
+        return this._bail(`Unexpected Apache index line format ${row}, no href`, queueItem);
+      }
       if (!size.startsWith('0') && size.length > 0) {
         result.push({
           path: pathMatch[1],

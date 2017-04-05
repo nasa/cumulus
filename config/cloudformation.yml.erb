@@ -204,13 +204,13 @@ Resources:
             Resource:
             - "*"
 
+# TODO: This ought to be done here but can't now due to parent deployment
   PrivateResources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub ${StackName}-private
-
-# TODO: This ought to be done here but can't now due to OnEarth triggers
+#
 #  PublicResources:
 #    Type: AWS::S3::Bucket
 #    DeletionPolicy: Retain
@@ -284,6 +284,20 @@ Resources:
         WriteCapacityUnits: 1
       TableName: !Sub ${StackName}-locks
 
+  ConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: key
+        AttributeType: S
+      KeySchema:
+      - AttributeName: key
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Sub ${StackName}-connects
+
   IngestECSCluster:
     Type: AWS::ECS::Cluster
 
@@ -334,6 +348,10 @@ Resources:
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
                 "public": "${StackName}-public"
+              },
+              "tables": {
+                "connections": "${StackName}-connects",
+                "locks": "${StackName}-locks"
               }
             },
             "config": {
@@ -344,6 +362,9 @@ Resources:
           }
         Cpu: '10'
         Essential: true
+        Environment:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '256'
         LogConfiguration:
@@ -366,6 +387,9 @@ Resources:
         Essential: true
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '2048'
+        Environment:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
         LogConfiguration:
           LogDriver: awslogs
           Options:
@@ -386,7 +410,7 @@ Resources:
         MinInstancesInService: 0
     Properties:
       AvailabilityZones:
-      - !Sub ${AWS::Region}a # Might not want to hardcode this
+      - !Sub ${AWS::Region}b # Might not want to hardcode this
       <% if ENV['subnet'] && ENV['subnet'].size > 0 %>
       VPCZoneIdentifier:
       - <%= ENV['subnet'] %>
@@ -480,4 +504,4 @@ Mappings:
     us-west-2:
       AMIID: ami-241bd844
     us-east-1:
-      AMIID: ami-e4c4cbf3
+      AMIID: ami-b2df2ca4

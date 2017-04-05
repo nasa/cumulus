@@ -8,7 +8,6 @@ const Task = require('gitc-common/task');
 const aws = require('gitc-common/aws');
 const concurrency = require('gitc-common/concurrency');
 
-exports.SIMULTANEOUS_REQUEST_LIMIT = 5;
 exports.TIMEOUT_TIME_MS = 20 * 1000;
 
 const updatedFiles = (existingKeys, updates) => {
@@ -53,7 +52,6 @@ module.exports = class SyncHttpUrlsTask extends Task {
   async run() {
     const bucket = this.config.output.Bucket;
     const keypath = this.config.output.Key;
-
     const { completed, errors } = await this.syncFiles(
       this.updated,
       bucket,
@@ -99,7 +97,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
                                      bucket,
                                      keypath,
                                      simulate);
-    const syncLimited = concurrency.limit(exports.SIMULTANEOUS_REQUEST_LIMIT, syncIfTimeLeft);
+    const syncLimited = concurrency.limit(this.config.connections || 5, syncIfTimeLeft);
     return concurrency.mapTolerant(files, syncLimited);
   }
 

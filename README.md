@@ -4,16 +4,29 @@
 
 ### Prerequisites
 
-* node.js >= 4.2 (https://nodejs.org/en/)
-* AWS SDK (http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+* node.js >= 4.2 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm)
+* AWS CLI (http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+* Ruby
 * BASH
 * Docker (only required for building new container images)
+
+Install the correct node version:
+
+```
+nvm install 4.2
+```
+
+Ensure that the aws cli is configured and that the default output format is either JSON or None:
+
+```
+aws configure
+```
 
 ### Deployment
 
 Deploy a new stack into AWS
 ```
-$ bin/deploy my-stack-name create my-keyname
+$ bin/deploy --create my-stack-name my-keyname
 ```
 The stack will be called "gitc-my-stack-name" and have two s3 buckets, "gitc-my-stack-name-deploy" for deployment
 artifacts and "gitc-my-stack-name" for working files. By default, the stacks are deployed into us-west-2 (Oregon)
@@ -22,13 +35,15 @@ instances.
 
 Redeploy an existing stack into AWS, required any time you make a code change.
 ```
-$ bin/deploy my-stack-name update my-keyname
+$ bin/deploy my-stack-name my-keyname
 ```
 
 If you are running `npm watch`, you can deploy even faster with
 ```
-$ bin/deploy my-stack-name push my-keyname
+$ bin/deploy --no-compile my-stack-name my-keyname
 ```
+
+See `bin/deploy --help` for more information about deployment options
 
 ### Useful commands
 
