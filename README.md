@@ -85,3 +85,15 @@ Currently these only contain errors and information on start/stop timing for syn
 5. /aws/lambda/gitc-<stack>-task-sync-http-urls : Synchronization logs for HTTP tile fetches
 6. /aws/lambda/gitc-<stack>-task-discovery-http-tiles : Logs for the discovery mechanisms that do web crawls
 7. /aws/lambda/gitc-<stack>-yas3fs-notifier : Logs for the yas3fs cache invalidation function
+
+### Troubleshooting
+
+If you receive errors of this form:
+
+'''
+ERROR in ./tasks/trigger-ingest/index.js
+Module not found: Error: Cannot resolve module 'gitc-common/task' in /Users/pquinn/earthdata/gitc/gitc/ingest/tasks/trigger-ingest
+@ ./tasks/trigger-ingest/index.js 15:11-38
+'''
+
+It is likely you are using a version of npm that is too recent. Try using nvm to manage your node version, use node version 4.3.* and npm 2.*.*
