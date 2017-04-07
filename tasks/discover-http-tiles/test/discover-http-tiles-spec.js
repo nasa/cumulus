@@ -1,4 +1,35 @@
+'use strict';
+
 const expect = require('expect.js');
+
+// This is required to avoid ReferenceError: regeneratorRuntime is not defined
+// See http://stackoverflow.com/questions/36619383/referenceerror-regeneratorruntime-is-not-defined-but-working-inside-a-scope
+require('babel-polyfill');
+
+const aws = require('gitc-common/aws');
+
+// Mimics the request returned by an AWS client enough for this test.
+class FakeRequest {
+  constructor(cannedData){
+    this.cannedData = cannedData;
+  }
+  promise() {
+    return new Promise(
+      (resolve,reject) => resolve(this.cannedData)
+    );
+  }
+}
+
+// Mimics the AWS dynamo db client enough so that the semaphore will allow execution.
+// This permits the test to run without having to actually use dynamo db for locking.
+class FakeDynamoClient{
+  put(params){
+    return new FakeRequest(null);
+  }
+  update(params){
+    return new FakeRequest(null);
+  }
+}
 
 const DiscoverHttpTilesTask = require('../index');
 
@@ -13,11 +44,12 @@ describe('discover-http-tiles.handler', () => {
     // Note: This crawls a subset of a real site to avoid the general mess of mocks. It's set up
     //       to only do so once per execution
     describe('crawling a site', () => {
-      //sinon.stub(indexer.log, 'info');
-      //sinon.stub(indexer.s3, 'upload').yields(null, null);
       let triggeredEvents;
+      let originalDynamoClient = aws.dynamodbDocClient;
 
       before((done) => {
+        aws.dynamodbDocClient = ()=> new FakeDynamoClient();
+
         helpers
           .run(DiscoverHttpTilesTask, event)
           .then((events) => {
@@ -25,6 +57,11 @@ describe('discover-http-tiles.handler', () => {
           })
           .then(done)
           .catch(done);
+      });
+
+      after((done)=> {
+        aws.dynamodbDocClient = originalDynamoClient;
+        done();
       });
 
       it('groups the product\'s URLs by Julian date', () => {
