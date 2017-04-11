@@ -4,9 +4,9 @@
 
 Provider data ingest and GIBS have a set of common needs in getting data from a source system and into the cloud where they can be distributed to end users. These common needs are:
 
-* Data Discovery - Crawling, polling, or detecting changes from a variety of sources.
-* Data Transformation - Taking data files in their original format and extracting and transforming them into another desired format such as visible browse images.
-* Archival - Storage of the files in a location that's accessible to end users.
+* **Data Discovery** - Crawling, polling, or detecting changes from a variety of sources.
+* **Data Transformation** - Taking data files in their original format and extracting and transforming them into another desired format such as visible browse images.
+* **Archival** - Storage of the files in a location that's accessible to end users.
 
 AWS and other cloud vendors provide an ideal solution for parts of these problems but there needs to be a higher level solution to allow composition of AWS components into a full featured solution. Ingest is designed to meet the needs for Earth Science data ingest and transformation.
 
@@ -19,7 +19,7 @@ AWS and other cloud vendors provide an ideal solution for parts of these problem
   * We generally assume that the operators know best in terms of the limits on a providers infrastructure, how often things need to be done, and details of a collection. The architecture should defer to their decisions and knowledge.
 * **Safety Nets**
   * This is the counter point to "Operators Know Best". We will prevent them from shooting them in the foot where possible. But we will also allow them to bypass the safety net when necessary.
-* **Maintain Provenance of data**
+* **Maintain Provenance of Data**
   * We should have traceability for how data was produced and where it comes from.
   * Use immutable representations of data. Data once received is not overwritten. Data can be removed for cleanup.
   * All software is versioned. We can trace transformation of data by tracking the immutable source data and the versioned software applied to it.
@@ -42,28 +42,23 @@ AWS and other cloud vendors provide an ideal solution for parts of these problem
 
 Ingest components can be divided into two categories, AWS Runtime and Configuration. The AWS Runtime components orchestrate the execution of different tasks to perform discovery, transformation, and persistence of data. The Configuration components allow an operator to compose the different runtime components and set them up in AWS.
 
-TODO diagram of everything including major components
-* Make in lucid charts, export image and include in repo and then stick image link here.
-* configuration code
-* Ops tools
-* state machines
-* tasks state machines are executing
-  * Don't need to have all specific ones. Just show a set of boxes being invoked.
+<img src="images/ingest_diagram.png">
 
-### AWS Runtime
+**TODO an example configured workflow**
 
-The AWS Runtime consists of:
+* [**Workflow Scheduler**](#workflow-scheduler)
+* [**Scheduler**](#scheduler)
+* [**Workflows**](#workflows)
+* [**Tasks**](#tasks)
+* [**Ops Dashboard**](#ops-dashboard)
+* [**collections.json Configuration File**](#collection.json-configuration-file)
+* [**Ingest Deploy**](#ingest-deploy)
 
-* **Workflows**
-* **Scheduler**
-* **Tasks**
-* **Ops Dashboard**
-
-#### Workflows
+### Workflows
 
 A workflow is a provider configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://aws.amazon.com/documentation/step-functions/).
 
-##### Benefits of AWS Step Functions
+#### Benefits of AWS Step Functions
 
 AWS Step functions are described in detail in the AWS documentation but they provide several benefits which are applicable to AWS.
 
@@ -82,11 +77,11 @@ AWS Step functions are described in detail in the AWS documentation but they pro
   * This makes it easy to save the step function in configuration management solutions.
   * We can build simple interfaces on top of the flexibility provided here if
 
-#### Scheduler
+### Workflow Scheduler
 
-The scheduler is responsible for initiating the start of a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection.
+The scheduler is responsible for initiating the start of a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The Scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
 
-#### Tasks
+### Tasks
 
 A workflow is composed of tasks. Each task is responsible for performing a discrete step of the ingest process. These can be activities like:
 
@@ -96,58 +91,60 @@ A workflow is composed of tasks. Each task is responsible for performing a discr
 
 AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/latest/dg/concepts-tasks.html#concepts-tasks) to be code running anywhere, even on premise. We expect most tasks will be written as Lambda functions in order to take advantage of the easy deployment, scalability, and cost benefits provided by AWS Lambda.
 
-##### Task Input and Output Messages
+#### Task Input and Output Messages
 
-TODO Should we use the name envelope or not?
-- Prior art which sounds right: http://www.enterpriseintegrationpatterns.com/patterns/messaging/EnvelopeWrapper.html
-- rename the envelop schema to task_input_output_message_schema.json if doing this
-
-The input and output from a task is a JSON data structure. Ingest defines a schema for the input and output messages using the [Envelope JSON schema](TODO link somewhere).
-
-TODO embed the HTML documentation here
+Ingest uses a common format for all inputs and outputs from Tasks consisting of a JSON object which holds all necessary information about the task execution and AWS environment. Ingest defines a schema for the input and output messages using the [Envelope JSON schema](/schemas/envelope_schema.json). See the embedded HTML documentation generated from the schema below. Tasks return objects identical in format to their input with the exception of a task-specific `"payload"` field. Tasks may also augment their execution metadata.
 
 <script src="docson/widget.js" data-schema="/schemas/envelope_schema.json">
 </script>
 
-#### Ops Dashboard
+#### Common Tasks and Library
+
+**TODO document the common tasks and library**
+
+### Ops Dashboard
+
+The Ops Dashboard is currently undergoing design.
+
+**TODO document ops dashboard**
+
+### collections.json Configuration File
+
+TODO document the configuration file
+
+#### URL Templating
+
+**TODO Ask Patrick if this is still valid. Do tasks do template replacing? Wouldn't this be handled in scheduler?**
+
+When each task executes, it is expected to resolve URL templates found in its collection configuration against the entire collection configuration. For example, tasks should resolve the following collection:
+
+```JSON
+{
+  "meta": { "name": "Hello" },
+  "config" : { "output" : "{meta.name} World!" }
+}
+```
+
+Into this:
+
+```JSON
+{
+  "meta": { "name": "Hello" },
+  "config" : { "output" : "Hello World!" }
+}
+```
+
+URL template variables replace dotted paths inside curly brackets with their corresponding value. If a Task cannot resolve a value, it should ignore the template, leaving it verbatim in the string.  While seemingly complex, this allows significant decoupling of Tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run Tasks and domain data.
 
 
+### Ingest Deploy
 
-### Configuration
-
-
-
-
-
-
-### Overview
-
-
-Components
-
-
-* Configuration
-* Runtime
-  * Scheduler
-  * AWS Step Functions
-  * Tasks
-* Common Helpers
-  * Ingest Common Library
-  * Ingest Tasks
-
-
-What does the architecture include?
-
-* Configuration File(s)
-* Scheduler
-* State Machines
-* Built in Lambdas and Activities
-
-
-TODO envelope and individual stages
+**TODO document ingest deployment**
 
 
 ## Benefits
+
+**TODO document benefits**
 
 * Flexibility
 
@@ -162,9 +159,9 @@ Possible benefits
 * Reusing lessons from past systems like CMR
 *
 
-
-
 ## Tradeoffs
+
+**TODO document additional tradeoffs**
 
 * We specify the statemachine using the same format as AWS Step Functions.
   * Downsides
@@ -182,4 +179,3 @@ Possible benefits
 * How does each step know which configuration element to use?
  * The configuration for an individual step is located in the config that is passed in the message. The step needs to know which step it is so it can retrieve it from the full config. The problem is unless it is hard coded in the step it does not know what it's name is. This makes it difficult to reuse a step in multiple locations.
 * How do we version the state machines?
-*
