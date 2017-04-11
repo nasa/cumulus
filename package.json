@@ -10,9 +10,11 @@
     "prepublish": "./bin/npm/prepublish",
     "lock": "./bin/npm/lock",
     "clean": "./bin/npm/clean",
+    "//": "Generates HTML from markdown documentation.",
+    "generate-docs": "./node_modules/.bin/generate-md --layout github --input docs/ingest_design.md --output docs",
 
-    "//":"Starts showing the schema documentation via a local http server and opens a browser to it.",
-    "serve-schemas": "./node_modules/.bin/http-server -c-1 schemas -o"
+    "//": "Starts showing the documentation via a local http server and opens a browser to it.",
+    "serve-docs": "./node_modules/.bin/http-server -c-1 docs -o"
   },
   "keywords": [
     "GIBS"
@@ -45,6 +47,7 @@
     "exports-loader": "^0.6.3",
     "http-server": "^0.9.0",
     "json-loader": "^0.5.4",
+    "markdown-styles": "^3.1.9",
     "mocha": "^2.5.3",
     "mocha-junit-reporter": "^1.11.1",
     "mocha-webpack": "^0.7.0",
