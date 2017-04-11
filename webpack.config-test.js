@@ -33,7 +33,7 @@ module.exports = {
         )
       },
       {
-        include: glob.sync('{./tasks/*/index.js,./services/*/index.js,./test/**/*.js}',
+        include: glob.sync('{./tasks/*/index.js,./services/*/index.js,**/test/**/*.js}',
                            { realpath: true })
                      .map((filename) => path.resolve(__dirname, filename)),
         exclude: /node_modules/,

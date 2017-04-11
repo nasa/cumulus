@@ -1,33 +1,22 @@
 'use strict';
-
 const expect = require('expect.js');
-
-// This is required to avoid ReferenceError: regeneratorRuntime is not defined
-// See http://stackoverflow.com/questions/36619383/referenceerror-regeneratorruntime-is-not-defined-but-working-inside-a-scope
-require('babel-polyfill');
-
 const aws = require('gitc-common/aws');
 
-// Mimics the request returned by an AWS client enough for this test.
-class FakeRequest {
-  constructor(cannedData){
-    this.cannedData = cannedData;
-  }
-  promise() {
-    return new Promise(
-      (resolve,reject) => resolve(this.cannedData)
-    );
-  }
-}
+const promiseWithData = (data)=> {
+  return new Promise(
+    (resolve,reject) => resolve(data)
+  );
+};
+
 
 // Mimics the AWS dynamo db client enough so that the semaphore will allow execution.
 // This permits the test to run without having to actually use dynamo db for locking.
 class FakeDynamoClient{
   put(params){
-    return new FakeRequest(null);
+    return {promise: ()=> promiseWithData(null) };
   }
   update(params){
-    return new FakeRequest(null);
+    return {promise: ()=> promiseWithData(null)};
   }
 }
 
