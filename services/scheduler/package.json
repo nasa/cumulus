@@ -4,7 +4,8 @@
   "description": "Runs ingest timers as configured in /config/products.json",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npm_config_prefix='../../tmp' npm link ../../lib"
+    "//":"The ingest lib directory is linked in as gitc-common module.",
+    "link-gitc-common": "npm_config_prefix='../../tmp' npm link ../../lib"
   },
   "keywords": [
     "GIBS"
