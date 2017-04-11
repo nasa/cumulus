@@ -1,0 +1,13 @@
+{
+  "meta": {},
+  "config": {},
+  "resources": {
+    "stack": "foo",
+    "buckets": {
+      "config":"config s3 bucket",
+      "private":"a private bucket",
+      "public": "a public bucket"
+    },
+    "tables": {}
+  }
+}

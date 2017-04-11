@@ -1,0 +1,3 @@
+[submodule "schemas/docson"]
+	path = schemas/docson
+	url = https://github.com/lbovet/docson.git

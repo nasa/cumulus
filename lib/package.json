@@ -13,10 +13,14 @@
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
   "dependencies": {
+    "ajv": "^5.0.4-beta.3",
     "async": "^2.0.0",
     "aws-sdk": "^2.4.11",
     "cwait": "^1.0.0",
     "js-yaml": "^3.8.3",
     "lodash": "^4.13.1"
+  },
+  "devDependencies": {
+    "ajv-cli": "^1.1.1"
   }
 }

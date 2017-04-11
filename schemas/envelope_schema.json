@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Message Envelope",
+  "description": "Describes the structure of data that is used to pass information between steps of the state machine. It contains information about the configuration of the entire run, the item being processed, resources in AWS, and payload information from the previous step.",
+  "type": "object",
+  "properties": {
+    "meta": {
+      "$ref": "#/definitions/MetaType"
+    },
+    "config": {
+      "$ref": "#/definitions/ConfigType"
+    },
+    "resources": {
+      "$ref": "#/definitions/ResourcesType"
+    },
+    "payload": {
+      "description": "This contains information that's the result of the last step run. It can be any valid JSON type."
+    }
+  },
+  "required": ["meta", "config", "resources"],
+
+  "definitions": {
+    "MetaType": {
+      "description": "TODO Need to define parts of meta type.",
+      "type": "object"
+    },
+    "ConfigType": {
+      "description": "TODO Need to defined fields of ",
+      "type": "object"
+    },
+    "ResourcesType": {
+      "description": "TODO",
+      "type": "object",
+      "properties": {
+        "stack": {
+          "description": "The name of the stack in AWS",
+          "type": "string",
+          "minLength": 1
+        },
+        "buckets": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "description": "TODO",
+              "type": "string",
+              "minLength": 1
+            },
+            "private": {
+              "description": "TODO",
+              "type": "string",
+              "minLength": 1
+            },
+            "public": {
+              "description": "TODO",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["config", "private", "public"]
+        },
+        "tables": {
+          "description":"TODO define fields for tables"
+        }
+      },
+      "required": ["stack", "buckets", "tables"]
+    }
+  }
+}
