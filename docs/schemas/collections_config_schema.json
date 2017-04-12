@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Collection Configuration",
+  "description": "Describes the workflows, tasks, schedule, and other options for ingesting a collection.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "An id used to identify this configuration.",
+      "type": "string",
+      "minLength": 1
+    },
+    "trigger": {
+      "$ref": "#/definitions/TriggerType"
+    },
+    "meta": {
+      "$ref": "#/definitions/MetaType"
+    },
+    "task_config": {
+      "$ref": "#/definitions/TaskConfigType"
+    },
+    "workflows": {
+      "$ref": "#/definitions/WorkflowsType"
+    }
+  },
+  "required": ["id", "meta", "task_config", "workflows"],
+  "additionalProperties": false,
+  "definitions": {
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "exclusiveMinimum": true
+    },
+    "TriggerType": {
+      "description": "Defines the schedule for triggering the collection. ",
+      "type": "object",
+      "properties": {
+        "interval_sec": {
+          "description": "Defines how frequently in seconds this collection is triggered to run.",
+          "$ref": "#/definitions/positiveInteger"
+        },
+        "workflow": {
+          "description": "The name of a workflow to execute when the trigger fires.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MetaType": {
+      "description": "Defines meta-configuration information about the particular collection being processed. These can contain any data that is specific to the collection.",
+      "type": "object"
+    },
+    "TaskConfigType": {
+      "description": "Defines configuration for tasks that are part of a workflow as a map of task name to a JSON object containing configuration settings.",
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[0-9a-zA-Z_\\-.]+$": {
+          "description": "Any configuration properties are permitted here for the task.",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "WorkflowsType": {
+      "description": "Defines a set of named workflows as a JSON object of workflow name to a workflow defined in the AWS Step Function States Language.",
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[0-9a-zA-Z_\\-.]+$": {
+          "description": "This should be a AWS Step Function compliant with the Amazon States Language defined here http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

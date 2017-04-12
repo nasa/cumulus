@@ -51,7 +51,7 @@ Ingest components can be divided into two categories, AWS Runtime and Configurat
 * [**Workflows**](#workflows)
 * [**Tasks**](#tasks)
 * [**Ops Dashboard**](#ops-dashboard)
-* [**collections.json Configuration File**](#collection.json-configuration-file)
+* [**collection.json Configuration File**](#collection.json-configuration-file)
 * [**Ingest Deploy**](#ingest-deploy)
 
 ### Workflows
@@ -95,6 +95,10 @@ AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/late
 
 Ingest uses a common format for all inputs and outputs from Tasks consisting of a JSON object which holds all necessary information about the task execution and AWS environment. Ingest defines a schema for the input and output messages using the [Envelope JSON schema](/schemas/envelope_schema.json). See the embedded HTML documentation generated from the schema below. Tasks return objects identical in format to their input with the exception of a task-specific `"payload"` field. Tasks may also augment their execution metadata.
 
+[envelope_schema.json](/schemas/envelope_schema.json)
+
+[Example Message Envelope](/schemas/example-data/example-message-envelope.json)
+
 <script src="docson/widget.js" data-schema="/schemas/envelope_schema.json">
 </script>
 
@@ -106,15 +110,31 @@ Ingest uses a common format for all inputs and outputs from Tasks consisting of 
 
 The Ops Dashboard is currently undergoing design.
 
-**TODO document ops dashboard**
+**TODO ops dashboard - Can we say this will be documented in future sprints?**
 
-### collections.json Configuration File
+### collection.json Configuration File
 
-TODO document the configuration file
+The workflows, schedule, tasks, and configuration for a collection is configured via a JSON file. Generated HTML documentation from the JSON Schema is included below.
+
+Notes about the Schema
+
+* **Leverages Existing Work**
+  * The design leverages the existing work of Amazon by defining workflows using the [AWS Step Function State Language](http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language). This is the language that was created for describing the state machines used in AWS Step Functions.
+* **Open for Extension**
+  * Both `meta` and `task_config` which are used for configuring at the collection and task levels do not dictate the fields and structure of the configuration. Additional task specific JSON schemas can be used for extending the validation of individual steps.  
+* **Data-centric Configuration**
+  * The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
+
+#### collection.json JSON Schema
+
+[collections_config_schema.json](/schemas/collections_config_schema.json)
+
+[Example Collection Config](/schemas/example-data/example-collection.json)
+
+<script src="docson/widget.js" data-schema="/schemas/collections_config_schema.json">
+</script>
 
 #### URL Templating
-
-**TODO Ask Patrick if this is still valid. Do tasks do template replacing? Wouldn't this be handled in scheduler?**
 
 When each task executes, it is expected to resolve URL templates found in its collection configuration against the entire collection configuration. For example, tasks should resolve the following collection:
 
@@ -134,13 +154,11 @@ Into this:
 }
 ```
 
-URL template variables replace dotted paths inside curly brackets with their corresponding value. If a Task cannot resolve a value, it should ignore the template, leaving it verbatim in the string.  While seemingly complex, this allows significant decoupling of Tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run Tasks and domain data.
-
+URL template variables replace dotted paths inside curly brackets with their corresponding value. If a Task cannot resolve a value, it should ignore the template, leaving it verbatim in the string.  This allows decoupling tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run Tasks and domain data.
 
 ### Ingest Deploy
 
 **TODO document ingest deployment**
-
 
 ## Benefits
 
@@ -150,6 +168,8 @@ URL template variables replace dotted paths inside curly brackets with their cor
 
 Possible benefits
 
+* Data centric representation for configuration
+  * Allows incorporation into existing flows or mapping existing configuration formats (recipes.json) to the new format.
 * Leverage the advantages of AWS
   * Leverage scalability of things like Serverless architectures.
   * Take advantage of existing AWS solutions that remove the need for building our own solutions.
@@ -169,7 +189,7 @@ Possible benefits
     * If they make changes in the future we will have to deal with existing projects written against that.
   * Benefits
     * We can support anything AWS supports without
-* Collections Configuration File is very flexible but more complex to setup flows.
+* Collections Configuration File is very flexible but requires more knowledge of AWS step functions etc to configure.
   * Mitigation is that we can map recipes or other simpler configuration files into this one.
   * We gain the flexibility of this while also allows configuration through a simpler file. We still have to write an maintain the code to perform the translation.
 
