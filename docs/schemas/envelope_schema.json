@@ -1,5 +1,4 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Message Envelope",
   "description": "Describes the structure of data that is used to pass information between steps of the workflow. It contains information about the configuration of the entire run, the item being processed, resources in AWS, and payload information from the previous step.",
   "type": "object",

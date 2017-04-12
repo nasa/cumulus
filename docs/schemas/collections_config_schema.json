@@ -1,5 +1,4 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Collections Configuration",
   "description": "Describes the workflows, tasks, schedule, and other options for ingesting collections.",
   "type": "object",
@@ -34,8 +33,7 @@
   "definitions": {
     "positiveInteger": {
       "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
+      "minimum": 1
     },
     "CollectionType": {
       "description": "TODO",
