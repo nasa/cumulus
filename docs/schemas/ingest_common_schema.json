@@ -5,7 +5,7 @@
   "description": "Defines common types for use in ingest common schemas",
   "definitions": {
     "ProviderType": {
-      "description": "TODO",
+      "description": "Defines a provider configuration for ingest.",
       "type": "object",
       "properties": {
         "id": {
