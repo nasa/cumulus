@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Ingest Common Types",
+  "id":"ingest_common_schema.json",
+  "description": "Defines common types for use in ingest common schemas",
+  "definitions": {
+    "ProviderType": {
+      "description": "TODO",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "An id used to identify this provider",
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "description": "Defines configuration information about this provider. Any fields are allowed.",
+          "type": "object"
+        }
+      },
+      "required": ["id", "config"],
+      "patternProperties": {
+        "^_.*$": {
+          "description": "Any fields starting with _ are ignored."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaskConfigType": {
+      "description": "Defines configuration for tasks that are part of a workflow as a map of task name to a JSON object containing configuration settings.",
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[0-9a-zA-Z_\\-.]+$": {
+          "description": "Any configuration properties are permitted here for the task.",
+          "type": "object"
+        },
+        "^_.*$": {
+          "description": "Any fields starting with _ are ignored."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

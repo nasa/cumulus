@@ -44,75 +44,19 @@ Ingest components can be divided into two categories, AWS Runtime and Configurat
 
 <img src="images/ingest_diagram.png">
 
+**TODO remove Ops dashboard**
+
 **TODO an example configured workflow**
 
+* [**Collection Configuration File**](#collection-configuration-file)
+* [**Ingest Deploy**](#ingest-deploy)
 * [**Workflow Scheduler**](#workflow-scheduler)
-* [**Scheduler**](#scheduler)
 * [**Workflows**](#workflows)
 * [**Tasks**](#tasks)
-* [**Ops Dashboard**](#ops-dashboard)
-* [**collection.json Configuration File**](#collection.json-configuration-file)
-* [**Ingest Deploy**](#ingest-deploy)
 
-### Workflows
+### Collection Configuration File
 
-A workflow is a provider configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://aws.amazon.com/documentation/step-functions/).
-
-#### Benefits of AWS Step Functions
-
-AWS Step functions are described in detail in the AWS documentation but they provide several benefits which are applicable to AWS.
-
-* Prebuilt solution
-* Operations Visibility
-  * Visual diagram
-  * Every execution is recorded with both inputs and output for every step.
-* Composability
-  * Allow composing AWS Lambdas and code running in other steps. Code can be run in EC2 to interface with it or even on premise if desired.
-  * Step functions allow specifying when steps run in parallel or choices between steps based on data from the previous step.
-* Flexibility
-  * Step functions are designed to be easy to build new applications and reconfigure. We're exposing that flexibility directly to the provider.
-* Reliability and Error Handling
-  * Step functions allow configuration of retries and adding handling of error conditions.
-* Described via data
-  * This makes it easy to save the step function in configuration management solutions.
-  * We can build simple interfaces on top of the flexibility provided here if
-
-### Workflow Scheduler
-
-The scheduler is responsible for initiating the start of a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The Scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
-
-### Tasks
-
-A workflow is composed of tasks. Each task is responsible for performing a discrete step of the ingest process. These can be activities like:
-
-* Crawling a provider website for new data.
-* Uploading data from a provider to S3.
-* Executing a process to transform data.
-
-AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/latest/dg/concepts-tasks.html#concepts-tasks) to be code running anywhere, even on premise. We expect most tasks will be written as Lambda functions in order to take advantage of the easy deployment, scalability, and cost benefits provided by AWS Lambda.
-
-#### Task Input and Output Messages
-
-Ingest uses a common format for all inputs and outputs from Tasks consisting of a JSON object which holds all necessary information about the task execution and AWS environment. Ingest defines a schema for the input and output messages using the [Envelope JSON schema](/schemas/envelope_schema.json). See the embedded HTML documentation generated from the schema below. Tasks return objects identical in format to their input with the exception of a task-specific `"payload"` field. Tasks may also augment their execution metadata.
-
-[envelope_schema.json](/schemas/envelope_schema.json)
-
-[Example Message Envelope](/schemas/example-data/example-message-envelope.json)
-
-<script src="docson/widget.js" data-schema="/schemas/envelope_schema.json">
-</script>
-
-#### Common Tasks and Library
-
-**TODO document the common tasks and library**
-
-### Ops Dashboard
-
-The Ops Dashboard is currently undergoing design.
-
-**TODO ops dashboard - Can we say this will be documented in future sprints?**
-
-### collection.json Configuration File
+**TODO Update this based on recent changes**
 
 The workflows, schedule, tasks, and configuration for a collection is configured via a JSON file. Generated HTML documentation from the JSON Schema is included below.
 
@@ -125,7 +69,7 @@ Notes about the Schema
 * **Data-centric Configuration**
   * The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
 
-#### collection.json JSON Schema
+#### Collection Configuration JSON Schema
 
 [collections_config_schema.json](/schemas/collections_config_schema.json)
 
@@ -159,6 +103,62 @@ URL template variables replace dotted paths inside curly brackets with their cor
 ### Ingest Deploy
 
 **TODO document ingest deployment**
+
+### Workflow Scheduler
+
+The scheduler is responsible for initiating the start of a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The Scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
+
+**TODO diagram of how task message is built from collection configuration**
+
+### Workflows
+
+A workflow is a provider configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://aws.amazon.com/documentation/step-functions/).
+
+#### Benefits of AWS Step Functions
+
+AWS Step functions are described in detail in the AWS documentation but they provide several benefits which are applicable to AWS.
+
+* Prebuilt solution
+* Operations Visibility
+  * Visual diagram
+  * Every execution is recorded with both inputs and output for every step.
+* Composability
+  * Allow composing AWS Lambdas and code running in other steps. Code can be run in EC2 to interface with it or even on premise if desired.
+  * Step functions allow specifying when steps run in parallel or choices between steps based on data from the previous step.
+* Flexibility
+  * Step functions are designed to be easy to build new applications and reconfigure. We're exposing that flexibility directly to the provider.
+* Reliability and Error Handling
+  * Step functions allow configuration of retries and adding handling of error conditions.
+* Described via data
+  * This makes it easy to save the step function in configuration management solutions.
+  * We can build simple interfaces on top of the flexibility provided here if
+
+### Tasks
+
+A workflow is composed of tasks. Each task is responsible for performing a discrete step of the ingest process. These can be activities like:
+
+* Crawling a provider website for new data.
+* Uploading data from a provider to S3.
+* Executing a process to transform data.
+
+AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/latest/dg/concepts-tasks.html#concepts-tasks) to be code running anywhere, even on premise. We expect most tasks will be written as Lambda functions in order to take advantage of the easy deployment, scalability, and cost benefits provided by AWS Lambda.
+
+#### Task Input and Output Messages
+
+Ingest uses a common format for all inputs and outputs from Tasks consisting of a JSON object which holds all necessary information about the task execution and AWS environment. Ingest defines a schema for the input and output messages using the [Envelope JSON schema](/schemas/envelope_schema.json). See the embedded HTML documentation generated from the schema below. Tasks return objects identical in format to their input with the exception of a task-specific `"payload"` field. Tasks may also augment their execution metadata.
+
+[envelope_schema.json](/schemas/envelope_schema.json)
+
+[Example Message Envelope](/schemas/example-data/example-message-envelope.json)
+
+<script src="docson/widget.js" data-schema="/schemas/envelope_schema.json">
+</script>
+
+#### Common Tasks and Library
+
+**TODO document the common tasks and library**
+
+
 
 ## Benefits
 

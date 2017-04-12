@@ -1,28 +1,35 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Collection Configuration",
-  "description": "Describes the workflows, tasks, schedule, and other options for ingesting a collection.",
+  "title": "Collections Configuration",
+  "description": "Describes the workflows, tasks, schedule, and other options for ingesting collections.",
   "type": "object",
   "properties": {
-    "id": {
-      "description": "An id used to identify this configuration.",
-      "type": "string",
-      "minLength": 1
+    "providers": {
+      "description": "The set of configured providers",
+      "type": "array",
+      "items": {
+        "$ref": "ingest_common_schema.json#/definitions/ProviderType"
+      },
+      "minItems": 0
     },
-    "trigger": {
-      "$ref": "#/definitions/TriggerType"
-    },
-    "meta": {
-      "$ref": "#/definitions/MetaType"
-    },
-    "task_config": {
-      "$ref": "#/definitions/TaskConfigType"
+    "collections": {
+      "description": "This is a list of the collections configured for ingest",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CollectionType"
+      },
+      "minItems": 0
     },
     "workflows": {
       "$ref": "#/definitions/WorkflowsType"
     }
   },
-  "required": ["id", "meta", "task_config", "workflows"],
+  "patternProperties": {
+    "^_.*$": {
+      "description": "Any fields starting with _ are ignored."
+    }
+  },
+  "required": ["providers", "collections", "workflows"],
   "additionalProperties": false,
   "definitions": {
     "positiveInteger": {
@@ -30,11 +37,49 @@
       "minimum": 0,
       "exclusiveMinimum": true
     },
-    "TriggerType": {
+    "CollectionType": {
+      "description": "TODO",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "An id used to identify this collection.",
+          "type": "string",
+          "minLength": 1
+        },
+        "provider_id": {
+          "description": "The id of the provider to which this collection belongs",
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "$ref": "#/definitions/PeriodicTriggerType"
+        },
+        "meta": {
+          "description": "Defines meta-configuration information about the particular collection being processed. These can contain any data that is specific to the collection.",
+          "type": "object"
+        },
+        "task_config": {
+          "$ref": "ingest_common_schema.json#/definitions/TaskConfigType"
+        }
+      },
+      "required": ["id", "provider_id", "task_config"],
+      "patternProperties": {
+        "^_.*$": {
+          "description": "Any fields starting with _ are ignored."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PeriodicTriggerType": {
       "description": "Defines the schedule for triggering the collection. ",
       "type": "object",
       "properties": {
-        "interval_sec": {
+        "type": {
+          "description":"Defines the type of the trigger",
+          "type": "string",
+          "enum": ["periodic"]
+        },
+        "period_s": {
           "description": "Defines how frequently in seconds this collection is triggered to run.",
           "$ref": "#/definitions/positiveInteger"
         },
@@ -43,20 +88,9 @@
           "type": "string"
         }
       },
-      "additionalProperties": false
-    },
-    "MetaType": {
-      "description": "Defines meta-configuration information about the particular collection being processed. These can contain any data that is specific to the collection.",
-      "type": "object"
-    },
-    "TaskConfigType": {
-      "description": "Defines configuration for tasks that are part of a workflow as a map of task name to a JSON object containing configuration settings.",
-      "type": "object",
-      "minProperties": 1,
       "patternProperties": {
-        "^[0-9a-zA-Z_\\-.]+$": {
-          "description": "Any configuration properties are permitted here for the task.",
-          "type": "object"
+        "^_.*$": {
+          "description": "Any fields starting with _ are ignored."
         }
       },
       "additionalProperties": false
@@ -69,6 +103,9 @@
         "^[0-9a-zA-Z_\\-.]+$": {
           "description": "This should be a AWS Step Function compliant with the Amazon States Language defined here http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language",
           "type": "object"
+        },
+        "^_.*$": {
+          "description": "Any fields starting with _ are ignored."
         }
       },
       "additionalProperties": false
