@@ -1,5 +1,4 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Ingest Common Types",
   "id":"ingest_common_schema.json",
   "description": "Defines common types for use in ingest common schemas",
