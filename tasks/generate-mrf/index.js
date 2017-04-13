@@ -17,13 +17,16 @@ const execSync = require('child_process').execSync;
 
 module.exports = class GenerateMrfTask extends Task {
   run() {
-    return this.exclusive(this.transactionKey, LOCK_TIMEOUT_MS, this.runExclusive.bind(this));
+    return this.exclusive(this.event.meta.key, LOCK_TIMEOUT_MS, this.runExclusive.bind(this));
   }
 
   async runExclusive() {
     const event = this.event;
 
-    log.info(JSON.stringify(event));
+    log.info(this.config);
+    log.info(this.event.meta);
+
+    //log.info(JSON.stringify(event));
 
     if (event.payload.length === 0) {
       log.info('No files to process');
@@ -53,9 +56,9 @@ module.exports = class GenerateMrfTask extends Task {
       });
 
       const mrfConfig = configGen.generateConfig(
-        `EPSG:${event.transaction.epsg}`,
-        event.transaction.date,
-        event.transaction.zoom,
+        `EPSG:${this.config.epsg}`,
+        this.config.date,
+        this.config.zoom,
         this.config.mrfgen,
         paths
       );
@@ -79,7 +82,7 @@ module.exports = class GenerateMrfTask extends Task {
         }
       }
 
-      const eventInfo = `(${event.payload.length} files from ${this.transactionKey})`;
+      const eventInfo = `(${event.payload.length} files from ${this.event.meta.key})`;
       await aws.downloadS3Files(event.payload, paths.input);
       this.logStageComplete(`Source Download ${eventInfo}`);
       log.info('==== MRF CONFIG ====');
@@ -123,28 +126,8 @@ module.exports = class GenerateMrfTask extends Task {
   }
 };
 
-if (['stdin', 'stdin-ecs'].indexOf(process.argv[2]) !== -1) {
-  if (process.argv[2] === 'stdin') {
-    module.exports.delegate = null;
-  }
-  module.exports.handler({
-    eventName: 'sync-completed',
-    eventSource: 'stdin',
-    functionName: process.argv[3],
-    config: {
-      mrfgen: {
-        mrf_compression_type: "JPEG",
-        source_epsg: "{meta.epsg}",
-        mrf_merge: false,
-        mrf_nocopy: true,
-        overview_resampling: "average",
-        resize_resampling: "average",
-        parameter_name: "{meta.parameterName}"
-      },
-      output: {
-        Bucket: "{resources.buckets.public}",
-        Key: "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
-      }
-    }
-  }, {}, () => {});
-}
+
+const local = require('gitc-common/local-helpers');
+local.setupLocalRun(
+  module.exports.handler,
+  () => ({ ingest_meta: { event_source: 'stdin', task: 'MRFGen' } }));

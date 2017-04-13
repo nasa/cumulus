@@ -60,6 +60,7 @@ class ApacheIndexTileCrawler extends HttpTileCrawler {
         });
       }
     }
+
     return result;
   }
 }

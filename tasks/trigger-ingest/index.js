@@ -9,32 +9,48 @@ module.exports = class TriggerIngestTask extends Task {
     const s3Promises = [];
     const executions = [];
     const executionPromises = [];
-    const stateMachine = this.event.resources &&
-                         this.event.resources.stateMachines &&
-                         this.event.resources.stateMachines.ingest;
+    const isSfnExecution = this.event.ingest_meta.event_source === 'sfn';
 
-    log.info('MY EVENT', JSON.stringify(this.event, null, 2));
+    if (!isSfnExecution) {
+      log.warn('TriggerIngestTask only triggers AWS Step Functions. Running with inline triggers.');
+    }
 
-    if (!stateMachine) {
-      log.info('BUMMER');
+    const stateMachinePrefix = this.event.resources &&
+                               this.event.resources.state_machine_prefix;
+    if (!stateMachinePrefix) {
       return null;
     }
 
+    const stateMachine = stateMachinePrefix + this.config.workflow;
+
     const bucket = this.event.resources.buckets.private;
 
+    log.info(this.event.payload);
+    const date = this.event.ingest_meta.start_date;
+    const noSpecialDate = date.split('.')[0].replace(/[:T]/g, '_');
+
     for (const e of this.event.payload) {
-      const date = (e.transaction && e.transaction.startDate) || (new Date().toISOString());
-      const noSpecialDate = date.split('.')[0].replace(/[:T]/g, '_');
-      const key = (e.transaction && e.transaction.key) || 'Unknown';
+      const key = (e.meta && e.meta.key) || 'Unknown';
       const name = `${key.replace(/\W+/g, '-')}-${noSpecialDate}`;
       log.info(`Starting ingest of ${name}`);
       const payload = { Bucket: bucket, Key: [key, noSpecialDate].join('/') };
-      const eventData = Object.assign({}, e, { payload: payload });
-      const s3Params = Object.assign({}, payload, { Body: JSON.stringify(e.payload) });
 
-      log.info('WILL TRIGGER', name, JSON.stringify(eventData, 0, 2));
+      const fullEventData = Object.assign({}, this.event, e);
+      fullEventData.meta = Object.assign({}, this.event.meta, e.meta);
 
-      s3Promises.push(aws.promiseS3Upload(s3Params));
+      const eventData = Object.assign({}, fullEventData, { payload: payload });
+      eventData.ingest_params = Object.assign({},
+                                              eventData.ingest_params,
+                                              { sfn_name: name });
+
+      const s3Params = Object.assign({}, payload, { Body: JSON.stringify(eventData.payload) });
+
+      if (!isSfnExecution) {
+        log.warn('inline-result: ', JSON.stringify(fullEventData));
+      }
+      else {
+        s3Promises.push(aws.promiseS3Upload(s3Params));
+      }
       executions.push({
         stateMachineArn: stateMachine,
         input: JSON.stringify(eventData),
@@ -42,8 +58,11 @@ module.exports = class TriggerIngestTask extends Task {
       });
     }
     await Promise.all(s3Promises);
-    for (const execution of executions) {
-      executionPromises.push(aws.sfn().startExecution(execution).promise());
+
+    if (isSfnExecution) {
+      for (const execution of executions) {
+        executionPromises.push(aws.sfn().startExecution(execution).promise());
+      }
     }
     await Promise.all(executionPromises);
     return null;
@@ -53,3 +72,9 @@ module.exports = class TriggerIngestTask extends Task {
     return TriggerIngestTask.handle(...args);
   }
 };
+
+const local = require('gitc-common/local-helpers');
+local.setupLocalRun(
+  module.exports.handler,
+  () => ({ ingest_meta: { event_source: 'stdin', task: 'TriggerIngest' } })
+);

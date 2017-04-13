@@ -7,6 +7,8 @@ const log = require('gitc-common/log');
 const Task = require('gitc-common/task');
 const aws = require('gitc-common/aws');
 const concurrency = require('gitc-common/concurrency');
+const local = require('gitc-common/local-helpers');
+
 
 exports.TIMEOUT_TIME_MS = 20 * 1000;
 
@@ -22,7 +24,7 @@ let intermediates = 0;
 const syncFile = async (bucket, keypath, simulate, file) => {
   const destKey = path.join(keypath, file.name || path.basename(file.key || file.url));
   let didLog = false;
-  if (!lastLog || new Date() > 5000 + lastLog) {
+  if (!lastLog || new Date() > 5000 + lastLog || simulate) {
     const suppression = intermediates > 0 ? ` (${intermediates} messages supressed)` : '';
     log.debug(`Starting: ${file.url} -> s3://${bucket}/${destKey}${suppression}`);
     intermediates = 0;
@@ -32,7 +34,12 @@ const syncFile = async (bucket, keypath, simulate, file) => {
   else {
     intermediates++;
   }
-  await aws.syncUrl(file.url, bucket, destKey);
+  if (simulate) {
+    log.warn('Simulated call');
+  }
+  else {
+    await aws.syncUrl(file.url, bucket, destKey);
+  }
   if (didLog) {
     log.debug(`Completed: ${file.url}`);
   }
@@ -50,23 +57,22 @@ module.exports = class SyncHttpUrlsTask extends Task {
   }
 
   async run() {
-    const bucket = this.config.output.Bucket;
-    const keypath = this.config.output.Key;
+    const bucket = this.config.output.bucket;
+    const keypath = this.config.output.key_prefix;
     const { completed, errors } = await this.syncFiles(
       this.updated,
       bucket,
       keypath,
-      this.event.local);
+      local.isLocal);
     const isComplete = completed.length === this.updated.length;
     const completedFiles = _.map(completed, (f) => _.omit(f, ['url', 'version']));
     const completedKeys = _.map(completed, (f) => f.url + f.version);
     this.state.files = _.values(_.keyBy(this.state.files.concat(completedFiles), 'Key'));
     this.state.completed = _.uniq(this.state.completed.concat(completedKeys));
-    const result = Object.assign({}, this.event, { payload: [] });
+    let result = [];
     if (isComplete) {
       log.info('Sync is complete');
-      result.payload = this.state.files;
-      this.trigger('sync-completed', this.transactionKey, result);
+      result = this.state.files;
     }
     else {
       log.info('Sync is incomplete');
@@ -87,7 +93,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
     if (!isComplete) {
       throw new Error('Incomplete');
     }
-    return result.payload;
+    return result;
   }
 
   syncFiles(files, bucket, keypath, simulate = false) {
@@ -106,16 +112,6 @@ module.exports = class SyncHttpUrlsTask extends Task {
   }
 };
 
-if (process.argv[2] === 'stdin') {
-  module.exports.handler({
-    eventName: 'resource-urls-found',
-    eventSource: 'stdin',
-    config: {
-      ignoredErrorStatuses: '{collection.ingest.config.ignoredErrorStatuses}',
-      output: {
-        Bucket: "{resources.buckets.private}",
-        Key: "sources/EPSG{meta.epsg}/{meta.key}"
-      }
-    }
-  }, {}, () => {});
-}
+local.setupLocalRun(
+  module.exports.handler,
+  () => ({ ingest_meta: { event_source: 'stdin', task: 'SyncHttpUrls' } }));

@@ -5,9 +5,8 @@ const Crawler = require('simplecrawler');
 const log = require('gitc-common/log');
 
 module.exports = class HttpTileCrawler extends EventEmitter {
-  constructor(product, url, pattern, connectionLimit = 10) {
+  constructor(url, pattern, connectionLimit = 10) {
     super();
-    this.product = product;
     this.url = url;
     this.pattern = pattern;
     this.connectionLimit = connectionLimit;
@@ -66,30 +65,6 @@ module.exports = class HttpTileCrawler extends EventEmitter {
   _bail(reason, queueItem) {
     log.error(`[ERROR] Could not process ${queueItem.url}: ${reason}`);
     return [];
-  }
-
-  _processDiscoveries(discoveredFiles) {
-    const groupings = {};
-    const result = [];
-    for (const file of discoveredFiles) {
-      groupings[file.parent] = groupings[file.parent] || [];
-      groupings[file.parent].push({
-        product: this.product,
-        url: this.url + file.path,
-        parent: file.parent,
-        version: file.version,
-        filename: file.path.split('/').pop()
-      });
-    }
-
-    for (const parent of Object.keys(groupings)) {
-      result.push({
-        product: this.product,
-        parent: parent,
-        files: groupings[parent]
-      });
-    }
-    return result;
   }
 
   _discoverResources(buffer, queueItem) {

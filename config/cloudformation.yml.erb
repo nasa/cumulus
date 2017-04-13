@@ -43,12 +43,6 @@ Parameters:
 
 Resources:
 
-<%# [name, retries, processing-timeout] %>
-<% queues = [] %>
-<% queues.each { |q| q.push(q.first.split(/[-_]/).map(&:capitalize).join() + "Queue") } %>
-<% events = queues.reject { |q| !q.first.end_with?('-events') } %>
-
-
 <%# [task, description, memory, ecs-instance-count (nil to run in Lambda)] %>
 <% tasks = [['discover-http-tiles', 'Discovers tile files to ingest from HTTP', 256, nil],
             ['discover-cmr-granules', 'Discovers tile files to ingest from HTTP', 256, nil],
@@ -134,16 +128,6 @@ Resources:
             Resource:
             - "*"
 
-          # Allow lambdas to send and receive messages on queues
-          - Effect: Allow
-            Action:
-            - sqs:SendMessage
-            - sqs:ReceiveMessage
-            - sqs:ChangeMessageVisibility
-            - sqs:DeleteMessage
-            Resource:
-            - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${StackName}-*"
-
           # Allow lambdas to interact with their StepFunctions
           - Effect: Allow
             Action:
@@ -216,23 +200,6 @@ Resources:
 #    DeletionPolicy: Retain
 #    Properties:
 #      BucketName: !Sub ${StackName}-public
-
-<% queues.each do |queue, max_receive, timeout, queue_name| %>
-  <%= queue_name %>:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${StackName}-<%= queue %>
-      ReceiveMessageWaitTimeSeconds: 20
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt [Failed<%= queue_name %>, Arn]
-        maxReceiveCount: <%= max_receive %>
-      VisibilityTimeout: <%= timeout %>
-
-  Failed<%= queue_name %>:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${StackName}-failed-<%= queue %>
-<% end %>
 
 <% tasks.each do |task, description, memory, ecsDesiredCount| %>
   <% caps_name = task.split('-').map(&:capitalize).join() %>
@@ -326,24 +293,20 @@ Resources:
     Properties:
       LogGroupName: !Sub ${StackName}-transactions
 
-<% ['sfn-scheduler'].each do |task| %>
-  <% caps_name = task.split('-').map(&:capitalize).join() %>
-  <%= caps_name %>Task:
+  SfnSchedulerTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-      - Name: <%= task %>
+      - Name: sfn-scheduler
         Command:
-        - !GetAtt [<%= caps_name %>Fn, Arn]
+        - !GetAtt [SfnSchedulerFn, Arn]
         - "--eventJson"
         - !Sub >-
           {
             "resources": {
-              "stack":"${StackName}",
-              "stateMachines": {
-                "discover": "arn:aws:states:${DeployRegion}:${AWS::AccountId}:stateMachine:${StackName}-discover-granules",
-                "ingest": "arn:aws:states:${DeployRegion}:${AWS::AccountId}:stateMachine:${StackName}-ingest-granules-2"
-              },
+              "stack":"${AWS::StackName}",
+              "state_machine_prefix":
+                "arn:aws:states:${DeployRegion}:${AWS::AccountId}:stateMachine:${StackName}",
               "buckets": {
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
@@ -354,10 +317,7 @@ Resources:
                 "locks": "${StackName}-locks"
               }
             },
-            "config": {
-              "events": {"Key": "ingest/events.json", "Bucket": "${ConfigS3Bucket}"},
-              "collections": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
-            }
+            "config": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
           }
         Cpu: '10'
         Essential: true
@@ -369,9 +329,8 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref <%= caps_name %>Logs
+            awslogs-group: !Ref SfnSchedulerLogs
             awslogs-region: !Ref AWS::Region
-<% end %>
 
   GenerateMrfTask:
     Type: AWS::ECS::TaskDefinition

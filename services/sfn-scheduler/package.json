@@ -16,5 +16,8 @@
   },
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "lodash": "^4.17.4"
+  }
 }

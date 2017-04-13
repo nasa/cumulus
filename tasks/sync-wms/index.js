@@ -13,7 +13,6 @@ module.exports = class SyncWmsTask extends Task {
           url: this.config.getmap,
           version: meta.version }] });
 
-    this.trigger('resource-urls-found', meta.key, event);
     return event;
   }
 

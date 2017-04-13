@@ -18,7 +18,6 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     const result = [];
     for (const event of events) {
       result.push(Object.assign({}, this.event, event));
-      this.trigger(this.config.event, event.meta.key, Object.assign({}, this.event, event));
     }
     return result;
   }
