@@ -12,7 +12,7 @@
     "clean": "./bin/npm/clean",
 
     "//": "Generates HTML from markdown documentation.",
-    "generate-docs": "./node_modules/.bin/generate-md --layout github --input docs/ingest_design.md --output docs",
+    "generate-docs": "./node_modules/.bin/generate-md --layout github --input docs/ingest_workflows_architecture.md --output docs",
 
     "//": "Starts showing the documentation via a local http server and opens a browser to it.",
     "serve-docs": "./node_modules/.bin/http-server -c-1 docs -o",

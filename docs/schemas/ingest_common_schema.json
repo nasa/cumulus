@@ -5,6 +5,7 @@
   "description": "Defines common types for use in ingest common schemas",
   "definitions": {
     "ProviderType": {
+      "title": "Provider",
       "description": "Defines a provider configuration for ingest.",
       "type": "object",
       "properties": {
@@ -27,6 +28,7 @@
       "additionalProperties": false
     },
     "TaskConfigType": {
+      "title": "Task Config",
       "description": "Defines configuration for tasks that are part of a workflow as a map of task name to a JSON object containing configuration settings.",
       "type": "object",
       "minProperties": 1,
