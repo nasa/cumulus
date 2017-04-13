@@ -126,12 +126,12 @@ workflows:
     States:
       DiscoverHttpTiles:
         Type: Task
-        Resource: !GitcResource discover-http-tiles
+        Resource: !GitcResource DiscoverHttpTilesTask
         Next: TriggerIngest
 
       TriggerIngest:
         Type: Task
-        Resource: !GitcResource trigger-ingest
+        Resource: !GitcResource TriggerIngestTask
         End: true
 
   ingest_VIIRS:
@@ -140,7 +140,7 @@ workflows:
     States:
       SyncHttpUrls:
         Type: Task
-        Resource: !GitcResource sync-http-urls
+        Resource: !GitcResource SyncHttpUrlsTask
         Next: ChooseSyncContinuation
       ChooseSyncContinuation:
         Type: Choice
@@ -160,7 +160,7 @@ workflows:
         Cause: Unhandled Sync Error
       MRFGen:
         Type: Task
-        Resource: !GitcResource generate-mrf
+        Resource: !GitcResource GenerateMrfTask
         End: true
       MethodNotFound:
         Type: Fail
@@ -176,12 +176,12 @@ workflows:
       States:
         DiscoverCmrGranules:
           Type: Task
-          Resource: !GitcResource discover-cmr-granules
+          Resource: !GitcResource DiscoverCmrGranulesTask
           Next: TriggerIngest
 
         TriggerIngest:
           Type: Task
-          Resource: !GitcResource trigger-ingest
+          Resource: !GitcResource TriggerIngestTask
           End: true
 
     ingest_MOPITT:
@@ -190,11 +190,11 @@ workflows:
       States:
         CreateWmsUrls:
           Type: Task
-          Resource: !GitcResource sync-wms
+          Resource: !GitcResource SyncWmsTask
           Next: SyncHttpUrls
         SyncHttpUrls:
           Type: Task
-          Resource: !GitcResource sync-http-urls
+          Resource: !GitcResource SyncHttpUrlsTask
           Next: ChooseSyncContinuation
         ChooseSyncContinuation:
           Type: Choice
@@ -214,7 +214,7 @@ workflows:
           Cause: Unhandled Sync Error
         MRFGen:
           Type: Task
-          Resource: !GitcResource generate-mrf
+          Resource: !GitcResource GenerateMrfTask
           End: true
         MethodNotFound:
           Type: Fail

@@ -55,13 +55,29 @@ const triggerIngest = async (resources, provider, collection) => {
   }
 };
 
+const resolveResource = (cfResourcesById) =>
+  (name) => {
+    if (cfResourcesById[name]) return cfResourcesById[name];
+    throw new Error(`Resource not found: ${name}`);
+  };
+
 /**
  * Starts a scheduler service that periodically triggers ingests described in config/collections.yml
  */
 module.exports.handler = async (invocation) => {
   try {
+    const cfParams = { StackName: invocation.resources.stack };
+    const cfResources = await aws.cf().describeStackResources(cfParams).promise();
+    const cfResourcesById = {};
+
+    for (const cfResource of cfResources.StackResources) {
+      log.info(cfResource);
+      cfResourcesById[cfResource.LogicalResourceId] = cfResource.PhysicalResourceId;
+    }
+
     const configStr = await aws.getPossiblyRemote(invocation.payload);
-    const config = configUtil.parseConfig(configStr);
+    const config = configUtil.parseConfig(configStr, resolveResource);
+
     const collectionsByProviderId = _.groupBy(config.collections, (c) => c.provider_id);
 
     for (const provider of config.providers) {
@@ -93,3 +109,7 @@ module.exports.handler = async (invocation) => {
     throw err;
   }
 };
+
+const fs = require('fs');
+module.exports.handler({ resources: { stack: 'gitc-pq-sfn' },
+                         payload: fs.readFileSync('../config/collections.yml').toString() });

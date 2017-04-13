@@ -188,6 +188,13 @@ Resources:
             Resource:
             - "*"
 
+          # Allow querying cloudformation for resource ids
+          - Effect: Allow
+            Action:
+            - cloudformation:DescribeStackResources
+            Resource:
+            - !Ref AWS::StackId
+
 # TODO: This ought to be done here but can't now due to parent deployment
   PrivateResources:
     Type: AWS::S3::Bucket
