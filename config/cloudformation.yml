@@ -1,0 +1,24 @@
+Description: GIBS Dashboard
+Parameters:
+  WebBucket:
+    Type: String
+    Description: Name of the bucket to use for web content
+    # A default has to be provided and is replaced at runtime due to this AWS cli bug.
+    # https://github.com/aws/aws-cli/issues/2460
+    Default: '%WebBucket%'
+Resources:
+  # S3 Bucket that hosts the content of the website.
+  HostingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Sub ${WebBucket}
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt HostingBucket.WebsiteURL
+    Description: URL for the website hosted on S3
+    Export:
+      Name: WebsiteURL
