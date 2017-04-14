@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.earthdata.nasa.gov/eui/1.1.3/stylesheets/application.css" rel="stylesheet" />
+
+  <!-- TODO put this in a CSS file for ops dashboard -->
+  <style media="screen">
+    .eui-masthead-logo {
+      width: 350px;
+      padding: 15px 0;
+    }
+
+    .eui-masthead-logo h1 a:link {
+      width: inherit;
+    }
+
+    .eui-masthead-logo h1 {
+      font-family: "Helvetica Neue", "Helvetica", sans-serif;
+      font-weight: 100;
+      font-size: 2em;
+      line-height: 0.8em;
+    }
+
+    .container {
+      margin: 0 auto;
+      width: 95%;
+    }
+
+    .doc-mast {
+      background: #2276ac;
+      box-shadow: 0 5px 5px rgba(189, 195, 199, 0.15);
+      display: flex;
+    }
+
+    .main-nav {
+      font-size: 0.9em;
+      text-transform: uppercase;
+      float: right;
+      margin-top: 14px;
+    }
+
+    .main-nav-list {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .main-nav-list li {
+      display: inline-block;
+      padding: 15px;
+    }
+
+    .main-nav-list a {
+      color: #fff;
+    }
+
+    .main-nav-list a.active {
+      font-weight: bold;
+    }
+
+    .eui-masthead-logo.eui-application-logo a:link {
+      background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo.png);
+    }
+
+    .eui-masthead-logo.eui-application-logo a:hover {
+      background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_hover.png);
+    }
+
+    @media only screen and (-webkit-min-device-pixel-ratio: 1.3),
+    only screen and (min--moz-device-pixel-ratio: 1.3),
+    only screen and (-o-min-device-pixel-ratio: 1.3 / 1),
+    only screen and (min-resolution: 125dpi),
+    only screen and (min-resolution: 1.3dppx) {
+      .eui-masthead-logo.eui-application-logo a:link {
+        background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_2x.png);
+      }
+      .eui-masthead-logo.eui-application-logo a:hover {
+        background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_hover_2x.png);
+      }
+    }
+
+    .icon-green {
+      color: #189c54;
+    }
+
+    .icon-red {
+      color: #b3241c;
+    }
+
+    .eui-icon {
+      /* Add space to the right of the icon when used on a button.*/
+      padding-right: 3px;
+    }
+
+    main {
+      padding-left: 20px;
+    }
+
+    .alerts-list {
+      list-style-type: none;
+      /*Undo default webkti settings for this*/
+      -webkit-padding-start: 0px;
+    }
+
+    .alerts-list .eui-banner--danger {
+      text-align: inherit;
+    }
+
+    .alerts-list .eui-banner--warn {
+      text-align: inherit;
+      color: #988001;
+    }
+
+    .product-status-table {
+      width: calc(100% - 20px);
+      margin-right: 20px;
+    }
+  </style>
+
+  <!-- TODO download font awesome and include directly instead of through JS -->
+  <script src="https://use.fontawesome.com/890daa05d4.js"></script>
+
+  <!-- Should this go in the body? -->
+  <!-- Reference JQuery before eui.js-->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+  <!-- Latest compiled JavaScript-->
+  <script src="https://cdn.earthdata.nasa.gov/eui/1.1.3/js/eui.js"></script>
+</head>
+<header class="doc-mast">
+  <div class="container">
+    <div class="eui-masthead-logo eui-application-logo">
+      <h1><a href="#">GIBS Ops Dashboard</a> <span class="eui-badge--sm">BETA</span></h1>
+    </div>
+
+    <nav class="main-nav" role="navigation">
+      <ul class="main-nav-list">
+        <!-- These don't link to anything for now. -->
+        <li><a href="#">Settings</a></li>
+        <li><a href="#">Login</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<body>
+  <main>
+    <h2>Alerts</h2>
+    <ul class="alerts-list">
+      <li class="eui-banner--danger"><strong>Error:</strong> MOPITT hasn't updated in 3 days.</li>
+      <li class="eui-banner--warn"><strong>Warning:</strong> Ingest 95th percentile is &gt; 2s.</li>
+    </ul>
+
+    <h2>System Status</h2>
+    <ul class="system-stats-list">
+      <li><strong>17</strong> Running Jobs</li>
+      <li><strong>10</strong> Longest Queue (VNGCR_NQD_C1)</li>
+      <li><strong>20</strong> Running Jobs (VNGCR_NQD_C1)</li>
+    </ul>
+
+    <h2>Product Status</h2>
+    <table class="product-status-table">
+      <thead>
+        <tr>
+          <th>Product Type</th>
+          <th>Last Ingest</th>
+          <th>Status</th>
+          <th>95th Perc. Ingest Time (24h)</th>
+          <th>95th Perc. Ingest Time (30d)</th>
+          <th>Reingest</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><i class="eui-icon eui-fa-minus-circle icon-red"></i> VIIRS</td>
+          <td>10 minutes ago</td>
+          <td>Ingesting 3 products</td>
+          <td><i class="eui-icon eui-fa-minus-circle icon-red"></i><strong>20 minutes</strong></td>
+          <td>5 minutes</td>
+          <td><button type="button" class="eui-btn"><i class="eui-icon fa fa-refresh"></i>Reingest</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+  </main>
+</body>
+
+</html>
