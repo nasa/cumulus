@@ -1,2 +1,8 @@
 config/cloudformation-output.yml
 dist/
+app/scripts/config/local.js
+node_modules
+.tmp
+**/npm-debug.log
+.DS_Store
+*.swp
