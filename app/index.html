@@ -14,130 +14,6 @@
   <!-- build:css styles/main.css -->
   <link rel="stylesheet" href="styles/main.css">
   <!-- endbuild -->
-
-  <!-- TODO put this in a CSS file for ops dashboard -->
-  <style media="screen">
-    .eui-masthead-logo {
-      width: 350px;
-      padding: 15px 0;
-    }
-
-    .eui-masthead-logo h1 a:link {
-      width: inherit;
-    }
-
-    .eui-masthead-logo h1 {
-      font-family: "Helvetica Neue", "Helvetica", sans-serif;
-      font-weight: 100;
-      font-size: 2em;
-      line-height: 0.8em;
-    }
-
-    .container {
-      margin: 0 auto;
-      width: 95%;
-    }
-
-    .doc-mast {
-      background: #2276ac;
-      box-shadow: 0 5px 5px rgba(189, 195, 199, 0.15);
-      display: flex;
-    }
-
-    .main-nav {
-      font-size: 0.9em;
-      text-transform: uppercase;
-      float: right;
-      margin-top: 14px;
-    }
-
-    .main-nav-list {
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .main-nav-list li {
-      display: inline-block;
-      padding: 15px;
-    }
-
-    .main-nav-list a {
-      color: #fff;
-    }
-
-    .main-nav-list a.active {
-      font-weight: bold;
-    }
-
-    .eui-masthead-logo.eui-application-logo a:link {
-      background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo.png);
-    }
-
-    .eui-masthead-logo.eui-application-logo a:hover {
-      background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_hover.png);
-    }
-
-    @media only screen and (-webkit-min-device-pixel-ratio: 1.3),
-    only screen and (min--moz-device-pixel-ratio: 1.3),
-    only screen and (-o-min-device-pixel-ratio: 1.3 / 1),
-    only screen and (min-resolution: 125dpi),
-    only screen and (min-resolution: 1.3dppx) {
-      .eui-masthead-logo.eui-application-logo a:link {
-        background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_2x.png);
-      }
-      .eui-masthead-logo.eui-application-logo a:hover {
-        background-image: url(https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_hover_2x.png);
-      }
-    }
-
-    .icon-green {
-      color: #189c54;
-    }
-
-    .icon-red {
-      color: #b3241c;
-    }
-
-    .eui-icon {
-      /* Add space to the right of the icon when used on a button.*/
-      padding-right: 3px;
-    }
-
-    main {
-      padding-left: 20px;
-    }
-
-    .alerts-list {
-      list-style-type: none;
-      /*Undo default webkti settings for this*/
-      -webkit-padding-start: 0px;
-    }
-
-    .alerts-list .eui-banner--danger {
-      text-align: inherit;
-    }
-
-    .alerts-list .eui-banner--warn {
-      text-align: inherit;
-      color: #988001;
-    }
-
-    .product-status-table {
-      width: calc(100% - 20px);
-      margin-right: 20px;
-    }
-  </style>
-
-  <!-- TODO download font awesome and include directly instead of through JS -->
-  <script src="https://use.fontawesome.com/890daa05d4.js"></script>
-
-  <!-- Should this go in the body? -->
-  <!-- Reference JQuery before eui.js-->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-
-  <!-- Latest compiled JavaScript-->
-  <script src="https://cdn.earthdata.nasa.gov/eui/1.1.3/js/eui.js"></script>
 </head>
 <header class="doc-mast">
   <div class="container">
@@ -195,6 +71,11 @@
     </table>
 
   </main>
+
+  <!-- Reference JQuery before eui.js-->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <!-- EUI (Earthdata UI) JavaScript-->
+  <script src="https://cdn.earthdata.nasa.gov/eui/1.1.3/js/eui.js"></script>
 
   <!-- build:js scripts/vendor.js -->
   <script src="scripts/vendor.js"></script>

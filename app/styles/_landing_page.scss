@@ -1,0 +1,36 @@
+.icon-green {
+  color: #189c54;
+}
+
+.icon-red {
+  color: #b3241c;
+}
+
+.eui-icon {
+  /* Add space to the right of the icon when used on a button.*/
+  padding-right: 3px;
+}
+
+main {
+  padding-left: 20px;
+}
+
+.alerts-list {
+  list-style-type: none;
+  /* Undo default webkit settings for this */
+  -webkit-padding-start: 0;
+
+  .eui-banner--danger {
+    text-align: inherit;
+  }
+
+  .eui-banner--warn {
+    text-align: inherit;
+    color: #988001;
+  }
+}
+
+.product-status-table {
+  width: calc(100% - 20px);
+  margin-right: 20px;
+}

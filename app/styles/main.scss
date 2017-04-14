@@ -28,9 +28,14 @@
 
 @import "normalize";
 
+@import "font-awesome/font-awesome";
 
 /* Main
    ========================================================================== */
 
 // Import other styles from here like so. These would be in files named like _base.scss
 // @import "base";
+
+@import "masthead";
+
+@import "landing_page"
