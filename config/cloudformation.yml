@@ -15,7 +15,16 @@ Resources:
       BucketName: !Sub ${WebBucket}
       WebsiteConfiguration:
         IndexDocument: index.html
-        ErrorDocument: error.html
+        ErrorDocument: error
+        # This is a single page app. Every path is handled within the index.html. We redirect 404s
+        # to the index page but change the path to start with # to make it a hash parameter. There
+        # is code within the JavaScript to fix the browser history after it loads.
+        # Based on various solutions described here: http://stackoverflow.com/questions/16267339/s3-static-website-hosting-route-all-paths-to-index-html
+        RoutingRules:
+          - RoutingRuleCondition:
+              HttpErrorCodeReturnedEquals: '404'
+            RedirectRule:
+              ReplaceKeyPrefixWith: "#/"
 Outputs:
   WebsiteURL:
     Value: !GetAtt HostingBucket.WebsiteURL

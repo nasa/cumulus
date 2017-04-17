@@ -2,24 +2,29 @@
 
 const React = require('react');
 const ReactDOM = require('react-dom');
-
-const redux = require('redux');
-const createStore = redux.createStore;
-// const combineReducers = redux.combineReducers;
-const applyMiddleware = redux.applyMiddleware;
-
-const Provider = require('react-redux').Provider;
-
-const createHistory = require('history').createBrowserHistory;
-
-const Route = require('react-router').Route;
-
-const reactRouterRedux = require('react-router-redux');
-const ConnectedRouter = reactRouterRedux.ConnectedRouter;
-const routerMiddleware = reactRouterRedux.routerMiddleware;
+import {createStore, applyMiddleware} from 'redux';
+import {Provider} from 'react-redux';
+import {Switch} from 'react-router-dom';
+import {createBrowserHistory} from 'history';
+import {Route} from 'react-router';
+import {reactRouterRedux, ConnectedRouter, routerMiddleware} from 'react-router-redux';
 
 // Create a history of your choosing (we're using a browser history in this case)
-const history = createHistory();
+const history = createBrowserHistory();
+
+// This looks for hash options and changes it to a regular url.
+// Based on some solutions described here:
+// http://stackoverflow.com/questions/16267339/s3-static-website-hosting-route-all-paths-to-index-html
+function convertHistoryHash (location) {
+  // Check if the location hash is something like "#/foo" then we get just the "/foo" part
+  const path = (/#(\/.*)$/.exec(location.hash) || [])[1];
+  if (path) {
+    history.replace(path);
+  }
+}
+history.listen(convertHistoryHash);
+// Fix the current load if necessary.
+convertHistoryHash(history.location);
 
 // Build the middleware for intercepting and dispatching navigation actions
 const middleware = routerMiddleware(history);
@@ -39,25 +44,19 @@ const store = createStore(
 );
 
 // Components
+import NotFoundPage from './components/not-found-page';
+import ErrorPage from './components/error-page';
 import LandingPage from './components/landing-page';
-
-function Foo () {
-  return <p>I'm a foo</p>;
-}
-
-function Bar () {
-  return <p>I'm a bar</p>;
-}
 
 ReactDOM.render(
   <Provider store={store}>
     { /* Tell the Router to use our enhanced history */ }
     <ConnectedRouter history={history}>
-      <div>
-        <Route path="/" component={LandingPage}/>
-        <Route path="foo" component={Foo}/>
-        <Route path="bar" component={Bar}/>
-      </div>
+      <Switch>
+        <Route exact path="/" component={LandingPage}/>
+        <Route path="/error" component={ErrorPage}/>
+        <Route component={NotFoundPage}/>
+      </Switch>
     </ConnectedRouter>
   </Provider>,
   document.getElementById('mount')

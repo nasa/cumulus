@@ -17,7 +17,7 @@ var rev = require('gulp-rev');
 var revReplace = require('gulp-rev-replace');
 var SassString = require('node-sass').types.String;
 var notifier = require('node-notifier');
-var preprocess = require('gulp-preprocess');
+var historyApiFallback = require('connect-history-api-fallback');
 
 // /////////////////////////////////////////////////////////////////////////////
 // --------------------------- Variables -------------------------------------//
@@ -63,7 +63,8 @@ gulp.task('serve', ['vendorScripts', 'javascript', 'styles', 'fonts'], function 
       baseDir: ['.tmp', 'app'],
       routes: {
         '/node_modules': './node_modules'
-      }
+      },
+      middleware: [ historyApiFallback() ]
     }
   });
 

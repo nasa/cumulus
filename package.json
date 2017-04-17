@@ -13,11 +13,10 @@
   "license": "TBD",
   "homepage": "https://git.earthdata.nasa.gov/projects/GITC/repos/gibs-dashboard/browse",
   "scripts": {
-    "//": "TODO add additional testing",
     "postinstall": "[ -f app/scripts/config/local.js ] || echo 'module.exports = {};' > app/scripts/config/local.js",
     "serve": "GIBS_ENV=development gulp serve",
     "staging": "GIBS_ENV=staging gulp",
-    "production": "GIBS_ENV=production gulp",
+    "production": "NODE_ENV=production GIBS_ENV=production gulp",
     "lint": "eslint app/scripts/ --ext .js",
     "start": "npm run serve",
     "test": "npm run lint"
@@ -80,6 +79,7 @@
   },
   "dependencies": {
     "assert": "^1.4.1",
+    "connect-history-api-fallback": "^1.3.0",
     "d3-queue": "^3.0.5",
     "d3-scale": "^1.0.5",
     "deepmerge": "^1.3.2",
@@ -98,6 +98,7 @@
     "react-dom": "^15.5.4",
     "react-redux": "^5.0.4",
     "react-router": "^4.1.1",
+    "react-router-dom": "^4.1.1",
     "react-router-redux": "^5.0.0-alpha.6",
     "redux": "^3.6.0",
     "redux-thunk": "^2.2.0",
