@@ -110,6 +110,6 @@ module.exports.handler = async (invocation) => {
   }
 };
 
-const fs = require('fs');
-module.exports.handler({ resources: { stack: 'gitc-pq-sfn' },
-                         payload: fs.readFileSync('../config/collections.yml').toString() });
+//const fs = require('fs');
+//module.exports.handler({ resources: { stack: 'gitc-pq-sfn' },
+//                         payload: fs.readFileSync('../config/collections.yml').toString() });
