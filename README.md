@@ -73,6 +73,28 @@ function, syncing to a test path, then pass the output to mrf generation, which 
 all the files, output the configuration file, then likely bail due to the lack of local gdal support
 for MRF.
 
+#### Viewing Ingest Documentation
+
+Ingest documentation written in Markdown and JSON schemas are located in the docs folder. [Docson](https://github.com/lbovet/docson) is used for showing JSON schema documentation.
+
+You should run the following commands the first time to view the documentation.
+
+```Bash
+npm install  # If you haven't run this yet.
+
+# Get the docson code
+git submodules init
+git submodules update
+
+# Generate HTML from the markdown
+npm run generate-docs
+# Start an HTTP Server to serve up the documentation.
+npm run serve-docs
+```
+
+You'll only need to run the last two lines of code to view the updated documentation in the future.
+
+
 ### Logs
 
 Logs from ingest go into several CloudWatch Logs groups
