@@ -1,6 +1,13 @@
-'use strict'
-const awsServerlessExpress = require('aws-serverless-express')
-const app = require('./app')
+'use strict';
+
+// Runs the application in AWS lambda.
+
+const awsServerlessExpress = require('aws-serverless-express');
+const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
+const app = require('./app');
+app.use(awsServerlessExpressMiddleware.eventContext());
+
+
 // NOTE: If you get ERR_CONTENT_DECODING_FAILED in your browser, this is likely
 // due to a compressed response (e.g. gzip) which has not been handled correctly
 // by aws-serverless-express and/or API Gateway. Add the necessary MIME types to
@@ -24,7 +31,7 @@ const binaryMimeTypes = [
   'text/plain',
   'text/text',
   'text/xml'
-]
-const server = awsServerlessExpress.createServer(app, null, binaryMimeTypes)
+];
+const server = awsServerlessExpress.createServer(app, null, binaryMimeTypes);
 
-exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context)
+exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
