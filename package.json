@@ -4,22 +4,32 @@
   "description": "Implements the API backing the GIBS Ops Dashboard",
   "main": "lambda.js",
   "scripts": {
-    "local": "node -e \"require('./lambda.js').handler(require('./api-gateway-event.json'), {succeed: v => { console.log(v); process.exit(0); }}, (e, v) => { console.log(v); process.exit(1); })\"",
-    "invoke-lambda": "aws lambda invoke --function-name $npm_package_config_functionName --region $npm_package_config_region --payload file://api-gateway-event.json lambda-invoke-response.json && cat lambda-invoke-response.json"
+    "start":"node app/local.js",
+    "start-debug":"node --inspect app/local.js"
   },
   "dependencies": {
     "aws-serverless-express": "^2.2.0",
-    "body-parser": "^1.15.2",
+    "body-parser": "^1.17.1",
     "compression": "^1.6.2",
-    "cors": "^2.8.1",
-    "express": "^4.14.0",
+    "cors": "^2.8.3",
+    "express": "^4.15.2",
     "pug": "^2.0.0-beta12"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
+    "babel-eslint": "^7.2.2",
     "babel-loader": "^6.4.1",
     "babel-preset-env": "^1.4.0",
     "copy-webpack-plugin": "^4.0.1",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb": "^14.1.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^4.0.0",
+    "eslint-plugin-node": "^4.2.2",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-react": "^6.10.3",
+    "eslint-plugin-standard": "^3.0.1",
     "webpack": "^2.4.1"
   }
 }
