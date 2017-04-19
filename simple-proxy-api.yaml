@@ -1,6 +1,7 @@
 ---
 swagger: 2.0
 info:
+  # TODO RENAME THIS
   title: AwsServerlessExpressApi
 basePath: /prod
 schemes:
@@ -12,14 +13,15 @@ paths:
       - application/json
       responses:
         200:
-          description: 200 response
+          description: 200 response updated1
           schema:
             $ref: "#/definitions/Empty"
       x-amazon-apigateway-integration:
         responses:
           default:
             statusCode: 200
-        uri: arn:aws:apigateway:YOUR_AWS_REGION:lambda:path/2015-03-31/functions/arn:aws:lambda:YOUR_AWS_REGION:YOUR_ACCOUNT_ID:function:${stageVariables.ServerlessExpressLambdaFunctionName}/invocations
+        # TODO CHANGE THE STAGE VARIABLE NAME
+        uri: arn:aws:apigateway:%REGION%:lambda:path/2015-03-31/functions/arn:aws:lambda:%REGION%:%ACCOUNT_ID%:function:${stageVariables.ServerlessExpressLambdaFunctionName}/invocations
         passthroughBehavior: when_no_match
         httpMethod: POST
         type: aws_proxy
@@ -63,7 +65,7 @@ paths:
         type: string
       responses: {}
       x-amazon-apigateway-integration:
-        uri: arn:aws:apigateway:YOUR_AWS_REGION:lambda:path/2015-03-31/functions/arn:aws:lambda:YOUR_AWS_REGION:YOUR_ACCOUNT_ID:function:${stageVariables.ServerlessExpressLambdaFunctionName}/invocations
+        uri: arn:aws:apigateway:%REGION%:lambda:path/2015-03-31/functions/arn:aws:lambda:%REGION%:%ACCOUNT_ID%:function:${stageVariables.ServerlessExpressLambdaFunctionName}/invocations
         httpMethod: POST
         type: aws_proxy
     options:
