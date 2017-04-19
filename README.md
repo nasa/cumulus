@@ -6,22 +6,21 @@ TODO description of the API
 ## TODOs
 
 * test deploying it using the existing application - X
-  * Update simple-proxy-api.yaml to replace region and account id in some way.
-  * Maybe specified in a config file.
-*
+  * Update simple-proxy-api.yaml to replace region and account id in some way. - X
+* Move configuration stuff under config directory. - X
+  * cloudformation.yaml
+  * simple-proxy-api.yaml
+* Move deployment to a bash script. - X
+* Remove all the junk in npm script - X
+* Get rid of all the stuff in scripts - X
+* Make sure it can be run locally
 * upgrade node js version to 6.10
 * Update all the library versions
 * Integrate tools
   * babel
   * webpack
   * eslint
-* Move configuration stuff under config directory.
-  * cloudformation.yaml
-  * simple-proxy-api.yaml
-* What is vanilla-server.js for?
-* Move deployment to a bash script.
-* Remove all the junk in npm script
-* Get rid of all the stuff in scripts
+* Setup testing with mocha
 
 ## Project layout
 
