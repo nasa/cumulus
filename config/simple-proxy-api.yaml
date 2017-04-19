@@ -1,8 +1,7 @@
 ---
 swagger: 2.0
 info:
-  # TODO RENAME THIS
-  title: AwsServerlessExpressApi
+  title: GibsOpsApi
 basePath: /prod
 schemes:
 - https
@@ -20,8 +19,7 @@ paths:
         responses:
           default:
             statusCode: 200
-        # TODO CHANGE THE STAGE VARIABLE NAME
-        uri: arn:aws:apigateway:%REGION%:lambda:path/2015-03-31/functions/arn:aws:lambda:%REGION%:%ACCOUNT_ID%:function:${stageVariables.ServerlessExpressLambdaFunctionName}/invocations
+        uri: arn:aws:apigateway:%REGION%:lambda:path/2015-03-31/functions/arn:aws:lambda:%REGION%:%ACCOUNT_ID%:function:${stageVariables.ApiLambdaFunctionName}/invocations
         passthroughBehavior: when_no_match
         httpMethod: POST
         type: aws_proxy
@@ -65,7 +63,7 @@ paths:
         type: string
       responses: {}
       x-amazon-apigateway-integration:
-        uri: arn:aws:apigateway:%REGION%:lambda:path/2015-03-31/functions/arn:aws:lambda:%REGION%:%ACCOUNT_ID%:function:${stageVariables.ServerlessExpressLambdaFunctionName}/invocations
+        uri: arn:aws:apigateway:%REGION%:lambda:path/2015-03-31/functions/arn:aws:lambda:%REGION%:%ACCOUNT_ID%:function:${stageVariables.ApiLambdaFunctionName}/invocations
         httpMethod: POST
         type: aws_proxy
     options:
