@@ -12,13 +12,13 @@ TODO description of the API
 * Move deployment to a bash script. - X
 * Remove all the junk in npm script - X
 * Get rid of all the stuff in scripts - X
-* Make sure it can be run locally
-* upgrade node js version to 6.10
-* Update all the library versions
+* upgrade node js version to 6.10 - X
+* Update all the library versions - X
 * Integrate tools
-  * babel
-  * webpack
+  * babel - X
+  * webpack - X
   * eslint
+* Make sure it can be run locally
 * Setup testing with mocha
 
 ## Project layout
