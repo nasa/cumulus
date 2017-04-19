@@ -4,7 +4,6 @@ TODO description of the API
 
 ## TODOs
 
-* Make sure it can be run locally - X
 * Setup testing with mocha
 * eslint as part of testing
 
@@ -18,7 +17,15 @@ Run this to start the application. It will specify which port it's listening on.
 
 `npm start`
 
-You can also start it in debug mode:
+### Watching With Automatic Reload
+
+It can also be run in a way that will automatically recompile and restart the app on every change to the file system. This is good when actively developing the project.
+
+`npm run start-watch`
+
+### Debug Mode
+
+You can also start it in debug mode to debug problems using the Chrome dev tools
 
 `npm run start-debug`
 
@@ -35,10 +42,8 @@ Open up Chrome to that URL and then you can use Chrome dev tools to set break po
 
 TODO describe how to run tests
 
-## Build
-
-TODO describe how to build it
-
 ## Deploy
 
-TODO describe how to deploy
+Run the following command with the stack name to use. (Suggested name is your `first two initials + -gibs-api`)
+
+`bin/deploy.sh my-stack-name`
