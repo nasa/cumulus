@@ -55,8 +55,8 @@ Resources:
   GibsApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../
-      Handler: lambda.handler
+      CodeUri: ../dist/
+      Handler: bundle.handler
       MemorySize: 1024
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs6.10
