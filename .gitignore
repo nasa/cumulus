@@ -1,3 +1,4 @@
 lambda-invoke-response.json
 config/packaged-*.yaml
 /node_modules
+/dist

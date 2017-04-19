@@ -13,6 +13,13 @@
     "compression": "^1.6.2",
     "cors": "^2.8.1",
     "express": "^4.14.0",
-    "pug": "^2.0.0-beta11"
+    "pug": "^2.0.0-beta12"
+  },
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^6.4.1",
+    "babel-preset-env": "^1.4.0",
+    "copy-webpack-plugin": "^4.0.1",
+    "webpack": "^2.4.1"
   }
 }
