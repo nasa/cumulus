@@ -4,22 +4,9 @@ TODO description of the API
 
 ## TODOs
 
-* test deploying it using the existing application - X
-  * Update simple-proxy-api.yaml to replace region and account id in some way. - X
-* Move configuration stuff under config directory. - X
-  * cloudformation.yaml
-  * simple-proxy-api.yaml
-* Move deployment to a bash script. - X
-* Remove all the junk in npm script - X
-* Get rid of all the stuff in scripts - X
-* upgrade node js version to 6.10 - X
-* Update all the library versions - X
-* Integrate tools
-  * babel - X
-  * webpack - X
-  * eslint
-* Make sure it can be run locally
+* Make sure it can be run locally - X
 * Setup testing with mocha
+* eslint as part of testing
 
 ## Project layout
 
@@ -27,7 +14,22 @@ TODO describe the project layout
 
 ## Running Locally
 
-TODO describe how to run Locally
+Run this to start the application. It will specify which port it's listening on.
+
+`npm start`
+
+You can also start it in debug mode:
+
+`npm run start-debug`
+
+This will output a message like
+
+```
+To start debugging, open the following URL in Chrome:
+    chrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws=127.0.0.1:9229/bae74702-93c5-44dd-ab30-fe29a9bddbb9
+```
+
+Open up Chrome to that URL and then you can use Chrome dev tools to set break points
 
 ## Running Tests
 
