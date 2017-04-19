@@ -59,7 +59,7 @@ Resources:
       Handler: lambda.handler
       MemorySize: 1024
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: nodejs4.3
+      Runtime: nodejs6.10
       Timeout: 30
       Events:
         ProxyApiRoot:
@@ -109,3 +109,5 @@ Outputs:
         - ".execute-api."
         - !Ref AWS::Region
         - ".amazonaws.com/prod/"
+    Export:
+      Name: ApiUrl

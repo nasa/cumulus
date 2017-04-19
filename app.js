@@ -13,14 +13,16 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(awsServerlessExpressMiddleware.eventContext())
 
+// Renders a view describing the API.
 app.get('/', (req, res) => {
     res.render('index', {
       apiUrl: `https://${req.apiGateway.event.headers.Host}/${req.apiGateway.event.requestContext.stage}`
     })
 })
 
-app.get('/sam', (req, res) => {
-    res.sendFile(`${__dirname}/sam-logo.png`)
+// Responds with the health of the application.
+app.get('/health', (req, res) => {
+  res.json({"ok?": true})
 })
 
 app.get('/users', (req, res) => {
