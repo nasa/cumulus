@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Serverless Express Application/API powered by API Gateway and Lambda
+Description: Describes an API for controlling the operations of GIBS.
 Resources:
   ApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -11,7 +11,7 @@ Resources:
       Variables:
         region: !Ref AWS::Region
         accountId: !Ref AWS::AccountId
-        ServerlessExpressLambdaFunctionName: !Ref AwsServerlessExpressFunction
+        ApiLambdaFunctionName: !Ref GibsApiFunction
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -40,7 +40,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt AwsServerlessExpressFunction.Arn
+      FunctionName: !GetAtt GibsApiFunction.Arn
       Principal: apigateway.amazonaws.com
       SourceArn: !Join
         - ''
@@ -52,10 +52,10 @@ Resources:
           - !Ref ApiGatewayApi
           - "/*/*"
 
-  AwsServerlessExpressFunction:
+  GibsApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
+      CodeUri: ../
       Handler: lambda.handler
       MemorySize: 1024
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -85,7 +85,7 @@ Outputs:
         - ".console.aws.amazon.com/lambda/home?region="
         - !Ref AWS::Region
         - "#/functions/"
-        - !Ref AwsServerlessExpressFunction
+        - !Ref GibsApiFunction
 
   ApiGatewayApiConsoleUrl:
     Description: Console URL for the API Gateway API's Stage.
