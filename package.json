@@ -4,8 +4,10 @@
   "description": "Implements the API backing the GIBS Ops Dashboard",
   "main": "lambda.js",
   "scripts": {
-    "start":"node app/local.js",
-    "start-debug":"node --inspect app/local.js"
+    "build": "webpack --config webpack.config.js",
+    "start": "npm run build && node dist/local.js",
+    "start-debug": "npm run build && node --inspect dist/local.js",
+    "start-watch": "bin/parallel.sh 'webpack --config webpack.config.js  -w' 'nodemon dist/local.js -w dist'"
   },
   "dependencies": {
     "aws-serverless-express": "^2.2.0",
@@ -30,6 +32,7 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-react": "^6.10.3",
     "eslint-plugin-standard": "^3.0.1",
+    "nodemon": "^1.11.0",
     "webpack": "^2.4.1"
   }
 }

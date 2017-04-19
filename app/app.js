@@ -31,6 +31,7 @@ app.get('/', (req, res) => {
 
 // Responds with the health of the application.
 app.get('/health', (req, res) => {
+  // res.json({ 'ok?': true, foo: true });
   res.json({ 'ok?': true });
 });
 
