@@ -6,10 +6,12 @@ Resources:
   ApiGatewayApi:
     Type: AWS::Serverless::Api
     Properties:
-      DefinitionUri: ./simple-proxy-api.yaml
+      DefinitionUri: ./packaged-simple-proxy-api.yaml
       StageName: prod
       Variables:
-        ServerlessExpressLambdaFunctionName: !Ref YOUR_SERVERLESS_EXPRESS_LAMBDA_FUNCTION_NAME
+        region: !Ref AWS::Region
+        accountId: !Ref AWS::AccountId
+        ServerlessExpressLambdaFunctionName: !Ref AwsServerlessExpressFunction
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -38,7 +40,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt YOUR_SERVERLESS_EXPRESS_LAMBDA_FUNCTION_NAME.Arn
+      FunctionName: !GetAtt AwsServerlessExpressFunction.Arn
       Principal: apigateway.amazonaws.com
       SourceArn: !Join
         - ''
@@ -50,7 +52,7 @@ Resources:
           - !Ref ApiGatewayApi
           - "/*/*"
 
-  YOUR_SERVERLESS_EXPRESS_LAMBDA_FUNCTION_NAME:
+  AwsServerlessExpressFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./
@@ -83,7 +85,7 @@ Outputs:
         - ".console.aws.amazon.com/lambda/home?region="
         - !Ref AWS::Region
         - "#/functions/"
-        - !Ref YOUR_SERVERLESS_EXPRESS_LAMBDA_FUNCTION_NAME
+        - !Ref AwsServerlessExpressFunction
 
   ApiGatewayApiConsoleUrl:
     Description: Console URL for the API Gateway API's Stage.
