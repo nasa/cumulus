@@ -14,6 +14,7 @@
     "spaced-comment": "off",
     "prefer-template": "warn",
     "no-underscore-dangle": "off",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "comma-dangle": ["warn", "never"],
     "strict": "off",
     "object-shorthand": "off",
