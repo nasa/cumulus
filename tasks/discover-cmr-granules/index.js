@@ -13,13 +13,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     const since = new Date(Date.now() - parseDuration(this.config.since)).toISOString();
     const conceptId = this.event.meta.concept_id;
     const granules = await this.cmrGranules(this.config.root, since, conceptId);
-    const events = this.buildEvents(granules, this.config.addMeta, this.event.meta);
-
-    const result = [];
-    for (const event of events) {
-      result.push(Object.assign({}, this.event, event));
-    }
-    return result;
+    return this.buildEvents(granules, this.config.granule_meta, this.event.meta);
   }
 
   async cmrGranules(root, since, id) {
@@ -55,8 +49,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
         transaction[key] = pattern.format({ granule: granule });
       }
       return {
-        meta: transaction,
-        transaction: transaction
+        meta: transaction
       };
     });
   }
@@ -70,4 +63,6 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 // node discover-cmr-granules local
 
 const local = require('gitc-common/local-helpers');
-local.setupLocalRun(module.exports.handler, local.collectionEventInput('MOPITT_DCOSMR_LL_D_STD'));
+const localTaskName = 'DiscoverCmrGranules';
+local.setupLocalRun(module.exports.handler,
+                    local.collectionEventInput('MOPITT_DCOSMR_LL_D_STD', localTaskName));
