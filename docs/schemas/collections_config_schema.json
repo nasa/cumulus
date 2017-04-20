@@ -49,6 +49,11 @@
           "type": "string",
           "minLength": 1
         },
+        "workflow": {
+          "description": "The workflow to trigger for ingest",
+          "type": "string",
+          "minLength": 1
+        },
         "trigger": {
           "$ref": "#/definitions/PeriodicTriggerType"
         },
@@ -56,11 +61,11 @@
           "description": "Defines meta-configuration information about the particular collection being processed. These can contain any data that is specific to the collection.",
           "type": "object"
         },
-        "task_config": {
-          "$ref": "ingest_common_schema.json#/definitions/TaskConfigType"
+        "workflow_config_template": {
+          "$ref": "ingest_common_schema.json#/definitions/WorkflowConfigTemplateType"
         }
       },
-      "required": ["id", "provider_id", "task_config"],
+      "required": ["id", "provider_id", "workflow_config_template"],
       "patternProperties": {
         "^_.*$": {
           "description": "Any fields starting with _ are ignored."
@@ -75,15 +80,11 @@
         "type": {
           "description":"Defines the type of the trigger",
           "type": "string",
-          "enum": ["periodic"]
+          "enum": ["interval"]
         },
         "period_s": {
           "description": "Defines how frequently in seconds this collection is triggered to run.",
           "$ref": "#/definitions/positiveInteger"
-        },
-        "workflow": {
-          "description": "The name of a workflow to execute when the trigger fires.",
-          "type": "string"
         }
       },
       "patternProperties": {

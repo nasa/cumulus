@@ -80,7 +80,6 @@ module.exports = class DiscoverHttpTilesTask extends Task {
         const pattern = new FieldPattern(opts[key], fieldValues);
         meta[key] = pattern.format({ match: group[0].fields });
       }
-      log.info('asdf', meta);
       return {
         meta: meta,
         payload: group.map((resource) => _.omit(resource, ['fields']))
@@ -100,8 +99,8 @@ const localTaskName = 'DiscoverHttpTiles';
 local.setupLocalRun(
   module.exports.handler,
   local.collectionEventInput('VNGCR_SQD_C1', localTaskName, (input) => {
-    const config = input.workflow_config[localTaskName];
+    const config = input.workflow_config_template[localTaskName];
     config.root += 'VNGCR_SQD_C1_r00c01/';
     delete config.connections;
-    return config;
+    return null;
   }));

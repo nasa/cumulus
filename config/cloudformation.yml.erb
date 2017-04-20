@@ -197,18 +197,11 @@ Resources:
             Resource:
             - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
 
-# TODO: This ought to be done here but can't now due to parent deployment
   PrivateResources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub ${StackName}-private
-#
-#  PublicResources:
-#    Type: AWS::S3::Bucket
-#    DeletionPolicy: Retain
-#    Properties:
-#      BucketName: !Sub ${StackName}-public
 
 <% tasks.each do |task, description, memory, ecsDesiredCount| %>
   <% caps_name = task.split('-').map(&:capitalize).join() %>
@@ -314,7 +307,7 @@ Resources:
           {
             "resources": {
               "stack": "${AWS::StackName}",
-              "sfn_prefix": "<%= alphanum_stack_prefix %>",
+              "state_machine_prefix": "<%= alphanum_stack_prefix %>",
               "buckets": {
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",

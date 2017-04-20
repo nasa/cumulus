@@ -13,10 +13,10 @@ _templates:
       workflow: !GitcResource DiscoverVIIRS
 
       trigger:
-        type: timer
+        type: interval
         period_s: 900
 
-      workflow_config:
+      workflow_config_template:
         DiscoverHttpTiles:
           type: apache-index
           connections: 10
@@ -47,7 +47,7 @@ _templates:
             key_prefix: 'sources/EPSG{meta.epsg}/{meta.key}'
 
         MRFGen:
-          date: '{meta.date}'
+          date: '{meta.date.year}{meta.date.month}{meta.date.day}'
           epsg: '{meta.epsg}'
           zoom: '{meta.zoom}'
           mrfgen:
@@ -68,10 +68,10 @@ _templates:
       workflow: !GitcResource DiscoverMOPITT
 
       trigger:
-        type: timer
+        type: interval
         period_s: 900
 
-      step_config:
+      workflow_config_template:
         DiscoverCmrGranules:
           root: 'https://cmr.earthdata.nasa.gov'
           since: 5d
@@ -97,6 +97,7 @@ _templates:
             key_prefix: 'sources/EPSG{meta.epsg}/{meta.key}'
 
         MRFGen:
+          date: '{meta.date.year}{meta.date.month}{meta.date.day}'
           files:
             - Bucket: '{resources.buckets.config}'
               Key: 'ingest/colormaps/{meta.colormap}'

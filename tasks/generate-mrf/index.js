@@ -23,16 +23,9 @@ module.exports = class GenerateMrfTask extends Task {
   async runExclusive() {
     const event = this.event;
 
-    log.info(this.config);
-    log.info(this.event.meta);
-
-    //log.info(JSON.stringify(event));
-
     if (event.payload.length === 0) {
       log.info('No files to process');
-      return this.complete(Object.assign({}, event, {
-        files: []
-      }));
+      return [];
     }
     const tempDir = util.mkdtempSync(this.constructor.name);
 
@@ -63,8 +56,8 @@ module.exports = class GenerateMrfTask extends Task {
         paths
       );
 
-      const destBucket = this.config.output.Bucket;
-      const destKey = this.config.output.Key;
+      const destBucket = this.config.output.bucket;
+      const destKey = this.config.output.key_prefix;
 
       log.info("Writing mrfgen config", mrfConfig);
       fs.writeFileSync(paths.mrfgenConfig, mrfConfig, {

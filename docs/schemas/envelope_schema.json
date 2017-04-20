@@ -14,9 +14,9 @@
       "description": "Provider configuration information taken from the 'providers' of collection configuration.",
       "$ref": "ingest_common_schema.json#/definitions/ProviderType"
     },
-    "task_config": {
-      "description": "Task configuration taken from the task_config element of the collection configuration.",
-      "$ref": "ingest_common_schema.json#/definitions/TaskConfigType"
+    "workflow_config_template": {
+      "description": "Task configuration templates taken from the workflow_config_template element of the collection configuration.",
+      "$ref": "ingest_common_schema.json#/definitions/WorkflowConfigTemplateType"
     },
     "resources": {
       "$ref": "#/definitions/ResourcesType"
@@ -34,7 +34,7 @@
     }
   },
   "additionalProperties": false,
-  "required": ["meta", "provider", "task_config", "resources"],
+  "required": ["meta", "provider", "workflow_config_template", "resources"],
   "definitions": {
     "IngestMetaType": {
       "description": "Fields set by ingest about the current ingest run.",
@@ -45,10 +45,26 @@
           "format": "date-time",
           "type": "string"
         },
+        "id": {
+          "description": "Unique ID identifying the ingest",
+          "type": "string"
+        },
+        "task": {
+          "description": "(Non-Step-Function only) The task to run",
+          "type": "string"
+        },
+        "state_machine": {
+          "description": "(Step-Function only) The ARN of the state machine being run",
+          "type": "string"
+        },
+        "execution_name": {
+          "description": "(Step-Function only) The name of the execution being run",
+          "type": "string"
+        },
         "event_source": {
           "description": "A string describing the source that caused ingest to start.",
           "type": "string",
-          "enum": ["sfn", "stdin"]
+          "enum": ["sfn", "stdin", "local"]
         }
       },
       "patternProperties": {
@@ -64,6 +80,11 @@
       "properties": {
         "stack": {
           "description": "The name of the Task's CloudFormation Task, useful as a prefix",
+          "type": "string",
+          "minLength": 1
+        },
+        "state_machine_prefix": {
+          "description": "The prefix applied to all state machine names",
           "type": "string",
           "minLength": 1
         },

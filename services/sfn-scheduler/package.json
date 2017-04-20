@@ -16,9 +16,9 @@
   },
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
     "lodash": "^4.17.4",
     "uuid": "^3.0.1"
-  }
+  },
+  "devDependencies": {}
 }

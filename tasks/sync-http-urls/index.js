@@ -8,6 +8,7 @@ const Task = require('gitc-common/task');
 const aws = require('gitc-common/aws');
 const concurrency = require('gitc-common/concurrency');
 const local = require('gitc-common/local-helpers');
+const errors = require('gitc-common/errors');
 
 
 exports.TIMEOUT_TIME_MS = 20 * 1000;
@@ -91,7 +92,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
       }
     }
     if (!isComplete) {
-      throw new Error('Incomplete');
+      throw new errors.IncompleteError();
     }
     return result;
   }

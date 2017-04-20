@@ -10,17 +10,13 @@
     "prepublish": "./bin/npm/prepublish",
     "lock": "./bin/npm/lock",
     "clean": "./bin/npm/clean",
-
-    "//": "Generates HTML from markdown documentation.",
-    "generate-docs": "./node_modules/.bin/generate-md --layout github --input docs/ingest_workflows_architecture.md --output docs",
-
-    "//": "Starts showing the documentation via a local http server and opens a browser to it.",
-    "serve-docs": "./node_modules/.bin/http-server -c-1 docs -o",
-
-    "//": ["Allows validation of a collection configuration file",
+    "//": [
+      "Allows validation of a collection configuration file",
       "Execute like `npm run-script validate-collection-json -- docs/schemas/example-data/example-collection.json`"
     ],
-    "validate-collection-json": "ajv validate -s docs/schemas/collections_config_schema.json -r docs/schemas/ingest_common_schema.json -d"
+    "generate-docs": "./node_modules/.bin/generate-md --layout github --input docs/ingest_workflows_architecture.md --output docs",
+    "serve-docs": "./node_modules/.bin/http-server -c-1 docs -o",
+    "validate-collection-json": "sed 's/!GitcResource//g' config/collections.yml | js-yaml > tmp_collection.json && ajv validate -s docs/schemas/collections_config_schema.json -r docs/schemas/ingest_common_schema.json -d tmp_collection.json; rm tmp_collection.json"
   },
   "keywords": [
     "GIBS"
@@ -36,6 +32,8 @@
     "glob": "^7.0.5"
   },
   "devDependencies": {
+    "ajv": "^5.0.4-beta.3",
+    "ajv-cli": "^2.0.0",
     "aws-sdk": "^2.4.9",
     "aws-sdk-mock": "^1.3.0",
     "babel-core": "^6.13.2",

@@ -26,19 +26,18 @@ module.exports = class TriggerIngestTask extends Task {
       const key = (e.meta && e.meta.key) || 'Unknown';
       const name = `${key.replace(/\W+/g, '-')}-${id}`;
       log.info(`Starting ingest of ${name}`);
-      const payload = { Bucket: bucket, Key: [key, id].join('/') };
+      const payload = { Bucket: bucket, Key: ['TriggerIngest', key].join('/') };
 
       const fullEventData = Object.assign({}, this.event, e);
       fullEventData.meta = Object.assign({}, this.event.meta, e.meta);
 
-      const eventData = Object.assign({}, fullEventData, { payload: payload });
-
-      const originalIngestMeta = eventData.ingest_meta;
+      const originalIngestMeta = fullEventData.ingest_meta;
       const newIngestMeta = { state_machine: stateMachine, execution_name: name };
-      eventData.ingest_meta = Object.assign({}, originalIngestMeta, newIngestMeta);
+      fullEventData.ingest_meta = Object.assign({}, originalIngestMeta, newIngestMeta);
 
-      const s3Params = Object.assign({}, payload, { Body: JSON.stringify(eventData.payload) });
+      const s3Params = Object.assign({}, payload, { Body: JSON.stringify(fullEventData.payload) });
 
+      const sfnEventData = Object.assign({}, fullEventData, { payload: payload });
       if (!isSfnExecution) {
         log.warn('inline-result: ', JSON.stringify(fullEventData));
       }
@@ -47,7 +46,7 @@ module.exports = class TriggerIngestTask extends Task {
       }
       executions.push({
         stateMachineArn: stateMachine,
-        input: JSON.stringify(eventData),
+        input: JSON.stringify(sfnEventData),
         name: name
       });
     }

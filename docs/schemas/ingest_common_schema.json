@@ -26,8 +26,8 @@
       },
       "additionalProperties": false
     },
-    "TaskConfigType": {
-      "title": "Task Config",
+    "WorkflowConfigTemplateType": {
+      "title": "Workflow Config Template",
       "description": "Defines configuration for tasks that are part of a workflow as a map of task name to a JSON object containing configuration settings.",
       "type": "object",
       "minProperties": 1,

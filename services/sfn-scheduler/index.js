@@ -12,7 +12,7 @@ const uuid = require('uuid');
  * @param {number} periodMs - The period (ms) at which to run the given fn
  * @param {number} offsetMs - The time offset (ms) at which to run the first invocation
  */
-const doPeriodically = async (periodMs, offsetMs, fn) => {
+const doPeriodically = (periodMs, offsetMs, fn) => {
   setTimeout(() => {
     setInterval(fn, periodMs);
     fn();
@@ -34,7 +34,7 @@ const triggerIngest = async (resources, provider, collection) => {
     const id = uuid.v4();
     const executionName = `${collection.id}-${id}`;
     const eventData = {
-      workflow_config: collection.workflow_config,
+      workflow_config_template: collection.workflow_config_template,
       resources: resources,
       provider: provider,
       ingest_meta: {
@@ -91,6 +91,17 @@ const resourceToArn = (resource) => {
   return arnFn(resource, region, account);
 };
 
+/**
+ * Returns a function that takes a logical resource key and uses the passed lookup map
+ * and prefix to resolve that logical resource id as an AWS resource.  Lookups support one
+ * property, '.Arn', e.g. MyLambdaFunction.Arn. If specified, the resolver will attempt
+ * to return the ARN of the specified resource, otherwise it will return the PhysicalResourceId
+ * @param cfResourcesById - A mapping of logical ids to CloudFormation resources as returned by
+ *                          CloudFormation::DescribeStackResources
+ * @param prefix - A prefix to prepend to the given name if no resource matches the name. This
+ *                 is a hack to allow us to prefix state machines with the stack name for IAM
+ * @return The resolver function described above
+ */
 const resolveResource = (cfResourcesById, prefix) =>
   (key) => {
     const [name, fn] = key.split('.');
@@ -98,7 +109,7 @@ const resolveResource = (cfResourcesById, prefix) =>
     if (!resource) throw new Error(`Resource not found: ${key}`);
     if (fn && ['Arn'].indexOf(fn) === -1) throw new Error(`Function not supported: ${key}`);
     const result = fn === 'Arn' ? resourceToArn(resource) : resource.PhysicalResourceId;
-    log.info(`${key} -> ${result}`);
+    log.info(`Resolved Resource: ${key} -> ${result}`);
     return result;
   };
 
@@ -110,7 +121,7 @@ module.exports.handler = async (invocation) => {
     const cfParams = { StackName: invocation.resources.stack };
     const cfResources = await aws.cf().describeStackResources(cfParams).promise();
     const cfResourcesById = {};
-    const prefix = invocation.resources.sfn_prefix;
+    const prefix = invocation.resources.state_machine_prefix;
 
     for (const cfResource of cfResources.StackResources) {
       cfResourcesById[cfResource.LogicalResourceId] = cfResource;
@@ -122,9 +133,6 @@ module.exports.handler = async (invocation) => {
 
     // Update the keys under the workflows to map identifiers (Arns) to workflow
     config.workflows = _.mapKeys(config.workflows, (v, k) => resolver(k));
-
-    log.info('RESOURCES', JSON.stringify(cfResourcesById));
-    log.info('CONFIG', JSON.stringify(config));
 
     const collectionsByProviderId = _.groupBy(config.collections, (c) => c.provider_id);
 
@@ -139,7 +147,7 @@ module.exports.handler = async (invocation) => {
 
       for (const collection of collections) {
         const trigger = collection.trigger;
-        if (trigger && trigger.type === 'timer') {
+        if (trigger && trigger.type === 'interval') {
           const periodMs = 1000 * trigger.period_s;
           log.info(`Scheduling ${collection.id}.` +
                    `period=${periodMs}ms, offset=${offsetMs % periodMs}ms`);
@@ -161,6 +169,8 @@ module.exports.handler = async (invocation) => {
 const localHelpers = require('gitc-common/local-helpers');
 const fs = require('fs');
 if (localHelpers.isLocal) {
-  module.exports.handler({ resources: { sfn_prefix: 'gitcxpqxsfnxx', stack: 'gitc-pq-sfn' },
+  const stack = process.argv[3];
+  const prefix = `${stack.replace(/\W/, 'x')}xx`;
+  module.exports.handler({ resources: { state_machine_prefix: prefix, stack: stack },
                            payload: fs.readFileSync('../config/collections.yml').toString() });
 }
