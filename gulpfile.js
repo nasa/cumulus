@@ -168,6 +168,14 @@ gulp.task('build', ['vendorScripts', 'javascript'], function () {
   });
 });
 
+// This is a helper task which can be added to deploy source maps if desired.
+// Add it to the start call in the task above.
+gulp.task('sourcemaps', function () {
+  return gulp.src('.tmp/scripts/*.map', { dot: true })
+    .pipe(gulp.dest('dist/scripts'));
+});
+
+
 gulp.task('styles', function () {
   var assets = process.env.GIBS_ENV === 'development' ? '/graphics'
     : process.env.GIBS_ENV === 'staging' ? '/dashboard/dev/graphics' : '/dashboard/graphics';
@@ -206,7 +214,7 @@ gulp.task('styles', function () {
 gulp.task('html', ['styles'], function () {
   return gulp.src('app/*.html')
     .pipe($.useref({searchPath: ['.tmp', 'app', '.']}))
-    .pipe($.if('*.js', $.uglify()))
+    .pipe($.if('*.js', $.uglify())) // Comment this out to see deployed source maps.
     .pipe($.if('*.css', $.csso()))
     .pipe($.if(/\.(css|js)$/, rev()))
     .pipe(revReplace())
@@ -244,3 +252,4 @@ gulp.task('extras', function () {
     dot: true
   }).pipe(gulp.dest('dist'));
 });
+

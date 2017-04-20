@@ -1,6 +1,6 @@
 config/cloudformation-output.yml
+app/scripts/config/production-generated.js
 dist/
-app/scripts/config/local.js
 node_modules
 .tmp
 **/npm-debug.log

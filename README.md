@@ -2,15 +2,11 @@
 
 A dashboard for operating GIBS running in AWS.
 
-## Build
+## Project Layout
 
-```Bash
-nvm use
-npm install
-npm run production
-```
+TODO describe the project layout.
 
-The code is compiled into static assets in `dist`.
+TODO describe how to add a new page and API operation
 
 ## Running Locally
 
@@ -24,6 +20,13 @@ After running this the website will load in your browser. The website will autom
 
 ## Deploy
 
-Run the following command with the stack name to use. (Suggested name is your first two initials + `-gibs-dashboard`)
+Deploying requires two stack names.
 
-`bin/deploy.sh my-stack-name`
+1. Dashboard stack name - The name of the dashboard client itself.
+2. GIBs Ops API stack name - The name of the stack used for deploying the GIBS Ops API. This is used to determine and configure the URL to use when talking to the API.
+
+It also requires that the gibs-ops-api is checked out in a local directory.
+
+Run the following with both specified stack names.
+
+`bin/deploy.sh xx-gibs-dashboard xx-gibs-api`
