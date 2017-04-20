@@ -4,8 +4,9 @@
 
 const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
-const app = require('./app');
-app.use(awsServerlessExpressMiddleware.eventContext());
+const app = require('./app')((expressApp) => {
+  expressApp.use(awsServerlessExpressMiddleware.eventContext());
+});
 
 
 // NOTE: If you get ERR_CONTENT_DECODING_FAILED in your browser, this is likely
