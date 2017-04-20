@@ -1,5 +1,7 @@
 'use strict';
 
+/*eslint no-console: ["error", { allow: ["warn", "error"] }] */
+
 // The main application where routes are configured.
 
 const express = require('express');
@@ -54,5 +56,12 @@ module.exports = (cb = null) => {
 
     return res.json(user);
   });
+
+  // Add an error handler last
+  app.use((err, req, res, _next) => {
+    console.error(err.stack);
+    res.status(500).json({ errors: ['An internal error has occured.'] });
+  });
+
   return app;
 };
