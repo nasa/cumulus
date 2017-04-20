@@ -15,9 +15,7 @@
     "body-parser": "^1.17.1",
     "compression": "^1.6.2",
     "cors": "^2.8.3",
-    "express": "^4.15.2",
-    "pug": "^2.0.0-beta12",
-    "pug-loader": "^2.3.0"
+    "express": "^4.15.2"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
@@ -34,6 +32,8 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-react": "^6.10.3",
     "eslint-plugin-standard": "^3.0.1",
+    "html-loader": "^0.4.5",
+    "markdown-loader": "^2.0.0",
     "mocha": "^3.2.0",
     "mocha-webpack": "^0.7.0",
     "nodemon": "^1.11.0",

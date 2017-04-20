@@ -2,7 +2,7 @@
 
 // Allows running the app locally.
 
-const app = require('./app');
+const app = require('./app')();
 app.listen(3000);
 
 /*eslint no-console: ["error", { allow: ["log"] }]*/

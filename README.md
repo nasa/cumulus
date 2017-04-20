@@ -6,6 +6,9 @@ TODO description of the API
 
 * Setup testing with mocha
 * eslint as part of testing
+* Change documentation rendering to markdown.
+* Add documentation page verification to deployment
+* Add error handler to express to prevent stack traces on API.
 
 ## Project layout
 
