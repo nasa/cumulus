@@ -15,11 +15,16 @@ module.exports = {
     library: '[name]',
     libraryTarget: 'commonjs2'
   },
-  plugins: [
-    new CopyWebpackPlugin([
-      { from: 'app/views', to: 'views' }]
-    )
-  ],
+  plugins: [new CopyWebpackPlugin([
+    {
+      from: 'app/views',
+      to: 'views'
+    }, {
+      from: 'public',
+      to: 'public'
+    }
+  ])],
+  devtool: 'source-map',
   module: {
     rules: [
       {
@@ -31,6 +36,28 @@ module.exports = {
             cacheDirectory: true
           }
         }
+      }, {
+        test: /\.html$/,
+        use: [
+          {
+            loader: 'html-loader',
+            options: {
+              interpolate: true
+            }
+          }
+        ]
+      }, {
+        test: /\.md$/,
+        use: [
+          {
+            loader: 'html-loader'
+          }, {
+            loader: 'markdown-loader',
+            options: {
+              /* your options here */
+            }
+          }
+        ]
       }
     ]
   }
