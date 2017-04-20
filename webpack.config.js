@@ -17,7 +17,7 @@ module.exports = {
   },
   plugins: [
     new CopyWebpackPlugin([
-      { from: 'views', to: 'views' }]
+      { from: 'app/views', to: 'views' }]
     )
   ],
   module: {
