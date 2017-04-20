@@ -7,6 +7,7 @@
     "build": "webpack --config webpack.config.js",
     "start": "npm run build && node dist/local.js",
     "start-debug": "npm run build && node --inspect dist/local.js",
+    "start-debug-brk": "npm run build && node --inspect-brk dist/local.js",
     "start-watch": "bin/parallel.sh 'webpack --config webpack.config.js  -w' 'nodemon dist/local.js -w dist'"
   },
   "dependencies": {
@@ -15,7 +16,8 @@
     "compression": "^1.6.2",
     "cors": "^2.8.3",
     "express": "^4.15.2",
-    "pug": "^2.0.0-beta12"
+    "pug": "^2.0.0-beta12",
+    "pug-loader": "^2.3.0"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
@@ -32,6 +34,8 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-react": "^6.10.3",
     "eslint-plugin-standard": "^3.0.1",
+    "mocha": "^3.2.0",
+    "mocha-webpack": "^0.7.0",
     "nodemon": "^1.11.0",
     "webpack": "^2.4.1"
   }
