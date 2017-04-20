@@ -100,7 +100,7 @@ const localTaskName = 'DiscoverHttpTiles';
 local.setupLocalRun(
   module.exports.handler,
   local.collectionEventInput('VNGCR_SQD_C1', localTaskName, (input) => {
-    const config = input.task_config[localTaskName];
+    const config = input.workflow_config[localTaskName];
     config.root += 'VNGCR_SQD_C1_r00c01/';
     delete config.connections;
     return config;

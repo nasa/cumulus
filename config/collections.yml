@@ -10,13 +10,13 @@ _templates:
     - &VIIRS
       provider_id: MODAPS
 
-      workflow: discover_VIIRS
+      workflow: !GitcResource DiscoverVIIRS
 
       trigger:
         type: timer
         period_s: 900
 
-      task_config:
+      workflow_config:
         DiscoverHttpTiles:
           type: apache-index
           connections: 10
@@ -38,7 +38,7 @@ _templates:
           group_by: 'VIIRS/{meta.collection}/{match.jday}'
 
         TriggerIngest:
-          workflow: ingest_VIIRS
+          workflow: !GitcResource IngestVIIRS
 
         SyncHttpUrls:
           connections: 5
@@ -65,10 +65,11 @@ _templates:
     - &MOPITT
       provider_id: LARC
 
+      workflow: !GitcResource DiscoverMOPITT
+
       trigger:
         type: timer
         period_s: 900
-        entry: discover_MOPITT
 
       step_config:
         DiscoverCmrGranules:
@@ -87,7 +88,7 @@ _templates:
           ignoredErrorStatuses: '500'
 
         TriggerIngest:
-          workflow: ingest_MOPITT
+          workflow: !GitcResource IngestMOPITT
 
         SyncHttpUrls:
           connections: 5
@@ -120,27 +121,27 @@ _templates:
 
 
 workflows:
-  discover_VIIRS:
+  DiscoverVIIRS:
     Comment: VIIRS Discovery
     StartAt: DiscoverHttpTiles
     States:
       DiscoverHttpTiles:
         Type: Task
-        Resource: !GitcResource DiscoverHttpTilesTask
+        Resource: !GitcResource DiscoverHttpTilesFn.Arn
         Next: TriggerIngest
 
       TriggerIngest:
         Type: Task
-        Resource: !GitcResource TriggerIngestTask
+        Resource: !GitcResource TriggerIngestFn.Arn
         End: true
 
-  ingest_VIIRS:
+  IngestVIIRS:
     Comment: VIIRS Ingest
     StartAt: SyncHttpUrls
     States:
       SyncHttpUrls:
         Type: Task
-        Resource: !GitcResource SyncHttpUrlsTask
+        Resource: !GitcResource SyncHttpUrlsFn.Arn
         Next: ChooseSyncContinuation
       ChooseSyncContinuation:
         Type: Choice
@@ -160,69 +161,63 @@ workflows:
         Cause: Unhandled Sync Error
       MRFGen:
         Type: Task
-        Resource: !GitcResource GenerateMrfTask
+        Resource: !GitcResource GenerateMrfActivity
         End: true
-      MethodNotFound:
-        Type: Fail
-        Cause: Ingest Method Not Found
       NoUpdates:
         Type: Pass
         Result: No Updates Necessary
         End: true
 
-    discover_MOPITT:
-      Comment: MOPITT Discovery
-      StartAt: DiscoverCmrGranules
-      States:
-        DiscoverCmrGranules:
-          Type: Task
-          Resource: !GitcResource DiscoverCmrGranulesTask
-          Next: TriggerIngest
+  DiscoverMOPITT:
+    Comment: MOPITT Discovery
+    StartAt: DiscoverCmrGranules
+    States:
+      DiscoverCmrGranules:
+        Type: Task
+        Resource: !GitcResource DiscoverCmrGranulesFn.Arn
+        Next: TriggerIngest
 
-        TriggerIngest:
-          Type: Task
-          Resource: !GitcResource TriggerIngestTask
-          End: true
+      TriggerIngest:
+        Type: Task
+        Resource: !GitcResource TriggerIngestFn.Arn
+        End: true
 
-    ingest_MOPITT:
-      Comment: MOPITT Ingest
-      StartAt: CreateWmsUrls
-      States:
-        CreateWmsUrls:
-          Type: Task
-          Resource: !GitcResource SyncWmsTask
-          Next: SyncHttpUrls
-        SyncHttpUrls:
-          Type: Task
-          Resource: !GitcResource SyncHttpUrlsTask
-          Next: ChooseSyncContinuation
-        ChooseSyncContinuation:
-          Type: Choice
-          Choices:
-            - Variable: $.exception
-              StringEquals: NotNeeded
-              Next: NoUpdates
-            - Variable: $.exception
-              StringEquals: Incomplete
-              Next: SyncHttpUrls
-            - Variable: $.exception
-              StringEquals: None
-              Next: MRFGen
-          Default: UnhandledSyncError
-        UnhandledSyncError:
-          Type: Fail
-          Cause: Unhandled Sync Error
-        MRFGen:
-          Type: Task
-          Resource: !GitcResource GenerateMrfTask
-          End: true
-        MethodNotFound:
-          Type: Fail
-          Cause: Ingest Method Not Found
-        NoUpdates:
-          Type: Pass
-          Result: No Updates Necessary
-          End: true
+  IngestMOPITT:
+    Comment: MOPITT Ingest
+    StartAt: CreateWmsUrls
+    States:
+      CreateWmsUrls:
+        Type: Task
+        Resource: !GitcResource SyncWmsFn.Arn
+        Next: SyncHttpUrls
+      SyncHttpUrls:
+        Type: Task
+        Resource: !GitcResource SyncHttpUrlsFn.Arn
+        Next: ChooseSyncContinuation
+      ChooseSyncContinuation:
+        Type: Choice
+        Choices:
+          - Variable: $.exception
+            StringEquals: NotNeeded
+            Next: NoUpdates
+          - Variable: $.exception
+            StringEquals: Incomplete
+            Next: SyncHttpUrls
+          - Variable: $.exception
+            StringEquals: None
+            Next: MRFGen
+        Default: UnhandledSyncError
+      UnhandledSyncError:
+        Type: Fail
+        Cause: Unhandled Sync Error
+      MRFGen:
+        Type: Task
+        Resource: !GitcResource GenerateMrfActivity
+        End: true
+      NoUpdates:
+        Type: Pass
+        Result: No Updates Necessary
+        End: true
 
 
 collections:
@@ -261,12 +256,3 @@ collections:
       wms:
         layer: MOP03J.006/RetrievedCOSurfaceMixingRatioDay
         style: se_mopitt_threshold_retrievedcosurfacemixingratioday_mop03j
-
-# (Envelope)
-  # task_config:
-  # resources:
-  # provider: (new)
-  # [ingest_]meta:
-  # meta:
-  # exception:
-  # payload: (optional)

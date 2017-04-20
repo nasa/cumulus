@@ -15,33 +15,27 @@ module.exports = class TriggerIngestTask extends Task {
       log.warn('TriggerIngestTask only triggers AWS Step Functions. Running with inline triggers.');
     }
 
-    const stateMachinePrefix = this.event.resources &&
-                               this.event.resources.state_machine_prefix;
-    if (!stateMachinePrefix) {
-      return null;
-    }
-
-    const stateMachine = stateMachinePrefix + this.config.workflow;
+    const stateMachine = this.config.workflow;
 
     const bucket = this.event.resources.buckets.private;
 
     log.info(this.event.payload);
-    const date = this.event.ingest_meta.start_date;
-    const noSpecialDate = date.split('.')[0].replace(/[:T]/g, '_');
+    const id = this.event.ingest_meta.id;
 
     for (const e of this.event.payload) {
       const key = (e.meta && e.meta.key) || 'Unknown';
-      const name = `${key.replace(/\W+/g, '-')}-${noSpecialDate}`;
+      const name = `${key.replace(/\W+/g, '-')}-${id}`;
       log.info(`Starting ingest of ${name}`);
-      const payload = { Bucket: bucket, Key: [key, noSpecialDate].join('/') };
+      const payload = { Bucket: bucket, Key: [key, id].join('/') };
 
       const fullEventData = Object.assign({}, this.event, e);
       fullEventData.meta = Object.assign({}, this.event.meta, e.meta);
 
       const eventData = Object.assign({}, fullEventData, { payload: payload });
-      eventData.ingest_params = Object.assign({},
-                                              eventData.ingest_params,
-                                              { sfn_name: name });
+
+      const originalIngestMeta = eventData.ingest_meta;
+      const newIngestMeta = { state_machine: stateMachine, execution_name: name };
+      eventData.ingest_meta = Object.assign({}, originalIngestMeta, newIngestMeta);
 
       const s3Params = Object.assign({}, payload, { Body: JSON.stringify(eventData.payload) });
 

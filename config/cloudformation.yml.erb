@@ -43,6 +43,8 @@ Parameters:
 
 Resources:
 
+<% alphanum_stack_prefix = ENV['stack_name'].gsub(/\W/, 'x') + 'xx' %>
+
 <%# [task, description, memory, ecs-instance-count (nil to run in Lambda)] %>
 <% tasks = [['discover-http-tiles', 'Discovers tile files to ingest from HTTP', 256, nil],
             ['discover-cmr-granules', 'Discovers tile files to ingest from HTTP', 256, nil],
@@ -133,9 +135,9 @@ Resources:
             Action:
             - "*"
             Resource:
-            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StackName}-*"
-            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:${StackName}-*"
-            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:activity:${StackName}-*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:<%= alphanum_stack_prefix %>*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:<%= alphanum_stack_prefix %>*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:activity:${StackName}*"
 
           # Allow lambdas to find their corresponding ECS cluster
           - Effect: Allow
@@ -154,7 +156,7 @@ Resources:
             - "*"
             Condition:
               ArnLike:
-                ecs:cluster: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${StackName}-*"
+                ecs:cluster: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${StackName}*"
 
           # Allow use of dynamo
           - Effect: Allow
@@ -193,7 +195,7 @@ Resources:
             Action:
             - cloudformation:DescribeStackResources
             Resource:
-            - !Ref AWS::StackId
+            - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
 
 # TODO: This ought to be done here but can't now due to parent deployment
   PrivateResources:
@@ -311,9 +313,8 @@ Resources:
         - !Sub >-
           {
             "resources": {
-              "stack":"${AWS::StackName}",
-              "state_machine_prefix":
-                "arn:aws:states:${DeployRegion}:${AWS::AccountId}:stateMachine:${StackName}",
+              "stack": "${AWS::StackName}",
+              "sfn_prefix": "<%= alphanum_stack_prefix %>",
               "buckets": {
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
@@ -324,7 +325,7 @@ Resources:
                 "locks": "${StackName}-locks"
               }
             },
-            "config": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
+            "payload": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
           }
         Cpu: '10'
         Essential: true
@@ -347,7 +348,7 @@ Resources:
         Command:
         - !GetAtt [GenerateMrfFn, Arn]
         - "--activity"
-        - !Sub arn:aws:states:${DeployRegion}:${AWS::AccountId}:activity:${StackName}-mrf-gen
+        - !Ref GenerateMrfActivity
         Cpu: '512'
         Essential: true
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
@@ -461,6 +462,28 @@ Resources:
         ToPort: '22'
         CidrIp: 0.0.0.0/0
       VpcId: !Ref VPC
+
+<%
+require('yaml')
+require('json')
+YAML::add_domain_type('GitcResource', 'GitcResource') { |type, val| "${#{val}}" }
+collections = YAML.load_file('config/collections.yml')
+collections['workflows'].each do |name, definition|
+%>
+  # Unfortunately, we have to prefix the desired state machine name with a stack-specific
+  # prefix so that we can restrict IAM roles to only our state machines
+  <%= alphanum_stack_prefix + name %>:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString: !Sub '<%= definition.to_json %>'
+      RoleArn: !GetAtt [TaskExecutionRole, Arn]
+
+<% end %>
+
+  GenerateMrfActivity:
+    Type: "AWS::StepFunctions::Activity"
+    Properties:
+      Name: !Sub '${StackName}-GenerateMrf'
 
 Mappings:
   AWSRegionToAMI:

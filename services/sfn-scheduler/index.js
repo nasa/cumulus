@@ -4,6 +4,7 @@ const _ = require('lodash');
 const aws = require('gitc-common/aws');
 const log = require('gitc-common/log');
 const configUtil = require('gitc-common/config');
+const uuid = require('uuid');
 
 /**
  * Runs the given function at the given offset and with the given period thereafter
@@ -27,15 +28,22 @@ const doPeriodically = async (periodMs, offsetMs, fn) => {
  */
 const triggerIngest = async (resources, provider, collection) => {
   try {
-    const stateMachinePrefix = resources.state_machine_prefix;
-    const stateMachine = `${stateMachinePrefix}_${collection.workflow}`;
+    const stateMachine = collection.workflow;
     const meta = JSON.parse(JSON.stringify(collection.meta || {}));
     const startDate = new Date().toISOString();
+    const id = uuid.v4();
+    const executionName = `${collection.id}-${id}`;
     const eventData = {
-      task_config: collection.task_config,
+      workflow_config: collection.workflow_config,
       resources: resources,
       provider: provider,
-      ingest_meta: { event_source: 'sfn', start_date: startDate },
+      ingest_meta: {
+        event_source: 'sfn',
+        start_date: startDate,
+        state_machine: stateMachine,
+        execution_name: executionName,
+        id: id
+      },
       meta: meta,
       exception: 'None',
       payload: null
@@ -46,7 +54,7 @@ const triggerIngest = async (resources, provider, collection) => {
     await aws.sfn().startExecution({
       stateMachineArn: stateMachine,
       input: message,
-      name: `${collection.id}-${startDate.split('.')[0].replace(/[:T]/g, '_')}`
+      name: executionName
     }).promise();
   }
   catch (err) {
@@ -55,10 +63,43 @@ const triggerIngest = async (resources, provider, collection) => {
   }
 };
 
-const resolveResource = (cfResourcesById) =>
-  (name) => {
-    if (cfResourcesById[name]) return cfResourcesById[name];
-    throw new Error(`Resource not found: ${name}`);
+/**
+ * Given a resource object as returned by CloudFormation::DescribeStackResources, returns
+ * the resource's ARN. Often this is the PhysicalResourceId property, but for Lambdas,
+ * need to glean information and attempt to construct an ARN.
+ * @param {StackResource} resource - The resource as returned by cloudformation
+ * @return - The ARN of the resource
+ */
+const resourceToArn = (resource) => {
+  const physicalId = resource.PhysicalResourceId;
+  if (physicalId.indexOf('arn:') === 0) {
+    return physicalId;
+  }
+  const typesToArnFns = {
+    'AWS::Lambda::Function': (cfResource, region, account) =>
+      `arn:aws:lambda:${region}:${account}:function:${cfResource.PhysicalResourceId}`,
+    'AWS::DynamoDB::Table': (cfResource, region, account) =>
+      `arn:aws:dynamodb:${region}:${account}:table/${cfResource.PhysicalResourceId}`
+  };
+
+  const arnFn = typesToArnFns[resource.ResourceType];
+  if (!arnFn) throw new Error(`Could not resolve resource type to ARN: ${resource.ResourceType}`);
+
+  const arnParts = resource.StackId.split(':');
+  const region = arnParts[3];
+  const account = arnParts[4];
+  return arnFn(resource, region, account);
+};
+
+const resolveResource = (cfResourcesById, prefix) =>
+  (key) => {
+    const [name, fn] = key.split('.');
+    const resource = cfResourcesById[name] || cfResourcesById[prefix + name];
+    if (!resource) throw new Error(`Resource not found: ${key}`);
+    if (fn && ['Arn'].indexOf(fn) === -1) throw new Error(`Function not supported: ${key}`);
+    const result = fn === 'Arn' ? resourceToArn(resource) : resource.PhysicalResourceId;
+    log.info(`${key} -> ${result}`);
+    return result;
   };
 
 /**
@@ -69,14 +110,21 @@ module.exports.handler = async (invocation) => {
     const cfParams = { StackName: invocation.resources.stack };
     const cfResources = await aws.cf().describeStackResources(cfParams).promise();
     const cfResourcesById = {};
+    const prefix = invocation.resources.sfn_prefix;
 
     for (const cfResource of cfResources.StackResources) {
-      log.info(cfResource);
-      cfResourcesById[cfResource.LogicalResourceId] = cfResource.PhysicalResourceId;
+      cfResourcesById[cfResource.LogicalResourceId] = cfResource;
     }
 
     const configStr = await aws.getPossiblyRemote(invocation.payload);
-    const config = configUtil.parseConfig(configStr, resolveResource);
+    const resolver = resolveResource(cfResourcesById, prefix);
+    const config = configUtil.parseConfig(configStr, resolver);
+
+    // Update the keys under the workflows to map identifiers (Arns) to workflow
+    config.workflows = _.mapKeys(config.workflows, (v, k) => resolver(k));
+
+    log.info('RESOURCES', JSON.stringify(cfResourcesById));
+    log.info('CONFIG', JSON.stringify(config));
 
     const collectionsByProviderId = _.groupBy(config.collections, (c) => c.provider_id);
 
@@ -96,7 +144,7 @@ module.exports.handler = async (invocation) => {
           log.info(`Scheduling ${collection.id}.` +
                    `period=${periodMs}ms, offset=${offsetMs % periodMs}ms`);
           doPeriodically(periodMs, offsetMs % periodMs, () => {
-            triggerIngest(invocation.resources, trigger.workflow, provider, collection);
+            triggerIngest(invocation.resources, provider, collection);
           });
           offsetMs += staggerMs;
         }
@@ -110,6 +158,9 @@ module.exports.handler = async (invocation) => {
   }
 };
 
-//const fs = require('fs');
-//module.exports.handler({ resources: { stack: 'gitc-pq-sfn' },
-//                         payload: fs.readFileSync('../config/collections.yml').toString() });
+const localHelpers = require('gitc-common/local-helpers');
+const fs = require('fs');
+if (localHelpers.isLocal) {
+  module.exports.handler({ resources: { sfn_prefix: 'gitcxpqxsfnxx', stack: 'gitc-pq-sfn' },
+                           payload: fs.readFileSync('../config/collections.yml').toString() });
+}
