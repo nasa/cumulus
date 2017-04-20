@@ -1,12 +1,9 @@
 # GIBS Ops API
 
-TODO description of the API
+Provides an API for operating GIBS.
 
 ## TODOs
 
-* Setup testing with mocha
-* eslint as part of testing
-* Change documentation rendering to markdown.
 * Add documentation page verification to deployment
 * Add error handler to express to prevent stack traces on API.
 
@@ -43,7 +40,17 @@ Open up Chrome to that URL and then you can use Chrome dev tools to set break po
 
 ## Running Tests
 
-TODO describe how to run tests
+Tests can be run with the following command.
+
+`npm test`
+
+You can also run linting individually.
+
+`npm run lint`
+
+You can run the mocha tests individually.
+
+`npm run mocha`
 
 ## Deploy
 

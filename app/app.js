@@ -47,7 +47,8 @@ module.exports = (cb = null) => {
   });
 
   app.get('/users/:userId', (req, res) => {
-    const user = User.getUser(User.users, req.params.userId);
+    const userId = parseInt(req.params.userId, 10);
+    const user = User.getUser(User.users, userId);
 
     if (!user) return res.status(404).json({});
 
