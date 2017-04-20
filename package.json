@@ -8,7 +8,10 @@
     "start": "npm run build && node dist/local.js",
     "start-debug": "npm run build && node --inspect dist/local.js",
     "start-debug-brk": "npm run build && node --inspect-brk dist/local.js",
-    "start-watch": "bin/parallel.sh 'webpack --config webpack.config.js  -w' 'nodemon dist/local.js -w dist'"
+    "start-watch": "bin/parallel.sh 'webpack --config webpack.config.js  -w' 'nodemon dist/local.js -w dist'",
+    "mocha": "mocha-webpack --webpack-config webpack.config-test.js test/**/*spec.js",
+    "lint": "eslint app test",
+    "test": "npm run lint && npm run mocha"
   },
   "dependencies": {
     "aws-serverless-express": "^2.2.0",
@@ -32,6 +35,7 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-react": "^6.10.3",
     "eslint-plugin-standard": "^3.0.1",
+    "expect.js": "^0.3.1",
     "html-loader": "^0.4.5",
     "markdown-loader": "^2.0.0",
     "mocha": "^3.2.0",
