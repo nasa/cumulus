@@ -4,9 +4,25 @@ A dashboard for operating GIBS running in AWS.
 
 ## Project Layout
 
-TODO describe the project layout.
+* **app/** - Contains all code for the application, html, styles
+  * **font/** - Fonts
+  * **graphics/** - Images and icons
+  * **scripts/** - Javascript Code
+    * **components/** - Visual JSX compoents
+    * **config/ & config.js** - Configuration files. Some of them are automatically generated during deployment.
+    * **main.js** - The main entry point for the application.
+    * **<other.js>** - These other javascript files define additional react actions and reducers.
+  * **styles/** -
+  * **index.html** -
+* **bin/** - Scripts for deploying etc.
+* **config/** - Configuration files for AWS.
+* **test/** - Tests.
 
-TODO describe how to add a new page and API operation
+This project is setup using these technologies.
+
+* React
+* Redux
+* Immutable.js for state
 
 ## Running Locally
 
@@ -17,6 +33,14 @@ npm start
 ```
 
 After running this the website will load in your browser. The website will automatically load on changes.
+
+## Running Tests
+
+`npm test` runs all tests
+
+`npm run lint` runs the linter
+
+`npm run mocha` runs the mocha tests
 
 ## Deploy
 

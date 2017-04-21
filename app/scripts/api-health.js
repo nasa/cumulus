@@ -39,8 +39,6 @@ function getApiHealth(config, dispatch) {
   });
 }
 
-// TODO tests for this stuff
-
 module.exports = {
   reducer,
   getApiHealth
