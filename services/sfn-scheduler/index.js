@@ -11,6 +11,7 @@ const uuid = require('uuid');
  *
  * @param {number} periodMs - The period (ms) at which to run the given fn
  * @param {number} offsetMs - The time offset (ms) at which to run the first invocation
+ * @param {function} fn - The function to call
  */
 const doPeriodically = (periodMs, offsetMs, fn) => {
   setTimeout(() => {
@@ -21,10 +22,10 @@ const doPeriodically = (periodMs, offsetMs, fn) => {
 
 /**
  * Starts an ingest for the given collection
- * @param resources - An object with keys and values mapping meaningful resource names to external
- *                    URIs, ARNs, etc
- * @param provider - The provider configuration object for the collection's provider.
- * @param collection - Configuration for the collection to be ingested
+ * @param {object} resources - An object with keys and values mapping meaningful resource names
+ *                             to external URIs, ARNs, etc
+ * @param {object} provider - The provider configuration object for the collection's provider.
+ * @param {object} collection - Configuration for the collection to be ingested
  */
 const triggerIngest = async (resources, provider, collection) => {
   try {
@@ -68,7 +69,7 @@ const triggerIngest = async (resources, provider, collection) => {
  * the resource's ARN. Often this is the PhysicalResourceId property, but for Lambdas,
  * need to glean information and attempt to construct an ARN.
  * @param {StackResource} resource - The resource as returned by cloudformation
- * @return - The ARN of the resource
+ * @returns {string} The ARN of the resource
  */
 const resourceToArn = (resource) => {
   const physicalId = resource.PhysicalResourceId;
@@ -96,11 +97,11 @@ const resourceToArn = (resource) => {
  * and prefix to resolve that logical resource id as an AWS resource.  Lookups support one
  * property, '.Arn', e.g. MyLambdaFunction.Arn. If specified, the resolver will attempt
  * to return the ARN of the specified resource, otherwise it will return the PhysicalResourceId
- * @param cfResourcesById - A mapping of logical ids to CloudFormation resources as returned by
- *                          CloudFormation::DescribeStackResources
- * @param prefix - A prefix to prepend to the given name if no resource matches the name. This
- *                 is a hack to allow us to prefix state machines with the stack name for IAM
- * @return The resolver function described above
+ * @param {object} cfResourcesById - A mapping of logical ids to CloudFormation resources as
+ *                                   returned by CloudFormation::DescribeStackResources
+ * @param {string} prefix - A prefix to prepend to the given name if no resource matches the name.
+ *                 This is a hack to allow us to prefix state machines with the stack name for IAM
+ * @returns {function} The resolver function described above
  */
 const resolveResource = (cfResourcesById, prefix) =>
   (key) => {
@@ -115,6 +116,7 @@ const resolveResource = (cfResourcesById, prefix) =>
 
 /**
  * Starts a scheduler service that periodically triggers ingests described in config/collections.yml
+ * @param {MessageEnvelope} invocation - Configuration and resources for the scheduler
  */
 module.exports.handler = async (invocation) => {
   try {
@@ -171,6 +173,8 @@ const fs = require('fs');
 if (localHelpers.isLocal) {
   const stack = process.argv[3];
   const prefix = `${stack.replace(/\W/, 'x')}xx`;
-  module.exports.handler({ resources: { state_machine_prefix: prefix, stack: stack },
-                           payload: fs.readFileSync('../config/collections.yml').toString() });
+  module.exports.handler({
+    resources: { state_machine_prefix: prefix, stack: stack },
+    payload: fs.readFileSync('../config/collections.yml').toString()
+  });
 }
