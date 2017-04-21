@@ -1,3 +1,7 @@
+/**
+ * Main entry point of the application. Sets up the store, reducers, routing, history, and the
+ * display of the application.
+ */
 import { createStore, applyMiddleware, compose } from 'redux';
 import { combineReducers } from 'redux-immutable';
 import { Provider } from 'react-redux';
@@ -19,6 +23,9 @@ const React = require('react');
 const ReactDOM = require('react-dom');
 const Immutable = require('immutable');
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Setup history
+
 // Create a history of your choosing (we're using a browser history in this case)
 const history = createBrowserHistory();
 
@@ -36,6 +43,9 @@ history.listen(convertHistoryHash);
 // Fix the current load if necessary.
 convertHistoryHash(history.location);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Create the store with reducers
+
 // Build the middleware for intercepting and dispatching navigation actions
 const middleware = routerMiddleware(history);
 
@@ -45,10 +55,12 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 const reducers = combineReducers({
   config: _ => config,
-  apiHealth,
+  apiHealth
 });
 const store = createStore(reducers, Immutable.Map(), composeEnhancers(applyMiddleware(middleware)));
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Render the application
 ReactDOM.render(
   <Provider store={store}>
     { /* Tell the Router to use our enhanced history */ }

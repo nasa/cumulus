@@ -1,58 +1,13 @@
-import { connect } from 'react-redux';
-import { Map } from 'immutable';
 import Header from '../header';
-import { getApiHealth } from '../../api-health';
-
-const functional = require('react-functional');
+import AlertList from './alert-list';
 const React = require('react');
 
 
-const chooseApiHealthBanner = ({ healthy, inFlight, error }) => {
-  if (!inFlight && healthy !== undefined) {
-    if (healthy) {
-      return (
-        <li className="eui-banner--success">
-          <strong>API Success:&nbsp;</strong>
-          The API is healthy.</li>
-      );
-    }
-
-    return (
-      <li className="eui-banner--danger">
-        <strong>API Error:&nbsp;</strong>{error || 'unknown problem'}</li>
-    );
-  }
-  return null;
-};
-
-function AlertListFn({ apiHealth }) {
-  return (
-    <div>
-      <h2>Alerts</h2>
-      <ul className="alerts-list">
-        {chooseApiHealthBanner(apiHealth)}
-        <li className="eui-banner--danger">
-          <strong>Error:&nbsp;</strong>
-          MOPITT hasn&quot;t updated in 3 days.</li>
-        <li className="eui-banner--warn">
-          <strong>Warning:&nbsp;</strong>
-          Ingest 95th percentile is &gt; 2s.</li>
-      </ul>
-    </div>
-  );
-}
-
-const alertListStateToProps = ({ config, apiHealth }) => ({ config, apiHealth });
-
-function alertListMount({ config, dispatch }) {
-  getApiHealth(config, dispatch);
-}
-
-const AlertList = connect(alertListStateToProps)(
-  functional(AlertListFn, { componentWillMount: alertListMount }),
-);
-
-
+/**
+ * SystemStatus - description
+ *
+ * @return {type}  description
+ */
 function SystemStatus() {
   return (
     <div>
@@ -72,6 +27,11 @@ function SystemStatus() {
   );
 }
 
+/**
+ * ProductStatusTable - description
+ *
+ * @return {type}  description
+ */
 function ProductStatusTable() {
   return (
     <div>
@@ -98,7 +58,9 @@ function ProductStatusTable() {
             </td>
             <td>5 minutes</td>
             <td>
-              <button type="button" className="eui-btn"><i className="eui-icon fa fa-refresh" />Reingest</button>
+              <button type="button" className="eui-btn">
+                <i className="eui-icon fa fa-refresh" />Reingest
+              </button>
             </td>
           </tr>
         </tbody>
@@ -107,6 +69,12 @@ function ProductStatusTable() {
   );
 }
 
+
+/**
+ * LandingPage - description
+ *
+ * @return {type}  description
+ */
 function LandingPage() {
   return (
     <div>
