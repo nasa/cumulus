@@ -18,7 +18,8 @@
     "production": "NODE_ENV=production GIBS_ENV=production gulp",
     "lint": "eslint app/scripts/ --ext .js",
     "start": "npm run serve",
-    "test": "npm run lint"
+    "mocha": "mocha --compilers js:babel-core/register",
+    "test": "npm run lint && npm run mocha"
   },
   "browserify": {
     "transform": [
@@ -47,6 +48,8 @@
     "babelify": "^7.3.0",
     "browser-sync": "^2.12.5",
     "browserify": "^13.0.1",
+    "chai": "^3.5.0",
+    "chai-immutable": "^1.6.0",
     "del": "^2.2.0",
     "envify": "^3.4.0",
     "eslint": "^3.19.0",
@@ -58,6 +61,8 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-react": "^6.10.3",
     "eslint-plugin-standard": "^3.0.1",
+    "expect-immutable": "0.0.3",
+    "expect.js": "^0.3.1",
     "gulp": "^3.9.1",
     "gulp-cache": "^0.4.4",
     "gulp-csso": "^2.0.0",
@@ -75,6 +80,7 @@
     "gulp-uglify": "^1.5.3",
     "gulp-useref": "^3.1.0",
     "gulp-util": "^3.0.7",
+    "mocha": "^3.2.0",
     "node-bourbon": "^4.2.8",
     "node-notifier": "^4.5.0",
     "node-sass": "^3.7.0",
