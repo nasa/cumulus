@@ -101,7 +101,8 @@ gulp.task('javascript', function () {
     debug: true,
     cache: {},
     packageCache: {},
-    fullPaths: true
+    fullPaths: true,
+    transform: ["babelify"]
   }), {poll: true});
 
   function bundler () {

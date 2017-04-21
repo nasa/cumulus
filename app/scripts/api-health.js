@@ -16,35 +16,26 @@ const reducer = (state = initialState, action) => {
     case API_HEALTH_IN_FLIGHT:
       return state.set('inFlight', true);
     case API_HEALTH_RCVD:
-      return state.set('healthy', action.healthy).set('inFlight', false);
+      return state.set('healthy', action.healthy)
+        .set('inFlight', false)
+        .set('error', action.error);
     default:
       return state;
   }
 };
 
-async function getApiHealth(_config) {
-  return rp({ uri: 'http://localhost:3000/health', json: true });
+function getApiHealth(config, dispatch) {
+  dispatch({ type: API_HEALTH_IN_FLIGHT });
+  rp({ uri: `${config.apiBaseUrl}/health`, json: true })
+  .then((resp) => {
+    dispatch({ type: API_HEALTH_RCVD, healthy: resp['ok?'] });
+  })
+  .catch((err) => {
+    dispatch({ type: API_HEALTH_RCVD, healthy: false, error: err.message });
+  });
 }
 
-// getApiHealth(null).then(result => console.log(`Result ${JSON.stringify(result)}`)).catch(err => console.log(`Error ${err}`));
-
-// const getApiHealth = async (_config) => {
-//   return null;
-// };
-
-// let r;
-// let e;
-// rp({ uri: 'http://localhost:3000/health', json: true })
-//   .then(result => r = result)
-//   .catch(err => e = err);
-//
-// r;
-// e;
-
-
-// TODO tests like this
-// reducer(reducer(undefined, {type: API_HEALTH_IN_FLIGHT}),
-//   {type: API_HEALTH_RCVD, healthy: false});
+// TODO tests for this stuff
 
 module.exports = {
   reducer,

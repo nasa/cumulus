@@ -1,4 +1,5 @@
-import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware, compose } from 'redux';
+import { combineReducers } from 'redux-immutable';
 import { Provider } from 'react-redux';
 import { Switch } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
@@ -13,8 +14,10 @@ import NotFoundPage from './components/not-found-page';
 import ErrorPage from './components/error-page';
 import LandingPage from './components/landing-page';
 
+const config = require('./config');
 const React = require('react');
 const ReactDOM = require('react-dom');
+const Immutable = require('immutable');
 
 // Create a history of your choosing (we're using a browser history in this case)
 const history = createBrowserHistory();
@@ -36,10 +39,15 @@ convertHistoryHash(history.location);
 // Build the middleware for intercepting and dispatching navigation actions
 const middleware = routerMiddleware(history);
 
+/* eslint-disable no-underscore-dangle */
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+/* eslint-enable */
+
 const reducers = combineReducers({
+  config: _ => config,
   apiHealth,
 });
-const store = createStore(reducers, applyMiddleware(middleware));
+const store = createStore(reducers, Immutable.Map(), composeEnhancers(applyMiddleware(middleware)));
 
 ReactDOM.render(
   <Provider store={store}>

@@ -34,6 +34,7 @@
     "react/no-is-mounted": 2,
     "react/no-unknown-property": 2,
     "react/prop-types": 2,
-    "react/react-in-jsx-scope": 2
+    "react/react-in-jsx-scope": 2,
+    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }]
   }
 }
