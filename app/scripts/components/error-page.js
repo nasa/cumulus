@@ -1,12 +1,16 @@
 'use strict';
 
-const React = require('react');
-import Header from './header.js';
+import Header from './header';
 
-function ErrorPage () {
+const React = require('react');
+
+/**
+ * @return {JSX} Error page for the application
+ */
+function ErrorPage() {
   return (
     <div>
-      <Header/>
+      <Header />
       <main>
         <h1>Error</h1>
         <p className="message">An internal error has occurred.</p>

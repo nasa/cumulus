@@ -1,5 +1,6 @@
 {
-  "extends": ["standard"],
+  "parser": "babel-eslint",
+  "extends": "airbnb",
   "env": {
     "es6": true,
     "browser": true
@@ -14,11 +15,26 @@
     }
   },
   "rules": {
-    "semi": [2, "always"],
-    "no-extra-semi": 2,
-    "semi-spacing": [2, {
-      "before": false,
-      "after": true
+    "brace-style": [2, "stroustrup"],
+    "comma-dangle": ["warn", "never"],
+    "generator-star-spacing": "off",
+    "import/newline-after-import": "off",
+    "import/no-extraneous-dependencies": "off",
+    "no-console": "warn",
+    "no-underscore-dangle": "off",
+    "no-useless-escape": "off",
+    "object-shorthand": "off",
+    "prefer-template": "warn",
+    "space-before-function-paren": ["error", "never"],
+    "spaced-comment": "off",
+    "strict": "off",
+    "max-len": [2, {
+      "code": 100,
+      "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+    }],
+
+    "no-unused-vars": ["error", {
+      "argsIgnorePattern": "^_"
     }],
     "react/jsx-no-duplicate-props": 2,
     "react/jsx-no-undef": 2,
@@ -31,7 +47,10 @@
     "react/no-direct-mutation-state": 2,
     "react/no-is-mounted": 2,
     "react/no-unknown-property": 2,
-    "react/prop-types": 2,
-    "react/react-in-jsx-scope": 2
+    "react/prop-types": 0,
+    "react/react-in-jsx-scope": 2,
+    "react/jsx-filename-extension": [1, {
+      "extensions": [".js", ".jsx"]
+    }]
   }
 }

@@ -1,19 +1,20 @@
 'use strict';
+
 const React = require('react');
 
 // Use this import when eventually adding real links.
 // import {Link} from 'react-router-dom';
 
 /**
- * Defines a Header for the application.
+ * @returns {JSX} Header for the application.
  */
-function Header () {
+function Header() {
   return (
     <header className="doc-mast">
       <div className="container">
         <div className="eui-masthead-logo eui-application-logo">
           <h1>
-            <a href="#">GIBS Ops Dashboard</a>
+            <a href="/">GIBS Ops Dashboard</a>
             <span className="eui-badge--sm">BETA</span>
           </h1>
         </div>
@@ -22,10 +23,10 @@ function Header () {
           <ul className="main-nav-list">
             <li>
               {/* We'll eventually use links like this <Link to="/foo">Foo</Link> */}
-              <a href="#">Settings</a>
+              <a href="/">Settings</a>
             </li>
             <li>
-              <a href="#">Login</a>
+              <a href="/">Login</a>
             </li>
           </ul>
         </nav>

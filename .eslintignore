@@ -1,0 +1,7 @@
+node_modules
+bin
+dist
+test-reports
+.tmp
+gulpfile.js
+test
