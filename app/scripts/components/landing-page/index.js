@@ -2,11 +2,8 @@ import Header from '../header';
 import AlertList from './alert-list';
 const React = require('react');
 
-
 /**
- * SystemStatus - description
- *
- * @return {type}  description
+ * SystemStatus - A section describing some statistics about the state of the system.
  */
 function SystemStatus() {
   return (
@@ -28,9 +25,8 @@ function SystemStatus() {
 }
 
 /**
- * ProductStatusTable - description
- *
- * @return {type}  description
+ * ProductStatusTable - A table listing various information about the products that are configured
+ * in GIBS.
  */
 function ProductStatusTable() {
   return (
@@ -71,9 +67,7 @@ function ProductStatusTable() {
 
 
 /**
- * LandingPage - description
- *
- * @return {type}  description
+ * LandingPage - The main landing page for the application.
  */
 function LandingPage() {
   return (
