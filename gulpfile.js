@@ -97,7 +97,7 @@ gulp.task('clean', function () {
 // main.js
 gulp.task('javascript', function () {
   var watcher = watchify(browserify({
-    entries: ['./app/scripts/main.js'],
+    entries: ['./app/scripts/preload.js'],
     debug: true,
     cache: {},
     packageCache: {},

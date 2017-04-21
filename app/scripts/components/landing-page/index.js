@@ -1,21 +1,26 @@
-'use strict';
+import Header from '../header';
 
+const functional = require('react-functional');
 const React = require('react');
-import Header from '../header.js';
 
-function AlertList () {
+// TODO when the alert list is loaded it should trigger somehow the request to get the api health
+
+function AlertList() {
   return (
     <div>
       <h2>Alerts</h2>
       <ul className="alerts-list">
-        <li className="eui-banner--danger"><strong>Error:</strong> MOPITT hasn't updated in 3 days.</li>
+        {/* TODO define this next line based on the state in the store */}
+        <li className="eui-banner--success"><strong>Success:</strong> The API is healthy.</li>
+
+        <li className="eui-banner--danger"><strong>Error:</strong> MOPITT hasn&quot;t updated in 3 days.</li>
         <li className="eui-banner--warn"><strong>Warning:</strong> Ingest 95th percentile is &gt; 2s.</li>
       </ul>
     </div>
   );
 }
 
-function SystemStatus () {
+function SystemStatus() {
   return (
     <div>
       <h2>System Status</h2>
@@ -28,7 +33,7 @@ function SystemStatus () {
   );
 }
 
-function ProductStatusTable () {
+function ProductStatusTable() {
   return (
     <div>
       <h2>Product Status</h2>
@@ -45,12 +50,12 @@ function ProductStatusTable () {
         </thead>
         <tbody>
           <tr>
-            <td><i className="eui-icon eui-fa-minus-circle icon-red"></i> VIIRS</td>
+            <td><i className="eui-icon eui-fa-minus-circle icon-red" /> VIIRS</td>
             <td>10 minutes ago</td>
             <td>Ingesting 3 products</td>
-            <td><i className="eui-icon eui-fa-minus-circle icon-red"></i><strong>20 minutes</strong></td>
+            <td><i className="eui-icon eui-fa-minus-circle icon-red" /><strong>20 minutes</strong></td>
             <td>5 minutes</td>
-            <td><button type="button" className="eui-btn"><i className="eui-icon fa fa-refresh"></i>Reingest</button></td>
+            <td><button type="button" className="eui-btn"><i className="eui-icon fa fa-refresh" />Reingest</button></td>
           </tr>
         </tbody>
       </table>
@@ -58,17 +63,21 @@ function ProductStatusTable () {
   );
 }
 
-function LandingPage () {
+function LandingPage() {
   return (
     <div>
-      <Header/>
+      <Header />
       <main>
-        <AlertList/>
-        <SystemStatus/>
-        <ProductStatusTable/>
+        <AlertList />
+        <SystemStatus />
+        <ProductStatusTable />
       </main>
     </div>
   );
 }
 
-export default LandingPage;
+function landingPageMount(props) {
+  console.log('Landing page mounting with props', props);
+}
+
+export default functional(LandingPage, { componentWillMount: landingPageMount });

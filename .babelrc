@@ -1,3 +1,10 @@
 {
-  "presets": ["es2015", "react"]
+  "presets": [
+    "react",
+    "es2015",
+    ["env", {
+      "modules": false
+    }]
+  ],
+  "plugins": ["transform-async-to-generator"]
 }

@@ -1,5 +1,6 @@
 {
-  "extends": ["standard"],
+  "parser": "babel-eslint",
+  "extends": "airbnb",
   "env": {
     "es6": true,
     "browser": true
@@ -14,6 +15,7 @@
     }
   },
   "rules": {
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "semi": [2, "always"],
     "no-extra-semi": 2,
     "semi-spacing": [2, {
