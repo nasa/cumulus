@@ -1,30 +1,54 @@
 /**
  * Provides functions for accessing the GIBS Ops API.
  */
+const { fromJS } = require('immutable');
+const rp = require('request-promise');
 
- const rp = require('request-promise');
+// TODO add tests for workflow parsing
+
+/**
+ * getApiHealth - Gets the health of the Ops API
+ *
+ * @param  config APP configuration
+ * @return A promise delivering the health.
+ */
+function getApiHealth(config) {
+  return rp({ uri: `${config.apiBaseUrl}/health`, json: true });
+}
+
+/**
+ * Parses a date if present.
+ */
+const safeDateParse = d => (d ? Date.parse(d) : null);
+
+
+/**
+ * parseExecution - Parses the execution section of a workflow to convert dates to longs.
+ */
+function parseExecution(execution) {
+  return execution.updateIn(['start_date'], safeDateParse)
+    .updateIn(['end_date'], safeDateParse);
+}
+
+/**
+ * Parses the workflow from a workflow response.
+ */
+function parseWorkflow(workflow) {
+  return workflow.updateIn(['executions'], es => es.map(parseExecution));
+}
 
  /**
-  * getApiHealth - Gets the health of the Ops API
+  * getWorkflowStatus - Fetches the list of workflow status details.
   *
   * @param  config APP configuration
-  * @return A promise delivering the health.
+  * @return A promise delivering the list of workflow statuses.
   */
- function getApiHealth(config) {
-   return rp({ uri: `${config.apiBaseUrl}/health`, json: true });
- }
+async function getWorkflowStatus(config) {
+  const workflows = await rp({ uri: `${config.apiBaseUrl}/workflow_status`, json: true });
+  return fromJS(workflows).map(parseWorkflow);
+}
 
- /**
-  * getProductStatus - Fetches the list of product status details.
-  *
-  * @param  config APP configuration
-  * @return A promise delivering the list of product statuses.
-  */
- function getProductStatus(config) {
-   return rp({ uri: `${config.apiBaseUrl}/product_status`, json: true });
- }
-
- module.exports = {
-   getApiHealth,
-   getProductStatus
- };
+module.exports = {
+  getApiHealth,
+  getWorkflowStatus
+};

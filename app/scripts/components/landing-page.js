@@ -1,6 +1,6 @@
 import Header from './header';
 import AlertList from './landing-page/alert-list';
-import ProductStatusTable from './landing-page/product-status-table';
+import WorkflowStatusTable from './landing-page/workflow-status-table';
 const React = require('react');
 
 /**
@@ -35,7 +35,7 @@ function LandingPage() {
       <main>
         <AlertList />
         <SystemStatus />
-        <ProductStatusTable />
+        <WorkflowStatusTable />
       </main>
     </div>
   );
