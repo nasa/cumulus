@@ -8,7 +8,7 @@ const Task = require('gitc-common/task');
 const aws = require('gitc-common/aws');
 const concurrency = require('gitc-common/concurrency');
 const local = require('gitc-common/local-helpers');
-const errors = require('gitc-common/errors');
+const errorTypes = require('gitc-common/errors');
 
 
 exports.TIMEOUT_TIME_MS = 20 * 1000;
@@ -92,7 +92,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
       }
     }
     if (!isComplete) {
-      throw new errors.IncompleteError();
+      throw new errorTypes.IncompleteError();
     }
     return result;
   }
@@ -108,6 +108,11 @@ module.exports = class SyncHttpUrlsTask extends Task {
     return concurrency.mapTolerant(files, syncLimited);
   }
 
+  /**
+   * Entrypoint for Lambda
+   * @param {array} args The arguments passed by AWS Lambda
+   * @return The handler return value
+   */
   static handler(...args) {
     return SyncHttpUrlsTask.handle(...args);
   }

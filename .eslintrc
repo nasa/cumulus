@@ -15,7 +15,8 @@
       }
     }],
     "valid-jsdoc": ["warn", {
-      "requireReturn": false
+      "requireReturn": false,
+      "requireReturnType": false
     }],
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",

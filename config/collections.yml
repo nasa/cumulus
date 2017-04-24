@@ -83,14 +83,16 @@ _templates:
             date:
               type: date
               value: '{granule.time_start}'
+
+        CreateWmsUrls:
           filename: '{meta.key}.png'
           getmap: 'https://opendap.larc.nasa.gov/ncWMS-2.0/wms?REQUEST=GetMap&VERSION=1.3.0&STYLES={meta.wms.style}&CRS=CRS:84&WIDTH=640&HEIGHT=320&FORMAT=image/png&TRANSPARENT=true&LAYERS={meta.wms.layer}&BBOX=-180,-90,180,90&&time={meta.date.isoDateTime}'
-          ignoredErrorStatuses: '500'
 
         TriggerIngest:
           workflow: !GitcResource IngestMOPITT
 
         SyncHttpUrls:
+          ignoredErrorStatuses: '500'
           connections: 5
           output:
             bucket: '{resources.buckets.private}'

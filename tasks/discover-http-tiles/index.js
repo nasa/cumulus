@@ -87,6 +87,11 @@ module.exports = class DiscoverHttpTilesTask extends Task {
     });
   }
 
+  /**
+   * Entrypoint for Lambda
+   * @param {array} args The arguments passed by AWS Lambda
+   * @return The handler return value
+   */
   static handler(...args) {
     return DiscoverHttpTilesTask.handle(...args);
   }

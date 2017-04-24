@@ -8,7 +8,17 @@ const FieldPattern = require('gitc-common/field-pattern');
 
 const PAGE_SIZE = 2000;
 
+/**
+ * Task which discovers granules by querying the CMR
+ * Input payload: none
+ * Output payload: Array of objects { meta: {...} } containing meta as specified in the task config
+ *                 for each discovered granule
+ */
 module.exports = class DiscoverCmrGranulesTask extends Task {
+  /**
+   * Main task entrypoint
+   * @return An array of CMR granules that need ingest
+   */
   async run() {
     const since = new Date(Date.now() - parseDuration(this.config.since)).toISOString();
     const conceptId = this.event.meta.concept_id;
@@ -16,6 +26,13 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     return this.buildEvents(granules, this.config.granule_meta, this.event.meta);
   }
 
+  /**
+   * Returns CMR granules updated after the specified date
+   * @param {string} root - The CMR root url (protocol and domain without path)
+   * @param {string} since - The ISO date/time of the earliest update date to return
+   * @param {string} id - The collection id
+   * @return An array of all granules updated after the specified date
+   */
   async cmrGranules(root, since, id) {
     const granules = [];
     const url = `${root}/search/granules.json?updated_since=${since}&collection_concept_id=${id}&page_size=${PAGE_SIZE}&sort_key=revision_date&page_num=`;
@@ -38,6 +55,13 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     return granules;
   }
 
+  /**
+   * Builds the output array for the task
+   * @param {array} granules - The granules to output
+   * @param {object} opts - The granule_meta object passed to the task config
+   * @param {object} fieldValues - Field values to apply to the granule_meta (the incoming event)
+   * @return An array of meta objects for each granule created as specified in the task config
+   */
   buildEvents(granules, opts, fieldValues) {
     if (!opts) return granules;
 
@@ -54,6 +78,11 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     });
   }
 
+  /**
+   * Entrypoint for Lambda
+   * @param {array} args The arguments passed by AWS Lambda
+   * @return The handler return value
+   */
   static handler(...args) {
     return DiscoverCmrGranulesTask.handle(...args);
   }

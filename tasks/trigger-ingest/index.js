@@ -4,7 +4,19 @@ const Task = require('gitc-common/task');
 const aws = require('gitc-common/aws');
 const log = require('gitc-common/log');
 
+/**
+ * Task which triggers ingest of discovered granules. Starts a state machine execution
+ * for each object specified in the payload, merging its properties into those provided
+ * to the input event
+ *
+ * Input payload: Array of objects { meta: {...}, payload: ... } which need ingest
+ * Output payload: none
+ */
 module.exports = class TriggerIngestTask extends Task {
+  /**
+   * Main task entrypoint
+   * @return null
+   */
   async run() {
     const s3Promises = [];
     const executions = [];
@@ -61,6 +73,11 @@ module.exports = class TriggerIngestTask extends Task {
     return null;
   }
 
+  /**
+   * Entrypoint for Lambda
+   * @param {array} args The arguments passed by AWS Lambda
+   * @return The handler return value
+   */
   static handler(...args) {
     return TriggerIngestTask.handle(...args);
   }

@@ -2,7 +2,19 @@
 
 const Task = require('gitc-common/task');
 
+/**
+ * Transforms input WMS endpoint information (GetMap URL and filename) to output
+ * suitable for ingest via http url sync
+ *
+ * Input payload: None
+ * Output payload: An array containing a single {name, url, version} object suitable
+ *                 for http url sync
+ */
 module.exports = class SyncWmsTask extends Task {
+  /**
+   * Main task entrypoint
+   * @return A payload suitable for syncing via http url sync
+   */
   run() {
     const meta = this.event.meta;
     const event = Object.assign(
@@ -16,6 +28,11 @@ module.exports = class SyncWmsTask extends Task {
     return event;
   }
 
+  /**
+   * Entrypoint for Lambda
+   * @param {array} args The arguments passed by AWS Lambda
+   * @return The handler return value
+   */
   static handler(...args) {
     return SyncWmsTask.handle(...args);
   }

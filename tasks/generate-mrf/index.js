@@ -114,6 +114,11 @@ module.exports = class GenerateMrfTask extends Task {
     });
   }
 
+  /**
+   * Entrypoint for Lambda
+   * @param {array} args The arguments passed by AWS Lambda
+   * @return The handler return value
+   */
   static handler(...args) {
     return GenerateMrfTask.handle(...args);
   }
