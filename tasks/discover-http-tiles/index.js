@@ -14,7 +14,7 @@ const endpointsToCrawlers = {
 module.exports = class DiscoverHttpTilesTask extends Task {
   run() {
     const config = this.config;
-    const event = this.event;
+    const message = this.message;
     const root = this.config.root;
 
     const CrawlerClass = endpointsToCrawlers[config.type];
@@ -24,10 +24,10 @@ module.exports = class DiscoverHttpTilesTask extends Task {
 
     return new Promise((resolve) => {
       crawler.on('complete', (resources) => {
-        const complete = this.excludeIncomplete(resources, config.required, event);
-        const withMeta = this.addFileMeta(complete, config.file, event);
-        const events = this.buildEvents(withMeta, config.group_by, config.group_meta, event);
-        resolve(events);
+        const complete = this.excludeIncomplete(resources, config.required, message);
+        const withMeta = this.addFileMeta(complete, config.file, message);
+        const messages = this.buildMessages(withMeta, config.group_by, config.group_meta, message);
+        resolve(messages);
       });
       crawler.crawl();
     });
@@ -68,7 +68,7 @@ module.exports = class DiscoverHttpTilesTask extends Task {
     return resources;
   }
 
-  buildEvents(resources, grouping, opts, fieldValues) {
+  buildMessages(resources, grouping, opts, fieldValues) {
     // Group everything
     const pattern = new FieldPattern(grouping, fieldValues);
     const groups = _.values(_.groupBy(resources, (r) => pattern.format({ match: r.fields })));
@@ -103,7 +103,7 @@ const local = require('gitc-common/local-helpers');
 const localTaskName = 'DiscoverHttpTiles';
 local.setupLocalRun(
   module.exports.handler,
-  local.collectionEventInput('VNGCR_SQD_C1', localTaskName, (input) => {
+  local.collectionMessageInput('VNGCR_SQD_C1', localTaskName, (input) => {
     const config = input.workflow_config_template[localTaskName];
     config.root += 'VNGCR_SQD_C1_r00c01/';
     delete config.connections;

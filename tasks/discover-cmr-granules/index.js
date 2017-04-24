@@ -21,9 +21,9 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    */
   async run() {
     const since = new Date(Date.now() - parseDuration(this.config.since)).toISOString();
-    const conceptId = this.event.meta.concept_id;
+    const conceptId = this.message.meta.concept_id;
     const granules = await this.cmrGranules(this.config.root, since, conceptId);
-    return this.buildEvents(granules, this.config.granule_meta, this.event.meta);
+    return this.buildMessages(granules, this.config.granule_meta, this.message.meta);
   }
 
   /**
@@ -59,13 +59,13 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * Builds the output array for the task
    * @param {array} granules - The granules to output
    * @param {object} opts - The granule_meta object passed to the task config
-   * @param {object} fieldValues - Field values to apply to the granule_meta (the incoming event)
+   * @param {object} fieldValues - Field values to apply to the granule_meta (the incoming message)
    * @return An array of meta objects for each granule created as specified in the task config
    */
-  buildEvents(granules, opts, fieldValues) {
+  buildMessages(granules, opts, fieldValues) {
     if (!opts) return granules;
 
-    // One event per granule
+    // One message per granule
     return granules.map((granule) => {
       const transaction = Object.assign({}, fieldValues);
       for (const key of Object.keys(opts)) {
@@ -94,4 +94,4 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 const local = require('gitc-common/local-helpers');
 const localTaskName = 'DiscoverCmrGranules';
 local.setupLocalRun(module.exports.handler,
-                    local.collectionEventInput('MOPITT_DCOSMR_LL_D_STD', localTaskName));
+                    local.collectionMessageInput('MOPITT_DCOSMR_LL_D_STD', localTaskName));
