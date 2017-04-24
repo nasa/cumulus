@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { getApiHealth } from '../../api-health';
+import { fetchApiHealth } from '../../reducers/api-health';
 
 const functional = require('react-functional');
 const React = require('react');
@@ -54,7 +54,7 @@ const alertListStateToProps = ({ config, apiHealth }) => ({ config, apiHealth })
  * Handles the alert list being mounted by initiating a check to get the API health
  */
 function alertListMount({ config, dispatch }) {
-  getApiHealth(config, dispatch);
+  fetchApiHealth(config, dispatch);
 }
 
 export default connect(alertListStateToProps)(

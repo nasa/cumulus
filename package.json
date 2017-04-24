@@ -18,7 +18,7 @@
     "production": "NODE_ENV=production GIBS_ENV=production gulp",
     "lint": "eslint app/scripts/ --ext .js",
     "start": "npm run serve",
-    "mocha": "mocha --compilers js:babel-core/register",
+    "mocha": "mocha --compilers js:babel-core/register --recursive",
     "test": "npm run lint && npm run mocha"
   },
   "browserify": {

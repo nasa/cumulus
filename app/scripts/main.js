@@ -3,22 +3,20 @@
  * display of the application.
  */
 import { createStore, applyMiddleware, compose } from 'redux';
-import { combineReducers } from 'redux-immutable';
 import { Provider } from 'react-redux';
 import { Switch } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import { Route } from 'react-router';
 import { ConnectedRouter, routerMiddleware } from 'react-router-redux';
 
-// Reducers/actions
-import { reducer as apiHealth } from './api-health';
-
 // Components
 import NotFoundPage from './components/not-found-page';
 import ErrorPage from './components/error-page';
 import LandingPage from './components/landing-page';
 
-const config = require('./config');
+// Reducers
+import reducers from './reducers';
+
 const React = require('react');
 const ReactDOM = require('react-dom');
 const Immutable = require('immutable');
@@ -53,10 +51,6 @@ const middleware = routerMiddleware(history);
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 /* eslint-enable */
 
-const reducers = combineReducers({
-  config: _ => config,
-  apiHealth
-});
 const store = createStore(reducers, Immutable.Map(), composeEnhancers(applyMiddleware(middleware)));
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

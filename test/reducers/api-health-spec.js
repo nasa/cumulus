@@ -1,7 +1,7 @@
 'use strict';
 
 import { Map } from 'immutable';
-import { reducer } from '../app/scripts/api-health.js';
+import { reducer } from '../../app/scripts/reducers/api-health.js';
 const chai = require('chai');
 const chaiImmutable = require('chai-immutable');
 chai.use(chaiImmutable);
