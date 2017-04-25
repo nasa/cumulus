@@ -13,3 +13,4 @@ curl http://localhost:3000/health
 {"ok?": true}
 ```
 
+TODO document workflow status endpoint
