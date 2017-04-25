@@ -10,6 +10,7 @@ const log = require('gitc-common/log');
 const util = require('gitc-common/util');
 const aws = require('gitc-common/aws');
 const configGen = require('./config-gen');
+const Mutex = require('gitc-common/concurrency').Mutex;
 
 const LOCK_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
 const execSync = require('child_process').execSync;
@@ -17,10 +18,11 @@ const execSync = require('child_process').execSync;
 
 module.exports = class GenerateMrfTask extends Task {
   run() {
-    return this.exclusive(this.message.meta.key, LOCK_TIMEOUT_MS, this.runExclusive.bind(this));
+    const mutex = new Mutex(aws.dynamodbDocClient(), this.message.resources.tables.locks);
+    return mutex.lock(this.message.meta.key, LOCK_TIMEOUT_MS, this.runWithLock.bind(this));
   }
 
-  async runExclusive() {
+  async runWithLock() {
     const message = this.message;
 
     if (message.payload.length === 0) {
@@ -77,12 +79,12 @@ module.exports = class GenerateMrfTask extends Task {
 
       const messageInfo = `(${message.payload.length} files from ${this.message.meta.key})`;
       await aws.downloadS3Files(message.payload, paths.input);
-      this.logStageComplete(`Source Download ${messageInfo}`);
+      log.info(`Completed source download ${messageInfo}`);
       log.info('==== MRF CONFIG ====');
       log.info(mrfConfig);
       log.info('========');
       await this.runMrfgen(paths.mrfgenConfig);
-      this.logStageComplete(`MRF Generation ${messageInfo}`);
+      log.info(`Completed MRF generation ${messageInfo}`);
       const fullPaths = fs.readdirSync(paths.output).map((f) => path.join(paths.output, f));
       // Upload under the destKey bucket, inserting an underscore before the file extension
       const destKeyFn = (filename) =>

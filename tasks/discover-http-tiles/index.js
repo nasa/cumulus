@@ -13,6 +13,10 @@ const endpointsToCrawlers = {
 
 module.exports = class DiscoverHttpTilesTask extends Task {
   run() {
+    return this.limitConnectionsFromConfig(() => this.runWithLimitedConnections());
+  }
+
+  runWithLimitedConnections() {
     const config = this.config;
     const message = this.message;
     const root = this.config.root;
