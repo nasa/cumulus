@@ -53,7 +53,6 @@ async function getExecutions(stackName, workflow, numExecutions) {
  * @return {type}           description
  */
 async function getCollectionsYaml(stackName) {
-  console.info(`Fetching collection yaml from ${stackName}-deploy`);
   const resp = await s3.getObject(
     { Bucket: `${stackName}-deploy`,
       Key: COLLECTIONS_YAML }).promise();
