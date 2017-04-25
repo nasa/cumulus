@@ -43,8 +43,11 @@ function parseWorkflow(workflow) {
   * @param  config APP configuration
   * @return A promise delivering the list of workflow statuses.
   */
-async function getWorkflowStatus(config) {
-  const workflows = await rp({ uri: `${config.apiBaseUrl}/workflow_status`, json: true });
+async function getWorkflowStatus(config, numExecutions = 30) {
+  const workflows = await rp(
+    { uri: `${config.apiBaseUrl}/workflow_status`,
+      qs: { stack_name: config.stackName, num_executions: numExecutions },
+      json: true });
   return fromJS(workflows).map(parseWorkflow);
 }
 

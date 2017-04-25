@@ -25,6 +25,8 @@ const lastCompleted = (workflow) => {
   return 'Not yet';
 };
 
+// TODO add a test for this where some of the recent ones are running. It should say out of the
+// total that aren't running N are successful.
 /**
  * TODO
  */
