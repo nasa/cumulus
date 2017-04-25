@@ -34,12 +34,12 @@ const triggerIngest = async (resources, provider, collection) => {
     const startDate = new Date().toISOString();
     const id = uuid.v4();
     const executionName = `${collection.id}-${id}`;
-    const eventData = {
+    const messageData = {
       workflow_config_template: collection.workflow_config_template,
       resources: resources,
       provider: provider,
       ingest_meta: {
-        event_source: 'sfn',
+        message_source: 'sfn',
         start_date: startDate,
         state_machine: stateMachine,
         execution_name: executionName,
@@ -50,7 +50,7 @@ const triggerIngest = async (resources, provider, collection) => {
       payload: null
     };
 
-    const message = JSON.stringify(eventData);
+    const message = JSON.stringify(messageData);
     log.info(`Starting ingest of ${collection.id}`);
     await aws.sfn().startExecution({
       stateMachineArn: stateMachine,

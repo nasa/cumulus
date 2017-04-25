@@ -15,7 +15,7 @@ xdescribe('sync-http-urls.handler', function() {
   const SOURCE_KEY = 'some/test/key';
   const DEST_KEY = 'some/test/key.synced';
 
-  const event = {
+  const message = {
     Records: [{
       s3: {
         bucket: {name: BUCKET_NAME},
@@ -77,7 +77,7 @@ xdescribe('sync-http-urls.handler', function() {
     http.get.yields("some body");
     s3util.s3.upload.yields(null, null);
 
-    sync.handler(event, {}, options.callback || function() {})
+    sync.handler(message, {}, options.callback || function() {})
 
     for (let file of syncedFiles) {
       sinon.assert.calledWith(http.get, file.url);
@@ -125,7 +125,7 @@ xdescribe('sync-http-urls.handler', function() {
 
     it('performs no sync activities', function() {
       let callback = sinon.mock().once().withArgs(null, {complete: true, updated: 0});
-      sync.handler(event, {}, callback);
+      sync.handler(message, {}, callback);
       callback.verify();
     });
   });

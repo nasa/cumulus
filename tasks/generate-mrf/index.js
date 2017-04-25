@@ -17,13 +17,13 @@ const execSync = require('child_process').execSync;
 
 module.exports = class GenerateMrfTask extends Task {
   run() {
-    return this.exclusive(this.event.meta.key, LOCK_TIMEOUT_MS, this.runExclusive.bind(this));
+    return this.exclusive(this.message.meta.key, LOCK_TIMEOUT_MS, this.runExclusive.bind(this));
   }
 
   async runExclusive() {
-    const event = this.event;
+    const message = this.message;
 
-    if (event.payload.length === 0) {
+    if (message.payload.length === 0) {
       log.info('No files to process');
       return [];
     }
@@ -75,14 +75,14 @@ module.exports = class GenerateMrfTask extends Task {
         }
       }
 
-      const eventInfo = `(${event.payload.length} files from ${this.event.meta.key})`;
-      await aws.downloadS3Files(event.payload, paths.input);
-      this.logStageComplete(`Source Download ${eventInfo}`);
+      const messageInfo = `(${message.payload.length} files from ${this.message.meta.key})`;
+      await aws.downloadS3Files(message.payload, paths.input);
+      this.logStageComplete(`Source Download ${messageInfo}`);
       log.info('==== MRF CONFIG ====');
       log.info(mrfConfig);
       log.info('========');
       await this.runMrfgen(paths.mrfgenConfig);
-      this.logStageComplete(`MRF Generation ${eventInfo}`);
+      this.logStageComplete(`MRF Generation ${messageInfo}`);
       const fullPaths = fs.readdirSync(paths.output).map((f) => path.join(paths.output, f));
       // Upload under the destKey bucket, inserting an underscore before the file extension
       const destKeyFn = (filename) =>
@@ -128,4 +128,4 @@ module.exports = class GenerateMrfTask extends Task {
 const local = require('gitc-common/local-helpers');
 local.setupLocalRun(
   module.exports.handler,
-  () => ({ ingest_meta: { event_source: 'stdin', task: 'MRFGen' } }));
+  () => ({ ingest_meta: { message_source: 'stdin', task: 'MRFGen' } }));

@@ -53,7 +53,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
       this.state = { files: [], completed: [] };
     }
 
-    this.updated = updatedFiles(this.state.completed, this.event.payload);
+    this.updated = updatedFiles(this.state.completed, this.message.payload);
     return this.updated.length !== 0;
   }
 
@@ -120,4 +120,4 @@ module.exports = class SyncHttpUrlsTask extends Task {
 
 local.setupLocalRun(
   module.exports.handler,
-  () => ({ ingest_meta: { event_source: 'stdin', task: 'SyncHttpUrls' } }));
+  () => ({ ingest_meta: { message_source: 'stdin', task: 'SyncHttpUrls' } }));
