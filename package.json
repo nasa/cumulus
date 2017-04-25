@@ -14,11 +14,17 @@
     "test": "npm run lint && npm run mocha"
   },
   "dependencies": {
+    "aws-sdk": "^2.45.0",
     "aws-serverless-express": "^2.2.0",
+    "babel-plugin-extensible-destructuring": "^4.1.0",
     "body-parser": "^1.17.1",
     "compression": "^1.6.2",
     "cors": "^2.8.3",
-    "express": "^4.15.2"
+    "express": "^4.15.2",
+    "extensible-runtime": "^4.1.0",
+    "immutable": "^3.8.1",
+    "js-yaml": "^3.8.3",
+    "babel-polyfill": "^6.23.0"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",

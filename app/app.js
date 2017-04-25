@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const compression = require('compression');
 const docsHtml = require('./views/docs.html');
-const User = require('./user');
+const { handleWorkflowsRequest } = require('./workflows');
 
 const app = express();
 app.use(compression());
@@ -40,21 +40,11 @@ module.exports = (cb = null) => {
 
   // Responds with the health of the application.
   app.get('/health', (req, res) => {
-    // res.json({ 'ok?': true, foo: true });
     res.json({ 'ok?': true });
   });
 
-  app.get('/users', (req, res) => {
-    res.json(User.users);
-  });
-
-  app.get('/users/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId, 10);
-    const user = User.getUser(User.users, userId);
-
-    if (!user) return res.status(404).json({});
-
-    return res.json(user);
+  app.get('/workflow_status', (req, res) => {
+    handleWorkflowsRequest(req, res);
   });
 
   // Add an error handler last
