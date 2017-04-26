@@ -10,9 +10,6 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of an existing EC2 KeyPair to enable SSH access to ingest ECS
       instances.
-  AuthorizedKeys:
-    Type: CommaDelimitedList
-    Description: Comma-delimited list of SSH keys to authorize on EC2 instances.
   IngestDesiredInstances:
     Type: Number
     Default: '1'
@@ -430,15 +427,11 @@ Resources:
           VolumeSize: 100
       KeyName: !Ref IngestKeyName
       UserData:
-        "Fn::Base64": !Join
-          - ""
-          - - "#cloud-config\n"
-            - "ssh_authorized_keys:\n - "
-            - !Join ["\n - ", !Ref AuthorizedKeys]
-            - "\nruncmd:\n"
-            - " - yum install -y aws-cfn-bootstrap\n"
-            - !Sub " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource IngestContainerInstanceLaunch --region ${AWS::Region}\n"
-            - !Sub " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource IngestECSAutoScalingGroup --region ${AWS::Region}\n"
+        "Fn::Base64": !Sub |
+          #!/bin/bash
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource IngestContainerInstanceLaunch
+          /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource IngestECSAutoScalingGroup
 
   IngestECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
