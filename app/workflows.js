@@ -1,14 +1,15 @@
 'use strict';
 
-/*eslint no-console: ["error", { allow: ["error"] }] */
-
 /**
- * TODO describe this file
+ * Provides access to access ingest workflows running in AWS step functions.
  */
+
+/*eslint no-console: ["error", { allow: ["error"] }] */
 
 const { s3, stepFunctions } = require('./aws');
 const yaml = require('js-yaml');
-const { fromJS, Map } = require('immutable');
+const { BadRequestError, handleError } = require('./api-errors');
+const { fromJS, Map, List } = require('immutable');
 
 const COLLECTIONS_YAML = 'ingest/collections.yml';
 
@@ -21,7 +22,7 @@ const COLLECTIONS_YAML = 'ingest/collections.yml';
  */
 async function getStateMachineArn(stackName, { id }) {
   const deployedPrefix = `${stackName}xx${id}`.replace(/-/g, 'x');
-  const resp = await stepFunctions.listStateMachines().promise();
+  const resp = await stepFunctions().listStateMachines().promise();
   return resp.stateMachines.filter(s => s.name.startsWith(deployedPrefix))[0].stateMachineArn;
 }
 
@@ -35,32 +36,44 @@ async function getStateMachineArn(stackName, { id }) {
  */
 async function getExecutions(stackName, workflow, numExecutions) {
   const arn = await getStateMachineArn(stackName, workflow);
-  const resp = await stepFunctions
+  const resp = await stepFunctions()
     .listExecutions({ stateMachineArn: arn, maxResults: numExecutions })
     .promise();
 
   const executions = resp.executions;
-  return executions.map(e => (
-    { status: e.status,
-      start_date: e.startDate,
-      stop_date: e.stopDate }));
+  return List(executions.map((e) => {
+    const m = Map(
+      { status: e.status,
+        start_date: e.startDate });
+    if (e.stopDate) {
+      return m.set('stop_date', e.stopDate);
+    }
+    return m;
+  }));
 }
 
 /**
- * getCollectionsYaml - TODO
+ * getCollectionsYaml - Fetches the collections yaml from S3.
  *
- * @param  {type} stackName description
- * @return {type}           description
+ * @param stackName Name of the step functions deployment stack.
  */
 async function getCollectionsYaml(stackName) {
-  const resp = await s3.getObject(
-    { Bucket: `${stackName}-deploy`,
-      Key: COLLECTIONS_YAML }).promise();
-  return resp.Body.toString();
+  try {
+    const resp = await s3().getObject(
+      { Bucket: `${stackName}-deploy`,
+        Key: COLLECTIONS_YAML }).promise();
+    return resp.Body.toString();
+  }
+  catch (error) {
+    if (error.code === 'NoSuchBucket') {
+      throw new BadRequestError(`Stack name [${stackName}] does not appear to exist`);
+    }
+    throw error;
+  }
 }
 
 /**
- * TODO
+ * Parses the collection yaml into a Immutable JS javascript object.
  */
 const parseCollectionYaml = (collectionsYaml) => {
   const resourceType = new yaml.Type('!GitcResource', {
@@ -70,27 +83,16 @@ const parseCollectionYaml = (collectionsYaml) => {
   return fromJS(yaml.safeLoad(collectionsYaml, { schema: schema }));
 };
 
-
-/* eslint-disable */
-const sampleCollYaml = () => {
-  const fs = require('fs');
-  return parseCollectionYaml(fs.readFileSync('../test/sample-collections.yml', 'UTF-8'));
-};
-/* eslint-enable */
-
-
 /**
- * getWorkflowStatuses - description
+ * getWorkflowStatuses - Returns a list of workflow status results. These include the workflow id,
+ * name, and execution information.
  *
- * @param  stackName     description
- * @param  numExecutions description
- * @return               description
+ * @param  stackName     The name of the deployed cloud formation stack with AWS state machines.
+ * @param  numExecutions The number of executions to return per workflow.
  */
 async function getWorkflowStatuses(stackName, numExecutions) {
   const collectionsYaml = await getCollectionsYaml(stackName);
   const parsedYaml = parseCollectionYaml(collectionsYaml);
-
-  // const parsedYaml = sampleCollYaml();
 
   const workflows = parsedYaml.get('workflows')
     .entrySeq()
@@ -105,30 +107,34 @@ async function getWorkflowStatuses(stackName, numExecutions) {
   return workflows.map((w, idx) => {
     const executions = executionArrays[idx];
     return w.set('executions', executions);
-  });
+  }).toJS();
 }
 
 /**
- * handleWorkflowsRequest - TODO
- *
- * @param  {type} req description
- * @param  {type} res description
- * @return {type}     description
+ * handleWorkflowStatusRequest - Handles the API request for workflow statuses.
  */
-function handleWorkflowsRequest(req, res) {
-  const stackName = req.query.stack_name;
-  const numExecutions = req.query.num_executions;
+function handleWorkflowStatusRequest(req, res) {
+  req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
+  req.checkQuery('num_executions', 'Invalid num_executions').isInt({ min: 1, max: 1000 });
+  req.getValidationResult().then((result) => {
+    if (!result.isEmpty()) {
+      res.status(400).json(result.array());
+    }
+    else {
+      const stackName = req.query.stack_name;
+      const numExecutions = req.query.num_executions;
 
-  // TODO validate that params are present
-  // TODO handle stack name not existing
-  getWorkflowStatuses(stackName, numExecutions)
-  .then((statuses) => {
-    res.json(statuses.toJS());
-  })
-  .catch((err) => {
-    console.error(err.stack);
-    res.status(500).json({ errors: ['An internal error has occured.'] });
+      getWorkflowStatuses(stackName, numExecutions)
+      .then((statuses) => {
+        res.json(statuses);
+      })
+      .catch((err) => {
+        handleError(err, req, res);
+      });
+    }
   });
 }
 
-module.exports = { handleWorkflowsRequest };
+module.exports = { parseCollectionYaml,
+  getWorkflowStatuses,
+  handleWorkflowStatusRequest };
