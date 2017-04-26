@@ -1,7 +1,5 @@
 'use strict';
 
-/*eslint no-console: ["error", { allow: ["warn", "error"] }] */
-
 // The main application where routes are configured.
 
 const express = require('express');
@@ -9,7 +7,10 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const compression = require('compression');
 const docsHtml = require('./views/docs.html');
-const { handleWorkflowsRequest } = require('./workflows');
+const expressValidator = require('express-validator');
+
+const { handleError } = require('./api-errors');
+const { handleWorkflowStatusRequest } = require('./workflows');
 
 const app = express();
 app.use(compression());
@@ -18,6 +19,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // Setup code to allow rendering the documentation.curl http://uvsvuiocwk.execute-api.us-west-2.amazonaws.com/health
 app.use(express.static('public'));
+// this line must be immediately after any of the bodyParser middlewares
+app.use(expressValidator());
 
 module.exports = (cb = null) => {
   // Invoke the callback to allow it to configure the application before setting up routes.
@@ -44,14 +47,11 @@ module.exports = (cb = null) => {
   });
 
   app.get('/workflow_status', (req, res) => {
-    handleWorkflowsRequest(req, res);
+    handleWorkflowStatusRequest(req, res);
   });
 
   // Add an error handler last
-  app.use((err, req, res, _next) => {
-    console.error(err.stack);
-    res.status(500).json({ errors: ['An internal error has occured.'] });
-  });
+  app.use(handleError);
 
   return app;
 };
