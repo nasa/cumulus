@@ -1,15 +1,19 @@
 /**
- * Defines a table component in React. It expects that the data provided will be an Immutable JS
- * List of Maps. Each map must define a unique id.
+ * Defines a sortable table component in React. It expects that the data provided will be an
+ * Immutable JS List of Maps. Each map must define a unique id.
  *
- * <Table className="some-specific-class" data={immutableJsListOfData}>
+ * <Table className="some-specific-class" data={immutableJsListOfData} sortDirectionAsc={asc}>
  *   <Column
  *     header="Column A"
  *     valueFn={r => r.get('a')}
+ *     sorted={isASorted()}
+ *     sortHandler={...}
  *   />
  *   <Column
  *     header="Column B"
  *     valueFn={r => r.get('b')}
+ *     sorted={isBSorted()}
+ *     sortHandler={...}
  *   />
  * </Table>
  */
@@ -32,7 +36,7 @@ const handleColumnSortClick = (e, column) => {
 };
 
 /**
- * TODO
+ * Returns the icon indicating the direction of the sort on the column.
  */
 const getSortIcon = (column, sortDirectionAsc) => {
   if (column.props.sorted) {
@@ -49,6 +53,7 @@ const getSortIcon = (column, sortDirectionAsc) => {
  * * children - should be the list of columns.
  * * className - a CSS class to use for styling.
  * * data - the source data for rendering the table.
+ * * sortDirectionAsc - true or false to indicate the sort direction.
  */
 const TableFn = (props) => {
   const { children, className, data, sortDirectionAsc } = props;
@@ -59,7 +64,7 @@ const TableFn = (props) => {
         <tr>
           {columns.map(c =>
             <th key={c.props.header}>
-              <a href="#" onClick={e => handleColumnSortClick(e, c)}>
+              <a role="button" href="/" onClick={e => handleColumnSortClick(e, c)}>
                 {getSortIcon(c, sortDirectionAsc)}
                 &nbsp;
                 {c.props.header}

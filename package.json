@@ -16,9 +16,10 @@
     "serve": "GIBS_ENV=development gulp serve",
     "staging": "GIBS_ENV=staging gulp",
     "production": "NODE_ENV=production GIBS_ENV=production gulp",
-    "lint": "eslint app/scripts/ --ext .js",
+    "lint": "eslint . --ext .js",
     "start": "npm run serve",
     "mocha": "mocha --require babel-polyfill --compilers js:babel-core/register --recursive",
+    "mocha-watch": "npm run mocha -- -w",
     "test": "npm run lint && npm run mocha"
   },
   "browserify": {

@@ -23,8 +23,6 @@ const initialState = Map(
     inFlight: false,
     error: undefined });
 
-// TODO add tests for these functions.
-
 /**
  * Returns all the exections in a workflow that are not running.
  */
@@ -33,13 +31,14 @@ const nonRunningExecutions = workflow =>
   .filter(v => v.get('status') !== 'RUNNING');
 
 /**
- * TODO
+ * Gets the last completed execution of a workflow.
  */
 const getLastCompleted = workflow => nonRunningExecutions(workflow).first();
 
 
 /**
- * TODO
+ * Returns a map containing the number of successful runs and the total number of executions that
+ * completed.
  */
 const getSuccessRate = (workflow) => {
   const executions = nonRunningExecutions(workflow);
@@ -48,13 +47,14 @@ const getSuccessRate = (workflow) => {
 };
 
 /**
- *  TODO
+ *  Returns the number of running executions in the workflow
  */
 const getNumRunning = workflow =>
   workflow.get('executions').filter(v => v.get('status') === 'RUNNING').count();
 
 /**
- * TODO document and test this
+ * Reducer helper function. Takes the current state and a field to sort the workflows. Sorts the
+ * workflows by the given field reversing the sort if it's already sorted by that.
  */
 const sortWorkflows = (state, field) => {
   let sorter;
@@ -102,7 +102,7 @@ const sortWorkflows = (state, field) => {
 };
 
 /**
- * TODO
+ * Main reducer function for workflow status state.
  */
 const reducer = (state = initialState, action) => {
   switch (action.type) {
@@ -124,7 +124,7 @@ const reducer = (state = initialState, action) => {
 
 
 /**
- * TODO
+ * Creates an action to indicate a change in the workflow sort.
  */
 const changeSort = field => ({ type: WORKFLOW_CHANGE_SORT, field: field });
 
@@ -148,6 +148,7 @@ const fetchWorkflowStatus = (config, dispatch) => {
 module.exports = {
   reducer,
 
+  SORT_NONE,
   SORT_NAME,
   SORT_LAST_COMPLETED,
   SORT_SUCCESS_RATE,
@@ -160,5 +161,8 @@ module.exports = {
 
   // Actions
   changeSort,
-  fetchWorkflowStatus
+  fetchWorkflowStatus,
+
+  // for testing
+  sortWorkflows
 };
