@@ -48,32 +48,37 @@ const syncFile = async (bucket, keypath, simulate, file) => {
 };
 
 module.exports = class SyncHttpUrlsTask extends Task {
-  shouldRun() {
-    if (!this.state) {
-      this.state = { files: [], completed: [] };
-    }
-
-    this.updated = updatedFiles(this.state.completed, this.message.payload);
-    return this.updated.length !== 0;
+  run() {
+    return this.limitConnectionsFromConfig(() => this.runWithLimitedConnections());
   }
 
-  async run() {
+  async runWithLimitedConnections() {
+    let state = await this.source.loadState(this.constructor.name);
+    if (!state) {
+      state = { files: [], completed: [] };
+    }
+    const updated = updatedFiles(state.completed, this.message.payload);
+    if (updated.length === 0) {
+      log.info('No updates to synced files. Sync is not needed.');
+      await this.source.complete();
+      throw new errorTypes.NotNeededError();
+    }
     const bucket = this.config.output.bucket;
     const keypath = this.config.output.key_prefix;
     const { completed, errors } = await this.syncFiles(
-      this.updated,
+      updated,
       bucket,
       keypath,
       local.isLocal);
-    const isComplete = completed.length === this.updated.length;
+    const isComplete = completed.length === updated.length;
     const completedFiles = _.map(completed, (f) => _.omit(f, ['url', 'version']));
     const completedKeys = _.map(completed, (f) => f.url + f.version);
-    this.state.files = _.values(_.keyBy(this.state.files.concat(completedFiles), 'Key'));
-    this.state.completed = _.uniq(this.state.completed.concat(completedKeys));
+    state.files = _.values(_.keyBy(state.files.concat(completedFiles), 'Key'));
+    state.completed = _.uniq(state.completed.concat(completedKeys));
     let result = [];
     if (isComplete) {
       log.info('Sync is complete');
-      result = this.state.files;
+      result = state.files;
     }
     else {
       log.info('Sync is incomplete');
@@ -91,6 +96,8 @@ module.exports = class SyncHttpUrlsTask extends Task {
         throw JSON.stringify(errors);
       }
     }
+
+    this.source.saveState(this.constructor.name, state);
     if (!isComplete) {
       throw new errorTypes.IncompleteError();
     }
