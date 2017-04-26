@@ -9,16 +9,20 @@ const JsTimeAgo = require('javascript-time-ago');
 JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
 const timeAgo = new JsTimeAgo('en-US');
 
+const SuccessIcon = () => <i className="fa fa-check-circle icon-green" aria-hidden="true" />;
+const FailedIcon = () => <i className="fa fa-exclamation-triangle icon-red" aria-hidden="true" />;
+const NotRunIcon = () => <i className="fa fa-circle-o icon-grey" aria-hidden="true" />;
+
 /**
  * Returns a human readable time for when the last execution completed for the workflow.
  */
 const lastCompleted = (workflow) => {
   const lastExecution = ws.getLastCompleted(workflow);
   if (lastExecution) {
-    // TODO add icon for whether the last one was successful or not.
-    return timeAgo.format(lastExecution.get('stop_date'));
+    const icon = lastExecution.get('status') === 'SUCCEEDED' ? <SuccessIcon /> : <FailedIcon />;
+    return <span>{icon}&nbsp;{timeAgo.format(lastExecution.get('stop_date'))}</span>;
   }
-  return 'Not yet';
+  return <span><NotRunIcon />&nbsp;not yet</span>;
 };
 
 /**
@@ -97,4 +101,11 @@ const WorkflowStatusTable = connect(workflowStatusStateToProps)(
   // Adds in the workflowStatusMount as a callback when the WorkflowStatusTable is mounted in React.
   functional(WorkflowStatusTableFn, { componentWillMount: workflowStatusMount }));
 
-export { WorkflowStatusTable, lastCompleted, successRatio, runningStatus };
+export { WorkflowStatusTable,
+  // For Testing
+  lastCompleted,
+  successRatio,
+  runningStatus,
+  SuccessIcon,
+  FailedIcon,
+  NotRunIcon };

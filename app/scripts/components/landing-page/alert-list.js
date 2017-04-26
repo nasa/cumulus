@@ -36,10 +36,10 @@ function AlertListFn({ apiHealth }) {
         {chooseApiHealthBanner(apiHealth)}
         <li className="eui-banner--danger">
           <strong>Error:&nbsp;</strong>
-          MOPITT hasn&quot;t updated in 3 days.</li>
+        MOPITT hasn&quot;t updated in 3 days.</li>
         <li className="eui-banner--warn">
           <strong>Warning:&nbsp;</strong>
-          Ingest 95th percentile is &gt; 2s.</li>
+        Ingest 95th percentile is &gt; 2s.</li>
       </ul>
     </div>
   );

@@ -1,8 +1,10 @@
 'use strict';
 
-const { lastCompleted, successRatio, runningStatus } =
+const { lastCompleted, successRatio, runningStatus,
+  SuccessIcon, FailedIcon, NotRunIcon } =
   require('../../../app/scripts/components/landing-page/workflow-status-table');
 
+const React = require('react');
 const { withExamples } = require('../../test-helper');
 const { fromJS } = require('immutable');
 const chai = require('chai');
@@ -14,14 +16,26 @@ const expect = chai.expect;
 describe('lastCompleted', () => {
   it('should return Not yet when nothing has completed', () => {
     const workflow = fromJS({ executions: [{ status: 'RUNNING' }] });
-    expect(lastCompleted(workflow)).to.equal('Not yet');
+    expect(lastCompleted(workflow)).to.deep.equal(
+      <span><NotRunIcon />&nbsp;not yet</span>
+    );
   });
   it('should return a humanized time', () => {
     const twoHoursAgo = Date.now() - (3600 * 2 * 1000);
-    const workflow = fromJS({ executions:
-    [{ status: 'RUNNING' },
-     { status: 'SUCCEEDED', stop_date: twoHoursAgo }] });
-    expect(lastCompleted(workflow)).to.deep.equal('2 hours ago');
+    it('and indicate success', () => {
+      const workflow = fromJS(
+        { executions:
+        [{ status: 'RUNNING' },
+         { status: 'SUCCEEDED', stop_date: twoHoursAgo }] });
+      expect(lastCompleted(workflow)).to.deep.equal(<span><SuccessIcon />&nbsp;2 hours ago</span>);
+    });
+    it('and indicate failure', () => {
+      const workflow = fromJS(
+        { executions:
+        [{ status: 'RUNNING' },
+         { status: 'ABORTED', stop_date: twoHoursAgo }] });
+      expect(lastCompleted(workflow)).to.deep.equal(<span><FailedIcon />&nbsp;2 hours ago</span>);
+    });
   });
 });
 

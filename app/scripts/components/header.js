@@ -15,6 +15,7 @@ function Header() {
         <div className="eui-masthead-logo eui-application-logo">
           <h1>
             <a href="/">GIBS Ops Dashboard</a>
+            &nbsp;
             <span className="eui-badge--sm">BETA</span>
           </h1>
         </div>
