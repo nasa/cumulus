@@ -4,4 +4,3 @@ dist
 test-reports
 .tmp
 gulpfile.js
-test

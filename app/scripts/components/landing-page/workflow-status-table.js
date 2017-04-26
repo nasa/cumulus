@@ -9,36 +9,36 @@ const JsTimeAgo = require('javascript-time-ago');
 JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
 const timeAgo = new JsTimeAgo('en-US');
 
-// TODO add tests for stateless functions
+/**
+ * Returns all the exections in a workflow that are not running.
+ */
+const nonRunningExecutions = workflow =>
+  workflow.get('executions')
+  .filter(v => v.get('status') !== 'RUNNING');
 
 /**
- * TODO
+ * Returns a human readable time for when the last execution completed for the workflow.
  */
 const lastCompleted = (workflow) => {
-  const lastExecution = workflow.get('executions')
-    .filter(v => v.get('status') !== 'RUNNING')
-    .first();
+  const lastExecution = nonRunningExecutions(workflow).first();
   if (lastExecution) {
     // TODO add icon for whether the last one was successful or not.
-    return timeAgo.format(lastExecution.get('start_date'));
+    return <p>{timeAgo.format(lastExecution.get('start_date'))}</p>;
   }
   return 'Not yet';
 };
 
-// TODO add a test for this where some of the recent ones are running. It should say out of the
-// total that aren't running N are successful.
 /**
- * TODO
+ * Returns the success ratio with any non running executions.
  */
 const successRatio = (workflow) => {
-  const executions = workflow.get('executions');
+  const executions = nonRunningExecutions(workflow);
   const numSuccessful = executions.filter(v => v.get('status') === 'SUCCEEDED').count();
   return `${numSuccessful}/${executions.count()} Successful`;
 };
 
-
 /**
- * TODO
+ * Return the number of running executions for display.
  */
 const runningStatus = (workflow) => {
   const executions = workflow.get('executions');
@@ -88,6 +88,8 @@ function workflowStatusMount({ config, dispatch }) {
   fetchWorkflowStatus(config, dispatch);
 }
 
-export default connect(workflowStatusStateToProps)(
+const WorkflowStatusTable = connect(workflowStatusStateToProps)(
   // Adds in the workflowStatusMount as a callback when the WorkflowStatusTable is mounted in React.
   functional(WorkflowStatusTableFn, { componentWillMount: workflowStatusMount }));
+
+export { WorkflowStatusTable, lastCompleted, successRatio, runningStatus };

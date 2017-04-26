@@ -1,6 +1,6 @@
 import Header from './header';
 import AlertList from './landing-page/alert-list';
-import WorkflowStatusTable from './landing-page/workflow-status-table';
+import { WorkflowStatusTable } from './landing-page/workflow-status-table';
 const React = require('react');
 
 /**
