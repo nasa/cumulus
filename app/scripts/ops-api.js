@@ -4,8 +4,6 @@
 const { fromJS } = require('immutable');
 const rp = require('request-promise');
 
-// TODO add tests for workflow parsing
-
 /**
  * getApiHealth - Gets the health of the Ops API
  *
@@ -27,7 +25,7 @@ const safeDateParse = d => (d ? Date.parse(d) : null);
  */
 function parseExecution(execution) {
   return execution.updateIn(['start_date'], safeDateParse)
-    .updateIn(['end_date'], safeDateParse);
+    .updateIn(['stop_date'], safeDateParse);
 }
 
 /**

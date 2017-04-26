@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
-import { fetchWorkflowStatus } from '../../reducers/workflow-status';
 import { Table, Column } from '../table';
 
+const workflowStatus = require('../../reducers/workflow-status');
 const functional = require('react-functional');
 const React = require('react');
 const { List } = require('immutable');
@@ -10,20 +10,13 @@ JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
 const timeAgo = new JsTimeAgo('en-US');
 
 /**
- * Returns all the exections in a workflow that are not running.
- */
-const nonRunningExecutions = workflow =>
-  workflow.get('executions')
-  .filter(v => v.get('status') !== 'RUNNING');
-
-/**
  * Returns a human readable time for when the last execution completed for the workflow.
  */
 const lastCompleted = (workflow) => {
-  const lastExecution = nonRunningExecutions(workflow).first();
+  const lastExecution = workflowStatus.getLastCompleted(workflow);
   if (lastExecution) {
     // TODO add icon for whether the last one was successful or not.
-    return <p>{timeAgo.format(lastExecution.get('start_date'))}</p>;
+    return timeAgo.format(lastExecution.get('stop_date'));
   }
   return 'Not yet';
 };
@@ -32,17 +25,15 @@ const lastCompleted = (workflow) => {
  * Returns the success ratio with any non running executions.
  */
 const successRatio = (workflow) => {
-  const executions = nonRunningExecutions(workflow);
-  const numSuccessful = executions.filter(v => v.get('status') === 'SUCCEEDED').count();
-  return `${numSuccessful}/${executions.count()} Successful`;
+  const { numSuccessful, numExecutions } = workflowStatus.getSuccessRate(workflow);
+  return `${numSuccessful}/${numExecutions} Successful`;
 };
 
 /**
  * Return the number of running executions for display.
  */
 const runningStatus = (workflow) => {
-  const executions = workflow.get('executions');
-  const numRunning = executions.filter(v => v.get('status') === 'RUNNING').count();
+  const numRunning = workflowStatus.getNumRunning(workflow);
   return `${numRunning} Running`;
 };
 
@@ -50,24 +41,37 @@ const runningStatus = (workflow) => {
  * TODO table should be sortable
  */
 const WorkflowStatusTableFn = (props) => {
-  const { workflows } = props.workflowStatus;
+  const dispatch = props.dispatch;
+  const { workflows, sort } = props.workflowStatus;
   return (
     <div>
       <h2>Workflow Status</h2>
-      <Table className="workflow-status-table" data={workflows || List()}>
+      <Table
+        className="workflow-status-table"
+        data={workflows || List()}
+        sortDirectionAsc={sort.get('ascending')}
+      >
         <Column
+          sorted={sort.get('field') === workflowStatus.SORT_NAME}
+          sortHandler={_ => dispatch(workflowStatus.changeSort(workflowStatus.SORT_NAME))}
           header="Workflow Name"
           valueFn={r => r.get('name')}
         />
         <Column
+          sorted={sort.get('field') === workflowStatus.SORT_LAST_COMPLETED}
+          sortHandler={_ => dispatch(workflowStatus.changeSort(workflowStatus.SORT_LAST_COMPLETED))}
           header="Last Completed"
           valueFn={lastCompleted}
         />
         <Column
+          sorted={sort.get('field') === workflowStatus.SORT_SUCCESS_RATE}
+          sortHandler={_ => dispatch(workflowStatus.changeSort(workflowStatus.SORT_SUCCESS_RATE))}
           header="Success Ratio"
           valueFn={successRatio}
         />
         <Column
+          sorted={sort.get('field') === workflowStatus.SORT_NUM_RUNNING}
+          sortHandler={_ => dispatch(workflowStatus.changeSort(workflowStatus.SORT_NUM_RUNNING))}
           header="Status"
           valueFn={runningStatus}
         />
@@ -85,7 +89,7 @@ const workflowStatusStateToProps = ({ config, workflowStatus }) => ({ config, wo
  * Handles the alert list being mounted by initiating a check to get the API health
  */
 function workflowStatusMount({ config, dispatch }) {
-  fetchWorkflowStatus(config, dispatch);
+  workflowStatus.fetchWorkflowStatus(config, dispatch);
 }
 
 const WorkflowStatusTable = connect(workflowStatusStateToProps)(
