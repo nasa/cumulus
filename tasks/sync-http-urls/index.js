@@ -59,7 +59,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
     }
     const updated = updatedFiles(state.completed, this.message.payload);
     if (updated.length === 0) {
-      log.info('Full execution not needed');
+      log.info('No updates to synced files. Sync is not needed.');
       await this.source.complete();
       throw new errorTypes.NotNeededError();
     }
