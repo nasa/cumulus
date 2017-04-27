@@ -11,14 +11,15 @@ const chooseApiHealthBanner = ({ healthy, inFlight, error }) => {
     if (healthy) {
       return (
         <li className="eui-banner--success">
-          <strong>API Success:&nbsp;</strong>
-          The API is healthy.</li>
+          <strong>API Success:</strong> The API is healthy.
+        </li>
       );
     }
 
     return (
       <li className="eui-banner--danger">
-        <strong>API Error:&nbsp;</strong>{error || 'unknown problem'}</li>
+        <strong>API Error:</strong> {error || 'unknown problem'}
+      </li>
     );
   }
   return null;
@@ -33,11 +34,11 @@ const AlertListFn = ({ apiHealth }) =>
     <ul className="alerts-list">
       {chooseApiHealthBanner(apiHealth)}
       <li className="eui-banner--danger">
-        <strong>Error:&nbsp;</strong>
-      MOPITT hasn&quot;t updated in 3 days.</li>
+        <strong>Error:</strong> MOPITT hasn&quot;t updated in 3 days.
+      </li>
       <li className="eui-banner--warn">
-        <strong>Warning:&nbsp;</strong>
-      Ingest 95th percentile is &gt; 2s.</li>
+        <strong>Warning:</strong> Ingest 95th percentile is &gt; 2s.
+      </li>
     </ul>
   </div>;
 

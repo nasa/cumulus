@@ -10,7 +10,12 @@ const canned = require('./ops-api/canned-data');
  * @param  config APP configuration
  * @return A promise delivering the health.
  */
-const getApiHealth = config => rp({ uri: `${config.get('apiBaseUrl')}/health`, json: true });
+const getApiHealth = (config) => {
+  if (config.get('useCannedData')) {
+    return { 'ok?': true };
+  }
+  return rp({ uri: `${config.get('apiBaseUrl')}/health`, json: true });
+};
 
 /**
  * Parses a date if present.

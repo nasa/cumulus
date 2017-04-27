@@ -134,15 +134,15 @@ const changeSort = field => ({ type: WORKFLOW_CHANGE_SORT, field: field });
  * @param  config   Application configuration
  * @param  dispatch Function to dispatch a change to update the store.
  */
-const fetchWorkflowStatus = (config, dispatch) => {
+const fetchWorkflowStatus = async (config, dispatch) => {
   dispatch({ type: WORKFLOW_STATUS_IN_FLIGHT });
-  api.getWorkflowStatus(config)
-  .then((resp) => {
+  try {
+    const resp = await api.getWorkflowStatus(config);
     dispatch({ type: WORKFLOW_STATUS_RCVD, workflows: resp });
-  })
-  .catch((err) => {
-    dispatch({ type: WORKFLOW_STATUS_RCVD, error: err.message });
-  });
+  }
+  catch (e) {
+    dispatch({ type: WORKFLOW_STATUS_RCVD, error: e.message });
+  }
 };
 
 module.exports = {

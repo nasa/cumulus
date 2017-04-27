@@ -17,7 +17,7 @@ describe('lastCompleted', () => {
   it('should return Not yet when nothing has completed', () => {
     const workflow = fromJS({ executions: [{ status: 'RUNNING' }] });
     expect(lastCompleted(workflow)).to.deep.equal(
-      <span><NotRunIcon />&nbsp;not yet</span>
+      <span><NotRunIcon />not yet</span>
     );
   });
   it('should return a humanized time', () => {
@@ -27,14 +27,14 @@ describe('lastCompleted', () => {
         { executions:
         [{ status: 'RUNNING' },
          { status: 'SUCCEEDED', stop_date: twoHoursAgo }] });
-      expect(lastCompleted(workflow)).to.deep.equal(<span><SuccessIcon />&nbsp;2 hours ago</span>);
+      expect(lastCompleted(workflow)).to.deep.equal(<span><SuccessIcon />2 hours ago</span>);
     });
     it('and indicate failure', () => {
       const workflow = fromJS(
         { executions:
         [{ status: 'RUNNING' },
          { status: 'ABORTED', stop_date: twoHoursAgo }] });
-      expect(lastCompleted(workflow)).to.deep.equal(<span><FailedIcon />&nbsp;2 hours ago</span>);
+      expect(lastCompleted(workflow)).to.deep.equal(<span><FailedIcon />2 hours ago</span>);
     });
   });
 });

@@ -48,12 +48,12 @@ const getWorkflowStatusResp =
       name: 'MOPITT Discovery',
       executions: [
         {
-          status: 'SUCCEEDED',
+          status: 'ABORTED',
           start_date: '2017-04-27T13:37:10.364Z',
           stop_date: '2017-04-27T13:37:12.146Z'
         },
         {
-          status: 'SUCCEEDED',
+          status: 'ABORTED',
           start_date: '2017-04-27T13:22:10.319Z',
           stop_date: '2017-04-27T13:22:12.456Z'
         },

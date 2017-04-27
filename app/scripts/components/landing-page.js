@@ -1,6 +1,6 @@
 const Header = require('./header').default;
 // Commented out import of mocked component
-// import AlertList from './landing-page/alert-list';
+// const AlertList = require('./landing-page/alert-list').default;
 const { WorkflowStatusTable } = require('./landing-page/workflow-status-table');
 const React = require('react');
 
@@ -9,24 +9,15 @@ const React = require('react');
 // /**
 //  * SystemStatus - A section describing some statistics about the state of the system.
 //  */
-// function SystemStatus() {
-//   return (
-//     <div>
-//       <h2>System Status</h2>
-//       <ul className="system-stats-list">
-//         <li>
-//           <strong>17&nbsp;</strong>
-//         Running Jobs</li>
-//         <li>
-//           <strong>10&nbsp;</strong>
-//         Longest Queue (VNGCR_NQD_C1)</li>
-//         <li>
-//           <strong>20&nbsp;</strong>
-//         Running Jobs (VNGCR_NQD_C1)</li>
-//       </ul>
-//     </div>
-//   );
-// }
+// const SystemStatus = () =>
+//   <div>
+//     <h2>System Status</h2>
+//     <ul className="system-stats-list">
+//       <li><strong>17</strong> Running Jobs</li>
+//       <li><strong>10</strong> Longest Queue (VNGCR_NQD_C1)</li>
+//       <li><strong>20</strong> Running Jobs (VNGCR_NQD_C1)</li>
+//     </ul>
+//   </div>;
 
 /**
  * LandingPage - The main landing page for the application.

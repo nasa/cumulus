@@ -4,14 +4,15 @@ const { Table, Column } = require('../table');
 const functional = require('react-functional');
 const { List } = require('immutable');
 const ws = require('../../reducers/workflow-status');
+const Icon = require('../icon');
 
 const JsTimeAgo = require('javascript-time-ago');
 JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
 const timeAgo = new JsTimeAgo('en-US');
 
-const SuccessIcon = () => <i className="fa fa-check-circle icon-green" aria-hidden="true" />;
-const FailedIcon = () => <i className="fa fa-exclamation-triangle icon-red" aria-hidden="true" />;
-const NotRunIcon = () => <i className="fa fa-circle-o icon-grey" aria-hidden="true" />;
+const SuccessIcon = () => <Icon className="fa-check-circle icon-success" />;
+const FailedIcon = () => <Icon className="fa-exclamation-triangle icon-alert" />;
+const NotRunIcon = () => <Icon className="fa-circle-o icon-disabled" />;
 
 /**
  * Returns a human readable time for when the last execution completed for the workflow.
@@ -20,9 +21,9 @@ const lastCompleted = (workflow) => {
   const lastExecution = ws.getLastCompleted(workflow);
   if (lastExecution) {
     const icon = lastExecution.get('status') === 'SUCCEEDED' ? <SuccessIcon /> : <FailedIcon />;
-    return <span>{icon}&nbsp;{timeAgo.format(lastExecution.get('stop_date'))}</span>;
+    return <span>{icon}{timeAgo.format(lastExecution.get('stop_date'))}</span>;
   }
-  return <span><NotRunIcon />&nbsp;not yet</span>;
+  return <span><NotRunIcon />not yet</span>;
 };
 
 /**
@@ -47,7 +48,7 @@ const runningStatus = (workflow) => {
  */
 const Loading = (props) => {
   if (props.isLoading()) {
-    return <i className="fa fa-circle-o-notch fa-spin fa-2x fa-fw" />;
+    return <Icon className="fa-circle-o-notch fa-spin fa-2x fa-fw" />;
   }
 
   return props.children;

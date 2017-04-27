@@ -18,6 +18,7 @@
  * </Table>
  */
 const React = require('react');
+const Icon = require('./icon');
 
 /**
  * Renders a row of data for the given columns.
@@ -40,11 +41,11 @@ const handleColumnSortClick = (e, column) => {
 const getSortIcon = (column, sortDirectionAsc) => {
   if (column.props.sorted) {
     if (sortDirectionAsc) {
-      return <i className="fa fa-long-arrow-down" aria-hidden="true" />;
+      return <Icon className="fa-long-arrow-down" />;
     }
-    return <i className="fa fa-long-arrow-up" aria-hidden="true" />;
+    return <Icon className="fa-long-arrow-up" />;
   }
-  return <i className="fa fa-arrows-v" aria-hidden="true" />;
+  return <Icon className="fa-arrows-v" />;
 };
 
 /**
@@ -65,7 +66,6 @@ const Table = (props) => {
             <th key={c.props.header}>
               <a role="button" href="/" onClick={e => handleColumnSortClick(e, c)}>
                 {getSortIcon(c, sortDirectionAsc)}
-                &nbsp;
                 {c.props.header}
               </a>
             </th>)}
