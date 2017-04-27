@@ -18,7 +18,7 @@ const SORT_SUCCESS_RATE = 'SORT_SUCCESS_RATE';
 const SORT_NUM_RUNNING = 'SORT_NUM_RUNNING';
 
 const initialState = Map(
-  { workflows: List(),
+  { workflows: null,
     sort: Map({ field: SORT_NONE, ascending: true }),
     inFlight: false,
     error: undefined });

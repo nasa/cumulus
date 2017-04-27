@@ -41,6 +41,18 @@ const runningStatus = (workflow) => {
   return `${numRunning} Running`;
 };
 
+
+/**
+ * Shows a loading icon while props.isLoading. Once loading is complete the children are shown.
+ */
+const Loading = (props) => {
+  if (props.isLoading()) {
+    return <i className="fa fa-circle-o-notch fa-spin fa-2x fa-fw" />;
+  }
+
+  return props.children;
+};
+
 /**
  * Creates a table containing all of the workflows configured in the system with their current
  * status.
@@ -51,36 +63,38 @@ const WorkflowStatusTableFn = (props) => {
   return (
     <div>
       <h2>Workflow Status</h2>
-      <Table
-        className="workflow-status-table"
-        data={workflows || List()}
-        sortDirectionAsc={sort.get('ascending')}
-      >
-        <Column
-          header="Workflow Name"
-          valueFn={r => r.get('name')}
-          sorted={sort.get('field') === ws.SORT_NAME}
-          sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NAME))}
-        />
-        <Column
-          header="Last Completed"
-          valueFn={lastCompleted}
-          sorted={sort.get('field') === ws.SORT_LAST_COMPLETED}
-          sortHandler={_ => dispatch(ws.changeSort(ws.SORT_LAST_COMPLETED))}
-        />
-        <Column
-          header="Success Ratio"
-          valueFn={successRatio}
-          sorted={sort.get('field') === ws.SORT_SUCCESS_RATE}
-          sortHandler={_ => dispatch(ws.changeSort(ws.SORT_SUCCESS_RATE))}
-        />
-        <Column
-          header="Status"
-          valueFn={runningStatus}
-          sorted={sort.get('field') === ws.SORT_NUM_RUNNING}
-          sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NUM_RUNNING))}
-        />
-      </Table>
+      <Loading isLoading={() => !workflows}>
+        <Table
+          className="workflow-status-table"
+          data={workflows || List()}
+          sortDirectionAsc={sort.get('ascending')}
+        >
+          <Column
+            header="Workflow Name"
+            valueFn={r => r.get('name')}
+            sorted={sort.get('field') === ws.SORT_NAME}
+            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NAME))}
+          />
+          <Column
+            header="Last Completed"
+            valueFn={lastCompleted}
+            sorted={sort.get('field') === ws.SORT_LAST_COMPLETED}
+            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_LAST_COMPLETED))}
+          />
+          <Column
+            header="Success Ratio"
+            valueFn={successRatio}
+            sorted={sort.get('field') === ws.SORT_SUCCESS_RATE}
+            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_SUCCESS_RATE))}
+          />
+          <Column
+            header="Status"
+            valueFn={runningStatus}
+            sorted={sort.get('field') === ws.SORT_NUM_RUNNING}
+            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NUM_RUNNING))}
+          />
+        </Table>
+      </Loading>
     </div>
   );
 };
