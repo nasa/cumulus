@@ -15,7 +15,7 @@
     "epsg": 4326,
     "zoom": 9
   },
-  "task_config": {
+  "workflow_config_template": {
     "DiscoverHttpTiles": {
       "type": "apache-index",
       "connections": 10,
@@ -64,6 +64,7 @@
   },
   "resources": {
     "stack": "foo",
+    "state_machine_prefix": "bar",
     "buckets": {
       "config": "config s3 bucket",
       "private": "a private bucket",
