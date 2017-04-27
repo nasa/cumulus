@@ -2,7 +2,7 @@
  * Handles fetching and saving the workflow status in the state. Workflow status the name, and
  * execution dates of the workflows.
  */
-const { Map, List, fromJS } = require('immutable');
+const { Map, fromJS } = require('immutable');
 const api = require('../ops-api');
 
 // Actions
