@@ -20,11 +20,11 @@ const COLLECTIONS_YAML = 'ingest/collections.yml';
  * @param  { id }    A workflow with an id.
  * @return ARN of the statemachine in AWS.
  */
-async function getStateMachineArn(stackName, { id }) {
+const getStateMachineArn = async (stackName, { id }) => {
   const deployedPrefix = `${stackName}xx${id}`.replace(/-/g, 'x');
   const resp = await stepFunctions().listStateMachines().promise();
   return resp.stateMachines.filter(s => s.name.startsWith(deployedPrefix))[0].stateMachineArn;
-}
+};
 
 /**
  * getExecutions - Returns the most recent executions of the given workflow
@@ -34,7 +34,7 @@ async function getStateMachineArn(stackName, { id }) {
  * @param  numExecutions The number of executions to return at most.
  * @return a list of executions for the workflow with status and start and stop dates.
  */
-async function getExecutions(stackName, workflow, numExecutions) {
+const getExecutions = async (stackName, workflow, numExecutions) => {
   const arn = await getStateMachineArn(stackName, workflow);
   const resp = await stepFunctions()
     .listExecutions({ stateMachineArn: arn, maxResults: numExecutions })
@@ -50,14 +50,14 @@ async function getExecutions(stackName, workflow, numExecutions) {
     }
     return m;
   }));
-}
+};
 
 /**
  * getCollectionsYaml - Fetches the collections yaml from S3.
  *
  * @param stackName Name of the step functions deployment stack.
  */
-async function getCollectionsYaml(stackName) {
+const getCollectionsYaml = async (stackName) => {
   try {
     const resp = await s3().getObject(
       { Bucket: `${stackName}-deploy`,
@@ -70,7 +70,7 @@ async function getCollectionsYaml(stackName) {
     }
     throw error;
   }
-}
+};
 
 /**
  * Parses the collection yaml into a Immutable JS javascript object.
@@ -90,7 +90,7 @@ const parseCollectionYaml = (collectionsYaml) => {
  * @param  stackName     The name of the deployed cloud formation stack with AWS state machines.
  * @param  numExecutions The number of executions to return per workflow.
  */
-async function getWorkflowStatuses(stackName, numExecutions) {
+const getWorkflowStatuses = async (stackName, numExecutions) => {
   const collectionsYaml = await getCollectionsYaml(stackName);
   const parsedYaml = parseCollectionYaml(collectionsYaml);
 
@@ -108,32 +108,30 @@ async function getWorkflowStatuses(stackName, numExecutions) {
     const executions = executionArrays[idx];
     return w.set('executions', executions);
   }).toJS();
-}
+};
 
 /**
  * handleWorkflowStatusRequest - Handles the API request for workflow statuses.
  */
-function handleWorkflowStatusRequest(req, res) {
-  req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
-  req.checkQuery('num_executions', 'Invalid num_executions').isInt({ min: 1, max: 1000 });
-  req.getValidationResult().then((result) => {
+const handleWorkflowStatusRequest = async (req, res) => {
+  try {
+    req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
+    req.checkQuery('num_executions', 'Invalid num_executions').isInt({ min: 1, max: 1000 });
+    const result = await req.getValidationResult();
     if (!result.isEmpty()) {
       res.status(400).json(result.array());
     }
     else {
       const stackName = req.query.stack_name;
       const numExecutions = req.query.num_executions;
-
-      getWorkflowStatuses(stackName, numExecutions)
-      .then((statuses) => {
-        res.json(statuses);
-      })
-      .catch((err) => {
-        handleError(err, req, res);
-      });
+      const statuses = await getWorkflowStatuses(stackName, numExecutions);
+      res.json(statuses);
     }
-  });
-}
+  }
+  catch (e) {
+    handleError(e, req, res);
+  }
+};
 
 module.exports = { parseCollectionYaml,
   getWorkflowStatuses,
