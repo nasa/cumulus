@@ -6,15 +6,15 @@ Provides an API for operating GIBS.
 
 The project is laid out in the following structure
 
-* **app** - Contains the code for the application.
-  * **views** - Markdown and HTML for rendering documentation views.
+* **app/** - Contains the code for the application.
+  * **views/** - Markdown and HTML for rendering documentation views.
   * **app.js** - Defines the routes of the application.
   * **local.js** - Runner for locally running.
   * **lambda.js** - Runner for when deployed in lambda.
-* **bin** - Scripts for deploying etc.
-* **config** - Configuration files for AWS.
-* **public** - Public files to expose. These are mostly CSS for documentation rendering.
-* **test** - Tests.
+* **bin/** - Scripts for deploying etc.
+* **config/** - Configuration files for AWS.
+* **public/** - Public files to expose. These are mostly CSS for documentation rendering.
+* **test/** - Tests.
 
 ## Running Locally
 
