@@ -17,7 +17,6 @@
  *   />
  * </Table>
  */
-import { connect } from 'react-redux';
 const React = require('react');
 
 /**
@@ -55,7 +54,7 @@ const getSortIcon = (column, sortDirectionAsc) => {
  * * data - the source data for rendering the table.
  * * sortDirectionAsc - true or false to indicate the sort direction.
  */
-const TableFn = (props) => {
+const Table = (props) => {
   const { children, className, data, sortDirectionAsc } = props;
   const columns = children;
   return (
@@ -78,8 +77,6 @@ const TableFn = (props) => {
     </table>
   );
 };
-
-const Table = connect()(TableFn);
 
 /**
  * Used for configuring a Table column. It should contain a header and valueFn.

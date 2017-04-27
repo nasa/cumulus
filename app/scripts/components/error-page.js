@@ -1,7 +1,6 @@
 'use strict';
 
-import Header from './header';
-
+const Header = require('./header').default;
 const React = require('react');
 
 /**

@@ -1,10 +1,10 @@
-import { connect } from 'react-redux';
-import { Table, Column } from '../table';
-
-const ws = require('../../reducers/workflow-status');
-const functional = require('react-functional');
 const React = require('react');
+const { connect } = require('react-redux');
+const { Table, Column } = require('../table');
+const functional = require('react-functional');
 const { List } = require('immutable');
+const ws = require('../../reducers/workflow-status');
+
 const JsTimeAgo = require('javascript-time-ago');
 JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
 const timeAgo = new JsTimeAgo('en-US');
@@ -113,7 +113,7 @@ const WorkflowStatusTable = connect(workflowStatusStateToProps)(
   // Adds in the workflowStatusMount as a callback when the WorkflowStatusTable is mounted in React.
   functional(WorkflowStatusTableFn, { componentWillMount: workflowStatusMount }));
 
-export { WorkflowStatusTable,
+module.exports = { WorkflowStatusTable,
   // For Testing
   lastCompleted,
   successRatio,

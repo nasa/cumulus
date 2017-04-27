@@ -1,6 +1,6 @@
 'use strict';
 
-import { Map, fromJS } from 'immutable';
+const { Map, fromJS } = require('immutable');
 const ws = require('../../app/scripts/reducers/workflow-status');
 const { withNamedExamples } = require('../test-helper');
 const chai = require('chai');

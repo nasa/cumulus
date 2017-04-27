@@ -1,6 +1,5 @@
-import { connect } from 'react-redux';
-import { fetchApiHealth } from '../../reducers/api-health';
-
+const { connect } = require('react-redux');
+const { fetchApiHealth } = require('../../reducers/api-health');
 const functional = require('react-functional');
 const React = require('react');
 

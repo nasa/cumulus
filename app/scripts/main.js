@@ -2,20 +2,20 @@
  * Main entry point of the application. Sets up the store, reducers, routing, history, and the
  * display of the application.
  */
-import { createStore, applyMiddleware, compose } from 'redux';
-import { Provider } from 'react-redux';
-import { Switch } from 'react-router-dom';
-import { createBrowserHistory } from 'history';
-import { Route } from 'react-router';
-import { ConnectedRouter, routerMiddleware } from 'react-router-redux';
+const { createStore, applyMiddleware, compose } = require('redux');
+const { Provider } = require('react-redux');
+const { Switch } = require('react-router-dom');
+const { createBrowserHistory } = require('history');
+const { Route } = require('react-router');
+const { ConnectedRouter, routerMiddleware } = require('react-router-redux');
 
 // Components
-import NotFoundPage from './components/not-found-page';
-import ErrorPage from './components/error-page';
-import LandingPage from './components/landing-page';
+const NotFoundPage = require('./components/not-found-page').default;
+const ErrorPage = require('./components/error-page').default;
+const LandingPage = require('./components/landing-page').default;
 
 // Reducers
-import reducers from './reducers';
+const reducers = require('./reducers').default;
 
 const React = require('react');
 const ReactDOM = require('react-dom');

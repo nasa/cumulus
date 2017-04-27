@@ -1,7 +1,7 @@
-import Header from './header';
+const Header = require('./header').default;
 // Commented out import of mocked component
 // import AlertList from './landing-page/alert-list';
-import { WorkflowStatusTable } from './landing-page/workflow-status-table';
+const { WorkflowStatusTable } = require('./landing-page/workflow-status-table');
 const React = require('react');
 
 // A mocked up system status component. This is commented out for now. The code is kept here until

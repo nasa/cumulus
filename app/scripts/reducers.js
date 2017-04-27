@@ -1,7 +1,7 @@
 // Reducers/actions
-import { combineReducers } from 'redux-immutable';
-import { reducer as apiHealth } from './reducers/api-health';
-import { reducer as workflowStatus } from './reducers/workflow-status';
+const { combineReducers } = require('redux-immutable');
+const apiHealth = require('./reducers/api-health').reducer;
+const workflowStatus = require('./reducers/workflow-status').reducer;
 
 const { config } = require('./config');
 
