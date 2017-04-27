@@ -3,7 +3,8 @@
   "extends": "airbnb",
   "env": {
     "es6": true,
-    "browser": true
+    "browser": true,
+    "mocha": true
   },
   "plugins": [
     "react"
@@ -26,6 +27,7 @@
     "object-shorthand": "off",
     "prefer-template": "warn",
     "space-before-function-paren": ["error", "never"],
+    "func-style": "error",
     "spaced-comment": "off",
     "strict": "off",
     "max-len": [2, {

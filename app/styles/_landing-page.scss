@@ -1,9 +1,19 @@
-.icon-green {
+
+//
+.icon {
+  margin-right: 0.25em;
+}
+
+.icon-success {
   color: #189c54;
 }
 
-.icon-red {
+.icon-alert {
   color: #b3241c;
+}
+
+.icon-disabled {
+  color: #95a5a6;
 }
 
 .eui-icon {
@@ -34,7 +44,13 @@ main {
   }
 }
 
-.product-status-table {
+.workflow-status-table {
   width: calc(100% - 20px);
   margin-right: 20px;
+
+  // Table headers that have a link in them should make the whole header clickable
+  th a {
+    display: block;
+    color: inherit;
+  }
 }

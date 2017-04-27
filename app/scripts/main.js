@@ -2,23 +2,21 @@
  * Main entry point of the application. Sets up the store, reducers, routing, history, and the
  * display of the application.
  */
-import { createStore, applyMiddleware, compose } from 'redux';
-import { combineReducers } from 'redux-immutable';
-import { Provider } from 'react-redux';
-import { Switch } from 'react-router-dom';
-import { createBrowserHistory } from 'history';
-import { Route } from 'react-router';
-import { ConnectedRouter, routerMiddleware } from 'react-router-redux';
-
-// Reducers/actions
-import { reducer as apiHealth } from './api-health';
+const { createStore, applyMiddleware, compose } = require('redux');
+const { Provider } = require('react-redux');
+const { Switch } = require('react-router-dom');
+const { createBrowserHistory } = require('history');
+const { Route } = require('react-router');
+const { ConnectedRouter, routerMiddleware } = require('react-router-redux');
 
 // Components
-import NotFoundPage from './components/not-found-page';
-import ErrorPage from './components/error-page';
-import LandingPage from './components/landing-page';
+const NotFoundPage = require('./components/not-found-page').default;
+const ErrorPage = require('./components/error-page').default;
+const LandingPage = require('./components/landing-page').default;
 
-const config = require('./config');
+// Reducers
+const reducers = require('./reducers').default;
+
 const React = require('react');
 const ReactDOM = require('react-dom');
 const Immutable = require('immutable');
@@ -32,13 +30,14 @@ const history = createBrowserHistory();
 // This looks for hash options and changes it to a regular url.
 // Based on some solutions described here:
 // http://stackoverflow.com/questions/16267339/s3-static-website-hosting-route-all-paths-to-index-html
-function convertHistoryHash(location) {
+const convertHistoryHash = (location) => {
   // Check if the location hash is something like "#/foo" then we get just the "/foo" part
   const path = (/#(\/.*)$/.exec(location.hash) || [])[1];
   if (path) {
     history.replace(path);
   }
-}
+};
+
 history.listen(convertHistoryHash);
 // Fix the current load if necessary.
 convertHistoryHash(history.location);
@@ -53,10 +52,6 @@ const middleware = routerMiddleware(history);
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 /* eslint-enable */
 
-const reducers = combineReducers({
-  config: _ => config,
-  apiHealth
-});
 const store = createStore(reducers, Immutable.Map(), composeEnhancers(applyMiddleware(middleware)));
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
