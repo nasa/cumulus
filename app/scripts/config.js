@@ -2,6 +2,7 @@
  * Provides configuration for the application. Configuration is determined from the environmental
  * setting.
  */
+const { fromJS } = require('immutable');
 const local = require('./config/local');
 const base = require('./config/base');
 const productionGenerated = require('./config/production-generated');
@@ -21,4 +22,4 @@ if (process.env.GIBS_ENV === 'production') {
   config = Object.assign({}, base, configurations.productionGenerated);
 }
 
-module.exports = config;
+module.exports = { config: fromJS(config) };

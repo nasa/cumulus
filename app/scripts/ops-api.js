@@ -3,7 +3,7 @@
  */
 const { fromJS } = require('immutable');
 const rp = require('request-promise');
-
+const canned = require('./ops-api/canned-data');
 /**
  * getApiHealth - Gets the health of the Ops API
  *
@@ -11,7 +11,7 @@ const rp = require('request-promise');
  * @return A promise delivering the health.
  */
 function getApiHealth(config) {
-  return rp({ uri: `${config.apiBaseUrl}/health`, json: true });
+  return rp({ uri: `${config.get('apiBaseUrl')}/health`, json: true });
 }
 
 /**
@@ -42,10 +42,16 @@ function parseWorkflow(workflow) {
   * @return A promise delivering the list of workflow statuses.
   */
 async function getWorkflowStatus(config, numExecutions = 30) {
-  const workflows = await rp(
-    { uri: `${config.apiBaseUrl}/workflow_status`,
-      qs: { stack_name: config.stackName, num_executions: numExecutions },
-      json: true });
+  let workflows;
+  if (config.get('useCannedData')) {
+    workflows = canned.getWorkflowStatusResp;
+  }
+  else {
+    workflows = await rp(
+      { uri: `${config.get('apiBaseUrl')}/workflow_status`,
+        qs: { stack_name: config.get('stackName'), num_executions: numExecutions },
+        json: true });
+  }
   return fromJS(workflows).map(parseWorkflow);
 }
 
