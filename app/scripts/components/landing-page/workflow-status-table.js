@@ -107,9 +107,7 @@ const workflowStatusStateToProps = ({ config, workflowStatus }) => ({ config, wo
 /**
  * Handles the alert list being mounted by initiating a check to get the API health
  */
-function workflowStatusMount({ config, dispatch }) {
-  ws.fetchWorkflowStatus(config, dispatch);
-}
+const workflowStatusMount = ({ config, dispatch }) => ws.fetchWorkflowStatus(config, dispatch);
 
 const WorkflowStatusTable = connect(workflowStatusStateToProps)(
   // Adds in the workflowStatusMount as a callback when the WorkflowStatusTable is mounted in React.

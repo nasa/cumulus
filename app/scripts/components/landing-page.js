@@ -1,8 +1,11 @@
 import Header from './header';
+// Commented out import of mocked component
 // import AlertList from './landing-page/alert-list';
 import { WorkflowStatusTable } from './landing-page/workflow-status-table';
 const React = require('react');
 
+// A mocked up system status component. This is commented out for now. The code is kept here until
+// we implement it for real.
 // /**
 //  * SystemStatus - A section describing some statistics about the state of the system.
 //  */
@@ -28,18 +31,15 @@ const React = require('react');
 /**
  * LandingPage - The main landing page for the application.
  */
-function LandingPage() {
-  return (
-    <div>
-      <Header />
-      <main>
-        {/* Commenting out mocked up pages until we implement them for real. */}
-        {/* <AlertList /> */}
-        {/* <SystemStatus /> */}
-        <WorkflowStatusTable />
-      </main>
-    </div>
-  );
-}
+const LandingPage = () =>
+  <div>
+    <Header />
+    <main>
+      {/* Commenting out mocked up pages until we implement them for real. */}
+      {/* <AlertList /> */}
+      {/* <SystemStatus /> */}
+      <WorkflowStatusTable />
+    </main>
+  </div>;
 
 export default LandingPage;

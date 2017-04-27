@@ -10,30 +10,23 @@ const canned = require('./ops-api/canned-data');
  * @param  config APP configuration
  * @return A promise delivering the health.
  */
-function getApiHealth(config) {
-  return rp({ uri: `${config.get('apiBaseUrl')}/health`, json: true });
-}
+const getApiHealth = config => rp({ uri: `${config.get('apiBaseUrl')}/health`, json: true });
 
 /**
  * Parses a date if present.
  */
 const safeDateParse = d => (d ? Date.parse(d) : null);
 
-
 /**
  * parseExecution - Parses the execution section of a workflow to convert dates to longs.
  */
-function parseExecution(execution) {
-  return execution.updateIn(['start_date'], safeDateParse)
-    .updateIn(['stop_date'], safeDateParse);
-}
+const parseExecution = execution =>
+  execution.updateIn(['start_date'], safeDateParse).updateIn(['stop_date'], safeDateParse);
 
 /**
  * Parses the workflow from a workflow response.
  */
-function parseWorkflow(workflow) {
-  return workflow.updateIn(['executions'], es => es.map(parseExecution));
-}
+const parseWorkflow = workflow => workflow.updateIn(['executions'], es => es.map(parseExecution));
 
  /**
   * getWorkflowStatus - Fetches the list of workflow status details.
@@ -41,7 +34,7 @@ function parseWorkflow(workflow) {
   * @param  config APP configuration
   * @return A promise delivering the list of workflow statuses.
   */
-async function getWorkflowStatus(config, numExecutions = 30) {
+const getWorkflowStatus = async (config, numExecutions = 30) => {
   let workflows;
   if (config.get('useCannedData')) {
     workflows = canned.getWorkflowStatusResp;
@@ -53,7 +46,7 @@ async function getWorkflowStatus(config, numExecutions = 30) {
         json: true });
   }
   return fromJS(workflows).map(parseWorkflow);
-}
+};
 
 module.exports = {
   getApiHealth,

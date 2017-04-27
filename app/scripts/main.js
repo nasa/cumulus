@@ -30,13 +30,14 @@ const history = createBrowserHistory();
 // This looks for hash options and changes it to a regular url.
 // Based on some solutions described here:
 // http://stackoverflow.com/questions/16267339/s3-static-website-hosting-route-all-paths-to-index-html
-function convertHistoryHash(location) {
+const convertHistoryHash = (location) => {
   // Check if the location hash is something like "#/foo" then we get just the "/foo" part
   const path = (/#(\/.*)$/.exec(location.hash) || [])[1];
   if (path) {
     history.replace(path);
   }
-}
+};
+
 history.listen(convertHistoryHash);
 // Fix the current load if necessary.
 convertHistoryHash(history.location);

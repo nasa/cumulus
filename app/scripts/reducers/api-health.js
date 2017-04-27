@@ -21,23 +21,22 @@ const reducer = (state = initialState, action) => {
   }
 };
 
-
 /**
  * fetchApiHealth - An action creator that initiates a request to get the health of the API.
  *
  * @param  config   Application configuration
  * @param  dispatch Function to dispatch a change to update the store.
  */
-function fetchApiHealth(config, dispatch) {
+const fetchApiHealth = async (config, dispatch) => {
   dispatch({ type: API_HEALTH_IN_FLIGHT });
-  api.getApiHealth(config)
-  .then((resp) => {
+  try {
+    const resp = await api.getApiHealth(config);
     dispatch({ type: API_HEALTH_RCVD, healthy: resp['ok?'] });
-  })
-  .catch((err) => {
-    dispatch({ type: API_HEALTH_RCVD, healthy: false, error: err.message });
-  });
-}
+  }
+  catch (e) {
+    dispatch({ type: API_HEALTH_RCVD, healthy: false, error: e.message });
+  }
+};
 
 module.exports = {
   reducer,
