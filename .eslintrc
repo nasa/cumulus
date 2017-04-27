@@ -6,23 +6,27 @@
     "mocha": true
   },
   "rules": {
-    "generator-star-spacing": "off",
-    "import/no-extraneous-dependencies": "off",
-    "import/newline-after-import": "off",
-    "no-useless-escape": "off",
-    "no-console": "warn",
-    "spaced-comment": "off",
-    "prefer-template": "warn",
-    "no-underscore-dangle": "off",
-    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    "comma-dangle": ["warn", "never"],
-    "strict": "off",
-    "object-shorthand": "off",
-    "space-before-function-paren": ["error", "never"],
     "brace-style": [2, "stroustrup"],
+    "comma-dangle": ["warn", "never"],
+    "generator-star-spacing": "off",
+    "import/newline-after-import": "off",
+    "import/no-extraneous-dependencies": "off",
+    "no-console": "warn",
+    "no-underscore-dangle": "off",
+    "no-useless-escape": "off",
+    "object-shorthand": "off",
+    "prefer-template": "warn",
+    "space-before-function-paren": ["error", "never"],
+    "func-style": "error",
+    "spaced-comment": "off",
+    "strict": "off",
     "max-len": [2, {
       "code": 100,
       "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+    }],
+
+    "no-unused-vars": ["error", {
+      "argsIgnorePattern": "^_"
     }]
   }
 }

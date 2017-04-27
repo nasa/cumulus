@@ -2,7 +2,7 @@
 
 module.exports = {
   target: 'node',
-  devtool: 'source-map',
+  devtool: 'eval',
   module: {
     rules: [
       {
