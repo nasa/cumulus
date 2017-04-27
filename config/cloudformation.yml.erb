@@ -10,9 +10,6 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of an existing EC2 KeyPair to enable SSH access to ingest ECS
       instances.
-  AuthorizedKeys:
-    Type: CommaDelimitedList
-    Description: Comma-delimited list of SSH keys to authorize on EC2 instances.
   IngestDesiredInstances:
     Type: Number
     Default: '1'
@@ -43,25 +40,16 @@ Parameters:
 
 Resources:
 
-<%# [name, retries, processing-timeout] %>
-<% queues = [['ingest-needed_http-tiles-events', 1, 350],
-             ['ingest-needed_cmr-granules-events', 1, 350],
-             ['wms-map-found-events', 1, 350],
-             ['resource-urls-found-events', 1, 350],
-             ['sync-completed-events', 30, 30],
-             ['pending-mrf-gen', 30, 1200]] %>
-<% queues.each { |q| q.push(q.first.split(/[-_]/).map(&:capitalize).join() + "Queue") } %>
-<% events = queues.reject { |q| !q.first.end_with?('-events') } %>
-
+<% alphanum_stack_prefix = ENV['stack_name'].gsub(/\W/, 'x') + 'xx' %>
 
 <%# [task, description, memory, ecs-instance-count (nil to run in Lambda)] %>
 <% tasks = [['discover-http-tiles', 'Discovers tile files to ingest from HTTP', 256, nil],
             ['discover-cmr-granules', 'Discovers tile files to ingest from HTTP', 256, nil],
             ['sync-http-urls', 'Synchronizes HTTP files to S3', 512, nil],
             ['sync-wms', 'Generates WMS URLs to sync', 256, nil],
+            ['trigger-ingest', 'Triggers ingest for discovered granules', 256, nil],
             ['generate-mrf', 'Generates an MRF from imported files', 256, 2],
-            ['dispatcher', 'Dispatches events from SQS', 256, 1],
-            ['scheduler', 'Runs scheduled ingests', 256, 1]] %>
+            ['sfn-scheduler', 'Runs scheduled discovery / ingest', 256, 1]] %>
 
   TaskExecutionRole:
     Type: AWS::IAM::Role
@@ -79,6 +67,12 @@ Resources:
           Principal:
             Service:
             - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service:
+            - !Sub "states.${AWS::Region}.amazonaws.com"
           Action:
           - sts:AssumeRole
       Path: "/"
@@ -133,15 +127,14 @@ Resources:
             Resource:
             - "*"
 
-          # Allow lambdas to send and receive messages on queues
+          # Allow lambdas to interact with their StepFunctions
           - Effect: Allow
             Action:
-            - sqs:SendMessage
-            - sqs:ReceiveMessage
-            - sqs:ChangeMessageVisibility
-            - sqs:DeleteMessage
+            - "*"
             Resource:
-            - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${StackName}-*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:<%= alphanum_stack_prefix %>*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:<%= alphanum_stack_prefix %>*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:activity:${StackName}*"
 
           # Allow lambdas to find their corresponding ECS cluster
           - Effect: Allow
@@ -160,7 +153,7 @@ Resources:
             - "*"
             Condition:
               ArnLike:
-                ecs:cluster: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${StackName}-*"
+                ecs:cluster: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${StackName}*"
 
           # Allow use of dynamo
           - Effect: Allow
@@ -194,35 +187,18 @@ Resources:
             Resource:
             - "*"
 
-# TODO: This ought to be done here but can't now due to parent deployment
+          # Allow querying cloudformation for resource ids
+          - Effect: Allow
+            Action:
+            - cloudformation:DescribeStackResources
+            Resource:
+            - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
+
   PrivateResources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub ${StackName}-private
-#
-#  PublicResources:
-#    Type: AWS::S3::Bucket
-#    DeletionPolicy: Retain
-#    Properties:
-#      BucketName: !Sub ${StackName}-public
-
-<% queues.each do |queue, max_receive, timeout, queue_name| %>
-  <%= queue_name %>:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${StackName}-<%= queue %>
-      ReceiveMessageWaitTimeSeconds: 20
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt [Failed<%= queue_name %>, Arn]
-        maxReceiveCount: <%= max_receive %>
-      VisibilityTimeout: <%= timeout %>
-
-  Failed<%= queue_name %>:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${StackName}-failed-<%= queue %>
-<% end %>
 
 <% tasks.each do |task, description, memory, ecsDesiredCount| %>
   <% caps_name = task.split('-').map(&:capitalize).join() %>
@@ -316,20 +292,19 @@ Resources:
     Properties:
       LogGroupName: !Sub ${StackName}-transactions
 
-<% ['dispatcher', 'scheduler'].each do |task| %>
-  <%= task.capitalize %>Task:
+  SfnSchedulerTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-      - Name: <%= task %>
+      - Name: sfn-scheduler
         Command:
-        - !GetAtt [<%= task.capitalize %>Fn, Arn]
+        - !GetAtt [SfnSchedulerFn, Arn]
         - "--eventJson"
         - !Sub >-
           {
             "resources": {
-              "stack":"${StackName}",
-              "eventQueues": {<%= events.map {|e| %Q("#{e.first.gsub(/-events$/, '')}": "${#{e.last}}")}.join(",") %>},
+              "stack": "${AWS::StackName}",
+              "state_machine_prefix": "<%= alphanum_stack_prefix %>",
               "buckets": {
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
@@ -340,11 +315,7 @@ Resources:
                 "locks": "${StackName}-locks"
               }
             },
-            "config": {
-              "events": {"Key": "ingest/events.json", "Bucket": "${ConfigS3Bucket}"},
-              "collections": {"Key": "ingest/collections.json", "Bucket": "${ConfigS3Bucket}"},
-              "providers": {"Key": "ingest/providers.json", "Bucket": "${ConfigS3Bucket}"}
-            }
+            "payload": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
           }
         Cpu: '10'
         Essential: true
@@ -356,9 +327,8 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref <%= task.capitalize %>Logs
+            awslogs-group: !Ref SfnSchedulerLogs
             awslogs-region: !Ref AWS::Region
-<% end %>
 
   GenerateMrfTask:
     Type: AWS::ECS::TaskDefinition
@@ -367,12 +337,8 @@ Resources:
       - Name: generate-mrf
         Command:
         - !GetAtt [GenerateMrfFn, Arn]
-        - "--queue"
-        - !Ref PendingMrfGenQueue
-        - "--prefix"
-        - !Ref StackName
-        - "--bucket"
-        - !Sub ${StackName}-private
+        - "--activity"
+        - !Ref GenerateMrfActivity
         Cpu: '512'
         Essential: true
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
@@ -461,15 +427,11 @@ Resources:
           VolumeSize: 100
       KeyName: !Ref IngestKeyName
       UserData:
-        "Fn::Base64": !Join
-          - ""
-          - - "#cloud-config\n"
-            - "ssh_authorized_keys:\n - "
-            - !Join ["\n - ", !Ref AuthorizedKeys]
-            - "\nruncmd:\n"
-            - " - yum install -y aws-cfn-bootstrap\n"
-            - !Sub " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource IngestContainerInstanceLaunch --region ${AWS::Region}\n"
-            - !Sub " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource IngestECSAutoScalingGroup --region ${AWS::Region}\n"
+        "Fn::Base64": !Sub |
+          #!/bin/bash
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource IngestContainerInstanceLaunch
+          /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource IngestECSAutoScalingGroup
 
   IngestECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -486,6 +448,28 @@ Resources:
         ToPort: '22'
         CidrIp: 0.0.0.0/0
       VpcId: !Ref VPC
+
+<%
+require('yaml')
+require('json')
+YAML::add_domain_type('GitcResource', 'GitcResource') { |type, val| "${#{val}}" }
+collections = YAML.load_file('config/collections.yml')
+collections['workflows'].each do |name, definition|
+%>
+  # Unfortunately, we have to prefix the desired state machine name with a stack-specific
+  # prefix so that we can restrict IAM roles to only our state machines
+  <%= alphanum_stack_prefix + name %>:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString: !Sub '<%= definition.to_json %>'
+      RoleArn: !GetAtt [TaskExecutionRole, Arn]
+
+<% end %>
+
+  GenerateMrfActivity:
+    Type: "AWS::StepFunctions::Activity"
+    Properties:
+      Name: !Sub '${StackName}-GenerateMrf'
 
 Mappings:
   AWSRegionToAMI:

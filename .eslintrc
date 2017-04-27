@@ -6,6 +6,18 @@
     "mocha": true
   },
   "rules": {
+    "require-jsdoc": ["warn", {
+      "require": {
+        "FunctionDeclaration": true,
+        "MethodDefinition": true,
+        "ClassDeclaration": true,
+        "ArrowFunctionExpression": true
+      }
+    }],
+    "valid-jsdoc": ["warn", {
+      "requireReturn": false,
+      "requireReturnType": false
+    }],
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",
     "import/newline-after-import": "off",

@@ -62,7 +62,7 @@ exports.generateConfig = (projection, date, zoomLevels, mrfgenConfig, paths) => 
 
   const templateParams = {
     paths: paths,
-    productDate: date.year + date.month + date.day,
+    productDate: date,
     isReprojection: sourceProjection !== projection,
     tileSize: tileSize,
     fileExt: fileExt

@@ -13,24 +13,25 @@ const endpointsToCrawlers = {
 
 module.exports = class DiscoverHttpTilesTask extends Task {
   run() {
+    return this.limitConnectionsFromConfig(() => this.runWithLimitedConnections());
+  }
+
+  runWithLimitedConnections() {
     const config = this.config;
-    const event = this.event;
+    const message = this.message;
     const root = this.config.root;
 
     const CrawlerClass = endpointsToCrawlers[config.type];
     const pattern = new FieldPattern(config.match);
-    const crawler = new CrawlerClass(event.product, root, pattern, config.connections || 10);
+    const crawler = new CrawlerClass(root, pattern, config.connections || 10);
+    log.info(config);
 
     return new Promise((resolve) => {
       crawler.on('complete', (resources) => {
-        const complete = this.excludeIncomplete(resources, config.required, event);
-        const withMeta = this.addFileMeta(complete, config.file, event);
-        const events = this.buildEvents(withMeta, config.groupBy, config.addMeta, event);
-
-        for (const event of events) {
-          this.trigger('resource-urls-found', event.transaction.key, event);
-        }
-        resolve(resources.length);
+        const complete = this.excludeIncomplete(resources, config.required, message);
+        const withMeta = this.addFileMeta(complete, config.file, message);
+        const messages = this.buildMessages(withMeta, config.group_by, config.group_meta, message);
+        resolve(messages);
       });
       crawler.crawl();
     });
@@ -71,28 +72,30 @@ module.exports = class DiscoverHttpTilesTask extends Task {
     return resources;
   }
 
-  buildEvents(resources, grouping, opts, fieldValues) {
-    if (!opts) return resources;
-
-    // Group everything by transaction key
+  buildMessages(resources, grouping, opts, fieldValues) {
+    // Group everything
     const pattern = new FieldPattern(grouping, fieldValues);
     const groups = _.values(_.groupBy(resources, (r) => pattern.format({ match: r.fields })));
 
-    // Add transaction fields
+    // Add envelope fields
     return groups.map((group) => {
-      const transaction = Object.assign({}, this.event.transaction);
+      const meta = {};
       for (const key of Object.keys(opts)) {
         const pattern = new FieldPattern(opts[key], fieldValues);
-        transaction[key] = pattern.format({ match: group[0].fields });
+        meta[key] = pattern.format({ match: group[0].fields });
       }
-      return Object.assign({}, this.event, {
-        transaction: transaction,
-        meta: transaction,
+      return {
+        meta: meta,
         payload: group.map((resource) => _.omit(resource, ['fields']))
-      });
+      };
     });
   }
 
+  /**
+   * Entrypoint for Lambda
+   * @param {array} args The arguments passed by AWS Lambda
+   * @return The handler return value
+   */
   static handler(...args) {
     return DiscoverHttpTilesTask.handle(...args);
   }
@@ -101,11 +104,12 @@ module.exports = class DiscoverHttpTilesTask extends Task {
 // To run a small test:
 // node --harmony index.js local
 const local = require('gitc-common/local-helpers');
-local.setupLocalRun(module.exports.handler, local.collectionEventInput('VNGCR_SQD_C1', (input) => {
-  const result = {
-    config: input.collection.ingest.config
-  };
-  result.config.root += 'VNGCR_SQD_C1_r00c01/';
-  delete result.config.connections;
-  return result;
-}));
+const localTaskName = 'DiscoverHttpTiles';
+local.setupLocalRun(
+  module.exports.handler,
+  local.collectionMessageInput('VNGCR_SQD_C1', localTaskName, (input) => {
+    const config = input.workflow_config_template[localTaskName];
+    config.root += 'VNGCR_SQD_C1_r00c01/';
+    delete config.connections;
+    return null;
+  }));

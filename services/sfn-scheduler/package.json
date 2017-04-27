@@ -4,7 +4,8 @@
   "description": "Runs ingest timers as configured in /config/products.json",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npm_config_prefix='../../tmp' npm link ../../lib"
+    "//": "The ingest lib directory is linked in as gitc-common module.",
+    "link-gitc-common": "npm_config_prefix='../../tmp' npm link ../../lib"
   },
   "keywords": [
     "GIBS"
@@ -15,5 +16,9 @@
   },
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
-  "dependencies": {}
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "uuid": "^3.0.1"
+  },
+  "devDependencies": {}
 }

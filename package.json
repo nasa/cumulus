@@ -9,7 +9,14 @@
     "start": "webpack -w --colors",
     "prepublish": "./bin/npm/prepublish",
     "lock": "./bin/npm/lock",
-    "clean": "./bin/npm/clean"
+    "clean": "./bin/npm/clean",
+    "//": [
+      "Allows validation of a collection configuration file",
+      "Execute like `npm run-script validate-collection-json -- docs/schemas/example-data/example-collection.json`"
+    ],
+    "generate-docs": "./node_modules/.bin/generate-md --layout github --input docs/ingest_workflows_architecture.md --output docs",
+    "serve-docs": "./node_modules/.bin/http-server -c-1 docs -o",
+    "validate-collection-json": "sed 's/!GitcResource//g' config/collections.yml | js-yaml > tmp_collection.json && ajv validate -s docs/schemas/collections_config_schema.json -r docs/schemas/ingest_common_schema.json -d tmp_collection.json; rm tmp_collection.json"
   },
   "keywords": [
     "GIBS"
@@ -25,6 +32,8 @@
     "glob": "^7.0.5"
   },
   "devDependencies": {
+    "ajv": "^5.0.4-beta.3",
+    "ajv-cli": "^2.0.0",
     "aws-sdk": "^2.4.9",
     "aws-sdk-mock": "^1.3.0",
     "babel-core": "^6.13.2",
@@ -40,7 +49,9 @@
     "eslint-plugin-react": "^6.0.0",
     "expect.js": "^0.3.1",
     "exports-loader": "^0.6.3",
+    "http-server": "^0.9.0",
     "json-loader": "^0.5.4",
+    "markdown-styles": "^3.1.9",
     "mocha": "^2.5.3",
     "mocha-junit-reporter": "^1.11.1",
     "mocha-webpack": "^0.7.0",

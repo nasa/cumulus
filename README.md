@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-* node.js >= 4.2 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm)
+* node.js >= 4.3 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm)
 * AWS CLI (http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 * Ruby
 * BASH
@@ -13,7 +13,7 @@
 Install the correct node version:
 
 ```
-nvm install 4.2
+nvm install 4.3
 ```
 
 Ensure that the aws cli is configured and that the default output format is either JSON or None:
@@ -72,6 +72,28 @@ The above command will discover all tiles from a small VIIRS subdirectory, pass 
 function, syncing to a test path, then pass the output to mrf generation, which will download
 all the files, output the configuration file, then likely bail due to the lack of local gdal support
 for MRF.
+
+#### Viewing Ingest Documentation
+
+Ingest documentation written in Markdown and JSON schemas are located in the docs folder. [Docson](https://github.com/lbovet/docson) is used for showing JSON schema documentation.
+
+You should run the following commands the first time to view the documentation.
+
+```Bash
+npm install  # If you haven't run this yet.
+
+# Get the docson code
+git submodules init
+git submodules update
+
+# Generate HTML from the markdown
+npm run generate-docs
+# Start an HTTP Server to serve up the documentation.
+npm run serve-docs
+```
+
+You'll only need to run the last two lines of code to view the updated documentation in the future.
+
 
 ### Logs
 

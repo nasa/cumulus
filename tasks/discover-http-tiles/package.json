@@ -4,7 +4,8 @@
   "description": "Crawls an HTTP endpoint to discover tiled imagery",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npm_config_prefix='../../tmp' npm link ../../lib"
+    "//":"The ingest lib directory is linked in as gitc-common module.",
+    "link-gitc-common": "npm_config_prefix='../../tmp' npm link ../../lib"
   },
   "keywords": [
     "GIBS"
@@ -19,5 +20,8 @@
     "async": "^2.0.0",
     "lodash": "^4.15.0",
     "simplecrawler": "git+https://github.com/cgiffard/node-simplecrawler.git#193e506c39164ddf045c7c6c502e1a015d85a290"
+  },
+  "devDependencies": {
+    "sinon": "^1.17.4"
   }
 }
