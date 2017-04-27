@@ -31,7 +31,7 @@ const lastCompleted = (workflow) => {
  */
 const successRatio = (workflow) => {
   const { numSuccessful, numExecutions } = ws.getSuccessRate(workflow);
-  return `${numSuccessful} of the last ${numExecutions} Successful`;
+  return `${numSuccessful} of the last ${numExecutions} successful`;
 };
 
 /**

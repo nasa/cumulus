@@ -50,10 +50,10 @@ describe('successRatio', () => {
     withExamples((args, expected) => {
       const workflow = workflowWithStatus(args);
       expect(successRatio(workflow)).to.equal(expected);
-    }, ['SUCCEEDED', 'SUCCEEDED', 'ABORTED'], '2 of the last 3 Successful',
-       ['ABORTED', 'ABORTED', 'ABORTED'], '0 of the last 3 Successful',
-       ['SUCCEEDED', 'RUNNING', 'ABORTED'], '1 of the last 2 Successful',
-       ['SUCCEEDED', 'SUCCEEDED', 'SUCCEEDED'], '3 of the last 3 Successful');
+    }, ['SUCCEEDED', 'SUCCEEDED', 'ABORTED'], '2 of the last 3 successful',
+       ['ABORTED', 'ABORTED', 'ABORTED'], '0 of the last 3 successful',
+       ['SUCCEEDED', 'RUNNING', 'ABORTED'], '1 of the last 2 successful',
+       ['SUCCEEDED', 'SUCCEEDED', 'SUCCEEDED'], '3 of the last 3 successful');
   });
 });
 
