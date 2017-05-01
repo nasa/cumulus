@@ -41,11 +41,11 @@ const handleColumnSortClick = (e, column) => {
 const getSortIcon = (column, sortDirectionAsc) => {
   if (column.props.sorted) {
     if (sortDirectionAsc) {
-      return <Icon className="fa-long-arrow-down" />;
+      return <Icon className="icon-sort fa-sort-down" />;
     }
-    return <Icon className="fa-long-arrow-up" />;
+    return <Icon className="icon-sort fa-sort-up" />;
   }
-  return <Icon className="fa-arrows-v" />;
+  return <Icon className="icon-sort fa-sort" />;
 };
 
 /**
@@ -65,8 +65,8 @@ const Table = (props) => {
           {columns.map(c =>
             <th key={c.props.header}>
               <a role="button" href="/" onClick={e => handleColumnSortClick(e, c)}>
-                {getSortIcon(c, sortDirectionAsc)}
                 {c.props.header}
+                {getSortIcon(c, sortDirectionAsc)}
               </a>
             </th>)}
         </tr>
