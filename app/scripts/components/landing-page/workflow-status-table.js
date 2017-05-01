@@ -83,7 +83,7 @@ const WorkflowStatusTableFn = (props) => {
             sortHandler={_ => dispatch(ws.changeSort(ws.SORT_LAST_COMPLETED))}
           />
           <Column
-            header="Success Ratio"
+            header="Recent Run Success Ratio"
             valueFn={successRatio}
             sorted={sort.get('field') === ws.SORT_SUCCESS_RATE}
             sortHandler={_ => dispatch(ws.changeSort(ws.SORT_SUCCESS_RATE))}
