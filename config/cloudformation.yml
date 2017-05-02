@@ -2,6 +2,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Describes an API for controlling the operations of GIBS.
+
+Parameters:
+  LambdaExecutionRole:
+    Type: String
+
 Resources:
   ApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -13,56 +18,13 @@ Resources:
         accountId: !Ref AWS::AccountId
         ApiLambdaFunctionName: !Ref GibsApiFunction
 
-  LambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
-      Policies:
-      - PolicyName: root
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-            Resource: arn:aws:logs:*:*:*
-          # Gives permission to read the collections yaml file and other resources in the step function stack
-          - Effect: Allow
-            Action:
-            - s3:GetObject
-            Resource: arn:aws:s3:::%StepFunctionStack%-deploy/*
-          # Gives permission to list state machines and get their executions.
-          - Effect: Allow
-            Action:
-            - states:ListStateMachines
-            - states:ListExecutions
-            Resource:
-            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:*"
-
   LambdaApiGatewayExecutionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt GibsApiFunction.Arn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Join
-        - ''
-        - - 'arn:aws:execute-api:'
-          - !Ref AWS::Region
-          - ":"
-          - !Ref AWS::AccountId
-          - ":"
-          - !Ref ApiGatewayApi
-          - "/*/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApi}/*/*"
 
   GibsApiFunction:
     Type: AWS::Serverless::Function
@@ -70,7 +32,7 @@ Resources:
       CodeUri: ../dist/
       Handler: lambda.handler
       MemorySize: 1024
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !Ref LambdaExecutionRole
       Runtime: nodejs6.10
       Timeout: 30
       Events:
@@ -90,36 +52,15 @@ Resources:
 Outputs:
   LambdaFunctionConsoleUrl:
     Description: Console URL for the Lambda Function.
-    Value: !Join
-      - ''
-      - - https://
-        - !Ref AWS::Region
-        - ".console.aws.amazon.com/lambda/home?region="
-        - !Ref AWS::Region
-        - "#/functions/"
-        - !Ref GibsApiFunction
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${GibsApiFunction}"
 
   ApiGatewayApiConsoleUrl:
     Description: Console URL for the API Gateway API's Stage.
-    Value: !Join
-      - ''
-      - - https://
-        - !Ref AWS::Region
-        - ".console.aws.amazon.com/apigateway/home?region="
-        - !Ref AWS::Region
-        - "#/apis/"
-        - !Ref ApiGatewayApi
-        - "/stages/prod"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ApiGatewayApi}/stages/prod"
 
   ApiUrl:
     Description: Invoke URL for your API. Clicking this link will perform a GET request
       on the root resource of your API.
-    Value: !Join
-      - ''
-      - - https://
-        - !Ref ApiGatewayApi
-        - ".execute-api."
-        - !Ref AWS::Region
-        - ".amazonaws.com/prod/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
     Export:
       Name: ApiUrl
