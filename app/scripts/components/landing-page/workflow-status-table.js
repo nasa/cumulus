@@ -1,8 +1,7 @@
 const React = require('react');
-const { connect } = require('react-redux');
-const { Table, Column } = require('../table');
-const functional = require('react-functional');
 const { List } = require('immutable');
+const { connect } = require('react-redux');
+const functional = require('react-functional');
 const ws = require('../../reducers/workflow-status');
 const Icon = require('../icon');
 
@@ -55,46 +54,153 @@ const Loading = (props) => {
 };
 
 /**
+ * TODO
+ */
+const WorkflowTbody = ({ workflow }) =>
+  <tbody key={workflow.get('name')} className="workflow-body">
+    <tr>
+      <td>{workflow.get('name')}</td>
+      <td>{lastCompleted(workflow)}</td>
+      <td />
+      <td>{successRatio(workflow)}</td>
+      <td>{runningStatus(workflow)}</td>
+      <td />
+    </tr>
+  </tbody>;
+
+/**
+ * TODO
+ */
+const ProductTbody = ({ workflow }) =>
+  <tbody key={`${workflow.get('name')}-products`} className="product-body">
+    <tr>
+      <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_LQD_C1)</td>
+      <td>
+        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+        XX minutes ago
+      </td>
+      <td>X hours ago</td>
+      <td>XX of the last XX successful</td>
+      <td>X Running</td>
+      <td>chart.js chart here</td>
+    </tr>
+    <tr>
+      <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_SQD_C1)</td>
+      <td>
+        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+        XX minutes ago
+      </td>
+      <td>X hours ago</td>
+      <td>XX of the last XX successful</td>
+      <td>X Running</td>
+      <td>chart.js chart here</td>
+    </tr>
+    <tr>
+      <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_NQD_C1)</td>
+      <td>
+        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+        XX minutes ago
+      </td>
+      <td>X hours ago</td>
+      <td>XX of the last XX successful</td>
+      <td>X Running</td>
+      <td>chart.js chart here</td>
+    </tr>
+  </tbody>;
+
+/**
+ * Returns the icon indicating the direction of the sort on the column.
+ */
+const SortIcon = ({ isSorted, sortDirectionAsc }) => {
+  if (isSorted) {
+    if (sortDirectionAsc) {
+      return <Icon className="icon-sort fa-sort-down" />;
+    }
+    return <Icon className="icon-sort fa-sort-up" />;
+  }
+  return <Icon className="icon-sort fa-sort" />;
+};
+
+
+/**
+ * TODO
+ */
+const Th = (props) => {
+  if (props.sortHandler) {
+    return (
+      <th>
+        <a
+          role="button" href="/" onClick={(e) => {
+            e.preventDefault();
+            props.sortHandler();
+          }}
+        >
+          {props.title}
+          <SortIcon isSorted={props.isSorted} sortDirectionAsc={props.sortDirectionAsc} />
+        </a>
+      </th>
+    );
+  }
+  // No sorting needed
+  return <th>{props.title}</th>;
+};
+
+
+/**
  * Creates a table containing all of the workflows configured in the system with their current
  * status.
  */
 const WorkflowStatusTableFn = (props) => {
   const dispatch = props.dispatch;
-  const { workflows, sort } = props.workflowStatus;
+  const sort = props.workflowStatus.get('sort');
+  const workflows = props.workflowStatus.get('workflows') || List();
   return (
     <div>
       <h2>Workflow Status</h2>
-      <Loading isLoading={() => !workflows}>
-        <Table
+      <Loading isLoading={() => !props.workflowStatus.get('workflows')}>
+        <table
           className="workflow-status-table"
-          data={workflows || List()}
-          sortDirectionAsc={sort.get('ascending')}
         >
-          <Column
-            header="Workflow Name"
-            valueFn={r => r.get('name')}
-            sorted={sort.get('field') === ws.SORT_NAME}
-            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NAME))}
-          />
-          <Column
-            header="Last Completed"
-            valueFn={lastCompleted}
-            sorted={sort.get('field') === ws.SORT_LAST_COMPLETED}
-            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_LAST_COMPLETED))}
-          />
-          <Column
-            header="Recent Run Success Ratio"
-            valueFn={successRatio}
-            sorted={sort.get('field') === ws.SORT_SUCCESS_RATE}
-            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_SUCCESS_RATE))}
-          />
-          <Column
-            header="Status"
-            valueFn={runningStatus}
-            sorted={sort.get('field') === ws.SORT_NUM_RUNNING}
-            sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NUM_RUNNING))}
-          />
-        </Table>
+          <thead>
+            <tr>
+              <Th
+                title="Name"
+                isSorted={sort.get('field') === ws.SORT_NAME}
+                sortDirectionAsc={sort.get('ascending')}
+                sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NAME))}
+              />
+              <Th
+                title="Last Completed"
+                isSorted={sort.get('field') === ws.SORT_LAST_COMPLETED}
+                sortDirectionAsc={sort.get('ascending')}
+                sortHandler={_ => dispatch(ws.changeSort(ws.SORT_LAST_COMPLETED))}
+              />
+              <Th
+                title="Most Recent Temporal Date"
+                isSorted={sort.get('field') === ws.SORT_RECENT_TEMPORAL}
+                sortDirectionAsc={sort.get('ascending')}
+                sortHandler={_ => dispatch(ws.changeSort(ws.SORT_RECENT_TEMPORAL))}
+              />
+              <Th
+                title="Recent Run Success Ratio"
+                isSorted={sort.get('field') === ws.SORT_SUCCESS_RATE}
+                sortDirectionAsc={sort.get('ascending')}
+                sortHandler={_ => dispatch(ws.changeSort(ws.SORT_SUCCESS_RATE))}
+              />
+              <Th
+                title="Status"
+                isSorted={sort.get('field') === ws.SORT_NUM_RUNNING}
+                sortDirectionAsc={sort.get('ascending')}
+                sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NUM_RUNNING))}
+              />
+              <Th title="Ingest Performance" />
+            </tr>
+          </thead>
+          {workflows.map(w =>
+            [<WorkflowTbody workflow={w} />, <ProductTbody workflow={w} />]
+          )}
+
+        </table>
       </Loading>
     </div>
   );

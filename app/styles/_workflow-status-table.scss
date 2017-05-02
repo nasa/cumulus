@@ -1,0 +1,25 @@
+.workflow-status-table {
+  width: calc(100% - 20px);
+  margin-right: 20px;
+  // Table headers that have a link in them should make the whole header clickable
+  th a {
+    display: block;
+    color: inherit;
+  }
+
+  .workflow-body {
+    tr {
+      background: #ebebeb;
+    }
+  }
+
+  .product-body {
+    tr {
+      background: white;
+    }
+  }
+
+  .hidden-tbody {
+    display: none;
+  }
+}

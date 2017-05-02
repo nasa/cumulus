@@ -48,14 +48,3 @@ main {
     color: #988001;
   }
 }
-
-.workflow-status-table {
-  width: calc(100% - 20px);
-  margin-right: 20px;
-
-  // Table headers that have a link in them should make the whole header clickable
-  th a {
-    display: block;
-    color: inherit;
-  }
-}

@@ -14,6 +14,7 @@ const WORKFLOW_CHANGE_SORT = 'WORKFLOW_CHANGE_SORT';
 const SORT_NONE = 'SORT_NONE';
 const SORT_NAME = 'SORT_NAME';
 const SORT_LAST_COMPLETED = 'SORT_LAST_COMPLETED';
+const SORT_RECENT_TEMPORAL = 'SORT_RECENT_TEMPORAL';
 const SORT_SUCCESS_RATE = 'SORT_SUCCESS_RATE';
 const SORT_NUM_RUNNING = 'SORT_NUM_RUNNING';
 
@@ -72,6 +73,8 @@ const sortWorkflows = (state, field) => {
         return Number.MAX_VALUE;
       };
       break;
+    case SORT_RECENT_TEMPORAL:
+      throw new Error('TODO implement me');
     case SORT_SUCCESS_RATE:
       sorter = w => getSuccessRate(w).get('numSuccessful');
       break;
