@@ -17,6 +17,7 @@
     "object-shorthand": "off",
     "prefer-template": "warn",
     "space-before-function-paren": ["error", "never"],
+    "func-style": "error",
     "spaced-comment": "off",
     "strict": "off",
     "max-len": [2, {
