@@ -47,7 +47,9 @@ module.exports = class TriggerIngestTask extends Task {
       const newIngestMeta = { state_machine: stateMachine, execution_name: name };
       fullMessageData.ingest_meta = Object.assign({}, originalIngestMeta, newIngestMeta);
 
-      const s3Params = Object.assign({}, payload, { Body: JSON.stringify(fullMessageData.payload) });
+      const s3Params = Object.assign({},
+                                     payload,
+                                     { Body: JSON.stringify(fullMessageData.payload) });
 
       const sfnMessageData = Object.assign({}, fullMessageData, { payload: payload });
       if (!isSfnExecution) {
