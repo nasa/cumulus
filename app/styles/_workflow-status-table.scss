@@ -1,10 +1,15 @@
 .workflow-status-table {
   width: calc(100% - 20px);
   margin-right: 20px;
+
   // Table headers that have a link in them should make the whole header clickable
-  th a {
+  .button-cell {
     display: block;
     color: inherit;
+  }
+
+  .expandable-icon {
+    font-size: 1.25em;
   }
 
   .workflow-body {
@@ -17,9 +22,5 @@
     tr {
       background: white;
     }
-  }
-
-  .hidden-tbody {
-    display: none;
   }
 }

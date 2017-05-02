@@ -8,7 +8,13 @@ const api = require('../ops-api');
 // Actions
 const WORKFLOW_STATUS_IN_FLIGHT = 'WORKFLOW_STATUS_IN_FLIGHT';
 const WORKFLOW_STATUS_RCVD = 'WORKFLOW_STATUS_RCVD';
+
+// Change how workflows are sorted
 const WORKFLOW_CHANGE_SORT = 'WORKFLOW_CHANGE_SORT';
+
+// Change whether the products of a workflow are shown or not
+const WORKFLOW_COLLAPSE_EXPAND = 'WORKFLOW_COLLAPSE_EXPAND';
+
 
 // Sort Fields
 const SORT_NONE = 'SORT_NONE';
@@ -117,6 +123,16 @@ const reducer = (state = initialState, action) => {
         .set('error', action.error);
     case WORKFLOW_CHANGE_SORT:
       return sortWorkflows(state, action.field);
+    // TODO add test for workflow collapse expand change
+    case WORKFLOW_COLLAPSE_EXPAND:
+      // Find the workflow that was collapsed or expanded and reverse it.
+      return state.updateIn(['workflows'], workflows =>
+        workflows.map((w) => {
+          if (w.get('name') === action.workflowName) {
+            return w.updateIn(['expanded'], v => !v);
+          }
+          return w;
+        }));
     default:
       return state;
   }
@@ -130,6 +146,12 @@ const reducer = (state = initialState, action) => {
  * Creates an action to indicate a change in the workflow sort.
  */
 const changeSort = field => ({ type: WORKFLOW_CHANGE_SORT, field: field });
+
+/**
+ * TODO
+ */
+const collapseExpandWorkflow = workflow =>
+  ({ type: WORKFLOW_COLLAPSE_EXPAND, workflowName: workflow.get('name') });
 
 /**
  * fetchWorkflowStatus - An action creator that initiates a request to fetch the workflow status
@@ -164,6 +186,7 @@ module.exports = {
 
   // Actions
   changeSort,
+  collapseExpandWorkflow,
   fetchWorkflowStatus,
 
   // for testing

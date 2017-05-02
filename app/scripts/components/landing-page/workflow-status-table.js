@@ -14,6 +14,29 @@ const FailedIcon = () => <Icon className="fa-exclamation-triangle icon-alert" />
 const NotRunIcon = () => <Icon className="fa-circle-o icon-disabled" />;
 
 /**
+ *  Icon to represent collapsed and expanded workflow rows
+ */
+const ExpandableRowIcon = ({ isExpanded }) => {
+  if (isExpanded) {
+    return <Icon className="fa-angle-down expandable-icon" />;
+  }
+  return <Icon className="fa-angle-right expandable-icon" />;
+};
+
+/**
+ * Returns the icon indicating the direction of the sort on the column.
+ */
+const SortIcon = ({ isSorted, sortDirectionAsc }) => {
+  if (isSorted) {
+    if (sortDirectionAsc) {
+      return <Icon className="icon-sort fa-sort-down" />;
+    }
+    return <Icon className="icon-sort fa-sort-up" />;
+  }
+  return <Icon className="icon-sort fa-sort" />;
+};
+
+/**
  * Returns a human readable time for when the last execution completed for the workflow.
  */
 const lastCompleted = (workflow) => {
@@ -56,71 +79,82 @@ const Loading = (props) => {
 /**
  * TODO
  */
-const WorkflowTbody = ({ workflow }) =>
-  <tbody key={workflow.get('name')} className="workflow-body">
-    <tr>
-      <td>{workflow.get('name')}</td>
-      <td>{lastCompleted(workflow)}</td>
-      <td />
-      <td>{successRatio(workflow)}</td>
-      <td>{runningStatus(workflow)}</td>
-      <td />
-    </tr>
-  </tbody>;
+const WorkflowTbody = connect()((props) => {
+  const { workflow, dispatch } = props;
+  const expanded = workflow.get('expanded', false);
+  return (
+    <tbody key={workflow.get('name')} className="workflow-body">
+      <tr>
+        <td>
+          <a
+            className="button-cell"
+            role="button" href="/" onClick={(e) => {
+              e.preventDefault();
+              dispatch(ws.collapseExpandWorkflow(workflow));
+            }}
+          >
+            <ExpandableRowIcon isExpanded={expanded} />
+            {workflow.get('name')}
+          </a>
+        </td>
+        <td>{lastCompleted(workflow)}</td>
+        <td />
+        <td>{successRatio(workflow)}</td>
+        <td>{runningStatus(workflow)}</td>
+        <td />
+      </tr>
+    </tbody>
+  );
+});
 
 /**
  * TODO
  */
-const ProductTbody = ({ workflow }) =>
-  <tbody key={`${workflow.get('name')}-products`} className="product-body">
-    <tr>
-      <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_LQD_C1)</td>
-      <td>
-        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-        XX minutes ago
-      </td>
-      <td>X hours ago</td>
-      <td>XX of the last XX successful</td>
-      <td>X Running</td>
-      <td>chart.js chart here</td>
-    </tr>
-    <tr>
-      <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_SQD_C1)</td>
-      <td>
-        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-        XX minutes ago
-      </td>
-      <td>X hours ago</td>
-      <td>XX of the last XX successful</td>
-      <td>X Running</td>
-      <td>chart.js chart here</td>
-    </tr>
-    <tr>
-      <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_NQD_C1)</td>
-      <td>
-        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-        XX minutes ago
-      </td>
-      <td>X hours ago</td>
-      <td>XX of the last XX successful</td>
-      <td>X Running</td>
-      <td>chart.js chart here</td>
-    </tr>
-  </tbody>;
-
-/**
- * Returns the icon indicating the direction of the sort on the column.
- */
-const SortIcon = ({ isSorted, sortDirectionAsc }) => {
-  if (isSorted) {
-    if (sortDirectionAsc) {
-      return <Icon className="icon-sort fa-sort-down" />;
-    }
-    return <Icon className="icon-sort fa-sort-up" />;
+const ProductTbody = ({ workflow }) => {
+  if (workflow.get('expanded', false)) {
+    return (
+      <tbody
+        key={`${workflow.get('name')}-products`}
+        className="product-body"
+      >
+        <tr>
+          <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_LQD_C1)</td>
+          <td>
+            <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+            XX minutes ago
+          </td>
+          <td>X hours ago</td>
+          <td>XX of the last XX successful</td>
+          <td>X Running</td>
+          <td>chart.js chart here</td>
+        </tr>
+        <tr>
+          <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_SQD_C1)</td>
+          <td>
+            <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+            XX minutes ago
+          </td>
+          <td>X hours ago</td>
+          <td>XX of the last XX successful</td>
+          <td>X Running</td>
+          <td>chart.js chart here</td>
+        </tr>
+        <tr>
+          <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_NQD_C1)</td>
+          <td>
+            <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+            XX minutes ago
+          </td>
+          <td>X hours ago</td>
+          <td>XX of the last XX successful</td>
+          <td>X Running</td>
+          <td>chart.js chart here</td>
+        </tr>
+      </tbody>
+    );
   }
-  return <Icon className="icon-sort fa-sort" />;
+  return null;
 };
-
 
 /**
  * TODO
@@ -130,6 +164,7 @@ const Th = (props) => {
     return (
       <th>
         <a
+          className="button-cell"
           role="button" href="/" onClick={(e) => {
             e.preventDefault();
             props.sortHandler();
