@@ -57,7 +57,7 @@
     "mocha-junit-reporter": "^1.11.1",
     "mocha-webpack": "^0.7.0",
     "prepend-loader": "0.0.2",
-    "sinon": "^1.17.4",
+    "sinon": "^2.2.0",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
     "webpack": "^1.13.3",

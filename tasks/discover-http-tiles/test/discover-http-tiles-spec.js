@@ -1,27 +1,7 @@
 'use strict';
 const expect = require('expect.js');
-const aws = require('gitc-common/aws');
-
-const promiseWithData = (data) =>
-  new Promise(
-    (resolve) => resolve(data)
-  );
-
-
-// Mimics the AWS dynamo db client enough so that the semaphore will allow execution.
-// This permits the test to run without having to actually use dynamo db for locking.
-class FakeDynamoClient {
-  put(params) {
-    return { promise: () => promiseWithData(null) };
-  }
-  update(params) {
-    return { promise: () => promiseWithData(null) };
-  }
-}
-
-const DiscoverHttpTilesTask = require('../index');
-
 const helpers = require('gitc-common/test-helpers');
+const DiscoverHttpTilesTask = require('../index');
 
 describe('discover-http-tiles.handler', () => {
   describe('for a VIIRS product', () => {
@@ -33,23 +13,14 @@ describe('discover-http-tiles.handler', () => {
     //       to only do so once per execution
     describe('crawling a site', () => {
       let result;
-      const originalDynamoClient = aws.dynamodbDocClient;
-
       before((done) => {
-        aws.dynamodbDocClient = () => new FakeDynamoClient();
-
         helpers
           .run(DiscoverHttpTilesTask, message)
           .then((response) => {
-            result = response;
+            [, result] = response;
           })
           .then(done)
           .catch(done);
-      });
-
-      after((done) => {
-        aws.dynamodbDocClient = originalDynamoClient;
-        done();
       });
 
       it('groups the product\'s URLs by Julian date', () => {
