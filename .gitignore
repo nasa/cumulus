@@ -1,6 +1,6 @@
 lambda-invoke-response.json
 config/packaged-*.yml
-config/cloudformation-with-replacments.yml
+config/cloudformation-with-replacements.yml
 /node_modules
 /dist
 # mocha-webpack compiles things here.
