@@ -59,6 +59,27 @@ You can run the mocha tests individually.
 
 ## Deploy
 
-Run the following command with the stack name to use. (Suggested name is your `first two initials + -gibs-api`)
+### Creating required IAM permissions
 
-`bin/deploy.sh my-stack-name`
+```(bash)
+aws cloudformation --region=us-east-1 deploy \
+  --stack-name gsfc-ngap-gibs-ops-api-iam \
+  --template-file ./config/iam-permissions.yml \
+  --parameter-overrides \
+      DeploymentUserName=deploy-gibs-ops-api \
+      StepFunctionStackName=MyStepFunctionStack \
+  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+```
+
+### Deploying the app
+
+```(bash)
+env \
+  AWS_ACCESS_KEY_ID=ASDF \
+  AWS_SECRET_ACCESS_KEY="12345" \
+./bin/deploy.sh \
+  --region us-east-1 \
+  --no-compile \
+  SIT \
+  "arn:aws:iam::1234567890:role/gsfc-ngap-GibsOpsApiLambdaExecutionRole"
+```
