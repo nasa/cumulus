@@ -2,6 +2,61 @@
   width: calc(100% - 20px);
   margin-right: 20px;
 
+  .name-cell {
+    width: 570px;
+  }
+
+  // Animating product rows entering and exiting
+  .products-enter {
+    opacity: 0.01;
+
+    td {
+      padding: 0;
+    }
+
+    div {
+      max-height: 0;
+      overflow: hidden;
+    }
+  }
+
+  .products-enter.products-enter-active {
+    opacity: 1;
+    transition: opacity 200ms ease;
+    td {
+      padding: 0.5em;
+      transition: padding 300ms ease;
+    }
+    div {
+      max-height: 30px;
+      transition: max-height 300ms ease;
+    }
+  }
+
+  .products-leave {
+    opacity: 1;
+    td {
+      padding: 0.5em;
+    }
+    div {
+      max-height: 30px;
+    }
+  }
+
+  .products-leave.products-leave-active {
+    opacity: 0.01;
+    transition: opacity 200ms ease;
+    td {
+      padding: 0;
+      transition: padding 300ms ease;
+    }
+    div {
+      max-height: 0;
+      transition: max-height 300ms ease;
+    }
+  }
+  // End of animation styles
+
   // Table headers that have a link in them should make the whole header clickable
   .button-cell {
     display: block;

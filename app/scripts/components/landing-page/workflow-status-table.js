@@ -1,4 +1,5 @@
 const React = require('react');
+const CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup');
 const { List } = require('immutable');
 const { connect } = require('react-redux');
 const functional = require('react-functional');
@@ -85,7 +86,7 @@ const WorkflowTbody = connect()((props) => {
   return (
     <tbody key={workflow.get('name')} className="workflow-body">
       <tr>
-        <td>
+        <td className="name-cell">
           <a
             className="button-cell"
             role="button" href="/" onClick={(e) => {
@@ -107,53 +108,70 @@ const WorkflowTbody = connect()((props) => {
   );
 });
 
+const cannedRows = () =>
+  [<tr key="product-1">
+    <td className="name-cell">
+      <div>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_LQD_C1)</div>
+    </td>
+    <td>
+      <div>
+        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+        XX minutes ago
+      </div>
+    </td>
+    <td><div>X hours ago</div></td>
+    <td><div>XX of the last XX successful</div></td>
+    <td><div>X Running</div></td>
+    <td><div>chart.js chart here</div></td>
+  </tr>,
+    <tr key="product-2">
+      <td className="name-cell">
+        <div>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_SQD_C1)</div>
+      </td>
+      <td>
+        <div>
+          <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+          XX minutes ago
+        </div>
+      </td>
+      <td><div>X hours ago</div></td>
+      <td><div>XX of the last XX successful</div></td>
+      <td><div>X Running</div></td>
+      <td><div>chart.js chart here</div></td>
+    </tr>,
+    <tr key="product-3">
+      <td className="name-cell">
+        <div>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_NQD_C1)</div>
+      </td>
+      <td>
+        <div>
+          <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
+          XX minutes ago
+        </div>
+      </td>
+      <td><div>X hours ago</div></td>
+      <td><div>XX of the last XX successful</div></td>
+      <td><div>X Running</div></td>
+      <td><div>chart.js chart here</div></td>
+    </tr>];
+
 /**
  * TODO
  */
 const ProductTbody = ({ workflow }) => {
-  if (workflow.get('expanded', false)) {
-    return (
-      <tbody
-        key={`${workflow.get('name')}-products`}
-        className="product-body"
-      >
-        <tr>
-          <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_LQD_C1)</td>
-          <td>
-            <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-            XX minutes ago
-          </td>
-          <td>X hours ago</td>
-          <td>XX of the last XX successful</td>
-          <td>X Running</td>
-          <td>chart.js chart here</td>
-        </tr>
-        <tr>
-          <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_SQD_C1)</td>
-          <td>
-            <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-            XX minutes ago
-          </td>
-          <td>X hours ago</td>
-          <td>XX of the last XX successful</td>
-          <td>X Running</td>
-          <td>chart.js chart here</td>
-        </tr>
-        <tr>
-          <td>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_NQD_C1)</td>
-          <td>
-            <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-            XX minutes ago
-          </td>
-          <td>X hours ago</td>
-          <td>XX of the last XX successful</td>
-          <td>X Running</td>
-          <td>chart.js chart here</td>
-        </tr>
-      </tbody>
-    );
-  }
-  return null;
+  const rows = workflow.get('expanded', false) ? cannedRows() : null;
+  return (
+    <CSSTransitionGroup
+      transitionName="products"
+      transitionEnterTimeout={300}
+      transitionLeaveTimeout={300}
+      component="tbody"
+      key={`${workflow.get('name')}-products`}
+      className="product-body"
+    >
+      {rows}
+    </CSSTransitionGroup>
+  );
 };
 
 /**
@@ -162,7 +180,7 @@ const ProductTbody = ({ workflow }) => {
 const Th = (props) => {
   if (props.sortHandler) {
     return (
-      <th>
+      <th className={props.className}>
         <a
           className="button-cell"
           role="button" href="/" onClick={(e) => {
@@ -199,6 +217,7 @@ const WorkflowStatusTableFn = (props) => {
           <thead>
             <tr>
               <Th
+                className="name-cell"
                 title="Name"
                 isSorted={sort.get('field') === ws.SORT_NAME}
                 sortDirectionAsc={sort.get('ascending')}
@@ -228,7 +247,9 @@ const WorkflowStatusTableFn = (props) => {
                 sortDirectionAsc={sort.get('ascending')}
                 sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NUM_RUNNING))}
               />
-              <Th title="Ingest Performance" />
+              <Th
+                title="Ingest Performance"
+              />
             </tr>
           </thead>
           {workflows.map(w =>
