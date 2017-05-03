@@ -1,5 +1,21 @@
 #!/bin/sh
 
+### 
+# This script is intended to be run inside of docker.  It will run the mocha
+# tests and write results out to test-results.xml.
+#
+# It should be invoked with:
+#
+# docker run \
+#   -e RELEASE_UID=$(id -u) \
+#   -e RELEASE_GID=$(id -g) \
+#   --rm \
+#   -v "$(pwd):/source" \
+#   node \
+#   /source/ngap/bamboo/mocha_in_docker.sh
+#
+###
+
 set -e
 
 (
