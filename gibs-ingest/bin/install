@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+version=v0.0.1
+progname=$(basename $0)
+docstr="$progname $version: builds the component, placing compiled output in dist/"
+
+usage() {
+echo "Usage:
+  $progname
+
+Examples:
+  $progname
+"
+}
+
+function echoerr() {
+    echo "Error: $@" 1>&2;
+}
+
+if [ $# -ne 0 ]; then
+    echo "$docstr"
+    echo
+    usage
+    exit 1
+fi
+
+find . -name package.json \
+     -not -path './test/*' \
+     -not -path '*/node_modules/*' \
+     -not -path './package.json' \
+     -execdir npm install --unsafe-perm \;

@@ -1,9 +1,14 @@
 const path = require('path');
-const fs = require('fs');
 const glob = require('glob');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
+  resolve: {
+    fallback: path.join(__dirname, 'node_modules')
+  },
+  resolveLoader: {
+    fallback: path.join(__dirname, 'node_modules')
+  },
   entry: glob.sync('{./tasks/*,./services/*}')
              .map((filename) => {
                const entry = {};
@@ -45,9 +50,10 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         loader: 'babel',
-        query: JSON.parse(
-          fs.readFileSync(path.join(__dirname, '.babelrc'), { encoding: 'utf8' })
-        )
+        query: {
+          presets: [require.resolve('babel-preset-es2015')],
+          plugins: [require.resolve('babel-plugin-transform-async-to-generator')]
+        }
       },
       {
         include: glob.sync('{./tasks/*/index.js,./services/*/index.js}', { realpath: true })

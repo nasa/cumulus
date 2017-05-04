@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+version=v0.0.1
+progname=$(basename $0)
+docstr="$progname $version: builds the component, placing compiled output in dist/"
+
+usage() {
+echo "Usage:
+  $progname
+
+Examples:
+  $progname
+"
+}
+
+function echoerr() {
+    echo "Error: $@" 1>&2;
+}
+
+if [ $# -ne 0 ]; then
+    echo "$docstr"
+    echo
+    usage
+    exit 1
+fi
+
+shopt -s nullglob
+for dir in *-workflows; do
+    (cd $dir && ./node_modules/.bin/webpack)
+done
