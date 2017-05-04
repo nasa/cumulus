@@ -3,10 +3,6 @@
   "version": "0.0.0",
   "description": "Discovers granules from the CMR",
   "main": "index.js",
-  "scripts": {
-    "//":"The ingest lib directory is linked in as ingest-common module.",
-    "link-ingest-common": "npm_config_prefix='../../tmp' npm link ../../lib"
-  },
   "keywords": [
     "GIBS"
   ],
@@ -17,6 +13,7 @@
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
   "dependencies": {
+    "ingest-common": "ssh://git@git.earthdata.nasa.gov:7999/gitc/ingest-common.git",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1"
   }

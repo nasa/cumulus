@@ -1,8 +1,0 @@
-#!/bin/bash
-
-set -e
-
-./node_modules/.bin/eslint -o ../test-reports/eslint.xml . -f junit
-./node_modules/.bin/mocha-webpack \
-    --reporter mocha-junit-reporter \
-    --reporter-options mochaFile=../test-reports/testreport.xml
