@@ -19,6 +19,6 @@
 
 set -e
 
-npm package
+npm run package
 rm -rf dist
 chown "${RELEASE_UID}:${RELEASE_GID}" /source/package.tar
