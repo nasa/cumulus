@@ -183,6 +183,7 @@ module.exports = {
   getNumRunning,
   getSuccessRate,
   getLastCompleted,
+  nonRunningExecutions,
 
   // Actions
   changeSort,

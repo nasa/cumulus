@@ -1,8 +1,9 @@
 const React = require('react');
 const CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup');
-const { List } = require('immutable');
 const { connect } = require('react-redux');
 const functional = require('react-functional');
+const LineChart = require('react-chartjs-2').Line;
+const { List } = require('immutable');
 const ws = require('../../reducers/workflow-status');
 const Icon = require('../icon');
 
@@ -77,6 +78,50 @@ const Loading = (props) => {
   return props.children;
 };
 
+// TODO this should be refactored into it's own file
+
+/**
+ * TODO
+ */
+const IngestChart = (props) => {
+  const workflow = props.workflow;
+  const points = ws.nonRunningExecutions(workflow).map(({ start_date, stop_date }) =>
+    // eslint-disable-next-line camelcase
+    ({ x: stop_date, y: (stop_date - start_date) })
+  ).toJS();
+  const chartData = { datasets: [{ data: points }] };
+  const chartOptions = {
+    responsive: false,
+    maintainAspectRatio: false,
+    legend: { display: false },
+    scales: {
+      xAxes: [{
+        type: 'time',
+        display: false,
+        time: {
+          format: 'MM/DD/YYYY HH:mm',
+          tooltipFormat: 'll HH:mm'
+        } }],
+      yAxes: [{ display: false }] } };
+  return (
+    <div>
+      <div className="eui-modal-content">
+        <LineChart
+          data={chartData}
+          options={chartOptions}
+        />
+      </div>
+      <LineChart
+        data={chartData}
+        height={38}
+        width={200}
+        options={chartOptions}
+      />
+    </div>
+  );
+};
+
+
 /**
  * TODO
  */
@@ -102,7 +147,9 @@ const WorkflowTbody = connect()((props) => {
         <td />
         <td>{successRatio(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
-        <td />
+        <td>
+          <IngestChart workflow={workflow} />
+        </td>
       </tr>
     </tbody>
   );
