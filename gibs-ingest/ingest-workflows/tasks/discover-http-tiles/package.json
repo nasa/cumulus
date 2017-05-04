@@ -4,8 +4,8 @@
   "description": "Crawls an HTTP endpoint to discover tiled imagery",
   "main": "index.js",
   "scripts": {
-    "//":"The ingest lib directory is linked in as gitc-common module.",
-    "link-gitc-common": "npm_config_prefix='../../tmp' npm link ../../lib"
+    "//":"The ingest lib directory is linked in as ingest-common module.",
+    "link-ingest-common": "npm_config_prefix='../../tmp' npm link ../../lib"
   },
   "keywords": [
     "GIBS"

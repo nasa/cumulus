@@ -1,6 +1,6 @@
 'use strict';
 const expect = require('expect.js');
-const aws = require('gitc-common/aws');
+const aws = require('ingest-common/aws');
 
 const promiseWithData = (data)=> {
   return new Promise(
@@ -22,7 +22,7 @@ class FakeDynamoClient{
 
 const DiscoverHttpTilesTask = require('../index');
 
-const helpers = require('gitc-common/test-helpers');
+const helpers = require('ingest-common/test-helpers');
 
 describe('discover-http-tiles.handler', () => {
   describe('for a VIIRS product', () => {

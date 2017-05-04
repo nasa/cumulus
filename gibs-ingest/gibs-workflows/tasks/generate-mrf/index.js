@@ -5,12 +5,12 @@ const path = require('path');
 const spawn = require('child_process').spawn;
 const spawnSync = require('child_process').spawnSync;
 
-const Task = require('gitc-common/task');
-const log = require('gitc-common/log');
-const util = require('gitc-common/util');
-const aws = require('gitc-common/aws');
+const Task = require('ingest-common/task');
+const log = require('ingest-common/log');
+const util = require('ingest-common/util');
+const aws = require('ingest-common/aws');
 const configGen = require('./config-gen');
-const Mutex = require('gitc-common/concurrency').Mutex;
+const Mutex = require('ingest-common/concurrency').Mutex;
 
 const LOCK_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
 const execSync = require('child_process').execSync;
@@ -127,7 +127,7 @@ module.exports = class GenerateMrfTask extends Task {
 };
 
 
-const local = require('gitc-common/local-helpers');
+const local = require('ingest-common/local-helpers');
 local.setupLocalRun(
   module.exports.handler,
   () => ({ ingest_meta: { message_source: 'stdin', task: 'MRFGen' } }));

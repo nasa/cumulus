@@ -2,9 +2,9 @@
 
 const parseDuration = require('parse-duration');
 const fetch = require('node-fetch');
-const log = require('gitc-common/log');
-const Task = require('gitc-common/task');
-const FieldPattern = require('gitc-common/field-pattern');
+const log = require('ingest-common/log');
+const Task = require('ingest-common/task');
+const FieldPattern = require('ingest-common/field-pattern');
 
 const PAGE_SIZE = 2000;
 
@@ -91,7 +91,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 // To run a small test:
 // node discover-cmr-granules local
 
-const local = require('gitc-common/local-helpers');
+const local = require('ingest-common/local-helpers');
 const localTaskName = 'DiscoverCmrGranules';
 local.setupLocalRun(module.exports.handler,
                     local.collectionMessageInput('MOPITT_DCOSMR_LL_D_STD', localTaskName));

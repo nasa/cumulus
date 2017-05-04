@@ -1,6 +1,6 @@
 'use strict';
 
-const Task = require('gitc-common/task');
+const Task = require('ingest-common/task');
 
 /**
  * Transforms input WMS endpoint information (GetMap URL and filename) to output

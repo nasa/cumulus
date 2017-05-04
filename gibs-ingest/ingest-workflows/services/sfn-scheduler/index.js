@@ -1,9 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
-const aws = require('gitc-common/aws');
-const log = require('gitc-common/log');
-const configUtil = require('gitc-common/config');
+const aws = require('ingest-common/aws');
+const log = require('ingest-common/log');
+const configUtil = require('ingest-common/config');
 const uuid = require('uuid');
 
 /**
@@ -168,7 +168,7 @@ module.exports.handler = async (invocation) => {
   }
 };
 
-const localHelpers = require('gitc-common/local-helpers');
+const localHelpers = require('ingest-common/local-helpers');
 const fs = require('fs');
 if (localHelpers.isLocal) {
   const stack = process.argv[3];

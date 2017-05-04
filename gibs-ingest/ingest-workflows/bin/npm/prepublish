@@ -11,7 +11,7 @@ find . -name package.json \
      -not -path './package.json' \
      -execdir npm install --unsafe-perm \;
 
-# Add in gitc-common link which adds shared code library to the sub-modules.
+# Add in ingest-common link which adds shared code library to the sub-modules.
 # We only add it in for a specific subset of groups which are in the following top level folders
 module_groups=(services tasks)
 
@@ -21,7 +21,7 @@ for module_group in ${module_groups[@]}; do
        -not -path './test/*' \
        -not -path '*/node_modules/*' \
        -path "./${module_group}/*" \
-       -execdir npm run-script link-gitc-common \;
+       -execdir npm run-script link-ingest-common \;
 done
 
 

@@ -3,12 +3,12 @@
 const path = require('path');
 const _ = require('lodash');
 
-const log = require('gitc-common/log');
-const Task = require('gitc-common/task');
-const aws = require('gitc-common/aws');
-const concurrency = require('gitc-common/concurrency');
-const local = require('gitc-common/local-helpers');
-const errorTypes = require('gitc-common/errors');
+const log = require('ingest-common/log');
+const Task = require('ingest-common/task');
+const aws = require('ingest-common/aws');
+const concurrency = require('ingest-common/concurrency');
+const local = require('ingest-common/local-helpers');
+const errorTypes = require('ingest-common/errors');
 
 
 exports.TIMEOUT_TIME_MS = 20 * 1000;

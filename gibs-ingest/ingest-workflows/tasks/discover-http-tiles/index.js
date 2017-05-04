@@ -2,9 +2,9 @@
 
 const ApacheIndexTileCrawler = require('./apache-index-tile-crawler');
 
-const log = require('gitc-common/log');
-const Task = require('gitc-common/task');
-const FieldPattern = require('gitc-common/field-pattern');
+const log = require('ingest-common/log');
+const Task = require('ingest-common/task');
+const FieldPattern = require('ingest-common/field-pattern');
 const _ = require('lodash');
 
 const endpointsToCrawlers = {
@@ -103,7 +103,7 @@ module.exports = class DiscoverHttpTilesTask extends Task {
 
 // To run a small test:
 // node --harmony index.js local
-const local = require('gitc-common/local-helpers');
+const local = require('ingest-common/local-helpers');
 const localTaskName = 'DiscoverHttpTiles';
 local.setupLocalRun(
   module.exports.handler,

@@ -1,8 +1,8 @@
 'use strict';
 
-const Task = require('gitc-common/task');
-const aws = require('gitc-common/aws');
-const log = require('gitc-common/log');
+const Task = require('ingest-common/task');
+const aws = require('ingest-common/aws');
+const log = require('ingest-common/log');
 
 /**
  * Task which triggers ingest of discovered granules. Starts a state machine execution
@@ -83,7 +83,7 @@ module.exports = class TriggerIngestTask extends Task {
   }
 };
 
-const local = require('gitc-common/local-helpers');
+const local = require('ingest-common/local-helpers');
 local.setupLocalRun(
   module.exports.handler,
   () => ({ ingest_meta: { message_source: 'stdin', task: 'TriggerIngest' } })

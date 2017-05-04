@@ -2,7 +2,7 @@
 
 const EventEmitter = require('events');
 const Crawler = require('simplecrawler');
-const log = require('gitc-common/log');
+const log = require('ingest-common/log');
 
 module.exports = class HttpTileCrawler extends EventEmitter {
   constructor(url, pattern, connectionLimit = 10) {
