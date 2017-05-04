@@ -1,0 +1,29 @@
+#!/bin/bash
+# A script that sets things up prior to install or publishing. It searches through all folders to
+# find sub modules and installs them
+
+set -e
+
+# Run npm install
+find . -name package.json \
+     -not -path './test/*' \
+     -not -path '*/node_modules/*' \
+     -not -path './package.json' \
+     -execdir npm install --unsafe-perm \;
+
+# Add in gitc-common link which adds shared code library to the sub-modules.
+# We only add it in for a specific subset of groups which are in the following top level folders
+module_groups=(services tasks)
+
+for module_group in ${module_groups[@]}; do
+  echo "Installing gitc for ${module_group}"
+  find . -name package.json \
+       -not -path './test/*' \
+       -not -path '*/node_modules/*' \
+       -path "./${module_group}/*" \
+       -execdir npm run-script link-gitc-common \;
+done
+
+
+# Run webpack which does transpilation etc.
+./node_modules/.bin/webpack

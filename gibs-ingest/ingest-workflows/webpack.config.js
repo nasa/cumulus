@@ -26,11 +26,6 @@ module.exports = {
     __filename: false
   },
   devtool: '#inline-source-map',
-  plugins: [
-    new CopyWebpackPlugin([
-      { from: 'tasks/generate-mrf/templates', to: 'generate-mrf/templates' }]
-    )
-  ],
   module: {
     resolve: {
       alias: {
