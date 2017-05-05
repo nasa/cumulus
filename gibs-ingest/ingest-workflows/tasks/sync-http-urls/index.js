@@ -11,7 +11,7 @@ const local = require('ingest-common/local-helpers');
 const errorTypes = require('ingest-common/errors');
 
 
-exports.TIMEOUT_TIME_MS = 20 * 1000;
+const TIMEOUT_TIME_MS = 20 * 1000;
 
 const updatedFiles = (existingKeys, updates) => {
   const toKey = (file) => file.url + file.version;
@@ -53,23 +53,31 @@ module.exports = class SyncHttpUrlsTask extends Task {
   }
 
   async runWithLimitedConnections() {
+    // Load existing state
     let state = await this.source.loadState(this.constructor.name);
     if (!state) {
       state = { files: [], completed: [] };
     }
+
+    // Figure out what new / modified files are available
     const updated = updatedFiles(state.completed, this.message.payload);
     if (updated.length === 0) {
       log.info('No updates to synced files. Sync is not needed.');
       await this.source.complete();
       throw new errorTypes.NotNeededError();
     }
+
     const bucket = this.config.output.bucket;
     const keypath = this.config.output.key_prefix;
+
+    // Synchronize the files
     const { completed, errors } = await this.syncFiles(
       updated,
       bucket,
       keypath,
       local.isLocal);
+
+    // Determine / save the new state
     const isComplete = completed.length === updated.length;
     const completedFiles = _.map(completed, (f) => _.omit(f, ['url', 'version']));
     const completedKeys = _.map(completed, (f) => f.url + f.version);
@@ -83,21 +91,23 @@ module.exports = class SyncHttpUrlsTask extends Task {
     else {
       log.info('Sync is incomplete');
     }
+    this.source.saveState(this.constructor.name, state);
+
+    // Terminate correctly
     if (errors) {
       if (this.config.ignoredErrorStatuses) {
         const ignoredErrors = this.config.ignoredErrorStatuses.split(',');
         const thrownErrors = _.reject(errors, (error) =>
           _.some(ignoredErrors, (ignored) => error.reason === `HTTP Error ${ignored}`));
         if (thrownErrors.length > 0) {
-          throw JSON.stringify(thrownErrors);
+          throw new errorTypes.RemoteResourceError(JSON.stringify(thrownErrors));
         }
       }
       else {
-        throw JSON.stringify(errors);
+        throw new errorTypes.RemoteResourceError(JSON.stringify(errors));
       }
     }
 
-    this.source.saveState(this.constructor.name, state);
     if (!isComplete) {
       throw new errorTypes.IncompleteError();
     }
@@ -106,7 +116,7 @@ module.exports = class SyncHttpUrlsTask extends Task {
 
   syncFiles(files, bucket, keypath, simulate = false) {
     const syncIfTimeLeft = _.partial(concurrency.unless,
-                                     () => this.endsWithin(exports.TIMEOUT_TIME_MS),
+                                     () => this.endsWithin(TIMEOUT_TIME_MS),
                                      syncFile,
                                      bucket,
                                      keypath,

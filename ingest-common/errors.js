@@ -35,5 +35,9 @@ module.exports = {
 
   // ResourcesLockedError indicates that the execution is unable to proceed due to resources
   // being tied up in other executions. Execution may be retried after resources free up
-  ResourcesLockedError: createErrorType('ResourcesLockedError', WorkflowError)
+  ResourcesLockedError: createErrorType('ResourcesLockedError', WorkflowError),
+
+  // RemoteResourceError indicates that a required remote resource could not be fetched or
+  // otherwise used
+  RemoteResourceError: createErrorType('RemoteResourceError')
 };

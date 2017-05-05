@@ -76,8 +76,6 @@ module.exports = class Task {
       return response;
     }
     catch (err) {
-      log.error('Failing job: ', err.message);
-      await task.source.fail();
       throw err;
     }
   }
@@ -156,14 +154,13 @@ module.exports = class Task {
       this.logTaskCompletion(response, startDate);
 
       // Complete and pass on data to the next task
-      return await source.performLambdaCallback(this, callback, null, response);
+      await source.performLambdaCallback(this, callback, null, response);
+      return response;
     }
     catch (error) {
-      this.logTaskError(error, startDate);
-
       if (source) {
         try {
-          source.fail();
+          await source.fail();
         }
         catch (e) {
           log.error('Failure failed', e.message, e.stack);
@@ -171,11 +168,16 @@ module.exports = class Task {
       }
 
       if (error instanceof errors.WorkflowError) {
+        log.info(`Failing task due to workflow error ${error.name}`);
+        log.info(error.stack);
         callback(null, { exception: error.name });
         return null;
       }
 
+      this.logTaskError(error, startDate);
+
       callback(error.message, error.stack);
+
       return error;
     }
   }

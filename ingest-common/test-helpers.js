@@ -7,8 +7,11 @@ const log = require('./log');
  * @param {string} id - The collection id in collections.yml
  * @return - The input message
  */
-exports.collectionMessageInput = (id) =>
-  local.collectionMessageInput(id)();
+exports.collectionMessageInput = (id, task) => {
+  const message = local.collectionMessageInput(id)();
+  message.ingest_meta.task = task;
+  return message;
+};
 
 /**
  * An MessageSource instance suitable for tests, which mocks
@@ -37,7 +40,21 @@ class TestSource extends messageSource.MessageSource {
    * @return The 'state' field of the message
    */
   loadState() {
-    return this.messageData && this.messageData.state;
+    if (!this.messageData || !this.messageData.state) {
+      return undefined;
+    }
+    return Object.assign({}, this.messageData && this.messageData.state);
+  }
+
+  /**
+   * Saves the state for reading by tests
+   * @param {string} taskName - Not used by this method
+   * @param {string} state - The state to save
+   */
+  saveState(taskName, state) {
+    if (this.messageData) {
+      this.messageData.stateOut = state;
+    }
   }
 
   /**
@@ -52,13 +69,19 @@ class TestSource extends messageSource.MessageSource {
  * Creates and runs ingest for an instance of the given Task class with the given input
  * @param {class} TaskClass - The Task class to create/run
  * @param {object} input - The input message to run the Task with
- * @return - The task return value
+ * @return - A tuple containing the callback values [error, data] invoked by the task
  */
 exports.run = async (TaskClass, input) => {
   messageSource.messageSources.unshift(TestSource);
   log.mute('info', 'log', 'debug');
   try {
-    return await TaskClass.handler(input, {}, () => null);
+    let data;
+    let error;
+    await TaskClass.handler(input, {}, (e, d) => {
+      data = d;
+      error = e;
+    });
+    return [error, data];
   }
   finally {
     messageSource.messageSources.shift();

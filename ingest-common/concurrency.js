@@ -37,9 +37,16 @@ const toPromise = (fn, ...args) =>
   new Promise((resolve, reject) =>
     fn(...args, (err, data) => (err ? reject(err) : resolve(data))));
 
+/**
+ * Returns a promise that resolves to the result of calling the given function if
+ * condition returns true or null if condition is false. Useful for chaining.
+ * @param {function} condition - A function which determines whether fn is called.
+ * @param {function} fn - The function to call if condition returns true
+ * @param {*} args - Arguments to pass to calls to both condition and fn
+ * @return - A promise that resolves to either null or the result of fn
+*/
 const unless = (condition, fn, ...args) =>
-  (condition(...args) ? null : fn(...args));
-
+  Promise.resolve((condition(...args) ? null : fn(...args)));
 
 const promiseUrl = (urlstr) =>
   new Promise((resolve, reject) => {
@@ -52,7 +59,7 @@ const promiseUrl = (urlstr) =>
       auth: urlopts.auth,
       headers: { 'User-Agent': 'Cumulus-GIBS' }
     };
-    client.get(options, (response) => {
+    return client.get(options, (response) => {
       if (response.statusCode >= 300) {
         reject(`HTTP Error ${response.statusCode}`);
       }

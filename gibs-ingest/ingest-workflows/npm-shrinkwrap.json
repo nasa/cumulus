@@ -3059,9 +3059,9 @@
       "dev": true
     },
     "sinon": {
-      "version": "1.17.7",
-      "from": "sinon@>=1.17.4 <2.0.0",
-      "resolved": "https://registry.npmjs.org/sinon/-/sinon-1.17.7.tgz",
+      "version": "2.2.0",
+      "from": "sinon@>=2.2.0 <3.0.0",
+      "resolved": "https://registry.npmjs.org/sinon/-/sinon-2.2.0.tgz",
       "dev": true
     },
     "slash": {
