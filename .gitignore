@@ -5,4 +5,4 @@ config/cloudformation-with-replacements.yml
 /dist
 # mocha-webpack compiles things here.
 /.tmp
-/package.tar
+/release.tar
