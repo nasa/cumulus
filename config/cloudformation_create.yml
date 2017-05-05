@@ -1,0 +1,10 @@
+# Minimal template used for initial creates. It's much easier to deal with rollbacks
+# for updates rather than creates, so we create something that will almost certainly
+# succeed and then update it to build the real resources.
+Description: GIBS-in-the-Cloud
+Resources:
+  ConfigBucket:
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-deploy

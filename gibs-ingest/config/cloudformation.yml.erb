@@ -1,4 +1,4 @@
-Description: GIBS/Cumulus - Ingest
+Description: GIBS-in-the-Cloud - Ingest
 Parameters:
   ConfigS3Bucket:
     Type: String
@@ -6,10 +6,6 @@ Parameters:
   StackName:
     Type: String
     Description: Name of the (parent) stack name being created
-  IngestKeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: Name of an existing EC2 KeyPair to enable SSH access to ingest ECS
-      instances.
   IngestDesiredInstances:
     Type: Number
     Default: '1'
@@ -28,12 +24,6 @@ Parameters:
       - t2.medium
       - t2.large
       - m4.large
-  ArtifactPath:
-    Type: String
-    Description: Path within the deployment bucket containing artifacts
-  DeployRegion:
-    Type: String
-    Description: AWS region used for S3 Bucket creation, services and ECS instances
   VPC:
     Type: String
     Description: ID of the VPC into which we should deploy
@@ -41,6 +31,9 @@ Parameters:
 Resources:
 
 <% alphanum_stack_prefix = ENV['stack_name'].gsub(/\W/, 'x') + 'xx' %>
+
+<% require('json') %>
+<% artifact_locations = JSON.parse(File.read(ENV['artifact_locs'])) %>
 
 <%# [task, description, memory, ecs-instance-count (nil to run in Lambda)] %>
 <% tasks = [['discover-http-tiles', 'Discovers tile files to ingest from HTTP', 256, nil],
@@ -194,12 +187,6 @@ Resources:
             Resource:
             - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
 
-  PrivateResources:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    Properties:
-      BucketName: !Sub ${StackName}-private
-
 <% tasks.each do |task, description, memory, ecsDesiredCount| %>
   <% caps_name = task.split('-').map(&:capitalize).join() %>
   <%= caps_name %>Fn:
@@ -208,7 +195,7 @@ Resources:
       FunctionName: !Sub ${StackName}-task-<%= task %>
       Code:
         S3Bucket: !Ref ConfigS3Bucket
-        S3Key: !Sub ${ArtifactPath}/lambda/<%= task %>.zip
+        S3Key: <%= artifact_locations[task] %>
       Description: <%= description + (ecsDesiredCount.nil? ? '' : ' (runs as ECS service)')%>
       Runtime: nodejs4.3
       Timeout: 300
@@ -279,7 +266,7 @@ Resources:
       - Name: ecs-lambda-runner
         Cpu: '10'
         Essential: true
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '1024'
         LogConfiguration:
           LogDriver: awslogs
@@ -322,7 +309,7 @@ Resources:
         Environment:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '256'
         LogConfiguration:
           LogDriver: awslogs
@@ -341,7 +328,7 @@ Resources:
         - !Ref GenerateMrfActivity
         Cpu: '512'
         Essential: true
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${DeployRegion}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
         Memory: '2048'
         Environment:
           - Name: AWS_DEFAULT_REGION
@@ -425,7 +412,6 @@ Resources:
         Ebs:
           DeleteOnTermination: true
           VolumeSize: 100
-      KeyName: !Ref IngestKeyName
       UserData:
         "Fn::Base64": !Sub |
           #!/bin/bash
@@ -451,7 +437,6 @@ Resources:
 
 <%
 require('yaml')
-require('json')
 YAML::add_domain_type('GitcResource', 'GitcResource') { |type, val| "${#{val}}" }
 collections = YAML.load_file('config/collections.yml')
 collections['workflows'].each do |name, definition|

@@ -4,7 +4,7 @@ set -e
 
 version=v0.0.1
 progname=$(basename $0)
-docstr="$progname $version: builds the component, placing compiled output in dist/"
+docstr="$progname $version: Runs tests"
 
 usage() {
 echo "Usage:
@@ -26,6 +26,9 @@ if [ $# -ne 0 ]; then
     exit 1
 fi
 
+shopt -s nullglob
 for dir in *-workflows; do
-    (cd $dir && ./node_modules/.bin/webpack)
+    cd $dir
+    npm test
+    cd ..
 done
