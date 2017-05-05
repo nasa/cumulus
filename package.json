@@ -5,7 +5,7 @@
   "main": "lambda.js",
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "package": "rm -rf dist package.tar && npm run build && cp ngap/deployment/Procfile dist/Procfile && cp ngap/deployment/Dockerfile dist/Dockerfile && tar -cf package.tar -C dist .",
+    "release": "rm -rf dist release.tar && npm run build && cp ngap/deployment/Procfile dist/Procfile && cp ngap/deployment/Dockerfile dist/Dockerfile && tar -cf release.tar -C dist .",
     "start": "npm run build && node dist/local.js",
     "start-debug": "npm run build && node --inspect dist/local.js",
     "start-debug-brk": "npm run build && node --inspect-brk dist/local.js",
