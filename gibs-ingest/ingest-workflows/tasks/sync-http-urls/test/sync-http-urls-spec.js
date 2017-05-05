@@ -5,9 +5,9 @@ const expect = require('expect.js');
 const https = require('https');
 const path = require('path');
 
-const helpers = require('gitc-common/test-helpers');
-const aws = require('gitc-common/aws');
-const Task = require('gitc-common/task');
+const helpers = require('ingest-common/test-helpers');
+const aws = require('ingest-common/aws');
+const Task = require('ingest-common/task');
 
 const SyncHttpUrlsTask = require('../index');
 

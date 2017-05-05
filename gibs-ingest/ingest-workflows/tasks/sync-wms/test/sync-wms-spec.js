@@ -1,6 +1,6 @@
 'use strict';
 const expect = require('expect.js');
-const helpers = require('gitc-common/test-helpers');
+const helpers = require('ingest-common/test-helpers');
 const SyncWmsTask = require('../index');
 
 xdescribe('sync-wms.handler', () => {

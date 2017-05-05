@@ -16,13 +16,13 @@ exports.isLocal = isLocal;
 
 let rootPath;
 if (isMocha) {
-  rootPath = '../../..';
+  rootPath = '../../../..';
 }
 else if (isJupyter) {
-  rootPath = '..';
+  rootPath = '../..';
 }
 else {
-  rootPath = '../..';
+  rootPath = '../../..';
 }
 
 const fileRoot = () => path.join(__dirname, rootPath);
@@ -46,6 +46,7 @@ const findById = (arr, id) => {
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
   if (!isLocal && !isMocha && !isJupyter) return null;
+  console.log(fileRoot());
   const configStr = fs.readFileSync(`${fileRoot()}/config/collections.yml`).toString();
   const config = configUtil.parseConfig(configStr, (resource) => resource);
 
