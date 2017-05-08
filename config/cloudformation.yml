@@ -83,14 +83,12 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${AWS::StackName}-private
-    DeletionPolicy: Retain
     Condition: IsDev
 
   DevPublicBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${AWS::StackName}-public
-    DeletionPolicy: Retain
     Condition: IsDev
 
 Conditions:
