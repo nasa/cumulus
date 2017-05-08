@@ -1,3 +1,0 @@
-  <target_epsg>4326</target_epsg>
-  <target_extents>-180,-90,180,90</target_extents>
-  <mrf_blocksize>512</mrf_blocksize>

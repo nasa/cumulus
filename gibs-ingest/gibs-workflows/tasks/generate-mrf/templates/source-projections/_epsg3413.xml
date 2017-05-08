@@ -1,4 +1,0 @@
-  <extents>-4194304,-4194304,4194304,4194304</extents>
-  {{#isReprojection}}
-  <reprojection_resampling>average</reprojection_resampling>
-  {{/isReprojection}}
