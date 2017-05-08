@@ -79,9 +79,19 @@ docker run \
 
 ## Deploy
 
+### Deploying to ngap-test using API Gateway
+
+To deploy to the ngap-test environment, run
+
+```(bash)
+./bin/deploy.sh --region us-east-1 SIT arn:aws:iam::***REMOVED***:role/gsfc-ngap-gibs-ops-api
+```
+
+### Deploying to the NGAP PaaS
+
 To deploy to NGAP, run **ngap/bamboo/deploy_to_ngap.sh**.  It expects the following environment variables to be set:
 
-* bamboo_APP_NAM
+* bamboo_APP_NAME
 * bamboo_NGAP_API
 * bamboo_NGAP_API_PASSWORD
 
