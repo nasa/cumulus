@@ -1,0 +1,44 @@
+---
+Mappings:
+  AccountIdMap:
+    "***REMOVED***":
+      BucketPrefix: ngap-test
+    "***REMOVED***":
+      BucketPrefix: gsfc-ngap
+Resources:
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: gsfc-ngap-gibs-ops-api
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+              - ec2.amazonaws.com
+              - lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-sit-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-uat-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-prod-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+              - Effect: Allow
+                Action:
+                  - states:ListExecutions
+                  - states:ListStateMachines
+                Resource: !Sub "arn:aws:states:*:${AWS::AccountId}:*"
