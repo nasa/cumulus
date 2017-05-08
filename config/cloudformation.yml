@@ -1,0 +1,98 @@
+Description: GIBS-in-the-Cloud
+Parameters:
+  DeployWorldview:
+    Description: If "true", deploy a local instance of worldview in each onearth docker container
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+  IngestDesiredInstances:
+    Description: Number of instances to launch in the ingest ECS cluster.
+    Type: Number
+    Default: '1'
+  IngestMaxInstances:
+    Type: Number
+    Default: '5'
+    Description: Maximum number of instances in the ingest ECS cluster.
+  IngestInstanceType:
+    Description: The EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m4.large
+  OnEarthMaxInstances:
+    Default: '10'
+    Description: Maximum number of OnEarth instances to keep.
+    Type: Number
+  OnEarthMinInstances:
+    Default: '2'
+    Description: Minimum number of OnEarth instances to keep.
+    Type: Number
+  Environment:
+    Description: Env name associated with this deployment (e.g. DEV, SIT, UAT, OPS)
+    Type: String
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - SIT
+      - UAT
+      - OPS
+  VPC:
+    Type: String
+    Description: ID of the VPC into which we should deploy.
+
+Resources:
+  IngestStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        ConfigS3Bucket: !Ref ConfigBucket
+        StackName: !Ref AWS::StackName
+        IngestDesiredInstances: !Ref IngestDesiredInstances
+        IngestMaxInstances: !Ref IngestMaxInstances
+        IngestInstanceType: !Ref IngestInstanceType
+        VPC: !Ref VPC
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ConfigBucket}/ingest/cloudformation.yml"
+
+  ConfigBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-deploy
+
+  PrivateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-private
+    DeletionPolicy: Retain
+    Condition: IsNotDev
+
+  PublicBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-public
+    DeletionPolicy: Retain
+    Condition: IsNotDev
+
+  # Hack because of this limitation on CF: https://forums.aws.amazon.com/message.jspa?messageID=560586
+  DevPrivateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-private
+    DeletionPolicy: Retain
+    Condition: IsDev
+
+  DevPublicBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-public
+    DeletionPolicy: Retain
+    Condition: IsDev
+
+Conditions:
+  IsDev: !Equals [!Ref Environment, "DEV"]
+  IsNotDev: !Not [!Equals [!Ref Environment, "DEV"]]
