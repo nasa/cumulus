@@ -44,6 +44,7 @@ const getExecutions = async (stackName, workflow, numExecutions) => {
   return List(executions.map((e) => {
     const m = Map(
       { status: e.status,
+        arn: e.executionArn,
         start_date: e.startDate });
     if (e.stopDate) {
       return m.set('stop_date', e.stopDate);
@@ -51,6 +52,26 @@ const getExecutions = async (stackName, workflow, numExecutions) => {
     return m;
   }));
 };
+
+// let p;
+//
+// p = getExecutions('gitc-pq-sfn', { id: 'DiscoverVIIRS' }, 10);
+//
+// let data;
+//
+// p.then(d => data=d).catch(e => data=e);
+//
+// data
+//
+// console.log(JSON.stringify(data, null, 2));
+//
+// let arn = data.getIn([0, 'arn']);
+//
+// p = stepFunctions().describeExecution({ executionArn: arn }).promise();
+//
+// let output = JSON.parse(data.output);
+//
+// output.meta.collection
 
 /**
  * getCollectionsYaml - Fetches the collections yaml from S3.
@@ -107,7 +128,7 @@ const getWorkflowStatuses = async (stackName, numExecutions) => {
   return workflows.map((w, idx) => {
     const executions = executionArrays[idx];
     return w.set('executions', executions);
-  }).toJS();
+  });
 };
 
 /**
@@ -125,7 +146,7 @@ const handleWorkflowStatusRequest = async (req, res) => {
       const stackName = req.query.stack_name;
       const numExecutions = req.query.num_executions;
       const statuses = await getWorkflowStatuses(stackName, numExecutions);
-      res.json(statuses);
+      res.json(statuses.toJS());
     }
   }
   catch (e) {
