@@ -7,12 +7,12 @@
     "GIBS"
   ],
   "repository": {
-    "type" : "git",
-    "url" : "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+    "type": "git",
+    "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
   },
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
   "dependencies": {
-    "ingest-common": "ssh://git@git.earthdata.nasa.gov:7999/gitc/ingest-common.git"
+    "ingest-common": "git+https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git#master"
   }
 }
