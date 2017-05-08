@@ -29,4 +29,4 @@ const handleError = (err, req, res, _next) => {
   }
 };
 
-export { BadRequestError, handleError };
+module.exports = { BadRequestError, handleError };

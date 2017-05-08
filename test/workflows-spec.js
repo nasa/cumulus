@@ -75,23 +75,41 @@ const mockSF = new FakeStepFunctions(
    { name: 'sfxStackxxIngestVIIRS-1234', stateMachineArn: 'ingest-viirs-arn' }],
 
   // A map of step function statemachine arn to executions.
-  { 'discover-viirs-arn': [{ status: 'SUCCEEDED', startDate: '2012', stopDate: '2013' },
-                           { status: 'ABORTED', startDate: '2012', stopDate: '2013' },
-                           { status: 'RUNNING', startDate: '2012' },
-                           { status: 'SUCCEEDED', startDate: '2012', stopDate: '2013' }],
-    'ingest-viirs-arn': [{ status: 'RUNNING', startDate: '2014' },
-                         { status: 'SUCCEEDED', startDate: '2012', stopDate: '2013' }] }
+  {
+    'discover-viirs-arn':
+    [
+      { executionArn: '1',
+        status: 'SUCCEEDED',
+        startDate: '2012',
+        stopDate: '2013' },
+      { executionArn: '2',
+        status: 'ABORTED',
+        startDate: '2012',
+        stopDate: '2013' },
+      { executionArn: '3', status: 'RUNNING', startDate: '2012' },
+      { executionArn: '4',
+        status: 'SUCCEEDED',
+        startDate: '2012',
+        stopDate: '2013' }],
+
+    'ingest-viirs-arn':
+    [
+      { executionArn: '5', status: 'RUNNING', startDate: '2014' },
+      { executionArn: '6',
+        status: 'SUCCEEDED',
+        startDate: '2012',
+        stopDate: '2013' }] }
 );
 
 const expectedStatuses = [
   { id: 'DiscoverVIIRS',
     name: 'VIIRS Discovery',
-    executions: [{ status: 'SUCCEEDED', start_date: '2012', stop_date: '2013' },
-                 { status: 'ABORTED', start_date: '2012', stop_date: '2013' }] },
+    executions: [{ arn: '1', status: 'SUCCEEDED', start_date: '2012', stop_date: '2013' },
+                 { arn: '2', status: 'ABORTED', start_date: '2012', stop_date: '2013' }] },
   { id: 'IngestVIIRS',
     name: 'VIIRS Ingest',
-    executions: [{ status: 'RUNNING', start_date: '2014' },
-                 { status: 'SUCCEEDED', start_date: '2012', stop_date: '2013' }] }
+    executions: [{ arn: '5', status: 'RUNNING', start_date: '2014' },
+                 { arn: '6', status: 'SUCCEEDED', start_date: '2012', stop_date: '2013' }] }
 ];
 
 describe('getWorkflowStatuses', () => {
@@ -105,9 +123,10 @@ describe('getWorkflowStatuses', () => {
     done();
   });
 
-  it('find correct executions', () =>
-    expect(workflows.getWorkflowStatuses('sf-Stack', 2)).to.eventually.deep.eq(expectedStatuses)
-  );
+  it('find correct executions', async () => {
+    const actual = (await workflows.getWorkflowStatuses('sf-Stack', 2)).toJS();
+    expect(actual).to.deep.eq(expectedStatuses);
+  });
 });
 
 describe('parseCollectionYaml', () =>
