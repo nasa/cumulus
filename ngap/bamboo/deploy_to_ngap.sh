@@ -48,6 +48,8 @@ while [ "$CHECK_COUNT" -gt 0 ]; do
   sleep 15
 done
 
+rm -f create_deployment_result.json
+
 if [ "$DEPLOYMENT_STATE" == "deployed" ]; then
   echo "Deployment successful."
   exit 0
