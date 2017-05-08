@@ -1,3 +1,5 @@
+# Sets up an IAM role that mimics NGAP so we can test during local development to see what fails and
+# what doesn't
 Description: GIBS/Cumulus - Deployer IAM Role
 Parameters:
   Prefix:
