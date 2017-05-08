@@ -1,7 +1,0 @@
-<parameter_name>VNGCR_LQD_I1-M4-M3_NRT</parameter_name>
-<mrf_compression_type>JPEG</mrf_compression_type>
-<source_epsg>4326</source_epsg>
-<mrf_merge>false</mrf_merge>
-<mrf_nocopy>true</mrf_nocopy>
-<overview_resampling>average</overview_resampling>
-<resize_resampling>average</resize_resampling>
