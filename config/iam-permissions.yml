@@ -1,20 +1,23 @@
 ---
-Parameters:
-  DeploymentUserName:
-    Type: String
-  StepFunctionStackName:
-    Type: String
+Mappings:
+  AccountIdMap:
+    "***REMOVED***":
+      BucketPrefix: ngap-test
+    "***REMOVED***":
+      BucketPrefix: gsfc-ngap
 Resources:
-  LambdaExecutionRole:
+  AppRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: gsfc-ngap-GibsOpsApiLambdaExecutionRole
+      RoleName: gsfc-ngap-gibs-ops-api
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
           Effect: Allow
           Principal:
-            Service: lambda.amazonaws.com
+            Service:
+              - ec2.amazonaws.com
+              - lambda.amazonaws.com
           Action: sts:AssumeRole
       Path: "/"
       Policies:
@@ -24,51 +27,18 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub "arn:aws:s3:::${StepFunctionStackName}-deploy/*"
+                Resource:
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-sit-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-uat-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-prod-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
               - Effect: Allow
                 Action:
                   - states:ListExecutions
                   - states:ListStateMachines
                 Resource: !Sub "arn:aws:states:*:${AWS::AccountId}:*"
-  DeploymentManagedPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      Description: Permissions for deploying the gibs-ops-api
-      Users:
-        - !Ref DeploymentUserName
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action:
-              - apigateway:GET
-              - apigateway:PATCH
-              - apigateway:POST
-              - cloudformation:CreateChangeSet
-              - cloudformation:DescribeChangeSet
-              - lambda:CreateFunction
-              - s3:CreateBucket
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - lambda:AddPermission
-              - lambda:GetFunctionConfiguration
-              - lambda:UpdateFunctionCode
-              - lambda:UpdateFunctionConfiguration
-            Resource: !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:gsfc-ngap-gibs-ops-api-*"
-          - Effect: Allow
-            Action: iam:PassRole
-            Resource: !GetAtt LambdaExecutionRole.Arn
-          - Effect: Allow
-            Action:
-              - cloudformation:CreateStack
-              - cloudformation:DescribeStacks
-              - cloudformation:ExecuteChangeSet
-            Resource: !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/gsfc-ngap-gibs-ops-api-*"
-          - Effect: Allow
-            Action:
-              - s3:GetObject
-              - s3:Listbucket
-              - s3:PutObject
-            Resource:
-              - arn:aws:s3:::gsfc-ngap-gibs-ops-api-*
