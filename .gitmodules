@@ -1,3 +1,9 @@
 [submodule "schemas/docson"]
 	path = gibs-ingest/ingest-workflows/docs/docson
 	url = https://github.com/lbovet/docson.git
+[submodule "gibs-ingest/ingest-workflows"]
+	path = gibs-ingest/ingest-workflows
+	url = https://git.earthdata.nasa.gov/scm/gitc/ingest-workflows.git
+[submodule "gibs-ingest/ingest-common"]
+	path = gibs-ingest/ingest-common
+	url = https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git
