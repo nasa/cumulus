@@ -4,6 +4,6 @@
 [submodule "gibs-ingest/ingest-workflows"]
 	path = gibs-ingest/ingest-workflows
 	url = https://git.earthdata.nasa.gov/scm/gitc/ingest-workflows.git
-[submodule "gibs-ingest/ingest-common"]
-	path = gibs-ingest/ingest-common
+[submodule "ingest-common"]
+	path = ingest-common
 	url = https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git
