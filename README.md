@@ -62,3 +62,16 @@ You can run the mocha tests individually.
 Run the following command with the stack name to use. (Suggested name is your `first two initials + -gibs-api`)
 
 `bin/deploy.sh my-stack-name`
+
+## Configure IAM permissions
+
+IAM permissions required by this project are defined in **config/iam-permissions.yml**.
+
+### Update IAM permissions in the ngap-test account
+
+```(bash)
+aws cloudformation --region=us-east-1 deploy \
+  --stack-name ngap-test-gibs-ops-api-iam \
+  --template-file ./config/iam-permissions.yml \
+  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+```
