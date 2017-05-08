@@ -13,6 +13,43 @@ Resources:
         accountId: !Ref AWS::AccountId
         ApiLambdaFunctionName: !Ref GibsApiFunction
 
+  # TODO file issue for this
+  # operational things to consider
+  # - dedicated master node
+  # - zone awareness
+  # - instancy sizing
+  # - EBS volume sizing
+  # - backups
+
+  ElasticsearchDomain:
+    Type: "AWS::Elasticsearch::Domain"
+    Properties:
+      DomainName: "gibsesdomain"
+      ElasticsearchVersion: "5.1"
+      ElasticsearchClusterConfig:
+        DedicatedMasterEnabled: "false"
+        InstanceCount: "3"
+        ZoneAwarenessEnabled: "false"
+        InstanceType: "t2.medium.elasticsearch"
+      EBSOptions:
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 20
+        VolumeType: "gp2"
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: "0"
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Ref AWS::AccountId
+            Action: "es:*"
+            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/gibsesdomain/*"
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: "true"
+
+
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -47,6 +84,13 @@ Resources:
             - states:ListExecutions
             Resource:
             - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:*"
+          # Give permission to access elasticsearch domain
+          - Effect: Allow
+            Action:
+              - es:*
+            Resource:
+              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/gibsesdomain/*"
+
 
   LambdaApiGatewayExecutionPermission:
     Type: AWS::Lambda::Permission
@@ -72,7 +116,7 @@ Resources:
       MemorySize: 1024
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs6.10
-      Timeout: 30
+      Timeout: 300
       Events:
         ProxyApiRoot:
           Type: Api
