@@ -57,11 +57,51 @@ You can run the mocha tests individually.
 
 `npm run mocha`
 
+### Running tests in Bamboo
+
+Run eslint.  This is a pass / fail test.
+
+```(bash)
+docker run \
+  --rm \
+  -v "$(pwd):/source:ro" \
+  -w /source \
+  node \
+  npm run lint
+```
+
+Run mocha tests.  This creates **test-results.xml**.
+
+```(bash)
+docker run \
+  -e RELEASE_UID=$(id -u) \
+  -e RELEASE_GID=$(id -g) \
+  --rm \
+  -v "$(pwd):/source" \
+  node \
+  /source/ngap/bamboo/mocha_in_docker.sh
+```
+
 ## Deploy
 
-Run the following command with the stack name to use. (Suggested name is your `first two initials + -gibs-api`)
+To deploy to NGAP, run **ngap/bamboo/deploy_to_ngap.sh**.  It expects the following environment variables to be set:
 
-`bin/deploy.sh my-stack-name`
+* bamboo_APP_NAME
+* bamboo_NGAP_API
+* bamboo_NGAP_API_PASSWORD
+
+It also expects **release.tar** to be present.  That release package can be created with
+
+```(bash)
+docker run \
+  -e RELEASE_UID=$(id -u) \
+  -e RELEASE_GID=$(id -g) \
+  --rm \
+  -v "$(pwd):/source" \
+  -w /source \
+  node \
+  /source/ngap/bamboo/npm_release_in_docker.sh
+```
 
 ## Configure IAM permissions
 
