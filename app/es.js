@@ -29,6 +29,63 @@ const booleanType = {
   store: 'yes'
 };
 
+const executionsIndex = {
+  settings: {
+    index: {
+      number_of_shards: 5,
+      number_of_replicas: 1,
+      mapper: { dynamic: false }
+    }
+  },
+  mappings: {
+    execution: {
+      dynamic: 'strict',
+      _source: { enabled: false },
+      _all: { enabled: false },
+      properties: {
+        workflow_id: stringType,
+        collection_id: stringType,
+        granule_id: stringType,
+        start_date: dateType,
+        stop_date: dateType,
+        elapsed_ms: longType,
+        success: booleanType
+      }
+    }
+  }
+};
+
+const executionsMetaIndex = {
+  settings: {
+    index: {
+      number_of_shards: 1,
+      number_of_replicas: 1,
+      mapper: { dynamic: false }
+    }
+  },
+  mappings: {
+    executionMeta: {
+      dynamic: 'strict',
+      _source: { enabled: true },
+      _all: { enabled: false },
+      properties: {
+        last_indexed_date: dateType
+      }
+    }
+  }
+};
+
+p = es().indices.delete({ index: 'executions' });
+p = es().indices.create({
+  index: 'executions',
+  body: executionsIndex
+});
+p = es().indices.delete({ index: 'executions-meta' });
+p = es().indices.create({
+  index: 'executions-meta',
+  body: executionsMetaIndex
+});
+
 const createIndexRequest = {
   index: 'executions',
   body: {
@@ -57,9 +114,6 @@ const createIndexRequest = {
     }
   }
 };
-
-p = es().indices.delete({ index: 'executions' });
-p = es().indices.create(createIndexRequest);
 
 
 const exampleDoc = {
