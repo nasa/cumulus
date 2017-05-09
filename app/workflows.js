@@ -6,6 +6,7 @@
 
 /*eslint no-console: ["error", { allow: ["error"] }] */
 
+require('babel-polyfill');
 const { s3, stepFunctions } = require('./aws');
 const yaml = require('js-yaml');
 const { BadRequestError, handleError } = require('./api-errors');
@@ -35,6 +36,10 @@ const getStateMachineArn = async (stackName, { id }) => {
  * @return a list of executions for the workflow with status and start and stop dates.
  */
 const getExecutions = async (stackName, workflow, numExecutions) => {
+  if (numExecutions === 0) {
+    return List();
+  }
+
   const arn = await getStateMachineArn(stackName, workflow);
   const resp = await stepFunctions()
     .listExecutions({ stateMachineArn: arn, maxResults: numExecutions })
@@ -44,7 +49,7 @@ const getExecutions = async (stackName, workflow, numExecutions) => {
   return List(executions.map((e) => {
     const m = Map(
       { status: e.status,
-        arn: e.executionArn,
+        name: e.name,
         start_date: e.startDate });
     if (e.stopDate) {
       return m.set('stop_date', e.stopDate);
@@ -155,5 +160,6 @@ const handleWorkflowStatusRequest = async (req, res) => {
 };
 
 module.exports = { parseCollectionYaml,
+  getStateMachineArn,
   getWorkflowStatuses,
   handleWorkflowStatusRequest };
