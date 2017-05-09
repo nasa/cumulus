@@ -25,6 +25,7 @@ const realServices = {
   stepFunctions: new AWS.StepFunctions(),
   es: Elasticsearch.Client({
     // TODO this needs to be configured somehow
+    // Environment variable in NGAP or else look it up to make it work locally.
     hosts: 'https://search-gibsesdomain-g6zoaxeqpp7xyfifdxfdt5tuxi.us-west-2.es.amazonaws.com',
     connectionClass: AwsEs,
     amazonES: {
