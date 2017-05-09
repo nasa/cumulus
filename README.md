@@ -62,12 +62,7 @@ You can run the mocha tests individually.
 Run eslint.  This is a pass / fail test.
 
 ```(bash)
-docker run \
-  --rm \
-  -v "$(pwd):/source:ro" \
-  -w /source \
-  node \
-  npm run lint
+docker run --rm -v "$(pwd):/source:ro" -w /source node npm run lint
 ```
 
 Run mocha tests.  This creates **test-results.xml**.
@@ -83,6 +78,16 @@ docker run \
 ```
 
 ## Deploy
+
+### Deploying to ngap-test using API Gateway
+
+To deploy to the ngap-test environment, run
+
+```(bash)
+./bin/deploy.sh --region us-east-1 SIT arn:aws:iam::***REMOVED***:role/gsfc-ngap-gibs-ops-api
+```
+
+### Deploying to the NGAP PaaS
 
 To deploy to NGAP, run **ngap/bamboo/deploy_to_ngap.sh**.  It expects the following environment variables to be set:
 
