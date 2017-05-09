@@ -7,26 +7,58 @@ require('babel-polyfill');
 const { stepFunctions, es } = require('./aws');
 const ws = require('./workflows');
 
-// High level overview
-// Get all the workflows
-// Get all executions for each workflow
-// Get details for each execution
-// Convert details and execution into document
-// Index all the documents
+// TODO the regexes here are so convoluted. They're really tied to specific GIBS id styles.
+// There's no good way to know which part is absolutely the collection id and which part is the
+// granule id
+const withGranuleIdRegex = /^(?:[^\-^_]+-)?([A-Z0-9_]+)-([A-Z0-9_]+)-[a-z0-9\-]+$/;
+const withoutGranuleIdRegex = /^([A-Z0-9_]+)-.+$/;
 
-const executionToDoc = async (execution) => {
-  const { workflowId, status, start_date, stop_date, arn } = execution;
-  const desc = await stepFunctions().describeExecution({ executionArn: arn }).promise();
-  const input = JSON.parse(desc.input);
-  const startDateEpoch = Date.parse(start_date);
-  const stopDateEpoch = Date.parse(stop_date);
-  const dataDate = input.meta.date ? Date.parse(input.meta.date.isoDateTime) : null;
+// let name;
+// // without granules
+// name = 'VNGCR_LQD_C1-000a89dd-6f3c-4876-928e-ab6736fd98e6';
+// name = 'MOPITT_DCOSMR_LL_D_STD-2017-04-19_17_19_01';
+// name = 'MOPITT_DCOSMR_LL_D_STD-20402140-0056-4b65-bb9d-8f3055d3dd7c';
+//
+// // with granules
+// name = 'VIIRS-VNGCR_LQD_C1-2017126-e9792534-8721-40c4-b4fe-f046c5e4376b';
+//
+// name.match(withGranuleIdRegex)
+// name.match(withoutGranuleIdRegex)
+
+/**
+ * TODO
+ */
+const executionToDoc = (workflowId, execution) => {
+  const { status, startDate, stopDate, name } = execution;
+  // TODO what is the first thing and are the following true?
+  // example name: 'VIIRS-VNGCR_LQD_C1-2017126-e9792534-8721-40c4-b4fe-f046c5e4376b';
+  // Parts of the name
+  // 1. ...
+  // 2. collection_id: does not contain -
+  // 3. granule_id: does not contain -
+  // 4. guid
+  let matchResult = name.match(withGranuleIdRegex);
+  if (!matchResult) {
+    // If the granule id isn't in it then it may just have the collection id followed by a guid
+    // Example: VNGCR_LQD_C1-000a89dd-6f3c-4876-928e-ab6736fd98e6
+    // Another  MOPITT_DCOSMR_LL_D_STD-2017-04-19_17_19_01
+    // TODO why does mopitt not have a guid? Is the first part the collection id?
+    // TODO is it true that the collection id will never contain a dash?
+    matchResult = name.match(withoutGranuleIdRegex);
+    if (!matchResult) {
+      throw new Error(`Found invalid execution name: ${name}`);
+    }
+  }
+  const [_, collectionId, granuleId] = matchResult;
+
+  const startDateEpoch = Date.parse(startDate);
+  const stopDateEpoch = Date.parse(stopDate);
 
   return {
-    _id: desc.name,
+    _id: name,
     workflow_id: workflowId,
-    collection_id: input.meta.collection,
-    data_date: dataDate,
+    collection_id: collectionId,
+    granule_id: granuleId,
     start_date: startDateEpoch,
     stop_date: stopDateEpoch,
     elapsed_ms: (stopDateEpoch - startDateEpoch),
@@ -34,6 +66,10 @@ const executionToDoc = async (execution) => {
   };
 };
 
+
+/**
+ * TODO
+ */
 const docsToBulk = (docs) => {
   const bulkArgs = [];
   docs.forEach((doc) => {
@@ -45,87 +81,60 @@ const docsToBulk = (docs) => {
   return bulkArgs;
 };
 
-const partition = (n, items) => {
-  if (n >= items.length) {
-    return [items];
-  }
-  return [items.slice(0, n)].concat(partition(n, items.slice(n)));
-};
-
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-// eslint-disable-next-line no-unused-vars
+/**
+ *
+ */
 const indexRecentExecutions = async (stackName, numExecutions) => {
-  const workflows = await ws.getWorkflowStatuses(stackName, numExecutions);
-  const executions = workflows.flatMap(workflow =>
-    workflow.get('executions')
-      .filter(e => e.get('status') !== 'RUNNING')
-      .map(e => e.set('workflowId', workflow.get('id')))
-  );
+  const workflows = await ws.getWorkflowStatuses(stackName, 0);
+  const promises = workflows.map(async (workflow) => {
+    const arn = await ws.getStateMachineArn(stackName, workflow);
+    const workflowId = workflow.get('id');
 
-  // In order to avoid the AWS Throttling we split executions into sets and then have sleeps between
-  // fetching each set
-  const executionSets = partition(10, executions.toArray());
-
-  let docs = [];
-
-  // eslint-disable-next-line no-console
-  console.log(`Total of ${executionSets.length} execution sets`);
-
-  // eslint-disable-next-line no-restricted-syntax
-  for (const execSet of executionSets) {
     // eslint-disable-next-line no-console
-    console.log('Fetching more docs');
-    // eslint-disable-next-line no-await-in-loop
-    await sleep(3000);
-    // eslint-disable-next-line no-await-in-loop
-    docs = docs.concat(await Promise.all(execSet.map(executionToDoc)));
-  }
-  // eslint-disable-next-line no-console
-  console.log('Bulk saving docs');
+    console.log(`Indexing executions for workflow ${workflowId}`);
+    let numIndexed = 0;
+    let moreExecutions = true;
+    let nextToken = null;
 
-  // const docPromises = workflows.flatMap(workflow =>
-  //   workflow.get('executions')
-  //     .filter(e => e.get('status') !== 'RUNNING')
-  //     // This map is returning a bunch of promises
-  //     .map(e => executionToDoc(workflow, e))
-  // );
-  // const docs = await Promise.all(docPromises);
-  const bulkArgs = docsToBulk(docs);
-  return es().bulk({ body: bulkArgs });
+    while (numIndexed < numExecutions && moreExecutions) {
+      // eslint-disable-next-line no-await-in-loop
+      const resp = await stepFunctions()
+      .listExecutions({ stateMachineArn: arn, nextToken })
+      .promise();
+
+      const docs = resp.executions.filter(e => e.status !== 'RUNNING')
+      .map(e => executionToDoc(workflowId, e));
+
+      if (docs.length > 0) {
+        const bulkArgs = docsToBulk(docs);
+        // eslint-disable-next-line no-await-in-loop
+        const esResp = await es().bulk({ body: bulkArgs });
+
+        if (esResp.errors !== false) {
+          // eslint-disable-next-line no-console
+          console.error(`esResp failed ${JSON.stringify(esResp, null, 2)}`);
+          throw new Error('Failed saving to elasticsearch');
+        }
+
+        numIndexed += docs.length;
+        // eslint-disable-next-line no-console
+        console.log(`Indexed total of ${numIndexed} docs for workflow ${workflowId}`);
+        nextToken = resp.nextToken;
+        moreExecutions = !!nextToken;
+      }
+      else {
+        moreExecutions = false;
+      }
+    }
+  });
+  await Promise.all(promises);
 };
 
 
-// const stackName = 'gitc-pq-sfn';
-// const numExecutions = 10;
-//
-// let p = indexRecentExecutions(stackName, numExecutions)
-//
-// let data;
-// p.then(d => data=d).catch(e => data=e);
-// data
-//
-//
-// p = es().search({
-//   index: 'executions',
-//   body: {
-//     query: { match_all: {} },
-//     stored_fields: [
-//       'workflow_id',
-//       'collection_id',
-//       'data_date',
-//       'start_date',
-//       'stop_date',
-//       'elapsed_ms',
-//       'success'
-//     ]
-//   }
-// });
-//
-// let searchResponse;
-// let searchError;
-// p.then(d => searchResponse=d).catch(e => searchError=e);
-// searchResponse
-// searchError
-//
-// console.log(JSON.stringify(searchResponse, null, 2))
+const stackName = 'gitc-pq-sfn';
+
+let p = indexRecentExecutions(stackName, 50000);
+
+let data;
+p.then(d => data = d).catch(e => data = e);
+data;
