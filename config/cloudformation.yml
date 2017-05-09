@@ -24,6 +24,7 @@ Resources:
   ElasticsearchDomain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
+      # TODO uniquify for environment
       DomainName: "gibsesdomain"
       ElasticsearchVersion: "5.1"
       ElasticsearchClusterConfig:
