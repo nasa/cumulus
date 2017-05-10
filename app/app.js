@@ -12,6 +12,7 @@ const { es } = require('./aws');
 
 const { handleError } = require('./api-errors');
 const { handleWorkflowStatusRequest } = require('./workflows');
+const ws2 = require('./workflows2');
 
 const app = express();
 app.use(compression());
@@ -55,6 +56,11 @@ module.exports = (cb = null) => {
 
   app.get('/workflow_status', (req, res) => {
     handleWorkflowStatusRequest(req, res);
+  });
+
+  app.get('/workflow_status2', (req, res) => {
+    ws2.handleWorkflowStatusRequest(req, res)
+    .catch(e => handleError(e, req, res));
   });
 
   // Add an error handler last
