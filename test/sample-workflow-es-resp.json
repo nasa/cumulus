@@ -1,0 +1,782 @@
+{
+  "took": 72,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 11016,
+    "max_score": 0,
+    "hits": []
+  },
+  "aggregations": {
+    "workflows": {
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "DiscoverVIIRS",
+          "doc_count": 6081,
+          "success_ratio": {
+            "doc_count": 2237,
+            "successes": {
+              "doc_count_error_upper_bound": 0,
+              "sum_other_doc_count": 0,
+              "buckets": [
+                {
+                  "key": 1,
+                  "key_as_string": "true",
+                  "doc_count": 2237
+                }
+              ]
+            }
+          },
+          "products": {
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0,
+            "buckets": [
+              {
+                "key": "VNGCR_LQD_C1",
+                "doc_count": 2036,
+                "last_exec": {
+                  "value": {
+                    "success": true,
+                    "stop_date": 1494354428000
+                  }
+                },
+                "success_ratio": {
+                  "doc_count": 746,
+                  "successes": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      {
+                        "key": 1,
+                        "key_as_string": "true",
+                        "doc_count": 746
+                      }
+                    ]
+                  }
+                },
+                "successful": {
+                  "doc_count": 1918,
+                  "last_granule_id": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 48,
+                    "buckets": [
+                      {
+                        "key": "99321383",
+                        "doc_count": 1
+                      }
+                    ]
+                  },
+                  "ingest_perf": {
+                    "doc_count": 746,
+                    "daily": {
+                      "buckets": [
+                        {
+                          "key_as_string": "2017-05-02T00:00:00.000Z",
+                          "key": 1493683200000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 208250
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-03T00:00:00.000Z",
+                          "key": 1493769600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 222500
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-04T00:00:00.000Z",
+                          "key": 1493856000000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 209000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-05T00:00:00.000Z",
+                          "key": 1493942400000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 209500
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-06T00:00:00.000Z",
+                          "key": 1494028800000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 212500
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-07T00:00:00.000Z",
+                          "key": 1494115200000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 205250
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-08T00:00:00.000Z",
+                          "key": 1494201600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 198000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-09T00:00:00.000Z",
+                          "key": 1494288000000,
+                          "doc_count": 74,
+                          "performance": {
+                            "values": {
+                              "95.0": 198700
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "key": "VNGCR_SQD_C1",
+                "doc_count": 2027,
+                "last_exec": {
+                  "value": {
+                    "success": true,
+                    "stop_date": 1494354352000
+                  }
+                },
+                "success_ratio": {
+                  "doc_count": 746,
+                  "successes": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      {
+                        "key": 1,
+                        "key_as_string": "true",
+                        "doc_count": 746
+                      }
+                    ]
+                  }
+                },
+                "successful": {
+                  "doc_count": 1915,
+                  "last_granule_id": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 47,
+                    "buckets": [
+                      {
+                        "key": "96025042",
+                        "doc_count": 1
+                      }
+                    ]
+                  },
+                  "ingest_perf": {
+                    "doc_count": 746,
+                    "daily": {
+                      "buckets": [
+                        {
+                          "key_as_string": "2017-05-02T00:00:00.000Z",
+                          "key": 1493683200000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 25000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-03T00:00:00.000Z",
+                          "key": 1493769600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 26250
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-04T00:00:00.000Z",
+                          "key": 1493856000000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 25000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-05T00:00:00.000Z",
+                          "key": 1493942400000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 26000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-06T00:00:00.000Z",
+                          "key": 1494028800000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 26000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-07T00:00:00.000Z",
+                          "key": 1494115200000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 25000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-08T00:00:00.000Z",
+                          "key": 1494201600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 24000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-09T00:00:00.000Z",
+                          "key": 1494288000000,
+                          "doc_count": 74,
+                          "performance": {
+                            "values": {
+                              "95.0": 24000
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "key": "VNGCR_NQD_C1",
+                "doc_count": 2018,
+                "last_exec": {
+                  "value": {
+                    "stop_date": 1494354625000,
+                    "success": true
+                  }
+                },
+                "success_ratio": {
+                  "doc_count": 745,
+                  "successes": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      {
+                        "key": 1,
+                        "key_as_string": "true",
+                        "doc_count": 745
+                      }
+                    ]
+                  }
+                },
+                "successful": {
+                  "doc_count": 1913,
+                  "last_granule_id": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 34,
+                    "buckets": [
+                      {
+                        "key": "99533992",
+                        "doc_count": 1
+                      }
+                    ]
+                  },
+                  "ingest_perf": {
+                    "doc_count": 745,
+                    "daily": {
+                      "buckets": [
+                        {
+                          "key_as_string": "2017-05-02T00:00:00.000Z",
+                          "key": 1493683200000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 22000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-03T00:00:00.000Z",
+                          "key": 1493769600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 23000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-04T00:00:00.000Z",
+                          "key": 1493856000000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 23000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-05T00:00:00.000Z",
+                          "key": 1493942400000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 23000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-06T00:00:00.000Z",
+                          "key": 1494028800000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 23000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-07T00:00:00.000Z",
+                          "key": 1494115200000,
+                          "doc_count": 95,
+                          "performance": {
+                            "values": {
+                              "95.0": 23000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-08T00:00:00.000Z",
+                          "key": 1494201600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 24000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-09T00:00:00.000Z",
+                          "key": 1494288000000,
+                          "doc_count": 74,
+                          "performance": {
+                            "values": {
+                              "95.0": 24000
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "IngestVIIRS",
+          "doc_count": 2899,
+          "success_ratio": {
+            "doc_count": 2899,
+            "successes": {
+              "doc_count_error_upper_bound": 0,
+              "sum_other_doc_count": 0,
+              "buckets": [
+                {
+                  "key": 1,
+                  "key_as_string": "true",
+                  "doc_count": 2899
+                }
+              ]
+            }
+          },
+          "products": {
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0,
+            "buckets": [
+              {
+                "key": "VNGCR_LQD_C1",
+                "doc_count": 1015,
+                "last_exec": {
+                  "value": {
+                    "success": true,
+                    "stop_date": 1494354432000
+                  }
+                },
+                "success_ratio": {
+                  "doc_count": 1015,
+                  "successes": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      {
+                        "key": 1,
+                        "key_as_string": "true",
+                        "doc_count": 1015
+                      }
+                    ]
+                  }
+                },
+                "successful": {
+                  "doc_count": 1015,
+                  "last_granule_id": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 941,
+                    "buckets": [
+                      {
+                        "key": "2017129",
+                        "doc_count": 74
+                      }
+                    ]
+                  },
+                  "ingest_perf": {
+                    "doc_count": 1015,
+                    "daily": {
+                      "buckets": [
+                        {
+                          "key_as_string": "2017-05-08T00:00:00.000Z",
+                          "key": 1494201600000,
+                          "doc_count": 111,
+                          "performance": {
+                            "values": {
+                              "95.0": 530000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-09T00:00:00.000Z",
+                          "key": 1494288000000,
+                          "doc_count": 904,
+                          "performance": {
+                            "values": {
+                              "95.0": 287000
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "key": "VNGCR_NQD_C1",
+                "doc_count": 984,
+                "last_exec": {
+                  "value": {
+                    "success": true,
+                    "stop_date": 1494354704000
+                  }
+                },
+                "success_ratio": {
+                  "doc_count": 984,
+                  "successes": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      {
+                        "key": 1,
+                        "key_as_string": "true",
+                        "doc_count": 984
+                      }
+                    ]
+                  }
+                },
+                "successful": {
+                  "doc_count": 984,
+                  "last_granule_id": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 939,
+                    "buckets": [
+                      {
+                        "key": "2017129",
+                        "doc_count": 45
+                      }
+                    ]
+                  },
+                  "ingest_perf": {
+                    "doc_count": 984,
+                    "daily": {
+                      "buckets": [
+                        {
+                          "key_as_string": "2017-05-08T00:00:00.000Z",
+                          "key": 1494201600000,
+                          "doc_count": 108,
+                          "performance": {
+                            "values": {
+                              "95.0": 2000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-09T00:00:00.000Z",
+                          "key": 1494288000000,
+                          "doc_count": 876,
+                          "performance": {
+                            "values": {
+                              "95.0": 2000
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "key": "VNGCR_SQD_C1",
+                "doc_count": 900,
+                "last_exec": {
+                  "value": {
+                    "success": true,
+                    "stop_date": 1494354424000
+                  }
+                },
+                "success_ratio": {
+                  "doc_count": 900,
+                  "successes": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      {
+                        "key": 1,
+                        "key_as_string": "true",
+                        "doc_count": 900
+                      }
+                    ]
+                  }
+                },
+                "successful": {
+                  "doc_count": 900,
+                  "last_granule_id": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 855,
+                    "buckets": [
+                      {
+                        "key": "2017129",
+                        "doc_count": 45
+                      }
+                    ]
+                  },
+                  "ingest_perf": {
+                    "doc_count": 900,
+                    "daily": {
+                      "buckets": [
+                        {
+                          "key_as_string": "2017-05-08T00:00:00.000Z",
+                          "key": 1494201600000,
+                          "doc_count": 99,
+                          "performance": {
+                            "values": {
+                              "95.0": 3000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-09T00:00:00.000Z",
+                          "key": 1494288000000,
+                          "doc_count": 801,
+                          "performance": {
+                            "values": {
+                              "95.0": 3000
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "DiscoverMOPITT",
+          "doc_count": 2036,
+          "success_ratio": {
+            "doc_count": 746,
+            "successes": {
+              "doc_count_error_upper_bound": 0,
+              "sum_other_doc_count": 0,
+              "buckets": [
+                {
+                  "key": 1,
+                  "key_as_string": "true",
+                  "doc_count": 746
+                }
+              ]
+            }
+          },
+          "products": {
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0,
+            "buckets": [
+              {
+                "key": "MOPITT_DCOSMR_LL_D_STD",
+                "doc_count": 2036,
+                "last_exec": {
+                  "value": {
+                    "success": true,
+                    "stop_date": 1494354237000
+                  }
+                },
+                "success_ratio": {
+                  "doc_count": 746,
+                  "successes": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      {
+                        "key": 1,
+                        "key_as_string": "true",
+                        "doc_count": 746
+                      }
+                    ]
+                  }
+                },
+                "successful": {
+                  "doc_count": 1824,
+                  "last_granule_id": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 32,
+                    "buckets": [
+                      {
+                        "key": "97582064",
+                        "doc_count": 1
+                      }
+                    ]
+                  },
+                  "ingest_perf": {
+                    "doc_count": 746,
+                    "daily": {
+                      "buckets": [
+                        {
+                          "key_as_string": "2017-05-02T00:00:00.000Z",
+                          "key": 1493683200000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 5000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-03T00:00:00.000Z",
+                          "key": 1493769600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 4000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-04T00:00:00.000Z",
+                          "key": 1493856000000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 4250
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-05T00:00:00.000Z",
+                          "key": 1493942400000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 4000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-06T00:00:00.000Z",
+                          "key": 1494028800000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 4000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-07T00:00:00.000Z",
+                          "key": 1494115200000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 4000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-08T00:00:00.000Z",
+                          "key": 1494201600000,
+                          "doc_count": 96,
+                          "performance": {
+                            "values": {
+                              "95.0": 4000
+                            }
+                          }
+                        },
+                        {
+                          "key_as_string": "2017-05-09T00:00:00.000Z",
+                          "key": 1494288000000,
+                          "doc_count": 74,
+                          "performance": {
+                            "values": {
+                              "95.0": 3000
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
