@@ -15,7 +15,7 @@ AWS.config.setPromisesDependency(Promise);
 
 const isJupyter = global.__isJupyter;
 const isStdin = process.argv[2] === 'stdin';
-const isLocal = isJupyter || isStdin || process.argv[2] === 'local';
+const isLocal = isJupyter || isStdin || process.env.LOCAL_NODE;
 
 /**
  * A map of real AWS services to use.
