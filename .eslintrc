@@ -36,7 +36,8 @@
     }],
 
     "no-unused-vars": ["error", {
-      "argsIgnorePattern": "^_"
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
     }],
     "react/jsx-no-duplicate-props": 2,
     "react/jsx-no-undef": 2,

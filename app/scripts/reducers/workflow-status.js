@@ -2,7 +2,7 @@
  * Handles fetching and saving the workflow status in the state. Workflow status the name, and
  * execution dates of the workflows.
  */
-const { Map, fromJS } = require('immutable');
+const { Map, List } = require('immutable');
 const api = require('../ops-api');
 
 // Actions
@@ -31,33 +31,31 @@ const initialState = Map(
     error: undefined });
 
 /**
- * Returns all the exections in a workflow that are not running.
- */
-const nonRunningExecutions = workflow =>
-  workflow.get('executions')
-  .filter(v => v.get('status') !== 'RUNNING');
-
-/**
  * Gets the last completed execution of a workflow.
  */
-const getLastCompleted = workflow => nonRunningExecutions(workflow).first();
-
+const getLastCompleted = workflow =>
+  workflow.get('products', List())
+    .map(p => p.get('last_execution'))
+    .sortBy(e => e.get('stop_date'))
+    .reverse()
+    .first();
 
 /**
  * Returns a map containing the number of successful runs and the total number of executions that
  * completed.
  */
 const getSuccessRate = (workflow) => {
-  const executions = nonRunningExecutions(workflow);
-  const numSuccessful = executions.filter(v => v.get('status') === 'SUCCEEDED').count();
-  return Map({ numSuccessful, numExecutions: executions.count() });
+  const { successes, total } = workflow.get('success_ratio', Map({ successes: 0, total: 0 }));
+  return Map({ numSuccessful: successes, numExecutions: total });
 };
 
 /**
  *  Returns the number of running executions in the workflow
  */
 const getNumRunning = workflow =>
-  workflow.get('executions').filter(v => v.get('status') === 'RUNNING').count();
+  workflow.get('products', List())
+    .map(p => p.get('num_running'))
+    .reduce((v1, v2) => v1 + v2, 0);
 
 /**
  * Reducer helper function. Takes the current state and a field to sort the workflows. Sorts the
@@ -118,7 +116,7 @@ const reducer = (state = initialState, action) => {
     case WORKFLOW_STATUS_IN_FLIGHT:
       return state.set('inFlight', true);
     case WORKFLOW_STATUS_RCVD:
-      return state.set('workflows', fromJS(action.workflows))
+      return state.set('workflows', action.workflows)
         .set('inFlight', false)
         .set('error', action.error);
     case WORKFLOW_CHANGE_SORT:
@@ -166,6 +164,7 @@ const fetchWorkflowStatus = async (config, dispatch) => {
     dispatch({ type: WORKFLOW_STATUS_RCVD, workflows: resp });
   }
   catch (e) {
+    console.error(e);
     dispatch({ type: WORKFLOW_STATUS_RCVD, error: e.message });
   }
 };
@@ -183,7 +182,6 @@ module.exports = {
   getNumRunning,
   getSuccessRate,
   getLastCompleted,
-  nonRunningExecutions,
 
   // Actions
   changeSort,

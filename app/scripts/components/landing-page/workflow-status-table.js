@@ -41,10 +41,9 @@ const SortIcon = ({ isSorted, sortDirectionAsc }) => {
 /**
  * Returns a human readable time for when the last execution completed for the workflow.
  */
-const lastCompleted = (workflow) => {
-  const lastExecution = ws.getLastCompleted(workflow);
+const lastCompleted = (lastExecution) => {
   if (lastExecution) {
-    const icon = lastExecution.get('status') === 'SUCCEEDED' ? <SuccessIcon /> : <FailedIcon />;
+    const icon = lastExecution.get('success') ? <SuccessIcon /> : <FailedIcon />;
     return <span>{icon}{timeAgo.format(lastExecution.get('stop_date'))}</span>;
   }
   return <span><NotRunIcon />not yet</span>;
@@ -80,17 +79,34 @@ const Loading = (props) => {
 
 // TODO this should be refactored into it's own file
 
+// Chart TODO
+// Add for workflow
+// - change product_id to just id
+// - add ingest perf for workflows in the API
+// Add "95 Percentile" to the legend.
+// Add GUID for each
+
 /**
  * TODO
  */
-const IngestChart = (props) => {
-  const workflow = props.workflow;
-  const points = ws.nonRunningExecutions(workflow).map(({ start_date, stop_date }) =>
-    // eslint-disable-next-line camelcase
-    ({ x: stop_date, y: (stop_date - start_date) })
+const IngestChartFn = (props) => {
+  const product = props.product;
+  const points = product.get('ingest_perf').map(perf =>
+    ({ x: perf.get('date'), y: perf.get('95.0') })
   ).toJS();
   const chartData = { datasets: [{ data: points }] };
-  const chartOptions = {
+  const modalChartOptions = {
+    responsive: false,
+    maintainAspectRatio: false,
+    scales: {
+      xAxes: [{
+        type: 'time',
+        time: {
+          format: 'MM/DD/YYYY HH:mm',
+          tooltipFormat: 'll HH:mm'
+        } }],
+      yAxes: [{ ticks: { beginAtZero: true } }] } };
+  const inlineChartOptions = {
     responsive: false,
     maintainAspectRatio: false,
     legend: { display: false },
@@ -102,24 +118,45 @@ const IngestChart = (props) => {
           format: 'MM/DD/YYYY HH:mm',
           tooltipFormat: 'll HH:mm'
         } }],
-      yAxes: [{ display: false }] } };
+      yAxes: [{
+        display: false,
+        ticks: { beginAtZero: true }
+      }] } };
   return (
     <div>
-      <div className="eui-modal-content">
+      <div className="eui-modal-content" id={`big-chart-${product.get('product_id')}`}>
         <LineChart
           data={chartData}
-          options={chartOptions}
+          width={750}
+          height={300}
+          options={modalChartOptions}
         />
       </div>
-      <LineChart
-        data={chartData}
-        height={38}
-        width={200}
-        options={chartOptions}
-      />
+      <div
+        id={`small-chart-${product.get('product_id')}`}
+        name={`big-chart-${product.get('product_id')}`}
+        href={`#big-chart-${product.get('product_id')}`}
+      >
+        <LineChart
+          data={chartData}
+          height={38}
+          width={200}
+          options={inlineChartOptions}
+        />
+      </div>
     </div>
   );
 };
+
+const IngestChart = functional(
+  IngestChartFn, {
+    componentDidMount: ({ product }) => {
+      // Use EUI recommended method for creating modal content.
+      // eslint-disable-next-line no-undef
+      $(`#small-chart-${product.get('product_id')}`).leanModal();
+    }
+  }
+);
 
 
 /**
@@ -143,70 +180,76 @@ const WorkflowTbody = connect()((props) => {
             {workflow.get('name')}
           </a>
         </td>
-        <td>{lastCompleted(workflow)}</td>
+        <td>{lastCompleted(ws.getLastCompleted(workflow))}</td>
         <td />
         <td>{successRatio(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
         <td>
-          <IngestChart workflow={workflow} />
+          {/* <IngestChart workflow={workflow} /> */}
         </td>
       </tr>
     </tbody>
   );
 });
 
-const cannedRows = () =>
-  [<tr key="product-1">
+// TODO add a test for this. 2017130 should be 2017-05-10 130 in 2016 in 5/9
+
+/**
+ * Parses a julian date like '2014130' and returns a string formatted date of YYYY-MM-DD
+ */
+const parseJulian = (dateStr) => {
+  // Parse out the components of a julian date string.
+  const match = dateStr.match(/^(\d\d\d\d)(\d+)$/);
+  if (!match) {
+    return 'Invalid date';
+  }
+  const [_, yearStr, dayOfYearStr] = match;
+  const year = Number(yearStr);
+  const dayOfYear = Number(dayOfYearStr);
+
+  // Calculate date from Julian date
+  const daysSinceJanFirst = dayOfYear - 1;
+  const msSinceJanFirst = daysSinceJanFirst * 24 * 3600 * 1000;
+  const yearMs = Date.UTC(year, 0);
+  const date = new Date(yearMs + msSinceJanFirst);
+
+  // Format the date string
+  const zeroPad = n => (n < 10 ? `0${n}` : n);
+  const y = date.getUTCFullYear();
+  const m = date.getUTCMonth() + 1;
+  const d = date.getUTCDate();
+  return `${y}-${zeroPad(m)}-${zeroPad(d)}`;
+};
+
+
+/**
+ * TODO
+ */
+const ProductRow = ({ product }) =>
+  <tr key={product.get('product_id')}>
     <td className="name-cell">
-      <div>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_LQD_C1)</div>
+      <div>{product.get('product_id')}</div>
     </td>
+    <td><div>{lastCompleted(product.get('last_execution'))}</div></td>
     <td>
       <div>
-        <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-        XX minutes ago
+        {product.get('last_granule_id') ? parseJulian(product.get('last_granule_id')) : 'N/A'}
       </div>
     </td>
-    <td><div>X hours ago</div></td>
-    <td><div>XX of the last XX successful</div></td>
-    <td><div>X Running</div></td>
-    <td><div>chart.js chart here</div></td>
-  </tr>,
-    <tr key="product-2">
-      <td className="name-cell">
-        <div>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_SQD_C1)</div>
-      </td>
-      <td>
-        <div>
-          <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-          XX minutes ago
-        </div>
-      </td>
-      <td><div>X hours ago</div></td>
-      <td><div>XX of the last XX successful</div></td>
-      <td><div>X Running</div></td>
-      <td><div>chart.js chart here</div></td>
-    </tr>,
-    <tr key="product-3">
-      <td className="name-cell">
-        <div>VIIRS_SNPP_CorrectedReflectance_TrueColor_v1_NRT (VNGCR_NQD_C1)</div>
-      </td>
-      <td>
-        <div>
-          <i className="icon fa fa-check-circle icon-success" aria-hidden="true" />
-          XX minutes ago
-        </div>
-      </td>
-      <td><div>X hours ago</div></td>
-      <td><div>XX of the last XX successful</div></td>
-      <td><div>X Running</div></td>
-      <td><div>chart.js chart here</div></td>
-    </tr>];
+    <td><div>{successRatio(product)}</div></td>
+    <td><div>{product.get('num_running')} Running</div></td>
+    <td><div><IngestChart product={product} /></div></td>
+  </tr>;
 
 /**
  * TODO
  */
 const ProductTbody = ({ workflow }) => {
-  const rows = workflow.get('expanded', false) ? cannedRows() : null;
+  const rows = workflow.get('expanded', false) ?
+    workflow.get('products', List()).map(p =>
+      <ProductRow key={p.get('product_id')} product={p} />
+    ).toArray()
+    : null;
   return (
     <CSSTransitionGroup
       transitionName="products"
