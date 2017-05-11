@@ -12,13 +12,6 @@ const { fromJS, Map, List } = require('immutable');
 const WorkflowAggregator = require('./workflow-aggregator');
 const { parseExecutionName } = require('./execution-name-parser');
 
-// require('babel-polyfill');
-// const WorkflowAggregator = require('./workflow-aggregator');
-// p = WorkflowAggregator.loadWorkflowsFromEs()
-// let data
-// p.then(d => data=d).catch(d=> data=d)
-// data
-
 const COLLECTIONS_YAML = 'ingest/collections.yml';
 
 /**
@@ -101,8 +94,6 @@ const getWorkflowStatuses = async (stackName) => {
   const parsedYaml = parseCollectionYaml(collectionsYaml);
 
   const esWorkflowsById = await WorkflowAggregator.loadWorkflowsFromEs();
-
-  console.log("Workflows by Id:", esWorkflowsById);
 
   const workflowPromises = parsedYaml.get('workflows')
     .entrySeq()
