@@ -79,7 +79,7 @@ const ingestPerfAgg = {
         performance: {
           percentiles: {
             field: 'elapsed_ms',
-            percents: [95]
+            percents: [50, 95]
           }
         }
       }
@@ -105,6 +105,7 @@ const lastExecutionAgg = {
 const productAgg = {
   terms: { field: 'collection_id' },
   aggs: {
+    success_ratio: successRatioAgg,
     successful: {
       filter: { term: { success: true } },
       aggs: {
@@ -112,7 +113,6 @@ const productAgg = {
         ingest_perf: ingestPerfAgg
       }
     },
-    success_ratio: successRatioAgg,
     last_exec: lastExecutionAgg
   }
 };
@@ -125,6 +125,12 @@ const workflowAgg = {
   terms: { field: 'workflow_id' },
   aggs: {
     success_ratio: successRatioAgg,
+    successful: {
+      filter: { term: { success: true } },
+      aggs: {
+        ingest_perf: ingestPerfAgg
+      }
+    },
     products: productAgg
   }
 };
@@ -142,17 +148,28 @@ const parseSuccessRatioAgg = (aggs) => {
  * TODO
  */
 const parseIngestPerf = aggs =>
-  aggs.daily.buckets.map(b => ({
-    date: b.key_as_string,
-    '95.0': b.performance.values['95.0']
-  }));
+  aggs.daily.buckets.map((b) => {
+    const values = b.performance.values;
+    const percentiles = Object.keys(values);
+    const dataMap = { date: b.key };
+    percentiles.forEach((p) => {
+      dataMap[p.replace('.0', '')] = values[p];
+    });
+    return dataMap;
+  });
+
+// const parseIngestPerf = aggs =>
+//   aggs.daily.buckets.map(b => ({
+//     date: b.key,
+//     '95.0': b.performance.values['95.0']
+//   }));
 
 /**
  * TODO
  */
 const parseProductsAgg = aggs =>
   aggs.buckets.map(b => ({
-    product_id: b.key,
+    id: b.key,
     last_execution: b.last_exec.value,
     last_granule_id: _.get(b, 'successful.last_granule_id.buckets[0].key'),
     success_ratio: parseSuccessRatioAgg(b.success_ratio),
@@ -166,6 +183,7 @@ const parseWorkflowAgg = (aggs) => {
   const workflows = aggs.buckets.map(b => ({
     id: b.key,
     success_ratio: parseSuccessRatioAgg(b.success_ratio),
+    ingest_perf: parseIngestPerf(b.successful.ingest_perf),
     products: parseProductsAgg(b.products)
   }));
   const workflowsById = {};
@@ -183,6 +201,7 @@ const parseElasticResponse = resp =>
  * TODO
  */
 const loadWorkflowsFromEs = async () => {
+  const startTime = Date.now();
   const resp = await es().search({
     index: 'executions',
     body: {
@@ -191,6 +210,8 @@ const loadWorkflowsFromEs = async () => {
       aggs: { workflows: workflowAgg }
     }
   });
+  // eslint-disable-next-line no-console
+  console.info(`Elasticsearch Time: ${Date.now() - startTime} ms`);
   return parseElasticResponse(resp);
 };
 
