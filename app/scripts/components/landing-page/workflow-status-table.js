@@ -2,10 +2,10 @@ const React = require('react');
 const CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup');
 const { connect } = require('react-redux');
 const functional = require('react-functional');
-const LineChart = require('react-chartjs-2').Line;
 const { List } = require('immutable');
-const ws = require('../../reducers/workflow-status');
 const Icon = require('../icon');
+const { IngestChart } = require('./ingest-chart');
+const ws = require('../../reducers/workflow-status');
 
 const JsTimeAgo = require('javascript-time-ago');
 JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
@@ -77,87 +77,6 @@ const Loading = (props) => {
   return props.children;
 };
 
-// TODO this should be refactored into it's own file
-
-// Chart TODO
-// Add for workflow
-// - change product_id to just id
-// - add ingest perf for workflows in the API
-// Add "95 Percentile" to the legend.
-// Add GUID for each
-
-/**
- * TODO
- */
-const IngestChartFn = (props) => {
-  const product = props.product;
-  const points = product.get('ingest_perf').map(perf =>
-    ({ x: perf.get('date'), y: perf.get('95.0') })
-  ).toJS();
-  const chartData = { datasets: [{ data: points }] };
-  const modalChartOptions = {
-    responsive: false,
-    maintainAspectRatio: false,
-    scales: {
-      xAxes: [{
-        type: 'time',
-        time: {
-          format: 'MM/DD/YYYY HH:mm',
-          tooltipFormat: 'll HH:mm'
-        } }],
-      yAxes: [{ ticks: { beginAtZero: true } }] } };
-  const inlineChartOptions = {
-    responsive: false,
-    maintainAspectRatio: false,
-    legend: { display: false },
-    scales: {
-      xAxes: [{
-        type: 'time',
-        display: false,
-        time: {
-          format: 'MM/DD/YYYY HH:mm',
-          tooltipFormat: 'll HH:mm'
-        } }],
-      yAxes: [{
-        display: false,
-        ticks: { beginAtZero: true }
-      }] } };
-  return (
-    <div>
-      <div className="eui-modal-content" id={`big-chart-${product.get('product_id')}`}>
-        <LineChart
-          data={chartData}
-          width={750}
-          height={300}
-          options={modalChartOptions}
-        />
-      </div>
-      <div
-        id={`small-chart-${product.get('product_id')}`}
-        name={`big-chart-${product.get('product_id')}`}
-        href={`#big-chart-${product.get('product_id')}`}
-      >
-        <LineChart
-          data={chartData}
-          height={38}
-          width={200}
-          options={inlineChartOptions}
-        />
-      </div>
-    </div>
-  );
-};
-
-const IngestChart = functional(
-  IngestChartFn, {
-    componentDidMount: ({ product }) => {
-      // Use EUI recommended method for creating modal content.
-      // eslint-disable-next-line no-undef
-      $(`#small-chart-${product.get('product_id')}`).leanModal();
-    }
-  }
-);
-
 
 /**
  * TODO
@@ -185,7 +104,7 @@ const WorkflowTbody = connect()((props) => {
         <td>{successRatio(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
         <td>
-          {/* <IngestChart workflow={workflow} /> */}
+          <IngestChart ingestPerf={workflow.get('ingest_perf', List())} guid={workflow.get('id')} />
         </td>
       </tr>
     </tbody>
@@ -225,10 +144,10 @@ const parseJulian = (dateStr) => {
 /**
  * TODO
  */
-const ProductRow = ({ product }) =>
-  <tr key={product.get('product_id')}>
+const ProductRow = ({ workflow, product }) =>
+  <tr key={product.get('id')}>
     <td className="name-cell">
-      <div>{product.get('product_id')}</div>
+      <div>{product.get('id')}</div>
     </td>
     <td><div>{lastCompleted(product.get('last_execution'))}</div></td>
     <td>
@@ -238,7 +157,14 @@ const ProductRow = ({ product }) =>
     </td>
     <td><div>{successRatio(product)}</div></td>
     <td><div>{product.get('num_running')} Running</div></td>
-    <td><div><IngestChart product={product} /></div></td>
+    <td>
+      <div>
+        <IngestChart
+          ingestPerf={product.get('ingest_perf')}
+          guid={`${workflow.get('id')}-${product.get('id')}`}
+        />
+      </div>
+    </td>
   </tr>;
 
 /**
@@ -247,7 +173,7 @@ const ProductRow = ({ product }) =>
 const ProductTbody = ({ workflow }) => {
   const rows = workflow.get('expanded', false) ?
     workflow.get('products', List()).map(p =>
-      <ProductRow key={p.get('product_id')} product={p} />
+      <ProductRow key={p.get('id')} workflow={workflow} product={p} />
     ).toArray()
     : null;
   return (
