@@ -104,7 +104,11 @@ const WorkflowTbody = connect()((props) => {
         <td>{successRatio(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
         <td>
-          <IngestChart ingestPerf={workflow.get('ingest_perf', List())} guid={workflow.get('id')} />
+          <IngestChart
+            title={`${workflow.get('id')} Workflow`}
+            ingestPerf={workflow.get('ingest_perf', List())}
+            guid={workflow.get('id')}
+          />
         </td>
       </tr>
     </tbody>
@@ -160,6 +164,7 @@ const ProductRow = ({ workflow, product }) =>
     <td>
       <div>
         <IngestChart
+          title={`${workflow.get('id')} Workflow - ${product.get('id')}`}
           ingestPerf={product.get('ingest_perf')}
           guid={`${workflow.get('id')}-${product.get('id')}`}
         />

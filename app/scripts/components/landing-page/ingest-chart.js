@@ -5,9 +5,13 @@ const LineChart = require('react-chartjs-2').Line;
 /**
  * TODO
  */
-const modalChartOptions = {
+const modalChartOptions = title => ({
   responsive: false,
   maintainAspectRatio: false,
+  title: {
+    display: true,
+    text: title
+  },
   scales: {
     xAxes: [{
       type: 'time',
@@ -23,7 +27,7 @@ const modalChartOptions = {
       }
     }]
   }
-};
+});
 
 /**
  * TODO
@@ -78,13 +82,13 @@ const guidToInlineId = guid => `inline-chart-${guid}`;
 /**
  * TODO
  */
-const ModalChart = ({ guid, chartData }) =>
+const ModalChart = ({ guid, chartData, title }) =>
   <div className="eui-modal-content" id={guidToModalId(guid)}>
     <LineChart
       data={chartData}
       width={750}
       height={300}
-      options={modalChartOptions}
+      options={modalChartOptions(title)}
     />
   </div>;
 
@@ -108,12 +112,12 @@ const InlineChart = ({ guid, chartData }) =>
 /**
  * TODO
  */
-const IngestChartFn = ({ ingestPerf, guid }) => {
+const IngestChartFn = ({ ingestPerf, guid, title }) => {
   const chartData = ingestPerfToChartData(ingestPerf);
 
   return (
     <div>
-      <ModalChart guid={guid} chartData={chartData} />
+      <ModalChart guid={guid} chartData={chartData} title={title} />
       <InlineChart guid={guid} chartData={chartData} />
     </div>
   );
