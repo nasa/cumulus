@@ -3,8 +3,8 @@
 // Allows running the app locally.
 
 const app = require('./app')();
-app.listen(3000);
+const port = process.env.PORT || 3000;
+app.listen(port);
 
 /*eslint no-console: ["error", { allow: ["log"] }]*/
-console.log('Listening on port 3000');
-
+console.log(`Listening on port ${port}`);
