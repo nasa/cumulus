@@ -7,3 +7,6 @@
 [submodule "ingest-common"]
 	path = ingest-common
 	url = https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git
+[submodule "gibs-onearth"]
+	path = gibs-onearth
+	url = https://git.earthdata.nasa.gov/scm/gitc/gibs-onearth.git

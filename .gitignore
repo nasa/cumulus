@@ -6,4 +6,4 @@ tmp
 .tmp
 config/authorized_keys
 cache-invalidation/config/runtime_config.json
-gibs-ingest/artifacts
+artifacts

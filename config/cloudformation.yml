@@ -7,6 +7,13 @@ Parameters:
     AllowedValues:
       - true
       - false
+  PaaS:
+    Description: If "true" the deployment is happening into the NGAP PaaS where possible
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
   IngestDesiredInstances:
     Description: Number of instances to launch in the ingest ECS cluster.
     Type: Number
@@ -59,6 +66,30 @@ Resources:
         VPC: !Ref VPC
       TemplateURL: !Sub "https://s3.amazonaws.com/${ConfigBucket}/ingest/cloudformation.yml"
 
+  PublicUpdateTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub ${AWS::StackName}-public-update
+
+  PublicUpdateTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Id: !Sub "${AWS::StackName}PublishPolicy"
+        Version: '2012-10-17'
+        Statement:
+          - Sid: !Sub "${AWS::StackName}PublishStmt"
+            Effect: Allow
+            Principal:
+              AWS: "*"
+            Action: sns:Publish
+            Resource: !Ref PublicUpdateTopic
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:s3:::${AWS::StackName}-public
+      Topics:
+        - Ref: PublicUpdateTopic
+
   ConfigBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -73,8 +104,14 @@ Resources:
 
   PublicBucket:
     Type: AWS::S3::Bucket
+    DependsOn:
+      - PublicUpdateTopicPolicy
     Properties:
       BucketName: !Sub ${AWS::StackName}-public
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Event: s3:ObjectCreated:*
+            Topic: !Ref PublicUpdateTopic
     DeletionPolicy: Retain
     Condition: IsNotDev
 
@@ -87,10 +124,17 @@ Resources:
 
   DevPublicBucket:
     Type: AWS::S3::Bucket
+    DependsOn:
+      - PublicUpdateTopicPolicy
     Properties:
       BucketName: !Sub ${AWS::StackName}-public
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Event: s3:ObjectCreated:*
+            Topic: !Ref PublicUpdateTopic
     Condition: IsDev
 
 Conditions:
   IsDev: !Equals [!Ref Environment, "DEV"]
   IsNotDev: !Not [!Equals [!Ref Environment, "DEV"]]
+  IsNotPaaS: !Not [!Equals [!Ref PaaS, "true"]]

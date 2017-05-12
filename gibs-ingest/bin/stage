@@ -8,13 +8,14 @@ docstr="$progname $version: Stages build artifacts for deployment to AWS"
 
 usage() {
 echo "Usage:
-  $progname --bucket=bucket --region=region --stack-name=name [--subnet=subnet]
+  $progname --bucket=bucket --region=region --stack-name=name [--ngap] [--subnet=subnet]
 
 Options:
   --subnet=subnet      The subnet which instances will be deployed into (default: the VPC's default subnet)
   --bucket=bucket      The bucket into which artifacts should be staged
   --region=region      Deploy into the given region
   --stack-name=name    The name of the stack that will be deployed using staged artifacts
+  --ngap               The stack is to be deployed to NGAP
 
 Examples:
   $progname --subnet=subnet1234 --bucket=my-bucket --region=us-west-2 --stack-name=gibs-sit"
@@ -48,6 +49,13 @@ do
                 stack_name="$2"
                 shift
                 ;;
+            --stack-name)
+                stack_name="$2"
+                shift
+                ;;
+            --ngap)
+                shift
+                ;;
             --help)
                 echo "$docstr"
                 echo
@@ -79,8 +87,6 @@ fi
 
 deployment_path="$bucket/$artifact_hash/"
 template_path="$bucket/ingest/"
-
-echo "Staging for subnet $subnet"
 
 # Clean up old artifacts
 rm -rf artifacts

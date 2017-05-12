@@ -4,7 +4,6 @@
 Description: GIBS-in-the-Cloud
 Resources:
   ConfigBucket:
-    DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${AWS::StackName}-deploy
