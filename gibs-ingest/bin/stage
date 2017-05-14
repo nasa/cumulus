@@ -49,12 +49,7 @@ do
                 stack_name="$2"
                 shift
                 ;;
-            --stack-name)
-                stack_name="$2"
-                shift
-                ;;
             --ngap)
-                shift
                 ;;
             --help)
                 echo "$docstr"
@@ -84,9 +79,6 @@ if [ -z $bucket ] || [ -z $region ] || [ -z $stack_name ]; then
     usage
     exit 1
 fi
-
-deployment_path="$bucket/$artifact_hash/"
-template_path="$bucket/ingest/"
 
 # Clean up old artifacts
 rm -rf artifacts

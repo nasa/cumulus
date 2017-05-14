@@ -156,6 +156,69 @@ Resources:
               Resource:
                 - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*"
 
+            # Resources below need update from NGAP team
+
+            - Effect: Allow
+              Action:
+               - lambda:RemovePermission # Needs update from NGAP team
+              Resource:
+               - "*"
+
+            - Effect: Allow
+              Action:
+                - SNS:ListTopics
+              Resource:
+                - !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:*"
+
+            - Effect: Allow
+              Action:
+                - SNS:*
+              Resource:
+                - !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${Prefix}*"
+
+            # Resources below are not (currently) necessary for NGAP
+
+            # Allow creation / management of own elasticsearch cluster
+            - Effect: Allow
+              Action:
+                - es:*
+              Resource:
+                - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${Prefix}*"
+
+            - Effect: Allow
+              Action:
+                - es:AddTags
+              Resource:
+                - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/*"
+
+            # Allow creating / listing REST APIs. This does not appear to be possible to restrict by prefix
+            - Effect: Allow
+              Action:
+                - apigateway:POST
+                - apigateway:GET
+              Resource:
+                - !Sub arn:aws:apigateway:${AWS::Region}::/restapis
+
+            # Allow creating / listing REST APIs. It does not appear possible to ensure REST APIs have a
+            # particular prefix
+            - Effect: Allow
+              Action:
+                - apigateway:*
+              Resource:
+                - !Sub arn:aws:apigateway:${AWS::Region}::/restapis/*
+
+            - Effect: Allow
+              Action:
+                - apigateway:*
+              Resource:
+                - !Sub arn:aws:apigateway:${AWS::Region}::/restapis/*/deployments
+
+            - Effect: Allow
+              Action:
+                - apigateway:*
+              Resource:
+                - !Sub arn:aws:apigateway:${AWS::Region}::/restapis/*/stages/prod
+
 Outputs:
   DeployerRoleArn:
     Description: The ARN of the Deployer

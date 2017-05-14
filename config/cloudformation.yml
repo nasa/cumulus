@@ -66,6 +66,14 @@ Resources:
         VPC: !Ref VPC
       TemplateURL: !Sub "https://s3.amazonaws.com/${ConfigBucket}/ingest/cloudformation.yml"
 
+  APIStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        PaaS: !Ref PaaS
+        StackName: !Ref AWS::StackName
+      TemplateURL: "../gibs-ops-api/config/cloudformation.yml"
+
   PublicUpdateTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -138,3 +146,8 @@ Conditions:
   IsDev: !Equals [!Ref Environment, "DEV"]
   IsNotDev: !Not [!Equals [!Ref Environment, "DEV"]]
   IsNotPaaS: !Not [!Equals [!Ref PaaS, "true"]]
+
+Outputs:
+  APIElasticEndpoint:
+    Description: Elastic search host
+    Value: !GetAtt [APIStack, Outputs.ElasticEndpoint]
