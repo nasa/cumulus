@@ -1,23 +1,22 @@
----
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: Describes an API for controlling the operations of GIBS.
 
 Parameters:
-  LambdaExecutionRole:
+  StackName:
     Type: String
+    Description: Name of the (parent) stack name being created
+  PaaS:
+    Description: If "true" the deployment is happening into the NGAP PaaS where possible
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+Conditions:
+  UseApiGateway: !Not [!Equals [!Ref PaaS, "true"]]
 
 Resources:
-  ApiGatewayApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionUri: ./packaged-simple-proxy-api.yml
-      StageName: prod
-      Variables:
-        region: !Ref AWS::Region
-        accountId: !Ref AWS::AccountId
-        ApiLambdaFunctionName: !Ref GibsApiFunction
-
   # TODO file issue for this
   # operational things to consider
   # - dedicated master node
@@ -29,8 +28,7 @@ Resources:
   ElasticsearchDomain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
-      # TODO uniquify for environment
-      DomainName: "gibsesdomain"
+      DomainName: !Sub "${StackName}-gibsesdomain"
       ElasticsearchVersion: "5.1"
       ElasticsearchClusterConfig:
         DedicatedMasterEnabled: "false"
@@ -44,20 +42,14 @@ Resources:
         VolumeType: "gp2"
       SnapshotOptions:
         AutomatedSnapshotStartHour: "0"
-      AccessPolicies:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              AWS: !Ref AWS::AccountId
-            Action: "es:*"
-            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/gibsesdomain/*"
       AdvancedOptions:
         rest.action.multi.allow_explicit_index: "true"
 
+  # Everything below only applies to non-PaaS deployments
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
+    Condition: UseApiGateway
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -95,11 +87,49 @@ Resources:
             Action:
               - es:*
             Resource:
-              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/gibsesdomain/*"
+              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${StackName}-gibsesdomain/*"
 
+  ApiRootPerm:
+    Type: AWS::Lambda::Permission
+    Condition: UseApiGateway
+    Properties:
+      Action: lambda:invokeFunction
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref GibsApiFunction
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApi}/prod/ANY/"
+
+  ApiGreedyPerm:
+    Type: AWS::Lambda::Permission
+    Condition: UseApiGateway
+    Properties:
+      Action: lambda:invokeFunction
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref GibsApiFunction
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApi}/prod/ANY/*"
+
+  ApiProdStage:
+    Type: AWS::ApiGateway::Stage
+    Condition: UseApiGateway
+    Properties:
+      Variables:
+        region: !Ref AWS::Region
+        ApiLambdaFunctionName: !Ref GibsApiFunction
+        accountId: !Ref AWS::AccountId
+      RestApiId: !Ref ApiGatewayApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: prod
+
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Condition: UseApiGateway
+    Properties:
+      RestApiId: !Ref ApiGatewayApi
+      Description: 'GIBS ops API deployment'
+      StageName: Stage
 
   LambdaApiGatewayExecutionPermission:
     Type: AWS::Lambda::Permission
+    Condition: UseApiGateway
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt GibsApiFunction.Arn
@@ -107,40 +137,40 @@ Resources:
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApi}/*/*"
 
   GibsApiFunction:
-    Type: AWS::Serverless::Function
+    Type: AWS::Lambda::Function
+    Condition: UseApiGateway
     Properties:
-      CodeUri: ../dist/
-      Handler: lambda.handler
+      Code: ../dist/
       MemorySize: 1024
-      Role: !Ref LambdaExecutionRole
+      Handler: lambda.handler
+      Role: !GetAtt [LambdaExecutionRole, Arn]
+      Timeout: 30
       Runtime: nodejs6.10
-      Timeout: 300
-      Events:
-        ProxyApiRoot:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayApi
-            Path: /
-            Method: ANY
-        ProxyApiGreedy:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayApi
-            Path: /{proxy+}
-            Method: ANY
+
+  ApiGatewayApi:
+    Type: AWS::ApiGateway::RestApi
+    Condition: UseApiGateway
+    Properties:
+      Name: ${StackName}-ops-api
+      BodyS3Location: ./packaged-simple-proxy-api.yml
 
 Outputs:
-  LambdaFunctionConsoleUrl:
-    Description: Console URL for the Lambda Function.
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${GibsApiFunction}"
+  ElasticEndpoint:
+    Description: Elastic search host
+    Value: !GetAtt [ElasticsearchDomain, DomainEndpoint]
 
   ApiGatewayApiConsoleUrl:
-    Description: Console URL for the API Gateway API's Stage.
+    Condition: UseApiGateway
+    Description: "Console URL for the API Gateway API's Stage."
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ApiGatewayApi}/stages/prod"
 
   ApiUrl:
+    Condition: UseApiGateway
     Description: Invoke URL for your API. Clicking this link will perform a GET request
       on the root resource of your API.
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
-    Export:
-      Name: ApiUrl
+
+  LambdaFunctionConsoleUrl:
+    Condition: UseApiGateway
+    Description: Console URL for the Lambda Function.
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${GibsApiFunction}"
