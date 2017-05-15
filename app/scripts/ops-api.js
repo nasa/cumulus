@@ -30,7 +30,7 @@ const getWorkflowStatus = async (config) => {
   }
   else {
     workflows = await rp(
-      { uri: `${config.get('apiBaseUrl')}/workflow_status2`,
+      { uri: `${config.get('apiBaseUrl')}/workflow_status`,
         qs: { stack_name: config.get('stackName') },
         json: true });
   }
