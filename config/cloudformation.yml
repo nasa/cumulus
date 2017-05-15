@@ -73,8 +73,10 @@ Resources:
           # Gives permission to read the collections yaml file and other resources in the step function stack
           - Effect: Allow
             Action:
-            - s3:GetObject
-            Resource: arn:aws:s3:::%StepFunctionStack%-deploy/*
+            - s3:Get*
+            Resource:
+            - !Sub arn:aws:s3:::${StackName}-deploy
+            - !Sub arn:aws:s3:::${StackName}-deploy/*
           # Gives permission to list state machines and get their executions.
           - Effect: Allow
             Action:
@@ -115,6 +117,7 @@ Resources:
         region: !Ref AWS::Region
         ApiLambdaFunctionName: !Ref GibsApiFunction
         accountId: !Ref AWS::AccountId
+        elasticEndpoint: !GetAtt [ElasticsearchDomain, DomainEndpoint]
       RestApiId: !Ref ApiGatewayApi
       DeploymentId: !Ref ApiDeployment
       StageName: prod
@@ -151,7 +154,7 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Condition: UseApiGateway
     Properties:
-      Name: ${StackName}-ops-api
+      Name: !Sub ${StackName}-ops-api
       BodyS3Location: ./packaged-simple-proxy-api.yml
 
 Outputs:
