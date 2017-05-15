@@ -17,24 +17,34 @@ const isJupyter = global.__isJupyter;
 const isStdin = process.argv[2] === 'stdin';
 const isLocal = isJupyter || isStdin || process.env.LOCAL_NODE;
 
+let esClient;
+
 /**
  * A map of real AWS services to use.
  */
 const realServices = {
   s3: new AWS.S3(),
   stepFunctions: new AWS.StepFunctions(),
-  es: Elasticsearch.Client({
-    // TODO this needs to be configured somehow
-    // Environment variable in NGAP or else look it up to make it work locally.
-    hosts: 'https://search-gibsesdomain-g6zoaxeqpp7xyfifdxfdt5tuxi.us-west-2.es.amazonaws.com',
-    connectionClass: AwsEs,
-    amazonES: {
-      region: region,
-      credentials: isLocal ?
-        new AWS.SharedIniFileCredentials({ profile: 'default' }) :
-        new AWS.EnvironmentCredentials('AWS')
+
+  // Getter for an elasticsearch client. It lazily constructs the client, since the host
+  // may not enter the environment until a request is actually called
+  get es() {
+    if (esClient) return esClient;
+    if (!process.env.ELASTIC_ENDPOINT) {
+      throw new Error('ELASTIC_ENDPIONT must be present in the environment');
     }
-  })
+    esClient = new Elasticsearch.Client({
+      hosts: process.env.ELASTIC_ENDPOINT,
+      connectionClass: AwsEs,
+      amazonES: {
+        region: region,
+        credentials: isLocal ?
+          new AWS.SharedIniFileCredentials({ profile: 'default' }) :
+          new AWS.EnvironmentCredentials('AWS')
+      }
+    });
+    return esClient;
+  }
 };
 
 /**
