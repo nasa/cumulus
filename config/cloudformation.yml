@@ -148,6 +148,12 @@ Conditions:
   IsNotPaaS: !Not [!Equals [!Ref PaaS, "true"]]
 
 Outputs:
-  APIElasticEndpoint:
+  ApiElasticEndpoint:
     Description: Elastic search host
     Value: !GetAtt [APIStack, Outputs.ElasticEndpoint]
+
+  ApiUrl:
+    Condition: IsNotPaaS
+    Description: Invoke URL for your API. Clicking this link will perform a GET request
+      on the root resource of your API.
+    Value: !GetAtt [APIStack, Outputs.ApiUrl]
