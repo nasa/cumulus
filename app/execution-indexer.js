@@ -1,17 +1,119 @@
 'use strict';
 
+/**
+*  Implements a local helper namespace to bulk index executions
+*/
+
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
 
-// Implements a local helper namespace to bulk index executions
+// TODO temporarily needed when running in editor.
+// require('babel-polyfill');
 
-require('babel-polyfill');
 const { stepFunctions, es } = require('./aws');
 const ws = require('./workflows');
 const { parseExecutionName } = require('./execution-name-parser');
 
+const stringType = { type: 'keyword', store: 'yes' };
+const dateType = { type: 'date', store: 'yes' };
+const longType = { type: 'long', store: 'yes' };
+const booleanType = { type: 'boolean', store: 'yes' };
+
 /**
- * TODO
+ * Defines settings for storing executions in Elasticsearch.
+ */
+const executionsIndex = {
+  name: 'executions',
+  type: 'execution',
+  settings: {
+    index: {
+      // NOTE That you can't change these settings after it has been created.
+      number_of_shards: 5,
+      number_of_replicas: 1,
+      mapper: { dynamic: false }
+    }
+  },
+  mapping: {
+    dynamic: 'strict',
+    _source: { enabled: false },
+    _all: { enabled: false },
+    properties: {
+      workflow_id: stringType,
+      collection_id: stringType,
+      granule_id: stringType,
+      start_date: dateType,
+      stop_date: dateType,
+      elapsed_ms: longType,
+      success: booleanType
+    }
+  }
+};
+
+
+/**
+ * The settings to use for defining the executions meta index.
+ */
+const executionsMetaIndex = {
+  name: 'executions-meta',
+  type: 'executionMeta',
+  settings: {
+    index: {
+      // NOTE That you can't change these settings after it has been created.
+      number_of_shards: 1,
+      number_of_replicas: 1,
+      mapper: { dynamic: false }
+    }
+  },
+  mapping: {
+    dynamic: 'strict',
+    _source: { enabled: true },
+    _all: { enabled: false },
+    properties: {
+      last_indexed_date: dateType
+    }
+  }
+};
+
+/**
+ * Verifies that the response from an indexing action was successful or throws an error.
+ */
+const verifySuccessfulIndexResponse = (resp) => {
+  if (!resp.acknowledged) {
+    throw new Error(`Unexpected index response: ${resp}`);
+  }
+};
+
+
+/**
+ * Creates the elasticsearch index if it doesn't exist otherwise attempts to update it.
+ */
+const createOrUpdateIndex = async (index) => {
+  if (await es().indices.exists({ index: index.name })) {
+    console.log(`${index.name} exists. Updating mappings`);
+    verifySuccessfulIndexResponse(
+      await es().indices.putMapping({
+        index: index.name,
+        type: index.type,
+        body: index.mapping
+      }));
+  }
+  else {
+    console.log(`Creating ${index.name}.`);
+    const mappings = {};
+    mappings[index.type] = index.mapping;
+    verifySuccessfulIndexResponse(
+      await es().indices.create({
+        index: index.name,
+        body: {
+          settings: index.settings,
+          mappings: mappings
+        } })
+    );
+  }
+};
+
+/**
+ * Converts an execution to a document to index in elasticsearch.
  */
 const executionToDoc = (workflowId, execution) => {
   const { status, startDate, stopDate, name } = execution;
@@ -32,7 +134,7 @@ const executionToDoc = (workflowId, execution) => {
 };
 
 /**
- * TODO
+ * Takes a bunch of execution documents and converts them into a bulk indexing request.
  */
 const docsToBulk = (docs) => {
   const bulkArgs = [];
@@ -46,7 +148,7 @@ const docsToBulk = (docs) => {
 };
 
 /**
- * TODO
+ * Returns the date of the last time indexing was run.
  */
 const getLastIndexedDate = async () => {
   const resp = await es().search({
@@ -63,7 +165,7 @@ const getLastIndexedDate = async () => {
 };
 
 /**
- * TODO
+ * Saves the date of when indexing was last run.
  */
 const saveIndexedDate = async date =>
   es().index({
@@ -82,13 +184,13 @@ const saveIndexedDate = async date =>
 const LAST_INDEXED_THRESHOLD = 5 * 60 * 1000;
 
 /**
- * TODO
+ * Returns true if the execution ended before the last indexed data minus the threshold.
  */
 const executionBeforeLastIndexed = (lastIndexedDate, e) =>
   Date.parse(e.stopDate) < lastIndexedDate - LAST_INDEXED_THRESHOLD;
 
 /**
- * TODO
+ * Indexes the executions in elasticsearch.
  */
 const indexExecutions = async (workflowId, executions) => {
   // Convert non-running executions to docs
@@ -110,59 +212,65 @@ const indexExecutions = async (workflowId, executions) => {
 };
 
 /**
+ * The main flow. Does the following:
  *
+ * 1. Makes sure that the executions and related elasticsearch indexes exists.
+ * 2. Iterates through each workflow and retrieves executions from the step function API.
+ * 3. Indexes the executions in Elasticsearch.
+ * 4. Keeps fetching the executions and indexing them until we find executions that were already
+ * indexed.
  */
 const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
+  await createOrUpdateIndex(executionsIndex);
+  await createOrUpdateIndex(executionsMetaIndex);
+
   const lastIndexedDate = await getLastIndexedDate();
   // Capture the time that we start indexing before we start fetching executions.
   const indexingStartTime = Date.now();
   const workflows = await ws.getWorkflowStatuses(stackName, 0);
 
   const promises = workflows.map(async (workflow) => {
-    const arn = await ws.getStateMachineArn(stackName, workflow);
-    const workflowId = workflow.get('id');
+    const arn = await ws.getStateMachineArn(stackName, workflow.get('id'));
 
-    console.info(`Indexing executions for workflow ${workflowId}`);
+    console.info(`Indexing executions for workflow ${workflow.get('id')}`);
     let totalIndexed = 0;
     let done = false;
-    let nextToken = null;
+    let nextToken = null; // token found in a previous run.
 
-    while (totalIndexed < maxIndexExecutions && !done) {
+    while (!done) {
       const resp = await stepFunctions()
-      .listExecutions({ stateMachineArn: arn, nextToken })
-      .promise();
-
-      // Did we find any executions before the lastIndexedDate?
-      const foundOlderExecutions = resp.executions.filter(e =>
-        executionBeforeLastIndexed(lastIndexedDate, e)
-      ).length > 0;
-
-      const numIndexed = await indexExecutions(workflowId, resp.executions);
+        .listExecutions({ stateMachineArn: arn, nextToken })
+        .promise();
+      const numIndexed = await indexExecutions(workflow.get('id'), resp.executions);
 
       if (numIndexed > 0) {
-        // Decide if we're continuing to search for executions
+        // Did we find enough executions that we can stop?
         totalIndexed += numIndexed;
-        console.info(`Indexed total of ${totalIndexed} docs for workflow ${workflowId}`);
-        nextToken = resp.nextToken;
-
-        if (foundOlderExecutions) {
-          console.info('Stopping because executions were found older than last indexed date.');
+        console.info(`Indexed total of ${totalIndexed} docs for workflow ${workflow.get('id')}`);
+        if (totalIndexed >= maxIndexExecutions) {
+          console.info('We indexed up to max index executions.');
+          done = true;
         }
+
+        // Do we have another token to continue searching?
+        nextToken = resp.nextToken;
         if (!nextToken) {
           console.info('Stopping because no more executions were found.');
+          done = true;
         }
-        // We're done if we found older executions that are before the last time we indexed or if
-        // AWS does not give us a next token meaning there's no more data to index.
-        done = foundOlderExecutions || !nextToken;
+
+        // Did we find any executions before the lastIndexedDate?
+        const foundOlderExecutions = resp.executions.filter(e =>
+          executionBeforeLastIndexed(lastIndexedDate, e)
+        ).length > 0;
+        if (foundOlderExecutions) {
+          console.info('Stopping because executions were found older than last indexed date.');
+          done = true;
+        }
       }
       else {
         console.info('Stopping because no executions were found.');
-        // Nothing was found to index
         done = true;
-      }
-
-      if (totalIndexed >= maxIndexExecutions) {
-        console.info('We indexed up to max index executions.');
       }
     }
   });
@@ -172,12 +280,13 @@ const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
   await saveIndexedDate(indexingStartTime);
 };
 
-const stackName = 'gitc-pq-sfn';
-let p;
-p = getLastIndexedDate();
-p = saveIndexedDate(Date.now() - (6 * 3600 * 1000));
-p = indexRecentExecutions(stackName, 50000);
 
-let data;
-p.then(d => data = d).catch(e => data = e);
-data;
+// const printResponse = p =>
+//   p.then(d => console.log(JSON.stringify(d, null, 2)))
+//    .catch(e => {
+//      console.error(e);
+//      console.log("Error:", JSON.stringify(e, null, 2))
+//    })
+//
+// const stackName = 'gitc-pq-sfn';
+// printResponse(indexRecentExecutions(stackName, 50000));
