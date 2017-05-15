@@ -24,7 +24,7 @@ module.exports = {
       to: 'public'
     }
   ])],
-  devtool: 'source-map',
+  devtool: '#inline-source-map',
   module: {
     rules: [
       {
@@ -33,7 +33,7 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            cacheDirectory: true
+            cacheDirectory: false
           }
         }
       }, {
