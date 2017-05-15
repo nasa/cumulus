@@ -27,7 +27,5 @@ Resources:
               ReplaceKeyPrefixWith: "#/"
 Outputs:
   WebsiteURL:
-    Value: !GetAtt HostingBucket.WebsiteURL
+    Value: !GetAtt [HostingBucket, WebsiteURL]
     Description: URL for the website hosted on S3
-    Export:
-      Name: WebsiteURL
