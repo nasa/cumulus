@@ -5,6 +5,7 @@ const concurrency = require('./concurrency');
 const fs = require('fs');
 const path = require('path');
 const log = require('./log');
+const string = require('./string');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
@@ -164,3 +165,42 @@ exports.getCurrentSfnTask = async (stateMachineArn, executionName) => {
   }
   throw new Error(`No task found for ${stateMachineArn}#${executionName}`);
 };
+
+/**
+ * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
+ * execution name, where all fields are joined by a StepFunction-safe delimiter
+ * Important: This transformation isn't entirely two-way. Names longer than 80 characters
+ *            will be truncated.
+ *
+ * @param{string} fields - The fields to be injected into an execution name
+ * @param{string} delimiter - An optional delimiter string to replace, pass null to make
+ *   no replacements
+ * @return - A string that's safe to use as a StepFunctions execution name
+ */
+exports.toSfnExecutionName = (fields, delimiter = '__') => {
+  let sfnUnsafeChars = '[^\\w-=+_.]';
+  if (delimiter) {
+    sfnUnsafeChars = `(${delimiter}|${sfnUnsafeChars})`;
+  }
+  const regex = new RegExp(sfnUnsafeChars, 'g');
+  return fields.map((s) => s.replace(regex, string.unicodeEscape).replace(/\\/g, '!'))
+               .join(delimiter)
+               .substring(0, 80);
+};
+
+/**
+ * Opposite of toSfnExecutionName. Given a delimited StepFunction execution name, returns
+ * an array of its original fields
+ * Important: This value may be truncated from the original because of the 80-char limit on
+ *            execution names
+ *
+ * @param{string} str - The string to make stepfunction safe
+ * @param{string} delimiter - An optional delimiter string to replace, pass null to make
+ *   no replacements
+ * @param{string} sfnDelimiter - The string to replace delimiter with
+ * @return - An array of the original fields
+ */
+exports.fromSfnExecutionName = (str, delimiter = '__') =>
+  str.split(delimiter)
+     .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
+     .map((s) => JSON.parse(`"${s}"`));
