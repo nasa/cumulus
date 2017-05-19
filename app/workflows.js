@@ -5,11 +5,12 @@
  */
 
 /*eslint no-console: ["error", { allow: ["error"] }] */
-
 const { s3, stepFunctions } = require('./aws');
 const yaml = require('js-yaml');
 const { BadRequestError, handleError } = require('./api-errors');
 const { fromJS, Map, List } = require('immutable');
+const WorkflowAggregator = require('./workflow-aggregator');
+const { parseExecutionName } = require('./execution-name-parser');
 
 const COLLECTIONS_YAML = 'ingest/collections.yml';
 
@@ -20,35 +21,35 @@ const COLLECTIONS_YAML = 'ingest/collections.yml';
  * @param  { id }    A workflow with an id.
  * @return ARN of the statemachine in AWS.
  */
-const getStateMachineArn = async (stackName, { id }) => {
-  const deployedPrefix = `${stackName}xx${id}`.replace(/-/g, 'x');
+const getStateMachineArn = async (stackName, workflowId) => {
+  const deployedPrefix = `${stackName}xx${workflowId}`.replace(/-/g, 'x');
   const resp = await stepFunctions().listStateMachines().promise();
   return resp.stateMachines.filter(s => s.name.startsWith(deployedPrefix))[0].stateMachineArn;
 };
 
 /**
- * getExecutions - Returns the most recent executions of the given workflow
+ * getRunningExecutions - Returns running executions for the workflow
  *
  * @param  stackName     Name of the AWS stack.
- * @param  workflow      The workflow containing an id
- * @param  numExecutions The number of executions to return at most.
- * @return a list of executions for the workflow with status and start and stop dates.
+ * @param  workflowId    The id of the workflow to look for running executions
  */
-const getExecutions = async (stackName, workflow, numExecutions) => {
-  const arn = await getStateMachineArn(stackName, workflow);
+const getRunningExecutions = async (stackName, workflowId) => {
+  const arn = await getStateMachineArn(stackName, workflowId);
   const resp = await stepFunctions()
-    .listExecutions({ stateMachineArn: arn, maxResults: numExecutions })
+    .listExecutions({ stateMachineArn: arn, maxResults: 100, statusFilter: 'RUNNING' })
     .promise();
 
-  const executions = resp.executions;
-  return List(executions.map((e) => {
-    const m = Map(
-      { status: e.status,
-        start_date: e.startDate });
-    if (e.stopDate) {
-      return m.set('stop_date', e.stopDate);
-    }
-    return m;
+  if (resp.nextToken) {
+    throw new Error(`Found more than 100 running workflows for ${arn}`);
+  }
+  return List(resp.executions.map((e) => {
+    const { collectionId, granuleId } = parseExecutionName(e.name);
+    return Map({
+      name: e.name,
+      start_date: e.startDate,
+      collectionId,
+      granuleId
+    });
   }));
 };
 
@@ -84,30 +85,32 @@ const parseCollectionYaml = (collectionsYaml) => {
 };
 
 /**
- * getWorkflowStatuses - Returns a list of workflow status results. These include the workflow id,
- * name, and execution information.
+ * getWorkflowStatuses - Returns a list of workflow status results.
  *
  * @param  stackName     The name of the deployed cloud formation stack with AWS state machines.
- * @param  numExecutions The number of executions to return per workflow.
  */
-const getWorkflowStatuses = async (stackName, numExecutions) => {
+const getWorkflowStatuses = async (stackName) => {
   const collectionsYaml = await getCollectionsYaml(stackName);
   const parsedYaml = parseCollectionYaml(collectionsYaml);
 
-  const workflows = parsedYaml.get('workflows')
+  const esWorkflowsById = await WorkflowAggregator.loadWorkflowsFromEs();
+
+  const workflowPromises = parsedYaml.get('workflows')
     .entrySeq()
-    .map(([k, v]) => Map({ id: k, name: v.get('Comment') }));
-
-  // Request the executions for each workflow. We don't do separate waiting so that they'll
-  // execute in parallel.
-  const executionPromises = workflows.map(w => getExecutions(stackName, w, numExecutions));
-  // We use Promise.all to wait on all of the parallel requests.
-  const executionArrays = await Promise.all(executionPromises);
-
-  return workflows.map((w, idx) => {
-    const executions = executionArrays[idx];
-    return w.set('executions', executions);
-  }).toJS();
+    .map(async ([id, w]) => {
+      const name = w.get('Comment');
+      const runningExecs = await getRunningExecutions(stackName, id);
+      const runningExecsByCollection = runningExecs.groupBy(e => e.get('collectionId'));
+      let workflow = fromJS(esWorkflowsById[id] || { id: id });
+      workflow = workflow.set('name', name);
+      return workflow.updateIn(['products'], products =>
+        (products || List()).map((product) => {
+          const running = runningExecsByCollection.get(product.get('id'), List());
+          return product.set('num_running', running.count());
+        })
+      );
+    });
+  return List(await Promise.all(workflowPromises.toArray()));
 };
 
 /**
@@ -116,23 +119,23 @@ const getWorkflowStatuses = async (stackName, numExecutions) => {
 const handleWorkflowStatusRequest = async (req, res) => {
   try {
     req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
-    req.checkQuery('num_executions', 'Invalid num_executions').isInt({ min: 1, max: 1000 });
     const result = await req.getValidationResult();
     if (!result.isEmpty()) {
       res.status(400).json(result.array());
     }
     else {
       const stackName = req.query.stack_name;
-      const numExecutions = req.query.num_executions;
-      const statuses = await getWorkflowStatuses(stackName, numExecutions);
-      res.json(statuses);
+      const statuses = await getWorkflowStatuses(stackName);
+      res.json(statuses.toJS());
     }
   }
   catch (e) {
+    console.error(e);
     handleError(e, req, res);
   }
 };
 
 module.exports = { parseCollectionYaml,
+  getStateMachineArn,
   getWorkflowStatuses,
   handleWorkflowStatusRequest };

@@ -1,25 +1,130 @@
----
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: Describes an API for controlling the operations of GIBS.
 
 Parameters:
-  LambdaExecutionRole:
+  StackName:
     Type: String
+    Description: Name of the (parent) stack name being created
+  PaaS:
+    Description: If "true" the deployment is happening into the NGAP PaaS where possible
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+Conditions:
+  # This condition is used to enable the API Gateway usage when not running in NGAP.
+  # The PaaS is used for hosting when running there.
+  UseApiGateway: !Not [!Equals [!Ref PaaS, "true"]]
 
 Resources:
-  ApiGatewayApi:
-    Type: AWS::Serverless::Api
+  ElasticsearchDomain:
+    Type: "AWS::Elasticsearch::Domain"
     Properties:
-      DefinitionUri: ./packaged-simple-proxy-api.yml
-      StageName: prod
+      DomainName: !Sub "${StackName}-gibsesdomain"
+      ElasticsearchVersion: "5.1"
+      ElasticsearchClusterConfig:
+        DedicatedMasterEnabled: "false"
+        InstanceCount: "3"
+        ZoneAwarenessEnabled: "false"
+        InstanceType: "t2.medium.elasticsearch"
+      EBSOptions:
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 20
+        VolumeType: "gp2"
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: "0"
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: "true"
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Condition: UseApiGateway
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          # Gives permission to read the collections yaml file and other resources in the step function stack
+          - Effect: Allow
+            Action:
+            - s3:Get*
+            Resource:
+            - !Sub arn:aws:s3:::${StackName}-deploy
+            - !Sub arn:aws:s3:::${StackName}-deploy/*
+          # Gives permission to list state machines and get their executions.
+          - Effect: Allow
+            Action:
+            - states:ListStateMachines
+            - states:ListExecutions
+            Resource:
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:*"
+          # Give permission to access elasticsearch domain
+          - Effect: Allow
+            Action:
+              - es:*
+            Resource:
+              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${StackName}-gibsesdomain/*"
+
+  ApiRootPerm:
+    Type: AWS::Lambda::Permission
+    Condition: UseApiGateway
+    Properties:
+      Action: lambda:invokeFunction
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref GibsApiFunction
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApi}/prod/ANY/"
+
+  ApiGreedyPerm:
+    Type: AWS::Lambda::Permission
+    Condition: UseApiGateway
+    Properties:
+      Action: lambda:invokeFunction
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref GibsApiFunction
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApi}/prod/ANY/*"
+
+  ApiProdStage:
+    Type: AWS::ApiGateway::Stage
+    Condition: UseApiGateway
+    Properties:
       Variables:
         region: !Ref AWS::Region
-        accountId: !Ref AWS::AccountId
         ApiLambdaFunctionName: !Ref GibsApiFunction
+        accountId: !Ref AWS::AccountId
+        elasticEndpoint: !GetAtt [ElasticsearchDomain, DomainEndpoint]
+      RestApiId: !Ref ApiGatewayApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: prod
+
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Condition: UseApiGateway
+    Properties:
+      RestApiId: !Ref ApiGatewayApi
+      Description: 'GIBS ops API deployment'
+      StageName: Stage
 
   LambdaApiGatewayExecutionPermission:
     Type: AWS::Lambda::Permission
+    Condition: UseApiGateway
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt GibsApiFunction.Arn
@@ -27,40 +132,75 @@ Resources:
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApi}/*/*"
 
   GibsApiFunction:
-    Type: AWS::Serverless::Function
+    Type: AWS::Lambda::Function
+    Condition: UseApiGateway
     Properties:
-      CodeUri: ../dist/
-      Handler: lambda.handler
+      Code: ../dist/
       MemorySize: 1024
-      Role: !Ref LambdaExecutionRole
-      Runtime: nodejs6.10
+      Handler: lambda.handler
+      Role: !GetAtt [LambdaExecutionRole, Arn]
       Timeout: 30
-      Events:
-        ProxyApiRoot:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayApi
-            Path: /
-            Method: ANY
-        ProxyApiGreedy:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayApi
-            Path: /{proxy+}
-            Method: ANY
+      Runtime: nodejs6.10
+
+  ApiGatewayApi:
+    Type: AWS::ApiGateway::RestApi
+    Condition: UseApiGateway
+    Properties:
+      Name: !Sub ${StackName}-ops-api
+      BodyS3Location: ./packaged-simple-proxy-api.yml
+
+  # Indexes executions into Elasticsearch.
+  IndexerFunction:
+    Type: AWS::Lambda::Function
+    Condition: UseApiGateway
+    Properties:
+      Code: ../dist/
+      MemorySize: 1024
+      Handler: indexer.handler
+      Role: !GetAtt [LambdaExecutionRole, Arn]
+      Timeout: 300
+      Runtime: nodejs6.10
+      Environment:
+        Variables:
+          ELASTIC_ENDPOINT: !GetAtt [ElasticsearchDomain, DomainEndpoint]
+
+  # Runs the IndexerFunction on a periodic basis.
+  IndexerSchedulerRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: rate(5 minutes)
+      Targets:
+        - Id: IndexerScheduler
+          Arn: !GetAtt IndexerFunction.Arn
+          Input: !Sub '{"StackName":"${StackName}"}'
+
+  # Gives permission to the indexer scheduler to run the indexer function.
+  InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt IndexerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt IndexerSchedulerRule.Arn
+
 
 Outputs:
-  LambdaFunctionConsoleUrl:
-    Description: Console URL for the Lambda Function.
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${GibsApiFunction}"
+  ElasticEndpoint:
+    Description: Elastic search host
+    Value: !GetAtt [ElasticsearchDomain, DomainEndpoint]
 
   ApiGatewayApiConsoleUrl:
-    Description: Console URL for the API Gateway API's Stage.
+    Condition: UseApiGateway
+    Description: "Console URL for the API Gateway API's Stage."
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ApiGatewayApi}/stages/prod"
 
   ApiUrl:
+    Condition: UseApiGateway
     Description: Invoke URL for your API. Clicking this link will perform a GET request
       on the root resource of your API.
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
-    Export:
-      Name: ApiUrl
+
+  LambdaFunctionConsoleUrl:
+    Condition: UseApiGateway
+    Description: Console URL for the Lambda Function.
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${GibsApiFunction}"
