@@ -1,6 +1,8 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const AwsEs = require('http-aws-es');
+const Elasticsearch = require('elasticsearch');
 
 const region = process.env.AWS_DEFAULT_REGION || 'us-west-2';
 if (region) {
@@ -11,12 +13,38 @@ if (region) {
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
 AWS.config.setPromisesDependency(Promise);
 
+const isJupyter = global.__isJupyter;
+const isStdin = process.argv[2] === 'stdin';
+const isLocal = isJupyter || isStdin || process.env.LOCAL_NODE;
+
+let esClient;
+
 /**
  * A map of real AWS services to use.
  */
 const realServices = {
   s3: new AWS.S3(),
-  stepFunctions: new AWS.StepFunctions()
+  stepFunctions: new AWS.StepFunctions(),
+
+  // Getter for an elasticsearch client. It lazily constructs the client, since the host
+  // may not enter the environment until a request is actually called
+  get es() {
+    if (esClient) return esClient;
+    if (!process.env.ELASTIC_ENDPOINT) {
+      throw new Error('ELASTIC_ENDPOINT must be present in the environment');
+    }
+    esClient = new Elasticsearch.Client({
+      hosts: process.env.ELASTIC_ENDPOINT,
+      connectionClass: AwsEs,
+      amazonES: {
+        region: region,
+        credentials: isLocal ?
+          new AWS.SharedIniFileCredentials({ profile: 'default' }) :
+          new AWS.EnvironmentCredentials('AWS')
+      }
+    });
+    return esClient;
+  }
 };
 
 /**
@@ -42,5 +70,6 @@ module.exports = {
   useRealServices,
   useReplacementServices,
   s3: () => currentServices.s3,
-  stepFunctions: () => currentServices.stepFunctions
+  stepFunctions: () => currentServices.stepFunctions,
+  es: () => currentServices.es
 };

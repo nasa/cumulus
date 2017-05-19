@@ -5,11 +5,10 @@
   "main": "lambda.js",
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "release": "rm -rf dist release.tar && npm run build && cp ngap/deployment/Procfile dist/Procfile && cp ngap/deployment/Dockerfile dist/Dockerfile && tar -cf release.tar -C dist .",
-    "start": "npm run build && node dist/local.js",
-    "start-debug": "npm run build && node --inspect dist/local.js",
-    "start-debug-brk": "npm run build && node --inspect-brk dist/local.js",
-    "start-watch": "bin/parallel.sh 'webpack --config webpack.config.js  -w' 'nodemon dist/local.js -w dist'",
+    "start": "export LOCAL_NODE=true; npm run build && node dist/local.js",
+    "start-debug": "export LOCAL_NODE=true; npm run build && node --inspect dist/local.js",
+    "start-debug-brk": "export LOCAL_NODE=true; npm run build && node --inspect-brk dist/local.js",
+    "start-watch": "export LOCAL_NODE=true; bin/parallel.sh 'webpack --config webpack.config.js  -w' 'nodemon dist/local.js -w dist'",
     "mocha": "mocha-webpack --require babel-polyfill --webpack-config webpack.config-test.js test/**/*spec.js",
     "lint": "eslint app test",
     "test": "npm run lint && npm run mocha"
@@ -22,16 +21,20 @@
     "body-parser": "^1.17.1",
     "compression": "^1.6.2",
     "cors": "^2.8.3",
+    "elasticsearch": "^13.0.0",
     "express": "^4.15.2",
     "express-validator": "^3.2.0",
     "extensible-runtime": "^4.1.0",
+    "http-aws-es": "^1.1.3",
     "immutable": "^3.8.1",
-    "js-yaml": "^3.8.3"
+    "js-yaml": "^3.8.3",
+    "lodash": "^4.17.4"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
     "babel-eslint": "^7.2.2",
     "babel-loader": "^6.4.1",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-preset-env": "^1.4.0",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
