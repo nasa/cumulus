@@ -35,4 +35,8 @@ const binaryMimeTypes = [
 ];
 const server = awsServerlessExpress.createServer(app, null, binaryMimeTypes);
 
-exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
+exports.handler = (event, context) => {
+  process.env.ELASTIC_ENDPOINT = process.env.ELASTIC_ENDPOINT ||
+                                 (event.stageVariables && event.stageVariables.elasticEndpoint);
+  return awsServerlessExpress.proxy(server, event, context);
+};

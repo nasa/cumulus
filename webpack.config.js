@@ -6,7 +6,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
   entry: {
     lambda: ['babel-polyfill', './app/lambda.js'],
-    local: ['babel-polyfill', './app/local.js']
+    local: ['babel-polyfill', './app/local.js'],
+    indexer: ['babel-polyfill', './app/execution-indexer.js']
   },
   target: 'node',
   output: {
