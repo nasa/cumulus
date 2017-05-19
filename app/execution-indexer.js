@@ -7,9 +7,6 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
 
-// TODO temporarily needed when running in editor.
-// require('babel-polyfill');
-
 const { stepFunctions, es } = require('./aws');
 const ws = require('./workflows');
 const { parseExecutionName } = require('./execution-name-parser');
@@ -49,7 +46,6 @@ const executionsIndex = {
   }
 };
 
-
 /**
  * The settings to use for defining the executions meta index.
  */
@@ -82,7 +78,6 @@ const verifySuccessfulIndexResponse = (resp) => {
     throw new Error(`Unexpected index response: ${resp}`);
   }
 };
-
 
 /**
  * Creates the elasticsearch index if it doesn't exist otherwise attempts to update it.
@@ -239,7 +234,7 @@ const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
 
     while (!done) {
       const resp = await stepFunctions()
-        .listExecutions({ stateMachineArn: arn, nextToken })
+        .listExecutions({ stateMachineArn: arn, nextToken, maxResults: 1000 })
         .promise();
       const numIndexed = await indexExecutions(workflow.get('id'), resp.executions);
 
@@ -280,13 +275,20 @@ const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
   await saveIndexedDate(indexingStartTime);
 };
 
+const MAX_EXECUTIONS_TO_INDEX = 50000;
 
-// const printResponse = p =>
-//   p.then(d => console.log(JSON.stringify(d, null, 2)))
-//    .catch(e => {
-//      console.error(e);
-//      console.log("Error:", JSON.stringify(e, null, 2))
-//    })
-//
-// const stackName = 'gitc-pq-sfn';
-// printResponse(indexRecentExecutions(stackName, 50000));
+exports.handler = async (event, context, callback) => {
+  console.log(`Indexer Handler called. Event: ${JSON.stringify(event, null, 2)}`);
+
+  try {
+    const stackName = event.StackName;
+    console.log(`Starting indexing of executions for stack ${stackName}`);
+    await indexRecentExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
+    console.log(`Indexing complete for stack ${stackName}`);
+    callback(null, 'Elasticsearch indexing complete');
+  }
+  catch (e) {
+    console.error(e);
+    callback(e.message);
+  }
+};

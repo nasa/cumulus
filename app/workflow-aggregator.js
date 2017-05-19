@@ -1,19 +1,27 @@
 'use strict';
 
+
+/**
+ * Defines a function for searching Elasticsearch for executions and aggregating that into status
+ * information about workflows and products.
+ */
+
 const _ = require('lodash');
 const { es } = require('./aws');
 
 /**
- * TODO
+ * Part of a combination of scripts to find the last execution as a script aggregation.
+ * Gets the stop date and success status from each document.
  */
-const mapScript = `
+const lastExecutionMapScript = `
 params._agg.results.add(['stop_date': doc.stop_date.value, 'success': doc.success.value])
 `;
 
 /**
- * TODO
- */
-const combineScript = `
+* Part of a combination of scripts to find the last execution as a script aggregation.
+* Returns the last last execution from a set of results.
+*/
+const lastExecutionCombineScript = `
 def lastResult = null;
 for (r in params._agg.results) {
   if (lastResult == null) {
@@ -27,9 +35,10 @@ return lastResult
 `;
 
 /**
- * TODO
- */
-const reduceScript = `
+* Part of a combination of scripts to find the last execution as a script aggregation.
+* Returns the last last execution from a set of results.
+*/
+const lastExecutionReduceScript = `
 def lastResult = null;
 for (r in params._aggs) {
   if (lastResult == null) {
@@ -43,8 +52,18 @@ return lastResult
 `;
 
 /**
- * TODO
+ * An aggregation that uses elasticsearch scripting to find the last execution with its success
+ * status.
  */
+const lastExecutionAgg = {
+  scripted_metric: {
+    init_script: 'params._agg.results = []',
+    map_script: lastExecutionMapScript,
+    combine_script: lastExecutionCombineScript,
+    reduce_script: lastExecutionReduceScript
+  }
+};
+
 const successRatioAgg = {
   filter: { range: { stop_date: { gte: 'now-1w/d' } } },
   aggs: {
@@ -52,9 +71,6 @@ const successRatioAgg = {
   }
 };
 
-/**
- * TODO
- */
 const latestGranuleIdAgg = {
   terms: {
     field: 'granule_id',
@@ -63,9 +79,6 @@ const latestGranuleIdAgg = {
   }
 };
 
-/**
- * TODO
- */
 const ingestPerfAgg = {
   filter: { range: { stop_date: { gte: 'now-1w/d' } } },
   aggs: {
@@ -87,21 +100,6 @@ const ingestPerfAgg = {
   }
 };
 
-/**
- * TODO
- */
-const lastExecutionAgg = {
-  scripted_metric: {
-    init_script: 'params._agg.results = []',
-    map_script: mapScript,
-    combine_script: combineScript,
-    reduce_script: reduceScript
-  }
-};
-
-/**
- * TODO
- */
 const productAgg = {
   terms: { field: 'collection_id' },
   aggs: {
@@ -118,7 +116,7 @@ const productAgg = {
 };
 
 /**
- * TODO
+ * Defines an aggregation for getting workflows with nested products.
  */
 const workflowAgg = {
   // Aggregate by workflow
@@ -135,18 +133,12 @@ const workflowAgg = {
   }
 };
 
-/**
- * TODO
- */
 const parseSuccessRatioAgg = (aggs) => {
   const trueBuckets = aggs.successes.buckets.filter(b => b.key_as_string === 'true');
   const trueCount = trueBuckets.reduce((c, b) => c + b.doc_count, 0);
   return { successes: trueCount, total: aggs.doc_count };
 };
 
-/**
- * TODO
- */
 const parseIngestPerf = aggs =>
   aggs.daily.buckets.map((b) => {
     const values = b.performance.values;
@@ -158,15 +150,6 @@ const parseIngestPerf = aggs =>
     return dataMap;
   });
 
-// const parseIngestPerf = aggs =>
-//   aggs.daily.buckets.map(b => ({
-//     date: b.key,
-//     '95.0': b.performance.values['95.0']
-//   }));
-
-/**
- * TODO
- */
 const parseProductsAgg = aggs =>
   aggs.buckets.map(b => ({
     id: b.key,
@@ -176,9 +159,6 @@ const parseProductsAgg = aggs =>
     ingest_perf: parseIngestPerf(b.successful.ingest_perf)
   }));
 
-/**
- * TODO
- */
 const parseWorkflowAgg = (aggs) => {
   const workflows = aggs.buckets.map(b => ({
     id: b.key,
@@ -192,13 +172,13 @@ const parseWorkflowAgg = (aggs) => {
 };
 
 /**
- * TODO
+ * Parses the elasticsearch response into a set of workflows with nested products.
  */
 const parseElasticResponse = resp =>
   parseWorkflowAgg(resp.aggregations.workflows);
 
 /**
- * TODO
+ * Finds and returns workflows with products from the indexed Elasticsearch executions.
  */
 const loadWorkflowsFromEs = async () => {
   const startTime = Date.now();
