@@ -11,23 +11,24 @@ const expect = chai.expect;
 describe('sortWorkflows', () => {
   const workflows = [
     { name: 'alpha',
-      executions:
-      [{ status: 'SUCCEEDED', stop_date: 6 }] },
+      success_ratio: { successes: 1, total: 1 },
+      products:
+      [{ last_execution: { success: true, stop_date: 6 } }] },
 
     { name: 'charlie',
-      executions:
-      [{ status: 'SUCCEEDED', stop_date: 4 },
-       { status: 'SUCCEEDED' },
-       { status: 'RUNNING' }] },
+      success_ratio: { successes: 2, total: 2 },
+      products:
+      [{ last_execution: { success: true, stop_date: 3 } },
+       { last_execution: { success: true, stop_date: 4 } }] },
 
     { name: 'beta',
-      executions: [{ status: 'SUCCEEDED', stop_date: 4 }] },
+      success_ratio: { successes: 1, total: 1 },
+      products: [{ last_execution: { success: true, stop_date: 4 } }] },
 
     { name: 'delta',
-      executions:
-      [{ status: 'SUCCEEDED', stop_date: 7 },
-       { status: 'RUNNING' },
-       { status: 'RUNNING' }] }
+      success_ratio: { successes: 1, total: 1 },
+      products:
+      [{ last_execution: { success: true, stop_date: 7 } }] }
   ];
 
   const makeState = (field, ascending) =>

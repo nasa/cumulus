@@ -78,6 +78,7 @@ const sortWorkflows = (state, field) => {
       };
       break;
     case SORT_RECENT_TEMPORAL:
+      // This will only sort products temporally
       throw new Error('TODO implement me');
     case SORT_SUCCESS_RATE:
       sorter = w => getSuccessRate(w).get('numSuccessful');
@@ -121,7 +122,6 @@ const reducer = (state = initialState, action) => {
         .set('error', action.error);
     case WORKFLOW_CHANGE_SORT:
       return sortWorkflows(state, action.field);
-    // TODO add test for workflow collapse expand change
     case WORKFLOW_COLLAPSE_EXPAND:
       // Find the workflow that was collapsed or expanded and reverse it.
       return state.updateIn(['workflows'], workflows =>
@@ -146,7 +146,7 @@ const reducer = (state = initialState, action) => {
 const changeSort = field => ({ type: WORKFLOW_CHANGE_SORT, field: field });
 
 /**
- * TODO
+ * Creates an action that will reverse the collapsed/expanded state of a workflow.
  */
 const collapseExpandWorkflow = workflow =>
   ({ type: WORKFLOW_COLLAPSE_EXPAND, workflowName: workflow.get('name') });
@@ -164,6 +164,7 @@ const fetchWorkflowStatus = async (config, dispatch) => {
     dispatch({ type: WORKFLOW_STATUS_RCVD, workflows: resp });
   }
   catch (e) {
+    // eslint-disable-next-line no-console
     console.error(e);
     dispatch({ type: WORKFLOW_STATUS_RCVD, error: e.message });
   }

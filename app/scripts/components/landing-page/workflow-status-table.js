@@ -79,7 +79,7 @@ const Loading = (props) => {
 
 
 /**
- * TODO
+ * Defines the table body that displays workflow information
  */
 const WorkflowTbody = connect()((props) => {
   const { workflow, dispatch } = props;
@@ -115,8 +115,6 @@ const WorkflowTbody = connect()((props) => {
   );
 });
 
-// TODO add a test for this. 2017130 should be 2017-05-10 130 in 2016 in 5/9
-
 /**
  * Parses a julian date like '2014130' and returns a string formatted date of YYYY-MM-DD
  */
@@ -144,9 +142,8 @@ const parseJulian = (dateStr) => {
   return `${y}-${zeroPad(m)}-${zeroPad(d)}`;
 };
 
-
 /**
- * TODO
+ * Defines a single row showing product information.
  */
 const ProductRow = ({ workflow, product }) =>
   <tr key={product.get('id')}>
@@ -173,7 +170,8 @@ const ProductRow = ({ workflow, product }) =>
   </tr>;
 
 /**
- * TODO
+ * Defines the table body that displays product information for all of the products in a workflow.
+ * Uses CSS transitions to hide the table body until the workflow is clicked.
  */
 const ProductTbody = ({ workflow }) => {
   const rows = workflow.get('expanded', false) ?
@@ -196,7 +194,7 @@ const ProductTbody = ({ workflow }) => {
 };
 
 /**
- * TODO
+ * Defines a single table header that is sortable.
  */
 const Th = (props) => {
   if (props.sortHandler) {
@@ -299,6 +297,7 @@ const WorkflowStatusTable = connect(workflowStatusStateToProps)(
 
 module.exports = { WorkflowStatusTable,
   // For Testing
+  parseJulian,
   lastCompleted,
   successRatio,
   runningStatus,
