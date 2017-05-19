@@ -105,7 +105,7 @@ const getWorkflowStatuses = async (stackName) => {
       workflow = workflow.set('name', name);
       return workflow.updateIn(['products'], products =>
         (products || List()).map((product) => {
-          const running = runningExecsByCollection.get(product.get('collectionId'), List());
+          const running = runningExecsByCollection.get(product.get('id'), List());
           return product.set('num_running', running.count());
         })
       );
