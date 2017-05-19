@@ -1,8 +1,8 @@
 'use strict';
 
 /**
-*  Implements a local helper namespace to bulk index executions
-*/
+ *  Implements a lambda job to index executions in elasticsearch.
+ */
 
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
@@ -275,8 +275,14 @@ const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
   await saveIndexedDate(indexingStartTime);
 };
 
+/**
+ * The maximum number of executions for a single workflow before giving up.
+ */
 const MAX_EXECUTIONS_TO_INDEX = 50000;
 
+/**
+ * Implements lambda handler.
+ */
 exports.handler = async (event, context, callback) => {
   console.log(`Indexer Handler called. Event: ${JSON.stringify(event, null, 2)}`);
 
