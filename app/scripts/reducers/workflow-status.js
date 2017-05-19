@@ -2,18 +2,25 @@
  * Handles fetching and saving the workflow status in the state. Workflow status the name, and
  * execution dates of the workflows.
  */
-const { Map, fromJS } = require('immutable');
+const { Map, List } = require('immutable');
 const api = require('../ops-api');
 
 // Actions
 const WORKFLOW_STATUS_IN_FLIGHT = 'WORKFLOW_STATUS_IN_FLIGHT';
 const WORKFLOW_STATUS_RCVD = 'WORKFLOW_STATUS_RCVD';
+
+// Change how workflows are sorted
 const WORKFLOW_CHANGE_SORT = 'WORKFLOW_CHANGE_SORT';
+
+// Change whether the products of a workflow are shown or not
+const WORKFLOW_COLLAPSE_EXPAND = 'WORKFLOW_COLLAPSE_EXPAND';
+
 
 // Sort Fields
 const SORT_NONE = 'SORT_NONE';
 const SORT_NAME = 'SORT_NAME';
 const SORT_LAST_COMPLETED = 'SORT_LAST_COMPLETED';
+const SORT_RECENT_TEMPORAL = 'SORT_RECENT_TEMPORAL';
 const SORT_SUCCESS_RATE = 'SORT_SUCCESS_RATE';
 const SORT_NUM_RUNNING = 'SORT_NUM_RUNNING';
 
@@ -24,33 +31,31 @@ const initialState = Map(
     error: undefined });
 
 /**
- * Returns all the exections in a workflow that are not running.
- */
-const nonRunningExecutions = workflow =>
-  workflow.get('executions')
-  .filter(v => v.get('status') !== 'RUNNING');
-
-/**
  * Gets the last completed execution of a workflow.
  */
-const getLastCompleted = workflow => nonRunningExecutions(workflow).first();
-
+const getLastCompleted = workflow =>
+  workflow.get('products', List())
+    .map(p => p.get('last_execution'))
+    .sortBy(e => e.get('stop_date'))
+    .reverse()
+    .first();
 
 /**
  * Returns a map containing the number of successful runs and the total number of executions that
  * completed.
  */
 const getSuccessRate = (workflow) => {
-  const executions = nonRunningExecutions(workflow);
-  const numSuccessful = executions.filter(v => v.get('status') === 'SUCCEEDED').count();
-  return Map({ numSuccessful, numExecutions: executions.count() });
+  const { successes, total } = workflow.get('success_ratio', Map({ successes: 0, total: 0 }));
+  return Map({ numSuccessful: successes, numExecutions: total });
 };
 
 /**
  *  Returns the number of running executions in the workflow
  */
 const getNumRunning = workflow =>
-  workflow.get('executions').filter(v => v.get('status') === 'RUNNING').count();
+  workflow.get('products', List())
+    .map(p => p.get('num_running'))
+    .reduce((v1, v2) => v1 + v2, 0);
 
 /**
  * Reducer helper function. Takes the current state and a field to sort the workflows. Sorts the
@@ -72,6 +77,9 @@ const sortWorkflows = (state, field) => {
         return Number.MAX_VALUE;
       };
       break;
+    case SORT_RECENT_TEMPORAL:
+      // This will only sort products temporally
+      throw new Error('TODO implement me');
     case SORT_SUCCESS_RATE:
       sorter = w => getSuccessRate(w).get('numSuccessful');
       break;
@@ -109,11 +117,20 @@ const reducer = (state = initialState, action) => {
     case WORKFLOW_STATUS_IN_FLIGHT:
       return state.set('inFlight', true);
     case WORKFLOW_STATUS_RCVD:
-      return state.set('workflows', fromJS(action.workflows))
+      return state.set('workflows', action.workflows)
         .set('inFlight', false)
         .set('error', action.error);
     case WORKFLOW_CHANGE_SORT:
       return sortWorkflows(state, action.field);
+    case WORKFLOW_COLLAPSE_EXPAND:
+      // Find the workflow that was collapsed or expanded and reverse it.
+      return state.updateIn(['workflows'], workflows =>
+        workflows.map((w) => {
+          if (w.get('name') === action.workflowName) {
+            return w.updateIn(['expanded'], v => !v);
+          }
+          return w;
+        }));
     default:
       return state;
   }
@@ -129,6 +146,12 @@ const reducer = (state = initialState, action) => {
 const changeSort = field => ({ type: WORKFLOW_CHANGE_SORT, field: field });
 
 /**
+ * Creates an action that will reverse the collapsed/expanded state of a workflow.
+ */
+const collapseExpandWorkflow = workflow =>
+  ({ type: WORKFLOW_COLLAPSE_EXPAND, workflowName: workflow.get('name') });
+
+/**
  * fetchWorkflowStatus - An action creator that initiates a request to fetch the workflow status
  *
  * @param  config   Application configuration
@@ -141,6 +164,8 @@ const fetchWorkflowStatus = async (config, dispatch) => {
     dispatch({ type: WORKFLOW_STATUS_RCVD, workflows: resp });
   }
   catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
     dispatch({ type: WORKFLOW_STATUS_RCVD, error: e.message });
   }
 };
@@ -161,6 +186,7 @@ module.exports = {
 
   // Actions
   changeSort,
+  collapseExpandWorkflow,
   fetchWorkflowStatus,
 
   // for testing
