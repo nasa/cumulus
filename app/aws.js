@@ -31,7 +31,7 @@ const realServices = {
   get es() {
     if (esClient) return esClient;
     if (!process.env.ELASTIC_ENDPOINT) {
-      throw new Error('ELASTIC_ENDPIONT must be present in the environment');
+      throw new Error('ELASTIC_ENDPOINT must be present in the environment');
     }
     esClient = new Elasticsearch.Client({
       hosts: process.env.ELASTIC_ENDPOINT,
