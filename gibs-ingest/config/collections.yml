@@ -1,7 +1,6 @@
 providers:
   - id: MODAPS
-    config:
-      global_connection_limit: 50
+    config: {}
   - id: LARC
     config: {}
 
