@@ -8,6 +8,7 @@ const cors = require('cors');
 const compression = require('compression');
 const docsHtml = require('./views/docs.html');
 const expressValidator = require('express-validator');
+const { es } = require('./aws');
 
 const { handleError } = require('./api-errors');
 const { handleWorkflowStatusRequest } = require('./workflows');
@@ -42,8 +43,14 @@ module.exports = (cb = null) => {
   });
 
   // Responds with the health of the application.
-  app.get('/health', (req, res) => {
-    res.json({ 'ok?': true });
+  app.get('/health', async (req, res) => {
+    try {
+      const esHealth = await es().ping();
+      res.json({ elasticsearch: esHealth, 'ok?': esHealth });
+    }
+    catch (error) {
+      handleError(error, req, res);
+    }
   });
 
   app.get('/workflow_status', (req, res) => {
