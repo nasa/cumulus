@@ -83,6 +83,10 @@
     }
   }
 
+  .inline-expandable-chart {
+    cursor: pointer;
+  }
+
   canvas {
     height: 38;
     min-width: 0;
