@@ -17,14 +17,6 @@ Conditions:
   UseApiGateway: !Not [!Equals [!Ref PaaS, "true"]]
 
 Resources:
-  # TODO file issue for this
-  # operational things to consider
-  # - dedicated master node
-  # - zone awareness
-  # - instancy sizing
-  # - EBS volume sizing
-  # - backups
-
   ElasticsearchDomain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
@@ -156,6 +148,41 @@ Resources:
     Properties:
       Name: !Sub ${StackName}-ops-api
       BodyS3Location: ./packaged-simple-proxy-api.yml
+
+  # Indexes executions into Elasticsearch.
+  IndexerFunction:
+    Type: AWS::Lambda::Function
+    Condition: UseApiGateway
+    Properties:
+      Code: ../dist/
+      MemorySize: 1024
+      Handler: indexer.handler
+      Role: !GetAtt [LambdaExecutionRole, Arn]
+      Timeout: 300
+      Runtime: nodejs6.10
+      Environment:
+        Variables:
+          ELASTIC_ENDPOINT: !GetAtt [ElasticsearchDomain, DomainEndpoint]
+
+  # Runs the IndexerFunction on a periodic basis.
+  IndexerSchedulerRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: rate(5 minutes)
+      Targets:
+        - Id: IndexerScheduler
+          Arn: !GetAtt IndexerFunction.Arn
+          Input: !Sub '{"StackName":"${StackName}"}'
+
+  # Gives permission to the indexer scheduler to run the indexer function.
+  InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt IndexerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt IndexerSchedulerRule.Arn
+
 
 Outputs:
   ElasticEndpoint:

@@ -1,6 +1,6 @@
 'use strict';
 
-// TODO the regexes here are so convoluted. They're really tied to specific GIBS id styles.
+// The regexes here are so convoluted. They're really tied to specific GIBS id styles.
 // There's no good way to know which part is absolutely the collection id and which part is the
 // granule id
 const withGranuleIdRegex = /^(?:[^\-^_]+-)?([A-Z0-9_]+)-([A-Z0-9_]+)-[a-z0-9\-]+$/;
@@ -20,7 +20,7 @@ const withoutGranuleIdRegex = /^([A-Z0-9_]+)-.+$/;
 
 module.exports = {
   parseExecutionName: (name) => {
-    // TODO what is the first thing and are the following true?
+    // What is the first thing and are the following true?
     // example name: 'VIIRS-VNGCR_LQD_C1-2017126-e9792534-8721-40c4-b4fe-f046c5e4376b';
     // Parts of the name
     // 1. ...
@@ -32,8 +32,6 @@ module.exports = {
       // If the granule id isn't in it then it may just have the collection id followed by a guid
       // Example: VNGCR_LQD_C1-000a89dd-6f3c-4876-928e-ab6736fd98e6
       // Another  MOPITT_DCOSMR_LL_D_STD-2017-04-19_17_19_01
-      // TODO why does mopitt not have a guid? Is the first part the collection id?
-      // TODO is it true that the collection id will never contain a dash?
       matchResult = name.match(withoutGranuleIdRegex);
       if (!matchResult) {
         throw new Error(`Found invalid execution name: ${name}`);
