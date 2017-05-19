@@ -42,7 +42,6 @@ const getWorkflowStatusResp =
         stop_date: 1494438140000,
         success: true
       },
-      last_granule_id: '99321383',
       success_ratio: {
         successes: 647,
         total: 647
@@ -83,7 +82,6 @@ const getWorkflowStatusResp =
         stop_date: 1494438058000,
         success: true
       },
-      last_granule_id: '96025042',
       success_ratio: {
         successes: 647,
         total: 647
@@ -124,7 +122,6 @@ const getWorkflowStatusResp =
         success: true,
         stop_date: 1494438334000
       },
-      last_granule_id: '99533992',
       success_ratio: {
         successes: 646,
         total: 646
@@ -362,7 +359,6 @@ const getWorkflowStatusResp =
         stop_date: 1494437945000,
         success: true
       },
-      last_granule_id: '97582064',
       success_ratio: {
         successes: 647,
         total: 647
