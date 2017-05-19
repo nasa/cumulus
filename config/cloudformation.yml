@@ -14,6 +14,8 @@ Parameters:
       - false
 
 Conditions:
+  # This condition is used to enable the API Gateway usage when not running in NGAP.
+  # The PaaS is used for hosting when running there.
   UseApiGateway: !Not [!Equals [!Ref PaaS, "true"]]
 
 Resources:
@@ -36,8 +38,6 @@ Resources:
         AutomatedSnapshotStartHour: "0"
       AdvancedOptions:
         rest.action.multi.allow_explicit_index: "true"
-
-  # Everything below only applies to non-PaaS deployments
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
