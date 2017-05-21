@@ -59,9 +59,11 @@ describe('sortWorkflows', () => {
     [false, 'charlie, beta, alpha, delta'],
 
     'Success Rate ascending',
-    [ws.SORT_NAME, true, ws.SORT_SUCCESS_RATE], [true, 'alpha, beta, delta, charlie'],
+    [ws.SORT_NAME, true, ws.SORT_RECENT_EXECUTIONS], [true, 'alpha, beta, delta, charlie'],
+
     'Success Rate descending',
-    [ws.SORT_SUCCESS_RATE, true, ws.SORT_SUCCESS_RATE], [false, 'charlie, delta, beta, alpha'],
+    [ws.SORT_RECENT_EXECUTIONS, true, ws.SORT_RECENT_EXECUTIONS],
+    [false, 'charlie, delta, beta, alpha'],
 
     'Num Running ascending',
     [ws.SORT_NAME, true, ws.SORT_NUM_RUNNING], [true, 'alpha, beta, charlie, delta'],
