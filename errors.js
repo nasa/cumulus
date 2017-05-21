@@ -19,23 +19,33 @@ const createErrorType = (name, ParentType = Error) => {
 
 const WorkflowError = createErrorType('WorkflowError');
 
+
+/**
+ * Returns true if the error is a resource error.
+ * This is used because for some reason instanceof WorkflowError is not working when deployed.
+ */
+const isWorkflowError = error => error.name.includes("WorkflowError");
+
 module.exports = {
+
+  isWorkflowError,
+
   // WorkflowError should be bubbled out to the overall workflow in the 'exception'
   // field, rather than being thrown and causting an immediate failure
   WorkflowError: WorkflowError,
 
   // NotNeededError indicates that execution was not completed because it was unnecessary.
   // The workflow should therefore terminate but be considered successful
-  NotNeededError: createErrorType('NotNeeded', WorkflowError),
+  NotNeededError: createErrorType('NotNeededWorkflowError', WorkflowError),
 
   // IncompleteError indicates that the execution was partially successful and can be
   // re-executed to make further progress. This may happen, for instance, if an execution timeout
   // stops progress
-  IncompleteError: createErrorType('Incomplete', WorkflowError),
+  IncompleteError: createErrorType('IncompleteWorkflowError', WorkflowError),
 
   // ResourcesLockedError indicates that the execution is unable to proceed due to resources
   // being tied up in other executions. Execution may be retried after resources free up
-  ResourcesLockedError: createErrorType('ResourcesLockedError', WorkflowError),
+  ResourcesLockedError: createErrorType('ResourcesLockedWorkflowError', WorkflowError),
 
   // RemoteResourceError indicates that a required remote resource could not be fetched or
   // otherwise used

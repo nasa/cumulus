@@ -167,7 +167,7 @@ module.exports = class Task {
         }
       }
 
-      if (error instanceof errors.WorkflowError) {
+      if (errors.isWorkflowError(error)) {
         log.info(`Failing task due to workflow error ${error.name}`);
         log.info(error.stack);
         callback(null, { exception: error.name });
