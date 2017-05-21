@@ -109,7 +109,7 @@ module.exports = class Task {
    */
   static logTaskCompletion(response, startDate, limit = 2000) {
     const duration = (new Date() - startDate) / 1000;
-    const responseStr = (response === null && response === undefined) ?
+    const responseStr = (response === null || response === undefined) ?
                         '(no response)' :
                         JSON.stringify(response, null, 2);
     log.info(`Processing Completed (${duration}s)`,
@@ -167,7 +167,7 @@ module.exports = class Task {
         }
       }
 
-      if (error instanceof errors.WorkflowError) {
+      if (errors.isWorkflowError(error)) {
         log.info(`Failing task due to workflow error ${error.name}`);
         log.info(error.stack);
         callback(null, { exception: error.name });
