@@ -65,7 +65,7 @@ const lastExecutionAgg = {
 };
 
 const successRatioAgg = {
-  filter: { range: { stop_date: { gte: 'now-1w/d' } } },
+  filter: { range: { stop_date: { gte: 'now-1d/d' } } },
   aggs: {
     successes: { terms: { field: 'success' } }
   }

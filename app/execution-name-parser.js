@@ -15,11 +15,13 @@ module.exports = {
     const parts = fromSfnExecutionName(name);
     let collectionId;
     let granuleId;
+    // eslint-disable-next-line no-unused-vars
+    let ignored;
     if (parts.length === 2) {
       collectionId = parts[0];
     }
     else {
-      [_, collectionId, granuleId] = parts
+      [ignored, collectionId, granuleId] = parts;
     }
     return { collectionId, granuleId };
   }
