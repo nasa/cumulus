@@ -50,11 +50,17 @@ const lastCompleted = (lastExecution) => {
 };
 
 /**
- * Returns the success ratio with any non running executions.
+ * Returns information about recent number of failures or successes.
  */
-const successRatio = (workflow) => {
-  const { numSuccessful, numExecutions } = ws.getSuccessRate(workflow);
-  return `${numSuccessful} of the last ${numExecutions} successful`;
+const recentExecutions = (workflow) => {
+  const { numFailed, numExecutions } = ws.getSuccessRate(workflow);
+  if (numExecutions === 0) {
+    return <span><NotRunIcon />No runs yet.</span>;
+  }
+  if (numFailed > 0) {
+    return <span><FailedIcon />{`${numFailed} failures out of recent ${numExecutions}`}</span>;
+  }
+  return <span><SuccessIcon />{`${numExecutions} recent successful runs`}</span>;
 };
 
 /**
@@ -101,7 +107,7 @@ const WorkflowTbody = connect()((props) => {
         </td>
         <td>{lastCompleted(ws.getLastCompleted(workflow))}</td>
         <td />
-        <td>{successRatio(workflow)}</td>
+        <td>{recentExecutions(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
         <td>
           <IngestChart
@@ -156,7 +162,7 @@ const ProductRow = ({ workflow, product }) =>
         {product.get('last_granule_id') ? parseJulian(product.get('last_granule_id')) : 'N/A'}
       </div>
     </td>
-    <td><div>{successRatio(product)}</div></td>
+    <td><div>{recentExecutions(product)}</div></td>
     <td><div>{product.get('num_running')} Running</div></td>
     <td>
       <div>
@@ -182,8 +188,8 @@ const ProductTbody = ({ workflow }) => {
   return (
     <CSSTransitionGroup
       transitionName="products"
-      transitionEnterTimeout={300}
-      transitionLeaveTimeout={300}
+      transitionEnterTimeout={150}
+      transitionLeaveTimeout={150}
       component="tbody"
       key={`${workflow.get('name')}-products`}
       className="product-body"
@@ -255,10 +261,10 @@ const WorkflowStatusTableFn = (props) => {
                 sortHandler={_ => dispatch(ws.changeSort(ws.SORT_RECENT_TEMPORAL))}
               />
               <Th
-                title="Recent Run Success Ratio"
-                isSorted={sort.get('field') === ws.SORT_SUCCESS_RATE}
+                title="Recent Executions"
+                isSorted={sort.get('field') === ws.SORT_RECENT_EXECUTIONS}
                 sortDirectionAsc={sort.get('ascending')}
-                sortHandler={_ => dispatch(ws.changeSort(ws.SORT_SUCCESS_RATE))}
+                sortHandler={_ => dispatch(ws.changeSort(ws.SORT_RECENT_EXECUTIONS))}
               />
               <Th
                 title="Status"
@@ -299,7 +305,6 @@ module.exports = { WorkflowStatusTable,
   // For Testing
   parseJulian,
   lastCompleted,
-  successRatio,
   runningStatus,
   SuccessIcon,
   FailedIcon,

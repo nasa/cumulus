@@ -5,6 +5,9 @@
   .name-cell {
     width: 570px;
   }
+
+  $transition-time: 150ms;
+
   // Animating product rows entering and exiting
   .products-enter {
     opacity: 0.01;
@@ -21,16 +24,16 @@
 
   .products-enter.products-enter-active {
     opacity: 1;
-    transition: opacity 200ms ease;
+    transition: opacity $transition-time ease;
 
     td {
       padding: 0.5em;
-      transition: padding 300ms ease;
+      transition: padding $transition-time ease;
     }
 
     div {
       max-height: 30px;
-      transition: max-height 300ms ease;
+      transition: max-height $transition-time ease;
     }
   }
 
@@ -48,16 +51,16 @@
 
   .products-leave.products-leave-active {
     opacity: 0.01;
-    transition: opacity 200ms ease;
+    transition: opacity $transition-time ease;
 
     td {
       padding: 0;
-      transition: padding 300ms ease;
+      transition: padding $transition-time ease;
     }
 
     div {
       max-height: 0;
-      transition: max-height 300ms ease;
+      transition: max-height $transition-time ease;
     }
   }
   // End of animation styles
@@ -81,6 +84,10 @@
     tr {
       background: white;
     }
+  }
+
+  .inline-expandable-chart {
+    cursor: pointer;
   }
 
   canvas {

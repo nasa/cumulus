@@ -104,6 +104,7 @@ const ModalChart = ({ guid, chartData, title }) =>
  */
 const InlineChart = ({ guid, chartData }) =>
   <div
+    className="inline-expandable-chart"
     id={guidToInlineId(guid)}
     name={guidToModalId(guid)}
     href={`#${guidToModalId(guid)}`}
