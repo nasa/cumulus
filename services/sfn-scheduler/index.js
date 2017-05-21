@@ -33,7 +33,7 @@ const triggerIngest = async (resources, provider, collection) => {
     const meta = JSON.parse(JSON.stringify(collection.meta || {}));
     const startDate = new Date().toISOString();
     const id = uuid.v4();
-    const executionName = `${collection.id}-${id}`;
+    const executionName = aws.toSfnExecutionName([collection.id, id], '__');
     const messageData = {
       workflow_config_template: collection.workflow_config_template,
       resources: resources,
