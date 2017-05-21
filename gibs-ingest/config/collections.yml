@@ -149,10 +149,10 @@ workflows:
         Type: Choice
         Choices:
           - Variable: $.exception
-            StringEquals: NotNeeded
+            StringEquals: NotNeededWorkflowError
             Next: NoUpdates
           - Variable: $.exception
-            StringEquals: Incomplete
+            StringEquals: IncompleteWorkflowError
             Next: SyncHttpUrls
           - Variable: $.exception
             StringEquals: None
@@ -200,10 +200,10 @@ workflows:
         Type: Choice
         Choices:
           - Variable: $.exception
-            StringEquals: NotNeeded
+            StringEquals: NotNeededWorkflowError
             Next: NoUpdates
           - Variable: $.exception
-            StringEquals: Incomplete
+            StringEquals: IncompleteWorkflowError
             Next: SyncHttpUrls
           - Variable: $.exception
             StringEquals: None
