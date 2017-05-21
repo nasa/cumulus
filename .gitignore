@@ -6,3 +6,4 @@ config/cloudformation-with-replacements.yml
 # mocha-webpack compiles things here.
 /.tmp
 /release.tar
+/app/local-helper.js
