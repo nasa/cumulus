@@ -15,6 +15,8 @@ curl http://localhost:3000/health
 
 ## /workflow_status
 
+TODO update these docs here.
+
 Returns a list of configured ingest workflows along with recent executions.
 
 Params:
@@ -61,3 +63,7 @@ curl "http://localhost:3000/workflow_status?stack_name=gitc-xx-sfn&num_execution
   }
 ]
 ```
+
+## /service_status
+
+TODO document this
