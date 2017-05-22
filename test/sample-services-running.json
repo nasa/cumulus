@@ -1,0 +1,102 @@
+{
+  "services": [
+    {
+      "serviceArn": "arn:aws:ecs:us-west-2:***REMOVED***:service/gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI",
+      "serviceName": "gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI",
+      "clusterArn": "arn:aws:ecs:us-west-2:***REMOVED***:cluster/gitc-jg-IngestStack-12UHWOQITAL9C-IngestECSCluster-1UKBTF5A7O23G",
+      "loadBalancers": [],
+      "status": "ACTIVE",
+      "desiredCount": 2,
+      "runningCount": 2,
+      "pendingCount": 0,
+      "taskDefinition": "arn:aws:ecs:us-west-2:***REMOVED***:task-definition/gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfTask-5P2IKCWLP3TM:1",
+      "deploymentConfiguration": {
+        "maximumPercent": 100,
+        "minimumHealthyPercent": 0
+      },
+      "deployments": [
+        {
+          "id": "ecs-svc/9223370541636595953",
+          "status": "PRIMARY",
+          "taskDefinition": "arn:aws:ecs:us-west-2:***REMOVED***:task-definition/gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfTask-5P2IKCWLP3TM:1",
+          "desiredCount": 2,
+          "pendingCount": 0,
+          "runningCount": 2,
+          "createdAt": "2017-05-19T18:22:59.854Z",
+          "updatedAt": "2017-05-19T18:22:59.854Z"
+        }
+      ],
+      "events": [
+        {
+          "id": "90cb9ec7-21a1-44fd-be0c-f966e57a4dcb",
+          "createdAt": "2017-05-21T11:21:26.996Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "bf2c1878-7b41-4ef3-b3de-b3608e70d6cd",
+          "createdAt": "2017-05-21T11:21:14.072Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has started 2 tasks: (task a488d043-1705-4e30-aed3-19889d032822) (task 763b92ac-d6f7-4987-8a00-83673dd15bf9)."
+        },
+        {
+          "id": "50c0e6fb-bd97-4c88-ac1d-1ca4c2e43f5c",
+          "createdAt": "2017-05-21T10:56:50.861Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "4b59f6db-e996-4851-90ca-f18ae0a49b17",
+          "createdAt": "2017-05-21T10:56:40.417Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has started 2 tasks: (task 0a990536-328c-4a54-9a3d-07c03743ea85) (task 2c53cf0e-de4f-4012-8e02-3d164524c08f)."
+        },
+        {
+          "id": "a5bd628e-6e22-4b68-9282-dbef97af8843",
+          "createdAt": "2017-05-21T06:27:08.021Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "48d39de0-7ff0-4056-84db-4a071321bad3",
+          "createdAt": "2017-05-21T00:27:02.706Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "689a5412-42ab-437a-b246-9634f2340da5",
+          "createdAt": "2017-05-20T18:26:46.847Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "5aea07f0-637e-45d4-b7ac-5f8ccb7936f3",
+          "createdAt": "2017-05-20T12:26:30.768Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "8a9d6a9a-801a-4a3d-a55c-b9d9539498a5",
+          "createdAt": "2017-05-20T06:26:10.609Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "cb09444e-cdf9-4b92-86ca-8d63ac8c5a6f",
+          "createdAt": "2017-05-20T00:26:07.994Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "1e621dff-9709-4a8f-b275-00e14e0d573f",
+          "createdAt": "2017-05-19T18:25:52.970Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has reached a steady state."
+        },
+        {
+          "id": "12b6462b-97c8-4a13-828c-ebd862bcf29b",
+          "createdAt": "2017-05-19T18:24:36.134Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) has started 2 tasks: (task 2a269675-77ff-4250-a5dc-c8f517f5c2f2) (task 83ed912e-bc3e-400d-a615-1c68a59e81e5)."
+        },
+        {
+          "id": "e3c4c37e-f971-4dca-9d7f-e85a03495a79",
+          "createdAt": "2017-05-19T18:23:00.496Z",
+          "message": "(service gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI) was unable to place a task because no container instance met all of its requirements. Reason: No Container Instances were found in your cluster. For more information, see the Troubleshooting section of the Amazon ECS Developer Guide."
+        }
+      ],
+      "createdAt": "2017-05-19T18:22:59.854Z",
+      "placementConstraints": [],
+      "placementStrategy": []
+    }
+  ],
+  "failures": []
+}

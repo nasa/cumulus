@@ -1,0 +1,63 @@
+{
+  "tasks": [
+    {
+      "taskArn": "arn:aws:ecs:us-west-2:***REMOVED***:task/2762cb1c-a29a-4b90-9595-5118ce9157d0",
+      "clusterArn": "arn:aws:ecs:us-west-2:***REMOVED***:cluster/gitc-jg-IngestStack-12UHWOQITAL9C-IngestECSCluster-1UKBTF5A7O23G",
+      "taskDefinitionArn": "arn:aws:ecs:us-west-2:***REMOVED***:task-definition/gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfTask-5P2IKCWLP3TM:1",
+      "containerInstanceArn": "arn:aws:ecs:us-west-2:***REMOVED***:container-instance/4846a59c-b2ac-438a-93de-91b3dee1d047",
+      "overrides": {
+        "containerOverrides": [
+          {
+            "name": "generate-mrf"
+          }
+        ]
+      },
+      "lastStatus": "RUNNING",
+      "desiredStatus": "RUNNING",
+      "containers": [
+        {
+          "containerArn": "arn:aws:ecs:us-west-2:***REMOVED***:container/69ebea5a-021b-4692-ab4f-c66d7ee9fe79",
+          "taskArn": "arn:aws:ecs:us-west-2:***REMOVED***:task/2762cb1c-a29a-4b90-9595-5118ce9157d0",
+          "name": "generate-mrf",
+          "lastStatus": "RUNNING",
+          "networkBindings": []
+        }
+      ],
+      "startedBy": "ecs-svc/9223370541636595953",
+      "version": 3,
+      "createdAt": "2017-05-21T21:14:44.650Z",
+      "startedAt": "2017-05-21T21:14:48.049Z",
+      "group": "service:gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI"
+    },
+    {
+      "taskArn": "arn:aws:ecs:us-west-2:***REMOVED***:task/527cb004-0f1b-41cd-8604-1fde29d3cb06",
+      "clusterArn": "arn:aws:ecs:us-west-2:***REMOVED***:cluster/gitc-jg-IngestStack-12UHWOQITAL9C-IngestECSCluster-1UKBTF5A7O23G",
+      "taskDefinitionArn": "arn:aws:ecs:us-west-2:***REMOVED***:task-definition/gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfTask-5P2IKCWLP3TM:1",
+      "containerInstanceArn": "arn:aws:ecs:us-west-2:***REMOVED***:container-instance/4846a59c-b2ac-438a-93de-91b3dee1d047",
+      "overrides": {
+        "containerOverrides": [
+          {
+            "name": "generate-mrf"
+          }
+        ]
+      },
+      "lastStatus": "RUNNING",
+      "desiredStatus": "RUNNING",
+      "containers": [
+        {
+          "containerArn": "arn:aws:ecs:us-west-2:***REMOVED***:container/8d42d64a-ed5f-4f44-9f6f-6d5c4494f3c1",
+          "taskArn": "arn:aws:ecs:us-west-2:***REMOVED***:task/527cb004-0f1b-41cd-8604-1fde29d3cb06",
+          "name": "generate-mrf",
+          "lastStatus": "RUNNING",
+          "networkBindings": []
+        }
+      ],
+      "startedBy": "ecs-svc/9223370541636595953",
+      "version": 3,
+      "createdAt": "2017-05-21T21:14:44.650Z",
+      "startedAt": "2017-05-21T21:14:48.684Z",
+      "group": "service:gitc-jg-IngestStack-12UHWOQITAL9C-GenerateMrfService-HVFIZM5JLZCI"
+    }
+  ],
+  "failures": []
+}
