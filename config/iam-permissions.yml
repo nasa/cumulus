@@ -43,3 +43,7 @@ Resources:
                   - states:ListExecutions
                   - states:ListStateMachines
                 Resource: !Sub "arn:aws:states:*:${AWS::AccountId}:*"
+              # GITC-319 add additional ones from the cloud formation file
+              # - elasticsearch
+              # - ecs
+              # - cloudformation
