@@ -88,35 +88,35 @@ The response contains the number of tasks that should be running for the service
 ```JSON
 [
   {
-    "serviceName": "GenerateMrf",
+    "service_name": "GenerateMrf",
     "desired_count": 2,
     "running_tasks": [
       {
-        "startedAt": "2017-05-22T15:09:28.911Z"
+        "started_at": "2017-05-22T15:09:28.911Z"
       }
     ]
   },
   {
-    "serviceName": "SfnScheduler",
+    "service_name": "SfnScheduler",
     "desired_count": 1,
     "running_tasks": [
       {
-        "startedAt": "2017-05-22T15:09:30.206Z"
+        "started_at": "2017-05-22T15:09:30.206Z"
       }
     ]
   },
   {
-    "serviceName": "OnEarth",
+    "service_name": "OnEarth",
     "desired_count": 3,
     "running_tasks": [
       {
-        "startedAt": "2017-05-17T15:09:46.169Z"
+        "started_at": "2017-05-17T15:09:46.169Z"
       },
       {
-        "startedAt": "2017-05-17T15:09:52.604Z"
+        "started_at": "2017-05-17T15:09:52.604Z"
       },
       {
-        "startedAt": "2017-05-17T15:09:48.299Z"
+        "started_at": "2017-05-17T15:09:48.299Z"
       }
     ]
   }
