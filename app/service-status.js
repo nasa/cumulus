@@ -9,11 +9,9 @@ const { handleError } = require('./api-errors');
 const { ecs, cf } = require('./aws');
 const { fromJS } = require('immutable');
 
-const INGEST_SERVICE_NAMES = ['GenerateMrf', 'SfnScheduler'];
-const ON_EARTH_SERVICE_NAME = 'OnEarth';
-
 /**
- * TODO
+ * Takes in what might be an ARN and if it is parses out the name. If it is not an ARN returns it
+ * without changes.
  */
 const arnToName = (arnMaybe) => {
   if (arnMaybe.startsWith('arn:')) {
@@ -23,7 +21,7 @@ const arnToName = (arnMaybe) => {
 };
 
 /**
- * TODO
+ * Fetches the stack and returns a map of logical resource id to stack information.
  */
 const getStackResources = async (arnOrStackName) => {
   const stackName = arnToName(arnOrStackName);
@@ -31,13 +29,15 @@ const getStackResources = async (arnOrStackName) => {
   return resp.get('StackResources').groupBy(m => m.get('LogicalResourceId')).map(v => v.first());
 };
 
-// TODO fetching all the stack resources and ids for things is slow. Add memoization to speed up
+// Potential performation optimization:
+// Fetching all the stack resources and ids for things is slow. We could add memoization to speed up
 // performance. We can cache cluster ids potentially to reduce the lookup time.
-// Once a task stops it can't be started again. We could cache the task ARN to task information.
-// We're running in a lambda so it will keep it fresh for a little while.
+// Once a task stops it can't be started again. We could cache the task ARN to task information
+// because the task start date will never change. This is all running in a lambda so caching in
+// memory would only help while the lambda is up.
 
 /**
- * TODO
+ * Returns a list of the tasks that are running for the service.
  */
 const getRunningTasks = async (clusterId, serviceId) => {
   const taskListResp = await ecs().listTasks({
@@ -49,9 +49,8 @@ const getRunningTasks = async (clusterId, serviceId) => {
       cluster: clusterId,
       tasks: taskListResp.taskArns
     }).promise();
-    // TODO update docs
     return taskDescriptions.tasks.map(taskDesc => ({
-      startedAt: taskDesc.startedAt
+      started_at: taskDesc.startedAt
     }));
   }
   //No running tasks found.
@@ -59,9 +58,9 @@ const getRunningTasks = async (clusterId, serviceId) => {
 };
 
 /**
- * TODO
+ * Returns a map containing service status information for the service.
  */
-const getServiceStatus = async (arnOrClusterId, serviceName, serviceId) => {
+const getServiceStatus = async (arnOrClusterId, humanServiceName, serviceId) => {
   const clusterId = arnToName(arnOrClusterId);
   const [serviceDesc, runningTasks] = await Promise.all([
     ecs().describeServices({
@@ -71,14 +70,16 @@ const getServiceStatus = async (arnOrClusterId, serviceName, serviceId) => {
     getRunningTasks(clusterId, serviceId)
   ]);
   return {
-    serviceName: serviceName,
+    service_name: humanServiceName,
     desired_count: serviceDesc.services[0].desiredCount,
     running_tasks: runningTasks
   };
 };
 
+const INGEST_SERVICE_NAMES = ['GenerateMrf', 'SfnScheduler'];
+
 /**
- * TODO
+ * Returns a list of service statuses for the services associated with ingest.
  */
 const getIngestServicesStatus = async (stackName) => {
   const mainStackResources = await getStackResources(stackName);
@@ -93,8 +94,10 @@ const getIngestServicesStatus = async (stackName) => {
   }));
 };
 
+const ON_EARTH_SERVICE_NAME = 'OnEarth';
+
 /**
- * TODO
+ * Returns the status of the OnEarth Service.
  */
 const getOnEarthServiceStatus = async (stackName) => {
   const oeMainStackResources = await getStackResources(stackName);
@@ -112,7 +115,7 @@ const getOnEarthServiceStatus = async (stackName) => {
 };
 
 /**
- * TODO
+ * Returns a list of the status of all the services.
  */
 const getServicesStatus = async (mainStackName, onEarthStackName) => {
   const [ingestServicesStatus, onEarthStatus] = await Promise.all([
@@ -148,6 +151,3 @@ const handleServiceStatusRequest = async (req, res) => {
 };
 
 module.exports = { handleServiceStatusRequest };
-
-
-// printPromise(getServicesStatus('gitc-jg','gibs-oe-jg'))
