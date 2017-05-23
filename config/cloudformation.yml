@@ -32,6 +32,9 @@ Parameters:
       - t2.medium
       - t2.large
       - m4.large
+  OnEarthStackName:
+    Type: String
+    Description: Name of the OnEarth stack name being created
   OnEarthMaxInstances:
     Default: '10'
     Description: Maximum number of OnEarth instances to keep.
@@ -72,6 +75,7 @@ Resources:
       Parameters:
         PaaS: !Ref PaaS
         StackName: !Ref AWS::StackName
+        OnEarthStackName: !Ref OnEarthStackName
       TemplateURL: "../gibs-ops-api/config/cloudformation.yml"
 
   PublicUpdateTopic:
