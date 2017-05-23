@@ -37,7 +37,31 @@ const getWorkflowStatus = async (config) => {
   return fromJS(workflows);
 };
 
+ /**
+  * getServiceStatus - Fetches the list of service status details.
+  *
+  * @param  config APP configuration
+  * @return A promise delivering the list of service statuses.
+  */
+const getServiceStatus = async (config) => {
+  let services;
+  if (config.get('useCannedData')) {
+    services = canned.getServiceStatusResp;
+  }
+  else {
+    services = await rp(
+      { uri: `${config.get('apiBaseUrl')}/service_status`,
+        qs: {
+          main_stack_name: config.get('stackName'),
+          on_earth_stack_name: config.get('onEarthStackName')
+        },
+        json: true });
+  }
+  return fromJS(services);
+};
+
 module.exports = {
   getApiHealth,
-  getWorkflowStatus
+  getWorkflowStatus,
+  getServiceStatus
 };

@@ -3,7 +3,8 @@ const CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup');
 const { connect } = require('react-redux');
 const functional = require('react-functional');
 const { List } = require('immutable');
-const Icon = require('../icon');
+const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
+const { Loading } = require('../loading');
 const { IngestChart } = require('./ingest-chart');
 const ws = require('../../reducers/workflow-status');
 
@@ -11,8 +12,6 @@ const JsTimeAgo = require('javascript-time-ago');
 JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
 const timeAgo = new JsTimeAgo('en-US');
 
-const SuccessIcon = () => <Icon className="fa-check-circle icon-success" />;
-const FailedIcon = () => <Icon className="fa-exclamation-triangle icon-alert" />;
 const NotRunIcon = () => <Icon className="fa-circle-o icon-disabled" />;
 
 /**
@@ -43,7 +42,7 @@ const SortIcon = ({ isSorted, sortDirectionAsc }) => {
  */
 const lastCompleted = (lastExecution) => {
   if (lastExecution) {
-    const icon = lastExecution.get('success') ? <SuccessIcon /> : <FailedIcon />;
+    const icon = lastExecution.get('success') ? <SuccessIcon /> : <ErrorIcon />;
     return <span>{icon}{timeAgo.format(lastExecution.get('stop_date'))}</span>;
   }
   return <span><NotRunIcon />not yet</span>;
@@ -58,7 +57,7 @@ const recentExecutions = (workflow) => {
     return <span><NotRunIcon />No runs yet.</span>;
   }
   if (numFailed > 0) {
-    return <span><FailedIcon />{`${numFailed} failures out of recent ${numExecutions}`}</span>;
+    return <span><ErrorIcon />{`${numFailed} failures out of recent ${numExecutions}`}</span>;
   }
   return <span><SuccessIcon />{`${numExecutions} recent successful runs`}</span>;
 };
@@ -70,19 +69,6 @@ const runningStatus = (workflow) => {
   const numRunning = ws.getNumRunning(workflow);
   return `${numRunning} Running`;
 };
-
-
-/**
- * Shows a loading icon while props.isLoading. Once loading is complete the children are shown.
- */
-const Loading = (props) => {
-  if (props.isLoading()) {
-    return <Icon className="fa-circle-o-notch fa-spin fa-2x fa-fw" />;
-  }
-
-  return props.children;
-};
-
 
 /**
  * Defines the table body that displays workflow information
@@ -306,6 +292,4 @@ module.exports = { WorkflowStatusTable,
   parseJulian,
   lastCompleted,
   runningStatus,
-  SuccessIcon,
-  FailedIcon,
   NotRunIcon };

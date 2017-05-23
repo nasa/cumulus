@@ -1,7 +1,8 @@
 'use strict';
 
-const { lastCompleted, SuccessIcon, FailedIcon, NotRunIcon, parseJulian } =
+const { lastCompleted, NotRunIcon, parseJulian } =
   require('../../../app/scripts/components/landing-page/workflow-status-table');
+const { SuccessIcon, ErrorIcon } = require('../../../app/scripts/components/icon');
 
 const React = require('react');
 const { fromJS } = require('immutable');
@@ -25,7 +26,7 @@ describe('lastCompleted', () => {
     });
     it('and indicate failure', () => {
       const lastExecution = fromJS({ success: false, stop_date: twoHoursAgo });
-      expect(lastCompleted(lastExecution)).to.deep.equal(<span><FailedIcon />2 hours ago</span>);
+      expect(lastCompleted(lastExecution)).to.deep.equal(<span><ErrorIcon />2 hours ago</span>);
     });
   });
 });
