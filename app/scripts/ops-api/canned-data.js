@@ -401,4 +401,38 @@ const getWorkflowStatusResp =
     products: []
   }];
 
-module.exports = { getWorkflowStatusResp };
+const getServiceStatusResp =
+  [
+    {
+      service_name: 'GenerateMrf',
+      desired_count: 2,
+      running_tasks: [
+        {
+          started_at: '2017-05-23T11:40:34.729Z'
+        }
+      ]
+    },
+    {
+      service_name: 'SfnScheduler',
+      desired_count: 1,
+      running_tasks: []
+    },
+    {
+      service_name: 'OnEarth',
+      desired_count: 3,
+      running_tasks: [
+        {
+          started_at: '2017-05-17T15:09:46.169Z'
+        },
+        {
+          started_at: '2017-05-17T15:09:52.604Z'
+        },
+        {
+          started_at: '2017-05-17T15:09:48.299Z'
+        }
+      ]
+    }
+  ];
+
+
+module.exports = { getWorkflowStatusResp, getServiceStatusResp };

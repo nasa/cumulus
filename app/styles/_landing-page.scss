@@ -30,6 +30,14 @@ main {
   padding-left: 20px;
 }
 
+.service-stats-list {
+  list-style-type: none;
+
+  .service-name {
+    font-weight: bold;
+  }
+}
+
 .alerts-list {
   list-style-type: none;
   /* Undo default webkit settings for this */
