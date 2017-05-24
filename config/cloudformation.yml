@@ -5,6 +5,9 @@ Parameters:
   StackName:
     Type: String
     Description: Name of the (parent) stack name being created
+  OnEarthStackName:
+    Type: String
+    Description: Name of the OnEarth stack name being created
   PaaS:
     Description: If "true" the deployment is happening into the NGAP PaaS where possible
     Type: String
@@ -82,6 +85,35 @@ Resources:
               - es:*
             Resource:
               - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${StackName}-gibsesdomain/*"
+
+          # Allow querying cloudformation for resource ids of the OnEarth and main stacks
+          - Effect: Allow
+            Action:
+              - cloudformation:DescribeStackResources
+            Resource:
+              - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${StackName}*"
+          - Effect: Allow
+            Action:
+              - cloudformation:DescribeStackResources
+            Resource:
+              - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${OnEarthStackName}*"
+
+          # Allow describing tasks on ECS
+          - Effect: Allow
+            Action:
+              - ecs:ListTasks
+              - ecs:DescribeTasks
+              - ecs:DescribeServices
+            Resource:
+              # You can't be any more specific than this with the Describe*. Andrew said this is NGAP Kosher
+              - "*"
+          - Effect: Allow
+            Action:
+              - ecs:ListTasks
+              - ecs:DescribeTasks
+              - ecs:DescribeServices
+            Resource:
+              - "*"
 
   ApiRootPerm:
     Type: AWS::Lambda::Permission

@@ -20,42 +20,103 @@ Returns a list of configured ingest workflows along with recent executions.
 Params:
 
 * `stack_name` - The name of the deployed AWS CloudFormation stack containing Step Function State Machines.
-* `num_executions` - The number of executions to return with each workflow. Must be between 1 and 1000 inclusive.
 
 ```Bash
-curl "http://localhost:3000/workflow_status?stack_name=gitc-xx-sfn&num_executions=2"
+curl "http://localhost:3000/workflow_status?stack_name=gitc-xx"
 ```
 ```JSON
 [
   {
     "id": "DiscoverVIIRS",
     "name": "VIIRS Discovery",
-    "executions": [
+    "success_ratio": {
+      "successes": 322,
+      "total": 448
+    },
+    "ingest_perf": [
       {
-        "status": "SUCCEEDED",
-        "start_date": "2017-04-26T12:22:01.549Z",
-        "stop_date": "2017-04-26T12:25:23.765Z"
+        "50": 22000,
+        "95": 199650,
+        "date": 1495152000000
       },
+      ...
+    ],
+    "products": [
       {
-        "status": "SUCCEEDED",
-        "start_date": "2017-04-26T12:24:22.889Z",
-        "stop_date": "2017-04-26T12:24:43.933Z"
+        "id": "VNGCR_LQD_C1",
+        "last_granule_id": "2017142",
+        "last_execution": {
+          "stop_date": 1495458287000,
+          "success": true
+        },
+        "success_ratio": {
+          "successes": 108,
+          "total": 150
+        },
+        "ingest_perf": [
+          {
+            "50": 192000,
+            "95": 202900,
+            "date": 1495152000000
+          },
+          ...
+        ],
+        "num_running": 1
+      },
+      ...
+    ]
+  },
+  ...
+]
+```
+
+## /service_status
+
+Returns a list of statuses of the services running for GIBS
+
+Params:
+
+* `main_stack_name` - The name of main top level stack that contains ingest and other substacks.
+* `on_earth_stack_name` - The name of stack containing the on earth resources.
+
+```Bash
+curl 'http://localhost:3000/service_status?main_stack_name=gitc-xx&on_earth_stack_name=gibs-oe-xx'
+```
+
+The response contains the number of tasks that should be running for the service. Any running tasks are included in the service with the date at which they were started. A number of running tasks less than the desired count indicates that not enough tasks are running.
+
+```JSON
+[
+  {
+    "service_name": "GenerateMrf",
+    "desired_count": 2,
+    "running_tasks": [
+      {
+        "started_at": "2017-05-22T15:09:28.911Z"
       }
     ]
   },
   {
-    "id": "IngestVIIRS",
-    "name": "VIIRS Ingest",
-    "executions": [
+    "service_name": "SfnScheduler",
+    "desired_count": 1,
+    "running_tasks": [
       {
-        "status": "SUCCEEDED",
-        "start_date": "2017-04-26T12:25:23.563Z",
-        "stop_date": "2017-04-26T12:25:25.243Z"
+        "started_at": "2017-05-22T15:09:30.206Z"
+      }
+    ]
+  },
+  {
+    "service_name": "OnEarth",
+    "desired_count": 3,
+    "running_tasks": [
+      {
+        "started_at": "2017-05-17T15:09:46.169Z"
       },
       {
-        "status": "SUCCEEDED",
-        "start_date": "2017-04-26T12:25:18.622Z",
-        "stop_date": "2017-04-26T12:25:21.167Z"
+        "started_at": "2017-05-17T15:09:52.604Z"
+      },
+      {
+        "started_at": "2017-05-17T15:09:48.299Z"
       }
     ]
   }
