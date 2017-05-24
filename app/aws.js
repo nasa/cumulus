@@ -25,6 +25,8 @@ let esClient;
 const realServices = {
   s3: new AWS.S3(),
   stepFunctions: new AWS.StepFunctions(),
+  ecs: new AWS.ECS(),
+  cf: new AWS.CloudFormation(),
 
   // Getter for an elasticsearch client. It lazily constructs the client, since the host
   // may not enter the environment until a request is actually called
@@ -71,5 +73,7 @@ module.exports = {
   useReplacementServices,
   s3: () => currentServices.s3,
   stepFunctions: () => currentServices.stepFunctions,
-  es: () => currentServices.es
+  es: () => currentServices.es,
+  ecs: () => currentServices.ecs,
+  cf: () => currentServices.cf
 };
