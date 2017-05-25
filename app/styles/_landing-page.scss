@@ -26,6 +26,12 @@
   padding-right: 3px;
 }
 
+// Give spacing around buttons.
+.eui-btn {
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
 main {
   padding-left: 20px;
 }
@@ -33,9 +39,22 @@ main {
 .service-stats-list {
   list-style-type: none;
 
+  li {
+    padding-bottom: 0.5em;
+  }
   .service-name {
     font-weight: bold;
   }
+}
+
+// Defines a modal that is wider.
+.wide-modal {
+  width: 90%;
+  height: calc(100% - 200px);
+}
+
+.modal-pre {
+  height: calc(100% - 100px);
 }
 
 .alerts-list {
