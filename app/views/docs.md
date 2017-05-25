@@ -74,6 +74,8 @@ curl "http://localhost:3000/workflow_status?stack_name=gitc-xx"
 
 Returns a list of statuses of the services running for GIBS
 
+TODO update to add service events.
+
 Params:
 
 * `main_stack_name` - The name of main top level stack that contains ingest and other substacks.
