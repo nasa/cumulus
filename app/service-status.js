@@ -69,9 +69,14 @@ const getServiceStatus = async (arnOrClusterId, humanServiceName, serviceId) => 
     }).promise(),
     getRunningTasks(clusterId, serviceId)
   ]);
+  const service = serviceDesc.services[0];
   return {
     service_name: humanServiceName,
-    desired_count: serviceDesc.services[0].desiredCount,
+    desired_count: service.desiredCount,
+    events: service.events.map(e => ({
+      date: e.createdAt,
+      message: e.message
+    })),
     running_tasks: runningTasks
   };
 };
