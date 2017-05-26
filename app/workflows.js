@@ -5,14 +5,12 @@
  */
 
 /*eslint no-console: ["error", { allow: ["error"] }] */
-const { s3, stepFunctions } = require('./aws');
-const yaml = require('js-yaml');
-const { BadRequestError, handleError } = require('./api-errors');
+const { stepFunctions } = require('./aws');
+const { handleError } = require('./api-errors');
 const { fromJS, Map, List } = require('immutable');
 const WorkflowAggregator = require('./workflow-aggregator');
+const { loadCollectionConfig } = require('./collection-config');
 const { parseExecutionName } = require('./execution-name-parser');
-
-const COLLECTIONS_YAML = 'ingest/collections.yml';
 
 /**
  * getStateMachineArn - Returns the ARN of the state machine for the given stack with the given id.
@@ -54,48 +52,15 @@ const getRunningExecutions = async (stackName, workflowId) => {
 };
 
 /**
- * getCollectionsYaml - Fetches the collections yaml from S3.
- *
- * @param stackName Name of the step functions deployment stack.
- */
-const getCollectionsYaml = async (stackName) => {
-  try {
-    const resp = await s3().getObject(
-      { Bucket: `${stackName}-deploy`,
-        Key: COLLECTIONS_YAML }).promise();
-    return resp.Body.toString();
-  }
-  catch (error) {
-    if (error.code === 'NoSuchBucket') {
-      throw new BadRequestError(`Stack name [${stackName}] does not appear to exist`);
-    }
-    throw error;
-  }
-};
-
-/**
- * Parses the collection yaml into a Immutable JS javascript object.
- */
-const parseCollectionYaml = (collectionsYaml) => {
-  const resourceType = new yaml.Type('!GitcResource', {
-    kind: 'scalar'
-  });
-  const schema = yaml.Schema.create([resourceType]);
-  return fromJS(yaml.safeLoad(collectionsYaml, { schema: schema }));
-};
-
-/**
  * getWorkflowStatuses - Returns a list of workflow status results.
  *
  * @param  stackName     The name of the deployed cloud formation stack with AWS state machines.
  */
 const getWorkflowStatuses = async (stackName) => {
-  const collectionsYaml = await getCollectionsYaml(stackName);
-  const parsedYaml = parseCollectionYaml(collectionsYaml);
-
+  const collectionConfig = await loadCollectionConfig(stackName);
   const esWorkflowsById = await WorkflowAggregator.loadWorkflowsFromEs();
 
-  const workflowPromises = parsedYaml.get('workflows')
+  const workflowPromises = collectionConfig.get('workflows')
     .entrySeq()
     .map(async ([id, w]) => {
       const name = w.get('Comment');
@@ -135,7 +100,7 @@ const handleWorkflowStatusRequest = async (req, res) => {
   }
 };
 
-module.exports = { parseCollectionYaml,
+module.exports = {
   getStateMachineArn,
   getWorkflowStatuses,
   handleWorkflowStatusRequest };
