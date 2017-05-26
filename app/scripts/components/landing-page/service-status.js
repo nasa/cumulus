@@ -96,12 +96,12 @@ const SingleServiceStatus = ({ service }) => {
     text = `0/${desired_count} tasks running`;
   }
   return (
-    <span>
+    <div>
       {serviceIcon}
       <span className="service-name">{humanServiceName}</span>
-      &mdash; {text}
       <ServiceEventsModal service={service} />
-    </span>
+      <p className="service-status-desc">{text}</p>
+    </div>
   );
 };
 

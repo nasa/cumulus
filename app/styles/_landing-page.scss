@@ -44,6 +44,15 @@ main {
   }
   .service-name {
     font-weight: bold;
+    display: inline-block;
+    margin-left: 5px;
+    width: 120px;
+  }
+  .service-status-desc {
+    margin-top: 5px;
+    margin-left: 23px;
+    color: #95a5a6;
+    font-style: italic;
   }
 }
 
