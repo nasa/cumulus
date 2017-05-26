@@ -39,10 +39,10 @@ const ViewEventsButton = ({ serviceName }) =>
  * TODO
  */
 const getCombinedServiceEvents = ({ events }) =>
-  events.map(({ date, message }) => {
+  events.map(({ date, message, id }) => {
     const localDate = new Date(Date.parse(date)).toLocaleString();
-    return `${localDate} - ${message}`;
-  }).join('\n');
+    return <p key={id}>{`${localDate} - ${message}`}</p>;
+  });
 
 /**
  * TODO
@@ -55,7 +55,7 @@ const ServiceEventsModalFn = ({ service }) => {
       <ViewEventsButton serviceName={serviceName} />
       <div className="eui-modal-content wide-modal" id={modalDivId(serviceName)}>
         <h2>{humanServiceName} Events</h2>
-        <pre className="eui-info-box modal-pre">{getCombinedServiceEvents(service)}</pre>
+        <div className="eui-info-box modal-pre">{getCombinedServiceEvents(service)}</div>
       </div>
     </span>
   );
@@ -105,23 +105,41 @@ const SingleServiceStatus = ({ service }) => {
   );
 };
 
-
 /**
  * ServiceStatus - A section describing the status of the services of the system.
  */
 const ServiceStatusFn = (props) => {
   const services = props.serviceStatus.get('services') || List();
+  const connections = props.serviceStatus.get('connections') || Map();
   return (
     <div>
       <h2>Service Status</h2>
       <Loading isLoading={() => !props.serviceStatus.get('services')}>
-        <ul className="service-stats-list">
-          {
-            services.map(service =>
-              <li key={service.get('service_name')}><SingleServiceStatus service={service} /></li>
-            )
-          }
-        </ul>
+        <div>
+          <ul className="service-stats-list">
+            {
+              services.map(service =>
+                <li key={service.get('service_name')}><SingleServiceStatus service={service} /></li>
+              )
+            }
+          </ul>
+          <h3>Connections In Use</h3>
+          <ul className="connections-used-list">
+            {
+              connections.keySeq().map((provider) => {
+                const { connection_limit, used } = connections.get(provider);
+                const limitDesc = connection_limit === 'unlimited' ?
+                  connection_limit :
+                  `${used}/${connection_limit}`;
+                return (
+                  <li key={provider}>
+                    {provider} &mdash; {limitDesc}
+                  </li>
+                );
+              })
+            }
+          </ul>
+        </div>
       </Loading>
     </div>
   );
