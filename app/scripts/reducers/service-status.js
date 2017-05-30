@@ -10,6 +10,7 @@ const SERVICE_STATUS_RCVD = 'SERVICE_STATUS_RCVD';
 
 const initialState = Map(
   { services: null,
+    connections: null,
     inFlight: false,
     error: undefined });
 
@@ -21,7 +22,8 @@ const reducer = (state = initialState, action) => {
     case SERVICE_STATUS_IN_FLIGHT:
       return state.set('inFlight', true);
     case SERVICE_STATUS_RCVD:
-      return state.set('services', action.services)
+      return state.set('services', action.serviceStatus.get('services'))
+        .set('connections', action.serviceStatus.get('connections'))
         .set('inFlight', false)
         .set('error', action.error);
     default:
@@ -42,7 +44,7 @@ const fetchServiceStatus = async (config, dispatch) => {
   dispatch({ type: SERVICE_STATUS_IN_FLIGHT });
   try {
     const resp = await api.getServiceStatus(config);
-    dispatch({ type: SERVICE_STATUS_RCVD, services: resp });
+    dispatch({ type: SERVICE_STATUS_RCVD, serviceStatus: resp });
   }
   catch (e) {
     // eslint-disable-next-line no-console
