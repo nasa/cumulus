@@ -22,37 +22,33 @@ const showModalButtonId = serviceName => `btn-show-${serviceName}-events`;
 const modalDivId = serviceName => `modal-service-events-${serviceName}`;
 
 /**
- * TODO
- */
-const ViewEventsButton = ({ serviceName }) =>
-  <button
-    type="button"
-    className="eui-btn eui-btn--sm"
-    id={showModalButtonId(serviceName)}
-    name={modalDivId(serviceName)}
-    href={`#${modalDivId(serviceName)}`}
-  >
-    View Events
-  </button>;
-
-/**
- * TODO
+ * Returns an array of JSX elements displaying each service event.
  */
 const getCombinedServiceEvents = ({ events }) =>
   events.map(({ date, message, id }) => {
     const localDate = new Date(Date.parse(date)).toLocaleString();
+    // Separate paragraph elements let us put spacing between each line. Long lines are wrapped and
+    // extra spacing makes this more readable.
     return <p key={id}>{`${localDate} - ${message}`}</p>;
   });
 
 /**
- * TODO
+ * Returns the button and modal div for displaying service events.
  */
 const ServiceEventsModalFn = ({ service }) => {
   const serviceName = service.get('service_name');
   const humanServiceName = serviceNameToHumanName.get(serviceName);
   return (
     <span>
-      <ViewEventsButton serviceName={serviceName} />
+      <button
+        type="button"
+        className="eui-btn eui-btn--sm"
+        id={showModalButtonId(serviceName)}
+        name={modalDivId(serviceName)}
+        href={`#${modalDivId(serviceName)}`}
+      >
+        View Events
+      </button>
       <div className="eui-modal-content wide-modal" id={modalDivId(serviceName)}>
         <h2>{humanServiceName} Events</h2>
         <div className="eui-info-box modal-pre">{getCombinedServiceEvents(service)}</div>
@@ -62,7 +58,7 @@ const ServiceEventsModalFn = ({ service }) => {
 };
 
 /**
- * TODO
+ * Creates a button that will display the events associated with a service in a modal window.
  */
 const ServiceEventsModal = functional(
   ServiceEventsModalFn, {
@@ -105,6 +101,31 @@ const SingleServiceStatus = ({ service }) => {
   );
 };
 
+
+/**
+ * Displays a list of the number of connections in use for each provider. Takes a map of providers
+ * to counts of connections used.
+ */
+const ConnectionsUsed = ({ connections }) =>
+  <div>
+    <h3>Connections In Use</h3>
+    <ul className="connections-used-list">
+      {
+        connections.keySeq().map((provider) => {
+          const { connection_limit, used } = connections.get(provider);
+          const limitDesc = connection_limit === 'unlimited' ?
+            connection_limit :
+            `${used}/${connection_limit}`;
+          return (
+            <li key={provider}>
+              {provider} &mdash; {limitDesc}
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>;
+
 /**
  * ServiceStatus - A section describing the status of the services of the system.
  */
@@ -123,22 +144,7 @@ const ServiceStatusFn = (props) => {
               )
             }
           </ul>
-          <h3>Connections In Use</h3>
-          <ul className="connections-used-list">
-            {
-              connections.keySeq().map((provider) => {
-                const { connection_limit, used } = connections.get(provider);
-                const limitDesc = connection_limit === 'unlimited' ?
-                  connection_limit :
-                  `${used}/${connection_limit}`;
-                return (
-                  <li key={provider}>
-                    {provider} &mdash; {limitDesc}
-                  </li>
-                );
-              })
-            }
-          </ul>
+          <ConnectionsUsed connections={connections} />
         </div>
       </Loading>
     </div>
