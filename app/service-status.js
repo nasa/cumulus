@@ -31,7 +31,8 @@ const getStackResources = async (arnOrStackName) => {
 };
 
 /**
- * TODO
+ * Returns a map of providers to maps containing the number of connections used and the provider
+ * limit.
  */
 const getCurrentUseConnections = async (mainStackName, ingestStackResources) => {
   const connectsTable = ingestStackResources.getIn(['ConnectionsTable', 'PhysicalResourceId']);
