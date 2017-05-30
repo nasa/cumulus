@@ -17,18 +17,6 @@ const Header = () =>
           <span className="eui-badge--sm">BETA</span>
         </h1>
       </div>
-
-      <nav className="main-nav" role="navigation">
-        <ul className="main-nav-list">
-          <li>
-            {/* We'll eventually use links like this <Link to="/foo">Foo</Link> */}
-            <a href="/">Settings</a>
-          </li>
-          <li>
-            <a href="/">Login</a>
-          </li>
-        </ul>
-      </nav>
     </div>
   </header>;
 
