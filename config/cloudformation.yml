@@ -107,13 +107,13 @@ Resources:
             Resource:
               # You can't be any more specific than this with the Describe*. Andrew said this is NGAP Kosher
               - "*"
+
+          # Allow use of dynamo
           - Effect: Allow
             Action:
-              - ecs:ListTasks
-              - ecs:DescribeTasks
-              - ecs:DescribeServices
+            - dynamodb:Scan
             Resource:
-              - "*"
+            - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StackName}-*
 
   ApiRootPerm:
     Type: AWS::Lambda::Permission

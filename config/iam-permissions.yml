@@ -47,3 +47,4 @@ Resources:
               # - elasticsearch
               # - ecs
               # - cloudformation
+              # - dynamodb
