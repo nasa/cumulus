@@ -6,8 +6,9 @@
 
 /*eslint no-console: ["error", { allow: ["error"] }] */
 const { handleError } = require('./api-errors');
-const { ecs, cf } = require('./aws');
-const { fromJS } = require('immutable');
+const { ecs, cf, dynamoDB } = require('./aws');
+const { fromJS, Map } = require('immutable');
+const { loadCollectionConfig } = require('./collection-config');
 
 /**
  * Takes in what might be an ARN and if it is parses out the name. If it is not an ARN returns it
@@ -27,6 +28,31 @@ const getStackResources = async (arnOrStackName) => {
   const stackName = arnToName(arnOrStackName);
   const resp = fromJS(await cf().describeStackResources({ StackName: stackName }).promise());
   return resp.get('StackResources').groupBy(m => m.get('LogicalResourceId')).map(v => v.first());
+};
+
+/**
+ * Returns a map of providers to maps containing the number of connections used and the provider
+ * limit.
+ */
+const getCurrentUseConnections = async (mainStackName, ingestStackResources) => {
+  const connectsTable = ingestStackResources.getIn(['ConnectionsTable', 'PhysicalResourceId']);
+
+  const [collectionConfig, dbResult] = await Promise.all([
+    loadCollectionConfig(mainStackName),
+    dynamoDB().scan({ TableName: connectsTable }).promise()
+  ]);
+  const provUsedConns = dbResult.Items.reduce((m, { key, semvalue }) => (
+    m.set(key, semvalue)
+  ), Map());
+
+  return collectionConfig.get('providers').reduce((m, provider) => {
+    const id = provider.get('id');
+    const config = provider.get('config');
+    return m.set(id, Map({
+      connection_limit: config.get('global_connection_limit', 'unlimited'),
+      used: provUsedConns.get(id, 0)
+    }));
+  }, Map()).toJS();
 };
 
 // Potential performation optimization:
@@ -69,9 +95,15 @@ const getServiceStatus = async (arnOrClusterId, humanServiceName, serviceId) => 
     }).promise(),
     getRunningTasks(clusterId, serviceId)
   ]);
+  const service = serviceDesc.services[0];
   return {
     service_name: humanServiceName,
-    desired_count: serviceDesc.services[0].desiredCount,
+    desired_count: service.desiredCount,
+    events: service.events.map(e => ({
+      id: e.id,
+      date: e.createdAt,
+      message: e.message
+    })),
     running_tasks: runningTasks
   };
 };
@@ -81,11 +113,7 @@ const INGEST_SERVICE_NAMES = ['GenerateMrf', 'SfnScheduler'];
 /**
  * Returns a list of service statuses for the services associated with ingest.
  */
-const getIngestServicesStatus = async (stackName) => {
-  const mainStackResources = await getStackResources(stackName);
-  const ingestStackResources = await getStackResources(
-    mainStackResources.getIn(['IngestStack', 'PhysicalResourceId']));
-
+const getIngestServicesStatus = async (ingestStackResources) => {
   const clusterId = ingestStackResources.getIn(['IngestECSCluster', 'PhysicalResourceId']);
 
   return Promise.all(INGEST_SERVICE_NAMES.map(async (serviceName) => {
@@ -118,12 +146,20 @@ const getOnEarthServiceStatus = async (stackName) => {
  * Returns a list of the status of all the services.
  */
 const getServicesStatus = async (mainStackName, onEarthStackName) => {
-  const [ingestServicesStatus, onEarthStatus] = await Promise.all([
-    getIngestServicesStatus(mainStackName),
+  const mainStackResources = await getStackResources(mainStackName);
+  const ingestStackResources = await getStackResources(
+    mainStackResources.getIn(['IngestStack', 'PhysicalResourceId']));
+
+  const [providerToUsedConnections, ingestServicesStatus, onEarthStatus] = await Promise.all([
+    getCurrentUseConnections(mainStackName, ingestStackResources),
+    getIngestServicesStatus(ingestStackResources),
     getOnEarthServiceStatus(onEarthStackName)
   ]);
   ingestServicesStatus.push(onEarthStatus);
-  return ingestServicesStatus;
+  return {
+    services: ingestServicesStatus,
+    connections: providerToUsedConnections
+  };
 };
 
 /**
