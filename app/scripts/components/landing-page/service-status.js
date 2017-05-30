@@ -50,6 +50,7 @@ const ServiceEventsModalFn = ({ service }) => {
         View Events
       </button>
       <div className="eui-modal-content wide-modal" id={modalDivId(serviceName)}>
+        <button type="button" className="icon fa fa-close modal-close" />
         <h2>{humanServiceName} Events</h2>
         <div className="eui-info-box modal-pre">{getCombinedServiceEvents(service)}</div>
       </div>
@@ -66,7 +67,7 @@ const ServiceEventsModal = functional(
       const serviceName = service.get('service_name');
       // Use EUI recommended method for creating modal content.
       // eslint-disable-next-line no-undef
-      $(`#${showModalButtonId(serviceName)}`).leanModal();
+      $(`#${showModalButtonId(serviceName)}`).leanModal({ closeButton: '.modal-close' });
     }
   }
 );

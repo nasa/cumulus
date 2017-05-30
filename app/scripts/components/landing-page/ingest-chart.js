@@ -91,6 +91,7 @@ const guidToInlineId = guid => `inline-chart-${guid}`;
  */
 const ModalChart = ({ guid, chartData, title }) =>
   <div className="eui-modal-content" id={guidToModalId(guid)}>
+    <button type="button" className="icon fa fa-close modal-close" />
     <LineChart
       data={chartData}
       width={750}
@@ -140,7 +141,7 @@ const IngestChart = functional(
     componentDidMount: ({ guid }) => {
       // Use EUI recommended method for creating modal content.
       // eslint-disable-next-line no-undef
-      $(`#${guidToInlineId(guid)}`).leanModal();
+      $(`#${guidToInlineId(guid)}`).leanModal({ closeButton: '.modal-close' });
     }
   }
 );
