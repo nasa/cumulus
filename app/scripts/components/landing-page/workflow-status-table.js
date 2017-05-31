@@ -1,6 +1,7 @@
 const React = require('react');
 const CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup');
 const { connect } = require('react-redux');
+const { Link } = require('react-router-dom');
 const functional = require('react-functional');
 const { List } = require('immutable');
 const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
@@ -137,29 +138,35 @@ const parseJulian = (dateStr) => {
 /**
  * Defines a single row showing product information.
  */
-const ProductRow = ({ workflow, product }) =>
-  <tr key={product.get('id')}>
-    <td className="name-cell">
-      <div>{product.get('id')}</div>
-    </td>
-    <td><div>{lastCompleted(product.get('last_execution'))}</div></td>
-    <td>
-      <div>
-        {product.get('last_granule_id') ? parseJulian(product.get('last_granule_id')) : 'N/A'}
-      </div>
-    </td>
-    <td><div>{recentExecutions(product)}</div></td>
-    <td><div>{product.get('num_running')} Running</div></td>
-    <td>
-      <div>
-        <IngestChart
-          title={`${workflow.get('id')} Workflow - ${product.get('id')}`}
-          ingestPerf={product.get('ingest_perf')}
-          guid={`${workflow.get('id')}-${product.get('id')}`}
-        />
-      </div>
-    </td>
-  </tr>;
+const ProductRow = ({ workflow, product }) => {
+  const productId = product.get('id');
+  return (
+    <tr key={productId}>
+      <td className="name-cell">
+        <div>
+          <Link to={`/products/${productId}`}>{productId}</Link>
+        </div>
+      </td>
+      <td><div>{lastCompleted(product.get('last_execution'))}</div></td>
+      <td>
+        <div>
+          {product.get('last_granule_id') ? parseJulian(product.get('last_granule_id')) : 'N/A'}
+        </div>
+      </td>
+      <td><div>{recentExecutions(product)}</div></td>
+      <td><div>{product.get('num_running')} Running</div></td>
+      <td>
+        <div>
+          <IngestChart
+            title={`${workflow.get('id')} Workflow - ${productId}`}
+            ingestPerf={product.get('ingest_perf')}
+            guid={`${workflow.get('id')}-${product.get('id')}`}
+          />
+        </div>
+      </td>
+    </tr>
+  );
+};
 
 /**
  * Defines the table body that displays product information for all of the products in a workflow.

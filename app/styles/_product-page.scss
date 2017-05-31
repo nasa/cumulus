@@ -1,0 +1,39 @@
+.product-page {
+
+  .pill {
+    width: 80px;
+    display: inline-block;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    margin-right: 54px;
+  }
+
+  .execution-list {
+    list-style-type: none;
+  }
+
+  .execution-list-element {
+    margin-top: 25px;
+  }
+
+  .execution-list-element-header {
+    margin-bottom: 5px;
+  }
+
+  .execution-details-list {
+    list-style-type: none;
+  }
+
+  .details-list-label {
+    font-weight: bold;
+    display: inline-block;
+    width: 110px;
+  }
+
+
+  .execution-granule-id {
+    font-weight: bold;
+    margin-right: 10px;
+  }
+
+}

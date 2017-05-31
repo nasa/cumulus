@@ -36,7 +36,9 @@
 // Import other styles from here like so. These would be in files named like _base.scss
 // @import "base";
 
+@import "core";
 @import "header";
 
 @import "landing-page";
+@import "product-page";
 @import "workflow-status-table";
