@@ -191,11 +191,60 @@ const loadWorkflowsFromEs = async () => {
     }
   });
   // eslint-disable-next-line no-console
-  console.info(`Elasticsearch Time: ${Date.now() - startTime} ms`);
+  console.info(`Workflow Aggregation Elasticsearch Time: ${Date.now() - startTime} ms`);
   return parseElasticResponse(resp);
+};
+
+/**
+ * Parses the results of an Elasticsearch query for executions related to a collection.
+ */
+const parseCollectionSearchResponse = async (resp) => {
+  const extractFirst = v => (v ? v[0] : v);
+  return resp.hits.hits.map(item => ({
+    start_date: extractFirst(item.fields.start_date),
+    stop_date: extractFirst(item.fields.stop_date),
+    elapsed_ms: extractFirst(item.fields.elapsed_ms),
+    success: extractFirst(item.fields.success),
+    granule_id: extractFirst(item.fields.granule_id)
+  }));
+};
+
+/**
+ * Finds recent executions for a collection and returns them.
+ */
+const getCollectionCompletedExecutions = async (workflowId, collectionId, numExecutions) => {
+  const startTime = Date.now();
+  const resp = await es().search({
+    index: 'executions',
+    body: {
+      query: {
+        bool: {
+          must: [
+            { term: { workflow_id: workflowId } },
+            { term: { collection_id: collectionId } }
+          ]
+        }
+      },
+      size: numExecutions,
+      sort: [{ stop_date: 'desc' }],
+      stored_fields: [
+        'workflow_id',
+        'collection_id',
+        'granule_id',
+        'start_date',
+        'stop_date',
+        'elapsed_ms',
+        'success'
+      ]
+    }
+  });
+  // eslint-disable-next-line no-console
+  console.info(`Collection Search Elasticsearch Time: ${Date.now() - startTime} ms`);
+  return parseCollectionSearchResponse(resp);
 };
 
 module.exports = {
   loadWorkflowsFromEs,
+  getCollectionCompletedExecutions,
   // For testing
   parseElasticResponse };
