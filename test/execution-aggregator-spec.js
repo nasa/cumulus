@@ -1,6 +1,6 @@
 'use strict';
 
-const wa = require('../app/workflow-aggregator');
+const ea = require('../app/execution-aggregator');
 const fs = require('fs');
 
 const chai = require('chai');
@@ -10,7 +10,7 @@ describe('parseElasticResponse', () =>
   it('parse sample yaml', () => {
     const resp = JSON.parse(fs.readFileSync('./test/sample-workflow-es-resp.json'));
     const workflows = JSON.parse(fs.readFileSync('./test/sample-workflow-parsed.json'));
-    const parsed = wa.parseElasticResponse(resp);
+    const parsed = ea.parseElasticResponse(resp);
     expect(parsed).to.eql(workflows);
   })
 );

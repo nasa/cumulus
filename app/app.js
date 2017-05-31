@@ -13,6 +13,7 @@ const { es } = require('./aws');
 const { handleError } = require('./api-errors');
 const { handleWorkflowStatusRequest } = require('./workflows');
 const { handleServiceStatusRequest } = require('./service-status');
+const { handleProductStatusRequest } = require('./product-status');
 
 const app = express();
 app.use(compression());
@@ -60,6 +61,10 @@ module.exports = (cb = null) => {
 
   app.get('/service_status', (req, res) => {
     handleServiceStatusRequest(req, res);
+  });
+
+  app.get('/product_status', (req, res) => {
+    handleProductStatusRequest(req, res);
   });
 
   // Add an error handler last
