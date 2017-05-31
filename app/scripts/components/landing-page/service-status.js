@@ -2,13 +2,11 @@ const React = require('react');
 const { connect } = require('react-redux');
 const functional = require('react-functional');
 const { SuccessIcon, ErrorIcon } = require('../icon');
+const util = require('../../util');
 const { Loading } = require('../loading');
 const { List, Map } = require('immutable');
 const ss = require('../../reducers/service-status');
 
-const JsTimeAgo = require('javascript-time-ago');
-JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
-const timeAgo = new JsTimeAgo('en-US');
 
 const serviceNameToHumanName = Map({
   GenerateMrf: 'MRF Generator',
@@ -86,7 +84,7 @@ const SingleServiceStatus = ({ service }) => {
   }
   let text;
   if (numRunning > 0) {
-    const dateStr = timeAgo.format(mostRecentStartDate);
+    const dateStr = util.humanTimeSince(mostRecentStartDate);
     text = `${numRunning}/${desired_count} tasks running since ${dateStr}`;
   }
   else {

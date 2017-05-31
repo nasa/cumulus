@@ -3,6 +3,7 @@ const { combineReducers } = require('redux-immutable');
 const apiHealth = require('./reducers/api-health').reducer;
 const workflowStatus = require('./reducers/workflow-status').reducer;
 const serviceStatus = require('./reducers/service-status').reducer;
+const productStatus = require('./reducers/product-status').reducer;
 
 const { config } = require('./config');
 
@@ -10,7 +11,8 @@ const reducerCombiner = combineReducers({
   config: currConfig => currConfig || config,
   apiHealth,
   workflowStatus,
-  serviceStatus
+  serviceStatus,
+  productStatus
 });
 
 export default (state, action) => {

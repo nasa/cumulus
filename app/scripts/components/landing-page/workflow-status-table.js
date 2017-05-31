@@ -8,10 +8,7 @@ const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
 const { Loading } = require('../loading');
 const { IngestChart } = require('./ingest-chart');
 const ws = require('../../reducers/workflow-status');
-
-const JsTimeAgo = require('javascript-time-ago');
-JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
-const timeAgo = new JsTimeAgo('en-US');
+const util = require('../../util');
 
 const NotRunIcon = () => <Icon className="fa-circle-o icon-disabled" />;
 
@@ -44,7 +41,7 @@ const SortIcon = ({ isSorted, sortDirectionAsc }) => {
 const lastCompleted = (lastExecution) => {
   if (lastExecution) {
     const icon = lastExecution.get('success') ? <SuccessIcon /> : <ErrorIcon />;
-    return <span>{icon}{timeAgo.format(lastExecution.get('stop_date'))}</span>;
+    return <span>{icon}{util.humanTimeSince(lastExecution.get('stop_date'))}</span>;
   }
   return <span><NotRunIcon />not yet</span>;
 };
@@ -144,7 +141,7 @@ const ProductRow = ({ workflow, product }) => {
     <tr key={productId}>
       <td className="name-cell">
         <div>
-          <Link to={`/products/${productId}`}>{productId}</Link>
+          <Link to={`/workflows/${workflow.get('id')}/products/${productId}`}>{productId}</Link>
         </div>
       </td>
       <td><div>{lastCompleted(product.get('last_execution'))}</div></td>

@@ -63,7 +63,7 @@ ReactDOM.render(
     <ConnectedRouter history={history}>
       <Switch>
         <Route exact path="/" component={LandingPage} />
-        <Route exact path="/products/:id" component={ProductPage} />
+        <Route exact path="/workflows/:workflowId/products/:productId" component={ProductPage} />
         <Route path="/error" component={ErrorPage} />
         <Route component={NotFoundPage} />
       </Switch>

@@ -6,5 +6,7 @@ module.exports = {
   // The name of the on earth stack
   onEarthStackName: 'gibs-oe-jg',
   // Indicates whether we should use canned data or make a real request to the API.
-  useCannedData: false
+  useCannedData: false,
+  // The number of executions to display in a list.
+  numExecutions: 20
 };
