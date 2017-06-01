@@ -1,0 +1,51 @@
+.product-page {
+
+  .performance-chart {
+    margin-left: 50px;
+    margin-right: 50px;
+    max-height: 300px;
+    max-width: 1200px;
+
+    canvas{
+      width: 100% !important;
+      max-width: 1200px;
+      height: auto !important;
+    }
+  }
+
+  .status-cell {
+    color: #fff;
+
+    .icon {
+      color: white;
+    }
+  }
+
+  .even-row {
+    .running-status {
+      background: rgb(34, 118, 172);
+    }
+
+    .success-status {
+      background: rgb(24, 156, 84);
+    }
+
+    .fail-status {
+      background: rgb(179, 36, 28);
+    }
+  }
+  .odd-row {
+    .running-status {
+      background: rgb(27, 111, 165);
+    }
+
+    .success-status {
+      background: rgb(17, 149, 77);
+    }
+
+    .fail-status {
+      background: rgb(172, 29, 21);
+    }
+  }
+
+}

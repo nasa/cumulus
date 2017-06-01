@@ -37,12 +37,12 @@ const getWorkflowStatus = async (config) => {
   return fromJS(workflows);
 };
 
- /**
-  * getServiceStatus - Fetches the list of service status details.
-  *
-  * @param  config APP configuration
-  * @return A promise delivering the list of service statuses.
-  */
+/**
+ * getServiceStatus - Fetches the list of service status details.
+ *
+ * @param  config APP configuration
+ * @return A promise delivering the list of service statuses.
+ */
 const getServiceStatus = async (config) => {
   let services;
   if (config.get('useCannedData')) {
@@ -60,8 +60,34 @@ const getServiceStatus = async (config) => {
   return fromJS(services);
 };
 
+/**
+ * getProductStatus - Fetches the list of product status details.
+ *
+ * @param  config APP configuration
+ * @return A promise delivering the list of product statuses.
+ */
+const getProductStatus = async (config, workflowId, collectionId) => {
+  let products;
+  if (config.get('useCannedData')) {
+    products = canned.getProductStatusResp;
+  }
+  else {
+    products = await rp(
+      { uri: `${config.get('apiBaseUrl')}/product_status`,
+        qs: {
+          stack_name: config.get('stackName'),
+          workflow_id: workflowId,
+          collection_id: collectionId,
+          num_executions: config.get('numExecutions')
+        },
+        json: true });
+  }
+  return fromJS(products);
+};
+
 module.exports = {
   getApiHealth,
   getWorkflowStatus,
-  getServiceStatus
+  getServiceStatus,
+  getProductStatus
 };

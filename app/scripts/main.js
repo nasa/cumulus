@@ -13,6 +13,7 @@ const { ConnectedRouter, routerMiddleware } = require('react-router-redux');
 const NotFoundPage = require('./components/not-found-page').default;
 const ErrorPage = require('./components/error-page').default;
 const LandingPage = require('./components/landing-page').default;
+const { ProductPage } = require('./components/product-page');
 
 // Reducers
 const reducers = require('./reducers').default;
@@ -62,6 +63,7 @@ ReactDOM.render(
     <ConnectedRouter history={history}>
       <Switch>
         <Route exact path="/" component={LandingPage} />
+        <Route exact path="/workflows/:workflowId/products/:productId" component={ProductPage} />
         <Route path="/error" component={ErrorPage} />
         <Route component={NotFoundPage} />
       </Switch>

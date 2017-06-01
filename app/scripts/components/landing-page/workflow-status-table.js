@@ -1,18 +1,18 @@
 const React = require('react');
 const CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup');
 const { connect } = require('react-redux');
+const { Link } = require('react-router-dom');
 const functional = require('react-functional');
 const { List } = require('immutable');
 const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
 const { Loading } = require('../loading');
-const { IngestChart } = require('./ingest-chart');
+const { InlineClickablePerformanceChart } = require('../performance-chart');
 const ws = require('../../reducers/workflow-status');
-
-const JsTimeAgo = require('javascript-time-ago');
-JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
-const timeAgo = new JsTimeAgo('en-US');
+const util = require('../../util');
 
 const NotRunIcon = () => <Icon className="fa-circle-o icon-disabled" />;
+
+/* eslint-disable camelcase */
 
 /**
  *  Icon to represent collapsed and expanded workflow rows
@@ -43,7 +43,7 @@ const SortIcon = ({ isSorted, sortDirectionAsc }) => {
 const lastCompleted = (lastExecution) => {
   if (lastExecution) {
     const icon = lastExecution.get('success') ? <SuccessIcon /> : <ErrorIcon />;
-    return <span>{icon}{timeAgo.format(lastExecution.get('stop_date'))}</span>;
+    return <span>{icon}{util.humanTimeSince(lastExecution.get('stop_date'))}</span>;
   }
   return <span><NotRunIcon />not yet</span>;
 };
@@ -96,9 +96,9 @@ const WorkflowTbody = connect()((props) => {
         <td>{recentExecutions(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
         <td>
-          <IngestChart
+          <InlineClickablePerformanceChart
             title={`${workflow.get('id')} Workflow`}
-            ingestPerf={workflow.get('ingest_perf', List())}
+            perfData={workflow.get('performance', List())}
             guid={workflow.get('id')}
           />
         </td>
@@ -108,58 +108,39 @@ const WorkflowTbody = connect()((props) => {
 });
 
 /**
- * Parses a julian date like '2014130' and returns a string formatted date of YYYY-MM-DD
- */
-const parseJulian = (dateStr) => {
-  // Parse out the components of a julian date string.
-  const match = dateStr.match(/^(\d\d\d\d)(\d+)$/);
-  if (!match) {
-    return 'Invalid date';
-  }
-  const [_, yearStr, dayOfYearStr] = match;
-  const year = Number(yearStr);
-  const dayOfYear = Number(dayOfYearStr);
-
-  // Calculate date from Julian date
-  const daysSinceJanFirst = dayOfYear - 1;
-  const msSinceJanFirst = daysSinceJanFirst * 24 * 3600 * 1000;
-  const yearMs = Date.UTC(year, 0);
-  const date = new Date(yearMs + msSinceJanFirst);
-
-  // Format the date string
-  const zeroPad = n => (n < 10 ? `0${n}` : n);
-  const y = date.getUTCFullYear();
-  const m = date.getUTCMonth() + 1;
-  const d = date.getUTCDate();
-  return `${y}-${zeroPad(m)}-${zeroPad(d)}`;
-};
-
-/**
  * Defines a single row showing product information.
  */
-const ProductRow = ({ workflow, product }) =>
-  <tr key={product.get('id')}>
-    <td className="name-cell">
-      <div>{product.get('id')}</div>
-    </td>
-    <td><div>{lastCompleted(product.get('last_execution'))}</div></td>
-    <td>
-      <div>
-        {product.get('last_granule_id') ? parseJulian(product.get('last_granule_id')) : 'N/A'}
-      </div>
-    </td>
-    <td><div>{recentExecutions(product)}</div></td>
-    <td><div>{product.get('num_running')} Running</div></td>
-    <td>
-      <div>
-        <IngestChart
-          title={`${workflow.get('id')} Workflow - ${product.get('id')}`}
-          ingestPerf={product.get('ingest_perf')}
-          guid={`${workflow.get('id')}-${product.get('id')}`}
-        />
-      </div>
-    </td>
-  </tr>;
+const ProductRow = ({ workflow, product }) => {
+  const productId = product.get('id');
+  const workflowId = workflow.get('id');
+  const { last_execution, last_granule_id, num_running, performance } = product;
+  return (
+    <tr key={productId}>
+      <td className="name-cell">
+        <div>
+          <Link to={`/workflows/${workflowId}/products/${productId}`}>{productId}</Link>
+        </div>
+      </td>
+      <td><div>{lastCompleted(last_execution)}</div></td>
+      <td>
+        <div>
+          {last_granule_id ? util.parseJulian(last_granule_id) : 'N/A'}
+        </div>
+      </td>
+      <td><div>{recentExecutions(product)}</div></td>
+      <td><div>{num_running} Running</div></td>
+      <td>
+        <div>
+          <InlineClickablePerformanceChart
+            title={`${workflowId} Workflow - ${productId}`}
+            perfData={performance}
+            guid={`${workflowId}-${productId}`}
+          />
+        </div>
+      </td>
+    </tr>
+  );
+};
 
 /**
  * Defines the table body that displays product information for all of the products in a workflow.
@@ -218,12 +199,13 @@ const WorkflowStatusTableFn = (props) => {
   const dispatch = props.dispatch;
   const sort = props.workflowStatus.get('sort');
   const workflows = props.workflowStatus.get('workflows') || List();
+  const expandedWorkflows = props.workflowStatus.get('expandedWorkflows');
   return (
     <div>
       <h2>Workflow Status</h2>
       <Loading isLoading={() => !props.workflowStatus.get('workflows')}>
         <table
-          className="workflow-status-table"
+          className="workflow-status-table wide-table"
         >
           <thead>
             <tr>
@@ -259,13 +241,17 @@ const WorkflowStatusTableFn = (props) => {
                 sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NUM_RUNNING))}
               />
               <Th
-                title="Ingest Performance"
+                title="Workflow Performance"
               />
             </tr>
           </thead>
-          {workflows.map(w =>
-            [<WorkflowTbody workflow={w} />, <ProductTbody workflow={w} />]
-          )}
+          {workflows.map((w) => {
+            const workflowWithExpanded = w.set('expanded', expandedWorkflows.contains(w.get('id')));
+            return ([
+              <WorkflowTbody workflow={workflowWithExpanded} />,
+              <ProductTbody workflow={workflowWithExpanded} />
+            ]);
+          })}
 
         </table>
       </Loading>
@@ -289,7 +275,6 @@ const WorkflowStatusTable = connect(workflowStatusStateToProps)(
 
 module.exports = { WorkflowStatusTable,
   // For Testing
-  parseJulian,
   lastCompleted,
   runningStatus,
   NotRunIcon };

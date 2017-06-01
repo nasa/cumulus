@@ -1081,5 +1081,113 @@ const getServiceStatusResp =
     }
   };
 
+const getProductStatusResp =
+  {
+    running_executions: [
+      {
+        start_date: '2017-06-01T17:27:58.246Z',
+        granule_id: '2017152',
+        current_state: 'MRFGen'
+      },
+      {
+        start_date: '2017-05-30T18:08:42.237Z',
+        granule_id: '2017150',
+        current_state: 'MRFGen'
+      },
+      {
+        start_date: '2017-05-30T17:17:39.370Z',
+        granule_id: '2017150',
+        current_state: 'MRFGen'
+      },
+      {
+        start_date: '2017-05-27T09:27:19.326Z',
+        granule_id: '2017147',
+        current_state: 'MRFGen'
+      },
+      {
+        start_date: '2017-05-22T13:58:27.809Z',
+        granule_id: '2017142',
+        current_state: 'MRFGen'
+      }
+    ],
+    completed_executions: [
+      {
+        start_date: '2017-06-01T17:12:59.000Z',
+        stop_date: '2017-06-01T17:18:56.000Z',
+        elapsed_ms: 357000,
+        success: true,
+        granule_id: '2017152'
+      },
+      {
+        start_date: '2017-06-01T17:12:58.000Z',
+        stop_date: '2017-06-01T17:13:06.000Z',
+        elapsed_ms: 8000,
+        success: true,
+        granule_id: '2017146'
+      },
+      {
+        start_date: '2017-06-01T17:12:59.000Z',
+        stop_date: '2017-06-01T17:13:05.000Z',
+        elapsed_ms: 6000,
+        success: true,
+        granule_id: '2017148'
+      },
+      {
+        start_date: '2017-06-01T17:12:59.000Z',
+        stop_date: '2017-06-01T17:13:05.000Z',
+        elapsed_ms: 6000,
+        success: true,
+        granule_id: '2017145'
+      },
+      {
+        start_date: '2017-06-01T17:12:59.000Z',
+        stop_date: '2017-06-01T17:13:05.000Z',
+        elapsed_ms: 6000,
+        success: true,
+        granule_id: '2017143'
+      }
+    ],
+    ingest_perf: [
+      {
+        50: 2000,
+        95: 252300.00000000064,
+        date: 1495670400000
+      },
+      {
+        50: 2000,
+        95: 213700.00000000003,
+        date: 1495756800000
+      },
+      {
+        50: 1000,
+        95: 198799.99999999994,
+        date: 1495843200000
+      },
+      {
+        50: 1000,
+        95: 200849.9999999993,
+        date: 1495929600000
+      },
+      {
+        date: 1496016000000
+      },
+      {
+        50: 4000,
+        95: 215999.9999999968,
+        date: 1496102400000
+      },
+      {
+        50: 5000,
+        95: 257399.99999999988,
+        date: 1496188800000
+      },
+      {
+        50: 4000,
+        95: 251799.99999999994,
+        date: 1496275200000
+      }
+    ]
+  };
 
-module.exports = { getWorkflowStatusResp, getServiceStatusResp };
+
+module.exports = { getWorkflowStatusResp, getServiceStatusResp, getProductStatusResp };

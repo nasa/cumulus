@@ -2,7 +2,7 @@
  * Handles fetching and saving the workflow status in the state. Workflow status the name, and
  * execution dates of the workflows.
  */
-const { Map, List } = require('immutable');
+const { Map, List, Set } = require('immutable');
 const api = require('../ops-api');
 
 // Actions
@@ -26,6 +26,7 @@ const SORT_NUM_RUNNING = 'SORT_NUM_RUNNING';
 
 const initialState = Map(
   { workflows: null,
+    expandedWorkflows: Set(),
     sort: Map({ field: SORT_NONE, ascending: true }),
     inFlight: false,
     error: undefined });
@@ -153,14 +154,10 @@ const reducer = (state = initialState, action) => {
     case WORKFLOW_CHANGE_SORT:
       return sortWorkflows(state, action.field);
     case WORKFLOW_COLLAPSE_EXPAND:
-      // Find the workflow that was collapsed or expanded and reverse it.
-      return state.updateIn(['workflows'], workflows =>
-        workflows.map((w) => {
-          if (w.get('name') === action.workflowName) {
-            return w.updateIn(['expanded'], v => !v);
-          }
-          return w;
-        }));
+      if (state.get('expandedWorkflows').contains(action.workflowId)) {
+        return state.updateIn(['expandedWorkflows'], ws => ws.remove(action.workflowId));
+      }
+      return state.updateIn(['expandedWorkflows'], ws => ws.add(action.workflowId));
     default:
       return state;
   }
@@ -179,7 +176,7 @@ const changeSort = field => ({ type: WORKFLOW_CHANGE_SORT, field: field });
  * Creates an action that will reverse the collapsed/expanded state of a workflow.
  */
 const collapseExpandWorkflow = workflow =>
-  ({ type: WORKFLOW_COLLAPSE_EXPAND, workflowName: workflow.get('name') });
+  ({ type: WORKFLOW_COLLAPSE_EXPAND, workflowId: workflow.get('id') });
 
 /**
  * fetchWorkflowStatus - An action creator that initiates a request to fetch the workflow status

@@ -1,0 +1,80 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Icons
+.icon {
+  margin-right: 7px;
+}
+
+.icon-success {
+  color: #189c54;
+}
+
+.icon-alert {
+  color: #b3241c;
+}
+
+.icon-disabled {
+  color: #95a5a6;
+}
+
+.icon-sort {
+  line-height: 1.5em;
+  float: right;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// EUI customization
+
+.eui-icon {
+  /* Add space to the right of the icon when used on a button.*/
+  padding-right: 3px;
+}
+
+// Give spacing around buttons.
+.eui-btn {
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.eui-breadcrumbs {
+  margin-top: 20px;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Main sections
+
+main {
+  padding-left: 20px;
+}
+
+.wide-table {
+  width: calc(100% - 20px);
+  margin-right: 20px;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Modals
+
+// Defines a modal that is wider.
+.wide-modal {
+  width: 90%;
+  height: calc(100% - 200px);
+}
+
+/**
+ * Styles the close button of the modal
+ */
+.modal-close {
+  float: right;
+  border: none;
+  background: white;
+}
+
+.modal-pre {
+  height: calc(100% - 100px);
+  font-family: monospace;
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}

@@ -12,7 +12,6 @@ const Icon = props =>
 const SuccessIcon = () => <Icon className="fa-check-circle icon-success" />;
 const ErrorIcon = () => <Icon className="fa-exclamation-triangle icon-alert" />;
 
-
 module.exports = {
   Icon,
   SuccessIcon,
