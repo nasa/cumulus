@@ -13,7 +13,8 @@ const util = require('../util');
 /* eslint-disable camelcase */
 
 /**
- * TODO
+ * Parses out the workflow id and product id from the location path of the page. Expected that it
+ * will look like /workflows/:workflowId/products/:productId
  */
 const parsePathIds = (props) => {
   const parts = props.location.pathname.split('/');
@@ -23,9 +24,6 @@ const parsePathIds = (props) => {
 };
 
 const RunningIcon = () => <Icon className="fa-repeat icon-running" />;
-
-// TODO the presence of the last pages product status causes this to show the old stuff
-// first before showing the correct data.
 
 const RunningCell = () =>
   <td className="status-cell running-status">
@@ -46,7 +44,8 @@ const FailCell = () =>
   </td>;
 
 /**
- * TODO
+ * Returns a table containing information about the running and completed executions for the
+ * product.
  */
 const ExecutionTable = (props) => {
   const { running_executions, completed_executions } = props.productStatus;
@@ -76,7 +75,7 @@ const ExecutionTable = (props) => {
               className={rowClassName(rowIndex)}
             >
               <RunningCell />
-              <td>{util.parseJulian(granule_id)}</td>
+              <td>{granule_id ? util.parseJulian(granule_id) : 'N/A'}</td>
               <td>{util.dateStringToLocaleString(start_date)}</td>
               <td />
               <td>{util.humanDuration(msSinceStart)}</td>
@@ -94,7 +93,7 @@ const ExecutionTable = (props) => {
               className={rowClassName(rowIndex)}
             >
               {success ? <SuccessCell /> : <FailCell />}
-              <td>{util.parseJulian(granule_id)}</td>
+              <td>{granule_id ? util.parseJulian(granule_id) : 'N/A'}</td>
               <td>{util.dateStringToLocaleString(start_date)}</td>
               <td>{util.dateStringToLocaleString(stop_date)}</td>
               <td>{util.humanDuration(elapsed_ms)}</td>
@@ -159,4 +158,8 @@ const productPageMount = (props) => {
 const ProductPage = connect(productPageStateToProps)(
  functional(ProductPageFn, { componentWillMount: productPageMount }));
 
-export default ProductPage;
+module.exports = {
+  ProductPage,
+  // Testing
+  parsePathIds
+};

@@ -13,7 +13,7 @@ const { ConnectedRouter, routerMiddleware } = require('react-router-redux');
 const NotFoundPage = require('./components/not-found-page').default;
 const ErrorPage = require('./components/error-page').default;
 const LandingPage = require('./components/landing-page').default;
-const ProductPage = require('./components/product-page').default;
+const { ProductPage } = require('./components/product-page');
 
 // Reducers
 const reducers = require('./reducers').default;

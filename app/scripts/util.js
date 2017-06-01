@@ -4,8 +4,6 @@ JsTimeAgo.locale(require('javascript-time-ago/locales/en'));
 const timeAgo = new JsTimeAgo('en-US');
 const fuzzyStyle = timeAgo.style.fuzzy();
 
-// TODO write tests for these functions
-
 /**
  * Returns how long ago in human terms a date occurred
  */
@@ -15,9 +13,11 @@ const humanTimeSince = dateInt => timeAgo.format(dateInt);
  * Returns a human styled duration from the given number of milliseconds.
  */
 const humanDuration = (ms) => {
-  if (ms < 60000) {
-    // TODO this returns fractional seconds when it should not.
+  if (ms < 1000) {
     return `${ms / 1000} seconds`;
+  }
+  if (ms < 60000) {
+    return `${Math.round(ms / 1000)} seconds`;
   }
   return timeAgo.format(Date.now() - ms, fuzzyStyle);
 };

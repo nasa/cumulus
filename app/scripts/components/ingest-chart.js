@@ -85,7 +85,7 @@ const ingestPerfToChartData = (ingestPerf) => {
 };
 
 /**
- * TODO
+ * Displays a line chart of ingest performance data.
  */
 const IngestChart = ({ ingestPerf, title }) =>
   <div className="ingest-chart">
