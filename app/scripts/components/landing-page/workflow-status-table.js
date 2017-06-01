@@ -6,7 +6,7 @@ const functional = require('react-functional');
 const { List } = require('immutable');
 const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
 const { Loading } = require('../loading');
-const { InlineClickableIngestChart } = require('../ingest-chart');
+const { InlineClickablePerformanceChart } = require('../performance-chart');
 const ws = require('../../reducers/workflow-status');
 const util = require('../../util');
 
@@ -96,9 +96,9 @@ const WorkflowTbody = connect()((props) => {
         <td>{recentExecutions(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
         <td>
-          <InlineClickableIngestChart
+          <InlineClickablePerformanceChart
             title={`${workflow.get('id')} Workflow`}
-            ingestPerf={workflow.get('ingest_perf', List())}
+            perfData={workflow.get('performance', List())}
             guid={workflow.get('id')}
           />
         </td>
@@ -113,7 +113,7 @@ const WorkflowTbody = connect()((props) => {
 const ProductRow = ({ workflow, product }) => {
   const productId = product.get('id');
   const workflowId = workflow.get('id');
-  const { last_execution, last_granule_id, num_running, ingest_perf } = product;
+  const { last_execution, last_granule_id, num_running, performance } = product;
   return (
     <tr key={productId}>
       <td className="name-cell">
@@ -131,9 +131,9 @@ const ProductRow = ({ workflow, product }) => {
       <td><div>{num_running} Running</div></td>
       <td>
         <div>
-          <InlineClickableIngestChart
+          <InlineClickablePerformanceChart
             title={`${workflowId} Workflow - ${productId}`}
-            ingestPerf={ingest_perf}
+            perfData={performance}
             guid={`${workflowId}-${productId}`}
           />
         </div>
@@ -241,7 +241,7 @@ const WorkflowStatusTableFn = (props) => {
                 sortHandler={_ => dispatch(ws.changeSort(ws.SORT_NUM_RUNNING))}
               />
               <Th
-                title="Ingest Performance"
+                title="Workflow Performance"
               />
             </tr>
           </thead>

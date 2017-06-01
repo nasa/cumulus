@@ -6,7 +6,7 @@ const { List, Map } = require('immutable');
 const Header = require('./header').default;
 const { Loading } = require('./loading');
 const { SuccessIcon, ErrorIcon, Icon } = require('./icon');
-const { IngestChart } = require('./ingest-chart');
+const { PerformanceChart } = require('./performance-chart');
 const ps = require('../reducers/product-status');
 const util = require('../util');
 
@@ -128,9 +128,9 @@ const ProductPageFn = (props) => {
         <h1>Collection {productId}</h1>
         <Loading isLoading={() => !props.productStatus.get('productStatus')}>
           <div>
-            <IngestChart
+            <PerformanceChart
               title={`${workflowId} Workflow ${productId} Performance`}
-              ingestPerf={productStatus.get('ingest_perf', List())}
+              perfData={productStatus.get('performance', List())}
             />
             <h2>Executions</h2>
             <ExecutionTable productStatus={productStatus} />

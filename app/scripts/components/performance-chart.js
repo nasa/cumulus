@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Defines a chart for displaying Ingest performance.
+ * Defines a chart for displaying workflow performance.
  */
 
 const React = require('react');
@@ -67,15 +67,15 @@ const inlineChartOptions = {
 };
 
 /**
- * Takes ingest performance and converts it into the data that can be displayed in the chart.
+ * Takes performance data and converts it into the data that can be displayed in the chart.
  */
-const ingestPerfToChartData = (ingestPerf) => {
-  if (ingestPerf.isEmpty()) {
+const perfDataToChartData = (perfData) => {
+  if (perfData.isEmpty()) {
     return { datasets: [] };
   }
-  const percentiles = ingestPerf.first().keySeq().filter(k => k !== 'date').toArray();
+  const percentiles = perfData.first().keySeq().filter(k => k !== 'date').toArray();
   const datasets = percentiles.map((p) => {
-    const points = ingestPerf.map(perf => ({
+    const points = perfData.map(perf => ({
       x: perf.get('date'),
       y: Math.round(perf.get(p)) / 1000
     })).toArray();
@@ -85,16 +85,15 @@ const ingestPerfToChartData = (ingestPerf) => {
 };
 
 /**
- * Displays a line chart of ingest performance data.
+ * Displays a line chart of workflow performance data.
  */
-const IngestChart = ({ ingestPerf, title }) =>
-  <div className="ingest-chart">
+const PerformanceChart = ({ perfData, title }) =>
+  <div className="performance-chart">
     <LineChart
-      data={ingestPerfToChartData(ingestPerf)}
+      data={perfDataToChartData(perfData)}
       options={regularChartOptions(title)}
     />
   </div>;
-
 
 /**
  * Converts a GUID to a unique DOM node id for the modal chart.
@@ -140,10 +139,10 @@ const InlineChart = ({ guid, chartData }) =>
   </div>;
 
 /**
- * Defines the ingest chart with an inline chart that when clicked shows a larger modal chart.
+ * Defines the performance chart with an inline chart that when clicked shows a larger modal chart.
  */
-const InlineClickableIngestChartFn = ({ ingestPerf, guid, title }) => {
-  const chartData = ingestPerfToChartData(ingestPerf);
+const InlineClickablePerformanceChartFn = ({ perfData, guid, title }) => {
+  const chartData = perfDataToChartData(perfData);
 
   return (
     <div>
@@ -154,11 +153,11 @@ const InlineClickableIngestChartFn = ({ ingestPerf, guid, title }) => {
 };
 
 /**
- * Wraps the ingest chart function with a react component classes that will enable the modal
+ * Wraps the performance chart function with a react component classes that will enable the modal
  * behavior when the component is mounted.
  */
-const InlineClickableIngestChart = functional(
-  InlineClickableIngestChartFn, {
+const InlineClickablePerformanceChart = functional(
+  InlineClickablePerformanceChartFn, {
     componentDidMount: ({ guid }) => {
       // Use EUI recommended method for creating modal content.
       // eslint-disable-next-line no-undef
@@ -168,6 +167,6 @@ const InlineClickableIngestChart = functional(
 );
 
 module.exports = {
-  IngestChart,
-  InlineClickableIngestChart
+  PerformanceChart,
+  InlineClickablePerformanceChart
 };
