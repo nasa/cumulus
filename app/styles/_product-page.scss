@@ -1,5 +1,18 @@
 .product-page {
 
+  .ingest-chart {
+    margin-left: 50px;
+    margin-right: 50px;
+    max-height: 300px;
+    max-width: 1200px;
+
+    canvas{
+      width: 100% !important;
+      max-width: 1200px;
+      height: auto !important;
+    }
+  }
+
   .status-cell {
     color: #fff;
 

@@ -1,8 +1,7 @@
 'use strict';
 
 /**
- * Defines a chart for displaying Ingest performance. The chart is a small inline one that when
- * clicked shows a modal popover chart.
+ * Defines a chart for displaying Ingest performance.
  */
 
 const React = require('react');
@@ -10,10 +9,10 @@ const functional = require('react-functional');
 const LineChart = require('react-chartjs-2').Line;
 
 /**
- * Returns the chart options to use for the modal chart.
+ * Returns the chart options to use for a normal sized chart on a page.
  */
-const modalChartOptions = title => ({
-  responsive: false,
+const regularChartOptions = title => ({
+  responsive: true,
   maintainAspectRatio: false,
   title: {
     display: true,
@@ -35,6 +34,16 @@ const modalChartOptions = title => ({
     }]
   }
 });
+
+/**
+ * Returns the chart options to use for the modal chart.
+ */
+const modalChartOptions = (title) => {
+  const options = regularChartOptions(title);
+  options.responsive = false;
+  options.maintainAspectRatio = false;
+  return options;
+};
 
 /**
  * Returns the options to use with the inline chart.
@@ -74,6 +83,18 @@ const ingestPerfToChartData = (ingestPerf) => {
   });
   return { datasets };
 };
+
+/**
+ * TODO
+ */
+const IngestChart = ({ ingestPerf, title }) =>
+  <div className="ingest-chart">
+    <LineChart
+      data={ingestPerfToChartData(ingestPerf)}
+      options={regularChartOptions(title)}
+    />
+  </div>;
+
 
 /**
  * Converts a GUID to a unique DOM node id for the modal chart.
@@ -121,7 +142,7 @@ const InlineChart = ({ guid, chartData }) =>
 /**
  * Defines the ingest chart with an inline chart that when clicked shows a larger modal chart.
  */
-const IngestChartFn = ({ ingestPerf, guid, title }) => {
+const InlineClickableIngestChartFn = ({ ingestPerf, guid, title }) => {
   const chartData = ingestPerfToChartData(ingestPerf);
 
   return (
@@ -136,8 +157,8 @@ const IngestChartFn = ({ ingestPerf, guid, title }) => {
  * Wraps the ingest chart function with a react component classes that will enable the modal
  * behavior when the component is mounted.
  */
-const IngestChart = functional(
-  IngestChartFn, {
+const InlineClickableIngestChart = functional(
+  InlineClickableIngestChartFn, {
     componentDidMount: ({ guid }) => {
       // Use EUI recommended method for creating modal content.
       // eslint-disable-next-line no-undef
@@ -146,4 +167,7 @@ const IngestChart = functional(
   }
 );
 
-module.exports = { IngestChart };
+module.exports = {
+  IngestChart,
+  InlineClickableIngestChart
+};

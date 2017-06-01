@@ -6,7 +6,7 @@ const functional = require('react-functional');
 const { List } = require('immutable');
 const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
 const { Loading } = require('../loading');
-const { IngestChart } = require('./ingest-chart');
+const { InlineClickableIngestChart } = require('../ingest-chart');
 const ws = require('../../reducers/workflow-status');
 const util = require('../../util');
 
@@ -96,7 +96,7 @@ const WorkflowTbody = connect()((props) => {
         <td>{recentExecutions(workflow)}</td>
         <td>{runningStatus(workflow)}</td>
         <td>
-          <IngestChart
+          <InlineClickableIngestChart
             title={`${workflow.get('id')} Workflow`}
             ingestPerf={workflow.get('ingest_perf', List())}
             guid={workflow.get('id')}
@@ -131,7 +131,7 @@ const ProductRow = ({ workflow, product }) => {
       <td><div>{num_running} Running</div></td>
       <td>
         <div>
-          <IngestChart
+          <InlineClickableIngestChart
             title={`${workflowId} Workflow - ${productId}`}
             ingestPerf={ingest_perf}
             guid={`${workflowId}-${productId}`}

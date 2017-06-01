@@ -2,9 +2,11 @@ const React = require('react');
 const { connect } = require('react-redux');
 const functional = require('react-functional');
 const { Link } = require('react-router-dom');
+const { List, Map } = require('immutable');
 const Header = require('./header').default;
 const { Loading } = require('./loading');
 const { SuccessIcon, ErrorIcon, Icon } = require('./icon');
+const { IngestChart } = require('./ingest-chart');
 const ps = require('../reducers/product-status');
 const util = require('../util');
 
@@ -42,7 +44,6 @@ const FailCell = () =>
     <ErrorIcon />
     Fail
   </td>;
-
 
 /**
  * TODO
@@ -110,7 +111,8 @@ const ExecutionTable = (props) => {
  * LandingPage - The main landing page for the application.
  */
 const ProductPageFn = (props) => {
-  const { productId } = parsePathIds(props);
+  const { workflowId, productId } = parsePathIds(props);
+  const productStatus = props.productStatus.get('productStatus') || Map();
   return (
     <div>
       <Header />
@@ -124,13 +126,15 @@ const ProductPageFn = (props) => {
         </div>
 
         <h1>Collection {productId}</h1>
-
-        {/* TODO ingest performance */}
-
-        <h2>Executions</h2>
         <Loading isLoading={() => !props.productStatus.get('productStatus')}>
-          {/* <ExecutionList productStatus={props.productStatus.get('productStatus')} /> */}
-          <ExecutionTable productStatus={props.productStatus.get('productStatus')} />
+          <div>
+            <IngestChart
+              title={`${workflowId} Workflow ${productId} Ingest Performance`}
+              ingestPerf={productStatus.get('ingest_perf', List())}
+            />
+            <h2>Executions</h2>
+            <ExecutionTable productStatus={productStatus} />
+          </div>
         </Loading>
       </main>
     </div>
