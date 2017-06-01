@@ -8,7 +8,7 @@
 const { stepFunctions } = require('./aws');
 const { handleError } = require('./api-errors');
 const { fromJS, Map, List } = require('immutable');
-const WorkflowAggregator = require('./workflow-aggregator');
+const ExecutionAggregator = require('./execution-aggregator');
 const { loadCollectionConfig } = require('./collection-config');
 const { parseExecutionName } = require('./execution-name-parser');
 
@@ -43,8 +43,9 @@ const getRunningExecutions = async (stackName, workflowId) => {
   return List(resp.executions.map((e) => {
     const { collectionId, granuleId } = parseExecutionName(e.name);
     return Map({
+      arn: e.executionArn,
       name: e.name,
-      start_date: e.startDate,
+      startDate: e.startDate,
       collectionId,
       granuleId
     });
@@ -58,7 +59,7 @@ const getRunningExecutions = async (stackName, workflowId) => {
  */
 const getWorkflowStatuses = async (stackName) => {
   const collectionConfig = await loadCollectionConfig(stackName);
-  const esWorkflowsById = await WorkflowAggregator.loadWorkflowsFromEs();
+  const esWorkflowsById = await ExecutionAggregator.loadWorkflowsFromEs();
 
   const workflowPromises = collectionConfig.get('workflows')
     .entrySeq()
@@ -103,4 +104,5 @@ const handleWorkflowStatusRequest = async (req, res) => {
 module.exports = {
   getStateMachineArn,
   getWorkflowStatuses,
+  getRunningExecutions,
   handleWorkflowStatusRequest };
