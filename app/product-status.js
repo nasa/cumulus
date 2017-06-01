@@ -44,7 +44,7 @@ const getProductStatus = async (stackName, workflowId, collectionId, numExecutio
   return {
     running_executions: runningExecsWithState.slice(0, numExecutions),
     completed_executions: productStatus.executions,
-    ingest_perf: productStatus.ingest_perf
+    performance: productStatus.performance
   };
 };
 

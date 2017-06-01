@@ -79,7 +79,7 @@ const latestGranuleIdAgg = {
   }
 };
 
-const ingestPerfAgg = {
+const perfAgg = {
   filter: { range: { stop_date: { gte: 'now-1w/d' } } },
   aggs: {
     daily: {
@@ -108,7 +108,7 @@ const productAgg = {
       filter: { term: { success: true } },
       aggs: {
         last_granule_id: latestGranuleIdAgg,
-        ingest_perf: ingestPerfAgg
+        performance: perfAgg
       }
     },
     last_exec: lastExecutionAgg
@@ -126,7 +126,7 @@ const workflowAgg = {
     successful: {
       filter: { term: { success: true } },
       aggs: {
-        ingest_perf: ingestPerfAgg
+        performance: perfAgg
       }
     },
     products: productAgg
@@ -139,7 +139,7 @@ const parseSuccessRatioAgg = (aggs) => {
   return { successes: trueCount, total: aggs.doc_count };
 };
 
-const parseIngestPerf = aggs =>
+const parsePerformanceAggregation = aggs =>
   aggs.daily.buckets.map((b) => {
     const values = b.performance.values;
     const percentiles = Object.keys(values);
@@ -158,14 +158,14 @@ const parseProductsAgg = aggs =>
     last_execution: b.last_exec.value,
     last_granule_id: _.get(b, 'successful.last_granule_id.buckets[0].key'),
     success_ratio: parseSuccessRatioAgg(b.success_ratio),
-    ingest_perf: parseIngestPerf(b.successful.ingest_perf)
+    performance: parsePerformanceAggregation(b.successful.performance)
   }));
 
 const parseWorkflowAgg = (aggs) => {
   const workflows = aggs.buckets.map(b => ({
     id: b.key,
     success_ratio: parseSuccessRatioAgg(b.success_ratio),
-    ingest_perf: parseIngestPerf(b.successful.ingest_perf),
+    performance: parsePerformanceAggregation(b.successful.performance),
     products: parseProductsAgg(b.products)
   }));
   const workflowsById = {};
@@ -211,7 +211,7 @@ const parseCollectionSearchResponse = (resp) => {
   }));
   return {
     executions,
-    ingest_perf: parseIngestPerf(resp.aggregations.successful.ingest_perf)
+    performance: parsePerformanceAggregation(resp.aggregations.successful.performance)
   };
 };
 
@@ -246,7 +246,7 @@ const getCollectionCompletedExecutions = async (workflowId, collectionId, numExe
         successful: {
           filter: { term: { success: true } },
           aggs: {
-            ingest_perf: ingestPerfAgg
+            performance: perfAgg
           }
         }
       }
@@ -263,5 +263,5 @@ module.exports = {
   // For testing
   parseElasticResponse,
   parseCollectionSearchResponse,
-  ingestPerfAgg
+  perfAgg
 };

@@ -335,7 +335,7 @@
   "aggregations": {
     "successful": {
       "doc_count": 9228,
-      "ingest_perf": {
+      "performance": {
         "doc_count": 5050,
         "daily": {
           "buckets": [

@@ -33,7 +33,7 @@ curl "http://localhost:3000/workflow_status?stack_name=gitc-xx"
       "successes": 322,
       "total": 448
     },
-    "ingest_perf": [
+    "performance": [
       {
         "50": 22000,
         "95": 199650,
@@ -53,7 +53,7 @@ curl "http://localhost:3000/workflow_status?stack_name=gitc-xx"
           "successes": 108,
           "total": 150
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 192000,
             "95": 202900,
@@ -202,7 +202,7 @@ The response contains a list of the executions currently running for the workflo
     },
     ...
   ],
-  "ingest_perf": [
+  "performance": [
     {
       "50": 2000,
       "95": 252300.00000000064,
