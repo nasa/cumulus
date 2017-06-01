@@ -145,7 +145,9 @@ const parseIngestPerf = aggs =>
     const percentiles = Object.keys(values);
     const dataMap = { date: b.key };
     percentiles.forEach((p) => {
-      dataMap[p.replace('.0', '')] = values[p];
+      if (values[p] !== 'NaN') {
+        dataMap[p.replace('.0', '')] = values[p];
+      }
     });
     return dataMap;
   });
@@ -198,15 +200,19 @@ const loadWorkflowsFromEs = async () => {
 /**
  * Parses the results of an Elasticsearch query for executions related to a collection.
  */
-const parseCollectionSearchResponse = async (resp) => {
+const parseCollectionSearchResponse = (resp) => {
   const extractFirst = v => (v ? v[0] : v);
-  return resp.hits.hits.map(item => ({
+  const executions = resp.hits.hits.map(item => ({
     start_date: extractFirst(item.fields.start_date),
     stop_date: extractFirst(item.fields.stop_date),
     elapsed_ms: extractFirst(item.fields.elapsed_ms),
     success: extractFirst(item.fields.success),
     granule_id: extractFirst(item.fields.granule_id)
   }));
+  return {
+    executions,
+    ingest_perf: parseIngestPerf(resp.aggregations.successful.ingest_perf)
+  };
 };
 
 /**
@@ -235,7 +241,15 @@ const getCollectionCompletedExecutions = async (workflowId, collectionId, numExe
         'stop_date',
         'elapsed_ms',
         'success'
-      ]
+      ],
+      aggs: {
+        successful: {
+          filter: { term: { success: true } },
+          aggs: {
+            ingest_perf: ingestPerfAgg
+          }
+        }
+      }
     }
   });
   // eslint-disable-next-line no-console
@@ -247,4 +261,7 @@ module.exports = {
   loadWorkflowsFromEs,
   getCollectionCompletedExecutions,
   // For testing
-  parseElasticResponse };
+  parseElasticResponse,
+  parseCollectionSearchResponse,
+  ingestPerfAgg
+};

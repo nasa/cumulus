@@ -14,3 +14,12 @@ describe('parseElasticResponse', () =>
     expect(parsed).to.eql(workflows);
   })
 );
+
+describe('parseCollectionSearchResponse', () =>
+  it('parse sample yaml', () => {
+    const resp = JSON.parse(fs.readFileSync('./test/sample-products-es-resp.json'));
+    const productStatus = JSON.parse(fs.readFileSync('./test/sample-products-parsed.json'));
+    const parsed = ea.parseCollectionSearchResponse(resp);
+    expect(parsed).to.eql(productStatus);
+  })
+);

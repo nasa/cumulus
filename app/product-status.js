@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * TODO
+ * Implements functions for retrieving product execution status
  */
 
 /*eslint no-console: ["error", { allow: ["error"] }] */
@@ -36,15 +36,15 @@ const getProductStatus = async (stackName, workflowId, collectionId, numExecutio
     };
   }).toJS();
 
-  const [runningExecsWithState, completedExecs] = await Promise.all([
+  const [runningExecsWithState, productStatus] = await Promise.all([
     Promise.all(runningPromises),
     ExecutionAggregator.getCollectionCompletedExecutions(workflowId, collectionId, numExecutions)
   ]);
 
   return {
-    // TODO add ingest performance
     running_executions: runningExecsWithState.slice(0, numExecutions),
-    completed_executions: completedExecs
+    completed_executions: productStatus.executions,
+    ingest_perf: productStatus.ingest_perf
   };
 };
 
