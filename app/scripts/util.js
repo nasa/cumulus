@@ -27,8 +27,36 @@ const humanDuration = (ms) => {
  */
 const dateStringToLocaleString = dateStr => new Date(Date.parse(dateStr)).toLocaleString();
 
+/**
+ * Parses a julian date like '2014130' and returns a string formatted date of YYYY-MM-DD
+ */
+const parseJulian = (dateStr) => {
+  // Parse out the components of a julian date string.
+  const match = dateStr.match(/^(\d\d\d\d)(\d+)$/);
+  if (!match) {
+    return 'Invalid date';
+  }
+  const [_, yearStr, dayOfYearStr] = match;
+  const year = Number(yearStr);
+  const dayOfYear = Number(dayOfYearStr);
+
+  // Calculate date from Julian date
+  const daysSinceJanFirst = dayOfYear - 1;
+  const msSinceJanFirst = daysSinceJanFirst * 24 * 3600 * 1000;
+  const yearMs = Date.UTC(year, 0);
+  const date = new Date(yearMs + msSinceJanFirst);
+
+  // Format the date string
+  const zeroPad = n => (n < 10 ? `0${n}` : n);
+  const y = date.getUTCFullYear();
+  const m = date.getUTCMonth() + 1;
+  const d = date.getUTCDate();
+  return `${y}-${zeroPad(m)}-${zeroPad(d)}`;
+};
+
 module.exports = {
   dateStringToLocaleString,
   humanTimeSince,
-  humanDuration
+  humanDuration,
+  parseJulian
 };

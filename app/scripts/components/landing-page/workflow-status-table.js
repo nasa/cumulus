@@ -12,6 +12,8 @@ const util = require('../../util');
 
 const NotRunIcon = () => <Icon className="fa-circle-o icon-disabled" />;
 
+/* eslint-disable camelcase */
+
 /**
  *  Icon to represent collapsed and expanded workflow rows
  */
@@ -106,58 +108,33 @@ const WorkflowTbody = connect()((props) => {
 });
 
 /**
- * Parses a julian date like '2014130' and returns a string formatted date of YYYY-MM-DD
- */
-const parseJulian = (dateStr) => {
-  // Parse out the components of a julian date string.
-  const match = dateStr.match(/^(\d\d\d\d)(\d+)$/);
-  if (!match) {
-    return 'Invalid date';
-  }
-  const [_, yearStr, dayOfYearStr] = match;
-  const year = Number(yearStr);
-  const dayOfYear = Number(dayOfYearStr);
-
-  // Calculate date from Julian date
-  const daysSinceJanFirst = dayOfYear - 1;
-  const msSinceJanFirst = daysSinceJanFirst * 24 * 3600 * 1000;
-  const yearMs = Date.UTC(year, 0);
-  const date = new Date(yearMs + msSinceJanFirst);
-
-  // Format the date string
-  const zeroPad = n => (n < 10 ? `0${n}` : n);
-  const y = date.getUTCFullYear();
-  const m = date.getUTCMonth() + 1;
-  const d = date.getUTCDate();
-  return `${y}-${zeroPad(m)}-${zeroPad(d)}`;
-};
-
-/**
  * Defines a single row showing product information.
  */
 const ProductRow = ({ workflow, product }) => {
   const productId = product.get('id');
+  const workflowId = workflow.get('id');
+  const { last_execution, last_granule_id, num_running, ingest_perf } = product;
   return (
     <tr key={productId}>
       <td className="name-cell">
         <div>
-          <Link to={`/workflows/${workflow.get('id')}/products/${productId}`}>{productId}</Link>
+          <Link to={`/workflows/${workflowId}/products/${productId}`}>{productId}</Link>
         </div>
       </td>
-      <td><div>{lastCompleted(product.get('last_execution'))}</div></td>
+      <td><div>{lastCompleted(last_execution)}</div></td>
       <td>
         <div>
-          {product.get('last_granule_id') ? parseJulian(product.get('last_granule_id')) : 'N/A'}
+          {last_granule_id ? util.parseJulian(last_granule_id) : 'N/A'}
         </div>
       </td>
       <td><div>{recentExecutions(product)}</div></td>
-      <td><div>{product.get('num_running')} Running</div></td>
+      <td><div>{num_running} Running</div></td>
       <td>
         <div>
           <IngestChart
-            title={`${workflow.get('id')} Workflow - ${productId}`}
-            ingestPerf={product.get('ingest_perf')}
-            guid={`${workflow.get('id')}-${product.get('id')}`}
+            title={`${workflowId} Workflow - ${productId}`}
+            ingestPerf={ingest_perf}
+            guid={`${workflowId}-${productId}`}
           />
         </div>
       </td>
@@ -227,7 +204,7 @@ const WorkflowStatusTableFn = (props) => {
       <h2>Workflow Status</h2>
       <Loading isLoading={() => !props.workflowStatus.get('workflows')}>
         <table
-          className="workflow-status-table"
+          className="workflow-status-table wide-table"
         >
           <thead>
             <tr>
@@ -293,7 +270,6 @@ const WorkflowStatusTable = connect(workflowStatusStateToProps)(
 
 module.exports = { WorkflowStatusTable,
   // For Testing
-  parseJulian,
   lastCompleted,
   runningStatus,
   NotRunIcon };

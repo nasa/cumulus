@@ -4,10 +4,15 @@ const functional = require('react-functional');
 const { Link } = require('react-router-dom');
 const Header = require('./header').default;
 const { Loading } = require('./loading');
-const { SuccessPill, RunningPill, FailedPill } = require('./icon');
+const { SuccessIcon, ErrorIcon, Icon } = require('./icon');
 const ps = require('../reducers/product-status');
 const util = require('../util');
 
+/* eslint-disable camelcase */
+
+/**
+ * TODO
+ */
 const parsePathIds = (props) => {
   const parts = props.location.pathname.split('/');
   const workflowId = parts[2];
@@ -15,111 +20,97 @@ const parsePathIds = (props) => {
   return { workflowId, productId };
 };
 
+const RunningIcon = () => <Icon className="fa-repeat icon-running" />;
+
 // TODO the presence of the last pages product status causes this to show the old stuff
 // first before showing the correct data.
+
+const RunningCell = () =>
+  <td className="status-cell running-status">
+    <RunningIcon />
+    Running
+  </td>;
+
+const SuccessCell = () =>
+  <td className="status-cell success-status">
+    <SuccessIcon />
+    Success
+  </td>;
+
+const FailCell = () =>
+  <td className="status-cell fail-status">
+    <ErrorIcon />
+    Fail
+  </td>;
+
 
 /**
  * TODO
  */
-const ExecutionList = (props) => {
+const ExecutionTable = (props) => {
   const { running_executions, completed_executions } = props.productStatus;
+  let rowIndex = -1;
+  const rowClassName = index => (index % 2 === 0 ? 'even-row' : 'odd-row');
   return (
-    <ul className="execution-list">
-      {running_executions.map((exec) => {
-        const msSinceStart = Date.now() - Date.parse(exec.get('start_date'));
-
-        return (
-          <li className="execution-list-element">
-            <div className="execution-list-element-header">
-              <RunningPill />
-              <span className="execution-granule-id">{exec.get('granule_id')}</span>
-            </div>
-            <ul className="execution-details-list">
-              <li>
-                <span className="details-list-label">Started:</span>
-                {util.dateStringToLocaleString(exec.get('start_date'))}
-              </li>
-              <li>
-                <span className="details-list-label">Duration:</span>
-                {util.humanDuration(msSinceStart)}
-              </li>
-              <li>
-                <span className="details-list-label">Current Step:</span>
-                {exec.get('current_state')}
-              </li>
-            </ul>
-          </li>
-        );
-      })}
-      {completed_executions.map(exec =>
-        <li className="execution-list-element">
-          <div className="execution-list-element-header">
-            {exec.get('success') ? <SuccessPill /> : <FailedPill />}
-            <span className="execution-granule-id">{exec.get('granule_id')}</span>
-          </div>
-          <ul className="execution-details-list">
-            <li>
-              <span className="details-list-label">Started:</span>
-              {util.dateStringToLocaleString(exec.get('start_date'))}
-            </li>
-            <li>
-              <span className="details-list-label">Ended:</span>
-              {util.dateStringToLocaleString(exec.get('stop_date'))}
-            </li>
-            <li>
-              <span className="details-list-label">Elapsed:</span>
-              {util.humanDuration(exec.get('elapsed_ms'))}
-            </li>
-          </ul>
-        </li>
-      )}
-    </ul>
+    <table className="execution-table wide-table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Granule Date</th>
+          <th>Started</th>
+          <th>Stopped</th>
+          <th>Duration</th>
+          <th>Current Step</th>
+        </tr>
+      </thead>
+      <tbody>
+        {running_executions.map((exec) => {
+          rowIndex += 1;
+          const { granule_id, start_date, current_state } = exec;
+          const rowId = `${granule_id}-${start_date}`;
+          const msSinceStart = Date.now() - Date.parse(start_date);
+          return (
+            <tr
+              key={rowId}
+              className={rowClassName(rowIndex)}
+            >
+              <RunningCell />
+              <td>{util.parseJulian(granule_id)}</td>
+              <td>{util.dateStringToLocaleString(start_date)}</td>
+              <td />
+              <td>{util.humanDuration(msSinceStart)}</td>
+              <td>{current_state}</td>
+            </tr>
+          );
+        })}
+        {completed_executions.map((exec) => {
+          rowIndex += 1;
+          const { granule_id, start_date, stop_date, elapsed_ms, success } = exec;
+          const rowId = `${granule_id}-${start_date}`;
+          return (
+            <tr
+              key={rowId}
+              className={rowClassName(rowIndex)}
+            >
+              {success ? <SuccessCell /> : <FailCell />}
+              <td>{util.parseJulian(granule_id)}</td>
+              <td>{util.dateStringToLocaleString(start_date)}</td>
+              <td>{util.dateStringToLocaleString(stop_date)}</td>
+              <td>{util.humanDuration(elapsed_ms)}</td>
+              <td />
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 };
-
-const mockExecutions =
-<ul className="execution-list">
-  <li className="execution-list-element">
-    <div className="execution-list-element-header">
-      <RunningPill />
-      <span className="execution-granule-id">2017-05-30</span>
-    </div>
-    <ul className="execution-details-list">
-      <li><span className="details-list-label">Started:</span> 5/30/2017, 11:29:23 AM</li>
-      <li><span className="details-list-label">Duration:</span> 20 minutes</li>
-      <li><span className="details-list-label">Current Step:</span> MRF Gen</li>
-    </ul>
-  </li>
-  <li className="execution-list-element">
-    <div className="execution-list-element-header">
-      <SuccessPill />
-      <span className="execution-granule-id">2017-05-30</span>
-    </div>
-    <ul className="execution-details-list">
-      <li><span className="details-list-label">Started:</span> 5/30/2017, 11:29:23 AM</li>
-      <li><span className="details-list-label">Ended:</span> 5/30/2017, 11:29:23 AM</li>
-      <li><span className="details-list-label">Elapsed:</span> 27 seconds</li>
-    </ul>
-  </li>
-  <li className="execution-list-element">
-    <div className="execution-list-element-header">
-      <FailedPill />
-      <span className="execution-granule-id">2017-05-30</span>
-    </div>
-    <ul className="execution-details-list">
-      <li><span className="details-list-label">Started:</span> 5/30/2017, 11:29:23 AM</li>
-      <li><span className="details-list-label">Ended:</span> 5/30/2017, 11:29:23 AM</li>
-      <li><span className="details-list-label">Elapsed:</span> 27 seconds</li>
-    </ul>
-  </li>
-</ul>;
 
 /**
  * LandingPage - The main landing page for the application.
  */
 const ProductPageFn = (props) => {
-  const { workflowId, productId } = parsePathIds(props);
-  console.log(props);
+  const { productId } = parsePathIds(props);
   return (
     <div>
       <Header />
@@ -138,7 +129,8 @@ const ProductPageFn = (props) => {
 
         <h2>Executions</h2>
         <Loading isLoading={() => !props.productStatus.get('productStatus')}>
-          <ExecutionList productStatus={props.productStatus.get('productStatus')} />
+          {/* <ExecutionList productStatus={props.productStatus.get('productStatus')} /> */}
+          <ExecutionTable productStatus={props.productStatus.get('productStatus')} />
         </Loading>
       </main>
     </div>

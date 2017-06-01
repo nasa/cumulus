@@ -1,39 +1,38 @@
 .product-page {
 
-  .pill {
-    width: 80px;
-    display: inline-block;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    margin-right: 54px;
+  .status-cell {
+    color: #fff;
+
+    .icon {
+      color: white;
+    }
   }
 
-  .execution-list {
-    list-style-type: none;
+  .even-row {
+    .running-status {
+      background: rgb(34, 118, 172);
+    }
+
+    .success-status {
+      background: rgb(24, 156, 84);
+    }
+
+    .fail-status {
+      background: rgb(179, 36, 28);
+    }
   }
+  .odd-row {
+    .running-status {
+      background: rgb(27, 111, 165);
+    }
 
-  .execution-list-element {
-    margin-top: 25px;
-  }
+    .success-status {
+      background: rgb(17, 149, 77);
+    }
 
-  .execution-list-element-header {
-    margin-bottom: 5px;
-  }
-
-  .execution-details-list {
-    list-style-type: none;
-  }
-
-  .details-list-label {
-    font-weight: bold;
-    display: inline-block;
-    width: 110px;
-  }
-
-
-  .execution-granule-id {
-    font-weight: bold;
-    margin-right: 10px;
+    .fail-status {
+      background: rgb(172, 29, 21);
+    }
   }
 
 }
