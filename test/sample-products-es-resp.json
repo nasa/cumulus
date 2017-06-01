@@ -1,0 +1,435 @@
+{
+  "took": 18,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 14085,
+    "max_score": null,
+    "hits": [
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017152__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            269000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017152"
+          ],
+          "stop_date": [
+            "2017-06-01T11:17:23.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315843000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017151__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            6000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017151"
+          ],
+          "stop_date": [
+            "2017-06-01T11:13:00.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315580000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017148__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            6000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017148"
+          ],
+          "stop_date": [
+            "2017-06-01T11:13:00.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315580000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017145__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            6000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017145"
+          ],
+          "stop_date": [
+            "2017-06-01T11:13:00.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315580000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017149__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            5000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017149"
+          ],
+          "stop_date": [
+            "2017-06-01T11:12:59.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315579000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017150__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            5000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017150"
+          ],
+          "stop_date": [
+            "2017-06-01T11:12:59.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315579000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017143__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            3000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017143"
+          ],
+          "stop_date": [
+            "2017-06-01T11:12:57.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315577000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017141__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            3000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017141"
+          ],
+          "stop_date": [
+            "2017-06-01T11:12:57.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315577000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017144__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            2000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017144"
+          ],
+          "stop_date": [
+            "2017-06-01T11:12:56.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315576000
+        ]
+      },
+      {
+        "_index": "executions",
+        "_type": "execution",
+        "_id": "VIIRS__VNGCR_LQD_C1__2017142__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
+        "_score": null,
+        "fields": {
+          "collection_id": [
+            "VNGCR_LQD_C1"
+          ],
+          "workflow_id": [
+            "IngestVIIRS"
+          ],
+          "elapsed_ms": [
+            2000
+          ],
+          "success": [
+            true
+          ],
+          "granule_id": [
+            "2017142"
+          ],
+          "stop_date": [
+            "2017-06-01T11:12:56.000Z"
+          ],
+          "start_date": [
+            "2017-06-01T11:12:54.000Z"
+          ]
+        },
+        "sort": [
+          1496315576000
+        ]
+      }
+    ]
+  },
+  "aggregations": {
+    "successful": {
+      "doc_count": 9228,
+      "ingest_perf": {
+        "doc_count": 5050,
+        "daily": {
+          "buckets": [
+            {
+              "key_as_string": "2017-05-25T00:00:00.000Z",
+              "key": 1495670400000,
+              "doc_count": 1172,
+              "performance": {
+                "values": {
+                  "50.0": 2000,
+                  "95.0": 252300.00000000064
+                }
+              }
+            },
+            {
+              "key_as_string": "2017-05-26T00:00:00.000Z",
+              "key": 1495756800000,
+              "doc_count": 724,
+              "performance": {
+                "values": {
+                  "50.0": 2000,
+                  "95.0": 213700.00000000003
+                }
+              }
+            },
+            {
+              "key_as_string": "2017-05-27T00:00:00.000Z",
+              "key": 1495843200000,
+              "doc_count": 527,
+              "performance": {
+                "values": {
+                  "50.0": 1000,
+                  "95.0": 198799.99999999994
+                }
+              }
+            },
+            {
+              "key_as_string": "2017-05-28T00:00:00.000Z",
+              "key": 1495929600000,
+              "doc_count": 344,
+              "performance": {
+                "values": {
+                  "50.0": 1000,
+                  "95.0": 200849.9999999993
+                }
+              }
+            },
+            {
+              "key_as_string": "2017-05-29T00:00:00.000Z",
+              "key": 1496016000000,
+              "doc_count": 0,
+              "performance": {
+                "values": {
+                  "50.0": "NaN",
+                  "95.0": "NaN"
+                }
+              }
+            },
+            {
+              "key_as_string": "2017-05-30T00:00:00.000Z",
+              "key": 1496102400000,
+              "doc_count": 553,
+              "performance": {
+                "values": {
+                  "50.0": 4000,
+                  "95.0": 215999.9999999968
+                }
+              }
+            },
+            {
+              "key_as_string": "2017-05-31T00:00:00.000Z",
+              "key": 1496188800000,
+              "doc_count": 1173,
+              "performance": {
+                "values": {
+                  "50.0": 5000,
+                  "95.0": 257399.99999999988
+                }
+              }
+            },
+            {
+              "key_as_string": "2017-06-01T00:00:00.000Z",
+              "key": 1496275200000,
+              "doc_count": 557,
+              "performance": {
+                "values": {
+                  "50.0": 3000,
+                  "95.0": 251199.99999999994
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
