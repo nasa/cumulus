@@ -33,7 +33,7 @@ curl "http://localhost:3000/workflow_status?stack_name=gitc-xx"
       "successes": 322,
       "total": 448
     },
-    "ingest_perf": [
+    "performance": [
       {
         "50": 22000,
         "95": 199650,
@@ -53,7 +53,7 @@ curl "http://localhost:3000/workflow_status?stack_name=gitc-xx"
           "successes": 108,
           "total": 150
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 192000,
             "95": 202900,
@@ -163,4 +163,52 @@ The response contains the number of tasks that should be running for the service
   }
 }
 
+```
+
+## /product_status
+
+Returns status information on a product (aka collection) within a particular workflow.
+
+Params:
+
+* `stack_name` - The name of main top level stack that contains ingest and other substacks.
+* `workflow_id` - The id of the workflow
+* `collection_id` - The id of the collection
+* `num_executions` - The maximum number of executions to return.
+
+```Bash
+curl 'http://localhost:3000/product_status?stack_name=gitc-xx&workflow_id=IngestVIIRS&collection_id=VNGCR_LQD_C1&num_executions=5'
+```
+
+The response contains a list of the executions currently running for the workflow for the collection along with a set of completed executions and the performance latencies on days over the past week.
+
+```JSON
+{
+  "running_executions": [
+    {
+      "start_date": "2017-06-01T17:27:58.246Z",
+      "granule_id": "2017152",
+      "current_state": "MRFGen"
+    },
+    ...
+  ],
+  "completed_executions": [
+    {
+      "start_date": "2017-06-01T17:12:59.000Z",
+      "stop_date": "2017-06-01T17:18:56.000Z",
+      "elapsed_ms": 357000,
+      "success": true,
+      "granule_id": "2017152"
+    },
+    ...
+  ],
+  "performance": [
+    {
+      "50": 2000,
+      "95": 252300.00000000064,
+      "date": 1495670400000
+    },
+    ...
+  ]
+}
 ```

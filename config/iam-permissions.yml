@@ -42,6 +42,8 @@ Resources:
                 Action:
                   - states:ListExecutions
                   - states:ListStateMachines
+                  # TODO this is new and not added to NGAP yet
+                  - states:GetExecutionHistory
                 Resource: !Sub "arn:aws:states:*:${AWS::AccountId}:*"
               # GITC-319 add additional ones from the cloud formation file
               # - elasticsearch
