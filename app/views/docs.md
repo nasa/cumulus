@@ -164,3 +164,7 @@ The response contains the number of tasks that should be running for the service
 }
 
 ```
+
+## /product_status
+
+TODO document this
