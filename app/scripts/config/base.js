@@ -8,5 +8,5 @@ module.exports = {
   // Indicates whether we should use canned data or make a real request to the API.
   useCannedData: false,
   // The number of executions to display in a list.
-  numExecutions: 20
+  numExecutions: 100
 };

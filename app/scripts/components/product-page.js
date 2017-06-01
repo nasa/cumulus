@@ -107,7 +107,8 @@ const ExecutionTable = (props) => {
 };
 
 /**
- * LandingPage - The main landing page for the application.
+ * ProductPageFn - Shows a page for product execution information within a single workflow. Shows
+ * currently running workflows and past executions along with past performance.
  */
 const ProductPageFn = (props) => {
   const { workflowId, productId } = parsePathIds(props);
@@ -128,7 +129,7 @@ const ProductPageFn = (props) => {
         <Loading isLoading={() => !props.productStatus.get('productStatus')}>
           <div>
             <IngestChart
-              title={`${workflowId} Workflow ${productId} Ingest Performance`}
+              title={`${workflowId} Workflow ${productId} Performance`}
               ingestPerf={productStatus.get('ingest_perf', List())}
             />
             <h2>Executions</h2>

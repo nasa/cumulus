@@ -199,6 +199,7 @@ const WorkflowStatusTableFn = (props) => {
   const dispatch = props.dispatch;
   const sort = props.workflowStatus.get('sort');
   const workflows = props.workflowStatus.get('workflows') || List();
+  const expandedWorkflows = props.workflowStatus.get('expandedWorkflows');
   return (
     <div>
       <h2>Workflow Status</h2>
@@ -244,9 +245,13 @@ const WorkflowStatusTableFn = (props) => {
               />
             </tr>
           </thead>
-          {workflows.map(w =>
-            [<WorkflowTbody workflow={w} />, <ProductTbody workflow={w} />]
-          )}
+          {workflows.map((w) => {
+            const workflowWithExpanded = w.set('expanded', expandedWorkflows.contains(w.get('id')));
+            return ([
+              <WorkflowTbody workflow={workflowWithExpanded} />,
+              <ProductTbody workflow={workflowWithExpanded} />
+            ]);
+          })}
 
         </table>
       </Loading>
