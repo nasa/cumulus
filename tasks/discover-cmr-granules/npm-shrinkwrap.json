@@ -69,7 +69,7 @@
     },
     "ingest-common": {
       "version": "0.0.0",
-      "from": "git+https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git#master",
+      "from": "file:../../../../ingest-common",
       "resolved": "git+https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git#6c9ba171c58e815fe3dded7d80069d87344d400d"
     },
     "is-stream": {

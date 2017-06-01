@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "async": "^2.0.0",
-    "ingest-common": "git+https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git#master",
+    "ingest-common": "file:../../../../ingest-common",
     "lodash": "^4.15.0",
     "simplecrawler": "git+https://github.com/cgiffard/node-simplecrawler.git#193e506c39164ddf045c7c6c502e1a015d85a290"
   },

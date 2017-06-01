@@ -13,7 +13,7 @@
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
   "dependencies": {
-    "ingest-common": "git+https://git.earthdata.nasa.gov/scm/gitc/ingest-common.git#master",
+    "ingest-common": "file:../../../../ingest-common",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1"
   }
