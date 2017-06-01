@@ -79,7 +79,7 @@ const latestGranuleIdAgg = {
   }
 };
 
-const ingestPerfAgg = {
+const perfAgg = {
   filter: { range: { stop_date: { gte: 'now-1w/d' } } },
   aggs: {
     daily: {
@@ -108,7 +108,7 @@ const productAgg = {
       filter: { term: { success: true } },
       aggs: {
         last_granule_id: latestGranuleIdAgg,
-        ingest_perf: ingestPerfAgg
+        performance: perfAgg
       }
     },
     last_exec: lastExecutionAgg
@@ -126,7 +126,7 @@ const workflowAgg = {
     successful: {
       filter: { term: { success: true } },
       aggs: {
-        ingest_perf: ingestPerfAgg
+        performance: perfAgg
       }
     },
     products: productAgg
@@ -139,13 +139,15 @@ const parseSuccessRatioAgg = (aggs) => {
   return { successes: trueCount, total: aggs.doc_count };
 };
 
-const parseIngestPerf = aggs =>
+const parsePerformanceAggregation = aggs =>
   aggs.daily.buckets.map((b) => {
     const values = b.performance.values;
     const percentiles = Object.keys(values);
     const dataMap = { date: b.key };
     percentiles.forEach((p) => {
-      dataMap[p.replace('.0', '')] = values[p];
+      if (values[p] !== 'NaN') {
+        dataMap[p.replace('.0', '')] = values[p];
+      }
     });
     return dataMap;
   });
@@ -156,14 +158,14 @@ const parseProductsAgg = aggs =>
     last_execution: b.last_exec.value,
     last_granule_id: _.get(b, 'successful.last_granule_id.buckets[0].key'),
     success_ratio: parseSuccessRatioAgg(b.success_ratio),
-    ingest_perf: parseIngestPerf(b.successful.ingest_perf)
+    performance: parsePerformanceAggregation(b.successful.performance)
   }));
 
 const parseWorkflowAgg = (aggs) => {
   const workflows = aggs.buckets.map(b => ({
     id: b.key,
     success_ratio: parseSuccessRatioAgg(b.success_ratio),
-    ingest_perf: parseIngestPerf(b.successful.ingest_perf),
+    performance: parsePerformanceAggregation(b.successful.performance),
     products: parseProductsAgg(b.products)
   }));
   const workflowsById = {};
@@ -191,11 +193,75 @@ const loadWorkflowsFromEs = async () => {
     }
   });
   // eslint-disable-next-line no-console
-  console.info(`Elasticsearch Time: ${Date.now() - startTime} ms`);
+  console.info(`Workflow Aggregation Elasticsearch Time: ${Date.now() - startTime} ms`);
   return parseElasticResponse(resp);
+};
+
+/**
+ * Parses the results of an Elasticsearch query for executions related to a collection.
+ */
+const parseCollectionSearchResponse = (resp) => {
+  const extractFirst = v => (v ? v[0] : v);
+  const executions = resp.hits.hits.map(item => ({
+    start_date: extractFirst(item.fields.start_date),
+    stop_date: extractFirst(item.fields.stop_date),
+    elapsed_ms: extractFirst(item.fields.elapsed_ms),
+    success: extractFirst(item.fields.success),
+    granule_id: extractFirst(item.fields.granule_id)
+  }));
+  return {
+    executions,
+    performance: parsePerformanceAggregation(resp.aggregations.successful.performance)
+  };
+};
+
+/**
+ * Finds recent executions for a collection and returns them.
+ */
+const getCollectionCompletedExecutions = async (workflowId, collectionId, numExecutions) => {
+  const startTime = Date.now();
+  const resp = await es().search({
+    index: 'executions',
+    body: {
+      query: {
+        bool: {
+          must: [
+            { term: { workflow_id: workflowId } },
+            { term: { collection_id: collectionId } }
+          ]
+        }
+      },
+      size: numExecutions,
+      sort: [{ stop_date: 'desc' }],
+      stored_fields: [
+        'workflow_id',
+        'collection_id',
+        'granule_id',
+        'start_date',
+        'stop_date',
+        'elapsed_ms',
+        'success'
+      ],
+      aggs: {
+        successful: {
+          filter: { term: { success: true } },
+          aggs: {
+            performance: perfAgg
+          }
+        }
+      }
+    }
+  });
+  // eslint-disable-next-line no-console
+  console.info(`Collection Search Elasticsearch Time: ${Date.now() - startTime} ms`);
+  return parseCollectionSearchResponse(resp);
 };
 
 module.exports = {
   loadWorkflowsFromEs,
+  getCollectionCompletedExecutions,
   // For testing
-  parseElasticResponse };
+  parseElasticResponse,
+  parseCollectionSearchResponse,
+  perfAgg
+};
