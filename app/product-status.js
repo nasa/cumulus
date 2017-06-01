@@ -12,18 +12,18 @@ const ExecutionAggregator = require('./execution-aggregator');
 const Workflows = require('./workflows');
 
 /**
- * getProductStatus - Returns a list of workflow status results.
- *
- * @param  stackName     The name of the deployed cloud formation stack with AWS state machines.
+ * Returns product status info for the given collection.
  */
 const getProductStatus = async (stackName, workflowId, collectionId, numExecutions) => {
+  // Get the currently running executions
   const runningExecs = await Workflows.getRunningExecutions(stackName, workflowId);
   const runningExecsForColl = runningExecs.filter(e => e.get('collectionId') === collectionId);
 
-  // Add last state
+  // Figure out which state each of the running executions is on.
   const runningPromises = runningExecsForColl.map(async (exec) => {
     const history = await stepFunctions().getExecutionHistory({ executionArn: exec.get('arn') })
       .promise();
+    // The last entered state will contain the current task.
     const enteredEvents = history.events.reverse().filter(e => e.type.endsWith('Entered'));
     let currentState = null;
     if (enteredEvents.length > 0) {
@@ -49,7 +49,7 @@ const getProductStatus = async (stackName, workflowId, collectionId, numExecutio
 };
 
 /**
- * handleProductStatusRequest - Handles the API request for workflow statuses.
+ * handleProductStatusRequest - Handles the API request for product status.
  */
 const handleProductStatusRequest = async (req, res) => {
   try {
