@@ -5,7 +5,7 @@
       "successes": 8049,
       "total": 16423
     },
-    "ingest_perf": [
+    "performance": [
       {
         "50": 2000,
         "95": 5000,
@@ -59,7 +59,7 @@
           "successes": 4569,
           "total": 8208
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 4000,
             "95": 6000,
@@ -113,7 +113,7 @@
           "successes": 3205,
           "total": 7927
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 1000,
             "95": 2000,
@@ -167,7 +167,7 @@
           "successes": 275,
           "total": 288
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 1000,
             "95": 4000,
@@ -188,7 +188,7 @@
       "successes": 1375,
       "total": 2026
     },
-    "ingest_perf": [
+    "performance": [
       {
         "50": 101500,
         "95": 200000,
@@ -242,7 +242,7 @@
           "successes": 676,
           "total": 676
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 20000,
             "95": 24000,
@@ -296,7 +296,7 @@
           "successes": 675,
           "total": 675
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 190000,
             "95": 203000,
@@ -350,7 +350,7 @@
           "successes": 24,
           "total": 675
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 22000,
             "95": 23050.000000000004,
@@ -371,7 +371,7 @@
       "successes": 674,
       "total": 675
     },
-    "ingest_perf": [
+    "performance": [
       {
         "50": 2000,
         "95": 4000,
@@ -425,7 +425,7 @@
           "successes": 674,
           "total": 675
         },
-        "ingest_perf": [
+        "performance": [
           {
             "50": 2000,
             "95": 4000,
