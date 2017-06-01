@@ -40,7 +40,7 @@
           },
           "successful": {
             "doc_count": 13110,
-            "ingest_perf": {
+            "performance": {
               "doc_count": 8049,
               "daily": {
                 "buckets": [
@@ -180,7 +180,7 @@
                       }
                     ]
                   },
-                  "ingest_perf": {
+                  "performance": {
                     "doc_count": 4569,
                     "daily": {
                       "buckets": [
@@ -317,7 +317,7 @@
                       }
                     ]
                   },
-                  "ingest_perf": {
+                  "performance": {
                     "doc_count": 3205,
                     "daily": {
                       "buckets": [
@@ -454,7 +454,7 @@
                       }
                     ]
                   },
-                  "ingest_perf": {
+                  "performance": {
                     "doc_count": 275,
                     "daily": {
                       "buckets": [
@@ -512,7 +512,7 @@
           },
           "successful": {
             "doc_count": 2108,
-            "ingest_perf": {
+            "performance": {
               "doc_count": 1375,
               "daily": {
                 "buckets": [
@@ -647,7 +647,7 @@
                       }
                     ]
                   },
-                  "ingest_perf": {
+                  "performance": {
                     "doc_count": 676,
                     "daily": {
                       "buckets": [
@@ -779,7 +779,7 @@
                       }
                     ]
                   },
-                  "ingest_perf": {
+                  "performance": {
                     "doc_count": 675,
                     "daily": {
                       "buckets": [
@@ -916,7 +916,7 @@
                       }
                     ]
                   },
-                  "ingest_perf": {
+                  "performance": {
                     "doc_count": 24,
                     "daily": {
                       "buckets": [
@@ -974,7 +974,7 @@
           },
           "successful": {
             "doc_count": 1000,
-            "ingest_perf": {
+            "performance": {
               "doc_count": 674,
               "daily": {
                 "buckets": [
@@ -1114,7 +1114,7 @@
                       }
                     ]
                   },
-                  "ingest_perf": {
+                  "performance": {
                     "doc_count": 674,
                     "daily": {
                       "buckets": [
