@@ -100,7 +100,7 @@ describe('sync-http-urls.handler', () => {
     });
 
     it('performs no sync activities', () => {
-      expect(result.exception).to.equal('NotNeeded');
+      expect(result.exception).to.equal('NotNeededWorkflowError');
     });
   });
 
@@ -155,7 +155,7 @@ describe('sync-http-urls.handler', () => {
     });
 
     it('returns an incomplete status', () => {
-      expect(result.exception).to.equal('Incomplete');
+      expect(result.exception).to.equal('IncompleteWorkflowError');
     });
 
     it('continues processing when called back with its saved state', async (done) => {
