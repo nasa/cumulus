@@ -24,7 +24,7 @@ const WorkflowError = createErrorType('WorkflowError');
  * Returns true if the error is a resource error.
  * This is used because for some reason instanceof WorkflowError is not working when deployed.
  */
-const isWorkflowError = error => error.name.includes("WorkflowError");
+const isWorkflowError = error => error.name.includes('WorkflowError');
 
 module.exports = {
 
