@@ -9,7 +9,7 @@ const getWorkflowStatusResp =
       successes: 1940,
       total: 1940
     },
-    ingest_perf: [{
+    performance: [{
       50: 23000,
       95: 204650,
       date: 1493856000000
@@ -48,7 +48,7 @@ const getWorkflowStatusResp =
         successes: 647,
         total: 647
       },
-      ingest_perf: [{
+      performance: [{
         50: 194000,
         95: 209000,
         date: 1493856000000
@@ -88,7 +88,7 @@ const getWorkflowStatusResp =
         successes: 647,
         total: 647
       },
-      ingest_perf: [{
+      performance: [{
         50: 23000,
         95: 25000,
         date: 1493856000000
@@ -128,7 +128,7 @@ const getWorkflowStatusResp =
         successes: 646,
         total: 646
       },
-      ingest_perf: [{
+      performance: [{
         50: 21000,
         95: 23000,
         date: 1493856000000
@@ -166,7 +166,7 @@ const getWorkflowStatusResp =
       successes: 22531,
       total: 22572
     },
-    ingest_perf: [{
+    performance: [{
       50: 1031.25,
       95: 4000,
       date: 1493856000000
@@ -206,7 +206,7 @@ const getWorkflowStatusResp =
         successes: 7852,
         total: 7853
       },
-      ingest_perf: [{
+      performance: [{
         50: 2000,
         95: 272599.9999999995,
         date: 1493856000000
@@ -247,7 +247,7 @@ const getWorkflowStatusResp =
         successes: 7517,
         total: 7557
       },
-      ingest_perf: [{
+      performance: [{
         50: 1000,
         95: 2000,
         date: 1493856000000
@@ -288,7 +288,7 @@ const getWorkflowStatusResp =
         successes: 7162,
         total: 7162
       },
-      ingest_perf: [{
+      performance: [{
         50: 2000,
         95: 4000,
         date: 1493856000000
@@ -326,7 +326,7 @@ const getWorkflowStatusResp =
       successes: 647,
       total: 647
     },
-    ingest_perf: [{
+    performance: [{
       50: 2000,
       95: 4250,
       date: 1493856000000
@@ -365,7 +365,7 @@ const getWorkflowStatusResp =
         successes: 647,
         total: 647
       },
-      ingest_perf: [{
+      performance: [{
         50: 2000,
         95: 4250,
         date: 1493856000000
@@ -1147,7 +1147,7 @@ const getProductStatusResp =
         granule_id: '2017143'
       }
     ],
-    ingest_perf: [
+    performance: [
       {
         50: 2000,
         95: 252300.00000000064,
