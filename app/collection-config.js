@@ -1,9 +1,9 @@
 'use strict';
 
 const { s3 } = require('./aws');
-const yaml = require('js-yaml');
 const { BadRequestError } = require('./api-errors');
 const { fromJS } = require('immutable');
+const commonConfig = require('ingest-common/config');
 
 const COLLECTIONS_YAML = 'ingest/collections.yml';
 
@@ -30,24 +30,34 @@ const getCollectionsYaml = async (stackName) => {
 };
 
 /**
+ * TODO
+ */
+const ingestStackResourceResolver = (ingestStackResources, prefix) =>
+  commonConfig.resolveResource(ingestStackResources.toJS(), prefix);
+
+/**
  * Parses the collection yaml into a Immutable JS javascript object.
  */
-const parseCollectionYaml = (collectionsYaml) => {
-  const resourceType = new yaml.Type('!GitcResource', {
-    kind: 'scalar'
-  });
-  const schema = yaml.Schema.create([resourceType]);
-  return fromJS(yaml.safeLoad(collectionsYaml, { schema: schema }));
-};
+const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
+  const result = fromJS(commonConfig.parseConfig(collectionsYaml, resourceResolver));
+
+  if (resourceResolver) {
+    // Update the keys in workflows to be the resolved names
+    return result.updateIn(['workflows'], workflows => workflows.mapKeys(resourceResolver))
+  }
+
+  return result;
+}
 
 /**
  * Returns a parsed collection config
  */
-const loadCollectionConfig = async stackName =>
-  parseCollectionYaml(await getCollectionsYaml(stackName));
+const loadCollectionConfig = async (stackName, resourceResolver) =>
+  parseCollectionYaml(await getCollectionsYaml(stackName), resourceResolver);
 
 module.exports = {
   loadCollectionConfig,
+  ingestStackResourceResolver,
 
   // For testing
   parseCollectionYaml

@@ -104,6 +104,7 @@ Resources:
             Action:
               - ecs:ListTasks
               - ecs:DescribeTasks
+              - ecs:DescribeTaskDefinition
               - ecs:DescribeServices
             Resource:
               # You can't be any more specific than this with the Describe*. Andrew said this is NGAP Kosher
