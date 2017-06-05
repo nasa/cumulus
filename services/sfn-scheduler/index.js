@@ -3,8 +3,8 @@
 const _ = require('lodash');
 const aws = require('ingest-common/aws');
 const log = require('ingest-common/log');
+const sf = require('ingest-common/step-functions');
 const configUtil = require('ingest-common/config');
-const uuid = require('uuid');
 
 /**
  * Runs the given function at the given offset and with the given period thereafter
@@ -29,26 +29,9 @@ const doPeriodically = (periodMs, offsetMs, fn) => {
  */
 const triggerIngest = async (resources, provider, collection) => {
   try {
+    const messageData = sf.constructStepFunctionInput(resources, provider, collection);
     const stateMachine = collection.workflow;
-    const meta = JSON.parse(JSON.stringify(collection.meta || {}));
-    const startDate = new Date().toISOString();
-    const id = uuid.v4();
-    const executionName = aws.toSfnExecutionName([collection.id, id], '__');
-    const messageData = {
-      workflow_config_template: collection.workflow_config_template,
-      resources: resources,
-      provider: provider,
-      ingest_meta: {
-        message_source: 'sfn',
-        start_date: startDate,
-        state_machine: stateMachine,
-        execution_name: executionName,
-        id: id
-      },
-      meta: meta,
-      exception: 'None',
-      payload: null
-    };
+    const executionName = messageData.ingest_meta.execution_name;
 
     const message = JSON.stringify(messageData);
     log.info(`Starting ingest of ${collection.id}`);
@@ -63,56 +46,6 @@ const triggerIngest = async (resources, provider, collection) => {
     log.error(err.stack);
   }
 };
-
-/**
- * Given a resource object as returned by CloudFormation::DescribeStackResources, returns
- * the resource's ARN. Often this is the PhysicalResourceId property, but for Lambdas,
- * need to glean information and attempt to construct an ARN.
- * @param {StackResource} resource - The resource as returned by cloudformation
- * @returns {string} The ARN of the resource
- */
-const resourceToArn = (resource) => {
-  const physicalId = resource.PhysicalResourceId;
-  if (physicalId.indexOf('arn:') === 0) {
-    return physicalId;
-  }
-  const typesToArnFns = {
-    'AWS::Lambda::Function': (cfResource, region, account) =>
-      `arn:aws:lambda:${region}:${account}:function:${cfResource.PhysicalResourceId}`,
-    'AWS::DynamoDB::Table': (cfResource, region, account) =>
-      `arn:aws:dynamodb:${region}:${account}:table/${cfResource.PhysicalResourceId}`
-  };
-
-  const arnFn = typesToArnFns[resource.ResourceType];
-  if (!arnFn) throw new Error(`Could not resolve resource type to ARN: ${resource.ResourceType}`);
-
-  const arnParts = resource.StackId.split(':');
-  const region = arnParts[3];
-  const account = arnParts[4];
-  return arnFn(resource, region, account);
-};
-
-/**
- * Returns a function that takes a logical resource key and uses the passed lookup map
- * and prefix to resolve that logical resource id as an AWS resource.  Lookups support one
- * property, '.Arn', e.g. MyLambdaFunction.Arn. If specified, the resolver will attempt
- * to return the ARN of the specified resource, otherwise it will return the PhysicalResourceId
- * @param {object} cfResourcesById - A mapping of logical ids to CloudFormation resources as
- *                                   returned by CloudFormation::DescribeStackResources
- * @param {string} prefix - A prefix to prepend to the given name if no resource matches the name.
- *                 This is a hack to allow us to prefix state machines with the stack name for IAM
- * @returns {function} The resolver function described above
- */
-const resolveResource = (cfResourcesById, prefix) =>
-  (key) => {
-    const [name, fn] = key.split('.');
-    const resource = cfResourcesById[name] || cfResourcesById[prefix + name];
-    if (!resource) throw new Error(`Resource not found: ${key}`);
-    if (fn && ['Arn'].indexOf(fn) === -1) throw new Error(`Function not supported: ${key}`);
-    const result = fn === 'Arn' ? resourceToArn(resource) : resource.PhysicalResourceId;
-    log.info(`Resolved Resource: ${key} -> ${result}`);
-    return result;
-  };
 
 /**
  * Starts a scheduler service that periodically triggers ingests described in config/collections.yml
@@ -130,7 +63,7 @@ module.exports.handler = async (invocation) => {
     }
 
     const configStr = await aws.getPossiblyRemote(invocation.payload);
-    const resolver = resolveResource(cfResourcesById, prefix);
+    const resolver = configUtil.resolveResource(cfResourcesById, prefix);
     const config = configUtil.parseConfig(configStr, resolver);
 
     // Update the keys under the workflows to map identifiers (Arns) to workflow

@@ -23,7 +23,24 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     const since = new Date(Date.now() - parseDuration(this.config.since)).toISOString();
     const conceptId = this.message.meta.concept_id;
     const granules = await this.cmrGranules(this.config.root, since, conceptId);
-    return this.buildMessages(granules, this.config.granule_meta, this.message.meta);
+    const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
+    const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
+    return filtered;
+  }
+
+  /**
+   * excludeFiltered - TODO description
+   *
+   * @param  {type} resources description
+   * @param  {type} matchingKeys   description
+   * @return {type}           description
+   */
+  excludeFiltered(messages, matchingKeys) {
+    if (matchingKeys) {
+      const keySet = new Set(matchingKeys);
+      return messages.filter(msg => keySet.has(msg.meta.key));
+    }
+    return messages;
   }
 
   /**

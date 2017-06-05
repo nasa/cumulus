@@ -31,10 +31,26 @@ module.exports = class DiscoverHttpTilesTask extends Task {
         const complete = this.excludeIncomplete(resources, config.required, message);
         const withMeta = this.addFileMeta(complete, config.file, message);
         const messages = this.buildMessages(withMeta, config.group_by, config.group_meta, message);
-        resolve(messages);
+        const filtered = this.excludeFiltered(messages, config.filtered_granule_keys);
+        resolve(filtered);
       });
       crawler.crawl();
     });
+  }
+
+  /**
+   * excludeFiltered - TODO description
+   *
+   * @param  {type} resources description
+   * @param  {type} matchingKeys   description
+   * @return {type}           description
+   */
+  excludeFiltered(messages, matchingKeys) {
+    if (matchingKeys) {
+      const keySet = new Set(matchingKeys);
+      return messages.filter(msg => keySet.has(msg.meta.key));
+    }
+    return messages;
   }
 
   excludeIncomplete(resources, opts, fieldValues) {
