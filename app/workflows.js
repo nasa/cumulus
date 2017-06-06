@@ -41,13 +41,14 @@ const getRunningExecutions = async (stackName, workflowId) => {
     throw new Error(`Found more than 100 running workflows for ${arn}`);
   }
   return List(resp.executions.map((e) => {
-    const { collectionId, granuleId } = parseExecutionName(e.name);
+    const { collectionId, granuleId, uuid } = parseExecutionName(e.name);
     return Map({
       arn: e.executionArn,
       name: e.name,
       startDate: e.startDate,
       collectionId,
-      granuleId
+      granuleId,
+      uuid
     });
   }));
 };
