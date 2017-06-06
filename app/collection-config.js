@@ -43,11 +43,14 @@ const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
 
   if (resourceResolver) {
     // Update the keys in workflows to be the resolved names
-    return result.updateIn(['workflows'], workflows => workflows.mapKeys(resourceResolver))
+    return result.updateIn(['workflows'], workflows => workflows.mapKeys(resourceResolver));
   }
 
   return result;
-}
+};
+
+// TODO add a test of parsing the collection yaml with a resolver. Use a fake set of ingest stack
+// resources
 
 /**
  * Returns a parsed collection config
