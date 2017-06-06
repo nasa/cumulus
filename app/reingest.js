@@ -11,7 +11,7 @@ const collConfig = require('./collection-config');
 const sf = require('ingest-common/step-functions');
 const { getIngestStackResources, getPhysicalResourceId } = require('./stack-resources');
 
-// TODO consider extracting out some of the following code
+// TODO consider extracting out some of the following code into helper functions
 // TODO look for concurrency opportunities when doing that.
 
 /**
@@ -50,6 +50,9 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   const firstStep = collectionConfig.getIn(['workflows', stateMachine, 'StartAt']);
   sfInput.workflow_config_template[firstStep].filtered_granule_keys = [granuleId];
 
+  // TODO consider some sort of signifier that this execution is one for reingesting a specific set
+  // of granules.
+
   const executionName = sfInput.ingest_meta.execution_name;
 
   console.info(`Starting execution of ${stateMachine} for ${granuleId}`);
@@ -63,5 +66,31 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   return executionName;
 };
 
-
 // printPromise(reingestGranule('gitc-jg', 'VNGCR_NQD_C1', 'VIIRS/VNGCR_NQD_C1/2017152'));
+
+/**
+ * handleReingestRequest - Handles the API request to reingest granules
+ */
+const handleReingestRequest = async (req, res) => {
+  try {
+    req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
+    req.checkQuery('collection_id', 'Invalid collection_id').notEmpty();
+    req.checkQuery('granule_id', 'Invalid granule_id').notEmpty();
+    const result = await req.getValidationResult();
+    if (!result.isEmpty()) {
+      res.status(400).json(result.array());
+    }
+    else {
+      const stackName = req.query.stack_name;
+      const collectionId = req.query.collection_id;
+      const granuleId = req.query.granule_id;
+      res.json(await reingestGranule(stackName, collectionId, granuleId));
+    }
+  }
+  catch (e) {
+    console.error(e);
+    handleError(e, req, res);
+  }
+};
+
+module.exports = { handleReingestRequest };
