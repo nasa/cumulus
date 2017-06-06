@@ -92,7 +92,9 @@ const Modal = functional(
     componentDidMount: ({ modalType, uniqId }) => {
       // Use EUI recommended method for creating modal content.
       // eslint-disable-next-line no-undef
-      $(`#${showModalClickableId(modalType, uniqId)}`).leanModal({ closeButton: '.modal-close-trigger' });
+      $(`#${showModalClickableId(modalType, uniqId)}`).leanModal({
+        closeButton: '.modal-close-trigger'
+      });
     }
   }
 );

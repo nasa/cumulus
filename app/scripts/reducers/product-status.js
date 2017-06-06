@@ -7,6 +7,8 @@ const api = require('../ops-api');
 // Actions
 const PRODUCT_STATUS_IN_FLIGHT = 'PRODUCT_STATUS_IN_FLIGHT';
 const PRODUCT_STATUS_RCVD = 'PRODUCT_STATUS_RCVD';
+const REINGEST_GRANULE_COMPLETED = 'REINGEST_GRANULE_COMPLETED';
+const REINGEST_GRANULE_IN_FLIGHT = 'REINGEST_GRANULE_IN_FLIGHT';
 
 const initialState = Map(
   { productStatus: undefined,
@@ -36,6 +38,10 @@ const reducer = (state = initialState, action) => {
       return state.set('productStatus', action.productStatus)
         .set('inFlight', false)
         .set('error', action.error);
+    case REINGEST_GRANULE_IN_FLIGHT:
+      return state;
+    case REINGEST_GRANULE_COMPLETED:
+      return state;
     default:
       return state;
   }
@@ -63,8 +69,28 @@ const fetchProductStatus = async (config, workflowId, collectionId, dispatch) =>
   }
 };
 
+const reingestGranule = async (config, collectionId, granuleId, dispatch) => {
+
+  // dispatch something to show it's in progress
+  // TODO Show that we're reingesting
+  dispatch({ type: REINGEST_GRANULE_IN_FLIGHT, collectionId, granuleId });
+  try {
+    const executionName = await api.reingestGranule(config, collectionId, granuleId);
+    // TODO show somehow that its completed
+    dispatch({ type: REINGEST_GRANULE_COMPLETED, executionName, collectionId, granuleId });
+  }
+  catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    // TODO If there's an error display that in a header row.
+    dispatch({ type: REINGEST_GRANULE_COMPLETED, error: e.message });
+  }
+  // TODO Refetch product status as well so the running execution shows up
+};
+
 module.exports = {
   reducer,
   // Actions
-  fetchProductStatus
+  fetchProductStatus,
+  reingestGranule
 };

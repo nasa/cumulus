@@ -85,9 +85,25 @@ const getProductStatus = async (config, workflowId, collectionId) => {
   return fromJS(products);
 };
 
+/**
+ * TODO
+ */
+const reingestGranule = (config, collectionId, granuleId) =>
+  rp({
+    uri: `${config.get('apiBaseUrl')}/reingest_granule`,
+    method: 'POST',
+    qs: {
+      stack_name: config.get('stackName'),
+      collection_id: collectionId,
+      granule_id: granuleId
+    },
+    json: true
+  });
+
 module.exports = {
   getApiHealth,
   getWorkflowStatus,
   getServiceStatus,
-  getProductStatus
+  getProductStatus,
+  reingestGranule
 };

@@ -24,23 +24,43 @@ const parsePathIds = (props) => {
   return { workflowId, productId };
 };
 
-const ReingestModal = ({ granuleId, productId, uniqId }) => {
-  return (
-    <Modal modalType="reingestModal" uniqId={uniqId}>
-      <ModalButton className="eui-btn--sm">Reingest</ModalButton>
-      <ModalContent className="reingest-modal">
-        <div className="confirmation-msg">{`Reingest ${granuleId} in ${productId}?`}</div>
-        <div>
-          <button type="button" className="eui-btn eui-btn--green eui-btn--round">OK</button>
-          <button type="button" className="eui-btn eui-btn--round modal-close-trigger">
-            Cancel
-          </button>
-        </div>
-      </ModalContent>
-    </Modal>
-  );
-};
+// TODO use a constant for modal-close-trigger
 
+/**
+ * TODO
+ */
+const TriggerReingestButton = connect(({ config }) => ({ config }))(
+  ({ granuleId, productId, config, dispatch }) =>
+    <button
+      type="button"
+      className="eui-btn eui-btn--green eui-btn--round modal-close-trigger"
+      onClick={(e) => {
+        e.preventDefault();
+        // TODO is there a better way to do this?
+        const ingestGranuleId = `VIIRS/${productId}/${granuleId}`;
+        ps.reingestGranule(config, productId, ingestGranuleId, dispatch);
+      }}
+    >
+      OK
+    </button>
+);
+
+/**
+ * TODO
+ */
+const ReingestModal = ({ granuleId, productId, uniqId }) =>
+  <Modal modalType="reingestModal" uniqId={uniqId}>
+    <ModalButton className="eui-btn--sm">Reingest</ModalButton>
+    <ModalContent className="reingest-modal">
+      <div className="confirmation-msg">{`Reingest ${granuleId} in ${productId}?`}</div>
+      <div>
+        <TriggerReingestButton granuleId={granuleId} productId={productId} />
+        <button type="button" className="eui-btn eui-btn--round modal-close-trigger">
+          Cancel
+        </button>
+      </div>
+    </ModalContent>
+  </Modal>;
 
 const RunningIcon = () => <Icon className="fa-repeat icon-running" />;
 
@@ -69,7 +89,7 @@ const executionTableHeader = (
   <thead>
     <tr>
       <th>Status</th>
-      <th>Granule Date</th>
+      <th>Granule Id</th>
       <th>Started</th>
       <th>Stopped</th>
       <th>Duration</th>
@@ -100,7 +120,9 @@ const RunningRow = ({ rowIndex, execution }) => {
       className={rowClassName(rowIndex)}
     >
       <RunningCell />
-      <td>{granule_id ? util.parseJulian(granule_id) : 'N/A'}</td>
+      <td>
+        {granule_id ? `${granule_id} (${util.parseJulian(granule_id)})` : 'N/A'}
+      </td>
       <td>{util.dateStringToLocaleString(start_date)}</td>
       <td />
       <td>{util.humanDuration(msSinceStart)}</td>
@@ -120,7 +142,9 @@ const CompletedRow = ({ rowIndex, execution, productId }) => {
       className={rowClassName(rowIndex)}
     >
       {success ? <SuccessCell /> : <FailCell />}
-      <td>{granule_id ? util.parseJulian(granule_id) : 'N/A'}</td>
+      <td>
+        {granule_id ? `${granule_id} (${util.parseJulian(granule_id)})` : 'N/A'}
+      </td>
       <td>{util.dateStringToLocaleString(start_date)}</td>
       <td>{util.dateStringToLocaleString(stop_date)}</td>
       <td>{util.humanDuration(elapsed_ms)}</td>
@@ -187,7 +211,7 @@ const ProductPageFn = (props) => {
           </ol>
         </div>
 
-        <h1>Collection {productId}</h1>
+        <h1>{workflowId} {productId}</h1>
         <Loading isLoading={() => !props.productStatus.get('productStatus')}>
           <div>
             <PerformanceChart
@@ -195,7 +219,7 @@ const ProductPageFn = (props) => {
               perfData={productStatus.get('performance', List())}
             />
             <h2>Executions</h2>
-            <ExecutionTable productStatus={productStatus} productId={productId}  />
+            <ExecutionTable productStatus={productStatus} productId={productId} />
           </div>
         </Loading>
       </main>
