@@ -6,6 +6,7 @@ const util = require('../../util');
 const { Loading } = require('../loading');
 const { List, Map } = require('immutable');
 const ss = require('../../reducers/service-status');
+const { Modal, ModalButton, ModalContent } = require('../modal');
 
 
 const serviceNameToHumanName = Map({
@@ -15,9 +16,6 @@ const serviceNameToHumanName = Map({
 });
 
 /* eslint-disable camelcase */
-
-const showModalButtonId = serviceName => `btn-show-${serviceName}-events`;
-const modalDivId = serviceName => `modal-service-events-${serviceName}`;
 
 /**
  * Returns an array of JSX elements displaying each service event.
@@ -33,42 +31,19 @@ const getCombinedServiceEvents = ({ events }) =>
 /**
  * Returns the button and modal div for displaying service events.
  */
-const ServiceEventsModalFn = ({ service }) => {
+const ServiceEventsModal = ({ service }) => {
   const serviceName = service.get('service_name');
   const humanServiceName = serviceNameToHumanName.get(serviceName);
   return (
-    <span>
-      <button
-        type="button"
-        className="eui-btn eui-btn--sm"
-        id={showModalButtonId(serviceName)}
-        name={modalDivId(serviceName)}
-        href={`#${modalDivId(serviceName)}`}
-      >
-        View Events
-      </button>
-      <div className="eui-modal-content wide-modal" id={modalDivId(serviceName)}>
-        <button type="button" className="icon fa fa-close modal-close" />
+    <Modal modalType="serviceEvents" uniqId={serviceName}>
+      <ModalButton className="eui-btn--sm">View Events</ModalButton>
+      <ModalContent className="wide-modal">
         <h2>{humanServiceName} Events</h2>
         <div className="eui-info-box modal-pre">{getCombinedServiceEvents(service)}</div>
-      </div>
-    </span>
+      </ModalContent>
+    </Modal>
   );
 };
-
-/**
- * Creates a button that will display the events associated with a service in a modal window.
- */
-const ServiceEventsModal = functional(
-  ServiceEventsModalFn, {
-    componentDidMount: ({ service }) => {
-      const serviceName = service.get('service_name');
-      // Use EUI recommended method for creating modal content.
-      // eslint-disable-next-line no-undef
-      $(`#${showModalButtonId(serviceName)}`).leanModal({ closeButton: '.modal-close' });
-    }
-  }
-);
 
 /**
  * Shows the status of a single service.
