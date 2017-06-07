@@ -12,6 +12,16 @@ const ExecutionAggregator = require('./execution-aggregator');
 const { loadCollectionConfig } = require('./collection-config');
 const { parseExecutionName } = require('./execution-name-parser');
 
+
+/**
+ * Helper function for converting a workflow id to ARN.
+ */
+const workflowIdToArn = async (stackName, id) => {
+  const collectionConfig = await loadCollectionConfig(stackName);
+  const workflow = collectionConfig.get('_workflow_meta').filter(w => w.get('id') === id).first();
+  return workflow ? workflow.get('arn') : null;
+};
+
 /**
  * getRunningExecutions - Returns running executions for the workflow
  */
@@ -46,10 +56,8 @@ const getWorkflowStatuses = async (stackName) => {
   const esWorkflowsById = await ExecutionAggregator.loadWorkflowsFromEs();
 
   const workflowPromises = collectionConfig.get('_workflow_meta')
-    .entrySeq()
-    .map(async ([id, w]) => {
-      const name = w.get('name');
-      const arn = w.get('arn');
+    .map(async (w) => {
+      const { id, name, arn } = w.toJS();
       const runningExecs = await getRunningExecutions(stackName, arn);
       const runningExecsByCollection = runningExecs.groupBy(e => e.get('collectionId'));
       let workflow = fromJS(esWorkflowsById[id] || { id: id });
@@ -89,4 +97,5 @@ const handleWorkflowStatusRequest = async (req, res) => {
 module.exports = {
   getWorkflowStatuses,
   getRunningExecutions,
+  workflowIdToArn,
   handleWorkflowStatusRequest };
