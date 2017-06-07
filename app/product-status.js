@@ -16,7 +16,8 @@ const Workflows = require('./workflows');
  */
 const getProductStatus = async (stackName, workflowId, collectionId, numExecutions) => {
   // Get the currently running executions
-  const runningExecs = await Workflows.getRunningExecutions(stackName, workflowId);
+  const workflowArn = await Workflows.workflowIdToArn(stackName, workflowId);
+  const runningExecs = await Workflows.getRunningExecutions(stackName, workflowArn);
   const runningExecsForColl = runningExecs.filter(e => e.get('collectionId') === collectionId);
 
   // Figure out which state each of the running executions is on.
