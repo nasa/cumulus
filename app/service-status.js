@@ -28,6 +28,8 @@ const arnToName = (arnMaybe) => {
  * limit.
  */
 const getCurrentUseConnections = async (mainStackName, ingestStackResources) => {
+  // Performance optimization: If the config for providers has no limited connections then we don't
+  // need to scan the table
   const connectsTable = getPhysicalResourceId(ingestStackResources, 'ConnectionsTable');
 
   const [collectionConfig, dbResult] = await Promise.all([
