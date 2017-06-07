@@ -17,7 +17,8 @@ const longType = { type: 'long', store: 'yes' };
 const booleanType = { type: 'boolean', store: 'yes' };
 
 /**
- * Defines settings for storing executions in Elasticsearch.
+ * The executions index contains completed executions of workflow runs (state machines in AWS Step
+ * Functions)
  */
 const executionsIndex = {
   name: 'executions',
@@ -47,7 +48,7 @@ const executionsIndex = {
 };
 
 /**
- * The settings to use for defining the executions meta index.
+ * The executions meta index keeps track of the last time we indexed executions.
  */
 const executionsMetaIndex = {
   name: 'executions-meta',
@@ -225,12 +226,9 @@ const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
   const collectionConfig = await loadCollectionConfig(stackName);
   const workflows = collectionConfig.get('_workflow_meta');
 
-  const promises = workflows
-  .entrySeq()
-  .map(async ([workflowId, workflow]) => {
-    const arn = workflow.get('arn');
-
-    console.info(`Indexing executions for workflow ${workflowId}`);
+  const promises = workflows.map(async (w) => {
+    const { id, arn } = w.toJS();
+    console.info(`Indexing executions for workflow ${id}`);
     let totalIndexed = 0;
     let done = false;
     let nextToken = null; // token found in a previous run.
@@ -239,12 +237,12 @@ const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
       const resp = await stepFunctions()
         .listExecutions({ stateMachineArn: arn, nextToken, maxResults: 100 })
         .promise();
-      const numIndexed = await indexExecutions(workflowId, resp.executions);
+      const numIndexed = await indexExecutions(id, resp.executions);
 
       if (numIndexed > 0) {
         // Did we find enough executions that we can stop?
         totalIndexed += numIndexed;
-        console.info(`Indexed total of ${totalIndexed} docs for workflow ${workflowId}`);
+        console.info(`Indexed total of ${totalIndexed} docs for workflow ${id}`);
         if (totalIndexed >= maxIndexExecutions) {
           console.info('We indexed up to max index executions.');
           done = true;

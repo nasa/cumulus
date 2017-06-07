@@ -29,10 +29,7 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   const eventJson = command[eventJsonIndex + 1];
   const resources = JSON.parse(eventJson).resources;
 
-  const resolver = collConfig.ingestStackResourceResolver(
-    ingestStackResources, resources.state_machine_prefix);
-
-  const collectionConfig = await collConfig.loadCollectionConfig(stackName, resolver);
+  const collectionConfig = await collConfig.loadCollectionConfig(stackName);
   const collection = collectionConfig.get('collections')
     .filter(c => collectionId === c.get('id'))
     .first();
