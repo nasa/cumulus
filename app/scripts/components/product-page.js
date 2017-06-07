@@ -9,7 +9,8 @@ const { SuccessIcon, ErrorIcon, Icon } = require('./icon');
 const { PerformanceChart } = require('./performance-chart');
 const ps = require('../reducers/product-status');
 const util = require('../util');
-const { Modal, ModalButton, ModalContent } = require('./modal');
+
+const ProcessingIcon = () => <Icon className="fa-refresh fa-spin fa-fw" />;
 
 /* eslint-disable camelcase */
 
@@ -24,43 +25,43 @@ const parsePathIds = (props) => {
   return { workflowId, productId };
 };
 
-// TODO use a constant for modal-close-trigger
+
+/**
+ * @returns The properties to send to the TriggerReingestButton component
+ */
+const triggerReingestButtonStateToProps = ({ config, productStatus }) =>
+  ({ config, productStatus });
+
 
 /**
  * TODO
  */
-const TriggerReingestButton = connect(({ config }) => ({ config }))(
-  ({ granuleId, productId, config, dispatch }) =>
-    <button
-      type="button"
-      className="eui-btn eui-btn--green eui-btn--round modal-close-trigger"
-      onClick={(e) => {
-        e.preventDefault();
-        // TODO is there a better way to do this?
-        const ingestGranuleId = `VIIRS/${productId}/${granuleId}`;
-        ps.reingestGranule(config, productId, ingestGranuleId, dispatch);
-      }}
-    >
-      OK
-    </button>
+const TriggerReingestButton = connect(triggerReingestButtonStateToProps)(
+  ({ granuleId, productId, config, productStatus, dispatch }) => {
+    // TODO file issue related to fixing this in the ops API and here.
+    const ingestGranuleId = `VIIRS/${productId}/${granuleId}`;
+    const { startingGranules, startedGranules } = productStatus.get('reingest');
+
+    if (startingGranules.contains(ingestGranuleId)) {
+      return <span><ProcessingIcon />Starting</span>;
+    }
+    if (startedGranules.contains(ingestGranuleId)) {
+      return <span><SuccessIcon />Running</span>;
+    }
+    return (
+      <button
+        type="button"
+        className="eui-btn eui-btn--sm"
+        onClick={(e) => {
+          e.preventDefault();
+          ps.reingestGranule(config, productId, ingestGranuleId, dispatch);
+        }}
+      >
+        Reingest
+      </button>
+    );
+  }
 );
-
-/**
- * TODO
- */
-const ReingestModal = ({ granuleId, productId, uniqId }) =>
-  <Modal modalType="reingestModal" uniqId={uniqId}>
-    <ModalButton className="eui-btn--sm">Reingest</ModalButton>
-    <ModalContent className="reingest-modal">
-      <div className="confirmation-msg">{`Reingest ${granuleId} in ${productId}?`}</div>
-      <div>
-        <TriggerReingestButton granuleId={granuleId} productId={productId} />
-        <button type="button" className="eui-btn eui-btn--round modal-close-trigger">
-          Cancel
-        </button>
-      </div>
-    </ModalContent>
-  </Modal>;
 
 const RunningIcon = () => <Icon className="fa-repeat icon-running" />;
 
@@ -150,10 +151,9 @@ const CompletedRow = ({ rowIndex, execution, productId }) => {
       <td>{util.humanDuration(elapsed_ms)}</td>
       <td />
       <td>
-        <ReingestModal
+        <TriggerReingestButton
           granuleId={granule_id}
           productId={productId}
-          uniqId={`${granule_id}-${rowIndex}`}
         />
       </td>
     </tr>
