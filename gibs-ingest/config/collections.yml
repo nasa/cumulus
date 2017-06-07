@@ -121,20 +121,20 @@ _templates:
             Key: 'EPSG{meta.epsg}/{meta.collection}/{meta.date.year}'
 
 _workflow_meta:
-  DiscoverVIIRS:
+  - id: DiscoverVIIRS
     name: VIIRS Discovery
     arn: !GitcResource DiscoverVIIRS
     type: discovery
-  IngestVIIRS:
+  - id: IngestVIIRS
     name: VIIRS Ingest
     arn: !GitcResource IngestVIIRS
     type: ingest
     parent: DiscoverVIIRS
-  DiscoverMOPITT:
+  - id: DiscoverMOPITT
     name: MOPITT Discovery
     arn: !GitcResource DiscoverMOPITT
     type: discovery
-  IngestMOPITT:
+  - id: IngestMOPITT
     name: MOPITT Ingest
     arn: !GitcResource IngestMOPITT
     type: ingest
