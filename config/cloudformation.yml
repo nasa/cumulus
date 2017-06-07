@@ -8,6 +8,9 @@ Parameters:
   OnEarthStackName:
     Type: String
     Description: Name of the OnEarth stack name being created
+  AlphanumPrefix:
+    Type: String
+    Description: Prefix to use for naming certain AWS items requiring only A-Z/0-9
   PaaS:
     Description: If "true" the deployment is happening into the NGAP PaaS where possible
     Type: String
@@ -75,11 +78,18 @@ Resources:
           # Gives permission to list state machines and get their executions.
           - Effect: Allow
             Action:
-            - states:ListStateMachines
             - states:ListExecutions
             - states:GetExecutionHistory
             Resource:
+            # TODO this should be more specific (executions and are they prefixed?)
             - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:*"
+          # Gives permission to start executions of  state machines
+          - Effect: Allow
+            Action:
+            - states:StartExecution
+            Resource:
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AlphanumPrefix}*"
+
           # Give permission to access elasticsearch domain
           - Effect: Allow
             Action:
@@ -202,7 +212,7 @@ Resources:
   IndexerSchedulerRule:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: rate(5 minutes)
+      ScheduleExpression: rate(1 minute)
       Targets:
         - Id: IndexerScheduler
           Arn: !GetAtt IndexerFunction.Arn

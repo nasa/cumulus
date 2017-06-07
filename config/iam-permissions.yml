@@ -41,10 +41,18 @@ Resources:
               - Effect: Allow
                 Action:
                   - states:ListExecutions
-                  - states:ListStateMachines
                   # TODO this is new and not added to NGAP yet
                   - states:GetExecutionHistory
+                # TODO this should be more specific (executions and are they prefixed?)
                 Resource: !Sub "arn:aws:states:*:${AWS::AccountId}:*"
+              # TODO this is new and not added to NGAP yet
+              # Gives permission to start executions of  state machines
+              - Effect: Allow
+                Action:
+                - states:StartExecution
+                Resource:
+                # TODO this should be scoped by the alphabetic numeric prefix. Not sure how we'll set this in ngap
+                - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:*"
               # GITC-319 add additional ones from the cloud formation file
               # - elasticsearch
               # - ecs
