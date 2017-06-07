@@ -8,8 +8,8 @@
 /* eslint-disable no-console */
 
 const { stepFunctions, es } = require('./aws');
-const ws = require('./workflows');
 const { parseExecutionName } = require('./execution-name-parser');
+const { loadCollectionConfig } = require('./collection-config');
 
 const stringType = { type: 'keyword', store: 'yes' };
 const dateType = { type: 'date', store: 'yes' };
@@ -215,33 +215,36 @@ const indexExecutions = async (workflowId, executions) => {
  * 4. Keeps fetching the executions and indexing them until we find executions that were already
  * indexed.
  */
-const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
+const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
   await createOrUpdateIndex(executionsIndex);
   await createOrUpdateIndex(executionsMetaIndex);
 
   const lastIndexedDate = await getLastIndexedDate();
   // Capture the time that we start indexing before we start fetching executions.
   const indexingStartTime = Date.now();
-  const workflows = await ws.getWorkflowStatuses(stackName, 0);
+  const collectionConfig = await loadCollectionConfig(stackName);
+  const workflows = collectionConfig.get('_workflow_meta');
 
-  const promises = workflows.map(async (workflow) => {
-    const arn = await ws.getStateMachineArn(stackName, workflow.get('id'));
+  const promises = workflows
+  .entrySeq()
+  .map(async ([workflowId, workflow]) => {
+    const arn = workflow.get('arn');
 
-    console.info(`Indexing executions for workflow ${workflow.get('id')}`);
+    console.info(`Indexing executions for workflow ${workflowId}`);
     let totalIndexed = 0;
     let done = false;
     let nextToken = null; // token found in a previous run.
 
     while (!done) {
       const resp = await stepFunctions()
-        .listExecutions({ stateMachineArn: arn, nextToken, maxResults: 1000 })
+        .listExecutions({ stateMachineArn: arn, nextToken, maxResults: 100 })
         .promise();
-      const numIndexed = await indexExecutions(workflow.get('id'), resp.executions);
+      const numIndexed = await indexExecutions(workflowId, resp.executions);
 
       if (numIndexed > 0) {
         // Did we find enough executions that we can stop?
         totalIndexed += numIndexed;
-        console.info(`Indexed total of ${totalIndexed} docs for workflow ${workflow.get('id')}`);
+        console.info(`Indexed total of ${totalIndexed} docs for workflow ${workflowId}`);
         if (totalIndexed >= maxIndexExecutions) {
           console.info('We indexed up to max index executions.');
           done = true;
@@ -281,20 +284,42 @@ const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
 const MAX_EXECUTIONS_TO_INDEX = 50000;
 
 /**
+ * TODO
+ */
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
  * Implements lambda handler.
  */
-exports.handler = async (event, context, callback) => {
+const handler = async (event, context, callback) => {
   console.log(`Indexer Handler called. Event: ${JSON.stringify(event, null, 2)}`);
 
   try {
     const stackName = event.StackName;
+
+    const startTime = Date.now();
+
     console.log(`Starting indexing of executions for stack ${stackName}`);
-    await indexRecentExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
+    await findAndIndexExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
     console.log(`Indexing complete for stack ${stackName}`);
+
+    // A hacky way to run this in lambda more frequently than once a minute.
+    const elapsed = Date.now() - startTime;
+    await sleep(30000 - elapsed);
+
+    console.log(`Starting indexing of executions for stack ${stackName}`);
+    await findAndIndexExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
+    console.log(`Indexing complete for stack ${stackName}`);
+
     callback(null, 'Elasticsearch indexing complete');
   }
   catch (e) {
     console.error(e);
     callback(e.message);
   }
+};
+
+
+module.exports = {
+  handler
 };

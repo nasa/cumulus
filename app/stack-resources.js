@@ -2,6 +2,7 @@
 
 const { cf } = require('./aws');
 const { fromJS } = require('immutable');
+const { memoize } = require('./cache');
 
 /**
  * Takes in what might be an ARN and if it is parses out the name. If it is not an ARN returns it
@@ -17,24 +18,20 @@ const arnToName = (arnMaybe) => {
 /**
  * Fetches the stack and returns a map of logical resource id to stack information.
  */
-const getStackResources = async (arnOrStackName) => {
+const getStackResources = memoize(async (arnOrStackName) => {
   const stackName = arnToName(arnOrStackName);
   const resp = fromJS(await cf().describeStackResources({ StackName: stackName }).promise());
   return resp.get('StackResources').groupBy(m => m.get('LogicalResourceId')).map(v => v.first());
-};
-
-// Potential performation optimization:
-// Fetching all the stack resources and ids for things is slow. We could add memoization to speed up
-// performance.
+});
 
 /**
  * TODO
  */
-const getIngestStackResources = async (stackName) => {
+const getIngestStackResources = memoize(async (stackName) => {
   const mainStackResources = await getStackResources(stackName);
   return getStackResources(
     mainStackResources.getIn(['IngestStack', 'PhysicalResourceId']));
-};
+});
 
 /**
  * TODO

@@ -4,6 +4,8 @@ const { s3 } = require('./aws');
 const { BadRequestError } = require('./api-errors');
 const { fromJS } = require('immutable');
 const commonConfig = require('ingest-common/config');
+const { memoize } = require('./cache');
+const sr = require('./stack-resources');
 
 const COLLECTIONS_YAML = 'ingest/collections.yml';
 
@@ -53,15 +55,22 @@ const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
 // resources
 
 /**
+ * TODO
+ */
+const stackNameToAlphanumPrefix = stackName => `${stackName.replace(/\W/, 'x')}xx`;
+
+/**
  * Returns a parsed collection config
  */
-const loadCollectionConfig = async (stackName, resourceResolver) =>
-  parseCollectionYaml(await getCollectionsYaml(stackName), resourceResolver);
+const loadCollectionConfig = memoize(async (stackName) => {
+  const ingestStackResources = await sr.getIngestStackResources(stackName);
+  const prefix = stackNameToAlphanumPrefix(stackName);
+  const resourceResolver = ingestStackResourceResolver(ingestStackResources, prefix);
+  return parseCollectionYaml(await getCollectionsYaml(stackName), resourceResolver);
+});
 
 module.exports = {
   loadCollectionConfig,
-  ingestStackResourceResolver,
-
   // For testing
   parseCollectionYaml
 };
