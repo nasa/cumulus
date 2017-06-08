@@ -151,11 +151,15 @@ const CompletedRow = ({ rowIndex, execution, productId, workflowId }) => {
       <td>{util.humanDuration(elapsed_ms)}</td>
       <td />
       <td>
-        <TriggerReingestButton
-          workflowId={workflowId}
-          granuleId={granule_id}
-          productId={productId}
-        />
+        {
+          granule_id ?
+            <TriggerReingestButton
+              workflowId={workflowId}
+              granuleId={granule_id}
+              productId={productId}
+            />
+            : ''
+        }
       </td>
     </tr>
   );
