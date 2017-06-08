@@ -86,7 +86,7 @@ const getProductStatus = async (config, workflowId, collectionId) => {
 };
 
 /**
- * TODO
+ * Submits a request to reingest the granule. Returns a promise with response.
  */
 const reingestGranule = (config, collectionId, granuleId) =>
   rp({

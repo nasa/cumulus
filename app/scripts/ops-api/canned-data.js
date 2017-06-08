@@ -1085,106 +1085,107 @@ const getProductStatusResp =
   {
     running_executions: [
       {
-        start_date: '2017-06-01T17:27:58.246Z',
-        granule_id: '2017152',
-        current_state: 'MRFGen'
+        uuid: 'c0d98c30-67be-4e8a-98b0-1412af0d6750',
+        start_date: '2017-06-07T06:22:40.312Z',
+        granule_id: '2017158',
+        current_state: 'MRFGen',
+        reason: 'Timer'
       },
       {
-        start_date: '2017-05-30T18:08:42.237Z',
-        granule_id: '2017150',
-        current_state: 'MRFGen'
-      },
-      {
-        start_date: '2017-05-30T17:17:39.370Z',
-        granule_id: '2017150',
-        current_state: 'MRFGen'
-      },
-      {
-        start_date: '2017-05-27T09:27:19.326Z',
+        uuid: '0ddaf89d-b301-4797-9a42-4b4bd2729cca',
+        start_date: '2017-05-27T07:42:41.860Z',
         granule_id: '2017147',
-        current_state: 'MRFGen'
-      },
-      {
-        start_date: '2017-05-22T13:58:27.809Z',
-        granule_id: '2017142',
-        current_state: 'MRFGen'
+        current_state: 'MRFGen',
+        reason: 'Timer'
       }
     ],
     completed_executions: [
       {
-        start_date: '2017-06-01T17:12:59.000Z',
-        stop_date: '2017-06-01T17:18:56.000Z',
-        elapsed_ms: 357000,
+        uuid: '12b44f50-70e3-41dd-93b2-f90f44aa3771',
+        start_date: '2017-06-08T17:37:52.000Z',
+        stop_date: '2017-06-08T17:37:54.000Z',
+        elapsed_ms: 2000,
         success: true,
-        granule_id: '2017152'
+        granule_id: '2017152',
+        reason: 'Timer'
       },
       {
-        start_date: '2017-06-01T17:12:58.000Z',
-        stop_date: '2017-06-01T17:13:06.000Z',
-        elapsed_ms: 8000,
+        uuid: '12b44f50-70e3-41dd-93b2-f90f44aa3771',
+        start_date: '2017-06-08T17:37:52.000Z',
+        stop_date: '2017-06-08T17:37:54.000Z',
+        elapsed_ms: 2000,
         success: true,
-        granule_id: '2017146'
+        granule_id: '2017153',
+        reason: 'Timer'
       },
       {
-        start_date: '2017-06-01T17:12:59.000Z',
-        stop_date: '2017-06-01T17:13:05.000Z',
-        elapsed_ms: 6000,
+        uuid: '12b44f50-70e3-41dd-93b2-f90f44aa3771',
+        start_date: '2017-06-08T17:37:52.000Z',
+        stop_date: '2017-06-08T17:37:53.000Z',
+        elapsed_ms: 1000,
         success: true,
-        granule_id: '2017148'
+        granule_id: '2017154',
+        reason: 'Timer'
       },
       {
-        start_date: '2017-06-01T17:12:59.000Z',
-        stop_date: '2017-06-01T17:13:05.000Z',
-        elapsed_ms: 6000,
+        uuid: '12b44f50-70e3-41dd-93b2-f90f44aa3771',
+        start_date: '2017-06-08T17:37:52.000Z',
+        stop_date: '2017-06-08T17:37:53.000Z',
+        elapsed_ms: 1000,
         success: true,
-        granule_id: '2017145'
+        granule_id: '2017151',
+        reason: 'Timer'
       },
       {
-        start_date: '2017-06-01T17:12:59.000Z',
-        stop_date: '2017-06-01T17:13:05.000Z',
-        elapsed_ms: 6000,
+        uuid: '12b44f50-70e3-41dd-93b2-f90f44aa3771',
+        start_date: '2017-06-08T17:37:52.000Z',
+        stop_date: '2017-06-08T17:37:53.000Z',
+        elapsed_ms: 1000,
         success: true,
-        granule_id: '2017143'
+        granule_id: '2017148',
+        reason: 'Timer'
       }
     ],
     performance: [
       {
-        50: 2000,
-        95: 252300.00000000064,
-        date: 1495670400000
-      },
-      {
-        50: 2000,
-        95: 213700.00000000003,
-        date: 1495756800000
-      },
-      {
         50: 1000,
-        95: 198799.99999999994,
-        date: 1495843200000
-      },
-      {
-        50: 1000,
-        95: 200849.9999999993,
-        date: 1495929600000
-      },
-      {
-        date: 1496016000000
-      },
-      {
-        50: 4000,
-        95: 215999.9999999968,
-        date: 1496102400000
-      },
-      {
-        50: 5000,
-        95: 257399.99999999988,
-        date: 1496188800000
-      },
-      {
-        50: 4000,
-        95: 251799.99999999994,
+        95: 2000,
         date: 1496275200000
+      },
+      {
+        50: 1000,
+        95: 2000,
+        date: 1496361600000
+      },
+      {
+        50: 1000,
+        95: 2000,
+        date: 1496448000000
+      },
+      {
+        50: 1000,
+        95: 2000,
+        date: 1496534400000
+      },
+      {
+        50: 1000,
+        95: 2000,
+        date: 1496620800000
+      },
+      {
+        50: 1000,
+        95: 2000,
+        date: 1496707200000
+      },
+      {
+        50: 1000,
+        95: 2000,
+        date: 1496793600000
+      },
+      {
+        50: 1000,
+        95: 2000,
+        date: 1496880000000
       }
     ]
   };

@@ -33,7 +33,7 @@ const triggerReingestButtonStateToProps = ({ config, productStatus }) =>
   ({ config, productStatus });
 
 /**
- * TODO
+ * Creates a button that will trigger reingest of the specified granule.
  */
 const TriggerReingestButton = connect(triggerReingestButtonStateToProps)(
   ({ workflowId, granuleId, productId, config, productStatus, dispatch }) => {
@@ -81,7 +81,7 @@ const FailCell = () =>
   </td>;
 
 /**
- * TODO
+ * The headers for the execution table.
  */
 const executionTableHeader = (
   <thead>
@@ -99,17 +99,18 @@ const executionTableHeader = (
 );
 
 /**
- * TODO
+ * The class name to use for the specified row based on its index. Manually tagging every other row
+ * allows us to slightly vary the color of the status cells which use a different color.
  */
 const rowClassName = index => (index % 2 === 0 ? 'even-row' : 'odd-row');
 
 /**
- * TODO
+ * Returns the unique key for react to use with a row.
  */
 const rowKey = ({ granule_id, start_date }) => `${granule_id}-${start_date}`;
 
 /**
- * TODO
+ * Shows the status of a running execution.
  */
 const RunningRow = ({ rowIndex, execution }) => {
   const { granule_id, start_date, current_state, reason } = execution;
@@ -133,7 +134,7 @@ const RunningRow = ({ rowIndex, execution }) => {
 };
 
 /**
- * TODO
+ * Shows the status of a completed execution.
  */
 const CompletedRow = ({ rowIndex, execution, productId, workflowId }) => {
   const { granule_id, start_date, stop_date, elapsed_ms, reason, success } = execution;
