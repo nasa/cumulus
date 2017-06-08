@@ -10,6 +10,8 @@ const { handleError } = require('./api-errors');
 const collConfig = require('./collection-config');
 const sf = require('ingest-common/step-functions');
 const { getIngestStackResources, getPhysicalResourceId } = require('./stack-resources');
+const ExecutionIndexer = require('./execution-indexer');
+const { parseExecutionName } = require('./execution-name-parser');
 
 // TODO consider extracting out some of the following code into helper functions
 // TODO look for concurrency opportunities when doing that.
@@ -45,21 +47,25 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   // The first step of workflow will have an additional configuration item to detect only the
   // given granuleId.
   const firstStep = collectionConfig.getIn(['workflows', stateMachine, 'StartAt']);
-  sfInput.workflow_config_template[firstStep].filtered_granule_keys = [granuleId];
-
-  // TODO consider some sort of signifier that this execution is one for reingesting a specific set
-  // of granules.
+  // TODO note issue number to fix this in a comment here.
+  const actualGranuleId = `VIIRS/${collectionId}/${granuleId}`;
+  sfInput.workflow_config_template[firstStep].filtered_granule_keys = [actualGranuleId];
 
   const executionName = sfInput.ingest_meta.execution_name;
+  const { uuid } = parseExecutionName(executionName);
 
   console.info(`Starting execution of ${stateMachine} for ${granuleId}`);
   console.info(`Input ${JSON.stringify(sfInput, null, 2)}`);
 
-  await stepFunctions().startExecution({
-    stateMachineArn: stateMachine,
-    input: JSON.stringify(sfInput),
-    name: executionName
-  }).promise();
+  await Promise.all([
+    stepFunctions().startExecution({
+      stateMachineArn: stateMachine,
+      input: JSON.stringify(sfInput),
+      name: executionName
+    }).promise(),
+    ExecutionIndexer.indexReingestExecution({ collectionId, granuleId, executionName, uuid })
+  ]);
+
   return executionName;
 };
 
