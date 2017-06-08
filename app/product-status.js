@@ -16,7 +16,7 @@ const { loadCollectionConfig } = require('./collection-config');
 
 
 /**
- * TODO
+ * Returns the ARN of a workflow and the ARN of its parent workflow if it has one.
  */
 const getArnAndParentArn = async (stackName, workflowId) => {
   const collectionConfig = await loadCollectionConfig(stackName);
@@ -30,7 +30,6 @@ const getArnAndParentArn = async (stackName, workflowId) => {
   }
   return null;
 };
-
 
 /**
  * Gets running executions for the given workflowArn. Returns empty list if workflowArn is null.

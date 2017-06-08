@@ -1,22 +1,26 @@
 'use strict';
 
-// TODO test the cache
+/* eslint-disable no-console */
 
 /**
- * TODO
+ * Creates an empty mutable cache.
  */
 const createCache = () => ({});
 
 /**
- * TODO
- * Add info about assumptions of data that's safe to cache
+ * Looks up the given key in the cache and returns the cached value. If there is a cache miss the
+ * lookup function is used to find the value. The returned value is then cached.
+ *
+ * Assumes values returned by lookupFn are safely cachable such as immutable objects. A value
+ * returned by lookupFn can be a Promise that resolves to a value. The resolved value will be
+ * cached.
  */
-const cacheLookup = async (cache, name, lookupFn) => {
-  const cachedValue = cache[name];
+const cacheLookup = async (cache, key, lookupFn) => {
+  const cachedValue = cache[key];
   let result;
   if (cachedValue === null || cachedValue === undefined) {
-    console.info(`Cache miss on ${name}`);
-    const valueToCache = lookupFn(name);
+    console.info(`Cache miss on ${key}`);
+    const valueToCache = lookupFn(key);
     if (valueToCache.then) {
       result = await valueToCache;
     }
@@ -24,17 +28,18 @@ const cacheLookup = async (cache, name, lookupFn) => {
       result = valueToCache;
     }
     // eslint-disable-next-line no-param-reassign
-    cache[name] = valueToCache;
+    cache[key] = valueToCache;
   }
   else {
-    console.info(`Cache hit on ${name}`);
+    console.info(`Cache hit on ${key}`);
     result = cachedValue;
   }
   return result;
 };
 
 /**
- * TODO
+ * Memoizes the given function which should take one argument that is a string key. Assumes that the
+ * function returns values that are safe to cache and share.
  */
 const memoize = (f) => {
   const cache = createCache();

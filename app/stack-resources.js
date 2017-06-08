@@ -25,7 +25,7 @@ const getStackResources = memoize(async (arnOrStackName) => {
 });
 
 /**
- * TODO
+ * Returns a map of ingest stack resources loaded from cloud formation.
  */
 const getIngestStackResources = memoize(async (stackName) => {
   const mainStackResources = await getStackResources(stackName);
@@ -34,7 +34,7 @@ const getIngestStackResources = memoize(async (stackName) => {
 });
 
 /**
- * TODO
+ * Takes a stack resource map and a logical id and extracts the PhysicalResourceId.
  */
 const getPhysicalResourceId = (stackResources, logicalId) =>
   stackResources.getIn([logicalId, 'PhysicalResourceId']);

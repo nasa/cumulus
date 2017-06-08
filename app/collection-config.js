@@ -32,7 +32,10 @@ const getCollectionsYaml = async (stackName) => {
 };
 
 /**
- * TODO
+ * Returns a resolver function to use when parsing the yaml that will find an resolve items in
+ * the stack resources from GIBS ingest.
+ * * ingestStackResources - an immutable map of resource logical ids to details returned from
+ * cloud formation of ingest resources.
  */
 const ingestStackResourceResolver = (ingestStackResources, prefix) =>
   commonConfig.resolveResource(ingestStackResources.toJS(), prefix);
@@ -51,11 +54,9 @@ const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
   return result;
 };
 
-// TODO add a test of parsing the collection yaml with a resolver. Use a fake set of ingest stack
-// resources
-
 /**
- * TODO
+ * Converts a stack name like gitc-test to the prefix used for naming certain resources like
+ * gitcxtestxx.
  */
 const stackNameToAlphanumPrefix = stackName => `${stackName.replace(/\W/, 'x')}xx`;
 
@@ -72,5 +73,6 @@ const loadCollectionConfig = memoize(async (stackName) => {
 module.exports = {
   loadCollectionConfig,
   // For testing
+  ingestStackResourceResolver,
   parseCollectionYaml
 };
