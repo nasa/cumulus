@@ -13,7 +13,7 @@
     "_collection_types": [
       {
         "provider_id": "MODAPS",
-        "workflow": "DiscoverVIIRS",
+        "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
         "trigger": {
           "type": "interval",
           "period_s": 900
@@ -45,7 +45,7 @@
             "group_by": "VIIRS/{meta.collection}/{match.jday}"
           },
           "TriggerIngest": {
-            "workflow": "IngestVIIRS"
+            "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
           },
           "SyncHttpUrls": {
             "connections": 5,
@@ -76,7 +76,7 @@
       },
       {
         "provider_id": "LARC",
-        "workflow": "DiscoverMOPITT",
+        "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C",
         "trigger": {
           "type": "interval",
           "period_s": 900
@@ -101,7 +101,7 @@
             "getmap": "https://opendap.larc.nasa.gov/ncWMS-2.0/wms?REQUEST=GetMap&VERSION=1.3.0&STYLES={meta.wms.style}&CRS=CRS:84&WIDTH=640&HEIGHT=320&FORMAT=image/png&TRANSPARENT=true&LAYERS={meta.wms.layer}&BBOX=-180,-90,180,90&&time={meta.date.isoDateTime}"
           },
           "TriggerIngest": {
-            "workflow": "IngestMOPITT"
+            "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY"
           },
           "SyncHttpUrls": {
             "ignoredErrorStatuses": "500",
@@ -147,30 +147,58 @@
       }
     ]
   },
+  "_workflow_meta": [
+    {
+      "id": "DiscoverVIIRS",
+      "name": "VIIRS Discovery",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
+      "type": "discovery"
+    },
+    {
+      "id": "IngestVIIRS",
+      "name": "VIIRS Ingest",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL",
+      "type": "ingest",
+      "parent": "DiscoverVIIRS"
+    },
+    {
+      "id": "DiscoverMOPITT",
+      "name": "MOPITT Discovery",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C",
+      "type": "discovery"
+    },
+    {
+      "id": "IngestMOPITT",
+      "name": "MOPITT Ingest",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY",
+      "type": "ingest",
+      "parent": "DiscoverMOPITT"
+    }
+  ],
   "workflows": {
-    "DiscoverVIIRS": {
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI": {
       "Comment": "VIIRS Discovery",
       "StartAt": "DiscoverHttpTiles",
       "States": {
         "DiscoverHttpTiles": {
           "Type": "Task",
-          "Resource": "DiscoverHttpTilesFn.Arn",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-discover-http-tiles",
           "Next": "TriggerIngest"
         },
         "TriggerIngest": {
           "Type": "Task",
-          "Resource": "TriggerIngestFn.Arn",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-trigger-ingest",
           "End": true
         }
       }
     },
-    "IngestVIIRS": {
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL": {
       "Comment": "VIIRS Ingest",
       "StartAt": "SyncHttpUrls",
       "States": {
         "SyncHttpUrls": {
           "Type": "Task",
-          "Resource": "SyncHttpUrlsFn.Arn",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-sync-http-urls",
           "Next": "ChooseSyncContinuation"
         },
         "ChooseSyncContinuation": {
@@ -200,7 +228,7 @@
         },
         "MRFGen": {
           "Type": "Task",
-          "Resource": "GenerateMrfActivity",
+          "Resource": "arn:aws:states:us-west-2:12345:activity:gitc-tst-GenerateMrf",
           "End": true
         },
         "NoUpdates": {
@@ -210,34 +238,34 @@
         }
       }
     },
-    "DiscoverMOPITT": {
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C": {
       "Comment": "MOPITT Discovery",
       "StartAt": "DiscoverCmrGranules",
       "States": {
         "DiscoverCmrGranules": {
           "Type": "Task",
-          "Resource": "DiscoverCmrGranulesFn.Arn",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-discover-cmr-granules",
           "Next": "TriggerIngest"
         },
         "TriggerIngest": {
           "Type": "Task",
-          "Resource": "TriggerIngestFn.Arn",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-trigger-ingest",
           "End": true
         }
       }
     },
-    "IngestMOPITT": {
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY": {
       "Comment": "MOPITT Ingest",
       "StartAt": "CreateWmsUrls",
       "States": {
         "CreateWmsUrls": {
           "Type": "Task",
-          "Resource": "SyncWmsFn.Arn",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-sync-wms",
           "Next": "SyncHttpUrls"
         },
         "SyncHttpUrls": {
           "Type": "Task",
-          "Resource": "SyncHttpUrlsFn.Arn",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-sync-http-urls",
           "Next": "ChooseSyncContinuation"
         },
         "ChooseSyncContinuation": {
@@ -267,7 +295,7 @@
         },
         "MRFGen": {
           "Type": "Task",
-          "Resource": "GenerateMrfActivity",
+          "Resource": "arn:aws:states:us-west-2:12345:activity:gitc-tst-GenerateMrf",
           "End": true
         },
         "NoUpdates": {
@@ -281,7 +309,7 @@
   "collections": [
     {
       "provider_id": "MODAPS",
-      "workflow": "DiscoverVIIRS",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
       "trigger": {
         "type": "interval",
         "period_s": 900
@@ -313,7 +341,7 @@
           "group_by": "VIIRS/{meta.collection}/{match.jday}"
         },
         "TriggerIngest": {
-          "workflow": "IngestVIIRS"
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
         },
         "SyncHttpUrls": {
           "connections": 5,
@@ -351,7 +379,7 @@
     },
     {
       "provider_id": "MODAPS",
-      "workflow": "DiscoverVIIRS",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
       "trigger": {
         "type": "interval",
         "period_s": 900
@@ -383,7 +411,7 @@
           "group_by": "VIIRS/{meta.collection}/{match.jday}"
         },
         "TriggerIngest": {
-          "workflow": "IngestVIIRS"
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
         },
         "SyncHttpUrls": {
           "connections": 5,
@@ -421,7 +449,7 @@
     },
     {
       "provider_id": "MODAPS",
-      "workflow": "DiscoverVIIRS",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
       "trigger": {
         "type": "interval",
         "period_s": 900
@@ -453,7 +481,7 @@
           "group_by": "VIIRS/{meta.collection}/{match.jday}"
         },
         "TriggerIngest": {
-          "workflow": "IngestVIIRS"
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
         },
         "SyncHttpUrls": {
           "connections": 5,
@@ -491,7 +519,7 @@
     },
     {
       "provider_id": "LARC",
-      "workflow": "DiscoverMOPITT",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C",
       "trigger": {
         "type": "interval",
         "period_s": 900
@@ -516,7 +544,7 @@
           "getmap": "https://opendap.larc.nasa.gov/ncWMS-2.0/wms?REQUEST=GetMap&VERSION=1.3.0&STYLES={meta.wms.style}&CRS=CRS:84&WIDTH=640&HEIGHT=320&FORMAT=image/png&TRANSPARENT=true&LAYERS={meta.wms.layer}&BBOX=-180,-90,180,90&&time={meta.date.isoDateTime}"
         },
         "TriggerIngest": {
-          "workflow": "IngestMOPITT"
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY"
         },
         "SyncHttpUrls": {
           "ignoredErrorStatuses": "500",
