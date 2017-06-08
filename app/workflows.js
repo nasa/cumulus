@@ -15,6 +15,7 @@ const { parseExecutionName } = require('./execution-name-parser');
 
 /**
  * Helper function for converting a workflow id to ARN.
+ * TODO is this still needed?
  */
 const workflowIdToArn = async (stackName, id) => {
   const collectionConfig = await loadCollectionConfig(stackName);

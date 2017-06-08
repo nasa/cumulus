@@ -182,6 +182,8 @@ curl 'http://localhost:3000/product_status?stack_name=gitc-xx&workflow_id=Ingest
 
 The response contains a list of the executions currently running for the workflow for the collection along with a set of completed executions and the performance latencies on days over the past week.
 
+TODO update to add reason
+
 ```JSON
 {
   "running_executions": [
