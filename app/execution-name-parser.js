@@ -24,7 +24,7 @@ module.exports = {
     else {
       [ignored, collectionId, granuleId] = parts;
     }
-    const uuid = parts[-1];
+    const uuid = parts[parts.length - 1];
     return { collectionId, granuleId, uuid };
   }
 };
