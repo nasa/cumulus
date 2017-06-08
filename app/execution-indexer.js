@@ -144,7 +144,7 @@ const createOrUpdateIndex = async (index) => {
 
 
 /**
- * TODO
+ * Finds and deletes reingest executions that are older than needed for display.
  */
 const deleteOldReingestExecutions = async () => {
   const resp = await es().deleteByQuery({
@@ -165,7 +165,8 @@ const deleteOldReingestExecutions = async () => {
 };
 
 /**
- * TODO
+ * Saves an ingest execution that was started for reingest. Reingests are tracked so that additional
+ * information can be provided in the dashboard about current executions and why they were started.
  */
 const indexReingestExecution = async ({ collectionId, granuleId, executionName, uuid }) => {
   await createOrUpdateIndex(reingestExecutionsIndex);
@@ -192,7 +193,9 @@ const indexReingestExecution = async ({ collectionId, granuleId, executionName, 
 };
 
 /**
- * TODO
+ * Takes a set of execution UUIDs and returns an immutable list of execution details that match.
+ * UUIDs that do not match a reingest execution will not find a result. Only the subset of UUIDs
+ * that match a reingest execution will be returned.
  */
 const findReingestExecsByUUIDs = async (uuids) => {
   const resp = await es().search({
@@ -211,21 +214,6 @@ const findReingestExecsByUUIDs = async (uuids) => {
   return fromJS(resp.hits.hits.map(m => ({ uuid: m._id, granuleId: m.fields.granule_id[0] })));
 };
 
-// print(findReingestExecsByUUIDs(['foo']))
-//
-// print(es().search({
-//  index: reingestExecutionsIndex.name,
-//  body: {
-//    query: {
-//     //  bool: {
-//     //    filter: {
-//     //      terms: { execution_uuid: uuids }
-//     //    }
-//     //  }
-//    },
-//    stored_fields: ['granule_id']
-//  }
-// }))
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Execution Indexing
 
