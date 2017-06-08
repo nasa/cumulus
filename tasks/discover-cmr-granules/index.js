@@ -29,11 +29,8 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
   }
 
   /**
-   * excludeFiltered - TODO description
-   *
-   * @param  {type} resources description
-   * @param  {type} matchingKeys   description
-   * @return {type}           description
+   * excludeFiltered - Excludes messages that do not match one of the specified keys. Allows all
+   * messages if matchingKeys is null.
    */
   excludeFiltered(messages, matchingKeys) {
     if (matchingKeys) {
