@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * TODO
+ * Allows kicking off reingestion of granules.
  */
 
 /*eslint no-console: ["error", { allow: ["error", "info"] }] */
@@ -13,13 +13,10 @@ const { getIngestStackResources, getPhysicalResourceId } = require('./stack-reso
 const ExecutionIndexer = require('./execution-indexer');
 const { parseExecutionName } = require('./execution-name-parser');
 
-// TODO consider extracting out some of the following code into helper functions
-// TODO look for concurrency opportunities when doing that.
-
 /**
- * TODO
+ * Fetches the resources associated with the given stack.
  */
-const reingestGranule = async (stackName, collectionId, granuleId) => {
+const getResources = async (stackName) => {
   const ingestStackResources = await getIngestStackResources(stackName);
 
   // Get resources
@@ -29,9 +26,18 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   const command = taskDef.taskDefinition.containerDefinitions[0].command;
   const eventJsonIndex = command.findIndex(a => a === '--eventJson');
   const eventJson = command[eventJsonIndex + 1];
-  const resources = JSON.parse(eventJson).resources;
+  return JSON.parse(eventJson).resources;
+};
 
-  const collectionConfig = await collConfig.loadCollectionConfig(stackName);
+/**
+ * Starts reingesting a granule in the given collection .
+ */
+const reingestGranule = async (stackName, collectionId, granuleId) => {
+  const [resources, collectionConfig] = await Promise.all([
+    getResources(stackName),
+    collConfig.loadCollectionConfig(stackName)
+  ]);
+
   const collection = collectionConfig.get('collections')
     .filter(c => collectionId === c.get('id'))
     .first();
@@ -47,7 +53,7 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   // The first step of workflow will have an additional configuration item to detect only the
   // given granuleId.
   const firstStep = collectionConfig.getIn(['workflows', stateMachine, 'StartAt']);
-  // TODO note issue number to fix this in a comment here.
+  // Fix this assumption as part of GITC-358.
   const actualGranuleId = `VIIRS/${collectionId}/${granuleId}`;
   sfInput.workflow_config_template[firstStep].filtered_granule_keys = [actualGranuleId];
 

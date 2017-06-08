@@ -182,39 +182,61 @@ curl 'http://localhost:3000/product_status?stack_name=gitc-xx&workflow_id=Ingest
 
 The response contains a list of the executions currently running for the workflow for the collection along with a set of completed executions and the performance latencies on days over the past week.
 
-TODO update to add reason
-
 ```JSON
 {
   "running_executions": [
     {
-      "start_date": "2017-06-01T17:27:58.246Z",
-      "granule_id": "2017152",
-      "current_state": "MRFGen"
+      "uuid": "c0d98c30-67be-4e8a-98b0-1412af0d6750",
+      "start_date": "2017-06-07T06:22:40.312Z",
+      "granule_id": "2017158",
+      "current_state": "MRFGen",
+      "reason": "Timer"
     },
     ...
   ],
   "completed_executions": [
     {
-      "start_date": "2017-06-01T17:12:59.000Z",
-      "stop_date": "2017-06-01T17:18:56.000Z",
-      "elapsed_ms": 357000,
+      "uuid": "12b44f50-70e3-41dd-93b2-f90f44aa3771",
+      "start_date": "2017-06-08T17:37:52.000Z",
+      "stop_date": "2017-06-08T17:37:54.000Z",
+      "elapsed_ms": 2000,
       "success": true,
-      "granule_id": "2017152"
+      "granule_id": "2017152",
+      "reason": "Timer"
+    },
+    {
+      "uuid": "12b44f50-70e3-41dd-93b2-f90f44aa3772",
+      "start_date": "2017-06-08T17:37:52.000Z",
+      "stop_date": "2017-06-08T17:37:54.000Z",
+      "elapsed_ms": 2000,
+      "success": true,
+      "granule_id": "2017153",
+      "reason": "Manual Reingest"
     },
     ...
   ],
   "performance": [
     {
-      "50": 2000,
-      "95": 252300.00000000064,
-      "date": 1495670400000
+      "50": 1000,
+      "95": 2000,
+      "date": 1496275200000
     },
     ...
   ]
 }
+
 ```
 
 ## /reingest_granule
 
-TODO document this
+Starts reingesting the given granule
+
+Params:
+
+* `stack_name` - The name of main top level stack that contains ingest and other substacks.
+* `collection_id` - The id of the collection
+* `granule_id` - The id of the granule to start reingesting.
+
+```Bash
+curl -XPOST 'http://localhost:3000/reingest_granule?stack_name=gitc-jg&collection_id=VNGCR_NQD_C1&granule_id=2017157'
+```

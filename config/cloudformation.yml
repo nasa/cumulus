@@ -81,8 +81,7 @@ Resources:
             - states:ListExecutions
             - states:GetExecutionHistory
             Resource:
-            # TODO this should be more specific (executions and are they prefixed?)
-            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:${AlphanumPrefix}*"
           # Gives permission to start executions of  state machines
           - Effect: Allow
             Action:
