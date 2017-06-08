@@ -24,6 +24,16 @@
     }
   }
 
+  h2 {
+    // Add spacing around clickable icons in the header row.
+    .icon-clickable {
+      margin-left: 30px;
+    }
+    .icon-refreshing {
+      margin-left: 30px;
+    }
+  }
+
 
   .status-cell {
     color: #fff;

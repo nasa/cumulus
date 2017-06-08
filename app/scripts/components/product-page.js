@@ -4,7 +4,7 @@ const functional = require('react-functional');
 const { Link } = require('react-router-dom');
 const { List, Map } = require('immutable');
 const Header = require('./header').default;
-const { Loading } = require('./loading');
+const { Loading, RefreshButton } = require('./loading');
 const { SuccessIcon, ErrorIcon, Icon } = require('./icon');
 const { PerformanceChart } = require('./performance-chart');
 const ps = require('../reducers/product-status');
@@ -32,20 +32,17 @@ const parsePathIds = (props) => {
 const triggerReingestButtonStateToProps = ({ config, productStatus }) =>
   ({ config, productStatus });
 
-
 /**
  * TODO
  */
 const TriggerReingestButton = connect(triggerReingestButtonStateToProps)(
-  ({ granuleId, productId, config, productStatus, dispatch }) => {
-    // TODO file issue related to fixing this in the ops API and here.
-    const ingestGranuleId = `VIIRS/${productId}/${granuleId}`;
+  ({ workflowId, granuleId, productId, config, productStatus, dispatch }) => {
     const { startingGranules, startedGranules } = productStatus.get('reingest');
 
-    if (startingGranules.contains(ingestGranuleId)) {
+    if (startingGranules.contains(granuleId)) {
       return <span><ProcessingIcon />Starting</span>;
     }
-    if (startedGranules.contains(ingestGranuleId)) {
+    if (startedGranules.contains(granuleId)) {
       return <span><SuccessIcon />Running</span>;
     }
     return (
@@ -54,7 +51,7 @@ const TriggerReingestButton = connect(triggerReingestButtonStateToProps)(
         className="eui-btn eui-btn--sm"
         onClick={(e) => {
           e.preventDefault();
-          ps.reingestGranule(config, productId, ingestGranuleId, dispatch);
+          ps.reingestGranule(config, workflowId, productId, granuleId, dispatch);
         }}
       >
         Reingest
@@ -90,6 +87,7 @@ const executionTableHeader = (
   <thead>
     <tr>
       <th>Status</th>
+      <th>Reason</th>
       <th>Granule Id</th>
       <th>Started</th>
       <th>Stopped</th>
@@ -114,15 +112,16 @@ const rowKey = ({ granule_id, start_date }) => `${granule_id}-${start_date}`;
  * TODO
  */
 const RunningRow = ({ rowIndex, execution }) => {
-  const { granule_id, start_date, current_state } = execution;
+  const { granule_id, start_date, current_state, reason } = execution;
   const msSinceStart = Date.now() - Date.parse(start_date);
   return (
     <tr
       className={rowClassName(rowIndex)}
     >
       <RunningCell />
+      <td>{reason}</td>
       <td>
-        {granule_id ? `${granule_id} (${util.parseJulian(granule_id)})` : 'N/A'}
+        {granule_id ? util.parseJulian(granule_id) : 'N/A'}
       </td>
       <td>{util.dateStringToLocaleString(start_date)}</td>
       <td />
@@ -136,15 +135,16 @@ const RunningRow = ({ rowIndex, execution }) => {
 /**
  * TODO
  */
-const CompletedRow = ({ rowIndex, execution, productId }) => {
-  const { granule_id, start_date, stop_date, elapsed_ms, success } = execution;
+const CompletedRow = ({ rowIndex, execution, productId, workflowId }) => {
+  const { granule_id, start_date, stop_date, elapsed_ms, reason, success } = execution;
   return (
     <tr
       className={rowClassName(rowIndex)}
     >
       {success ? <SuccessCell /> : <FailCell />}
+      <td>{reason}</td>
       <td>
-        {granule_id ? `${granule_id} (${util.parseJulian(granule_id)})` : 'N/A'}
+        {granule_id ? util.parseJulian(granule_id) : 'N/A'}
       </td>
       <td>{util.dateStringToLocaleString(start_date)}</td>
       <td>{util.dateStringToLocaleString(stop_date)}</td>
@@ -152,6 +152,7 @@ const CompletedRow = ({ rowIndex, execution, productId }) => {
       <td />
       <td>
         <TriggerReingestButton
+          workflowId={workflowId}
           granuleId={granule_id}
           productId={productId}
         />
@@ -183,6 +184,7 @@ const ExecutionTable = (props) => {
               key={rowKey(exec)}
               rowIndex={rowIndex}
               execution={exec}
+              workflowId={props.workflowId}
               productId={props.productId}
             />
           );
@@ -197,6 +199,7 @@ const ExecutionTable = (props) => {
  * currently running workflows and past executions along with past performance.
  */
 const ProductPageFn = (props) => {
+  const { config, dispatch } = props;
   const { workflowId, productId } = parsePathIds(props);
   const productStatus = props.productStatus.get('productStatus') || Map();
   return (
@@ -218,8 +221,21 @@ const ProductPageFn = (props) => {
               title={`${workflowId} Workflow ${productId} Performance`}
               perfData={productStatus.get('performance', List())}
             />
-            <h2>Executions</h2>
-            <ExecutionTable productStatus={productStatus} productId={productId} />
+            <h2>
+              Executions
+              <RefreshButton
+                reloading={props.productStatus.get('inFlight')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  ps.fetchProductStatus(config, workflowId, productId, dispatch);
+                }}
+              />
+            </h2>
+            <ExecutionTable
+              productStatus={productStatus}
+              productId={productId}
+              workflowId={workflowId}
+            />
           </div>
         </Loading>
       </main>
