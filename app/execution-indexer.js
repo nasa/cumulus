@@ -10,6 +10,7 @@
 const { stepFunctions, es } = require('./aws');
 const { parseExecutionName } = require('./execution-name-parser');
 const { loadCollectionConfig } = require('./collection-config');
+const { fromJS } = require('immutable');
 
 const stringType = { type: 'keyword', store: 'yes' };
 const dateType = { type: 'date', store: 'yes' };
@@ -36,6 +37,7 @@ const executionsIndex = {
     _source: { enabled: false },
     _all: { enabled: false },
     properties: {
+      execution_uuid: stringType,
       workflow_id: stringType,
       collection_id: stringType,
       granule_id: stringType,
@@ -67,6 +69,35 @@ const executionsMetaIndex = {
     _all: { enabled: false },
     properties: {
       last_indexed_date: dateType
+    }
+  }
+};
+
+/**
+ * The reingest executions index contains discovery executions that were kicked off for reingesting
+ * granules.
+ */
+const reingestExecutionsIndex = {
+  name: 'reingest-executions',
+  type: 'reingestExecution',
+  settings: {
+    index: {
+      // NOTE That you can't change these settings after it has been created.
+      number_of_shards: 5,
+      number_of_replicas: 1,
+      mapper: { dynamic: false }
+    }
+  },
+  mapping: {
+    dynamic: 'strict',
+    _source: { enabled: false },
+    _all: { enabled: false },
+    properties: {
+      execution_name: stringType,
+      execution_uuid: stringType,
+      collection_id: stringType,
+      granule_id: stringType,
+      start_date: dateType
     }
   }
 };
@@ -108,17 +139,108 @@ const createOrUpdateIndex = async (index) => {
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Reingest Indexing
+
+
+/**
+ * TODO
+ */
+const deleteOldReingestExecutions = async () => {
+  const resp = await es().deleteByQuery({
+    index: reingestExecutionsIndex.name,
+    body: {
+      query: {
+        bool: {
+          must: [
+            { range: { start_date: { lte: 'now-7d/d' } } }
+          ]
+        }
+      }
+    }
+  });
+  if (resp.failures.length !== 0) {
+    throw new Error(`Failure to delete old reingest executions. resp: ${JSON.stringify(resp)}`);
+  }
+};
+
+/**
+ * TODO
+ */
+const indexReingestExecution = async ({ collectionId, granuleId, executionName, uuid }) => {
+  await createOrUpdateIndex(reingestExecutionsIndex);
+
+  // Delete old ones in the background. We don't care if it's successful.
+  deleteOldReingestExecutions().catch(e => console.error(e));
+
+  // Index an execution
+  const resp = await es().index({
+    index: reingestExecutionsIndex.name,
+    type: reingestExecutionsIndex.type,
+    id: uuid,
+    body: {
+      execution_name: executionName,
+      execution_uuid: uuid,
+      collection_id: collectionId,
+      granule_id: granuleId,
+      start_date: Date.now()
+    }
+  });
+  if (!resp.created) {
+    throw new Error(`Unable to index reingest execution. resp: ${JSON.stringify(resp)}`);
+  }
+};
+
+/**
+ * TODO
+ */
+const findReingestExecsByUUIDs = async (uuids) => {
+  const resp = await es().search({
+    index: reingestExecutionsIndex.name,
+    body: {
+      query: {
+        bool: {
+          filter: {
+            terms: { execution_uuid: uuids }
+          }
+        }
+      },
+      stored_fields: ['granule_id']
+    }
+  });
+  return fromJS(resp.hits.hits.map(m => ({ uuid: m._id, granuleId: m.fields.granule_id[0] })));
+};
+
+// print(findReingestExecsByUUIDs(['foo']))
+//
+// print(es().search({
+//  index: reingestExecutionsIndex.name,
+//  body: {
+//    query: {
+//     //  bool: {
+//     //    filter: {
+//     //      terms: { execution_uuid: uuids }
+//     //    }
+//     //  }
+//    },
+//    stored_fields: ['granule_id']
+//  }
+// }))
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Execution Indexing
+
 /**
  * Converts an execution to a document to index in elasticsearch.
  */
 const executionToDoc = (workflowId, execution) => {
   const { status, startDate, stopDate, name } = execution;
-  const { collectionId, granuleId } = parseExecutionName(name);
+  const { collectionId, granuleId, uuid } = parseExecutionName(name);
   const startDateEpoch = Date.parse(startDate);
   const stopDateEpoch = Date.parse(stopDate);
 
   return {
     _id: name,
+    execution_uuid: uuid,
     workflow_id: workflowId,
     collection_id: collectionId,
     granule_id: granuleId,
@@ -235,7 +357,7 @@ const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
 
     while (!done) {
       const resp = await stepFunctions()
-        .listExecutions({ stateMachineArn: arn, nextToken, maxResults: 100 })
+        .listExecutions({ stateMachineArn: arn, nextToken, maxResults: 1000 })
         .promise();
       const numIndexed = await indexExecutions(id, resp.executions);
 
@@ -282,7 +404,7 @@ const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
 const MAX_EXECUTIONS_TO_INDEX = 50000;
 
 /**
- * TODO
+ * Returns a promise that resolves in some number of milliseconds.
  */
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -319,5 +441,7 @@ const handler = async (event, context, callback) => {
 
 
 module.exports = {
-  handler
+  handler,
+  findReingestExecsByUUIDs,
+  indexReingestExecution
 };
