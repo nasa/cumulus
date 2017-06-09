@@ -4,7 +4,11 @@
   "description": "GIBS-in-the-Cloud Prototype Workflows",
   "main": "index.js",
   "scripts": {
-    "test": "eslint . && mocha-webpack",
+    "lint": "eslint .",
+    "mocha": "mocha-webpack",
+    "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
+    "test": "npm run lint && npm run mocha",
+    "test-ci": "npm run lint && npm run mocha-junit",
     "start": "webpack -w --colors",
     "//": [
       "Allows validation of a collection configuration file",

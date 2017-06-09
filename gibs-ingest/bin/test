@@ -29,6 +29,6 @@ fi
 shopt -s nullglob
 for dir in *-workflows; do
     cd $dir
-    npm test
+    npm run test-ci
     cd ..
 done
