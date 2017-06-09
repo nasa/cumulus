@@ -16,6 +16,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017152__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -48,6 +51,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017151__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -80,6 +86,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017148__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -112,6 +121,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017145__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -144,6 +156,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017149__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -176,6 +191,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017150__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -208,6 +226,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017143__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -240,6 +261,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017141__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -272,6 +296,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017144__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],
@@ -304,6 +331,9 @@
         "_id": "VIIRS__VNGCR_LQD_C1__2017142__876a5eb8-7e96-4402-b563-c80b14bbe0ef",
         "_score": null,
         "fields": {
+          "execution_uuid": [
+            "876a5eb8-7e96-4402-b563-c80b14bbe0ef"
+          ],
           "collection_id": [
             "VNGCR_LQD_C1"
           ],

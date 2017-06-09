@@ -13,41 +13,25 @@ const { loadCollectionConfig } = require('./collection-config');
 const { parseExecutionName } = require('./execution-name-parser');
 
 /**
- * getStateMachineArn - Returns the ARN of the state machine for the given stack with the given id.
- *
- * @param  stackName The name of the stack
- * @param  { id }    A workflow with an id.
- * @return ARN of the statemachine in AWS.
- */
-const getStateMachineArn = async (stackName, workflowId) => {
-  const deployedPrefix = `${stackName}xx${workflowId}`.replace(/-/g, 'x');
-  const resp = await stepFunctions().listStateMachines().promise();
-  return resp.stateMachines.filter(s => s.name.startsWith(deployedPrefix))[0].stateMachineArn;
-};
-
-/**
  * getRunningExecutions - Returns running executions for the workflow
- *
- * @param  stackName     Name of the AWS stack.
- * @param  workflowId    The id of the workflow to look for running executions
  */
-const getRunningExecutions = async (stackName, workflowId) => {
-  const arn = await getStateMachineArn(stackName, workflowId);
+const getRunningExecutions = async (stackName, workflowArn) => {
   const resp = await stepFunctions()
-    .listExecutions({ stateMachineArn: arn, maxResults: 100, statusFilter: 'RUNNING' })
+    .listExecutions({ stateMachineArn: workflowArn, maxResults: 100, statusFilter: 'RUNNING' })
     .promise();
 
   if (resp.nextToken) {
-    throw new Error(`Found more than 100 running workflows for ${arn}`);
+    throw new Error(`Found more than 100 running workflows for ${workflowArn}`);
   }
   return List(resp.executions.map((e) => {
-    const { collectionId, granuleId } = parseExecutionName(e.name);
+    const { collectionId, granuleId, uuid } = parseExecutionName(e.name);
     return Map({
       arn: e.executionArn,
       name: e.name,
       startDate: e.startDate,
       collectionId,
-      granuleId
+      granuleId,
+      uuid
     });
   }));
 };
@@ -61,11 +45,10 @@ const getWorkflowStatuses = async (stackName) => {
   const collectionConfig = await loadCollectionConfig(stackName);
   const esWorkflowsById = await ExecutionAggregator.loadWorkflowsFromEs();
 
-  const workflowPromises = collectionConfig.get('workflows')
-    .entrySeq()
-    .map(async ([id, w]) => {
-      const name = w.get('Comment');
-      const runningExecs = await getRunningExecutions(stackName, id);
+  const workflowPromises = collectionConfig.get('_workflow_meta')
+    .map(async (w) => {
+      const { id, name, arn } = w.toJS();
+      const runningExecs = await getRunningExecutions(stackName, arn);
       const runningExecsByCollection = runningExecs.groupBy(e => e.get('collectionId'));
       let workflow = fromJS(esWorkflowsById[id] || { id: id });
       workflow = workflow.set('name', name);
@@ -102,7 +85,7 @@ const handleWorkflowStatusRequest = async (req, res) => {
 };
 
 module.exports = {
-  getStateMachineArn,
   getWorkflowStatuses,
   getRunningExecutions,
-  handleWorkflowStatusRequest };
+  handleWorkflowStatusRequest
+};

@@ -203,6 +203,7 @@ const loadWorkflowsFromEs = async () => {
 const parseCollectionSearchResponse = (resp) => {
   const extractFirst = v => (v ? v[0] : v);
   const executions = resp.hits.hits.map(item => ({
+    uuid: extractFirst(item.fields.execution_uuid),
     start_date: extractFirst(item.fields.start_date),
     stop_date: extractFirst(item.fields.stop_date),
     elapsed_ms: extractFirst(item.fields.elapsed_ms),
@@ -234,6 +235,7 @@ const getCollectionCompletedExecutions = async (workflowId, collectionId, numExe
       size: numExecutions,
       sort: [{ stop_date: 'desc' }],
       stored_fields: [
+        'execution_uuid',
         'workflow_id',
         'collection_id',
         'granule_id',
