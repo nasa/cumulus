@@ -10,8 +10,10 @@
     "start-debug-brk": "export LOCAL_NODE=true; npm run build && node --inspect-brk dist/local.js",
     "start-watch": "export LOCAL_NODE=true; bin/parallel.sh 'webpack --config webpack.config.js  -w' 'nodemon dist/local.js -w dist'",
     "mocha": "mocha-webpack --require babel-polyfill --webpack-config webpack.config-test.js test/**/*spec.js",
+    "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
     "lint": "eslint app test",
-    "test": "npm run lint && npm run mocha"
+    "test": "npm run lint && npm run mocha",
+    "test-ci": "npm run lint && npm run mocha-junit"
   },
   "dependencies": {
     "aws-sdk": "^2.45.0",
