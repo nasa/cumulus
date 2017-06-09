@@ -82,6 +82,7 @@ Resources:
             - states:GetExecutionHistory
             Resource:
             - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:${AlphanumPrefix}*"
+            - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AlphanumPrefix}*"
           # Gives permission to start executions of  state machines
           - Effect: Allow
             Action:

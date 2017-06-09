@@ -44,7 +44,9 @@ Resources:
                   # TODO this is new and not added to NGAP yet
                   - states:GetExecutionHistory
                 # TODO this should be scoped by the alphabetic numeric prefix. Not sure how we'll set this in ngap
-                Resource: !Sub "arn:aws:states:*:${AWS::AccountId}:execution:*"
+                Resource:
+                  - !Sub "arn:aws:states:*:${AWS::AccountId}:execution:*"
+                  - !Sub "arn:aws:states:*:${AWS::AccountId}:stateMachine:*"
               # TODO this is new and not added to NGAP yet
               # Gives permission to start executions of  state machines
               - Effect: Allow
