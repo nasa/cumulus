@@ -8,8 +8,9 @@
 /* eslint-disable no-console */
 
 const { stepFunctions, es } = require('./aws');
-const ws = require('./workflows');
 const { parseExecutionName } = require('./execution-name-parser');
+const { loadCollectionConfig } = require('./collection-config');
+const { fromJS } = require('immutable');
 
 const stringType = { type: 'keyword', store: 'yes' };
 const dateType = { type: 'date', store: 'yes' };
@@ -17,7 +18,8 @@ const longType = { type: 'long', store: 'yes' };
 const booleanType = { type: 'boolean', store: 'yes' };
 
 /**
- * Defines settings for storing executions in Elasticsearch.
+ * The executions index contains completed executions of workflow runs (state machines in AWS Step
+ * Functions)
  */
 const executionsIndex = {
   name: 'executions',
@@ -35,6 +37,7 @@ const executionsIndex = {
     _source: { enabled: false },
     _all: { enabled: false },
     properties: {
+      execution_uuid: stringType,
       workflow_id: stringType,
       collection_id: stringType,
       granule_id: stringType,
@@ -47,7 +50,7 @@ const executionsIndex = {
 };
 
 /**
- * The settings to use for defining the executions meta index.
+ * The executions meta index keeps track of the last time we indexed executions.
  */
 const executionsMetaIndex = {
   name: 'executions-meta',
@@ -66,6 +69,35 @@ const executionsMetaIndex = {
     _all: { enabled: false },
     properties: {
       last_indexed_date: dateType
+    }
+  }
+};
+
+/**
+ * The reingest executions index contains discovery executions that were kicked off for reingesting
+ * granules.
+ */
+const reingestExecutionsIndex = {
+  name: 'reingest-executions',
+  type: 'reingestExecution',
+  settings: {
+    index: {
+      // NOTE That you can't change these settings after it has been created.
+      number_of_shards: 5,
+      number_of_replicas: 1,
+      mapper: { dynamic: false }
+    }
+  },
+  mapping: {
+    dynamic: 'strict',
+    _source: { enabled: false },
+    _all: { enabled: false },
+    properties: {
+      execution_name: stringType,
+      execution_uuid: stringType,
+      collection_id: stringType,
+      granule_id: stringType,
+      start_date: dateType
     }
   }
 };
@@ -107,17 +139,96 @@ const createOrUpdateIndex = async (index) => {
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Reingest Indexing
+
+
+/**
+ * Finds and deletes reingest executions that are older than needed for display.
+ */
+const deleteOldReingestExecutions = async () => {
+  const resp = await es().deleteByQuery({
+    index: reingestExecutionsIndex.name,
+    body: {
+      query: {
+        bool: {
+          must: [
+            { range: { start_date: { lte: 'now-7d/d' } } }
+          ]
+        }
+      }
+    }
+  });
+  if (resp.failures.length !== 0) {
+    throw new Error(`Failure to delete old reingest executions. resp: ${JSON.stringify(resp)}`);
+  }
+};
+
+/**
+ * Saves an ingest execution that was started for reingest. Reingests are tracked so that additional
+ * information can be provided in the dashboard about current executions and why they were started.
+ */
+const indexReingestExecution = async ({ collectionId, granuleId, executionName, uuid }) => {
+  await createOrUpdateIndex(reingestExecutionsIndex);
+
+  // Delete old ones in the background. We don't care if it's successful.
+  deleteOldReingestExecutions().catch(e => console.error(e));
+
+  // Index an execution
+  const resp = await es().index({
+    index: reingestExecutionsIndex.name,
+    type: reingestExecutionsIndex.type,
+    id: uuid,
+    body: {
+      execution_name: executionName,
+      execution_uuid: uuid,
+      collection_id: collectionId,
+      granule_id: granuleId,
+      start_date: Date.now()
+    }
+  });
+  if (!resp.created) {
+    throw new Error(`Unable to index reingest execution. resp: ${JSON.stringify(resp)}`);
+  }
+};
+
+/**
+ * Takes a set of execution UUIDs and returns an immutable list of execution details that match.
+ * UUIDs that do not match a reingest execution will not find a result. Only the subset of UUIDs
+ * that match a reingest execution will be returned.
+ */
+const findReingestExecsByUUIDs = async (uuids) => {
+  const resp = await es().search({
+    index: reingestExecutionsIndex.name,
+    body: {
+      query: {
+        bool: {
+          filter: {
+            terms: { execution_uuid: uuids }
+          }
+        }
+      },
+      stored_fields: ['granule_id']
+    }
+  });
+  return fromJS(resp.hits.hits.map(m => ({ uuid: m._id, granuleId: m.fields.granule_id[0] })));
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Execution Indexing
+
 /**
  * Converts an execution to a document to index in elasticsearch.
  */
 const executionToDoc = (workflowId, execution) => {
   const { status, startDate, stopDate, name } = execution;
-  const { collectionId, granuleId } = parseExecutionName(name);
+  const { collectionId, granuleId, uuid } = parseExecutionName(name);
   const startDateEpoch = Date.parse(startDate);
   const stopDateEpoch = Date.parse(stopDate);
 
   return {
     _id: name,
+    execution_uuid: uuid,
     workflow_id: workflowId,
     collection_id: collectionId,
     granule_id: granuleId,
@@ -215,19 +326,19 @@ const indexExecutions = async (workflowId, executions) => {
  * 4. Keeps fetching the executions and indexing them until we find executions that were already
  * indexed.
  */
-const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
+const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
   await createOrUpdateIndex(executionsIndex);
   await createOrUpdateIndex(executionsMetaIndex);
 
   const lastIndexedDate = await getLastIndexedDate();
   // Capture the time that we start indexing before we start fetching executions.
   const indexingStartTime = Date.now();
-  const workflows = await ws.getWorkflowStatuses(stackName, 0);
+  const collectionConfig = await loadCollectionConfig(stackName);
+  const workflows = collectionConfig.get('_workflow_meta');
 
-  const promises = workflows.map(async (workflow) => {
-    const arn = await ws.getStateMachineArn(stackName, workflow.get('id'));
-
-    console.info(`Indexing executions for workflow ${workflow.get('id')}`);
+  const promises = workflows.map(async (w) => {
+    const { id, arn } = w.toJS();
+    console.info(`Indexing executions for workflow ${id}`);
     let totalIndexed = 0;
     let done = false;
     let nextToken = null; // token found in a previous run.
@@ -236,12 +347,12 @@ const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
       const resp = await stepFunctions()
         .listExecutions({ stateMachineArn: arn, nextToken, maxResults: 1000 })
         .promise();
-      const numIndexed = await indexExecutions(workflow.get('id'), resp.executions);
+      const numIndexed = await indexExecutions(id, resp.executions);
 
       if (numIndexed > 0) {
         // Did we find enough executions that we can stop?
         totalIndexed += numIndexed;
-        console.info(`Indexed total of ${totalIndexed} docs for workflow ${workflow.get('id')}`);
+        console.info(`Indexed total of ${totalIndexed} docs for workflow ${id}`);
         if (totalIndexed >= maxIndexExecutions) {
           console.info('We indexed up to max index executions.');
           done = true;
@@ -281,20 +392,44 @@ const indexRecentExecutions = async (stackName, maxIndexExecutions) => {
 const MAX_EXECUTIONS_TO_INDEX = 50000;
 
 /**
+ * Returns a promise that resolves in some number of milliseconds.
+ */
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
  * Implements lambda handler.
  */
-exports.handler = async (event, context, callback) => {
+const handler = async (event, context, callback) => {
   console.log(`Indexer Handler called. Event: ${JSON.stringify(event, null, 2)}`);
 
   try {
     const stackName = event.StackName;
+
+    const startTime = Date.now();
+
     console.log(`Starting indexing of executions for stack ${stackName}`);
-    await indexRecentExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
+    await findAndIndexExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
     console.log(`Indexing complete for stack ${stackName}`);
+
+    // A hacky way to run this in lambda more frequently than once a minute.
+    const elapsed = Date.now() - startTime;
+    await sleep(30000 - elapsed);
+
+    console.log(`Starting indexing of executions for stack ${stackName}`);
+    await findAndIndexExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
+    console.log(`Indexing complete for stack ${stackName}`);
+
     callback(null, 'Elasticsearch indexing complete');
   }
   catch (e) {
     console.error(e);
     callback(e.message);
   }
+};
+
+
+module.exports = {
+  handler,
+  findReingestExecsByUUIDs,
+  indexReingestExecution
 };
