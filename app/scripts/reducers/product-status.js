@@ -45,8 +45,10 @@ const reducer = (state = initialState, action) => {
     case PRODUCT_STATUS_RCVD:
       return state
         .set('productStatus', action.productStatus)
-        // Reset the reingest state that tracks reingests that were started.
-        .set('reingest', reingestInitialState)
+        // Later: This causes problems in that the state on the GUI too quickly disappears when we
+        // do an auto refresh. It loses track of the fact that granule reingests were started
+        // // Reset the reingest state that tracks reingests that were started.
+        // .set('reingest', reingestInitialState)
         .set('inFlight', false);
     case REINGEST_GRANULE_IN_FLIGHT:
       return state
