@@ -21,6 +21,7 @@
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",
     "import/newline-after-import": "off",
+    "no-warning-comments": [2, { "terms": ["TODO", "fixme"], "location": "anywhere" }],
     "no-useless-escape": "off",
     "no-console": "warn",
     "spaced-comment": "off",

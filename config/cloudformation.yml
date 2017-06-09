@@ -32,6 +32,9 @@ Parameters:
       - t2.medium
       - t2.large
       - m4.large
+  AlphanumPrefix:
+    Type: String
+    Description: Prefix to use for naming certain AWS items requiring only A-Z/0-9
   OnEarthStackName:
     Type: String
     Description: Name of the OnEarth stack name being created
@@ -76,6 +79,7 @@ Resources:
         PaaS: !Ref PaaS
         StackName: !Ref AWS::StackName
         OnEarthStackName: !Ref OnEarthStackName
+        AlphanumPrefix: !Sub "${AlphanumPrefix}"
       TemplateURL: "../gibs-ops-api/config/cloudformation.yml"
 
   PublicUpdateTopic:

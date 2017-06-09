@@ -120,7 +120,25 @@ _templates:
             Bucket: '{resources.buckets.public}'
             Key: 'EPSG{meta.epsg}/{meta.collection}/{meta.date.year}'
 
-
+_workflow_meta:
+  - id: DiscoverVIIRS
+    name: VIIRS Discovery
+    arn: !GitcResource DiscoverVIIRS
+    type: discovery
+  - id: IngestVIIRS
+    name: VIIRS Ingest
+    arn: !GitcResource IngestVIIRS
+    type: ingest
+    parent: DiscoverVIIRS
+  - id: DiscoverMOPITT
+    name: MOPITT Discovery
+    arn: !GitcResource DiscoverMOPITT
+    type: discovery
+  - id: IngestMOPITT
+    name: MOPITT Ingest
+    arn: !GitcResource IngestMOPITT
+    type: ingest
+    parent: DiscoverMOPITT
 
 workflows:
   DiscoverVIIRS:

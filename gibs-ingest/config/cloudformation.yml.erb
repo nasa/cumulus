@@ -30,7 +30,7 @@ Parameters:
 
 Resources:
 
-<% alphanum_stack_prefix = ENV['stack_name'].gsub(/\W/, 'x') + 'xx' %>
+<% alphanum_stack_prefix = ENV['alphanum_prefix'] %>
 
 <% require('json') %>
 <% artifact_locations = JSON.parse(File.read(ENV['artifact_locs'])) %>
