@@ -10,6 +10,7 @@ module.exports = {
    * Example name with both: VIIRS__VNGCR_NQD_C1__2017140__201f9667-2e53-4c5c-8318-f3bdfa83a453
    * collectionId: VNGCR_NQD_C1
    * granuleId: 2017140
+   * uuid: 201f9667-2e53-4c5c-8318-f3bdfa83a453
    */
   parseExecutionName: (name) => {
     const parts = fromSfnExecutionName(name);
@@ -23,6 +24,7 @@ module.exports = {
     else {
       [ignored, collectionId, granuleId] = parts;
     }
-    return { collectionId, granuleId };
+    const uuid = parts[parts.length - 1];
+    return { collectionId, granuleId, uuid };
   }
 };
