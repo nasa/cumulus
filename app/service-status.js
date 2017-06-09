@@ -6,9 +6,11 @@
 
 /*eslint no-console: ["error", { allow: ["error"] }] */
 const { handleError } = require('./api-errors');
-const { ecs, cf, dynamoDB } = require('./aws');
-const { fromJS, Map } = require('immutable');
+const { ecs, dynamoDB } = require('./aws');
+const { Map } = require('immutable');
 const { loadCollectionConfig } = require('./collection-config');
+const { getStackResources, getIngestStackResources, getPhysicalResourceId } =
+  require('./stack-resources');
 
 /**
  * Takes in what might be an ARN and if it is parses out the name. If it is not an ARN returns it
@@ -22,20 +24,13 @@ const arnToName = (arnMaybe) => {
 };
 
 /**
- * Fetches the stack and returns a map of logical resource id to stack information.
- */
-const getStackResources = async (arnOrStackName) => {
-  const stackName = arnToName(arnOrStackName);
-  const resp = fromJS(await cf().describeStackResources({ StackName: stackName }).promise());
-  return resp.get('StackResources').groupBy(m => m.get('LogicalResourceId')).map(v => v.first());
-};
-
-/**
  * Returns a map of providers to maps containing the number of connections used and the provider
  * limit.
  */
 const getCurrentUseConnections = async (mainStackName, ingestStackResources) => {
-  const connectsTable = ingestStackResources.getIn(['ConnectionsTable', 'PhysicalResourceId']);
+  // Performance optimization: If the config for providers has no limited connections then we don't
+  // need to scan the table
+  const connectsTable = getPhysicalResourceId(ingestStackResources, 'ConnectionsTable');
 
   const [collectionConfig, dbResult] = await Promise.all([
     loadCollectionConfig(mainStackName),
@@ -114,10 +109,10 @@ const INGEST_SERVICE_NAMES = ['GenerateMrf', 'SfnScheduler'];
  * Returns a list of service statuses for the services associated with ingest.
  */
 const getIngestServicesStatus = async (ingestStackResources) => {
-  const clusterId = ingestStackResources.getIn(['IngestECSCluster', 'PhysicalResourceId']);
+  const clusterId = getPhysicalResourceId(ingestStackResources, 'IngestECSCluster');
 
   return Promise.all(INGEST_SERVICE_NAMES.map(async (serviceName) => {
-    const physicalId = ingestStackResources.getIn([`${serviceName}Service`, 'PhysicalResourceId']);
+    const physicalId = getPhysicalResourceId(ingestStackResources, `${serviceName}Service`);
     return getServiceStatus(clusterId, serviceName, arnToName(physicalId));
   }));
 };
@@ -130,15 +125,15 @@ const ON_EARTH_SERVICE_NAME = 'OnEarth';
 const getOnEarthServiceStatus = async (stackName) => {
   const oeMainStackResources = await getStackResources(stackName);
   const oneEarthStackResources = await getStackResources(
-    oeMainStackResources.getIn(['OnEarthStack', 'PhysicalResourceId'])
+    getPhysicalResourceId(oeMainStackResources, 'OnEarthStack')
   );
   const [clusterStackResources, dockerStackResources] = await Promise.all([
-    getStackResources(oneEarthStackResources.getIn(['Cluster', 'PhysicalResourceId'])),
-    getStackResources(oneEarthStackResources.getIn(['OnearthDocker', 'PhysicalResourceId']))
+    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'Cluster')),
+    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'OnearthDocker'))
   ]);
 
-  const clusterId = clusterStackResources.getIn(['ECSCluster', 'PhysicalResourceId']);
-  const serviceId = dockerStackResources.getIn(['Service', 'PhysicalResourceId']);
+  const clusterId = getPhysicalResourceId(clusterStackResources, 'ECSCluster');
+  const serviceId = getPhysicalResourceId(dockerStackResources, 'Service');
   return getServiceStatus(clusterId, ON_EARTH_SERVICE_NAME, serviceId);
 };
 
@@ -146,9 +141,7 @@ const getOnEarthServiceStatus = async (stackName) => {
  * Returns a list of the status of all the services.
  */
 const getServicesStatus = async (mainStackName, onEarthStackName) => {
-  const mainStackResources = await getStackResources(mainStackName);
-  const ingestStackResources = await getStackResources(
-    mainStackResources.getIn(['IngestStack', 'PhysicalResourceId']));
+  const ingestStackResources = await getIngestStackResources(mainStackName);
 
   const [providerToUsedConnections, ingestServicesStatus, onEarthStatus] = await Promise.all([
     getCurrentUseConnections(mainStackName, ingestStackResources),
