@@ -21,12 +21,16 @@
   float: right;
 }
 
+a.icon-clickable {
+  color: inherit;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EUI customization
 
 .eui-icon {
   /* Add space to the right of the icon when used on a button.*/
-  padding-right: 3px;
+  margin-right: 3px;
 }
 
 // Give spacing around buttons.

@@ -4,11 +4,13 @@ const functional = require('react-functional');
 const { Link } = require('react-router-dom');
 const { List, Map } = require('immutable');
 const Header = require('./header').default;
-const { Loading } = require('./loading');
+const { Loading, RefreshButton } = require('./loading');
 const { SuccessIcon, ErrorIcon, Icon } = require('./icon');
 const { PerformanceChart } = require('./performance-chart');
 const ps = require('../reducers/product-status');
 const util = require('../util');
+
+const ProcessingIcon = () => <Icon className="fa-refresh fa-spin fa-fw" />;
 
 /* eslint-disable camelcase */
 
@@ -22,6 +24,41 @@ const parsePathIds = (props) => {
   const productId = parts[4];
   return { workflowId, productId };
 };
+
+
+/**
+ * @returns The properties to send to the TriggerReingestButton component
+ */
+const triggerReingestButtonStateToProps = ({ config, productStatus }) =>
+  ({ config, productStatus });
+
+/**
+ * Creates a button that will trigger reingest of the specified granule.
+ */
+const TriggerReingestButton = connect(triggerReingestButtonStateToProps)(
+  ({ workflowId, granuleId, productId, config, productStatus, dispatch }) => {
+    const { startingGranules, startedGranules } = productStatus.get('reingest');
+
+    if (startingGranules.contains(granuleId)) {
+      return <span><ProcessingIcon />Starting</span>;
+    }
+    if (startedGranules.contains(granuleId)) {
+      return <span><SuccessIcon />Running</span>;
+    }
+    return (
+      <button
+        type="button"
+        className="eui-btn eui-btn--sm"
+        onClick={(e) => {
+          e.preventDefault();
+          ps.reingestGranule(config, workflowId, productId, granuleId, dispatch);
+        }}
+      >
+        Reingest
+      </button>
+    );
+  }
+);
 
 const RunningIcon = () => <Icon className="fa-repeat icon-running" />;
 
@@ -44,61 +81,117 @@ const FailCell = () =>
   </td>;
 
 /**
+ * The headers for the execution table.
+ */
+const executionTableHeader = (
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Reason</th>
+      <th>Granule Id</th>
+      <th>Started</th>
+      <th>Stopped</th>
+      <th>Duration</th>
+      <th>Current Step</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+);
+
+/**
+ * The class name to use for the specified row based on its index. Manually tagging every other row
+ * allows us to slightly vary the color of the status cells which use a different color.
+ */
+const rowClassName = index => (index % 2 === 0 ? 'even-row' : 'odd-row');
+
+/**
+ * Returns the unique key for react to use with a row.
+ */
+const rowKey = ({ granule_id, start_date }) => `${granule_id}-${start_date}`;
+
+/**
+ * Shows the status of a running execution.
+ */
+const RunningRow = ({ rowIndex, execution }) => {
+  const { granule_id, start_date, current_state, reason } = execution;
+  const msSinceStart = Date.now() - Date.parse(start_date);
+  return (
+    <tr
+      className={rowClassName(rowIndex)}
+    >
+      <RunningCell />
+      <td>{reason}</td>
+      <td>
+        {granule_id ? util.parseJulian(granule_id) : 'N/A'}
+      </td>
+      <td>{util.dateStringToLocaleString(start_date)}</td>
+      <td />
+      <td>{util.humanDuration(msSinceStart)}</td>
+      <td>{current_state}</td>
+      <td />
+    </tr>
+  );
+};
+
+/**
+ * Shows the status of a completed execution.
+ */
+const CompletedRow = ({ rowIndex, execution, productId, workflowId }) => {
+  const { granule_id, start_date, stop_date, elapsed_ms, reason, success } = execution;
+  return (
+    <tr
+      className={rowClassName(rowIndex)}
+    >
+      {success ? <SuccessCell /> : <FailCell />}
+      <td>{reason}</td>
+      <td>
+        {granule_id ? util.parseJulian(granule_id) : 'N/A'}
+      </td>
+      <td>{util.dateStringToLocaleString(start_date)}</td>
+      <td>{util.dateStringToLocaleString(stop_date)}</td>
+      <td>{util.humanDuration(elapsed_ms)}</td>
+      <td />
+      <td>
+        {
+          granule_id ?
+            <TriggerReingestButton
+              workflowId={workflowId}
+              granuleId={granule_id}
+              productId={productId}
+            />
+            : ''
+        }
+      </td>
+    </tr>
+  );
+};
+
+/**
  * Returns a table containing information about the running and completed executions for the
  * product.
  */
 const ExecutionTable = (props) => {
   const { running_executions, completed_executions } = props.productStatus;
   let rowIndex = -1;
-  const rowClassName = index => (index % 2 === 0 ? 'even-row' : 'odd-row');
+
   return (
     <table className="execution-table wide-table">
-      <thead>
-        <tr>
-          <th>Status</th>
-          <th>Granule Date</th>
-          <th>Started</th>
-          <th>Stopped</th>
-          <th>Duration</th>
-          <th>Current Step</th>
-        </tr>
-      </thead>
+      {executionTableHeader}
       <tbody>
         {running_executions.map((exec) => {
           rowIndex += 1;
-          const { granule_id, start_date, current_state } = exec;
-          const rowId = `${granule_id}-${start_date}`;
-          const msSinceStart = Date.now() - Date.parse(start_date);
-          return (
-            <tr
-              key={rowId}
-              className={rowClassName(rowIndex)}
-            >
-              <RunningCell />
-              <td>{granule_id ? util.parseJulian(granule_id) : 'N/A'}</td>
-              <td>{util.dateStringToLocaleString(start_date)}</td>
-              <td />
-              <td>{util.humanDuration(msSinceStart)}</td>
-              <td>{current_state}</td>
-            </tr>
-          );
+          return (<RunningRow key={rowKey(exec)} rowIndex={rowIndex} execution={exec} />);
         })}
         {completed_executions.map((exec) => {
           rowIndex += 1;
-          const { granule_id, start_date, stop_date, elapsed_ms, success } = exec;
-          const rowId = `${granule_id}-${start_date}`;
           return (
-            <tr
-              key={rowId}
-              className={rowClassName(rowIndex)}
-            >
-              {success ? <SuccessCell /> : <FailCell />}
-              <td>{granule_id ? util.parseJulian(granule_id) : 'N/A'}</td>
-              <td>{util.dateStringToLocaleString(start_date)}</td>
-              <td>{util.dateStringToLocaleString(stop_date)}</td>
-              <td>{util.humanDuration(elapsed_ms)}</td>
-              <td />
-            </tr>
+            <CompletedRow
+              key={rowKey(exec)}
+              rowIndex={rowIndex}
+              execution={exec}
+              workflowId={props.workflowId}
+              productId={props.productId}
+            />
           );
         })}
       </tbody>
@@ -111,6 +204,7 @@ const ExecutionTable = (props) => {
  * currently running workflows and past executions along with past performance.
  */
 const ProductPageFn = (props) => {
+  const { config, dispatch } = props;
   const { workflowId, productId } = parsePathIds(props);
   const productStatus = props.productStatus.get('productStatus') || Map();
   return (
@@ -125,15 +219,28 @@ const ProductPageFn = (props) => {
           </ol>
         </div>
 
-        <h1>Collection {productId}</h1>
+        <h1>{workflowId} {productId}</h1>
         <Loading isLoading={() => !props.productStatus.get('productStatus')}>
           <div>
             <PerformanceChart
               title={`${workflowId} Workflow ${productId} Performance`}
               perfData={productStatus.get('performance', List())}
             />
-            <h2>Executions</h2>
-            <ExecutionTable productStatus={productStatus} />
+            <h2>
+              Executions
+              <RefreshButton
+                reloading={props.productStatus.get('inFlight')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  ps.fetchProductStatus(config, workflowId, productId, dispatch);
+                }}
+              />
+            </h2>
+            <ExecutionTable
+              productStatus={productStatus}
+              productId={productId}
+              workflowId={workflowId}
+            />
           </div>
         </Loading>
       </main>
