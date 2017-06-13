@@ -7,7 +7,8 @@ module.exports = {
   entry: {
     lambda: ['babel-polyfill', './app/lambda.js'],
     local: ['babel-polyfill', './app/local.js'],
-    indexer: ['babel-polyfill', './app/execution-indexer.js']
+    indexer: ['babel-polyfill', './app/execution-indexer.js'],
+    local_indexer: ['babel-polyfill', './app/local-indexer.js']
   },
   target: 'node',
   output: {
