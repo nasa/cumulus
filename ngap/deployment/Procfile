@@ -1,1 +1,2 @@
 web: node ./local.js
+indexer: node ./local_indexer.js
