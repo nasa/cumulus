@@ -7,6 +7,7 @@ const { List } = require('immutable');
 const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
 const { Loading } = require('../loading');
 const { InlineClickablePerformanceChart } = require('../performance-chart');
+const { Modal, ModalButton, ModalContent } = require('../modal');
 const ws = require('../../reducers/workflow-status');
 const util = require('../../util');
 
@@ -70,6 +71,79 @@ const runningStatus = (workflow) => {
   return `${numRunning} Running`;
 };
 
+
+/**
+ * Adds a datepicker based on https://github.com/uxsolutions/bootstrap-datepicker
+ * Assumes that the CSS and JS for that are available. (As of this comment time they were added
+* on main index.html through CDN links.)
+ */
+const DatePicker = functional(
+  ({ name, id, defaultValue, defaultToday }) => {
+    let value = defaultValue || '';
+    if (defaultToday) {
+      value = util.toDateString(new Date(Date.now()));
+    }
+    return (
+      <input
+        type="text"
+        className="form-control default"
+        name={name}
+        id={id}
+        value={value}
+      />
+    );
+  },
+  {
+    componentDidMount: ({ id }) => {
+      // eslint-disable-next-line no-undef
+      $(`#${id}`).datepicker({
+        maxViewMode: 2,
+        format: 'yyyy-mm-dd',
+        todayBtn: 'linked',
+        autoclose: true
+      });
+    }
+  }
+);
+/**
+ * Returns the button and modal div for showing options for workflow reingest.
+ */
+const WorkflowReingestModal = ({ workflow }) => {
+  const { id, name, products } = workflow;
+  return (
+    <Modal modalType="workflowReingest" uniqId={id}>
+      <ModalButton className="in-row-btn eui-btn--sm">Reingest</ModalButton>
+      <ModalContent>
+        <h2>Reingest {name}</h2>
+        <form>
+          <div className="form-field">
+            <label htmlFor={`${id}-start-date`}>Start Date:</label>
+            <DatePicker name="start-date" id={`${id}-start-date`} defaultToday="true" />
+          </div>
+          <div className="form-field">
+            <label htmlFor={`${id}-stop-date`}>Stop Date:</label>
+            <DatePicker name="stop-date" id={`${id}-stop-date`} defaultToday="true" />
+          </div>
+          <div className="form-field">
+            <label htmlFor={`${id}-product-select`}>Products:</label>
+            <select
+              className="multi-select"
+              size={Math.min(4, products.count())}
+              multiple="multiple"
+              name="product-select"
+              id={`${id}-product-select`}
+            >
+              {products.map(p => <option>{p.get('id')}</option>)}
+            </select>
+          </div>
+          <input className="button submit eui-btn eui-btn--green" type="submit" value="Reingest" />
+          <button type="button" className="cancel eui-btn modal-close-trigger">Cancel</button>
+        </form>
+      </ModalContent>
+    </Modal>
+  );
+};
+
 /**
  * Defines the table body that displays workflow information
  */
@@ -102,6 +176,7 @@ const WorkflowTbody = connect()((props) => {
             guid={workflow.get('id')}
           />
         </td>
+        <td><WorkflowReingestModal workflow={workflow} /></td>
       </tr>
     </tbody>
   );
@@ -138,6 +213,7 @@ const ProductRow = ({ workflow, product }) => {
           />
         </div>
       </td>
+      <td />
     </tr>
   );
 };
@@ -242,6 +318,9 @@ const WorkflowStatusTableFn = (props) => {
               />
               <Th
                 title="Workflow Performance"
+              />
+              <Th
+                title="Actions"
               />
             </tr>
           </thead>
