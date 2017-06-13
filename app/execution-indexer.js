@@ -318,6 +318,16 @@ const indexExecutions = async (workflowId, executions) => {
 };
 
 /**
+ * The maximum number of executions for a single workflow before giving up.
+ */
+const MAX_EXECUTIONS_TO_INDEX = 50000;
+
+const createOrUpdateExecutionIndexes = async () => {
+  await createOrUpdateIndex(executionsIndex);
+  await createOrUpdateIndex(executionsMetaIndex);
+};
+
+/**
  * The main flow. Does the following:
  *
  * 1. Makes sure that the executions and related elasticsearch indexes exists.
@@ -326,10 +336,7 @@ const indexExecutions = async (workflowId, executions) => {
  * 4. Keeps fetching the executions and indexing them until we find executions that were already
  * indexed.
  */
-const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
-  await createOrUpdateIndex(executionsIndex);
-  await createOrUpdateIndex(executionsMetaIndex);
-
+const findAndIndexExecutions = async (stackName, maxIndexExecutions = MAX_EXECUTIONS_TO_INDEX) => {
   const lastIndexedDate = await getLastIndexedDate();
   // Capture the time that we start indexing before we start fetching executions.
   const indexingStartTime = Date.now();
@@ -387,11 +394,6 @@ const findAndIndexExecutions = async (stackName, maxIndexExecutions) => {
 };
 
 /**
- * The maximum number of executions for a single workflow before giving up.
- */
-const MAX_EXECUTIONS_TO_INDEX = 50000;
-
-/**
  * Returns a promise that resolves in some number of milliseconds.
  */
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -405,10 +407,12 @@ const handler = async (event, context, callback) => {
   try {
     const stackName = event.StackName;
 
+    await createOrUpdateExecutionIndexes();
+
     const startTime = Date.now();
 
     console.log(`Starting indexing of executions for stack ${stackName}`);
-    await findAndIndexExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
+    await findAndIndexExecutions(stackName);
     console.log(`Indexing complete for stack ${stackName}`);
 
     // A hacky way to run this in lambda more frequently than once a minute.
@@ -416,7 +420,7 @@ const handler = async (event, context, callback) => {
     await sleep(30000 - elapsed);
 
     console.log(`Starting indexing of executions for stack ${stackName}`);
-    await findAndIndexExecutions(stackName, MAX_EXECUTIONS_TO_INDEX);
+    await findAndIndexExecutions(stackName);
     console.log(`Indexing complete for stack ${stackName}`);
 
     callback(null, 'Elasticsearch indexing complete');
@@ -430,6 +434,8 @@ const handler = async (event, context, callback) => {
 
 module.exports = {
   handler,
+  createOrUpdateExecutionIndexes,
+  findAndIndexExecutions,
   findReingestExecsByUUIDs,
   indexReingestExecution
 };
