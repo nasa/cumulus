@@ -100,23 +100,23 @@
     cursor: pointer;
   }
 
-  // Date Picker reset of certain styles added by EUI.
-  div.datepicker {
-    table {
-      border: inherit;
-      th {
-        background-color: inherit;
-      }
-      tr {
-        background: inherit;
-      }
-    }
-  }
-
   canvas {
     height: 38;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+  }
+}
+
+// Date Picker reset of certain styles added by EUI.
+div.datepicker {
+  table {
+    border: inherit;
+    th {
+      background-color: inherit;
+    }
+    tr {
+      background: inherit;
+    }
   }
 }

@@ -4,6 +4,7 @@
  */
 const { Map, List, Set } = require('immutable');
 const api = require('../ops-api');
+const { errorAction } = require('./errors');
 
 // Actions
 const WORKFLOW_STATUS_IN_FLIGHT = 'WORKFLOW_STATUS_IN_FLIGHT';
@@ -14,7 +15,6 @@ const WORKFLOW_CHANGE_SORT = 'WORKFLOW_CHANGE_SORT';
 
 // Change whether the products of a workflow are shown or not
 const WORKFLOW_COLLAPSE_EXPAND = 'WORKFLOW_COLLAPSE_EXPAND';
-
 
 // Sort Fields
 const SORT_NONE = 'SORT_NONE';
@@ -197,6 +197,24 @@ const fetchWorkflowStatus = async (config, dispatch) => {
   }
 };
 
+/**
+ * TODO
+ */
+const reingestGranules = async (config, collectionIds, startDate, endDate, dispatch) => {
+  try {
+    const executionName = await api.reingestGranules(config, collectionIds, startDate, endDate);
+    // TODO add spinner to workflow so that it shows when refreshing.
+    // Refresh workflow status
+    fetchWorkflowStatus(config, dispatch);
+  }
+  catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    dispatch(
+      errorAction(`An unexpected error occurred attempting to reingest the granule. ${e.message}`));
+  }
+};
+
 module.exports = {
   reducer,
 
@@ -216,6 +234,7 @@ module.exports = {
   changeSort,
   collapseExpandWorkflow,
   fetchWorkflowStatus,
+  reingestGranules,
 
   // for testing
   sortWorkflows

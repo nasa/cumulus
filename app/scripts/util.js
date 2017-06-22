@@ -39,6 +39,7 @@ const toDateString = (date) => {
   return `${y}-${zeroPad(m)}-${zeroPad(d)}`;
 };
 
+// TODO rename this to parseDayOfYear. Julian is incorrect
 /**
  * Parses a julian date like '2014130' and returns a string formatted date of YYYY-MM-DD
  */

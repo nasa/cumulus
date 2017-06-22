@@ -98,6 +98,24 @@ const reingestGranule = (config, collectionId, granuleId) =>
       granule_id: granuleId
     },
     json: true
+  }
+);
+
+/**
+ * Submits a request to reingest granules across multiple collections in a date range. Returns a
+ * promise with response.
+ */
+const reingestGranules = (config, collectionIds, startDate, endDate) =>
+  rp({
+    uri: `${config.get('apiBaseUrl')}/reingest_granules`,
+    method: 'POST',
+    qs: {
+      stack_name: config.get('stackName'),
+      collection_ids: collectionIds.join(','),
+      start_date: startDate.valueOf(),
+      end_date: endDate.valueOf()
+    },
+    json: true
   });
 
 module.exports = {
@@ -105,5 +123,6 @@ module.exports = {
   getWorkflowStatus,
   getServiceStatus,
   getProductStatus,
-  reingestGranule
+  reingestGranule,
+  reingestGranules
 };
