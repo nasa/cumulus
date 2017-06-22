@@ -14,7 +14,7 @@ const { handleError } = require('./api-errors');
 const { handleWorkflowStatusRequest } = require('./workflows');
 const { handleServiceStatusRequest } = require('./service-status');
 const { handleProductStatusRequest } = require('./product-status');
-const { handleReingestRequest } = require('./reingest');
+const { handleReingestGranuleRequest, handleReingestGranulesRequest } = require('./reingest');
 
 const app = express();
 app.use(compression());
@@ -69,7 +69,11 @@ module.exports = (cb = null) => {
   });
 
   app.post('/reingest_granule', (req, res) => {
-    handleReingestRequest(req, res);
+    handleReingestGranuleRequest(req, res);
+  });
+
+  app.post('/reingest_granules', (req, res) => {
+    handleReingestGranulesRequest(req, res);
   });
 
   // Add an error handler last

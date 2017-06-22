@@ -30,17 +30,12 @@ const getResources = async (stackName) => {
 };
 
 /**
- * Starts reingesting a granule in the given collection .
+ * TODO
+ * granuleId can be null. Used for indexing with execution tracking
  */
-const reingestGranule = async (stackName, collectionId, granuleId) => {
-  const [resources, collectionConfig] = await Promise.all([
-    getResources(stackName),
-    collConfig.loadCollectionConfig(stackName)
-  ]);
-
-  const collection = collectionConfig.get('collections')
-    .filter(c => collectionId === c.get('id'))
-    .first();
+const executeWorkflowForReingest =
+async (collectionConfig, resources, collection, granuleFilterFn, granuleId) => {
+  const collectionId = collection.get('id');
   const provider = collectionConfig.get('providers')
     .filter(p => p.get('id') === collection.get('provider_id'))
     .first();
@@ -53,14 +48,13 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   // The first step of workflow will have an additional configuration item to detect only the
   // given granuleId.
   const firstStep = collectionConfig.getIn(['workflows', stateMachine, 'StartAt']);
-  // Fix this assumption as part of GITC-358.
-  const actualGranuleId = `VIIRS/${collectionId}/${granuleId}`;
-  sfInput.workflow_config_template[firstStep].filtered_granule_keys = [actualGranuleId];
+  const granuleFilter = granuleFilterFn(collectionId);
+  sfInput.workflow_config_template[firstStep].granule_filter = granuleFilter;
 
   const executionName = sfInput.ingest_meta.execution_name;
   const { uuid } = parseExecutionName(executionName);
 
-  console.info(`Starting execution of ${stateMachine} for ${granuleId}`);
+  console.info(`Starting execution of ${stateMachine} for ${JSON.stringify(granuleFilter)}`);
   console.info(`Input ${JSON.stringify(sfInput, null, 2)}`);
 
   await Promise.all([
@@ -75,12 +69,32 @@ const reingestGranule = async (stackName, collectionId, granuleId) => {
   return executionName;
 };
 
-// printPromise(reingestGranule('gitc-jg', 'VNGCR_NQD_C1', 'VIIRS/VNGCR_NQD_C1/2017152'));
+/**
+ * Starts reingesting a granule in the given collection .
+ */
+const reingestGranule = async (stackName, collectionId, granuleId) => {
+  const [resources, collectionConfig] = await Promise.all([
+    getResources(stackName),
+    collConfig.loadCollectionConfig(stackName)
+  ]);
+
+  const collection = collectionConfig.get('collections')
+    .filter(c => collectionId === c.get('id'))
+    .first();
+
+  const granuleFilterFn = () => ({
+    // Fix this assumption as part of GITC-358.
+    filtered_granule_keys: [`VIIRS/${collectionId}/${granuleId}`]
+  });
+
+  return executeWorkflowForReingest(
+    collectionConfig, resources, collection, granuleFilterFn, granuleId);
+};
 
 /**
- * handleReingestRequest - Handles the API request to reingest granules
+ * handleReingestRequest - Handles the API request to reingest a single granule
  */
-const handleReingestRequest = async (req, res) => {
+const handleReingestGranuleRequest = async (req, res) => {
   try {
     req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
     req.checkQuery('collection_id', 'Invalid collection_id').notEmpty();
@@ -102,4 +116,76 @@ const handleReingestRequest = async (req, res) => {
   }
 };
 
-module.exports = { handleReingestRequest };
+
+/**
+ * Returns the day (1- 366) of the year given a date.
+ */
+const dateToDayOfYear = (d) => {
+  const startOfYear = Date.UTC(d.getUTCFullYear(), 0);
+  const ms = d.valueOf() - startOfYear;
+  return Math.floor(ms / (24 * 3600 * 1000)) + 1;
+};
+
+/**
+ * TODO
+ */
+const reingestGranules = async (stackName, collectionIds, startDate, stopDate) => {
+  const [resources, collectionConfig] = await Promise.all([
+    getResources(stackName),
+    collConfig.loadCollectionConfig(stackName)
+  ]);
+
+  const collectionIdSet = Set(collectionIds);
+  const collections = collectionConfig.get('collections')
+    .filter(c => collectionIdSet.has(c.get('id')));
+
+  // TODO if collections length doesn't ==== collectionIds length return error
+
+  const dateToDayOfYearDate = d => `${d.getUTCFullYear()}${dateToDayOfYear(d)}`;
+
+  // GITC-358: Fix this assumption that granule ids are constructed this way.
+  const granuleFilterFn = collectionId => ({
+    filtered_granule_key_start: `VIIRS/${collectionId}/${dateToDayOfYearDate(startDate)}`,
+    filtered_granule_key_end: `VIIRS/${collectionId}/${dateToDayOfYearDate(stopDate)}`
+  });
+
+  const executionNamePromises = collections.map(collection =>
+    executeWorkflowForReingest(collectionConfig, resources, collection, granuleFilterFn, null));
+  return Promise.all(executionNamePromises);
+};
+
+/**
+ * handleReingestRequest - Handles the API request to reingest multiple granules
+ */
+const handleReingestGranulesRequest = async (req, res) => {
+  try {
+    req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
+    req.checkQuery('collection_ids', 'Invalid collection_ids').notEmpty();
+    // TODO add dates and validation
+    // Just use ms for dates
+    req.checkQuery('start_date', 'Invalid start_date').notEmpty();
+    req.checkQuery('end_date', 'Invalid end_date').notEmpty();
+    const result = await req.getValidationResult();
+    if (!result.isEmpty()) {
+      res.status(400).json(result.array());
+    }
+    else {
+      const stackName = req.query.stack_name;
+      const collectionIds = req.query.collection_ids.split(',');
+      const startDate = req.query.start_date;
+      const stopDate = req.query.stopDate;
+      res.json(await reingestGranules(stackName, collectionIds, startDate, stopDate));
+    }
+  }
+  catch (e) {
+    console.error(e);
+    handleError(e, req, res);
+  }
+};
+
+module.exports = {
+  handleReingestGranuleRequest,
+  handleReingestGranulesRequest,
+  // Testing
+  dateToDayOfYear
+};

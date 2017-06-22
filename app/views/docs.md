@@ -227,6 +227,8 @@ The response contains a list of the executions currently running for the workflo
 
 ```
 
+TODO update for single and plural
+
 ## /reingest_granule
 
 Starts reingesting the given granule
