@@ -29,15 +29,23 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
   }
 
   /**
-   * excludeFiltered - Excludes messages that do not match one of the specified keys. Allows all
-   * messages if matchingKeys is null.
+   * excludeFiltered - Excludes messages that do not match one of the specified granuleFilter.
+   * Allows all messages if matchingKeys is null.
    */
-  excludeFiltered(messages, matchingKeys) {
-    if (matchingKeys) {
-      const keySet = new Set(matchingKeys);
-      return messages.filter(msg => keySet.has(msg.meta.key));
+  excludeFiltered(messages, granuleFilter) {
+    let filterFn = () => true;
+    if (granuleFilter) {
+      if (granuleFilter.filtered_granule_keys) {
+        const keySet = new Set(granuleFilter.filtered_granule_keys);
+        filterFn = msg => keySet.has(msg.meta.key);
+      }
+      else if (granuleFilter.filtered_granule_key_start) {
+        const start = granuleFilter.filtered_granule_key_start;
+        const end = granuleFilter.filtered_granule_key_end;
+        filterFn = msg => msg.meta.key >= start && msg.meta.key <= end;
+      }
     }
-    return messages;
+    return messages.filter(filterFn);
   }
 
   /**
