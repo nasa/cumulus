@@ -9,6 +9,7 @@ const { stepFunctions, ecs } = require('./aws');
 const { handleError } = require('./api-errors');
 const collConfig = require('./collection-config');
 const sf = require('ingest-common/step-functions');
+const { Set } = require('immutable');
 const { getIngestStackResources, getPhysicalResourceId } = require('./stack-resources');
 const ExecutionIndexer = require('./execution-indexer');
 const { parseExecutionName } = require('./execution-name-parser');
@@ -129,7 +130,9 @@ const dateToDayOfYear = (d) => {
 /**
  * TODO
  */
-const reingestGranules = async (stackName, collectionIds, startDate, stopDate) => {
+const reingestGranules = async (stackName, collectionIds, startDate, endDate) => {
+  console.info(`Reingesting granules for collections ${collectionIds}`
+    + ` from ${startDate} to ${endDate}`);
   const [resources, collectionConfig] = await Promise.all([
     getResources(stackName),
     collConfig.loadCollectionConfig(stackName)
@@ -146,7 +149,7 @@ const reingestGranules = async (stackName, collectionIds, startDate, stopDate) =
   // GITC-358: Fix this assumption that granule ids are constructed this way.
   const granuleFilterFn = collectionId => ({
     filtered_granule_key_start: `VIIRS/${collectionId}/${dateToDayOfYearDate(startDate)}`,
-    filtered_granule_key_end: `VIIRS/${collectionId}/${dateToDayOfYearDate(stopDate)}`
+    filtered_granule_key_end: `VIIRS/${collectionId}/${dateToDayOfYearDate(endDate)}`
   });
 
   const executionNamePromises = collections.map(collection =>
@@ -163,18 +166,21 @@ const handleReingestGranulesRequest = async (req, res) => {
     req.checkQuery('collection_ids', 'Invalid collection_ids').notEmpty();
     // TODO add dates and validation
     // Just use ms for dates
-    req.checkQuery('start_date', 'Invalid start_date').notEmpty();
-    req.checkQuery('end_date', 'Invalid end_date').notEmpty();
+    req.checkQuery('start_date', 'Invalid start_date').isInt({ min: 1 });
+    req.checkQuery('end_date', 'Invalid end_date').isInt({ min: 1 });
     const result = await req.getValidationResult();
     if (!result.isEmpty()) {
       res.status(400).json(result.array());
     }
     else {
       const stackName = req.query.stack_name;
+      console.log(req.query.collection_ids);
+      console.log(req.query.start_date);
+      console.log(req.query.end_date);
       const collectionIds = req.query.collection_ids.split(',');
-      const startDate = req.query.start_date;
-      const stopDate = req.query.stopDate;
-      res.json(await reingestGranules(stackName, collectionIds, startDate, stopDate));
+      const startDate = new Date(Number.parseInt(req.query.start_date, 10));
+      const endDate = new Date(Number.parseInt(req.query.end_date, 10));
+      res.json(await reingestGranules(stackName, collectionIds, startDate, endDate));
     }
   }
   catch (e) {
