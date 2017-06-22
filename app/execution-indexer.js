@@ -211,7 +211,11 @@ const findReingestExecsByUUIDs = async (uuids) => {
       stored_fields: ['granule_id']
     }
   });
-  return fromJS(resp.hits.hits.map(m => ({ uuid: m._id, granuleId: m.fields.granule_id[0] })));
+  return fromJS(resp.hits.hits.map(m => ({
+    uuid: m._id,
+    // Granule id can be empty for reingest executions that use a date range.
+    granuleId: m.fields.granule_id ? m.fields.granule_id[0] : null
+  })));
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
