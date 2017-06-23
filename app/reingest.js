@@ -31,8 +31,17 @@ const getResources = async (stackName) => {
 };
 
 /**
- * TODO
- * granuleId can be null. Used for indexing with execution tracking
+ * A helper function that will kickoff a workflow execution for the purposes of reingesting a
+ * granule.
+ *
+ * Parameters:
+ * * collectionConfig - Collection configuration loaded from the collections.yml file.
+ * * resources - Resources configured for the GIBS. This is required input for kicking off a
+ * workflow.
+ * * collection - The specific collection obejct from the config
+ * * granuleFilterFn - A function that given the collection id will return a JSON object to include
+ * as the granule filter in the workflow config.
+ * * granuleId - Set to a value if this is for reingesting one specific granule.
  */
 const executeWorkflowForReingest =
 async (collectionConfig, resources, collection, granuleFilterFn, granuleId) => {
@@ -128,7 +137,8 @@ const dateToDayOfYear = (d) => {
 };
 
 /**
- * TODO
+ * Starts the discovery workflows for the given collections to reingest granules found within the
+ * start and end dates given.
  */
 const reingestGranules = async (stackName, collectionIds, startDate, endDate) => {
   console.info(`Reingesting granules for collections ${collectionIds}`
@@ -141,8 +151,6 @@ const reingestGranules = async (stackName, collectionIds, startDate, endDate) =>
   const collectionIdSet = Set(collectionIds);
   const collections = collectionConfig.get('collections')
     .filter(c => collectionIdSet.has(c.get('id')));
-
-  // TODO if collections length doesn't ==== collectionIds length return error
 
   const dateToDayOfYearDate = d => `${d.getUTCFullYear()}${dateToDayOfYear(d)}`;
 
@@ -164,8 +172,6 @@ const handleReingestGranulesRequest = async (req, res) => {
   try {
     req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
     req.checkQuery('collection_ids', 'Invalid collection_ids').notEmpty();
-    // TODO add dates and validation
-    // Just use ms for dates
     req.checkQuery('start_date', 'Invalid start_date').isInt({ min: 1 });
     req.checkQuery('end_date', 'Invalid end_date').isInt({ min: 1 });
     const result = await req.getValidationResult();
@@ -174,9 +180,6 @@ const handleReingestGranulesRequest = async (req, res) => {
     }
     else {
       const stackName = req.query.stack_name;
-      console.log(req.query.collection_ids);
-      console.log(req.query.start_date);
-      console.log(req.query.end_date);
       const collectionIds = req.query.collection_ids.split(',');
       const startDate = new Date(Number.parseInt(req.query.start_date, 10));
       const endDate = new Date(Number.parseInt(req.query.end_date, 10));
