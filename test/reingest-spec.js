@@ -7,7 +7,8 @@ const { dateToDayOfYear } = require('../app/reingest.js');
 
 
 /**
- * TODO
+ * Checks every date in the year given to make sure that the dateToDayOfYear function returns the
+ * correct data.
  */
 const checkEveryDateInYear = (year, isLeap) => {
   const numDays = isLeap ? 366 : 365;
