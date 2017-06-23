@@ -227,6 +227,7 @@ The response contains a list of the executions currently running for the workflo
 
 ```
 
+
 ## /reingest_granule
 
 Starts reingesting the given granule
@@ -239,4 +240,20 @@ Params:
 
 ```Bash
 curl -XPOST 'http://localhost:3000/reingest_granule?stack_name=gitc-jg&collection_id=VNGCR_NQD_C1&granule_id=2017157'
+```
+
+## /reingest_granules
+
+Kicks off reingesting granules for the collections in the list. It first does discovery of the granules found between the start and end dates and then ingests any new data found.
+
+Params:
+
+* `stack_name` - The name of main top level stack that contains ingest and other substacks.
+* `collection_ids` - Comma separated list of ids of collections to reingest.
+* `start_date` - The inclusive temporal start date of the granules to look for. Should use milliseconds since epoch time.
+* `end_date` - The inclusive temporal end date of the granules to look for. Should use milliseconds since epoch time.
+
+```Bash
+curl -XPOST
+'http://localhost:3000/reingest_granules?stack_name=gitc-xx&collection_ids=VNGCR_NQD_C1%2CVNGCR_SQD_C1&start_date=1497672000000&end_date=1497758400000'
 ```
