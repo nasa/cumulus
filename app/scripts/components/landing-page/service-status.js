@@ -49,21 +49,17 @@ const ServiceEventsModal = ({ service }) => {
  * Shows the status of a single service.
  */
 const SingleServiceStatus = ({ service }) => {
-  const { desired_count, service_name, running_tasks } = service;
+  const { desired_count, service_name, running_tasks, actual_count } = service;
   const humanServiceName = serviceNameToHumanName.get(service_name);
-  const numRunning = running_tasks.count();
-  const mostRecentStartDate = running_tasks.map(({ started_at }) => Date.parse(started_at)).max();
   let serviceIcon = <SuccessIcon />;
-  if (numRunning !== desired_count) {
+  if (actual_count !== desired_count) {
     serviceIcon = <ErrorIcon />;
   }
-  let text;
-  if (numRunning > 0) {
+  let text = `${actual_count}/${desired_count} tasks running`;
+  if (running_tasks.count() > 0) {
+    const mostRecentStartDate = running_tasks.map(({ started_at }) => Date.parse(started_at)).max();
     const dateStr = util.humanTimeSince(mostRecentStartDate);
-    text = `${numRunning}/${desired_count} tasks running since ${dateStr}`;
-  }
-  else {
-    text = `0/${desired_count} tasks running`;
+    text += ` since ${dateStr}`;
   }
   return (
     <div>
