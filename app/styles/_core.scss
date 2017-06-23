@@ -82,3 +82,51 @@ main {
   white-space: -o-pre-wrap;    /* Opera 7 */
   word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Forms
+
+label {
+  margin-right: 15px;
+  padding-left: 1em;
+  display: inline-block;
+  width: 7em;
+}
+
+.form-field {
+  margin-bottom: 20px;
+}
+
+
+input.button {
+  line-height: inherit;
+}
+
+.cancel.eui-btn {
+  margin-left: 2em;
+}
+
+// Date Picker reset of certain styles added by EUI.
+div.datepicker {
+  table {
+    border: inherit;
+    th {
+      background-color: inherit;
+    }
+    tr {
+      background: inherit;
+    }
+  }
+}
+
+.form-error {
+  font-weight: bold;
+  color: #e74c3c;
+  margin-left: 20px
+}
+
+button[disabled], html input[disabled], html input[disabled]:hover {
+  cursor: default;
+  background-color: #b5cede;
+  color: #ebebeb;
+}

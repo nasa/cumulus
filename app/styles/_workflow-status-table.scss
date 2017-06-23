@@ -67,6 +67,18 @@
     color: inherit;
   }
 
+  // EUI buttons in the workflow table should be slightly darker
+  .in-row-btn {
+    background: #e0e0e0;
+  }
+
+  // range of 12
+
+  .in-row-btn:hover {
+    background: #cecece;
+  }
+
+
   .expandable-icon {
     font-size: 1.25em;
     width: 0.5em;
@@ -95,3 +107,4 @@
     overflow: hidden;
   }
 }
+

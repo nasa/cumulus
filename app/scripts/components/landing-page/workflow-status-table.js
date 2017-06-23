@@ -7,6 +7,8 @@ const { List } = require('immutable');
 const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
 const { Loading } = require('../loading');
 const { InlineClickablePerformanceChart } = require('../performance-chart');
+const { WorkflowReingestForm } = require('./workflow-reingest-form');
+const { Modal, ModalButton, ModalContent } = require('../modal');
 const ws = require('../../reducers/workflow-status');
 const util = require('../../util');
 
@@ -71,6 +73,22 @@ const runningStatus = (workflow) => {
 };
 
 /**
+ * Returns the button and modal div for showing options for workflow reingest.
+ */
+const WorkflowReingestModal = ({ workflow }) => {
+  const { id, name } = workflow;
+  return (
+    <Modal modalType="workflowReingest" uniqId={id}>
+      <ModalButton className="in-row-btn eui-btn--sm">Reingest</ModalButton>
+      <ModalContent>
+        <h2>Reingest {name}</h2>
+        <WorkflowReingestForm workflow={workflow} />
+      </ModalContent>
+    </Modal>
+  );
+};
+
+/**
  * Defines the table body that displays workflow information
  */
 const WorkflowTbody = connect()((props) => {
@@ -102,6 +120,7 @@ const WorkflowTbody = connect()((props) => {
             guid={workflow.get('id')}
           />
         </td>
+        <td><WorkflowReingestModal workflow={workflow} /></td>
       </tr>
     </tbody>
   );
@@ -124,7 +143,7 @@ const ProductRow = ({ workflow, product }) => {
       <td><div>{lastCompleted(last_execution)}</div></td>
       <td>
         <div>
-          {last_granule_id ? util.parseJulian(last_granule_id) : 'N/A'}
+          {last_granule_id ? util.parseDayOfYear(last_granule_id) : 'N/A'}
         </div>
       </td>
       <td><div>{recentExecutions(product)}</div></td>
@@ -138,6 +157,7 @@ const ProductRow = ({ workflow, product }) => {
           />
         </div>
       </td>
+      <td />
     </tr>
   );
 };
@@ -242,6 +262,9 @@ const WorkflowStatusTableFn = (props) => {
               />
               <Th
                 title="Workflow Performance"
+              />
+              <Th
+                title="Actions"
               />
             </tr>
           </thead>

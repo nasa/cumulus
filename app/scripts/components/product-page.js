@@ -122,7 +122,7 @@ const RunningRow = ({ rowIndex, execution }) => {
       <RunningCell />
       <td>{reason}</td>
       <td>
-        {granule_id ? util.parseJulian(granule_id) : 'N/A'}
+        {granule_id ? util.parseDayOfYear(granule_id) : 'N/A'}
       </td>
       <td>{util.dateStringToLocaleString(start_date)}</td>
       <td />
@@ -145,7 +145,7 @@ const CompletedRow = ({ rowIndex, execution, productId, workflowId }) => {
       {success ? <SuccessCell /> : <FailCell />}
       <td>{reason}</td>
       <td>
-        {granule_id ? util.parseJulian(granule_id) : 'N/A'}
+        {granule_id ? util.parseDayOfYear(granule_id) : 'N/A'}
       </td>
       <td>{util.dateStringToLocaleString(start_date)}</td>
       <td>{util.dateStringToLocaleString(stop_date)}</td>
