@@ -120,3 +120,15 @@ div.datepicker {
     }
   }
 }
+
+.form-error {
+  font-weight: bold;
+  color: #e74c3c;
+  margin-left: 20px
+}
+
+button[disabled], html input[disabled], html input[disabled]:hover {
+  cursor: default;
+  background-color: #b5cede;
+  color: #ebebeb;
+}

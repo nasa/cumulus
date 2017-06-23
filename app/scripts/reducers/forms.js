@@ -30,12 +30,18 @@ const updateFormFieldValue = (formName, fieldName, value) => (
  * Returns a helper object that has functions for getting values related to a form and dispatching
  * actions that indicate a value changed.
  */
-const formHelper = (dispatch, forms, formName, defaultValues) => {
-  const safeForms = forms || Map();
-  const formValues = defaultValues.merge(safeForms.get(formName));
+const formHelper = ({ dispatch, formsState, formName, defaultValues, validator }) => {
+  const safeForms = formsState || Map();
+  const setValues = safeForms.get(formName);
+  const formValues = defaultValues.merge(setValues);
+  const fieldErrors = validator(formValues);
+
   return {
     formName,
+    setValues,
+    defaultValues,
     formValues,
+    fieldErrors,
 
     /**
      * Dispatches an action indicating the field value was updated. The value is saved in the state.
@@ -54,7 +60,17 @@ const formHelper = (dispatch, forms, formName, defaultValues) => {
     /**
      * Returns an immutable map of the values of the form.
      */
-    getFieldValues: () => formValues
+    getFieldValues: () => formValues,
+
+    /**
+     * TODO
+     */
+    errorForField: fieldName => fieldErrors.get(fieldName),
+
+    /**
+     * TODO
+     */
+    isFormValid: () => !fieldErrors || fieldErrors.isEmpty()
   };
 };
 

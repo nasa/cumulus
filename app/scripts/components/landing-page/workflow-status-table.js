@@ -3,13 +3,13 @@ const CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup');
 const { connect } = require('react-redux');
 const { Link } = require('react-router-dom');
 const functional = require('react-functional');
-const { List, Set, Map } = require('immutable');
+const { List } = require('immutable');
 const { Icon, SuccessIcon, ErrorIcon } = require('../icon');
 const { Loading } = require('../loading');
 const { InlineClickablePerformanceChart } = require('../performance-chart');
+const { WorkflowReingestForm } = require('./workflow-reingest-form');
 const { Modal, ModalButton, ModalContent } = require('../modal');
 const ws = require('../../reducers/workflow-status');
-const formsReducer = require('../../reducers/forms');
 const util = require('../../util');
 
 const NotRunIcon = () => <Icon className="fa-circle-o icon-disabled" />;
@@ -72,142 +72,21 @@ const runningStatus = (workflow) => {
   return `${numRunning} Running`;
 };
 
-// TODO move workflow reingest modal into a separate component file
-
-/**
- * Adds a datepicker based on https://github.com/uxsolutions/bootstrap-datepicker
- * Assumes that the CSS and JS for that are available. (As of this comment time they were added
-* on main index.html through CDN links.)
- */
-const DatePicker = functional(
-  ({ name, id, defaultValue }) =>
-    <input
-      type="text"
-      className="form-control default"
-      name={name}
-      id={id}
-      defaultValue={util.toDateString(defaultValue)}
-    />,
-  {
-    componentDidMount: ({ id, onChange }) => {
-      // eslint-disable-next-line no-undef
-      $(`#${id}`).datepicker({
-        maxViewMode: 2,
-        format: 'yyyy-mm-dd',
-        todayBtn: 'linked',
-        autoclose: true
-      }).on('changeDate', (event) => {
-        if (onChange) {
-          onChange(event.date);
-        }
-      });
-    }
-  }
-);
-
-const workflowReingestFormStateToProps = ({ config, forms, workflowStatus }) =>
-  ({ config, forms, workflowStatus });
-
-// TODO make submit button work
-// TODO add validation
-
-const WorkflowReingestForm = connect(workflowReingestFormStateToProps)(
-  (props) => {
-    const { config, workflow, forms, dispatch } = props;
-    const { id, products } = workflow;
-    const formHelper = formsReducer.formHelper(dispatch, forms, 'WorkflowReingestForm', Map({
-      startDate: new Date(Date.now()),
-      endDate: new Date(Date.now()),
-      selectedProducts: Set()
-    }));
-    const selectedProductSet = formHelper.getFieldValue('selectedProducts');
-
-    // TODO break out some of the event handlers and potentially fields themselves.
-
-    return (
-      <form>
-        <div className="form-field">
-          <label htmlFor={`${id}-startDate`}>Start Date:</label>
-          <DatePicker
-            name="startDate"
-            id={`${id}-startDate`}
-            defaultValue={formHelper.getFieldValue('startDate')}
-            onChange={date => formHelper.updateFieldValue('startDate', date)}
-          />
-        </div>
-        <div className="form-field">
-          <label htmlFor={`${id}-endDate`}>Stop Date:</label>
-          <DatePicker
-            name="endDate"
-            id={`${id}-endDate`}
-            defaultValue={formHelper.getFieldValue('endDate')}
-            onChange={date => formHelper.updateFieldValue('endDate', date)}
-          />
-        </div>
-        <div className="form-field">
-          <label htmlFor={`${id}-selectedProducts`}>Products:</label>
-          <select
-            className="multi-select"
-            size={Math.min(4, products.count())}
-            multiple="multiple"
-            name="selectedProducts"
-            id={`${id}-selectedProducts`}
-            onChange={(event) => {
-              const optionsArray = Array.prototype.slice.call(event.target.selectedOptions);
-              const selectedValues = optionsArray.map(o => o.value);
-              formHelper.updateFieldValue('selectedProducts', Set(selectedValues));
-            }}
-          >
-            {
-              products.map((p) => {
-                const productId = p.get('id');
-                return (
-                  <option key={productId} defaultValue={selectedProductSet.contains(productId)}>
-                    {productId}
-                  </option>
-                );
-              })
-            }
-          </select>
-        </div>
-        <input
-          className="button submit eui-btn eui-btn--green modal-close-trigger"
-          type="submit"
-          defaultValue="Reingest"
-          onClick={(e) => {
-            e.preventDefault();
-            const { selectedProducts, startDate, endDate } = formHelper.getFieldValues();
-            ws.reingestGranules(config, selectedProducts.toArray(), startDate, endDate, dispatch);
-          }}
-        />
-        <button type="button" className="cancel eui-btn modal-close-trigger">Cancel</button>
-      </form>
-    );
-  }
-);
-
-// TODO probably don't need this anymore.
-const workflowReingestModalStateToProps = ({ config, workflowStatus }) =>
-  ({ config, workflowStatus });
-
 /**
  * Returns the button and modal div for showing options for workflow reingest.
  */
-const WorkflowReingestModal = connect(workflowReingestModalStateToProps)(
-  ({ workflow, config, dispatch }) => {
-    const { id, name } = workflow;
-    // TODO get the right stuff to call reingest granules
-    return (
-      <Modal modalType="workflowReingest" uniqId={id}>
-        <ModalButton className="in-row-btn eui-btn--sm">Reingest</ModalButton>
-        <ModalContent>
-          <h2>Reingest {name}</h2>
-          <WorkflowReingestForm workflow={workflow} />
-        </ModalContent>
-      </Modal>
-    );
-  }
-);
+const WorkflowReingestModal = ({ workflow }) => {
+  const { id, name } = workflow;
+  return (
+    <Modal modalType="workflowReingest" uniqId={id}>
+      <ModalButton className="in-row-btn eui-btn--sm">Reingest</ModalButton>
+      <ModalContent>
+        <h2>Reingest {name}</h2>
+        <WorkflowReingestForm workflow={workflow} />
+      </ModalContent>
+    </Modal>
+  );
+};
 
 /**
  * Defines the table body that displays workflow information
