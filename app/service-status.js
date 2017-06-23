@@ -11,6 +11,7 @@ const { Map } = require('immutable');
 const { loadCollectionConfig } = require('./collection-config');
 const { getStackResources, getIngestStackResources, getPhysicalResourceId } =
   require('./stack-resources');
+const rp = require('request-promise-native');
 
 /**
  * Takes in what might be an ARN and if it is parses out the name. If it is not an ARN returns it
@@ -94,6 +95,7 @@ const getServiceStatus = async (arnOrClusterId, humanServiceName, serviceId) => 
   return {
     service_name: humanServiceName,
     desired_count: service.desiredCount,
+    actual_count: runningTasks.length,
     events: service.events.map(e => ({
       id: e.id,
       date: e.createdAt,
@@ -120,9 +122,47 @@ const getIngestServicesStatus = async (ingestStackResources) => {
 const ON_EARTH_SERVICE_NAME = 'OnEarth';
 
 /**
- * Returns the status of the OnEarth Service.
+ * Returns the status of the OnEarth Service when deployed via NGAP
  */
-const getOnEarthServiceStatus = async (stackName) => {
+const getOnEarthServiceStatusNgap = async (appName) => {
+  const ngapApi = process.env.NGAP_API;
+  if (!ngapApi) throw new Error('NGAP_API environment variable must be set');
+
+  const ngapKey = process.env.NGAP_API_KEY;
+  if (!ngapKey) throw new Error('NGAP_API_KEY environment variable must be set');
+
+  const response = await rp({
+    uri: `${ngapApi}/api/v1/apps/${appName}/processes`,
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Token token=${ngapKey}`
+    },
+    json: true
+  });
+
+  if (!response.success) throw new Error(`API Call failed: ${JSON.stringify(response)}`);
+  let webProcess = null;
+  for (const process of response.processes) {
+    if (process.process_type === 'web') {
+      webProcess = process;
+      break;
+    }
+  }
+  if (!webProcess) throw new Error(`No web process for OnEarth found: ${JSON.stringify(response)}`);
+
+  return {
+    service_name: ON_EARTH_SERVICE_NAME,
+    desired_count: webProcess.desired_count,
+    actual_count: webProcess.running_count,
+    events: [], // Not available in NGAP
+    running_tasks: [] // Not available in NGAP
+  };
+};
+
+/**
+ * Returns the status of the OnEarth Service when deployed via CloudFormation
+ */
+const getOnEarthServiceStatusCloudFormation = async (stackName) => {
   const oeMainStackResources = await getStackResources(stackName);
   const oneEarthStackResources = await getStackResources(
     getPhysicalResourceId(oeMainStackResources, 'OnEarthStack')
@@ -135,6 +175,22 @@ const getOnEarthServiceStatus = async (stackName) => {
   const clusterId = getPhysicalResourceId(clusterStackResources, 'ECSCluster');
   const serviceId = getPhysicalResourceId(dockerStackResources, 'Service');
   return getServiceStatus(clusterId, ON_EARTH_SERVICE_NAME, serviceId);
+};
+
+/**
+ * Returns the status of the OnEarth Service
+ */
+const getOnEarthServiceStatus = async (stackName) => {
+  // Check if an NGAP app name for OnEarth is in the environment, if so, query that.
+  // For a successful NGAP query, we need three environment variables:
+  //   NGAP_API - The NGAP API endpoint, e.g. https://ngap.ecs.earthdata.nasa.gov
+  //   NGAP_API_KEY - A key authorized to communicate with the API for the OnEarth app
+  //   NGAP_ONEARTH_APP_NAME - The name of the OnEarth app in the NGAP PaaS
+  const ngapAppName = process.env.NGAP_ONEARTH_APP_NAME;
+
+  return ngapAppName ?
+         getOnEarthServiceStatusNgap(ngapAppName) :
+         getOnEarthServiceStatusCloudFormation(stackName);
 };
 
 /**
