@@ -143,7 +143,7 @@ const ProductRow = ({ workflow, product }) => {
       <td><div>{lastCompleted(last_execution)}</div></td>
       <td>
         <div>
-          {last_granule_id ? util.parseJulian(last_granule_id) : 'N/A'}
+          {last_granule_id ? util.parseDayOfYear(last_granule_id) : 'N/A'}
         </div>
       </td>
       <td><div>{recentExecutions(product)}</div></td>

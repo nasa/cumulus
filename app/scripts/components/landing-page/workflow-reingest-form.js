@@ -39,13 +39,13 @@ const DatePicker = functional(
 
 
 /**
- * TODO
+ * Displays an error if present for a form field.
  */
 const FormError = ({ formHelper, field }) =>
   <span className="form-error">{formHelper.errorForField(field)}</span>;
 
 /**
- * TODO
+ * Displays a date field with date picker.
  */
 const DateField = ({ idPrefix, name, formHelper, label }) =>
   <div className="form-field">
@@ -60,7 +60,7 @@ const DateField = ({ idPrefix, name, formHelper, label }) =>
   </div>;
 
 /**
- * TODO
+ * Displays a multiselect field.
  */
 const MultiSelectField = ({ idPrefix, name, formHelper, label, size, values }) => {
   const selectedValueSet = formHelper.getFieldValue(name) || Set();
@@ -94,13 +94,7 @@ const MultiSelectField = ({ idPrefix, name, formHelper, label, size, values }) =
 };
 
 /**
- * TODO
- */
-const workflowReingestFormStateToProps = ({ config, forms, workflowStatus }) =>
-  ({ config, forms, workflowStatus });
-
-/**
- * TODO
+ * The default selected values for the workflow reingest form.
  */
 const defaultFormValues = (workflow) => {
   const firstProductId = workflow.getIn(['products', 0, 'id']);
@@ -112,7 +106,7 @@ const defaultFormValues = (workflow) => {
 };
 
 /**
- *
+ * Validates the workflow reingest form values. Returns a map of field names to errors.
  */
 const workflowFormValidator = ({ startDate, endDate, selectedProducts }) => {
   const errors = {};
@@ -125,16 +119,21 @@ const workflowFormValidator = ({ startDate, endDate, selectedProducts }) => {
   return Map(errors);
 };
 
+/**
+ * Specifies the properties from the state to get for the workflow reingest form.
+ */
+const workflowReingestFormStateToProps = ({ config, forms, workflowStatus }) =>
+  ({ config, forms, workflowStatus });
+
 
 /**
- * TODO
+ * A form that allows a workflow reingest to be started. It allows specifying a range of dates to
+ * match for granules and multiple collections to be specified.
  */
 const WorkflowReingestForm = connect(workflowReingestFormStateToProps)(
   (props) => {
     const { config, workflow, forms, dispatch } = props;
     const { id, products } = workflow;
-    // const formHelper = formsReducer.formHelper(
-    //   dispatch, forms, 'WorkflowReingestForm', defaultFormValues, workflowFormValidator);
     const formHelper = formsReducer.formHelper({
       dispatch,
       formsState: forms,

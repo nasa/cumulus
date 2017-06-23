@@ -198,12 +198,12 @@ const fetchWorkflowStatus = async (config, dispatch) => {
 };
 
 /**
- * TODO
+ * Starts reingesting granules for the given collections within the date range given.
  */
 const reingestGranules = async (config, collectionIds, startDate, endDate, dispatch) => {
   try {
-    const executionName = await api.reingestGranules(config, collectionIds, startDate, endDate);
-    // TODO add spinner to workflow so that it shows when refreshing.
+    await api.reingestGranules(config, collectionIds, startDate, endDate);
+    // Future Improvement: add spinner to workflow so that it shows when refreshing.
     // Refresh workflow status
     fetchWorkflowStatus(config, dispatch);
   }

@@ -39,11 +39,10 @@ const toDateString = (date) => {
   return `${y}-${zeroPad(m)}-${zeroPad(d)}`;
 };
 
-// TODO rename this to parseDayOfYear. Julian is incorrect
 /**
  * Parses a julian date like '2014130' and returns a string formatted date of YYYY-MM-DD
  */
-const parseJulian = (dateStr) => {
+const parseDayOfYear = (dateStr) => {
   // Parse out the components of a julian date string.
   const match = dateStr.match(/^(\d\d\d\d)(\d+)$/);
   if (!match) {
@@ -65,5 +64,5 @@ module.exports = {
   humanTimeSince,
   humanDuration,
   toDateString,
-  parseJulian
+  parseDayOfYear
 };

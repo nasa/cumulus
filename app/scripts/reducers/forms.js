@@ -25,7 +25,6 @@ const updateFormFieldValue = (formName, fieldName, value) => (
   { type: FORM_FIELD_VALUE_UPDATED, formName, fieldName, value }
 );
 
-// TODO test all the functions here
 /**
  * Returns a helper object that has functions for getting values related to a form and dispatching
  * actions that indicate a value changed.
@@ -37,12 +36,6 @@ const formHelper = ({ dispatch, formsState, formName, defaultValues, validator }
   const fieldErrors = validator(formValues);
 
   return {
-    formName,
-    setValues,
-    defaultValues,
-    formValues,
-    fieldErrors,
-
     /**
      * Dispatches an action indicating the field value was updated. The value is saved in the state.
      * The related values in the form in this helper are immutable and not updated when this
@@ -63,12 +56,12 @@ const formHelper = ({ dispatch, formsState, formName, defaultValues, validator }
     getFieldValues: () => formValues,
 
     /**
-     * TODO
+     * Returns an error associated with the given field.
      */
     errorForField: fieldName => fieldErrors.get(fieldName),
 
     /**
-     * TODO
+     * Returns true if the current set of form values is valid.
      */
     isFormValid: () => !fieldErrors || fieldErrors.isEmpty()
   };
