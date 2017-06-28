@@ -243,9 +243,9 @@ The Ingest Common JSON Schema defines common types for other JSON schemas.
 
 [ingest_common_schema.json](/schemas/ingest_common_schema.json)
 
-<script src="docson/widget.js" data-schema="/schemas/ingest_common_schema.json$definitions/ProviderType">
+<script src="docson/widget.js" data-schema="/schemas/merged-ingest_common_schema.json$definitions/ProviderType">
 </script>
-<script src="docson/widget.js" data-schema="/schemas/ingest_common_schema.json$definitions/TaskConfigType">
+<script src="docson/widget.js" data-schema="/schemas/merged-ingest_common_schema.json$definitions/WorkflowConfigTemplateType">
 </script>
 
 #### Collection Configuration JSON Schema
@@ -256,7 +256,7 @@ The Collection Configuration JSON Schema defines the Ingest configured workflows
 
 [Example Collection Config](/schemas/example-data/example-collection.json)
 
-<script src="docson/widget.js" data-schema="/schemas/collections_config_schema.json">
+<script src="docson/widget.js" data-schema="/schemas/merged-collections_config_schema.json">
 </script>
 
 #### Envelope JSON Schema
@@ -267,7 +267,7 @@ The Envelope JSON schema defines the structure of the message sent to and return
 
 [Example Message Envelope](/schemas/example-data/example-message-envelope.json)
 
-<script src="docson/widget.js" data-schema="/schemas/envelope_schema.json">
+<script src="docson/widget.js" data-schema="/schemas/merged-envelope_schema.json">
 </script>
 
 ### Example GIBS Ingest Architecture
