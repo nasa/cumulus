@@ -13,7 +13,7 @@ const readSchema = (name) => {
 
 const commonSchema = readSchema('ingest_common_schema.json');
 const collectionSchema = readSchema('collections_config_schema.json');
-const envelopeSchema = readSchema('envelope_schema.json');
+const messageSchema = readSchema('message_schema.json');
 
 const compiledCommon = ajv.compile(commonSchema);
 
@@ -27,10 +27,10 @@ exports.validateCollectionsConfiguration =
       allErrors: true });
 
 /**
- * Validates the envelope against the JSON schema. Returns true or false. If invalid it
+ * Validates the message against the JSON schema. Returns true or false. If invalid it
  * will have a errors attribute on the function with the list of errors.
  */
-exports.validateEnvelope =
-  ajv.compile(envelopeSchema,
+exports.validateMessageEnvelope =
+  ajv.compile(messageSchema,
     { schemas: { 'ingest_common_schema.json': compiledCommon.schema },
       allErrors: true });

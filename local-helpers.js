@@ -27,7 +27,15 @@ else {
 
 const fileRoot = () => path.join(__dirname, rootPath);
 
+/**
+ * Helper for changing the root path for local testing.
+ */
+const changeRootPath = (newPath) => {
+  rootPath = newPath;
+};
+
 exports.fileRoot = fileRoot;
+exports.changeRootPath = changeRootPath;
 
 const findById = (arr, id) => {
   for (const item of arr) {
@@ -46,7 +54,6 @@ const findById = (arr, id) => {
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
   if (!isLocal && !isMocha && !isJupyter) return null;
-  console.log(fileRoot());
   const configStr = fs.readFileSync(`${fileRoot()}/config/collections.yml`).toString();
   const config = configUtil.parseConfig(configStr, (resource) => resource);
 
