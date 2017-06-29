@@ -1,0 +1,110 @@
+.workflow-status-table {
+  .name-cell {
+    width: 570px;
+  }
+
+  $transition-time: 150ms;
+
+  // Animating product rows entering and exiting
+  .products-enter {
+    opacity: 0.01;
+
+    td {
+      padding: 0;
+    }
+
+    div {
+      max-height: 0;
+      overflow: hidden;
+    }
+  }
+
+  .products-enter.products-enter-active {
+    opacity: 1;
+    transition: opacity $transition-time ease;
+
+    td {
+      padding: 0.5em;
+      transition: padding $transition-time ease;
+    }
+
+    div {
+      max-height: 30px;
+      transition: max-height $transition-time ease;
+    }
+  }
+
+  .products-leave {
+    opacity: 1;
+
+    td {
+      padding: 0.5em;
+    }
+
+    div {
+      max-height: 30px;
+    }
+  }
+
+  .products-leave.products-leave-active {
+    opacity: 0.01;
+    transition: opacity $transition-time ease;
+
+    td {
+      padding: 0;
+      transition: padding $transition-time ease;
+    }
+
+    div {
+      max-height: 0;
+      transition: max-height $transition-time ease;
+    }
+  }
+  // End of animation styles
+  // Table headers that have a link in them should make the whole header clickable
+  .button-cell {
+    display: block;
+    color: inherit;
+  }
+
+  // EUI buttons in the workflow table should be slightly darker
+  .in-row-btn {
+    background: #e0e0e0;
+  }
+
+  // range of 12
+
+  .in-row-btn:hover {
+    background: #cecece;
+  }
+
+
+  .expandable-icon {
+    font-size: 1.25em;
+    width: 0.5em;
+  }
+
+  .workflow-body {
+    tr {
+      background: #ebebeb;
+    }
+  }
+
+  .product-body {
+    tr {
+      background: white;
+    }
+  }
+
+  .inline-expandable-chart {
+    cursor: pointer;
+  }
+
+  canvas {
+    height: 38;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+

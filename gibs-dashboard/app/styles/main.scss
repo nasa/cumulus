@@ -1,0 +1,44 @@
+/* ==========================================================================
+   Main
+   ========================================================================== */
+
+/**
+ * Following Necolas' Principles of writing consistent, idiomatic CSS:
+ * https://github.com/necolas/idiomatic-css
+ */
+
+/* Charset */
+
+@charset "UTF-8";
+
+
+/* Libraries
+   ========================================================================== */
+
+/**
+ * Using Bourbon for extended SASS functionality:
+ * http://bourbon.io/
+ */
+
+@import "bourbon";
+
+
+/* Reboot
+   ========================================================================== */
+
+@import "normalize";
+
+@import "font-awesome/font-awesome";
+
+/* Main
+   ========================================================================== */
+
+// Import other styles from here like so. These would be in files named like _base.scss
+// @import "base";
+
+@import "core";
+@import "header";
+
+@import "landing-page";
+@import "product-page";
+@import "workflow-status-table";

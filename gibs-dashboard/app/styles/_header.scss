@@ -1,0 +1,77 @@
+// Describes the top bar in the app
+
+.eui-masthead-logo {
+  width: 375px;
+  padding: 15px 0;
+
+  h1 {
+    font-family: "Helvetica Neue", "Helvetica", sans-serif;
+    font-weight: 100;
+    font-size: 2em;
+    line-height: 0.8em;
+
+    a:link {
+      width: inherit;
+    }
+
+    .eui-badge--sm {
+      margin-left: 1em;
+    }
+  }
+}
+
+.container {
+  margin: 0 auto;
+  width: 95%;
+}
+
+.doc-mast {
+  background: #2276ac;
+  box-shadow: 0 5px 5px rgba(189, 195, 199, 0.15);
+  display: flex;
+}
+
+.main-nav {
+  font-size: 0.9em;
+  text-transform: uppercase;
+  float: right;
+  margin-top: 14px;
+}
+
+.main-nav-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: inline-block;
+    padding: 15px;
+  }
+
+  a {
+    color: #fff;
+  }
+
+  a.active {
+    font-weight: bold;
+  }
+}
+
+.eui-masthead-logo.eui-application-logo {
+  a:link {
+    background-image: url("https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo.png");
+  }
+
+  a:hover {
+    background-image: url("https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_hover.png");
+  }
+}
+@media only screen and (-webkit-min-device-pixel-ratio: 1.3), only screen and (min--moz-device-pixel-ratio: 1.3), only screen and (-o-min-device-pixel-ratio: 1.3 / 1), only screen and (min-resolution: 125dpi), only screen and (min-resolution: 1.3dppx) {
+  .eui-masthead-logo.eui-application-logo a:link {
+    background-image: url("https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_2x.png");
+  }
+
+  .eui-masthead-logo.eui-application-logo a:hover {
+    background-image: url("https://cdn.earthdata.nasa.gov/eui/latest/docs/assets/ed-logos/app-logo_hover_2x.png");
+  }
+}

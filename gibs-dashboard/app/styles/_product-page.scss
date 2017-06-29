@@ -1,0 +1,73 @@
+.product-page {
+
+  .performance-chart {
+    margin-left: 50px;
+    margin-right: 50px;
+    max-height: 300px;
+    max-width: 1200px;
+
+    canvas{
+      width: 100% !important;
+      max-width: 1200px;
+      height: auto !important;
+    }
+  }
+
+  .reingest-modal {
+    .confirmation-msg {
+      font-weight: bold;
+      padding-bottom: 30px;
+    }
+
+    .eui-btn {
+      margin-left: 0;
+    }
+  }
+
+  h2 {
+    // Add spacing around clickable icons in the header row.
+    .icon-clickable {
+      margin-left: 30px;
+    }
+    .icon-refreshing {
+      margin-left: 30px;
+    }
+  }
+
+
+  .status-cell {
+    color: #fff;
+
+    .icon {
+      color: white;
+    }
+  }
+
+  .even-row {
+    .running-status {
+      background: rgb(34, 118, 172);
+    }
+
+    .success-status {
+      background: rgb(24, 156, 84);
+    }
+
+    .fail-status {
+      background: rgb(179, 36, 28);
+    }
+  }
+  .odd-row {
+    .running-status {
+      background: rgb(27, 111, 165);
+    }
+
+    .success-status {
+      background: rgb(17, 149, 77);
+    }
+
+    .fail-status {
+      background: rgb(172, 29, 21);
+    }
+  }
+
+}

@@ -1,0 +1,38 @@
+.service-stats-list {
+  list-style-type: none;
+
+  li {
+    padding-bottom: 0.5em;
+  }
+  .service-name {
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 5px;
+    width: 120px;
+  }
+  .service-status-desc {
+    margin-top: 5px;
+    margin-left: 23px;
+    color: #95a5a6;
+    font-style: italic;
+  }
+}
+
+.alerts-list {
+  list-style-type: none;
+  /* Undo default webkit settings for this */
+  -webkit-padding-start: 0;
+
+  .eui-banner--danger {
+    text-align: inherit;
+  }
+
+  .eui-banner--success {
+    text-align: inherit;
+  }
+
+  .eui-banner--warn {
+    text-align: inherit;
+    color: #988001;
+  }
+}

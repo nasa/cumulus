@@ -1,0 +1,132 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Icons
+.icon {
+  margin-right: 7px;
+}
+
+.icon-success {
+  color: #189c54;
+}
+
+.icon-alert {
+  color: #b3241c;
+}
+
+.icon-disabled {
+  color: #95a5a6;
+}
+
+.icon-sort {
+  line-height: 1.5em;
+  float: right;
+}
+
+a.icon-clickable {
+  color: inherit;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// EUI customization
+
+.eui-icon {
+  /* Add space to the right of the icon when used on a button.*/
+  margin-right: 3px;
+}
+
+// Give spacing around buttons.
+.eui-btn {
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.eui-breadcrumbs {
+  margin-top: 20px;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Main sections
+
+main {
+  padding-left: 20px;
+}
+
+.wide-table {
+  width: calc(100% - 20px);
+  margin-right: 20px;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Modals
+
+// Defines a modal that is wider.
+.wide-modal {
+  width: 90%;
+  height: calc(100% - 200px);
+}
+
+/**
+ * Styles the close button of the modal
+ */
+.modal-close {
+  float: right;
+  border: none;
+  background: white;
+}
+
+.modal-pre {
+  height: calc(100% - 100px);
+  font-family: monospace;
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Forms
+
+label {
+  margin-right: 15px;
+  padding-left: 1em;
+  display: inline-block;
+  width: 7em;
+}
+
+.form-field {
+  margin-bottom: 20px;
+}
+
+
+input.button {
+  line-height: inherit;
+}
+
+.cancel.eui-btn {
+  margin-left: 2em;
+}
+
+// Date Picker reset of certain styles added by EUI.
+div.datepicker {
+  table {
+    border: inherit;
+    th {
+      background-color: inherit;
+    }
+    tr {
+      background: inherit;
+    }
+  }
+}
+
+.form-error {
+  font-weight: bold;
+  color: #e74c3c;
+  margin-left: 20px
+}
+
+button[disabled], html input[disabled], html input[disabled]:hover {
+  cursor: default;
+  background-color: #b5cede;
+  color: #ebebeb;
+}

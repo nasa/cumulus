@@ -1,0 +1,9 @@
+config/cloudformation-output.yml
+app/scripts/config/production-generated.js
+dist/
+node_modules
+.tmp
+**/npm-debug.log
+.DS_Store
+*.swp
+.env
