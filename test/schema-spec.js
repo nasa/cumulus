@@ -3,23 +3,19 @@
  * Tests validations with the schema
  */
 
-describe('schema', () => {
-  it('is currently failing', () => {
-    // Fix this as part of GITC-304
-    // throw new Error('FIXME: Schema validation currently fails due to changing FS paths');
-  });
-});
-
-/*
 const fs = require('fs');
+const local = require('../local-helpers');
+
+local.changeRootPath('../../../../gibs-ingest/ingest-workflows/');
+
 const schema = require('../schema');
 const expect = require('expect.js');
 
 const validCollection = JSON.parse(
-  fs.readFileSync(`${__dirname}/example-data/example-collection.json`,
+  fs.readFileSync(`${local.fileRoot()}/docs/schemas/example-data/example-collection.json`,
                   'UTF-8'));
-const validEnvelope = JSON.parse(
-  fs.readFileSync(`${__dirname}/example-data/example-message-envelope.json`,
+const validMessage = JSON.parse(
+  fs.readFileSync(`${local.fileRoot()}/docs/schemas/example-data/example-message-envelope.json`,
                   'UTF-8'));
 
 describe('schema', () => {
@@ -35,17 +31,17 @@ describe('schema', () => {
       });
     });
   });
-  describe('validateEnvelope', () => {
+  describe('validateMessageEnvelope', () => {
     it('Should return true for valid data', () => {
-      expect(schema.validateEnvelope(validEnvelope)).to.be(true);
-      expect(schema.validateEnvelope.errors).to.be(null);
+      expect(schema.validateMessageEnvelope(validMessage)).to.be(true);
+      expect(schema.validateMessageEnvelope.errors).to.be(null);
     });
     it('Should return false for invalid data', () => {
-      expect(schema.validateEnvelope({ invalid: 'thing' })).to.be(false);
+      expect(schema.validateMessageEnvelope({ invalid: 'thing' })).to.be(false);
       it('And have errors', () => {
-        expect(schema.validateEnvelope.errors).to.not.be(null);
+        expect(schema.validateMessageEnvelope.errors).to.not.be(null);
       });
     });
   });
 });
-*/
+
