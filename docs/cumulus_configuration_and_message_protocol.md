@@ -6,9 +6,9 @@ This document describes the Cumulus configuration file and the messages that are
 
 <img src="images/cumulus_configuration_and_message_schema_diagram.png">
 
-* **Configuration** - The Cumulus configuration file defines everything needed to describe an instance of Cumulus. See details in the Configuration section below.
+* **Configuration** - The Cumulus configuration file defines everything needed to describe an instance of Cumulus. See details in the [Configuration section](#configuration) below.
 * **Scheduler** - This starts ingest of a collection on configured intervals.
-* **Input to Step Functions** - The Scheduler uses the Configuration as source data to construct the input to the Workflow. See the Message Protocol section for details on how the configuration is used to
+* **Input to Step Functions** - The Scheduler uses the Configuration as source data to construct the input to the Workflow. See the [Message Protocol section](#message-protocol) for details on how the configuration is used to
 * **AWS Step Functions** - Run the workflows as kicked off by the scheduler or other processes.
 * **Input to Task** - The input for each task is a JSON document that conforms to the message schema.
 * **Output from Task** - The output of each task must conform to the message schemas as well and is used as the input for the subsequent task.
@@ -17,12 +17,12 @@ This document describes the Cumulus configuration file and the messages that are
 
 The Cumulus configuration file defines everything needed to describe an instance of Cumulus. This includes:
 
-* **Provider configuration** - Settings that are specific to a provider
-* **Workflows** defined using the [AWS Step Function State Language](http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language). This is the language that was created for describing the state machines used in AWS Step Functions.
+* **Provider configuration** - A list of providers and settings that apply at the provider level.
+* **Workflows** - The Step Functions defined using the [AWS Step Function State Language](http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language).
 * **Collections** - Settings specific for ingesting data for a collection. This includes:
   * **Workflow** - a reference to a workflow at the top level that will allow ingesting the collection.
   * **Triggers** - Settings indicating how an ingest is started for a collection.
-  * **Meta** - An element that is _open for extension_ allowing the definition of any collection level configuration items needed.
+  * **Meta** - An element that is open for extension allowing the definition of any collection level configuration items needed.
   * **Workflow Task Configuration** - Templates that specify the configurations for each of the tasks that run within a workflow.
 
 ### URL Templating
