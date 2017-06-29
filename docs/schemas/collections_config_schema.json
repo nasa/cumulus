@@ -20,6 +20,7 @@
       "minItems": 0
     },
     "workflows": {
+      "description": "The set of workflows that will be installed into AWS Step Functions.",
       "$ref": "#/definitions/WorkflowsType"
     }
   },
@@ -36,7 +37,7 @@
       "minimum": 1
     },
     "CollectionType": {
-      "description": "TODO",
+      "description": "Specifies a single collection for ingest.",
       "type": "object",
       "properties": {
         "id": {
