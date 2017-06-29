@@ -1,4 +1,0 @@
-#!/bin/bash
-
-echo "PaaS deployment for ops Dashboard not implemented"
-exit 1
