@@ -14,12 +14,13 @@
       "Allows validation of a collection configuration file",
       "Execute like `npm run-script validate-collection-json -- docs/schemas/example-data/example-collection.json`"
     ],
-    "generate-docs": "./node_modules/.bin/generate-md --layout github --input docs/ingest_workflows_architecture.md --output docs",
+    "generate-docs": "bin/generate-docs",
     "serve-docs": "./node_modules/.bin/http-server -c-1 docs -o",
     "validate-collection-json": "sed 's/!GitcResource//g' config/collections.yml | js-yaml > tmp_collection.json && ajv validate -s docs/schemas/collections_config_schema.json -r docs/schemas/ingest_common_schema.json -d tmp_collection.json; rm tmp_collection.json"
   },
   "keywords": [
-    "GIBS", "Cumulus"
+    "GIBS",
+    "Cumulus"
   ],
   "repository": {
     "type": "git",
@@ -32,6 +33,7 @@
     "glob": "^7.0.5"
   },
   "devDependencies": {
+    "immutable": "^3.8.1",
     "ajv": "^5.0.4-beta.3",
     "ajv-cli": "^2.0.0",
     "aws-sdk": "^2.4.9",

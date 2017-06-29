@@ -1,3 +1,5 @@
 /assets
 ingest_design.html
 ingest_workflows_architecture.html
+cumulus_configuration_and_message_protocol.html
+schemas/merged-*.json

@@ -94,7 +94,7 @@ AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/late
 
 #### Task Input and Output Messages
 
-Ingest uses a common format for all inputs and outputs from Tasks consisting of a JSON object which holds all necessary information about the task execution and AWS environment. Ingest defines a schema for the input and output messages using the [Envelope JSON schema](#envelope-json-schema). See the embedded HTML documentation generated from the schema below. Tasks return objects identical in format to their input with the exception of a task-specific `"payload"` field. Tasks may also augment their execution metadata.
+Ingest uses a common format for all inputs and outputs from Tasks consisting of a JSON object which holds all necessary information about the task execution and AWS environment. Ingest defines a schema for the input and output messages using the [Message JSON schema](#envelope-json-schema). See the embedded HTML documentation generated from the schema below. Tasks return objects identical in format to their input with the exception of a task-specific `"payload"` field. Tasks may also augment their execution metadata.
 
 ### Collection Configuration File
 
@@ -243,9 +243,9 @@ The Ingest Common JSON Schema defines common types for other JSON schemas.
 
 [ingest_common_schema.json](/schemas/ingest_common_schema.json)
 
-<script src="docson/widget.js" data-schema="/schemas/ingest_common_schema.json$definitions/ProviderType">
+<script src="docson/widget.js" data-schema="/schemas/merged-ingest_common_schema.json$definitions/ProviderType">
 </script>
-<script src="docson/widget.js" data-schema="/schemas/ingest_common_schema.json$definitions/TaskConfigType">
+<script src="docson/widget.js" data-schema="/schemas/merged-ingest_common_schema.json$definitions/WorkflowConfigTemplateType">
 </script>
 
 #### Collection Configuration JSON Schema
@@ -256,18 +256,18 @@ The Collection Configuration JSON Schema defines the Ingest configured workflows
 
 [Example Collection Config](/schemas/example-data/example-collection.json)
 
-<script src="docson/widget.js" data-schema="/schemas/collections_config_schema.json">
+<script src="docson/widget.js" data-schema="/schemas/merged-collections_config_schema.json">
 </script>
 
-#### Envelope JSON Schema
+#### Message JSON Schema
 
-The Envelope JSON schema defines the structure of the message sent to and returned from tasks.
+The Message JSON schema defines the structure of the message sent to and returned from tasks.
 
-[envelope_schema.json](/schemas/envelope_schema.json)
+[message_schema.json](/schemas/message_schema.json)
 
-[Example Message Envelope](/schemas/example-data/example-message-envelope.json)
+[Example Message Message](/schemas/example-data/example-message-envelope.json)
 
-<script src="docson/widget.js" data-schema="/schemas/envelope_schema.json">
+<script src="docson/widget.js" data-schema="/schemas/merged-message_schema.json">
 </script>
 
 ### Example GIBS Ingest Architecture
