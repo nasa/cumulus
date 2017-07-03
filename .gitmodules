@@ -10,6 +10,3 @@
 [submodule "gibs-onearth"]
 	path = gibs-onearth
 	url = https://git.earthdata.nasa.gov/scm/gitc/gibs-onearth.git
-[submodule "gibs-ops-api"]
-	path = gibs-ops-api
-	url = https://git.earthdata.nasa.gov/scm/gitc/gibs-ops-api.git
