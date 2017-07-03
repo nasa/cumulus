@@ -1,0 +1,21 @@
+{
+  "name": "gitc-scheduler",
+  "version": "0.0.0",
+  "description": "Runs ingest timers as configured in /config/products.json",
+  "main": "index.js",
+  "keywords": [
+    "GIBS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+  },
+  "author": "Patrick Quinn",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "ingest-common": "file:../../../../ingest-common",
+    "lodash": "^4.17.4",
+    "uuid": "^3.0.1"
+  },
+  "devDependencies": {}
+}
