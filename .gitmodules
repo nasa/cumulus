@@ -1,5 +1,5 @@
 [submodule "schemas/docson"]
-	path = gibs-ingest/ingest-workflows/docs/docson
+	path = cumulus/docs/docson
 	url = https://github.com/lbovet/docson.git
 [submodule "gibs-onearth"]
 	path = gibs-onearth
