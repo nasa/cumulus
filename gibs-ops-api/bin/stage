@@ -1,0 +1,91 @@
+#!/bin/bash
+
+set -e
+
+version=v0.0.1
+progname=$(basename $0)
+docstr="$progname $version: Stages build artifacts for deployment to AWS"
+
+usage() {
+echo "Usage:
+  $progname --bucket=bucket --region=region --stack-name=name
+
+Options:
+  --bucket=bucket      The bucket into which artifacts should be staged
+  --region=region      Deploy into the given region
+  --alphanum-prefix    ignored
+  --stack-name=name    The name of the stack that will be deployed using staged artifacts
+
+Examples:
+  $progname --bucket=my-bucket --region=us-west-2 --stack-name=gibs-sit"
+}
+
+function echoerr() {
+    echo "Error: $@" 1>&2;
+}
+
+while [[ $# -gt 0 ]]
+do
+
+    key="$1"
+
+    if [[ $key == -* ]]; then
+        # Dash argument
+        case $key in
+            --bucket)
+                bucket="$2"
+                shift
+                ;;
+            --region)
+                region="$2"
+                shift
+                ;;
+            --stack-name)
+                stack_name="$2"
+                shift
+                ;;
+            --alphanum-prefix)
+                shift
+                ;;
+            --subnet) # Unused but provided by parent script
+                shift
+                ;;
+            --ngap)
+                ;;
+            --help)
+                echo "$docstr"
+                echo
+                usage
+                exit 0
+                ;;
+            *)
+                echoerr "Unknown option: $key"
+                exit 2
+                ;;
+        esac
+    fi
+    shift
+done
+
+if [ "${#args[@]}" -ne 0 ]; then
+    echo "$docstr"
+    echo
+    usage
+    exit 1
+fi
+
+if [ -z $bucket ] || [ -z $region ] || [ -z $stack_name ]; then
+    echo "$docstr"
+    echo
+    usage
+    exit 1
+fi
+
+account_id=$(aws sts get-caller-identity | jq -r .Account)
+
+# Update the API Gateway yaml file to replace variables that can't be relaced by a stage Variables
+sed \
+  -e "s/\\%REGION\\%/${region}/g" \
+  -e "s/\\%ACCOUNT_ID\\%/${account_id}/g" \
+  < config/simple-proxy-api.yml \
+  > config/packaged-simple-proxy-api.yml
