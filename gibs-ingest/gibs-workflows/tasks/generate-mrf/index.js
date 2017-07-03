@@ -5,12 +5,12 @@ const path = require('path');
 const spawn = require('child_process').spawn;
 const spawnSync = require('child_process').spawnSync;
 
-const Task = require('ingest-common/task');
-const log = require('ingest-common/log');
-const util = require('ingest-common/util');
-const aws = require('ingest-common/aws');
+const Task = require('cumulus-common/task');
+const log = require('cumulus-common/log');
+const util = require('cumulus-common/util');
+const aws = require('cumulus-common/aws');
 const configGen = require('./config-gen');
-const Mutex = require('ingest-common/concurrency').Mutex;
+const Mutex = require('cumulus-common/concurrency').Mutex;
 
 const LOCK_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
 const execSync = require('child_process').execSync;
@@ -127,7 +127,7 @@ module.exports = class GenerateMrfTask extends Task {
 };
 
 
-const local = require('ingest-common/local-helpers');
+const local = require('cumulus-common/local-helpers');
 local.setupLocalRun(
   module.exports.handler,
   () => ({ ingest_meta: { message_source: 'stdin', task: 'MRFGen' } }));
