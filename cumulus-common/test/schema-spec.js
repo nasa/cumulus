@@ -6,7 +6,7 @@
 const fs = require('fs');
 const local = require('../local-helpers');
 
-local.changeRootPath('../../../../gibs-ingest/ingest-workflows/');
+local.changeRootPath('../../../../cumulus/');
 
 const schema = require('../schema');
 const expect = require('expect.js');
@@ -44,4 +44,3 @@ describe('schema', () => {
     });
   });
 });
-
