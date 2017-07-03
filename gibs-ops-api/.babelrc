@@ -1,0 +1,11 @@
+{
+  "presets": [
+    ["env", {
+      "modules": false
+    }]
+  ],
+  "plugins": ["transform-async-to-generator", ["extensible-destructuring", {
+    "mode": "optout",
+    "impl": "immutable"
+  }]]
+}
