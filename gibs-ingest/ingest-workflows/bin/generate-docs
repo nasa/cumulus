@@ -1,0 +1,11 @@
+#!/bin/bash
+# Generates necesary files for the documentation. Expected to be run from the root directory of ingest-workflows
+
+./node_modules/.bin/generate-md --layout github --input docs/ingest_workflows_architecture.md --output docs
+./node_modules/.bin/generate-md --layout github --input docs/cumulus_configuration_and_message_protocol.md --output docs
+
+cd docs
+node merge-schema.js collections_config_schema.json
+node merge-schema.js message_schema.json
+node merge-schema.js ingest_common_schema.json
+cd ..
