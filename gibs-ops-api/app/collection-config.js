@@ -3,7 +3,7 @@
 const { s3 } = require('./aws');
 const { BadRequestError } = require('./api-errors');
 const { fromJS } = require('immutable');
-const commonConfig = require('ingest-common/config');
+const commonConfig = require('cumulus-common/config');
 const { memoize } = require('./cache');
 const sr = require('./stack-resources');
 
