@@ -71,10 +71,10 @@
       "from": "ieee754@>=1.1.4 <2.0.0",
       "resolved": "https://registry.npmjs.org/ieee754/-/ieee754-1.1.8.tgz"
     },
-    "ingest-common": {
+    "cumulus-common": {
       "version": "0.0.0",
-      "from": "file:../../../../ingest-common",
-      "resolved": "file:../../../../ingest-common",
+      "from": "file:../../../../cumulus-common",
+      "resolved": "file:../../../../cumulus-common",
       "dependencies": {
         "lodash": {
           "version": "4.17.4",

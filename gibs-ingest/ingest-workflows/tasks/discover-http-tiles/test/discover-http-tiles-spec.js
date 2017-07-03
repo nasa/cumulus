@@ -1,6 +1,6 @@
 'use strict';
 const expect = require('expect.js');
-const helpers = require('ingest-common/test-helpers');
+const helpers = require('cumulus-common/test-helpers');
 const DiscoverHttpTilesTask = require('../index');
 
 describe('discover-http-tiles.handler', () => {

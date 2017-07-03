@@ -3,12 +3,12 @@
 const path = require('path');
 const _ = require('lodash');
 
-const log = require('ingest-common/log');
-const Task = require('ingest-common/task');
-const aws = require('ingest-common/aws');
-const concurrency = require('ingest-common/concurrency');
-const local = require('ingest-common/local-helpers');
-const errorTypes = require('ingest-common/errors');
+const log = require('cumulus-common/log');
+const Task = require('cumulus-common/task');
+const aws = require('cumulus-common/aws');
+const concurrency = require('cumulus-common/concurrency');
+const local = require('cumulus-common/local-helpers');
+const errorTypes = require('cumulus-common/errors');
 
 
 const TIMEOUT_TIME_MS = 20 * 1000;
