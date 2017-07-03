@@ -1,0 +1,604 @@
+{
+  "providers": [
+    {
+      "id": "MODAPS",
+      "config": {}
+    },
+    {
+      "id": "LARC",
+      "config": {}
+    }
+  ],
+  "_templates": {
+    "_collection_types": [
+      {
+        "provider_id": "MODAPS",
+        "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
+        "trigger": {
+          "type": "interval",
+          "period_s": 900
+        },
+        "workflow_config_template": {
+          "DiscoverHttpTiles": {
+            "type": "apache-index",
+            "connections": 10,
+            "root": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/",
+            "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/{_}/{jday}/{file}.{ext}",
+            "required": [
+              {
+                "group": "file",
+                "prop": "ext",
+                "values": [
+                  "jgw",
+                  "jpg",
+                  "txt"
+                ]
+              }
+            ],
+            "group_meta": {
+              "key": "VIIRS/{meta.collection}/{match.jday}",
+              "date": {
+                "type": "date",
+                "value": "{match.jday}"
+              }
+            },
+            "group_by": "VIIRS/{meta.collection}/{match.jday}"
+          },
+          "TriggerIngest": {
+            "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
+          },
+          "SyncHttpUrls": {
+            "connections": 5,
+            "output": {
+              "bucket": "{resources.buckets.private}",
+              "key_prefix": "sources/EPSG{meta.epsg}/{meta.key}"
+            }
+          },
+          "MRFGen": {
+            "date": "{meta.date.year}{meta.date.month}{meta.date.day}",
+            "epsg": "{meta.epsg}",
+            "zoom": "{meta.zoom}",
+            "mrfgen": {
+              "mrf_compression_type": "JPEG",
+              "source_epsg": "{meta.epsg}",
+              "mrf_merge": false,
+              "mrf_nocopy": true,
+              "overview_resampling": "average",
+              "resize_resampling": "average",
+              "parameter_name": "{meta.parameter_name}"
+            },
+            "output": {
+              "bucket": "{resources.buckets.public}",
+              "key_prefix": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+            }
+          }
+        }
+      },
+      {
+        "provider_id": "LARC",
+        "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C",
+        "trigger": {
+          "type": "interval",
+          "period_s": 900
+        },
+        "workflow_config_template": {
+          "DiscoverCmrGranules": {
+            "root": "https://cmr.earthdata.nasa.gov",
+            "since": "5d",
+            "event": "wms-map-found",
+            "granule_meta": {
+              "key": "{meta.collection}/{granule.id}",
+              "granuleId": "{granule.id}",
+              "version": "{granule.updated}",
+              "date": {
+                "type": "date",
+                "value": "{granule.time_start}"
+              }
+            }
+          },
+          "CreateWmsUrls": {
+            "filename": "{meta.key}.png",
+            "getmap": "https://opendap.larc.nasa.gov/ncWMS-2.0/wms?REQUEST=GetMap&VERSION=1.3.0&STYLES={meta.wms.style}&CRS=CRS:84&WIDTH=640&HEIGHT=320&FORMAT=image/png&TRANSPARENT=true&LAYERS={meta.wms.layer}&BBOX=-180,-90,180,90&&time={meta.date.isoDateTime}"
+          },
+          "TriggerIngest": {
+            "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY"
+          },
+          "SyncHttpUrls": {
+            "ignoredErrorStatuses": "500",
+            "connections": 5,
+            "output": {
+              "bucket": "{resources.buckets.private}",
+              "key_prefix": "sources/EPSG{meta.epsg}/{meta.key}"
+            }
+          },
+          "MRFGen": {
+            "date": "{meta.date.year}{meta.date.month}{meta.date.day}",
+            "files": [
+              {
+                "Bucket": "{resources.buckets.config}",
+                "Key": "ingest/colormaps/{meta.colormap}"
+              },
+              {
+                "Bucket": "{resources.buckets.config}",
+                "Key": "ingest/empty_tiles/{meta.collection}.png"
+              },
+              {
+                "filename": "{meta.granuleId}.pgw",
+                "contents": "0.5625\n0\n0\n-0.5625\n-179.4375\n89.4375"
+              }
+            ],
+            "mrfgen": {
+              "overview_resampling": "nearest",
+              "parameter_name": "{meta.collection}",
+              "source_epsg": "{meta.epsg}",
+              "resize_resampling": "near",
+              "mrf_empty_tile_filename": "{{{paths.input}}}/{meta.collection}.png",
+              "mrf_compression_type": "PPNG",
+              "mrf_nocopy": false,
+              "colormap": "{{{paths.input}}}/{meta.colormap}",
+              "mrf_merge": false
+            },
+            "output": {
+              "Bucket": "{resources.buckets.public}",
+              "Key": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "_workflow_meta": [
+    {
+      "id": "DiscoverVIIRS",
+      "name": "VIIRS Discovery",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
+      "type": "discovery"
+    },
+    {
+      "id": "IngestVIIRS",
+      "name": "VIIRS Ingest",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL",
+      "type": "ingest",
+      "parent": "DiscoverVIIRS"
+    },
+    {
+      "id": "DiscoverMOPITT",
+      "name": "MOPITT Discovery",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C",
+      "type": "discovery"
+    },
+    {
+      "id": "IngestMOPITT",
+      "name": "MOPITT Ingest",
+      "arn": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY",
+      "type": "ingest",
+      "parent": "DiscoverMOPITT"
+    }
+  ],
+  "workflows": {
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI": {
+      "Comment": "VIIRS Discovery",
+      "StartAt": "DiscoverHttpTiles",
+      "States": {
+        "DiscoverHttpTiles": {
+          "Type": "Task",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-discover-http-tiles",
+          "Next": "TriggerIngest"
+        },
+        "TriggerIngest": {
+          "Type": "Task",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-trigger-ingest",
+          "End": true
+        }
+      }
+    },
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL": {
+      "Comment": "VIIRS Ingest",
+      "StartAt": "SyncHttpUrls",
+      "States": {
+        "SyncHttpUrls": {
+          "Type": "Task",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-sync-http-urls",
+          "Next": "ChooseSyncContinuation"
+        },
+        "ChooseSyncContinuation": {
+          "Type": "Choice",
+          "Choices": [
+            {
+              "Variable": "$.exception",
+              "StringEquals": "NotNeededWorkflowError",
+              "Next": "NoUpdates"
+            },
+            {
+              "Variable": "$.exception",
+              "StringEquals": "IncompleteWorkflowError",
+              "Next": "SyncHttpUrls"
+            },
+            {
+              "Variable": "$.exception",
+              "StringEquals": "None",
+              "Next": "MRFGen"
+            }
+          ],
+          "Default": "UnhandledSyncError"
+        },
+        "UnhandledSyncError": {
+          "Type": "Fail",
+          "Cause": "Unhandled Sync Error"
+        },
+        "MRFGen": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:us-west-2:12345:activity:gitc-tst-GenerateMrf",
+          "End": true
+        },
+        "NoUpdates": {
+          "Type": "Pass",
+          "Result": "No Updates Necessary",
+          "End": true
+        }
+      }
+    },
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C": {
+      "Comment": "MOPITT Discovery",
+      "StartAt": "DiscoverCmrGranules",
+      "States": {
+        "DiscoverCmrGranules": {
+          "Type": "Task",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-discover-cmr-granules",
+          "Next": "TriggerIngest"
+        },
+        "TriggerIngest": {
+          "Type": "Task",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-trigger-ingest",
+          "End": true
+        }
+      }
+    },
+    "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY": {
+      "Comment": "MOPITT Ingest",
+      "StartAt": "CreateWmsUrls",
+      "States": {
+        "CreateWmsUrls": {
+          "Type": "Task",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-sync-wms",
+          "Next": "SyncHttpUrls"
+        },
+        "SyncHttpUrls": {
+          "Type": "Task",
+          "Resource": "arn:aws:lambda:us-west-2:12345:function:gitc-tst-task-sync-http-urls",
+          "Next": "ChooseSyncContinuation"
+        },
+        "ChooseSyncContinuation": {
+          "Type": "Choice",
+          "Choices": [
+            {
+              "Variable": "$.exception",
+              "StringEquals": "NotNeededWorkflowError",
+              "Next": "NoUpdates"
+            },
+            {
+              "Variable": "$.exception",
+              "StringEquals": "IncompleteWorkflowError",
+              "Next": "SyncHttpUrls"
+            },
+            {
+              "Variable": "$.exception",
+              "StringEquals": "None",
+              "Next": "MRFGen"
+            }
+          ],
+          "Default": "UnhandledSyncError"
+        },
+        "UnhandledSyncError": {
+          "Type": "Fail",
+          "Cause": "Unhandled Sync Error"
+        },
+        "MRFGen": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:us-west-2:12345:activity:gitc-tst-GenerateMrf",
+          "End": true
+        },
+        "NoUpdates": {
+          "Type": "Pass",
+          "Result": "No Updates Necessary",
+          "End": true
+        }
+      }
+    }
+  },
+  "collections": [
+    {
+      "provider_id": "MODAPS",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
+      "trigger": {
+        "type": "interval",
+        "period_s": 900
+      },
+      "workflow_config_template": {
+        "DiscoverHttpTiles": {
+          "type": "apache-index",
+          "connections": 10,
+          "root": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/",
+          "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/{_}/{jday}/{file}.{ext}",
+          "required": [
+            {
+              "group": "file",
+              "prop": "ext",
+              "values": [
+                "jgw",
+                "jpg",
+                "txt"
+              ]
+            }
+          ],
+          "group_meta": {
+            "key": "VIIRS/{meta.collection}/{match.jday}",
+            "date": {
+              "type": "date",
+              "value": "{match.jday}"
+            }
+          },
+          "group_by": "VIIRS/{meta.collection}/{match.jday}"
+        },
+        "TriggerIngest": {
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
+        },
+        "SyncHttpUrls": {
+          "connections": 5,
+          "output": {
+            "bucket": "{resources.buckets.private}",
+            "key_prefix": "sources/EPSG{meta.epsg}/{meta.key}"
+          }
+        },
+        "MRFGen": {
+          "date": "{meta.date.year}{meta.date.month}{meta.date.day}",
+          "epsg": "{meta.epsg}",
+          "zoom": "{meta.zoom}",
+          "mrfgen": {
+            "mrf_compression_type": "JPEG",
+            "source_epsg": "{meta.epsg}",
+            "mrf_merge": false,
+            "mrf_nocopy": true,
+            "overview_resampling": "average",
+            "resize_resampling": "average",
+            "parameter_name": "{meta.parameter_name}"
+          },
+          "output": {
+            "bucket": "{resources.buckets.public}",
+            "key_prefix": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+          }
+        }
+      },
+      "id": "VNGCR_LQD_C1",
+      "meta": {
+        "collection": "VNGCR_LQD_C1",
+        "parameter_name": "VNGCR_LQD_I1-M4-M3_NRT",
+        "epsg": 4326,
+        "zoom": 9
+      }
+    },
+    {
+      "provider_id": "MODAPS",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
+      "trigger": {
+        "type": "interval",
+        "period_s": 900
+      },
+      "workflow_config_template": {
+        "DiscoverHttpTiles": {
+          "type": "apache-index",
+          "connections": 10,
+          "root": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/",
+          "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/{_}/{jday}/{file}.{ext}",
+          "required": [
+            {
+              "group": "file",
+              "prop": "ext",
+              "values": [
+                "jgw",
+                "jpg",
+                "txt"
+              ]
+            }
+          ],
+          "group_meta": {
+            "key": "VIIRS/{meta.collection}/{match.jday}",
+            "date": {
+              "type": "date",
+              "value": "{match.jday}"
+            }
+          },
+          "group_by": "VIIRS/{meta.collection}/{match.jday}"
+        },
+        "TriggerIngest": {
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
+        },
+        "SyncHttpUrls": {
+          "connections": 5,
+          "output": {
+            "bucket": "{resources.buckets.private}",
+            "key_prefix": "sources/EPSG{meta.epsg}/{meta.key}"
+          }
+        },
+        "MRFGen": {
+          "date": "{meta.date.year}{meta.date.month}{meta.date.day}",
+          "epsg": "{meta.epsg}",
+          "zoom": "{meta.zoom}",
+          "mrfgen": {
+            "mrf_compression_type": "JPEG",
+            "source_epsg": "{meta.epsg}",
+            "mrf_merge": false,
+            "mrf_nocopy": true,
+            "overview_resampling": "average",
+            "resize_resampling": "average",
+            "parameter_name": "{meta.parameter_name}"
+          },
+          "output": {
+            "bucket": "{resources.buckets.public}",
+            "key_prefix": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+          }
+        }
+      },
+      "id": "VNGCR_SQD_C1",
+      "meta": {
+        "collection": "VNGCR_SQD_C1",
+        "parameter_name": "VNGCR_SQD_I1-M4-M3_NRT",
+        "epsg": 3031,
+        "zoom": 6
+      }
+    },
+    {
+      "provider_id": "MODAPS",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
+      "trigger": {
+        "type": "interval",
+        "period_s": 900
+      },
+      "workflow_config_template": {
+        "DiscoverHttpTiles": {
+          "type": "apache-index",
+          "connections": 10,
+          "root": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/",
+          "match": "https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/{_}/{jday}/{file}.{ext}",
+          "required": [
+            {
+              "group": "file",
+              "prop": "ext",
+              "values": [
+                "jgw",
+                "jpg",
+                "txt"
+              ]
+            }
+          ],
+          "group_meta": {
+            "key": "VIIRS/{meta.collection}/{match.jday}",
+            "date": {
+              "type": "date",
+              "value": "{match.jday}"
+            }
+          },
+          "group_by": "VIIRS/{meta.collection}/{match.jday}"
+        },
+        "TriggerIngest": {
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL"
+        },
+        "SyncHttpUrls": {
+          "connections": 5,
+          "output": {
+            "bucket": "{resources.buckets.private}",
+            "key_prefix": "sources/EPSG{meta.epsg}/{meta.key}"
+          }
+        },
+        "MRFGen": {
+          "date": "{meta.date.year}{meta.date.month}{meta.date.day}",
+          "epsg": "{meta.epsg}",
+          "zoom": "{meta.zoom}",
+          "mrfgen": {
+            "mrf_compression_type": "JPEG",
+            "source_epsg": "{meta.epsg}",
+            "mrf_merge": false,
+            "mrf_nocopy": true,
+            "overview_resampling": "average",
+            "resize_resampling": "average",
+            "parameter_name": "{meta.parameter_name}"
+          },
+          "output": {
+            "bucket": "{resources.buckets.public}",
+            "key_prefix": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+          }
+        }
+      },
+      "id": "VNGCR_NQD_C1",
+      "meta": {
+        "collection": "VNGCR_NQD_C1",
+        "parameter_name": "VNGCR_NQD_I1-M4-M3_NRT",
+        "epsg": 3413,
+        "zoom": 6
+      }
+    },
+    {
+      "provider_id": "LARC",
+      "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C",
+      "trigger": {
+        "type": "interval",
+        "period_s": 900
+      },
+      "workflow_config_template": {
+        "DiscoverCmrGranules": {
+          "root": "https://cmr.earthdata.nasa.gov",
+          "since": "5d",
+          "event": "wms-map-found",
+          "granule_meta": {
+            "key": "{meta.collection}/{granule.id}",
+            "granuleId": "{granule.id}",
+            "version": "{granule.updated}",
+            "date": {
+              "type": "date",
+              "value": "{granule.time_start}"
+            }
+          }
+        },
+        "CreateWmsUrls": {
+          "filename": "{meta.key}.png",
+          "getmap": "https://opendap.larc.nasa.gov/ncWMS-2.0/wms?REQUEST=GetMap&VERSION=1.3.0&STYLES={meta.wms.style}&CRS=CRS:84&WIDTH=640&HEIGHT=320&FORMAT=image/png&TRANSPARENT=true&LAYERS={meta.wms.layer}&BBOX=-180,-90,180,90&&time={meta.date.isoDateTime}"
+        },
+        "TriggerIngest": {
+          "workflow": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY"
+        },
+        "SyncHttpUrls": {
+          "ignoredErrorStatuses": "500",
+          "connections": 5,
+          "output": {
+            "bucket": "{resources.buckets.private}",
+            "key_prefix": "sources/EPSG{meta.epsg}/{meta.key}"
+          }
+        },
+        "MRFGen": {
+          "date": "{meta.date.year}{meta.date.month}{meta.date.day}",
+          "files": [
+            {
+              "Bucket": "{resources.buckets.config}",
+              "Key": "ingest/colormaps/{meta.colormap}"
+            },
+            {
+              "Bucket": "{resources.buckets.config}",
+              "Key": "ingest/empty_tiles/{meta.collection}.png"
+            },
+            {
+              "filename": "{meta.granuleId}.pgw",
+              "contents": "0.5625\n0\n0\n-0.5625\n-179.4375\n89.4375"
+            }
+          ],
+          "mrfgen": {
+            "overview_resampling": "nearest",
+            "parameter_name": "{meta.collection}",
+            "source_epsg": "{meta.epsg}",
+            "resize_resampling": "near",
+            "mrf_empty_tile_filename": "{{{paths.input}}}/{meta.collection}.png",
+            "mrf_compression_type": "PPNG",
+            "mrf_nocopy": false,
+            "colormap": "{{{paths.input}}}/{meta.colormap}",
+            "mrf_merge": false
+          },
+          "output": {
+            "Bucket": "{resources.buckets.public}",
+            "Key": "EPSG{meta.epsg}/{meta.collection}/{meta.date.year}"
+          }
+        }
+      },
+      "id": "MOPITT_DCOSMR_LL_D_STD",
+      "meta": {
+        "concept_id": "C190698050-LARC",
+        "collection": "MOPITT_DCOSMR_LL_D_STD",
+        "colormap": "MOPITT_CO_Daily_Surface_Mixing_Ratio_Day.xml",
+        "epsg": 4326,
+        "zoom": 6,
+        "wms": {
+          "layer": "MOP03J.006/RetrievedCOSurfaceMixingRatioDay",
+          "style": "se_mopitt_threshold_retrievedcosurfacemixingratioday_mop03j"
+        }
+      }
+    }
+  ]
+}

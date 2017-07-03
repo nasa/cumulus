@@ -1,0 +1,9 @@
+lambda-invoke-response.json
+config/packaged-*.yml
+config/cloudformation-with-replacements.yml
+/node_modules
+/dist
+# mocha-webpack compiles things here.
+/.tmp
+/release.tar
+/app/local-helper.js
