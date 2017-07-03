@@ -1,0 +1,52 @@
+{
+  "DiscoverCmrGranulesFn": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "gitc-tst-task-discover-cmr-granules",
+    "ResourceType": "AWS::Lambda::Function"
+  },
+  "DiscoverHttpTilesFn": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "gitc-tst-task-discover-http-tiles",
+    "ResourceType": "AWS::Lambda::Function"
+  },
+  "GenerateMrfActivity": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "arn:aws:states:us-west-2:12345:activity:gitc-tst-GenerateMrf",
+    "ResourceType": "AWS::StepFunctions::Activity"
+  },
+  "SyncHttpUrlsFn": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "gitc-tst-task-sync-http-urls",
+    "ResourceType": "AWS::Lambda::Function"
+  },
+  "SyncWmsFn": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "gitc-tst-task-sync-wms",
+    "ResourceType": "AWS::Lambda::Function"
+  },
+  "TriggerIngestFn": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "gitc-tst-task-trigger-ingest",
+    "ResourceType": "AWS::Lambda::Function"
+  },
+  "gitcxtstxxDiscoverMOPITT": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverMOPITT-EHGAWMMKHO4C",
+    "ResourceType": "AWS::StepFunctions::StateMachine"
+  },
+  "gitcxtstxxDiscoverVIIRS": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxDiscoverVIIRS-GWQPRBDV5AOI",
+    "ResourceType": "AWS::StepFunctions::StateMachine"
+  },
+  "gitcxtstxxIngestMOPITT": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestMOPITT-UXYGEHPTXGIY",
+    "ResourceType": "AWS::StepFunctions::StateMachine"
+  },
+  "gitcxtstxxIngestVIIRS": {
+    "StackId": "arn:aws:cloudformation:us-west-2:12345:stack/gitc-tst-IngestStack-123/abc123",
+    "PhysicalResourceId": "arn:aws:states:us-west-2:12345:stateMachine:gitcxtstxxIngestVIIRS-BPM16QLM6CYL",
+    "ResourceType": "AWS::StepFunctions::StateMachine"
+  }
+}

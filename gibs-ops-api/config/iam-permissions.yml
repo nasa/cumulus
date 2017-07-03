@@ -1,0 +1,62 @@
+---
+Mappings:
+  AccountIdMap:
+    "***REMOVED***":
+      BucketPrefix: ngap-test
+    "***REMOVED***":
+      BucketPrefix: gsfc-ngap
+Resources:
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: gsfc-ngap-gibs-ops-api
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+              - ecs-tasks.amazonaws.com
+              - ecs.amazonaws.com
+              - lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-sit-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-uat-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+                  - !Sub
+                    - "arn:aws:s3:::${BucketPrefix}-gibs-prod-deploy/*"
+                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+              - Effect: Allow
+                Action:
+                  - states:ListExecutions
+                  # TODO this is new and not added to NGAP yet
+                  - states:GetExecutionHistory
+                # TODO this should be scoped by the alphabetic numeric prefix. Not sure how we'll set this in ngap
+                Resource:
+                  - !Sub "arn:aws:states:*:${AWS::AccountId}:execution:*"
+                  - !Sub "arn:aws:states:*:${AWS::AccountId}:stateMachine:*"
+              # TODO this is new and not added to NGAP yet
+              # Gives permission to start executions of  state machines
+              - Effect: Allow
+                Action:
+                - states:StartExecution
+                Resource:
+                # TODO this should be scoped by the alphabetic numeric prefix. Not sure how we'll set this in ngap
+                - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:*"
+              # GITC-319 add additional ones from the cloud formation file
+              # - elasticsearch
+              # - ecs
+              # - cloudformation
+              # - dynamodb
