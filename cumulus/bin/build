@@ -26,6 +26,4 @@ if [ $# -ne 0 ]; then
     exit 1
 fi
 
-for dir in *-workflows; do
-    (cd $dir && ./node_modules/.bin/webpack)
-done
+./node_modules/.bin/webpack
