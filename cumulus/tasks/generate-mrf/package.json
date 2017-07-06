@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "async": "^2.0.0",
-    "cumulus-common": "file:../../../../cumulus-common",
+    "cumulus-common": "file:../../../cumulus-common",
     "lodash": "^4.13.1",
     "mustache": "^2.2.1",
     "s3": "^4.4.0"

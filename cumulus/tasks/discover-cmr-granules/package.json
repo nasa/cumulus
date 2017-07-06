@@ -13,7 +13,7 @@
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
   "dependencies": {
-    "cumulus-common": "file:../../../../cumulus-common",
+    "cumulus-common": "file:../../../cumulus-common",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1"
   }

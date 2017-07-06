@@ -59,8 +59,8 @@
     },
     "cumulus-common": {
       "version": "0.0.0",
-      "from": "file:../../../../cumulus-common",
-      "resolved": "file:../../../../cumulus-common"
+      "from": "file:../../../cumulus-common",
+      "resolved": "file:../../../cumulus-common"
     },
     "jmespath": {
       "version": "0.15.0",
