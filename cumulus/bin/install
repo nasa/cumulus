@@ -31,3 +31,5 @@ find . -name package.json \
      -not -path '*/node_modules/*' \
      -not -path './package.json' \
      -execdir npm install --unsafe-perm \;
+
+npm install
