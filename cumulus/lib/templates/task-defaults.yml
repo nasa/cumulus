@@ -1,0 +1,10 @@
+Resources:
+  Fn:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ['', !Sub "${StackName}-task-", !Var name]
+      Code: !Var path
+      Timeout: 300
+      MemorySize: 256
+      Handler: !Join ["", !Var name, ".handler"]
+      Role: !Ref TaskExecutionArn

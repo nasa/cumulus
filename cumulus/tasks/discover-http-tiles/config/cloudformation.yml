@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Discovers tile files to ingest from HTTP'
+      Runtime: nodejs6.10.2
