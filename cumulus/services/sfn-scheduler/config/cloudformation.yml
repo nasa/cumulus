@@ -1,0 +1,74 @@
+Description: GIBS-in-the-Cloud - Ingest - Step Function Scheduler
+Parameters:
+  StackName:
+    Type: String
+    Description: Name of the (parent) stack name being created
+Resources:
+  SfnSchedulerFn:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName:
+        Fn::ImportValue:
+          !Sub ${StackName}-task-sfn-scheduler
+      Code: ../../dist
+      Description: 'Runs scheduled discovery / ingest'
+      Runtime: nodejs6.10.2
+      Timeout: 300
+      MemorySize: 256
+      Handler: trigger-ingest.handler
+      Role: !ImportValue TaskExecutionRoleArn
+
+  SfnSchedulerService:
+    Type: AWS::ECS::Service
+    DependsOn:
+    - SfnSchedulerFn
+    Properties:
+      Cluster: !ImportValue IngestECSCluster
+      DesiredCount: 1
+      TaskDefinition: !Ref SfnSchedulerTask
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+
+  SfnSchedulerTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: sfn-scheduler
+        Command:
+        - !GetAtt [SfnSchedulerFn, Arn]
+        - "--eventJson"
+        - !Sub >-
+          {
+            "resources": {
+              "stack": "${AWS::StackName}",
+              "state_machine_prefix": "<%= alphanum_stack_prefix %>",
+              "buckets": {
+                "config": "${ConfigS3Bucket}",
+                "private": "${StackName}-private",
+                "public": "${StackName}-public"
+              },
+              "tables": {
+                "connections": "${StackName}-connects",
+                "locks": "${StackName}-locks"
+              }
+            },
+            "payload": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
+          }
+        Cpu: '10'
+        Essential: true
+        Environment:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Memory: '256'
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref SfnSchedulerLogs
+            awslogs-region: !Ref AWS::Region
+
+  SfnSchedulerLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub ${StackName}-service-<%= task %>-ecs

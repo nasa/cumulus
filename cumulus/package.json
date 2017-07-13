@@ -30,7 +30,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "copy-webpack-plugin": "^3.0.1",
-    "glob": "^7.0.5"
+    "deep-assign": "^2.0.0",
+    "glob": "^7.0.5",
+    "js-yaml": "^3.9.0",
+    "yargs": "^8.0.2"
   },
   "devDependencies": {
     "immutable": "^3.8.1",
