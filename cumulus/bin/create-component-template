@@ -1,0 +1,54 @@
+#!/usr/bin/env node --harmony
+
+const yargs = require('yargs');
+const path = require('path');
+const fs = require('fs');
+const templateUtil = require('../lib/cf-template');
+
+const args = yargs
+  .usage('$0 [options]\n\nCreate a CloudFormation template used to deploy a task or service')
+  .config()
+  .options({
+    type: {
+      demandOption: true,
+      describe: 'The type of component',
+      type: 'string',
+      choices: ['task', 'ecs-task', 'service']
+    },
+    path: {
+      demandOption: true,
+      describe: "The path to the component's code",
+      coerce: path.resolve,
+      type: 'string'
+    },
+    overrides: {
+      demandOption: false,
+      describe: 'Path(s) to cloudformation files that can override service configuration',
+      type: 'string',
+      default: [],
+      array: true
+    }
+  })
+  .strict()
+  .help()
+  .argv;
+
+const name = path.basename(args.path);
+const prefix = name.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+const paths = [
+  path.resolve(__dirname, `../lib/templates/${args.type}-defaults.yml`),
+  path.resolve(__dirname, `${args.path}/config/cloudformation.yml`)
+];
+paths.push(...args.overrides);
+
+const context = {
+  name: name,
+  path: args.path
+};
+
+const templates = paths.map((p) => templateUtil.parseTemplate(
+  fs.readFileSync(p, 'utf8'),
+  prefix,
+  context));
+const merged = templateUtil.mergeTemplates(templates);
+console.log(templateUtil.dumpTemplate(merged));
