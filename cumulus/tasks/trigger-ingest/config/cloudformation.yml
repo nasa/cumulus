@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Triggers ingest for discovered granules'
+      Runtime: nodejs6.10.2

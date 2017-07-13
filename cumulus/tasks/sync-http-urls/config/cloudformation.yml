@@ -1,0 +1,6 @@
+Resources:
+  SyncHttpUrlsFn:
+    Properties:
+      Description: 'Synchronizes HTTP(S) files to S3'
+      Runtime: nodejs6.10.2
+      MemorySize: 512

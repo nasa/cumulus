@@ -1,0 +1,15 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Generates an MRF from imported files'
+      Runtime: nodejs6.10.2
+
+  Service:
+    Properties:
+      DesiredCount: 2
+
+  Task:
+    Properties:
+      ContainerDefinitions:
+      - Cpu: '512'
+        Memory: '2048'
