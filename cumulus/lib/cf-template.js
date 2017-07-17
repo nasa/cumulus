@@ -1,3 +1,4 @@
+const path = require('path');
 const yaml = require('js-yaml');
 const deepAssign = require('deep-assign');
 
@@ -44,6 +45,8 @@ const buildSchema = (prefix = '', context = {}) => {
 
 const prefixResources = (template, prefix) => {
   const unprefixed = template.Resources;
+  if (!unprefixed) return template;
+
   const prefixed = { };
   for (const key of Object.keys(template.Resources)) {
     prefixed[prefix + key] = unprefixed[key];
@@ -63,8 +66,20 @@ const dumpTemplate = (template) =>
 
 const mergeTemplates = (templates) => deepAssign(...templates);
 
+const defaultPaths = (componentType) => {
+  const result = [
+    path.resolve(__dirname, './templates/defaults.yml')
+  ];
+  if (componentType === 'ecs-task') {
+    result.push(path.resolve(__dirname, './templates/service-defaults.yml'));
+  }
+  result.push(path.resolve(__dirname, `./templates/${componentType}-defaults.yml`));
+  return result;
+};
+
 module.exports = {
   parseTemplate: parseTemplate,
   dumpTemplate: dumpTemplate,
-  mergeTemplates: mergeTemplates
+  mergeTemplates: mergeTemplates,
+  defaultPaths: defaultPaths
 };

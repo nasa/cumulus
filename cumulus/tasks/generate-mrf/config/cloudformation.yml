@@ -2,7 +2,7 @@ Resources:
   Fn:
     Properties:
       Description: 'Generates an MRF from imported files'
-      Runtime: nodejs6.10.2
+      Runtime: nodejs6.10
 
   Service:
     Properties:
