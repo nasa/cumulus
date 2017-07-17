@@ -1,56 +1,13 @@
 Resources:
-  Fn:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: !Join ['-', !Ref StackName, task, !Var name]
-      Code: !Var path
-      Timeout: 300
-      MemorySize: 256
-      Handler: !Join ["", !Var name, ".handler"]
-      Role: !Ref TaskExecutionArn
-
-  Service:
-    Type: AWS::ECS::Service
-    DependsOn:
-    - !ResourceName Fn
-    Properties:
-      Cluster: !ImportValue IngestECSCluster
-      DesiredCount: 2
-      TaskDefinition:
-        'Fn::Ref': !ResourceName Task
-      DeploymentConfiguration:
-        MaximumPercent: 100
-        MinimumHealthyPercent: 0
-
   Task:
-    Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-      - Name: !Var name
-        Command:
+      - Command:
         - !GetAtt [!ResourceName Fn, Arn]
         - "--activity"
-        - 'Fn::Ref': !ResourceName Activity
-        Cpu: '512'
-        Essential: true
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
-        Memory: '256'
-        Environment:
-          - Name: AWS_DEFAULT_REGION
-            Value: !Ref AWS::Region
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group:
-              'Fn::Ref': !ResourceName Logs
-            awslogs-region: !Ref AWS::Region
-
-  Logs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Join ['-', !Ref StackName, task, !Var name, ecs]
+        - Ref: !ResourceName Activity
 
   Activity:
     Type: "AWS::StepFunctions::Activity"
     Properties:
-      Name: !Join ['-', !Ref StackName, !Var name]
+      Name: !Join ['-', [!Ref StackName, !Var name]]
