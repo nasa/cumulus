@@ -1,48 +1,29 @@
-Description: GIBS-in-the-Cloud - Ingest - Step Function Scheduler
 Parameters:
-  StackName:
+  StateMachinePrefix:
     Type: String
-    Description: Name of the (parent) stack name being created
+    Description: An alphanumeric string used to prefix State Machine names
+
 Resources:
-  SfnSchedulerFn:
-    Type: AWS::Lambda::Function
+  Fn:
     Properties:
-      FunctionName:
-        Fn::ImportValue:
-          !Sub ${StackName}-task-sfn-scheduler
-      Code: ../../dist
       Description: 'Runs scheduled discovery / ingest'
-      Runtime: nodejs6.10.2
-      Timeout: 300
-      MemorySize: 256
-      Handler: trigger-ingest.handler
-      Role: !ImportValue TaskExecutionRoleArn
+      Runtime: nodejs6.10
 
-  SfnSchedulerService:
-    Type: AWS::ECS::Service
-    DependsOn:
-    - SfnSchedulerFn
+  Service:
     Properties:
-      Cluster: !ImportValue IngestECSCluster
       DesiredCount: 1
-      TaskDefinition: !Ref SfnSchedulerTask
-      DeploymentConfiguration:
-        MaximumPercent: 100
-        MinimumHealthyPercent: 0
 
-  SfnSchedulerTask:
-    Type: AWS::ECS::TaskDefinition
+  Task:
     Properties:
       ContainerDefinitions:
-      - Name: sfn-scheduler
-        Command:
-        - !GetAtt [SfnSchedulerFn, Arn]
+      - Command:
+        - !GetAtt [!ResourceName Fn, Arn]
         - "--eventJson"
         - !Sub >-
           {
             "resources": {
               "stack": "${AWS::StackName}",
-              "state_machine_prefix": "<%= alphanum_stack_prefix %>",
+              "state_machine_prefix": "${StateMachinePrefix}",
               "buckets": {
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
@@ -55,20 +36,3 @@ Resources:
             },
             "payload": {"Key": "ingest/collections.yml", "Bucket": "${ConfigS3Bucket}"}
           }
-        Cpu: '10'
-        Essential: true
-        Environment:
-          - Name: AWS_DEFAULT_REGION
-            Value: !Ref AWS::Region
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
-        Memory: '256'
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group: !Ref SfnSchedulerLogs
-            awslogs-region: !Ref AWS::Region
-
-  SfnSchedulerLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub ${StackName}-service-<%= task %>-ecs

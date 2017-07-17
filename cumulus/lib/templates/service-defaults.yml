@@ -1,0 +1,47 @@
+Resources:
+  Fn:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ['-', [!Ref StackName, task, !Var name]]
+      Code: !Var path
+      Timeout: 300
+      MemorySize: 256
+      Handler: index.handler
+      Role: !GetAtt [TaskExecutionRole, Arn]
+
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn:
+    - !ResourceName Fn
+    Properties:
+      Cluster: !Ref IngestECSCluster
+      DesiredCount: 2
+      TaskDefinition:
+        Ref: !ResourceName Task
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+
+  Task:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: !Var name
+        Cpu: '512'
+        Essential: true
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/gitcdev/ecs-lambda-runner:latest
+        Memory: '256'
+        Environment:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group:
+              Ref: !ResourceName Logs
+            awslogs-region: !Ref AWS::Region
+
+  Logs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['-', [!Ref StackName, task, !Var name, ecs]]

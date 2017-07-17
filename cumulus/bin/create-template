@@ -1,0 +1,104 @@
+#!/usr/bin/env node --harmony
+
+const yargs = require('yargs');
+const path = require('path');
+const fs = require('fs');
+const templateUtil = require('../lib/cf-template');
+
+function parseArgs() {
+  return yargs
+  .usage('$0 [options]\n\nCreate a CloudFormation template used to deploy all tasks and services')
+  .config()
+  .options({
+    services: {
+      demandOption: false,
+      describe: 'List of services to package',
+      type: 'string',
+      default: [],
+      array: true
+    },
+    'ecs-tasks': {
+      demandOption: false,
+      describe: 'List of ECS tasks to package',
+      type: 'string',
+      default: [],
+      array: true
+    },
+    tasks: {
+      demandOption: false,
+      describe: 'List of Lambda tasks to package',
+      type: 'string',
+      default: [],
+      array: true
+    },
+    overrides: {
+      demandOption: false,
+      describe: 'Path(s) to cloudformation files that override configuration',
+      type: 'string',
+      default: [],
+      array: true
+    }
+  })
+  .strict()
+  .help()
+  .argv;
+}
+
+function nameToPrefix(name) {
+  return name.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+}
+
+function nameToPath(type, name) {
+  const dir = type === 'ecs-task' ? 'tasks' : `${type}s`;
+  return path.resolve(__dirname, `../${dir}/${name}`);
+}
+
+function parseTemplates(paths, prefix = '', context = {}) {
+  return paths.map((p) => templateUtil.parseTemplate(
+    fs.readFileSync(p, 'utf8'),
+    prefix,
+    context));
+}
+
+function packageComponent(type, name) {
+  const prefix = nameToPrefix(name);
+  const paths = templateUtil.defaultPaths(type);
+  const componentPath = nameToPath(type, name);
+  paths.push(path.join(componentPath, 'config/cloudformation.yml'));
+  const distPath = path.resolve(__dirname, `../dist/${name}`);
+  const parsed = parseTemplates(paths, prefix, { name: name, path: distPath });
+  return templateUtil.mergeTemplates(parsed);
+}
+
+function packageService(name) {
+  return packageComponent('service', name);
+}
+
+function packageTask(name) {
+  return packageComponent('task', name);
+}
+
+function packageEcsTask(name) {
+  return packageComponent('ecs-task', name);
+}
+
+function main() {
+  const args = parseArgs();
+  const services = args.services.map(packageService);
+  const tasks = args.tasks.map(packageTask);
+  const ecsTasks = args.ecsTasks.map(packageEcsTask);
+  const overrides = parseTemplates(args.overrides);
+
+  const templates = []
+    .concat(services)
+    .concat(tasks)
+    .concat(ecsTasks)
+    .concat(overrides);
+
+  const merged = templateUtil.mergeTemplates(templates);
+  console.log(templateUtil.dumpTemplate(merged));
+}
+
+if (require.main === module) {
+  main();
+}

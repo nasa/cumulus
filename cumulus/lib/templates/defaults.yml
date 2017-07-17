@@ -1,0 +1,9 @@
+Parameters:
+  ConfigS3Bucket:
+    Type: String
+    Description: Name of an S3 bucket that can hold deployment configuration and artifacts
+  StackName:
+    Type: String
+    Description:
+      Identifier for the stack being created. This is used to prefix resources and permissions
+      and may differ from AWS::StackName if, e.g., this is a child stack deployment
