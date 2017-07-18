@@ -74,7 +74,7 @@ if [ "${#args[@]}" -ne 0 ]; then
     exit 1
 fi
 
-if [ -z $bucket ] || [ -z $region ] || [ -z $stack_name ]; then
+if [ -z $region ] ; then
     echo "$docstr"
     echo
     usage
