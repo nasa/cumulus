@@ -1043,12 +1043,12 @@ const getServiceStatusResp =
           {
             id: '5205e54d-75d7-49d3-a53f-3851a757d1de',
             date: '2017-05-17T15:10:02.129Z',
-            message: '(service gibs-oe-jg-OnEarthStack-1T6VC14DYLJQF-OnearthDocker-1KZF93BUB6VQ6-Service-19KQXSSV3CWKA) registered 1 targets in (target-group arn:aws:elasticloadbalancing:us-west-2:***REMOVED***:targetgroup/gibs-oe-jg-onearth/ab7ed7f957e94345)'
+            message: '(service gibs-oe-jg-OnEarthStack-1T6VC14DYLJQF-OnearthDocker-1KZF93BUB6VQ6-Service-19KQXSSV3CWKA) registered 1 targets in (target-group arn:aws:elasticloadbalancing:us-west-2:000000000000:targetgroup/gibs-oe-jg-onearth/ab7ed7f957e94345)'
           },
           {
             id: '464c4225-b895-4a4d-aed8-289147aaee2f',
             date: '2017-05-17T15:09:49.520Z',
-            message: '(service gibs-oe-jg-OnEarthStack-1T6VC14DYLJQF-OnearthDocker-1KZF93BUB6VQ6-Service-19KQXSSV3CWKA) registered 2 targets in (target-group arn:aws:elasticloadbalancing:us-west-2:***REMOVED***:targetgroup/gibs-oe-jg-onearth/ab7ed7f957e94345)'
+            message: '(service gibs-oe-jg-OnEarthStack-1T6VC14DYLJQF-OnearthDocker-1KZF93BUB6VQ6-Service-19KQXSSV3CWKA) registered 2 targets in (target-group arn:aws:elasticloadbalancing:us-west-2:000000000000:targetgroup/gibs-oe-jg-onearth/ab7ed7f957e94345)'
           },
           {
             id: '61f80e6d-b261-4e18-afb1-d2dd986106d1',
