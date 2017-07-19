@@ -84,7 +84,7 @@ docker run \
 To deploy to the ngap-test environment, run
 
 ```(bash)
-./bin/deploy.sh --region us-east-1 SIT arn:aws:iam::***REMOVED***:role/gsfc-ngap-gibs-ops-api
+./bin/deploy.sh --region us-east-1 SIT arn:aws:iam::<account-id>:role/gsfc-ngap-gibs-ops-api
 ```
 
 ### Deploying to the NGAP PaaS
