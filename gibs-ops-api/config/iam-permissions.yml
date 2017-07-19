@@ -1,10 +1,7 @@
----
-Mappings:
-  AccountIdMap:
-    "***REMOVED***":
-      BucketPrefix: ngap-test
-    "***REMOVED***":
-      BucketPrefix: gsfc-ngap
+Parameters:
+  StackName:
+    Type: String
+    Description: Name of the (parent) stack name being created
 Resources:
   AppRole:
     Type: AWS::IAM::Role
@@ -29,15 +26,7 @@ Resources:
               - Effect: Allow
                 Action: s3:GetObject
                 Resource:
-                  - !Sub
-                    - "arn:aws:s3:::${BucketPrefix}-gibs-sit-deploy/*"
-                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
-                  - !Sub
-                    - "arn:aws:s3:::${BucketPrefix}-gibs-uat-deploy/*"
-                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
-                  - !Sub
-                    - "arn:aws:s3:::${BucketPrefix}-gibs-prod-deploy/*"
-                    - BucketPrefix: !FindInMap [ AccountIdMap, !Ref "AWS::AccountId", BucketPrefix ]
+                  - !Sub "arn:aws:s3:::${StackName}-deploy/*"
               - Effect: Allow
                 Action:
                   - states:ListExecutions
