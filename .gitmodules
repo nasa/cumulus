@@ -1,6 +1,3 @@
 [submodule "schemas/docson"]
 	path = cumulus/docs/docson
 	url = https://github.com/lbovet/docson.git
-[submodule "gibs-onearth"]
-	path = gibs-onearth
-	url = https://git.earthdata.nasa.gov/scm/gitc/gibs-onearth.git
