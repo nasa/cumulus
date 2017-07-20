@@ -1,5 +1,5 @@
-#!/bin/bash
+#!/bin/sh
 
-set -e
+set -evx
 
-# TODO: Implement command to setup build environment and install dependencies
+npm install

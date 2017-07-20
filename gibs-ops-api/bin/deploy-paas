@@ -1,4 +1,0 @@
-#!/bin/bash
-
-echo "PaaS deployment for ops API not implemented"
-exit 1
