@@ -1,6 +1,0 @@
-#!/bin/bash
-
-set -e
-
-# TODO: Implement command to deploy the application
-# Patrick opinion: I think this should run ./setup and ./dist
