@@ -74,13 +74,8 @@ curl "http://localhost:3000/workflow_status?stack_name=gitc-xx"
 
 Returns a list of statuses of the services running for GIBS
 
-Params:
-
-* `main_stack_name` - The name of main top level stack that contains ingest and other substacks.
-* `on_earth_stack_name` - The name of stack containing the on earth resources.
-
 ```Bash
-curl 'http://localhost:3000/service_status?main_stack_name=gitc-xx&on_earth_stack_name=gibs-oe-xx'
+curl 'http://localhost:3000/service_status'
 ```
 
 The response contains the number of tasks that should be running for the service. Any running tasks are included in the service with the date at which they were started. A number of running tasks less than the desired count indicates that not enough tasks are running.
