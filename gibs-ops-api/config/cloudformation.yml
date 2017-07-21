@@ -28,7 +28,7 @@ Resources:
   ElasticsearchDomain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
-      DomainName: !Sub "${StackName}-gibsesdomain"
+      DomainName: !Sub "${StackName}-esdomain"
       ElasticsearchVersion: "5.1"
       ElasticsearchClusterConfig:
         DedicatedMasterEnabled: "false"
@@ -95,7 +95,7 @@ Resources:
             Action:
               - es:*
             Resource:
-              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${StackName}-gibsesdomain/*"
+              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${StackName}-esdomain/*"
 
           # Allow querying cloudformation for resource ids of the OnEarth and main stacks
           - Effect: Allow
@@ -211,6 +211,7 @@ Resources:
   # Runs the IndexerFunction on a periodic basis.
   IndexerSchedulerRule:
     Type: AWS::Events::Rule
+    Condition: UseApiGateway
     Properties:
       ScheduleExpression: rate(1 minute)
       Targets:
@@ -221,6 +222,7 @@ Resources:
   # Gives permission to the indexer scheduler to run the indexer function.
   InvokeLambdaPermission:
     Type: AWS::Lambda::Permission
+    Condition: UseApiGateway
     Properties:
       FunctionName: !GetAtt IndexerFunction.Arn
       Action: lambda:InvokeFunction

@@ -216,7 +216,7 @@ const getServicesStatus = async (mainStackName, onEarthStackName) => {
  */
 const handleServiceStatusRequest = async (req, res) => {
   try {
-    const mainStackName = process.env.main_stack_name;
+    const mainStackName = process.env.STACK_NAME;
     const onEarthStackName = process.env.on_earth_stack_name;
     const status = await getServicesStatus(mainStackName, onEarthStackName);
     res.json(status);
