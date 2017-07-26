@@ -164,12 +164,12 @@ const getOnEarthServiceStatusNgap = async (appName) => {
  */
 const getOnEarthServiceStatusCloudFormation = async (stackName) => {
   const oeMainStackResources = await getStackResources(stackName);
-  const oneEarthStackResources = await getStackResources(
+  const onEarthStackResources = await getStackResources(
     getPhysicalResourceId(oeMainStackResources, 'OnEarthStack')
   );
   const [clusterStackResources, dockerStackResources] = await Promise.all([
-    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'Cluster')),
-    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'OnearthDocker'))
+    getStackResources(getPhysicalResourceId(onEarthStackResources, 'Cluster')),
+    getStackResources(getPhysicalResourceId(onEarthStackResources, 'OnearthDocker'))
   ]);
 
   const clusterId = getPhysicalResourceId(clusterStackResources, 'ECSCluster');
