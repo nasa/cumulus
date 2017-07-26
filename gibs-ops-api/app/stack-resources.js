@@ -27,9 +27,9 @@ const getStackResources = memoize(async (arnOrStackName) => {
 /**
  * Returns a map of ingest stack resources loaded from cloud formation.
  */
-const getIngestStackResources = memoize(async (stackName) => {
-  await getStackResources(`${stackName}-ingest`);
-});
+const getIngestStackResources = memoize(async (stackName) =>
+  await getStackResources(`${stackName}-ingest`)
+);
 
 /**
  * Takes a stack resource map and a logical id and extracts the PhysicalResourceId.
