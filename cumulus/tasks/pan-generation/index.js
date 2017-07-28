@@ -60,7 +60,10 @@ module.exports = class ProcessPdr extends Task {
     const fileInfo = fileGroups.map((fileGroup) => ({
 
     }));
+
     return pdrObj;
+
+    // TODO extension (PAN or pan) must match case of extension of original PDR file name
   }
 
   /**

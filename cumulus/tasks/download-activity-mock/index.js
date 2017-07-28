@@ -11,17 +11,21 @@ const pdrMod = require('./pdr');
  * Output payload: A single object with keys `file` and `pdr` referencing the oldest PDR
  * on the SIPS server
  */
-module.exports = class DiscoverPdr extends Task {
+module.exports = class DownloadArchiveFiles extends Task {
   /**
    * Main task entry point
    * @return An object referencing the oldest PDR on the server
    */
   async run() {
     // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
-    const { s3Bucket, folder } = this.config;
+    const { s3Bucket, folder, destinationS3Bucket } = this.config;
 
-    // Get the list of PDRs
-    const pdrList = await aws.listS3Objects(s3Bucket, `${folder}/`);
+    const message = this.message;
+
+    const { fileName, pdr } = await message.payload;
+
+    // Create a list of files from pdr
+
 
     // Return the oldest
     const pdrInfo = pdrList.sort((obj1, obj2) => {
@@ -34,13 +38,12 @@ module.exports = class DiscoverPdr extends Task {
     })[0];
 
     const s3Key = pdrInfo.Key;
-    const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
+    // const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
 
     return {
       file: fileName,
       pdr: pdr
     };
-
   }
 
   /**
@@ -49,7 +52,7 @@ module.exports = class DiscoverPdr extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return DiscoverPdr.handle(...args);
+    return DownloadArchiveFiles.handle(...args);
   }
 };
 
@@ -60,16 +63,18 @@ module.exports = class DiscoverPdr extends Task {
 const local = require('cumulus-common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
-    DiscoverPdr: {
+    DownloadArchiveFiles: {
       s3Bucket: '{resources.s3Bucket}',
-      folder: 'PDR'
+      folder: 'DATA',
+      destinationS3Bucket: '{resources.destinationS3Bucket'
     },
     ProcessPdr: {
       s3Bucket: '{resources.s3Bucket}'
     }
   },
   resources: {
-    s3Bucket: 'gitc-jn-sips-mock'
+    s3Bucket: 'gitc-jn-sips-mock',
+    destinationS3Bucket: 'gitc-jn-sips-mock-downloads'
   },
   provider: {
     id: 'DUMMY',
@@ -77,7 +82,7 @@ local.setupLocalRun(module.exports.handler, () => ({
   },
   meta: {},
   ingest_meta: {
-    task: 'DiscoverPdr',
+    task: 'DownloadArchiveFiles',
     id: 'abc123',
     message_source: 'local'
   }
@@ -89,12 +94,12 @@ local.setupLocalRun(module.exports.handler, () => ({
 //   folder: 'PDR'
 // };
 
-// const DiscoverPdr = module.exports;
-// const discoverPdr = new DiscoverPdr(null, config, null, null);
+// const DownloadArchiveFiles = module.exports;
+// const DownloadArchiveFiles = new DownloadArchiveFiles(null, config, null, null);
 
 // const demo = async () => {
 //   while (true) {
-//     log.info(await discoverPdr.run());
+//     log.info(await DownloadArchiveFiles.run());
 //     await sleep(10000);
 //   }
 // };

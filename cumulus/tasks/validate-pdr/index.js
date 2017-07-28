@@ -6,15 +6,16 @@ const Task = require('cumulus-common/task');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
 const pdrMod = require('./pdr');
-const pdrValid = require('cumulus-common/pdr-validations');
+const pdrValid = require('./pdr-validations');
 
 /**
- * Task that retrieves a PDR from a SIPS server and processes it
- * Input payload: An object containing information about the PDR to process
- * Output payload: An object containing either an `errors` key pointing to an array of
- * errors or a `files` key pointing to an array of archive files to be downloaded.
+ * Task that validates a PDR retrieved from a SIPS server
+ * Input payload: An object containing the PDR to process
+ * Output payload: An object possibly containing a `topLevelErrors` key pointing to an array
+ * of error messages, a `fileGroupErrors` key pointing to an array of error messages, or
+ * neither. The original input pdr is included in the output payload.
  */
-module.exports = class ProcessPdr extends Task {
+module.exports = class ValidatePdr extends Task {
   /**
    * Main task entry point
    * @return Array An array of archive files to be processed
@@ -23,14 +24,12 @@ module.exports = class ProcessPdr extends Task {
     // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
     const message = this.message;
 
-    const { s3Bucket } = this.config;
     log.info('MESSAGE');
     log.info(message);
-    const s3Key = message.payload.Key;
 
     // Download the PDR
     // const pdr = await aws.downloadS3Files([{ Bucket: s3Bucket, Key: s3Key }], '/tmp');
-    const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
+    const { fileName, pdr } = await message.payload;
     log.info('PDR');
     log.info(pdr);
 
@@ -51,17 +50,14 @@ module.exports = class ProcessPdr extends Task {
     }
 
     // Validate each file group entry
-    const fileGroups = pdrObj.object('FILE_GROUP');
+    const fileGroups = pdrObj.objects('FILE_GROUP');
     const fileGroupErrors = fileGroups.map(pdrValid.validateFileGroup);
     if (fileGroupErrors.some((value) => value.length > 0)) {
       return { fileGroupErrors: fileGroupErrors };
     }
 
-    // Get the file list
-    const fileInfo = fileGroups.map((fileGroup) => ({
-
-    }));
-    return pdrObj;
+    // No errors so just pass the payload along
+    return message.payload;
   }
 
   /**
@@ -70,7 +66,7 @@ module.exports = class ProcessPdr extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return ProcessPdr.handle(...args);
+    return ValidatePdr.handle(...args);
   }
 };
 
@@ -82,8 +78,7 @@ local.setupLocalRun(module.exports.handler, () => ({
       s3Bucket: '{resources.s3Bucket}',
       folder: 'PDR'
     },
-    ProcessPdr: {
-      s3Bucket: '{resources.s3Bucket}'
+    ValidatePdr: {
     }
   },
   resources: {
@@ -95,8 +90,8 @@ local.setupLocalRun(module.exports.handler, () => ({
   },
   meta: {},
   ingest_meta: {
-    task: 'ProcessPdr',
-    id: 'abc123',
+    task: 'ValidatePdr',
+    id: 'abc1234',
     message_source: 'stdin'
   }
 

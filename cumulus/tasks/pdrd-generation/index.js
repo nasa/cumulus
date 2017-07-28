@@ -61,6 +61,8 @@ module.exports = class ProcessPdr extends Task {
 
     }));
     return pdrObj;
+
+    // TODO extension (PDRD or pdrd) must match case of extension of original PDR file name
   }
 
   /**

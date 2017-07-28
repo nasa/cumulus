@@ -4,6 +4,31 @@
  * Validations for PDR entries
  */
 
+ /**
+  * File spec validations - validations for individual files
+  */
+
+/**
+ * Validates that the DIRECTORY_ID values for FILE_SPEC entries is neither missing nor empty
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const directoryIdValidation = fileSpec => {
+  const directoryId = fileSpec.get('DIRECTORY_ID');
+
+  return (!directoryId || directoryId.value === '') ? 'INVALID DIRECTORY' : null;
+};
+
+const fileSpecValidations = [directoryIdValidation];
+
+/**
+ * Performs a series of validations on a file group
+ * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
+ * @return {Array} An (possibly empty) array of error strings.
+ */
+const validateFileSpec = fileSpec =>
+  fileSpecValidations.map(validationFn => validationFn(fileSpec)).filter(err => err);
+
 /**
  * File group validations
  */
@@ -18,39 +43,41 @@ const dataTypeValidation = fileGroup => {
   const versionId = fileGroup.get('VERSION_ID');
 
   let rval = null;
-  // TODO Need to check that dataType and versionId correspond to an Imagery Product
-  if (!dataType || dataType.value === '' || !versionId) {
-    rval = ['INVALID_DATA_TYPE'];
+  // TODO Need to check that DATA_TYPE and VERSION_ID correspond to an Imagery Product
+  // TODO Need to add check for empty/missing VERSION_ID
+  if (!dataType || dataType.value === '') {
+    rval = 'INVALID_DATA_TYPE';
   }
 
   return rval;
 };
 
-/**
- * Validates that the DIRECOTRY_ID value is neither missing nor empty
- * @param {PVLObject} fileGroup
- * @return {string} An error string or null
- */
-const directoryIdValidation = fileGroup => {
-  const directoryId = fileGroup.get('DIRECTORY_ID');
-
-  let rval = null;
-  if (!directoryId || directoryId.value === '') {
-    rval = 'INVALID DIRECTORY';
-  }
-
-  return rval;
-};
-
-const fileGroupValidations = [dataTypeValidation, directoryIdValidation];
+const fileGroupValidations = [dataTypeValidation];
 
 /**
  * Performs a series of validations on a file group
  * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
  * @return {Array} An (possibly empty) array of error strings.
  */
-exports.validateFileGroup = fileGroup =>
-  fileGroupValidations.map(validationFn => validationFn(fileGroup)).filter(err => err);
+exports.validateFileGroup = fileGroup => {
+  const fileGroupErrors = fileGroupValidations.map(validationFn => validationFn(fileGroup))
+    .filter(err => err);
+  if (fileGroupErrors.length > 0) {
+    return fileGroupErrors;
+  }
+  // No errors in file group parameters, so validate each FILE_SPEC in the FILE_GROUP
+  const fileSpecs = fileGroup.objects('FILE_SPEC');
+  const fileSpecErrors = [];
+  fileSpecs.forEach(fileSpec => {
+    const fileErrors = validateFileSpec(fileSpec);
+    if (fileErrors.length > 0) {
+      // Only need one error
+      fileSpecErrors.push(fileErrors[0]);
+    }
+  });
+
+  return fileSpecErrors;
+};
 
 /**
  * Top level (non file group) PDR validations
