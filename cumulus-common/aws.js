@@ -129,6 +129,38 @@ exports.uploadS3Files = (files, bucket, keyPath, s3opts = {}) => {
   return Promise.all(files.map(limitedUpload));
 };
 
+/**
+ * List the objects in an S3 bucket
+ * @param {string} bucket The name of the bucket
+ * @param {string} prefix Only objects with keys starting with this prefix will be included
+ * (useful for searching folders in buckets, e.g., '/PDR')
+ * @param {boolean} skipFolders If true don't return objects that are folders (defaults to true)
+ * @return A promise that resolves to the list of objects. Each S3 object is represented
+ * as a JS object with the following attributes:
+ * `Key`, `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`
+ */
+exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
+  log.info(`Listing objects in s3://${bucket}`);
+  const params = {
+    Bucket: bucket
+  };
+  if (prefix) params.Prefix = prefix;
+
+  return new Promise((resolve, reject) => {
+    exports.s3().listObjects(params, (err, data) => {
+      if (err) reject(err);
+
+      let contents = data.Contents || [];
+      if (skipFolders) {
+        // Filter out any references to folders
+        contents = contents.filter((obj) => !obj.Key.endsWith('/'));
+      }
+
+      resolve(contents);
+    });
+  });
+};
+
 exports.syncUrl = async (url, bucket, destKey) => {
   const response = await concurrency.promiseUrl(url);
   await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
@@ -204,3 +236,9 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
      .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
      .map((s) => JSON.parse(`"${s}"`));
+
+// Test code
+// const prom = exports.listS3Objects('gitc-jn-sips-mock', 'PDR/');
+// prom.then((list) => {
+//   log.info(list);
+// });

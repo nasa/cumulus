@@ -205,7 +205,7 @@ class StdinMessageSource extends InlineMessageSource {
         value.ingest_meta = value.ingest_meta || {};
         value.ingest_meta.task = this.messageData.ingest_meta.task;
       }
-      return value;
+      return value; // XXX Doesn't this always return the first value? Why use a for loop?
     }
     return null;
   }
