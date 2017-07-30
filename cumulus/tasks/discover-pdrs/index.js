@@ -1,7 +1,6 @@
 'use strict';
 
 const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
 const Task = require('cumulus-common/task');
 const promisify = require('util.promisify');
 const FtpClient = require('ftp');
@@ -61,53 +60,9 @@ module.exports = class DiscoverPdr extends Task {
       client.end();
     }
 
-    // Set up callback to start our processing once the connection is 'ready' then connect
-    // TODO - It's not clear to me what happens when an exception is thrown inside an event
-    // handler. I need to establish how to correctly handle errors here.
-    // client
-    //   .once('ready', async () => {
-    //     try {
-    //       // Get the list of PDRs
-    //       const list = await pdrMod.getPdrList(client);
-    //       log.info(`PDR LIST: [${list}]`);
-    //       // Get the oldest one
-    //       const oldestPdr = list.sort((a, b) => b.date < a.date)[0];
-
-    //     }
-    //     finally {
-    //       // Close the connection to the SIPS server
-    //       client.end();
-    //     }
-    //   })
-    //   .connect({
-    //     host: host,
-    //     port: port,
-    //     user: user,
-    //     password: password
-    //   });
-
-    // const { s3Bucket, folder } = this.config;
-
-    // // Get the list of PDRs
-    // const pdrList = await aws.listS3Objects(s3Bucket, `${folder}/`);
-
-    // // Get the oldest PDR
-    // const pdrInfo = pdrList.sort((obj1, obj2) => {
-    //   const lastModStr1 = obj1.LastModified;
-    //   const lastModStr2 = obj2.LastModified;
-    //   const lastMod1 = new Date(lastModStr1);
-    //   const lastMod2 = new Date(lastModStr2);
-
-    //   return lastMod1 < lastMod2;
-    // })[0];
-
-    // const s3Key = pdrInfo.Key;
     // const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
 
-    return {
-      fileName: fileName,
-      pdr: pdr
-    };
+    return pdr;
   }
 
   /**

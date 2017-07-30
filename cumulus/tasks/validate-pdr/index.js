@@ -30,8 +30,6 @@ module.exports = class ValidatePdr extends Task {
     // Download the PDR
     // const pdr = await aws.downloadS3Files([{ Bucket: s3Bucket, Key: s3Key }], '/tmp');
     const { fileName, pdr } = await message.payload;
-    log.info('PDR');
-    log.info(pdr);
 
     // Parse the PDR and do a preliminary validation
     let pdrObj;
@@ -40,6 +38,7 @@ module.exports = class ValidatePdr extends Task {
     }
     catch (e) {
       log.error(e);
+      log.error(e.stack);
       return { errors: ['INVALID PVL STATEMENT'] };
     }
 

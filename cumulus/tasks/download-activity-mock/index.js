@@ -3,7 +3,10 @@
 const log = require('cumulus-common/log');
 const aws = require('cumulus-common/aws');
 const Task = require('cumulus-common/task');
-const pdrMod = require('./pdr');
+const promisify = require('util.promisify');
+const FtpClient = require('ftp');
+const SftpClient = require('sftpjs');
+const sips = require('./sips');
 
 /**
  * Task that retrieves PDRs from a SIPS server
@@ -18,26 +21,45 @@ module.exports = class DownloadArchiveFiles extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
-    const { s3Bucket, folder, destinationS3Bucket } = this.config;
+    const { protocol, host, port, user, password, destinationS3Bucket } = this.config;
 
     const message = this.message;
 
-    const { fileName, pdr } = await message.payload;
+    // TEST
 
-    // Create a list of files from pdr
+    const { files } = await message.payload;
 
+    // Open a connection to the SIPS server
+    let client;
+    if (protocol.toUpperCase() === 'FTP') {
+      client = new FtpClient();
+    }
+    else {
+      client = new SftpClient();
+    }
 
-    // Return the oldest
-    const pdrInfo = pdrList.sort((obj1, obj2) => {
-      const lastModStr1 = obj1.LastModified;
-      const lastModStr2 = obj2.LastModified;
-      const lastMod1 = new Date(lastModStr1);
-      const lastMod2 = new Date(lastModStr2);
+    const clientReady = promisify(client.once).bind(client);
 
-      return lastMod1 < lastMod2;
-    })[0];
+    client.connect({
+      host: host,
+      port: port,
+      user: user,
+      password: password
+    });
 
-    const s3Key = pdrInfo.Key;
+    await clientReady('ready');
+
+    // Download all the files
+    let results = files.map((file) => {
+      const fileStream = sips.getFileStream(client, file);
+      return 1;
+    });
+
+    // Verify checksums for files
+
+    // Return links to the files [s3Bucket, key] and error messages for each
+
+    // const s3Key = pdrInfo.Key;
     // const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
 
     return {

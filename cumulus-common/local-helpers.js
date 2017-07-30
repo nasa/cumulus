@@ -54,6 +54,8 @@ const findById = (arr, id) => {
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
   if (!isLocal && !isMocha && !isJupyter) return null;
+  const configPath = `${fileRoot()}/config/collections.yml`;
+  log.info(`CONFIG PATH: ${configPath}`);
   const configStr = fs.readFileSync(`${fileRoot()}/config/collections.yml`).toString();
   const config = configUtil.parseConfig(configStr, (resource) => resource);
 

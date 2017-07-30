@@ -17,11 +17,11 @@ exports.getPdrList = async client => {
 };
 
 /**
-   * Get the contents of a PDR from a SIPS server
-   * @param {Client} client The client connected to the SIPS server
-   * @param {*} fileName
-   * @return An object with keys `fileName` and `pdr`.
-   */
+ * Get the contents of a PDR from a SIPS server
+ * @param {Client} client The client connected to the SIPS server
+ * @param {*} fileName The name of the PDR to retrieve
+ * @return An object with keys `fileName` and `pdr`.
+ */
 exports.getPdr = async (client, fileName) => {
   const syncGet = promisify(client.get).bind(client);
   const stream = await syncGet(`PDR/${fileName}`);

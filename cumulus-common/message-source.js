@@ -129,6 +129,8 @@ class StateMachineS3MessageSource extends MessageSource {
       return error;
     }
 
+    // XXX I think this is checking for data === null, but it will also catch data ==== false,
+    // which is probably not what we want
     if (!data) {
       const message = Object.assign({}, this.originalMessage, { payload: data, exception: 'None' });
       callback(null, message);

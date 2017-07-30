@@ -130,6 +130,19 @@ exports.uploadS3Files = (files, bucket, keyPath, s3opts = {}) => {
 };
 
 /**
+ * Upload the file associated with the given stream to an S3 bucket
+ * @param {ReadableStream} fileStream The stream for the file's contents
+ * @param {string} bucket The S3 bucket to which the file is to be uploaded
+ * @param {string} key The key to the file in the bucket
+ * @param s3opts {Object} Options to pass to the AWS sdk call (defaults to `{}`)
+ * @return A promise
+ */
+exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
+  const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
+  return exports.promiseS3Upload(opts);
+};
+
+/**
  * List the objects in an S3 bucket
  * @param {string} bucket The name of the bucket
  * @param {string} prefix Only objects with keys starting with this prefix will be included
