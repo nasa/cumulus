@@ -8,10 +8,9 @@ const SftpClient = require('sftpjs');
 const pdrMod = require('./pdr');
 
 /**
- * Task that retrieves a PDR from a SIPS server and processes it
- * Input payload: An object containing information about the PDR to process
- * Output payload: An object containing either an `errors` key pointing to an array of
- * errors or a `files` key pointing to an array of archive files to be downloaded.
+ * Task that generates a PAN for a set of files referenced in a PDR
+ * Input payload: An array containing entries for each downloaded file
+ * Output payload: None
  */
 module.exports = class ProcessPdr extends Task {
   /**

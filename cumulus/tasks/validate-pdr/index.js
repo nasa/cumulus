@@ -13,7 +13,8 @@ const pdrValid = require('./pdr-validations');
  * Input payload: An object containing the PDR to process
  * Output payload: An object possibly containing a `topLevelErrors` key pointing to an array
  * of error messages, a `fileGroupErrors` key pointing to an array of error messages, or
- * neither. The original input pdr is included in the output payload.
+ * a list of paths to files to be downloaded. The original input pdr is included in the output
+ * payload.
  */
 module.exports = class ValidatePdr extends Task {
   /**
@@ -55,8 +56,17 @@ module.exports = class ValidatePdr extends Task {
       return { fileGroupErrors: fileGroupErrors };
     }
 
-    // No errors so just pass the payload along
-    return message.payload;
+    // No errors so pass along the list of paths to the archive files.
+    const fileList = [];
+    fileGroups.forEach((fileGroup) => {
+      const fileSpecs = fileGroup.objects('FILE_SPEC');
+      fileSpecs.forEach((fileSpec) => {
+        const fileEntry = pdrMod.fileSpecToFileEntry(fileSpec);
+        fileList.push(fileEntry);
+      });
+    });
+
+    return { fileList: fileList };
   }
 
   /**

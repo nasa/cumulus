@@ -92,10 +92,21 @@ local.setupLocalRun(module.exports.handler, () => ({
     },
     ProcessPdr: {
       s3Bucket: '{resources.s3Bucket}'
+    },
+    DownloadActivityMock: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      s3Bucket: '{resources.s3Bucket}',
+      folder: 'DATA',
+      destinationS3Bucket: '{resources.destinationS3Bucket}'
     }
   },
   resources: {
-    s3Bucket: 'gitc-jn-sips-mock'
+    s3Bucket: 'gitc-jn-sips-mock',
+    destinationS3Bucket: 'gitc-jn-sips-mock-downloads'
   },
   provider: {
     id: 'DUMMY',

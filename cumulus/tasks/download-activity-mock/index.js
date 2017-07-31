@@ -14,7 +14,7 @@ const sips = require('./sips');
  * Output payload: A single object with keys `file` and `pdr` referencing the oldest PDR
  * on the SIPS server
  */
-module.exports = class DownloadArchiveFiles extends Task {
+module.exports = class DownloadActivityMock extends Task {
   /**
    * Main task entry point
    * @return An object referencing the oldest PDR on the server
@@ -25,9 +25,7 @@ module.exports = class DownloadArchiveFiles extends Task {
 
     const message = this.message;
 
-    // TEST
-
-    const { files } = await message.payload;
+    const { fileList } = await message.payload;
 
     // Open a connection to the SIPS server
     let client;
@@ -50,22 +48,39 @@ module.exports = class DownloadArchiveFiles extends Task {
     await clientReady('ready');
 
     // Download all the files
-    let results = files.map((file) => {
-      const fileStream = sips.getFileStream(client, file);
-      return 1;
+    const resultsPromises = fileList.map(async (fileEntry) => {
+      const { directory, fileName, checksumType, checksum, fileType, size } = fileEntry;
+      // Remove starting '/' from directory and append fileName and type to make S3 key
+      const s3Key = `${directory}/${fileName}.${fileType}`.substring(1);
+
+      try {
+        // aws streaming upload is not working with FTP stream for some reason, workaround
+        // is to download the file to the file system
+        // const fileStream = sips.getFileStream(client, s3Key);
+        // await aws.uploadS3FileStream(fileStream, destinationS3Bucket, fileName);
+
+        const downloadPath =
+          await sips.downloadFile(client, directory, '/tmp/staging', `${fileName}.${fileType}`);
+        log.info(`DOWNLOAD PATH: ${downloadPath}`);
+        log.info(`DEST BUCKET:  ${destinationS3Bucket}`);
+        await aws.uploadS3Files([downloadPath], destinationS3Bucket, s3Key);
+
+        return [destinationS3Bucket, s3Key, []];
+      }
+      catch (e) {
+        log.error(e);
+        return [destinationS3Bucket, s3Key, [e]];
+      }
     });
+
+    const results = await Promise.all(resultsPromises);
 
     // Verify checksums for files
 
+
     // Return links to the files [s3Bucket, key] and error messages for each
 
-    // const s3Key = pdrInfo.Key;
-    // const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
-
-    return {
-      file: fileName,
-      pdr: pdr
-    };
+    return results;
   }
 
   /**
@@ -74,7 +89,7 @@ module.exports = class DownloadArchiveFiles extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return DownloadArchiveFiles.handle(...args);
+    return DownloadActivityMock.handle(...args);
   }
 };
 
@@ -85,10 +100,15 @@ module.exports = class DownloadArchiveFiles extends Task {
 const local = require('cumulus-common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
-    DownloadArchiveFiles: {
+    DownloadActivityMock: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
       s3Bucket: '{resources.s3Bucket}',
       folder: 'DATA',
-      destinationS3Bucket: '{resources.destinationS3Bucket'
+      destinationS3Bucket: '{resources.destinationS3Bucket}'
     },
     ProcessPdr: {
       s3Bucket: '{resources.s3Bucket}'
@@ -104,9 +124,9 @@ local.setupLocalRun(module.exports.handler, () => ({
   },
   meta: {},
   ingest_meta: {
-    task: 'DownloadArchiveFiles',
+    task: 'DownloadActivityMock',
     id: 'abc123',
-    message_source: 'local'
+    message_source: 'stdin'
   }
 
 }));

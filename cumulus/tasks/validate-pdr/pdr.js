@@ -3,6 +3,9 @@
 const log = require('cumulus-common/log');
 const pvl = require('pvl');
 
+const fileSpecFields =
+  ['DIRECTORY_ID', 'FILE_ID', 'FILE_CKSUM_TYPE', 'FILE_CKSUM_VALUE', 'FILE_TYPE', 'FILE_SIZE'];
+
 /**
  * Parses a PDR, performing validation and returning a list of file paths
  * @param {string} pdr The text of the PDR
@@ -10,6 +13,25 @@ const pvl = require('pvl');
  * @throws {Error} Throws an Error if parsing fails
  */
 exports.parsePdr = pdr => pvl.pvlToJS(pdr);
+
+/**
+ * Convert a PVL FILE_SPEC entry into an object with enough information to download the
+ * associated file and verify it
+ * @param {PVLObject} fileSpec An object containing the FILE_SPEC data
+ * @return {Object} An object containing the FILE_SPEC data needed for downloading the archive file
+ */
+exports.fileSpecToFileEntry = fileSpec => {
+  const [directory, fileName, checksumType, checksum, fileType, size] =
+    fileSpecFields.map((field) => fileSpec.get(field).value);
+  return {
+    directory: directory,
+    fileName: fileName,
+    checksumType: checksumType,
+    checksum: checksum,
+    fileType: fileType,
+    size: size
+  };
+};
 
 
 // test code
