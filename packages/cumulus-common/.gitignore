@@ -1,9 +1,0 @@
-node_modules
-build/
-dist/
-test-reports
-tmp
-.tmp
-config/authorized_keys
-config/cloudformation.yml
-cache-invalidation/config/runtime_config.json

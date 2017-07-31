@@ -1,0 +1,22 @@
+{
+  "name": "@cumulus/parse-pdr",
+  "version": "1.0.0",
+  "description": "Download and Parse a given PDR",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "scripts": {
+    "test": "echo 'no tests'"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/common": "^1.0.0",
+    "lodash.get": "^4.4.2"
+  }
+}

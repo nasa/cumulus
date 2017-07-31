@@ -13,7 +13,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "cumulus-common": "file:../../../cumulus-common",
+    "@cumulus/common": "^1.0.0",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1"
   }
