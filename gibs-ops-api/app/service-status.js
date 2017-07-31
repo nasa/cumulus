@@ -164,12 +164,12 @@ const getOnEarthServiceStatusNgap = async (appName) => {
  */
 const getOnEarthServiceStatusCloudFormation = async (stackName) => {
   const oeMainStackResources = await getStackResources(stackName);
-  const oneEarthStackResources = await getStackResources(
+  const onEarthStackResources = await getStackResources(
     getPhysicalResourceId(oeMainStackResources, 'OnEarthStack')
   );
   const [clusterStackResources, dockerStackResources] = await Promise.all([
-    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'Cluster')),
-    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'OnearthDocker'))
+    getStackResources(getPhysicalResourceId(onEarthStackResources, 'Cluster')),
+    getStackResources(getPhysicalResourceId(onEarthStackResources, 'OnearthDocker'))
   ]);
 
   const clusterId = getPhysicalResourceId(clusterStackResources, 'ECSCluster');
@@ -216,18 +216,10 @@ const getServicesStatus = async (mainStackName, onEarthStackName) => {
  */
 const handleServiceStatusRequest = async (req, res) => {
   try {
-    req.checkQuery('main_stack_name', 'Invalid main_stack_name').notEmpty();
-    req.checkQuery('on_earth_stack_name', 'Invalid on_earth_stack_name').notEmpty();
-    const result = await req.getValidationResult();
-    if (!result.isEmpty()) {
-      res.status(400).json(result.array());
-    }
-    else {
-      const mainStackName = req.query.main_stack_name;
-      const onEarthStackName = req.query.on_earth_stack_name;
-      const status = await getServicesStatus(mainStackName, onEarthStackName);
-      res.json(status);
-    }
+    const mainStackName = process.env.STACK_NAME;
+    const onEarthStackName = process.env.on_earth_stack_name;
+    const status = await getServicesStatus(mainStackName, onEarthStackName);
+    res.json(status);
   }
   catch (e) {
     console.error(e);

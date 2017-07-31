@@ -30,9 +30,7 @@ const getWorkflowStatus = async (config) => {
   }
   else {
     workflows = await rp(
-      { uri: `${config.get('apiBaseUrl')}/workflow_status`,
-        qs: { stack_name: config.get('stackName') },
-        json: true });
+      { uri: `${config.get('apiBaseUrl')}/workflow_status`, json: true });
   }
   return fromJS(workflows);
 };
@@ -49,13 +47,7 @@ const getServiceStatus = async (config) => {
     services = canned.getServiceStatusResp;
   }
   else {
-    services = await rp(
-      { uri: `${config.get('apiBaseUrl')}/service_status`,
-        qs: {
-          main_stack_name: config.get('stackName'),
-          on_earth_stack_name: config.get('onEarthStackName')
-        },
-        json: true });
+    services = await rp({ uri: `${config.get('apiBaseUrl')}/service_status`, json: true });
   }
   return fromJS(services);
 };

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -evx
+
+if [ -z "$1" ]; then
+  echo 'Usage: build OPS_API_URL' >&2
+  exit 1
+fi
+
+OPS_API_URL="$1"
+
+cat << EOF > app/scripts/config/production-generated.js
+'use strict';
+
+// This is a generated file. Do not manually modify.
+module.exports = {
+  apiBaseUrl: '${OPS_API_URL}',
+};
+EOF
+
+npm run production

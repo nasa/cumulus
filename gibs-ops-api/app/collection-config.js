@@ -58,7 +58,8 @@ const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
  * Converts a stack name like gitc-test to the prefix used for naming certain resources like
  * gitcxtestxx.
  */
-const stackNameToAlphanumPrefix = stackName => `${stackName.replace(/\W/, 'x')}xx`;
+const stackNameToAlphanumPrefix = stackName => stackName.split('-').map(
+  (s) => s.charAt(0).toUpperCase() + s.slice(1)).join('');
 
 /**
  * Returns a parsed collection config
