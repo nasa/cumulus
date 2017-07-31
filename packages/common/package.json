@@ -1,0 +1,42 @@
+{
+  "name": "@cumulus/common",
+  "version": "1.0.0",
+  "description": "Common utilities used across tasks",
+  "scripts": {
+    "lint": "eslint .",
+    "mocha": "mocha-webpack",
+    "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
+    "test": "npm run mocha",
+    "test-ci": "npm run lint && npm run mocha-junit"
+  },
+  "keywords": [
+    "GIBS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/pvl": "^1.0.0",
+    "@cumulus/test-data": "^1.0.0",
+    "ajv": "^5.0.4-beta.3",
+    "async": "^2.0.0",
+    "aws-sdk": "^2.4.11",
+    "cwait": "^1.1.0",
+    "ftp": "^0.3.10",
+    "got": "^6.7.1",
+    "js-yaml": "^3.8.3",
+    "lodash": "^4.13.1",
+    "lodash.get": "^4.4.2",
+    "public-ip": "^2.3.5",
+    "simplecrawler": "^1.1.4"
+  },
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mocha": "^2.5.3",
+    "mocha-junit-reporter": "^1.11.1",
+    "mocha-webpack": "^0.7.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@cumulus/iscover-cmr-granules",
+  "version": "1.0.0",
+  "description": "Discovers granules from the CMR",
+  "main": "index.js",
+  "keywords": [
+    "GIBS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/common": "^1.0.0",
+    "node-fetch": "^1.6.1",
+    "parse-duration": "^0.1.1"
+  }
+}
