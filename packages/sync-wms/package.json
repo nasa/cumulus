@@ -1,6 +1,6 @@
 {
-  "name": "gitc-sync-wms",
-  "version": "0.0.0",
+  "name": "@cumulus/sync-wms",
+  "version": "1.0.0",
   "description": "Transforms input granule info to WMS URLs for URL sync",
   "main": "index.js",
   "keywords": [

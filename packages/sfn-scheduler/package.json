@@ -1,6 +1,6 @@
 {
-  "name": "gitc-scheduler",
-  "version": "0.0.0",
+  "name": "@cumulus/sfn-scheduler",
+  "version": "1.0.0",
   "description": "Runs ingest timers as configured in /config/products.json",
   "main": "index.js",
   "keywords": [

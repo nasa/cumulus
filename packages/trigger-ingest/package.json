@@ -1,7 +1,7 @@
 {
-  "name": "gitc-sync-wms",
-  "version": "0.0.0",
-  "description": "Transforms input granule info to WMS URLs for URL sync",
+  "name": "@cumulus/trigger-ingest",
+  "version": "1.0.0",
+  "description": "Triggers ingest",
   "main": "index.js",
   "keywords": [
     "GIBS"

@@ -1,6 +1,6 @@
 {
-  "name": "gitc-discover-cmr-granules",
-  "version": "0.0.0",
+  "name": "@cumulus/iscover-cmr-granules",
+  "version": "1.0.0",
   "description": "Discovers granules from the CMR",
   "main": "index.js",
   "keywords": [

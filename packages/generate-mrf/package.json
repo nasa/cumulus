@@ -1,6 +1,6 @@
 {
-  "name": "gitc-generate-mrf",
-  "version": "0.0.0",
+  "name": "@cumulus/generate-mrf",
+  "version": "1.0.0",
   "description": "Generates MRFs for ingested tiles",
   "main": "index.js",
   "keywords": [

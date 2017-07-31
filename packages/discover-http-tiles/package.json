@@ -1,6 +1,6 @@
 {
-  "name": "gitc-http-tile-indexer",
-  "version": "0.0.0",
+  "name": "@cumulus/gitc-http-tile-indexer",
+  "version": "1.0.0",
   "description": "Crawls an HTTP endpoint to discover tiled imagery",
   "main": "index.js",
   "keywords": [
