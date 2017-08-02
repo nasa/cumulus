@@ -23,14 +23,12 @@ module.exports = class ValidatePdr extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
-    const message = this.message;
+    const { host, port, user, password, s3Bucket } = this.config;
 
-    log.info('MESSAGE');
-    log.info(message);
 
     // Download the PDR
-    // const pdr = await aws.downloadS3Files([{ Bucket: s3Bucket, Key: s3Key }], '/tmp');
-    const { fileName, pdr } = await message.payload;
+    const message = this.message;
+    const { pdr } = await message.payload;
 
     // Parse the PDR and do a preliminary validation
     let pdrObj;
@@ -61,12 +59,13 @@ module.exports = class ValidatePdr extends Task {
     fileGroups.forEach((fileGroup) => {
       const fileSpecs = fileGroup.objects('FILE_SPEC');
       fileSpecs.forEach((fileSpec) => {
-        const fileEntry = pdrMod.fileSpecToFileEntry(fileSpec);
+        const fileEntry =
+          pdrMod.fileSpecToFileEntry(fileSpec, host, port, user, password, s3Bucket);
         fileList.push(fileEntry);
       });
     });
 
-    return { fileList: fileList };
+    return fileList;
   }
 
   /**
@@ -88,6 +87,8 @@ local.setupLocalRun(module.exports.handler, () => ({
       folder: 'PDR'
     },
     ValidatePdr: {
+      s3Bucket: '{resources.s3Bucket}',
+
     }
   },
   resources: {

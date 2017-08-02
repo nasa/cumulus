@@ -90,8 +90,14 @@ local.setupLocalRun(module.exports.handler, () => ({
       password: process.env.FTP_PASS,
       folder: 'PDR'
     },
-    ProcessPdr: {
-      s3Bucket: '{resources.s3Bucket}'
+    ValidatePdr: {
+      s3Bucket: '{resources.s3Bucket}',
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      folder: 'PDR'
     },
     DownloadActivityMock: {
       host: 'localhost',
@@ -101,12 +107,10 @@ local.setupLocalRun(module.exports.handler, () => ({
       password: process.env.FTP_PASS,
       s3Bucket: '{resources.s3Bucket}',
       folder: 'DATA',
-      destinationS3Bucket: '{resources.destinationS3Bucket}'
     }
   },
   resources: {
-    s3Bucket: 'gitc-jn-sips-mock',
-    destinationS3Bucket: 'gitc-jn-sips-mock-downloads'
+    s3Bucket: 'gitc-jn-sips-mock-downloads'
   },
   provider: {
     id: 'DUMMY',

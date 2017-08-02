@@ -24,7 +24,7 @@ module.exports = class ProcessPdr extends Task {
     const { s3Bucket } = this.config;
     log.info('MESSAGE');
     log.info(message);
-    const s3Key = message.payload.Key;
+    const  fileStatus = await message.payload;
 
     // Download the PDR
     // const pdr = await aws.downloadS3Files([{ Bucket: s3Bucket, Key: s3Key }], '/tmp');

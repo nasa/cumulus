@@ -27,7 +27,8 @@ Resources:
               "buckets": {
                 "config": "${ConfigS3Bucket}",
                 "private": "${StackName}-private",
-                "public": "${StackName}-public"
+                "public": "${StackName}-public",
+                "sips_archives": "${StackName}-mock-downloads"
               },
               "tables": {
                 "connections": "${StackName}-connects",
