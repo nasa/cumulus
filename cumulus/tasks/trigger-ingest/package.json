@@ -13,6 +13,6 @@
   "author": "Patrick Quinn",
   "license": "Apache-2.0",
   "dependencies": {
-    "cumulus-common": "file:../../../cumulus-common"
+    "cumulus-common": "^1.0.0"
   }
 }
