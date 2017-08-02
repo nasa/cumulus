@@ -17,6 +17,7 @@
   "author": "James Norton",
   "license": "Apache-2.0",
   "dependencies": {
+    "checksum": "^0.1.1",
     "cumulus-common": "file:../../../cumulus-common",
     "ftp": "^0.3.10",
     "gunzip-maybe": "^1.4.1",
@@ -25,7 +26,7 @@
     "sftpjs": "^1.3.4",
     "stream-to-promise": "^2.2.0",
     "string-to-stream": "^1.1.0",
-    "tar-stream": "^1.5.4",
+    "targz": "^1.0.1",
     "util.promisify": "^1.0.0"
   },
   "devDependencies": {

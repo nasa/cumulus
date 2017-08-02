@@ -7,14 +7,18 @@ const validations = require('./archive-validations');
 const fs = require('fs');
 const path = require('path');
 const gunzip = require('gunzip-maybe');
-const tar = require('tar-stream');
+const tarGz = require('targz');
 const promisify = require('util.promisify');
+const util = require('cumulus-common/util');
+const { spawn, spawnSync, execSync } = require('child_process');
+const checksum = require('checksum');
 
 /**
  * Task that validates the archive files retrieved from a SIPS server
  * Input payload: An array of objects describing the downloaded archive files
  * Output payload: An object possibly containing an `errors` key pointing to an array
- * of error or success messages.
+ * of error or success messages. A side-effect of this function is that the
+ * archive files will be expanded on S3.
  */
 module.exports = class ValidateArchives extends Task {
   /**
@@ -25,75 +29,82 @@ module.exports = class ValidateArchives extends Task {
     // Vars needed from config to connect to the S3 bucket
     const { s3Bucket } = this.config;
 
-    // Decompress the archives
     const message = this.message;
     const { fileAttributes } = await message.payload;
 
+    const tmpDir = util.mkdtempSync(this.constructor.name);
+
     const archiveFiles = fileAttributes.map(attr => attr.s3Key);
+    const downloadRequest = archiveFiles.map(s3Key => ({ Bucket: s3Bucket, Key: s3Key }));
 
-    const unArchiveErrorPromises = archiveFiles.map(s3Key => {
-      const promise = new Promise();
-      let msg = null;
-      try {
-        // TODO convert these streams to promises to try to process them in 'parallel'
-        const extract = tar.extract();
+    // Promisify some functions to avoid using callbacks
+    const fileChecksum = promisify(checksum.file);
+    const decompress = promisify(tarGz.decompress);
 
-        extract.on('entry', async (header, stream, next) => {
-          const fileName = header.name;
-          // Upload the stream to the S3 bucket
-          log.info(`Uploading ${fileName} to S3 bucket ${s3Bucket}`);
-          await aws.uploadS3FileStream(s3Bucket, stream, fileName);
-          next();
-        });
+    let dispositionPromises;
 
-        extract.on('error', (err) => {
-          promise.resolve(err);
-        });
+    try {
+      // Download the archive files to the local file system
+      await aws.downloadS3Files(downloadRequest, tmpDir);
 
-        extract.on('finish', () => {
-          log.info(`Finished un-archiving ${s3Key}`);
-          promise.resolve(msg);
-        });
+      dispositionPromises = fileAttributes.map(async fileAttrs => {
+        const archiveFilePath = path.join(tmpDir, fileAttrs.s3Key);
 
-        // Get a stream for the file
-        const stream = aws.s3.getObject({ Bucket: s3Bucket, Key: s3Key }).createReadStream();
-        // Pipe the stream through a de-compressor then pipe the decompressed stream through the
-        // extract stream
-        stream.pipe(gunzip()).pipe(extract);
+        // Validate checksum
+        let algorithm = 'md5';
+        if (fileAttrs.checksumType.toUpperCase() === 'SHA1') {
+          algorithm = 'sha1';
+        }
+        const cksum = await fileChecksum(archiveFilePath, { algorithm: algorithm });
+        if (cksum !== fileAttrs.checksum) {
+          return 'CHECKSUM VERIFICATION FAILURE';
+        }
+
+        // Extract archive
+        const archiveDirPath = archiveFilePath.substr(0, archiveFilePath.length - 4);
+        // fs.mkdirSync(archiveDirPath);
+        try {
+          await decompress(archiveDirPath, archiveFilePath);
+        }
+        catch (e) {
+          return 'FILE I/O ERROR';
+        }
+
+        try {
+          // Verify that all the files are present
+          const unarchivedFiles = fs.readDirSync(archiveDirPath).map(file => file.toUpperCase());
+          let hasImage = false;
+          let hasWorldFile = false;
+          let hasMetadata = false;
+          unarchivedFiles.forEach(filePath => {
+            const ext = path.extname(filePath);
+            if (ext === 'JPG' || ext === 'PNG') hasImage = true;
+            if (ext === 'PGW' || ext === 'JGW') hasWorldFile = true;
+            if (ext === 'MET') hasMetadata = true;
+          });
+
+          if (!hasImage) return 'INCORRECT NUMBER OF SCIENCE FILES';
+          if (!hasWorldFile) return 'INCORRECT NUMBER OF FILES';
+          if (!hasMetadata) return 'INCORRECT NUMBER OF METADATA FILES';
+
+          // TODO Check for un-parsable metadata file
+
+          // Upload expanded files to S3
+          const s3DirKey = fileAttrs.s3Key.substr(0, fileAttrs.s3Key.length - 4);
+          aws.uploadS3Files(unarchivedFiles, s3Bucket, s3DirKey);
+        }
+        catch (e) {
+          return 'ECS INTERNAL ERROR';
+        }
 
         return 'SUCCESSFUL';
-      }
-      catch (e) {
-        return e;
-      }
-    });
+      });
+    }
+    finally {
+      execSync(`rm -rf ${tmpDir}`);
+    }
 
-
-    // // Do a top-level validation
-    // const topLevelErrors = pdrValid.validateTopLevelPdr(pdrObj);
-    // if (topLevelErrors.length > 0) {
-    //   return { topLevelErrors: topLevelErrors };
-    // }
-
-    // // Validate each file group entry
-    // const fileGroups = pdrObj.objects('FILE_GROUP');
-    // const fileGroupErrors = fileGroups.map(pdrValid.validateFileGroup);
-    // if (fileGroupErrors.some((value) => value.length > 0)) {
-    //   return { fileGroupErrors: fileGroupErrors };
-    // }
-
-    // // No errors so pass along the list of paths to the archive files.
-    // const fileList = [];
-    // fileGroups.forEach((fileGroup) => {
-    //   const fileSpecs = fileGroup.objects('FILE_SPEC');
-    //   fileSpecs.forEach((fileSpec) => {
-    //     const fileEntry =
-    //       pdrMod.fileSpecToFileEntry(fileSpec, host, port, user, password, s3Bucket);
-    //     fileList.push(fileEntry);
-    //   });
-    // });
-
-    // return fileList;
+    return Promise.all(dispositionPromises);
   }
 
   /**

@@ -25,8 +25,7 @@ module.exports = class ValidatePdr extends Task {
     // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
     const { host, port, user, password, s3Bucket } = this.config;
 
-
-    // Download the PDR
+    // Message payload contains the PDR
     const message = this.message;
     const { pdr } = await message.payload;
 

@@ -19,7 +19,7 @@ module.exports = class DiscoverPdr extends Task {
    * @return An object referencing the oldest PDR on the server
    */
   async run() {
-    // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
+    // Vars needed from config to connect to the SIPS server
     const { protocol, host, port, user, password } = this.config;
 
     let client;
@@ -105,8 +105,19 @@ local.setupLocalRun(module.exports.handler, () => ({
       protocol: 'ftp',
       user: process.env.FTP_USER,
       password: process.env.FTP_PASS,
-      s3Bucket: '{resources.s3Bucket}',
       folder: 'DATA',
+      s3Bucket: '{resources.s3Bucket}'
+    },
+    ValidateArchives: {
+      s3Bucket: '{resources.s3Bucket}'
+    },
+    DeletePdr: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      folder: 'PDR'
     }
   },
   resources: {

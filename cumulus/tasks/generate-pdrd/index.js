@@ -3,66 +3,57 @@
 const log = require('cumulus-common/log');
 const aws = require('cumulus-common/aws');
 const Task = require('cumulus-common/task');
+const promisify = require('util.promisify');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
 const pdrMod = require('./pdr');
 
 /**
- * Task that retrieves a PDR from a SIPS server and processes it
- * Input payload: An object containing information about the PDR to process
- * Output payload: An object containing either an `errors` key pointing to an array of
- * errors or a `files` key pointing to an array of archive files to be downloaded.
+ * Task that generates a PDRD for a failing PDR and uploads it to the SIPS server
+ * Input payload: An object possibly containing a `topLevelErrors` key pointing to an array
+ * of error messages or a `fileGroupErrors` key pointing to an array of error messages.
+ * The original input pdr is included in the payload.
+ * Output payload: An empty array
  */
-module.exports = class ProcessPdr extends Task {
+module.exports = class GeneratePdrd extends Task {
   /**
    * Main task entry point
    * @return Array An array of archive files to be processed
    */
   async run() {
-    // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
+
+    // Vars needed from config to connect to the SIPS server
+    const { protocol, host, port, user, password } = this.config;
+
+    // Message contains the status of the PDR
     const message = this.message;
+    const payload = await this.message.payload;
 
-    const { s3Bucket } = this.config;
-    log.info('MESSAGE');
-    log.info(message);
-    const s3Key = message.payload.Key;
+    const topLevelErrors = payLoad.topLevelErrors;
+    const fileGroupErrors = payLoad.fileGroupErrors;
 
-    // Download the PDR
-    // const pdr = await aws.downloadS3Files([{ Bucket: s3Bucket, Key: s3Key }], '/tmp');
-    const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
-    log.info('PDR');
-    log.info(pdr);
-
-    // Parse the PDR and do a preliminary validation
-    let pdrObj;
-    try {
-      pdrObj = pdrMod.parsePdr(pdr);
+    let client;
+    if (protocol.toUpperCase() === 'FTP') {
+      client = new FtpClient();
     }
-    catch (e) {
-      log.error(e);
-      return { errors: ['INVALID PVL STATEMENT'] };
+    else {
+      client = new SftpClient();
     }
 
-    // Do a top-level validation
-    const topLevelErrors = pdrValid.validateTopLevelPdr(pdrObj);
-    if (topLevelErrors.length > 0) {
-      return { topLevelErrors: topLevelErrors };
-    }
+    const clientReady = promisify(client.once).bind(client);
 
-    // Validate each file group entry
-    const fileGroups = pdrObj.object('FILE_GROUP');
-    const fileGroupErrors = fileGroups.map(pdrValid.validateFileGroup);
-    if (fileGroupErrors.some((value) => value.length > 0)) {
-      return { fileGroupErrors: fileGroupErrors };
-    }
+    client.connect({
+      host: host,
+      port: port,
+      user: user,
+      password: password
+    });
 
-    // Get the file list
-    const fileInfo = fileGroups.map((fileGroup) => ({
-
-    }));
-    return pdrObj;
+    await clientReady('ready');
 
     // TODO extension (PDRD or pdrd) must match case of extension of original PDR file name
+
+    return [];
   }
 
   /**
@@ -71,7 +62,7 @@ module.exports = class ProcessPdr extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return ProcessPdr.handle(...args);
+    return GeneratePdrd.handle(...args);
   }
 };
 
@@ -83,7 +74,7 @@ local.setupLocalRun(module.exports.handler, () => ({
       s3Bucket: '{resources.s3Bucket}',
       folder: 'PDR'
     },
-    ProcessPdr: {
+    GeneratePdrd: {
       s3Bucket: '{resources.s3Bucket}'
     }
   },
@@ -96,7 +87,7 @@ local.setupLocalRun(module.exports.handler, () => ({
   },
   meta: {},
   ingest_meta: {
-    task: 'ProcessPdr',
+    task: 'GeneratePdrd',
     id: 'abc123',
     message_source: 'stdin'
   }

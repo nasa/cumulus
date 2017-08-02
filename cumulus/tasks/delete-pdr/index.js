@@ -1,46 +1,50 @@
 'use strict';
 
 const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
 const Task = require('cumulus-common/task');
-const pdrMod = require('./pdr');
+const FtpClient = require('ftp');
+const SftpClient = require('sftpjs');
+const promisify = require('util.promisify');
 
 /**
- * Task that retrieves PDRs from a SIPS server
- * Input payload: none
- * Output payload: A single object with keys `file` and `pdr` referencing the oldest PDR
- * on the SIPS server
+ * Task that deletes a PDR from a SIPS server
+ * Input payload: The path to the PDR on the server
+ * Output payload: none
  */
-module.exports = class DiscoverPdr extends Task {
+module.exports = class DeletePdr extends Task {
   /**
    * Main task entry point
    * @return An object referencing the oldest PDR on the server
    */
   async run() {
-    // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
-    const { s3Bucket, folder } = this.config;
+    // Vars needed from config to connect to the SIPS server
+    const { protocol, host, port, user, password } = this.config;
 
-    // Get the list of PDRs
-    const pdrList = await aws.listS3Objects(s3Bucket, `${folder}/`);
+    // Message payload contains the path to the PDR to be deleted
+    const message = this.message;
+    const { pdrPath } = await message.payload;
 
-    // Return the oldest
-    const pdrInfo = pdrList.sort((obj1, obj2) => {
-      const lastModStr1 = obj1.LastModified;
-      const lastModStr2 = obj2.LastModified;
-      const lastMod1 = new Date(lastModStr1);
-      const lastMod2 = new Date(lastModStr2);
+    let client;
+    if (protocol.toUpperCase() === 'FTP') {
+      client = new FtpClient();
+    }
+    else {
+      client = new SftpClient();
+    }
 
-      return lastMod1 < lastMod2;
-    })[0];
+    const clientReady = promisify(client.once).bind(client);
+    const del = promisify(client.delete).bind(client);
 
-    const s3Key = pdrInfo.Key;
-    const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
+    client.connect({
+      host: host,
+      port: port,
+      user: user,
+      password: password
+    });
 
-    return {
-      file: fileName,
-      pdr: pdr
-    };
+    await clientReady('ready');
 
+    await del(pdrPath);
   }
 
   /**
@@ -49,7 +53,7 @@ module.exports = class DiscoverPdr extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return DiscoverPdr.handle(...args);
+    return DeletePdr.handle(...args);
   }
 };
 
@@ -60,7 +64,7 @@ module.exports = class DiscoverPdr extends Task {
 const local = require('cumulus-common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
-    DiscoverPdr: {
+    DeletePdr: {
       s3Bucket: '{resources.s3Bucket}',
       folder: 'PDR'
     },
@@ -77,7 +81,7 @@ local.setupLocalRun(module.exports.handler, () => ({
   },
   meta: {},
   ingest_meta: {
-    task: 'DiscoverPdr',
+    task: 'DeletePdr',
     id: 'abc123',
     message_source: 'local'
   }
