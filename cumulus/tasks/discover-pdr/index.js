@@ -91,7 +91,7 @@ local.setupLocalRun(module.exports.handler, () => ({
       folder: 'PDR'
     },
     ValidatePdr: {
-      s3Bucket: '{resources.s3Bucket}',
+      s3Bucket: '{resources.buckets.private}',
       host: 'localhost',
       port: 21,
       protocol: 'ftp',
@@ -99,17 +99,14 @@ local.setupLocalRun(module.exports.handler, () => ({
       password: process.env.FTP_PASS,
       folder: 'PDR'
     },
-    DownloadActivityMock: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'DATA',
-      s3Bucket: '{resources.s3Bucket}'
+    DownloadActivity: {
+      output: {
+        bucket: '{resources.buckets.private}',
+        key_prefix: 'sources/EPSG{meta.epsg}/SIPSTEST/{meta.collection}'
+      }
     },
     ValidateArchives: {
-      s3Bucket: '{resources.s3Bucket}'
+      s3Bucket: '{resources.buckets.private}'
     },
     DeletePdr: {
       host: 'localhost',
@@ -121,13 +118,18 @@ local.setupLocalRun(module.exports.handler, () => ({
     }
   },
   resources: {
-    s3Bucket: 'gitc-jn-sips-mock-downloads'
+    buckets: {
+      private: 'provgateway-deploy'
+    }
   },
   provider: {
     id: 'DUMMY',
     config: {}
   },
-  meta: {},
+  meta: {
+    epsg: 4326,
+    collection: 'VNGCR_LQD_C1'
+  },
   ingest_meta: {
     task: 'DiscoverPdr',
     id: 'abc123',

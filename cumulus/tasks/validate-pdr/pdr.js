@@ -20,7 +20,7 @@ exports.parsePdr = pdr => pvl.pvlToJS(pdr);
  * @param {PVLObject} fileSpec An object containing the FILE_SPEC data
  * @return {Object} An object containing the FILE_SPEC data needed for downloading the archive file
  */
-exports.fileSpecToFileEntry = (fileSpec, host, port, user, pass, s3Bucket) => {
+exports.fileSpecToFileEntry = (fileSpec, host, port, user, pass) => {
   const [directory, fileName, checksumType, checksum, fileType, size] =
     fileSpecFields.map((field) => fileSpec.get(field).value);
   return {
@@ -29,10 +29,7 @@ exports.fileSpecToFileEntry = (fileSpec, host, port, user, pass, s3Bucket) => {
       // TODO url encode this
       url: `ftp://${user}:${pass}@${host}:${port}${directory}/${fileName}.${fileType}`
     },
-    target: {
-      bucket: s3Bucket,
-      key: `${directory}/${fileName}.${fileType}`
-    },
+    target: 'FROM_CONFIG',
     checksumType: checksumType,
     checksum: checksum,
     size: size

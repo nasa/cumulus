@@ -59,7 +59,7 @@ module.exports = class ValidatePdr extends Task {
       const fileSpecs = fileGroup.objects('FILE_SPEC');
       fileSpecs.forEach((fileSpec) => {
         const fileEntry =
-          pdrMod.fileSpecToFileEntry(fileSpec, host, port, user, password, s3Bucket);
+          pdrMod.fileSpecToFileEntry(fileSpec, host, port, user, password);
         fileList.push(fileEntry);
       });
     });
