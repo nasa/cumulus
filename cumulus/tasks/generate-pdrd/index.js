@@ -6,7 +6,7 @@ const Task = require('cumulus-common/task');
 const promisify = require('util.promisify');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
-const pdrMod = require('./pdr');
+const pdrMod = require('./pdrd');
 
 /**
  * Task that generates a PDRD for a failing PDR and uploads it to the SIPS server
@@ -21,7 +21,6 @@ module.exports = class GeneratePdrd extends Task {
    * @return Array An array of archive files to be processed
    */
   async run() {
-
     // Vars needed from config to connect to the SIPS server
     const { protocol, host, port, user, password } = this.config;
 

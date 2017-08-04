@@ -20,7 +20,7 @@ module.exports = class DiscoverPdr extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { protocol, host, port, user, password } = this.config;
+    const { protocol, host, port, user, password, folder } = this.config;
 
     let client;
     if (protocol.toUpperCase() === 'FTP') {
@@ -44,14 +44,14 @@ module.exports = class DiscoverPdr extends Task {
     let pdr;
     try {
       // Get the list of PDRs
-      const list = await pdrMod.getPdrList(client);
+      const list = await pdrMod.getPdrList(client, folder);
       log.info(`PDR LIST: [${list}]`);
       // Get the oldest one
       fileName = list.sort((a, b) => b.date < a.date)[0].name;
       log.info('FILE:');
       log.info(fileName);
       // Get the file contents
-      pdr = await pdrMod.getPdr(client, fileName);
+      pdr = await pdrMod.getPdr(client, folder, fileName);
       log.info('PDR:');
       log.info(pdr);
     }
@@ -98,6 +98,11 @@ local.setupLocalRun(module.exports.handler, () => ({
       user: process.env.FTP_USER,
       password: process.env.FTP_PASS,
       folder: 'PDR'
+    },
+    GeneratePdrFileList: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp'
     },
     DownloadActivity: {
       output: {

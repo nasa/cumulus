@@ -1,12 +1,7 @@
 'use strict';
 
-const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
 const Task = require('cumulus-common/task');
-const FtpClient = require('ftp');
-const SftpClient = require('sftpjs');
 const pdrMod = require('./pdr');
-const pdrValid = require('./pdr-validations');
 
 /**
  * Task that validates a PDR retrieved from a SIPS server
@@ -16,43 +11,34 @@ const pdrValid = require('./pdr-validations');
  * a list of paths to files to be downloaded. The original input pdr is included in the output
  * payload.
  */
-module.exports = class ValidatePdr extends Task {
+module.exports = class GeneratePdrFileList extends Task {
   /**
    * Main task entry point
    * @return Array An array of archive files to be processed
    */
   async run() {
+    // Vars needed from config to connect to the SIPS server
+    const { host, port } = this.config;
     // Message payload contains the PDR
     const message = this.message;
     const { pdrFileName, pdr } = await message.payload;
 
-    // Parse the PDR and do a preliminary validation
-    let pdrObj;
-    let topLevelErrors = [];
-    let fileGroupErrors = [];
 
-    try {
-      pdrObj = pdrMod.parsePdr(pdr);
-
-      // Do a top-level validation
-      const errors = pdrValid.validateTopLevelPdr(pdrObj);
-      topLevelErrors = topLevelErrors.concat(errors);
-
-      // Validate each file group entry
-      const fileGroups = pdrObj.objects('FILE_GROUP');
-      fileGroupErrors = fileGroups.map(pdrValid.validateFileGroup);
-    }
-    catch (e) {
-      log.error(e);
-      log.error(e.stack);
-      topLevelErrors.push('INVALID PVL STATEMENT');
-    }
+    const pdrObj = pdrMod.parsePdr(pdr);
+    const fileGroups = pdrObj.objects('FILE_GROUP');
+    const fileList = [];
+    fileGroups.forEach((fileGroup) => {
+      const fileSpecs = fileGroup.objects('FILE_SPEC');
+      fileSpecs.forEach((fileSpec) => {
+        const fileEntry =
+          pdrMod.fileSpecToFileEntry(fileSpec, host, port);
+        fileList.push(fileEntry);
+      });
+    });
 
     return {
       pdrFileName: pdrFileName,
-      pdr: pdr,
-      topLevelErrors: topLevelErrors,
-      fileGroupErrors: fileGroupErrors
+      fileList: fileList
     };
   }
 
@@ -62,7 +48,7 @@ module.exports = class ValidatePdr extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return ValidatePdr.handle(...args);
+    return GeneratePdrFileList.handle(...args);
   }
 };
 
@@ -74,7 +60,7 @@ local.setupLocalRun(module.exports.handler, () => ({
       s3Bucket: '{resources.s3Bucket}',
       folder: 'PDR'
     },
-    ValidatePdr: {
+    GeneratePdrFileList: {
       s3Bucket: '{resources.s3Bucket}',
 
     }
@@ -88,7 +74,7 @@ local.setupLocalRun(module.exports.handler, () => ({
   },
   meta: {},
   ingest_meta: {
-    task: 'ValidatePdr',
+    task: 'GeneratePdrFileList',
     id: 'abc1234',
     message_source: 'stdin'
   }
