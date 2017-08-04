@@ -37,8 +37,8 @@ module.exports = class GeneratePdrFileList extends Task {
     });
 
     return {
-      pdrFileName: pdrFileName,
-      fileList: fileList
+      pdr_file_name: pdrFileName,
+      files: fileList
     };
   }
 

@@ -1,68 +1,88 @@
 'use strict';
 
 const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
 const Task = require('cumulus-common/task');
+const promisify = require('util.promisify');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
-const pdrMod = require('./pdr');
+const path = require('path');
+const sts = require('string-to-stream');
+const ftp = require('./ftp_util');
 
 /**
  * Task that generates a PAN for a set of files referenced in a PDR
  * Input payload: An array containing entries for each downloaded file
  * Output payload: None
  */
-module.exports = class ProcessPdr extends Task {
+module.exports = class GeneratePan extends Task {
   /**
    * Main task entry point
    * @return Array An array of archive files to be processed
    */
   async run() {
-    // Vars needed from config to connect to the SIPS server (just an S3 bucket for now)
-    const message = this.message;
+    // Vars needed from config to connect to the SIPS server
+    const { protocol, host, port, user, password, folder } = this.config;
+    const payload = await this.message.payload;
+    const pdrFileName = payload.pdr_file_name;
+    const files = payload.files;
 
-    const { s3Bucket } = this.config;
-    log.info('MESSAGE');
-    log.info(message);
-    const  fileStatus = await message.payload;
+    const timeStamp = (new Date()).toISOString().replace(/\.\d\d\dZ/, 'Z');
 
-    // Download the PDR
-    // const pdr = await aws.downloadS3Files([{ Bucket: s3Bucket, Key: s3Key }], '/tmp');
-    const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
-    log.info('PDR');
-    log.info(pdr);
+    const pdrExt = path.extname(pdrFileName);
+    const panExt = pdrExt === 'TGZ' ? 'PAN' : 'pan';
+    const panFileName = `${pdrFileName.substr(0, pdrFileName.length - 4)}.${panExt}`;
 
-    // Parse the PDR and do a preliminary validation
-    let pdrObj;
+    let pan = 'MESSAGE_TYPE = LONGPAN;\n';
+    pan += `NO_OF_FILES = ${files.length};\n`;
+
+    files.forEach(file => {
+      const fileName = file.source.url.substring(file.source.url.lastIndexOf('/') + 1);
+      const filePath = file.source.url.substring(file.source.url.lastIndexOf(':') + 3);
+      const fileDirectory = path.dirname(filePath);
+      pan += `FILE_DIRECTORY = ${fileDirectory};\n`;
+      pan += `FILE_NAME = ${fileName};\n`;
+      let disposition = 'SUCCESSFUL';
+      if (!file.success) {
+        disposition = file.error;
+      }
+      pan += `DISPOSITION = "${disposition}";\n`;
+      pan += `TIME_STAMP = ${timeStamp};\n`;
+    });
+
+    let client;
+    if (protocol.toUpperCase() === 'FTP') {
+      client = new FtpClient();
+    }
+    else {
+      client = new SftpClient();
+    }
+
+    const clientReady = promisify(client.once).bind(client);
+
+    client.connect({
+      host: host,
+      port: port,
+      user: user,
+      password: password
+    });
+
+    await clientReady('ready');
+
     try {
-      pdrObj = pdrMod.parsePdr(pdr);
+      const stream = sts(pan);
+      await ftp.uploadFile(client, folder, panFileName, stream);
     }
     catch (e) {
       log.error(e);
-      return { errors: ['INVALID PVL STATEMENT'] };
+      log.error(e.stack);
+      throw e;
+    }
+    finally {
+      // Close the connection to the SIPS server
+      client.end();
     }
 
-    // Do a top-level validation
-    const topLevelErrors = pdrValid.validateTopLevelPdr(pdrObj);
-    if (topLevelErrors.length > 0) {
-      return { topLevelErrors: topLevelErrors };
-    }
-
-    // Validate each file group entry
-    const fileGroups = pdrObj.object('FILE_GROUP');
-    const fileGroupErrors = fileGroups.map(pdrValid.validateFileGroup);
-    if (fileGroupErrors.some((value) => value.length > 0)) {
-      return { fileGroupErrors: fileGroupErrors };
-    }
-
-    // Get the file list
-    const fileInfo = fileGroups.map((fileGroup) => ({
-
-    }));
-
-    return pdrObj;
-
-    // TODO extension (PAN or pan) must match case of extension of original PDR file name
+    return { pdr_file_name: pdrFileName };
   }
 
   /**
@@ -71,7 +91,7 @@ module.exports = class ProcessPdr extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return ProcessPdr.handle(...args);
+    return GeneratePan.handle(...args);
   }
 };
 
@@ -80,23 +100,69 @@ const local = require('cumulus-common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DiscoverPdr: {
-      s3Bucket: '{resources.s3Bucket}',
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
       folder: 'PDR'
     },
-    ProcessPdr: {
-      s3Bucket: '{resources.s3Bucket}'
+    ValidatePdr: {
+      s3Bucket: '{resources.buckets.private}',
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      folder: 'PDR'
+    },
+    GeneratePdrFileList: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp'
+    },
+    DownloadActivity: {
+      skip_upload_output_payload_to_s3: true,
+      output: {
+        bucket: '{resources.buckets.private}',
+        key_prefix: 'sources/EPSG{meta.epsg}/SIPSTEST/{meta.collection}'
+      }
+    },
+    ValidateArchives: {
+      s3Bucket: '{resources.buckets.private}'
+    },
+    GeneratePan: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      folder: 'PAN'
+    },
+    DeletePdr: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      folder: 'PDR'
     }
   },
   resources: {
-    s3Bucket: 'gitc-jn-sips-mock'
+    buckets: {
+      private: 'provgateway-deploy'
+    }
   },
   provider: {
     id: 'DUMMY',
     config: {}
   },
-  meta: {},
+  meta: {
+    epsg: 4326,
+    collection: 'VNGCR_LQD_C1'
+  },
   ingest_meta: {
-    task: 'ProcessPdr',
+    task: 'GeneratePan',
     id: 'abc123',
     message_source: 'stdin'
   }

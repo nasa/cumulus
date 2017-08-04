@@ -105,6 +105,7 @@ local.setupLocalRun(module.exports.handler, () => ({
       protocol: 'ftp'
     },
     DownloadActivity: {
+      skip_upload_output_payload_to_s3: true,
       output: {
         bucket: '{resources.buckets.private}',
         key_prefix: 'sources/EPSG{meta.epsg}/SIPSTEST/{meta.collection}'
@@ -112,6 +113,14 @@ local.setupLocalRun(module.exports.handler, () => ({
     },
     ValidateArchives: {
       s3Bucket: '{resources.buckets.private}'
+    },
+    GeneratePan: {
+      host: 'localhost',
+      port: 21,
+      protocol: 'ftp',
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      folder: 'PAN'
     },
     DeletePdr: {
       host: 'localhost',
