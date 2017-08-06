@@ -8,6 +8,7 @@ const SftpClient = require('sftpjs');
 const path = require('path');
 const sts = require('string-to-stream');
 const ftp = require('./ftp_util');
+const pan = require('./pan');
 
 /**
  * Task that generates a PAN for a set of files referenced in a PDR
@@ -25,29 +26,14 @@ module.exports = class GeneratePan extends Task {
     const payload = await this.message.payload;
     const pdrFileName = payload.pdr_file_name;
     const files = payload.files;
-
     const timeStamp = (new Date()).toISOString().replace(/\.\d\d\dZ/, 'Z');
 
     const pdrExt = path.extname(pdrFileName);
-    const panExt = pdrExt === 'TGZ' ? 'PAN' : 'pan';
+    log.info(`EXT: ${pdrExt}`);
+    const panExt = pdrExt === '.PDR' ? 'PAN' : 'pan';
     const panFileName = `${pdrFileName.substr(0, pdrFileName.length - 4)}.${panExt}`;
 
-    let pan = 'MESSAGE_TYPE = LONGPAN;\n';
-    pan += `NO_OF_FILES = ${files.length};\n`;
-
-    files.forEach(file => {
-      const fileName = file.source.url.substring(file.source.url.lastIndexOf('/') + 1);
-      const filePath = file.source.url.substring(file.source.url.lastIndexOf(':') + 3);
-      const fileDirectory = path.dirname(filePath);
-      pan += `FILE_DIRECTORY = ${fileDirectory};\n`;
-      pan += `FILE_NAME = ${fileName};\n`;
-      let disposition = 'SUCCESSFUL';
-      if (!file.success) {
-        disposition = file.error;
-      }
-      pan += `DISPOSITION = "${disposition}";\n`;
-      pan += `TIME_STAMP = ${timeStamp};\n`;
-    });
+    const panStr = pan.generatePan(files, timeStamp);
 
     let client;
     if (protocol.toUpperCase() === 'FTP') {
@@ -69,7 +55,7 @@ module.exports = class GeneratePan extends Task {
     await clientReady('ready');
 
     try {
-      const stream = sts(pan);
+      const stream = sts(panStr);
       await ftp.uploadFile(client, folder, panFileName, stream);
     }
     catch (e) {

@@ -1,7 +1,7 @@
 {
-  "name": "process-pdr",
+  "name": "generate-pdrd",
   "version": "0.0.1",
-  "description": "SIPS handler PDR processing task",
+  "description": "SIPS handler generating a PDRD when PDR validation fails",
   "main": "index.js",
   "scripts": {
     "test": "npm test"
