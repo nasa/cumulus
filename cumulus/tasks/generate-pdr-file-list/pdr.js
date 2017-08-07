@@ -28,11 +28,11 @@ exports.fileSpecToFileEntry = (fileSpec, host, port) => {
     type: 'download',
     source: {
       // TODO url encode this
-      url: `ftp://${host}:${port}${directory}/${fileName}.${fileType}`
+      url: `ftp://${host}:${port}${directory}/${fileName}.${fileType}`,
+      checksumType: checksumType,
+      checksum: checksum,
+      size: size
     },
     target: 'FROM_CONFIG',
-    checksumType: checksumType,
-    checksum: checksum,
-    size: size
   };
 };

@@ -3,10 +3,13 @@
 const log = require('cumulus-common/log');
 const aws = require('cumulus-common/aws');
 const Task = require('cumulus-common/task');
+const path = require('path');
 const promisify = require('util.promisify');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
-const pdrMod = require('./pdrd');
+const sts = require('string-to-stream');
+const ftp = require('./ftp_util');
+const pdrdMod = require('./pdrd');
 
 /**
  * Task that generates a PDRD for a failing PDR and uploads it to the SIPS server
@@ -22,14 +25,17 @@ module.exports = class GeneratePdrd extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { protocol, host, port, user, password } = this.config;
+    const { protocol, host, port, user, password, folder } = this.config;
 
     // Message contains the status of the PDR
-    const message = this.message;
     const payload = await this.message.payload;
-
-    const topLevelErrors = payLoad.topLevelErrors;
-    const fileGroupErrors = payLoad.fileGroupErrors;
+    const pdrFileName = payload.pdr_file_name;
+    const topLevelErrors = payload.top_level_errors;
+    const fileGroupErrors = payload.file_group_errors;
+    const pdrExt = path.extname(pdrFileName);
+    const pdrdExt = pdrExt === '.PDR' ? 'PDRD' : 'pdrd';
+    const pdrdFileName = `${pdrFileName.substr(0, pdrFileName.length - 4)}.${pdrdExt}`;
+    const pdrdStr = pdrdMod.generatePdrd(topLevelErrors, fileGroupErrors);
 
     let client;
     if (protocol.toUpperCase() === 'FTP') {
@@ -50,9 +56,21 @@ module.exports = class GeneratePdrd extends Task {
 
     await clientReady('ready');
 
-    // TODO extension (PDRD or pdrd) must match case of extension of original PDR file name
+    try {
+      const stream = sts(pdrdStr);
+      await ftp.uploadFile(client, folder, pdrdFileName, stream);
+    }
+    catch (e) {
+      log.error(e);
+      log.error(e.stack);
+      throw e;
+    }
+    finally {
+      // Close the connection to the SIPS server
+      client.end();
+    }
 
-    return [];
+    return { pdrd_file_name: pdrdFileName };
   }
 
   /**

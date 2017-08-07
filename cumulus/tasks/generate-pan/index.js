@@ -29,7 +29,6 @@ module.exports = class GeneratePan extends Task {
     const timeStamp = (new Date()).toISOString().replace(/\.\d\d\dZ/, 'Z');
 
     const pdrExt = path.extname(pdrFileName);
-    log.info(`EXT: ${pdrExt}`);
     const panExt = pdrExt === '.PDR' ? 'PAN' : 'pan';
     const panFileName = `${pdrFileName.substr(0, pdrFileName.length - 4)}.${panExt}`;
 

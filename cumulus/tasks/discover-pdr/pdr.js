@@ -30,5 +30,5 @@ exports.getPdr = async (client, folder, fileName) => {
   stream.setEncoding('utf8');
   const streamPromise = thenable(stream);
   const pdr = await streamPromise;
-  return { pdrFileName: fileName, pdr: pdr.toString() };
+  return { pdr_file_name: fileName, pdr: pdr.toString() };
 };

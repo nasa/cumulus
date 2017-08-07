@@ -24,7 +24,9 @@ module.exports = class ValidatePdr extends Task {
   async run() {
     // Message payload contains the PDR
     const message = this.message;
-    const { pdrFileName, pdr } = await message.payload;
+    const payload = await message.payload;
+    const pdrFileName = payload.pdr_file_name;
+    const pdr = payload.pdr;
 
     // Parse the PDR and do a preliminary validation
     let pdrObj;
@@ -48,11 +50,17 @@ module.exports = class ValidatePdr extends Task {
       topLevelErrors.push('INVALID PVL STATEMENT');
     }
 
+    let status = 'OK';
+    if (topLevelErrors.length > 0 || fileGroupErrors.length > 0) {
+      status = 'ERROR';
+    }
+
     return {
-      pdrFileName: pdrFileName,
+      pdr_file_name: pdrFileName,
       pdr: pdr,
-      topLevelErrors: topLevelErrors,
-      fileGroupErrors: fileGroupErrors
+      status: status,
+      top_level_errors: topLevelErrors,
+      file_group_errors: fileGroupErrors
     };
   }
 
@@ -71,12 +79,9 @@ const local = require('cumulus-common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DiscoverPdr: {
-      s3Bucket: '{resources.s3Bucket}',
       folder: 'PDR'
     },
     ValidatePdr: {
-      s3Bucket: '{resources.s3Bucket}',
-
     }
   },
   resources: {

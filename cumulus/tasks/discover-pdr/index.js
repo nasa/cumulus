@@ -91,7 +91,6 @@ local.setupLocalRun(module.exports.handler, () => ({
       folder: 'PDR'
     },
     ValidatePdr: {
-      s3Bucket: '{resources.buckets.private}',
       host: 'localhost',
       port: 21,
       protocol: 'ftp',

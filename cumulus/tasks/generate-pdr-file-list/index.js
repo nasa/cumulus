@@ -21,8 +21,9 @@ module.exports = class GeneratePdrFileList extends Task {
     const { host, port } = this.config;
     // Message payload contains the PDR
     const message = this.message;
-    const { pdrFileName, pdr } = await message.payload;
-
+    const payload = await message.payload;
+    const pdr = payload.pdr;
+    const pdrFileName = payload.pdr_file_name;
 
     const pdrObj = pdrMod.parsePdr(pdr);
     const fileGroups = pdrObj.objects('FILE_GROUP');
