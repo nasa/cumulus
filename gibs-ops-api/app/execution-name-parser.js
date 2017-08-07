@@ -1,6 +1,6 @@
 'use strict';
 
-const { fromSfnExecutionName } = require('cumulus-common/aws');
+const { fromSfnExecutionName } = require('@cumulus/common/aws');
 
 module.exports = {
 
