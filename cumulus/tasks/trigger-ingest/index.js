@@ -1,8 +1,8 @@
 'use strict';
 
-const Task = require('@cumulus/common/task');
-const aws = require('@cumulus/common/aws');
-const log = require('@cumulus/common/log');
+const Task = require('cumulus-common/task');
+const aws = require('cumulus-common/aws');
+const log = require('cumulus-common/log');
 
 /**
  * Task which triggers ingest of discovered granules. Starts a state machine execution
@@ -85,7 +85,7 @@ module.exports = class TriggerIngestTask extends Task {
   }
 };
 
-const local = require('@cumulus/common/local-helpers');
+const local = require('cumulus-common/local-helpers');
 local.setupLocalRun(
   module.exports.handler,
   () => ({ ingest_meta: { message_source: 'stdin', task: 'TriggerIngest' } })
