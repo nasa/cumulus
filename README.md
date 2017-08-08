@@ -2,19 +2,31 @@
 
 ## Installing and deploying
 
-### Prerequisites
+### Install Lerna
 
-* node.js >= 4.3 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm)
-* AWS CLI (http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
-* Ruby
-* BASH
-* Docker (only required for building new container images)
+We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
 
-Install the correct node version:
+    $ npm install -g lerna
 
-```
-nvm install 4.3
-```
+### Install Local Dependencies
+
+We use Yarn for local package management
+
+    $ yarn install
+    $ lerna bootstrap
+
+## Running Tests
+
+Turn on the docker containers first:
+
+    $ docker-compose up local
+
+Run the test commands next
+
+    $ lerna run test
+
+
+### AWS
 
 Ensure that the aws cli is configured and that the default output format is either JSON or None:
 
@@ -22,11 +34,21 @@ Ensure that the aws cli is configured and that the default output format is eith
 aws configure
 ```
 
-### Deployment
+## Adding New Packages
 
-Deploy a new stack into AWS
-```
-$ bin/deploy my-stack-name
-```
+Create a new folder under `packages` if it is a common library or create folder under `cumulus/tasks` if it is a lambda task. `cd` to the folder and run `npm init`.
 
-See `bin/deploy --help` for information about the multitude of deployment options
+Make sure to name the package as `@cumulus/package-name`.
+
+## Publishing to NPM
+
+    $ lerna publish
+
+## Running command in all package folders
+
+    $ lerna exec -- rm -rf ./package-lock.json
+
+## Cleaning Up all the repos
+
+    $ lerna clean
+
