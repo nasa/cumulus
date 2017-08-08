@@ -1,0 +1,21 @@
+{
+  "name": "@cumulus/sf-sns-broadcast",
+  "version": "1.0.0",
+  "description": "Posts Step Functions payload to a SNS topic",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "scripts": {
+    "test": "echo 'no tests'"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "lodash.get": "^4.4.2"
+  }
+}
