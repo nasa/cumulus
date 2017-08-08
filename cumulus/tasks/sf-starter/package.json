@@ -1,0 +1,22 @@
+{
+  "name": "@cumulus/sf-starter",
+  "version": "1.0.0",
+  "description": "Execute step functions from a given SQS Queue",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "scripts": {
+    "test": "echo 'no tests'"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "lodash.get": "^4.4.2",
+    "@cumulus/common": "^1.0.0"
+  }
+}

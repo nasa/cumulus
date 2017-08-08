@@ -1,0 +1,17 @@
+{
+  "name": "@cumulus/test-data",
+  "version": "1.0.0",
+  "description": "Includes the test data for various packages",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\""
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+  }
+}
