@@ -1,0 +1,26 @@
+{
+  "name": "@cumulus/cmrjs",
+  "version": "1.0.0",
+  "description": "A node SDK for CMR",
+  "scripts": {
+    "test": "echo 'no tests'"
+  },
+  "keywords": [
+    "CUMULUS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/common": "^1.0.0",
+    "got": "^7.1.0",
+    "lodash.property": "^4.4.2",
+    "public-ip": "^2.3.5",
+    "xml2js": "^0.4.17"
+  },
+  "devDependencies": {
+  }
+}
