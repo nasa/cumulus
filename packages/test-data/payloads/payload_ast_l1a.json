@@ -1,6 +1,16 @@
 {
   "eventSource": "sfn",
-  "ingest_meta": {},
+  "ingest_meta": {
+    "config": {
+      "cmr": {
+        "enryptionKey": "s3://internal-bucket/key.pem",
+        "username": "username",
+        "password": "password",
+        "provider": "CUMULUS",
+        "clientId": "CUMULUS"
+      }
+    }
+  },
   "workflow_config_template": {},
   "resources": {
     "stack": "cumulus-generic-test",
@@ -18,29 +28,14 @@
     }
   },
   "collection": {
-    "id": "AST_L1A",
-    "trigger": {
-      "type": "timer",
-      "period_s": 1800
-    },
-    "stateConfig": {
-      "download": {},
-      "process": {},
-      "archive": {},
-      "cmr": {
-        "enryptionKey": "s3://internal-bucket/key.pem",
-        "username": "username",
-        "password": "password",
-        "cmrProvider": "CUMULUS"
-      }
-    },
-    "provider": {
-      "id": "MODAPS",
-      "globalConnectionLimit": 10,
-      "protocol": "http",
-      "host": "https://e4ftl01.cr.usgs.gov:40521",
-      "path": "TEST_B/Cumulus/PDR/TEST_CASES"
-    }
+    "id": "AST_L1A"
+  },
+  "provider": {
+    "id": "MODAPS",
+    "globalConnectionLimit": 10,
+    "protocol": "http",
+    "host": "https://e4ftl01.cr.usgs.gov:40521",
+    "path": "TEST_B/Cumulus/PDR/TEST_CASES"
   },
   "meta": {
     "pdrName": "PDN.ID1611071307",
