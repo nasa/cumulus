@@ -51,3 +51,34 @@ module.exports = {
   // otherwise used
   RemoteResourceError: createErrorType('RemoteResourceError')
 };
+
+/**
+ * The error object for when the xml file path is not provided
+ * @class
+ */
+module.exports.XmlMetaFileNotFound = createErrorType('XmlMetaFileNotFound');
+
+/**
+ * The provider info is missing error
+ * @class
+ */
+module.exports.ProviderNotFound = createErrorType('ProviderNotFound');
+
+/**
+ * The FTPError
+ * @class
+ */
+module.exports.FTPError = createErrorType('FTPError');
+
+/**
+ * The PDR Parsing Error
+ * @class
+ */
+module.exports.PDRParsingError = createErrorType('PDRParsingError');
+
+/**
+ * Connection Timeout
+ * @class
+ */
+module.exports.ConnectionTimeout = createErrorType('ConnectionTimeout');
+
