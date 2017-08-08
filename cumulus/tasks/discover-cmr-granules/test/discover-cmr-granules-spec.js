@@ -1,6 +1,6 @@
 'use strict';
 const expect = require('expect.js');
-const helpers = require('@cumulus/common/test-helpers');
+const helpers = require('cumulus-common/test-helpers');
 const DiscoverCmrGranulesTask = require('../index');
 
 xdescribe('discover-cmr-granules.handler', () => {

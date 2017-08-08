@@ -8,7 +8,7 @@
 const { stepFunctions, ecs } = require('./aws');
 const { handleError } = require('./api-errors');
 const collConfig = require('./collection-config');
-const sf = require('@cumulus/common/step-functions');
+const sf = require('cumulus-common/step-functions');
 const { Set } = require('immutable');
 const { getIngestStackResources, getPhysicalResourceId } = require('./stack-resources');
 const ExecutionIndexer = require('./execution-indexer');
