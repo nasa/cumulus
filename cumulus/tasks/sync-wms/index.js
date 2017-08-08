@@ -1,6 +1,6 @@
 'use strict';
 
-const Task = require('@cumulus/common/task');
+const Task = require('cumulus-common/task');
 
 /**
  * Transforms input WMS endpoint information (GetMap URL and filename) to output

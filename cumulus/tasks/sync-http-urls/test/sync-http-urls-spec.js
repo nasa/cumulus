@@ -5,9 +5,9 @@ const expect = require('expect.js');
 const https = require('https');
 const path = require('path');
 
-const helpers = require('@cumulus/common/test-helpers');
-const aws = require('@cumulus/common/aws');
-const Task = require('@cumulus/common/task');
+const helpers = require('cumulus-common/test-helpers');
+const aws = require('cumulus-common/aws');
+const Task = require('cumulus-common/task');
 
 const SyncHttpUrlsTask = require('../index');
 
