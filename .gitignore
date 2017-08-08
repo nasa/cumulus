@@ -9,4 +9,3 @@ cache-invalidation/config/runtime_config.json
 artifacts
 packaged-*
 .vscode
-*-debug.log

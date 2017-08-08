@@ -57,10 +57,10 @@
       "from": "ieee754@>=1.1.4 <2.0.0",
       "resolved": "https://registry.npmjs.org/ieee754/-/ieee754-1.1.8.tgz"
     },
-    "@cumulus/common": {
-      "version": "1.0.0",
-      "from": "@cumulus/common@>=1.0.0 < 2.0.0",
-      "resolved": "file:../../../packages/common"
+    "cumulus-common": {
+      "version": "0.0.0",
+      "from": "file:../../../cumulus-common",
+      "resolved": "file:../../../cumulus-common"
     },
     "jmespath": {
       "version": "0.15.0",
