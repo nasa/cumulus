@@ -1,4 +1,4 @@
-# Cumulus Framework
+# GIBS-in-the-Cloud Prototype
 
 ## Installing and deploying
 
