@@ -8,4 +8,3 @@ config/authorized_keys
 cache-invalidation/config/runtime_config.json
 artifacts
 packaged-*
-*-debug.log
