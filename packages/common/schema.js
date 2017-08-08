@@ -1,20 +1,12 @@
 // Contains helper functions for validating JSON against some of the ingest schemas.
 
-const fs = require('fs');
 const Ajv = require('ajv');
 const ajv = new Ajv();
+const commonSchema = require('@cumulus/test-data/schemas/ingest_common_schema.json');
+const collectionSchema = require('@cumulus/test-data/schemas/collections_config_schema.json');
+const messageSchema = require('@cumulus/test-data/schemas/message_schema.json');
+
 const local = require('./local-helpers');
-
-const readSchema = (name) => {
-  const location = `${local.fileRoot()}/docs/schemas/${name}`;
-  const contents = fs.readFileSync(location, 'UTF-8');
-  return JSON.parse(contents);
-};
-
-const commonSchema = readSchema('ingest_common_schema.json');
-const collectionSchema = readSchema('collections_config_schema.json');
-const messageSchema = readSchema('message_schema.json');
-
 const compiledCommon = ajv.compile(commonSchema);
 
 /**
