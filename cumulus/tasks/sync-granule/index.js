@@ -2,8 +2,8 @@
 
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
-const lock = require('@cumulus/common/ingest/lock');
-const granule = require('@cumulus/common/ingest/granule');
+const lock = require('@cumulus/ingest/lock');
+const granule = require('@cumulus/ingest/granule');
 
 async function download(buckets, provider, g, collections) {
   let IngestClass;
@@ -71,3 +71,4 @@ module.exports.handler = function handler(_event, context, cb) {
     return cb(null, event);
   }).catch(e => cb(e));
 };
+
