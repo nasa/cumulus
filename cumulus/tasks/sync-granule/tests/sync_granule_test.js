@@ -5,21 +5,25 @@ const proxyquire = require('proxyquire');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/payload_ast_l1a.json');
 
-const granule = proxyquire('@cumulus/common/ingest/granule', {
-  '../aws': {
+const granule = proxyquire('@cumulus/ingest/granule', {
+  '@cumulus/common/aws': {
     uploadS3Files: () => 's3://test-bucket/file'
   }
 });
 
 const handler = proxyquire('../index', {
-  '@cumulus/common/ingest/granule': {
+  '@cumulus/ingest/granule': {
     HttpGranule: granule.HttpGranule
+  },
+  '@cumulus/ingest/lock': {
+    proceed: () => true,
+    removeLock: () => true
   }
 }).handler;
 
 test.cb('error when provider info is missing', (t) => {
   const newPayload = Object.assign({}, payload);
-  delete newPayload.collection.provider;
+  delete newPayload.provider;
   handler(newPayload, {}, (e) => {
     t.true(e instanceof errors.ProviderNotFound);
     t.end();
@@ -37,7 +41,7 @@ test.cb('download Granule from FTP endpoint', (t) => {
   };
 
   const newPayload = Object.assign({}, payload);
-  newPayload.collection.provider = provider;
+  newPayload.provider = provider;
   newPayload.payload = {
     pdrName: 'mypdr.pdr',
     granules: [{
@@ -78,7 +82,7 @@ test.cb('download Granule from HTTP endpoint', (t) => {
   };
 
   const newPayload = Object.assign({}, payload);
-  newPayload.collection.provider = provider;
+  newPayload.provider = provider;
   newPayload.payload = {
     pdrName: 'mypdr.pdr',
     granules: [{
