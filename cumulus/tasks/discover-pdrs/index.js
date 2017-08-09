@@ -31,14 +31,13 @@ function handler(_event, context, cb) {
     event.payload.pdrs = pdrs;
     return cb(null, event);
   }).catch(e => {
-    if (e.details.status === 'timeout') {
+    if (e.details && e.details.status === 'timeout') {
       cb(new errors.ConnectionTimeout('connection Timed out'));
     }
-    else if (e.details.status === 'notfound') {
+    else if (e.details && e.details.status === 'notfound') {
       cb(new errors.HostNotFound(`${e.details.url} not found`));
     }
     else {
-      console.log(e);
       cb(e);
     }
   });
