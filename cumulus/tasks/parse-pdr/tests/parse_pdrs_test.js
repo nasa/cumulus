@@ -19,7 +19,7 @@ const handler = proxyquire('../index', {
 
 test.cb('error when provider info is missing', (t) => {
   const newPayload = Object.assign({}, payload);
-  delete newPayload.collection.provider;
+  delete newPayload.provider;
   handler(newPayload, {}, (e) => {
     t.true(e instanceof errors.ProviderNotFound);
     t.end();
