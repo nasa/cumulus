@@ -5,7 +5,7 @@ import url from 'url';
 import get from 'lodash.get';
 import log from '@cumulus/common/log';
 import { createErrorType } from '@cumulus/common/errors';
-import { S3 } from '@cumulus/common/aws-helpers';
+import { S3 } from '@cumulus/ingest/aws';
 
 /**
  * The error object for when payload files are not provided

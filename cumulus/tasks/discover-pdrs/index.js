@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const ProviderNotFound = require('@cumulus/common/errors').ProviderNotFound;
-const pdr = require('@cumulus/common/ingest/pdr');
+const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
 
 function handler(_event, context, cb) {
