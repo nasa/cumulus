@@ -5,7 +5,7 @@ import path from 'path';
 import sinon from 'sinon';
 import { ProviderNotFound, FTPError } from '@cumulus/common/errors';
 import payload from '@cumulus/test-data/payloads/payload_ast_l1a.json';
-import { S3 } from '@cumulus/common/aws-helpers';
+import { S3 } from '@cumulus/ingest/aws';
 import { handler } from '../index';
 
 test.cb('error when provider info is missing', (t) => {

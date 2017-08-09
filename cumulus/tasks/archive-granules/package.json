@@ -17,6 +17,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "^1.0.0",
+    "@cumulus/ingest": "^1.0.0",
     "lodash.get": "^4.4.2"
   }
 }

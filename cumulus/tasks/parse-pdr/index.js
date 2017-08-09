@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
-const pdr = require('@cumulus/common/ingest/pdr');
+const pdr = require('@cumulus/ingest/pdr');
 
 module.exports.handler = function handler(_event, context, cb) {
   let parse;

@@ -76,10 +76,7 @@ module.exports.httpMixin = superclass => class extends superclass {
           details: err
         };
 
-        // flag the provider
-        this._setProviderError(e)
-          .then(() => reject(e))
-          .catch(error => reject(error));
+        return reject(e);
       });
 
       c.start();

@@ -2,8 +2,8 @@
 
 const get = require('lodash.get');
 const AWS = require('aws-sdk');
-const aws = require('@cumulus/common/aws-helpers');
-const consumer = require('@cumulus/common/consumer');
+const aws = require('@cumulus/ingest/aws');
+const consumer = require('@cumulus/ingest/consumer');
 
 async function dispatch(message) {
   const sfPayload = message.Body;

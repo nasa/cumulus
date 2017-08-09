@@ -4,7 +4,7 @@
   "description": "Parse and serialize Parameter Value Language, a data markup language used by NASA",
   "main": "index.js",
   "scripts": {
-    "test": "ava"
+    "test": "ava test/*.js --serial"
   },
   "keywords": [
     "odl",
