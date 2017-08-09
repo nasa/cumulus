@@ -57,7 +57,7 @@ exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
   const configPath = `${fileRoot()}/cumulus-common/test/config/test-collections.yml`;
   log.info(`CONFIG PATH: ${configPath}`);
   const configStr =
-    fs.readFileSync(`${fileRoot()}/cumulus-common/test/config/test-collections.yml`).toString();
+    fs.readFileSync(configPath).toString();
   const config = configUtil.parseConfig(configStr, (resource) => resource);
 
   const collection = findById(config.collections, id);
