@@ -2,10 +2,10 @@
 
 import test from 'ava';
 import sinon from 'sinon';
-import { S3 } from 'cumulus-common/aws-helpers';
-import cmrjs from 'cumulus-common/cmrjs';
+import { S3 } from '@cumulus/ingest/aws';
+import cmrjs from '@cumulus/cmrjs';
+import payload from '@cumulus/test-data/payloads/payload_ast_l1a.json';
 import { handler } from '../index';
-import payload from '../../../test_data/payloads/payload_ast_l1a.json';
 
 const result = {
   'concept-id': 'testingtesging'
@@ -16,14 +16,24 @@ const collectionName = 'AST_L1A';
 
 test.before(() => {
   sinon.stub(S3, 'get').callsFake(() => ({ Body: '<xml></xml>' }));
-  sinon.stub(cmrjs, 'ingestGranule').callsFake(() => ({
-    result
-  }));
 });
 
-test.cb('should succeed with correct payload', (t) => {
-  t.is(payload.meta.granules[granuleId].published, false);
-  handler(payload, {}, (e, r) => {
+test.cb.serial('should succeed if cmr correctly identifies the xml as invalid', (t) => {
+  const newPayload = Object.assign({}, payload);
+  t.is(newPayload.meta.granules[granuleId].published, false);
+  handler(newPayload, {}, (e) => {
+    t.true(e instanceof cmrjs.ValidationError);
+    t.end();
+  });
+});
+
+test.cb.serial('should succeed with correct payload', (t) => {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  t.is(newPayload.meta.granules[granuleId].published, false);
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+  handler(newPayload, {}, (e, r) => {
     t.is(e, null);
     t.is(
       r.meta.granules[granuleId].cmrLink,
@@ -31,11 +41,13 @@ test.cb('should succeed with correct payload', (t) => {
     );
     t.is(r.meta.granules[granuleId].published, true);
     t.end(e);
+    cmrjs.CMR.prototype.ingestGranule.restore();
   });
 });
 
-test.cb('Should skip cmr step if the metadata file uri is missing', (t) => {
+test.cb.serial('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = Object.assign({}, payload);
+  newPayload.meta.granules[granuleId].published = false;
   t.is(newPayload.meta.granules[granuleId].published, false);
   newPayload.payload.output[collectionName].granules[0].files['meta-xml'] = null;
   handler(newPayload, {}, (e, r) => {
@@ -51,5 +63,4 @@ test.cb('Should skip cmr step if the metadata file uri is missing', (t) => {
 
 test.after(() => {
   S3.get.restore();
-  cmrjs.ingestGranule.restore();
 });
