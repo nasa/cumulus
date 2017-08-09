@@ -82,3 +82,9 @@ module.exports.PDRParsingError = createErrorType('PDRParsingError');
  */
 module.exports.ConnectionTimeout = createErrorType('ConnectionTimeout');
 
+/**
+ * Connection Timeout
+ * @class
+ */
+module.exports.HostNotFound = createErrorType('HostNotFound');
+
