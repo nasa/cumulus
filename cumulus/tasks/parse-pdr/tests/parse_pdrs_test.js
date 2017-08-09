@@ -5,8 +5,8 @@ const proxyquire = require('proxyquire');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/payload_ast_l1a.json');
 
-const pdr = proxyquire('@cumulus/common/ingest/pdr', {
-  '../aws': {
+const pdr = proxyquire('@cumulus/ingest/pdr', {
+  '@cumulus/common/aws': {
     uploadS3Files: () => 's3://test-bucket/file'
   }
 });
@@ -39,7 +39,7 @@ test.cb('parse PDR from FTP endpoint', (t) => {
   const pdrName = 'PDN.ID1611071307.PDR';
 
   const newPayload = Object.assign({}, payload);
-  newPayload.collection.provider = provider;
+  newPayload.provider = provider;
   newPayload.payload = { pdrName, pdrPath: '/pdrs' };
   handler(newPayload, {}, (e, r) => {
     t.is(r.payload.granules.length, r.payload.granulesCount);
@@ -64,7 +64,7 @@ test.cb('parse PDR from HTTP endpoint', (t) => {
   const pdrName = 'PDN.ID1611081200.PDR';
 
   const newPayload = Object.assign({}, payload);
-  newPayload.collection.provider = provider;
+  newPayload.provider = provider;
   newPayload.payload = {
     pdrName,
     pdrPath: '/pdrs'

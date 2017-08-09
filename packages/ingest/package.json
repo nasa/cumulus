@@ -28,5 +28,6 @@
     "url-join": "^1.0.0"
   },
   "devDependencies": {
+    "json-loader": "^0.5.4"
   }
 }

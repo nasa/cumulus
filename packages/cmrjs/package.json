@@ -22,5 +22,6 @@
     "xml2js": "^0.4.17"
   },
   "devDependencies": {
+    "json-loader": "^0.5.4"
   }
 }

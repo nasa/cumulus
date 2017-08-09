@@ -12,7 +12,6 @@
     "mocha": "mocha-webpack --require babel-polyfill --webpack-config webpack.config-test.js test/**/*spec.js",
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
     "lint": "eslint app test",
-    "test": "npm run lint && npm run mocha",
     "test-ci": "npm run lint && npm run mocha-junit"
   },
   "dependencies": {

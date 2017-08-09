@@ -5,7 +5,7 @@ const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
 
-async function download(buckets, provider, g, collections) {
+async function download(buckets, provider, g, collections) {P
   let IngestClass;
   const granuleId = g.granuleId;
   const proceed = await lock.proceed(buckets.internal, provider, granuleId);
