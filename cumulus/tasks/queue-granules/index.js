@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
-const aws = require('@cumulus/common/aws-helpers');
+const aws = require('@cumulus/ingest/aws');
 
 function handler(_event, context, cb) {
   // for each Granule, generate a new SF messages
@@ -36,7 +36,6 @@ function handler(_event, context, cb) {
         },
         output: {}
       };
-
 
       message.ingest_meta.execution_name = `${granule.collectionName}__GRANULE__${granule.granuleId}__${Date.now()}`;
 
