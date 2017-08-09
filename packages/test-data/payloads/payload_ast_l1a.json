@@ -52,6 +52,7 @@
         "version": "003",
         "granuleId": "^1A[\\d]{4}-[\\d]{10}_[\\d]{3}_[\\d]{3}$",
         "sampleFileName": "pg-PR1A0000-2016121001_001_011",
+        "cmrFile": "meta-xml",
         "granuleIdExtraction": "^pg-[P|B]R(1A.*)$",
         "files": {
           "origin-hdf5": {

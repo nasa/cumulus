@@ -2,6 +2,27 @@ import got from 'got';
 import publicIp from 'public-ip';
 import xml2js from 'xml2js';
 
+/**
+ * Creates a new error type with the given name and parent class. Sets up
+ * boilerplate necessary to successfully subclass Error and preserve stack trace
+ * @param {string} name - The name of the error type
+ * @param {Error} parentType - The error that serves as the parent
+ * @return - The new type
+ */
+
+const createErrorType = (name, ParentType = Error) => {
+  function E(message) {
+    Error.captureStackTrace(this, this.constructor);
+    this.message = message;
+  }
+  E.prototype = new ParentType();
+  E.prototype.name = name;
+  E.prototype.constructor = E;
+  return E;
+};
+
+export const ValidationError = createErrorType('ValidationError');
+
 function getHost() {
   const env = process.env.CMR_ENVIRONMENT;
   let host;
@@ -62,17 +83,22 @@ export function getUrl(type, cmrProvider) {
 }
 
 
-export async function validate(type, xml, identifier, token) {
-  const result = await got.post(`${getUrl('validate')}${type}/${identifier}`, {
-    body: xml,
-    headers: {
-      'Echo-Token': token,
-      'Content-type': 'application/echo10+xml'
-    }
-  });
+export async function validate(type, xml, identifier, provider) {
+  let result;
+  try {
+    result = await got.post(`${getUrl('validate', provider)}${type}/${identifier}`, {
+      body: xml,
+      headers: {
+        'Content-type': 'application/echo10+xml'
+      }
+    });
 
-  if (result.statusCode === 200) {
-    return true;
+    if (result.statusCode === 200) {
+      return true;
+    }
+  }
+  catch (e) {
+    result = e.response;
   }
 
   const parsed = await new Promise((resolve, reject) => {
@@ -82,7 +108,7 @@ export async function validate(type, xml, identifier, token) {
     });
   });
 
-  throw new Error(
+  throw new ValidationError(
     `Validation was not successful, CMR error message: ${JSON.stringify(parsed.errors.error)}`
   );
 }
