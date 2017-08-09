@@ -2,9 +2,10 @@ import fs from 'fs';
 import got from 'got';
 import property from 'lodash.property';
 import { parseString } from 'xml2js';
-import log from '@cumulus/common/log';
+//import log from '@cumulus/common/log';
 import {
   validate,
+  ValidationError,
   updateToken,
   getUrl,
   xmlParseOptions
@@ -16,7 +17,6 @@ const logDetails = {
   source: 'pushToCMR',
   type: 'processing'
 };
-
 
 async function searchConcept(type, searchParams, existingResults) {
   const limit = process.env.CMR_LIMIT || 100;
@@ -49,7 +49,7 @@ async function searchConcept(type, searchParams, existingResults) {
     });
   });
 
-  existingResults = existingResults.concat(str.results.references.reference || []);
+  const _existingResults = existingResults.concat(str.results.references.reference || []);
 
   const servedSoFar = (
     ((qs.page_num - 1) * qs.page_size) +
@@ -57,24 +57,13 @@ async function searchConcept(type, searchParams, existingResults) {
   );
   const isThereAnotherPage = str.results.hits > servedSoFar;
   if (isThereAnotherPage && servedSoFar < limit) {
-    return searchConcept(type, qs, existingResults);
+    return searchConcept(type, qs, _existingResults);
   }
 
-  return existingResults.slice(0, limit);
+  return _existingResults.slice(0, limit);
 }
 
-
-async function searchCollections(searchParams) {
-  return searchConcept('collection', searchParams, []);
-}
-
-
-async function searchGranules(searchParams) {
-  return searchConcept('granule', searchParams, []);
-}
-
-
-async function ingestConcept(type, xml, identifierPath, cmrProvider) {
+async function ingestConcept(type, xml, identifierPath, provider, token) {
   // Accept either an XML file, or an XML string itself
   let xmlString = xml;
   if (fs.existsSync(xml)) {
@@ -88,19 +77,17 @@ async function ingestConcept(type, xml, identifierPath, cmrProvider) {
     });
   });
 
-  log.debug('XML object parsed', logDetails);
+  //log.debug('XML object parsed', logDetails);
   const identifier = property(identifierPath)(xmlObject);
-  const token = await updateToken(cmrProvider, cmrProvider);
-
   logDetails.granuleId = identifier;
 
   try {
-    await validate(type, xmlString, identifier, token);
-    log.debug('XML object is valid', logDetails);
+    await validate(type, xmlString, identifier, provider);
+    //log.debug('XML object is valid', logDetails);
 
-    log.info('Pushing xml metadata to CMR', logDetails);
+    //log.info('Pushing xml metadata to CMR', logDetails);
     const response = await got.put(
-      `${getUrl('ingest', cmrProvider)}${type}s/${identifier}`,
+      `${getUrl('ingest', provider)}${type}s/${identifier}`,
       {
         body: xmlString,
         headers: {
@@ -110,7 +97,7 @@ async function ingestConcept(type, xml, identifierPath, cmrProvider) {
       }
     );
 
-    log.info('Metadata pushed to CMR.', logDetails);
+    //log.info('Metadata pushed to CMR.', logDetails);
 
     xmlObject = await new Promise((resolve, reject) => {
       parseString(response.body, xmlParseOptions, (err, res) => {
@@ -128,26 +115,13 @@ async function ingestConcept(type, xml, identifierPath, cmrProvider) {
     return xmlObject;
   }
   catch (e) {
-    log.error(e, logDetails);
+    //log.error(e, logDetails);
     throw e;
   }
 }
 
-
-async function ingestCollection(xml, cmrProvider) {
-  return ingestConcept('collection', xml, 'Collection.DataSetId', cmrProvider);
-}
-
-
-async function ingestGranule(xml, cmrProvider) {
-  log.debug('Ingesting meta data for the granule', logDetails);
-  return ingestConcept('granule', xml, 'Granule.GranuleUR', cmrProvider);
-}
-
-
-async function deleteConcept(type, identifier, cmrProvider) {
-  const token = await updateToken(cmrProvider, cmrProvider);
-  const url = `${getUrl('ingest', cmrProvider)}${type}/${identifier}`;
+async function deleteConcept(type, identifier, provider, token) {
+  const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
 
   const response = await got.delete(url, {
     headers: {
@@ -172,22 +146,50 @@ async function deleteConcept(type, identifier, cmrProvider) {
   return xmlObject;
 }
 
+class CMR {
+  constructor(provider, clientId, username, password) {
+    this.clientId = clientId;
+    this.provider = provider;
+    this.username = username;
+    this.password = password;
+  }
 
-async function deleteCollection(datasetID) {
-  return deleteConcept('collection', datasetID);
-}
+  async getToken() {
+    return updateToken(this.provider, this.clientId, this.username, this.password);
+  }
 
+  async ingestCollection(xml) {
+    const token = this.getToken();
+    return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, token);
+  }
 
-async function deleteGranule(granuleUR, cmrProvider) {
-  return deleteConcept('granules', granuleUR, cmrProvider);
+  async ingestGranule(xml) {
+    const token = this.getToken();
+    return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, token);
+  }
+
+  async deleteCollection(datasetID) {
+    return deleteConcept('collection', datasetID);
+  }
+
+  async deleteGranule(granuleUR) {
+    const token = this.getToken();
+    return deleteConcept('granules', granuleUR, this.provider, token);
+  }
+
+  async searchCollections(searchParams) {
+    return searchConcept('collection', searchParams, []);
+  }
+
+  async searchGranules(searchParams) {
+    return searchConcept('granule', searchParams, []);
+  }
 }
 
 module.exports = {
-  searchCollections,
-  searchGranules,
   ingestConcept,
-  ingestGranule,
-  ingestCollection,
-  deleteCollection,
-  deleteGranule
+  getUrl,
+  updateToken,
+  ValidationError,
+  CMR
 };

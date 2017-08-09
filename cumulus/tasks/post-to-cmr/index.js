@@ -1,15 +1,9 @@
 'use strict';
 
 import get from 'lodash.get';
-import { S3 } from '@cumulus/common/aws-helpers';
-import { ingestGranule } from '@cumulus/common/cmrjs';
+import { S3 } from '@cumulus/ingest/aws';
+import { CMR } from '@cumulus/cmrjs';
 import { XmlMetaFileNotFound } from '@cumulus/common/errors';
-
-const logDetails = {
-  file: 'lambdas/cmrPush/index.js',
-  source: 'pushToCMR',
-  type: 'processing'
-};
 
 /**
  * getMetadata
@@ -41,40 +35,33 @@ export async function getMetadata(xmlFilePath) {
  * @param {string} cmrProvider The name of of the CMR provider to be used
  * @returns {object} CMR's success response which includes the concept-id
  */
-export async function postToCMR(xml, cmrProvider) {
-  // TODO: pass the username and password provided by the payload
-  // This requires some changes to how cmrjs is initialized and accesses credentials
-  return ingestGranule(xml, cmrProvider);
-}
 
-export async function cmr(collectionName, event) {
-  const output = get(event, 'payload.output');
-  const cmrProvider = get(event, 'collection.meta.cmrProvider', 'CUMULUS');
+export async function publish(collection, output, creds) {
   const granules = [];
+  const cmr = new CMR(creds.provider, creds.clientId, creds.username, creds.password);
 
-  for (const granule of output[collectionName].granules) {
+  for (const granule of output[collection.name].granules) {
     // get xml-meta if exists
-    const xmlFilePath = get(granule, 'files[\'meta-xml\']', null);
+    const xmlFilePath = get(granule, `files[\'${collection.cmrFile}\']`, null);
 
     if (xmlFilePath) {
       const xml = await getMetadata(xmlFilePath);
-      const res = await postToCMR(xml, cmrProvider);
-
-      logDetails.collectionName = get(event, 'collection.id');
-      logDetails.pdrname = get(event, 'payload.pdrname');
-      logDetails.granuleId = get(granule, 'granuleId', 'unknown_granule');
+      const res = await cmr.ingestGranule(xml);
 
       // add conceptId to the record
       granule.cmrLink = 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
         `?concept_id=${res.result['concept-id']}`;
       granule.published = true;
     }
+    else {
+      granule.published = false;
+    }
 
     granules.push(granule);
   }
 
   return {
-    collectionName,
+    collectionName: collection.name,
     granules
   };
 }
@@ -88,11 +75,14 @@ export async function cmr(collectionName, event) {
  * @param {function} cb lambda callback
  * @returns 1A0000-2016111101_000_001{object} returns the updated event object[M`A[M`A[M`A
  */
-export function handler(event, context, cb) {
+export function handler(_event, context, cb) {
   try {
     // we have to post the meta-xml file of all output granules
     // first we check if there is an output file
+    const event = _event;
+    const collections = get(event, 'meta.collections');
     const output = get(event, 'payload.output');
+    const creds = get(event, 'ingest_meta.config.cmr');
 
     // do nothing and return the payload as is
     if (!output) {
@@ -100,10 +90,7 @@ export function handler(event, context, cb) {
     }
 
     // for all granules of all output collections post to CMR if meta-xml key exists
-    const jobs = [];
-    for (const collectionName in output) {
-      jobs.push(cmr(collectionName, event));
-    }
+    const jobs = Object.keys(output).map(c => publish(collections[c], output, creds));
 
     Promise.all(jobs).then((results) => {
       // update output section of the payload
