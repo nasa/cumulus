@@ -1,12 +1,13 @@
 'use strict';
 
 import get from 'lodash.get';
-import { SQS, S3 } from '@cumulus/common/aws-helpers';
+import { SQS, S3 } from '@cumulus/ingest/aws';
 
-export function handler(event, context, cb) {
+export function handler(_event, context, cb) {
   // for each PDR, generate a new SF messages
   // send to the step function queue to be executed
 
+  const event = _event;
   const pdrs = get(event, 'payload.pdrs', []);
   const queueUrl = get(event, 'resources.queues.startSF');
   const templates = get(event, 'resources.templates');

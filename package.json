@@ -69,6 +69,7 @@
     "exports-loader": "^0.6.3",
     "lerna": "^2.0.0",
     "prepend-loader": "0.0.2",
+    "json-loader": "^0.5.4",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
     "webpack": "^1.13.3",
