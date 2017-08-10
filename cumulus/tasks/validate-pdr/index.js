@@ -51,7 +51,7 @@ module.exports = class ValidatePdr extends Task {
     }
 
     let status = 'OK';
-    if (topLevelErrors.length > 0 || fileGroupErrors.length > 0) {
+    if (topLevelErrors.length > 0 || fileGroupErrors.some(errors => errors.length > 0)) {
       status = 'ERROR';
     }
 

@@ -15,6 +15,9 @@ const errorMessageToDisposition = {
  */
 exports.generatePan = (files, timeStamp) => {
   let pan = 'MESSAGE_TYPE = LONGPAN;\n';
+
+  let allSuccess = true;
+
   pan += `NO_OF_FILES = ${files.length};\n`;
 
   files.forEach(file => {
@@ -25,11 +28,20 @@ exports.generatePan = (files, timeStamp) => {
     pan += `FILE_NAME = ${fileName};\n`;
     let disposition = 'SUCCESSFUL';
     if (!file.success) {
+      allSuccess = false;
       disposition = errorMessageToDisposition[file.error] || file.error;
     }
     pan += `DISPOSITION = "${disposition}";\n`;
     pan += `TIME_STAMP = ${timeStamp};\n`;
   });
+
+  // Generate a short PAN if all the files were successful
+  if (allSuccess) {
+    pan =
+`MESSAGE_TYPE = SHORTPAN;
+DISPOSITION = "SUCCESSFUL";
+TIME_STAMP = ${timeStamp};`;
+  }
 
   return pan;
 };

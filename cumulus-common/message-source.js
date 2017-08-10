@@ -4,6 +4,9 @@ const readline = require('readline');
 const aws = require('./aws');
 const log = require('./log');
 
+// Maximum message payload size that will NOT be stored in S3. Anything bigger will be.
+const MAX_NON_S3_PAYLOAD_SIZE = 100000;
+
 /**
  * TODO Add docs
  */
@@ -124,35 +127,46 @@ class StateMachineS3MessageSource extends MessageSource {
   }
 
   performLambdaCallback(handler, callback, error, data) {
+
     if (error || (data && data.exception)) {
       callback(error, data);
       return error;
     }
 
-    // XXX I think this is checking for data === null, but it will also catch data ==== false,
-    // which is probably not what we want
-    if (!data) {
+    let returnValue;
+    // Convert data to JSON to get a rough estimate of how big it will be in the message
+    const jsonData = JSON.stringify(data);
+    const roughDataSize = data ? jsonData.length : 0;
+    log.debug(`PAYLOAD_SIZE: ${roughDataSize}`);
+
+    if (roughDataSize < MAX_NON_S3_PAYLOAD_SIZE) {
+      log.debug('Using standard payload');
       const message = Object.assign({}, this.originalMessage, { payload: data, exception: 'None' });
       callback(null, message);
+      returnValue = new Promise();
+    }
+    else {
+      log.debug('Using S3 payload');
+      const scopedKey = [handler.name, this.key].join('/');
+      const params = {
+        Bucket: this.bucket,
+        Key: scopedKey,
+        Body: jsonData || '{}'
+      };
+
+      const promise = aws.promiseS3Upload(params).then(() => {
+        const payload = { Bucket: params.Bucket, Key: params.Key };
+        const messageData = Object.assign({},
+                                        this.originalMessage,
+                                        { payload: payload, exception: 'None' });
+        log.info('Complete. Config uploaded to ', params.Key);
+        callback(null, messageData);
+      });
+      this.messages.push(promise);
+      returnValue = promise;
     }
 
-    const scopedKey = [handler.name, this.key].join('/');
-    const params = {
-      Bucket: this.bucket,
-      Key: scopedKey,
-      Body: JSON.stringify(data) || '{}'
-    };
-
-    const promise = aws.promiseS3Upload(params).then(() => {
-      const payload = { Bucket: params.Bucket, Key: params.Key };
-      const messageData = Object.assign({},
-                                      this.originalMessage,
-                                      { payload: payload, exception: 'None' });
-      log.info('Complete. Config uploaded to ', params.Key);
-      callback(null, messageData);
-    });
-    this.messages.push(promise);
-    return promise;
+    return returnValue;
   }
 }
 
