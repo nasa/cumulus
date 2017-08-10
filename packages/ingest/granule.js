@@ -4,6 +4,7 @@ const fs = require('fs');
 const get = require('lodash.get');
 const urljoin = require('url-join');
 const uploadS3Files = require('@cumulus/common/aws').uploadS3Files;
+const errors = require('@cumulus/common/errors');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 
@@ -74,7 +75,18 @@ class Granule {
     // we considered a direct stream from source to S3 but since
     // it doesn't work with FTP connections, we decided to always download
     // and then upload
-    const tempFile = await this._download(this.host, file.path, file.filename);
+    let tempFile;
+    try {
+      tempFile = await this._download(this.host, file.path, file.filename);
+    }
+    catch (e) {
+      if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
+        throw new errors.FileNotFound(
+          `${file.filename} was not found on the server with 403 status`
+        );
+      }
+      throw e;
+    }
 
     // run the checksum if there is a checksum value available
     // TODO: add support for md5
