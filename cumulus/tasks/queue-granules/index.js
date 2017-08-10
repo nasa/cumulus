@@ -21,23 +21,22 @@ function handler(_event, context, cb) {
     message.provider = event.provider;
     message.collection = event.collection;
     message.meta = event.meta;
+    message.meta.pdrName = message.payload.pdrName;
 
     const queueMessages = granules.map((granule) => {
       message.payload = {
-        input: {
-          [granule.collectionName]: {
-            granules: [
-              {
-                granuleId: granule.granuleId,
-                files: granule.files
-              }
-            ]
-          }
-        },
-        output: {}
+        granules: [{
+          granuleId: granule.granuleId,
+          collection: granule.collectionName,
+          files: granule.files
+        }]
       };
 
-      message.ingest_meta.execution_name = `${granule.collectionName}__GRANULE__${granule.granuleId}__${Date.now()}`;
+      const name = `${granule.collectionName}__GRANULE__${granule.granuleId}__${Date.now()}`;
+      message.ingest_meta.execution_name = name;
+      message.meta.collections = {
+        [granule.collectionName]: event.meta.collections[granule.collectionName]
+      };
 
       messages.push(message.ingest_meta);
       return aws.SQS.sendMessage(queueUrl, message);
