@@ -7,6 +7,7 @@ const granule = require('@cumulus/ingest/granule');
 
 async function download(buckets, provider, g, collections) {
   let IngestClass;
+  let r;
   const granuleId = g.granuleId;
   const proceed = await lock.proceed(buckets.internal, provider, granuleId);
 
@@ -22,15 +23,21 @@ async function download(buckets, provider, g, collections) {
   }
 
   if (!proceed) {
-    throw new Error('Download lock remained in place after multiple tries');
+    throw new errors.ResourcesLockedError('Download lock remained in place after multiple tries');
   }
 
-  const collection = collections[g.collectionName];
-  const ingest = new IngestClass(g, provider, collection, buckets);
+  try {
+    const collection = collections[g.collection];
+    const ingest = new IngestClass(g, provider, collection, buckets);
 
-  const r = await ingest.ingest();
+    r = await ingest.ingest();
+  }
+  catch (e) {
+    await lock.removeLock(buckets.internal, provider.id, granuleId);
+    throw e;
+  }
+
   await lock.removeLock(buckets.internal, provider.id, granuleId);
-
   return r;
 }
 
@@ -50,14 +57,16 @@ module.exports.handler = function handler(_event, context, cb) {
 
   // download all the granules provided
   ad = granules.map((g) => download(buckets, provider, g, collections));
-  const updatedInput = {};
 
+  const updatedInput = {};
   return Promise.all(ad).then((r) => {
+    let collectionName;
     r.forEach((g) => {
       const granuleObject = {
         granuleId: g.granuleId,
         files: g.files
       };
+      collectionName = g.collectionName;
       if (updatedInput[g.collectionName]) {
         updatedInput[g.collectionName].granules.push(granuleObject);
       }
@@ -67,8 +76,33 @@ module.exports.handler = function handler(_event, context, cb) {
         };
       }
     });
-    event.payload = { input: updatedInput };
+    event.meta.process = collections[collectionName].process;
+    event.payload = {
+      input: updatedInput,
+      output: {
+        [collectionName]: {
+          granules: []
+        }
+      }
+    };
     return cb(null, event);
   }).catch(e => cb(e));
+
+  //const updatedPayload = [];
+
+  //return Promise.all(ad).then((r) => {
+    //for (const g of r) {
+      //for (const og of granules) {
+        //if (og.granuleId === g.granuleId) {
+          //og.files = g.files;
+          //updatedPayload.push(og);
+          //break;
+        //}
+      //}
+    //}
+
+    //event.payload = { granules: updatedPayload };
+    //return cb(null, event);
+  //}).catch(e => cb(e));
 };
 
