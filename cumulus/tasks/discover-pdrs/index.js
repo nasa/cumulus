@@ -10,6 +10,8 @@ function handler(_event, context, cb) {
   const event = Object.assign({}, _event);
   const bucket = get(event, 'resources.buckets.internal');
   const provider = get(event, 'provider', null);
+  const folder = get(event, 'meta.pdrsFolder', 'pdrs');
+  const discoverLimit = get(event, 'meta.discoverLimit', 100);
 
   if (!provider) {
     const err = new ProviderNotFound('Provider info not provided');
@@ -19,16 +21,16 @@ function handler(_event, context, cb) {
   // discover files
   switch (provider.protocol) {
     case 'ftp': {
-      discover = new pdr.FtpDiscover(provider, bucket);
+      discover = new pdr.FtpDiscover(provider, bucket, folder);
       break;
     }
     default: {
-      discover = new pdr.HttpDiscover(provider, bucket);
+      discover = new pdr.HttpDiscover(provider, bucket, folder);
     }
   }
 
   return discover.discover().then((pdrs) => {
-    event.payload.pdrs = pdrs;
+    event.payload.pdrs = pdrs.slice(0, discoverLimit);
     return cb(null, event);
   }).catch(e => {
     if (e.details && e.details.status === 'timeout') {
