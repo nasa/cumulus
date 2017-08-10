@@ -3,7 +3,7 @@
 import get from 'lodash.get';
 import { SQS, S3 } from '@cumulus/ingest/aws';
 
-export function handler(_event, context, cb) {
+function handler(_event, context, cb) {
   // for each PDR, generate a new SF messages
   // send to the step function queue to be executed
 
@@ -31,8 +31,10 @@ export function handler(_event, context, cb) {
     });
 
     Promise.all(queueMessages).then(() => {
-      event.payload.messages = messages;
+      event.payload.pdrs_queued = messages.length;
       return cb(null, event);
     }).catch(e => cb(e));
   }).catch(e => cb(e));
 }
+
+module.exports.handler = handler;
