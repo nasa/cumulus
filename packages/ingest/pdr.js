@@ -17,7 +17,7 @@ const S3 = require('./aws').S3;
  * @abstract
  */
 class Discover {
-  constructor(provider, bucket) {
+  constructor(provider, bucket, folder = 'pdrs') {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
@@ -27,6 +27,7 @@ class Discover {
     this.host = get(provider, 'host', null);
     this.path = get(provider, 'path', '/');
     this.provider = provider;
+    this.folder = folder;
     this.endpoint = urljoin(this.host, this.path);
     this.username = get(provider, 'username', null);
     this.password = get(provider, 'password', null);
@@ -44,7 +45,7 @@ class Discover {
   }
 
   async pdrIsNew(pdr) {
-    const exists = await S3.fileExists(this.bucket, path.join('pdrs', pdr));
+    const exists = await S3.fileExists(this.bucket, path.join(this.folder, pdr));
     return exists ? false : pdr;
   }
 
@@ -66,7 +67,7 @@ class Discover {
 
     const newPdrs = _pdrs.filter(p => p).map(p => ({
       pdrName: path.basename(p),
-      pdrPath: path.dirname(p)
+      pdrPath: this.path
     }));
     return newPdrs;
   }
@@ -82,7 +83,7 @@ class Discover {
  */
 
 class Parse {
-  constructor(pdr, provider, collections, bucket) {
+  constructor(pdr, provider, collections, bucket, folder = 'pdrs') {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
     }
@@ -94,6 +95,7 @@ class Parse {
     this.host = get(provider, 'host', null);
     this.path = get(provider, 'path', '/');
     this.provider = provider;
+    this.folder = folder;
     this.endpoint = urljoin(this.host, this.path);
     this.username = get(provider, 'username', null);
     this.password = get(provider, 'password', null);
@@ -128,7 +130,7 @@ class Parse {
     const localPdrPath = await this._download(this.host, this.path, this.pdr);
 
     // upload to S3
-    await uploadS3Files([localPdrPath], this.bucket, 'pdrs');
+    await uploadS3Files([localPdrPath], this.bucket, this.folder);
 
     return localPdrPath;
   }
