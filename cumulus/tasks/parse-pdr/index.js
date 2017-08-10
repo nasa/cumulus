@@ -12,6 +12,7 @@ module.exports.handler = function handler(_event, context, cb) {
   const collections = get(event, 'meta.collections');
   const provider = get(event, 'provider', null);
   const pdrPath = get(event, 'payload.pdrPath', '/');
+  const folder = get(event, 'meta.pdrsFolder', 'pdrs');
 
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
@@ -23,11 +24,11 @@ module.exports.handler = function handler(_event, context, cb) {
   // parse PDR
   switch (provider.protocol) {
     case 'ftp': {
-      parse = new pdr.FtpParse(pdrName, provider, collections, bucket);
+      parse = new pdr.FtpParse(pdrName, provider, collections, bucket, folder);
       break;
     }
     default: {
-      parse = new pdr.HttpParse(pdrName, provider, collections, bucket);
+      parse = new pdr.HttpParse(pdrName, provider, collections, bucket, folder);
     }
   }
 
