@@ -13,7 +13,15 @@ We use Lerna to manage multiple Cumulus packages in the same repo. You need to i
 We use Yarn for local package management
 
     $ yarn install
-    $ lerna bootstrap
+    $ yarn run bootstrap
+
+Building All packages:
+
+    $ yarn run build
+
+Build and watch packages:
+
+    $ yarn run watch
 
 ## Running Tests
 
@@ -23,7 +31,7 @@ Turn on the docker containers first:
 
 Run the test commands next
 
-    $ lerna run test
+    $ yarn run test
 
 
 ### AWS
@@ -50,5 +58,5 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ## Cleaning Up all the repos
 
-    $ lerna clean
+    $ yarn run clean
 
