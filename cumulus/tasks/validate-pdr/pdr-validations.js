@@ -9,17 +9,102 @@
   */
 
 /**
- * Validates that the DIRECTORY_ID values for FILE_SPEC entries is neither missing nor empty
+ * Validates that the DIRECTORY_ID value for FILE_SPEC entry is neither missing nor empty
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
 const directoryIdValidation = fileSpec => {
   const directoryId = fileSpec.get('DIRECTORY_ID');
 
-  return (!directoryId || directoryId.value === '') ? 'INVALID DIRECTORY' : null;
+  return !directoryId || directoryId.value === '' ? 'INVALID DIRECTORY' : null;
 };
 
-const fileSpecValidations = [directoryIdValidation];
+/**
+ * Validates that the DIRECTORY_ID value for FILE_SPEC entry is neither missing nor < 1
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const fileSizeValidation = fileSpec => {
+  const fileSize = fileSpec.get('FILE_SIZE');
+
+  return !fileSize || fileSize.value < 1 ? 'INVALID FILE SIZE' : null;
+};
+
+/**
+ * Validates that the DIRECTORY_ID value for FILE_SPEC entry is neither missing nor empty
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const fileIdValidation = fileSpec => {
+  const fileId = fileSpec.get('FILE_ID');
+
+  return !fileId || fileId.value === '' ? 'INVALID FILE ID' : null;
+};
+
+/**
+ * Validates that the FILE_TYPE value for FILE_SPEC entry is neither missing nor empty
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const fileTypeValidation = fileSpec => {
+  const fileType = fileSpec.get('FILE_TYPE');
+
+  return !fileType || fileType.value === '' ? 'INVALID FILE TYPE' : null;
+};
+
+/**
+ * Validates that the FILE_CKSUM_TYPE value for FILE_SPEC entry is neither missing nor empty
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const fileCksumTypeMissingValidation = fileSpec => {
+  const cksumType = fileSpec.get('FILE_CKSUM_TYPE');
+
+  return !cksumType || cksumType.value === '' ? 'MISSING FILE_CKSUM_TYPE PARAMETER' : null;
+};
+
+/**
+ * Validates that the FILE_CKSUM_TYPE value for FILE_SPEC entry is a supported type
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const fileCksumTypeValidation = fileSpec => {
+  const cksumType = fileSpec.get('FILE_CKSUM_TYPE');
+
+  return cksumType === 'MD5' || cksumType === 'SHA1' ? null : 'UNSUPPORTED CHECKSUM TYPE';
+};
+
+/**
+ * Validates that the FILE_CKSUM value for FILE_SPEC entry is neither missing nor empty
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const fileCksumValueMissingValidation = fileSpec => {
+  const cksum = fileSpec.get('FILE_CKSUM_VALUE');
+
+  return (!cksum || cksum.value === '') ? 'MISSING FILE_CKSUM_VALUE PARAMETER' : null;
+};
+
+/**
+ * Validates that the FILE_CKSUM value for FILE_SPEC entry has the right form
+ * @param {PVLObject} fileSpec
+ * @return {string} An error string or null
+ */
+const fileCksumValueValidation = fileSpec => {
+  const cksum = fileSpec.get('FILE_CKSUM_VALUE');
+  // TODO Get cksum type value and use the proper regex
+  return (!cksum || cksum.value === '') ? 'MISSING FILE_CKSUM_VALUE PARAMETER' : null;
+};
+
+const fileSpecValidations = [
+  directoryIdValidation,
+  fileSizeValidation,
+  fileIdValidation,
+  fileTypeValidation,
+  fileCksumTypeMissingValidation,
+  fileCksumTypeValidation,
+  fileCksumValueMissingValidation
+];
 
 /**
  * Performs a series of validations on a file group
@@ -34,25 +119,38 @@ const validateFileSpec = fileSpec =>
  */
 
 /**
- * Validates the DISPLAY_TYPE entry for a file group
+ * Validates the DATA_TYPE entry for a file group
  * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
  * @return {string} An error string or null
  */
 const dataTypeValidation = fileGroup => {
   const dataType = fileGroup.get('DATA_TYPE');
-  const versionId = fileGroup.get('VERSION_ID');
 
   let rval = null;
-  // TODO Need to check that DATA_TYPE and VERSION_ID correspond to an Imagery Product
-  // TODO Need to add check for empty/missing VERSION_ID
-  if (!dataType || dataType.value === '') {
+  if (!dataType) {
     rval = 'INVALID_DATA_TYPE';
   }
 
   return rval;
 };
 
-const fileGroupValidations = [dataTypeValidation];
+/**
+ * Validates the VERSION_ID entry for a file group
+ * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
+ * @return {string} An error string or null
+ */
+const versionIdValidation = fileGroup => {
+  const versionId = fileGroup.get('VERSION_ID');
+
+  let rval = null;
+  if (!versionId) {
+    rval = 'INVALID_DATA_TYPE';
+  }
+
+  return rval;
+};
+
+const fileGroupValidations = [dataTypeValidation, versionIdValidation];
 
 /**
  * Performs a series of validations on a file group

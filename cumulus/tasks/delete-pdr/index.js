@@ -18,14 +18,17 @@ module.exports = class DeletePdr extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { protocol, host, port, user, password } = this.config;
+    const { type, host, port, username, password } =
+     this.message.provider.config.gateway_config.conn_config;
+    const folder = this.config.folder;
 
-    // Message payload contains the path to the PDR to be deleted
-    const message = this.message;
-    const { pdrPath } = await message.payload;
+    // Message payload contains the name of the PDR to be deleted
+    const payload = await this.message.payload;
+    const pdrFileName = payload.pdr_file_name;
+    const pdrPath = `${folder}/${pdrFileName}`;
 
     let client;
-    if (protocol.toUpperCase() === 'FTP') {
+    if (type.toUpperCase() === 'FTP') {
       client = new FtpClient();
     }
     else {
@@ -38,13 +41,15 @@ module.exports = class DeletePdr extends Task {
     client.connect({
       host: host,
       port: port,
-      user: user,
+      user: username,
       password: password
     });
 
     await clientReady('ready');
 
     await del(pdrPath);
+
+    return { pdr_file_name: pdrFileName };
   }
 
   /**
@@ -56,52 +61,3 @@ module.exports = class DeletePdr extends Task {
     return DeletePdr.handle(...args);
   }
 };
-
-// Test code
-
-// const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const local = require('cumulus-common/local-helpers');
-local.setupLocalRun(module.exports.handler, () => ({
-  workflow_config_template: {
-    DeletePdr: {
-      s3Bucket: '{resources.s3Bucket}',
-      folder: 'PDR'
-    },
-    ProcessPdr: {
-      s3Bucket: '{resources.s3Bucket}'
-    }
-  },
-  resources: {
-    s3Bucket: 'gitc-jn-sips-mock'
-  },
-  provider: {
-    id: 'DUMMY',
-    config: {}
-  },
-  meta: {},
-  ingest_meta: {
-    task: 'DeletePdr',
-    id: 'abc123',
-    message_source: 'local'
-  }
-
-}));
-
-// const config = {
-//   s3Bucket: 'gitc-jn-sips-mock',
-//   folder: 'PDR'
-// };
-
-// const DiscoverPdr = module.exports;
-// const discoverPdr = new DiscoverPdr(null, config, null, null);
-
-// const demo = async () => {
-//   while (true) {
-//     log.info(await discoverPdr.run());
-//     await sleep(10000);
-//   }
-// };
-
-// demo();
-

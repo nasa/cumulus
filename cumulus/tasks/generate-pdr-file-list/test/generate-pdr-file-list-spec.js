@@ -2,7 +2,7 @@
 const expect = require('expect.js');
 const helpers = require('cumulus-common/test-helpers');
 const fs = require('fs');
-const pan = require('../pan');
+const pdr = require('../pdr');
 
 const allSuccessFixture = require('./fixtures/all-success-fixture');
 const missingFileFixutre = require('./fixtures/missigng-file-fixture');

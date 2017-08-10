@@ -20,10 +20,13 @@ module.exports = class DiscoverPdr extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { protocol, host, port, user, password, folder } = this.config;
+    const { type, host, port, username, password } =
+     this.message.provider.config.gateway_config.conn_config;
+
+    const folder = this.config.folder;
 
     let client;
-    if (protocol.toUpperCase() === 'FTP') {
+    if (type.toUpperCase() === 'FTP') {
       client = new FtpClient();
     }
     else {
@@ -35,7 +38,7 @@ module.exports = class DiscoverPdr extends Task {
     client.connect({
       host: host,
       port: port,
-      user: user,
+      user: username,
       password: password
     });
 

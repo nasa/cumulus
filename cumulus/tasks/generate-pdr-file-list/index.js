@@ -18,7 +18,9 @@ module.exports = class GeneratePdrFileList extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { host, port } = this.config;
+    const { host, port } =
+     this.message.provider.config.gateway_config.conn_config;
+
     // Message payload contains the PDR
     const message = this.message;
     const payload = await message.payload;

@@ -1,5 +1,6 @@
 'use strict';
 
+const log = require('cumulus-common/log');
 const path = require('path');
 
 /**
@@ -37,6 +38,7 @@ exports.generatePan = (files, timeStamp) => {
 
   // Generate a short PAN if all the files were successful
   if (allSuccess) {
+    log.info('Generating Short PAN');
     pan =
 `MESSAGE_TYPE = SHORTPAN;
 DISPOSITION = "SUCCESSFUL";

@@ -22,9 +22,13 @@ module.exports = class GeneratePan extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { protocol, host, port, user, password, folder } = this.config;
+    const { type, host, port, username, password } =
+     this.message.provider.config.gateway_config.conn_config;
+
+    const folder = this.config.folder;
     const payload = await this.message.payload;
     const pdrFileName = payload.pdr_file_name;
+    log.info(`Generating PAN for PDR ${pdrFileName}`);
     const files = payload.files;
     const timeStamp = (new Date()).toISOString().replace(/\.\d\d\dZ/, 'Z');
 
@@ -35,7 +39,7 @@ module.exports = class GeneratePan extends Task {
     const panStr = pan.generatePan(files, timeStamp);
 
     let client;
-    if (protocol.toUpperCase() === 'FTP') {
+    if (type.toUpperCase() === 'FTP') {
       client = new FtpClient();
     }
     else {
@@ -47,7 +51,7 @@ module.exports = class GeneratePan extends Task {
     client.connect({
       host: host,
       port: port,
-      user: user,
+      user: username,
       password: password
     });
 
