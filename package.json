@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Cumulus Framework for ingesting and processing Nasa Earth data streams",
   "scripts": {
+    "test": "lerna run test",
+    "bootstrap": "lerna bootstrap",
+    "clean": "lerna clean",
+    "build": "lerna run --parallel --no-sort build",
+    "watch": "lerna run --parallel --no-sort watch"
   },
   "repository": {
     "type": "git",
