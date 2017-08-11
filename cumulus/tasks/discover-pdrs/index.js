@@ -21,16 +21,16 @@ function handler(_event, context, cb) {
   // discover files
   switch (provider.protocol) {
     case 'ftp': {
-      discover = new pdr.FtpDiscover(provider, bucket, folder);
+      discover = new pdr.FtpDiscoverAndQueue(event);
       break;
     }
     default: {
-      discover = new pdr.HttpDiscover(provider, bucket, folder);
+      discover = new pdr.HttpDiscoverAndQueue(event);
     }
   }
 
   return discover.discover().then((pdrs) => {
-    event.payload.pdrs = pdrs.slice(0, discoverLimit);
+    event.payload.pdrs = pdrs.slice(0, 10);
     return cb(null, event);
   }).catch(e => {
     if (e.details && e.details.status === 'timeout') {
