@@ -3,11 +3,12 @@
 const path = require('path');
 const get = require('lodash.get');
 const urljoin = require('url-join');
+const uploadS3Files = require('@cumulus/common/aws').uploadS3Files;
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
-const uploadS3Files = require('@cumulus/common/aws').uploadS3Files;
 const S3 = require('./aws').S3;
+const queue = require('./queue');
 
 /**
  * This is a base class for discovering PDRs
@@ -17,7 +18,7 @@ const S3 = require('./aws').S3;
  * @abstract
  */
 class Discover {
-  constructor(provider, bucket, folder = 'pdrs') {
+  constructor(provider, bucket, folder = 'pdrs', limit = 0) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
@@ -28,6 +29,8 @@ class Discover {
     this.path = get(provider, 'path', '/');
     this.provider = provider;
     this.folder = folder;
+    this.counter = 0;
+    this.limit = limit;
     this.endpoint = urljoin(this.host, this.path);
     this.username = get(provider, 'username', null);
     this.password = get(provider, 'password', null);
@@ -59,16 +62,58 @@ class Discover {
    * @private
    */
 
+  pdrMessage(pdr) {
+    return {
+      pdrName: path.basename(pdr),
+      pdrPath: this.path
+    };
+  }
+
   async findNewPdrs(pdrs) {
     // check if any of the discovered PDRs exist on S3
     // return those that are missing
+    //const limit = pLimit(this.limit || 100);
+
     const checkPdrs = pdrs.map(pdr => this.pdrIsNew(pdr));
+    //const checkPdrs = pdrs.slice(0, 700).map(pdr => limit(() => this.pdrIsNew(pdr)));
     const _pdrs = await Promise.all(checkPdrs);
 
-    const newPdrs = _pdrs.filter(p => p).map(p => ({
-      pdrName: path.basename(p),
-      pdrPath: this.path
-    }));
+    const newPdrs = _pdrs.filter(p => p).map(p => this.pdrMessage(p));
+    return newPdrs;
+  }
+}
+
+/**
+ * This is a base class for discovering PDRs
+ * It must be mixed with a FTP or HTTP mixing to work
+ *
+ * @class
+ * @abstract
+ */
+class DiscoverAndQueue extends Discover {
+  constructor(event) {
+    const buckets = get(event, 'resources.buckets');
+    const provider = get(event, 'provider');
+    const folder = get(event, 'meta.pdrsFolder', 'pdrs');
+    const discoverLimit = get(event, 'meta.discoverLimit', 100);
+
+    super(provider, buckets.internal, folder, discoverLimit);
+    this.event = event;
+  }
+
+  async findNewPdrs(pdrs) {
+    // check if any of the discovered PDRs exist on S3
+    // return those that are missing
+
+    const checkPdrs = pdrs.map(pdr => this.pdrIsNew(pdr));
+    const _pdrs = await Promise.all(checkPdrs);
+    let newPdrs = _pdrs.filter(p => p).map(p => this.pdrMessage(p));
+
+    if (this.limit > 0) {
+      newPdrs = newPdrs.slice(0, this.limit);
+    }
+
+    await Promise.all(newPdrs.map(p => queue.queuePdr(this.event, p)));
     return newPdrs;
   }
 }
@@ -167,12 +212,20 @@ class Parse {
 class FtpDiscover extends ftpMixin(Discover) {}
 
 /**
- * Parse PDRs downloaded from a FTP endpoint.
+ * Disocver PDRs from a HTTP endpoint.
  *
  * @class
  */
 
-class FtpParse extends ftpMixin(Parse) {}
+class HttpDiscover extends httpMixin(Discover) {}
+
+/**
+ * Disocver PDRs from a FTP endpoint.
+ *
+ * @class
+ */
+
+class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
 
 /**
  * Disocver PDRs from a HTTP endpoint.
@@ -180,7 +233,15 @@ class FtpParse extends ftpMixin(Parse) {}
  * @class
  */
 
-class HttpDiscover extends httpMixin(Discover) {}
+class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
+
+/**
+ * Parse PDRs downloaded from a FTP endpoint.
+ *
+ * @class
+ */
+
+class FtpParse extends ftpMixin(Parse) {}
 
 /**
  * Parse PDRs downloaded from a HTTP endpoint.
@@ -194,3 +255,5 @@ module.exports.HttpParse = HttpParse;
 module.exports.FtpParse = FtpParse;
 module.exports.FtpDiscover = FtpDiscover;
 module.exports.HttpDiscover = HttpDiscover;
+module.exports.FtpDiscoverAndQueue = FtpDiscoverAndQueue;
+module.exports.HttpDiscoverAndQueue = HttpDiscoverAndQueue;
