@@ -28,6 +28,8 @@ const isWorkflowError = error => error.name.includes('WorkflowError');
 
 module.exports = {
 
+  createErrorType: createErrorType,
+
   isWorkflowError,
 
   // WorkflowError should be bubbled out to the overall workflow in the 'exception'
