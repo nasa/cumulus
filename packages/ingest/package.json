@@ -25,7 +25,8 @@
     "pump": "^1.0.2",
     "moment": "^2.6.0",
     "simplecrawler": "^1.1.4",
-    "url-join": "^1.0.0"
+    "url-join": "^1.0.0",
+    "ssh2-sftp-client": "^1.1.0"
   },
   "devDependencies": {
     "json-loader": "^0.5.4"
