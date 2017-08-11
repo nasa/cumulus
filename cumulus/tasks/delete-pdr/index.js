@@ -5,6 +5,7 @@ const Task = require('cumulus-common/task');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
 const promisify = require('util.promisify');
+const ftp = require('./ftp_util');
 
 /**
  * Task that deletes a PDR from a SIPS server
@@ -25,7 +26,6 @@ module.exports = class DeletePdr extends Task {
     // Message payload contains the name of the PDR to be deleted
     const payload = await this.message.payload;
     const pdrFileName = payload.pdr_file_name;
-    const pdrPath = `${folder}/${pdrFileName}`;
 
     let client;
     if (type.toUpperCase() === 'FTP') {
@@ -36,7 +36,6 @@ module.exports = class DeletePdr extends Task {
     }
 
     const clientReady = promisify(client.once).bind(client);
-    const del = promisify(client.delete).bind(client);
 
     client.connect({
       host: host,
@@ -47,7 +46,20 @@ module.exports = class DeletePdr extends Task {
 
     await clientReady('ready');
 
-    await del(pdrPath);
+    try {
+      await ftp.deleteFile(client, folder, pdrFileName);
+    }
+    catch (e) {
+      log.error(e);
+      log.error(e.stack);
+      throw e;
+    }
+    finally {
+      // Close the connection to the SIPS server
+      client.end();
+    }
+
+    log.info(`PDR ${pdrFileName} DELETED`);
 
     return { pdr_file_name: pdrFileName };
   }

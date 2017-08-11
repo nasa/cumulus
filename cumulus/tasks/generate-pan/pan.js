@@ -7,7 +7,8 @@ const path = require('path');
  * Map of error messages from Provider Gateway to accepted dispositions for PANs
  */
 const errorMessageToDisposition = {
-  'The file did not exist at the source.': 'NETWORK FAILURE'
+  'The file did not exist at the source.': 'NETWORK FAILURE',
+  'Connection refused': 'NETWORK FAILURE'
 };
 
 /**
