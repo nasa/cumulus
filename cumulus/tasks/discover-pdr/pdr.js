@@ -1,8 +1,5 @@
 'use strict';
 
-const aws = require('cumulus-common/aws');
-const path = require('path');
-const fs = require('fs');
 const promisify = require('util.promisify');
 const thenable = require('thenable-stream');
 
