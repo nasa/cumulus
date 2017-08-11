@@ -49,6 +49,11 @@ module.exports = class DiscoverPdr extends Task {
       // Get the list of PDRs
       const list = await pdrMod.getPdrList(client, folder);
       log.info(`PDR LIST: [${list}]`);
+
+      if (list.length < 1) {
+        return { continue: false };
+      }
+
       // Get the oldest one
       fileName = list.sort((a, b) => b.date < a.date)[0].name;
       log.info('FILE:');
@@ -65,7 +70,7 @@ module.exports = class DiscoverPdr extends Task {
 
     // const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
 
-    return pdr;
+    return Object.assign({ continue: true }, pdr);
   }
 
   /**
