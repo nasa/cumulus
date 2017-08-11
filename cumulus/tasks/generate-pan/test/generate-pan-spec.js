@@ -5,7 +5,7 @@ const fs = require('fs');
 const pan = require('../pan');
 
 const allSuccessFixture = require('./fixtures/all-success-fixture');
-const missingFileFixutre = require('./fixtures/missigng-file-fixture');
+const missingFileFixutre = require('./fixtures/missing-file-fixture');
 
 const timeStamp = (dateTime) => dateTime.toISOString().replace(/\.\d\d\dZ/, 'Z');
 

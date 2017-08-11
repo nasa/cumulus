@@ -69,8 +69,8 @@ const fileCksumTypeMissingValidation = fileSpec => {
  * @return {string} An error string or null
  */
 const fileCksumTypeValidation = fileSpec => {
-  const cksumType = fileSpec.get('FILE_CKSUM_TYPE');
-
+  const cksumTypeStr = fileSpec.get('FILE_CKSUM_TYPE');
+  const cksumType = cksumTypeStr ? cksumTypeStr.value : null;
   return cksumType === 'MD5' || cksumType === 'SHA1' ? null : 'UNSUPPORTED CHECKSUM TYPE';
 };
 
@@ -92,8 +92,13 @@ const fileCksumValueMissingValidation = fileSpec => {
  */
 const fileCksumValueValidation = fileSpec => {
   const cksum = fileSpec.get('FILE_CKSUM_VALUE');
-  // TODO Get cksum type value and use the proper regex
-  return (!cksum || cksum.value === '') ? 'MISSING FILE_CKSUM_VALUE PARAMETER' : null;
+  const cksumType = fileSpec.get('FILE_CKSUM_TYPE');
+  let regex = /^[0-9a-f]{40}$/;
+  if (cksumType.value === 'MD5') {
+    regex = /^[0-9a-f]{32}$/;
+  }
+
+  return cksum.match(regex) ? null : 'INVALID FILE_CKSUM_VALUE';
 };
 
 const fileSpecValidations = [
@@ -103,7 +108,8 @@ const fileSpecValidations = [
   fileTypeValidation,
   fileCksumTypeMissingValidation,
   fileCksumTypeValidation,
-  fileCksumValueMissingValidation
+  fileCksumValueMissingValidation,
+  fileCksumValueValidation
 ];
 
 /**
