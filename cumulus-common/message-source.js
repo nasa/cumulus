@@ -143,7 +143,7 @@ class StateMachineS3MessageSource extends MessageSource {
       log.debug('Using standard payload');
       const message = Object.assign({}, this.originalMessage, { payload: data, exception: 'None' });
       callback(null, message);
-      returnValue = new Promise();
+      returnValue = Promise.resolve(null);
     }
     else {
       log.debug('Using S3 payload');
