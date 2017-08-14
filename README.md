@@ -30,7 +30,7 @@ We use Lerna to manage multiple Cumulus packages in the same repo. You need to i
 
 ### Install Local Dependencies
 
-We use Yarn for local package management
+We use npm for local package management
 
     $ npm install
     $ npm run bootstrap
