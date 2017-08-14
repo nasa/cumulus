@@ -2,4 +2,10 @@
 
 set -evx
 
-npm install
+if [ -f ../bin/setup ] && [ ! -d .git ]; then
+    echo "(Using parent setup script)"
+    cd ..
+    bin/setup
+else
+    npm install
+fi
