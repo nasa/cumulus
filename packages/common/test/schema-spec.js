@@ -3,20 +3,12 @@
  * Tests validations with the schema
  */
 
-const fs = require('fs');
+const validMessage = require('@cumulus/test-data/schemas/example-data/example-message-envelope.json');
+const validCollection = require('@cumulus/test-data/schemas/example-data/example-collection.json');
 const local = require('../local-helpers');
-
-local.changeRootPath('../../../../cumulus/');
 
 const schema = require('../schema');
 const expect = require('expect.js');
-
-const validCollection = JSON.parse(
-  fs.readFileSync(`${local.fileRoot()}/docs/schemas/example-data/example-collection.json`,
-                  'UTF-8'));
-const validMessage = JSON.parse(
-  fs.readFileSync(`${local.fileRoot()}/docs/schemas/example-data/example-message-envelope.json`,
-                  'UTF-8'));
 
 describe('schema', () => {
   describe('validateCollectionsConfiguration', () => {
