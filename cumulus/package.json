@@ -7,7 +7,6 @@
     "lint": "eslint .",
     "mocha": "mocha-webpack",
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
-    "test": "npm run lint && npm run mocha",
     "test-ci": "npm run lint && npm run mocha-junit",
     "start": "webpack -w --colors",
     "//": [
