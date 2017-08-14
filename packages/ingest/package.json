@@ -1,0 +1,34 @@
+{
+  "name": "@cumulus/ingest",
+  "version": "1.0.0",
+  "description": "Ingest utilities",
+  "scripts": {
+    "test": "echo 'no tests'"
+  },
+  "keywords": [
+    "CUMULUS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/common": "^1.0.0",
+    "@cumulus/pvl": "^1.0.0",
+    "aws-sdk": "^2.4.11",
+    "ftp": "^0.3.10",
+    "got": "^7.1.0",
+    "lodash.get": "^4.4.2",
+    "mkdirp": "^0.5.1",
+    "pump": "^1.0.2",
+    "moment": "^2.6.0",
+    "simplecrawler": "^1.1.4",
+    "url-join": "^1.0.0",
+    "ssh2-sftp-client": "^1.1.0"
+  },
+  "devDependencies": {
+    "json-loader": "^0.5.4"
+  }
+}
