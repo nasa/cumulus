@@ -8,13 +8,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
-  "author": "Patrick Quinn",
+  "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "async": "^2.0.0",
-    "cumulus-common": "file:../../../cumulus-common",
+    "@cumulus/common": "^1.0.0",
     "lodash": "^4.15.0",
     "simplecrawler": "git+https://github.com/cgiffard/node-simplecrawler.git#193e506c39164ddf045c7c6c502e1a015d85a290"
   },
