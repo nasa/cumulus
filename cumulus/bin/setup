@@ -4,7 +4,7 @@ set -e
 
 version=v0.0.1
 progname=$(basename $0)
-docstr="$progname $version: builds the component, placing compiled output in dist/"
+docstr="$progname $version: Installs dependencies"
 
 usage() {
 echo "Usage:
@@ -26,10 +26,16 @@ if [ $# -ne 0 ]; then
     exit 1
 fi
 
-find . -name package.json \
-     -not -path './test/*' \
-     -not -path '*/node_modules/*' \
-     -not -path './package.json' \
-     -execdir npm install --unsafe-perm \;
+if [ -f ../bin/setup ] && [ ! -d .git ]; then
+    echo "(Using parent setup script)"
+    cd ..
+    bin/setup
+else
+    find . -name package.json \
+         -not -path './test/*' \
+         -not -path '*/node_modules/*' \
+         -not -path './package.json' \
+         -execdir npm install --unsafe-perm \;
 
-npm install
+    npm install
+fi
