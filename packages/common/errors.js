@@ -28,6 +28,8 @@ const isWorkflowError = error => error.name.includes('WorkflowError');
 
 module.exports = {
 
+  createErrorType: createErrorType,
+
   isWorkflowError,
 
   // WorkflowError should be bubbled out to the overall workflow in the 'exception'
@@ -49,5 +51,26 @@ module.exports = {
 
   // RemoteResourceError indicates that a required remote resource could not be fetched or
   // otherwise used
-  RemoteResourceError: createErrorType('RemoteResourceError')
+  RemoteResourceError: createErrorType('RemoteResourceError'),
+
+  // The error object for when the xml file path is not provided
+  XmlMetaFileNotFound: createErrorType('XmlMetaFileNotFound'),
+
+  // The provider info is missing error
+  ProviderNotFound: createErrorType('ProviderNotFound'),
+
+  // The FTPError
+  FTPError: createErrorType('FTPError'),
+
+  // The PDR Parsing Error
+  PDRParsingError: createErrorType('PDRParsingError'),
+
+  // Connection Timeout
+  ConnectionTimeout: createErrorType('ConnectionTimeout'),
+
+  HostNotFound: createErrorType('HostNotFound'),
+
+  // to be returned when the file is missing or forbidden
+  FileNotFound: createErrorType('FileNotFound')
 };
+

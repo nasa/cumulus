@@ -1,0 +1,67 @@
+{
+  "eventSource": "sfn",
+  "ingest_meta": {
+    "state_machine_arn": "",
+    "state_machine_name": ""
+  },
+  "workflow_config_template": {},
+  "resources": {
+    "stack": "cumulus-generic-test",
+    "buckets": {
+      "internal": "cumulus-internal",
+      "private": "cumulus-generic-test-private",
+      "public": "cumulus-generic-test-public",
+      "protected": "cumulus-generic-test-protected"
+    }
+  },
+  "provider": {
+    "id": "mur_ftp",
+    "globalconnectionlimit": 10,
+    "protocol": "ftp",
+    "host": "podaac-ftp.jpl.nasa.gov",
+    "path": "/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/"
+    "port": 21,
+    "recursive": true,
+  },
+  "collection": {},
+  "meta": {
+    "collections": {
+      "MUR-JPL-L4-GLOB-v4.1": {
+        "name": "MUR-JPL-L4-GLOB-v4.1",
+        "version": "1",
+        "granuleId": "^.*$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+        "granuleIdExtraction": "^(.*).nc$",
+        "files": {
+          "datafile": {
+            "regex": ".*.nc$",
+            "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+            "bucket": "protected"
+          },
+          "checksum": {
+            "regex": ".*.nc.md5$",
+            "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+            "bucket": "public"
+          },
+          "meta-xml": {
+            "regex": ".*.nc.xml",
+            "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.xml",
+            "bucket": "public"
+          },
+          "thumbnail-2": {
+            "regex": "^.*.nc_analysed_sst.png$",
+            "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc_analysed_sst.png",
+            "bucket": "public"
+          },
+          "thumbnail-1": {
+            "regex": "^.*.nc_analysis_error.png$",
+            "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc_analysis_error.png",
+            "bucket": "public"
+          }
+        }
+      }
+    }
+  },
+  "exception": "None",
+  "payload": {}
+}
