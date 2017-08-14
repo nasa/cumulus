@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Common utilities used across tasks",
   "scripts": {
     "lint": "eslint .",
