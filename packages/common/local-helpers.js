@@ -54,7 +54,7 @@ const findById = (arr, id) => {
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
   if (!isLocal && !isMocha && !isJupyter) return null;
-  const configPath = `${fileRoot()}/cumulus-common/test/config/test-collections.yml`;
+  const configPath = `${fileRoot()}/packages/common/test/config/test-collections.yml`;
   log.info(`CONFIG PATH: ${configPath}`);
   const configStr =
     fs.readFileSync(configPath).toString();
