@@ -1,6 +1,6 @@
 {
-  "name": "cumulus-common",
-  "version": "0.0.0",
+  "name": "@cumulus/common",
+  "version": "1.0.0",
   "description": "Common utilities used across tasks",
   "scripts": {
     "lint": "eslint .",
@@ -14,9 +14,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
-  "author": "Patrick Quinn",
+  "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "ajv": "^5.0.4-beta.3",
