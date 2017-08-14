@@ -1,5 +1,83 @@
 {
-	"devDependencies": {
-		"lerna": "^2.0.0"
-	}
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cumulus Framework for ingesting and processing Nasa Earth data streams",
+  "scripts": {
+    "test": "lerna run test",
+    "bootstrap": "lerna bootstrap",
+    "clean": "lerna clean",
+    "build": "lerna run --parallel --no-sort build",
+    "watch": "lerna run --parallel --no-sort watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "keywords": [
+    "GIBS",
+    "CUMULUS",
+    "NASA"
+  ],
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "env": {
+      "node": true,
+      "mocha": true
+    },
+    "extends": "airbnb",
+    "rules": {
+      "generator-star-spacing": "off",
+      "import/no-extraneous-dependencies": "off",
+      "import/newline-after-import": "off",
+      "no-warning-comments": [2, { "terms": ["TODO", "fixme"], "location": "anywhere" }],
+      "no-useless-escape": "off",
+      "no-console": "warn",
+      "spaced-comment": "off",
+      "require-yield": "off",
+      "prefer-template": "warn",
+      "no-underscore-dangle": "off",
+      "comma-dangle": ["warn", "never"],
+      "strict": "off",
+      "guard-for-in": "off",
+      "object-shorthand": "off",
+      "space-before-function-paren": ["error", "never"],
+      "brace-style": [2, "stroustrup"],
+      "max-len": [2, {
+        "code": 100,
+        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+      }]
+    }
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ],
+    "plugins": [
+      "transform-async-to-generator"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "babel-core": "^6.13.2",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-polyfill": "^6.13.0",
+    "babel-preset-es2015": "^6.13.2",
+    "copy-webpack-plugin": "^4.0.1",
+    "eslint": "^3.2.2",
+    "eslint-config-airbnb": "^10.0.0",
+    "eslint-plugin-import": "^1.13.0",
+    "eslint-plugin-jsx-a11y": "^2.1.0",
+    "eslint-plugin-react": "^6.0.0",
+    "exports-loader": "^0.6.3",
+    "lerna": "^2.0.0",
+    "prepend-loader": "0.0.2",
+    "json-loader": "^0.5.4",
+    "source-map-support": "^0.4.2",
+    "transform-loader": "^0.2.3",
+    "webpack": "^1.13.3",
+    "webpack-node-externals": "^1.5.4"
+  }
 }
