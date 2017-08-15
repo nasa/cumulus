@@ -111,15 +111,20 @@ module.exports = superclass => class extends superclass {
 
     return new Promise((resolve, reject) => {
       this.sftp.readdir(path, (err, list) => {
-        if (err) return reject(err);
-
+        if (err) {
+          if (err.message.includes('No such file')) {
+            return resolve([]);
+          }
+          return reject(err);
+        }
         return resolve(list.map(i => ({
           name: i.filename,
           type: i.longname.substr(0, 1),
           size: i.attrs.size,
           time: i.attrs.mtime,
           owner: i.attrs.uid,
-          group: i.attrs.gid
+          group: i.attrs.gid,
+          path: path
         })));
       });
     });
