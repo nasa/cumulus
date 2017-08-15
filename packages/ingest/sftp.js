@@ -31,7 +31,7 @@ module.exports = superclass => class extends superclass {
   }
 
   async connect() {
-    if (!this.decrypted) {
+    if (!this.decrypted && this.provider.encrypted) {
       if (this.username) {
         this.options.user = await KMS.decrypt(this.username);
         this.decrypted = true;
