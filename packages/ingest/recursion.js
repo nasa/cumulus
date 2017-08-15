@@ -76,7 +76,6 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
     }
     // add file to the list
     else if (item.type === '-') {
-      item.path = currentPath;
       files = files.concat(item);
     }
   }
