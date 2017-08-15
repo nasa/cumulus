@@ -14,7 +14,8 @@ module.exports = {
     nodeExternals({
       whitelist: [/.*cumulus[-\/].*/]
     }),
-    'aws-sdk'
+    'aws-sdk',
+    'electron'
   ],
   node: {
     __dirname: false,
