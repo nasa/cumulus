@@ -10,6 +10,7 @@ const https = require('https');
 const mkdirp = require('mkdirp');
 const pump = require('pump');
 const syncUrl = require('@cumulus/common/aws').syncUrl;
+const errors = require('@cumulus/common/errors');
 
 
 async function downloadToDisk(url, filepath) {
@@ -72,8 +73,9 @@ module.exports.httpMixin = superclass => class extends superclass {
         return resolve(files);
       });
 
-      c.on('fetchtimeout', err => reject(err));
-      c.on('fetcherror', err => reject(err));
+      c.on('fetchtimeout', reject);
+      c.on('fetcherror', reject);
+      c.on('fetchclienterror', () => reject(new errors.RemoteResourceError('Connection Refused')));
 
       c.on('fetch404', (err) => {
         const e = {
