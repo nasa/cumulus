@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const pvl = require('@cumulus/pvl/t');
+const errors = require('@cumulus/common/errors');
 const PDRParsingError = require('@cumulus/common/errors').PDRParsingError;
 
 function getItem(spec, pdrName, name, must = true) {
@@ -22,6 +23,7 @@ function getItem(spec, pdrName, name, must = true) {
   return null;
 }
 
+const MismatchPdrCollection = errors.createErrorType('MismatchPdrCollection');
 
 /**
  * Makes sure that a FILE Spec has all the required files and returns
@@ -115,12 +117,15 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
       const error = new PDRParsingError('DATA_TYPE is missing');
       throw error;
     }
-    else {
-      dataType = dataType.value;
-    }
+    dataType = dataType.value;
 
     if (specs.length === 0) {
       throw new Error();
+    }
+
+    // make sure the datatype matches the collection
+    if (dataType !== collection.dataType) {
+      throw new MismatchPdrCollection('PDR doesnt match the collection');
     }
 
     const files = specs.map(parseSpec.bind(null, pdrName));
@@ -139,7 +144,6 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
   if (fileCount !== expectedFileCount) {
     throw new PDRParsingError('FILE COUNT doesn\'t match expected file count');
   }
-
 
   obj.granulesCount = fileGroups.length;
   obj.filesCount = fileCount;
