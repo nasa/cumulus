@@ -69,8 +69,12 @@ module.exports = superclass => class extends superclass {
    * @private
    */
 
-  async sync(url, bucket, key, filename) {
-    const tempFile = await this.download(this.host, this.path, filename);
+  async sync(path, bucket, key, filename) {
+    const tempFile = await this.download(path, filename);
+    return this.upload(bucket, key, filename, tempFile);
+  }
+
+  async upload(bucket, key, filename, tempFile) {
     await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
     return urljoin('s3://', bucket, key, filename);
   }
@@ -82,7 +86,7 @@ module.exports = superclass => class extends superclass {
    * @private
    */
 
-  async download(host, path, filename) {
+  async download(path, filename) {
     // let's stream to file
     if (!this.connected) await this.connect();
 
