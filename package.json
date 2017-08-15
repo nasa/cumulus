@@ -34,7 +34,7 @@
       "no-useless-escape": "off",
       "no-console": "warn",
       "spaced-comment": "off",
-      "require-yield": "off",
+      "no-return-await": "on",
       "prefer-template": "warn",
       "no-underscore-dangle": "off",
       "comma-dangle": ["warn", "never"],
