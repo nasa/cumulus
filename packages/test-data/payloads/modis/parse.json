@@ -69,8 +69,8 @@
   "exception": null,
   "payload": {
     "pdr": {
-      "name": "MYD13A1_5_grans.PDR",
-      "path": "/TEST_B/Cumulus/PDR/TEST_CASES"
+      "name": "MOD09GQ.PDR",
+      "path": "/pdrs"
     }
   }
 }
