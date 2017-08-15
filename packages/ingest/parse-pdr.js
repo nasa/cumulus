@@ -7,8 +7,6 @@
 
 const fs = require('fs');
 const pvl = require('@cumulus/pvl/t');
-const lGet = require('lodash.get');
-const basename = require('path').basename;
 const PDRParsingError = require('@cumulus/common/errors').PDRParsingError;
 
 function getItem(spec, pdrName, name, must = true) {
@@ -65,7 +63,8 @@ function parseSpec(pdrName, spec) {
     throw new PDRParsingError('FILE_CKSUM_VALUE', pdrName);
   }
 
-  return { path, filename, fileSize, checksumType, checksumValue };
+  const name = filename;
+  return { path, name, fileSize, checksumType, checksumValue };
 }
 module.exports.parseSpec = parseSpec;
 
@@ -79,11 +78,10 @@ function extractGranuleId(fileName, regex) {
   return fileName;
 }
 
-module.exports.parsePdr = function parsePdr(pdrFilePath, collections) {
+module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
   // then read the file and and pass it to parser
   const pdrFile = fs.readFileSync(pdrFilePath);
   const obj = {
-    pdrName: basename(pdrFilePath),
     granules: []
   };
 
@@ -125,22 +123,10 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collections) {
       throw new Error();
     }
 
-    const files = specs.map(parseSpec.bind(null, obj.pdrName));
-
-    // extract the granuleId from the first file
-    // if the regex is missing or the regex operation
-    // return nothing, use the fullFilename
-    const collection = lGet(collections, dataType);
-
-    if (!collection) {
-      const error = new PDRParsingError(`Collection for ${dataType} is not found`);
-      throw error;
-    }
-
-    const granuleId = extractGranuleId(files[0].filename, collection.granuleIdExtraction);
+    const files = specs.map(parseSpec.bind(null, pdrName));
+    const granuleId = extractGranuleId(files[0].name, collection.granuleIdExtraction);
 
     obj.granules.push({
-      collectionName: dataType,
       granuleId,
       granuleSize: files.reduce((total, file) => total + file.fileSize, 0),
       files

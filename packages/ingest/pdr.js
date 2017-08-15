@@ -2,8 +2,7 @@
 
 const path = require('path');
 const get = require('lodash.get');
-const urljoin = require('url-join');
-const uploadS3Files = require('@cumulus/common/aws').uploadS3Files;
+const log = require('@cumulus/common/log');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
@@ -18,22 +17,28 @@ const queue = require('./queue');
  * @abstract
  */
 class Discover {
-  constructor(provider, bucket, folder = 'pdrs', limit = 0) {
+  constructor(event) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    this.bucket = bucket;
-    this.port = get(provider, 'port', 21);
-    this.host = get(provider, 'host', null);
-    this.path = get(provider, 'path', '/');
-    this.provider = provider;
-    this.folder = folder;
-    this.counter = 0;
-    this.limit = limit;
-    this.endpoint = urljoin(this.host, this.path);
-    this.username = get(provider, 'username', null);
-    this.password = get(provider, 'password', null);
+    this.buckets = get(event, 'resources.buckets');
+    this.collection = get(event, 'collection.meta');
+    this.provider = get(event, 'provider');
+    this.folder = get(event, 'meta.pdrFolder', 'pdrs');
+    this.event = event;
+
+    // get authentication information
+    this.port = get(this.provider, 'port', 21);
+    this.host = get(this.provider, 'host', null);
+    this.path = this.collection.provider_path || '/';
+    this.username = get(this.provider, 'username', null);
+    this.password = get(this.provider, 'password', null);
+  }
+
+  filterPdrs(pdr) {
+    const test = new RegExp(/^(.*\.PDR)$/);
+    return pdr.name.match(test) !== null;
   }
 
   /**
@@ -43,12 +48,15 @@ class Discover {
    */
 
   async discover() {
-    const pdrs = await this._list();
-    return this.findNewPdrs(pdrs);
+    let files = await this.list();
+
+    // filter out non pdr files
+    files = files.filter(f => this.filterPdrs(f));
+    return this.findNewPdrs(files);
   }
 
   async pdrIsNew(pdr) {
-    const exists = await S3.fileExists(this.bucket, path.join(this.folder, pdr));
+    const exists = await S3.fileExists(this.buckets.internal, path.join(this.folder, pdr.name));
     return exists ? false : pdr;
   }
 
@@ -61,24 +69,11 @@ class Discover {
    * @return {Promise}
    * @private
    */
-
-  pdrMessage(pdr) {
-    return {
-      pdrName: path.basename(pdr),
-      pdrPath: this.path
-    };
-  }
-
   async findNewPdrs(pdrs) {
-    // check if any of the discovered PDRs exist on S3
-    // return those that are missing
-    //const limit = pLimit(this.limit || 100);
-
     const checkPdrs = pdrs.map(pdr => this.pdrIsNew(pdr));
-    //const checkPdrs = pdrs.slice(0, 700).map(pdr => limit(() => this.pdrIsNew(pdr)));
     const _pdrs = await Promise.all(checkPdrs);
 
-    const newPdrs = _pdrs.filter(p => p).map(p => this.pdrMessage(p));
+    const newPdrs = _pdrs.filter(p => p);
     return newPdrs;
   }
 }
@@ -91,30 +86,10 @@ class Discover {
  * @abstract
  */
 class DiscoverAndQueue extends Discover {
-  constructor(event) {
-    const buckets = get(event, 'resources.buckets');
-    const provider = get(event, 'provider');
-    const folder = get(event, 'meta.pdrsFolder', 'pdrs');
-    const discoverLimit = get(event, 'meta.discoverLimit', 100);
-
-    super(provider, buckets.internal, folder, discoverLimit);
-    this.event = event;
-  }
-
-  async findNewPdrs(pdrs) {
-    // check if any of the discovered PDRs exist on S3
-    // return those that are missing
-
-    const checkPdrs = pdrs.map(pdr => this.pdrIsNew(pdr));
-    const _pdrs = await Promise.all(checkPdrs);
-    let newPdrs = _pdrs.filter(p => p).map(p => this.pdrMessage(p));
-
-    if (this.limit > 0) {
-      newPdrs = newPdrs.slice(0, this.limit);
-    }
-
-    await Promise.all(newPdrs.map(p => queue.queuePdr(this.event, p)));
-    return newPdrs;
+  async findNewPdrs(_pdrs) {
+    let pdrs = _pdrs;
+    pdrs = await super.findNewPdrs(pdrs);
+    return Promise.all(pdrs.map(p => queue.queuePdr(this.event, p)));
   }
 }
 
@@ -128,22 +103,21 @@ class DiscoverAndQueue extends Discover {
  */
 
 class Parse {
-  constructor(pdr, provider, collections, bucket, folder = 'pdrs') {
+  constructor(event) {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
     }
+    this.pdr = get(event, 'payload.pdr');
+    this.buckets = get(event, 'resources.buckets');
+    this.collection = get(event, 'collection.meta');
+    this.provider = get(event, 'provider');
+    this.folder = get(event, 'meta.pdrFolder', 'pdrs');
 
-    this.pdr = pdr;
-    this.bucket = bucket;
-    this.collections = collections; // holds the collections associated with the PDR
-    this.port = get(provider, 'port', 21);
-    this.host = get(provider, 'host', null);
-    this.path = get(provider, 'path', '/');
-    this.provider = provider;
-    this.folder = folder;
-    this.endpoint = urljoin(this.host, this.path);
-    this.username = get(provider, 'username', null);
-    this.password = get(provider, 'password', null);
+    this.port = get(this.provider, 'port', 21);
+    this.host = get(this.provider, 'host', null);
+
+    this.username = get(this.provider, 'username', null);
+    this.password = get(this.provider, 'password', null);
   }
 
   /**
@@ -153,31 +127,17 @@ class Parse {
    * @public
    */
   async ingest() {
-    // push the PDR to S3
-    const pdrLocalPath = await this.sync();
+    // download
+    const pdrLocalPath = await this.download(this.pdr.path, this.pdr.name);
+
+    // upload
+    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
 
     // parse the PDR
     const granules = await this.parse(pdrLocalPath);
 
     // return list of all granules found in the PDR
     return granules;
-  }
-
-  /**
-   * Download the PDR from the provider
-   * upload it to S3 and return the path on the local machine
-   *
-   * @return {Promise}
-   * @public
-   */
-  async sync() {
-    // download the PDR
-    const localPdrPath = await this._download(this.host, this.path, this.pdr);
-
-    // upload to S3
-    await uploadS3Files([localPdrPath], this.bucket, this.folder);
-
-    return localPdrPath;
   }
 
   /**
@@ -191,13 +151,13 @@ class Parse {
   async parse(pdrLocalPath) {
     // catching all parse errors here to mark the pdr as failed
     // if any error occured
-    const parsed = parsePdr(pdrLocalPath, this.collections);
+    const parsed = parsePdr(pdrLocalPath, this.collection, this.pdr.name);
 
     // each group represents a Granule record.
     // After adding all the files in the group to the Queue
     // we create the granule record (moment of inception)
-    console.log(`There are ${parsed.granulesCount} granules in ${this.pdr}`);
-    console.log(`There are ${parsed.filesCount} files in ${this.pdr}`);
+    log.info(`There are ${parsed.granulesCount} granules in ${this.pdr}`);
+    log.info(`There are ${parsed.filesCount} files in ${this.pdr}`);
 
     return parsed;
   }
@@ -251,6 +211,32 @@ class FtpParse extends ftpMixin(Parse) {}
 
 class HttpParse extends httpMixin(Parse) {}
 
+function selector(type, protocol, q) {
+  if (type === 'discover') {
+    switch (protocol) {
+      case 'http':
+        return q ? HttpDiscoverAndQueue : HttpDiscover;
+      case 'ftp':
+        return q ? FtpDiscoverAndQueue : FtpDiscover;
+      default:
+        throw new Error(`Protocol ${protocol} is not supported.`);
+    }
+  }
+  else if (type === 'parse') {
+    switch (protocol) {
+      case 'http':
+        return HttpParse;
+      case 'ftp':
+        return FtpParse;
+      default:
+        throw new Error(`Protocol ${protocol} is not supported.`);
+    }
+  }
+
+  throw new Error(`${type} is not supported`);
+}
+
+module.exports.selector = selector;
 module.exports.HttpParse = HttpParse;
 module.exports.FtpParse = FtpParse;
 module.exports.FtpDiscover = FtpDiscover;
