@@ -82,6 +82,11 @@
           "from": "aws-sdk@>=2.4.11 <3.0.0",
           "resolved": "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.49.0.tgz"
         },
+        "@cumulus/test-data": {
+          "version": "1.0.0",
+          "from": "@cumulus/test-data@>=1.0.0 < 2.0.0",
+          "resolved": "file:../../../packages/test-data"
+        },
         "sax": {
           "version": "1.2.1",
           "from": "sax@1.2.1",
