@@ -55,6 +55,7 @@ test.cb('test discovering amsr2 granules using SFTP', (t) => {
     payload.provider.port = process.env.JAXA_PORT;
     payload.provider.username = process.env.JAXA_USER;
     payload.provider.password = process.env.JAXA_PASS;
+    payload.provider.encrypted = true;
 
     // update discovery rule
     payload.meta.useQueue = false;
