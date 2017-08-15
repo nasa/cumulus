@@ -41,9 +41,9 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  _list() {
-    const pattern = /<a href="(.*PDR)">/;
-    const c = new Crawler(this.endpoint);
+  list() {
+    const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
+    const c = new Crawler(urljoin(this.host, this.path));
 
     c.timeout = 2000;
     c.interval = 0;
@@ -51,7 +51,7 @@ module.exports.httpMixin = superclass => class extends superclass {
     c.respectRobotsTxt = false;
     c.userAgent = 'Cumulus';
     c.maxDepth = 1;
-    this.pdrs = [];
+    const files = [];
 
     return new Promise((resolve, reject) => {
       c.on('fetchcomplete', (queueItem, responseBuffer) => {
@@ -59,12 +59,17 @@ module.exports.httpMixin = superclass => class extends superclass {
         for (const line of lines) {
           const split = line.trim().split(pattern);
           if (split.length === 3) {
-            const name = split[1];
-            this.pdrs.push(name);
+            if (split[1].match(/^(.*\.[\w\d]{2,4})$/) !== null) {
+              const name = split[1];
+              files.push({
+                name,
+                path: this.path
+              });
+            }
           }
         }
 
-        return resolve(this.pdrs);
+        return resolve(files);
       });
 
       c.on('fetchtimeout', err => reject(err));
@@ -89,7 +94,7 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  async _sync(url, bucket, key, filename) {
+  async sync(url, bucket, key, filename) {
     await syncUrl(url, bucket, path.join(key, filename));
     return urljoin('s3://', bucket, key, filename);
   }
@@ -102,7 +107,7 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  async _download(host, _path, filename) {
+  async download(host, _path, filename) {
     // let's stream to file
     const tempFile = path.join(os.tmpdir(), filename);
     const uri = urljoin(host, _path, filename);
