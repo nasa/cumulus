@@ -9,6 +9,7 @@ const http = require('http');
 const https = require('https');
 const mkdirp = require('mkdirp');
 const pump = require('pump');
+const S3 = require('./aws').S3;
 const syncUrl = require('@cumulus/common/aws').syncUrl;
 const errors = require('@cumulus/common/errors');
 
@@ -96,11 +97,15 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  async sync(url, bucket, key, filename) {
-    await syncUrl(url, bucket, path.join(key, filename));
+  async sync(_path, bucket, key, filename) {
+    await syncUrl(urljoin(this.host, _path, filename), bucket, path.join(key, filename));
     return urljoin('s3://', bucket, key, filename);
   }
 
+  async upload(bucket, key, filename, tempfile) {
+    await S3.upload(bucket, path.join(key, filename), fs.createReadStream(tempfile));
+    return urljoin('s3://', bucket, key, filename);
+  }
 
   /**
    * Downloads the file to disk, difference with sync is that
@@ -109,10 +114,10 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  async download(host, _path, filename) {
+  async download(_path, filename) {
     // let's stream to file
     const tempFile = path.join(os.tmpdir(), filename);
-    const uri = urljoin(host, _path, filename);
+    const uri = urljoin(this.host, _path, filename);
 
     await downloadToDisk(uri, tempFile);
 
