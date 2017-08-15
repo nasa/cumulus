@@ -8,6 +8,7 @@ const urljoin = require('url-join');
 const log = require('@cumulus/common/log');
 //const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
+const KMS = require('./aws').KMS;
 const recursion = require('./recursion');
 
 //const PathIsInvalid = errors.createErrorType('PathIsInvalid');
@@ -17,6 +18,7 @@ module.exports = superclass => class extends superclass {
   constructor(...args) {
     super(...args);
     this.connected = false; // use to indicate an active connection exists
+    this.decrypted = false;
     this.options = {
       host: this.host,
       port: this.port || 21,
@@ -29,6 +31,18 @@ module.exports = superclass => class extends superclass {
   }
 
   async connect() {
+    if (!this.decrypted) {
+      if (this.username) {
+        this.options.user = await KMS.decrypt(this.username);
+        this.decrypted = true;
+      }
+
+      if (this.password) {
+        this.options.password = await KMS.decrypt(this.password);
+        this.decrypted = true;
+      }
+    }
+
     return new Promise((resolve, reject) => {
       this.client = new Client();
       this.client.on('ready', () => {
