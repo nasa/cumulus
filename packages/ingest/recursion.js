@@ -68,8 +68,11 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
         continue; // eslint-disable-line no-continue
       }
 
+      //console.log(newPath);
       const tmp = await recursion(fn, originalPath, newPath, position + 1);
       files = files.concat(tmp);
+
+      if (textPath) break;
     }
     // add file to the list
     else if (item.type === '-') {
