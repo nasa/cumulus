@@ -21,8 +21,8 @@ async function queuePdr(event, pdr) {
   const queueUrl = get(event, 'resources.queues.startSF');
   const message = await getTemplate(event);
 
-  message.payload = pdr;
-  message.ingest_meta.execution_name = `${pdr.pdrName}__PDR__${Date.now()}`;
+  message.payload = { pdr };
+  message.ingest_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
 
   return aws.SQS.sendMessage(queueUrl, message);
 }
