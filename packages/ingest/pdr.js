@@ -107,6 +107,8 @@ class Parse {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
     }
+
+    this.event = event;
     this.pdr = get(event, 'payload.pdr');
     this.buckets = get(event, 'resources.buckets');
     this.collection = get(event, 'collection.meta');
@@ -156,10 +158,24 @@ class Parse {
     // each group represents a Granule record.
     // After adding all the files in the group to the Queue
     // we create the granule record (moment of inception)
-    log.info(`There are ${parsed.granulesCount} granules in ${this.pdr}`);
-    log.info(`There are ${parsed.filesCount} files in ${this.pdr}`);
+    log.info(`There are ${parsed.granulesCount} granules in ${this.pdr.name}`);
+    log.info(`There are ${parsed.filesCount} files in ${this.pdr.name}`);
 
     return parsed;
+  }
+}
+
+/**
+ * This is a base class for discovering PDRs
+ * It must be mixed with a FTP or HTTP mixing to work
+ *
+ * @class
+ * @abstract
+ */
+class ParseAndQueue extends Parse {
+  async ingest() {
+    const payload = await super.ingest();
+    return Promise.all(payload.granules.map(g => queue.queueGranule(this.event, g)));
   }
 }
 
@@ -211,6 +227,24 @@ class FtpParse extends ftpMixin(Parse) {}
 
 class HttpParse extends httpMixin(Parse) {}
 
+/**
+ * Parse PDRs downloaded from a FTP endpoint.
+ *
+ * @class
+ */
+
+class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
+
+/**
+ * Parse PDRs downloaded from a HTTP endpoint.
+ *
+ * @class
+ */
+
+class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
+
+
+
 function selector(type, protocol, q) {
   if (type === 'discover') {
     switch (protocol) {
@@ -225,9 +259,9 @@ function selector(type, protocol, q) {
   else if (type === 'parse') {
     switch (protocol) {
       case 'http':
-        return HttpParse;
+        return q ? HttpParseAndQueue : HttpParse;
       case 'ftp':
-        return FtpParse;
+        return q ? FtpParseAndQueue : FtpParse;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
