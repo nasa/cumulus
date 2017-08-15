@@ -38,7 +38,7 @@
       "provider_path": "/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[\\d])",
       "granuleId": "^.*$",
       "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
-      "granuleIdExtraction": "^(.*)\.(nc|nc\.md5)$",
+      "granuleIdExtraction": "^(.*)\\.(nc|nc\\.md5)$",
       "files": [
         {
           "regex": ".*.nc$",
