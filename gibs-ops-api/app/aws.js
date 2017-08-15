@@ -42,7 +42,7 @@ const realServices = {
     if (isLocal) {
       awsCredentials = new AWS.SharedIniFileCredentials({ profile: 'default' });
     }
-    else if (process.env.NGAP_PAAS_DEPLOYMENT) {
+    else if (process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI) {
       awsCredentials = new AWS.ECSCredentials();
     }
     else {
