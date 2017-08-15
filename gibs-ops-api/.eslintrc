@@ -11,7 +11,7 @@
     "generator-star-spacing": "off",
     "import/newline-after-import": "off",
     "import/no-extraneous-dependencies": "off",
-    "no-console": "warn",
+    "no-console": "off",
     "no-warning-comments": [2, { "terms": ["TODO", "fixme"], "location": "anywhere" }],
     "no-underscore-dangle": "off",
     "no-useless-escape": "off",
