@@ -5,104 +5,75 @@ const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
 
-async function download(buckets, provider, g, collections) {
-  let IngestClass;
+async function download(ingest, bucket, provider, g) {
   let r;
-  const granuleId = g.granuleId;
-  const proceed = await lock.proceed(buckets.internal, provider, granuleId);
-
-  // parse PDR
-  switch (provider.protocol) {
-    case 'ftp': {
-      IngestClass = granule.FtpGranule;
-      break;
-    }
-    default: {
-      IngestClass = granule.HttpGranule;
-    }
-  }
+  const proceed = await lock.proceed(bucket, provider, g.granuleId);
 
   if (!proceed) {
     throw new errors.ResourcesLockedError('Download lock remained in place after multiple tries');
   }
 
   try {
-    const collection = collections[g.collection];
-    const ingest = new IngestClass(g, provider, collection, buckets);
-
-    r = await ingest.ingest();
+    r = await ingest.ingest(g);
   }
   catch (e) {
-    await lock.removeLock(buckets.internal, provider.id, granuleId);
+    await lock.removeLock(bucket, provider.id, g.granuleId);
     throw e;
   }
 
-  await lock.removeLock(buckets.internal, provider.id, granuleId);
+  await lock.removeLock(bucket, provider.id, g.granuleId);
   return r;
 }
 
 module.exports.handler = function handler(_event, context, cb) {
   const event = Object.assign({}, _event);
   const buckets = get(event, 'resources.buckets');
-  const collections = get(event, 'meta.collections');
-  const provider = get(event, 'provider', null);
+  const collection = get(event, 'collection.meta');
   const granules = get(event, 'payload.granules');
+  const provider = get(event, 'provider');
 
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
     return cb(err);
   }
 
+  const IngestClass = granule.selector('ingest', provider.protocol);
+  const ingest = new IngestClass(event);
+
   let ad = [];
 
   // download all the granules provided
-  ad = granules.map((g) => download(buckets, provider, g, collections));
+  ad = granules.map((g) => download(ingest, buckets.internal, provider, g));
 
-  const updatedInput = {};
-  return Promise.all(ad).then((r) => {
-    let collectionName;
-    r.forEach((g) => {
-      const granuleObject = {
-        granuleId: g.granuleId,
-        files: g.files
-      };
-      collectionName = g.collectionName;
-      if (updatedInput[g.collectionName]) {
-        updatedInput[g.collectionName].granules.push(granuleObject);
-      }
-      else {
-        updatedInput[g.collectionName] = {
-          granules: [granuleObject]
-        };
-      }
-    });
-    event.meta.process = collections[collectionName].process;
-    event.payload = {
-      input: updatedInput,
-      output: {
-        [collectionName]: {
-          granules: []
-        }
-      }
-    };
+  return Promise.all(ad).then((gs) => {
+    event.payload.granules = gs;
+
+    if (collection.process) {
+      event.meta.process = collection.process;
+    }
+
+    // temporary fix for payload parsing problem in docker images
+    // it deosn't look for the meta key in collection
+    event.collection = event.collection.meta;
+    event.collection.id = event.collection.name;
+
+    if (ingest.connected) {
+      ingest.end();
+    }
+
     return cb(null, event);
-  }).catch(e => cb(e));
+  }).catch(e => {
+    if (ingest.connected) {
+      ingest.end();
+    }
 
-  //const updatedPayload = [];
+    if (e.toString().includes('ECONNREFUSED')) {
+      return cb(new errors.RemoteResourceError('Connection Refused'));
+    }
+    else if (e.details && e.details.status === 'timeout') {
+      return cb(new errors.ConnectionTimeout('connection Timed out'));
+    }
 
-  //return Promise.all(ad).then((r) => {
-    //for (const g of r) {
-      //for (const og of granules) {
-        //if (og.granuleId === g.granuleId) {
-          //og.files = g.files;
-          //updatedPayload.push(og);
-          //break;
-        //}
-      //}
-    //}
-
-    //event.payload = { granules: updatedPayload };
-    //return cb(null, event);
-  //}).catch(e => cb(e));
+    return cb(e);
+  });
 };
-
