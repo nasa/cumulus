@@ -29,15 +29,12 @@
   5)
 
 (defn create-activity-arn
-  [activity-name-or-arn]
-  (if (.startsWith activity-name-or-arn "arn:aws")
-    activity-name-or-arn
-    (let [arn-name (str/replace activity-name-or-arn #"Activity$" "")]
-      (format "arn:aws:states:%s:%s:activity:%s-%s"
-              (util/get-aws-region)
-              (util/get-aws-account-id)
-              (util/get-stack-name)
-              arn-name))))
+  [activity-name]
+  (format "arn:aws:states:%s:%s:activity:%s-%s"
+          (util/get-aws-region)
+          (util/get-aws-account-id)
+          (util/get-stack-name)
+          activity-name))
 
 (defn get-gateway-providers
   ([]
@@ -53,12 +50,12 @@
                (merge
                 {:provider-id id}
                 (select-keys config [:conn_config :num_connections])
-                (when (:activity_arn config)
-                  {:activity-api {:type :aws
-                                  :arn (create-activity-arn (:activity_arn config))}})
-                (when (:sync_activity_arn config)
-                  {:sync-activity-api {:type :aws
-                                       :arn (create-activity-arn (:sync_activity_arn config))}})))))))
+                (when (:activity config)
+                  {:activity-api {:activity-api-type "aws"
+                                  :arn (create-activity-arn (:activity config))}})
+                (when (:sync_activity config)
+                  {:sync-activity-api {:activity-api-type "aws"
+                                       :arn (create-activity-arn (:sync_activity config))}})))))))
 
 (defn create-provider-components
   "TODO"

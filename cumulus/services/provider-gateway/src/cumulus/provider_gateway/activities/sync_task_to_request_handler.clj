@@ -40,25 +40,32 @@
      (assoc task-updated :input
             {:files (mapv #(file->download-request (:config task-updated) %) (:input task-updated))})))
 
-  ;; TODO the response from this should include an .exception if no synchronization is required.
   (handle-completed-task
-   [_ completion-request]
-   (let [payload-files (->> completion-request
-                            :results
-                            ;; Get the successful completions
-                            (filter :success)
-                            ;; Get their upload locations
-                            (map :target)
-                            ;; Change to the style expected
-                            (map #(hash-map :Bucket (:bucket %) :Key (:key %))))
-         message (-> completion-request
-                     :original-message
-                     (assoc :payload payload-files))]
-     (activity-handler/upload-large-payload
-      TASK_NAME
-      s3-api
-      (:config completion-request)
-      message))))
+   [_ {:keys [results] :as completion-request}]
+   (cond
+     (every? :version_skip results)
+     {:exception "NotNeededWorkflowError"}
+
+     ;; If any failed to transfer we'll return a remote resource error
+     (some (complement :success) results)
+     {:exception "RemoteResourceError"}
+
+     :else
+     (let [payload-files (->> results
+                              ;; Get the successful completions
+                              (filter :success)
+                              ;; Get their upload locations
+                              (map :target)
+                              ;; Change to the style expected
+                              (map #(hash-map :Bucket (:bucket %) :Key (:key %))))
+           message (-> completion-request
+                       :original-message
+                       (assoc :payload payload-files))]
+       (activity-handler/upload-large-payload
+        TASK_NAME
+        s3-api
+        (:config completion-request)
+        message)))))
 
 (defn create-sync-task-to-request-handler
   ([]
