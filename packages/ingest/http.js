@@ -9,7 +9,9 @@ const http = require('http');
 const https = require('https');
 const mkdirp = require('mkdirp');
 const pump = require('pump');
+const S3 = require('./aws').S3;
 const syncUrl = require('@cumulus/common/aws').syncUrl;
+const errors = require('@cumulus/common/errors');
 
 
 async function downloadToDisk(url, filepath) {
@@ -41,9 +43,9 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  _list() {
-    const pattern = /<a href="(.*PDR)">/;
-    const c = new Crawler(this.endpoint);
+  list() {
+    const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
+    const c = new Crawler(urljoin(this.host, this.path));
 
     c.timeout = 2000;
     c.interval = 0;
@@ -51,7 +53,7 @@ module.exports.httpMixin = superclass => class extends superclass {
     c.respectRobotsTxt = false;
     c.userAgent = 'Cumulus';
     c.maxDepth = 1;
-    this.pdrs = [];
+    const files = [];
 
     return new Promise((resolve, reject) => {
       c.on('fetchcomplete', (queueItem, responseBuffer) => {
@@ -59,16 +61,22 @@ module.exports.httpMixin = superclass => class extends superclass {
         for (const line of lines) {
           const split = line.trim().split(pattern);
           if (split.length === 3) {
-            const name = split[1];
-            this.pdrs.push(name);
+            if (split[1].match(/^(.*\.[\w\d]{2,4})$/) !== null) {
+              const name = split[1];
+              files.push({
+                name,
+                path: this.path
+              });
+            }
           }
         }
 
-        return resolve(this.pdrs);
+        return resolve(files);
       });
 
-      c.on('fetchtimeout', err => reject(err));
-      c.on('fetcherror', err => reject(err));
+      c.on('fetchtimeout', reject);
+      c.on('fetcherror', reject);
+      c.on('fetchclienterror', () => reject(new errors.RemoteResourceError('Connection Refused')));
 
       c.on('fetch404', (err) => {
         const e = {
@@ -89,11 +97,15 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  async _sync(url, bucket, key, filename) {
-    await syncUrl(url, bucket, path.join(key, filename));
+  async sync(_path, bucket, key, filename) {
+    await syncUrl(urljoin(this.host, _path, filename), bucket, path.join(key, filename));
     return urljoin('s3://', bucket, key, filename);
   }
 
+  async upload(bucket, key, filename, tempfile) {
+    await S3.upload(bucket, path.join(key, filename), fs.createReadStream(tempfile));
+    return urljoin('s3://', bucket, key, filename);
+  }
 
   /**
    * Downloads the file to disk, difference with sync is that
@@ -102,10 +114,10 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @private
    */
 
-  async _download(host, _path, filename) {
+  async download(_path, filename) {
     // let's stream to file
     const tempFile = path.join(os.tmpdir(), filename);
-    const uri = urljoin(host, _path, filename);
+    const uri = urljoin(this.host, _path, filename);
 
     await downloadToDisk(uri, tempFile);
 
