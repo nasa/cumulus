@@ -2,18 +2,23 @@
 
 const fs = require('fs');
 const os = require('os');
-const Client = require('ssh2-sftp-client');
+const Client = require('ssh2').Client;
 const join = require('path').join;
 const urljoin = require('url-join');
-const errors = require('@cumulus/common/errors');
+const log = require('@cumulus/common/log');
+//const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
+const KMS = require('./aws').KMS;
+const recursion = require('./recursion');
 
-const PathIsInvalid = errors.createErrorType('PathIsInvalid');
+//const PathIsInvalid = errors.createErrorType('PathIsInvalid');
 
 module.exports = superclass => class extends superclass {
 
   constructor(...args) {
     super(...args);
+    this.connected = false; // use to indicate an active connection exists
+    this.decrypted = false;
     this.options = {
       host: this.host,
       port: this.port || 21,
@@ -21,18 +26,40 @@ module.exports = superclass => class extends superclass {
       password: this.password
     };
 
-    const regex = /(\(.*?\))/g;
-    this.recursion = this.path.split(regex).map(i => i.replace(/\\\\/g, '\\'));
-    this.map = this.recursion.map(r => (r.match(regex) !== null));
     this.client = null;
+    this.sftp = null;
   }
 
-  async _connect() {
-    this.client = new Client();
-    await this.client.connect(this.options);
+  async connect() {
+    if (!this.decrypted && this.provider.encrypted) {
+      if (this.username) {
+        this.options.user = await KMS.decrypt(this.username);
+        this.decrypted = true;
+      }
+
+      if (this.password) {
+        this.options.password = await KMS.decrypt(this.password);
+        this.decrypted = true;
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      this.client = new Client();
+      this.client.on('ready', () => {
+        this.client.sftp((err, sftp) => {
+          if (err) return reject(err);
+          this.sftp = sftp;
+          this.connected = true;
+          log.info(`SFTP Connected to ${this.host}`);
+          return resolve();
+        });
+      });
+      this.client.on('error', (e) => reject(e));
+      this.client.connect(this.options);
+    });
   }
 
-  async _end() {
+  async end() {
     return this.client.end();
   }
 
@@ -42,8 +69,12 @@ module.exports = superclass => class extends superclass {
    * @private
    */
 
-  async _sync(url, bucket, key, filename) {
-    const tempFile = await this._download(this.host, this.path, filename);
+  async sync(path, bucket, key, filename) {
+    const tempFile = await this.download(path, filename);
+    return this.upload(bucket, key, filename, tempFile);
+  }
+
+  async upload(bucket, key, filename, tempFile) {
     await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
     return urljoin('s3://', bucket, key, filename);
   }
@@ -55,21 +86,21 @@ module.exports = superclass => class extends superclass {
    * @private
    */
 
-  async _download(host, path, filename) {
+  async download(path, filename) {
     // let's stream to file
-    if (!this.client) await this._connect();
+    if (!this.connected) await this.connect();
 
     const tempFile = join(os.tmpdir(), filename);
-    const file = fs.createWriteStream(tempFile);
-    const stream = await this.client.get(join(path, filename));
+    const remoteFile = join(path, filename);
+    log.info(`Downloading to ${tempFile}`);
 
     return new Promise((resolve, reject) => {
-      stream.on('data', chunk => file.write(chunk));
-      stream.on('error', e => reject(e));
-      return stream.on('end', () => {
-        file.close();
-        return resolve(tempFile);
+      this.sftp.fastGet(remoteFile, tempFile, (e) => {
+        if (e) return reject(e);
+        log.info(`Finishing downloading ${this.filename}`);
+        return (resolve(tempFile));
       });
+      this.client.on('error', (e) => reject(e));
     });
   }
 
@@ -80,12 +111,41 @@ module.exports = superclass => class extends superclass {
    * @private
    */
 
-  async _write(host, path, filename, body) {
+  async write(host, path, filename, body) {
     // stream to file
-    if (!this.client) await this._connect();
+    if (!this.connected) await this.connect();
 
     const input = new Buffer(body);
-    await this.client.put(input, join(path, filename));
+    return new Promise((resolve, reject) => {
+      const stream = this.sftp.createWriteStream(join(path, filename));
+      stream.on('error', reject);
+      stream.on('close', resolve);
+      stream.end(input);
+    });
+  }
+
+  async _list(path) {
+    if (!this.connected) await this.connect();
+
+    return new Promise((resolve, reject) => {
+      this.sftp.readdir(path, (err, list) => {
+        if (err) {
+          if (err.message.includes('No such file')) {
+            return resolve([]);
+          }
+          return reject(err);
+        }
+        return resolve(list.map(i => ({
+          name: i.filename,
+          type: i.longname.substr(0, 1),
+          size: i.attrs.size,
+          time: i.attrs.mtime,
+          owner: i.attrs.uid,
+          group: i.attrs.gid,
+          path: path
+        })));
+      });
+    });
   }
 
   /**
@@ -94,53 +154,10 @@ module.exports = superclass => class extends superclass {
    * @private
    */
 
-  async _list(_start = null, position = 0) {
-    let start = _start;
-    if (!start) {
-      start = this.recursion[position];
-    }
-
-    let allFiles = {};
-    try {
-      if (!this.client) await this._connect();
-
-      const list = await this.client.list(start);
-      allFiles[start] = [];
-      for (const item of list) {
-        if (item.type === 'd') {
-          const isRegex = this.map[position + 1];
-          let regexPath;
-          let textPath;
-          if (isRegex) {
-            regexPath = new RegExp(this.recursion[position + 1]);
-          }
-          else {
-            textPath = this.recursion[position + 1];
-          }
-          if (isRegex && item.name.match(regexPath)) {
-            const newStart = join(start, item.name);
-            const tmp = await this._list(newStart, position + 1);
-            allFiles = Object.assign(tmp, allFiles);
-          }
-          else {
-            const newStart = join(start, textPath);
-            const tmp = await this._list(newStart, position + 1);
-            allFiles = Object.assign(tmp, allFiles);
-          }
-        }
-        else if (item.type === '-') {
-          allFiles[start].push(item);
-        }
-      }
-
-      return allFiles;
-    }
-    catch (e) {
-      if (e.message.includes('No such file')) {
-        return allFiles;
-      }
-      await this._end();
-      throw e;
-    }
+  async list() {
+    const listFn = this._list.bind(this);
+    const files = await recursion(listFn, this.path);
+    log.info(`${files.length} files were found on ${this.host}`);
+    return files;
   }
 };

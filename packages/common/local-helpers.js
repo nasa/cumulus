@@ -108,3 +108,16 @@ exports.setupLocalRun = (handler, invocation) => {
     handler(invocation(), {}, (result) => result);
   }
 };
+
+
+/**
+ * Similar to setupLocalRun except that it only
+ * calls the passed function if it is a local run
+ *
+ * @param {function} fn - A function to call
+ */
+exports.justLocalRun = (fn) => {
+  if (isLocal) {
+    fn();
+  }
+};

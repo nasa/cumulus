@@ -21,33 +21,32 @@ async function queuePdr(event, pdr) {
   const queueUrl = get(event, 'resources.queues.startSF');
   const message = await getTemplate(event);
 
-  message.payload = pdr;
-  message.ingest_meta.execution_name = `${pdr.pdrName}__PDR__${Date.now()}`;
+  message.payload = { pdr };
+  message.ingest_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
 
   return aws.SQS.sendMessage(queueUrl, message);
 }
 
 async function queueGranule(event, granule) {
   const queueUrl = get(event, 'resources.queues.startSF');
+  const collectionId = get(event, 'collection.id');
+  const pdr = get(event, 'payload.pdr', null);
   const message = await getTemplate(event);
-
-  message.meta.pdrName = event.payload.pdrName;
 
   message.payload = {
     granules: [{
       granuleId: granule.granuleId,
-      collection: granule.collectionName,
       files: granule.files
     }]
   };
 
-  const name = `${granule.collectionName}__GRANULE__${granule.granuleId}__${Date.now()}`;
+  if (pdr) {
+    message.payload.pdr = pdr;
+  }
+
+  const name = `${collectionId}__GRANULE__${granule.granuleId}__${Date.now()}`;
 
   message.ingest_meta.execution_name = name;
-  message.meta.collections = {
-    [granule.collectionName]: event.meta.collections[granule.collectionName]
-  };
-
   return aws.SQS.sendMessage(queueUrl, message);
 }
 
