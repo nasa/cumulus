@@ -111,6 +111,7 @@
            {:keys [task-token input]} task]
        {:task-token task-token
         :input (json/decode input true)})
+     ; TODO handle this exception and return null com.amazonaws.SdkClientException: Unable to execute HTTP request: Read timed out
      (catch ClientExecutionTimeoutException e
        ;; ignoring this and returning nil
        nil)))
@@ -186,8 +187,6 @@
 
   (get-task
    [this]
-   (ensure-dir-exists input-dir)
-
    (when-let [oldest-input-file (get-oldest-input-file input-dir watch-service)]
      (let [contents (json/decode (slurp oldest-input-file) true)
            task-token (str "task-" (swap! task-token-atom inc))]
@@ -204,7 +203,6 @@
   (report-task-success
    [this task-token output]
    (println "Reporting success" task-token)
-   (ensure-dir-exists output-dir)
    (let [output-file (io/as-file (str output-dir File/separator task-token ".json"))]
      (spit output-file (json/encode output {:pretty true})))
    nil))
@@ -215,6 +213,8 @@
         output-dir (io/as-file (str target-dir File/separator "outputs"))
         watch-service (.newWatchService (FileSystems/getDefault))
         path (Paths/get (URI. (str (io/as-url input-dir))))]
+    (ensure-dir-exists input-dir)
+    (ensure-dir-exists output-dir)
     (.register path watch-service (into-array WatchEvent$Kind [StandardWatchEventKinds/ENTRY_CREATE]))
     (map->FileSystemActivityApi {:task-token-atom (atom 0)
                                  :watch-service watch-service

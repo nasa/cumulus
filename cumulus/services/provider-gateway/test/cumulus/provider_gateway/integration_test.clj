@@ -45,26 +45,34 @@
     (format "%s://localhost:%d/%s" (name type) port path)))
 
 (defn create-download-request
-  [type path]
-  (let [file-url (create-url type path)
-        file-name (util/url->file-name file-url)]
-   {:type "download"
-    :source {:url file-url}
-    :target {:bucket storage-bucket
-             :key file-name}}))
+  ([type path]
+   (create-download-request type path nil))
+  ([type path options]
+   (let [file-url (create-url type path)
+         file-name (util/url->file-name file-url)]
+     (merge-with merge
+                 {:type "download"
+                  :source {:url file-url}
+                  :target {:bucket storage-bucket
+                           :key file-name}}
+                 options))))
 
 (defn create-successful-download-request
-  [type path]
-  (assoc (create-download-request type path) :success true))
+  ([type path]
+   (create-successful-download-request type path nil))
+  ([type path options]
+   (assoc (create-download-request type path options) :success true)))
 
 (defn create-failed-download-request
-  [type path]
-  (let [request (create-download-request type path)
-        url (get-in request [:source :url])
-        error (case type
-                :http (str "Could not download data from " url)
-                :ftp "The file did not exist at the source.")]
-   (assoc request :success false :error error)))
+  ([type path]
+   (create-failed-download-request type path nil))
+  ([type path options]
+   (let [request (create-download-request type path options)
+         url (get-in request [:source :url])
+         error (case type
+                 :http (str "Could not download data from " url)
+                 :ftp "The file did not exist at the source.")]
+     (assoc request :success false :error error))))
 
 (defn create-download-task
   "TODO
@@ -107,14 +115,31 @@
                         (pr-str (get-completed-tasks)) (pr-str task-ids)))))
       (Thread/sleep 250))))
 
-;; TODO add tests that verify version works and size
+;; TODO add tests that verify size works
+;; TODO Add automatic requests to fetch the size if not present
+;; The version test is important to make sure we document the response behavior when using version
+
 ;; TODO add test to verify FROM_CONFIG behavior
 
+#_
+(def fixture-future
+  (future
+   ((http-server/create-run-jetty-fixture
+     #'running-http-server
+     {:file-paths->contents http-files->content})
+    (fn []
+      (println "Test function called")
+      (Thread/sleep 30000)
+      (println "Test function ending")))))
+
+
 (deftest http-download-request-integration-test
-  (let [task1-download-requests [(create-download-request :http "/foo/bar.txt")
-                                 (create-download-request :http "/foo/bar2.txt")]
-        expected-task-1-completed-requests [(create-successful-download-request :http "/foo/bar.txt")
-                                            (create-successful-download-request :http "/foo/bar2.txt")]
+  (let [task1-download-requests [(create-download-request :http "/foo/bar.txt" {:source {:version "v1"}})
+                                 (create-download-request :http "/foo/bar2.txt" {:source {:version "v1"}})]
+        expected-task-1-completed-requests [(create-successful-download-request
+                                             :http "/foo/bar.txt" {:source {:version "v1"}})
+                                            (create-successful-download-request
+                                             :http "/foo/bar2.txt" {:source {:version "v1"}})]
         task2-download-requests [(create-download-request :http "moo2.txt") ;; doesn't exist
                                  (create-download-request :http "moo.txt")]
         expected-task-2-completed-requests [(create-failed-download-request :http "moo2.txt")
@@ -133,11 +158,11 @@
                      {"bar.txt"
                       {:value (http-files->content "/foo/bar.txt")
                        :metadata {:content-length nil
-                                  :user-metadata {:version nil}}}
+                                  :user-metadata {:version "v1"}}}
                       "bar2.txt"
                       {:value (http-files->content "/foo/bar2.txt")
                        :metadata {:content-length nil
-                                  :user-metadata {:version nil}}}
+                                  :user-metadata {:version "v1"}}}
                       "moo.txt"
                       {:value (http-files->content "/moo.txt")
                        :metadata {:content-length nil
@@ -154,7 +179,47 @@
     ;; Verify successful output from download requests.
     (is (= {"task-1" (create-download-task-output expected-task-1-completed-requests)
             "task-2" (create-download-task-output expected-task-2-completed-requests)}
-           (-> activity-api :successful-tasks-atom deref)))))
+           (-> activity-api :successful-tasks-atom deref)))
+
+    ;; Testing download with versioning
+    (let [task3-download-requests [(create-download-request :http "/foo/bar.txt" {:source {:version "v1"}})
+                                   (create-download-request :http "/foo/bar2.txt" {:source {:version "v2"}})]
+          expected-task-3-completed-requests [(create-successful-download-request
+                                               :http "/foo/bar.txt" {:source {:version "v1"}
+                                                                     :version_skip true})
+                                              (create-successful-download-request
+                                               :http "/foo/bar2.txt" {:source {:version "v2"}})]
+          provider (assoc-in provider [:activity-api :tasks]
+                             [(create-download-task "task-3" task3-download-requests)])
+          system (-> (sys/create-system [provider])
+                     (assoc :LOCAL-s3-api s3-api)
+                     c/start)
+          activity-api (get-in system [:LOCAL-activity-handler :activity-api])
+          expected-s3 {storage-bucket
+                       {"bar.txt"
+                        {:value (http-files->content "/foo/bar.txt")
+                         :metadata {:content-length nil
+                                    :user-metadata {:version "v1"}}}
+                        "bar2.txt"
+                        {:value (http-files->content "/foo/bar2.txt")
+                         :metadata {:content-length nil
+                                    :user-metadata {:version "v2"}}}
+                        "moo.txt"
+                        {:value (http-files->content "/moo.txt")
+                         :metadata {:content-length nil
+                                    :user-metadata {:version nil}}}}}]
+      (try
+        (wait-for-tasks-to-complete activity-api ["task-3"])
+        (finally
+          (c/stop system)))
+      ;; verify the files in s3
+      (is (= expected-s3 (-> s3-api :bucket-key-to-value-atom deref)))
+      ;; Verify no failures sent to activity api
+      (is (= {} (-> activity-api :failed-tasks-atom deref)))
+
+      ;; Verify successful output from download requests.
+      (is (= {"task-3" (create-download-task-output expected-task-3-completed-requests)}
+             (-> activity-api :successful-tasks-atom deref))))))
 
 (deftest ftp-download-request-integration-test
   (let [task1-download-requests [(create-download-request :ftp "/ftp/foo/bar.txt")
@@ -231,11 +296,7 @@
                                                  (util/url->file-name (:url file)))})
                                     files)))))
 
-
 (deftest sync-task-integration-test
-  ;; TODO what should happen if a file doesn't exist?
-  ;; TODO add second sync where we check version stuff.
-
   (let [sync-files-1 [{:url (create-url :http "/foo/bar.txt") :version "bar-1"}
                       {:url (create-url :http "/foo/bar2.txt") :version "bar2-1"}]
         provider {:provider-id "LOCAL",
@@ -256,20 +317,102 @@
                       {:value (http-files->content "/foo/bar2.txt")
                        :metadata {:content-length nil
                                   :user-metadata {:version "bar2-1"}}}}}]
+    (testing "Sync with everything new"
+      (try
+        (wait-for-tasks-to-complete activity-api ["task-1"])
+        (finally
+          (c/stop system)))
+      ;; verify the files in s3
+      (is (= expected-s3 (-> s3-api :bucket-key-to-value-atom deref)))
+      ;; Verify no failures sent to activity api
+      (is (= {} (-> activity-api :failed-tasks-atom deref)))
+
+      ;; Verify successful output from download requests.
+      (is (= {"task-1" (create-sync-task-output sync-files-1)}
+             (-> activity-api :successful-tasks-atom deref))))
+
+    (let [sync-files-2 [{:url (create-url :http "/foo/bar.txt") :version "bar-1"} ;; same version
+                        {:url (create-url :http "/foo/bar2.txt") :version "bar2-2"} ;; newer version
+                        {:url (create-url :http "/moo.txt") :version "moo-1"}] ;; new file
+          provider (assoc-in provider [:sync-activity-api :tasks]
+                             [(create-sync-task "task-2" sync-files-2)])
+          system (-> (sys/create-system [provider])
+                     ;; Use the same mock s3 so the existing state will be persisted
+                     (assoc :LOCAL-s3-api s3-api)
+                     c/start)
+          activity-api (get-in system [:LOCAL-sync-activity-handler :activity-api])
+          expected-s3 {storage-bucket
+                       {"sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar.txt"
+                        {:value (http-files->content "/foo/bar.txt")
+                         :metadata {:content-length nil
+                                    :user-metadata {:version "bar-1"}}}
+                        "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar2.txt"
+                        {:value (http-files->content "/foo/bar2.txt")
+                         :metadata {:content-length nil
+                                    :user-metadata {:version "bar2-2"}}}
+                        "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/moo.txt"
+                        {:value (http-files->content "/moo.txt")
+                         :metadata {:content-length nil
+                                    :user-metadata {:version "moo-1"}}}}}]
+      (testing "Sync with some updates"
+        (try
+          (wait-for-tasks-to-complete activity-api ["task-2"])
+          (finally
+            (c/stop system)))
+        ;; verify the files in s3
+        (is (= expected-s3 (-> s3-api :bucket-key-to-value-atom deref)))
+        ;; Verify no failures sent to activity api
+        (is (= {} (-> activity-api :failed-tasks-atom deref)))
+
+        ;; Verify successful output from download requests.
+        (is (= {"task-2" (create-sync-task-output sync-files-2)}
+               (-> activity-api :successful-tasks-atom deref))))
+
+      (let [;; Creating a system with the same sync files as above with the same sync files.
+            ;; The sync task should find that there's nothing to do and return an exception
+            provider (assoc-in provider [:sync-activity-api :tasks]
+                               [(create-sync-task "task-3" sync-files-2)])
+            system (-> (sys/create-system [provider])
+                       ;; Use the same mock s3 so the existing state will be persisted
+                       (assoc :LOCAL-s3-api s3-api)
+                       c/start)
+            activity-api (get-in system [:LOCAL-sync-activity-handler :activity-api])]
+        (testing "Sync with no new updates"
+          (try
+            (wait-for-tasks-to-complete activity-api ["task-3"])
+            (finally
+              (c/stop system)))
+          ;; Verify no failures sent to activity api
+          (is (= {} (-> activity-api :failed-tasks-atom deref)))
+
+          ;; Verify successful output from download requests.
+          (is (= {"task-3" {:exception "NotNeededWorkflowError"}}
+                 (-> activity-api :successful-tasks-atom deref))))))))
+
+(deftest sync-task-file-doesnt-exist-integration-test
+  (let [sync-files-1 [{:url (create-url :http "/foo/bar.txt") :version "bar-1"}
+                      {:url (create-url :http "moo2.txt") :version "moo1"}] ;; doesn't exist
+        provider {:provider-id "LOCAL",
+                  :s3-api-type :canned
+                  :sync-activity-api {:activity-api-type "canned"
+                                      :tasks [(create-sync-task "task-1" sync-files-1)]}
+                  :conn_config {:conn_type "http"}
+                  :num_connections 2}
+        system (c/start (sys/create-system [provider]))
+        activity-api (get-in system [:LOCAL-sync-activity-handler :activity-api])]
     (try
       (wait-for-tasks-to-complete activity-api ["task-1"])
       (finally
         (c/stop system)))
-    ;; verify the files in s3
-    (is (= expected-s3 (-> s3-api :bucket-key-to-value-atom deref)))
     ;; Verify no failures sent to activity api
     (is (= {} (-> activity-api :failed-tasks-atom deref)))
 
     ;; Verify successful output from download requests.
-    (is (= {"task-1" (create-sync-task-output sync-files-1)}
+    (is (= {"task-1" {:exception "RemoteResourceError"}}
            (-> activity-api :successful-tasks-atom deref)))))
 
 
 ;; TODO add integration test that tries executing a task with incorrect data.
 ;; We should avoid internal errors.
+
 
