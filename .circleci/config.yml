@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: node:6.11-slim
+      - image: circleci/node:6.10
     working_directory: ~/cumulus
     steps:
       - checkout
@@ -12,7 +12,7 @@ jobs:
           command: |
             npm install -g lerna
             npm install
-            npm run ybootstrap
+            npm run bootstrap
 
       - run:
           name: Running Test
