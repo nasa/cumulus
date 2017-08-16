@@ -155,6 +155,8 @@ class Granule {
     this.host = get(this.provider, 'host', null);
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
+
+    this.forceDownload = get(event, 'meta.forceDownload', false);
   }
 
   async ingest(granule) {
@@ -175,15 +177,16 @@ class Granule {
       const test = new RegExp(fileDef.regex);
       const match = file.name.match(test);
       if (match) {
-        file.bucket = fileDef.bucket;
+        file.bucket = this.buckets[fileDef.bucket];
         file.url_path = fileDef.url_path || this.collection.url_path;
         return file;
       }
     }
 
     // if not found fall back to default
-    file.bucket = 'private';
+    file.bucket = this.buckets.private;
     file.url_path = this.collection.url_path || '';
+    return file;
   }
 
   /**
@@ -192,9 +195,15 @@ class Granule {
    */
   async ingestFile(_file) {
     const file = _file;
+    let exists;
 
     // check if the file exists. if it does skip
-    const exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
+    if (!this.forceDownload) {
+      exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
+    }
+    else {
+      exists = false;
+    }
 
     if (!exists) {
       // we considered a direct stream from source to S3 but since
@@ -205,7 +214,6 @@ class Granule {
         log.info(`downloading ${file.name}`);
         tempFile = await this.download(file.path, file.name);
         log.info(`downloaded ${file.name}`);
-
       }
       catch (e) {
         if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
@@ -228,7 +236,7 @@ class Granule {
       fs.unlinkSync(tempFile);
     }
 
-    file.filename = `s3://${this.buckets[file.bucket]}/${join(file.url_path, file.name)}`;
+    file.filename = `s3://${file.bucket}/${join(file.url_path, file.name)}`;
     return file;
   }
 }
