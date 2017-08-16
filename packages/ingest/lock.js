@@ -1,5 +1,6 @@
 'use strict';
 
+const log = require('@cumulus/common/log');
 const aws = require('./aws');
 const lockPrefix = 'lock';
 
@@ -33,7 +34,7 @@ async function proceed(bucket, provider, filename, counter = 0) {
   const count = await countLock(bucket, provider.id);
 
   if (count >= globalConnectionLimit) {
-    console.log('Reached the connection limit, trying again');
+    log.info('Reached the connection limit, trying again');
     // wait for 5 second and try again
     await delay(5000);
     return proceed(bucket, provider, filename, counter + 1);
