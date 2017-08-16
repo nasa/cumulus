@@ -1,0 +1,20 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: node:6.11-slim
+    working_directory: ~/cumulus
+    steps:
+      - checkout
+
+      - run:
+          name: Installing Dependencies
+          command: |
+            npm install -g lerna
+            npm install
+            npm run ybootstrap
+
+      - run:
+          name: Running Test
+          command: |
+            npm run test
