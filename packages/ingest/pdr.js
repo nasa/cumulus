@@ -34,6 +34,7 @@ class Discover {
     this.path = this.collection.provider_path || '/';
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
+    this.limit = get(event, 'meta.queueLimit', null);
   }
 
   filterPdrs(pdr) {
@@ -89,6 +90,9 @@ class DiscoverAndQueue extends Discover {
   async findNewPdrs(_pdrs) {
     let pdrs = _pdrs;
     pdrs = await super.findNewPdrs(pdrs);
+    if (this.limit) {
+      pdrs = pdrs.slice(0, this.limit);
+    }
     return Promise.all(pdrs.map(p => queue.queuePdr(this.event, p)));
   }
 }
@@ -242,8 +246,6 @@ class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
  */
 
 class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
-
-
 
 function selector(type, protocol, q) {
   if (type === 'discover') {
