@@ -1,5 +1,6 @@
 'use strict';
 
+const log = require('@cumulus/common/log');
 const aws = require('./aws');
 
 class Consume {
@@ -17,7 +18,7 @@ class Consume {
       await aws.SQS.deleteMessage(this.queueUrl, message.ReceiptHandle);
     }
     catch (e) {
-      console.log(e);
+      log.error(e);
     }
   }
 
@@ -47,10 +48,13 @@ class Consume {
     let messageLimit = this.messageLimit;
 
     let sum;
-    if (messageLimit > 10) {
+    if (messageLimit > 40) {
+      throw new Error('Message limit must be less than 40');
+    }
+    else if (messageLimit > 10) {
       const jobs = [];
       while (messageLimit > 10) {
-        jobs.push(this.processMessages(fn, messageLimit));
+        jobs.push(this.processMessages(fn, 10));
         messageLimit -= 10;
       }
 
@@ -61,12 +65,10 @@ class Consume {
       const results = await Promise.all(jobs);
       sum = results.reduce((s, v) => s + v, 0);
     }
-    else if (messageLimit > 40) {
-      throw new Error('Message limit must be less than 40');
-    }
+
     sum = await this.processMessages(fn, messageLimit);
 
-    console.log(`${sum} messages processed from ${this.queueUrl}`);
+    log.info(`${sum} messages processed from ${this.queueUrl}`);
     return sum;
   }
 }
