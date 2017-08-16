@@ -50,7 +50,7 @@ test.cb('test pdr discovery with FTP assuming all PDRs are new', (t) => {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
     }
-    t.is(r.payload.pdrs.length, 3);
+    t.is(r.payload.pdrs.length, 4);
     return t.end(e);
   });
 });
@@ -125,7 +125,7 @@ test.cb('test pdr discovery with FTP assuming some PDRs are new', (t) => {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
     }
-    t.is(r.payload.pdrs.length, 2);
+    t.is(r.payload.pdrs.length, 3);
     return t.end(e);
   });
 });
