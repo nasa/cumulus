@@ -8,9 +8,29 @@ Providers support a limited number of connections for downloading data. AWS infr
 
 TODO
 
+Document that this is not currently part of the build. Document how to deploy
+
+TODO file issue to integrate docker pushes with a bamboo build of the provider gateway.
+
+TODO how do you set and deploy a specific version
+TODO Deploy and update cumulus configuration to point to a specific version.
+
+
 ## Running
 
 TODO
+
+Create the file `dev/locals.clj` with contents set appropriately
+
+```Clojure
+(ns locals)
+
+(def defaults
+  {"AWS_ACCOUNT_ID" "1234567"
+   "AWS_DEFAULT_REGION" "us-west-2"
+   "STACK_NAME" "gitc-xx"})
+```
+
 
 ## Configuration
 
@@ -23,18 +43,18 @@ providers:
   - id: HTTP_PROV
     config:
       gateway_config:
-        activity_arn: GitcResource! HttpProvDownloadActivity
-        sync_activity_arn: GitcResource! HttpProvSyncActivity
+        activity: HttpProvDownloadActivity
+        sync_activity: HttpProvSyncActivity
         conn_config:
-          type: http
+          conn_type: http
         num_connections: 2
   - id: FTP_PROV
     config:
       gateway_config:
-        activity_arn: GitcResource! FtpProvDownloadActivity
-        sync_activity_arn: GitcResource! FtpProvSyncActivity
+        activity: FtpProvDownloadActivity
+        sync_activity: FtpProvSyncActivity
         conn_config:
-          type: ftp
+          conn_type: ftp
           host: 192.0.2.3
           port: 21
           username: user
@@ -48,9 +68,9 @@ TODO finish this section
 
 The following fields are configured per provider.
 
-* `activity_arn` - The AWS ARN of the step function activity receiving download requests
+* `activity` - The CloudFormation name of the step function activity receiving download requests
   * Note separate ARNs per provider because each activity is essentially a queue we want separate queues per provider so that one provider with more limited resources does not hold up another provider.
-* `sync_activity_arn` - The AWS ARN of the step function activity receiving requests to synchronize
+* `sync_activity` - The CloudFormation name of the step function activity receiving requests to synchronize
 * `conn_config` -
 * `num_connections` -
 

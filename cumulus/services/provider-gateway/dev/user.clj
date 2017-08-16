@@ -29,7 +29,9 @@
   (set! *print-length* 5000)
   (s/check-asserts true)
   (try
-    (let [the-system (sys/create-system [local-provider])]
+    (let [
+          the-system (sys/create-system [local-provider])]
+          ; the-system (sys/create-system)]
       (alter-var-root #'system
                       (constantly (c/start the-system))))
     (catch Exception e
