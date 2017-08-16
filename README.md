@@ -1,5 +1,7 @@
 # Cumulus Framework
 
+[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg&circle-token=4a16cbbdacb6396c709309ef5ac87479c9dc8bd1)](https://circleci.com/gh/cumulus-nasa/cumulus)
+
 ## Installing and deploying
 
 ### Prerequisites
