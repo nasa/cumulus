@@ -1,6 +1,6 @@
-import got from 'got';
-import publicIp from 'public-ip';
-import xml2js from 'xml2js';
+const got = require('got');
+const publicIp = require('public-ip');
+const xml2js = require('xml2js');
 
 /**
  * Creates a new error type with the given name and parent class. Sets up
@@ -21,7 +21,7 @@ const createErrorType = (name, ParentType = Error) => {
   return E;
 };
 
-export const ValidationError = createErrorType('ValidationError');
+const ValidationError = createErrorType('ValidationError');
 
 function getHost() {
   const env = process.env.CMR_ENVIRONMENT;
@@ -41,14 +41,14 @@ function getHost() {
 }
 
 
-export const xmlParseOptions = {
+const xmlParseOptions = {
   ignoreAttrs: true,
   mergeAttrs: true,
   explicitArray: false
 };
 
 
-export function getUrl(type, cmrProvider) {
+function getUrl(type, cmrProvider) {
   let url;
   const host = getHost();
   const env = process.env.CMR_ENVIRONMENT;
@@ -83,7 +83,7 @@ export function getUrl(type, cmrProvider) {
 }
 
 
-export async function validate(type, xml, identifier, provider) {
+async function validate(type, xml, identifier, provider) {
   let result;
   try {
     result = await got.post(`${getUrl('validate', provider)}${type}/${identifier}`, {
@@ -114,7 +114,7 @@ export async function validate(type, xml, identifier, provider) {
 }
 
 
-export async function updateToken(cmrProvider, clientId, username, password) {
+async function updateToken(cmrProvider, clientId, username, password) {
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
   const ip = await publicIp.v4();
@@ -150,7 +150,7 @@ export async function updateToken(cmrProvider, clientId, username, password) {
   return resp.token.id;
 }
 
-export async function tokenIsValid(token) {
+async function tokenIsValid(token) {
   // Use a fake collection ID and fake PUT data to see if the token is still valid
   const resp = await got.put(
     `${getUrl('ingest')}collections/CMRJS_TOKEN_TEST`,
@@ -171,4 +171,12 @@ export async function tokenIsValid(token) {
   }
 
   return true;
+}
+
+module.exports = {
+   validate,
+   ValidationError,
+   updateToken,
+   getUrl,
+   xmlParseOptions
 }
