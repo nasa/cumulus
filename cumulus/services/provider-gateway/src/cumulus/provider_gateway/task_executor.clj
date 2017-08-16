@@ -64,24 +64,29 @@
     ;; to the task we need to make sure that we still report the file as successfully completed in
     ;; the response. This is needed for the sync activity handler so that it can report all the
     ;; files that are in S3.
-    (when-not (version-skip-download? s3-api bucket key version)
-      (log (format "Transfering %s %s%s to S3 %s %s"
-                   url size-log-msg version-log-msg bucket key))
+    (if (version-skip-download? s3-api bucket key version)
+      ;; version is present and matches so we won't download it
+      (assoc request :success true :version_skip true)
 
-      ;; TODO time how long this takes and print it out. (get stream to s3 put object completion)
-      ;; That's the total time it took to download the file and save it to s3 (streaming-wise)
-      (if-let [stream (url-conn/download conn url)]
-        (do
-          (s3/write-s3-stream s3-api bucket key stream
-                              {:content-length size
-                               :user-metadata {:version version}})
-          (assoc request :success true))
+      ;; Version is out of date or not present
+      (do
+       (log (format "Transfering %s %s%s to S3 %s %s"
+                    url size-log-msg version-log-msg bucket key))
 
-        ;; The URL does not exist
-        (assoc request
-               :success false
-               ;; TODO test this with http.
-               :error "The file did not exist at the source.")))))
+       ;; TODO time how long this takes and print it out. (get stream to s3 put object completion)
+       ;; That's the total time it took to download the file and save it to s3 (streaming-wise)
+       (if-let [stream (url-conn/download conn url)]
+         (do
+           (s3/write-s3-stream s3-api bucket key stream
+                               {:content-length size
+                                :user-metadata {:version version}})
+           (assoc request :success true))
+
+         ;; The URL does not exist
+         (assoc request
+                :success false
+                ;; TODO test this with http.
+                :error "The file did not exist at the source."))))))
 
 (defn- process-request
   "TODO"

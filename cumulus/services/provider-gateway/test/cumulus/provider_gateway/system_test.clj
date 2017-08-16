@@ -8,8 +8,8 @@
   (let [sample-config {:providers [{:id "MODAPS"
                                     :config
                                     {:gateway_config
-                                     {:activity_arn "MODAPSProviderGatewayActivity"
-                                      :sync_activity_arn "MODAPSSyncActivity"
+                                     {:activity "MODAPSProviderGatewayActivity"
+                                      :sync_activity "MODAPSSyncActivity"
                                       :conn_config {:type "http"}
                                       :num_connections 10}}}
                                    {:id "LARC" :config {}}]}
@@ -17,10 +17,10 @@
                            (util/get-aws-region)
                            (util/get-aws-account-id)
                            (util/get-stack-name))]
-    (is (= [{:activity-api {:type :aws
-                            :arn (str arn-prefix "MODAPSProviderGateway")}
-             :sync-activity-api {:type :aws
-                                 :arn (str arn-prefix "MODAPSSync")}
+    (is (= [{:activity-api {:activity-api-type "aws"
+                            :arn (str arn-prefix "MODAPSProviderGatewayActivity")}
+             :sync-activity-api {:activity-api-type "aws"
+                                 :arn (str arn-prefix "MODAPSSyncActivity")}
              :conn_config {:type "http"}
              :num_connections 10
              :provider-id "MODAPS"}]

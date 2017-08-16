@@ -5,9 +5,14 @@ AWS_ACCOUNT_ID=$(aws ec2 describe-security-groups \
 --query 'SecurityGroups[0].OwnerId' \
 --output text)
 
-IMAGE_NAME="provider-gateway"
-NAMESPACE="nasa-cumulus"
+if [ -z "$AWS_DEFAULT_REGION" ]; then
+  region="us-east-1"
+else
+  region=$AWS_DEFAULT_REGION
+fi
 
+NAMESPACE="nasa-cumulus"
+IMAGE_NAME="provider-gateway"
 
 # -- Build --
 echo "Building ..."
@@ -15,15 +20,17 @@ echo "Building ..."
 
 # -- Tag --
 echo "Tagging ..."
-docker tag ${NAMESPACE}/${IMAGE_NAME}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/${NAMESPACE}/${IMAGE_NAME}:latest
+docker tag \
+${NAMESPACE}/${IMAGE_NAME}:latest \
+${AWS_ACCOUNT_ID}.dkr.ecr.${region}.amazonaws.com/${NAMESPACE}/${IMAGE_NAME}:latest
 
 # -- Login --
 echo "Logging in ..."
 # Get the login command
-login_cmd=$(aws ecr get-login --region us-west-2 --no-include-email)
+login_cmd=$(aws ecr get-login --region ${region} --no-include-email)
 # Run the command
 $login_cmd
 
 # -- Push --
 echo "Pushing ..."
-docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/${NAMESPACE}/${IMAGE_NAME}:latest
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${region}.amazonaws.com/${NAMESPACE}/${IMAGE_NAME}:latest

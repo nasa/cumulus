@@ -9,7 +9,8 @@
                  [clj-http "3.6.1"]
                  [commons-net/commons-net "3.6"]
                  [org.yaml/snakeyaml "1.18"]
-                 [com.fasterxml.jackson.dataformat/jackson-dataformat-yaml "2.8.9"]]
+                 [com.fasterxml.jackson.dataformat/jackson-dataformat-yaml "2.8.9"]
+                 [camel-snake-kebab "0.4.0"]]
 
 
   ;; The ^replace is done to disable the tiered compilation for accurate benchmarks
