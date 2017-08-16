@@ -10,7 +10,7 @@ jobs:
       - run:
           name: Installing Dependencies
           command: |
-            npm install -g lerna
+            sudo npm install -g lerna
             npm install
             npm run bootstrap
 
