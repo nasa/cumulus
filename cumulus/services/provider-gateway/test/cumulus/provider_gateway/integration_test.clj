@@ -74,8 +74,7 @@
      (assoc request :success false :error error))))
 
 (defn create-download-task
-  "TODO
-   Returns a new task"
+  "Creates a task containing a list of downloads to process"
   [task-token download-requests]
   {:task-token task-token
    :input
@@ -241,8 +240,7 @@
            (-> activity-api :successful-tasks-atom deref)))))
 
 (defn create-sync-task
-  "TODO
-   Returns a new task"
+  "Creates a synchronization task"
   [task-token files]
   {:task-token task-token
    :input

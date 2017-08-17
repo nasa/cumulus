@@ -34,14 +34,14 @@
   (a/thread
    (while @running-atom
      (if-let [task (activity/get-task activity-api)]
-       (let [_ (println (format "Read task from activity api %s" (pr-str task)))
-             ;; TODO track task start time here and log it's completion time in the completer thread.
-             ;; Call handle-new-task to take the task from the API and figure out what needs to be
-             ;; downloaded, uploaded, etc.
+       (let [_ (println (format "Read task from activity api %s" (:task-token task)))
+             start-time (System/currentTimeMillis)
              task (handle-new-task task-to-requests-handler task)
              ;; Put the completion channel in the task so we'll get a message when the task is
              ;; finished.
-             task (assoc task :completion-channel completion-channel)]
+             task (assoc task
+                         :completion-channel completion-channel
+                         :start-time start-time)]
          (a/>!! task-channel task))))
    (println "Activity reader thread completed")))
 
@@ -51,9 +51,10 @@
   [activity-api task-to-requests-handler completion-channel]
   (a/thread
    (util/while-let
-    [{:keys [type task-token] :as completion-request} (a/<!! completion-channel)]
-    (println (format "Handling completion request %s" (pr-str completion-request)))
+    [{:keys [type task-token start-time] :as completion-request} (a/<!! completion-channel)]
     (let [output (handle-completed-task task-to-requests-handler completion-request)]
+      (println (format "Handling completion request in %d ms of %s"
+                       (- (System/currentTimeMillis) start-time) task-token))
       (if (:success completion-request)
         (activity/report-task-success activity-api task-token output)
         (activity/report-task-failure
