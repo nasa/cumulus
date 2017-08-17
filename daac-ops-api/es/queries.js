@@ -161,7 +161,7 @@ function selectParams(fields, regex) {
   });
 }
 
-export default function(params) {
+module.exports = function(params) {
   const sortBy = params.sort_by || 'timestamp';
   const order = params.order || 'desc';
 
