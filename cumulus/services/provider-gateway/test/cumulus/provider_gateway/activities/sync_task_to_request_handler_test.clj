@@ -18,7 +18,7 @@
   [canned-s3 files]
   (let [payload-s3-key "LastStep/Payload"]
     ;; Stage the payload for the task message
-    (s3/write-s3-json canned-s3 private-bucket payload-s3-key {:files files})
+    (s3/write-s3-json canned-s3 private-bucket payload-s3-key files)
     ;; Return the task with the message
     {:task-token "task-token"
      :input

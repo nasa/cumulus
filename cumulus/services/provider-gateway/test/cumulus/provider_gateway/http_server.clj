@@ -3,6 +3,7 @@
   (:require
    [clj-http.client :as http]
    [clojure.test :refer :all]
+   [clj-http.conn-mgr :as conn-mgr]
    [ring.adapter.jetty :as jetty]))
 
 (def DEFAULT_PORT 3001)
@@ -39,6 +40,10 @@
           (finally
             (.stop (:server server))
             (alter-var-root var (constantly nil))))))))
+
+(comment
+ (def s (start-jetty (assoc (default-config) :file-paths->contents http-files->content)))
+ (.stop (:server s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Testing the server
