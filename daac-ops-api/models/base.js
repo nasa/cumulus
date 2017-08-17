@@ -4,8 +4,8 @@ const Ajv = require('ajv');
 const AWS = require('aws-sdk');
 const omit = require('lodash.omit');
 const getEndpoint = require('@cumulus/ingest/aws').getEndpoint;
-const errorify = require('../utils').errorify;
-const RecordDoesNotExist = require('../errors').RecordDoesNotExist;
+const { errorify } = require('../lib/utils');
+const { RecordDoesNotExist } = require('../lib/errors');
 
 /**
  * The manager class handles basic operations on a given DynamoDb table

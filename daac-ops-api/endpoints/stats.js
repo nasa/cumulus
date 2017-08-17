@@ -2,7 +2,7 @@
 
 const _get = require('lodash.get');
 const moment = require('moment');
-const handle = require('../response').handle;
+const handle = require('../lib/response').handle;
 const Stats = require('../es/search').Stats;
 
 function getType(event) {
