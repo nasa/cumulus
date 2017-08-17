@@ -3,7 +3,7 @@
 const { s3 } = require('./aws');
 const { BadRequestError } = require('./api-errors');
 const { fromJS } = require('immutable');
-const commonConfig = require('cumulus-common/config');
+const commonConfig = require('@cumulus/common/config');
 const { memoize } = require('./cache');
 const sr = require('./stack-resources');
 
@@ -58,7 +58,8 @@ const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
  * Converts a stack name like gitc-test to the prefix used for naming certain resources like
  * gitcxtestxx.
  */
-const stackNameToAlphanumPrefix = stackName => `${stackName.replace(/\W/, 'x')}xx`;
+const stackNameToAlphanumPrefix = stackName => stackName.split('-').map(
+  s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
 
 /**
  * Returns a parsed collection config

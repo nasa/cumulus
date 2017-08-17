@@ -185,6 +185,11 @@ Resources:
       Role: !GetAtt [LambdaExecutionRole, Arn]
       Timeout: 30
       Runtime: nodejs6.10
+      Environment:
+        Variables:
+          ELASTIC_ENDPOINT: !GetAtt [ElasticsearchDomain, DomainEndpoint]
+          STACK_NAME: !Ref StackName
+          on_earth_stack_name: !Ref OnEarthStackName
 
   ApiGatewayApi:
     Type: AWS::ApiGateway::RestApi
@@ -207,6 +212,8 @@ Resources:
       Environment:
         Variables:
           ELASTIC_ENDPOINT: !GetAtt [ElasticsearchDomain, DomainEndpoint]
+          STACK_NAME: !Ref StackName
+          on_earth_stack_name: !Ref OnEarthStackName
 
   # Runs the IndexerFunction on a periodic basis.
   IndexerSchedulerRule:

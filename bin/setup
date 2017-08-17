@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e
+
+version=v0.0.1
+progname=$(basename $0)
+docstr="$progname $version: Installs dependencies recursively in all child projects"
+
+usage() {
+echo "Usage:
+  $progname
+
+Examples:
+  $progname
+"
+}
+
+function echoerr() {
+    echo "Error: $@" 1>&2;
+}
+
+if [ $# -ne 0 ]; then
+    echo "$docstr"
+    echo
+    usage
+    exit 1
+fi
+
+npm install
+./node_modules/.bin/lerna bootstrap
