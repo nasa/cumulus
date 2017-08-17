@@ -5,35 +5,42 @@ const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
 
 module.exports.handler = function handler(_event, context, cb) {
-  let parse;
   const event = Object.assign({}, _event);
-  const pdrName = get(event, 'payload.pdrName');
-  const bucket = get(event, 'resources.buckets.internal');
-  const collections = get(event, 'meta.collections');
   const provider = get(event, 'provider', null);
-  const pdrPath = get(event, 'payload.pdrPath', '/');
-  const folder = get(event, 'meta.pdrsFolder', 'pdrs');
+  const queue = get(event, 'meta.useQueue', true);
 
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
     return cb(err);
   }
 
-  provider.path = pdrPath;
+  const Parse = pdr.selector('parse', provider.protocol, queue);
+  const parse = new Parse(event);
 
-  // parse PDR
-  switch (provider.protocol) {
-    case 'ftp': {
-      parse = new pdr.FtpParse(pdrName, provider, collections, bucket, folder);
-      break;
+  return parse.ingest().then((payload) => {
+    if (parse.connected) {
+      parse.end();
     }
-    default: {
-      parse = new pdr.HttpParse(pdrName, provider, collections, bucket, folder);
-    }
-  }
 
-  return parse.ingest().then((granules) => {
-    event.payload = granules;
+    if (queue) {
+      event.payload.granules_queued = payload.length
+    }
+    else {
+      event.payload = Object.assign({}, event.payload, payload);
+    }
     return cb(null, event);
-  }).catch(e => cb(e));
+  }).catch(e => {
+    if (parse.connected) {
+      parse.end();
+    }
+
+    if (e.toString().includes('ECONNREFUSED')) {
+      return cb(new errors.RemoteResourceError('Connection Refused'));
+    }
+    else if (e.details && e.details.status === 'timeout') {
+      return cb(new errors.ConnectionTimeout('connection Timed out'));
+    }
+
+    return cb(e);
+  });
 };
