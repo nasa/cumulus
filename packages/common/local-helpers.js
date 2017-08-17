@@ -11,7 +11,7 @@ const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
 const isJupyter = global.__isJupyter;
 
 const isStdin = process.argv[2] === 'stdin';
-const isLocal = isStdin || process.argv[2] === 'local';
+const isLocal = isJupyter || isStdin || process.argv[2] === 'local';
 exports.isLocal = isLocal;
 
 let rootPath;
@@ -106,5 +106,18 @@ exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
 exports.setupLocalRun = (handler, invocation) => {
   if (isLocal) {
     handler(invocation(), {}, (result) => result);
+  }
+};
+
+
+/**
+ * Similar to setupLocalRun except that it only
+ * calls the passed function if it is a local run
+ *
+ * @param {function} fn - A function to call
+ */
+exports.justLocalRun = (fn) => {
+  if (isLocal) {
+    fn();
   }
 };
