@@ -1,10 +1,10 @@
 'use strict';
 
 const _get = require('lodash.get');
-const handle = require('../response').handle;
+const handle = require('../lib/response').handle;
 const models = require('../models');
 const Search = require('../es/search').Search;
-const RecordDoesNotExist = require('../errors').RecordDoesNotExist;
+const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 
 /**
  * List all providers.

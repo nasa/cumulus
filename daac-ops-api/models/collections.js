@@ -2,8 +2,8 @@
 
 const Manager = require('./base');
 const Provider = require('./providers');
-const collectionSchema = require('../schemas').collection;
-const ValidationError = require('../errors').ValidationError;
+const collectionSchema = require('../lib/schemas').collection;
+const { ValidationError } = require('../lib/errors');
 
 class Collection extends Manager {
   static recordIsValid(_item, schema = null) {

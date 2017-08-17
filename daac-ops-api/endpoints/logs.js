@@ -1,6 +1,6 @@
 'use strict';
 
-const handle = require('../response').handle;
+const handle = require('../lib/response').handle;
 const LogSearch = require('../es/search').LogSearch;
 
 function count(event, cb) {
