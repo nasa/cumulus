@@ -42,7 +42,7 @@
 
 (defn create-url
   [type path]
-  (let [port (:port (case type :http running-http-server :ftp running-ftp-server))]
+  (let [port (:port (case type :http running-http-server :ftp running-ftp-server) 1234)]
     (format "%s://localhost:%d/%s" (name type) port path)))
 
 (defn create-download-request
@@ -114,7 +114,6 @@
                         (pr-str (get-completed-tasks)) (pr-str task-ids)))))
       (Thread/sleep 250))))
 
-;; TODO document version and size params
 ;; TODO add test to verify FROM_CONFIG behavior
 
 (defn create-expected-s3
