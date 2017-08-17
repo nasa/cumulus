@@ -20,7 +20,7 @@ const logDetails = {
 };
 
 class BaseSearch {
-  static async es() {
+  static async es(host) {
     let esConfig;
 
     // this is needed for getting temporary credentials from IAM role
@@ -38,7 +38,7 @@ class BaseSearch {
       }
 
       esConfig = {
-        host: process.env.ES_HOST || 'localhost:9200',
+        host: process.env.ES_HOST || host || 'localhost:9200',
         connectionClass: httpAwsEs,
         amazonES: {
           region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
@@ -311,16 +311,18 @@ class BaseSearch {
 
 }
 
-export class Search extends BaseSearch {}
+class Search extends BaseSearch {}
+module.exports.Search = Search;
 
-export class LogSearch extends BaseSearch {
+class LogSearch extends BaseSearch {
   constructor(event, type = null) {
     super(event, type);
     this.index = `${process.env.StackName}-${process.env.Stage}-logs`;
   }
 }
+module.exports.LogSearch = LogSearch;
 
-export class Stats extends BaseSearch {
+class Stats extends BaseSearch {
 
   async query() {
     if (!this.client) {
@@ -508,3 +510,4 @@ export class Stats extends BaseSearch {
     };
   }
 }
+module.exports.Stats = Stats;
