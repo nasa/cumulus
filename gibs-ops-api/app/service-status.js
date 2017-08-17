@@ -142,6 +142,7 @@ const getOnEarthServiceStatusNgap = async (appName) => {
 
   if (!response.success) throw new Error(`API Call failed: ${JSON.stringify(response)}`);
   let webProcess = null;
+  // eslint-disable-next-line no-restricted-syntax
   for (const process of response.processes) {
     if (process.process_type === 'web') {
       webProcess = process;
@@ -164,12 +165,12 @@ const getOnEarthServiceStatusNgap = async (appName) => {
  */
 const getOnEarthServiceStatusCloudFormation = async (stackName) => {
   const oeMainStackResources = await getStackResources(stackName);
-  const oneEarthStackResources = await getStackResources(
+  const onEarthStackResources = await getStackResources(
     getPhysicalResourceId(oeMainStackResources, 'OnEarthStack')
   );
   const [clusterStackResources, dockerStackResources] = await Promise.all([
-    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'Cluster')),
-    getStackResources(getPhysicalResourceId(oneEarthStackResources, 'OnearthDocker'))
+    getStackResources(getPhysicalResourceId(onEarthStackResources, 'Cluster')),
+    getStackResources(getPhysicalResourceId(onEarthStackResources, 'OnearthDocker'))
   ]);
 
   const clusterId = getPhysicalResourceId(clusterStackResources, 'ECSCluster');

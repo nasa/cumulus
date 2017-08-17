@@ -2,9 +2,9 @@
 
 const parseDuration = require('parse-duration');
 const fetch = require('node-fetch');
-const log = require('cumulus-common/log');
-const Task = require('cumulus-common/task');
-const FieldPattern = require('cumulus-common/field-pattern');
+const log = require('@cumulus/common/log');
+const Task = require('@cumulus/common/task');
+const FieldPattern = require('@cumulus/common/field-pattern');
 
 const PAGE_SIZE = 2000;
 
@@ -113,7 +113,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 // To run a small test:
 // node discover-cmr-granules local
 
-const local = require('cumulus-common/local-helpers');
+const local = require('@cumulus/common/local-helpers');
 const localTaskName = 'DiscoverCmrGranules';
 local.setupLocalRun(module.exports.handler,
                     local.collectionMessageInput('MOPITT_DCOSMR_LL_D_STD', localTaskName));

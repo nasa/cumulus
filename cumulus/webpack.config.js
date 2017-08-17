@@ -24,7 +24,8 @@ module.exports = {
   },
   target: 'node',
   externals: [
-    'aws-sdk'
+    'aws-sdk',
+    'electron'
   ],
   node: {
     __dirname: false,
