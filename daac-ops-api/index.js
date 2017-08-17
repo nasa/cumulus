@@ -8,6 +8,7 @@ const providers = require('./endpoints/providers');
 const schemas = require('./endpoints/schemas');
 const stats = require('./endpoints/stats');
 const distribution = require('./endpoints/distribution');
+const bootstrap = require('./lib/bootstrap');
 
 module.exports = {
   collections,
@@ -17,5 +18,6 @@ module.exports = {
   providers,
   schemas,
   stats,
-  distribution
+  distribution,
+  bootstrap
 };
