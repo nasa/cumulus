@@ -11,7 +11,7 @@ const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
 const isJupyter = global.__isJupyter;
 
 const isStdin = process.argv[2] === 'stdin';
-const isLocal = isStdin || process.argv[2] === 'local';
+const isLocal = isJupyter || isStdin || process.argv[2] === 'local';
 exports.isLocal = isLocal;
 
 let rootPath;
