@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.specs.common
-  "TODO"
+  "Defines common specifications"
   (:require
    [clojure.spec.alpha :as s]))
 
@@ -10,9 +10,3 @@
 (s/def ::bucket string?)
 
 (s/def ::key string?)
-
-
-;; Upper case aliases because the other parts of gibs use upper case for this in a payload in S3.
-; (s/def ::Bucket ::bucket)
-; (s/def ::Key ::key)
-;

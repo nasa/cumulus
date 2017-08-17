@@ -2,7 +2,7 @@
   (:require
    [clojure.test :refer :all]
    [cheshire.core :as json]
-   [cumulus.provider-gateway.activity-handler :as activity-handler]
+   [cumulus.provider-gateway.download-activity-handler :as activity-handler]
    [cumulus.provider-gateway.activities.sync-task-to-request-handler :as strh]
    [cumulus.provider-gateway.aws.s3 :as s3]))
 

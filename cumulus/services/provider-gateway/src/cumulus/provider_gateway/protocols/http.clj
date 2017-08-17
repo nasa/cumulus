@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.protocols.http
-  "TODO"
+  "Defines an instance of the HTTP protocol which can download data from an HTTP server"
   (:require
    [clj-http.client :as client]
    [clj-http.conn-mgr :as conn-mgr]
@@ -40,7 +40,6 @@
          nil)))))
 
 (defn create-http-connection
-  "TODO"
   []
   (->HttpConnection
    (conn-mgr/make-reusable-conn-manager

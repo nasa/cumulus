@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.system
-  "TODO"
+  "Defines the running system."
   (:require
    [clojure.spec.alpha :as s]
    [clojure.core.async :as a]
@@ -7,7 +7,7 @@
    [com.stuartsierra.component :as c]
    [cumulus.provider-gateway.aws.activity-api :as activity]
    [cumulus.provider-gateway.activities.sync-task-to-request-handler :as strh]
-   [cumulus.provider-gateway.activity-handler :as activity-handler]
+   [cumulus.provider-gateway.download-activity-handler :as activity-handler]
    [cumulus.provider-gateway.task-executor :as task-executor]
    [cumulus.provider-gateway.util :as util]
    [cumulus.provider-gateway.specs.provider :as provider-spec]
@@ -25,7 +25,8 @@
                                        (str stack-name "-deploy") COLLECTIONS_YAML))))
 
 (def TASK_CHANNEL_BUFFER_SIZE
-  "TODO"
+  "The number of messages that can be buffered in the download task channel before writing to it will
+   be blocked. There's a task channel per provider."
   5)
 
 (defn create-activity-arn
@@ -37,6 +38,7 @@
           activity-name))
 
 (defn get-gateway-providers
+  "Returns the set of providers configured in collections.yml"
   ([]
    (get-gateway-providers (load-collections-config)))
   ([config]
@@ -58,31 +60,33 @@
                                        :arn (create-activity-arn (:sync_activity config))}})))))))
 
 (defn create-provider-components
-  "TODO"
+  "Takes a configured provider and creates system components prefixed with the providers id so they
+   won't conflict with components for other providers."
   [provider]
   (s/assert ::provider-spec/provider provider)
   (let [;; helper function for making a keyword with a provider id prefix.
         pk #(keyword (str (:provider-id provider) "-" (name %)))]
 
     (merge
-     ;; TODO Add comments before each key documenting what it si.
-     {(pk :task-channel) (a/chan TASK_CHANNEL_BUFFER_SIZE)
+     {;; A channel for communicating task read from the activity API to the task executor
+      (pk :task-channel) (a/chan TASK_CHANNEL_BUFFER_SIZE)
 
+      ;; The implementation of the S3 API to use.
       (pk :s3-api) (s3/create-s3-api (:s3-api-type provider))
 
+      ;; The task executor processes download requests for a provider.
       (pk :task-executor) (c/using (task-executor/create-task-executor provider)
                                    {:task-channel (pk :task-channel)
                                     :s3-api (pk :s3-api)})}
 
+     ;; Create an activity handler that downloads requests
      (when (:activity-api provider)
-       ;; TODO rename request activity api in configuration to download-request or something with download in the name
-       ;; Create an activity handler just for normal requests
-       {(pk :activity-handler) (c/using (activity-handler/create-activity-handler
-                                         (activity/create-activity-api (:activity-api provider)))
-                                        {:task-channel (pk :task-channel)})})
+       {(pk :download-activity-handler) (c/using (activity-handler/create-activity-handler
+                                                  (activity/create-activity-api (:activity-api provider)))
+                                                 {:task-channel (pk :task-channel)})})
 
+     ;; Create a sync activity handler
      (when (:sync-activity-api provider)
-       ;; Create a sync activity handler
        {(pk :sync-activity-handler)
         (c/using (activity-handler/create-activity-handler
                   (activity/create-activity-api (:sync-activity-api provider))
