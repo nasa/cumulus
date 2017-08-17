@@ -42,7 +42,7 @@
 
 (defn create-url
   [type path]
-  (let [port (:port (case type :http running-http-server :ftp running-ftp-server) 1234)]
+  (let [port (:port (case type :http running-http-server :ftp running-ftp-server))]
     (format "%s://localhost:%d/%s" (name type) port path)))
 
 (defn create-download-request
@@ -94,8 +94,6 @@
   [completed-download-requests]
   ;; The ouput is the same as the input with the files containing the completed download requests
   (:input (create-download-task nil completed-download-requests)))
-
-;; TODO add sync task test
 
 (def MAX_WAIT_TIME 5000)
 
