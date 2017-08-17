@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.protocols.ftp
-  "TODO"
+  "Defines an instance of the FTP protocol which can download data from an FTP server"
   (:require
    [clojure.java.io :as io]
    [cumulus.provider-gateway.protocols.url-connection :as url-conn])
@@ -14,7 +14,7 @@
     FTPClient)))
 
 (defn- check-reply
-  "TODO"
+  "Checks that the reply from the server for the last request was successful."
   [client]
   (let [reply (.getReplyCode client)]
     (when-not (FTPReply/isPositiveCompletion reply)
@@ -29,11 +29,8 @@
     (catch Exception _
       conn)))
 
-;; TODO the connections will timeout if not used (It seems like.)
-;; Figure out how to handle that.
-;;  FTPConnectionClosedException FTP response 421 received.
-
 (defn- connect-client
+  "Takes an existing FTP client and configures and connects to the FTP server."
   [config client]
   (let [{:keys [host port username password]} config
         port (or port 21)]
@@ -57,7 +54,7 @@
     client))
 
 (defn- create-ftp-client
-  "TODO"
+  "Creates an connects and instance of an FTP Client"
   [config]
   (connect-client config (FTPClient.)))
 
@@ -140,7 +137,7 @@
                (reset! closed true))))))))))
 
 (defn create-ftp-connection
-  "TODO"
+  "Creates an instance of connection to an FTP server"
   [config]
   (map->FtpConnection {:config config :client (create-ftp-client config)}))
 

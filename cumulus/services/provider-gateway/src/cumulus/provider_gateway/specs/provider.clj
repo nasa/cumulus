@@ -1,12 +1,8 @@
 (ns cumulus.provider-gateway.specs.provider
-  "TODO"
+  "Defines specifications for provider configuration."
   (:require
    [clojure.spec.alpha :as s]
    [cumulus.provider-gateway.specs.common :as common]))
-
-;; TODO I don't like the dash case and underscore case inconsistency. Convert to dash case after
-;; reading in the provider data. Use camel-snake-kebab to do that.
-
 
 ;;;;
 ;; Provider Activity api configuration

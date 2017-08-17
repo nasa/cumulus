@@ -148,7 +148,7 @@
                   :conn_config {:conn_type "http"}
                   :num_connections 2}
         system (c/start (sys/create-system [provider]))
-        activity-api (get-in system [:LOCAL-activity-handler :activity-api])
+        activity-api (get-in system [:LOCAL-download-activity-handler :activity-api])
         s3-api (:LOCAL-s3-api system)
         expected-s3 (create-expected-s3
                      http-files->content
@@ -182,7 +182,7 @@
           system (-> (sys/create-system [provider])
                      (assoc :LOCAL-s3-api s3-api)
                      c/start)
-          activity-api (get-in system [:LOCAL-activity-handler :activity-api])
+          activity-api (get-in system [:LOCAL-download-activity-handler :activity-api])
           expected-s3 (create-expected-s3
                        http-files->content
                        {"/foo/bar.txt" "v1"
@@ -219,7 +219,7 @@
                                       (select-keys running-ftp-server [:username :password :port]))
                   :num_connections 2}
         system (c/start (sys/create-system [provider]))
-        activity-api (get-in system [:LOCAL-activity-handler :activity-api])
+        activity-api (get-in system [:LOCAL-download-activity-handler :activity-api])
         s3-api (:LOCAL-s3-api system)
         expected-s3 (create-expected-s3
                      ftp-files->content
