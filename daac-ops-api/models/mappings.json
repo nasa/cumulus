@@ -1,0 +1,174 @@
+{
+  "collection": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "name": {
+        "type": "keyword"
+      },
+      "version": {
+        "type": "keyword"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  },
+  "pdr": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "pdrName": {
+        "type": "keyword"
+      },
+      "collection": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "provider": {
+        "type": "keyword"
+      },
+      "progress": {
+        "type": "float"
+      },
+      "PANSent": {
+        "type": "boolean"
+      },
+      "PANmessage": {
+        "type": "text"
+      },
+      "address": {
+        "type": "keyword"
+      },
+      "originalUrl": {
+        "type": "keyword"
+      },
+      "duration": {
+        "type": "float"
+      },
+      "stats": {
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "completed": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "processing": {
+            "type": "integer"
+          }
+        }
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  },
+  "granule": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "_parent": {
+      "type": "collection"
+    },
+    "properties": {
+      "granuleId": {
+        "type": "keyword"
+      },
+      "collection": {
+        "type": "keyword"
+      },
+      "pdrName": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "published": {
+        "type": "boolean"
+      },
+      "cmrLink": {
+        "type": "keyword"
+      },
+      "provider": {
+        "type": "keyword"
+      },
+      "execution": {
+        "type": "keyword"
+      },
+      "duration": {
+        "type": "float"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  },
+  "execution": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "arn": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "keyword"
+      },
+      "collection": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "duration": {
+        "type": "float"
+      },
+      "type": {
+        "type": "keyword"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  }
+}
