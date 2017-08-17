@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.util
-  "TODO"
+  "Utility functions"
   (:require
    [cheshire.parse :as ch-parse]
    [clojure.java.io :as io]
@@ -37,7 +37,7 @@
         true nil nil))
 
 (defn- env-vars
-  "TODO"
+  "Returns a map of env vars some of which may be overloaded by dev/locals.clj"
   []
   (let [env (into {} (System/getenv))]
    (if (find-ns 'locals)
@@ -81,7 +81,7 @@
     message-part)))
 
 (defn running-in-repl?
-  "TODO"
+  "Returns true if we can detect this Clojure process is running in a REPL."
   []
   (and
    (find-ns 'user)
