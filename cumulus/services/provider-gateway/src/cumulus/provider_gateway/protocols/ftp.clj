@@ -9,6 +9,7 @@
    (org.apache.commons.net.ftp
     FTP
     FTPConnectionClosedException
+    FTPFile
     FTPReply
     FTPClient)))
 
@@ -66,6 +67,9 @@
          {:host "localhost"
           :username "ftp"
           :password "ftp"}))
+
+ (map #(.getSize %) (seq (.listFiles (:client c) "/PDR/PDN.ID1703251200.PD2R")))
+
  (def s (url-conn/download c "ftp://localhost/PDR/PDN.ID1703251200.PDR"))
 
  ;; returns nil if it doesn't exist
@@ -89,7 +93,7 @@
   [
    config
 
-   client]
+   ^FTPClient client]
 
   url-conn/UrlConnection
 
@@ -99,6 +103,14 @@
      (try (.logout client) (catch FTPConnectionClosedException _ nil))
      (try (.disconnect client) (catch FTPConnectionClosedException _ nil)))
    (assoc conn :client nil))
+
+  (get-size
+   [conn url]
+   (when-not client
+     (throw (Exception. "Connection not connected.")))
+   (let [path (.getPath (io/as-url url))]
+     (when-let [^FTPFile ftp-file (first (.listFiles client path))]
+       (.getSize ftp-file))))
 
   (download
    [conn url]
