@@ -1,10 +1,9 @@
 (ns cumulus.provider-gateway.specs.task
-  "TODO"
+  "Describes the expected fields in a download task."
   (:require
    [clojure.spec.alpha :as s]
    [cumulus.provider-gateway.specs.common :as common]
    [cumulus.provider-gateway.specs.config :as config]))
-
 
 (s/def ::source
        (s/keys :req-un [::url]
@@ -25,11 +24,6 @@
 
 (s/def ::payload
        (s/keys :req-un [::files]))
-
-; (s/def ::payload-maybe-in-s3
-;        (s/or
-;         :payload-in-s3 (s/keys :req-un [::Bucket ::Key])
-;         :payload ::payload))
 
 (s/def ::task-token string?)
 (s/def ::input ::payload)

@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.specs.config
-  "TODO"
+  "Defines specifications for configuration items for tasks configurations"
   (:require
    [clojure.spec.alpha :as s]
    [cumulus.provider-gateway.specs.common :as common]))
