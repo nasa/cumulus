@@ -1,6 +1,7 @@
 (ns cumulus.provider-gateway.integration-test
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [clojure.test :refer :all]
    [com.stuartsierra.component :as c]
    [cumulus.provider-gateway.system :as sys]
@@ -69,9 +70,7 @@
   ([type path options]
    (let [request (create-download-request type path options)
          url (get-in request [:source :url])
-         error (case type
-                 :http (str "Could not download data from " url)
-                 :ftp "The file did not exist at the source.")]
+         error "The file did not exist at the source."]
      (assoc request :success false :error error))))
 
 (defn create-download-task
@@ -115,23 +114,23 @@
                         (pr-str (get-completed-tasks)) (pr-str task-ids)))))
       (Thread/sleep 250))))
 
-;; TODO add tests that verify size works
-;; TODO Add automatic requests to fetch the size if not present
-;; The version test is important to make sure we document the response behavior when using version
-
+;; TODO document version and size params
 ;; TODO add test to verify FROM_CONFIG behavior
 
-#_
-(def fixture-future
-  (future
-   ((http-server/create-run-jetty-fixture
-     #'running-http-server
-     {:file-paths->contents http-files->content})
-    (fn []
-      (println "Test function called")
-      (Thread/sleep 30000)
-      (println "Test function ending")))))
-
+(defn create-expected-s3
+  "Creates a map of expected s3 content from a list of file paths and the map of files->content"
+  ([files->content file-paths->versions]
+   (create-expected-s3 "" files->content file-paths->versions))
+  ([key-prefix files->content file-paths->versions]
+   {storage-bucket
+    (reduce (fn [contents [path version]]
+              (assoc contents
+                     (str key-prefix (last (str/split path #"/")))
+                     {:value (files->content path)
+                      :metadata {:content-length (count (files->content path))
+                                 :user-metadata {:version version}}}))
+            {}
+            file-paths->versions)}))
 
 (deftest http-download-request-integration-test
   (let [task1-download-requests [(create-download-request :http "/foo/bar.txt" {:source {:version "v1"}})
@@ -154,19 +153,11 @@
         system (c/start (sys/create-system [provider]))
         activity-api (get-in system [:LOCAL-activity-handler :activity-api])
         s3-api (:LOCAL-s3-api system)
-        expected-s3 {storage-bucket
-                     {"bar.txt"
-                      {:value (http-files->content "/foo/bar.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version "v1"}}}
-                      "bar2.txt"
-                      {:value (http-files->content "/foo/bar2.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version "v1"}}}
-                      "moo.txt"
-                      {:value (http-files->content "/moo.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version nil}}}}}]
+        expected-s3 (create-expected-s3
+                     http-files->content
+                     {"/foo/bar.txt" "v1"
+                      "/foo/bar2.txt" "v1"
+                      "/moo.txt" nil})]
     (try
       (wait-for-tasks-to-complete activity-api ["task-1" "task-2"])
       (finally
@@ -195,19 +186,11 @@
                      (assoc :LOCAL-s3-api s3-api)
                      c/start)
           activity-api (get-in system [:LOCAL-activity-handler :activity-api])
-          expected-s3 {storage-bucket
-                       {"bar.txt"
-                        {:value (http-files->content "/foo/bar.txt")
-                         :metadata {:content-length nil
-                                    :user-metadata {:version "v1"}}}
-                        "bar2.txt"
-                        {:value (http-files->content "/foo/bar2.txt")
-                         :metadata {:content-length nil
-                                    :user-metadata {:version "v2"}}}
-                        "moo.txt"
-                        {:value (http-files->content "/moo.txt")
-                         :metadata {:content-length nil
-                                    :user-metadata {:version nil}}}}}]
+          expected-s3 (create-expected-s3
+                       http-files->content
+                       {"/foo/bar.txt" "v1"
+                        "/foo/bar2.txt" "v2"
+                        "/moo.txt" nil})]
       (try
         (wait-for-tasks-to-complete activity-api ["task-3"])
         (finally
@@ -241,19 +224,11 @@
         system (c/start (sys/create-system [provider]))
         activity-api (get-in system [:LOCAL-activity-handler :activity-api])
         s3-api (:LOCAL-s3-api system)
-        expected-s3 {storage-bucket
-                     {"bar.txt"
-                      {:value (ftp-files->content "/ftp/foo/bar.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version nil}}}
-                      "bar2.txt"
-                      {:value (ftp-files->content "/ftp/foo/bar2.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version nil}}}
-                      "moo.txt"
-                      {:value (ftp-files->content "/ftp/moo.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version nil}}}}}]
+        expected-s3 (create-expected-s3
+                     ftp-files->content
+                     {"/ftp/foo/bar.txt" nil
+                      "/ftp/foo/bar2.txt" nil
+                      "/ftp/moo.txt" nil})]
     (try
       (wait-for-tasks-to-complete activity-api ["task-1" "task-2"])
       (finally
@@ -308,15 +283,11 @@
         system (c/start (sys/create-system [provider]))
         activity-api (get-in system [:LOCAL-sync-activity-handler :activity-api])
         s3-api (:LOCAL-s3-api system)
-        expected-s3 {storage-bucket
-                     {"sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar.txt"
-                      {:value (http-files->content "/foo/bar.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version "bar-1"}}}
-                      "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar2.txt"
-                      {:value (http-files->content "/foo/bar2.txt")
-                       :metadata {:content-length nil
-                                  :user-metadata {:version "bar2-1"}}}}}]
+        expected-s3 (create-expected-s3
+                     "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/"
+                     http-files->content
+                     {"/foo/bar.txt" "bar-1"
+                      "/foo/bar2.txt" "bar2-1"})]
     (testing "Sync with everything new"
       (try
         (wait-for-tasks-to-complete activity-api ["task-1"])
@@ -341,19 +312,12 @@
                      (assoc :LOCAL-s3-api s3-api)
                      c/start)
           activity-api (get-in system [:LOCAL-sync-activity-handler :activity-api])
-          expected-s3 {storage-bucket
-                       {"sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar.txt"
-                        {:value (http-files->content "/foo/bar.txt")
-                         :metadata {:content-length nil
-                                    :user-metadata {:version "bar-1"}}}
-                        "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar2.txt"
-                        {:value (http-files->content "/foo/bar2.txt")
-                         :metadata {:content-length nil
-                                    :user-metadata {:version "bar2-2"}}}
-                        "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/moo.txt"
-                        {:value (http-files->content "/moo.txt")
-                         :metadata {:content-length nil
-                                    :user-metadata {:version "moo-1"}}}}}]
+          expected-s3 (create-expected-s3
+                       "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/"
+                       http-files->content
+                       {"/foo/bar.txt" "bar-1"
+                        "/foo/bar2.txt" "bar2-2"
+                        "/moo.txt" "moo-1"})]
       (testing "Sync with some updates"
         (try
           (wait-for-tasks-to-complete activity-api ["task-2"])
