@@ -15,8 +15,6 @@ export AWS_DEFAULT_REGION=us-west-2
 bin/docker_deploy.sh
 ```
 
-TODO file issue to integrate docker pushes with a bamboo build of the provider gateway.
-
 ## Running Locally
 
 Running the Provider Gateway locally is best done in a Clojure REPL.

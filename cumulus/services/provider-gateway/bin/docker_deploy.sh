@@ -34,3 +34,6 @@ $login_cmd
 # -- Push --
 echo "Pushing ..."
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${region}.amazonaws.com/${NAMESPACE}/${IMAGE_NAME}:latest
+
+# Remove leftover build stuff so a local repl will still work.
+lein clean

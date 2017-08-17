@@ -7,6 +7,8 @@
    [clojure.java.io :as io]
    [cheshire.core :as json])
   (:import
+   (com.amazonaws
+    SdkClientException)
    (com.amazonaws.http.timers.client
     ClientExecutionTimeoutException)
    (java.io
@@ -111,10 +113,14 @@
            {:keys [task-token input]} task]
        {:task-token task-token
         :input (json/decode input true)})
-     ; TODO handle this exception and return null com.amazonaws.SdkClientException: Unable to execute HTTP request: Read timed out
      (catch ClientExecutionTimeoutException e
        ;; ignoring this and returning nil
-       nil)))
+       nil)
+     (catch SdkClientException ce
+       ;; If the client exception is read timed out we will ignore it. Otherwise rethrow.
+       ;; com.amazonaws.SdkClientException: Unable to execute HTTP request: Read timed out
+       (when-not (.contains (.getMessage ce) "Read timed out")
+         (throw ce)))))
 
   (report-task-failure
    [this task-token error-code cause]

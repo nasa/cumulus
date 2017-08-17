@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.task-executor
-   "TODO"
+   "Defines a components and functions for executing download task requests."
    (:require
     [clojure.spec.alpha :as s]
     [clojure.core.async :as a]
@@ -11,10 +11,8 @@
     [cumulus.provider-gateway.protocols.ftp :as ftp-conn]
     [cumulus.provider-gateway.protocols.http :as http-conn]))
 
-;; TODO add validation that URLs match the connection protocol configured
-
 (defn- create-connection
-  "TODO"
+  "Creates a connection based from a provider connection configuration."
   [conn-config]
   (case (:conn_type conn-config)
     "ftp" (ftp-conn/create-ftp-connection conn-config)
@@ -37,6 +35,8 @@
       (:bucket target)
       target
 
+      ;; If the target is FROM_CONFIG then we will generate the bucket and key from the task
+      ;; configuration
       (= "FROM_CONFIG" target)
       (let [{:keys [bucket key_prefix]} (get-in task [:config :output])
             file-name (util/url->file-name (get-in request [:source :url]))]
@@ -54,9 +54,8 @@
 ;; the response. This is needed for the sync activity handler so that it can report all the
 ;; files that are in S3.
 
-
 (defn- process-download-request
-  "TODO"
+  "Processes a request to download a single file from a URL and upload it to S3"
   [s3-api conn log task request]
   (let [{{:keys [url size version]} :source} request
         {:keys [bucket key]} (request->s3-target task request)
@@ -90,23 +89,18 @@
                  :success false
                  :error "The file did not exist at the source."))))))
 
-
-(defn- process-request
-  "TODO"
-  [s3-api conn log task request]
-  (case (:type request)
-    "download" (process-download-request s3-api conn log task request)
-    ;; else
-    (throw (Exception. (format "Unexpected request type %s" (pr-str request))))))
+;; TODO this is not fully utilizing the threads that are available. Individual requests should be
+;; written to a channel so we can fully utilize the connection if there are not a lot of concurrent
+;; jobs running.
 
 (defn- process-task
-  "TODO"
+  "Processes a task downloading all of the files in it."
   [s3-api conn log task]
   (s/assert ::specs/task task)
   (let [{:keys [completion-channel input task-token]} task
         request-results (mapv (fn [request]
                                 (try
-                                  (process-request s3-api conn log task request)
+                                  (process-download-request s3-api conn log task request)
                                   (catch Exception e
                                     (.printStackTrace e)
                                     (assoc request
@@ -117,11 +111,9 @@
     (a/>!! completion-channel completion-msg)))
 
 (defn- create-task-processing-threads
-  "TODO"
+  "Creates a set of threads for processing requests of the task channel"
   [s3-api provider task-channel]
   (let [{:keys [provider-id conn_config num_connections]} provider]
-    ;; TODO in my testing here it seems like there's only 1 upload going on at a time while I have 2 connections configured.
-    ;; Make sure this is actually working as expected.
     (doall
      (for [thread-num (range 1 (inc num_connections))
            :let [thread-id (str provider-id "-" thread-num)
