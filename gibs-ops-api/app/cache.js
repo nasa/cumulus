@@ -1,5 +1,7 @@
 'use strict';
 
+const log = require('@cumulus/common/log');
+
 /* eslint-disable no-console */
 
 /**
@@ -19,7 +21,7 @@ const cacheLookup = async (cacheName, cache, key, lookupFn) => {
   const cachedValue = cache[key];
   let result;
   if (cachedValue === null || cachedValue === undefined) {
-    console.info(`Cache miss on ${cacheName}(${key})`);
+    log.info(`Cache miss on ${cacheName}(${key})`);
     const valueToCache = lookupFn(key);
     if (valueToCache.then) {
       result = await valueToCache;
@@ -31,7 +33,7 @@ const cacheLookup = async (cacheName, cache, key, lookupFn) => {
     cache[key] = valueToCache;
   }
   else {
-    console.info(`Cache hit on ${cacheName}(${key})`);
+    log.info(`Cache hit on ${cacheName}(${key})`);
     result = cachedValue;
   }
   return result;
