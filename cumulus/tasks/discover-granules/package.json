@@ -15,6 +15,13 @@
     "build": "webpack --progress",
     "watch": "webpack --progress -w"
   },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
   "babel": {
     "presets": [
       "es2017",
@@ -31,6 +38,8 @@
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^7.1.1",
     "babel-polyfill": "^6.23.0",
