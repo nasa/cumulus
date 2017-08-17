@@ -1,7 +1,7 @@
 (ns cumulus.provider-gateway.protocols.url-connection)
 
 (defprotocol UrlConnection
-  "TODO"
+  "Defines a protocol for interacting with URLS to download data."
 
   (close
    [conn]

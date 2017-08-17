@@ -1,5 +1,5 @@
 (ns cumulus.provider-gateway.aws.s3
-  "TODO"
+  "Defines protocols and functions for accessing AWS S3 or stubbed implementations"
   (:require
    [amazonica.aws.s3 :as s3]
    [cheshire.core :as json])
@@ -8,7 +8,7 @@
     AmazonS3Exception)))
 
 (defprotocol S3Api
-  "TODO"
+  "Defines an API for the kinds of requests we need to make to S3."
   (read-s3-string
    [this bucket key]
    "Reads a string from the given s3 bucket and key")
@@ -86,6 +86,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Canned data
+;; Used for testing so we can test code that works with S3 without actually connecting to it..
 
 (defrecord CannedS3API
   ;; nested maps of bucket -> key -> {:metadata ... :value ...}

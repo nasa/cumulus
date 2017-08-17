@@ -3,15 +3,14 @@
    files with contents already in S3."
   (:require
    [clojure.spec.alpha :as s]
-   [cumulus.provider-gateway.activity-handler :as activity-handler]
+   [cumulus.provider-gateway.download-activity-handler :as activity-handler]
    [cumulus.provider-gateway.util :as util]
    [cumulus.provider-gateway.aws.s3 :as s3]
    [cumulus.provider-gateway.specs.config :as config-spec]
    [cumulus.provider-gateway.specs.sync-task :as sync-spec]))
 
-;; TODO the input to the sync activity includes just the files. If we were to get the file sizes
-;; when scanning the folder we'd be able to improve S3 upload speeds. File an issue for this to
-;; improve the sync step
+;; PERFORMANCE ENHANCEMENT: the input to the sync activity includes just the files. If we were to
+;; get the file sizes when scanning the folder we'd be able to improve S3 upload speeds.
 
 (def TASK_NAME
   "SyncHttpUrls")
@@ -35,7 +34,6 @@
 
   (handle-new-task
    [_ task]
-   ;; TODO we should enforce the specs here instead of in file->download-request
    (let [task-updated (activity-handler/default-handle-new-task TASK_NAME s3-api task)]
      (assoc task-updated :input
             {:files (mapv #(file->download-request (:config task-updated) %) (:input task-updated))})))
