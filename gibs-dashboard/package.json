@@ -16,12 +16,13 @@
     "serve": "GIBS_ENV=development gulp serve",
     "staging": "GIBS_ENV=staging gulp",
     "production": "NODE_ENV=production GIBS_ENV=production gulp",
+    "ensure-production-config-exists": "[ -f app/scripts/config/production-generated.js ] || echo 'module.exports = {};' > app/scripts/config/production-generated.js",
     "lint": "eslint . --ext .js",
     "start": "npm run serve",
     "mocha": "mocha --require babel-polyfill --require jsdom-global/register --compilers js:babel-core/register --recursive",
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
     "mocha-watch": "npm run mocha -- -w",
-    "test": "npm run lint && npm run mocha",
+    "test": "npm run ensure-production-config-exists && npm run lint && npm run mocha",
     "test-ci": "npm run lint && npm run mocha-junit"
   },
   "browserify": {
