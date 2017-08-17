@@ -1,0 +1,20 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:6.10
+    working_directory: ~/cumulus
+    steps:
+      - checkout
+
+      - run:
+          name: Installing Dependencies
+          command: |
+            sudo npm install -g lerna
+            npm install
+            npm run bootstrap
+
+      - run:
+          name: Running Test
+          command: |
+            npm run test
