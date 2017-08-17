@@ -5,6 +5,7 @@
   "scripts": {
     "test": "lerna run test",
     "bootstrap": "lerna bootstrap",
+    "ybootstrap": "lerna bootstrap --npmClient=yarn",
     "clean": "lerna clean",
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch"

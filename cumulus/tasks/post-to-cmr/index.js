@@ -1,9 +1,71 @@
 'use strict';
 
-import get from 'lodash.get';
-import { S3 } from '@cumulus/ingest/aws';
-import { CMR } from '@cumulus/cmrjs';
-import { XmlMetaFileNotFound } from '@cumulus/common/errors';
+const get = require('lodash.get');
+const path = require('path');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
+const { S3, KMS } = require('@cumulus/ingest/aws');
+const { CMR } = require('@cumulus/cmrjs');
+const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
+const testPayload = require('@cumulus/test-data/payloads/modis/cmr.json');
+
+/**
+ * The output returned by Cumulus-py has a broken payload
+ * where files are not correctly grouped together. This function
+ * will fix the returned output by cumulus-py until a fix is
+ * issued there
+ *
+ */
+function temporaryPayloadFix(_payload, collection, buckets) {
+  const payload = _payload;
+
+  if (payload.granules) {
+    // first find the main granule object
+    const granules = payload.granules.filter(g => g.granuleId !== undefined);
+
+    for (const g of payload.granules) {
+      if (!g.granuleId) {
+        for (const file of g.files) {
+          file.name = path.basename(file.filename);
+          // find the bucket and url_path info
+          for (const def of collection.files) {
+            const test = new RegExp(def.regex);
+            if (file.name.match(test)) {
+              file.bucket = buckets[def.bucket];
+              file.url_path = def.url_path || collection.url_path || '';
+              break;
+            }
+          }
+        }
+        granules[0].files = granules[0].files.concat(g.files);
+      }
+    }
+
+    payload.granules = granules;
+  }
+  return payload;
+}
+
+function getCmrFiles(granule) {
+  const expectedFormats = [/.*\.meta\.xml$/];
+  const cmrFiles = granule.files.map((file) => {
+    const r = {
+      granuleId: granule.granuleId
+    };
+
+    if (file.cmrFile) {
+      r.file = file;
+    }
+
+    for (const regex of expectedFormats) {
+      if (file.name.match(regex)) {
+        r.file = file;
+      }
+    }
+    return r.file ? r : null;
+  });
+
+  return cmrFiles.filter(f => f);
+}
 
 /**
  * getMetadata
@@ -11,7 +73,7 @@ import { XmlMetaFileNotFound } from '@cumulus/common/errors';
  * @param {string} xmlFilePath S3 URI to the xml metadata document
  * @returns {string} returns stringified xml document downloaded from S3
  */
-export async function getMetadata(xmlFilePath) {
+async function getMetadata(xmlFilePath) {
   // Identify the location of the metadata file,
   // conditional on the name of the collection
 
@@ -27,6 +89,16 @@ export async function getMetadata(xmlFilePath) {
   return obj.Body.toString();
 }
 
+async function decryptPassword(password) {
+  try {
+    const pass = await KMS.decrypt(password);
+    return pass;
+  }
+  catch (e) {
+    return password;
+  }
+}
+
 
 /**
  * function for posting xml strings to CMR
@@ -36,33 +108,23 @@ export async function getMetadata(xmlFilePath) {
  * @returns {object} CMR's success response which includes the concept-id
  */
 
-export async function publish(collection, output, creds) {
-  const granules = [];
-  const cmr = new CMR(creds.provider, creds.clientId, creds.username, creds.password);
+async function publish(cmrFile, creds) {
+  const password = await decryptPassword(creds.password);
+  const cmr = new CMR(
+    creds.provider,
+    creds.clientId,
+    creds.username,
+    password
+  );
 
-  for (const granule of output[collection.name].granules) {
-    // get xml-meta if exists
-    const xmlFilePath = get(granule, `files[\'${collection.cmrFile}\']`, null);
-
-    if (xmlFilePath) {
-      const xml = await getMetadata(xmlFilePath);
-      const res = await cmr.ingestGranule(xml);
-
-      // add conceptId to the record
-      granule.cmrLink = 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
-        `?concept_id=${res.result['concept-id']}`;
-      granule.published = true;
-    }
-    else {
-      granule.published = false;
-    }
-
-    granules.push(granule);
-  }
+  const xml = await getMetadata(cmrFile.file.filename);
+  const res = await cmr.ingestGranule(xml);
 
   return {
-    collectionName: collection.name,
-    granules
+    granuleId: cmrFile.granuleId,
+    conceptId: res.result['concept-id'],
+    link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
+          `?concept_id=${res.result['concept-id']}`
   };
 }
 
@@ -75,39 +137,54 @@ export async function publish(collection, output, creds) {
  * @param {function} cb lambda callback
  * @returns 1A0000-2016111101_000_001{object} returns the updated event object[M`A[M`A[M`A
  */
-export function handler(_event, context, cb) {
+function handler(_event, context, cb) {
   try {
     // we have to post the meta-xml file of all output granules
     // first we check if there is an output file
     const event = _event;
-    const collections = get(event, 'meta.collections');
-    const output = get(event, 'payload.output');
-    const creds = get(event, 'ingest_meta.config.cmr');
 
-    // do nothing and return the payload as is
-    if (!output) {
-      return cb(null, event);
+    const collection = get(event, 'collection');
+    const buckets = get(event, 'resources.buckets');
+    const payload = temporaryPayloadFix(get(event, 'payload', null), collection, buckets);
+    const creds = get(event, 'resources.cmr');
+
+    // this lambda can only handle 1 granule at a time
+    if (payload.granules.length > 1) {
+      const err = new Error('Received more than 1 granule. ' +
+                            'This function can only handle 1 granule a time');
+      return cb(err);
     }
 
-    // for all granules of all output collections post to CMR if meta-xml key exists
-    const jobs = Object.keys(output).map(c => publish(collections[c], output, creds));
+    // determine CMR files
+    const cmrFiles = getCmrFiles(payload.granules[0]);
 
-    Promise.all(jobs).then((results) => {
+    // post all meta files to CMR
+    const jobs = cmrFiles.map(c => publish(c, creds));
+
+    return Promise.all(jobs).then((results) => {
       // update output section of the payload
       for (const result of results) {
-        event.payload.output[result.collectionName].granules = result.granules;
-
-        // also update granules info in the meta section of the payload
-        for (const granule of result.granules) {
-          event.meta.granules[granule.granuleId].cmrLink = get(granule, 'cmrLink', null);
-          event.meta.granules[granule.granuleId].published = get(granule, 'published', false);
+        for (const g of payload.granules) {
+          if (result.granuleId === g.granuleId) {
+            delete result.granuleId;
+            g.cmr = result;
+            break;
+          }
         }
       }
+
+      event.payload = payload;
+
       return cb(null, event);
     }).catch(e => cb(e));
   }
   catch (e) {
-    cb(e);
+    return cb(e);
   }
 }
 
+module.exports.handler = handler;
+
+justLocalRun(() => {
+  handler(testPayload, {}, (e, r) => console.log(e, JSON.stringify(r)));
+});
