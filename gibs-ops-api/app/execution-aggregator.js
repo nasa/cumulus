@@ -169,6 +169,7 @@ const parseWorkflowAgg = (aggs) => {
     products: parseProductsAgg(b.products)
   }));
   const workflowsById = {};
+  // eslint-disable-next-line no-return-assign
   workflows.forEach(w => (workflowsById[w.id] = w));
   return workflowsById;
 };

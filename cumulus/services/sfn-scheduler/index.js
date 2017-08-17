@@ -1,10 +1,10 @@
 'use strict';
 
 const _ = require('lodash');
-const aws = require('cumulus-common/aws');
-const log = require('cumulus-common/log');
-const sf = require('cumulus-common/step-functions');
-const configUtil = require('cumulus-common/config');
+const aws = require('@cumulus/common/aws');
+const log = require('@cumulus/common/log');
+const sf = require('@cumulus/common/step-functions');
+const configUtil = require('@cumulus/common/config');
 
 /**
  * Runs the given function at the given offset and with the given period thereafter
@@ -101,7 +101,7 @@ module.exports.handler = async (invocation) => {
   }
 };
 
-const localHelpers = require('cumulus-common/local-helpers');
+const localHelpers = require('@cumulus/common/local-helpers');
 const fs = require('fs');
 if (localHelpers.isLocal) {
   const stack = process.argv[3];

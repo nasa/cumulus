@@ -71,15 +71,20 @@
       "from": "ieee754@>=1.1.4 <2.0.0",
       "resolved": "https://registry.npmjs.org/ieee754/-/ieee754-1.1.8.tgz"
     },
-    "cumulus-common": {
-      "version": "0.0.0",
-      "from": "file:../../../cumulus-common",
-      "resolved": "file:../../../cumulus-common",
+    "@cumulus/common": {
+      "version": "1.0.0",
+      "from": "@cumulus/common@>=1.0.0 < 2.0.0",
+      "resolved": "file:../../../packages/common",
       "dependencies": {
         "lodash": {
           "version": "4.17.4",
           "from": "lodash@>=4.13.1 <5.0.0",
           "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.4.tgz"
+        },
+        "@cumulus/test-data": {
+          "version": "1.0.0",
+          "from": "@cumulus/test-data@>=1.0.0 < 2.0.0",
+          "resolved": "file:../../../packages/test-data"
         }
       }
     },
