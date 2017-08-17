@@ -15,14 +15,19 @@ const createCache = () => ({});
  * returned by lookupFn can be a Promise that resolves to a value. The resolved value will be
  * cached.
  */
-const cacheLookup = async (cache, key, lookupFn) => {
+const cacheLookup = async (cacheName, cache, key, lookupFn) => {
+  console.log(`MTH-DEBUG [${cacheName} - ${key}]: ${cache}`);
+
   const cachedValue = cache[key];
   let result;
   if (cachedValue === null || cachedValue === undefined) {
-    console.info(`Cache miss on ${key}`);
+    console.info(`Cache miss on ${cacheName}(${key})`);
     const valueToCache = lookupFn(key);
+    console.log(`MTH-DEBUG [${cacheName} - ${key}] valueToCache=${valueToCache}`);
     if (valueToCache.then) {
+      console.log(`MTH-DEBUG [${cacheName} - ${key}] Found a promise, waiting`);
       result = await valueToCache;
+      console.log(`MTH-DEBUG [${cacheName} - ${key}] awaited valueToCache=${result}`);
     }
     else {
       result = valueToCache;
@@ -31,7 +36,8 @@ const cacheLookup = async (cache, key, lookupFn) => {
     cache[key] = valueToCache;
   }
   else {
-    console.info(`Cache hit on ${key}`);
+    console.info(`Cache hit on ${cacheName}(${key})`);
+    console.log(`MTH-DEBUG [${cacheName} - ${key}] cachedValue=${cachedValue}`);
     result = cachedValue;
   }
   return result;
@@ -41,9 +47,9 @@ const cacheLookup = async (cache, key, lookupFn) => {
  * Memoizes the given function which should take one argument that is a string key. Assumes that the
  * function returns values that are safe to cache and share.
  */
-const memoize = (f) => {
+const memoize = (cacheName, f) => {
   const cache = createCache();
-  return lookupId => cacheLookup(cache, lookupId, f);
+  return lookupId => cacheLookup(cacheName, cache, lookupId, f);
 };
 
 module.exports = {
