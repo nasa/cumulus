@@ -142,6 +142,7 @@ const getOnEarthServiceStatusNgap = async (appName) => {
 
   if (!response.success) throw new Error(`API Call failed: ${JSON.stringify(response)}`);
   let webProcess = null;
+  // eslint-disable-next-line no-restricted-syntax
   for (const process of response.processes) {
     if (process.process_type === 'web') {
       webProcess = process;
