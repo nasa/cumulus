@@ -418,3 +418,4 @@ module.exports.S3 = S3;
 module.exports.KMS = KMS;
 module.exports.ECS = ECS;
 module.exports.invoke = invoke;
+module.exports.getEndpoint = getEndpoint;
