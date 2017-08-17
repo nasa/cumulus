@@ -59,7 +59,7 @@ const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
  * gitcxtestxx.
  */
 const stackNameToAlphanumPrefix = stackName => stackName.split('-').map(
-  (s) => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+  s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
 
 /**
  * Returns a parsed collection config
