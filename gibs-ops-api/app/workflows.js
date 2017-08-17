@@ -67,16 +67,9 @@ const getWorkflowStatuses = async (stackName) => {
  */
 const handleWorkflowStatusRequest = async (req, res) => {
   try {
-    req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
-    const result = await req.getValidationResult();
-    if (!result.isEmpty()) {
-      res.status(400).json(result.array());
-    }
-    else {
-      const stackName = req.query.stack_name;
-      const statuses = await getWorkflowStatuses(stackName);
-      res.json(statuses.toJS());
-    }
+    const stackName = process.env.STACK_NAME;
+    const statuses = await getWorkflowStatuses(stackName);
+    res.json(statuses.toJS());
   }
   catch (e) {
     console.error(e);

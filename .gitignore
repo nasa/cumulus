@@ -1,3 +1,5 @@
+package-lock.json
+yarn.lock
 node_modules
 build/
 dist/
@@ -8,3 +10,4 @@ config/authorized_keys
 cache-invalidation/config/runtime_config.json
 artifacts
 packaged-*
+*-debug.log

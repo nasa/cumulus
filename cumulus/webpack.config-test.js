@@ -11,8 +11,11 @@ module.exports = {
   },
   target: 'node',
   externals: [
-    nodeExternals(),
-    'aws-sdk'
+    nodeExternals({
+      whitelist: [/.*cumulus[-\/].*/]
+    }),
+    'aws-sdk',
+    'electron'
   ],
   node: {
     __dirname: false,
@@ -31,7 +34,7 @@ module.exports = {
     loaders: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: /node_modules(?!\/cumulus[-\/])/,
         loader: 'babel',
         query: {
           presets: [require.resolve('babel-preset-es2015')],
