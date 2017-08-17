@@ -9,7 +9,6 @@ const { handleError } = require('./api-errors');
 const { ecs, dynamoDB } = require('./aws');
 const { Map } = require('immutable');
 const { loadCollectionConfig } = require('./collection-config');
-const log = require('@cumulus/common/log');
 const { getStackResources, getIngestStackResources, getPhysicalResourceId } =
   require('./stack-resources');
 const rp = require('request-promise-native');
