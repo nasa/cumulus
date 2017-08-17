@@ -36,6 +36,9 @@
       }
     ],
     "properties": {
+      "execution": {
+        "type": "keyword"
+      },
       "pdrName": {
         "type": "keyword"
       },
@@ -103,29 +106,29 @@
       "type": "collection"
     },
     "properties": {
-      "granuleId": {
+      "execution": {
         "type": "keyword"
       },
-      "collection": {
+      "granuleId": {
         "type": "keyword"
       },
       "pdrName": {
         "type": "keyword"
       },
-      "status": {
+      "collection": {
         "type": "keyword"
       },
-      "published": {
-        "type": "boolean"
-      },
-      "cmrLink": {
+      "status": {
         "type": "keyword"
       },
       "provider": {
         "type": "keyword"
       },
-      "execution": {
+      "cmrLink": {
         "type": "keyword"
+      },
+      "published": {
+        "type": "boolean"
       },
       "duration": {
         "type": "float"
@@ -154,6 +157,12 @@
       "name": {
         "type": "keyword"
       },
+      "execution": {
+        "type": "keyword"
+      },
+      "type": {
+        "type": "keyword"
+      },
       "collection": {
         "type": "keyword"
       },
@@ -162,9 +171,6 @@
       },
       "duration": {
         "type": "float"
-      },
-      "type": {
-        "type": "keyword"
       },
       "timestamp": {
         "type": "date"
