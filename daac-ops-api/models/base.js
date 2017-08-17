@@ -3,7 +3,7 @@
 const Ajv = require('ajv');
 const AWS = require('aws-sdk');
 const omit = require('lodash.omit');
-const getEndpoint = require('@cumulus/ingest/aws').getEndpoint;
+const { getEndpoint } = require('@cumulus/ingest/aws');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 
