@@ -89,30 +89,9 @@
                  :success false
                  :error "The file did not exist at the source."))))))
 
-;; TODO this is not fully utilizing the threads that are available. Individual requests should be
-;; written to a channel so we can fully utilize the connection if there are not a lot of concurrent
-;; jobs running.
-
-(defn- process-task
-  "Processes a task downloading all of the files in it."
-  [s3-api conn log task]
-  (s/assert ::specs/task task)
-  (let [{:keys [completion-channel input task-token]} task
-        request-results (mapv (fn [request]
-                                (try
-                                  (process-download-request s3-api conn log task request)
-                                  (catch Exception e
-                                    (.printStackTrace e)
-                                    (assoc request
-                                           :success false
-                                           :error (.getMessage e)))))
-                              (:files input))
-        completion-msg (assoc task :results request-results :success true)]
-    (a/>!! completion-channel completion-msg)))
-
-(defn- create-task-processing-threads
+(defn- create-download-processing-threads
   "Creates a set of threads for processing requests of the task channel"
-  [s3-api provider task-channel]
+  [s3-api provider downloads-channel]
   (let [{:keys [provider-id conn_config num_connections]} provider]
     (doall
      (for [thread-num (range 1 (inc num_connections))
@@ -122,14 +101,53 @@
        (a/thread
         (try
           (util/while-let
-           [task (a/<!! task-channel)]
-           (try
-             (process-task s3-api conn log task)
-             (catch Exception e
-               (.printStackTrace e))))
+           [{:keys [file download-completion-ch task]} (a/<!! downloads-channel)]
+           (let [result (try
+                          (process-download-request s3-api conn log task file)
+                          (catch Exception e
+                            (.printStackTrace e)
+                            (assoc file
+                                   :success false
+                                   :error (.getMessage e))))]
+             (a/>!! download-completion-ch result)))
           (finally
             (println "Processing thread" thread-id "completed")
             (url-conn/close conn))))))))
+
+(defn- process-task
+  "Processes a task downloading all of the files in it."
+  [task downloads-channel]
+  (s/assert ::specs/task task)
+  (let [{:keys [completion-channel input]} task
+        download-completion-chs (mapv (fn [file]
+                                        (let [download-completion-ch (a/chan 1)]
+                                          (a/>!! downloads-channel
+                                                 {:file file
+                                                  :task task
+                                                  :download-completion-ch download-completion-ch})
+                                          download-completion-ch))
+                                      (:files input))
+        results (mapv a/<!! download-completion-chs)
+        completion-msg (assoc task :results results :success true)]
+    (a/>!! completion-channel completion-msg)))
+
+(defn- create-task-processing-threads
+  "Creates a set of threads for processing requests of the task channel"
+  [provider task-channel downloads-channel]
+  (let [{:keys [provider-id num_connections]} provider]
+    (doall
+     (for [thread-num (range 1 (inc num_connections))
+           :let [thread-id (str provider-id "-" thread-num)]]
+       (a/thread
+        (try
+          (util/while-let
+           [task (a/<!! task-channel)]
+           (try
+             (process-task task downloads-channel)
+             (catch Exception e
+               (.printStackTrace e))))
+          (finally
+            (println "Processing thread" thread-id "completed"))))))))
 
 ;; TODO
 (defrecord TaskExecutor
@@ -144,27 +162,40 @@
    ;; A channel containing tasks that need to be completed
    task-channel
 
+   ;; A channel containing individual files (parts of a task) that need to be completed.
+   downloads-channel
+
    ;; --- Runtime state ---
+   ;; These are sequences of channels for each thread that's started. The threads will close the
+   ;; channel when they complete. We track them so we can now when shutdown has completed
+   download-thread-chs
    task-thread-chs]
 
   c/Lifecycle
   (start
    [this]
    (if-not task-thread-chs
-     (assoc this
-            :task-thread-chs
-            (create-task-processing-threads s3-api provider task-channel))
+     (let [downloads-channel (a/chan 5)]
+       (-> this
+           (assoc :downloads-channel downloads-channel)
+           (assoc :task-thread-chs
+                  (create-task-processing-threads provider task-channel downloads-channel))
+           (assoc :download-thread-chs
+                  (create-download-processing-threads s3-api provider downloads-channel))))
      this))
 
   (stop
    [this]
    (if task-thread-chs
      (do
-       ;; Close task channel so that waiting thread will stop
+       ;; Close task and downloads-channel so that waiting thread will stop
+       (a/close! downloads-channel)
        (a/close! task-channel)
        ;; Wait until all the task thread channels are closed. That means the threads have completed.
-       (doseq [task-thread-ch task-thread-chs]
-         (a/<!! task-thread-ch))
+       (doseq [ch task-thread-chs]
+         (a/<!! ch))
+       (doseq [ch download-thread-chs]
+         (a/<!! ch))
        (assoc this :task-thread-chs nil))
      this)))
 
