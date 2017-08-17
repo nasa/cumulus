@@ -72,7 +72,7 @@ function sendResponse(event, status, data, cb) {
     Data: data
   });
 
-  log.info('RESPONSE BODY:\n', body);
+  //log.info('RESPONSE BODY:\n', body);
 
   const parsedUrl = url.parse(event.ResponseURL);
   const options = {
@@ -107,7 +107,7 @@ function sendResponse(event, status, data, cb) {
 }
 
 function handler(event, context, cb) {
-  log.info(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
+  //log.info(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');
