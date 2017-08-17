@@ -12,7 +12,7 @@
 const forge = require('node-forge');
 const auth = require('basic-auth');
 const proxy = require('lambda-proxy-utils');
-const User = require('./models').User;
+const User = require('../models').User;
 const errorify = require('./utils').errorify;
 
 export function resp(context, err, _body, _status = null) {
