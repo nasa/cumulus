@@ -5,7 +5,7 @@ const Collection = require('./collections');
 const Granule = require('./granules');
 const Pdr = require('./pdrs');
 const Provider = require('./providers');
-const granuleSchema = require('../schemas').granule;
+const granuleSchema = require('../lib/schemas').granule;
 
 export class User extends Manager {
   constructor() {
