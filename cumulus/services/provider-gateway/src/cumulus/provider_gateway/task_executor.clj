@@ -46,47 +46,50 @@
       :else
       (throw (Exception. (str "Unable to determine target for request " (pr-str request)))))))
 
+;; Performance Note: The version skip download check below is on the same thread as the download.
+;; ideally this could be filtered out ahead of time so we don't waste time utilizing a provider
+;; connection for this.
+;; IMPORTANT NOTE: If we change this in the future to filter out somewhere before it even gets
+;; to the task we need to make sure that we still report the file as successfully completed in
+;; the response. This is needed for the sync activity handler so that it can report all the
+;; files that are in S3.
+
+
 (defn- process-download-request
   "TODO"
   [s3-api conn log task request]
   (let [{{:keys [url size version]} :source} request
         {:keys [bucket key]} (request->s3-target task request)
-        size-log-msg (str "(" (or size "unknown") " bytes)")
-        version-log-msg (if version (str " with version " version) "")
+
         ;; Return the request with the bucket and key in the target. This may have been dynamically
         ;; generated.
         request (assoc request :target {:bucket bucket :key key})]
-    ;; TODO consider whether to fix this now or later
-    ;; Performance Note: The version skip download check is on the same thread as the download.
-    ;; ideally this could be filtered out ahead of time so we don't waste time utilizing a provider
-    ;; connection for this.
-    ;; IMPORTANT NOTE: If we change this in the future to filter out somewhere before it even gets
-    ;; to the task we need to make sure that we still report the file as successfully completed in
-    ;; the response. This is needed for the sync activity handler so that it can report all the
-    ;; files that are in S3.
     (if (version-skip-download? s3-api bucket key version)
       ;; version is present and matches so we won't download it
       (assoc request :success true :version_skip true)
 
       ;; Version is out of date or not present
-      (do
-       (log (format "Transfering %s %s%s to S3 %s %s"
-                    url size-log-msg version-log-msg bucket key))
+      (let [;; Fetch the size of the content if we don't know it.
+            size (or size (url-conn/get-size conn url))
+            size-log-msg (str "(" (or size "unknown") " bytes)")
+            version-log-msg (if version (str " with version " version) "")]
+        (log (format "Transfering %s %s%s to S3 %s %s"
+                     url size-log-msg version-log-msg bucket key))
 
-       ;; TODO time how long this takes and print it out. (get stream to s3 put object completion)
-       ;; That's the total time it took to download the file and save it to s3 (streaming-wise)
-       (if-let [stream (url-conn/download conn url)]
-         (do
-           (s3/write-s3-stream s3-api bucket key stream
-                               {:content-length size
-                                :user-metadata {:version version}})
-           (assoc request :success true))
+        ;; TODO time how long this takes and print it out. (get stream to s3 put object completion)
+        ;; That's the total time it took to download the file and save it to s3 (streaming-wise)
+        (if-let [stream (url-conn/download conn url)]
+          (do
+            (s3/write-s3-stream s3-api bucket key stream
+                                {:content-length size
+                                 :user-metadata {:version version}})
+            (assoc request :success true))
 
-         ;; The URL does not exist
-         (assoc request
-                :success false
-                ;; TODO test this with http.
-                :error "The file did not exist at the source."))))))
+          ;; The URL does not exist
+          (assoc request
+                 :success false
+                 :error "The file did not exist at the source."))))))
+
 
 (defn- process-request
   "TODO"

@@ -16,6 +16,15 @@
      (conn-mgr/shutdown-manager connection-manager))
    (assoc conn :connection-manager nil))
 
+  (get-size
+   [conn url]
+   (when-not connection-manager
+     (throw (Exception. "Connection not connected.")))
+   (let [resp (client/head url {:connection-manager connection-manager
+                                :throw-exceptions? false})]
+     (when (= 200 (:status resp))
+       (some-> resp :headers (get "Content-Length") (Long.)))))
+
   (download
    [conn url]
    (when-not connection-manager
@@ -25,9 +34,10 @@
                                :throw-exceptions? false})]
      (if (= 200 (:status resp))
        (:body resp)
-       (throw (ex-info (format "Could not download data from %s" url)
-                       {:status (:status resp)
-                        :body (slurp (:body resp))}))))))
+       (do
+         ;; The body must be closed or else the connection manager will get hung on subsequent requests
+         (.close (:body resp))
+         nil)))))
 
 (defn create-http-connection
   "TODO"
