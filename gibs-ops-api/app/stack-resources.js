@@ -18,16 +18,21 @@ const arnToName = (arnMaybe) => {
 /**
  * Fetches the stack and returns a map of logical resource id to stack information.
  */
-const getStackResources = memoize(async (arnOrStackName) => {
+const getStackResources = memoize('getStackResources', async (arnOrStackName) => {
+  console.log(`MTH-DEBUG Calling getStackResources on ${arnOrStackName}`);
   const stackName = arnToName(arnOrStackName);
-  const resp = fromJS(await cf().describeStackResources({ StackName: stackName }).promise());
+  console.log(`MTH-DEBUG stackName=${stackName}`);
+  const asdf = await cf().describeStackResources({ StackName: stackName }).promise();
+  console.log(`MTH-DEBUG asdf=${JSON.stringify(asdf)}`);
+  const resp = fromJS(asdf);
+  console.log(`MTH-DEBUG resp=${resp}`);
   return resp.get('StackResources').groupBy(m => m.get('LogicalResourceId')).map(v => v.first());
 });
 
 /**
  * Returns a map of ingest stack resources loaded from cloud formation.
  */
-const getIngestStackResources = memoize(stackName => getStackResources(`${stackName}-ingest`));
+const getIngestStackResources = stackName => getStackResources(`${stackName}-ingest`);
 
 /**
  * Takes a stack resource map and a logical id and extracts the PhysicalResourceId.

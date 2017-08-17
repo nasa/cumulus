@@ -44,8 +44,8 @@ describe('cache.js', () => {
       return callCountsByKey.get(key);
     };
 
-    const memo1 = memoize(lookup);
-    const memo2 = memoize(lookup);
+    const memo1 = memoize('memo1', lookup);
+    const memo2 = memoize('memo2', lookup);
 
     it('first lookup of key', (done) => {
       expect(memo1('keyA')).to.eventually.eql(1).and.notify(done);

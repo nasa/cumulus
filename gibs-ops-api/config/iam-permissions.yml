@@ -2,11 +2,14 @@ Parameters:
   StackName:
     Type: String
     Description: Name of the (parent) stack name being created
+  AlphanumPrefix:
+    Type: String
+    Description: Prefix to use for naming certain AWS items requiring only A-Z/0-9
 Resources:
   AppRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: gsfc-ngap-gibs-ops-api
+      RoleName: !Sub "${StackName}-ops-api-ecs
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -15,7 +18,6 @@ Resources:
             Service:
               - ecs-tasks.amazonaws.com
               - ecs.amazonaws.com
-              - lambda.amazonaws.com
           Action: sts:AssumeRole
       Path: "/"
       Policies:
@@ -23,29 +25,54 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              # Gives permission to read the collections yaml file and other resources in the step function stack
               - Effect: Allow
-                Action: s3:GetObject
+                Action: s3:Get*
                 Resource:
+                  - !Sub "arn:aws:s3:::${StackName}-deploy"
                   - !Sub "arn:aws:s3:::${StackName}-deploy/*"
+
+              # Gives permission to list state machines and get their executions.
               - Effect: Allow
                 Action:
                   - states:ListExecutions
-                  # TODO this is new and not added to NGAP yet
                   - states:GetExecutionHistory
-                # TODO this should be scoped by the alphabetic numeric prefix. Not sure how we'll set this in ngap
                 Resource:
-                  - !Sub "arn:aws:states:*:${AWS::AccountId}:execution:*"
-                  - !Sub "arn:aws:states:*:${AWS::AccountId}:stateMachine:*"
-              # TODO this is new and not added to NGAP yet
+                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:${AlphanumPrefix}*"
+                  - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AlphanumPrefix}*"
+
               # Gives permission to start executions of  state machines
               - Effect: Allow
+                Action: states:StartExecution
+                Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AlphanumPrefix}*"
+
+              # Give permission to access elasticsearch domain
+              - Effect: Allow
+                Action: es:*
+                Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${StackName}-esdomain/*"
+
+              # Allow querying cloudformation for resource ids of the OnEarth and main stacks
+              - Effect: Allow
+                Action: cloudformation:DescribeStackResources
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${StackName}*"
+
+              # - Effect: Allow
+              #   Action:
+              #     - cloudformation:DescribeStackResources
+              #   Resource:
+              #     - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${OnEarthStackName}*"
+
+              # Allow describing tasks on ECS
+              - Effect: Allow
                 Action:
-                - states:StartExecution
-                Resource:
-                # TODO this should be scoped by the alphabetic numeric prefix. Not sure how we'll set this in ngap
-                - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:*"
-              # GITC-319 add additional ones from the cloud formation file
-              # - elasticsearch
-              # - ecs
-              # - cloudformation
-              # - dynamodb
+                  - ecs:ListTasks
+                  - ecs:DescribeTasks
+                  - ecs:DescribeTaskDefinition
+                  - ecs:DescribeServices
+                # You can't be any more specific than this with the Describe*. Andrew said this is NGAP Kosher
+                Resource: "*"
+
+              # Allow use of dynamo
+              - Effect: Allow
+                Action: dynamodb:Scan
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StackName}-*"
