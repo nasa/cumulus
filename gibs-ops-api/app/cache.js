@@ -16,18 +16,13 @@ const createCache = () => ({});
  * cached.
  */
 const cacheLookup = async (cacheName, cache, key, lookupFn) => {
-  console.log(`MTH-DEBUG [${cacheName} - ${key}]: ${cache}`);
-
   const cachedValue = cache[key];
   let result;
   if (cachedValue === null || cachedValue === undefined) {
     console.info(`Cache miss on ${cacheName}(${key})`);
     const valueToCache = lookupFn(key);
-    console.log(`MTH-DEBUG [${cacheName} - ${key}] valueToCache=${valueToCache}`);
     if (valueToCache.then) {
-      console.log(`MTH-DEBUG [${cacheName} - ${key}] Found a promise, waiting`);
       result = await valueToCache;
-      console.log(`MTH-DEBUG [${cacheName} - ${key}] awaited valueToCache=${result}`);
     }
     else {
       result = valueToCache;
@@ -37,7 +32,6 @@ const cacheLookup = async (cacheName, cache, key, lookupFn) => {
   }
   else {
     console.info(`Cache hit on ${cacheName}(${key})`);
-    console.log(`MTH-DEBUG [${cacheName} - ${key}] cachedValue=${cachedValue}`);
     result = cachedValue;
   }
   return result;
