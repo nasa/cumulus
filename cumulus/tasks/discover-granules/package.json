@@ -11,9 +11,16 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "echo 'no tests'",
+    "test": "ava tests/*.js --no-color --serial",
     "build": "webpack --progress",
     "watch": "webpack --progress -w"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
   },
   "babel": {
     "presets": [
@@ -25,11 +32,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/test-data": "^1.0.0",
     "@cumulus/common": "^1.0.0",
     "@cumulus/ingest": "^1.0.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^7.1.1",
     "babel-polyfill": "^6.23.0",

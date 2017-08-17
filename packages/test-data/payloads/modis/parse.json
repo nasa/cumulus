@@ -1,0 +1,76 @@
+{
+  "eventSource": "sfn",
+  "resources": {
+    "stack": "lpdaac-cumulus-phaseIII",
+    "stage": "dev",
+    "kms": "xxxxxx",
+    "buckets": {
+      "internal": "cumulus-internal",
+      "private": "cumulus-private",
+      "protected": "cumulus-protected",
+      "public": "cumulus-public"
+    },
+    "queues": {
+      "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxx/lpdaac-cumulus-phaseIII-dev-startSF"
+    },
+    "templates": {
+      "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json",
+      "ParsePdr": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json",
+      "DiscoverPdrs": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/DiscoverPdrs.json"
+    }
+  },
+  "ingest_meta": {
+    "state_machine": "arn:aws:states:us-east-1:xxxxx:stateMachine:IngestGranuleLpdaacCumulusPhaseIIIdevStateMachine-XAWXXUDXOVQG",
+    "state_machine_name": "IngestGranule",
+    "execution_name": "MYD13A1_5_grans.PDR__PDR__1502809702748"
+  },
+  "provider": {
+    "id": "LPDAAC",
+    "globalConnectionLimit": 20,
+    "protocol": "http",
+    "host": "https://xxxxxxxxx.cr.usgs.gov:40521"
+  },
+  "collection": {
+    "id": "MOD09GQ",
+    "meta": {
+      "dataType": "MOD09GQ",
+      "name": "MOD09GQ",
+      "version": "006",
+      "process": "modis",
+      "provider_path": "/TEST_B/Cumulus/PDR/TEST_CASES",
+      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
+      "files": [
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "bucket": "protected",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+          "bucket": "private",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.meta\\.xml$",
+          "bucket": "protected",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.meta.xml"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+          "bucket": "public",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_1.jpg"
+        }
+      ]
+    }
+  },
+  "meta": {},
+  "exception": null,
+  "payload": {
+    "pdr": {
+      "name": "MOD09GQ.PDR",
+      "path": "/pdrs"
+    }
+  }
+}

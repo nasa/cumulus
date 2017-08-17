@@ -1,15 +1,15 @@
-import fs from 'fs';
-import got from 'got';
-import property from 'lodash.property';
-import { parseString } from 'xml2js';
+const fs = require('fs');
+const got = require('got');
+const property = require('lodash.property');
+const { parseString } = require('xml2js');
 //import log from '@cumulus/common/log';
-import {
+const {
   validate,
   ValidationError,
   updateToken,
   getUrl,
   xmlParseOptions
-} from './utils';
+} = require('./utils');
 
 
 const logDetails = {
@@ -159,12 +159,12 @@ class CMR {
   }
 
   async ingestCollection(xml) {
-    const token = this.getToken();
+    const token = await this.getToken();
     return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, token);
   }
 
   async ingestGranule(xml) {
-    const token = this.getToken();
+    const token = await this.getToken();
     return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, token);
   }
 
@@ -173,7 +173,7 @@ class CMR {
   }
 
   async deleteGranule(granuleUR) {
-    const token = this.getToken();
+    const token = await this.getToken();
     return deleteConcept('granules', granuleUR, this.provider, token);
   }
 
