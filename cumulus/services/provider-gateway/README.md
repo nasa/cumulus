@@ -4,23 +4,30 @@ A long running service that will download files from a variety of URLs and uploa
 
 Providers support a limited number of connections for downloading data. AWS infrastructure like lambdas could easily scale up beyond the number of connections a provider supports. We must fully utilize the connections that are available. The Provider Gateway sets up persistent connections to the providers up to the limit configured. It reads download requests from the Step Function Activity API and queues the requests be processed. Every connection has a single thread that downloads data from the provider to S3 as fast as it can to attempt to fully utilize the limited resource.
 
-## Building
+## Building and Deploying
 
-TODO
+**As of this writing the building and deploying of Provider Gateway is not part of Cumulus proper. It must be manually build and deployed to a container registry**
 
-Document that this is not currently part of the build. Document how to deploy
+A container can be build and deployed to AWS ECR by running `bin/docker_deploy.sh`
+
+```Bash
+export AWS_DEFAULT_REGION=us-west-2
+bin/docker_deploy.sh
+```
 
 TODO file issue to integrate docker pushes with a bamboo build of the provider gateway.
 
-TODO how do you set and deploy a specific version
-TODO Deploy and update cumulus configuration to point to a specific version.
+## Running Locally
 
+Running the Provider Gateway locally is best done in a Clojure REPL.
 
-## Running
+1. Make sure you have [Leiningen](https://leiningen.org/) and Java installed.
+2. Create the file `dev/locals.clj` with contents set appropriately.  (See below)
+3. Edit `dev/user.clj` to set how the system will be configured. There are settings to pull config from AWS or run locally with the file system as the activity API.
 
-TODO
+### Locals.clj sample contents
 
-Create the file `dev/locals.clj` with contents set appropriately
+Place contents like the following in `dev/locals.clj`.
 
 ```Clojure
 (ns locals)
@@ -31,12 +38,13 @@ Create the file `dev/locals.clj` with contents set appropriately
    "STACK_NAME" "gitc-xx"})
 ```
 
-
 ## Configuration
+
+### Provider Configuration
 
 The provider gateway is configured through the `collections.yml` file in each provider.
 
-### Example Configuration:
+#### Example Provider Configuration:
 
 ```YAML
 providers:
@@ -62,56 +70,161 @@ providers:
         num_connections: 2
 ```
 
-### Fields in Gateway Config
-
-TODO finish this section
+#### Fields in Provider Gateway Config
 
 The following fields are configured per provider.
 
 * `activity` - The CloudFormation name of the step function activity receiving download requests
   * Note separate ARNs per provider because each activity is essentially a queue we want separate queues per provider so that one provider with more limited resources does not hold up another provider.
 * `sync_activity` - The CloudFormation name of the step function activity receiving requests to synchronize
-* `conn_config` -
-* `num_connections` -
+* `conn_config` - Configuration settings per connection type. See example for valid fields.
+* `num_connections` - The number of threads to allocate for downloading data from a provider.
+
+#### Download and Sync Task Config
+
+The download and sync task configurations are configured in the `workflow_config_template` element of the message structure. The tasks names are "DownloadActivity" and "SyncHttpUrls" respectively.
+
+* `bucket` - Configures the name of the bucket in S3 to upload items
+* `key_prefix` - A prefix to use for generating a key when uploading new items.
+
+##### Example Task Config
+
+```JSON
+{"SyncHttpUrls": {
+  "output": {
+    "bucket": "{resources.buckets.private}",
+    "key_prefix": "sources/EPSG{meta.epsg}/{meta.key}"
+  }}
+}
+```
 
 ## Message Structure
 
+The input and output message structure matches the message payload schema for Cumulus
+
 ### Download Message Request Structure
 
-TODO finish this section
+#### Download Message Input Payload Structure
+
+Field descriptions
+
+* `payload`
+  * `files` - an array of file download requests
+    * Each File Map
+      * `type` - only `"download"` supported currently
+      * `source`
+        * `url` - Location of file to download
+        * `version` - optional version number. This can help avoid unnecessary downloads if the file is already in S3.
+        * `size` - Options size of the file to copy. Size is important to specify to avoid having to buffer the file in memory before copying to S3. If size is not present then the size will attempt to be determined via HTTP HEAD request, FTP ls, or similar.
+      * `target` either `"FROM_CONFIG"` or a map with `bucket` and `key` of an S3 location
 
 
-The input to
+##### Example Download Message Input Payload
 
-Stuff to include
-* Sync request
-* Download request
-* version
-* size
+```JSON
+{
+  "... other fields here as in message": "...",
+  "payload": {
+    "other-keys": "other keys at this level and below are ignored and passed through to output",
+    "files": [{
+      "type": "download",
+      "source": {
+        "url": "http://example.com/foo/bar.txt",
+        "version": "OptionalVersion",
+        "size": 1234
+      },
+      "target": {
+        "bucket": "the-bucket",
+        "key": "bar.txt"
+      }
+    }, {
+      "type": "download",
+      "source": {
+        "url": "http://example.com/foo/bar2.txt",
+      },
+      "target": "FROM_CONFIG"
+    }]
+  }
+}
+```
+
+#### Download Message Output Payload Structure
+
+The output is similar to the input structure but it has additional information.
+
+```JSON
+{
+  "... other fields here as in message": "...",
+  "payload": {
+    "other-keys": "other keys at this level and below are ignored and passed through to output",
+    "files": [{
+      "type": "download",
+      "source": {
+        "url": "http://example.com/foo/bar.txt",
+        "version": "v1"
+      },
+      "target": {
+        "bucket": "the-bucket",
+        "key": "bar.txt"
+      },
+      "success" : false,
+      "error" : "The file did not exist at the source."
+    }, {
+      "type": "download",
+      "source": {
+        "url": "http://example.com/foo/bar2.txt",
+        "version": "v1"
+      },
+      "target": {
+        "bucket": "the-bucket",
+        "key": "bar2.txt"
+      },
+      "success": true
+    }]
+  }
+}
+```
 
 ### Sync Message Request Structure
 
-TODO
+Synchronization messages can send a list of files and version to synchronize to S3.
+
+#### Sync Message Input Payload Structure
+
+The payload is a list of file urls and versions to synchronize.
+
+```JSON
+{
+  "... other fields here as in message": "...",
+  "payload" : [ {
+      "url" : "http://example.com/foo/bar.txt",
+      "version" : "bar-1"
+    }, {
+      "url" : "http://example.com/foo/bar2.txt",
+      "version" : "bar2-1"
+    } ]
+  }
+```
+#### Sync Message Output Payload Structure
+
+The output payload from synchronization is a list of S3 Bucket and Keys of the files that exist.
+
+```JSON
+{
+  "... other fields here as in message": "...",
+  "payload": [{
+    "Bucket": "the-bucket",
+    "Key": "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar.txt"
+  }, {
+    "Bucket": "the-bucket",
+    "Key": "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/bar2.txt"
+  }]
+}
+```
 
 
 ## TODOs
 
-* Document design
-* Add real example of jobs with providers and configuration.
-  * Test parallelism. Can we have multiple state machines running with multiple downloads on a single provider and they're actually downloading at the same time?
-* TODOs in code
-* Document README
 * More Protocols
   * SFTP
-  * Grid FTP - How would I test this?
-* Patrick comments
-  * Figure out how we do container versions and tie that into code
-    * How do we have multiple developers working on it and deploying newer versions?
-    * How do we specify the version in UAT, ops, sit etc?
-    * Maybe never commit version "latest" to master
-  * Size
-    * Make size optional (but try to fetch if not present)
-    * Try to determine it if not present.
-      * Use FTP mechanism (?)
-      * HEAD request in HTTP to get Content-Length
-  * Try using just version in the metadata for S3 and skip all the complicated sync logic.
+  * Grid FTP
