@@ -22,6 +22,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/ingest": "^1.0.0",
+    "@cumulus/common": "^1.0.0",
     "@cumulus/pvl": "^1.0.0",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.95.0",
