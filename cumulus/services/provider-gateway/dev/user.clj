@@ -31,6 +31,7 @@
   (try
     (let [
           the-system (sys/create-system [local-provider])]
+          ;; use this instead to run the system against AWS using collections.yml as configuration
           ; the-system (sys/create-system)]
       (alter-var-root #'system
                       (constantly (c/start the-system))))
