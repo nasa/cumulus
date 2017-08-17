@@ -224,5 +224,5 @@ The output payload from synchronization is a list of S3 Bucket and Keys of the f
 ## TODOs
 
 * More Protocols
-  * SFTP
-  * Grid FTP
+  * SFTP - implement this
+  * Grid FTP - File issue to support it.

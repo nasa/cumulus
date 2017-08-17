@@ -71,17 +71,17 @@
       (let [;; Fetch the size of the content if we don't know it.
             size (or size (url-conn/get-size conn url))
             size-log-msg (str "(" (or size "unknown") " bytes)")
-            version-log-msg (if version (str " with version " version) "")]
+            version-log-msg (if version (str " with version " version) "")
+            start-time (System/currentTimeMillis)]
         (log (format "Transfering %s %s%s to S3 %s %s"
                      url size-log-msg version-log-msg bucket key))
-
-        ;; TODO time how long this takes and print it out. (get stream to s3 put object completion)
-        ;; That's the total time it took to download the file and save it to s3 (streaming-wise)
         (if-let [stream (url-conn/download conn url)]
           (do
             (s3/write-s3-stream s3-api bucket key stream
                                 {:content-length size
                                  :user-metadata {:version version}})
+            (log (format "Completed download and upload to s3 %s in %d ms."
+                         size-log-msg (- (System/currentTimeMillis) start-time)))
             (assoc request :success true))
 
           ;; The URL does not exist
@@ -149,12 +149,10 @@
           (finally
             (println "Processing thread" thread-id "completed"))))))))
 
-;; TODO
 (defrecord TaskExecutor
   [
    s3-api
 
-   ;; TODO
    provider
 
    ;; --- Dependencies ---
@@ -200,6 +198,5 @@
      this)))
 
 (defn create-task-executor
- "TODO"
  [provider]
  (map->TaskExecutor {:provider provider}))

@@ -13,8 +13,7 @@
   "VIIRS/VNGCR_LQD_C1/2017192")
 
 (defn stage-data
-  "TODO
-   Returns a new task"
+  "Stages data in the canned s3 of the given set of files and returns a new synchronization task."
   [canned-s3 files]
   (let [payload-s3-key "LastStep/Payload"]
     ;; Stage the payload for the task message
