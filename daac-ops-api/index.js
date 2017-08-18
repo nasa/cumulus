@@ -9,6 +9,7 @@ const schemas = require('./endpoints/schemas');
 const stats = require('./endpoints/stats');
 const distribution = require('./endpoints/distribution');
 const bootstrap = require('./lib/bootstrap');
+const indexer = require('./es/indexer');
 
 module.exports = {
   collections,
@@ -19,5 +20,6 @@ module.exports = {
   schemas,
   stats,
   distribution,
-  bootstrap
+  bootstrap,
+  indexer
 };
