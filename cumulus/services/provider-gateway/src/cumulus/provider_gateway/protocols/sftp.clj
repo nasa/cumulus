@@ -53,7 +53,6 @@
    (ignore-file-not-found
     (.get channel (util/url->path url)))))
 
-
 (defn create-sftp-connection
   "Creates an instance of connection to an FTP server"
   [{:keys [username password host port disable-strict-host-checking] :as config}]
