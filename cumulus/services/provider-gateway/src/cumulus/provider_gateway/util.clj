@@ -20,11 +20,20 @@
        ~@body
        (recur))))
 
+(defn url->path
+  "Returns just the path of the URL. Works with sftp urls."
+  [url]
+  ;; SFTP isn't supported by Java URL so we just convert to FTP to get the path out of it.
+  (let [non-sftp-url (if (str/starts-with? url "sftp:")
+                       (str/replace-first url "sftp:" "ftp:")
+                       url)
+        url (io/as-url non-sftp-url)]
+    (.getPath url)))
+
 (defn url->file-name
   "Returns just the file name without the path from a url"
   [url]
-  (let [url (io/as-url url)]
-    (FilenameUtils/getName (.getPath url))))
+  (FilenameUtils/getName (url->path url)))
 
 (defn parse-yaml
   "Parses yaml using the Jackson YAMLFactory and Cheshire JSON parsing. This does not handle YAML

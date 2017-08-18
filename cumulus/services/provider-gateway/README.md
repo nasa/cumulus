@@ -66,6 +66,18 @@ providers:
           username: user
           password: password
         num_connections: 2
+  - id: SFTP_PROV
+    config:
+      gateway_config:
+        activity: SftpProvDownloadActivity
+        sync_activity: SftpProvSyncActivity
+        conn_config:
+          conn_type: sftp
+          host: 123.123.123.123
+          port: 21
+          username: user
+          password: password
+        num_connections: 2
 ```
 
 #### Fields in Provider Gateway Config
@@ -219,10 +231,3 @@ The output payload from synchronization is a list of S3 Bucket and Keys of the f
   }]
 }
 ```
-
-
-## TODOs
-
-* More Protocols
-  * SFTP - implement this
-  * Grid FTP - File issue to support it.
