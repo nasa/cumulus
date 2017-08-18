@@ -10,6 +10,8 @@
 'use strict';
 
 const get = require('lodash.get');
+const log = require('@cumulus/common/log');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { Search } = require('./search');
 
 async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
@@ -96,7 +98,8 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const url = `https://console.aws.amazon.com/states/home?region=${region}` +
               `#/executions/details/${arn}`;
   const collection = get(payload, 'collection');
-  const collectionId = `${collection.meta.name}___${collection.meta.version}`;
+  const meta = collection.meta || collection;
+  const collectionId = `${meta.name}___${meta.version}`;
 
   const granules = get(payload, 'payload.granules');
 
@@ -114,7 +117,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
       type: 'collection',
       id: collectionId,
       body: {
-        doc: collection.meta,
+        doc: meta,
         doc_as_upsert: true
       }
     });
@@ -155,9 +158,20 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   return Promise.all(done);
 }
 
-async function handler(payload, host) {
+async function handlePayload(event) {
+  let payload;
+  const source = get(event, 'EventSource');
+
+  if (source === 'aws:sns') {
+    payload = get(event, 'Sns.Message');
+    payload = JSON.parse(payload);
+  }
+  else {
+    payload = event;
+  }
+
   const type = get(payload, 'ingest_meta.workflow_name');
-  const esClient = await Search.es(host);
+  const esClient = await Search.es();
 
   await indexStepFunction(esClient, payload);
 
@@ -169,4 +183,28 @@ async function handler(payload, host) {
   }
 }
 
+function handler(event, context, cb) {
+  // we can handle both incoming message from SNS as well as direct payload
+  log.info(JSON.stringify(event));
+  const records = get(event, 'Records');
+  const jobs = [];
+
+  if (records) {
+    jobs.push(records.map(r => handlePayload(r)));
+  }
+  else {
+    jobs.push(handlePayload(event));
+  }
+
+  Promise.all(jobs).then(r => {
+    log.info(`Updated ${r.length} es records`);
+    cb(null, r);
+  }).catch(e => cb(e));
+}
+
 module.exports = handler;
+
+justLocalRun(() => {
+  const a = {};
+  handler(a, {}, (e, r) => log.info(e, r));
+});
