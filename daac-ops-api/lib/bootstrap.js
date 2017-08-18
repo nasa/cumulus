@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* this module is intended to be used for bootstraping
  * the cloudformation deployment of a DAAC.
  *
@@ -16,6 +17,7 @@ const url = require('url');
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 const { KMS } = require('@cumulus/ingest/aws');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
 const Manager = require('../models/base');
 const { Search } = require('../es/search');
 const mappings = require('../models/mappings.json');
@@ -62,7 +64,7 @@ async function bootstrapCmrProvider(kmsId, password) {
   return KMS.encrypt(password, kmsId);
 }
 
-function sendResponse(event, status, data, cb) {
+function sendResponse(event, status, data = {}, cb = () => {}) {
   const body = JSON.stringify({
     Status: status,
     PhysicalResourceId: physicalId,
@@ -72,7 +74,7 @@ function sendResponse(event, status, data, cb) {
     Data: data
   });
 
-  //log.info('RESPONSE BODY:\n', body);
+  log.info('RESPONSE BODY:\n', body);
 
   const parsedUrl = url.parse(event.ResponseURL);
   const options = {
@@ -107,10 +109,25 @@ function sendResponse(event, status, data, cb) {
 }
 
 function handler(event, context, cb) {
-  //log.info(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');
+  const requestType = get(event, 'RequestType');
+
+  // remove private data from event before logging
+  if (cmr) {
+    delete event.ResourceProperties.Cmr;
+  }
+  if (es) {
+    delete event.ResourceProperties.es;
+  }
+
+
+  log.info(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
+
+  if (requestType === 'Delete') {
+    return sendResponse(event, 'SUCCESS', null, cb);
+  }
 
   const actions = [
     bootstrapElasticSearch(es.host),
@@ -124,8 +141,15 @@ function handler(event, context, cb) {
     };
 
     return sendResponse(event, 'SUCCESS', data, cb);
-  }).catch(e => cb(e));
+  }).catch(e => {
+    log.error(e);
+    return sendResponse(event, 'FAILED', null, cb);
+  });
 }
 
 module.exports = handler;
 
+justLocalRun(() => {
+  const a = {};
+  handler(a, {}, (e, r) => console.log(e, r));
+});
