@@ -14,6 +14,14 @@ fi
 NAMESPACE="nasa-cumulus"
 IMAGE_NAME="provider-gateway"
 
+## -- Testing --
+lein test
+
+if [ $? -ne 0 ] ; then
+  echo "Tests failed"
+  exit 1
+fi
+
 # -- Build --
 echo "Building ..."
 ./bin/build.sh
