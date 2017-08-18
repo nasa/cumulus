@@ -9,6 +9,7 @@
     [cumulus.provider-gateway.util :as util]
     [cumulus.provider-gateway.specs.task :as specs]
     [cumulus.provider-gateway.protocols.ftp :as ftp-conn]
+    [cumulus.provider-gateway.protocols.sftp :as sftp-conn]
     [cumulus.provider-gateway.protocols.http :as http-conn]))
 
 (defn- create-connection
@@ -16,6 +17,7 @@
   [conn-config]
   (case (:conn_type conn-config)
     "ftp" (ftp-conn/create-ftp-connection conn-config)
+    "sftp" (sftp-conn/create-sftp-connection conn-config)
     "http" (http-conn/create-http-connection)
     ;; else
     (throw (Exception. (format "Unexpected connection type [%s]" (:conn_type conn-config))))))
@@ -24,6 +26,7 @@
   "Returns true if we should skip the download to S3 if the key has data at the given bucket"
   [s3-api bucket key version]
   (when version
+    ;; TODO log time to get version
     (let [metadata (s3/get-s3-object-metadata s3-api bucket key)]
       (= version (get-in metadata [:user-metadata :version])))))
 
@@ -64,6 +67,8 @@
         ;; generated.
         request (assoc request :target {:bucket bucket :key key})]
     (if (version-skip-download? s3-api bucket key version)
+      ;; TODO if version checks take a long time does it make sense just to transfer in data instead if it's small?
+      ;; TODO log skipping download from version check
       ;; version is present and matches so we won't download it
       (assoc request :success true :version_skip true)
 

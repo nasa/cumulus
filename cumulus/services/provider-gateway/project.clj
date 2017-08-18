@@ -4,13 +4,26 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [com.stuartsierra/component "0.3.2"]
                  [org.clojure/core.async "0.3.443"]
+
+                 ;; AWS API
                  [amazonica "0.3.107"]
+
+                 ;; Parsing JSON
                  [cheshire "5.7.1"]
-                 [clj-http "3.6.1"]
-                 [commons-net/commons-net "3.6"]
-                 [org.yaml/snakeyaml "1.18"]
+
+                 ;; Parsing yaml
                  [com.fasterxml.jackson.dataformat/jackson-dataformat-yaml "2.8.9"]
-                 [camel-snake-kebab "0.4.0"]]
+                 ;; TODO do we need this?
+                 [org.yaml/snakeyaml "1.18"]
+
+                 ;; HTTP Client
+                 [clj-http "3.6.1"]
+
+                 ;; FTP Client
+                 [commons-net/commons-net "3.6"]
+
+                 ;; SFTP Client
+                 [com.jcraft/jsch "0.1.54"]]
 
 
   ;; The ^replace is done to disable the tiered compilation for accurate benchmarks
@@ -25,6 +38,8 @@
 
                                   ;; HTTP server for testing
                                   [ring/ring-jetty-adapter "1.5.0"]
+                                  ;; SFTP server for testing
+                                  [org.apache.sshd/sshd-core "1.6.0"]
                                   ;; FTP server for testing
                                   [org.apache.ftpserver/ftpserver-core "1.1.1"]]
                    :jvm-opts ^:replace ["-server"]

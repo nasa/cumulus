@@ -8,7 +8,8 @@
    [cumulus.provider-gateway.aws.activity-api :as activity-api]
    [cumulus.provider-gateway.util :as util]
    [cumulus.provider-gateway.http-server :as http-server]
-   [cumulus.provider-gateway.ftp-server :as ftp-server]))
+   [cumulus.provider-gateway.ftp-server :as ftp-server]
+   [cumulus.provider-gateway.sftp-server :as sftp-server]))
 
 (def http-files->content
   {"/foo/bar.txt" "bar bar bar"
@@ -20,8 +21,18 @@
    "/ftp/foo/bar2.txt" "ftp another bar"
    "/ftp/moo.txt" "a cow over ftp"})
 
+(def sftp-files->content
+  {"/sftp/foo/bar.txt" "sftp bar bar bar"
+   "/sftp/foo/bar2.txt" "sftp another bar"
+   "/sftp/moo.txt" "a cow over sftp"})
+
 (def running-ftp-server
   "This will dynamically contain a reference to the running ftp server which is a map of info like
+   username and password."
+  nil)
+
+(def running-sftp-server
+  "This will dynamically contain a reference to the running sftp server which is a map of info like
    username and password."
   nil)
 
@@ -33,6 +44,9 @@
 (use-fixtures :once (join-fixtures [(ftp-server/create-run-ftp-fixture
                                      #'running-ftp-server
                                      {:file-paths->contents ftp-files->content})
+                                    (sftp-server/create-run-sftp-fixture
+                                     #'running-sftp-server
+                                     {:file-paths->contents sftp-files->content})
                                     (http-server/create-run-jetty-fixture
                                      #'running-http-server
                                      {:file-paths->contents http-files->content})]))
@@ -42,7 +56,10 @@
 
 (defn create-url
   [type path]
-  (let [port (:port (case type :http running-http-server :ftp running-ftp-server))]
+  (let [port (:port (case type
+                      :http running-http-server
+                      :ftp running-ftp-server
+                      :sftp running-sftp-server))]
     (format "%s://localhost:%d/%s" (name type) port path)))
 
 (defn create-download-request
@@ -225,6 +242,49 @@
                      {"/ftp/foo/bar.txt" nil
                       "/ftp/foo/bar2.txt" nil
                       "/ftp/moo.txt" nil})]
+    (try
+      (wait-for-tasks-to-complete activity-api ["task-1" "task-2"])
+      (finally
+        (c/stop system)))
+    ;; verify the files in s3
+    (is (= expected-s3 (-> s3-api :bucket-key-to-value-atom deref)))
+    ;; Verify no failures sent to activity api
+    (is (= {} (-> activity-api :failed-tasks-atom deref)))
+
+    ;; Verify successful output from download requests.
+    (is (= {"task-1" (create-download-task-output expected-task-1-completed-requests)
+            "task-2" (create-download-task-output expected-task-2-completed-requests)}
+           (-> activity-api :successful-tasks-atom deref)))))
+
+(deftest sftp-download-request-integration-test
+  (let [task1-download-requests [(create-download-request :sftp "/sftp/foo/bar.txt")
+                                 (create-download-request :sftp "/sftp/foo/bar2.txt")]
+        expected-task-1-completed-requests [(create-successful-download-request :sftp "/sftp/foo/bar.txt")
+                                            (create-successful-download-request :sftp "/sftp/foo/bar2.txt")]
+        task2-download-requests [(create-download-request :sftp "/sftp/moo2.txt") ;; doesn't exist
+                                 (create-download-request :sftp "/sftp/moo.txt")]
+        expected-task-2-completed-requests [(create-failed-download-request :sftp "/sftp/moo2.txt")
+                                            (create-successful-download-request :sftp "/sftp/moo.txt")]
+        provider {:provider-id "LOCAL",
+                  :s3-api-type :canned
+                  :activity-api {:activity-api-type "canned"
+                                 :tasks [(create-download-task "task-1" task1-download-requests)
+                                         (create-download-task "task-2" task2-download-requests)]}
+                  :conn_config (merge {:conn_type "sftp"
+                                       :host "localhost"
+                                       :username "ignored on server"
+                                       :password "ignored on test server"
+                                       :disable-strict-host-checking true}
+                                      (select-keys running-sftp-server [:port]))
+                  :num_connections 2}
+        system (c/start (sys/create-system [provider]))
+        activity-api (get-in system [:LOCAL-download-activity-handler :activity-api])
+        s3-api (:LOCAL-s3-api system)
+        expected-s3 (create-expected-s3
+                     sftp-files->content
+                     {"/sftp/foo/bar.txt" nil
+                      "/sftp/foo/bar2.txt" nil
+                      "/sftp/moo.txt" nil})]
     (try
       (wait-for-tasks-to-complete activity-api ["task-1" "task-2"])
       (finally
