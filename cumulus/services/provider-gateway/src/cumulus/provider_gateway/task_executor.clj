@@ -28,7 +28,7 @@
   (when version
     (let [start-time (System/currentTimeMillis)
           metadata (s3/get-s3-object-metadata s3-api bucket key)]
-      (println "Time to fetch version from S3" (- (System/currentTimeMillis) start-time))
+      (util/log-latency "s3-version-check" (- (System/currentTimeMillis) start-time))
       (= version (get-in metadata [:user-metadata :version])))))
 
 (defn- request->s3-target
@@ -87,8 +87,10 @@
             (s3/write-s3-stream s3-api bucket key stream
                                 {:content-length size
                                  :user-metadata {:version version}})
-            (log (format "Completed download and upload to s3 %s in %d ms."
-                         size-log-msg (- (System/currentTimeMillis) start-time)))
+            (let [latency-ms (- (System/currentTimeMillis) start-time)]
+              (log (format "Completed download and upload to s3 %s in %d ms."
+                           size-log-msg latency-ms))
+              (util/log-latency "download-upload-s3" latency-ms))
             (assoc request :success true))
 
           ;; The URL does not exist

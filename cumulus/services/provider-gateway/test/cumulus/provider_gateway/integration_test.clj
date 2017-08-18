@@ -59,7 +59,10 @@
   (let [port (:port (case type
                       :http running-http-server
                       :ftp running-ftp-server
-                      :sftp running-sftp-server))]
+                      :sftp running-sftp-server))
+        ;; to make running in repl easier
+        port (or port 1111)]
+
     (format "%s://localhost:%d/%s" (name type) port path)))
 
 (defn create-download-request
@@ -127,8 +130,6 @@
                 (format "All tasks not consumed within timeout period. Completed: %s Expecting: %s"
                         (pr-str (get-completed-tasks)) (pr-str task-ids)))))
       (Thread/sleep 250))))
-
-;; TODO add test to verify FROM_CONFIG behavior
 
 (defn create-expected-s3
   "Creates a map of expected s3 content from a list of file paths and the map of files->content"
@@ -216,6 +217,45 @@
       ;; Verify successful output from download requests.
       (is (= {"task-3" (create-download-task-output expected-task-3-completed-requests)}
              (-> activity-api :successful-tasks-atom deref))))))
+
+(deftest from-config-integration-test
+  (let [task1-download-requests [(create-download-request :http "/foo/bar.txt")
+                                 (create-download-request :http "/foo/bar2.txt")]
+        task1-download-requests (map #(assoc % :target "FROM_CONFIG") task1-download-requests)
+        expected-task-1-completed-requests [(create-successful-download-request :http "/foo/bar.txt")
+                                            (create-successful-download-request :http "/foo/bar2.txt")]
+        expected-task-1-completed-requests (map (fn [file]
+                                                  (update-in
+                                                   file [:target :key]
+                                                   #(str "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/" %)))
+                                                expected-task-1-completed-requests)
+        provider {:provider-id "LOCAL",
+                  :s3-api-type :canned
+                  :activity-api {:activity-api-type "canned"
+                                 :tasks [(create-download-task "task-1" task1-download-requests)]}
+                  :conn_config {:conn_type "http"}
+                  :num_connections 2}
+        system (c/start (sys/create-system [provider]))
+        activity-api (get-in system [:LOCAL-download-activity-handler :activity-api])
+        s3-api (:LOCAL-s3-api system)
+        expected-s3 (create-expected-s3
+                     "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/"
+                     http-files->content
+                     {"/foo/bar.txt" nil
+                      "/foo/bar2.txt" nil})]
+    (try
+      (wait-for-tasks-to-complete activity-api ["task-1"])
+      (finally
+        (c/stop system)))
+    ;; verify the files in s3
+    (is (= expected-s3 (-> s3-api :bucket-key-to-value-atom deref)))
+    ;; Verify no failures sent to activity api
+    (is (= {} (-> activity-api :failed-tasks-atom deref)))
+
+    ;; Verify successful output from download requests.
+    (is (= {"task-1" (create-download-task-output expected-task-1-completed-requests)}
+           (-> activity-api :successful-tasks-atom deref)))))
+
 
 (deftest ftp-download-request-integration-test
   (let [task1-download-requests [(create-download-request :ftp "/ftp/foo/bar.txt")
@@ -429,9 +469,4 @@
     ;; Verify successful output from download requests.
     (is (= {"task-1" {:exception "RemoteResourceError"}}
            (-> activity-api :successful-tasks-atom deref)))))
-
-
-;; TODO add integration test that tries executing a task with incorrect data.
-;; We should avoid internal errors.
-
 
