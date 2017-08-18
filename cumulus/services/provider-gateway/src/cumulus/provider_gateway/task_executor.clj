@@ -26,8 +26,9 @@
   "Returns true if we should skip the download to S3 if the key has data at the given bucket"
   [s3-api bucket key version]
   (when version
-    ;; TODO log time to get version
-    (let [metadata (s3/get-s3-object-metadata s3-api bucket key)]
+    (let [start-time (System/currentTimeMillis)
+          metadata (s3/get-s3-object-metadata s3-api bucket key)]
+      (println "Time to fetch version from S3" (- (System/currentTimeMillis) start-time))
       (= version (get-in metadata [:user-metadata :version])))))
 
 (defn- request->s3-target
@@ -51,7 +52,8 @@
 
 ;; Performance Note: The version skip download check below is on the same thread as the download.
 ;; ideally this could be filtered out ahead of time so we don't waste time utilizing a provider
-;; connection for this.
+;; connection for this. From my tests the version check is usually on the order of 10 ms or less
+;; so it's probably inconsequential.
 ;; IMPORTANT NOTE: If we change this in the future to filter out somewhere before it even gets
 ;; to the task we need to make sure that we still report the file as successfully completed in
 ;; the response. This is needed for the sync activity handler so that it can report all the
@@ -67,10 +69,10 @@
         ;; generated.
         request (assoc request :target {:bucket bucket :key key})]
     (if (version-skip-download? s3-api bucket key version)
-      ;; TODO if version checks take a long time does it make sense just to transfer in data instead if it's small?
-      ;; TODO log skipping download from version check
-      ;; version is present and matches so we won't download it
-      (assoc request :success true :version_skip true)
+      (do
+        (log (format "Skipping download of %s because it already exists in S3 with version %s"
+                     url version))
+        (assoc request :success true :version_skip true))
 
       ;; Version is out of date or not present
       (let [;; Fetch the size of the content if we don't know it.
