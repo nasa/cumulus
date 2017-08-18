@@ -11,3 +11,4 @@ pom.xml.asc
 .hg/
 dev/locals.clj
 /local_activities
+my.pem

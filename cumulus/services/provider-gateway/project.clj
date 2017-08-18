@@ -13,7 +13,6 @@
 
                  ;; Parsing yaml
                  [com.fasterxml.jackson.dataformat/jackson-dataformat-yaml "2.8.9"]
-                 ;; TODO do we need this?
                  [org.yaml/snakeyaml "1.18"]
 
                  ;; HTTP Client
