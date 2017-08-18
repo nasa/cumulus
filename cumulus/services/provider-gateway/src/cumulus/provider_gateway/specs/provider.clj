@@ -49,6 +49,11 @@
   (s/keys :req-un [::conn_type ::host]
           :opt-un [::port ::username ::password]))
 
+(defmethod connection-type "sftp"
+  [_]
+  (s/keys :req-un [::conn_type ::host ::username ::password]
+          :opt-un [::port]))
+
 (defmethod connection-type "http"
   [_]
   ;; HTTP doesn't really have any configuration
