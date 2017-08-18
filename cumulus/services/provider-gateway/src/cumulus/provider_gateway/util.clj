@@ -4,12 +4,18 @@
    [cheshire.parse :as ch-parse]
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [cheshire.core :as json]
    [clojure.walk :as walk])
   (:import
    (com.fasterxml.jackson.dataformat.yaml
     YAMLFactory)
    (org.apache.commons.io
     FilenameUtils)))
+
+(defn log-latency
+  "Logs a latency measure in a way that can be parsed by CloudWatch"
+  [category time-ms]
+  (println (json/generate-string {:category category :latency time-ms})))
 
 (defmacro while-let
   "A macro that's similar to when let. It will continually evaluate the

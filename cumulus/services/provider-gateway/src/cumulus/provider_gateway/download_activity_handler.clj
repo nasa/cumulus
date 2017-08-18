@@ -52,9 +52,11 @@
   (a/thread
    (util/while-let
     [{:keys [type task-token start-time] :as completion-request} (a/<!! completion-channel)]
-    (let [output (handle-completed-task task-to-requests-handler completion-request)]
+    (let [output (handle-completed-task task-to-requests-handler completion-request)
+          task-time-ms (- (System/currentTimeMillis) start-time)]
       (println (format "Handling completion request in %d ms of %s"
-                       (- (System/currentTimeMillis) start-time) task-token))
+                       task-time-ms task-token))
+      (util/log-latency "task" task-time-ms)
       (if (:success completion-request)
         (activity/report-task-success activity-api task-token output)
         (activity/report-task-failure
