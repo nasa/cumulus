@@ -7,25 +7,25 @@ const Pdr = require('./pdrs');
 const Provider = require('./providers');
 const granuleSchema = require('../lib/schemas').granule;
 
-export class User extends Manager {
+class User extends Manager {
   constructor() {
     super(process.env.UsersTable);
   }
 }
 
-export class Resource extends Manager {
+class Resource extends Manager {
   constructor() {
     super(process.env.ResourcesTable);
   }
 }
 
-export class Distribution extends Manager {
+class Distribution extends Manager {
   constructor() {
     super(process.env.DistributionTable);
   }
 }
 
-export class DuplicateGranule extends Manager {
+class DuplicateGranule extends Manager {
   constructor() {
     super(process.env.DuplicateGranulesTable, granuleSchema);
   }
@@ -66,7 +66,7 @@ export class DuplicateGranule extends Manager {
   }
 }
 
-export class Pan extends Manager {
+class Pan extends Manager {
   constructor() {
     super(process.env.PANsTable);
   }
@@ -83,7 +83,12 @@ export class Pan extends Manager {
 }
 
 
-export {
+module.exports = {
+  User,
+  Resource,
+  Distribution,
+  DuplicateGranule,
+  Pan,
   Collection,
   Granule,
   Pdr,
