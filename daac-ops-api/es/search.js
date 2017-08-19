@@ -77,7 +77,7 @@ class BaseSearch {
 
     this.frm = (page - 1) * this.size;
     this.page = parseInt((params.skip) ? params.skip : page, 10);
-    this.index = index || `${process.env.StackName}-${process.env.Stage}`;
+    this.index = index || 'cumulus';
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';
@@ -144,6 +144,8 @@ class BaseSearch {
   _metaTemplate() {
     return {
       name: 'cumulus-api',
+      stack: process.env.stackName,
+      stage: process.env.stage,
       table: this.type
     };
   }
