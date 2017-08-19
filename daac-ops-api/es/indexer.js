@@ -23,8 +23,8 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
               `#/executions/details/${arn}`;
 
   const doc = {
-    arn,
     name,
+    arn,
     execution,
     type: get(payload, 'ingest_meta.workflow_name'),
     collection: get(payload, 'collection.id'),
@@ -64,12 +64,12 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const progress = stats.total > 0 ? stats.processing / stats.total : 0;
 
   const doc = {
-    execution: url,
     pdrName: get(payload, 'payload.pdr.name'),
     collection: get(payload, 'collection.id'),
     status: get(payload, 'ingest_meta.status'),
     provider: get(payload, 'provider.id'),
     progress,
+    execution: url,
     PANSent: get(payload, 'payload.pdr.PANSent', false),
     PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
     stats,
@@ -99,6 +99,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
               `#/executions/details/${arn}`;
   const collection = get(payload, 'collection');
   const meta = collection.meta || collection;
+  const exception = get(payload, 'exception');
   const collectionId = `${meta.name}___${meta.version}`;
 
   const granules = get(payload, 'payload.granules');
@@ -112,12 +113,24 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
     });
   }
   catch (e) {
+    // adding collection record to ES
     await esClient.update({
       index,
       type: 'collection',
       id: collectionId,
       body: {
-        doc: meta,
+        doc: {
+          name: meta.name,
+          version: meta.version,
+          dataType: meta.dataType,
+          process: meta.process,
+          provider_path: meta.provider_path,
+          url_path: meta.url_path,
+          granuleId: meta.granuleId,
+          granuleIdExtraction: meta.granuleIdExtraction,
+          sampleFileName: meta.sampleFileName,
+          files: meta.files
+        },
         doc_as_upsert: true
       }
     });
@@ -126,14 +139,15 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const done = granules.map((g) => {
     if (g.granuleId) {
       const doc = {
-        execution: url,
         granuleId: g.granuleId,
         pdrName: get(payload, 'payload.pdr.name'),
         collection: collection.id,
         status: get(payload, 'ingest_meta.status'),
         provider: get(payload, 'provider.id'),
+        execution: url,
         cmrLink: get(g, 'cmr.link'),
         files: g.files,
+        error: exception,
         createdAt: get(payload, 'ingest_meta.createdAt'),
         timestamp: Date.now()
       };

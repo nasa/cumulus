@@ -8,7 +8,7 @@ const aws = require('@cumulus/ingest/aws');
 const Collection = require('./collections');
 const Provider = require('./providers');
 const Pdr = require('./pdrs');
-const granuleSchema = require('../lib/schemas').granule;
+const granuleSchema = require('./schemas').granule;
 
 class Granule extends Manager {
   constructor() {
