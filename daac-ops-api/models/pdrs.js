@@ -4,7 +4,7 @@ const pvl = require('@cumulus/pvl');
 const { errorify } = require('../lib/utils');
 const Manager = require('./base');
 //const Provider = require('./providers');
-const pdrSchema = require('../lib/schemas').pdr;
+const pdrSchema = require('./schemas').pdr;
 
 
 class Pdr extends Manager {
