@@ -3,7 +3,7 @@
 const forge = require('node-forge');
 const Manager = require('./base');
 const S3 = require('@cumulus/ingest/aws').S3;
-const providerSchema = require('../lib/schemas').provider;
+const providerSchema = require('./schemas').provider;
 
 class Provider extends Manager {
   constructor() {
