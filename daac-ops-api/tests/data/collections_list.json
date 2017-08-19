@@ -1,0 +1,52 @@
+{
+  "resource": "/collections",
+  "path": "/collections",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate",
+    "Authorization": "Basic Y3VtdWx1czp0ZXN0dXNlcg==",
+    "cache-control": "no-cache",
+    "CloudFront-Forwarded-Proto": "https",
+    "CloudFront-Is-Desktop-Viewer": "true",
+    "CloudFront-Is-Mobile-Viewer": "false",
+    "CloudFront-Is-SmartTV-Viewer": "false",
+    "CloudFront-Is-Tablet-Viewer": "false",
+    "CloudFront-Viewer-Country": "US",
+    "Content-Type": "application/json",
+    "Host": "xxxxx.us-east-1.amazonaws.com",
+    "X-Forwarded-Port": "443",
+    "X-Forwarded-Proto": "https"
+  },
+  "queryStringParameters": {
+    "q": "name:MOD*"
+  },
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "path": "/dev/collections",
+    "accountId": "985962406024",
+    "resourceId": "d92rht",
+    "stage": "dev",
+    "requestId": "3a4986ce-8470-11e7-9924-a386cead4cf6",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "accountId": null,
+      "cognitoIdentityId": null,
+      "caller": null,
+      "apiKey": "",
+      "sourceIp": "0.0.0.0",
+      "accessKey": null,
+      "cognitoAuthenticationType": null,
+      "cognitoAuthenticationProvider": null,
+      "userArn": null,
+      "userAgent": "PostmanRuntime/6.2.5",
+      "user": null
+    },
+    "resourcePath": "/collections",
+    "httpMethod": "GET",
+    "apiId": "ejxhiu80n0"
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

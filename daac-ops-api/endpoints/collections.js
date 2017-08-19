@@ -1,10 +1,12 @@
 'use strict';
 
 const _get = require('lodash.get');
-const handle = require('../lib/response').handle;
+const { justLocalRun } = require('@cumulus/common/local-helpers');
+const { handle } = require('../lib/response');
 const models = require('../models');
 const Search = require('../es/search').Search;
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
+const examplePayload = require('../tests/data/collections_list.json');
 
 /**
  * List all collections.
@@ -13,7 +15,7 @@ const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
  * @return {undefined}
  */
 function list(event, cb) {
-  const search = new Search(event, process.env.CollectionsTable);
+  const search = new Search(event, 'collection');
   search.query().then(res => cb(null, res)).catch((e) => {
     cb(e);
   });
@@ -150,3 +152,11 @@ function handler(event, context) {
 }
 
 module.exports = handler;
+
+justLocalRun(() => {
+handler(examplePayload, {
+  succeed: r => console.log(r),
+  failed: e => console.log(e)
+}, (e, r) => console.log(e, r));
+
+});
