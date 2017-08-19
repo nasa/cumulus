@@ -2,7 +2,7 @@
 
 const Manager = require('./base');
 const Provider = require('./providers');
-const collectionSchema = require('../lib/schemas').collection;
+const collectionSchema = require('./schemas').collection;
 const { ValidationError } = require('../lib/errors');
 
 class Collection extends Manager {
