@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* This code is copied from sat-api-lib library
  * with some alterations.
  * source: https://raw.githubusercontent.com/sat-utils/sat-api-lib/master/libs/queries.js
@@ -25,13 +26,6 @@ const build = {
   prefix: (queries, _prefix, terms) => {
     if (_prefix) {
       let fields = [
-        'granuleId',
-        'status',
-        'pdrName',
-        'collectionName',
-        'userName',
-        'providerName',
-        'name',
         'error'
       ];
 
@@ -67,13 +61,6 @@ const build = {
     // check for boolean values
     if (typeof i.value === 'number') {
       i.value = Boolean(i.value);
-    }
-
-    if (typeof i.value === 'string') {
-      const boolCheck = i.value.toLowerCase();
-      if (boolCheck !== 'true' && boolCheck !== 'false') {
-        fieldName = `${fieldName}.keyword`;
-      }
     }
 
     return {
