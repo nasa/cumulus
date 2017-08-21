@@ -1,0 +1,51 @@
+{
+  "name": "@cumulus/discover-pdrs",
+  "version": "1.0.0",
+  "description": "Discover PDRs in FTP and HTTP endpoints",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/ava tests/*.js --serial --no-color",
+    "build": "webpack --progress",
+    "watch": "webpack --progress -w"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "es2017",
+      "@ava/stage-4",
+      "@ava/transform-test-files"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/common": "^1.0.0",
+    "@cumulus/ingest": "^1.0.0",
+    "@cumulus/test-data": "^1.0.0",
+    "lodash.get": "^4.4.2"
+  },
+  "devDependencies": {
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^7.1.1",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
+    "sinon": "^2.0.0-pre.5",
+    "ava": "^0.21.0",
+    "webpack": "^1.12.13"
+  }
+}

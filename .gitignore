@@ -1,3 +1,5 @@
+package-lock.json
+yarn.lock
 node_modules
 build/
 dist/
@@ -9,3 +11,4 @@ cache-invalidation/config/runtime_config.json
 artifacts
 packaged-*
 .vscode
+*-debug.log

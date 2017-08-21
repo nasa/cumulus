@@ -1,4 +1,6 @@
-# GIBS-in-the-Cloud Prototype
+# Cumulus Framework
+
+[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg&circle-token=4a16cbbdacb6396c709309ef5ac87479c9dc8bd1)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
 ## Installing and deploying
 
@@ -22,11 +24,52 @@ Ensure that the aws cli is configured and that the default output format is eith
 aws configure
 ```
 
-### Deployment
+### Install Lerna
 
-Deploy a new stack into AWS
-```
-$ bin/deploy my-stack-name
-```
+We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
 
-See `bin/deploy --help` for information about the multitude of deployment options
+    $ npm install -g lerna
+
+### Install Local Dependencies
+
+We use npm for local package management
+
+    $ npm install
+    $ npm run bootstrap
+
+Building All packages:
+
+    $ npm run build
+
+Build and watch packages:
+
+    $ npm run watch
+
+## Running Tests
+
+Turn on the docker containers first:
+
+    $ docker-compose up local
+
+Run the test commands next
+
+    $ npm run test
+
+## Adding New Packages
+
+Create a new folder under `packages` if it is a common library or create folder under `cumulus/tasks` if it is a lambda task. `cd` to the folder and run `npm init`.
+
+Make sure to name the package as `@cumulus/package-name`.
+
+## Publishing to NPM
+
+    $ lerna publish
+
+## Running command in all package folders
+
+    $ lerna exec -- rm -rf ./package-lock.json
+
+## Cleaning Up all the repos
+
+    $ npm run clean
+

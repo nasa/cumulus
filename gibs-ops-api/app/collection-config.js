@@ -3,7 +3,7 @@
 const { s3 } = require('./aws');
 const { BadRequestError } = require('./api-errors');
 const { fromJS } = require('immutable');
-const commonConfig = require('cumulus-common/config');
+const commonConfig = require('@cumulus/common/config');
 const { memoize } = require('./cache');
 const sr = require('./stack-resources');
 
@@ -59,7 +59,7 @@ const parseCollectionYaml = (collectionsYaml, resourceResolver) => {
  * gitcxtestxx.
  */
 const stackNameToAlphanumPrefix = stackName => stackName.split('-').map(
-  (s) => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+  s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
 
 /**
  * Returns a parsed collection config
