@@ -9,13 +9,14 @@ module.exports = {
   resolveLoader: {
     fallback: path.join(__dirname, 'node_modules')
   },
-  entry: glob.sync('{./tasks/*,./services/*}')
-             .map((filename) => {
-               const entry = {};
-               entry[path.basename(filename)] = filename;
-               return entry;
-             })
-             .reduce((finalObject, entry) => Object.assign(finalObject, entry), {}),
+  entry: glob.sync('./{tasks,services}/*/package.json')
+              .map((packageJson) => {
+                const filename = path.dirname(packageJson);
+                const entry = {};
+                entry[path.basename(filename)] = filename;
+                return entry;
+              })
+              .reduce((finalObject, entry) => Object.assign(finalObject, entry), {}),
   output: {
     path: path.join(__dirname, 'dist'),
     library: '[name]',
