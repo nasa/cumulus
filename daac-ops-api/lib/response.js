@@ -10,8 +10,10 @@
 'use strict';
 
 const forge = require('node-forge');
+const get = require('lodash.get');
 const auth = require('basic-auth');
 const proxy = require('lambda-proxy-utils');
+const log = require('@cumulus/common/log');
 const { User } = require('../models');
 const { errorify } = require('./utils');
 
@@ -23,12 +25,15 @@ function resp(context, err, _body, _status = null) {
   }
 
   if (err) {
-    //const errMsg = { detail: 'An error occured' };
+    log.error(err);
     status = status || 400;
-    //if (typeof body === 'string') errMsg.detail = err;
-    //if (err.message) errMsg.detail = err.message;
+    const message = get(err, 'message', errorify(err));
+    const detail = get(err, 'detail');
 
-    body = { error: errorify(err) };
+    body = {
+      message,
+      detail
+    };
   }
 
   const res = new proxy.Response({ cors: true, statusCode: status });
