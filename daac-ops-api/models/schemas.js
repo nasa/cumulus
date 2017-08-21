@@ -2,7 +2,6 @@
 
 // Collection Record Definition
 module.exports.collection = {
-  //$schema: 'http://json-schema.org/draft-04/schema#',
   title: 'Collection Object',
   description: 'Cumulus-api Collection Table schema',
   type: 'object',
@@ -114,7 +113,6 @@ module.exports.collection = {
 
 // Granule Record Schema
 module.exports.granule = {
-  $schema: 'http://json-schema.org/draft-04/schema#',
   title: 'Granule Object',
   type: 'object',
   properties: {
@@ -211,7 +209,6 @@ module.exports.granule = {
 
 // PDR Record Schema
 module.exports.pdr = {
-  $schema: 'http://json-schema.org/draft-04/schema#',
   title: 'PDR Record Object',
   type: 'object',
   properties: {
@@ -292,7 +289,6 @@ module.exports.pdr = {
 
 // Provider Schema => the model keeps information about each ingest location
 module.exports.provider = {
-  $schema: 'http://json-schema.org/draft-04/schema#',
   title: 'Provider Object',
   description: 'Keep the information about each ingest endpoint',
   type: 'object',
