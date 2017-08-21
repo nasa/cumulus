@@ -43,25 +43,6 @@ class Collection extends Manager {
   constructor() {
     super(process.env.CollectionsTable, collectionSchema);
   }
-
-  async delete(item) {
-    const collection = await this.get({ collectionName: item.collectionName });
-    const response = await super.delete(item);
-
-    // remove the collectionName from the provider table
-    const p = new Provider();
-    if (collection.providers) {
-      for (const provider of collection.providers) {
-        try {
-          await p.removeRegex(provider, item.collectionName);
-        }
-        catch (e) {
-          log.error(e);
-        }
-      }
-    }
-    return response;
-  }
 }
 
 module.exports = Collection;

@@ -6,7 +6,8 @@ const { handle } = require('../lib/response');
 const models = require('../models');
 const Search = require('../es/search').Search;
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
-const examplePayload = require('../tests/data/collections_list.json');
+const examplePayload = require('../tests/data/collections_post.json');
+const { indexCollection, deleteRecord } = require('../es/indexer');
 
 /**
  * List all collections.
@@ -27,15 +28,14 @@ function list(event, cb) {
  * @return {object} a single granule object.
  */
 function get(event, cb) {
-  const collectionName = _get(event.pathParameters, 'short_name');
-  if (!collectionName) {
-    return cb('collectionName is missing');
-  }
+  const name = _get(event.pathParameters, 'collectionName');
+  const version = _get(event.pathParameters, 'version');
 
-  const search = new Search({}, process.env.CollectionsTable);
-  return search.get(collectionName)
-    .then(res => cb(null, res))
-    .catch(e => cb(e));
+  const c = new models.Collection();
+  return c.get({ name, version })
+    .then((res) => {
+      cb(null, res);
+    }).catch((e) => cb(e));
 }
 
 /**
@@ -46,27 +46,25 @@ function get(event, cb) {
 function post(event, cb) {
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
+  const name = _get(data, 'name');
+  const version = _get(data, 'version');
 
   // make sure primary key is included
-  if (!data.collectionName) {
-    return cb('Field collectionName is missing');
+  if (!data.name || !data.version) {
+    return cb({ message: 'Field name and/or version is missing' });
   }
-  const collectionName = data.collectionName;
-
   const c = new models.Collection();
 
-  return c.get({ collectionName: collectionName })
-    .then(() => cb(`A record already exists for ${collectionName}`))
+  return c.get({ name, version })
+    .then(() => cb({ message: `A record already exists for ${name} version: ${version}` }))
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
-        return c.create(data).then(() => {
-          cb(null, {
-            detail: 'Record saved',
-            record: data
-          });
-        }).catch(err => cb(err));
+        return c.create(data)
+          .then(() => Search.es())
+          .then(esClient => indexCollection(esClient, data))
+          .then(() => cb(null, { message: 'Record saved', record: data }))
+          .catch(err => cb(err));
       }
-
       return cb(e);
     });
 }
@@ -77,52 +75,47 @@ function post(event, cb) {
  * @return {object} a mapping of the updated properties.
  */
 function put(event, cb) {
-  const collectionName = _get(event.pathParameters, 'short_name');
-  if (!collectionName) {
-    return cb('collectionName is missing');
-  }
+  const pname = _get(event.pathParameters, 'collectionName');
+  const pversion = _get(event.pathParameters, 'version');
 
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
 
+  const name = _get(data, 'name');
+  const version = _get(data, 'version');
+
+  if (pname !== name || pversion !== version) {
+    return cb({ message: 'name and version in path doesn\'t match the payload' });
+  }
+
   const c = new models.Collection();
 
   // get the record first
-  return c.get({ collectionName: collectionName }).then((originalData) => {
+  return c.get({ name, version }).then((originalData) => {
     data = Object.assign({}, originalData, data);
     return c.create(data);
-  }).then(r => cb(null, r)).catch((err) => {
-    if (err instanceof RecordDoesNotExist) {
-      return cb('Record does not exist');
-    }
-    return cb(err);
-  });
+  }).then(() => Search.es())
+    .then(esClient => indexCollection(esClient, data))
+    .then(() => cb(null, data))
+    .catch((err) => {
+      if (err instanceof RecordDoesNotExist) {
+        return cb({ message: 'Record does not exist' });
+      }
+      return cb(err);
+    });
 }
 
 function del(event, cb) {
-  const collectionName = _get(event.pathParameters, 'short_name');
+  const name = _get(event.pathParameters, 'collectionName');
+  const version = _get(event.pathParameters, 'version');
+  const id = `${name}___${version}`;
   const c = new models.Collection();
 
-  return c.get({ collectionName }).then(() => {
-    // check if there are any granules associated with this collection
-    // do not delete if there are granules
-    const params = {
-      queryStringParameters: {
-        fields: 'granuleId',
-        collectionName,
-        limit: 1
-      }
-    };
-
-    const search = new Search(params, process.env.GranulesTable);
-    return search.query();
-  }).then((r) => {
-    if (r.meta.count > 0) {
-      throw new Error('Cannot delete this collection while there are granules associated with it');
-    }
-
-    return c.delete({ collectionName });
-  }).then(() => cb(null, { detail: 'Record deleted' }))
+  return c.get({ name, version })
+    .then(() => c.delete({ name, version }))
+    .then(() => Search.es())
+    .then((esClient) => deleteRecord(esClient, id, 'collection'))
+    .then(() => cb(null, { message: 'Record deleted' }))
     .catch(e => cb(e));
 }
 
@@ -154,9 +147,8 @@ function handler(event, context) {
 module.exports = handler;
 
 justLocalRun(() => {
-handler(examplePayload, {
-  succeed: r => console.log(r),
-  failed: e => console.log(e)
-}, (e, r) => console.log(e, r));
-
+  handler(examplePayload, {
+    succeed: r => console.log(r),
+    failed: e => console.log(e)
+  }, (e, r) => console.log(e, r));
 });
