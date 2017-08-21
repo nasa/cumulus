@@ -1,0 +1,20 @@
+Resources:
+
+  Service:
+    Properties:
+      DesiredCount: 1
+
+  Task:
+    Properties:
+      ContainerDefinitions:
+      - Cpu: '512'
+        Essential: true
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/nasa-cumulus/provider-gateway:latest
+        Memory: '2048'
+        Environment:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: STACK_NAME
+            Value: !Sub ${StackName}
+          - Name: AWS_ACCOUNT_ID
+            Value: !Sub ${AWS::AccountId}
