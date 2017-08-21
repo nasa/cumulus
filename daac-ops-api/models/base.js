@@ -22,7 +22,12 @@ class Manager {
       const validate = ajv.compile(schema);
       const valid = validate(item);
       if (!valid) {
-        throw validate.errors;
+        //console.log(validate.errors);
+        const err = {
+          message: 'The record has validation errors',
+          detail: validate.errors
+        };
+        throw err;
       }
     }
   }
