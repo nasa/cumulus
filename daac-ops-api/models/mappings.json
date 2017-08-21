@@ -138,6 +138,39 @@
       }
     }
   },
+  "provider": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "globalConnectionLimit": {
+        "type": "integer"
+      },
+      "protocol": {
+        "type": "keyword"
+      },
+      "host": {
+        "type": "keyword"
+      },
+      "port": {
+        "type": "integer"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  },
   "execution": {
     "dynamic_templates": [
       {
