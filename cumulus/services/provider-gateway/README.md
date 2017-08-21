@@ -6,7 +6,7 @@ Providers support a limited number of connections for downloading data. AWS infr
 
 ## Building and Deploying
 
-**As of this writing the building and deploying of Provider Gateway is not part of Cumulus proper. It must be manually build and deployed to a container registry**
+**As of this writing the building and deploying of Provider Gateway is not part of Cumulus proper. It must be manually built and deployed to a container registry**
 
 A container can be build and deployed to AWS ECR by running `bin/docker_deploy.sh`
 
