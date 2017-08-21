@@ -13,11 +13,11 @@
   "VIIRS/VNGCR_LQD_C1/2017192")
 
 (defn stage-data
-  "Stages data in the canned s3 of the given set of files and returns a new synchronization task."
-  [canned-s3 files]
+  "Stages data in the in-memory s3 of the given set of files and returns a new synchronization task."
+  [in-memory-s3 files]
   (let [payload-s3-key "LastStep/Payload"]
     ;; Stage the payload for the task message
-    (s3/write-s3-json canned-s3 private-bucket payload-s3-key files)
+    (s3/write-s3-json in-memory-s3 private-bucket payload-s3-key files)
     ;; Return the task with the message
     {:task-token "task-token"
      :input
@@ -31,13 +31,13 @@
                 :Key payload-s3-key}}}))
 
 (deftest handle-new-task-test
-  (let [canned-s3 (s3/create-canned-s3-api)
-        handler (strh/create-sync-task-to-request-handler canned-s3)
+  (let [in-memory-s3 (s3/create-in-memory-s3-api)
+        handler (strh/create-sync-task-to-request-handler in-memory-s3)
         files [{:url "http://example.com/foo/1.txt"
                 :version "v1"}
                {:url "http://example.com/foo/2.txt"
                 :version "v1"}]
-        task (stage-data canned-s3 files)
+        task (stage-data in-memory-s3 files)
         updated-task (activity-handler/handle-new-task handler task)
 
         expected-input [{:type "download"
@@ -59,13 +59,13 @@
            updated-task))))
 
 (deftest handle-completed-task-test
-  (let [canned-s3 (s3/create-canned-s3-api)
-        handler (strh/create-sync-task-to-request-handler canned-s3)
+  (let [in-memory-s3 (s3/create-in-memory-s3-api)
+        handler (strh/create-sync-task-to-request-handler in-memory-s3)
         files [{:url "http://example.com/foo/1.txt"
                 :version "v1"}
                {:url "http://example.com/foo/2.txt"
                 :version "v1"}]
-        task (stage-data canned-s3 files)
+        task (stage-data in-memory-s3 files)
 
         input [{:type "download"
                 :source {:url "http://example.com/foo/1.txt"
@@ -94,5 +94,5 @@
              :Key "sources/EPSG4326/VIIRS/VNGCR_LQD_C1/2017192/1.txt"}
             {:Bucket private-bucket
              :Key "sources/EPSG4326/VIIRS/VNGCR_LQD_C1/2017192/2.txt"}]
-           (s3/read-s3-json canned-s3 private-bucket payload-key)))))
+           (s3/read-s3-json in-memory-s3 private-bucket payload-key)))))
 
