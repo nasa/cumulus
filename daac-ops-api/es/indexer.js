@@ -129,8 +129,6 @@ async function indexProvider(esClient, payload, index = 'cumulus', type = 'provi
         protocol: payload.protocol,
         host: payload.host,
         port: payload.port,
-        username: payload.username,
-        password: payload.password,
         timestamp: Date.now()
       },
       doc_as_upsert: true
