@@ -90,6 +90,31 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   });
 }
 
+async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
+  // adding collection record to ES
+  const collectionId = `${meta.name}___${meta.version}`;
+  await esClient.update({
+    index,
+    type,
+    id: collectionId,
+    body: {
+      doc: {
+        name: meta.name,
+        version: meta.version,
+        dataType: meta.dataType,
+        process: meta.process,
+        provider_path: meta.provider_path,
+        url_path: meta.url_path,
+        granuleId: meta.granuleId,
+        granuleIdExtraction: meta.granuleIdExtraction,
+        sampleFileName: meta.sampleFileName,
+        files: meta.files
+      },
+      doc_as_upsert: true
+    }
+  });
+}
+
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   const sfArn = get(payload, 'ingest_meta.state_machine').replace('stateMachine', 'execution');
@@ -114,26 +139,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   }
   catch (e) {
     // adding collection record to ES
-    await esClient.update({
-      index,
-      type: 'collection',
-      id: collectionId,
-      body: {
-        doc: {
-          name: meta.name,
-          version: meta.version,
-          dataType: meta.dataType,
-          process: meta.process,
-          provider_path: meta.provider_path,
-          url_path: meta.url_path,
-          granuleId: meta.granuleId,
-          granuleIdExtraction: meta.granuleIdExtraction,
-          sampleFileName: meta.sampleFileName,
-          files: meta.files
-        },
-        doc_as_upsert: true
-      }
-    });
+    await indexCollection(esClient, meta);
   }
 
   const done = granules.map((g) => {
@@ -170,6 +176,14 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   });
 
   return Promise.all(done);
+}
+
+async function deleteRecord(esClient, id, type, index = 'cumulus') {
+  return esClient.delete({
+    index,
+    type,
+    id
+  });
 }
 
 async function handlePayload(event) {
@@ -216,7 +230,11 @@ function handler(event, context, cb) {
   }).catch(e => cb(e));
 }
 
-module.exports = handler;
+module.exports = {
+  handler,
+  indexCollection,
+  deleteRecord
+};
 
 justLocalRun(() => {
   const a = {};
