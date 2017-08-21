@@ -314,7 +314,7 @@ module.exports.provider = {
     },
     port: {
       title: 'Port',
-      type: 'string'
+      type: 'number'
     },
     username: {
       type: 'string'
