@@ -108,7 +108,30 @@ async function indexCollection(esClient, meta, index = 'cumulus', type = 'collec
         granuleId: meta.granuleId,
         granuleIdExtraction: meta.granuleIdExtraction,
         sampleFileName: meta.sampleFileName,
-        files: meta.files
+        files: meta.files,
+        timestamp: Date.now()
+      },
+      doc_as_upsert: true
+    }
+  });
+}
+
+async function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
+  // adding collection record to ES
+  await esClient.update({
+    index,
+    type,
+    id: payload.id,
+    body: {
+      doc: {
+        id: payload.id,
+        globalConnectionLimit: payload.globalConnectionLimit,
+        protocol: payload.protocol,
+        host: payload.host,
+        port: payload.port,
+        username: payload.username,
+        password: payload.password,
+        timestamp: Date.now()
       },
       doc_as_upsert: true
     }
@@ -233,6 +256,7 @@ function handler(event, context, cb) {
 module.exports = {
   handler,
   indexCollection,
+  indexProvider,
   deleteRecord
 };
 
