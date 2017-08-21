@@ -16,10 +16,10 @@
   [_]
   (s/keys :req-un [::activity-api-type ::dir]))
 
-(s/def ::canned-tasks (s/coll-of map?))
-(s/def ::tasks ::canned-tasks)
+(s/def ::in-memory-tasks (s/coll-of map?))
+(s/def ::tasks ::in-memory-tasks)
 
-(defmethod activity-api-type "canned"
+(defmethod activity-api-type "in-memory"
   [_]
   (s/keys :req-un [::activity-api-type ::tasks]))
 
