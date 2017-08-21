@@ -2,7 +2,7 @@
 
 // Collection Record Definition
 module.exports.collection = {
-  $schema: 'http://json-schema.org/draft-04/schema#',
+  //$schema: 'http://json-schema.org/draft-04/schema#',
   title: 'Collection Object',
   description: 'Cumulus-api Collection Table schema',
   type: 'object',
@@ -37,8 +37,7 @@ module.exports.collection = {
     url_path: {
       title: 'Url Path',
       description: 'The folder (url) used to save granules on S3 buckets',
-      type: 'string',
-      default: ''
+      type: 'string'
     },
     granuleId: {
       title: 'GranuleId Validation Regex',
@@ -87,7 +86,7 @@ module.exports.collection = {
         },
         required: [
           'regex',
-          'sampleFilename',
+          'sampleFileName',
           'bucket'
         ]
       }
