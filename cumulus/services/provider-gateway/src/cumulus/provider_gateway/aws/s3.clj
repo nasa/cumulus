@@ -85,10 +85,10 @@
   (create-s3-api :aws))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Canned data
+;; InMemory data
 ;; Used for testing so we can test code that works with S3 without actually connecting to it..
 
-(defrecord CannedS3API
+(defrecord InMemoryS3API
   ;; nested maps of bucket -> key -> {:metadata ... :value ...}
   [bucket-key-to-value-atom]
 
@@ -117,18 +117,18 @@
    [_ bucket key]
    (get-in @bucket-key-to-value-atom [bucket key :metadata])))
 
-(defn create-canned-s3-api
-  "Creates an instance of the canned s3 api. Takes an existing map of data in S3 of buckets to keys
+(defn create-in-memory-s3-api
+  "Creates an instance of the in-memory s3 api. Takes an existing map of data in S3 of buckets to keys
    to values"
   ([]
-   (create-canned-s3-api {}))
+   (create-in-memory-s3-api {}))
   ([existing-data]
-   (->CannedS3API (atom existing-data))))
+   (->InMemoryS3API (atom existing-data))))
 
-(defmethod create-s3-api :canned
+(defmethod create-s3-api :in-memory
   [_]
   ;; same instance is used for all of them
-  (create-canned-s3-api))
+  (create-in-memory-s3-api))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper functions

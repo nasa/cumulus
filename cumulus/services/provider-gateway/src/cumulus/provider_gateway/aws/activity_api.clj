@@ -22,7 +22,7 @@
     WatchEvent$Kind)))
 
 (defprotocol ActivityProtocol
-  "Defines a protocol for mimics the AWS activity API."
+  "Defines a protocol that mimics the AWS activity API."
 
   (get-task
    [this]
@@ -43,10 +43,10 @@
     (:activity-api-type config)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Canned implementation
+;; InMemory implementation
 
 ;; In memory implementation of the activity API for testing.
-(defrecord CannedActivities
+(defrecord InMemoryActivities
   [
    ;; An atom containing a sequence of tasks. Requests to get a task will take from the atom.
    tasks-atom
@@ -79,15 +79,15 @@
    (swap! successful-tasks-atom assoc task-token output)
    nil))
 
-(defn create-canned-activities
+(defn create-in-memory-activities
   [tasks]
-  (map->CannedActivities {:tasks-atom (atom tasks)
-                          :failed-tasks-atom (atom {})
-                          :successful-tasks-atom (atom {})}))
+  (map->InMemoryActivities {:tasks-atom (atom tasks)
+                            :failed-tasks-atom (atom {})
+                            :successful-tasks-atom (atom {})}))
 
-(defmethod create-activity-api "canned"
+(defmethod create-activity-api "in-memory"
   [config]
-  (create-canned-activities (:tasks config)))
+  (create-in-memory-activities (:tasks config)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; AWS implementation
