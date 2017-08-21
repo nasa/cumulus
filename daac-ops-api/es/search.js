@@ -179,7 +179,9 @@ class BaseSearch {
         return { detail: 'Record not found' };
       }
 
-      return result.hits.hits[0]._source;
+      const resp = result.hits.hits[0]._source;
+      resp._id = result.hits.hits[0]._id;
+      return resp;
     }
     catch (e) {
       //log.error(e, logDetails);

@@ -21,5 +21,5 @@ module.exports = {
   stats,
   distribution,
   bootstrap,
-  indexer
+  indexer: indexer.handler
 };
