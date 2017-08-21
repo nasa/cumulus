@@ -25,10 +25,7 @@
   "stageVariables": null,
   "requestContext": {
     "path": "/dev/collections",
-    "accountId": "111111111111",
-    "resourceId": "d92rht",
     "stage": "dev",
-    "requestId": "3a4986ce-8470-11e7-9924-a386cead4cf6",
     "identity": {
       "cognitoIdentityPoolId": null,
       "accountId": null,
@@ -44,8 +41,7 @@
       "user": null
     },
     "resourcePath": "/collections",
-    "httpMethod": "GET",
-    "apiId": "ejxhiu80n0"
+    "httpMethod": "GET"
   },
   "body": null,
   "isBase64Encoded": false
