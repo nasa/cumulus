@@ -17,6 +17,16 @@
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
+  "babel": {
+    "presets": [
+      "es2015",
+      "@ava/stage-4",
+      "@ava/transform-test-files"
+    ],
+    "plugins": [
+      "transform-async-to-generator"
+    ]
+  },
   "dependencies": {
     "lodash.get": "^4.4.2",
     "randomstring": "^1.1.5",
@@ -24,7 +34,7 @@
   },
   "devDependencies": {
     "babel-core": "^6.25.0",
-    "babel-loader": "^7.1.1",
+    "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
     "sinon": "^2.0.0-pre.5",
