@@ -136,6 +136,27 @@ async function indexProvider(esClient, payload, index = 'cumulus', type = 'provi
   });
 }
 
+async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
+  // adding collection record to ES
+  await esClient.update({
+    index,
+    type,
+    id: payload.name,
+    body: {
+      doc: {
+        name: payload.name,
+        provider: payload.provider,
+        collection: payload.collection,
+        meta: payload.meta,
+        rule: payload.rule,
+        state: payload.state,
+        timestamp: Date.now()
+      },
+      doc_as_upsert: true
+    }
+  });
+}
+
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   const sfArn = get(payload, 'ingest_meta.state_machine').replace('stateMachine', 'execution');
@@ -255,10 +276,11 @@ module.exports = {
   handler,
   indexCollection,
   indexProvider,
+  indexRule,
   deleteRecord
 };
 
 justLocalRun(() => {
-  const a = {};
-  handler(a, {}, (e, r) => log.info(e, r));
+  //const a = {};
+  //handler(a, {}, (e, r) => log.info(e, r));
 });
