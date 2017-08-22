@@ -67,6 +67,58 @@ function sqs(local) {
   return new AWS.SQS(getEndpoint(local, 9324));
 }
 
+class Events {
+  static async putEvent(name, schedule, state, description = null, role = null) {
+    const cwevents = new AWS.CloudWatchEvents();
+
+    const params = {
+      Name: name,
+      Description: description,
+      RoleArn: role,
+      ScheduleExpression: schedule,
+      State: state
+    };
+
+    return cwevents.putRule(params).promise();
+  }
+
+  static async deleteEvent(name) {
+    const cwevents = new AWS.CloudWatchEvents();
+
+    const params = {
+      Name: name
+    };
+
+    return cwevents.deleteRule(params).promise();
+  }
+
+  static async deleteTarget(id, rule) {
+    const cwevents = new AWS.CloudWatchEvents();
+    const params = {
+      Ids: [id],
+      Rule: rule
+    };
+
+    return cwevents.removeTargets(params).promise();
+  }
+
+  static async putTarget(rule, id, arn, input) {
+    const cwevents = new AWS.CloudWatchEvents();
+
+    const params = {
+      Rule: rule,
+      Targets: [ /* required */
+        {
+          Arn: arn,
+          Id: id,
+          Input: input
+        }
+      ]
+    };
+
+    return cwevents.putTargets(params).promise();
+  }
+}
 
 class S3 {
   static parseS3Uri(uri) {
@@ -412,10 +464,13 @@ class KMS {
   }
 }
 
-module.exports.CloudWatch = CloudWatch;
-module.exports.SQS = SQS;
-module.exports.S3 = S3;
-module.exports.KMS = KMS;
-module.exports.ECS = ECS;
-module.exports.invoke = invoke;
-module.exports.getEndpoint = getEndpoint;
+module.exports = {
+  CloudWatch,
+  SQS,
+  S3,
+  KMS,
+  ECS,
+  invoke,
+  getEndpoint,
+  Events
+};
