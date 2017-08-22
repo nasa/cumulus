@@ -87,7 +87,7 @@ class BaseSearch {
     }
   }
 
-  _buildSearch(granuleStats = false) {
+  _buildSearch() {
     let fields;
 
     // if fields are included remove it from params
@@ -96,14 +96,7 @@ class BaseSearch {
       this.params = omit(this.params, ['fields']);
     }
 
-    let body = queries(this.params);
-    if (granuleStats) {
-      body = Object.assign(
-        {},
-        body,
-        this._buildGranuleStats()
-      );
-    }
+    const body = queries(this.params);
 
     return {
       index: this.index,
@@ -316,7 +309,6 @@ class BaseSearch {
 }
 
 class Search extends BaseSearch {}
-module.exports.Search = Search;
 
 class LogSearch extends BaseSearch {
   constructor(event, type = null) {
@@ -324,7 +316,6 @@ class LogSearch extends BaseSearch {
     this.index = `${process.env.StackName}-${process.env.Stage}-logs`;
   }
 }
-module.exports.LogSearch = LogSearch;
 
 class Stats extends BaseSearch {
 
@@ -514,4 +505,10 @@ class Stats extends BaseSearch {
     };
   }
 }
-module.exports.Stats = Stats;
+
+module.exports = {
+  BaseSearch,
+  Stats,
+  Search,
+  LogSearch
+};
