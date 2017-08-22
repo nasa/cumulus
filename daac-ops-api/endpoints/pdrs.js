@@ -26,7 +26,7 @@ function list(event, cb) {
 function get(event, cb) {
   const pdrName = _get(event.pathParameters, 'pdrName');
 
-  const search = new Search({}, 'execution');
+  const search = new Search({}, 'pdr');
   search.get(pdrName).then((response) => {
     cb(null, response);
   }).catch((e) => {
