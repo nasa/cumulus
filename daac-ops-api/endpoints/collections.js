@@ -4,7 +4,7 @@ const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { handle } = require('../lib/response');
 const models = require('../models');
-const Search = require('../es/search').Search;
+const Collection = require('../es/collections');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 const examplePayload = require('../tests/data/collections_post.json');
 const { indexCollection, deleteRecord } = require('../es/indexer');
@@ -16,8 +16,8 @@ const { indexCollection, deleteRecord } = require('../es/indexer');
  * @return {undefined}
  */
 function list(event, cb) {
-  const search = new Search(event, 'collection');
-  search.query().then(res => cb(null, res)).catch((e) => {
+  const collection = new Collection(event);
+  collection.query().then(res => cb(null, res)).catch((e) => {
     cb(e);
   });
 }
@@ -34,8 +34,10 @@ function get(event, cb) {
   const c = new models.Collection();
   return c.get({ name, version })
     .then((res) => {
-      cb(null, res);
-    }).catch((e) => cb(e));
+      const collection = new Collection(event);
+      return collection.getStats([res], [res.name]);
+    }).then(res => cb(null, res[0]))
+      .catch((e) => cb(e));
 }
 
 /**
@@ -60,7 +62,7 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return c.create(data)
-          .then(() => Search.es())
+          .then(() => Collection.es())
           .then(esClient => indexCollection(esClient, data))
           .then(() => cb(null, { message: 'Record saved', record: data }))
           .catch(err => cb(err));
@@ -94,7 +96,7 @@ function put(event, cb) {
   return c.get({ name, version }).then((originalData) => {
     data = Object.assign({}, originalData, data);
     return c.create(data);
-  }).then(() => Search.es())
+  }).then(() => Collection.es())
     .then(esClient => indexCollection(esClient, data))
     .then(() => cb(null, data))
     .catch((err) => {
@@ -113,7 +115,7 @@ function del(event, cb) {
 
   return c.get({ name, version })
     .then(() => c.delete({ name, version }))
-    .then(() => Search.es())
+    .then(() => Collection.es())
     .then((esClient) => deleteRecord(esClient, id, 'collection'))
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(e => cb(e));
