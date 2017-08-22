@@ -5,6 +5,8 @@ const granules = require('./endpoints/granules');
 const logs = require('./endpoints/logs');
 const pdrs = require('./endpoints/pdrs');
 const providers = require('./endpoints/providers');
+const rules = require('./endpoints/rules');
+const workflows = require('./endpoints/workflows');
 const schemas = require('./endpoints/schemas');
 const stats = require('./endpoints/stats');
 const distribution = require('./endpoints/distribution');
@@ -17,6 +19,8 @@ module.exports = {
   logs,
   pdrs,
   providers,
+  rules,
+  workflows,
   schemas,
   stats,
   distribution,
