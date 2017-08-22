@@ -3,10 +3,11 @@
 const path = require('path');
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
+const { MismatchPdrCollection } = require('@cumulus/common/errors');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
-const S3 = require('./aws').S3;
+const { S3 } = require('./aws');
 const queue = require('./queue');
 
 /**
@@ -136,11 +137,11 @@ class Parse {
     // download
     const pdrLocalPath = await this.download(this.pdr.path, this.pdr.name);
 
-    // upload
-    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
-
     // parse the PDR
     const granules = await this.parse(pdrLocalPath);
+
+    // upload only if the parse was successful
+    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
 
     // return list of all granules found in the PDR
     return granules;
@@ -179,7 +180,41 @@ class Parse {
 class ParseAndQueue extends Parse {
   async ingest() {
     const payload = await super.ingest();
-    return Promise.all(payload.granules.map(g => queue.queueGranule(this.event, g)));
+    const events = {};
+
+    payload.granules = payload.granules.slice(0, 10);
+
+    // make sure all parsed granules the correct collection
+    for (const g of payload.granules) {
+      if (!events[g.dataType]) {
+        events[g.dataType] = JSON.parse(JSON.stringify(this.event));
+
+        if (g.dataType !== this.collection.name) {
+          const bucket = this.buckets.internal;
+          const key = `${this.event.resources.stack}-${this.event.resources.stage}` +
+                      `/collections/${g.dataType}.json`;
+          let file;
+          try {
+            file = await S3.get(bucket, key);
+          }
+          catch (e) {
+            throw new MismatchPdrCollection(
+              `${g.dataType} dataType in ${this.pdr.name} doesn't match ${this.collection.name}`
+            );
+          }
+
+          events[g.dataType].collection = {
+            id: g.dataType,
+            meta: JSON.parse(file.Body.toString())
+          };
+        }
+      }
+    }
+
+    const arns = await Promise.all(
+      payload.granules.map(g => queue.queueGranule(events[g.dataType], g))
+    );
+    return { running: arns, completed: [], failed: [], isFinished: false };
   }
 }
 
