@@ -24,6 +24,7 @@ class Provider extends Manager {
     // encrypt the password
     if (item.password) {
       item.password = await this.encryptPassword(item.password);
+      item.encrypted = true;
     }
 
     return super.update(key, item, keysToDelete);
@@ -31,9 +32,11 @@ class Provider extends Manager {
 
   async create(_item) {
     const item = _item;
+
     // encrypt the password
     if (item.password) {
       item.password = await this.encryptPassword(item.password);
+      item.encrypted = true;
     }
 
     return super.create(item);
