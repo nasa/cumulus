@@ -8,7 +8,7 @@ const urljoin = require('url-join');
 const log = require('@cumulus/common/log');
 //const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
-const KMS = require('./aws').KMS;
+const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
 
 //const PathIsInvalid = errors.createErrorType('PathIsInvalid');
@@ -33,12 +33,12 @@ module.exports = superclass => class extends superclass {
   async connect() {
     if (!this.decrypted && this.provider.encrypted) {
       if (this.username) {
-        this.options.user = await KMS.decrypt(this.username);
+        this.options.user = await Crypto.decrypt(this.username);
         this.decrypted = true;
       }
 
       if (this.password) {
-        this.options.password = await KMS.decrypt(this.password);
+        this.options.password = await Crypto.decrypt(this.password);
         this.decrypted = true;
       }
     }
