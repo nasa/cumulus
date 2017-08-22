@@ -12,15 +12,16 @@
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
+const { getExecutionArn, getExecutionUrl } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
 
 async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
-  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  const sfArn = get(payload, 'ingest_meta.state_machine').replace('stateMachine', 'execution');
   const name = get(payload, 'ingest_meta.execution_name');
-  const arn = `${sfArn}:${name}`;
-  const execution = `https://console.aws.amazon.com/states/home?region=${region}` +
-              `#/executions/details/${arn}`;
+  const arn = getExecutionArn(
+    get(payload, 'ingest_meta.state_machine'),
+    name
+  );
+  const execution = getExecutionUrl(arn);
 
   const doc = {
     name,
@@ -47,12 +48,12 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
 }
 
 async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
-  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  const sfArn = get(payload, 'ingest_meta.state_machine').replace('stateMachine', 'execution');
   const name = get(payload, 'ingest_meta.execution_name');
-  const arn = `${sfArn}:${name}`;
-  const url = `https://console.aws.amazon.com/states/home?region=${region}` +
-              `#/executions/details/${arn}`;
+  const arn = getExecutionArn(
+    get(payload, 'ingest_meta.state_machine'),
+    name
+  );
+  const execution = getExecutionUrl(arn);
 
   const collection = get(payload, 'collection.meta');
   const collectionId = `${collection.name}___${collection.version}`;
@@ -72,7 +73,7 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
     status: get(payload, 'ingest_meta.status'),
     provider: get(payload, 'provider.id'),
     progress,
-    execution: url,
+    execution,
     PANSent: get(payload, 'payload.pdr.PANSent', false),
     PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
     stats,
@@ -161,12 +162,13 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
 }
 
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
-  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  const sfArn = get(payload, 'ingest_meta.state_machine').replace('stateMachine', 'execution');
   const name = get(payload, 'ingest_meta.execution_name');
-  const arn = `${sfArn}:${name}`;
-  const url = `https://console.aws.amazon.com/states/home?region=${region}` +
-              `#/executions/details/${arn}`;
+  const arn = getExecutionArn(
+    get(payload, 'ingest_meta.state_machine'),
+    name
+  );
+  const execution = getExecutionUrl(arn);
+
   const collection = get(payload, 'collection');
   const meta = collection.meta || collection;
   const exception = get(payload, 'exception');
@@ -195,7 +197,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
         collectionId,
         status: get(payload, 'ingest_meta.status'),
         provider: get(payload, 'provider.id'),
-        execution: url,
+        execution,
         cmrLink: get(g, 'cmr.link'),
         files: g.files,
         error: exception,
