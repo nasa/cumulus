@@ -367,6 +367,10 @@ module.exports.provider = {
     password: {
       type: 'string'
     },
+    encrypted: {
+      type: 'boolean',
+      readonly: true
+    },
     createdAt: {
       type: 'number',
       readonly: true
