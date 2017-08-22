@@ -5,11 +5,20 @@ Parameters:
 
 Resources:
   Fn:
+    Type: AWS::Lambda::Function
     Properties:
+      FunctionName: !Join ['-', [!Ref StackName, task, !Var name]]
       Description: 'Runs scheduled discovery / ingest'
       Runtime: nodejs6.10
+      Code: !Var path
+      Timeout: 300
+      MemorySize: 256
+      Handler: index.handler
+      Role: !GetAtt [TaskExecutionRole, Arn]
 
   Service:
+    DependsOn:
+      - !ResourceName Fn
     Properties:
       DesiredCount: 1
 
