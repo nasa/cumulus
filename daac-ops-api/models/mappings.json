@@ -42,7 +42,7 @@
       "pdrName": {
         "type": "keyword"
       },
-      "collection": {
+      "collectionId": {
         "type": "keyword"
       },
       "status": {
@@ -115,7 +115,7 @@
       "pdrName": {
         "type": "keyword"
       },
-      "collection": {
+      "collectionId": {
         "type": "keyword"
       },
       "status": {
@@ -171,6 +171,56 @@
       }
     }
   },
+  "rule": {
+    "dynamic_templates": [
+      {
+        "all_date_fileds": {
+          "match": "*At",
+          "match_mapping_type": "long",
+          "mapping": {
+            "type": "date"
+          }
+        }
+      }
+    ],
+    "properties": {
+      "name": {
+        "type": "keyword"
+      },
+      "workflow": {
+        "type": "keyword"
+      },
+      "provider": {
+        "type": "keyword"
+      },
+      "collection": {
+        "properties": {
+          "name": {
+            "type": "keyword"
+          },
+          "version": {
+            "type": "keyword"
+          }
+        }
+      },
+      "meta": {
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "state": {
+        "type": "keyword"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  },
   "execution": {
     "dynamic_templates": [
       {
@@ -196,7 +246,7 @@
       "type": {
         "type": "keyword"
       },
-      "collection": {
+      "collectionId": {
         "type": "keyword"
       },
       "status": {
