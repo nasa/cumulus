@@ -28,7 +28,7 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
     arn,
     execution,
     type: get(payload, 'ingest_meta.workflow_name'),
-    collection: get(payload, 'collection.id'),
+    collectionId: get(payload, 'collection.id'),
     status: get(payload, 'ingest_meta.status'),
     createdAt: get(payload, 'ingest_meta.createdAt'),
     timestamp: Date.now()
@@ -262,10 +262,10 @@ function handler(event, context, cb) {
   // we can handle both incoming message from SNS as well as direct payload
   log.info(JSON.stringify(event));
   const records = get(event, 'Records');
-  const jobs = [];
+  let jobs = [];
 
   if (records) {
-    jobs.push(records.map(r => handlePayload(r)));
+    jobs = records.map(r => handlePayload(r));
   }
   else {
     jobs.push(handlePayload(event));
