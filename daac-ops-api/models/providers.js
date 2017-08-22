@@ -1,7 +1,7 @@
 'use strict';
 
 const Manager = require('./base');
-const { KMS } = require('@cumulus/ingest/aws');
+const Crypto = require('@cumulus/ingest/aws').DefaultProvider;
 const providerSchema = require('./schemas').provider;
 
 class Provider extends Manager {
@@ -11,12 +11,11 @@ class Provider extends Manager {
   }
 
   async encryptPassword(password) {
-    const kmsId = process.env.KMS_ID;
-    return KMS.encrypt(password, kmsId);
+    return await Crypto.encrypt(password);
   }
 
   async decryptPassword(password) {
-    return KMS.decrypt(password);
+    return await Crypto.decrypt(password);
   }
 
   async update(key, _item, keysToDelete = []) {

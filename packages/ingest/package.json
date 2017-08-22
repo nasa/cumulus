@@ -18,15 +18,16 @@
     "@cumulus/common": "^1.0.0",
     "@cumulus/pvl": "^1.0.0",
     "aws-sdk": "^2.4.11",
+    "ftp": "^0.3.10",
     "got": "^7.1.0",
     "lodash.get": "^4.4.2",
     "mkdirp": "^0.5.1",
-    "pump": "^1.0.2",
     "moment": "^2.6.0",
+    "node-forge": "^0.7.1",
+    "pump": "^1.0.2",
     "simplecrawler": "^1.1.4",
-    "url-join": "^1.0.0",
-    "ftp": "^0.3.10",
-    "ssh2": "^0.5.5"
+    "ssh2": "^0.5.5",
+    "url-join": "^1.0.0"
   },
   "devDependencies": {
     "json-loader": "^0.5.4"
