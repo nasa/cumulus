@@ -12,7 +12,7 @@ const Search = require('../es/search').Search;
  * @return {undefined}
  */
 function list(event, cb) {
-  const search = new Search(event, 'granule');
+  const search = new Search(event, 'execution');
   search.query().then(response => cb(null, response)).catch((e) => {
     cb(e);
   });
@@ -24,10 +24,10 @@ function list(event, cb) {
  * @return {object} a single granule object.
  */
 function get(event, cb) {
-  const granuleId = _get(event.pathParameters, 'granuleName');
+  const arn = _get(event.pathParameters, 'arn');
 
-  const search = new Search({}, 'granule');
-  search.get(granuleId).then((response) => {
+  const search = new Search({}, 'execution');
+  search.get(arn).then((response) => {
     cb(null, response);
   }).catch((e) => {
     cb(e);
