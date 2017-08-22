@@ -1,3 +1,4 @@
+/* eslint-disable require-yield */
 'use strict';
 
 const get = require('lodash.get');
