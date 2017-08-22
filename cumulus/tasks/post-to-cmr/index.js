@@ -3,7 +3,8 @@
 const get = require('lodash.get');
 const path = require('path');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { S3, KMS } = require('@cumulus/ingest/aws');
+const { S3 } = require('@cumulus/ingest/aws');
+const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const testPayload = require('@cumulus/test-data/payloads/modis/cmr.json');
@@ -91,7 +92,7 @@ async function getMetadata(xmlFilePath) {
 
 async function decryptPassword(password) {
   try {
-    const pass = await KMS.decrypt(password);
+    const pass = await DefaultProvider.decrypt(password);
     return pass;
   }
   catch (e) {
