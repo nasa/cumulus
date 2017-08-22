@@ -43,7 +43,10 @@ function queue(event, context, cb) {
     const message = JSON.parse(data.Body);
     message.provider = provider;
     message.meta = meta;
-    message.collection = collection;
+    message.collection = {
+      id: collection.name,
+      meta: collection
+    };
     message.ingest_meta.execution_name = generateRandomName();
 
     aws.SQS.sendMessage(message.resources.queues.startSF, message)
