@@ -54,6 +54,9 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const url = `https://console.aws.amazon.com/states/home?region=${region}` +
               `#/executions/details/${arn}`;
 
+  const collection = get(payload, 'collection.meta');
+  const collectionId = `${collection.name}___${collection.version}`;
+
   const stats = {
     total: get(payload, 'payload.granules_queued', 0),
     completed: get(payload, 'payload.granules.completed', 0),
@@ -65,7 +68,7 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
 
   const doc = {
     pdrName: get(payload, 'payload.pdr.name'),
-    collection: get(payload, 'collection.id'),
+    collectionId,
     status: get(payload, 'ingest_meta.status'),
     provider: get(payload, 'provider.id'),
     progress,
@@ -189,7 +192,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
       const doc = {
         granuleId: g.granuleId,
         pdrName: get(payload, 'payload.pdr.name'),
-        collection: collection.id,
+        collectionId,
         status: get(payload, 'ingest_meta.status'),
         provider: get(payload, 'provider.id'),
         execution: url,
