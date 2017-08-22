@@ -7,8 +7,8 @@ const join = require('path').join;
 const urljoin = require('url-join');
 const log = require('@cumulus/common/log');
 const FTPError = require('@cumulus/common/errors').FTPError;
-const KMS = require('./aws').KMS;
 const S3 = require('./aws').S3;
+const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
 
 module.exports.ftpMixin = superclass => class extends superclass {
@@ -34,12 +34,12 @@ module.exports.ftpMixin = superclass => class extends superclass {
 
     if (!this.decrypted && this.provider.encrypted) {
       if (this.username) {
-        this.options.user = await KMS.decrypt(this.username);
+        this.options.user = await Crypto.decrypt(this.username);
         this.decrypted = true;
       }
 
       if (this.password) {
-        this.options.password = await KMS.decrypt(this.password);
+        this.options.password = await Crypto.decrypt(this.password);
         this.decrypted = true;
       }
     }
