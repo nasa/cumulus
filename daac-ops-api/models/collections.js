@@ -1,8 +1,6 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
 const Manager = require('./base');
-const Provider = require('./providers');
 const collectionSchema = require('./schemas').collection;
 
 function checkRegex(regex, sampleFileName) {
