@@ -489,6 +489,28 @@ class KMS {
 }
 
 class StepFunction {
+  static async getExecution(arn, ignoreMissingExecutions = false) {
+    const stepfunctions = new AWS.StepFunctions();
+
+    const params = {
+      executionArn: arn
+    };
+
+    try {
+      const r = await stepfunctions.describeExecution(params).promise();
+      return r;
+    }
+    catch (e) {
+      if (ignoreMissingExecutions && e.message && e.message.includes('Execution Does Not Exist')) {
+        return {
+          executionArn: arn,
+          status: 'NOT_FOUND'
+        };
+      }
+      throw e;
+    }
+  }
+
   static async pullEvent(event) {
     if (event.s3_path) {
       const parsed = S3.parseS3Uri(event.s3_path);
