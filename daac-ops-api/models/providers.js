@@ -1,8 +1,7 @@
 'use strict';
 
-const forge = require('node-forge');
 const Manager = require('./base');
-const S3 = require('@cumulus/ingest/aws').S3;
+const Crypto = require('@cumulus/ingest/aws').DefaultProvider;
 const providerSchema = require('../schemas').provider;
 
 class Provider extends Manager {
@@ -12,26 +11,11 @@ class Provider extends Manager {
   }
 
   async encryptPassword(password) {
-    // Download the publickey
-    const pki = forge.pki;
-    const pub = await S3.get(
-      process.env.internal,
-      `${process.env.StackName}-${process.env.Stage}/crypto/public.pub`
-    );
-
-    const publicKey = pki.publicKeyFromPem(pub.Body.toString());
-    return publicKey.encrypt(password);
+    return await Crypto.encrypt(password);
   }
 
   async decryptPassword(password) {
-    const pki = forge.pki;
-    const priv = await S3.get(
-      process.env.internal,
-      `${process.env.StackName}-${process.env.Stage}/crypto/private.pem`
-    );
-
-    const privateKey = pki.privateKeyFromPem(priv.Body.toString());
-    return privateKey.decrypt(password);
+    return await Crypto.decrypt(password);
   }
 
   async update(key, _item, keysToDelete = []) {
