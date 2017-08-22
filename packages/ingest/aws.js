@@ -37,6 +37,30 @@ function getEndpoint(local = false, port = 8000) {
   return args;
 }
 
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} stateMachineArn state machine ARN
+ * @param {string} executionName state machine's execution name
+ * @returns {string} Step Function Execution Arn
+ */
+function getExecutionArn(stateMachineArn, executionName) {
+  const sfArn = stateMachineArn.replace('stateMachine', 'execution');
+  return `${sfArn}:${executionName}`;
+}
+
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} executionArn execution ARN
+ * @returns {string} return aws console url for the execution
+ */
+function getExecutionUrl(executionArn) {
+  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+  return `https://console.aws.amazon.com/states/home?region=${region}` +
+         `#/executions/details/${executionArn}`;
+}
+
 async function invoke(name, payload, type = 'Event') {
   if (process.env.IS_LOCAL) {
     log.info(`Faking Lambda invocation for ${name}`);
@@ -464,6 +488,36 @@ class KMS {
   }
 }
 
+class StepFunction {
+  static async pullEvent(event) {
+    if (event.s3_path) {
+      const parsed = S3.parseS3Uri(event.s3_path);
+      const file = await S3.get(parsed.bucket, parsed.key);
+
+      return JSON.parse(file.Body.toString());
+    }
+    return event;
+  }
+
+  static async pushEvent(event) {
+    const str = JSON.stringify(event);
+    if (str.length > 32000) {
+      const stack = event.resources.stack;
+      const stage = event.resources.stage;
+      const name = event.ingest_meta.execution_name;
+      const key = `${stack}-${stage}/payloads/${name}.json`;
+      const bucket = event.resources.buckets.internal;
+
+      await S3.put(bucket, key, str);
+      return {
+        s3_path: `s3://${bucket}/${key}`
+      };
+    }
+
+    return event;
+  }
+}
+
 module.exports = {
   CloudWatch,
   SQS,
@@ -472,5 +526,8 @@ module.exports = {
   ECS,
   invoke,
   getEndpoint,
-  Events
+  Events,
+  StepFunction,
+  getExecutionArn,
+  getExecutionUrl
 };
