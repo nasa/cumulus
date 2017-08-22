@@ -33,11 +33,6 @@ module.exports.ftpMixin = superclass => class extends superclass {
     this.client = new Ftp();
 
     if (!this.decrypted && this.provider.encrypted) {
-      if (this.username) {
-        this.options.user = await Crypto.decrypt(this.username);
-        this.decrypted = true;
-      }
-
       if (this.password) {
         this.options.password = await Crypto.decrypt(this.password);
         this.decrypted = true;
