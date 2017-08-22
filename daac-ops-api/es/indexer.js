@@ -59,13 +59,19 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const collectionId = `${collection.name}___${collection.version}`;
 
   const stats = {
-    total: get(payload, 'payload.granules_queued', 0),
-    completed: get(payload, 'payload.granules.completed', 0),
-    failed: get(payload, 'payload.granules.failed', 0)
+    processing: get(payload, 'payload.running', []).length,
+    completed: get(payload, 'payload.completed', []).length,
+    failed: get(payload, 'payload.failed', []).length
   };
 
-  stats.processing = stats.total - stats.completed - stats.failed;
-  const progress = stats.total > 0 ? stats.processing / stats.total : 0;
+  stats.total = stats.processing + stats.completed + stats.failed;
+  let progress = 0;
+  if (stats.processing > 0 && stats.total > 0) {
+    progress = stats.processing / stats.total;
+  }
+  else if (stats.processing === 0 && stats.total > 0) {
+    progress = 100;
+  }
 
   const doc = {
     pdrName: get(payload, 'payload.pdr.name'),
@@ -250,7 +256,7 @@ async function handlePayload(event) {
 
   await indexStepFunction(esClient, payload);
 
-  if (type === 'ParsePdrs') {
+  if (type === 'ParsePdr') {
     await pdr(esClient, payload);
   }
   else if (type === 'IngestGranule') {
