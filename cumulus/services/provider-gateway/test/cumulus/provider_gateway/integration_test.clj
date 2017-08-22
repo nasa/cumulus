@@ -158,8 +158,8 @@
         expected-task-2-completed-requests [(create-failed-download-request :http "moo2.txt")
                                             (create-successful-download-request :http "moo.txt")]
         provider {:provider-id "LOCAL",
-                  :s3-api-type :canned
-                  :activity-api {:activity-api-type "canned"
+                  :s3-api-type :in-memory
+                  :activity-api {:activity-api-type "in-memory"
                                  :tasks [(create-download-task "task-1" task1-download-requests)
                                          (create-download-task "task-2" task2-download-requests)]}
                   :conn_config {:conn_type "http"}
@@ -230,8 +230,8 @@
                                                    #(str "sources/EPSG4326/SIPSTEST/VNGCR_LQD_C1/" %)))
                                                 expected-task-1-completed-requests)
         provider {:provider-id "LOCAL",
-                  :s3-api-type :canned
-                  :activity-api {:activity-api-type "canned"
+                  :s3-api-type :in-memory
+                  :activity-api {:activity-api-type "in-memory"
                                  :tasks [(create-download-task "task-1" task1-download-requests)]}
                   :conn_config {:conn_type "http"}
                   :num_connections 2}
@@ -267,8 +267,8 @@
         expected-task-2-completed-requests [(create-failed-download-request :ftp "/ftp/moo2.txt")
                                             (create-successful-download-request :ftp "/ftp/moo.txt")]
         provider {:provider-id "LOCAL",
-                  :s3-api-type :canned
-                  :activity-api {:activity-api-type "canned"
+                  :s3-api-type :in-memory
+                  :activity-api {:activity-api-type "in-memory"
                                  :tasks [(create-download-task "task-1" task1-download-requests)
                                          (create-download-task "task-2" task2-download-requests)]}
                   :conn_config (merge {:conn_type "ftp" :host "localhost"}
@@ -306,8 +306,8 @@
         expected-task-2-completed-requests [(create-failed-download-request :sftp "/sftp/moo2.txt")
                                             (create-successful-download-request :sftp "/sftp/moo.txt")]
         provider {:provider-id "LOCAL",
-                  :s3-api-type :canned
-                  :activity-api {:activity-api-type "canned"
+                  :s3-api-type :in-memory
+                  :activity-api {:activity-api-type "in-memory"
                                  :tasks [(create-download-task "task-1" task1-download-requests)
                                          (create-download-task "task-2" task2-download-requests)]}
                   :conn_config (merge {:conn_type "sftp"
@@ -370,8 +370,8 @@
   (let [sync-files-1 [{:url (create-url :http "/foo/bar.txt") :version "bar-1"}
                       {:url (create-url :http "/foo/bar2.txt") :version "bar2-1"}]
         provider {:provider-id "LOCAL",
-                  :s3-api-type :canned
-                  :sync-activity-api {:activity-api-type "canned"
+                  :s3-api-type :in-memory
+                  :sync-activity-api {:activity-api-type "in-memory"
                                       :tasks [(create-sync-task "task-1" sync-files-1)]}
                   :conn_config {:conn_type "http"}
                   :num_connections 2}
@@ -452,8 +452,8 @@
   (let [sync-files-1 [{:url (create-url :http "/foo/bar.txt") :version "bar-1"}
                       {:url (create-url :http "moo2.txt") :version "moo1"}] ;; doesn't exist
         provider {:provider-id "LOCAL",
-                  :s3-api-type :canned
-                  :sync-activity-api {:activity-api-type "canned"
+                  :s3-api-type :in-memory
+                  :sync-activity-api {:activity-api-type "in-memory"
                                       :tasks [(create-sync-task "task-1" sync-files-1)]}
                   :conn_config {:conn_type "http"}
                   :num_connections 2}
