@@ -16,7 +16,7 @@ const https = require('https');
 const url = require('url');
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
-const { KMS } = require('@cumulus/ingest/aws');
+const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const Manager = require('../models/base');
 const { Search } = require('../es/search');
@@ -60,8 +60,8 @@ async function bootstrapUsers(table, records) {
   return Promise.all(additions);
 }
 
-async function bootstrapCmrProvider(kmsId, password) {
-  return KMS.encrypt(password, kmsId);
+async function bootstrapCmrProvider(password) {
+  return DefaultProvider.encrypt(password);
 }
 
 function sendResponse(event, status, data = {}, cb = () => {}) {
@@ -132,7 +132,7 @@ function handler(event, context, cb) {
   const actions = [
     bootstrapElasticSearch(es.host),
     bootstrapUsers(users.table, users.records),
-    bootstrapCmrProvider(cmr.KmsId, cmr.Password)
+    bootstrapCmrProvider(cmr.Password)
   ];
 
   return Promise.all(actions).then((results) => {
@@ -150,6 +150,11 @@ function handler(event, context, cb) {
 module.exports = handler;
 
 justLocalRun(() => {
-  const a = {};
-  handler(a, {}, (e, r) => console.log(e, r));
+  //const a = {};
+  //handler(a, {}, (e, r) => console.log(e, r));
+  //bootstrapCmrProvider('testing').then(r => {
+    //console.log(r)
+    //return DefaultProvider.decrypt(r)
+  //}).then(r => console.log(r))
+    //.catch(e => console.log(e));
 });
