@@ -310,13 +310,6 @@ class BaseSearch {
 
 class Search extends BaseSearch {}
 
-class LogSearch extends BaseSearch {
-  constructor(event, type = null) {
-    super(event, type);
-    this.index = `${process.env.StackName}-${process.env.Stage}-logs`;
-  }
-}
-
 class Stats extends BaseSearch {
 
   async query() {
@@ -509,6 +502,5 @@ class Stats extends BaseSearch {
 module.exports = {
   BaseSearch,
   Stats,
-  Search,
-  LogSearch
+  Search
 };
