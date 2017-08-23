@@ -27,5 +27,6 @@ module.exports = {
   stats,
   distribution,
   bootstrap,
-  indexer: indexer.handler
+  indexer: indexer.handler,
+  logHandler: indexer.logHandler
 };
