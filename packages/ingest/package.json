@@ -27,7 +27,8 @@
     "pump": "^1.0.2",
     "simplecrawler": "^1.1.4",
     "ssh2": "^0.5.5",
-    "url-join": "^1.0.0"
+    "url-join": "^1.0.0",
+    "pino": "^4.7.1"
   },
   "devDependencies": {
     "json-loader": "^0.5.4"
