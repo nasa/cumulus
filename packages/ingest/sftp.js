@@ -5,11 +5,13 @@ const os = require('os');
 const Client = require('ssh2').Client;
 const join = require('path').join;
 const urljoin = require('url-join');
-const log = require('./log');
+const logger = require('./log');
 //const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
+
+const log = logger.child({ file: 'ingest/sftp.js' });
 
 //const PathIsInvalid = errors.createErrorType('PathIsInvalid');
 
@@ -45,7 +47,7 @@ module.exports = superclass => class extends superclass {
           if (err) return reject(err);
           this.sftp = sftp;
           this.connected = true;
-          log.info(`SFTP Connected to ${this.host}`);
+          log.info({ provider: this.provider.id }, `SFTP Connected to ${this.host}`);
           return resolve();
         });
       });
@@ -87,12 +89,12 @@ module.exports = superclass => class extends superclass {
 
     const tempFile = join(os.tmpdir(), filename);
     const remoteFile = join(path, filename);
-    log.info(`Downloading to ${tempFile}`);
+    log.info({ filename }, `Downloading to ${tempFile}`);
 
     return new Promise((resolve, reject) => {
       this.sftp.fastGet(remoteFile, tempFile, (e) => {
         if (e) return reject(e);
-        log.info(`Finishing downloading ${this.filename}`);
+        log.info({ filename }, `Finishing downloading ${this.filename}`);
         return (resolve(tempFile));
       });
       this.client.on('error', (e) => reject(e));
@@ -152,7 +154,7 @@ module.exports = superclass => class extends superclass {
   async list() {
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, this.path);
-    log.info(`${files.length} files were found on ${this.host}`);
+    log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
     return files;
   }
 };
