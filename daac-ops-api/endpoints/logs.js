@@ -1,14 +1,14 @@
 'use strict';
 
 const handle = require('../lib/response').handle;
-const LogSearch = require('../es/search').LogSearch;
+const { Search } = require('../es/search');
 
 function count(event, cb) {
   return cb(null, {});
 }
 
 function list(event, cb) {
-  const search = new LogSearch(event);
+  const search = new Search(event, 'logs');
   search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
