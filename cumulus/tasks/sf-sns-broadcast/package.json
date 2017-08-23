@@ -18,7 +18,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "lodash.get": "^4.4.2"
+    "lodash.get": "^4.4.2",
+    "@cumulus/ingest": "^1.0.0"
   },
   "devDependencies": {
     "babel-core": "^6.25.0",
