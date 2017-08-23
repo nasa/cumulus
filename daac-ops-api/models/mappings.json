@@ -1,4 +1,32 @@
 {
+  "logs": {
+    "properties": {
+      "type": {
+        "type": "keyword"
+      },
+      "level": {
+        "type": "integer"
+      },
+      "provider": {
+        "type": "keyword"
+      },
+      "granuleId": {
+        "type": "keyword"
+      },
+      "collectionId": {
+        "type": "keyword"
+      },
+      "pdrName": {
+        "type": "keyword"
+      },
+      "timestamp": {
+        "type": "date"
+      },
+      "file": {
+        "type": "keyword"
+      }
+    }
+  },
   "collection": {
     "dynamic_templates": [
       {
