@@ -13,7 +13,7 @@
   "scripts": {
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
-    "test": "./node_modules/.bin/ava tests/*.js --serial --no-color"
+    "test": "echo 'no test'"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
