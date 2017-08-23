@@ -190,7 +190,7 @@ class ParseAndQueue extends Parse {
     const payload = await super.ingest();
     const events = {};
 
-    payload.granules = payload.granules.slice(0, 10);
+    //payload.granules = payload.granules.slice(0, 10);
 
     // make sure all parsed granules the correct collection
     for (const g of payload.granules) {
@@ -219,10 +219,19 @@ class ParseAndQueue extends Parse {
       }
     }
 
-    const arns = await Promise.all(
+    const names = await Promise.all(
       payload.granules.map(g => queue.queueGranule(events[g.dataType], g))
     );
-    return { running: arns, completed: [], failed: [], isFinished: false };
+
+    let isFinished = false;
+    const running = Object.keys(names).filter(n => n === 'running').map(n => names[n]);
+    const completed = Object.keys(names).filter(n => n === 'completed').map(n => names[n]);
+    const failed = Object.keys(names).filter(n => n === 'failed').map(n => names[n]);
+    if (running.length === 0) {
+      isFinished = true;
+    }
+
+    return { running, completed, failed, isFinished };
   }
 }
 
