@@ -12,6 +12,7 @@
   },
   "scripts": {
     "test": "ava tests/*.js --no-color --serial",
+    "local": "node index.js | pino",
     "build": "webpack --progress",
     "watch": "webpack --progress -w"
   },

@@ -1,7 +1,9 @@
 'use strict';
 
 const join = require('path').join;
-const log = require('@cumulus/common/log');
+const logger = require('./log');
+
+const log = logger.child({ file: 'ingest/recursion.js' });
 
 /**
  * Handles recursion of a FTP/SFTP list operation
