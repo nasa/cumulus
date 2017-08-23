@@ -10,10 +10,25 @@
 'use strict';
 
 const get = require('lodash.get');
-const log = require('@cumulus/common/log');
+const zlib = require('zlib');
+const logger = require('@cumulus/ingest/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getExecutionArn, getExecutionUrl } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
+
+const log = logger.child({ file: 'daac-ops-api/es/indexer.js' });
+
+async function indexLog(payloads, index = 'cumulus', type = 'logs') {
+  const esClient = await Search.es();
+  const body = [];
+
+  payloads.forEach((p) => {
+    body.push({ index: { _index: index, _type: type, _id: p.id } });
+    body.push(JSON.parse(p.message));
+  });
+
+  return esClient.bulk({ body: body });
+}
 
 async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
   const name = get(payload, 'ingest_meta.execution_name');
@@ -264,6 +279,18 @@ async function handlePayload(event) {
   }
 }
 
+function logHandler(event, context, cb) {
+  log.debug(event);
+  const payload = new Buffer(event.awslogs.data, 'base64');
+  zlib.gunzip(payload, (e, r) => {
+    const logs = JSON.parse(r.toString());
+    log.debug(logs);
+    return indexLog(logs.logEvents)
+      .then(s => cb(null, s))
+      .catch(err => cb(err));
+  });
+}
+
 function handler(event, context, cb) {
   // we can handle both incoming message from SNS as well as direct payload
   log.info(JSON.stringify(event));
@@ -285,6 +312,7 @@ function handler(event, context, cb) {
 
 module.exports = {
   handler,
+  logHandler,
   indexCollection,
   indexProvider,
   indexRule,
