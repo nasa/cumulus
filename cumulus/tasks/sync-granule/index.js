@@ -62,11 +62,6 @@ module.exports.handler = function handler(_event, context, cb) {
         event.meta.process = collection.process;
       }
 
-      // temporary fix for payload parsing problem in docker images
-      // it deosn't look for the meta key in collection
-      event.collection = event.collection.meta;
-      event.collection.id = event.collection.name;
-
       if (ingest.connected) {
         ingest.end();
       }
