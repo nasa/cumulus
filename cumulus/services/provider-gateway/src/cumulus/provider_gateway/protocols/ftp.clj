@@ -34,7 +34,13 @@
   [config client]
   (let [{:keys [host port username password]} config
         port (or port 21)]
+    (println (format "Connecting to FTP server [%s] on port [%d] using user [%s] password [%s]"
+                     host
+                     port
+                     username
+                     password))
     (.setControlEncoding client "UTF-8")
+    (.setUseEPSVwithIPv4 client true)
     (.setConnectTimeout client 30000) ; ms
     (.setDataTimeout client -1) ; forever ms
     (.setControlKeepAliveTimeout client 300) ; seconds

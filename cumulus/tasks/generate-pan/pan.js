@@ -1,6 +1,6 @@
 'use strict';
 
-const log = require('cumulus-common/log');
+const log = require('@cumulus/common/log');
 const path = require('path');
 
 /**

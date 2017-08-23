@@ -1,7 +1,7 @@
 'use strict';
 
-const log = require('cumulus-common/log');
-const Task = require('cumulus-common/task');
+const log = require('@cumulus/common/log');
+const Task = require('@cumulus/common/task');
 const promisify = require('util.promisify');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
@@ -22,7 +22,7 @@ module.exports = class GeneratePan extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { type, host, port, username, password } =
+    const { conn_type, host, port, username, password } =
      this.message.provider.config.gateway_config.conn_config;
 
     const folder = this.config.folder;
@@ -39,7 +39,7 @@ module.exports = class GeneratePan extends Task {
     const panStr = pan.generatePan(files, timeStamp);
 
     let client;
-    if (type.toUpperCase() === 'FTP') {
+    if (conn_type.toUpperCase() === 'FTP') {
       client = new FtpClient();
     }
     else {
@@ -85,7 +85,7 @@ module.exports = class GeneratePan extends Task {
 };
 
 // Test code
-const local = require('cumulus-common/local-helpers');
+const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DiscoverPdr: {

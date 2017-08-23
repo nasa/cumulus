@@ -1,15 +1,15 @@
 'use strict';
 
-const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
-const Task = require('cumulus-common/task');
+const log = require('@cumulus/common/log');
+const aws = require('@cumulus/common/aws');
+const Task = require('@cumulus/common/task');
 const validations = require('./archive-validations');
 const fs = require('fs');
 const path = require('path');
 const gunzip = require('gunzip-maybe');
 const tarGz = require('targz');
 const promisify = require('util.promisify');
-const util = require('cumulus-common/util');
+const util = require('@cumulus/common/util');
 const { spawn, spawnSync, execSync } = require('child_process');
 const checksum = require('checksum');
 
@@ -118,7 +118,7 @@ module.exports = class ValidateArchives extends Task {
 };
 
 // Test code
-const local = require('cumulus-common/local-helpers');
+const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DiscoverPdr: {

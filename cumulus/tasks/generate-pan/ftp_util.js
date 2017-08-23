@@ -4,8 +4,7 @@
  * package.
  */
 
-const log = require('cumulus-common/log');
-const fs = require('fs');
+const log = require('@cumulus/common/log');
 const path = require('path');
 const promisify = require('util.promisify');
 

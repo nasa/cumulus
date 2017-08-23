@@ -1,7 +1,7 @@
 'use strict';
 
-const log = require('cumulus-common/log');
-const Task = require('cumulus-common/task');
+const log = require('@cumulus/common/log');
+const Task = require('@cumulus/common/task');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
 const promisify = require('util.promisify');
@@ -19,7 +19,7 @@ module.exports = class DeletePdr extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { type, host, port, username, password } =
+    const { conn_type, host, port, username, password } =
      this.message.provider.config.gateway_config.conn_config;
     const folder = this.config.folder;
 
@@ -28,7 +28,7 @@ module.exports = class DeletePdr extends Task {
     const pdrFileName = payload.pdr_file_name;
 
     let client;
-    if (type.toUpperCase() === 'FTP') {
+    if (conn_type.toUpperCase() === 'FTP') {
       client = new FtpClient();
     }
     else {

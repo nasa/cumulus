@@ -1,8 +1,8 @@
 'use strict';
 
-const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
-const Task = require('cumulus-common/task');
+const log = require('@cumulus/common/log');
+const aws = require('@cumulus/common/aws');
+const Task = require('@cumulus/common/task');
 const path = require('path');
 const promisify = require('util.promisify');
 const FtpClient = require('ftp');
@@ -25,7 +25,7 @@ module.exports = class GeneratePdrd extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    const { type, host, port, username, password } =
+    const { conn_type, host, port, username, password } =
      this.message.provider.config.gateway_config.conn_config;
 
     const folder = this.config.folder;
@@ -41,7 +41,7 @@ module.exports = class GeneratePdrd extends Task {
     const pdrdStr = pdrdMod.generatePdrd(topLevelErrors, fileGroupErrors);
 
     let client;
-    if (type.toUpperCase() === 'FTP') {
+    if (conn_type.toUpperCase() === 'FTP') {
       client = new FtpClient();
     }
     else {
@@ -87,7 +87,7 @@ module.exports = class GeneratePdrd extends Task {
 };
 
 // Test code
-const local = require('cumulus-common/local-helpers');
+const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DiscoverPdr: {

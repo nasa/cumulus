@@ -5,7 +5,7 @@ const fs = require('fs');
 const pan = require('../pan');
 
 const allSuccessFixture = require('./fixtures/all-success-fixture');
-const missingFileFixutre = require('./fixtures/missing-file-fixture');
+const missingFileFixture = require('./fixtures/missing-file-fixture');
 
 const timeStamp = (dateTime) => dateTime.toISOString().replace(/\.\d\d\dZ/, 'Z');
 
@@ -33,7 +33,7 @@ describe('generate-pan.handler', () => {
   });
 
   it('generates a long pan with an entry for the number of files (NO_OF_FILES)', () => {
-    input = missingFileFixutre.input;
+    input = missingFileFixture.input;
     const now = new Date();
     timeStampStr = timeStamp(now);
     result = pan.generatePan(input, timeStampStr);
@@ -42,7 +42,7 @@ describe('generate-pan.handler', () => {
   });
 
   it('generates a timestamp for each file entry', () => {
-    input = missingFileFixutre.input;
+    input = missingFileFixture.input;
     const now = new Date();
     timeStampStr = timeStamp(now);
     const timeStampEntry = `TIME_STAMP = ${timeStampStr}`;
