@@ -526,9 +526,9 @@ class StepFunction {
       const oarn = exists.Metadata.arn;
       const status = exists.Metadata.status;
       if (status === 'failed') {
-        return { failed: oarn };
+        return ['failed', oarn];
       }
-      return { completed: oarn };
+      return ['completed', oarn];
     }
     return false;
   }
@@ -558,7 +558,7 @@ class StepFunction {
   static async pullEvent(event) {
     if (event.s3_path) {
       const parsed = S3.parseS3Uri(event.s3_path);
-      const file = await S3.get(parsed.bucket, parsed.key);
+      const file = await S3.get(parsed.Bucket, parsed.Key);
 
       return JSON.parse(file.Body.toString());
     }
