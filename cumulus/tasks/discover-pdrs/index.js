@@ -11,6 +11,7 @@ const log = logger.child({ file: 'discover-pdrs/index.js' });
 
 function handler(_event, context, cb) {
   try {
+    log.debug(_event);
     const event = Object.assign({}, _event);
     const queue = get(event, 'meta.useQueue', true);
     const provider = get(event, 'provider', null);
@@ -26,6 +27,7 @@ function handler(_event, context, cb) {
     const Discover = pdr.selector('discover', provider.protocol, queue);
     const discover = new Discover(event);
 
+    log.debug('Staring PDR discovery');
     return discover.discover().then((pdrs) => {
       if (queue) {
         event.payload.pdrs_found = pdrs.length;
@@ -36,6 +38,7 @@ function handler(_event, context, cb) {
 
       if (discover.connected) {
         discover.end();
+        log.debug(`Ending ${provider.protocol} connection`);
       }
 
       return cb(null, event);
@@ -44,6 +47,7 @@ function handler(_event, context, cb) {
 
       if (discover.connected) {
         discover.end();
+        log.debug(`Ending ${provider.protocol} connection`);
       }
 
       if (e.toString().includes('ECONNREFUSED')) {

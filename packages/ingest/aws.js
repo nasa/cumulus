@@ -3,8 +3,10 @@
 const url = require('url');
 const AWS = require('aws-sdk');
 const moment = require('moment');
-const log = require('@cumulus/common/log');
+const logger = require('./log');
 const errors = require('@cumulus/common/errors');
+
+const log = logger.chiled({ file: 'ingest/aws.js' });
 
 /**
  * getEndpoint returns proper AWS arguments for various

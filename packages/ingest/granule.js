@@ -4,13 +4,15 @@ const fs = require('fs');
 const get = require('lodash.get');
 const join = require('path').join;
 const urljoin = require('url-join');
-const log = require('./log');
+const logger = require('./log');
 const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
+
+const log = logger.child({ file: 'ingest/granule.js' });
 
 class Discover {
   constructor(event) {
