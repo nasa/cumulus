@@ -26,7 +26,7 @@ module.exports.handler = function handler(_event, context, cb) {
 
       return parse.ingest();
     }).then((payload) => {
-      if (parse.connected) {
+      if (parse && parse.connected) {
         parse.end();
       }
 
@@ -34,7 +34,7 @@ module.exports.handler = function handler(_event, context, cb) {
       return StepFunction.pushEvent(event);
     }).then(ev => cb(null, ev))
       .catch(e => {
-        if (parse.connected) {
+        if (parse && parse.connected) {
           parse.end();
         }
 
