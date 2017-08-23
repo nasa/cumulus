@@ -24,7 +24,10 @@ async function indexLog(payloads, index = 'cumulus', type = 'logs') {
 
   payloads.forEach((p) => {
     body.push({ index: { _index: index, _type: type, _id: p.id } });
-    body.push(JSON.parse(p.message));
+    const record = JSON.parse(p.message);
+    record.timestamp = record.time;
+    delete record.time;
+    body.push(record);
   });
 
   return esClient.bulk({ body: body });
