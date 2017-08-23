@@ -19,6 +19,9 @@ function generateRandomName() {
 async function dispatch(message) {
   const sfPayload = message.Body;
 
+  // add creation time
+  sfPayload.ingest_meta.createdAt = Date.now();
+
   const stepfunctions = new AWS.StepFunctions();
   const params = {
     stateMachineArn: sfPayload.ingest_meta.state_machine,
