@@ -1,8 +1,8 @@
 'use strict';
 
-const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
-const Task = require('cumulus-common/task');
+const log = require('@cumulus/common/log');
+const aws = require('@cumulus/common/aws');
+const Task = require('@cumulus/common/task');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
 const pdrMod = require('./pdr');
@@ -75,7 +75,7 @@ module.exports = class ValidatePdr extends Task {
 };
 
 // Test code
-const local = require('cumulus-common/local-helpers');
+const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DiscoverPdr: {

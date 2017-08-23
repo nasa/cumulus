@@ -1,6 +1,6 @@
 'use strict';
 
-const Task = require('cumulus-common/task');
+const Task = require('@cumulus/common/task');
 const pdrMod = require('./pdr');
 
 /**
@@ -56,7 +56,7 @@ module.exports = class GeneratePdrFileList extends Task {
 };
 
 // Test code
-const local = require('cumulus-common/local-helpers');
+const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DiscoverPdr: {

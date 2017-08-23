@@ -1,8 +1,8 @@
 'use strict';
 
-const log = require('cumulus-common/log');
-const aws = require('cumulus-common/aws');
-const Task = require('cumulus-common/task');
+const log = require('@cumulus/common/log');
+const aws = require('@cumulus/common/aws');
+const Task = require('@cumulus/common/task');
 const promisify = require('util.promisify');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
@@ -97,7 +97,7 @@ module.exports = class DownloadActivityMock extends Task {
 
 // const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const local = require('cumulus-common/local-helpers');
+const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
   workflow_config_template: {
     DownloadActivityMock: {
