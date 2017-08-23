@@ -2,13 +2,15 @@
 
 const path = require('path');
 const get = require('lodash.get');
-const log = require('@cumulus/common/log');
+const logger = require('./log');
 const { MismatchPdrCollection } = require('@cumulus/common/errors');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 const { S3 } = require('./aws');
 const queue = require('./queue');
+
+const log = logger.child({ file: 'ingest/pdr.js' });
 
 /**
  * This is a base class for discovering PDRs
@@ -163,8 +165,14 @@ class Parse {
     // each group represents a Granule record.
     // After adding all the files in the group to the Queue
     // we create the granule record (moment of inception)
-    log.info(`There are ${parsed.granulesCount} granules in ${this.pdr.name}`);
-    log.info(`There are ${parsed.filesCount} files in ${this.pdr.name}`);
+    log.info(
+      { pdrName: this.pdr.name },
+      `There are ${parsed.granulesCount} granules in ${this.pdr.name}`
+    );
+    log.info(
+      { pdrName: this.pdr.name },
+      `There are ${parsed.filesCount} files in ${this.pdr.name}`
+    );
 
     return parsed;
   }
