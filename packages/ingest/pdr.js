@@ -192,11 +192,13 @@ class ParseAndQueue extends Parse {
 
     //payload.granules = payload.granules.slice(0, 10);
 
-    // make sure all parsed granules the correct collection
+    // make sure all parsed granules have the correct collection
     for (const g of payload.granules) {
       if (!events[g.dataType]) {
         events[g.dataType] = JSON.parse(JSON.stringify(this.event));
 
+        // if the collection is not provided in the payload
+        // get it from S3
         if (g.dataType !== this.collection.name) {
           const bucket = this.buckets.internal;
           const key = `${this.event.resources.stack}-${this.event.resources.stage}` +
@@ -219,14 +221,16 @@ class ParseAndQueue extends Parse {
       }
     }
 
+    log.info(`Queueing ${payload.granules.length} granules to be processed`);
+
     const names = await Promise.all(
       payload.granules.map(g => queue.queueGranule(events[g.dataType], g))
     );
 
     let isFinished = false;
-    const running = Object.keys(names).filter(n => n === 'running').map(n => names[n]);
-    const completed = Object.keys(names).filter(n => n === 'completed').map(n => names[n]);
-    const failed = Object.keys(names).filter(n => n === 'failed').map(n => names[n]);
+    const running = names.filter(n => n[0] === 'running').map(n => n[1]);
+    const completed = names.filter(n => n[0] === 'completed').map(n => n[1]);
+    const failed = names.filter(n => n[0] === 'failed').map(n => n[1]);
     if (running.length === 0) {
       isFinished = true;
     }
