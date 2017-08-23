@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 'use strict';
 
 const get = require('lodash.get');
@@ -11,6 +12,7 @@ module.exports.handler = function handler(_event, context, cb) {
   let event;
   let counter;
   let limit;
+  let isFinished;
   try {
     StepFunction.pullEvent(_event).then((ev) => {
       event = ev;
@@ -19,7 +21,7 @@ module.exports.handler = function handler(_event, context, cb) {
 
       counter = get(event, 'payload.counter', 0);
       limit = get(event, 'payload.limit', 30);
-      const isFinished = get(event, 'payload.isFinished', false);
+      isFinished = get(event, 'payload.isFinished', false);
       const running = get(event, 'payload.running', []);
 
       // if finished, exit
@@ -64,34 +66,46 @@ module.exports.handler = function handler(_event, context, cb) {
       });
 
       if (running.length === 0) {
-        event.payload.isFinished = true;
+        isFinished = true;
+        event.payload.isFinished = isFinished;
+        event.payload.stats = {
+          failed: failed.length,
+          completed: failed.completed
+        };
+        delete event.payload.running;
+        delete event.payload.failed;
+        delete event.payload.completed;
       }
       else {
-        event.payload.isFinished = false;
+        isFinished = false;
+        event.payload.isFinished = isFinished;
+        log.info({
+          running: running.length,
+          completed: completed.length,
+          failed: failed.length,
+          counter,
+          limit
+        }, 'latest status');
+
+        event.payload.counter = counter + 1;
+        event.payload.limit = limit;
+        event.payload.running = running;
+        event.payload.completed = completed;
+        event.payload.failed = failed;
       }
 
-      log.info({
-        running: running.length,
-        completed: completed.length,
-        failed: failed.length,
-        counter,
-        limit
-      }, 'latest status');
-
-      event.payload.counter = counter + 1;
-      event.payload.limit = limit;
-      event.payload.running = running;
-      event.payload.completed = completed;
-      event.payload.failed = failed;
       return StepFunction.pushEvent(event);
-    }).then(ev => cb(null, ev))
-      .catch(e => {
-        log.error(e);
-        cb(e);
-      });
+    }).then(ev => {
+      ev.payload = { isFinished };
+      cb(null, ev);
+    }).catch(e => { //eslint-disable-line newline-per-chained-call
+      log.error(e);
+      cb(e);
+    });
   }
   catch (e) {
     log.error(e);
     throw e;
   }
 };
+
