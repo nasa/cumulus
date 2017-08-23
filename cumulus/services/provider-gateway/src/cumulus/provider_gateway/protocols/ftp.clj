@@ -35,6 +35,7 @@
   (let [{:keys [host port username password]} config
         port (or port 21)]
     (.setControlEncoding client "UTF-8")
+    (.setUseEPSVwithIPv4 client true)
     (.setConnectTimeout client 30000) ; ms
     (.setDataTimeout client -1) ; forever ms
     (.setControlKeepAliveTimeout client 300) ; seconds
