@@ -34,7 +34,7 @@ async function queueGranule(event, granule) {
   const message = await getTemplate(event);
 
   // check if the granule is already processed
-  const status = StepFunction.getGranuleStatus(granule.granuleId, event);
+  const status = await StepFunction.getGranuleStatus(granule.granuleId, event);
   if (status) {
     return status;
   }
@@ -63,7 +63,7 @@ async function queueGranule(event, granule) {
 
   message.ingest_meta.execution_name = name;
   await SQS.sendMessage(queueUrl, message);
-  return { running: arn };
+  return ['running', arn];
 }
 
 module.exports.queuePdr = queuePdr;
