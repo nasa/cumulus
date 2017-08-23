@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
-const { SQS, S3, getExecutionArn } = require('./aws');
+const { SQS, S3, getExecutionArn, StepFunction } = require('./aws');
 
 async function getTemplate(event) {
   const templates = get(event, 'resources.templates');
@@ -33,13 +33,20 @@ async function queueGranule(event, granule) {
   const pdr = get(event, 'payload.pdr', null);
   const message = await getTemplate(event);
 
+  // check if the granule is already processed
+  const status = StepFunction.getGranuleStatus(granule.granuleId, event);
+  if (status) {
+    return status;
+  }
+
   // if size is larger than 450mb skip
   for (const f of granule.files) {
     if (f.fileSize > 450000000) {
-      return false;
+      return { completed: granule.granuleId };
     }
   }
 
+  message.meta.granuleId = granule.granuleId;
   message.payload = {
     granules: [{
       granuleId: granule.granuleId,
@@ -56,7 +63,7 @@ async function queueGranule(event, granule) {
 
   message.ingest_meta.execution_name = name;
   await SQS.sendMessage(queueUrl, message);
-  return arn;
+  return { running: arn };
 }
 
 module.exports.queuePdr = queuePdr;
