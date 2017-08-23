@@ -2,27 +2,23 @@
 
 const _get = require('lodash.get');
 const moment = require('moment');
+const log = require('@cumulus/ingest/log');
 const handle = require('../lib/response').handle;
-const Stats = require('../es/search').Stats;
+const Stats = require('../es/stats');
 
 function getType(event) {
   let index;
 
   const supportedTypes = {
-    granules: process.env.GranulesTable,
-    pdrs: process.env.PDRsTable,
-    collections: process.env.CollectionsTable,
-    logs: null,
-    providers: process.env.ProvidersTable,
-    resources: process.env.ResourcesTable
+    granules: 'granule',
+    pdrs: 'pdr',
+    collections: 'collection',
+    logs: 'logs',
+    providers: 'provider'
   };
 
   const typeRequested = _get(event, 'queryStringParameters.type', null);
   const type = _get(supportedTypes, typeRequested);
-
-  if (typeRequested === 'logs') {
-    index = `${process.env.StackName}-${process.env.Stage}-logs`;
-  }
 
   return { type, index };
 }
@@ -65,6 +61,7 @@ function average(event, cb) {
 }
 
 function handler(event, context) {
+  log.debug(event);
   handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.resource === '/stats') {
       summary(event, cb);
