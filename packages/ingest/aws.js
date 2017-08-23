@@ -1,5 +1,6 @@
 'use strict';
 
+const _get = require('lodash.get');
 const url = require('url');
 const AWS = require('aws-sdk');
 const moment = require('moment');
@@ -194,7 +195,7 @@ class S3 {
     return s3.deleteObject(params).promise();
   }
 
-  static async put(bucket, key, body, acl = 'private') {
+  static async put(bucket, key, body, acl = 'private', meta = null) {
     const s3 = new AWS.S3();
 
     const params = {
@@ -203,6 +204,10 @@ class S3 {
       Body: body,
       ACL: acl
     };
+
+    if (meta) {
+      params.Metadata = meta;
+    }
 
     return s3.putObject(params).promise();
   }
@@ -243,8 +248,8 @@ class S3 {
   static async fileExists(bucket, key) {
     const s3 = new AWS.S3();
     try {
-      await s3.headObject({ Key: key, Bucket: bucket }).promise();
-      return true;
+      const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
+      return r;
     }
     catch (e) {
       // if file is not found download it
@@ -491,6 +496,43 @@ class KMS {
 }
 
 class StepFunction {
+  static granuleExecutionStatus(granuleId, event) {
+    const buckets = _get(event, 'resources.buckets');
+    const stage = _get(event, 'resources.stage');
+    const stack = _get(event, 'resources.stack');
+
+    const granuleKey = `${stack}-${stage}/granules_status/${granuleId}`;
+
+    return {
+      bucket: buckets.internal,
+      key: granuleKey
+    };
+  }
+
+  static async setGranuleStatus(granuleId, event) {
+    const d = this.granuleExecutionStatus(granuleId, event);
+    const sm = event.ingest_meta.state_machine;
+    const en = event.ingest_meta.execution_name;
+    const arn = getExecutionArn(sm, en);
+    const status = event.ingest_meta.status;
+    return S3.put(d.bucket, d.key, '', null, { arn, status });
+  }
+
+
+  static async getGranuleStatus(granuleId, event) {
+    const d = this.granuleExecutionStatus(granuleId, event);
+    const exists = await S3.fileExists(d.bucket, d.key);
+    if (exists) {
+      const oarn = exists.Metadata.arn;
+      const status = exists.Metadata.status;
+      if (status === 'failed') {
+        return { failed: oarn };
+      }
+      return { completed: oarn };
+    }
+    return false;
+  }
+
   static async getExecution(arn, ignoreMissingExecutions = false) {
     const stepfunctions = new AWS.StepFunctions();
 
