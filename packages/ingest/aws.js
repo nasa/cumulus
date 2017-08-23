@@ -6,7 +6,7 @@ const moment = require('moment');
 const logger = require('./log');
 const errors = require('@cumulus/common/errors');
 
-const log = logger.chiled({ file: 'ingest/aws.js' });
+const log = logger.child({ file: 'ingest/aws.js' });
 
 /**
  * getEndpoint returns proper AWS arguments for various
