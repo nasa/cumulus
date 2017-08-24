@@ -26,14 +26,28 @@ function handler(_event, context, cb) {
 
     log.debug('Staring granule discovery');
     return discover.discover().then((gs) => {
+      const stats = {
+        completed: gs.completed.length,
+        failed: gs.failed.length
+      };
+      console.log(stats);
+
+      stats.total = stats.completed + stats.failed;
+
       if (queue) {
-        event.payload.granules_found = gs.length;
-        log.debug(`Discovered ${gs.length} granules`);
+        stats.running = gs.running.length;
+        stats.total += stats.running;
       }
       else {
         log.debug(gs);
-        event.payload.granules = gs;
+        Object.assign(event.payload, { granules: gs.new });
+        stats.new = gs.new.length;
+        stats.total += stats.new;
       }
+      console.log(stats);
+
+      Object.assign(event.payload, stats);
+      log.info(`Discovered ${stats.total} granules`);
 
       if (discover.connected) {
         discover.end();
@@ -60,6 +74,6 @@ local.justLocalRun(() => {
   const payload = require( // eslint-disable-line global-require
     '@cumulus/test-data/payloads/mur/discover.json'
   );
-  payload.meta.useQueue = false;
+  payload.meta.useQueue = true;
   handler(payload, {}, (e) => log.info(e));
 });

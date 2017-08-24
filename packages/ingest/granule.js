@@ -6,7 +6,7 @@ const join = require('path').join;
 const urljoin = require('url-join');
 const logger = require('./log');
 const errors = require('@cumulus/common/errors');
-const S3 = require('./aws').S3;
+const { S3, StepFunction } = require('./aws');
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
@@ -83,37 +83,44 @@ class Discover {
       const file = this.setGranuleInfo(f);
       if (file) updatedFiles.push(file);
     });
-    return await this.findNewGranules(updatedFiles);
+    return this.findNewGranules(updatedFiles);
   }
 
-  async fileIsNew(file) {
-    const exists = await S3.fileExists(file.bucket, file.name);
-    return exists ? false : file;
+  async getGranuleStatus(g) {
+    const status = await StepFunction.getGranuleStatus(g.granuleId, this.event);
+    if (!status) {
+      return ['new', g];
+    }
+    return [status, g];
   }
 
   async findNewGranules(files) {
-    const checkFiles = files.map(f => this.fileIsNew(f));
-    const t = await Promise.all(checkFiles);
-    const newFiles = t.filter(f => f);
-
     // reorganize by granule
-    const granules = {};
-    newFiles.forEach(_f => {
+    const hash = {};
+    files.forEach(_f => {
       const f = _f;
       const granuleId = f.granuleId;
       delete f.granuleId;
-      if (granules[granuleId]) {
-        granules[granuleId].files.push(f);
+      if (hash[granuleId]) {
+        hash[granuleId].files.push(f);
       }
       else {
-        granules[granuleId] = {
+        hash[granuleId] = {
           granuleId,
           files: [f]
         };
       }
     });
+    const granules = Object.values(hash);
 
-    return granules;
+    // organize granules by their status
+    const status = await Promise.all(granules.map(g => this.getGranuleStatus(g)));
+
+    return {
+      new: status.filter(n => n[0] === 'new').map(n => n[1]),
+      completed: status.filter(n => n[0] === 'completed').map(n => n[1]),
+      failed: status.filter(n => n[0] === 'failed').map(n => n[1])
+    };
   }
 }
 
@@ -127,7 +134,16 @@ class Discover {
 class DiscoverAndQueue extends Discover {
   async findNewGranules(files) {
     const granules = await super.findNewGranules(files);
-    return Promise.all(Object.values(granules).map(g => queue.queueGranule(this.event, g)));
+    const toProcess = granules.new.concat(granules.failed);
+    const running = await Promise.all(
+      Object.values(toProcess).map(g => queue.queueGranule(this.event, g))
+    );
+
+    return {
+      running: running.filter(r => r), // only pass those have value
+      completed: granules.completed,
+      failed: []
+    };
   }
 }
 
