@@ -523,12 +523,7 @@ class StepFunction {
     const d = this.granuleExecutionStatus(granuleId, event);
     const exists = await S3.fileExists(d.bucket, d.key);
     if (exists) {
-      const oarn = exists.Metadata.arn;
-      const status = exists.Metadata.status;
-      if (status === 'failed') {
-        return ['failed', oarn];
-      }
-      return ['completed', oarn];
+      return exists.Metadata.status;
     }
     return false;
   }
