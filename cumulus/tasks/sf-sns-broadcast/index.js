@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
 const AWS = require('aws-sdk');
