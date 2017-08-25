@@ -1,10 +1,12 @@
+/* eslint-disable no-param-reassign */
 'use strict';
 
 const _get = require('lodash.get');
-const handle = require('../response').handle;
+const handle = require('../lib/response').handle;
 const models = require('../models');
 const Search = require('../es/search').Search;
-const RecordDoesNotExist = require('../errors').RecordDoesNotExist;
+const { deleteRecord, indexProvider } = require('../es/indexer');
+const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 
 /**
  * List all providers.
@@ -13,7 +15,7 @@ const RecordDoesNotExist = require('../errors').RecordDoesNotExist;
  * @return {undefined}
  */
 function list(event, cb) {
-  const search = new Search(event, process.env.ProvidersTable);
+  const search = new Search(event, 'provider');
   search.query().then(response => cb(null, response)).catch((e) => {
     cb(e);
   });
@@ -26,15 +28,17 @@ function list(event, cb) {
  * @return {object} a single granule object.
  */
 function get(event, cb) {
-  const name = _get(event.pathParameters, 'name');
-  if (!name) {
-    return cb('provider name is missing');
+  const id = _get(event.pathParameters, 'id');
+  if (!id) {
+    return cb('provider id is missing');
   }
 
-  const search = new Search({}, process.env.ProvidersTable);
-  return search.get(name)
-    .then(response => cb(null, response))
-    .catch(e => cb(e));
+  const p = new models.Provider();
+  return p.get({ id })
+    .then((res) => {
+      delete res.password;
+      cb(null, res);
+    }).catch((e) => cb(e));
 }
 
 /**
@@ -45,27 +49,22 @@ function get(event, cb) {
 function post(event, cb) {
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
-
-  // make sure primary key is included
-  if (!data.name) {
-    return cb('Field name is missing');
-  }
-  const name = data.name;
+  const id = _get(data, 'id');
 
   const p = new models.Provider();
 
-  return p.get({ name: name })
-    .then(() => cb(`A record already exists for ${name}`))
+  return p.get({ id })
+    .then(() => cb({ message: `A record already exists for ${id}` }))
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
-        return p.create(data).then(() => {
-          cb(null, {
-            detail: 'Record saved',
-            record: data
-          });
-        }).catch(err => cb(err));
+        return p.create(data)
+          .then((r) => {
+            data = r;
+            return Search.es();
+          }).then(esClient => indexProvider(esClient, data))
+            .then(() => cb(null, { message: 'Record saved', record: data }))
+            .catch(err => cb(err));
       }
-
       return cb(e);
     });
 }
@@ -76,9 +75,10 @@ function post(event, cb) {
  * @return {object} a mapping of the updated properties.
  */
 function put(event, cb) {
-  const name = _get(event.pathParameters, 'name');
-  if (!name) {
-    return cb('provider name is missing');
+  const id = _get(event.pathParameters, 'id');
+
+  if (!id) {
+    return cb('provider id is missing');
   }
 
   let data = _get(event, 'body', '{}');
@@ -87,41 +87,31 @@ function put(event, cb) {
   const p = new models.Provider();
 
   // get the record first
-  return p.get({ name }).then((originalData) => {
+  return p.get({ id }).then((originalData) => {
     data = Object.assign({}, originalData, data);
-
-    // handle restart case
-    if (data.action === 'restart') {
-      return p.restart(name)
-        .then(r => cb(null, r))
-        .catch(e => cb(e));
-    }
-
-    // handle stop case
-    if (data.action === 'stop') {
-      return p.update(
-        { name },
-        { status: 'stopped', isActive: false }
-      );
-    }
-
-    // otherwise just update
-    return p.update({ name }, data);
-  }).then(r => cb(null, r)).catch((err) => {
-    if (err instanceof RecordDoesNotExist) {
-      return cb('Record does not exist');
-    }
-    return cb(err);
-  });
+    return p.create(data);
+  }).then((r) => {
+    data = r;
+    return Search.es();
+  }).then(esClient => indexProvider(esClient, data))
+    .then(() => cb(null, data))
+    .catch((err) => {
+      if (err instanceof RecordDoesNotExist) {
+        return cb({ message: 'Record does not exist' });
+      }
+      return cb(err);
+    });
 }
 
 function del(event, cb) {
-  const name = _get(event.pathParameters, 'name');
+  const id = _get(event.pathParameters, 'id');
   const p = new models.Provider();
 
-  return p.get({ name })
-    .then(() => p.delete({ name }))
-    .then(() => cb(null, { detail: 'Record deleted' }))
+  return p.get({ id })
+    .then(() => p.delete({ id }))
+    .then(() => Search.es())
+    .then((esClient) => deleteRecord(esClient, id, 'provider'))
+    .then(() => cb(null, { message: 'Record deleted' }))
     .catch(e => cb(e));
 }
 
