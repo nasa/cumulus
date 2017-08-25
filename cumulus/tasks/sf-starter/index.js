@@ -1,12 +1,26 @@
+/* eslint-disable require-yield */
 'use strict';
 
 const get = require('lodash.get');
 const AWS = require('aws-sdk');
+const randomstring = require('randomstring');
 const aws = require('@cumulus/ingest/aws');
 const consumer = require('@cumulus/ingest/consumer');
 
+function generateRandomName() {
+  const r = [];
+  for (let i = 0; i < 5; i++) {
+    r.push(randomstring.generate(7));
+  }
+
+  return r.join('-');
+}
+
 async function dispatch(message) {
   const sfPayload = message.Body;
+
+  // add creation time
+  sfPayload.ingest_meta.createdAt = Date.now();
 
   const stepfunctions = new AWS.StepFunctions();
   const params = {
@@ -32,7 +46,11 @@ function queue(event, context, cb) {
     const message = JSON.parse(data.Body);
     message.provider = provider;
     message.meta = meta;
-    message.collection = collection;
+    message.collection = {
+      id: collection.name,
+      meta: collection
+    };
+    message.ingest_meta.execution_name = generateRandomName();
 
     aws.SQS.sendMessage(message.resources.queues.startSF, message)
        .then(r => cb(null, r))
@@ -43,7 +61,7 @@ function queue(event, context, cb) {
 function handler(event, context, cb) {
   const queueUrl = get(event, 'queueUrl', null);
   const messageLimit = get(event, 'messageLimit', 1);
-  const timeLimit = get(event, 'timeLimit', 90);
+  const timeLimit = get(event, 'timeLimit', 120);
 
   if (queueUrl) {
     const con = new consumer.Consume(queueUrl, messageLimit, timeLimit);
