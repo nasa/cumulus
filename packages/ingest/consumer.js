@@ -1,6 +1,6 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
+const log = require('./log');
 const aws = require('./aws');
 
 class Consume {

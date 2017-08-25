@@ -71,6 +71,10 @@ module.exports = {
   HostNotFound: createErrorType('HostNotFound'),
 
   // to be returned when the file is missing or forbidden
-  FileNotFound: createErrorType('FileNotFound')
+  FileNotFound: createErrorType('FileNotFound'),
+
+
+  // is raised if the PDR file doesn't match the collection
+  MismatchPdrCollection: createErrorType('MismatchPdrCollection')
 };
 
