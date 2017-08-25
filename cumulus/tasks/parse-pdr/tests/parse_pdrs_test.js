@@ -42,7 +42,6 @@ test.cb('parse PDR from FTP endpoint', (t) => {
   newPayload.provider = provider;
   newPayload.meta.useQueue = false;
   handler(newPayload, {}, (e, r) => {
-    console.log(e);
     if (e instanceof errors.RemoteResourceError) {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
@@ -67,7 +66,6 @@ test.cb('parse PDR from HTTP endpoint', (t) => {
   newPayload.provider = provider;
   newPayload.meta.useQueue = false;
   handler(newPayload, {}, (e, r) => {
-    console.log(e);
     if (e instanceof errors.RemoteResourceError) {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();

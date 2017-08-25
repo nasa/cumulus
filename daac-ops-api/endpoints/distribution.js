@@ -1,9 +1,13 @@
 'use strict';
 
+const get = require('lodash.get');
 const AWS = require('aws-sdk');
 const got = require('got');
 const FormData = require('form-data');
 const querystring = require('querystring');
+const logger = require('@cumulus/ingest/log');
+
+const log = logger.child({ name: 'cumulus-distribution' });
 
 /**
  * An AWS API Gateway function that either requests authentication,
@@ -28,9 +32,9 @@ const querystring = require('querystring');
 function handler(event, context, cb) {
   const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
   const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
-  const DEPLOYMENT_ENDPOINT = 'https://cumulus.developmentseed.org/distribution/redirect';
+  const DEPLOYMENT_ENDPOINT = process.env.DEPLOYMENT_ENDPOINT;
 
-  const EARTHDATA_BASE_URL = 'https://urs.earthdata.nasa.gov';
+  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://urs.earthdata.nasa.gov';
   const EARTHDATA_GET_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/authorize`;
   const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
 
@@ -82,13 +86,21 @@ function handler(event, context, cb) {
       });
 
       // now that we have the URL we have to save user's info
-      console.log({
+      log.info({
         userName: user,
         accessDate: Date.now(),
         file: granuleKey,
-        ip: event.sourceIp
+        bucket: process.env.protected,
+        sourceIp: get(event, 'requestContext.identity.sourceIp', '0.0.0.0')
       });
-      return url;
+
+      return cb(null, {
+        statusCode: '302',
+        body: 'redirecting',
+        headers: {
+          Location: url
+        }
+      });
     }).catch(e => cb(e));
   }
 
