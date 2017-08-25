@@ -1,0 +1,44 @@
+{
+    "resource": "/collections",
+    "path": "/collections",
+    "httpMethod": "POST",
+    "headers": {
+        "Accept": "*/*",
+        "accept-encoding": "gzip, deflate",
+        "Authorization": "Basic Y3VtdWx1czp0ZXN0dXNlcg==",
+        "cache-control": "no-cache",
+        "CloudFront-Forwarded-Proto": "https",
+        "CloudFront-Is-Desktop-Viewer": "true",
+        "CloudFront-Is-Mobile-Viewer": "false",
+        "CloudFront-Is-SmartTV-Viewer": "false",
+        "CloudFront-Is-Tablet-Viewer": "false",
+        "CloudFront-Viewer-Country": "US",
+        "Content-Type": "application/json",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https"
+    },
+    "queryStringParameters": null,
+    "pathParameters": null,
+    "stageVariables": null,
+    "requestContext": {
+        "path": "/dev/collections",
+        "stage": "dev",
+        "identity": {
+            "cognitoIdentityPoolId": null,
+            "accountId": null,
+            "cognitoIdentityId": null,
+            "caller": null,
+            "apiKey": "",
+            "accessKey": null,
+            "cognitoAuthenticationType": null,
+            "cognitoAuthenticationProvider": null,
+            "userArn": null,
+            "userAgent": "PostmanRuntime/6.2.5",
+            "user": null
+        },
+        "resourcePath": "/collections",
+        "httpMethod": "POST"
+    },
+    "body": "{\n      \"dataType\": \"MOD11A1\",\n      \"name\": \"MOD11A1\",\n      \"version\": \"006\",\n      \"process\": \"modis\",\n      \"provider_path\": \"/TEST_B/Cumulus/MODIS/PDR/\",\n      \"granuleId\": \"^MOD11A1\\\\.A[\\\\d]{7}\\\\.[\\\\S]{6}\\\\.006.[\\\\d]{13}$\",\n      \"sampleFileName\": \"MOD11A1.A2017025.h21v00.006.2017034065104.hdf\",\n      \"granuleIdExtraction\": \"(MOD11A1\\\\.(.*))\\\\.hdf\",\n      \"files\": [\n        {\n          \"regex\": \"^MOD11A1\\\\.A[\\\\d]{7}\\\\.[\\\\S]{6}\\\\.006.[\\\\d]{13}\\\\.hdf$\",\n          \"bucket\": \"protected\",\n          \"access\": \"protected\",\n          \"sampleFileName\": \"MOD11A1.A2017025.h21v00.006.2017034065104.hdf\"\n        },\n        {\n          \"regex\": \"^BROWSE\\\\.MOD11A1\\\\.A[\\\\d]{7}\\\\.[\\\\S]{6}\\\\.006.[\\\\d]{13}\\\\.hdf$\",\n          \"bucket\": \"private\",\n          \"access\": \"private\",\n          \"sampleFileName\": \"BROWSE.MOD11A1.A2017025.h21v00.006.2017034065104.hdf\"\n        },\n        {\n          \"regex\": \"^MOD11A1\\\\.A[\\\\d]{7}\\\\.[\\\\S]{6}\\\\.006.[\\\\d]{13}\\\\.hdf\\\\.met$\",\n          \"bucket\": \"private\",\n          \"access\": \"private\",\n          \"sampleFileName\": \"MOD11A1.A2017025.h21v00.006.2017034065104.hdf.met\"\n        },\n        {\n          \"regex\": \"^MOD11A1\\\\.A[\\\\d]{7}\\\\.[\\\\S]{6}\\\\.006.[\\\\d]{13}\\\\.meta\\\\.xml$\",\n          \"bucket\": \"protected\",\n          \"access\": \"protected\",\n          \"sampleFileName\": \"MOD11A1.A2017025.h21v00.006.2017034065104.meta.xml\"\n        },\n        {\n          \"regex\": \"^MOD11A1\\\\.A[\\\\d]{7}\\\\.[\\\\S]{6}\\\\.006.[\\\\d]{13}_2\\\\.jpg$\",\n          \"bucket\": \"public\",\n          \"access\": \"public\",\n          \"sampleFileName\": \"MOD11A1.A2017025.h21v00.006.2017034065104_2.jpg\"\n        },\n        {\n          \"regex\": \"^MOD11A1\\\\.A[\\\\d]{7}\\\\.[\\\\S]{6}\\\\.006.[\\\\d]{13}_1\\\\.jpg$\",\n          \"bucket\": \"public\",\n          \"access\": \"public\",\n          \"sampleFileName\": \"MOD11A1.A2017025.h21v00.006.2017034065104_1.jpg\"\n        }\n      ]\n    }",
+    "isBase64Encoded": false
+}

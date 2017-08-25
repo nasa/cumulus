@@ -1,10 +1,13 @@
 'use strict';
 
+const _get = require('lodash.get');
 const url = require('url');
 const AWS = require('aws-sdk');
 const moment = require('moment');
-const log = require('@cumulus/common/log');
+const logger = require('./log');
 const errors = require('@cumulus/common/errors');
+
+const log = logger.child({ file: 'ingest/aws.js' });
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -37,6 +40,30 @@ function getEndpoint(local = false, port = 8000) {
   return args;
 }
 
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} stateMachineArn state machine ARN
+ * @param {string} executionName state machine's execution name
+ * @returns {string} Step Function Execution Arn
+ */
+function getExecutionArn(stateMachineArn, executionName) {
+  const sfArn = stateMachineArn.replace('stateMachine', 'execution');
+  return `${sfArn}:${executionName}`;
+}
+
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} executionArn execution ARN
+ * @returns {string} return aws console url for the execution
+ */
+function getExecutionUrl(executionArn) {
+  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+  return `https://console.aws.amazon.com/states/home?region=${region}` +
+         `#/executions/details/${executionArn}`;
+}
+
 async function invoke(name, payload, type = 'Event') {
   if (process.env.IS_LOCAL) {
     log.info(`Faking Lambda invocation for ${name}`);
@@ -67,6 +94,58 @@ function sqs(local) {
   return new AWS.SQS(getEndpoint(local, 9324));
 }
 
+class Events {
+  static async putEvent(name, schedule, state, description = null, role = null) {
+    const cwevents = new AWS.CloudWatchEvents();
+
+    const params = {
+      Name: name,
+      Description: description,
+      RoleArn: role,
+      ScheduleExpression: schedule,
+      State: state
+    };
+
+    return cwevents.putRule(params).promise();
+  }
+
+  static async deleteEvent(name) {
+    const cwevents = new AWS.CloudWatchEvents();
+
+    const params = {
+      Name: name
+    };
+
+    return cwevents.deleteRule(params).promise();
+  }
+
+  static async deleteTarget(id, rule) {
+    const cwevents = new AWS.CloudWatchEvents();
+    const params = {
+      Ids: [id],
+      Rule: rule
+    };
+
+    return cwevents.removeTargets(params).promise();
+  }
+
+  static async putTarget(rule, id, arn, input) {
+    const cwevents = new AWS.CloudWatchEvents();
+
+    const params = {
+      Rule: rule,
+      Targets: [ /* required */
+        {
+          Arn: arn,
+          Id: id,
+          Input: input
+        }
+      ]
+    };
+
+    return cwevents.putTargets(params).promise();
+  }
+}
 
 class S3 {
   static parseS3Uri(uri) {
@@ -116,7 +195,7 @@ class S3 {
     return s3.deleteObject(params).promise();
   }
 
-  static async put(bucket, key, body, acl = 'private') {
+  static async put(bucket, key, body, acl = 'private', meta = null) {
     const s3 = new AWS.S3();
 
     const params = {
@@ -125,6 +204,10 @@ class S3 {
       Body: body,
       ACL: acl
     };
+
+    if (meta) {
+      params.Metadata = meta;
+    }
 
     return s3.putObject(params).promise();
   }
@@ -165,8 +248,8 @@ class S3 {
   static async fileExists(bucket, key) {
     const s3 = new AWS.S3();
     try {
-      await s3.headObject({ Key: key, Bucket: bucket }).promise();
-      return true;
+      const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
+      return r;
     }
     catch (e) {
       // if file is not found download it
@@ -412,9 +495,105 @@ class KMS {
   }
 }
 
-module.exports.CloudWatch = CloudWatch;
-module.exports.SQS = SQS;
-module.exports.S3 = S3;
-module.exports.KMS = KMS;
-module.exports.ECS = ECS;
-module.exports.invoke = invoke;
+class StepFunction {
+  static granuleExecutionStatus(granuleId, event) {
+    const buckets = _get(event, 'resources.buckets');
+    const stage = _get(event, 'resources.stage');
+    const stack = _get(event, 'resources.stack');
+
+    const granuleKey = `${stack}-${stage}/granules_status/${granuleId}`;
+
+    return {
+      bucket: buckets.internal,
+      key: granuleKey
+    };
+  }
+
+  static async setGranuleStatus(granuleId, event) {
+    const d = this.granuleExecutionStatus(granuleId, event);
+    const sm = event.ingest_meta.state_machine;
+    const en = event.ingest_meta.execution_name;
+    const arn = getExecutionArn(sm, en);
+    const status = event.ingest_meta.status;
+    return S3.put(d.bucket, d.key, '', null, { arn, status });
+  }
+
+
+  static async getGranuleStatus(granuleId, event) {
+    const d = this.granuleExecutionStatus(granuleId, event);
+    const exists = await S3.fileExists(d.bucket, d.key);
+    if (exists) {
+      const oarn = exists.Metadata.arn;
+      const status = exists.Metadata.status;
+      if (status === 'failed') {
+        return ['failed', oarn];
+      }
+      return ['completed', oarn];
+    }
+    return false;
+  }
+
+  static async getExecution(arn, ignoreMissingExecutions = false) {
+    const stepfunctions = new AWS.StepFunctions();
+
+    const params = {
+      executionArn: arn
+    };
+
+    try {
+      const r = await stepfunctions.describeExecution(params).promise();
+      return r;
+    }
+    catch (e) {
+      if (ignoreMissingExecutions && e.message && e.message.includes('Execution Does Not Exist')) {
+        return {
+          executionArn: arn,
+          status: 'NOT_FOUND'
+        };
+      }
+      throw e;
+    }
+  }
+
+  static async pullEvent(event) {
+    if (event.s3_path) {
+      const parsed = S3.parseS3Uri(event.s3_path);
+      const file = await S3.get(parsed.Bucket, parsed.Key);
+
+      return JSON.parse(file.Body.toString());
+    }
+    return event;
+  }
+
+  static async pushEvent(event) {
+    const str = JSON.stringify(event);
+    if (str.length > 32000) {
+      const stack = event.resources.stack;
+      const stage = event.resources.stage;
+      const name = event.ingest_meta.execution_name;
+      const key = `${stack}-${stage}/payloads/${name}.json`;
+      const bucket = event.resources.buckets.internal;
+
+      await S3.put(bucket, key, str);
+      return {
+        s3_path: `s3://${bucket}/${key}`
+      };
+    }
+
+    return event;
+  }
+}
+
+module.exports = {
+  CloudWatch,
+  SQS,
+  S3,
+  KMS,
+  ECS,
+  invoke,
+  getEndpoint,
+  Events,
+  StepFunction,
+  getExecutionArn,
+  getExecutionUrl
+};
