@@ -1,14 +1,14 @@
 'use strict';
 
 const get = require('lodash.get');
-const aws = require('./aws');
+const { SQS, S3, getExecutionArn, StepFunction } = require('./aws');
 
 async function getTemplate(event) {
   const templates = get(event, 'resources.templates');
   const next = get(event, 'ingest_meta.config.next', 'ParsePdr');
 
-  const parsed = aws.S3.parseS3Uri(templates[next]);
-  const data = await aws.S3.get(parsed.Bucket, parsed.Key);
+  const parsed = S3.parseS3Uri(templates[next]);
+  const data = await S3.get(parsed.Bucket, parsed.Key);
   const message = JSON.parse(data.Body);
   message.provider = event.provider;
   message.collection = event.collection;
@@ -24,7 +24,7 @@ async function queuePdr(event, pdr) {
   message.payload = { pdr };
   message.ingest_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
 
-  return aws.SQS.sendMessage(queueUrl, message);
+  return SQS.sendMessage(queueUrl, message);
 }
 
 async function queueGranule(event, granule) {
@@ -33,6 +33,20 @@ async function queueGranule(event, granule) {
   const pdr = get(event, 'payload.pdr', null);
   const message = await getTemplate(event);
 
+  // check if the granule is already processed
+  const status = await StepFunction.getGranuleStatus(granule.granuleId, event);
+  if (status) {
+    return status;
+  }
+
+  // if size is larger than 450mb skip
+  for (const f of granule.files) {
+    if (f.fileSize > 450000000) {
+      return { completed: granule.granuleId };
+    }
+  }
+
+  message.meta.granuleId = granule.granuleId;
   message.payload = {
     granules: [{
       granuleId: granule.granuleId,
@@ -45,9 +59,11 @@ async function queueGranule(event, granule) {
   }
 
   const name = `${collectionId}__GRANULE__${granule.granuleId}__${Date.now()}`;
+  const arn = getExecutionArn(message.ingest_meta.state_machine, name);
 
   message.ingest_meta.execution_name = name;
-  return aws.SQS.sendMessage(queueUrl, message);
+  await SQS.sendMessage(queueUrl, message);
+  return ['running', arn];
 }
 
 module.exports.queuePdr = queuePdr;
