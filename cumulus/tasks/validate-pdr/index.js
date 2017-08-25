@@ -2,6 +2,7 @@
 
 const log = require('@cumulus/common/log');
 const aws = require('@cumulus/common/aws');
+const { S3 } = require('@cumulus/ingest/aws');
 const Task = require('@cumulus/common/task');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
@@ -10,10 +11,11 @@ const pdrValid = require('./pdr-validations');
 
 /**
  * Task that validates a PDR retrieved from a SIPS server
- * Input payload: An object containing the PDR to process
+ * Input payload: An object containing info about the PDR to process and a continuation status
+ * (used by the state machine)
  * Output payload: An object possibly containing a `topLevelErrors` key pointing to an array
  * of error messages, a `fileGroupErrors` key pointing to an array of error messages, or
- * a list of paths to files to be downloaded. The original input pdr is included in the output
+ * a list of paths to files to be downloaded. The original payload is included in the output
  * payload.
  */
 module.exports = class ValidatePdr extends Task {
@@ -22,11 +24,16 @@ module.exports = class ValidatePdr extends Task {
    * @return Array An array of archive files to be processed
    */
   async run() {
-    // Message payload contains the PDR
+    // Message payload contains the PDR information
     const message = this.message;
     const payload = await message.payload;
-    const pdrFileName = payload.pdr_file_name;
-    const pdr = payload.pdr;
+    const s3Bucket = payload.pdr.s3_bucket;
+    const s3Key = payload.pdr.s3_key;
+
+    // Get the pdr from S3
+    const pdr = (await S3.get(s3Bucket, s3Key)).Body.toString();
+
+    log.info(`PDR: ${JSON.stringify(pdr)}`);
 
     // Parse the PDR and do a preliminary validation
     let pdrObj;
@@ -55,13 +62,11 @@ module.exports = class ValidatePdr extends Task {
       status = 'ERROR';
     }
 
-    return {
-      pdr_file_name: pdrFileName,
-      pdr: pdr,
-      status: status,
+    return Object.assign(payload, {
+      status: status, // used by the Choice action
       top_level_errors: topLevelErrors,
       file_group_errors: fileGroupErrors
-    };
+    });
   }
 
   /**

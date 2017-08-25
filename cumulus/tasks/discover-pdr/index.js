@@ -2,10 +2,12 @@
 
 const log = require('@cumulus/common/log');
 const Task = require('@cumulus/common/task');
+const aws = require('@cumulus/common/aws');
 const promisify = require('util.promisify');
 const FtpClient = require('ftp');
 const SftpClient = require('sftpjs');
 const pdrMod = require('./pdr');
+const stringToStream = require('string-to-stream');
 
 /**
  * Task that retrieves PDRs from a SIPS server
@@ -22,8 +24,10 @@ module.exports = class DiscoverPdr extends Task {
     // Vars needed from config to connect to the SIPS server
     const { conn_type, host, port, username, password } =
      this.message.provider.config.gateway_config.conn_config;
-
-    const folder = this.config.folder;
+    // The folder on the SIPS server holding the PDRS and the S3 bucket to which they should
+    // be copied
+    const { folder, bucket } = this.config;
+    const keyPrefix = this.config.key_prefix + '/pdr';
 
     let client;
     if (conn_type.toUpperCase() === 'FTP') {
@@ -44,10 +48,10 @@ module.exports = class DiscoverPdr extends Task {
 
     await clientReady('ready');
     let fileName;
-    let pdr;
+    let s3PdrKey;
     try {
       // Get the list of PDRs
-      const list = await pdrMod.getPdrList(client, folder);
+      const list = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
       log.info(`PDR LIST: [${list}]`);
 
       if (list.length < 1) {
@@ -59,7 +63,12 @@ module.exports = class DiscoverPdr extends Task {
       log.info('FILE:');
       log.info(fileName);
       // Get the file contents
-      pdr = await pdrMod.getPdr(client, folder, fileName);
+      const pdr = await pdrMod.getPdr(client, folder, fileName);
+      // Write the contents out to S3
+      s3PdrKey = `${keyPrefix}/${fileName}`;
+      const pdrStream = stringToStream(pdr.pdr);
+      await aws.uploadS3FileStream(pdrStream, bucket, s3PdrKey);
+
       log.info('PDR:');
       log.info(pdr);
     }
@@ -68,9 +77,14 @@ module.exports = class DiscoverPdr extends Task {
       client.end();
     }
 
-    // const { fileName, pdr } = await pdrMod.getPdr(s3Bucket, s3Key);
-
-    return Object.assign({ continue: true }, pdr);
+    return {
+      continue: true,
+      pdr: {
+        pdr_file_name: fileName,
+        s3_bucket: bucket,
+        s3_key: s3PdrKey
+      }
+    };
   }
 
   /**

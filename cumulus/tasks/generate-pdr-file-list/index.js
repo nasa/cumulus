@@ -1,11 +1,12 @@
 'use strict';
 
 const Task = require('@cumulus/common/task');
+const { S3 } = require('@cumulus/ingest/aws');
 const pdrMod = require('./pdr');
 
 /**
  * Task that validates a PDR retrieved from a SIPS server
- * Input payload: An object containing the PDR to process
+ * Input payload: An object containing information about the PDR to process
  * Output payload: An object possibly containing a `topLevelErrors` key pointing to an array
  * of error messages, a `fileGroupErrors` key pointing to an array of error messages, or
  * a list of paths to files to be downloaded. The original input pdr is included in the output
@@ -24,8 +25,12 @@ module.exports = class GeneratePdrFileList extends Task {
     // Message payload contains the PDR
     const message = this.message;
     const payload = await message.payload;
-    const pdr = payload.pdr;
-    const pdrFileName = payload.pdr_file_name;
+    const pdrFileName = payload.pdr.pdr_file_name;
+    const s3Bucket = payload.pdr.s3_bucket;
+    const s3Key = payload.pdr.s3_key;
+
+    // Get the pdr from S3
+    const pdr = (await S3.get(s3Bucket, s3Key)).Body.toString();
 
     const pdrObj = pdrMod.parsePdr(pdr);
     const fileGroups = pdrObj.objects('FILE_GROUP');

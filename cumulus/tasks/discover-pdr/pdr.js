@@ -2,16 +2,29 @@
 
 const promisify = require('util.promisify');
 const thenable = require('thenable-stream');
+const { S3 } = require('@cumulus/ingest/aws');
 
 /**
- * Get the list of PDRs using the given client (ftp/sftp)
+ * Get the list of new PDRs using the given client (ftp/sftp)
  * @param {Client} client The client connected to the SIPS server
  * @param {string} folder The directory on the server containing the PDRs
+ * @param {string} bucket The S3 bucket that will hold the downloaded PDRs
+ * @param {string} keyPrefix Prefix for the S3 key to use when looking for PDRs by name
  * @return A promise that resolves to a list of strings containing the file names of the PDRs
  */
-exports.getPdrList = async (client, folder) => {
+exports.getPdrList = async (client, folder, bucket, keyPrefix) => {
   const listSync = promisify(client.list).bind(client);
-  return await listSync(folder);
+  const pdrs = await listSync(folder);
+
+  // Check to see which files we already have in S3
+  const fileExistsPromises = pdrs.map(async pdr => {
+    const fileName = pdr.name;
+    return S3.fileExists(bucket, `${keyPrefix}/${fileName}`);
+  });
+
+  const fileExists = await Promise.all(fileExistsPromises);
+
+  return pdrs.filter((_, index) => !fileExists[index]);
 };
 
 /**
