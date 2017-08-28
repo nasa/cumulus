@@ -12,7 +12,7 @@ const log = require('@cumulus/common/log');
  * Input payload: Array of objects { meta: {...}, payload: ... } which need processing
  * Output payload: none
  */
-module.exports = class TriggerProcessPdrTask extends Task {
+module.exports = class TriggerProcessPdrs extends Task {
   /**
    * Main task entry point
    * @return null
@@ -24,7 +24,7 @@ module.exports = class TriggerProcessPdrTask extends Task {
     const isSfnExecution = this.message.ingest_meta.message_source === 'sfn';
 
     if (!isSfnExecution) {
-      log.warn('TriggerIngestTask only triggers AWS Step Functions. Running with inline triggers.');
+      log.warn('TriggerProcessPdrTask only triggers AWS Step Functions. Running with inline triggers.');
     }
 
     const stateMachine = this.config.workflow;
@@ -37,27 +37,28 @@ module.exports = class TriggerProcessPdrTask extends Task {
     for (const e of this.message.payload) {
       const key = (e.meta && e.meta.key) || 'Unknown';
       const name = aws.toSfnExecutionName(key.split('/', 3).concat(id), '__');
-      log.info(`Starting ingest of ${name}`);
-      const payload = { Bucket: bucket, Key: ['TriggerIngest', key].join('/') };
+      // log.info(`Starting processing of ${name}`);
+      // const payload = { Bucket: bucket, Key: ['TriggerProcessPdrs', key].join('/') };
+      const payload = e;
 
-      const fullMessageData = Object.assign({}, this.message, e);
+      const fullMessageData = Object.assign({}, this.message);
       fullMessageData.meta = Object.assign({}, this.message.meta, e.meta);
 
       const originalIngestMeta = fullMessageData.ingest_meta;
       const newIngestMeta = { state_machine: stateMachine, execution_name: name };
       fullMessageData.ingest_meta = Object.assign({}, originalIngestMeta, newIngestMeta);
 
-      const s3Params = Object.assign({},
-                                     payload,
-                                     { Body: JSON.stringify(fullMessageData.payload) });
+      // const s3Params = Object.assign({},
+      //                                payload,
+      //                                { Body: JSON.stringify(fullMessageData.payload) });
 
       const sfnMessageData = Object.assign({}, fullMessageData, { payload: payload });
-      if (!isSfnExecution) {
-        log.warn('inline-result: ', JSON.stringify(fullMessageData));
-      }
-      else {
-        s3Promises.push(aws.promiseS3Upload(s3Params));
-      }
+      // if (!isSfnExecution) {
+      //   log.warn('inline-result: ', JSON.stringify(fullMessageData));
+      // }
+      // else {
+      //   s3Promises.push(aws.promiseS3Upload(s3Params));
+      // }
       executions.push({
         stateMachineArn: stateMachine,
         input: JSON.stringify(sfnMessageData),
@@ -81,12 +82,12 @@ module.exports = class TriggerProcessPdrTask extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return TriggerIngestTask.handle(...args);
+    return TriggerProcessPdrs.handle(...args);
   }
 };
 
 const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(
   module.exports.handler,
-  () => ({ ingest_meta: { message_source: 'stdin', task: 'TriggerIngest' } })
+  () => ({ ingest_meta: { message_source: 'stdin', task: 'TriggerProcessPdrs' } })
 );

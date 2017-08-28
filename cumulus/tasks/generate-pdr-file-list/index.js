@@ -25,9 +25,9 @@ module.exports = class GeneratePdrFileList extends Task {
     // Message payload contains the PDR
     const message = this.message;
     const payload = await message.payload;
-    const pdrFileName = payload.pdr.pdr_file_name;
-    const s3Bucket = payload.pdr.s3_bucket;
-    const s3Key = payload.pdr.s3_key;
+    const pdrFileName = payload.pdr_file_name;
+    const s3Bucket = payload.s3_bucket;
+    const s3Key = payload.s3_key;
 
     // Get the pdr from S3
     const pdr = (await S3.get(s3Bucket, s3Key)).Body.toString();

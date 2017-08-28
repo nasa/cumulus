@@ -1,18 +1,14 @@
 'use strict';
 
 const log = require('@cumulus/common/log');
-const aws = require('@cumulus/common/aws');
 const { S3 } = require('@cumulus/ingest/aws');
 const Task = require('@cumulus/common/task');
-const FtpClient = require('ftp');
-const SftpClient = require('sftpjs');
 const pdrMod = require('./pdr');
 const pdrValid = require('./pdr-validations');
 
 /**
  * Task that validates a PDR retrieved from a SIPS server
- * Input payload: An object containing info about the PDR to process and a continuation status
- * (used by the state machine)
+ * Input payload: An object containing info about the PDR to process
  * Output payload: An object possibly containing a `topLevelErrors` key pointing to an array
  * of error messages, a `fileGroupErrors` key pointing to an array of error messages, or
  * a list of paths to files to be downloaded. The original payload is included in the output
@@ -27,8 +23,8 @@ module.exports = class ValidatePdr extends Task {
     // Message payload contains the PDR information
     const message = this.message;
     const payload = await message.payload;
-    const s3Bucket = payload.pdr.s3_bucket;
-    const s3Key = payload.pdr.s3_key;
+    const s3Bucket = payload.s3_bucket;
+    const s3Key = payload.s3_key;
 
     // Get the pdr from S3
     const pdr = (await S3.get(s3Bucket, s3Key)).Body.toString();

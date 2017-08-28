@@ -12,8 +12,8 @@ const stringToStream = require('string-to-stream');
 /**
  * Task that retrieves PDRs from a SIPS server
  * Input payload: none
- * Output payload: A single object with keys `fileName` and `pdr` referencing the oldest PDR
- * on the SIPS server
+ * Output payload: An array of objects with keys `pdr_file_name`, `s3_bucket`, and `s3_key`
+ * representing the original file name and location in S3 of any newly downloaded PDRs
  */
 module.exports = class DiscoverPdr extends Task {
   /**
@@ -47,44 +47,70 @@ module.exports = class DiscoverPdr extends Task {
     });
 
     await clientReady('ready');
-    let fileName;
-    let s3PdrKey;
+    let returnValue;
     try {
       // Get the list of PDRs
-      const list = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
-      log.info(`PDR LIST: [${list}]`);
+      const pdrList = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
+      log.info(`PDR LIST: [${pdrList}]`);
 
-      if (list.length < 1) {
-        return { continue: false };
-      }
+      // if (pdrList.length < 1) {
+      //   return { continue: false };
+      // }
+
+      const S3UploadPromises = pdrList.map(async pdrEntry => {
+        const fileName = pdrEntry.name;
+        log.info(`FILE: ${fileName}`);
+         // Get the file contents
+        const pdr = await pdrMod.getPdr(client, folder, fileName);
+        log.debug('SUCCESSFULLY RETRIEVED PDR FROM SIPS SERVER');
+        // Write the contents out to S3
+        const s3PdrKey = `${keyPrefix}/${fileName}`;
+        const pdrStream = stringToStream(pdr.pdr);
+        await aws.uploadS3FileStream(pdrStream, bucket, s3PdrKey);
+        log.debug(`PDR stored at [${s3PdrKey} in S3 bucket [${bucket}]`);
+
+        return {
+          pdr_file_name: fileName,
+          s3_bucket: bucket,
+          s3_key: s3PdrKey
+        };
+      });
+
+      returnValue = await Promise.all(S3UploadPromises);
 
       // Get the oldest one
-      fileName = list.sort((a, b) => b.date < a.date)[0].name;
-      log.info('FILE:');
-      log.info(fileName);
-      // Get the file contents
-      const pdr = await pdrMod.getPdr(client, folder, fileName);
-      // Write the contents out to S3
-      s3PdrKey = `${keyPrefix}/${fileName}`;
-      const pdrStream = stringToStream(pdr.pdr);
-      await aws.uploadS3FileStream(pdrStream, bucket, s3PdrKey);
+      // fileName = list.sort((a, b) => b.date < a.date)[0].name;
+      // log.info('FILE:');
+      // log.info(fileName);
+      // // Get the file contents
+      // const pdr = await pdrMod.getPdr(client, folder, fileName);
+      // // Write the contents out to S3
+      // s3PdrKey = `${keyPrefix}/${fileName}`;
+      // const pdrStream = stringToStream(pdr.pdr);
+      // await aws.uploadS3FileStream(pdrStream, bucket, s3PdrKey);
 
-      log.info('PDR:');
-      log.info(pdr);
+      // log.info('PDR:');
+      // log.info(pdr);
+    }
+    catch (e) {
+      log.error('Failed to download file');
+      log.error(e);
+      throw e;
     }
     finally {
       // Close the connection to the SIPS server
       client.end();
     }
 
-    return {
-      continue: true,
-      pdr: {
-        pdr_file_name: fileName,
-        s3_bucket: bucket,
-        s3_key: s3PdrKey
-      }
-    };
+    // return {
+    //   continue: true,
+    //   pdr: {
+    //     pdr_file_name: fileName,
+    //     s3_bucket: bucket,
+    //     s3_key: s3PdrKey
+    //   }
+    // };
+    return returnValue;
   }
 
   /**
