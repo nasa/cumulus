@@ -29,15 +29,18 @@ module.exports = class TriggerProcessPdrs extends Task {
 
     const stateMachine = this.config.workflow;
 
-    const bucket = this.message.resources.buckets.private;
+    // const bucket = this.message.resources.buckets.private;
 
     log.info(this.message.payload);
     const id = this.message.ingest_meta.id;
 
     for (const e of this.message.payload) {
-      const key = (e.meta && e.meta.key) || 'Unknown';
-      const name = aws.toSfnExecutionName(key.split('/', 3).concat(id), '__');
-      // log.info(`Starting processing of ${name}`);
+      const key = e.s3_key;
+      // Use the last three elements of the s3_key, whichh should include the PDR name
+      const keyElements = key.split('/');
+      const sliceIndex = keyElements.length > 3 ? keyElements.length - 3 : 0;
+      const name = aws.toSfnExecutionName(keyElements.slice(sliceIndex).concat(id), '__');
+      log.info(`Starting processing of ${name}`);
       // const payload = { Bucket: bucket, Key: ['TriggerProcessPdrs', key].join('/') };
       const payload = e;
 
