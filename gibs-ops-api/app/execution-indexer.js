@@ -335,6 +335,7 @@ const MAX_EXECUTIONS_TO_INDEX = 50000;
 const createOrUpdateExecutionIndexes = async () => {
   await createOrUpdateIndex(executionsIndex);
   await createOrUpdateIndex(executionsMetaIndex);
+  await createOrUpdateIndex(reingestExecutionsIndex);
 };
 
 /**
