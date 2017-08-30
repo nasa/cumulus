@@ -109,6 +109,31 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   return Promise.all(s3Objs.map(limitedDownload));
 };
 
+/**
+ * Delete files from S3
+ * @param {Array} s3Objs An array of objects containing keys 'Bucket' and 'Key'
+ * @param {Object} s3Opts An optional object containing options that influence the behavior of S3
+ * @return A promise that resolves to an Array of the data returned from the deletion operations
+ */
+exports.deleteS3Files = (s3Objs, s3opts = {}) => {
+  const s3 = exports.s3();
+  let i = 0;
+  const n = s3Objs.length;
+  log.info(`Starting deletion of ${n} keys`);
+  const promiseDelete = (s3Obj) => {
+    const opts = Object.assign(s3Obj, s3opts);
+    return new Promise((resolve, reject) => {
+      s3.deleteObject(opts, (err, data) => {
+        if (err) reject(err);
+        log.info(`Progress: [${i++} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${s3Obj.key}`);
+        resolve(data);
+      });
+    });
+  };
+  const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
+  return Promise.all(s3Objs.map(limitedDelete));
+};
+
 exports.uploadS3Files = (files, bucket, keyPath, s3opts = {}) => {
   let i = 0;
   const n = files.length;

@@ -13,6 +13,94 @@ const util = require('@cumulus/common/util');
 const { spawn, spawnSync, execSync } = require('child_process');
 const checksum = require('checksum');
 
+// Promisify some functions to avoid using callbacks
+const fileChecksum = promisify(checksum.file);
+const decompress = promisify(tarGz.decompress);
+
+/**
+ * Validate the checksum
+ * @param {Object} fileAttrs Object describing a file as processed by the provider gateway
+ * @param {string} archiveFilePath The path to the archive file on the local file system
+ * @return {string} An error string, or null if the checksum validates correctly
+ */
+const validateChecksum = async (fileAttrs, archiveFilePath) => {
+  let algorithm = 'md5';
+  if (fileAttrs.source.checksumType.toUpperCase() === 'SHA1') {
+    algorithm = 'sha1';
+  }
+
+  const cksum = await fileChecksum(archiveFilePath, { algorithm: algorithm });
+
+  return (cksum !== fileAttrs.source.checksum) ? 'CHECKSUM VERIFICATION FAILURE' : null;
+};
+
+/**
+ * Extracts a .tgz file
+ * @param {string} tmpDir The path to the directory where the file should be extracted
+ * @param {string} archiveFilePath The path to the file to be extracted
+ * @return {string} The path to the the directory below `tmpDir` where the files are extracted
+ * Throws an exception if there is an error decompressing or un-tarring the file
+ */
+const extractArchive = async (tmpDir, archiveFilePath) => {
+  // archiveDirPath is the directory to which the files are extracted, which is
+  // just the archive file path minus the extension, e.g., '.tgz'
+  const archiveDirPath = archiveFilePath.substr(0, archiveFilePath.length - 4);
+  // fs.mkdirSync(archiveDirPath);
+  log.debug(`DECOMPRESSING ${archiveFilePath}`);
+  await decompress({ dest: tmpDir, src: archiveFilePath });
+
+  return archiveDirPath;
+};
+
+/**
+ * Validate that all the expected file types are present in an archive
+ * @param {string} archiveDirPath The path where the files were extracted
+ * @return { Array } An Array of strings for the files in the archive
+ * Throws an error if a file is missing
+ */
+const validateArchiveContents = (archiveDirPath) => {
+  // Tar files created on Macs sometimes have extra files in them to store
+  // extended attribute data. These extra files start with ._, so we filter these
+  // out here.
+  const unarchivedFiles = fs
+    .readdirSync(archiveDirPath)
+    .filter(fileName => !fileName.startsWith('._'));
+
+  let hasImage = false;
+  let hasWorldFile = false;
+  let hasMetadata = false;
+  unarchivedFiles.forEach(filePath => {
+    log.debug(filePath);
+    const ext = path.extname(filePath).toUpperCase();
+    if (ext === '.JPG' || ext === '.PNG') hasImage = true;
+    if (ext === '.PGW' || ext === '.JGW') hasWorldFile = true;
+    if (ext === '.MET') hasMetadata = true;
+  });
+
+  const errMsg =
+    (!hasImage && 'INCORRECT NUMBER OF SCIENCE FILES') ||
+    (!hasWorldFile && 'INCORRECT NUMBER OF FILES') ||
+    (!hasMetadata && 'INCORRECT NUMBER OF METADATA FILES');
+
+  if (errMsg) throw errMsg;
+
+  return unarchivedFiles;
+};
+
+/**
+ *
+ * @param {Array} unarchivedFiles An array of files that were unarchived
+ *  @param {string} archiveDirPath The path where the files were extracted
+ * @param {Object} fileAttrs An object that contains attributes about the archive file
+ */
+const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs) => {
+  const fullFilePaths = unarchivedFiles.map(fileName =>
+    path.join(archiveDirPath, fileName)
+  );
+  const s3DirKey = fileAttrs.target.key.substr(0, fileAttrs.target.key.length - 4);
+  aws.uploadS3Files(fullFilePaths, fileAttrs.target.bucket, s3DirKey);
+};
+
 /**
  * Task that validates the archive files retrieved from a SIPS server
  * Input payload: An array of objects describing the downloaded archive files
@@ -21,90 +109,102 @@ const checksum = require('checksum');
  * archive files will be expanded on S3.
  */
 module.exports = class ValidateArchives extends Task {
+
   /**
    * Main task entry point
    * @return {Array} An array of strings, either error messages or 'SUCCESSFUL'
    */
   async run() {
-    // Vars needed from config to connect to the S3 bucket
-    const { s3Bucket } = this.config;
-
     const message = this.message;
-    const { fileAttributes } = await message.payload;
+    log.info(`MESSAGE: ${message}`);
+    const payload = await message.payload;
+    const files = payload.files;
+    const pdrFileName = payload.pdr_file_name;
 
-    const tmpDir = util.mkdtempSync(this.constructor.name);
+    // Create a directory for the files to be downloaded
+    const tmpDir = '/tmp/archives';
+    fs.mkdirSync(tmpDir);
 
-    const archiveFiles = fileAttributes.map(attr => attr.s3Key);
-    const downloadRequest = archiveFiles.map(s3Key => ({ Bucket: s3Bucket, Key: s3Key }));
+    // Only files that were successfully downloaded by the provider gateway will be processed
+    const archiveFiles = files
+      .filter(file => file.success)
+      .map(file => [file.target.bucket, file.target.key]);
 
-    // Promisify some functions to avoid using callbacks
-    const fileChecksum = promisify(checksum.file);
-    const decompress = promisify(tarGz.decompress);
-
-    let dispositionPromises;
+    const downloadRequest = archiveFiles.map(([s3Bucket, s3Key]) => ({
+      Bucket: s3Bucket,
+      Key: s3Key
+    }));
 
     try {
       // Download the archive files to the local file system
       await aws.downloadS3Files(downloadRequest, tmpDir);
 
-      dispositionPromises = fileAttributes.map(async fileAttrs => {
-        const archiveFilePath = path.join(tmpDir, fileAttrs.s3Key);
+      const downloadedFiles = fs.readdirSync(tmpDir);
+      log.debug(`FILES: ${JSON.stringify(downloadedFiles)}`);
 
-        // Validate checksum
-        let algorithm = 'md5';
-        if (fileAttrs.checksumType.toUpperCase() === 'SHA1') {
-          algorithm = 'sha1';
+      const dispositionPromises = files.map(async fileAttrs => {
+        // Only process archives that were downloaded successfully by the provider gateway
+        if (fileAttrs.success) {
+          const archiveFileName = path.basename(fileAttrs.target.key);
+          const archiveFilePath = path.join(tmpDir, archiveFileName);
+          const returnValue = Object.assign({}, fileAttrs, { success: false });
+
+          // Validate checksum
+          const cksumError = await validateChecksum(fileAttrs, archiveFilePath);
+          if (cksumError) {
+            return Object.assign(returnValue, { error: cksumError });
+          }
+
+          log.debug('VALIDATED CHECKSUM');
+
+          // Extract archive
+          let archiveDirPath;
+          try {
+            archiveDirPath = await extractArchive(tmpDir, archiveFilePath);
+          }
+          catch (e) {
+            log.debug(e);
+            return Object.assign(returnValue, { error: 'FILE I/O ERROR' });
+          }
+
+          try {
+            // Verify that all the files are present
+            let unarchivedFiles;
+            try {
+              unarchivedFiles = validateArchiveContents(archiveDirPath);
+            }
+            catch (e) {
+              return Object.assign(returnValue, { error: e.message });
+            }
+
+            // TODO Check for un-parsable metadata file
+
+            // Upload expanded files to S3
+            await uploadArchiveFilesToS3(unarchivedFiles, archiveDirPath, fileAttrs);
+
+            // Delete the archive files from S3
+            await aws.deleteS3Files(downloadRequest);
+          }
+          catch (e) {
+            log.debug(e);
+            return Object.assign(returnValue, { error: 'ECS INTERNAL ERROR' });
+          }
+
+          return fileAttrs;
         }
-        const cksum = await fileChecksum(archiveFilePath, { algorithm: algorithm });
-        if (cksum !== fileAttrs.checksum) {
-          return 'CHECKSUM VERIFICATION FAILURE';
-        }
 
-        // Extract archive
-        const archiveDirPath = archiveFilePath.substr(0, archiveFilePath.length - 4);
-        // fs.mkdirSync(archiveDirPath);
-        try {
-          await decompress(archiveDirPath, archiveFilePath);
-        }
-        catch (e) {
-          return 'FILE I/O ERROR';
-        }
-
-        try {
-          // Verify that all the files are present
-          const unarchivedFiles = fs.readDirSync(archiveDirPath).map(file => file.toUpperCase());
-          let hasImage = false;
-          let hasWorldFile = false;
-          let hasMetadata = false;
-          unarchivedFiles.forEach(filePath => {
-            const ext = path.extname(filePath);
-            if (ext === 'JPG' || ext === 'PNG') hasImage = true;
-            if (ext === 'PGW' || ext === 'JGW') hasWorldFile = true;
-            if (ext === 'MET') hasMetadata = true;
-          });
-
-          if (!hasImage) return 'INCORRECT NUMBER OF SCIENCE FILES';
-          if (!hasWorldFile) return 'INCORRECT NUMBER OF FILES';
-          if (!hasMetadata) return 'INCORRECT NUMBER OF METADATA FILES';
-
-          // TODO Check for un-parsable metadata file
-
-          // Upload expanded files to S3
-          const s3DirKey = fileAttrs.s3Key.substr(0, fileAttrs.s3Key.length - 4);
-          aws.uploadS3Files(unarchivedFiles, s3Bucket, s3DirKey);
-        }
-        catch (e) {
-          return 'ECS INTERNAL ERROR';
-        }
-
-        return 'SUCCESSFUL';
+        // File was not downloaded successfully by provder gateway so just pass along its status
+        return fileAttrs;
       });
+
+      // Have to wait here or the directory holding the archives might get deleted before
+      // we are done (see finally block below)
+      const dispositions = await Promise.all(dispositionPromises);
+      return { pdr_file_name: pdrFileName, files: dispositions };
     }
     finally {
       execSync(`rm -rf ${tmpDir}`);
     }
-
-    return Promise.all(dispositionPromises);
   }
 
   /**
@@ -118,30 +218,3 @@ module.exports = class ValidateArchives extends Task {
 };
 
 // Test code
-const local = require('@cumulus/common/local-helpers');
-local.setupLocalRun(module.exports.handler, () => ({
-  workflow_config_template: {
-    DiscoverPdr: {
-      s3Bucket: '{resources.s3Bucket}',
-      folder: 'PDR'
-    },
-    ValidateArchives: {
-      s3Bucket: '{resources.s3Bucket}',
-
-    }
-  },
-  resources: {
-    s3Bucket: 'gitc-jn-sips-mock'
-  },
-  provider: {
-    id: 'DUMMY',
-    config: {}
-  },
-  meta: {},
-  ingest_meta: {
-    task: 'ValidateArchives',
-    id: 'abc1234',
-    message_source: 'stdin'
-  }
-
-}));
