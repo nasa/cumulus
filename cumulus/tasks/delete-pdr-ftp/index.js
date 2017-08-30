@@ -12,7 +12,7 @@ const ftp = require('./ftp_util');
  * Input payload: The path to the PDR on the server
  * Output payload: none
  */
-module.exports = class DeletePdr extends Task {
+module.exports = class DeletePdrFtp extends Task {
   /**
    * Main task entry point
    * @return An object referencing the oldest PDR on the server
@@ -70,6 +70,6 @@ module.exports = class DeletePdr extends Task {
    * @return The handler return value
    */
   static handler(...args) {
-    return DeletePdr.handle(...args);
+    return DeletePdrFtp.handle(...args);
   }
 };
