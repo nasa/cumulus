@@ -10,12 +10,14 @@
 'use strict';
 
 const forge = require('node-forge');
+const get = require('lodash.get');
 const auth = require('basic-auth');
 const proxy = require('lambda-proxy-utils');
-const User = require('./models').User;
-const errorify = require('./utils').errorify;
+const log = require('@cumulus/common/log');
+const { User } = require('../models');
+const { errorify } = require('./utils');
 
-export function resp(context, err, _body, _status = null) {
+function resp(context, err, _body, _status = null) {
   let status = _status;
   let body = _body;
   if (typeof context.succeed !== 'function') {
@@ -23,19 +25,22 @@ export function resp(context, err, _body, _status = null) {
   }
 
   if (err) {
-    //const errMsg = { detail: 'An error occured' };
+    log.error(err);
     status = status || 400;
-    //if (typeof body === 'string') errMsg.detail = err;
-    //if (err.message) errMsg.detail = err.message;
+    const message = get(err, 'message', errorify(err));
+    const detail = get(err, 'detail');
 
-    body = { error: errorify(err) };
+    body = {
+      message,
+      detail
+    };
   }
 
   const res = new proxy.Response({ cors: true, statusCode: status });
   return context.succeed(res.send(body));
 }
 
-export function handle(event, context, authCheck, func) {
+function handle(event, context, authCheck, func) {
   if (typeof context.succeed !== 'function') {
     throw new Error('context object with succeed method not provided');
   }
@@ -43,6 +48,7 @@ export function handle(event, context, authCheck, func) {
   const cb = resp.bind(null, context);
   if (authCheck) {
     const req = new proxy.Request(event);
+
     const user = auth(req);
 
     if (!user) {
@@ -64,3 +70,6 @@ export function handle(event, context, authCheck, func) {
   }
   return func(cb);
 }
+
+module.exports.handle = handle;
+module.exports.resp = resp;
