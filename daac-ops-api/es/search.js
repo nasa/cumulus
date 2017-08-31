@@ -7,7 +7,6 @@
 
 const has = require('lodash.has');
 const omit = require('lodash.omit');
-const moment = require('moment');
 const aws = require('aws-sdk');
 const httpAwsEs = require('http-aws-es');
 const elasticsearch = require('elasticsearch');
@@ -20,7 +19,7 @@ const logDetails = {
 };
 
 class BaseSearch {
-  static async es() {
+  static async es(host) {
     let esConfig;
 
     // this is needed for getting temporary credentials from IAM role
@@ -38,7 +37,7 @@ class BaseSearch {
       }
 
       esConfig = {
-        host: process.env.ES_HOST || 'localhost:9200',
+        host: process.env.ES_HOST || host || 'localhost:9200',
         connectionClass: httpAwsEs,
         amazonES: {
           region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
@@ -77,7 +76,7 @@ class BaseSearch {
 
     this.frm = (page - 1) * this.size;
     this.page = parseInt((params.skip) ? params.skip : page, 10);
-    this.index = index || `${process.env.StackName}-${process.env.Stage}`;
+    this.index = index || 'cumulus';
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';
@@ -87,7 +86,7 @@ class BaseSearch {
     }
   }
 
-  _buildSearch(granuleStats = false) {
+  _buildSearch() {
     let fields;
 
     // if fields are included remove it from params
@@ -96,14 +95,7 @@ class BaseSearch {
       this.params = omit(this.params, ['fields']);
     }
 
-    let body = queries(this.params);
-    if (granuleStats) {
-      body = Object.assign(
-        {},
-        body,
-        this._buildGranuleStats()
-      );
-    }
+    const body = queries(this.params);
 
     return {
       index: this.index,
@@ -144,6 +136,8 @@ class BaseSearch {
   _metaTemplate() {
     return {
       name: 'cumulus-api',
+      stack: process.env.stackName,
+      stage: process.env.stage,
       table: this.type
     };
   }
@@ -177,7 +171,9 @@ class BaseSearch {
         return { detail: 'Record not found' };
       }
 
-      return result.hits.hits[0]._source;
+      const resp = result.hits.hits[0]._source;
+      resp._id = result.hits.hits[0]._id;
+      return resp;
     }
     catch (e) {
       //log.error(e, logDetails);
@@ -311,200 +307,9 @@ class BaseSearch {
 
 }
 
-export class Search extends BaseSearch {}
+class Search extends BaseSearch {}
 
-export class LogSearch extends BaseSearch {
-  constructor(event, type = null) {
-    super(event, type);
-    this.index = `${process.env.StackName}-${process.env.Stage}-logs`;
-  }
-}
-
-export class Stats extends BaseSearch {
-
-  async query() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
-    }
-
-    // we have to run three separate queries to get
-    // errors from logs, granules and collections from
-    // the main index and resources numbers
-
-    // resources - just get the latest
-    const resources = await this.client.search({
-      index: this.index,
-      type: process.env.ResourcesTable,
-      size: 1,
-      body: {
-        sort: [{
-          timestamp: { order: 'desc' }
-        }]
-      }
-    });
-
-    // granules
-    const searchParams = this._buildSearch();
-    searchParams.size = 0;
-    delete searchParams.from;
-    searchParams.type = process.env.GranulesTable;
-
-    // add aggregation
-    searchParams.body.aggs = {
-      averageDuration: {
-        avg: {
-          field: 'totalDuration'
-        }
-      },
-      granulesStatus: {
-        terms: {
-          field: 'status.keyword'
-        }
-      }
-    };
-
-    const granules = await this.client.search(searchParams);
-
-    const collections = await this.client.count({
-      index: this.index,
-      type: process.env.CollectionsTable
-    });
-
-    const dateFormat = 'YYYY-MM-DDThh:mm:ssZ';
-    const dateFrom = moment(this.params.timestamp__from).format(dateFormat);
-    const dateTo = moment(this.params.timestamp__to).format(dateFormat);
-
-    let granulesErrors = 0;
-    granules.aggregations.granulesStatus.buckets.forEach((b) => {
-      if (b.key === 'failed') {
-        granulesErrors = b.doc_count;
-      }
-    });
-
-    return {
-      errors: {
-        dateFrom,
-        dateTo,
-        value: granulesErrors,
-        aggregation: 'count',
-        unit: 'error'
-      },
-      collections: {
-        dateFrom: moment('1970-01-01').format(dateFormat),
-        dateTo,
-        value: collections.count,
-        aggregation: 'count',
-        unit: 'collection'
-      },
-      processingTime: {
-        dateFrom,
-        dateTo,
-        value: granules.aggregations.averageDuration.value,
-        aggregation: 'average',
-        unit: 'second'
-      },
-      granules: {
-        dateFrom,
-        dateTo,
-        value: granules.hits.total,
-        aggregation: 'count',
-        unit: 'granule'
-      },
-      resources: resources.hits.hits.map(s => s._source)
-    };
-  }
-
-  async histogram() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
-    }
-
-    const searchParams = this._buildSearch();
-    const criteria = {
-      field: this.params.field || 'timestamp',
-      interval: this.params.interval || 'day',
-      format: this.params.format || 'yyyy-MM-dd'
-    };
-
-    searchParams.size = 0;
-    searchParams.body.aggs = {
-      histogram: {
-        date_histogram: criteria
-      }
-    };
-
-    const hist = await this.client.search(searchParams);
-
-    return {
-      meta: {
-        name: 'cumulus-api',
-        count: hist.hits.total,
-        criteria
-      },
-      histogram: hist.aggregations.histogram.buckets.map(b => ({
-        date: b.key_as_string,
-        count: b.doc_count
-      }))
-    };
-  }
-
-  async count() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
-    }
-
-    const field = `${this.params.field}.keyword` || 'status.keyword';
-
-    const searchParams = this._buildSearch();
-    searchParams.size = 0;
-    searchParams.body.aggs = {
-      count: {
-        terms: { field }
-      }
-    };
-
-    const count = await this.client.search(searchParams);
-
-    return {
-      meta: {
-        name: 'cumulus-api',
-        count: count.hits.total,
-        field: field
-      },
-      count: count.aggregations.count.buckets.map(b => ({
-        key: b.key,
-        count: b.doc_count
-      }))
-    };
-  }
-
-  async avg() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
-    }
-
-    const field = this.params.field;
-    if (!field) {
-      throw new Error('field parameter must be provided');
-    }
-
-    const searchParams = this._buildSearch();
-    searchParams.size = 0;
-    searchParams.body.aggs = {
-      stats: {
-        extended_stats: { field }
-      }
-    };
-
-    const stats = await this.client.search(searchParams);
-
-    return {
-      meta: {
-        name: 'cumulus-api',
-        count: stats.hits.total,
-        field: field
-      },
-      stats: stats.aggregations.stats
-    };
-  }
-}
+module.exports = {
+  BaseSearch,
+  Search
+};
