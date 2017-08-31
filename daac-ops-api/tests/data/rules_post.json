@@ -1,0 +1,45 @@
+{
+    "resource": "/rules",
+    "path": "/rules",
+    "httpMethod": "POST",
+    "headers": {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate",
+        "Authorization": "Basic Y3VtdWx1czp0ZXN0dXNlcg==",
+        "cache-control": "no-cache",
+        "CloudFront-Forwarded-Proto": "https",
+        "CloudFront-Is-Desktop-Viewer": "true",
+        "CloudFront-Is-Mobile-Viewer": "false",
+        "CloudFront-Is-SmartTV-Viewer": "false",
+        "CloudFront-Is-Tablet-Viewer": "false",
+        "CloudFront-Viewer-Country": "US",
+        "Content-Type": "application/json",
+        "User-Agent": "PostmanRuntime/6.2.5",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https"
+    },
+    "queryStringParameters": null,
+    "pathParameters": null,
+    "stageVariables": null,
+    "requestContext": {
+        "path": "/dev/rules",
+        "stage": "dev",
+        "requestId": "21db175a-86ad-11e7-a26a-7708aa13f8e4",
+        "identity": {
+            "cognitoIdentityPoolId": null,
+            "accountId": null,
+            "cognitoIdentityId": null,
+            "caller": null,
+            "apiKey": "",
+            "accessKey": null,
+            "cognitoAuthenticationType": null,
+            "cognitoAuthenticationProvider": null,
+            "userArn": null,
+            "user": null
+        },
+        "resourcePath": "/rules",
+        "httpMethod": "POST"
+    },
+    "body": "{\n  \"name\": \"Discover Pdrs from LPDAAC\",\n \"workflow\": \"DiscoverPdrs\",  \"provider\": \"aster_lpdaac_pdrs\",\n  \"collection\": {\n  \t\"name\": \"MOD11A1\",\n  \t\"version\": \"006\"\n  },\n  \"rule\": {\n  \t\"type\": \"onetime\"\n  },\n  \"state\": \"ENABLED\"\n}",
+    "isBase64Encoded": false
+}

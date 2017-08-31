@@ -2,13 +2,13 @@
 
 const path = require('path');
 const Manager = require('./base');
-const errorify = require('../utils').errorify;
+const { errorify } = require('../lib/utils');
 //import { deleteGranule } from '../cmrjs';
 const aws = require('@cumulus/ingest/aws');
 const Collection = require('./collections');
 const Provider = require('./providers');
 const Pdr = require('./pdrs');
-const granuleSchema = require('../schemas').granule;
+const granuleSchema = require('./schemas').granule;
 
 class Granule extends Manager {
   constructor() {
