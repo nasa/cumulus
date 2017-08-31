@@ -27,7 +27,7 @@ module.exports = class DiscoverPdr extends Task {
     // The folder on the SIPS server holding the PDRS and the S3 bucket to which they should
     // be copied
     const { folder, bucket } = this.config;
-    const keyPrefix = this.config.key_prefix + '/pdr';
+    const keyPrefix = `${this.config.key_prefix}/pdr`;
 
     let client;
     if (conn_type.toUpperCase() === 'FTP') {
@@ -53,10 +53,6 @@ module.exports = class DiscoverPdr extends Task {
       const pdrList = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
       log.info(`PDR LIST: [${pdrList}]`);
 
-      // if (pdrList.length < 1) {
-      //   return { continue: false };
-      // }
-
       const S3UploadPromises = pdrList.map(async pdrEntry => {
         const fileName = pdrEntry.name;
         log.info(`FILE: ${fileName}`);
@@ -77,20 +73,6 @@ module.exports = class DiscoverPdr extends Task {
       });
 
       returnValue = await Promise.all(S3UploadPromises);
-
-      // Get the oldest one
-      // fileName = list.sort((a, b) => b.date < a.date)[0].name;
-      // log.info('FILE:');
-      // log.info(fileName);
-      // // Get the file contents
-      // const pdr = await pdrMod.getPdr(client, folder, fileName);
-      // // Write the contents out to S3
-      // s3PdrKey = `${keyPrefix}/${fileName}`;
-      // const pdrStream = stringToStream(pdr.pdr);
-      // await aws.uploadS3FileStream(pdrStream, bucket, s3PdrKey);
-
-      // log.info('PDR:');
-      // log.info(pdr);
     }
     catch (e) {
       log.error('Failed to download file');
@@ -102,14 +84,6 @@ module.exports = class DiscoverPdr extends Task {
       client.end();
     }
 
-    // return {
-    //   continue: true,
-    //   pdr: {
-    //     pdr_file_name: fileName,
-    //     s3_bucket: bucket,
-    //     s3_key: s3PdrKey
-    //   }
-    // };
     return returnValue;
   }
 
@@ -124,8 +98,6 @@ module.exports = class DiscoverPdr extends Task {
 };
 
 // Test code
-
-// const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(module.exports.handler, () => ({
@@ -198,21 +170,3 @@ local.setupLocalRun(module.exports.handler, () => ({
   }
 
 }));
-
-// const config = {
-//   s3Bucket: 'gitc-jn-sips-mock',
-//   folder: 'PDR'
-// };
-
-// const DiscoverPdr = module.exports;
-// const discoverPdr = new DiscoverPdr(null, config, null, null);
-
-// const demo = async () => {
-//   while (true) {
-//     log.info(await discoverPdr.run());
-//     await sleep(10000);
-//   }
-// };
-
-// demo();
-

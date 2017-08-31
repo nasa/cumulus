@@ -1,6 +1,6 @@
 'use strict';
 
-const pvl = require('pvl');
+const pvl = require('@cumulus/pvl');
 
 const fileSpecFields =
   ['DIRECTORY_ID', 'FILE_ID', 'FILE_CKSUM_TYPE', 'FILE_CKSUM_VALUE', 'FILE_TYPE', 'FILE_SIZE'];

@@ -12,12 +12,9 @@ const path = require('path');
 const main = (...args) => {
   // This is NOT robust argument handling - just enough for our needs
   const dir = args[2];
-  // log.info(`WATCHING ${dir}`);
   fs.watch(dir, (_, fileName) => {
     const filePath = path.join(dir, fileName);
     if (fs.existsSync(filePath)) {
-      // log:info(`FILE: ${fileName}`);
-
       let fileContents = fs.readFileSync(filePath).toString();
       fileContents = fileContents.replace(/\n/g, ' ');
       log.warn(`inline-result: ${fileContents}`);

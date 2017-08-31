@@ -1,7 +1,5 @@
 'use strict';
 const expect = require('expect.js');
-const helpers = require('cumulus-common/test-helpers');
-const fs = require('fs');
 const pan = require('../pan');
 
 const allSuccessFixture = require('./fixtures/all-success-fixture');
@@ -18,11 +16,6 @@ describe('generate-pan.handler', () => {
   let result;
   let input;
   let timeStampStr;
-
-
-  // beforeEach((done) => {
-  //   result = pan.generatePan(input, timeStampStr);
-  // });
 
   it('generates a short PAN if all files succeed', () => {
     input = allSuccessFixture.input;

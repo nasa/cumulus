@@ -20,7 +20,7 @@
     "ftp": "^0.3.10",
     "@cumulus/common": "^1.0.0",
     "@cumulus/ingest": "^1.0.0",
-    "pvl": "file:../../../../pvl",
+    "@cumulus/pvl": "^1.0.0",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1",
     "sftpjs": "^1.3.4",

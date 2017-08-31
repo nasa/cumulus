@@ -6,32 +6,23 @@ const Task = require('@cumulus/common/task');
 const validations = require('./archive-validations');
 const fs = require('fs');
 const path = require('path');
-const gunzip = require('gunzip-maybe');
+const { execSync } = require('child_process');
 const tarGz = require('targz');
 const promisify = require('util.promisify');
-const util = require('@cumulus/common/util');
-const { spawn, spawnSync, execSync } = require('child_process');
-const checksum = require('checksum');
 
-// Promisify some functions to avoid using callbacks
-const fileChecksum = promisify(checksum.file);
+// Promisify function to avoid using callbacks
 const decompress = promisify(tarGz.decompress);
 
 /**
- * Validate the checksum
- * @param {Object} fileAttrs Object describing a file as processed by the provider gateway
- * @param {string} archiveFilePath The path to the archive file on the local file system
- * @return {string} An error string, or null if the checksum validates correctly
+ *
+ * @param {Array} unarchivedFiles An array of files that were unarchived
+ *  @param {string} archiveDirPath The path where the files were extracted
+ * @param {Object} fileAttrs An object that contains attributes about the archive file
  */
-const validateChecksum = async (fileAttrs, archiveFilePath) => {
-  let algorithm = 'md5';
-  if (fileAttrs.source.checksumType.toUpperCase() === 'SHA1') {
-    algorithm = 'sha1';
-  }
-
-  const cksum = await fileChecksum(archiveFilePath, { algorithm: algorithm });
-
-  return (cksum !== fileAttrs.source.checksum) ? 'CHECKSUM VERIFICATION FAILURE' : null;
+const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs) => {
+  const fullFilePaths = unarchivedFiles.map(fileName => path.join(archiveDirPath, fileName));
+  const s3DirKey = fileAttrs.target.key.substr(0, fileAttrs.target.key.length - 4);
+  aws.uploadS3Files(fullFilePaths, fileAttrs.target.bucket, s3DirKey);
 };
 
 /**
@@ -53,55 +44,6 @@ const extractArchive = async (tmpDir, archiveFilePath) => {
 };
 
 /**
- * Validate that all the expected file types are present in an archive
- * @param {string} archiveDirPath The path where the files were extracted
- * @return { Array } An Array of strings for the files in the archive
- * Throws an error if a file is missing
- */
-const validateArchiveContents = (archiveDirPath) => {
-  // Tar files created on Macs sometimes have extra files in them to store
-  // extended attribute data. These extra files start with ._, so we filter these
-  // out here.
-  const unarchivedFiles = fs
-    .readdirSync(archiveDirPath)
-    .filter(fileName => !fileName.startsWith('._'));
-
-  let hasImage = false;
-  let hasWorldFile = false;
-  let hasMetadata = false;
-  unarchivedFiles.forEach(filePath => {
-    log.debug(filePath);
-    const ext = path.extname(filePath).toUpperCase();
-    if (ext === '.JPG' || ext === '.PNG') hasImage = true;
-    if (ext === '.PGW' || ext === '.JGW') hasWorldFile = true;
-    if (ext === '.MET') hasMetadata = true;
-  });
-
-  const errMsg =
-    (!hasImage && 'INCORRECT NUMBER OF SCIENCE FILES') ||
-    (!hasWorldFile && 'INCORRECT NUMBER OF FILES') ||
-    (!hasMetadata && 'INCORRECT NUMBER OF METADATA FILES');
-
-  if (errMsg) throw errMsg;
-
-  return unarchivedFiles;
-};
-
-/**
- *
- * @param {Array} unarchivedFiles An array of files that were unarchived
- *  @param {string} archiveDirPath The path where the files were extracted
- * @param {Object} fileAttrs An object that contains attributes about the archive file
- */
-const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs) => {
-  const fullFilePaths = unarchivedFiles.map(fileName =>
-    path.join(archiveDirPath, fileName)
-  );
-  const s3DirKey = fileAttrs.target.key.substr(0, fileAttrs.target.key.length - 4);
-  aws.uploadS3Files(fullFilePaths, fileAttrs.target.bucket, s3DirKey);
-};
-
-/**
  * Task that validates the archive files retrieved from a SIPS server
  * Input payload: An array of objects describing the downloaded archive files
  * Output payload: An object possibly containing an `errors` key pointing to an array
@@ -109,14 +51,12 @@ const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs
  * archive files will be expanded on S3.
  */
 module.exports = class ValidateArchives extends Task {
-
   /**
    * Main task entry point
    * @return {Array} An array of strings, either error messages or 'SUCCESSFUL'
    */
   async run() {
     const message = this.message;
-    log.info(`MESSAGE: ${message}`);
     const payload = await message.payload;
     const files = payload.files;
     const pdrFileName = payload.pdr_file_name;
@@ -142,6 +82,8 @@ module.exports = class ValidateArchives extends Task {
       const downloadedFiles = fs.readdirSync(tmpDir);
       log.debug(`FILES: ${JSON.stringify(downloadedFiles)}`);
 
+      // Compute the dispositions (status) for each file downloaded successfully by
+      // the provider gateway
       const dispositionPromises = files.map(async fileAttrs => {
         // Only process archives that were downloaded successfully by the provider gateway
         if (fileAttrs.success) {
@@ -150,12 +92,10 @@ module.exports = class ValidateArchives extends Task {
           const returnValue = Object.assign({}, fileAttrs, { success: false });
 
           // Validate checksum
-          const cksumError = await validateChecksum(fileAttrs, archiveFilePath);
+          const cksumError = await validations.validateChecksum(fileAttrs, archiveFilePath);
           if (cksumError) {
             return Object.assign(returnValue, { error: cksumError });
           }
-
-          log.debug('VALIDATED CHECKSUM');
 
           // Extract archive
           let archiveDirPath;
@@ -163,7 +103,7 @@ module.exports = class ValidateArchives extends Task {
             archiveDirPath = await extractArchive(tmpDir, archiveFilePath);
           }
           catch (e) {
-            log.debug(e);
+            log.error(e);
             return Object.assign(returnValue, { error: 'FILE I/O ERROR' });
           }
 
@@ -171,9 +111,10 @@ module.exports = class ValidateArchives extends Task {
             // Verify that all the files are present
             let unarchivedFiles;
             try {
-              unarchivedFiles = validateArchiveContents(archiveDirPath);
+              unarchivedFiles = validations.validateArchiveContents(archiveDirPath);
             }
             catch (e) {
+              log.error(e);
               return Object.assign(returnValue, { error: e.message });
             }
 
@@ -186,14 +127,14 @@ module.exports = class ValidateArchives extends Task {
             await aws.deleteS3Files(downloadRequest);
           }
           catch (e) {
-            log.debug(e);
+            log.error(e);
             return Object.assign(returnValue, { error: 'ECS INTERNAL ERROR' });
           }
 
           return fileAttrs;
         }
 
-        // File was not downloaded successfully by provder gateway so just pass along its status
+        // File was not downloaded successfully by provider gateway so just pass along its status
         return fileAttrs;
       });
 
@@ -216,5 +157,3 @@ module.exports = class ValidateArchives extends Task {
     return ValidateArchives.handle(...args);
   }
 };
-
-// Test code

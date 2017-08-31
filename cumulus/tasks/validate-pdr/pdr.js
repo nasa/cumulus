@@ -1,6 +1,6 @@
 'use strict';
 
-const pvl = require('pvl');
+const pvl = require('@cumulus/pvl');
 
 /**
  * Parses a PDR, performing validation and returning a list of file paths
