@@ -5,7 +5,7 @@
 
 'use strict';
 
-export function date(field) {
+function date(field) {
   return {
     scenes_by_date: {
       date_histogram: {
@@ -18,7 +18,7 @@ export function date(field) {
   };
 }
 
-export function term(field) {
+function term(field) {
   const aggs = {};
 
   aggs[`terms_${field}`] = {
@@ -29,3 +29,6 @@ export function term(field) {
 
   return aggs;
 }
+
+module.exports.date = date;
+module.exports.term = term;
