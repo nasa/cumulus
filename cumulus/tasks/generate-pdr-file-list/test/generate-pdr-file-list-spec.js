@@ -9,12 +9,8 @@ const missingFileFixture = require('./fixtures/missing-file-fixture');
 
 const timeStamp = (dateTime) => dateTime.toISOString().replace(/\.\d\d\dZ/, 'Z');
 
-const shortPan = (dateTime) =>
-`MESSAGE_TYPE = SHORTPAN;
-DISPOSITION = "SUCCESSFUL";
-TIME_STAMP = ${timeStamp(dateTime)};`;
 
-describe('generate-pan.handler', () => {
+xdescribe('generate-pan.handler', () => {
   let result;
   let input;
   let timeStampStr;
