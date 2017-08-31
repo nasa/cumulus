@@ -3,10 +3,12 @@
 const get = require('lodash.get');
 const path = require('path');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { S3, KMS } = require('@cumulus/ingest/aws');
+const { S3 } = require('@cumulus/ingest/aws');
+const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const testPayload = require('@cumulus/test-data/payloads/modis/cmr.json');
+const log = require('@cumulus/ingest/log');
 
 /**
  * The output returned by Cumulus-py has a broken payload
@@ -91,7 +93,7 @@ async function getMetadata(xmlFilePath) {
 
 async function decryptPassword(password) {
   try {
-    const pass = await KMS.decrypt(password);
+    const pass = await DefaultProvider.decrypt(password);
     return pass;
   }
   catch (e) {
@@ -135,7 +137,7 @@ async function publish(cmrFile, creds) {
  * @param {object} event Lambda function payload
  * @param {object} context aws lambda context object
  * @param {function} cb lambda callback
- * @returns 1A0000-2016111101_000_001{object} returns the updated event object[M`A[M`A[M`A
+ * @returns {object} returns the updated event object
  */
 function handler(_event, context, cb) {
   try {
@@ -152,6 +154,7 @@ function handler(_event, context, cb) {
     if (payload.granules.length > 1) {
       const err = new Error('Received more than 1 granule. ' +
                             'This function can only handle 1 granule a time');
+      log.error(err);
       return cb(err);
     }
 
@@ -176,9 +179,13 @@ function handler(_event, context, cb) {
       event.payload = payload;
 
       return cb(null, event);
-    }).catch(e => cb(e));
+    }).catch(e => {
+      log.error(e);
+      cb(e);
+    });
   }
   catch (e) {
+    log.error(e);
     return cb(e);
   }
 }
@@ -186,5 +193,5 @@ function handler(_event, context, cb) {
 module.exports.handler = handler;
 
 justLocalRun(() => {
-  handler(testPayload, {}, (e, r) => console.log(e, JSON.stringify(r)));
+  handler(testPayload, {}, (e, r) => log.debug(e, JSON.stringify(r)));
 });

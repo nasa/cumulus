@@ -4,7 +4,7 @@
  */
 
 const forge = require('node-forge');
-const { S3, KMS } = require('./aws').S3;
+const { S3, KMS } = require('./aws');
 
 /**
  * Provides encryption and decryption methods using a keypair stored in S3
@@ -21,11 +21,11 @@ class S3KeyPairProvider {
     const pki = forge.pki;
     const pub = await S3.get(
       process.env.internal,
-      `${process.env.StackName}-${process.env.Stage}/crypto/${keyId}`
+      `${process.env.stackName}-${process.env.stage}/crypto/${keyId}`
     );
 
     const publicKey = pki.publicKeyFromPem(pub.Body.toString());
-    return publicKey.encrypt(str);
+    return forge.util.encode64(publicKey.encrypt(str));
   }
 
   /**
@@ -38,11 +38,12 @@ class S3KeyPairProvider {
     const pki = forge.pki;
     const priv = await S3.get(
       process.env.internal,
-      `${process.env.StackName}-${process.env.Stage}/crypto/${keyId}`
+      `${process.env.stackName}-${process.env.stage}/crypto/${keyId}`
     );
 
+    const decoded = forge.util.decode64(str);
     const privateKey = pki.privateKeyFromPem(priv.Body.toString());
-    return privateKey.decrypt(str);
+    return privateKey.decrypt(decoded);
   }
 }
 
