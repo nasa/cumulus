@@ -4,53 +4,74 @@ const get = require('lodash.get');
 const ProviderNotFound = require('@cumulus/common/errors').ProviderNotFound;
 const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
-const log = require('@cumulus/common/log');
+const logger = require('@cumulus/ingest/log');
 const local = require('@cumulus/common/local-helpers');
 
+const log = logger.child({ file: 'discover-pdrs/index.js' });
+
 function handler(_event, context, cb) {
-  const event = Object.assign({}, _event);
-  const queue = get(event, 'meta.useQueue', true);
-  const provider = get(event, 'provider', null);
+  try {
+    log.debug(_event);
+    const event = Object.assign({}, _event);
+    const queue = get(event, 'meta.useQueue', true);
+    const provider = get(event, 'provider', null);
 
-  if (!provider) {
-    const err = new ProviderNotFound('Provider info not provided');
-    return cb(err);
+    log.child({ provider: get(provider, 'id') });
+
+    if (!provider) {
+      const err = new ProviderNotFound('Provider info not provided');
+      log.error(err);
+      return cb(err);
+    }
+
+    const Discover = pdr.selector('discover', provider.protocol, queue);
+    const discover = new Discover(event);
+
+    log.debug('Staring PDR discovery');
+    return discover.discover().then((pdrs) => {
+      if (queue) {
+        event.payload.pdrs_found = pdrs.length;
+      }
+      else {
+        event.payload.pdrs = pdrs;
+      }
+
+      if (discover.connected) {
+        discover.end();
+        log.debug(`Ending ${provider.protocol} connection`);
+      }
+
+      return cb(null, event);
+    }).catch(e => {
+      log.error(e);
+
+      if (discover.connected) {
+        discover.end();
+        log.debug(`Ending ${provider.protocol} connection`);
+      }
+
+      if (e.toString().includes('ECONNREFUSED')) {
+        const err = new errors.RemoteResourceError('Connection Refused');
+        log.error(err);
+        return cb(err);
+      }
+      else if (e.details && e.details.status === 'timeout') {
+        const err = new errors.ConnectionTimeout('connection Timed out');
+        log.error(err);
+        return cb(err);
+      }
+      else if (e.details && e.details.status === 'notfound') {
+        const err = new errors.HostNotFound(`${e.details.url} not found`);
+        log.error(err);
+        return cb(err);
+      }
+      return cb(e);
+    });
   }
-
-  const Discover = pdr.selector('discover', provider.protocol, queue);
-  const discover = new Discover(event);
-
-  return discover.discover().then((pdrs) => {
-    if (queue) {
-      event.payload.pdrs_found = pdrs.length;
-    }
-    else {
-      event.payload.pdrs = pdrs;
-    }
-
-    if (discover.connected) {
-      discover.end();
-    }
-
-    return cb(null, event);
-  }).catch(e => {
+  catch (e) {
     log.error(e);
-
-    if (discover.connected) {
-      discover.end();
-    }
-
-    if (e.toString().includes('ECONNREFUSED')) {
-      return cb(new errors.RemoteResourceError('Connection Refused'));
-    }
-    else if (e.details && e.details.status === 'timeout') {
-      return cb(new errors.ConnectionTimeout('connection Timed out'));
-    }
-    else if (e.details && e.details.status === 'notfound') {
-      return cb(new errors.HostNotFound(`${e.details.url} not found`));
-    }
-    return cb(e);
-  });
+    throw e;
+  }
 }
 
 module.exports.handler = handler;
