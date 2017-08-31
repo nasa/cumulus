@@ -1,10 +1,10 @@
 'use strict';
 
 const pvl = require('@cumulus/pvl');
-const errorify = require('../utils').errorify;
+const { errorify } = require('../lib/utils');
 const Manager = require('./base');
 //const Provider = require('./providers');
-const pdrSchema = require('../schemas').pdr;
+const pdrSchema = require('./schemas').pdr;
 
 
 class Pdr extends Manager {
