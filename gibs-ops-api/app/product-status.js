@@ -116,7 +116,6 @@ const getProductStatus = async (stackName, workflowId, collectionId, numExecutio
  */
 const handleProductStatusRequest = async (req, res) => {
   try {
-    req.checkQuery('stack_name', 'Invalid stack_name').notEmpty();
     req.checkQuery('workflow_id', 'Invalid workflow_id').notEmpty();
     req.checkQuery('collection_id', 'Invalid collection_id').notEmpty();
     req.checkQuery('num_executions', 'Invalid num_executions').isInt({ min: 1, max: 1000 });
@@ -125,7 +124,7 @@ const handleProductStatusRequest = async (req, res) => {
       res.status(400).json(result.array());
     }
     else {
-      const stackName = req.query.stack_name;
+      const stackName = process.env.STACK_NAME;
       const workflowId = req.query.workflow_id;
       const collectionId = req.query.collection_id;
       const numExecutions = req.query.num_executions;
