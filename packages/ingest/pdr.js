@@ -2,12 +2,15 @@
 
 const path = require('path');
 const get = require('lodash.get');
-const log = require('@cumulus/common/log');
+const logger = require('./log');
+const { MismatchPdrCollection } = require('@cumulus/common/errors');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
-const S3 = require('./aws').S3;
+const { S3 } = require('./aws');
 const queue = require('./queue');
+
+const log = logger.child({ file: 'ingest/pdr.js' });
 
 /**
  * This is a base class for discovering PDRs
@@ -136,11 +139,11 @@ class Parse {
     // download
     const pdrLocalPath = await this.download(this.pdr.path, this.pdr.name);
 
-    // upload
-    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
-
     // parse the PDR
     const granules = await this.parse(pdrLocalPath);
+
+    // upload only if the parse was successful
+    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
 
     // return list of all granules found in the PDR
     return granules;
@@ -162,8 +165,14 @@ class Parse {
     // each group represents a Granule record.
     // After adding all the files in the group to the Queue
     // we create the granule record (moment of inception)
-    log.info(`There are ${parsed.granulesCount} granules in ${this.pdr.name}`);
-    log.info(`There are ${parsed.filesCount} files in ${this.pdr.name}`);
+    log.info(
+      { pdrName: this.pdr.name },
+      `There are ${parsed.granulesCount} granules in ${this.pdr.name}`
+    );
+    log.info(
+      { pdrName: this.pdr.name },
+      `There are ${parsed.filesCount} files in ${this.pdr.name}`
+    );
 
     return parsed;
   }
@@ -179,7 +188,54 @@ class Parse {
 class ParseAndQueue extends Parse {
   async ingest() {
     const payload = await super.ingest();
-    return Promise.all(payload.granules.map(g => queue.queueGranule(this.event, g)));
+    const events = {};
+
+    //payload.granules = payload.granules.slice(0, 10);
+
+    // make sure all parsed granules have the correct collection
+    for (const g of payload.granules) {
+      if (!events[g.dataType]) {
+        events[g.dataType] = JSON.parse(JSON.stringify(this.event));
+
+        // if the collection is not provided in the payload
+        // get it from S3
+        if (g.dataType !== this.collection.name) {
+          const bucket = this.buckets.internal;
+          const key = `${this.event.resources.stack}-${this.event.resources.stage}` +
+                      `/collections/${g.dataType}.json`;
+          let file;
+          try {
+            file = await S3.get(bucket, key);
+          }
+          catch (e) {
+            throw new MismatchPdrCollection(
+              `${g.dataType} dataType in ${this.pdr.name} doesn't match ${this.collection.name}`
+            );
+          }
+
+          events[g.dataType].collection = {
+            id: g.dataType,
+            meta: JSON.parse(file.Body.toString())
+          };
+        }
+      }
+    }
+
+    log.info(`Queueing ${payload.granules.length} granules to be processed`);
+
+    const names = await Promise.all(
+      payload.granules.map(g => queue.queueGranule(events[g.dataType], g))
+    );
+
+    let isFinished = false;
+    const running = names.filter(n => n[0] === 'running').map(n => n[1]);
+    const completed = names.filter(n => n[0] === 'completed').map(n => n[1]);
+    const failed = names.filter(n => n[0] === 'failed').map(n => n[1]);
+    if (running.length === 0) {
+      isFinished = true;
+    }
+
+    return { running, completed, failed, isFinished };
   }
 }
 
