@@ -1,8 +1,8 @@
 'use strict';
 
 const _get = require('lodash.get');
-const schemas = require('../schemas');
-const handle = require('../response').handle;
+const schemas = require('../models/schemas');
+const handle = require('../lib/response').handle;
 
 function get(event, cb) {
   const schemaName = _get(event.pathParameters, 'schemaName');
