@@ -149,12 +149,11 @@ const getOnEarthServiceStatusNgap = async (appName) => {
       break;
     }
   }
-  if (!webProcess) throw new Error(`No web process for OnEarth found: ${JSON.stringify(response)}`);
 
   return {
     service_name: ON_EARTH_SERVICE_NAME,
-    desired_count: webProcess.desired_count,
-    actual_count: webProcess.running_count,
+    desired_count: webProcess ? webProcess.desired_count : 0,
+    actual_count: webProcess ? webProcess.running_count : 0,
     events: [], // Not available in NGAP
     running_tasks: [] // Not available in NGAP
   };
