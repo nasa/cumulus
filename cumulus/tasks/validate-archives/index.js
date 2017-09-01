@@ -118,8 +118,6 @@ module.exports = class ValidateArchives extends Task {
               return Object.assign(returnValue, { error: e.message });
             }
 
-            // TODO Check for un-parsable metadata file
-
             // Upload expanded files to S3
             await uploadArchiveFilesToS3(unarchivedFiles, archiveDirPath, fileAttrs);
 

@@ -49,15 +49,13 @@ module.exports = class DownloadActivityMock extends Task {
 
     // Download all the files
     const resultsPromises = fileList.map(async (fileEntry) => {
-      const { directory, fileName, checksumType, checksum, fileType, size } = fileEntry;
+      const { directory, fileName, fileType } = fileEntry;
       // Remove starting '/' from directory and append fileName and type to make S3 key
       const s3Key = `${directory}/${fileName}.${fileType}`.substring(1);
 
       try {
-        // aws streaming upload is not working with FTP stream for some reason, workaround
+        // AWS streaming upload is not working with FTP stream for some reason; workaround
         // is to download the file to the file system
-        // const fileStream = sips.getFileStream(client, s3Key);
-        // await aws.uploadS3FileStream(fileStream, destinationS3Bucket, fileName);
 
         const downloadPath =
           await sips.downloadFile(client, directory, '/tmp/staging', `${fileName}.${fileType}`);
@@ -74,9 +72,6 @@ module.exports = class DownloadActivityMock extends Task {
     });
 
     const results = await Promise.all(resultsPromises);
-
-    // Verify checksums for files
-
 
     // Return links to the files [s3Bucket, key] and error messages for each
 
@@ -130,21 +125,3 @@ local.setupLocalRun(module.exports.handler, () => ({
   }
 
 }));
-
-// const config = {
-//   s3Bucket: 'gitc-jn-sips-mock',
-//   folder: 'PDR'
-// };
-
-// const DownloadArchiveFiles = module.exports;
-// const DownloadArchiveFiles = new DownloadArchiveFiles(null, config, null, null);
-
-// const demo = async () => {
-//   while (true) {
-//     log.info(await DownloadArchiveFiles.run());
-//     await sleep(10000);
-//   }
-// };
-
-// demo();
-

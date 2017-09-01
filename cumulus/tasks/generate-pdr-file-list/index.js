@@ -5,12 +5,9 @@ const { S3 } = require('@cumulus/ingest/aws');
 const pdrMod = require('./pdr');
 
 /**
- * Task that validates a PDR retrieved from a SIPS server
+ * Task that parses a PDR retrieved from a SIPS server and creates a list of files to be downloaded.
  * Input payload: An object containing information about the PDR to process
- * Output payload: An object possibly containing a `topLevelErrors` key pointing to an array
- * of error messages, a `fileGroupErrors` key pointing to an array of error messages, or
- * a list of paths to files to be downloaded. The original input pdr is included in the output
- * payload.
+ * Output payload: A map containing a list of paths to files to be downloaded and the pdr file name.
  */
 module.exports = class GeneratePdrFileList extends Task {
   /**

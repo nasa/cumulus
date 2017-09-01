@@ -1,6 +1,6 @@
 'use strict';
 
-const pvl = require('@cumulus/pvl');
+const pvl = require('@cumulus/pvl/t');
 
 const fileSpecFields =
   ['DIRECTORY_ID', 'FILE_ID', 'FILE_CKSUM_TYPE', 'FILE_CKSUM_VALUE', 'FILE_TYPE', 'FILE_SIZE'];
@@ -27,8 +27,6 @@ exports.fileSpecToFileEntry = (fileSpec, host, port) => {
   return {
     type: 'download',
     source: {
-      // TODO url encode this
-      // TODO this should work for sftp as well
       url: `ftp://${host}:${port}${directory}/${fileName}.${fileType}`,
       checksumType: checksumType,
       checksum: checksum,
