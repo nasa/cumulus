@@ -20,9 +20,6 @@ const getRunningExecutions = async (stackName, workflowArn) => {
     .listExecutions({ stateMachineArn: workflowArn, maxResults: 100, statusFilter: 'RUNNING' })
     .promise();
 
-  if (resp.nextToken) {
-    throw new Error(`Found more than 100 running workflows for ${workflowArn}`);
-  }
   return List(resp.executions.map((e) => {
     const { collectionId, granuleId, uuid } = parseExecutionName(e.name);
     return Map({
