@@ -64,7 +64,7 @@ const stackNameToAlphanumPrefix = stackName => stackName.split('-').map(
 /**
  * Returns a parsed collection config
  */
-const loadCollectionConfig = memoize(async (stackName) => {
+const loadCollectionConfig = memoize('loadCollectionConfig', async (stackName) => {
   const ingestStackResources = await sr.getIngestStackResources(stackName);
   const prefix = stackNameToAlphanumPrefix(stackName);
   const resourceResolver = ingestStackResourceResolver(ingestStackResources, prefix);
