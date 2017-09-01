@@ -1,7 +1,6 @@
 'use strict';
 const pan = require('../pan');
 const test = require('ava');
-const log = require('@cumulus/common/log');
 const allSuccessFixture = require('./fixtures/all-success-fixture');
 const missingFileFixture = require('./fixtures/missing-file-fixture');
 

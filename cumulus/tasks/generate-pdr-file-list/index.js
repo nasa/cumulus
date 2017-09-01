@@ -29,17 +29,8 @@ module.exports = class GeneratePdrFileList extends Task {
     // Get the pdr from S3
     const pdr = (await S3.get(s3Bucket, s3Key)).Body.toString();
 
-    const pdrObj = pdrMod.parsePdr(pdr);
-    const fileGroups = pdrObj.objects('FILE_GROUP');
-    const fileList = [];
-    fileGroups.forEach((fileGroup) => {
-      const fileSpecs = fileGroup.objects('FILE_SPEC');
-      fileSpecs.forEach((fileSpec) => {
-        const fileEntry =
-          pdrMod.fileSpecToFileEntry(fileSpec, host, port);
-        fileList.push(fileEntry);
-      });
-    });
+    // Get the list of files in the PDR
+    const fileList = pdrMod.pdrToFileList(pdr, host, port);
 
     return {
       pdr_file_name: pdrFileName,

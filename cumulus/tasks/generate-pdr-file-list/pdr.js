@@ -32,6 +32,29 @@ exports.fileSpecToFileEntry = (fileSpec, host, port) => {
       checksum: checksum,
       size: size
     },
-    target: 'FROM_CONFIG',
+    target: 'FROM_CONFIG'
   };
+};
+
+/**
+ * Parse a PDR text and return a list of file descriptions for the files listed in the PDR
+ * @param {string} pdrStr The text of the PDR
+ * @param {string} host The SIPS hostname / IP address
+ * @param {number} port The port of the SIPS host
+ * @return {Array} An array of information for each file
+ */
+exports.pdrToFileList = (pdrStr, host, port) => {
+  const pdrObj = exports.parsePdr(pdrStr);
+  const fileGroups = pdrObj.objects('FILE_GROUP');
+  const fileList = [];
+  fileGroups.forEach((fileGroup) => {
+    const fileSpecs = fileGroup.objects('FILE_SPEC');
+    fileSpecs.forEach((fileSpec) => {
+      const fileEntry =
+        exports.fileSpecToFileEntry(fileSpec, host, port);
+      fileList.push(fileEntry);
+    });
+  });
+
+  return fileList;
 };
