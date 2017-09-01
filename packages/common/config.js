@@ -57,7 +57,7 @@ const resourceToArn = (resource) => {
  */
 exports.resolveResource = (cfResourcesById, prefix) =>
   (key) => {
-    console.log(`Resolving ${key}`);
+    console.log(`Resolving ${key} with prefix ${prefix}`);
     const [name, fn] = key.split('.');
     const resource = cfResourcesById[name] || cfResourcesById[prefix + name];
     if (!resource) throw new Error(`Resource not found: ${key}`);

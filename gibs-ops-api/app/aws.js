@@ -33,18 +33,30 @@ const realServices = {
   // may not enter the environment until a request is actually called
   get es() {
     if (esClient) return esClient;
+
     if (!process.env.ELASTIC_ENDPOINT) {
       throw new Error('ELASTIC_ENDPOINT must be present in the environment');
     }
+
+    let awsCredentials;
+    if (isLocal) {
+      awsCredentials = new AWS.SharedIniFileCredentials({ profile: 'default' });
+    }
+    else if (process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI) {
+      awsCredentials = new AWS.ECSCredentials();
+    }
+    else {
+      awsCredentials = new AWS.EnvironmentCredentials('AWS');
+    }
+
+    AWS.config.update({
+      credentials: awsCredentials,
+      region: process.env.AWS_DEFAULT_REGION || 'us-east-1'
+    });
+
     esClient = new Elasticsearch.Client({
       hosts: process.env.ELASTIC_ENDPOINT,
-      connectionClass: AwsEs,
-      amazonES: {
-        region: region,
-        credentials: isLocal ?
-          new AWS.SharedIniFileCredentials({ profile: 'default' }) :
-          new AWS.EnvironmentCredentials('AWS')
-      }
+      connectionClass: AwsEs
     });
     return esClient;
   }
