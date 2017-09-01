@@ -51,17 +51,8 @@ module.exports = class TriggerProcessPdrs extends Task {
       const newIngestMeta = { state_machine: stateMachine, execution_name: name };
       fullMessageData.ingest_meta = Object.assign({}, originalIngestMeta, newIngestMeta);
 
-      // const s3Params = Object.assign({},
-      //                                payload,
-      //                                { Body: JSON.stringify(fullMessageData.payload) });
-
       const sfnMessageData = Object.assign({}, fullMessageData, { payload: payload });
-      // if (!isSfnExecution) {
-      //   log.warn('inline-result: ', JSON.stringify(fullMessageData));
-      // }
-      // else {
-      //   s3Promises.push(aws.promiseS3Upload(s3Params));
-      // }
+
       executions.push({
         stateMachineArn: stateMachine,
         input: JSON.stringify(sfnMessageData),
@@ -80,7 +71,7 @@ module.exports = class TriggerProcessPdrs extends Task {
   }
 
   /**
-   * Entrypoint for Lambda
+   * Entry point for Lambda
    * @param {array} args The arguments passed by AWS Lambda
    * @return The handler return value
    */
