@@ -1,7 +1,7 @@
 {
-  "name": "discover-pdr",
+  "name": "tee",
   "version": "0.0.1",
-  "description": "SIPS handler PDR discovery task",
+  "description": "Task for testing that splits output",
   "main": "index.js",
   "keywords": [
     "GIBS",
