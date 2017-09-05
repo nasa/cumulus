@@ -30,7 +30,7 @@
   },
   "babel": {
     "presets": [
-      "es2017",
+      "env",
       "@ava/stage-4",
       "@ava/transform-test-files"
     ]
@@ -53,7 +53,7 @@
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1",
+    "babel-preset-env": "^1.4.0",
     "sinon": "^2.0.0-pre.5",
     "ava": "^0.21.0",
     "webpack": "^1.12.13"
