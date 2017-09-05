@@ -11,7 +11,7 @@
     "type": "git",
     "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
   },
-  "author": "James Norton",
+  "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "ftp": "^0.3.10",
