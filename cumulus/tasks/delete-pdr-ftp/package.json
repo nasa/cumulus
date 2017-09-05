@@ -1,5 +1,5 @@
 {
-  "name": "discover-pdr",
+  "name": "delete-pdr-ftp",
   "version": "0.0.1",
   "description": "SIPS handler PDR discovery task",
   "main": "index.js",

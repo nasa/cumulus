@@ -1,5 +1,5 @@
 {
-  "name": "gitc-sync-wms",
+  "name": "trigger-process-pdrs",
   "version": "0.0.0",
   "description": "Transforms input granule info to WMS URLs for URL sync",
   "main": "index.js",

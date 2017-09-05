@@ -13,6 +13,9 @@
   },
   "author": "James Norton",
   "license": "Apache-2.0",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "test": "./node_modules/.bin/ava test/*.js --no-color",
     "build": "webpack --progress",

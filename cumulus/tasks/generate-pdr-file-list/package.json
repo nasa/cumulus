@@ -1,5 +1,5 @@
 {
-  "name": "process-pdr",
+  "name": "generate-pdr-file-list",
   "version": "0.0.1",
   "description": "SIPS handler PDR processing task",
   "main": "index.js",
@@ -13,6 +13,9 @@
   },
   "author": "James Norton",
   "license": "Apache-2.0",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "test": "./node_modules/.bin/ava test/*.js --no-color",
     "build": "webpack --progress",
