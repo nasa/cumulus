@@ -1,9 +1,9 @@
 'use strict';
 
-exports.invalidDirectory = {
+exports.invalidFileCount = {
   input: {
-    topLevelErrors: ['INVALID DIRECTORY'],
+    topLevelErrors: ['INVALID FILE COUNT'],
     fileGroupErrors: []
   },
-  error: ['INVALID DIRECTORY']
+  error: ['INVALID FILE COUNT']
 };
