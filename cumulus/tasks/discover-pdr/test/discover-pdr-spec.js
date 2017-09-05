@@ -1,9 +1,6 @@
 'use strict';
-const expect = require('expect.js');
-const helpers = require('@cumulus/common/test-helpers');
-// const DiscoverPdrTask = require('../index');
+const test = require('ava');
 
-xdescribe('discover-pdr.handler', () => {
-  it('TODO', () => {
-  });
+test('TODO - add test', t => {
+  t.is(1, 1);
 });
