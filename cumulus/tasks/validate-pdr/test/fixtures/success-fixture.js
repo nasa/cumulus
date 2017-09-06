@@ -1,0 +1,71 @@
+'use strict';
+
+exports.input =
+`ORIGINATING_SYSTEM = "ASTER_FTP";
+TOTAL_FILE_COUNT = 3;
+OBJECT = "FILE_GROUP";
+    AGGREGATE_LENGTH = 49764949363;
+    DATA_TYPE = "AST_L1A";
+    VERSION_ID = "1";
+    DESCRIPTOR = "---NO VALUE---";
+    NODE_NAME = "e4ftl01.cr.usgs.gov";
+    OBJECT = "FILE_SPEC";
+        DIRECTORY_ID = "/DATA/ID1703251200";
+        FILE_ID = "pg-PR1A0000-2017032501_000_001";
+        FILE_CKSUM_TYPE = "MD5";
+        FILE_CKSUM_VALUE = "ae3c7b3b8d5e716c47e3a3397b5af7c9";
+        FILE_TYPE = "tgz";
+        FILE_SIZE = 3509571;
+    END_OBJECT = "FILE_SPEC";
+    OBJECT = "XAR_ENTRY";
+        GRANULE_ID = "ASTL1A 1703232337331703259000";
+        XAR_INFO_COUNT = 0;
+    END_OBJECT = "XAR_ENTRY";
+END_OBJECT = "FILE_GROUP";
+OBJECT = "FILE_GROUP";
+    DATA_TYPE = "AST_L1A";
+    DESCRIPTOR = "---NO VALUE---";
+    VERSION_ID = "1";
+    NODE_NAME = "e4ftl01.cr.usgs.gov";
+    OBJECT = "FILE_SPEC";
+        DIRECTORY_ID = "/DATA/ID1703251200";
+        FILE_ID = "pg-PR1A0000-2017032501_001_001";
+        FILE_CKSUM_TYPE = "MD5";
+        FILE_CKSUM_VALUE = "4580d03a927c6c14bf53b28984ff1a4d";
+        FILE_TYPE = "tgz";
+        FILE_SIZE = 4124460;
+    END_OBJECT = "FILE_SPEC";
+    OBJECT = "XAR_ENTRY";
+        GRANULE_ID = "ASTL1A 1703232350311703259000";
+        XAR_INFO_COUNT = 0;
+    END_OBJECT = "XAR_ENTRY";
+END_OBJECT = "FILE_GROUP";
+OBJECT = "FILE_GROUP";
+    DATA_TYPE = "AST_L1A";
+    DESCRIPTOR = "---NO VALUE---";
+    VERSION_ID = "1";
+    NODE_NAME = "e4ftl01.cr.usgs.gov";
+    OBJECT = "FILE_SPEC";
+        DIRECTORY_ID = "/DATA/ID1703251200";
+        FILE_ID = "pg-PR1A0000-2017032501_002_001";
+        FILE_CKSUM_TYPE = "MD5";
+        FILE_CKSUM_VALUE = "f84a5339968efa85b3f1739d7aae19f8";
+        FILE_TYPE = "tgz";
+        FILE_SIZE = 3033469;
+        END_OBJECT = "FILE_SPEC";
+        OBJECT = "XAR_ENTRY";
+            GRANULE_ID = "ASTL1A 1703240030271703259000";
+            XAR_INFO_COUNT = 0;
+        END_OBJECT = "XAR_ENTRY";
+    END_OBJECT = "FILE_GROUP";
+    END_GROUP = "PRODUCT_DELIVERY_RECORD";
+`;
+
+exports.errors = {
+  topLevelErrors: [],
+  fileGroupErrors: [
+    [],
+    [],
+    []
+  ]
+};

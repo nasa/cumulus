@@ -1,5 +1,8 @@
 'use strict';
 
+const log = require('@cumulus/common/log');
+const pdrMod = require('./pdr');
+
 /**
  * Validations for PDR entries
  */
@@ -135,7 +138,7 @@ const dataTypeValidation = fileGroup => {
 
   let rval = null;
   if (!dataType) {
-    rval = 'INVALID_DATA_TYPE';
+    rval = 'INVALID DATA TYPE';
   }
 
   return rval;
@@ -151,7 +154,8 @@ const versionIdValidation = fileGroup => {
 
   let rval = null;
   if (!versionId) {
-    rval = 'INVALID_DATA_TYPE';
+    // This is not a mistake - the GIBS ICD says the error should be INVALID DATA TYPE
+    rval = 'INVALID DATA TYPE';
   }
 
   return rval;
@@ -164,7 +168,7 @@ const fileGroupValidations = [dataTypeValidation, versionIdValidation];
  * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
  * @return {Array} An (possibly empty) array of error strings.
  */
-exports.validateFileGroup = fileGroup => {
+const validateFileGroup = fileGroup => {
   const fileGroupErrors = fileGroupValidations.map(validationFn => validationFn(fileGroup))
     .filter(err => err);
   if (fileGroupErrors.length > 0) {
@@ -207,5 +211,35 @@ const pdrTopLevelValidations = [fileCountValidation];
 /**
  * Performs a series of top-level validations on a PDR
  */
-exports.validateTopLevelPdr = pdr =>
+const validateTopLevelPdr = pdr =>
   pdrTopLevelValidations.map(validationFn => validationFn(pdr)).filter(err => err);
+
+
+exports.validatePdr = pdr => {
+  // Parse the PDR and do a preliminary validation
+  let pdrObj;
+  let topLevelErrors = [];
+  let fileGroupErrors = [];
+
+  try {
+    pdrObj = pdrMod.parsePdr(pdr);
+
+    // Do a top-level validation
+    const errors = validateTopLevelPdr(pdrObj);
+    if (errors && errors.length > 0) {
+      topLevelErrors = errors;
+    }
+    else {
+      // Validate each file group entry
+      const fileGroups = pdrObj.objects('FILE_GROUP');
+      fileGroupErrors = fileGroups.map(validateFileGroup);
+    }
+  }
+  catch (e) {
+    log.error(e);
+    log.error(e.stack);
+    topLevelErrors.push('INVALID PVL STATEMENT');
+  }
+
+  return [topLevelErrors, fileGroupErrors];
+};

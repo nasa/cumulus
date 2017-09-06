@@ -3,8 +3,6 @@
 const log = require('@cumulus/common/log');
 const { S3 } = require('@cumulus/ingest/aws');
 const Task = require('@cumulus/common/task');
-const pdrMod = require('./pdr');
-const pdrValid = require('./pdr-validations');
 
 /**
  * Task that validates a PDR retrieved from a SIPS server
@@ -31,27 +29,7 @@ module.exports = class ValidatePdr extends Task {
 
     log.info(`PDR: ${JSON.stringify(pdr)}`);
 
-    // Parse the PDR and do a preliminary validation
-    let pdrObj;
-    let topLevelErrors = [];
-    let fileGroupErrors = [];
-
-    try {
-      pdrObj = pdrMod.parsePdr(pdr);
-
-      // Do a top-level validation
-      const errors = pdrValid.validateTopLevelPdr(pdrObj);
-      topLevelErrors = topLevelErrors.concat(errors);
-
-      // Validate each file group entry
-      const fileGroups = pdrObj.objects('FILE_GROUP');
-      fileGroupErrors = fileGroups.map(pdrValid.validateFileGroup);
-    }
-    catch (e) {
-      log.error(e);
-      log.error(e.stack);
-      topLevelErrors.push('INVALID PVL STATEMENT');
-    }
+    const [topLevelErrors, fileGroupErrors] = pdr.validatePdr(pdr);
 
     let status = 'OK';
     if (topLevelErrors.length > 0 || fileGroupErrors.some(errors => errors.length > 0)) {
