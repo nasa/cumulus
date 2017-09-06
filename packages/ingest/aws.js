@@ -577,6 +577,15 @@ class StepFunction {
 
     return event;
   }
+
+  static async stop(arn, cause, error) {
+    const stepfunctions = new AWS.StepFunctions();
+    return stepfunctions.stopExecution({
+      executionArn: arn,
+      cause: cause,
+      error: error
+    }).promise();
+  }
 }
 
 module.exports = {
