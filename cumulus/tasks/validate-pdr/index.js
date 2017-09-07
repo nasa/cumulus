@@ -3,6 +3,7 @@
 const log = require('@cumulus/common/log');
 const { S3 } = require('@cumulus/ingest/aws');
 const Task = require('@cumulus/common/task');
+const pdrValid = require('./pdr-validations');
 
 /**
  * Task that validates a PDR retrieved from a SIPS server
@@ -29,7 +30,7 @@ module.exports = class ValidatePdr extends Task {
 
     log.info(`PDR: ${JSON.stringify(pdr)}`);
 
-    const [topLevelErrors, fileGroupErrors] = pdr.validatePdr(pdr);
+    const [topLevelErrors, fileGroupErrors] = pdrValid.validatePdr(pdr);
 
     let status = 'OK';
     if (topLevelErrors.length > 0 || fileGroupErrors.some(errors => errors.length > 0)) {
