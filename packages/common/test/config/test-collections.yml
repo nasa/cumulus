@@ -3,7 +3,17 @@ providers:
     config: {}
   - id: LARC
     config: {}
-
+  - id: SIPSPROV
+    config:
+      gateway_config:
+        activity: SIPSPROVDownloadActivity
+        conn_config:
+          conn_type: ftp
+          host: localhost
+          port: 21
+          username: ftp
+          password: ftp
+        num_connections: 2
 _templates:
   _collection_types:
     - &VIIRS
@@ -60,6 +70,39 @@ _templates:
           output:
             bucket: '{resources.buckets.public}'
             key_prefix: 'EPSG{meta.epsg}/{meta.collection}/{meta.date.year}'
+
+    - &SIPSTEST
+      provider_id: SIPSPROV
+
+      workflow: !GitcResource DiscoverPdrsSIPSTEST
+
+      trigger:
+        type: interval
+        period_s: 900
+
+      workflow_config_template:
+        DiscoverPdr:
+          folder: 'PDR'
+          bucket: '{resources.buckets.private}'
+          key_prefix: 'sources/EPSG{meta.epsg}/SIPSDEMO/{meta.collection}'
+
+        TriggerProcessPdrs:
+          workflow: !GitcResource ProcessPdrSIPSTEST
+
+        GeneratePdrd:
+          folder: 'PDRD'
+
+        GeneratePan:
+          folder: 'PAN'
+
+        DeletePdrS3:
+          bucket: '{resources.buckets.private}'
+          key_prefix: 'sources/EPSG{meta.epsg}/SIPSDEMO/{meta.collection}'
+
+        DownloadActivity:
+          output:
+            bucket: '{resources.buckets.private}'
+            key_prefix: 'sources/EPSG{meta.epsg}/SIPSDEMO/{meta.collection}'
 
     - &MOPITT
       provider_id: LARC
@@ -139,6 +182,15 @@ _workflow_meta:
     arn: !GitcResource IngestMOPITT
     type: ingest
     parent: DiscoverMOPITT
+  - id: DiscoverPdrsSIPSTEST
+    name: SIPS PDR Discovery
+    arn: !GitcResource DiscoverPdrsSIPSTEST
+    type: discovery
+  - id: ProcessPdrSIPSTEST
+    name: SIPS PDR Processing
+    arn: !GitcResource ProcessPdrSIPSTEST
+    type: ingest
+    parent: DiscoverPdrsSIPSTEST
 
 workflows:
   DiscoverVIIRS:
@@ -239,6 +291,77 @@ workflows:
         Result: No Updates Necessary
         End: true
 
+  DiscoverPdrsSIPSTEST:
+    Comment: SIPS PDR discovery
+    StartAt: DiscoverPdr
+    States:
+      DiscoverPdr:
+        Type: Task
+        Resource: !GitcResource DiscoverPdrFn.Arn
+        Next: TriggerProcessPdrs
+
+      TriggerProcessPdrs:
+        Type: Task
+        Resource: !GitcResource TriggerProcessPdrsFn.Arn
+        End: true
+
+  ProcessPdrSIPSTEST:
+    Comment: SIPS PDR processing
+    StartAt: ValidatePdr
+    States:
+      ValidatePdr:
+        Type: Task
+        Resource: !GitcResource ValidatePdrFn.Arn
+        Next: ChoosePdrPanContinuation
+
+      ChoosePdrPanContinuation:
+        Type: Choice
+        Choices:
+          - Variable: $.payload.status
+            StringEquals: OK
+            Next: GeneratePdrFileList
+        Default: GeneratePdrd
+
+      GeneratePdrd:
+        Type: Task
+        Resource: !GitcResource GeneratePdrdFn.Arn
+        End: true
+
+      GeneratePdrFileList:
+        Type: Task
+        Resource: !GitcResource GeneratePdrFileListFn.Arn
+        Next: DownloadActivity
+
+      DownloadActivity:
+        Type: Task
+        Resource: !GitcResource SIPSPROVDownloadActivity
+        TimeoutSeconds: 600
+        Catch:
+          - ErrorEquals:
+            - States.ALL
+            ResultPath: $.error-info,
+            Next: DeletePdrS3
+        Next: ValidateArchives
+
+      ValidateArchives:
+        Type: Task
+        Resource: !GitcResource ValidateArchivesFn.Arn
+        Next: GeneratePan
+
+      GeneratePan:
+        Type: Task
+        Resource: !GitcResource GeneratePanFn.Arn
+        End: True
+
+      DeletePdrS3:
+        Type: Task
+        Resource: !GitcResource DeletePdrS3Fn.Arn
+        Next: WorkloadFailed
+
+      WorkloadFailed:
+        Type: Fail
+        Cause: Workload failed
+
 
 collections:
   - <<: *VIIRS
@@ -276,3 +399,11 @@ collections:
       wms:
         layer: MOP03J.006/RetrievedCOSurfaceMixingRatioDay
         style: se_mopitt_threshold_retrievedcosurfacemixingratioday_mop03j
+
+  - <<: *SIPSTEST
+    id: VNGCR_LQD_C1_SIPS
+    meta:
+      collection: VNGCR_LQD_C1_SIPS
+      parameter_name: VNGCR_LQD_I1-M4-M3_NRT
+      epsg: 4326
+      zoom: 9
