@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Generate a PAN file for SIPS'
+      Runtime: nodejs6.10

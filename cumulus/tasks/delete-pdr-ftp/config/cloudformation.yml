@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Delete a PDR file from a SIPS server'
+      Runtime: nodejs6.10

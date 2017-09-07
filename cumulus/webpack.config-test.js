@@ -1,5 +1,6 @@
 const path = require('path');
 const glob = require('glob');
+const fs = require('fs');
 const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
@@ -9,6 +10,16 @@ module.exports = {
   resolveLoader: {
     fallback: path.join(__dirname, 'node_modules')
   },
+  entry: glob.sync('./{tasks,services}/*/package.json')
+  .map((packageJson) => {
+    const filename = path.dirname(packageJson);
+    const entry = {};
+    if (!fs.existsSync(path.join(filename, 'webpack.config.js'))) {
+      entry[path.basename(filename)] = filename;
+    }
+    return entry;
+  })
+  .reduce((finalObject, entry) => Object.assign(finalObject, entry), {}),
   target: 'node',
   externals: [
     nodeExternals({
