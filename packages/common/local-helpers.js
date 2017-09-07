@@ -14,7 +14,7 @@ const isJupyter = global.__isJupyter;
 const isAva = process.argv[1] && /ava/.test(process.argv[1]);
 
 const isStdin = process.argv[2] === 'stdin';
-const isLocal = isJupyter || isStdin || process.argv[2] === 'local' || isAva;
+const isLocal = isJupyter || isStdin || process.argv[2] === 'local';
 exports.isLocal = isLocal;
 
 let rootPath;
@@ -56,7 +56,7 @@ const findById = (arr, id) => {
  * @return - The config object
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
-  if (!isLocal && !isMocha && !isJupyter) return null;
+  if (!isLocal && !isMocha && !isJupyter && !isAva) return null;
   const configPath = `${fileRoot()}/packages/common/test/config/test-collections.yml`;
   log.info(`CONFIG PATH: ${configPath}`);
   const configStr =
