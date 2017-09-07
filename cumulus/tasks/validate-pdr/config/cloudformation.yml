@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Validate PDR'
+      Runtime: nodejs6.10

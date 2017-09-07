@@ -34,6 +34,9 @@
   [config client]
   (let [{:keys [host port username password]} config
         port (or port 21)]
+    (println (format "Connecting to FTP server [%s] on port [%d]"
+                     host
+                     port))
     (.setControlEncoding client "UTF-8")
     ;; The following line was added to fix an issue (GITC-455) when connecting to FTP servers
     ;; using extended passive mode (EPSV) from AWS ECS containers. This may cause problems
