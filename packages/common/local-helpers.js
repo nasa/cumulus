@@ -10,15 +10,18 @@ const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
 // startup code settings with {"Javascript (Node.js)": "global.__isJupyter = true;"}
 const isJupyter = global.__isJupyter;
 
+// Defines whether we're in an AVA test
+const isAva = process.argv[1] && /ava/.test(process.argv[1]);
+
 const isStdin = process.argv[2] === 'stdin';
-const isLocal = isJupyter || isStdin || process.argv[2] === 'local';
+const isLocal = isJupyter || isStdin || process.argv[2] === 'local' || isAva;
 exports.isLocal = isLocal;
 
 let rootPath;
 if (isMocha) {
   rootPath = '../../../..';
 }
-else if (isJupyter) {
+else if (isJupyter || isAva) {
   rootPath = '../..';
 }
 else {

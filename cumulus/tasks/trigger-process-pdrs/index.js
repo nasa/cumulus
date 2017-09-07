@@ -18,7 +18,6 @@ module.exports = class TriggerProcessPdrs extends Task {
    * @return null
    */
   async run() {
-    const s3Promises = [];
     const executions = [];
     const executionPromises = [];
     const isSfnExecution = this.message.ingest_meta.message_source === 'sfn';
@@ -28,20 +27,15 @@ module.exports = class TriggerProcessPdrs extends Task {
     }
 
     const stateMachine = this.config.workflow;
-
-    // const bucket = this.message.resources.buckets.private;
-
-    log.info(this.message.payload);
     const id = this.message.ingest_meta.id;
 
     for (const e of this.message.payload) {
       const key = e.s3_key;
-      // Use the last three elements of the s3_key, whichh should include the PDR name
+      // Use the last three elements of the s3_key, which should include the PDR name
       const keyElements = key.split('/');
       const sliceIndex = keyElements.length > 3 ? keyElements.length - 3 : 0;
       const name = aws.toSfnExecutionName(keyElements.slice(sliceIndex).concat(id), '__');
       log.info(`Starting processing of ${name}`);
-      // const payload = { Bucket: bucket, Key: ['TriggerProcessPdrs', key].join('/') };
       const payload = e;
 
       const fullMessageData = Object.assign({}, this.message);
@@ -52,6 +46,9 @@ module.exports = class TriggerProcessPdrs extends Task {
       fullMessageData.ingest_meta = Object.assign({}, originalIngestMeta, newIngestMeta);
 
       const sfnMessageData = Object.assign({}, fullMessageData, { payload: payload });
+      if (!isSfnExecution) {
+        log.warn('inline-result: ', JSON.stringify(fullMessageData));
+      }
 
       executions.push({
         stateMachineArn: stateMachine,
@@ -59,13 +56,17 @@ module.exports = class TriggerProcessPdrs extends Task {
         name: name
       });
     }
-    await Promise.all(s3Promises);
 
     if (isSfnExecution) {
       for (const execution of executions) {
         executionPromises.push(aws.sfn().startExecution(execution).promise());
       }
     }
+    else {
+      // For tests
+      return executions;
+    }
+
     await Promise.all(executionPromises);
     return null;
   }
