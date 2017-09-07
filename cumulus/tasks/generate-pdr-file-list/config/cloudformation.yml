@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Generate list of files to download by parsing PDR'
+      Runtime: nodejs6.10
