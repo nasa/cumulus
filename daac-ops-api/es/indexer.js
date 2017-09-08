@@ -296,7 +296,7 @@ function logHandler(event, context, cb) {
 
 function handler(event, context, cb) {
   // we can handle both incoming message from SNS as well as direct payload
-  log.info(JSON.stringify(event));
+  log.debug(JSON.stringify(event));
   const records = get(event, 'Records');
   let jobs = [];
 
