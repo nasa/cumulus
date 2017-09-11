@@ -67,6 +67,7 @@ module.exports.handler = function handler(_event, context, cb) {
 
       if (running.length === 0) {
         isFinished = true;
+        event.ingest_meta.status = 'completed';
         event.payload.isFinished = isFinished;
         event.payload.stats = {
           failed: failed.length,
