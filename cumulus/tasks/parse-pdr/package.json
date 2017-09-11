@@ -11,8 +11,6 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "build": "webpack --progress",
-    "watch": "webpack --progress -w",
     "test": "./node_modules/.bin/ava tests/*.js --serial --no-color"
   },
   "author": "Cumulus Authors",
