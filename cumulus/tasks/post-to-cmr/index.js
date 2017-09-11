@@ -47,26 +47,30 @@ function temporaryPayloadFix(_payload, collection, buckets) {
   return payload;
 }
 
-function getCmrFiles(granule) {
-  const expectedFormats = [/.*\.meta\.xml$/];
-  const cmrFiles = granule.files.map((file) => {
-    const r = {
-      granuleId: granule.granuleId
-    };
+function getCmrFiles(granules) {
+  let files = [];
+  const expectedFormats = [/.*\.xml$/];
+  granules.forEach(granule => {
+    files = files.concat(granule.files.map((file) => {
+      const r = {
+        granuleId: granule.granuleId
+      };
 
-    if (file.cmrFile) {
-      r.file = file;
-    }
-
-    for (const regex of expectedFormats) {
-      if (file.name.match(regex)) {
+      if (file.cmrFile) {
         r.file = file;
       }
-    }
-    return r.file ? r : null;
+
+      for (const regex of expectedFormats) {
+        if (file.filename.match(regex)) {
+          r.file = file;
+          r.file.granuleId = granule.granuleId;
+        }
+      }
+      return r.file ? r : null;
+    }));
   });
 
-  return cmrFiles.filter(f => f);
+  return files.filter(f => f);
 }
 
 /**
@@ -151,15 +155,15 @@ function handler(_event, context, cb) {
     const creds = get(event, 'resources.cmr');
 
     // this lambda can only handle 1 granule at a time
-    if (payload.granules.length > 1) {
-      const err = new Error('Received more than 1 granule. ' +
-                            'This function can only handle 1 granule a time');
-      log.error(err);
-      return cb(err);
-    }
+    //if (payload.granules.length > 1) {
+      //const err = new Error('Received more than 1 granule. ' +
+                            //'This function can only handle 1 granule a time');
+      //log.error(err);
+      //return cb(err);
+    //}
 
     // determine CMR files
-    const cmrFiles = getCmrFiles(payload.granules[0]);
+    const cmrFiles = getCmrFiles(payload.granules);
 
     // post all meta files to CMR
     const jobs = cmrFiles.map(c => publish(c, creds));
@@ -175,9 +179,9 @@ function handler(_event, context, cb) {
           }
         }
       }
-
-      event.payload = payload;
-
+      return payload;
+    }).then((r) => {
+      event.payload = r;
       return cb(null, event);
     }).catch(e => {
       log.error(e);
