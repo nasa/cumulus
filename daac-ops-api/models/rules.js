@@ -51,7 +51,7 @@ class Rule extends Manager {
     return super.update({ name: original.name }, updated);
   }
 
-  async buildPayload(item) {
+  static async buildPayload(item) {
     // make sure collection exists
     const c = new Collection();
     const collection = await c.get({
