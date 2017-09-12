@@ -25,7 +25,7 @@ function list(event, cb) {
 }
 
 /**
- * Query a single provider.
+ * Query a single rule.
  * @param {object} event aws lambda event object.
  * @param {string} granuleId the id of the granule.
  * @return {object} a single granule object.
@@ -42,7 +42,7 @@ function get(event, cb) {
 }
 
 /**
- * Creates a new provider
+ * Creates a new rule
  * @param {object} event aws lambda event object.
  * @return {object} returns the collection that was just saved.
  */
@@ -70,7 +70,7 @@ function post(event, cb) {
 }
 
 /**
- * Updates an existing provider
+ * Updates an existing rule
  * @param {object} event aws lambda event object.
  * @return {object} a mapping of the updated properties.
  */
