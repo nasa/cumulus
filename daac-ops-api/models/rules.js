@@ -45,7 +45,7 @@ class Rule extends Manager {
       original.rule.value = updated.rule.value;
     }
 
-    const payload = await this.buildPayload(original);
+    const payload = await Rule.buildPayload(original);
     await this.addRule(original, payload);
 
     return super.update({ name: original.name }, updated);
@@ -88,6 +88,11 @@ class Rule extends Manager {
     };
   }
 
+  static async invoke(item) {
+    const payload = await Rule.buildPayload(item);
+    await invoke(process.env.invoke, payload);
+  }
+
   async create(item) {
     // make sure the name only has word characters
     const re = /[^\w]/;
@@ -98,7 +103,7 @@ class Rule extends Manager {
       throw err;
     }
 
-    const payload = await this.buildPayload(item);
+    const payload = await Rule.buildPayload(item);
 
     switch (item.rule.type) {
       case 'onetime':
