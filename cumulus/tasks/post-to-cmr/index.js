@@ -1,7 +1,7 @@
+/* eslint-disable no-param-reassign */
 'use strict';
 
 const get = require('lodash.get');
-const path = require('path');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { S3 } = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
@@ -17,32 +17,25 @@ const log = require('@cumulus/ingest/log');
  * issued there
  *
  */
-function temporaryPayloadFix(_payload, collection, buckets) {
-  const payload = _payload;
-
+function temporaryPayloadFix(payload) {
   if (payload.granules) {
+    const granules = {};
+
     // first find the main granule object
-    const granules = payload.granules.filter(g => g.granuleId !== undefined);
-
-    for (const g of payload.granules) {
-      if (!g.granuleId) {
-        for (const file of g.files) {
-          file.name = path.basename(file.filename);
-          // find the bucket and url_path info
-          for (const def of collection.files) {
-            const test = new RegExp(def.regex);
-            if (file.name.match(test)) {
-              file.bucket = buckets[def.bucket];
-              file.url_path = def.url_path || collection.url_path || '';
-              break;
-            }
-          }
+    payload.granules.forEach(g => {
+      if (granules[g]) {
+        if (g.files && Array.isArray(g.files)) {
+          granules[g].files = granules[g].files.concat(g.files);
+          delete g.files;
+          Object.assign(granules[g], g);
         }
-        granules[0].files = granules[0].files.concat(g.files);
       }
-    }
+      else {
+        granules[g] = g;
+      }
+    });
 
-    payload.granules = granules;
+    payload.granules = Object.keys(granules).map(g => granules[g]);
   }
   return payload;
 }
@@ -58,15 +51,18 @@ function getCmrFiles(granules) {
 
       if (file.cmrFile) {
         r.file = file;
+        r.file.granuleId = granule.granuleId;
+        return r.file;
       }
 
       for (const regex of expectedFormats) {
-        if (file.filename.match(regex)) {
+        if (file.filename && file.filename.match(regex)) {
           r.file = file;
           r.file.granuleId = granule.granuleId;
+          return r.file;
         }
       }
-      return r.file ? r : null;
+      return null;
     }));
   });
 
@@ -123,7 +119,7 @@ async function publish(cmrFile, creds) {
     password
   );
 
-  const xml = await getMetadata(cmrFile.file.filename);
+  const xml = await getMetadata(cmrFile.filename);
   const res = await cmr.ingestGranule(xml);
 
   return {
@@ -153,14 +149,6 @@ function handler(_event, context, cb) {
     const buckets = get(event, 'resources.buckets');
     const payload = temporaryPayloadFix(get(event, 'payload', null), collection, buckets);
     const creds = get(event, 'resources.cmr');
-
-    // this lambda can only handle 1 granule at a time
-    //if (payload.granules.length > 1) {
-      //const err = new Error('Received more than 1 granule. ' +
-                            //'This function can only handle 1 granule a time');
-      //log.error(err);
-      //return cb(err);
-    //}
 
     // determine CMR files
     const cmrFiles = getCmrFiles(payload.granules);
