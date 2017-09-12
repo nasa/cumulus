@@ -319,6 +319,7 @@ module.exports = {
   indexCollection,
   indexProvider,
   indexRule,
+  handlePayload,
   deleteRecord
 };
 
