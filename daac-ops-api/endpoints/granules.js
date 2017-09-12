@@ -113,6 +113,10 @@ async function del(event) {
   const search = new Search({}, 'granule');
   const record = await search.get(granuleId);
 
+  if (record.detail) {
+    throw record;
+  }
+
   if (record.published) {
     throw new Error(
       'You cannot delete a granule that is published to CMR. Remove it from CMR first'
