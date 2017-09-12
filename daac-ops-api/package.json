@@ -21,6 +21,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/cmrjs": "^1.0.0",
     "@cumulus/ingest": "^1.0.0",
     "@cumulus/common": "^1.0.0",
     "@cumulus/pvl": "^1.0.0",

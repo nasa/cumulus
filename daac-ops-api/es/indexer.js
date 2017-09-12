@@ -278,12 +278,21 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   return Promise.all(done);
 }
 
-async function deleteRecord(esClient, id, type, index = 'cumulus') {
-  return esClient.delete({
+async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
+  if (!esClient) {
+    esClient = await Search.es();
+  }
+  const params = {
     index,
     type,
     id
-  });
+  };
+
+  if (parent) {
+    params.parent = parent;
+  }
+
+  return esClient.delete(params);
 }
 
 async function handlePayload(event) {
