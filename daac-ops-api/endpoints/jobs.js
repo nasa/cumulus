@@ -5,7 +5,7 @@ const get = require('lodash.get');
 const log = require('@cumulus/ingest/log');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('../es/search');
-const { handlePayload } = require('../es/indexer');
+const { handlePayload, partialRecordUpdate } = require('../es/indexer');
 
 async function findStaleRecords(type, q, limit = 100, page = 1) {
   const search = new Search({
@@ -22,27 +22,6 @@ async function findStaleRecords(type, q, limit = 100, page = 1) {
     return response.results.concat(more);
   }
   return response.results;
-}
-
-async function markRecordAsFailed(esClient, id, type, status, error, p, index = 'cumulus') {
-  const params = {
-    index,
-    type,
-    id,
-    body: {
-      doc: {
-        status,
-        error,
-        timestamp: Date.now()
-      }
-    }
-  };
-
-  if (p) {
-    params.parent = p;
-  }
-
-  return esClient.update(params);
 }
 
 async function checkExecution(arn, url, esClient) {
@@ -68,7 +47,7 @@ async function checkExecution(arn, url, esClient) {
       Error: 'Timeout',
       Cause: 'Execution is aborted because it did not finish in 5 hours'
     };
-    await markRecordAsFailed(esClient, arn, 'execution', 'failed', error);
+    await partialRecordUpdate(esClient, arn, 'execution', { status: 'failed', error });
 
     if (r.status === 'running') {
       await StepFunction.stop(
@@ -82,8 +61,8 @@ async function checkExecution(arn, url, esClient) {
     if (type === 'IngestGranule') {
       const searchTerm = `execution:"${url}"`;
       const granules = await findStaleRecords('granule', searchTerm, 100);
-      await Promise.all(granules.map(g => markRecordAsFailed(
-        esClient, g.granuleId, 'granule', 'failed', error, g.collectionId
+      await Promise.all(granules.map(g => partialRecordUpdate(
+        esClient, g.granuleId, 'granule', { status: 'failed', error }, g.collectionId
       )));
     }
 
@@ -91,8 +70,8 @@ async function checkExecution(arn, url, esClient) {
     if (type === 'ParsePdr') {
       const searchTerm = `execution:"${url}"`;
       const pdrs = await findStaleRecords('pdr', searchTerm, 100);
-      await Promise.all(pdrs.map(p => markRecordAsFailed(
-        esClient, p.pdrName, 'pdr', 'failed', error
+      await Promise.all(pdrs.map(p => partialRecordUpdate(
+        esClient, p.pdrName, 'pdr', { status: 'failed', error }
       )));
     }
   }
