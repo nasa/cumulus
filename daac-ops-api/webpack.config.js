@@ -6,7 +6,10 @@ module.exports = {
   },
   target: 'node',
   devtool: 'sourcemap',
-  externals: ['aws-sdk'],
+  externals: [
+    'aws-sdk',
+    'electron'
+  ],
   module: {
     resolve: {
       alias: {
