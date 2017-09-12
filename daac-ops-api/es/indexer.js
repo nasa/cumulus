@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* functions for transforming and indexing Cumulus Payloads
  * in ElasticSearch. These functions are specifically designed
  * to transform data for use in daac-ops-api
@@ -32,6 +33,34 @@ async function indexLog(payloads, index = 'cumulus', type = 'logs') {
 
   return esClient.bulk({ body: body });
 }
+
+async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cumulus') {
+  if (!esClient) {
+    esClient = await Search.es();
+  }
+
+  if (!doc) {
+    throw new Error('Nothing to update. Make sure doc argument has a value');
+  }
+
+  doc.timestamp = Date.now();
+
+  const params = {
+    index,
+    type,
+    id,
+    body: {
+      doc
+    }
+  };
+
+  if (parent) {
+    params.parent = parent;
+  }
+
+  return esClient.update(params);
+}
+
 
 async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
   const name = get(payload, 'ingest_meta.execution_name');
@@ -320,6 +349,7 @@ module.exports = {
   indexProvider,
   indexRule,
   handlePayload,
+  partialRecordUpdate,
   deleteRecord
 };
 
