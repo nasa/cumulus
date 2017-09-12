@@ -85,15 +85,14 @@ async function put(event) {
 
   // if the data includes any fields other than state and rule.value
   // throw error
-  let check = Object.keys(data).filter(f => (f !== 'state' && f !== 'rule'));
-  if (data.rule) {
-    check = check.concat(Object.keys(data.rule).filter(f => f !== 'value'));
-  }
-  if (check.length > 0) {
-    const err = {
-      message: 'Only state and rule.value values can be changed'
-    };
-    throw new Error(err);
+  if (action && action !== 'rerun') {
+    let check = Object.keys(data).filter(f => (f !== 'state' && f !== 'rule'));
+    if (data.rule) {
+      check = check.concat(Object.keys(data.rule).filter(f => f !== 'value'));
+    }
+    if (check.length > 0) {
+      throw new Error('Only state and rule.value values can be changed');
+    }
   }
 
   // get the record first
@@ -146,10 +145,10 @@ function handler(event, context) {
       post(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event).then(r => cb(null, r)).catch(e => cb(e));
+      put(event).then(r => cb(null, r)).catch(e => cb(JSON.stringify(e)));
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then(r => cb(null, r)).catch(e => cb(e));
+      del(event).then(r => cb(null, r)).catch(e => cb(JSON.stringify(e)));
     }
     else {
       list(event, cb);
@@ -161,9 +160,9 @@ module.exports = handler;
 
 
 justLocalRun(() => {
-  //del({ pathParameters: { name: 'Ingest_LP_MODIS' }, body: '{"state":"DISABLED"}' }).then(r => console.log(r)).catch(e => console.log(e));
-  handler(postPayload, {
-    succeed: r => console.log(r),
-    failed: e => console.log(e)
-  }, (e, r) => console.log(e, r));
+  //put({ pathParameters: { name: 'discover_aster' }, body: '{"action":"rerun"}' }).then(r => console.log(r)).catch(e => console.log(e));
+  //handler(postPayload, {
+    //succeed: r => console.log(r),
+    //failed: e => console.log(e)
+  //}, (e, r) => console.log(e, r));
 });
