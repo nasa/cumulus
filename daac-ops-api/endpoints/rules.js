@@ -74,11 +74,12 @@ function post(event, cb) {
  * @param {object} event aws lambda event object.
  * @return {object} a mapping of the updated properties.
  */
-function put(event, cb) {
+async function put(event) {
   const name = _get(event.pathParameters, 'name');
 
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
+  const action = _get(data, 'action');
 
   const model = new models.Rule();
 
@@ -92,46 +93,48 @@ function put(event, cb) {
     const err = {
       message: 'Only state and rule.value values can be changed'
     };
-    return cb(err);
+    throw new Error(err);
   }
 
   // get the record first
-  return model.get({ name })
-    .then((originalData) => {
-      // if rule type is onetime no change is allowed
-      if (originalData.rule.type === 'onetime') {
-        const err = {
-          message: 'Ingest rule of type "onetime" cannot be edited'
-        };
-        throw err;
-      }
-      model.update(originalData, data);
-    }).then((r) => {
-      data = r;
-      return Search.es();
-    }).then(esClient => indexRule(esClient, data))
-      .then(() => cb(null, data))
-      .catch((err) => {
-        log.error(err);
-        if (err instanceof RecordDoesNotExist) {
-          return cb({ message: 'Record does not exist' });
-        }
-        return cb(err);
-      });
+  let originalData;
+  try {
+    originalData = await model.get({ name });
+  }
+  catch (e) {
+    if (e instanceof RecordDoesNotExist) {
+      throw new Error({ message: 'Record does not exist' });
+    }
+  }
+
+  // if rule type is onetime no change is allowed unless it is a rerun
+  if (originalData.rule.type === 'onetime') {
+    if (action === 'rerun') {
+      await models.Rule.invoke(originalData);
+      return;
+    }
+
+    const err = {
+      message: 'Ingest rule of type "onetime" cannot be edited'
+    };
+    throw err;
+  }
+  data = await model.update(originalData, data);
+  const esClient = await Search.es();
+  await indexRule(esClient, data);
 }
 
-function del(event, cb) {
+async function del(event) {
   let name = _get(event.pathParameters, 'name', '');
   const model = new models.Rule();
 
   name = name.replace(/%20/g, ' ');
 
-  return model.get({ name })
-    .then((record) => model.delete(record))
-    .then(() => Search.es())
-    .then((esClient) => deleteRecord(esClient, name, 'rule'))
-    .then(() => cb(null, { message: 'Record deleted' }))
-    .catch(e => cb(e));
+  const record = await model.get({ name });
+  await model.delete(record);
+  const esClient = await Search.es();
+  await deleteRecord(esClient, name, 'rule');
+  return { message: 'Record deleted' };
 }
 
 function handler(event, context) {
@@ -143,10 +146,10 @@ function handler(event, context) {
       post(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event, cb);
+      put(event).then(r => cb(null, r)).catch(e => cb(e));
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event, cb);
+      del(event).then(r => cb(null, r)).catch(e => cb(e));
     }
     else {
       list(event, cb);
@@ -158,6 +161,7 @@ module.exports = handler;
 
 
 justLocalRun(() => {
+  //del({ pathParameters: { name: 'Ingest_LP_MODIS' }, body: '{"state":"DISABLED"}' }).then(r => console.log(r)).catch(e => console.log(e));
   handler(postPayload, {
     succeed: r => console.log(r),
     failed: e => console.log(e)
