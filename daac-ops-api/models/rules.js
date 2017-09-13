@@ -15,7 +15,7 @@ class Rule extends Manager {
   }
 
   async addRule(item, payload) {
-    const name = `${process.env.stackName}-${process.env.stage}-${item.name}`;
+    const name = `${process.env.stackName}-${process.env.stage}-custom-${item.name}`;
     const r = await Events.putEvent(
       name,
       item.rule.value,
@@ -29,7 +29,7 @@ class Rule extends Manager {
 
   async delete(item) {
     if (item.rule.type === 'scheduled') {
-      const name = `${process.env.stackName}-${process.env.stage}-${item.name}`;
+      const name = `${process.env.stackName}-${process.env.stage}-custom-${item.name}`;
       await Events.deleteTarget(this.targetId, name);
       await Events.deleteEvent(name);
     }
