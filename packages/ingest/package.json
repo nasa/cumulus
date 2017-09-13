@@ -18,7 +18,7 @@
     "@cumulus/common": "^1.0.0",
     "@cumulus/pvl": "^1.0.0",
     "aws-sdk": "^2.4.11",
-    "ftp": "^0.3.10",
+    "jsftp": "^2.0.0",
     "got": "^7.1.0",
     "lodash.get": "^4.4.2",
     "mkdirp": "^0.5.1",

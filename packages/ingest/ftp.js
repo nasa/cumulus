@@ -2,11 +2,10 @@
 
 const os = require('os');
 const fs = require('fs');
-const Ftp = require('ftp');
+const JSFtp = require('jsftp');
 const join = require('path').join;
 const urljoin = require('url-join');
 const logger = require('./log');
-const FTPError = require('@cumulus/common/errors').FTPError;
 const S3 = require('./aws').S3;
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
@@ -21,44 +20,21 @@ module.exports.ftpMixin = superclass => class extends superclass {
     this.options = {
       host: this.host,
       port: this.port || 21,
-      user: this.username,
-      password: this.password,
-      keepalive: 500, // every 1/2 second
-      pasvTimeout: 2000 // 5 mins
+      user: this.username || 'anonymous',
+      pass: this.password || 'password'
     };
 
     this.connected = false;
     this.client = null;
   }
 
-  async connect() {
-    this.client = new Ftp();
-
+  async decrypt() {
     if (!this.decrypted && this.provider.encrypted) {
       if (this.password) {
-        this.options.password = await Crypto.decrypt(this.password);
+        this.options.pass = await Crypto.decrypt(this.password);
         this.decrypted = true;
       }
     }
-
-    return new Promise((resolve, reject) => {
-      this.client.connect(this.options);
-      this.client.on('ready', () => {
-        this.connected = true;
-        return resolve();
-      });
-      this.client.on('error', (e) => {
-        if (e.message.includes('Login incorrect')) {
-          return reject(new FTPError('Login incorrect'));
-        }
-        return reject(e);
-      });
-    });
-  }
-
-  end() {
-    this.client.end();
-    this.connected = false;
   }
 
   /**
@@ -74,6 +50,7 @@ module.exports.ftpMixin = superclass => class extends superclass {
 
   async upload(bucket, key, filename, tempFile) {
     await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
+    log.info(`uploaded ${filename} to ${bucket}`);
     return urljoin('s3://', bucket, key, filename);
   }
 
@@ -84,25 +61,17 @@ module.exports.ftpMixin = superclass => class extends superclass {
    * @private
    */
   async download(path, filename) {
-    if (!this.connected) await this.connect();
+    if (!this.decrypted) await this.decrypt();
 
     // let's stream to file
     const tempFile = join(os.tmpdir(), filename);
-    const file = fs.createWriteStream(tempFile);
+    const client = new JSFtp(this.options);
 
     return new Promise((resolve, reject) => {
-      this.client.get(join(path, filename), (err, stream) => {
-        // exit if there are errors
-        if (err) {
-          return reject(err);
-        }
-
-        stream.on('data', chunk => file.write(chunk));
-        stream.on('error', e => reject(e));
-        return stream.on('end', () => {
-          file.close();
-          resolve(tempFile);
-        });
+      client.get(join(path, filename), tempFile, (err) => {
+        client.destroy();
+        if (err) return reject(err);
+        return resolve(tempFile);
       });
     });
   }
@@ -115,38 +84,38 @@ module.exports.ftpMixin = superclass => class extends superclass {
    */
 
   async write(path, filename, body) {
-    if (!this.connected) await this.connect();
+    if (!this.decrypted) await this.decrypt();
 
+    const client = new JSFtp(this.options);
     return new Promise((resolve, reject) => {
       const input = new Buffer(body);
-      this.client.put(input, join(path, filename), (err) => {
-        // exit if there are errors
-        if (err) {
-          return reject(err);
-        }
+      client.put(input, join(path, filename), (err) => {
+        client.destroy();
+        if (err) return reject(err);
         return resolve();
       });
     });
   }
 
   async _list(path, _counter = 0) {
+    if (!this.decrypted) await this.decrypt();
     let counter = _counter;
+    const client = new JSFtp(this.options);
     return new Promise((resolve, reject) => {
-      this.client.list(path, false, (err, data) => {
+      client.ls(path, (err, data) => {
+        client.destroy();
         if (err) {
           if (err.message.includes('Timed out') && counter < 3) {
             log.error(`Connection timed out while listing ${path}. Retrying...`);
-            this.end();
-            return this.connect().then(() => {
-              counter += 1;
-              return this._list(path, counter);
-            }).then((r) => {
+            counter += 1;
+            return this._list(path, counter).then((r) => {
               log.info(`${counter} retry suceeded`);
               return resolve(r);
             }).catch(e => reject(e));
           }
           return reject(err);
         }
+
         return resolve(data.map(d => ({
           name: d.name,
           type: d.type,
@@ -167,7 +136,7 @@ module.exports.ftpMixin = superclass => class extends superclass {
    */
 
   async list() {
-    if (!this.connected) await this.connect();
+    if (!this.decrypted) await this.decrypt();
 
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, this.path);
