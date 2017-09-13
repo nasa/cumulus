@@ -113,7 +113,7 @@ class Discover {
       }
     });
 
-    return granules;
+    return Object.keys(granules).map(k => granules[k]);
   }
 }
 
@@ -127,7 +127,7 @@ class Discover {
 class DiscoverAndQueue extends Discover {
   async findNewGranules(files) {
     const granules = await super.findNewGranules(files);
-    return Promise.all(Object.values(granules).map(g => queue.queueGranule(this.event, g)));
+    return Promise.all(granules.map(g => queue.queueGranule(this.event, g)));
   }
 }
 
