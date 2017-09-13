@@ -74,6 +74,8 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
     name,
     arn,
     execution,
+    error: get(payload, 'exception.Error', null),
+    cause: get(payload, 'exception.Cause', null),
     type: get(payload, 'ingest_meta.workflow_name'),
     collectionId: get(payload, 'collection.id'),
     status: get(payload, 'ingest_meta.status'),
