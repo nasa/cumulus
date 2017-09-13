@@ -67,15 +67,10 @@ module.exports.handler = function handler(_event, context, cb) {
 
       if (running.length === 0) {
         isFinished = true;
-        event.ingest_meta.status = 'completed';
         event.payload.isFinished = isFinished;
-        event.payload.stats = {
-          failed: failed.length,
-          completed: failed.completed
-        };
-        delete event.payload.running;
-        delete event.payload.failed;
-        delete event.payload.completed;
+        event.payload.running = running.length;
+        event.payload.failed = failed.length;
+        event.payload.completed = completed.length;
       }
       else {
         isFinished = false;
@@ -97,7 +92,9 @@ module.exports.handler = function handler(_event, context, cb) {
 
       return StepFunction.pushEvent(event);
     }).then(ev => {
-      ev.payload.isFinished = isFinished;
+      if (ev.s3_path) {
+        ev.payload = { isFinished };
+      }
       cb(null, ev);
     }).catch(e => { //eslint-disable-line newline-per-chained-call
       log.error(e);
