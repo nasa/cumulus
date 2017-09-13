@@ -97,7 +97,7 @@ module.exports.handler = function handler(_event, context, cb) {
 
       return StepFunction.pushEvent(event);
     }).then(ev => {
-      ev.payload = { isFinished };
+      ev.payload.isFinished = isFinished;
       cb(null, ev);
     }).catch(e => { //eslint-disable-line newline-per-chained-call
       log.error(e);
