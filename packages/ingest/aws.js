@@ -48,8 +48,11 @@ function getEndpoint(local = false, port = 8000) {
  * @returns {string} Step Function Execution Arn
  */
 function getExecutionArn(stateMachineArn, executionName) {
-  const sfArn = stateMachineArn.replace('stateMachine', 'execution');
-  return `${sfArn}:${executionName}`;
+  if (stateMachineArn) {
+    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
+    return `${sfArn}:${executionName}`;
+  }
+  return null;
 }
 
 /**
