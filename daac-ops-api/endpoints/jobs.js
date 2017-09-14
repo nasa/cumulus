@@ -2,9 +2,11 @@
 'use strict';
 
 const get = require('lodash.get');
+const pLimit = require('p-limit');
 const log = require('@cumulus/ingest/log');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('../es/search');
+const { reingest } = require('../lib/utils');
 const { handlePayload, partialRecordUpdate } = require('../es/indexer');
 
 async function findStaleRecords(type, q, limit = 100, page = 1) {
@@ -33,13 +35,24 @@ async function checkExecution(arn, url, esClient) {
   r.status = r.status.toLowerCase();
   r.status = r.status === 'succeeded' ? 'completed' : r.status;
 
-  const input = JSON.parse(get(r, 'input', '{}'));
-  const output = JSON.parse(get(r, 'output', '{}'));
-  const type = get(output, 'ingest_meta.workflow_name');
+  let input = get(r, 'input');
+  let output = get(r, 'output');
 
   if (!input) {
     return;
   }
+
+  input = JSON.parse(input);
+
+  try {
+    output = JSON.parse(output);
+  }
+  catch (e) {
+    output = input;
+  }
+
+  const type = get(output, 'ingest_meta.workflow_name');
+  console.log(`Checking ${arn}`);
 
   if (r.status === 'not_found' || r.status === 'running') {
     log.error(`Execution does not exist: ${arn}`);
@@ -110,7 +123,15 @@ async function cleanup() {
 
   log.info(`Found ${executions.length} stale executions`);
 
-  await Promise.all(executions.map(ex => checkExecution(ex.arn, ex.execution, esClient)));
+  const limit = pLimit(2);
+
+  await Promise.all(
+    executions.slice(0, 400).map(
+      ex => limit(
+        () => checkExecution(ex.arn, ex.execution, esClient)
+      )
+    )
+  );
 }
 
 function handler(event, context, cb) {
