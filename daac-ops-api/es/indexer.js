@@ -58,6 +58,7 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
     params.parent = parent;
   }
 
+  console.log(`Updated ${id}`);
   return esClient.update(params);
 }
 
@@ -68,31 +69,33 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
     get(payload, 'ingest_meta.state_machine'),
     name
   );
-  const execution = getExecutionUrl(arn);
+  if (arn) {
+    const execution = getExecutionUrl(arn);
 
-  const doc = {
-    name,
-    arn,
-    execution,
-    error: get(payload, 'exception', null),
-    type: get(payload, 'ingest_meta.workflow_name'),
-    collectionId: get(payload, 'collection.id'),
-    status: get(payload, 'ingest_meta.status'),
-    createdAt: get(payload, 'ingest_meta.createdAt'),
-    timestamp: Date.now()
-  };
+    const doc = {
+      name,
+      arn,
+      execution,
+      error: get(payload, 'exception', null),
+      type: get(payload, 'ingest_meta.workflow_name'),
+      collectionId: get(payload, 'collection.id'),
+      status: get(payload, 'ingest_meta.status'),
+      createdAt: get(payload, 'ingest_meta.createdAt'),
+      timestamp: Date.now()
+    };
 
-  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
 
-  await esClient.update({
-    index,
-    type,
-    id: doc.arn,
-    body: {
-      doc,
-      doc_as_upsert: true
-    }
-  });
+    await esClient.update({
+      index,
+      type,
+      id: doc.arn,
+      body: {
+        doc,
+        doc_as_upsert: true
+      }
+    });
+  }
 }
 
 async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
@@ -221,62 +224,66 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
     get(payload, 'ingest_meta.state_machine'),
     name
   );
-  const execution = getExecutionUrl(arn);
 
-  const collection = get(payload, 'collection');
-  const meta = collection.meta || collection;
-  const exception = get(payload, 'exception');
-  const collectionId = `${meta.name}___${meta.version}`;
+  if (arn) {
+    const execution = getExecutionUrl(arn);
 
-  const granules = get(payload, 'payload.granules');
+    const collection = get(payload, 'collection');
+    const meta = collection.meta || collection;
+    const exception = get(payload, 'exception');
+    const collectionId = `${meta.name}___${meta.version}`;
 
-  // make sure collection is added
-  try {
-    await esClient.get({
-      index,
-      type: 'collection',
-      id: collectionId
-    });
-  }
-  catch (e) {
-    // adding collection record to ES
-    await indexCollection(esClient, meta);
-  }
+    const granules = get(payload, 'payload.granules');
 
-  const done = granules.map((g) => {
-    if (g.granuleId) {
-      const doc = {
-        granuleId: g.granuleId,
-        pdrName: get(payload, 'payload.pdr.name'),
-        collectionId,
-        status: get(payload, 'ingest_meta.status'),
-        provider: get(payload, 'provider.id'),
-        execution,
-        cmrLink: get(g, 'cmr.link'),
-        files: g.files,
-        error: exception,
-        createdAt: get(payload, 'ingest_meta.createdAt'),
-        timestamp: Date.now()
-      };
-
-      doc.published = get(g, 'cmr.link', false);
-      doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-      return esClient.update({
+    // make sure collection is added
+    try {
+      await esClient.get({
         index,
-        type,
-        id: doc.granuleId,
-        parent: collectionId,
-        body: {
-          doc,
-          doc_as_upsert: true
-        }
+        type: 'collection',
+        id: collectionId
       });
     }
-    return false;
-  });
+    catch (e) {
+      // adding collection record to ES
+      await indexCollection(esClient, meta);
+    }
 
-  return Promise.all(done);
+    const done = granules.map((g) => {
+      if (g.granuleId) {
+        const doc = {
+          granuleId: g.granuleId,
+          pdrName: get(payload, 'payload.pdr.name'),
+          collectionId,
+          status: get(payload, 'ingest_meta.status'),
+          provider: get(payload, 'provider.id'),
+          execution,
+          cmrLink: get(g, 'cmr.link'),
+          files: g.files,
+          error: exception,
+          createdAt: get(payload, 'ingest_meta.createdAt'),
+          timestamp: Date.now()
+        };
+
+        doc.published = get(g, 'cmr.link', false);
+        doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+        return esClient.update({
+          index,
+          type,
+          id: doc.granuleId,
+          parent: collectionId,
+          body: {
+            doc,
+            doc_as_upsert: true
+          }
+        });
+      }
+      return false;
+    });
+
+    return Promise.all(done);
+  }
+  return false;
 }
 
 async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
