@@ -129,6 +129,16 @@ class Parse {
     this.password = get(this.provider, 'password', null);
   }
 
+  extractGranuleId(filename, regex) {
+    const test = new RegExp(regex);
+    const match = filename.match(test);
+
+    if (match) {
+      return match[1];
+    }
+    return filename;
+  }
+
   /**
    * Copy the PDR to S3 and parse it
    *
@@ -219,6 +229,11 @@ class ParseAndQueue extends Parse {
           };
         }
       }
+
+      g.granuleId = this.extractGranuleId(
+        g.files[0].name,
+        events[g.dataType].collection.meta.granuleIdExtraction
+      );
     }
 
     log.info(`Queueing ${payload.granules.length} granules to be processed`);
