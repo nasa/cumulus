@@ -38,7 +38,8 @@
     "got": "^6.7.1",
     "querystring": "^0.2.0",
     "form-data": "^2.1.2",
-    "node-forge": "^0.7.1"
+    "node-forge": "^0.7.1",
+    "p-limit": "^1.1.0"
   },
   "devDependencies": {
     "sinon": "^2.0.0-pre.5",
