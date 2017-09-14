@@ -14,8 +14,9 @@ const get = require('lodash.get');
 const zlib = require('zlib');
 const logger = require('@cumulus/ingest/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getExecutionArn, getExecutionUrl } = require('@cumulus/ingest/aws');
+const { getExecutionArn, getExecutionUrl, invoke } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
+const Rule = require('../models/rules');
 
 const log = logger.child({ file: 'daac-ops-api/es/indexer.js' });
 
@@ -303,6 +304,39 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
   return esClient.delete(params);
 }
 
+async function reingest(granule) {
+  const collection = granule.collectionId.split('___');
+  const payload = await Rule.buildPayload({
+    workflow: 'IngestGranule',
+    provider: granule.provider,
+    collection: {
+      name: collection[0],
+      version: collection[1]
+    },
+    meta: { granuleId: granule.granuleId },
+    payload: {
+      granules: [{
+        granuleId: granule.granuleId,
+        files: granule.files
+      }]
+    }
+  });
+
+  await partialRecordUpdate(
+    null,
+    granule.granuleId,
+    'granule',
+    { status: 'running' },
+    granule.collectionId
+  );
+  await invoke(process.env.invoke, payload);
+  return {
+    granuleId: granule.granuleId,
+    action: 'reingest',
+    status: 'SUCCESS'
+  };
+}
+
 async function handlePayload(event) {
   let payload;
   const source = get(event, 'EventSource');
@@ -367,7 +401,8 @@ module.exports = {
   indexRule,
   handlePayload,
   partialRecordUpdate,
-  deleteRecord
+  deleteRecord,
+  reingest
 };
 
 justLocalRun(() => {
