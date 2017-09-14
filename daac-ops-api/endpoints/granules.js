@@ -2,12 +2,12 @@
 
 const _get = require('lodash.get');
 const { CMR } = require('@cumulus/cmrjs');
-const { invoke, S3 } = require('@cumulus/ingest/aws');
+const { S3 } = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const { partialRecordUpdate, deleteRecord } = require('../es/indexer');
-const Rule = require('../models/rules');
+const { reingest } = require('../lib/utils');
 
 async function removeGranuleFromCmr(granuleId, collectionId) {
   const password = await DefaultProvider.decrypt(process.env.cmr_password);
@@ -43,6 +43,7 @@ function list(event, cb) {
   });
 }
 
+
 /**
  * Update a single granule.
  * Supported Actions: Reprocess, Remove From CMR.
@@ -61,36 +62,7 @@ async function put(event) {
     const search = new Search({}, 'granule');
     const response = await search.get(granuleId);
     if (action === 'reingest') {
-      const collection = response.collectionId.split('___');
-      const payload = await Rule.buildPayload({
-        workflow: 'IngestGranule',
-        provider: response.provider,
-        collection: {
-          name: collection[0],
-          version: collection[1]
-        },
-        meta: { granuleId: response.granuleId },
-        payload: {
-          granules: [{
-            granuleId: response.granuleId,
-            files: response.files
-          }]
-        }
-      });
-
-      await partialRecordUpdate(
-        null,
-        response.granuleId,
-        'granule',
-        { status: 'running' },
-        response.collectionId
-      );
-      await invoke(process.env.invoke, payload);
-      return {
-        granuleId: response.granuleId,
-        action,
-        status: 'SUCCESS'
-      };
+      await reingest(response);
     }
     else if (action === 'removeFromCmr') {
       await removeGranuleFromCmr(response.granuleId, response.collectionId);
