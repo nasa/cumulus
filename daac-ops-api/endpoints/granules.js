@@ -6,8 +6,7 @@ const { S3 } = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
-const { partialRecordUpdate, deleteRecord } = require('../es/indexer');
-const { reingest } = require('../lib/utils');
+const { partialRecordUpdate, deleteRecord, reingest } = require('../es/indexer');
 
 async function removeGranuleFromCmr(granuleId, collectionId) {
   const password = await DefaultProvider.decrypt(process.env.cmr_password);
