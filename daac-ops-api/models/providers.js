@@ -1,7 +1,7 @@
 'use strict';
 
-const Manager = require('./base');
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
+const Manager = require('./base');
 const providerSchema = require('./schemas').provider;
 
 class Provider extends Manager {
