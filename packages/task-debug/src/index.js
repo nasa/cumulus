@@ -5,21 +5,14 @@ global.__isDebug = true;
 
 const log = require('@cumulus/common/log');
 const program = require('commander');
+const workflow = require('./workflow');
 const local = require('@cumulus/common/local-helpers');
 
 // Tasks we need for our step function
-const DiscoverPdrTask = require('../../../cumulus/tasks/discover-pdr');
-const TriggerProcessPdrsTask = require('../../../cumulus/tasks/trigger-process-pdrs');
+// const DiscoverPdrTask = require('../../../cumulus/tasks/discover-pdr');
+// const TriggerProcessPdrsTask = require('../../../cumulus/tasks/trigger-process-pdrs');
 
 const increaseVerbosity = (_v, total) => total + 1;
-
-/**
- * Run a task locally with given message and return ouptput message for next stage
- * @param {Function} handler Function that executes a task
- * @param {Function} invocation Function that returns the message for a task
- * @return {*} The result from the execution
- */
-const runTask = (handler, invocation) => handler(invocation(), {}, result => result);
 
 const doDebug = configFile => {
   log.info(`Config file: ${configFile}`);
@@ -29,38 +22,44 @@ const doDebug = configFile => {
   log.info(`Verbosity: ${program.verbose}`);
 };
 
-/**
- *
- * @param {string} taskName
- * @param {*} payload
- */
-const genMessage = (taskName, resources = {}, payload = null) =>
-  local.collectionMessageInput('VNGCR_LQD_C1_SIPS', taskName, o =>
-    Object.assign({}, o, {
-      resources: resources,
-      payload: payload
-    })
-  );
+const workflows = local.parseWorkflows('VNGCR_LQD_C1_SIPS');
+const discoverPdrsWorkflow = workflows.DiscoverPdrsSIPSTEST;
+const resources = {
+  buckets: {
+    private: 'gitc-jn-private'
+  }
+};
 
-const message = genMessage('DiscoverPdr');
-log.info(`MESSAGE: ${message}`);
+const result = workflow.runWorkflow('VNGCR_LQD_C1_SIPS', discoverPdrsWorkflow, resources);
 
-const rval = runTask(
-  DiscoverPdrTask.handler,
-  genMessage('DiscoverPdr', {
-    buckets: {
-      private: 'gitc-jn-private'
-    }
-  })
-);
 
-rval.then(results => {
-  log.info(JSON.stringify(results));
-  const res = runTask(TriggerProcessPdrsTask.handler, genMessage('TriggerProcessPdrs', results));
-  res.then(r => {
-    log.info(JSON.stringify(r));
-  });
-});
+
+log.info(`RESULT: ${result}`);
+
+// log.info(`WORKFLOW: ${JSON.stringify(workflows)}`);
+
+// const message = workflow.genMessage('VNGCR_LQD_C1_SIPS', 'DiscoverPdr')();
+// log.info(`MESSAGE: ${message}`);
+
+// const rval = workflow.runTask(
+//   DiscoverPdrTask.handler,
+//   workflow.genMessage('VNGCR_LQD_C1_SIPS', 'DiscoverPdr', {
+//     buckets: {
+//       private: 'gitc-jn-private'
+//     }
+//   })
+// );
+
+// rval.then(results => {
+//   log.info(JSON.stringify(results));
+//   const res = workflow.runTask(
+//     TriggerProcessPdrsTask.handler,
+//     workflow.genMessage('VNGCR_LQD_C1_SIPS', 'TriggerProcessPdrs', results)
+//   );
+//   res.then(r => {
+//     log.info(JSON.stringify(r));
+//   });
+// });
 
 // local.setupLocalRun(
 //   DiscoverPdrTask.handler,
