@@ -32,8 +32,6 @@
   },
   "dependencies": {
     "@cumulus/common": "^1.0.0",
-    "discover-pdr": "^0.0.1",
-    "trigger-process-pdrs": "^0.0.1",
     "commander": "^2.11.0"
   },
   "devDependencies": {
