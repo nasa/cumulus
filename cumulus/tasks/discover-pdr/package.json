@@ -17,10 +17,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/ava test/*.js --no-color",
-    "build": "webpack --progress",
-    "watch": "webpack --progress -w",
-    "build-debug": "babel *.js --out-dir dist --source-maps"
+    "build-debug": "babel *.js --out-dir dist --source-maps",
+    "test": "./node_modules/.bin/ava test/*.js --no-color"
   },
   "ava": {
     "babel": "inherit",
