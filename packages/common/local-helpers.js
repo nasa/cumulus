@@ -10,18 +10,21 @@ const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
 // startup code settings with {"Javascript (Node.js)": "global.__isJupyter = true;"}
 const isJupyter = global.__isJupyter;
 
+// Defines whether we're running a debugging session or not
+const isDebug = global.__isDebug;
+
 // Defines whether we're in an AVA test
 const isAva = process.argv[1] && /ava/.test(process.argv[1]);
 
 const isStdin = process.argv[2] === 'stdin';
-const isLocal = isJupyter || isStdin || process.argv[2] === 'local';
+const isLocal = isDebug || isJupyter || isStdin || process.argv[2] === 'local';
 exports.isLocal = isLocal;
 
 let rootPath;
 if (isMocha) {
   rootPath = '../../../..';
 }
-else if (isJupyter || isAva) {
+else if (isJupyter || isAva || isDebug) {
   rootPath = '../..';
 }
 else {
@@ -53,6 +56,7 @@ const findById = (arr, id) => {
  * @param {string} id - The collection id to read from collections.yml
  * @param {string} taskName - The config key to lookup to find task config
  * @param {function} payload - A function which takes the message and can override its fields
+ * @param {string} configFile - Path to the yml file containing the configuration
  * @return - The config object
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {

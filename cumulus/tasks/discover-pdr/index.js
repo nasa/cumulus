@@ -51,7 +51,7 @@ module.exports = class DiscoverPdr extends Task {
     try {
       // Get the list of PDRs
       const pdrList = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
-      log.info(`PDR LIST: [${pdrList}]`);
+      log.info(`PDR LIST: [${JSON.stringify(pdrList)}]`);
 
       const S3UploadPromises = pdrList.map(async pdrEntry => {
         const fileName = pdrEntry.name;
