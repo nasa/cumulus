@@ -8,73 +8,50 @@ const program = require('commander');
 const workflow = require('./workflow');
 const local = require('@cumulus/common/local-helpers');
 
-// Tasks we need for our step function
-// const DiscoverPdrTask = require('../../../cumulus/tasks/discover-pdr');
-// const TriggerProcessPdrsTask = require('../../../cumulus/tasks/trigger-process-pdrs');
-
 const increaseVerbosity = (_v, total) => total + 1;
 
-const doDebug = configFile => {
+const doDebug = async () => {
+  const configFile = program.configFile;
+  const collectionId = program.collection;
+  const workflowName = program.workflow;
+  const bucket = program.bucket;
+
   log.info(`Config file: ${configFile}`);
-  // const localTaskName = 'DiscoverPdr';
-  // const inputMessageFun = local.collectionMessageInput('VNGCR_LQD_C1_SIPS', localTaskName);
-  // DiscoverPdrTask.handler(inputMessageFun, {}, (result) => result);
-  log.info(`Verbosity: ${program.verbose}`);
+  log.info(`Collection: ${collectionId}`);
+  log.info(`Workflow: ${workflowName}`);
+  log.info(`S3 Bucket: ${bucket}`);
+
+  const workflows = local.parseWorkflows(collectionId);
+  const wf = workflows[workflowName];
+  const resources = {
+    buckets: {
+      private: bucket
+    }
+  };
+
+  const result = await workflow.runWorkflow(collectionId, wf, resources);
+
+  log.info(`RESULT: ${JSON.stringify(result)}`);
 };
 
-const workflows = local.parseWorkflows('VNGCR_LQD_C1_SIPS');
-const discoverPdrsWorkflow = workflows.DiscoverPdrsSIPSTEST;
-const resources = {
-  buckets: {
-    private: 'gitc-jn-private'
-  }
-};
+// const workflows = local.parseWorkflows('VNGCR_LQD_C1_SIPS');
+// const discoverPdrsWorkflow = workflows.DiscoverPdrsSIPSTEST;
+// const resources = {
+//   buckets: {
+//     private: 'gitc-jn-private'
+//   }
+// };
 
-const result = workflow.runWorkflow('VNGCR_LQD_C1_SIPS', discoverPdrsWorkflow, resources);
+// const result = workflow.runWorkflow('VNGCR_LQD_C1_SIPS', discoverPdrsWorkflow, resources);
 
-
-
-log.info(`RESULT: ${result}`);
-
-// log.info(`WORKFLOW: ${JSON.stringify(workflows)}`);
-
-// const message = workflow.genMessage('VNGCR_LQD_C1_SIPS', 'DiscoverPdr')();
-// log.info(`MESSAGE: ${message}`);
-
-// const rval = workflow.runTask(
-//   DiscoverPdrTask.handler,
-//   workflow.genMessage('VNGCR_LQD_C1_SIPS', 'DiscoverPdr', {
-//     buckets: {
-//       private: 'gitc-jn-private'
-//     }
-//   })
-// );
-
-// rval.then(results => {
-//   log.info(JSON.stringify(results));
-//   const res = workflow.runTask(
-//     TriggerProcessPdrsTask.handler,
-//     workflow.genMessage('VNGCR_LQD_C1_SIPS', 'TriggerProcessPdrs', results)
-//   );
-//   res.then(r => {
-//     log.info(JSON.stringify(r));
-//   });
-// });
-
-// local.setupLocalRun(
-//   DiscoverPdrTask.handler,
-//   local.collectionMessageInput('VNGCR_LQD_C1_SIPS', localTaskName, o => Object.assign({}, o, {
-//     resources: {
-//       buckets: {
-//         private: 'gitc-jn-private'
-//       }
-//     }
-//   }))
-// );
+// log.info(`RESULT: ${result}`);
 
 program
   .version('0.0.1')
   .option('-v, --verbose', 'A value that can be increased', increaseVerbosity, 0)
+  .option('-c, --collection <value>', 'The ID of the collection to process')
+  .option('-w, --workflow <value>', 'The workflow to run')
+  .option('-b, --bucket [value]', 'The private S3 bucket to use')
   .command('debugg <config-file>')
   .action(doDebug);
 
