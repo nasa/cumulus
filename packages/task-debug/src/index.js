@@ -34,18 +34,6 @@ const doDebug = async () => {
   log.info(`RESULT: ${JSON.stringify(result)}`);
 };
 
-// const workflows = local.parseWorkflows('VNGCR_LQD_C1_SIPS');
-// const discoverPdrsWorkflow = workflows.DiscoverPdrsSIPSTEST;
-// const resources = {
-//   buckets: {
-//     private: 'gitc-jn-private'
-//   }
-// };
-
-// const result = workflow.runWorkflow('VNGCR_LQD_C1_SIPS', discoverPdrsWorkflow, resources);
-
-// log.info(`RESULT: ${result}`);
-
 program
   .version('0.0.1')
   .option('-v, --verbose', 'A value that can be increased', increaseVerbosity, 0)
