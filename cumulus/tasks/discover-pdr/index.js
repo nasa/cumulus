@@ -22,7 +22,6 @@ module.exports = class DiscoverPdr extends Task {
    */
   async run() {
     // Vars needed from config to connect to the SIPS server
-    log.info('Running...');
     const { conn_type, host, port, username, password } =
      this.message.provider.config.gateway_config.conn_config;
     // The folder on the SIPS server holding the PDRS and the S3 bucket to which they should
@@ -52,7 +51,6 @@ module.exports = class DiscoverPdr extends Task {
     try {
       // Get the list of PDRs
       const pdrList = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
-      log.info(`PDR LIST: [${JSON.stringify(pdrList)}]`);
 
       const S3UploadPromises = pdrList.map(async pdrEntry => {
         const fileName = pdrEntry.name;
