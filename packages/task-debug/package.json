@@ -1,0 +1,44 @@
+{
+  "name": "task-debug",
+  "version": "0.0.1",
+  "description": "A harness for debugging workflows.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cumulus-nasa/cumulus.git"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/cumulus-nasa/cumulus/issues"
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus#readme",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist --source-maps"
+  },
+  "babel": {
+    "presets": [
+      "env", {
+        "targets": {
+          "node": 6.10
+        }
+      },
+      "@ava/stage-4",
+      "@ava/transform-test-files"
+    ]
+  },
+  "dependencies": {
+    "@cumulus/common": "^1.0.0",
+    "commander": "^2.11.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.25.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-cli": "^6.26.0",
+    "sinon": "^2.0.0-pre.5",
+    "ava": "^0.21.0"
+  }
+}
