@@ -51,7 +51,6 @@ module.exports = class DiscoverPdr extends Task {
     try {
       // Get the list of PDRs
       const pdrList = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
-      log.info(`PDR LIST: [${pdrList}]`);
 
       const S3UploadPromises = pdrList.map(async pdrEntry => {
         const fileName = pdrEntry.name;
@@ -96,77 +95,3 @@ module.exports = class DiscoverPdr extends Task {
     return DiscoverPdr.handle(...args);
   }
 };
-
-// Test code
-
-const local = require('@cumulus/common/local-helpers');
-local.setupLocalRun(module.exports.handler, () => ({
-  workflow_config_template: {
-    DiscoverPdr: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PDR'
-    },
-    ValidatePdr: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PDR'
-    },
-    GeneratePdrFileList: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp'
-    },
-    DownloadActivity: {
-      skip_upload_output_payload_to_s3: true,
-      output: {
-        bucket: '{resources.buckets.private}',
-        key_prefix: 'sources/EPSG{meta.epsg}/SIPSTEST/{meta.collection}'
-      }
-    },
-    ValidateArchives: {
-      s3Bucket: '{resources.buckets.private}'
-    },
-    GeneratePan: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PAN'
-    },
-    DeletePdr: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PDR'
-    }
-  },
-  resources: {
-    buckets: {
-      private: 'provgateway-deploy'
-    }
-  },
-  provider: {
-    id: 'DUMMY',
-    config: {}
-  },
-  meta: {
-    epsg: 4326,
-    collection: 'VNGCR_LQD_C1'
-  },
-  ingest_meta: {
-    task: 'DiscoverPdr',
-    id: 'abc123',
-    message_source: 'local'
-  }
-
-}));
