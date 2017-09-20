@@ -68,6 +68,7 @@ module.exports.ftpMixin = superclass => class extends superclass {
     const client = new JSFtp(this.options);
 
     return new Promise((resolve, reject) => {
+      client.on('error', reject);
       client.get(join(path, filename), tempFile, (err) => {
         client.destroy();
         if (err) return reject(err);
@@ -88,6 +89,7 @@ module.exports.ftpMixin = superclass => class extends superclass {
 
     const client = new JSFtp(this.options);
     return new Promise((resolve, reject) => {
+      client.on('error', reject);
       const input = new Buffer(body);
       client.put(input, join(path, filename), (err) => {
         client.destroy();
@@ -102,6 +104,7 @@ module.exports.ftpMixin = superclass => class extends superclass {
     let counter = _counter;
     const client = new JSFtp(this.options);
     return new Promise((resolve, reject) => {
+      client.on('error', reject);
       client.ls(path, (err, data) => {
         client.destroy();
         if (err) {
