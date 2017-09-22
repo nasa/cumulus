@@ -62,6 +62,11 @@ async function put(event) {
     const response = await search.get(granuleId);
     if (action === 'reingest') {
       await reingest(response);
+      return {
+        granuleId: response.granuleId,
+        action,
+        status: 'SUCCESS'
+      };
     }
     else if (action === 'removeFromCmr') {
       await removeGranuleFromCmr(response.granuleId, response.collectionId);
@@ -72,7 +77,7 @@ async function put(event) {
       };
     }
 
-    throw new Error('Action is not supported. Choices are: \'reprocess\' and \'removeFromCmr\'');
+    throw new Error('Action is not supported. Choices are: \'reingest\' and \'removeFromCmr\'');
   }
 
   throw new Error('Action is missing');
