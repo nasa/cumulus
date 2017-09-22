@@ -23,15 +23,15 @@ function temporaryPayloadFix(payload) {
 
     // first find the main granule object
     payload.granules.forEach(g => {
-      if (granules[g]) {
+      if (granules[g.granuleId]) {
         if (g.files && Array.isArray(g.files)) {
-          granules[g].files = granules[g].files.concat(g.files);
+          granules[g.granuleId].files = granules[g.granuleId].files.concat(g.files);
           delete g.files;
-          Object.assign(granules[g], g);
+          Object.assign(granules[g.granuleId], g);
         }
       }
       else {
-        granules[g] = g;
+        granules[g.granuleId] = g;
       }
     });
 
@@ -42,7 +42,7 @@ function temporaryPayloadFix(payload) {
 
 function getCmrFiles(granules) {
   let files = [];
-  const expectedFormats = [/.*\.xml$/];
+  const expectedFormats = [/.*\.cmr\.xml$/];
   granules.forEach(granule => {
     files = files.concat(granule.files.map((file) => {
       const r = {
