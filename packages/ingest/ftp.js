@@ -34,6 +34,11 @@ module.exports.ftpMixin = superclass => class extends superclass {
         this.options.pass = await Crypto.decrypt(this.password);
         this.decrypted = true;
       }
+
+      if (this.username) {
+        this.options.user = await Crypto.decrypt(this.username);
+        this.decrypted = true;
+      }
     }
   }
 
