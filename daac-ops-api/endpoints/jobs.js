@@ -18,21 +18,50 @@ async function findStaleRecords(type, q, limit = 100, page = 1) {
   }, type);
   const response = await search.query();
 
-  if (response.results.length >= limit) {
-    const more = await findStaleRecords(type, q, limit, page + 1);
-    return response.results.concat(more);
-  }
+  //if (response.results.length >= limit) {
+    //const more = await findStaleRecords(type, q, limit, page + 1);
+    //return response.results.concat(more);
+  //}
   return response.results;
 }
 
-async function checkExecution(arn, url, esClient) {
+async function updateGranulesAndPdrs(esClient, url, error) {
+  // find related granule and update their status
+  let searchTerm = `execution:"${url}"`;
+  const granules = await findStaleRecords('granule', searchTerm, 100);
+  await Promise.all(granules.map(g => partialRecordUpdate(
+    esClient, g.granuleId, 'granule', { status: 'failed', error }, g.collectionId
+  )));
+
+  // find related pdrs and update their status
+  searchTerm = `execution:"${url}"`;
+  const pdrs = await findStaleRecords('pdr', searchTerm, 100);
+  await Promise.all(pdrs.map(p => partialRecordUpdate(
+    esClient, p.pdrName, 'pdr', { status: 'failed', error }
+  )));
+}
+
+async function checkExecution(arn, url, timestamp, esClient) {
   let error = {
-    Error: null,
-    Cause: null
+    Error: 'Unknown',
+    Cause: 'The error cause could not be determined'
   };
   const r = await StepFunction.getExecution(arn, true);
   r.status = r.status.toLowerCase();
   r.status = r.status === 'succeeded' ? 'completed' : r.status;
+
+
+  if (r.status === 'not_found') {
+    log.error(`Execution does not exist: ${arn}`);
+    error = {
+      Error: 'Not Found',
+      Cause: 'Execution was not found. If an execution is ' +
+             'finished and the state machine is deleted, this error is thrown'
+    };
+    await partialRecordUpdate(esClient, arn, 'execution', { status: 'failed', error });
+    await updateGranulesAndPdrs(esClient, url, error);
+    return;
+  }
 
   let input = get(r, 'input');
   let output = get(r, 'output');
@@ -50,41 +79,27 @@ async function checkExecution(arn, url, esClient) {
     output = input;
   }
 
-  const type = get(output, 'ingest_meta.workflow_name');
   console.log(`Checking ${arn}`);
 
-  if (r.status === 'not_found' || r.status === 'running') {
-    log.error(`Execution does not exist: ${arn}`);
-    error = {
-      Error: 'Timeout',
-      Cause: 'Execution is aborted because it did not finish in 5 hours'
-    };
-    await partialRecordUpdate(esClient, arn, 'execution', { status: 'failed', error });
+  if (r.status === 'running') {
+    // check if it the execution has passed the five hours limit
+    const now = Date.now();
+    const late = (now - timestamp) > 18000000;
 
-    if (r.status === 'running') {
+    if (late) {
+      error = {
+        Error: 'Stopped By Cumulus',
+        Cause: 'Execution was stopped by Cumulus because it did not finish in 5 hours.'
+      };
+
       await StepFunction.stop(
         arn,
         error.Cause,
         error.Error
       );
-    }
 
-    // find related granule and update their status
-    if (type === 'IngestGranule') {
-      const searchTerm = `execution:"${url}"`;
-      const granules = await findStaleRecords('granule', searchTerm, 100);
-      await Promise.all(granules.map(g => partialRecordUpdate(
-        esClient, g.granuleId, 'granule', { status: 'failed', error }, g.collectionId
-      )));
-    }
-
-    // find related pdrs and update their status
-    if (type === 'ParsePdr') {
-      const searchTerm = `execution:"${url}"`;
-      const pdrs = await findStaleRecords('pdr', searchTerm, 100);
-      await Promise.all(pdrs.map(p => partialRecordUpdate(
-        esClient, p.pdrName, 'pdr', { status: 'failed', error }
-      )));
+      await partialRecordUpdate(esClient, arn, 'execution', { status: 'failed', error });
+      await updateGranulesAndPdrs(esClient, url, error);
     }
   }
   else {
@@ -108,14 +123,8 @@ async function checkExecution(arn, url, esClient) {
   }
 }
 
-function getHoursAgo(hours) {
-  const now = Date.now();
-  return now - (hours * 60 * 60 * 1000);
-}
-
 async function cleanup() {
-  const fiveHoursAgo = getHoursAgo(5);
-  const searchTerm = `status:running AND timestamp:<${fiveHoursAgo}`;
+  const searchTerm = 'status:running';
 
   const esClient = await Search.es();
   const executions = await findStaleRecords('execution', searchTerm, 100);
@@ -127,7 +136,7 @@ async function cleanup() {
   await Promise.all(
     executions.slice(0, 400).map(
       ex => limit(
-        () => checkExecution(ex.arn, ex.execution, esClient)
+        () => checkExecution(ex.arn, ex.execution, ex.timestamp, esClient)
       )
     )
   );
@@ -139,5 +148,7 @@ function handler(event, context, cb) {
     cb(e);
   });
 }
+
+handler({}, {}, (e, r) => console.log(e, r));
 
 module.exports = handler;
