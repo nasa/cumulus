@@ -101,55 +101,59 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
 
 async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const name = get(payload, 'ingest_meta.execution_name');
-  const arn = getExecutionArn(
-    get(payload, 'ingest_meta.state_machine'),
-    name
-  );
-  const execution = getExecutionUrl(arn);
+  const pdrName = get(payload, 'payload.pdr.name')
 
-  const collection = get(payload, 'collection.meta');
-  const collectionId = `${collection.name}___${collection.version}`;
+  if (pdrName) {
+    const arn = getExecutionArn(
+      get(payload, 'ingest_meta.state_machine'),
+      name
+    );
+    const execution = getExecutionUrl(arn);
 
-  const stats = {
-    processing: get(payload, 'payload.running', []).length,
-    completed: get(payload, 'payload.completed', []).length,
-    failed: get(payload, 'payload.failed', []).length
-  };
+    const collection = get(payload, 'collection.meta');
+    const collectionId = `${collection.name}___${collection.version}`;
 
-  stats.total = stats.processing + stats.completed + stats.failed;
-  let progress = 0;
-  if (stats.processing > 0 && stats.total > 0) {
-    progress = stats.processing / stats.total;
-  }
-  else if (stats.processing === 0 && stats.total > 0) {
-    progress = 100;
-  }
+    const stats = {
+      processing: get(payload, 'payload.running', []).length,
+      completed: get(payload, 'payload.completed', []).length,
+      failed: get(payload, 'payload.failed', []).length
+    };
 
-  const doc = {
-    pdrName: get(payload, 'payload.pdr.name'),
-    collectionId,
-    status: get(payload, 'ingest_meta.status'),
-    provider: get(payload, 'provider.id'),
-    progress,
-    execution,
-    PANSent: get(payload, 'payload.pdr.PANSent', false),
-    PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
-    stats,
-    createdAt: get(payload, 'ingest_meta.createdAt'),
-    timestamp: Date.now()
-  };
-
-  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-  await esClient.update({
-    index,
-    type,
-    id: doc.pdrName,
-    body: {
-      doc,
-      doc_as_upsert: true
+    stats.total = stats.processing + stats.completed + stats.failed;
+    let progress = 0;
+    if (stats.processing > 0 && stats.total > 0) {
+      progress = stats.processing / stats.total;
     }
-  });
+    else if (stats.processing === 0 && stats.total > 0) {
+      progress = 100;
+    }
+
+    const doc = {
+      pdrName: get(payload, 'payload.pdr.name'),
+      collectionId,
+      status: get(payload, 'ingest_meta.status'),
+      provider: get(payload, 'provider.id'),
+      progress,
+      execution,
+      PANSent: get(payload, 'payload.pdr.PANSent', false),
+      PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
+      stats,
+      createdAt: get(payload, 'ingest_meta.createdAt'),
+      timestamp: Date.now()
+    };
+
+    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+    await esClient.update({
+      index,
+      type,
+      id: doc.pdrName,
+      body: {
+        doc,
+        doc_as_upsert: true
+      }
+    });
+  }
 }
 
 async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
@@ -221,68 +225,72 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
 
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const name = get(payload, 'ingest_meta.execution_name');
-  const arn = getExecutionArn(
-    get(payload, 'ingest_meta.state_machine'),
-    name
-  );
+  const granules = get(payload, 'payload.granules');
 
-  if (arn) {
-    const execution = getExecutionUrl(arn);
+  if (granule) {
+    const arn = getExecutionArn(
+      get(payload, 'ingest_meta.state_machine'),
+      name
+    );
 
-    const collection = get(payload, 'collection');
-    const meta = collection.meta || collection;
-    const exception = get(payload, 'exception');
-    const collectionId = `${meta.name}___${meta.version}`;
+    if (arn) {
+      const execution = getExecutionUrl(arn);
 
-    const granules = get(payload, 'payload.granules');
+      const collection = get(payload, 'collection');
+      const meta = collection.meta || collection;
+      const exception = get(payload, 'exception');
+      const collectionId = `${meta.name}___${meta.version}`;
 
-    // make sure collection is added
-    try {
-      await esClient.get({
-        index,
-        type: 'collection',
-        id: collectionId
-      });
-    }
-    catch (e) {
-      // adding collection record to ES
-      await indexCollection(esClient, meta);
-    }
+      const granules = get(payload, 'payload.granules');
 
-    const done = granules.map((g) => {
-      if (g.granuleId) {
-        const doc = {
-          granuleId: g.granuleId,
-          pdrName: get(payload, 'payload.pdr.name'),
-          collectionId,
-          status: get(payload, 'ingest_meta.status'),
-          provider: get(payload, 'provider.id'),
-          execution,
-          cmrLink: get(g, 'cmr.link'),
-          files: g.files,
-          error: exception,
-          createdAt: get(payload, 'ingest_meta.createdAt'),
-          timestamp: Date.now()
-        };
-
-        doc.published = get(g, 'cmr.link', false);
-        doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-        return esClient.update({
+      // make sure collection is added
+      try {
+        await esClient.get({
           index,
-          type,
-          id: doc.granuleId,
-          parent: collectionId,
-          body: {
-            doc,
-            doc_as_upsert: true
-          }
+          type: 'collection',
+          id: collectionId
         });
       }
-      return false;
-    });
+      catch (e) {
+        // adding collection record to ES
+        await indexCollection(esClient, meta);
+      }
 
-    return Promise.all(done);
+      const done = granules.map((g) => {
+        if (g.granuleId) {
+          const doc = {
+            granuleId: g.granuleId,
+            pdrName: get(payload, 'payload.pdr.name'),
+            collectionId,
+            status: get(payload, 'ingest_meta.status'),
+            provider: get(payload, 'provider.id'),
+            execution,
+            cmrLink: get(g, 'cmr.link'),
+            files: g.files,
+            error: exception,
+            createdAt: get(payload, 'ingest_meta.createdAt'),
+            timestamp: Date.now()
+          };
+
+          doc.published = get(g, 'cmr.link', false);
+          doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+          return esClient.update({
+            index,
+            type,
+            id: doc.granuleId,
+            parent: collectionId,
+            body: {
+              doc,
+              doc_as_upsert: true
+            }
+          });
+        }
+        return false;
+      });
+
+      return Promise.all(done);
+    }
   }
   return false;
 }
@@ -304,8 +312,8 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
   return esClient.delete(params);
 }
 
-async function reingest(granule) {
-  const collection = granule.collectionId.split('___');
+async function reingest(g) {
+  const collection = g.collectionId.split('___');
   const payload = await Rule.buildPayload({
     workflow: 'IngestGranule',
     provider: granule.provider,
@@ -313,25 +321,25 @@ async function reingest(granule) {
       name: collection[0],
       version: collection[1]
     },
-    meta: { granuleId: granule.granuleId },
+    meta: { granuleId: g.granuleId },
     payload: {
       granules: [{
-        granuleId: granule.granuleId,
-        files: granule.files
+        granuleId: g.granuleId,
+        files: g.files
       }]
     }
   });
 
   await partialRecordUpdate(
     null,
-    granule.granuleId,
+    g.granuleId,
     'granule',
     { status: 'running' },
-    granule.collectionId
+    g.collectionId
   );
   await invoke(process.env.invoke, payload);
   return {
-    granuleId: granule.granuleId,
+    granuleId: g.granuleId,
     action: 'reingest',
     status: 'SUCCESS'
   };
@@ -349,28 +357,28 @@ async function handlePayload(event) {
     payload = event;
   }
 
-  const type = get(payload, 'ingest_meta.workflow_name');
   const esClient = await Search.es();
 
   await indexStepFunction(esClient, payload);
-
-  if (type === 'ParsePdr') {
-    await pdr(esClient, payload);
-  }
-  else if (type === 'IngestGranule') {
-    await granule(esClient, payload);
-  }
+  await pdr(esClient, payload);
+  await granule(esClient, payload);
 }
 
 function logHandler(event, context, cb) {
   log.debug(event);
   const payload = new Buffer(event.awslogs.data, 'base64');
   zlib.gunzip(payload, (e, r) => {
-    const logs = JSON.parse(r.toString());
-    log.debug(logs);
-    return indexLog(logs.logEvents)
-      .then(s => cb(null, s))
-      .catch(err => cb(err));
+    try {
+      const logs = JSON.parse(r.toString());
+      log.debug(logs);
+      return indexLog(logs.logEvents)
+        .then(s => cb(null, s))
+        .catch(err => cb(err));
+    }
+    catch (err) {
+      log.error(e);
+      return cb(null);
+    }
   });
 }
 
