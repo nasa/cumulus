@@ -119,11 +119,7 @@
             "path": "/TEST_B/Cumulus/MODIS/DATA",
             "url_path": "",
             "name": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
-          }
-        ]
-      },
-      {
-        "files": [
+          },
           {
             "filename": "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg"
           },
@@ -131,7 +127,7 @@
             "filename": "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
           },
           {
-            "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.meta.xml"
+            "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }
         ]
       }
