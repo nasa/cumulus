@@ -211,6 +211,7 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
     body: {
       doc: {
         name: payload.name,
+        workflow: payload.workflow,
         provider: payload.provider,
         collection: payload.collection,
         meta: payload.meta,
@@ -227,7 +228,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const name = get(payload, 'ingest_meta.execution_name');
   const granules = get(payload, 'payload.granules');
 
-  if (granule) {
+  if (granules) {
     const arn = getExecutionArn(
       get(payload, 'ingest_meta.state_machine'),
       name
@@ -240,8 +241,6 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
       const meta = collection.meta || collection;
       const exception = get(payload, 'exception');
       const collectionId = `${meta.name}___${meta.version}`;
-
-      const granules = get(payload, 'payload.granules');
 
       // make sure collection is added
       try {
