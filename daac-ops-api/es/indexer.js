@@ -316,7 +316,7 @@ async function reingest(g) {
   const collection = g.collectionId.split('___');
   const payload = await Rule.buildPayload({
     workflow: 'IngestGranule',
-    provider: granule.provider,
+    provider: g.provider,
     collection: {
       name: collection[0],
       version: collection[1]
