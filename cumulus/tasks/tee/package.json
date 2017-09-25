@@ -1,0 +1,27 @@
+{
+  "name": "tee",
+  "version": "0.0.1",
+  "description": "Task for testing that splits output",
+  "main": "index.js",
+  "keywords": [
+    "GIBS",
+    "SIPS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "ftp": "^0.3.10",
+    "@cumulus/common": "^1.0.0",
+    "node-fetch": "^1.6.1",
+    "parse-duration": "^0.1.1",
+    "sftpjs": "^1.3.4",
+    "stream-to-promise": "^2.2.0",
+    "thenable-stream": "^1.0.0",
+    "util.promisify": "^1.0.0",
+    "string-to-stream": "^1.1.0"
+  }
+}

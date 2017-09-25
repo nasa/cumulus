@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Validate downloaded archive files'
+      Runtime: nodejs6.10

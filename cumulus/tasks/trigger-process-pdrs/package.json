@@ -1,0 +1,49 @@
+{
+  "name": "trigger-process-pdrs",
+  "version": "0.0.0",
+  "description": "Transforms input granule info to WMS URLs for URL sync",
+  "main": "index.js",
+  "keywords": [
+    "GIBS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/ava test/*.js --no-color"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "es2017",
+      "@ava/stage-4",
+      "@ava/transform-test-files"
+    ]
+  },
+  "dependencies": {
+    "@cumulus/common": "^1.0.0"
+  },
+  "devDependencies": {
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
+    "sinon": "^2.0.0-pre.5",
+    "ava": "^0.21.0",
+    "webpack": "^1.12.13"
+  }
+}
