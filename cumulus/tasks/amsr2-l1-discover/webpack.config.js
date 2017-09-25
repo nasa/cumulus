@@ -6,22 +6,10 @@ module.exports = {
   },
   target: 'node',
   devtool: 'sourcemap',
-  externals: [
-    'aws-sdk',
-    'electron'
-  ],
   module: {
-    resolve: {
-      alias: {
-        'aws-sdk': 'aws-sdk/dist/aws-sdk'
-      }
-    },
-    noParse: [
-      /graceful-fs\/fs.js/
-    ],
     loaders: [{
       test: /\.js?$/,
-      exclude: /node_modules(?!\/@cumulus)/,
+      exclude: /(node_modules)/,
       loader: 'babel'
     }, {
       test: /\.json$/,
