@@ -109,6 +109,31 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   return Promise.all(s3Objs.map(limitedDownload));
 };
 
+/**
+ * Delete files from S3
+ * @param {Array} s3Objs An array of objects containing keys 'Bucket' and 'Key'
+ * @param {Object} s3Opts An optional object containing options that influence the behavior of S3
+ * @return A promise that resolves to an Array of the data returned from the deletion operations
+ */
+exports.deleteS3Files = (s3Objs, s3opts = {}) => {
+  const s3 = exports.s3();
+  let i = 0;
+  const n = s3Objs.length;
+  log.info(`Starting deletion of ${n} keys`);
+  const promiseDelete = (s3Obj) => {
+    const opts = Object.assign(s3Obj, s3opts);
+    return new Promise((resolve, reject) => {
+      s3.deleteObject(opts, (err, data) => {
+        if (err) reject(err);
+        log.info(`Progress: [${i++} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${s3Obj.key}`);
+        resolve(data);
+      });
+    });
+  };
+  const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
+  return Promise.all(s3Objs.map(limitedDelete));
+};
+
 exports.uploadS3Files = (files, bucket, keyPath, s3opts = {}) => {
   let i = 0;
   const n = files.length;
@@ -127,6 +152,51 @@ exports.uploadS3Files = (files, bucket, keyPath, s3opts = {}) => {
   };
   const limitedUpload = concurrency.limit(S3_RATE_LIMIT, promiseUpload);
   return Promise.all(files.map(limitedUpload));
+};
+
+/**
+ * Upload the file associated with the given stream to an S3 bucket
+ * @param {ReadableStream} fileStream The stream for the file's contents
+ * @param {string} bucket The S3 bucket to which the file is to be uploaded
+ * @param {string} key The key to the file in the bucket
+ * @param s3opts {Object} Options to pass to the AWS sdk call (defaults to `{}`)
+ * @return A promise
+ */
+exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
+  const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
+  return exports.promiseS3Upload(opts);
+};
+
+/**
+ * List the objects in an S3 bucket
+ * @param {string} bucket The name of the bucket
+ * @param {string} prefix Only objects with keys starting with this prefix will be included
+ * (useful for searching folders in buckets, e.g., '/PDR')
+ * @param {boolean} skipFolders If true don't return objects that are folders (defaults to true)
+ * @return A promise that resolves to the list of objects. Each S3 object is represented
+ * as a JS object with the following attributes:
+ * `Key`, `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`
+ */
+exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
+  log.info(`Listing objects in s3://${bucket}`);
+  const params = {
+    Bucket: bucket
+  };
+  if (prefix) params.Prefix = prefix;
+
+  return new Promise((resolve, reject) => {
+    exports.s3().listObjects(params, (err, data) => {
+      if (err) reject(err);
+
+      let contents = data.Contents || [];
+      if (skipFolders) {
+        // Filter out any references to folders
+        contents = contents.filter((obj) => !obj.Key.endsWith('/'));
+      }
+
+      resolve(contents);
+    });
+  });
 };
 
 exports.syncUrl = async (url, bucket, destKey) => {
@@ -204,3 +274,9 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
      .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
      .map((s) => JSON.parse(`"${s}"`));
+
+// Test code
+// const prom = exports.listS3Objects('gitc-jn-sips-mock', 'PDR/');
+// prom.then((list) => {
+//   log.info(list);
+// });

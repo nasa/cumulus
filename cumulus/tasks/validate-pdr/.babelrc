@@ -1,0 +1,10 @@
+{
+  "presets": [
+    ["env", {
+      "modules": false
+    }]
+  ],
+  "sourceMaps": true,
+  "retainLines": true,
+  "plugins": ["transform-async-to-generator"]
+}
