@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Discovers tile PDR file to ingest from SIPS'
+      Runtime: nodejs6.10

@@ -10,15 +10,21 @@ const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
 // startup code settings with {"Javascript (Node.js)": "global.__isJupyter = true;"}
 const isJupyter = global.__isJupyter;
 
+// Defines whether we're running a debugging session or not
+const isDebug = global.__isDebug;
+
+// Defines whether we're in an AVA test
+const isAva = process.argv[1] && /ava/.test(process.argv[1]);
+
 const isStdin = process.argv[2] === 'stdin';
-const isLocal = isJupyter || isStdin || process.argv[2] === 'local';
+const isLocal = isDebug || isJupyter || isStdin || process.argv[2] === 'local';
 exports.isLocal = isLocal;
 
 let rootPath;
 if (isMocha) {
   rootPath = '../../../..';
 }
-else if (isJupyter) {
+else if (isJupyter || isAva || isDebug) {
   rootPath = '../..';
 }
 else {
@@ -45,16 +51,32 @@ const findById = (arr, id) => {
 };
 
 /**
+ * Returns the workflows defined in a yml configuration file
+ * @param {string} id The collection id to read from collections.yml
+ * @param {string} configFile The path to the yml file containing the configuration
+ * @returns {Object} A map containing descriptions of each workflow
+ */
+exports.parseWorkflows = (id, configFile = null) => {
+  const configPath = configFile || `${fileRoot()}/packages/common/test/config/test-collections.yml`;
+  log.info(`CONFIG PATH: ${configPath}`);
+  const configStr =
+    fs.readFileSync(configPath).toString();
+  const config = configUtil.parseConfig(configStr, (resource) => resource);
+  return config.workflows;
+};
+
+/**
  * Returns a dummy message for a collection of the given id, used for local testing,
  * with information obtained by reading collections.yml
  * @param {string} id - The collection id to read from collections.yml
  * @param {string} taskName - The config key to lookup to find task config
  * @param {function} payload - A function which takes the message and can override its fields
+ * @param {string} configFile - Path to the yml file containing the configuration
  * @return - The config object
  */
-exports.collectionMessageInput = (id, taskName, payload = (o) => o) => () => {
-  if (!isLocal && !isMocha && !isJupyter) return null;
-  const configPath = `${fileRoot()}/packages/common/test/config/test-collections.yml`;
+exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile = null) => () => {
+  if (!isLocal && !isMocha && !isJupyter && !isAva) return null;
+  const configPath = configFile || `${fileRoot()}/packages/common/test/config/test-collections.yml`;
   log.info(`CONFIG PATH: ${configPath}`);
   const configStr =
     fs.readFileSync(configPath).toString();
