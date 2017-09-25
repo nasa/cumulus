@@ -14,7 +14,8 @@ function getType(event) {
     pdrs: 'pdr',
     collections: 'collection',
     logs: 'logs',
-    providers: 'provider'
+    providers: 'provider',
+    executions: 'execution'
   };
 
   const typeRequested = _get(event, 'queryStringParameters.type', null);
