@@ -1,7 +1,7 @@
+/* eslint-disable no-param-reassign */
 'use strict';
 
 const get = require('lodash.get');
-const path = require('path');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { S3 } = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
@@ -17,56 +17,56 @@ const log = require('@cumulus/ingest/log');
  * issued there
  *
  */
-function temporaryPayloadFix(_payload, collection, buckets) {
-  const payload = _payload;
-
+function temporaryPayloadFix(payload) {
   if (payload.granules) {
+    const granules = {};
+
     // first find the main granule object
-    const granules = payload.granules.filter(g => g.granuleId !== undefined);
-
-    for (const g of payload.granules) {
-      if (!g.granuleId) {
-        for (const file of g.files) {
-          file.name = path.basename(file.filename);
-          // find the bucket and url_path info
-          for (const def of collection.files) {
-            const test = new RegExp(def.regex);
-            if (file.name.match(test)) {
-              file.bucket = buckets[def.bucket];
-              file.url_path = def.url_path || collection.url_path || '';
-              break;
-            }
-          }
+    payload.granules.forEach(g => {
+      if (granules[g.granuleId]) {
+        if (g.files && Array.isArray(g.files)) {
+          granules[g.granuleId].files = granules[g.granuleId].files.concat(g.files);
+          delete g.files;
+          Object.assign(granules[g.granuleId], g);
         }
-        granules[0].files = granules[0].files.concat(g.files);
       }
-    }
+      else {
+        granules[g.granuleId] = g;
+      }
+    });
 
-    payload.granules = granules;
+    payload.granules = Object.keys(granules).map(g => granules[g]);
   }
   return payload;
 }
 
-function getCmrFiles(granule) {
-  const expectedFormats = [/.*\.meta\.xml$/];
-  const cmrFiles = granule.files.map((file) => {
-    const r = {
-      granuleId: granule.granuleId
-    };
+function getCmrFiles(granules) {
+  let files = [];
+  const expectedFormats = [/.*\.cmr\.xml$/];
+  granules.forEach(granule => {
+    files = files.concat(granule.files.map((file) => {
+      const r = {
+        granuleId: granule.granuleId
+      };
 
-    if (file.cmrFile) {
-      r.file = file;
-    }
-
-    for (const regex of expectedFormats) {
-      if (file.name.match(regex)) {
+      if (file.cmrFile) {
         r.file = file;
+        r.file.granuleId = granule.granuleId;
+        return r.file;
       }
-    }
-    return r.file ? r : null;
+
+      for (const regex of expectedFormats) {
+        if (file.filename && file.filename.match(regex)) {
+          r.file = file;
+          r.file.granuleId = granule.granuleId;
+          return r.file;
+        }
+      }
+      return null;
+    }));
   });
 
-  return cmrFiles.filter(f => f);
+  return files.filter(f => f);
 }
 
 /**
@@ -119,7 +119,7 @@ async function publish(cmrFile, creds) {
     password
   );
 
-  const xml = await getMetadata(cmrFile.file.filename);
+  const xml = await getMetadata(cmrFile.filename);
   const res = await cmr.ingestGranule(xml);
 
   return {
@@ -150,16 +150,8 @@ function handler(_event, context, cb) {
     const payload = temporaryPayloadFix(get(event, 'payload', null), collection, buckets);
     const creds = get(event, 'resources.cmr');
 
-    // this lambda can only handle 1 granule at a time
-    if (payload.granules.length > 1) {
-      const err = new Error('Received more than 1 granule. ' +
-                            'This function can only handle 1 granule a time');
-      log.error(err);
-      return cb(err);
-    }
-
     // determine CMR files
-    const cmrFiles = getCmrFiles(payload.granules[0]);
+    const cmrFiles = getCmrFiles(payload.granules);
 
     // post all meta files to CMR
     const jobs = cmrFiles.map(c => publish(c, creds));
@@ -175,9 +167,9 @@ function handler(_event, context, cb) {
           }
         }
       }
-
-      event.payload = payload;
-
+      return payload;
+    }).then((r) => {
+      event.payload = r;
       return cb(null, event);
     }).catch(e => {
       log.error(e);
