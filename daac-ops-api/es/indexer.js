@@ -26,9 +26,21 @@ async function indexLog(payloads, index = 'cumulus', type = 'logs') {
 
   payloads.forEach((p) => {
     body.push({ index: { _index: index, _type: type, _id: p.id } });
-    const record = JSON.parse(p.message);
-    record.timestamp = record.time;
-    delete record.time;
+    let record;
+    try {
+      record = JSON.parse(p.message);
+      record.timestamp = record.time;
+      delete record.time;
+    }
+    catch (e) {
+      record = {
+        msg: p.message,
+        timestamp: p.timestamp,
+        level: 30,
+        pid: 1,
+        name: 'cumulus'
+      };
+    }
     body.push(record);
   });
 
