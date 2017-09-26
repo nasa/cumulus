@@ -125,11 +125,10 @@ function handler(event, context, cb) {
     delete event.ResourceProperties.Cmr;
   }
   if (es) {
-    delete event.ResourceProperties.es;
+    delete event.ResourceProperties.ElasticSearch.host;
   }
 
-
-  log.info(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
+  log.debug(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
 
   if (requestType === 'Delete') {
     return sendResponse(event, 'SUCCESS', null, cb);

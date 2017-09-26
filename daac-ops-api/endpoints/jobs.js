@@ -149,6 +149,4 @@ function handler(event, context, cb) {
   });
 }
 
-handler({}, {}, (e, r) => console.log(e, r));
-
 module.exports = handler;
