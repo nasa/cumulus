@@ -82,16 +82,17 @@ function put(event, cb) {
   }
 
   let data = _get(event, 'body', '{}');
+  let originalData;
   data = JSON.parse(data);
 
   const p = new models.Provider();
 
   // get the record first
-  return p.get({ id }).then((originalData) => {
+  return p.get({ id }).then((d) => {
+    originalData = d;
+    return p.update({ id }, data);
+  }).then(() => {
     data = Object.assign({}, originalData, data);
-    return p.create(data);
-  }).then((r) => {
-    data = r;
     return Search.es();
   }).then(esClient => indexProvider(esClient, data))
     .then(() => cb(null, data))
