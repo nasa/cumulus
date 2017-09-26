@@ -1,6 +1,8 @@
 'use strict';
 
 const _get = require('lodash.get');
+const { S3 } = require('@cumulus/ingest/aws');
+const { deleteRecord } = require('../es/indexer');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 
@@ -34,11 +36,37 @@ function get(event, cb) {
   });
 }
 
+async function del(event) {
+  const pdrName = _get(event.pathParameters, 'pdrName');
+
+  const search = new Search({}, 'pdr');
+  const record = await search.get(pdrName);
+
+  if (record.detail) {
+    throw record;
+  }
+
+  await deleteRecord(null, pdrName, 'pdr');
+
+  // remove file from s3
+  try {
+    const key = `pdrs/${pdrName}`;
+    await S3.delete(process.env.internal, key);
+  }
+  catch (e) {
+    console.log(e);
+  }
+
+  return { detail: 'Record deleted' };
+}
 
 function handler(event, context) {
   handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
+    }
+    else if (event.httpMethod === 'DELETE' && event.pathParameters) {
+      del(event).then(r => cb(null, r)).catch(e => cb(e));
     }
     else {
       list(event, cb);

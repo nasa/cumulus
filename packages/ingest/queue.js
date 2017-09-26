@@ -58,7 +58,8 @@ async function queueGranule(event, granule) {
     message.payload.pdr = pdr;
   }
 
-  const name = `${collectionId}__GRANULE__${granule.granuleId}__${Date.now()}`;
+  const name = `${collectionId.substring(0, 15)}__GRANULE__` +
+               `${granule.granuleId.substring(0, 16)}__${Date.now()}`;
   const arn = getExecutionArn(message.ingest_meta.state_machine, name);
 
   message.ingest_meta.execution_name = name;
