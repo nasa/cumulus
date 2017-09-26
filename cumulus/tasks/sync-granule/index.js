@@ -8,9 +8,10 @@ const logger = require('@cumulus/ingest/log');
 
 const log = logger.child({ file: 'sync-granule/index.js' });
 
-async function download(ingest, bucket, provider, g) {
-  let r;
-  const proceed = await lock.proceed(bucket, provider, g.granuleId);
+async function download(ingest, bucket, provider, granules) {
+  const updatedGranules = [];
+
+  const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
     const err = new errors.ResourcesLockedError(
@@ -20,17 +21,20 @@ async function download(ingest, bucket, provider, g) {
     throw err;
   }
 
-  try {
-    r = await ingest.ingest(g);
-  }
-  catch (e) {
-    await lock.removeLock(bucket, provider.id, g.granuleId);
-    log.error(e);
-    throw e;
+  for (const g of granules) {
+    try {
+      const r = await ingest.ingest(g);
+      updatedGranules.push(r);
+    }
+    catch (e) {
+      await lock.removeLock(bucket, provider.id, g.granuleId);
+      log.error(e);
+      throw e;
+    }
   }
 
-  await lock.removeLock(bucket, provider.id, g.granuleId);
-  return r;
+  await lock.removeLock(bucket, provider.id, granules[0].granuleId);
+  return updatedGranules;
 }
 
 module.exports.handler = function handler(_event, context, cb) {
@@ -50,25 +54,20 @@ module.exports.handler = function handler(_event, context, cb) {
     const IngestClass = granule.selector('ingest', provider.protocol);
     const ingest = new IngestClass(event);
 
-    let ad = [];
-
-    // download all the granules provided
-    ad = granules.map((g) => download(ingest, buckets.internal, provider, g));
-
-    return Promise.all(ad).then((gs) => {
+    return download(ingest, buckets.internal, provider, granules).then((gs) => {
       event.payload.granules = gs;
 
       if (collection.process) {
         event.meta.process = collection.process;
       }
 
-      if (ingest.connected) {
+      if (ingest.end) {
         ingest.end();
       }
 
       return cb(null, event);
     }).catch(e => {
-      if (ingest.connected) {
+      if (ingest.end) {
         ingest.end();
       }
 
