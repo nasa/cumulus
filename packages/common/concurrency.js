@@ -1,7 +1,7 @@
 'use strict';
 
-const http = require('http');
-const https = require('https');
+const http = require('follow-redirects').http;
+const https = require('follow-redirects').https;
 const url = require('url');
 const TaskQueue = require('cwait').TaskQueue;
 const _ = require('lodash');
