@@ -15,7 +15,7 @@ class Rule extends Manager {
   }
 
   async addRule(item, payload) {
-    const name = `${process.env.stackName}-${process.env.stage}-${item.name}`;
+    const name = `${process.env.stackName}-${process.env.stage}-custom-${item.name}`;
     const r = await Events.putEvent(
       name,
       item.rule.value,
@@ -29,7 +29,7 @@ class Rule extends Manager {
 
   async delete(item) {
     if (item.rule.type === 'scheduled') {
-      const name = `${process.env.stackName}-${process.env.stage}-${item.name}`;
+      const name = `${process.env.stackName}-${process.env.stage}-custom-${item.name}`;
       await Events.deleteTarget(this.targetId, name);
       await Events.deleteEvent(name);
     }
@@ -45,13 +45,13 @@ class Rule extends Manager {
       original.rule.value = updated.rule.value;
     }
 
-    const payload = await this.buildPayload(original);
+    const payload = await Rule.buildPayload(original);
     await this.addRule(original, payload);
 
     return super.update({ name: original.name }, updated);
   }
 
-  async buildPayload(item) {
+  static async buildPayload(item) {
     // make sure collection exists
     const c = new Collection();
     const collection = await c.get({
@@ -88,6 +88,11 @@ class Rule extends Manager {
     };
   }
 
+  static async invoke(item) {
+    const payload = await Rule.buildPayload(item);
+    await invoke(process.env.invoke, payload);
+  }
+
   async create(item) {
     // make sure the name only has word characters
     const re = /[^\w]/;
@@ -98,7 +103,7 @@ class Rule extends Manager {
       throw err;
     }
 
-    const payload = await this.buildPayload(item);
+    const payload = await Rule.buildPayload(item);
 
     switch (item.rule.type) {
       case 'onetime':
