@@ -243,10 +243,12 @@ module.exports.rule = {
       enum: ['ENABLED', 'DISABLED']
     },
     createdAt: {
-      type: 'number'
+      type: 'number',
+      readonly: true
     },
     updatedAt: {
-      type: 'number'
+      type: 'number',
+      readonly: true
     }
   },
   require: ['name', 'workflow', 'collection', 'rule', 'state']
@@ -295,6 +297,7 @@ module.exports.pdr = {
     },
     stats: {
       type: 'object',
+      readonly: true,
       properties: {
         total: {
           type: 'number'

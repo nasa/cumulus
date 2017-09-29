@@ -38,6 +38,11 @@ module.exports = superclass => class extends superclass {
         this.options.password = await Crypto.decrypt(this.password);
         this.decrypted = true;
       }
+
+      if (this.username) {
+        this.options.user = await Crypto.decrypt(this.username);
+        this.decrypted = true;
+      }
     }
 
     return new Promise((resolve, reject) => {

@@ -39,6 +39,7 @@
     "eslint-plugin-react": "^6.0.0",
     "expect.js": "^0.3.1",
     "exports-loader": "^0.6.3",
+    "follow-redirects": "^1.2.4",
     "glob": "^7.1.1",
     "js-yaml": "^3.8.3",
     "lodash": "^4.13.1",
@@ -48,6 +49,7 @@
     "prepend-loader": "0.0.2",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
+    "uuid": "^3.1.0",
     "webpack": "^1.13.3",
     "webpack-node-externals": "^1.5.4"
   }
