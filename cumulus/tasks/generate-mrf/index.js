@@ -127,6 +127,7 @@ module.exports = class GenerateMrfTask extends Task {
 };
 
 
+global.__isDebug = true;
 const local = require('@cumulus/common/local-helpers');
 local.setupLocalRun(
   module.exports.handler,
