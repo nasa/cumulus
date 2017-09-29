@@ -41,7 +41,7 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
     let newPath;
 
     // if directory is found, apply recursion logic
-    if (item.type === 'd') {
+    if (item.type === 'd' || item.type === 1) {
       // first we check if the next segment of the provided path
       // is a regex rule
       const isRegex = map[position + 1];
@@ -77,7 +77,7 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
       if (textPath) break;
     }
     // add file to the list
-    else if (item.type === '-') {
+    else if (item.type === '-' || item.type === 0) {
       files = files.concat(item);
     }
   }
