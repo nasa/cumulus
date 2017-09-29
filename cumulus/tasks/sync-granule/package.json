@@ -42,7 +42,6 @@
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
-    "@ava/babel-preset-transform-test-files": "^3.0.0",
     "proxyquire": "^1.8.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
