@@ -55,6 +55,18 @@ function handle(event, context, authCheck, func) {
       return cb('Invalid Authorization token');
     }
 
+    if (user.pass.startsWith('urs://')) {
+      // URS token passwords take the form "urs://<token>/<timestamp>"
+      // Check the timestamp portion for expiration.
+      const expiration = user.pass.split(/\/(\d+)$/)[1];
+      if (!expiration) {
+        return cb('Invalid Authorization token');
+      }
+      if (new Date(+expiration) < new Date()) {
+        return cb('Session expired');
+      }
+    }
+
     // hash password
     const md = forge.md.md5.create();
     md.update(user.pass);
