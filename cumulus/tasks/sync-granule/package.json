@@ -41,6 +41,7 @@
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
+    "@ava/babel-preset-stage-4": "^1.1.0",
     "proxyquire": "^1.8.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
