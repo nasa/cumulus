@@ -37,19 +37,24 @@ async function dispatch(message) {
 
 function queue(event, context, cb) {
   const template = get(event, 'template');
-  const provider = get(event, 'provider');
-  const meta = get(event, 'meta');
-  const collection = get(event, 'collection');
+  const provider = get(event, 'provider', {});
+  const meta = get(event, 'meta', {});
+  const collection = get(event, 'collection', {});
+  const payload = get(event, 'payload', {});
 
   const parsed = aws.S3.parseS3Uri(template);
   aws.S3.get(parsed.Bucket, parsed.Key).then((data) => {
     const message = JSON.parse(data.Body);
     message.provider = provider;
     message.meta = meta;
-    message.collection = {
-      id: collection.name,
-      meta: collection
-    };
+    message.payload = payload;
+
+    if (collection) {
+      message.collection = {
+        id: collection.name,
+        meta: collection
+      };
+    }
     message.ingest_meta.execution_name = generateRandomName();
 
     aws.SQS.sendMessage(message.resources.queues.startSF, message)
