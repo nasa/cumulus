@@ -86,6 +86,12 @@ exports.promiseS3Upload = (params) => {
 
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
+  // Scrub s3Ojbs to avoid errors from the AWS SDK
+  const scrubbedS3Objs = s3Objs.map(s3Obj =>
+    ({
+      Bucket: s3Obj.Bucket,
+      Key: s3Obj.Key
+    }));
   const s3 = exports.s3();
   let i = 0;
   const n = s3Objs.length;
@@ -106,7 +112,7 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
     });
   };
   const limitedDownload = concurrency.limit(S3_RATE_LIMIT, promiseDownload);
-  return Promise.all(s3Objs.map(limitedDownload));
+  return Promise.all(scrubbedS3Objs.map(limitedDownload));
 };
 
 /**
