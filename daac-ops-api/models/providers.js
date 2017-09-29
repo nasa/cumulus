@@ -1,7 +1,7 @@
 'use strict';
 
-const Manager = require('./base');
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
+const Manager = require('./base');
 const providerSchema = require('./schemas').provider;
 
 class Provider extends Manager {
@@ -10,21 +10,27 @@ class Provider extends Manager {
     this.removeAdditional = 'all';
   }
 
-  async encryptPassword(password) {
-    return await Crypto.encrypt(password);
+  async encrypt(value) {
+    return await Crypto.encrypt(value);
   }
 
-  async decryptPassword(password) {
-    return await Crypto.decrypt(password);
+  async decrypt(value) {
+    return await Crypto.decrypt(value);
   }
 
   async update(key, _item, keysToDelete = []) {
     const item = _item;
     // encrypt the password
     if (item.password) {
-      item.password = await this.encryptPassword(item.password);
+      item.password = await this.encrypt(item.password);
       item.encrypted = true;
     }
+
+    if (item.username) {
+      item.username = await this.encrypt(item.username);
+      item.encrypted = true;
+    }
+
 
     return super.update(key, item, keysToDelete);
   }
@@ -34,7 +40,12 @@ class Provider extends Manager {
 
     // encrypt the password
     if (item.password) {
-      item.password = await this.encryptPassword(item.password);
+      item.password = await this.encrypt(item.password);
+      item.encrypted = true;
+    }
+
+    if (item.username) {
+      item.username = await this.encrypt(item.username);
       item.encrypted = true;
     }
 

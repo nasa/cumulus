@@ -30,7 +30,7 @@ async function publish(message, finish = false) {
     const sns = new AWS.SNS();
     await sns.publish({
       TopicArn: topicArn,
-      Message: JSON.stringify(message)
+      Message: JSON.stringify(event)
     }).promise();
   }
 
@@ -48,7 +48,7 @@ async function publish(message, finish = false) {
     }
   }
 
-  return message;
+  return event;
 }
 
 function start(event, context, cb) {

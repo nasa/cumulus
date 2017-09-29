@@ -26,7 +26,12 @@ const build = {
   prefix: (queries, _prefix, terms) => {
     if (_prefix) {
       let fields = [
-        'error'
+        'error',
+        'granuleId',
+        'status',
+        'pdrName',
+        'msg',
+        'name'
       ];
 
       terms = terms.map(f => f.name);
@@ -41,7 +46,7 @@ const build = {
 
       const results = fields.map(f => ({
         prefix: {
-          [`${f}.keyword`]: _prefix
+          [`${f}`]: _prefix
         }
       }));
 
@@ -215,4 +220,4 @@ module.exports = function(params) {
   };
 
   return response;
-}
+};
