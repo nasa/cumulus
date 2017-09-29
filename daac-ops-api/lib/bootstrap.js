@@ -49,6 +49,9 @@ async function bootstrapElasticSearch(host, index = 'cumulus') {
 }
 
 async function bootstrapUsers(table, records) {
+  if (!table) {
+    return new Promise(resolve => resolve());
+  }
   const user = new Manager(table);
 
   const additions = records.map((record) => user.create({
@@ -61,6 +64,9 @@ async function bootstrapUsers(table, records) {
 }
 
 async function bootstrapCmrProvider(password) {
+  if (!password) {
+    return new Promise(resolve => resolve('nopassword'));
+  }
   return DefaultProvider.encrypt(password);
 }
 
@@ -119,20 +125,19 @@ function handler(event, context, cb) {
     delete event.ResourceProperties.Cmr;
   }
   if (es) {
-    delete event.ResourceProperties.es;
+    delete event.ResourceProperties.ElasticSearch.host;
   }
 
-
-  log.info(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
+  log.debug(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
 
   if (requestType === 'Delete') {
     return sendResponse(event, 'SUCCESS', null, cb);
   }
 
   const actions = [
-    bootstrapElasticSearch(es.host),
-    bootstrapUsers(users.table, users.records),
-    bootstrapCmrProvider(cmr.Password)
+    bootstrapElasticSearch(get(es, 'host')),
+    bootstrapUsers(get(users, 'table'), get(users, 'records')),
+    bootstrapCmrProvider(get(cmr, 'Password'))
   ];
 
   return Promise.all(actions).then((results) => {

@@ -70,11 +70,13 @@ test.cb('test pdr discovery with FTP invalid user/pass', (t) => {
   handler(newPayload, {}, (e) => {
     if (e instanceof RemoteResourceError) {
       log.info('ignoring this test. Test server seems to be down');
-      return t.end();
+      t.end();
     }
-    t.true(e instanceof FTPError);
-    t.true(e.message.includes('Login incorrect'));
-    t.end();
+    else {
+      t.true(e instanceof FTPError);
+      t.true(e.message.includes('Login incorrect'));
+      t.end();
+    }
   });
 });
 

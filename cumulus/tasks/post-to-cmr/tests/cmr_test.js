@@ -43,8 +43,12 @@ test.cb.serial('should succeed with correct payload', (t) => {
 
 test.cb.serial('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
-  const granules = newPayload.payload.granules.filter(g => g.granuleId !== undefined);
-  newPayload.payload.granules = granules;
+  newPayload.payload.granules = [{
+    granuleId: 'some granule',
+    files: [{
+      filename: 's3://path/to/file.xml'
+    }]
+  }];
 
   handler(newPayload, {}, (e, r) => {
     t.is(r.payload.granules[0].cmr, undefined);
