@@ -1,5 +1,6 @@
 'use strict';
 
+const auth = require('./endpoints/auth');
 const collections = require('./endpoints/collections');
 const granules = require('./endpoints/granules');
 const logs = require('./endpoints/logs');
@@ -15,6 +16,7 @@ const bootstrap = require('./lib/bootstrap');
 const indexer = require('./es/indexer');
 
 module.exports = {
+  auth,
   collections,
   granules,
   logs,
