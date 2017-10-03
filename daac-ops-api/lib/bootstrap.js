@@ -121,14 +121,14 @@ function handler(event, context, cb) {
   const requestType = get(event, 'RequestType');
 
   // remove private data from event before logging
-  if (cmr) {
-    delete event.ResourceProperties.Cmr;
-  }
-  if (es) {
-    delete event.ResourceProperties.ElasticSearch.host;
-  }
+  //if (cmr) {
+    //delete event.ResourceProperties.Cmr;
+  //}
+  //if (es) {
+    //delete event.ResourceProperties.ElasticSearch.host;
+  //}
 
-  log.debug(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
+  //log.debug(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
 
   if (requestType === 'Delete') {
     return sendResponse(event, 'SUCCESS', null, cb);
