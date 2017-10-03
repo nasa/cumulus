@@ -115,29 +115,19 @@ function sendResponse(event, status, data = {}, cb = () => {}) {
 }
 
 function handler(event, context, cb) {
-  const es = get(event, 'ResourceProperties.ElasticSearch.host');
+  const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
-  const cmr = get(event, 'ResourceProperties.Cmr.Password');
+  const cmr = get(event, 'ResourceProperties.Cmr');
   const requestType = get(event, 'RequestType');
-
-   //remove private data from event before logging
-  if (cmr) {
-    delete event.ResourceProperties.Cmr;
-  }
-  if (es) {
-    delete event.ResourceProperties.ElasticSearch.host;
-  }
-
-  log.debug(`REQUEST RECEIVED:\n ${JSON.stringify(event)}`);
 
   if (requestType === 'Delete') {
     return sendResponse(event, 'SUCCESS', null, cb);
   }
 
   const actions = [
-    bootstrapElasticSearch(es),
+    bootstrapElasticSearch(get(es, 'host')),
     bootstrapUsers(get(users, 'table'), get(users, 'records')),
-    bootstrapCmrProvider(cmr)
+    bootstrapCmrProvider(get(cmr, 'Password'))
   ];
 
   return Promise.all(actions).then((results) => {
