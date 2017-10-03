@@ -116,8 +116,8 @@ function sendResponse(event, status, data = {}, cb = () => {}) {
 
 function handler(event, context, cb) {
   const es = get(event, 'ResourceProperties.ElasticSearch.host');
-  const users = get(event, 'ResourceProperties.Users.Password');
-  const cmr = get(event, 'ResourceProperties.Cmr');
+  const users = get(event, 'ResourceProperties.Users');
+  const cmr = get(event, 'ResourceProperties.Cmr.Password');
   const requestType = get(event, 'RequestType');
 
    //remove private data from event before logging
@@ -135,9 +135,9 @@ function handler(event, context, cb) {
   }
 
   const actions = [
-    bootstrapElasticSearch(get(es, 'host')),
+    bootstrapElasticSearch(es),
     bootstrapUsers(get(users, 'table'), get(users, 'records')),
-    bootstrapCmrProvider(get(cmr, 'Password'))
+    bootstrapCmrProvider(cmr)
   ];
 
   return Promise.all(actions).then((results) => {
