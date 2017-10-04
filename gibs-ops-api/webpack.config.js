@@ -31,7 +31,7 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        exclude: /node_modules(?!\/cumulus-)/,
+        exclude: /node_modules(?!\/cumulus-|\/http-aws-es)/,
         use: {
           loader: 'babel-loader',
           options: {
