@@ -66,6 +66,11 @@ function handle(event, context, authCheck, func) {
         return cb('Session expired');
       }
     }
+    else {
+      // do not allow login with a password that doesn't start with urs://
+      // this ensures that login with default password OAuth is not allowed
+      return cb('Invalid Authorization token');
+    }
 
     // hash password
     const md = forge.md.md5.create();
