@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const got = require('got');
 const forge = require('node-forge');
 const { User } = require('../models');
@@ -7,8 +8,9 @@ const { resp } = require('../lib/response');
 const logger = require('@cumulus/ingest/log');
 const log = logger.child({ name: 'cumulus-api-auth' });
 
-function redirectUriParam() {
-  return encodeURIComponent(process.env.DEPLOYMENT_ENDPOINT);
+function redirectUriParam(uri) {
+  const url = uri || process.env.DASHBOARD_ENDPOINT;
+  return encodeURIComponent(url);
 }
 
 /**
@@ -22,7 +24,8 @@ function token(event, context) {
   const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://urs.earthdata.nasa.gov';
   const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
 
-  const { code } = event.queryStringParameters;
+  const code = get(event, 'queryStringParameters.code');
+  const state = get(event, 'queryStringParameters.state');
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
@@ -55,7 +58,13 @@ function token(event, context) {
 
       return u.get({ userName: username }).then(() =>
         u.update({ userName: username }, { password: passwordHash }).then(() => {
-          resp(context, null, JSON.stringify({ user: username, password: password }), 200);
+          if (state === 'login') {
+            const base64 = new Buffer(`${username}:${password}`).toString('base64');
+            resp(context, null, `{ "token": "${base64}" }`, 200);
+          }
+          else {
+            resp(context, null, JSON.stringify({ user: username, password: password }), 200);
+          }
         })
       ).catch(e => {
         log.error('User is not authorized', e);
@@ -87,12 +96,44 @@ function redirect(event, context, cb) {
   });
 }
 
+
+/**
+ * AWS API Gateway function that redirects to the correct URS endpoint with the correct client
+ * ID to be used with the API
+ */
+function login(event, context, cb) {
+  const endpoint = process.env.EARTHDATA_BASE_URL;
+  const clientId = process.env.EARTHDATA_CLIENT_ID;
+  const redirectUri = process.env.API_ENDPOINT;
+
+  const code = get(event, 'queryStringParameters.code');
+  const state = get(event, 'queryStringParameters.state');
+
+  if (code && state === 'login') {
+    return token(event, context, cb);
+  }
+
+  const url = `${endpoint}/oauth/authorize?` +
+              `client_id=${clientId}&` +
+              `redirect_uri=${redirectUriParam(redirectUri)}&state=login&response_type=code`;
+  return cb(null, {
+    statusCode: '301',
+    body: 'Redirecting to Earthdata Login',
+    headers: {
+      Location: url
+    }
+  });
+}
+
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource === '/auth/token') {
     return token(event, context, cb);
   }
   else if (event.httpMethod === 'GET' && event.resource === '/auth/redirect') {
     return redirect(event, context, cb);
+  }
+  else if (event.httpMethod === 'GET' && event.resource === '/auth/login') {
+    return login(event, context, cb);
   }
   return resp(context, new Error('Not found'), 404);
 }
