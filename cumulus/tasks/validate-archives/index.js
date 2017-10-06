@@ -26,6 +26,18 @@ const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs
 };
 
 /**
+ * Returns the directory path to which the archive file will be un-archived
+ * Ex: /tmp/test.tar.gz => /tmp/test
+ * @param {string} archiveFilePath
+ * @return {string} The un-archive directory
+ */
+const archiveDir = (archiveFilePath) => {
+  // archive files must be .tgz or .tar.gz files
+  const segments = archiveFilePath.match(/(.*?)(\.tar\.gz|\.tgz)/i);
+  return segments[1];
+};
+
+/**
  * Extracts a .tgz file
  * @param {string} tmpDir The path to the directory where the file should be extracted
  * @param {string} archiveFilePath The path to the file to be extracted
@@ -33,14 +45,10 @@ const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs
  * Throws an exception if there is an error decompressing or un-tarring the file
  */
 const extractArchive = async (tmpDir, archiveFilePath) => {
-  // archiveDirPath is the directory to which the files are extracted, which is
-  // just the archive file path minus the extension, e.g., '.tgz'
-  const archiveDirPath = archiveFilePath.substr(0, archiveFilePath.length - 4);
-  // fs.mkdirSync(archiveDirPath);
   log.debug(`DECOMPRESSING ${archiveFilePath}`);
   await decompress({ dest: tmpDir, src: archiveFilePath });
 
-  return archiveDirPath;
+  return archiveDir(archiveFilePath);
 };
 
 /**
@@ -87,6 +95,7 @@ module.exports = class ValidateArchives extends Task {
       const dispositionPromises = files.map(async fileAttrs => {
         // Only process archives that were downloaded successfully by the provider gateway
         if (fileAttrs.success) {
+          let imgFileKey = null;
           const archiveFileName = path.basename(fileAttrs.target.key);
           const archiveFilePath = path.join(tmpDir, archiveFileName);
           const returnValue = Object.assign({}, fileAttrs, { success: false });
@@ -119,7 +128,14 @@ module.exports = class ValidateArchives extends Task {
             }
 
             // Upload expanded files to S3
-            await uploadArchiveFilesToS3(unarchivedFiles, archiveDirPath, fileAttrs);
+            const s3Files = await uploadArchiveFilesToS3(unarchivedFiles, archiveDirPath, fileAttrs);
+            log.info('S3 FILES:');
+            log.info(JSON.stringify(s3Files));
+
+            imgFileKey = s3Files.filter(s3File => {
+              const ext = path.extname(s3File).toLowerCase();
+              return ext === '.png' || ext === '.jpg';
+            });
 
             // Delete the archive files from S3
             await aws.deleteS3Files(downloadRequest);
@@ -129,17 +145,24 @@ module.exports = class ValidateArchives extends Task {
             return Object.assign(returnValue, { error: 'ECS INTERNAL ERROR' });
           }
 
-          return fileAttrs;
+          return [fileAttrs, imgFileKey];
         }
 
         // File was not downloaded successfully by provider gateway so just pass along its status
-        return fileAttrs;
+        return [fileAttrs, null];
       });
 
       // Have to wait here or the directory holding the archives might get deleted before
       // we are done (see finally block below)
-      const dispositions = await Promise.all(dispositionPromises);
-      return { pdr_file_name: pdrFileName, files: dispositions };
+      let dispositions = await Promise.all(dispositionPromises);
+
+      // Get the bucket/key entries for the images in the valid archives
+      const sources = dispositions
+        .map(([attr, s3Key]) => ({ Bucket: attr.target.bucket, Key: s3Key }))
+        .filter(v => v.Key);
+      dispositions = dispositions.map(([attr, _]) => attr);
+
+      return { pdr_file_name: pdrFileName, files: dispositions, sources: sources };
     }
     finally {
       execSync(`rm -rf ${tmpDir}`);
