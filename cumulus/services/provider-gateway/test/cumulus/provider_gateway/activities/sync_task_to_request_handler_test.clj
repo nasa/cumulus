@@ -83,12 +83,11 @@
                             :input input
                             :results (map #(assoc % :success true) input)}
 
-        ;; The expected output to pass to the next task should be the same message with a payload
-        ;; uploaded to S3.
-        payload-key (str strh/TASK_NAME "/" meta-key)
-        expected-output (assoc (:input task) :payload {:Bucket private-bucket
-                                                       :Key payload-key})]
-    (is (= expected-output (activity-handler/handle-completed-task handler completion-request)))
+        output (activity-handler/handle-completed-task handler completion-request)
+        payload-key (get-in output [:payload :Key])
+        key-regex (re-pattern (str strh/TASK_NAME "/" meta-key ".*$"))]
+    ;; Payload key should be of the form (TASK_NAME/META_KEY/UUID)
+    (is (re-matches key-regex payload-key))
     ;; Check the payload in the message in S3 has the right content
     (is (= [{:Bucket private-bucket
              :Key "sources/EPSG4326/VIIRS/VNGCR_LQD_C1/2017192/1.txt"}
