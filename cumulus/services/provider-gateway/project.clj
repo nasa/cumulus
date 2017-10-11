@@ -22,7 +22,10 @@
                  [commons-net/commons-net "3.6"]
 
                  ;; SFTP Client
-                 [com.jcraft/jsch "0.1.54"]]
+                 [com.jcraft/jsch "0.1.54"]
+
+                 ;; UUID Generation
+                 [danlentz/clj-uuid "0.1.7"]]
 
 
   ;; The ^replace is done to disable the tiered compilation for accurate benchmarks
