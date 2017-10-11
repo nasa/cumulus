@@ -12,3 +12,4 @@ pom.xml.asc
 dev/locals.clj
 /local_activities
 my.pem
+profiles.clj
