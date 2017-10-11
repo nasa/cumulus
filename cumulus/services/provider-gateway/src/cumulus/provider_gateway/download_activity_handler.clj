@@ -3,6 +3,7 @@
    from the API and and places download tasks on a channel to be processed. It reads from another
    channel a list of completed downloads and writes output back to the activity API."
   (:require
+   [clj-uuid :as uuid]
    [clojure.core.async :as a]
    [com.stuartsierra.component :as c]
    [cumulus.provider-gateway.aws.activity-api :as activity]
@@ -125,8 +126,12 @@
 (defn- message->meta-key
   "Returns the meta key to use from a message"
   [message]
-  (let [meta (:meta message)]
-    (or (:key meta) (:collection meta))))
+  (let [unique-key
+        (if-let [key (get-in message [:meta :key])]
+          (format "%s/%s" key (uuid/v1))
+          (format "%s/%s" (get-in message [:meta :collection]) (uuid/v1)))]
+    (println "USING S3 MESSAGE KEY [" unique-key "]")
+    unique-key))
 
 (defn- message->private-bucket
   "Returns the name of the private bucket from a message."
@@ -171,11 +176,15 @@
   (if (:skip_upload_output_payload_to_s3 config)
 
     ;; Skip upload and return message with payload data in place.
-    message
+    (do
+      (println "USING STANDARD MESSAGING")
+      message)
 
     ;; Upload the resulting payload to s3
     (let [private-bucket (message->private-bucket message)
           payload-location (str task-name "/" (message->meta-key message))]
+      (println "USING S3 MESSAGING")
+      (println (str "STORING MESSAGE AT [" payload-location "]"))
       (s3/write-s3-json s3-api private-bucket payload-location (:payload message))
       ;; Create the output message to pass to the next task
       (assoc message :payload {:Bucket private-bucket :Key payload-location}))))
