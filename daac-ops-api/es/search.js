@@ -137,7 +137,6 @@ class BaseSearch {
     return {
       name: 'cumulus-api',
       stack: process.env.stackName,
-      stage: process.env.stage,
       table: this.type
     };
   }
