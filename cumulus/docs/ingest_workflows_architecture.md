@@ -16,7 +16,7 @@ AWS and other cloud vendors provide an ideal solution for parts of these problem
 
 #### Flexibility and Composability
 
-The steps to ingest and process data is different from collection to collection within a provider. Ingest should be as flexible as possible in the rearranging of steps and configuration.
+The steps to ingest and process data is different for each collection within a provider. Ingest should be as flexible as possible in the rearranging of steps and configuration.
 
 We want to use lego-like individual steps that can be composed by an operator.
 
@@ -29,7 +29,7 @@ Individual steps should ...
 
 #### Scalable
 
-The ingest architecture needs to be scalable both to handling ingesting hundreds of millions of granules but also scaling to handle dozens of different workflows.
+The ingest architecture needs to be scalable both to handle ingesting hundreds of millions of granules and interpret dozens of different workflows.
 
 #### Data Provenance
 
@@ -74,11 +74,11 @@ AWS Step functions are described in detail in the AWS documentation but they pro
   * Step functions allow configuration of retries and adding handling of error conditions.
 * Described via data
   * This makes it easy to save the step function in configuration management solutions.
-  * We can build simple interfaces on top of the flexibility provided here if
+  * We can build simple interfaces on top of the flexibility provided.
 
 #### Workflow Scheduler
 
-The scheduler is responsible for initiating the start of a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The Scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
+The scheduler is responsible for initiating a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The Scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
 
 **TODO diagram of how task message is built from collection configuration**
 
@@ -98,7 +98,7 @@ Ingest uses a common format for all inputs and outputs from Tasks consisting of 
 
 ### Collection Configuration File
 
-The workflows, schedule, tasks, and configuration for ingesting data is configured via a JSON configuration file. The configuration file allows an operator to compose the different runtime components and set them up in AWS.
+The workflows, schedule, tasks, and configuration for ingesting data are configured via a JSON configuration file. The configuration file allows an operator to compose the different runtime components and set them in AWS.
 
 * **Leverages Existing Work**
   * The design leverages the existing work of Amazon by defining workflows using the [AWS Step Function State Language](http://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language.html#amazon-states-language). This is the language that was created for describing the state machines used in AWS Step Functions.
@@ -133,7 +133,7 @@ URL template variables replace dotted paths inside curly brackets with their cor
 
 ### Ingest Deploy
 
-**This will be documented in a future sprint.**
+To view deployment documentation, please see [Deployment of Cumulus Documentation](cumulus_deployment.md).
 
 ## Risks, Tradeoffs, and Benefits
 
@@ -153,27 +153,6 @@ AWS Step Functions were introduced and made public on December 1, 2016. As a new
 
 Missing features is likely to be encountered. We found there is now built in For-Each capability. We can work around problems like this, as shown in the [GIBS Ingest Architecture](#example-gibs-ingest-architecture) by splitting the workflow. This does increase the complexity of the overall solution by requiring more workflow definitions.
 
-
-#### Pricing for Step Functions is in addition to other services.
-
-Pricing is per state transition with AWS Step Functions on top of Lambda and other services. The cost is currently $0.000025 per state transition.
-
-Currently with GIBS Ingest Architecture with Step Functions there are 9 state transitions to complete an ingest. (4 for discovery and 5 for ingest.) Discovery would run the most often since it would be executed periodically for each collection and not necessarily find any data to ingest. Estimating that 50 NRT collections would run every 15 minutes and about 300 collections would be scheduled once a day the total cost for discovery in 1 month would be about $16.
-
-**TODO Are these numbers realistic for GIBS?**
-I think this need correcting because discovery triggers ingest for every granule every time (if I'm reading it correctly). It performs a synchronization and decides if anything needs to be updated. In order to really calculate this it needs to also add in a couple steps performed for every granule on each run. How many granules are there?
-
-```JavaScript
-// 4 state transitions for 500 collections, once a day for 30 days
-4 * 500 * 1 * 30 * 0.000025 +
- // 4 state transitions for 50 NRT collections, 96 times a day (every 15 mins) for 30 days
- 4 * 50 * 96 * 30 * 0.000025 = 15.90
-```
-
-**TODO estimate for cumulus ingest of many granules.**
-
-**TODO In the switch from the old architecture to the new one is there removal of any components that would be considered a simplification and also potentially a reduction in cost?**
-
 ### Tradeoffs
 
 #### Workflow execution is handled completely by AWS.
@@ -184,13 +163,13 @@ If we implemented our own orchestration we'd be able to add all of these. We sav
 
 #### Workflow Configuration is specified in AWS Step Function States Language
 
-The current design uses combines the states language defined by AWS with Ingest specific configuration. This means our representation has a tight coupling with their standard. If they make backwards incompatible changes in the future we will have to deal with existing projects written against that.
+The current design combines the states language defined by AWS with Ingest specific configuration. This means our representation has a tight coupling with their standard. If they make backwards incompatible changes in the future we will have to deal with existing projects written against that.
 
 We avoid having to develop our own standard and code to process it. The design can support new features in AWS Step Functions without needing to update the Ingest library code changes. It is unlikely they will make a backwards incompatible change at this point. One mitigation for this is writing data transformations to a new format if that were to happen.
 
 #### Collection Configuration Flexibility vs Complexity
 
-The Collections Configuration File is very flexible but requires more knowledge of AWS step functions etc to configure. A person modifying this file directly would need to comfortable editing a JSON file and configuring AWS Step Functions state transitions which address AWS resources.
+The Collections Configuration File is very flexible but requires more knowledge of AWS step functions to configure. A person modifying this file directly would need to comfortable editing a JSON file and configuring AWS Step Functions state transitions which address AWS resources.
 
 The configuration file itself is not necessarily meant to be edited by a human directly. Since we are developing a reconfigurable, composable architecture that specified entirely in _data_ additional tools can be developed on top of it. The existing `recipes.json` files can be mapped to this format. Operational Tools like a GUI can be built that provide a usable interface for customizing workflows but it will take time to develop these tools.
 
@@ -200,7 +179,7 @@ This section describes benefits of the Ingest Workflow Architecture.
 
 #### Simplicity
 
-The concepts of Workflows and Tasks are simple ones that should make sense to providers. Additionally the implementation will only consist of a few components because the design leverages existing services and capabilities of AWS. The Ingest implementation will only consist of some reusable task code to make task implementation easier, Ingest deployment, and the Workflow Scheduler.
+The concepts of Workflows and Tasks are simple ones that should make sense to providers. Additionally, the implementation will only consist of a few components because the design leverages existing services and capabilities of AWS. The Ingest implementation will only consist of some reusable task code to make task implementation easier, Ingest deployment, and the Workflow Scheduler.
 
 #### Composability
 
@@ -217,7 +196,7 @@ AWS Step Functions scale up as needed and aren't limited by a set of number of s
 * Every execution is captured.
 * Every task run has captured input and outputs.
 * CloudWatch Metrics can be [used for monitoring](https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html) many of the events with the StepFunctions. It can also generate alarms for the whole process.
-* Visual view of the entire configuration.
+* Visual report of the entire configuration.
   * Errors and success states are highlighted visually in the flow.
 
 #### Data Provenance
@@ -231,7 +210,7 @@ AWS Step Functions scale up as needed and aren't limited by a set of number of s
 ### Open Questions
 
 * How does each step know which configuration element to use?
- * The configuration for an individual step is located in the config that is passed in the message. The step needs to know which step it is so it can retrieve it from the full config. The problem is unless it is hard coded in the step it does not know what it's name is. This makes it difficult to reuse a step in multiple locations.
+  * The configuration for an individual step is located in the config that is passed in the message. The step needs to know which step it is so it can retrieve it from the full config. The problem is unless it is hard coded in the step it does not know what it's name is. This makes it difficult to reuse a step in multiple locations.
 * How do we version the workflows?
 
 ### Schemas
