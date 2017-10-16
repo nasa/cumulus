@@ -80,8 +80,6 @@ AWS Step functions are described in detail in the AWS documentation but they pro
 
 The scheduler is responsible for initiating a step function and passing in the relevant data for a collection. This is currently configured as an interval for each collection. The Scheduler service creates the initial event by combining the collection configuration with the AWS execution context provided by its CloudFormation template.
 
-**TODO diagram of how task message is built from collection configuration**
-
 ### Tasks
 
 A workflow is composed of tasks. Each task is responsible for performing a discrete step of the ingest process. These can be activities like:
@@ -108,6 +106,8 @@ The workflows, schedule, tasks, and configuration for ingesting data are configu
   * The use of a single JSON configuration file allows this to be added to a workflow. We build additional support on top of the configuration file for simpler domain specific configuration or interactive GUIs.
 
 See the [Configuration File Schema](#collection-configuration-json-schema).
+
+For more details on Task Messages and Configuration, visit [Cumulus Configuration and Message Protocol](cumulus_configuration_and_message_protocol.md).
 
 #### URL Templating
 
@@ -210,7 +210,7 @@ AWS Step Functions scale up as needed and aren't limited by a set of number of s
 ### Open Questions
 
 * How does each step know which configuration element to use?
-  * The configuration for an individual step is located in the config that is passed in the message. The step needs to know which step it is so it can retrieve it from the full config. The problem is unless it is hard coded in the step it does not know what it's name is. This makes it difficult to reuse a step in multiple locations.
+  * The configuration for an individual step is located in the configuration details passed in through the message. The executer needs to know which step it is so it can retrieve the correct details from the full config. The problem is unless it is hard coded in the step it does not know what it's name is. This makes it difficult to reuse a step in multiple locations.
 * How do we version the workflows?
 
 ### Schemas
