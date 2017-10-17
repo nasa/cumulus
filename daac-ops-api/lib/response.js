@@ -37,6 +37,7 @@ function resp(context, err, _body, _status = null) {
   }
 
   const res = new proxy.Response({ cors: true, statusCode: status });
+  res.set('Strict-Transport-Security', 'max-age=31536000')
   return context.succeed(res.send(body));
 }
 
