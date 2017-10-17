@@ -98,7 +98,8 @@ function handler(event, context, cb) {
         statusCode: '302',
         body: 'redirecting',
         headers: {
-          Location: url
+          Location: url,
+          'Strict-Transport-Security': 'max-age=31536000' 
         }
       });
     }).catch(e => cb(e));
@@ -117,7 +118,8 @@ function handler(event, context, cb) {
     statusCode: '302',
     body: 'Redirect',
     headers: {
-      Location: `${EARTHDATA_GET_CODE_URL}?${querystring.stringify(qs)}`
+      Location: `${EARTHDATA_GET_CODE_URL}?${querystring.stringify(qs)}`,
+      'Strict-Transport-Security': 'max-age=31536000'
     }
   };
 
