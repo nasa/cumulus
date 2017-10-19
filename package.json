@@ -30,23 +30,44 @@
       "generator-star-spacing": "off",
       "import/no-extraneous-dependencies": "off",
       "import/newline-after-import": "off",
-      "no-warning-comments": [2, { "terms": ["TODO", "fixme"], "location": "anywhere" }],
+      "no-warning-comments": [
+        2,
+        {
+          "terms": [
+            "TODO",
+            "fixme"
+          ],
+          "location": "anywhere"
+        }
+      ],
       "no-useless-escape": "off",
       "no-console": "warn",
       "spaced-comment": "off",
       "require-yield": "off",
       "prefer-template": "warn",
       "no-underscore-dangle": "off",
-      "comma-dangle": ["warn", "never"],
+      "comma-dangle": [
+        "warn",
+        "never"
+      ],
       "strict": "off",
       "guard-for-in": "off",
       "object-shorthand": "off",
-      "space-before-function-paren": ["error", "never"],
-      "brace-style": [2, "stroustrup"],
-      "max-len": [2, {
-        "code": 100,
-        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
-      }]
+      "space-before-function-paren": [
+        "error",
+        "never"
+      ],
+      "brace-style": [
+        2,
+        "stroustrup"
+      ],
+      "max-len": [
+        2,
+        {
+          "code": 100,
+          "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+        }
+      ]
     }
   },
   "babel": {
