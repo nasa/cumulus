@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Runs GDAL'
+      Runtime: nodejs6.10
