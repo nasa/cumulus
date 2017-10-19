@@ -15,7 +15,7 @@ class Rule extends Manager {
   }
 
   async addRule(item, payload) {
-    const name = `${process.env.stackName}-${process.env.stage}-custom-${item.name}`;
+    const name = `${process.env.stackName}-custom-${item.name}`;
     const r = await Events.putEvent(
       name,
       item.rule.value,
@@ -29,7 +29,7 @@ class Rule extends Manager {
 
   async delete(item) {
     if (item.rule.type === 'scheduled') {
-      const name = `${process.env.stackName}-${process.env.stage}-custom-${item.name}`;
+      const name = `${process.env.stackName}-custom-${item.name}`;
       await Events.deleteTarget(this.targetId, name);
       await Events.deleteEvent(name);
     }
@@ -68,7 +68,7 @@ class Rule extends Manager {
 
     // makes sure the workflow exists
     const bucket = process.env.bucket;
-    const key = `${process.env.stackName}-${process.env.stage}/workflows/${item.workflow}.json`;
+    const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
     const exists = S3.fileExists(bucket, key);
 
     if (!exists) {
