@@ -84,11 +84,26 @@ exports.promiseS3Upload = (params) => {
   return concurrency.toPromise(uploadFn, params);
 };
 
+/**
+ * Downloads the given s3Obj to the given filename in a streaming manner
+ * @param s3Obj The parameters to send to S3 getObject call
+ * @param filename The output filename
+ */
+exports.downloadS3File = (s3Obj, filename) => {
+  const s3 = exports.s3();
+  const file = fs.createWriteStream(filename);
+  return new Promise((resolve, reject) => {
+    s3.getObject(s3Obj)
+      .createReadStream()
+      .pipe(file)
+      .on('finish', () => resolve(filename))
+      .on('error', reject);
+  });
+};
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
-  const scrubbedS3Objs = s3Objs.map(s3Obj =>
-    ({
+  const scrubbedS3Objs = s3Objs.map(s3Obj => ({
       Bucket: s3Obj.Bucket,
       Key: s3Obj.Key
     }));
@@ -140,14 +155,24 @@ exports.deleteS3Files = (s3Objs, s3opts = {}) => {
   return Promise.all(s3Objs.map(limitedDelete));
 };
 
-exports.uploadS3Files = (files, bucket, keyPath, s3opts = {}) => {
+exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
   let i = 0;
   const n = files.length;
-  log.info(`Starting upload of ${n} keys to s3://${bucket}`);
-  const promiseUpload = (filename) => {
-    const key = (typeof keyPath === 'string') ?
+  log.info(`Starting upload of ${n} key${n === 1 ? '' : 's'}`);
+  const promiseUpload = (filenameOrInfo) => {
+    let fileInfo = filenameOrInfo;
+    if (typeof fileInfo === 'string') {
+      const filename = fileInfo;
+      fileInfo = {
+        key: (typeof keyPath === 'string') ?
                 path.join(keyPath, path.basename(filename)) :
-                keyPath(filename);
+                keyPath(filename),
+        filename: filename
+      };
+    }
+    const bucket = fileInfo.bucket || defaultBucket;
+    const filename = fileInfo.filename;
+    const key = fileInfo.key;
     const body = fs.createReadStream(filename);
     const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
     return exports.promiseS3Upload(opts)
