@@ -12,7 +12,7 @@ const handle = require('../lib/response').handle;
  * @return {undefined}
  */
 function list(event, cb) {
-  const key = `${process.env.stackName}-${process.env.stage}/workflows/list.json`;
+  const key = `${process.env.stackName}/workflows/list.json`;
   S3.get(process.env.bucket, key).then(file => {
     const workflows = JSON.parse(file.Body.toString());
     return cb(null, workflows);
@@ -28,7 +28,7 @@ function list(event, cb) {
 function get(event, cb) {
   const name = _get(event.pathParameters, 'name');
 
-  const key = `${process.env.stackName}-${process.env.stage}/workflows/list.json`;
+  const key = `${process.env.stackName}/workflows/list.json`;
   S3.get(process.env.bucket, key).then(file => {
     const workflows = JSON.parse(file.Body.toString());
     for (const w of workflows) {
