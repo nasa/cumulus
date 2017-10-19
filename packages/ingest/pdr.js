@@ -211,7 +211,7 @@ class ParseAndQueue extends Parse {
         // get it from S3
         if (g.dataType !== this.collection.name) {
           const bucket = this.buckets.internal;
-          const key = `${this.event.resources.stack}-${this.event.resources.stage}` +
+          const key = `${this.event.resources.stack}` +
                       `/collections/${g.dataType}.json`;
           let file;
           try {
