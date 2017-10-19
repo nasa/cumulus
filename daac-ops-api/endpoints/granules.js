@@ -103,7 +103,7 @@ async function del(event) {
 
   // remove file from s3
   try {
-    const key = `${process.env.stackname}-${process.env.stage}/granules_status/${granuleId}`;
+    const key = `${process.env.stackname}/granules_status/${granuleId}`;
     await S3.delete(process.env.internal, key);
   }
   catch (e) {
