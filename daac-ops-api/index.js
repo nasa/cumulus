@@ -14,6 +14,7 @@ const schemas = require('./endpoints/schemas');
 const stats = require('./endpoints/stats');
 const distribution = require('./endpoints/distribution');
 const bootstrap = require('./lib/bootstrap');
+const authorizer = require('./lib/authorizer');
 const indexer = require('./es/indexer');
 
 module.exports = {
@@ -31,6 +32,7 @@ module.exports = {
   stats,
   distribution,
   bootstrap,
+  authorizer,
   indexer: indexer.handler,
   logHandler: indexer.logHandler
 };
