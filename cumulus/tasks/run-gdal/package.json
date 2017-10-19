@@ -1,0 +1,33 @@
+{
+  "name": "@cumulus/run-gdal",
+  "version": "0.0.0",
+  "description": "Runs gdal commands as a task",
+  "main": "index.js",
+  "keywords": [
+    "GIBS"
+  ],
+  "repository": {
+    "type" : "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo 'no tests'",
+    "build": "webpack --progress && unzip deps/lambda-gdal.zip -d dist",
+    "watch": "webpack --progress -w",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
+    "sinon": "^2.0.0-pre.5",
+    "ava": "^0.21.0",
+    "webpack": "^1.12.13"
+  },
+  "dependencies": {
+    "@cumulus/common": "^1.0.0"
+  }
+}
