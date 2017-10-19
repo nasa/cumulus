@@ -21,7 +21,7 @@ class S3KeyPairProvider {
     const pki = forge.pki;
     const pub = await S3.get(
       process.env.internal,
-      `${process.env.stackName}-${process.env.stage}/crypto/${keyId}`
+      `${process.env.stackName}/crypto/${keyId}`
     );
 
     const publicKey = pki.publicKeyFromPem(pub.Body.toString());
@@ -38,7 +38,7 @@ class S3KeyPairProvider {
     const pki = forge.pki;
     const priv = await S3.get(
       process.env.internal,
-      `${process.env.stackName}-${process.env.stage}/crypto/${keyId}`
+      `${process.env.stackName}/crypto/${keyId}`
     );
 
     const decoded = forge.util.decode64(str);
