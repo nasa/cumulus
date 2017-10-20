@@ -501,10 +501,9 @@ class KMS {
 class StepFunction {
   static granuleExecutionStatus(granuleId, event) {
     const buckets = _get(event, 'resources.buckets');
-    const stage = _get(event, 'resources.stage');
     const stack = _get(event, 'resources.stack');
 
-    const granuleKey = `${stack}-${stage}/granules_status/${granuleId}`;
+    const granuleKey = `${stack}/granules_status/${granuleId}`;
 
     return {
       bucket: buckets.internal,
@@ -572,9 +571,8 @@ class StepFunction {
     const str = JSON.stringify(event);
     if (str.length > 32000) {
       const stack = event.resources.stack;
-      const stage = event.resources.stage;
       const name = event.ingest_meta.execution_name;
-      const key = `${stack}-${stage}/payloads/${name}.json`;
+      const key = `${stack}/payloads/${name}.json`;
       const bucket = event.resources.buckets.internal;
 
       await S3.put(bucket, key, str);

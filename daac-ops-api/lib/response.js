@@ -37,6 +37,7 @@ function resp(context, err, _body, _status = null) {
   }
 
   const res = new proxy.Response({ cors: true, statusCode: status });
+  res.set('Strict-Transport-Security', 'max-age=31536000')
   return context.succeed(res.send(body));
 }
 
@@ -52,6 +53,23 @@ function handle(event, context, authCheck, func) {
     const user = auth(req);
 
     if (!user) {
+      return cb('Invalid Authorization token');
+    }
+
+    if (user.pass.startsWith('urs://')) {
+      // URS token passwords take the form "urs://<token>/<timestamp>"
+      // Check the timestamp portion for expiration.
+      const expiration = user.pass.split(/\/(\d+)$/)[1];
+      if (!expiration) {
+        return cb('Invalid Authorization token');
+      }
+      if (new Date(+expiration) < new Date()) {
+        return cb('Session expired');
+      }
+    }
+    else {
+      // do not allow login with a password that doesn't start with urs://
+      // this ensures that login with default password OAuth is not allowed
       return cb('Invalid Authorization token');
     }
 
