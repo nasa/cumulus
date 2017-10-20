@@ -183,7 +183,6 @@ module.exports = class ValidateArchives extends Task {
 
 
       log.debug(`Found ${imageSources.length} images for MRFGen`);
-      log.debug(`SOURCES:\n${JSON.stringify(imageSources)}`);
 
       return { pdr_file_name: pdrFileName, files: dispositions, sources: imageSources };
     }
@@ -195,7 +194,7 @@ module.exports = class ValidateArchives extends Task {
   /**
    * Entry point for Lambda
    * @param {array} args The arguments passed by AWS Lambda
-   * @return The handler return value
+  * @return The handler return value
    */
   static handler(...args) {
     return ValidateArchives.handle(...args);

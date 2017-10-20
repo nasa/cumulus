@@ -39,8 +39,6 @@ module.exports = class DiscoverPdr extends Task {
 
     const clientReady = promisify(client.once).bind(client);
 
-    log.info(`CONNECTION TO SIPS SERVER [${host}]`);
-
     client.connect({
       host: host,
       port: port,
@@ -49,14 +47,11 @@ module.exports = class DiscoverPdr extends Task {
     });
 
     await clientReady('ready');
-    log.info('CONNECTED');
 
     let returnValue;
     try {
       // Get the list of PDRs
-      log.debug('GETTING LIST OF PDRS');
       const pdrList = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
-      log.debug('GOT PDR LIST');
 
       const S3UploadPromises = pdrList.map(async pdrEntry => {
         const fileName = pdrEntry.name;
