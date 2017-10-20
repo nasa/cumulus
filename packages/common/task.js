@@ -143,11 +143,8 @@ module.exports = class Task {
       this.logHandlerStart(event, context);
       // Load actual source data and unpack configuration from it
       source = messageSource.forEvent(event, context);
-      log.debug('GOT MESSAGE SOURCE');
       const message = await source.loadMessageData();
-      log.debug('GOT MESSAGE DATA');
       const configTemplate = await source.loadConfigTemplate();
-      log.debug('LOADED CONFIG TEMPLATE');
       const config = FieldPattern.formatAll(configTemplate, message);
 
       // Create and invoke the task
