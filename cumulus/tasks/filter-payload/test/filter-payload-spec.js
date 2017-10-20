@@ -2,13 +2,4 @@
 const test = require('ava');
 const filter = require('../index');
 
-test('filter payload', t => {
-  const payload = {
-    a: 'A',
-    b: 'B',
-    c: 'C'
-  };
-  const outputKeys = ['a', 'c'];
-  const outputPayload = filter.filterPayload(payload, outputKeys);
-  t.is(outputPayload, { a: 'A', c: 'C' });
-});
+// This test was removed because FilterPayload was simplified to the point of being trivial
