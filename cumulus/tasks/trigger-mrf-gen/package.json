@@ -16,7 +16,6 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/ava test/*.js --no-color"
   },
   "ava": {
     "babel": "inherit",
