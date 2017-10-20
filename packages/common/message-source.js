@@ -89,6 +89,7 @@ class StateMachineS3MessageSource extends MessageSource {
     const meta = this.messageData.ingest_meta;
     log.debug('GETTING CURRENT SFN TASK');
     const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
+    log.debug(`TASK NAME is [${taskName}]`);
     return workflowConfig[taskName];
   }
 

@@ -3,6 +3,7 @@
 const log = require('@cumulus/common/log');
 const aws = require('@cumulus/common/aws');
 const Task = require('@cumulus/common/task');
+const util = require('@cumulus/common/util');
 const validations = require('./archive-validations');
 const fs = require('fs');
 const path = require('path');
@@ -14,6 +15,18 @@ const promisify = require('util.promisify');
 const decompress = promisify(tarGz.decompress);
 
 /**
+ * Returns the directory path to which the archive file will be un-archived
+ * Ex: /tmp/test.tar.gz => /tmp/test
+ * @param {string} archiveFilePath
+ * @return {string} The un-archive directory
+ */
+const archiveDir = archiveFilePath => {
+  // archive files must be .tgz or .tar.gz files
+  const segments = archiveFilePath.match(/(.*?)(\.tar\.gz|\.tgz)/i);
+  return segments[1];
+};
+
+/**
  *
  * @param {Array} unarchivedFiles An array of files that were unarchived
  *  @param {string} archiveDirPath The path where the files were extracted
@@ -21,20 +34,8 @@ const decompress = promisify(tarGz.decompress);
  */
 const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs) => {
   const fullFilePaths = unarchivedFiles.map(fileName => path.join(archiveDirPath, fileName));
-  const s3DirKey = fileAttrs.target.key.substr(0, fileAttrs.target.key.length - 4);
-  aws.uploadS3Files(fullFilePaths, fileAttrs.target.bucket, s3DirKey);
-};
-
-/**
- * Returns the directory path to which the archive file will be un-archived
- * Ex: /tmp/test.tar.gz => /tmp/test
- * @param {string} archiveFilePath
- * @return {string} The un-archive directory
- */
-const archiveDir = (archiveFilePath) => {
-  // archive files must be .tgz or .tar.gz files
-  const segments = archiveFilePath.match(/(.*?)(\.tar\.gz|\.tgz)/i);
-  return segments[1];
+  const s3DirKey = archiveDir(fileAttrs.target.key);
+  return aws.uploadS3Files(fullFilePaths, fileAttrs.target.bucket, s3DirKey);
 };
 
 /**
@@ -46,9 +47,22 @@ const archiveDir = (archiveFilePath) => {
  */
 const extractArchive = async (tmpDir, archiveFilePath) => {
   log.debug(`DECOMPRESSING ${archiveFilePath}`);
-  await decompress({ dest: tmpDir, src: archiveFilePath });
+  const archiveDirPath = archiveDir(archiveFilePath);
+  await decompress({ dest: archiveDirPath, src: archiveFilePath });
 
-  return archiveDir(archiveFilePath);
+  return archiveDirPath;
+};
+
+/**
+ * Deletes the given files from the local file system
+ * @param {Array} unarchivedFiles An array of files that were unarchived
+ * @param {string} archiveDirPath The path where the files were extracted
+ */
+const deleteExpandedFiles = async (unarchivedFiles, archiveDirPath) => {
+  unarchivedFiles.forEach(fileName => {
+    const fullPath = path.join(archiveDirPath, fileName);
+    fs.unlinkSync(fullPath);
+  });
 };
 
 /**
@@ -70,8 +84,7 @@ module.exports = class ValidateArchives extends Task {
     const pdrFileName = payload.pdr_file_name;
 
     // Create a directory for the files to be downloaded
-    const tmpDir = '/tmp/archives';
-    fs.mkdirSync(tmpDir);
+    const tmpDir = util.mkdtempSync(this.constructor.name);
 
     // Only files that were successfully downloaded by the provider gateway will be processed
     const archiveFiles = files
@@ -90,12 +103,13 @@ module.exports = class ValidateArchives extends Task {
       const downloadedFiles = fs.readdirSync(tmpDir);
       log.debug(`FILES: ${JSON.stringify(downloadedFiles)}`);
 
+      let imageSources = [];
+
       // Compute the dispositions (status) for each file downloaded successfully by
       // the provider gateway
       const dispositionPromises = files.map(async fileAttrs => {
         // Only process archives that were downloaded successfully by the provider gateway
         if (fileAttrs.success) {
-          let imgFileKey = null;
           const archiveFileName = path.basename(fileAttrs.target.key);
           const archiveFilePath = path.join(tmpDir, archiveFileName);
           const returnValue = Object.assign({}, fileAttrs, { success: false });
@@ -110,6 +124,7 @@ module.exports = class ValidateArchives extends Task {
           let archiveDirPath;
           try {
             archiveDirPath = await extractArchive(tmpDir, archiveFilePath);
+            log.debug(`UNARCHIVED PATH: ${archiveDirPath}`);
           }
           catch (e) {
             log.error(e);
@@ -121,6 +136,7 @@ module.exports = class ValidateArchives extends Task {
             let unarchivedFiles;
             try {
               unarchivedFiles = validations.validateArchiveContents(archiveDirPath);
+              log.debug(`UNARCHIVED FILES: ${JSON.stringify(unarchivedFiles)}`);
             }
             catch (e) {
               log.error(e);
@@ -128,41 +144,48 @@ module.exports = class ValidateArchives extends Task {
             }
 
             // Upload expanded files to S3
-            const s3Files = await uploadArchiveFilesToS3(unarchivedFiles, archiveDirPath, fileAttrs);
+            const s3Files = await uploadArchiveFilesToS3(
+              unarchivedFiles,
+              archiveDirPath,
+              fileAttrs
+            );
             log.info('S3 FILES:');
             log.info(JSON.stringify(s3Files));
 
-            imgFileKey = s3Files.filter(s3File => {
-              const ext = path.extname(s3File).toLowerCase();
-              return ext === '.png' || ext === '.jpg';
-            });
+            const imgFiles = s3Files.map(s3File => ({ Bucket: s3File.bucket, Key: s3File.key }));
+
+            if (imgFiles.length > 0) {
+              imageSources.push({ archive: archiveFileName, images: imgFiles });
+            }
+
+            // delete the local expanded files
+            deleteExpandedFiles(unarchivedFiles, archiveDirPath);
 
             // Delete the archive files from S3
             await aws.deleteS3Files(downloadRequest);
           }
           catch (e) {
             log.error(e);
+            log.error(e.stack);
             return Object.assign(returnValue, { error: 'ECS INTERNAL ERROR' });
           }
 
-          return [fileAttrs, imgFileKey];
+          return fileAttrs;
         }
 
         // File was not downloaded successfully by provider gateway so just pass along its status
-        return [fileAttrs, null];
+        return fileAttrs;
       });
 
       // Have to wait here or the directory holding the archives might get deleted before
       // we are done (see finally block below)
-      let dispositions = await Promise.all(dispositionPromises);
+      const dispositions = await Promise.all(dispositionPromises);
 
-      // Get the bucket/key entries for the images in the valid archives
-      const sources = dispositions
-        .map(([attr, s3Key]) => ({ Bucket: attr.target.bucket, Key: s3Key }))
-        .filter(v => v.Key);
-      dispositions = dispositions.map(([attr, _]) => attr);
 
-      return { pdr_file_name: pdrFileName, files: dispositions, sources: sources };
+      log.debug(`Found ${imageSources.length} images for MRFGen`);
+      log.debug(`SOURCES:\n${JSON.stringify(imageSources)}`);
+
+      return { pdr_file_name: pdrFileName, files: dispositions, sources: imageSources };
     }
     finally {
       execSync(`rm -rf ${tmpDir}`);
