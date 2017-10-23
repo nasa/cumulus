@@ -31,8 +31,6 @@ function token(event, context, uri) {
   if (code) {
     const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam(uri)}`;
 
-    console.log(EARTHDATA_CHECK_CODE_URL + params);
-
     // Verify token
     return got.post(EARTHDATA_CHECK_CODE_URL + params, {
       json: true,
