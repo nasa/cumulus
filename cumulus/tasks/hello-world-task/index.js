@@ -2,17 +2,13 @@
 
 const Task = require('@cumulus/common/task');
 
-/**
- * Input payload: None
- * Output payload: String
- */
 module.exports = class HelloWorld extends Task {
   /**
    * Main task entrypoint
    * @return A payload suitable for syncing via http url sync
    */
   run() {
-    return "Hello World";
+    return { hello: "Hello World" };
   }
 
   /**
@@ -24,3 +20,10 @@ module.exports = class HelloWorld extends Task {
     return HelloWorld.handle(...args);
   }
 };
+
+/*
+*Another example without using Task Class
+module.exports.handler = function handler(_event, context, cb) {
+  return cb(null, "Hello World");
+}
+*/
