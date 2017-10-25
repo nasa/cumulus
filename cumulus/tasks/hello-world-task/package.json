@@ -1,7 +1,7 @@
 {
-  "name": "@cumulus/post-to-cmr",
+  "name": "@cumulus/hello-world-task",
   "version": "1.0.0",
-  "description": "Post a given granule to CMR",
+  "description": "Example task",
   "main": "index.js",
   "directories": {
     "test": "tests"
@@ -35,11 +35,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0",
-    "@cumulus/ingest": "^1.0.0",
-    "@cumulus/cmrjs": "^1.0.0",
-    "@cumulus/test-data": "^1.0.0",
-    "lodash.get": "^4.4.2"
+    "@cumulus/common": "^1.0.0"
   },
   "devDependencies": {
     "proxyquire": "^1.8.0",
