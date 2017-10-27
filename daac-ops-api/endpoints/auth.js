@@ -17,7 +17,7 @@ function redirectUriParam(uri) {
  * AWS API Gateway function that handles callbacks from URS authentication, transforming
  * codes into tokens
  */
-function token(event, context) {
+function token(event, context, uri) {
   const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
   const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
 
@@ -29,7 +29,7 @@ function token(event, context) {
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
-    const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam()}`;
+    const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam(uri)}`;
 
     // Verify token
     return got.post(EARTHDATA_CHECK_CODE_URL + params, {
@@ -110,7 +110,7 @@ function login(event, context, cb) {
   const state = get(event, 'queryStringParameters.state');
 
   if (code && state === 'login') {
-    return token(event, context, cb);
+    return token(event, context, redirectUri);
   }
 
   const url = `${endpoint}/oauth/authorize?` +
@@ -127,7 +127,7 @@ function login(event, context, cb) {
 
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource === '/auth/token') {
-    return token(event, context, cb);
+    return token(event, context);
   }
   else if (event.httpMethod === 'GET' && event.resource === '/auth/redirect') {
     return redirect(event, context, cb);
