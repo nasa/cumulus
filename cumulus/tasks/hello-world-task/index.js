@@ -7,7 +7,7 @@ module.exports = class HelloWorld extends Task {
    * Main task entrypoint
    * @return A payload suitable for syncing via http url sync
    */
-  run() {
+  async run() {
     return { hello: "Hello World" };
   }
 
