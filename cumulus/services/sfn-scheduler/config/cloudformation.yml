@@ -2,6 +2,8 @@ Parameters:
   StateMachinePrefix:
     Type: String
     Description: An alphanumeric string used to prefix State Machine names
+  PrivateBucketName:
+    Type: String
 
 Resources:
   Fn:
