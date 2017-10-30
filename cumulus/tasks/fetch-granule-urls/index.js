@@ -20,7 +20,6 @@ module.exports = class FetchGranuleURLsTask extends Task {
    */
 
    //**TODO** this.config, this.message(.payload)
-   //**TODO**eslint in sublime
   async run() {
     this.getCMRdata('2015-01-01', '2015-01-02');
   }
@@ -37,7 +36,6 @@ module.exports = class FetchGranuleURLsTask extends Task {
       });
       res.on('end', () => {
         body = JSON.parse(body);
-        // console.log(JSON.stringify(body, null, 4));
         this.extractTifURLS(body);
       });
     });
@@ -57,51 +55,45 @@ module.exports = class FetchGranuleURLsTask extends Task {
     tifURLS.forEach(function (url) {
       const key = url.substring(url.lastIndexOf("/")+1,url.lastIndexOf("."));
       that.urlToS3(url, 'ast-l1t-2015-granules', key, function(err, res) {
-          if (err) throw err;
+        if (err) throw err;
         console.log('Uploaded data successfully!');
       });
     });
-    // const tifURLStest = ['https://i.imgur.com/08u6ePd.jpg'];
-    // console.log(tifURLStest);
-    // const that = this;
-    // tifURLStest.forEach(function (url) {
-    //   const key = url.substring(url.lastIndexOf('/') + 1, url.lastIndexOf('.'));
-    //   console.log(key);
-    //   that.urlToS3(url, 'ast-l1t-2015-granules', key, function(err) {
-    //       if (err) throw err;
-    //     console.log('Uploaded data successfully!');
-    //   });
-    // });
   }
 
   urlToS3(url, bucket, key, callback) {
-    request({
-        url: url,
-        auth: {
+
+    const options = {
+      url: url,
+      auth: {
           'user': 'sample_user',
           'pass': 'SampleUser1234',
-          // 'sendImmediately': false
-        },
-        followRedirect: true,
-        encoding: null
-      }, function(err, res, body) {
-        if (err) {
-          console.log('ERROR in urlToS3');
-          console.log(err);
-          return callback(err, res);
-        }
-        console.log(body, res);
-        // console.log(body, res.statusCode, res.headers);
-        console.log('-------------------------------------------------');
+          'sendImmediately': false
+      },
+      jar: true,
+      encoding: null
+    };
 
-        s3.putObject({
-            Bucket: bucket,
-            Key: key,
-            ContentType: res.headers['content-type'],
-            ContentLength: res.headers['content-length'],
-            Body: body
-        }, callback);
-      });
+    request(options, function (error, response, body) {
+      if (error) {
+        console.log('****ERROR in urlToS3****');
+        console.log(error);
+        return callback(error, response);
+      }
+      if (!error && response.statusCode == 200) {
+        console.log('****RESPONSE 200****');
+      }
+      console.log(body, response.statusCode, response.headers);
+      console.log('-------------------------------------------------');
+
+      s3.putObject({
+        Bucket: bucket,
+        Key: key,
+        ContentType: response.headers['content-type'],
+        ContentLength: response.headers['content-length'],
+        Body: body
+      }, callback);
+    });
   }
 
   /**
