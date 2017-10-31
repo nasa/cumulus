@@ -2,8 +2,6 @@ Parameters:
   StateMachinePrefix:
     Type: String
     Description: An alphanumeric string used to prefix State Machine names
-  PrivateBucketName:
-    Type: String
 
 Resources:
   Fn:
@@ -37,8 +35,8 @@ Resources:
               "state_machine_prefix": "${StateMachinePrefix}",
               "buckets": {
                 "config": "${ConfigS3Bucket}",
-                "private": "${StackName}-private",
-                "public": "${StackName}-public"
+                "private": "${PrivateBucketName}",
+                "public": "${PublicBucketName}"
               },
               "tables": {
                 "connections": "${StackName}-connects",
