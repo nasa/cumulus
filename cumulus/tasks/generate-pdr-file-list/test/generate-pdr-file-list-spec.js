@@ -20,7 +20,7 @@ test('fileSpecToFileEntry() - generates proper fields', t => {
     fileSpecs.forEach((fileSpec) => {
       const fileName = goodFileFixture.fileName[index];
       const fileEntry = pdr.fileSpecToFileEntry(fileSpec, host, port);
-      t.is(fileEntry.source.url, `ftp://${host}:${port}/${fileName}.tgz`);
+      t.is(fileEntry.source.url, `ftp://${host}:${port}/${fileName}`);
       t.is(fileEntry.type, 'download');
       t.is(fileEntry.target, 'FROM_CONFIG');
       t.is(fileEntry.source.checksumType, 'MD5');
