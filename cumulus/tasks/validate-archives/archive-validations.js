@@ -33,12 +33,15 @@ exports.validateChecksum = async (fileAttrs, archiveFilePath) => {
  * Throws an error if a file is missing
  */
 exports.validateArchiveContents = (archiveDirPath) => {
+  log.debug(`CHECKING CONTENTS OF [${archiveDirPath}]`)
   // Tar files created on Macs sometimes have extra files in them to store
   // extended attribute data. These extra files start with ._, so we filter these
   // out here.
   const unarchivedFiles = fs
     .readdirSync(archiveDirPath)
     .filter(fileName => !fileName.startsWith('._'));
+
+  log.debug(`UNARCHIVED FILES: ${JSON.stringify(unarchivedFiles)}`);
 
   let hasImage = false;
   let hasWorldFile = false;
