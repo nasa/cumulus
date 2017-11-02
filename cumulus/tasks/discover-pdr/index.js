@@ -47,6 +47,7 @@ module.exports = class DiscoverPdr extends Task {
     });
 
     await clientReady('ready');
+
     let returnValue;
     try {
       // Get the list of PDRs
