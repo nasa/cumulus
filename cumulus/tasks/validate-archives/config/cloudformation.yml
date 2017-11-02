@@ -1,5 +1,25 @@
 Resources:
   Fn:
+    Type: AWS::Lambda::Function
     Properties:
+      FunctionName: !Join ['-', [!Ref StackName, task, !Var name]]
       Description: 'Validate downloaded archive files'
       Runtime: nodejs6.10
+      Code: !Var path
+      Timeout: 300
+      MemorySize: 256
+      Handler: index.handler
+      Role: !GetAtt [TaskExecutionRole, Arn]
+
+  Service:
+    DependsOn:
+      - !ResourceName Fn
+    Properties:
+      DesiredCount: 1
+
+  Task:
+    Properties:
+      ContainerDefinitions:
+      - Cpu: '512'
+        Memory: '2048'
+
