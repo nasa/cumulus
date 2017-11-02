@@ -1,0 +1,24 @@
+default:
+  prefix: change-me-cumulus # used to grant access to services that start with the prefix
+  stackName: change-me-cumulus-iam
+  authorizer: false
+  capabilities:
+     - CAPABILITY_NAMED_IAM
+
+  buckets:
+    internal: change-me
+    private: change-me
+    protected: change-me
+    public: change-me
+
+  params:
+     - name: ResourcePrefix
+       value: '{{prefix}}'
+     - name: InternalBucketName
+       value: '{{buckets.internal}}'
+     - name: PrivateBucketName
+       value: '{{buckets.private}}'
+     - name: ProtectedBucketName
+       value: '{{buckets.protected}}'
+     - name: PublicBucketName
+       value: '{{buckets.public}}'

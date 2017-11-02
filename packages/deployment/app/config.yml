@@ -1,0 +1,137 @@
+default:
+  stackName: change-me-cumulus
+  stackNameNoDash: ChangeMeCumulus
+  stackNoDash: ChangeMeCumulus
+  stageNoDash: dev
+  resourcePrefixNoDash: ChangeMeCumulus
+
+  # override this in your deployment section
+  distribution:
+    endpoint: https://apigateway-url-to-distribution-app/
+    redirect: https://apigateway-url-to-distribution-app/redirect
+
+  # override this in your deployment section
+  backend:
+    endpoint: https://uat.urs.earthdata.nasa.gov
+    api: https://apigateway-url-to-api-backend/auth/login
+    dashboard: https://dashboard-url/#/auth
+
+  params:
+    - name: CmrPassword
+      value: '{{CMR_PASSWORD}}' # this has to be set in .env
+
+  shared_data_bucket: 'cumulus-data-shared'
+
+  buckets:
+    internal: change-me
+    private: change-me
+    protected: change-me
+    public: change-me
+
+  cmr:
+    username: devseed
+    provider: CUMULUS
+    clientId: CUMULUS
+    password: '{{CMR_PASSWORD}}'
+
+  # this whole section has to be updated in each deployment section
+  vpc:
+    vpcId: xxxxxx #change-me
+    subnets:
+      - subnet-xxxxx #change me
+
+  ecs:
+    amiid: ami-9eb4b1e5
+    instanceType: change-me 
+    ecsInstanceProfileArn: '{{iams.instanceProfile}}'
+    volumeSize: 50
+    availabilityZone: 'us-east-1a'
+    maxInstances: 1
+    desiredInstances: 0
+
+  es:
+    name: es5
+    elasticSearchMapping: 4
+    version: 5.3
+    instanceCount: 1
+    instanceType: m4.large.elasticsearch
+    volumeSize: 35
+
+  sns:
+    # this topic receives all the updates from
+    # step functions
+    - name: sftracker
+      subscriptions:
+        - protocol: lambda
+          endpoint: '!GetAtt sns2elasticsearchLambdaFunction.Arn'
+
+  # defining the APIs. Each item will include a separate endpoint
+  apis:
+    - name: distribution
+    - name: backend
+
+  dynamos:
+    - name: CollectionsTable
+      read: 5
+      write: 1
+      attributes:
+        - name: name
+          type: S
+        - name: version
+          type: S
+      schema:
+        - name: name
+          type: HASH
+        - name: version
+          type: RANGE
+
+    - name: ProvidersTable
+      read: 5
+      write: 1
+      attributes:
+        - name: id
+          type: S
+      schema:
+        - name: id
+          type: HASH
+
+    - name: RulesTable
+      read: 5
+      write: 1
+      attributes:
+        - name: name
+          type: S
+      schema:
+        - name: name
+          type: HASH
+
+    - name: UsersTable
+      read: 5
+      write: 1
+      attributes:
+        - name: userName
+          type: S
+      schema:
+        - name: userName
+          type: HASH
+
+  sqs:
+    - name: startSF
+      visibilityTimeout: 20
+      retry: 30
+      consumer:
+        - lambda: sqs2sf
+          schedule: rate(1 minute)
+          messageLimit: 10
+          state: ENABLED
+
+  rules:
+    - name: backgroundJobs
+      schedule: rate(10 minutes)
+      state: ENABLED
+      targets:
+        - lambda: jobs
+
+  stepFunctions: !!inc/file workflows.yml
+
+  lambdas: !!inc/file lambdas.yml

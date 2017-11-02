@@ -1,0 +1,16 @@
+default:
+  prefix: change-me-cumulus
+  stackName: change-me-cumulus-deployer
+  stackNameNoDash: ChangeCumulus
+  buckets:
+    internal: change-me
+  capabilities:
+    - CAPABILITY_IAM
+
+  params:
+    - name: Prefix
+      value: '{{prefix}}'
+    - name: StateMachinePrefix
+      value: '{{stackNameNoDash}}'
+    - name: InternalBucketName
+      value: '{{buckets.internal}}'
