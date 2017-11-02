@@ -71,7 +71,8 @@ module.exports = class GeneratePan extends Task {
       client.end();
     }
 
-    return { pdr_file_name: pdrFileName };
+    // pass the payload to the next task, if any
+    return payload;
   }
 
   /**
@@ -85,75 +86,3 @@ module.exports = class GeneratePan extends Task {
 };
 
 // Test code
-const local = require('@cumulus/common/local-helpers');
-local.setupLocalRun(module.exports.handler, () => ({
-  workflow_config_template: {
-    DiscoverPdr: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PDR'
-    },
-    ValidatePdr: {
-      s3Bucket: '{resources.buckets.private}',
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PDR'
-    },
-    GeneratePdrFileList: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp'
-    },
-    DownloadActivity: {
-      skip_upload_output_payload_to_s3: true,
-      output: {
-        bucket: '{resources.buckets.private}',
-        key_prefix: 'sources/EPSG{meta.epsg}/SIPSTEST/{meta.collection}'
-      }
-    },
-    ValidateArchives: {
-      s3Bucket: '{resources.buckets.private}'
-    },
-    GeneratePan: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PAN'
-    },
-    DeletePdr: {
-      host: 'localhost',
-      port: 21,
-      protocol: 'ftp',
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      folder: 'PDR'
-    }
-  },
-  resources: {
-    buckets: {
-      private: 'provgateway-deploy'
-    }
-  },
-  provider: {
-    id: 'DUMMY',
-    config: {}
-  },
-  meta: {
-    epsg: 4326,
-    collection: 'VNGCR_LQD_C1'
-  },
-  ingest_meta: {
-    task: 'GeneratePan',
-    id: 'abc123',
-    message_source: 'stdin'
-  }
-
-}));
