@@ -21,11 +21,11 @@ module.exports = class FetchGranuleURLsTask extends Task {
 
    //**TODO** this.config, this.message(.payload)
   async run() {
-    this.getCMRdata('2015-01-01', '2015-01-02');
+    this.getCMRdata('2015-01-01', '2015-01-06');
   }
 
   getCMRdata(startDate, endDate) {
-    const url = `https://cmr.earthdata.nasa.gov/search/granules.json?echo_collection_id=C1000000320-LPDAAC_ECS&pretty=true&page_num=1&page_size=10&temporal=${startDate}T00%3A00%3A00Z,${endDate}T00%3A00%3A00Z`;
+    const url = `https://cmr.earthdata.nasa.gov/search/granules.json?echo_collection_id=C1000000320-LPDAAC_ECS&page_size=5&pretty=true&temporal=${startDate}T00%3A00%3A00Z,${endDate}T00%3A00%3A00Z`;
     https.get(url, res => {
       console.log('statusCode:', res.statusCode);
       console.log('headers:', res.headers);
@@ -51,49 +51,6 @@ module.exports = class FetchGranuleURLsTask extends Task {
       });
     });
     console.log(tifURLS);
-    const that = this;
-    tifURLS.forEach(function (url) {
-      const key = url.substring(url.lastIndexOf("/")+1,url.lastIndexOf("."));
-      that.urlToS3(url, 'ast-l1t-2015-granules', key, function(err, res) {
-        if (err) throw err;
-        console.log('Uploaded data successfully!');
-      });
-    });
-  }
-
-  urlToS3(url, bucket, key, callback) {
-
-    const options = {
-      url: url,
-      auth: {
-          'user': 'sample_user',
-          'pass': 'SampleUser1234',
-          'sendImmediately': false
-      },
-      jar: true,
-      encoding: null
-    };
-
-    request(options, function (error, response, body) {
-      if (error) {
-        console.log('****ERROR in urlToS3****');
-        console.log(error);
-        return callback(error, response);
-      }
-      if (!error && response.statusCode == 200) {
-        console.log('****RESPONSE 200****');
-      }
-      console.log(body, response.statusCode, response.headers);
-      console.log('-------------------------------------------------');
-
-      s3.putObject({
-        Bucket: bucket,
-        Key: key,
-        ContentType: response.headers['content-type'],
-        ContentLength: response.headers['content-length'],
-        Body: body
-      }, callback);
-    });
   }
 
   /**
