@@ -15,7 +15,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "kes": "^1.0.2"
+    "kes": "^1.1.0"
   },
   "devDependencies": {
   }
