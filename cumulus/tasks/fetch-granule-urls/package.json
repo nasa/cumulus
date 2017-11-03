@@ -1,7 +1,7 @@
 {
-  "name": "gitc-discover-cmr-granules",
+  "name": "gitc-fetch-granule-urls",
   "version": "0.0.0",
-  "description": "Discovers granules from the CMR",
+  "description": "Fetch historical granules from the CMR and move to S3",
   "main": "index.js",
   "keywords": [
     "GIBS"
@@ -14,7 +14,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "^1.0.0",
-    "node-fetch": "^1.6.1",
-    "parse-duration": "^0.1.1"
+    "node-fetch": "^1.6.1"
   }
 }
