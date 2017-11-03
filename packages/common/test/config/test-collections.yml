@@ -114,6 +114,9 @@ _templates:
         period_s: 900
 
       workflow_config_template:
+        DownloadGranuleS3:
+          auth_user: 'sample_user'
+          auth_pass: 'SampleUser1234'
         DiscoverCmrGranules:
           root: 'https://cmr.earthdata.nasa.gov'
           since: 5d
