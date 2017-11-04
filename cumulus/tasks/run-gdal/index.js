@@ -43,7 +43,8 @@ module.exports = class RunGdalTask extends Task {
 
     const outputPromises = config.outputs.map((output) => this.compressAndUploadOutput(output));
 
-    return await Promise.all(outputPromises);
+    const result = await Promise.all(outputPromises);
+    return result.map((obj) => ({ Key: obj[0].key, Bucket: obj[0].bucket }));
   }
 
   async compressAndUploadOutput(output) {
@@ -70,7 +71,7 @@ module.exports = class RunGdalTask extends Task {
     const program = path.resolve(process.cwd(), 'bin', command);
     if (!command.match(/^[a-z0-9\-_]+$/g) || !fs.existsSync(program)) {
       if (!fs.existsSync(program)) {
-        throw new Error(`this happened: ${__dirname}, ${program}`);
+        throw new Error(`No such program: ${program} (dir: ${__dirname}, cwd: ${process.cwd()})`);
       }
       throw new Error(`Invalid gdal_command: ${command}`);
     }

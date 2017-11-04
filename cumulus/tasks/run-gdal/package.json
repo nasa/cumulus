@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "echo 'no tests'",
-    "build": "webpack --progress && unzip deps/lambda-gdal.zip -d dist",
+    "build": "webpack && unzip -o -q deps/lambda-gdal.zip -d dist",
     "watch": "webpack --progress -w",
     "clean": "rm -rf dist"
   },
