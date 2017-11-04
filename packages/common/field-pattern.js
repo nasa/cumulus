@@ -119,10 +119,12 @@ module.exports = class FieldPattern {
 
     const isoDate = isoDateTime.split('T')[0];
     const [year, month, day] = isoDate.split('-');
+    const dateTimeStamp = isoDateTime.split('.')[0].replace(/\D+/g, '');
 
     return {
       isoDate: isoDate,
       isoDateTime: isoDateTime,
+      dateTimeStamp: dateTimeStamp,
       day: day,
       month: month,
       year: year
