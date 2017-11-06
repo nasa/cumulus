@@ -3,7 +3,7 @@
 const pvl = require('@cumulus/pvl/t');
 
 const fileSpecFields =
-  ['DIRECTORY_ID', 'FILE_ID', 'FILE_CKSUM_TYPE', 'FILE_CKSUM_VALUE', 'FILE_TYPE', 'FILE_SIZE'];
+  ['DIRECTORY_ID', 'FILE_ID', 'FILE_CKSUM_TYPE', 'FILE_CKSUM_VALUE', 'FILE_SIZE'];
 
 /**
  * Parses a PDR, performing validation and returning a list of file paths
@@ -21,13 +21,13 @@ exports.parsePdr = pdr => pvl.pvlToJS(pdr);
  */
 exports.fileSpecToFileEntry = (fileSpec, host, port) => {
   // fileSpec is a PVLObject, so we have to use its getters to get values
-  const [directory, fileName, checksumType, checksum, fileType, size] =
+  const [directory, fileName, checksumType, checksum, size] =
     fileSpecFields.map((field) => fileSpec.get(field).value);
 
   return {
     type: 'download',
     source: {
-      url: `ftp://${host}:${port}${directory}/${fileName}.${fileType}`,
+      url: `ftp://${host}:${port}${directory}/${fileName}`,
       checksumType: checksumType,
       checksum: checksum,
       size: size
