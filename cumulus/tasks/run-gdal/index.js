@@ -47,6 +47,10 @@ module.exports = class RunGdalTask extends Task {
     return result.map((obj) => ({ Key: obj[0].key, Bucket: obj[0].bucket }));
   }
 
+  /**
+   * Uploads a file from the configuration to S3, compressing if requested
+   * @param {Object} output The output file, as configured
+   */
   async compressAndUploadOutput(output) {
     let filename = output.filename;
     if (output.compress) {
@@ -78,6 +82,12 @@ module.exports = class RunGdalTask extends Task {
     return this.promiseSpawn(program, args);
   }
 
+  /**
+   * Invokes the given program with the given args, returning a promise that resolves / rejects
+   * according to the return value of the invocation. A successful promise resolves to 0
+   * @param {String} program The program to spawn
+   * @param {Array<String>} args The command line arguments to pass to the program
+   */
   promiseSpawn(program, args) {
     log.info(`Spawning: ${program} "${args.join('", "')}"`);
     const process = spawn(program, args || [], { stdio: 'inherit', cwd: '/tmp' });
