@@ -87,8 +87,8 @@ class StateMachineS3MessageSource extends MessageSource {
   async loadConfigTemplate() {
     const workflowConfig = this.messageData.workflow_config_template;
     const meta = this.messageData.ingest_meta;
-
     const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
+    log.debug(`TASK NAME is [${taskName}]`);
     return workflowConfig[taskName];
   }
 
