@@ -19,6 +19,13 @@ const updatedFiles = (existingKeys, updates) => {
   return _.values(_.omit(keyedUpdates, existingKeys));
 };
 
+/**
+ * Synchronizes a single URL to S3, respecting cookies and redirects, with optional authorization
+ * @param {String} url The URL to sync
+ * @param {String} bucket The bucket to upload to
+ * @param {String} key The S3 key to upload to
+ * @param {Object} auth An object with username / password keys corresponding to basic auth, or null
+ */
 const syncUrl = (url, bucket, key, auth) =>
   new Promise((resolve, reject) => {
     const options = {
