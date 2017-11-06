@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Triggers processing of discovered PDRs'
+      Runtime: nodejs6.10
