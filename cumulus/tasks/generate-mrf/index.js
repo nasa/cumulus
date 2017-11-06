@@ -17,12 +17,7 @@ const execSync = require('child_process').execSync;
 
 
 module.exports = class GenerateMrfTask extends Task {
-  run() {
-    const mutex = new Mutex(aws.dynamodbDocClient(), this.message.resources.tables.locks);
-    return mutex.lock(this.message.meta.key, LOCK_TIMEOUT_MS, this.runWithLock.bind(this));
-  }
-
-  async runWithLock() {
+  async run() {
     const message = this.message;
 
     if (message.payload.length === 0) {
@@ -125,10 +120,3 @@ module.exports = class GenerateMrfTask extends Task {
     return GenerateMrfTask.handle(...args);
   }
 };
-
-
-global.__isDebug = true;
-const local = require('@cumulus/common/local-helpers');
-local.setupLocalRun(
-  module.exports.handler,
-  () => ({ ingest_meta: { message_source: 'stdin', task: 'MRFGen' } }));

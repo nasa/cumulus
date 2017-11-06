@@ -150,7 +150,7 @@ const dataTypeValidation = fileGroup => {
  * @return {string} An error string or null
  */
 const versionIdValidation = fileGroup => {
-  const versionId = fileGroup.get('VERSION_ID');
+  const versionId = fileGroup.get('VERSION_ID') || fileGroup.get('DATA_VERSION');
 
   let rval = null;
   if (!versionId) {
