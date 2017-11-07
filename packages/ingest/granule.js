@@ -4,6 +4,8 @@ const fs = require('fs');
 const get = require('lodash.get');
 const join = require('path').join;
 const urljoin = require('url-join');
+const cksum = require('cksum');
+const checksum = require('checksum');
 const logger = require('./log');
 const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
@@ -190,6 +192,38 @@ class Granule {
     return file;
   }
 
+  async _validateChecksum (type, value, tempFile, options) {
+    if (!options) options = {}
+    let sum = null;
+
+    if (type.toLowerCase() === 'cksum') {
+      sum = await this._cksum(tempFile)
+    } else {
+      sum = await this._hash(type, tempFile, options)
+    }
+
+    return value === sum;
+  }
+
+  async _cksum (tempFile) {
+    return new Promise(function (resolve, reject) {
+       fs.createReadStream(tempFile)
+         .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
+         .on('error', reject)
+    });
+  }
+
+  async _hash (type, tempFile) {
+    const options = { algorithm: type };
+
+    return new Promise(function (resolve, reject) {
+       checksum.file(tempFile, options, function (err, sum) {
+         if (err) return reject(err);
+         resolve(sum);
+       });
+    });
+  }
+
   /**
    * Ingest individual files
    * @private
@@ -225,13 +259,26 @@ class Granule {
         throw e;
       }
 
-      // run the checksum if there is a checksum value available
-      // TODO: add support for md5
-      if (file.checksumType && file.checksumType.toLowerCase() === 'cksum') {
-        //await this._cksum(tempFile, parseInt(file.checksumValue));
-      }
+      try {
+        const validated = await this._validateChecksum(
+          file.checksumType,
+          file.checksumValue,
+          tempFile
+        );
 
-      await this.upload(file.bucket, file.url_path, file.name, tempFile);
+        if (validated) {
+          await this.upload(file.bucket, file.url_path, file.name, tempFile);
+        } else {
+          throw new errors.InvalidChecksum(
+            `Invalid checksum for ${file.filename} with type ${file.checksumType} and value ${file.checksumValue}`
+          );
+        }
+      } catch (e) {
+        console.log('e', e)
+        throw new errors.InvalidChecksum(
+          `Error evaluating checksum for ${file.filename} with type ${file.checksumType} and value ${file.checksumValue}`
+        );
+      }
 
       // delete temp file
       fs.unlinkSync(tempFile);
@@ -299,6 +346,12 @@ class SftpGranule extends sftpMixin(Granule) {}
 
 class HttpGranule extends httpMixin(Granule) {}
 
+/**
+* Select a class for discovering or ingesting granules based on protocol
+* @param {string} type – `discover` or `ingest`
+* @param {string} protocol – `sftp`, `ftp`, or `http`
+* @param {boolean} useQueue – set to `true` to queue granules
+**/
 function selector(type, protocol, q) {
   if (type === 'discover') {
     switch (protocol) {
@@ -324,13 +377,6 @@ function selector(type, protocol, q) {
   }
 
   throw new Error(`${type} is not supported`);
-
-  //switch (protocol) {
-    //case 'sftp':
-      //return queue ? s : SftpDiscoverGranules;
-    //default:
-      //return queue ? FtpDiscoverAndQueueGranules : FtpDiscoverGranules;
-  //}
 }
 
 module.exports.selector = selector;
