@@ -9,6 +9,7 @@ const providers = require('./endpoints/providers');
 const rules = require('./endpoints/rules');
 const workflows = require('./endpoints/workflows');
 const executions = require('./endpoints/executions');
+const executionStatus = require('./endpoints/execution-status');
 const jobs = require('./endpoints/jobs');
 const schemas = require('./endpoints/schemas');
 const stats = require('./endpoints/stats');
@@ -27,6 +28,7 @@ module.exports = {
   rules,
   workflows,
   executions,
+  executionStatus,
   jobs,
   schemas,
   stats,
