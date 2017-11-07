@@ -5,6 +5,20 @@
   "scripts": {
     "test": "ava test/*.js"
   },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "env",
+      "@ava/stage-4",
+      "@ava/transform-test-files"
+    ]
+  },
   "keywords": [
     "CUMULUS"
   ],
@@ -35,6 +49,12 @@
   },
   "devDependencies": {
     "ava": "^0.23.0",
-    "json-loader": "^0.5.4"
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.4.0",
+    "babel-register": "^6.26.0"
   }
 }
