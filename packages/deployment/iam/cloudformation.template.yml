@@ -1,0 +1,364 @@
+---
+Parameters:
+  CreateDeploymentRole:
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: true
+  DeploymentUserName:
+    Type: String
+    Default: "n/a"
+  DeploymentStackTemplateUrl:
+    Type: String
+    Default: "n/a"
+  ResourcePrefix:
+    Type: String
+    Default: "lpdaac-cumulus"
+  AlphaNumPrefix:
+    Type: String
+    Default: "LpdaacCumulus"
+  InternalBucketName:
+    Type: String
+    Default: "cumulus-internal"
+  PrivateBucketName:
+    Type: String
+    Default: "cumulus-private"
+  ProtectedBucketName:
+    Type: String
+    Default: "cumulus-protected"
+  PublicBucketName:
+    Type: String
+    Default: "cumulus-public"
+Resources:
+  #DeploymentStack:
+  #  Type: AWS::CloudFormation::Stack
+  #  Properties:
+  #    Parameters:
+  #      CreateDeploymentRole: !Ref CreateDeploymentRole
+  #      DeploymentUserName: !Ref DeploymentUserName
+  #      ResourcePrefix: !Ref ResourcePrefix
+  #      AlphaNumPrefix: !Ref AlphaNumPrefix
+  #    TemplateURL: !Ref DeploymentStackTemplateUrl
+  # TODO this is a temporary hack
+  #DeploymentManagedPolicy:
+  #  Type: AWS::IAM::ManagedPolicy
+  #  Properties:
+  #    Users:
+  #      - !Ref DeploymentUserName
+  #    PolicyDocument:
+  #      Version: '2012-10-17'
+  #      Statement:
+  #          - Effect: Allow
+  #            Action: "s3:GetObject"
+  #            Resource: "arn:aws:s3:::cumulus-internal/*"
+          # - Effect: Allow
+          #   Action:
+          #     - "s3:Get*"
+          #     - "s3:List*"
+          #     - "s3:Put*"
+          #   Resource:
+          #     - "arn:aws:s3:::cumulus-internal"
+          #     - "arn:aws:s3:::cumulus-internal/*"
+  LambdaApiGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ResourcePrefix}-lambda-api-gateway"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: LambdaApiGateway
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:DescribeLogStreams
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - lambda:GetFunction
+                  - lambda:invokeFunction
+                Resource: "*"
+
+              - Effect: Allow
+                Action:
+                  - dynamodb:DeleteItem
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetItem
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                  - dynamodb:ListTables
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:UpdateItem
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
+
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:Put*
+                Resource:
+                  - !Sub "arn:aws:s3:::${InternalBucketName}"
+                  - !Sub "arn:aws:s3:::${InternalBucketName}/*"
+                  - !Sub "arn:aws:s3:::${ProtectedBucketName}"
+                  - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
+
+              - Effect: Allow
+                Action:
+                  - sqs:GetQueueUrl
+                  - sqs:GetQueueAttributes
+                  - sqs:SendMessage
+                Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
+
+              # allow adding/editing/deleting of rules associated with this deployment
+              - Effect: Allow
+                Action:
+                  - events:DisableRule
+                  - events:DeleteRule
+                  - events:EnableRule
+                  - events:ListRules
+                  - events:PutRule
+                  - events:DescribeRule
+                  - events:PutTargets
+                  - events:RemoveTargets
+                Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${ResourcePrefix}-*"
+
+  # role for Lambdas that are NOT used with APIGateway
+  LambdaProcessingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ResourcePrefix}-lambda-processing"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: ProcessingLambda
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:GetFunction
+                  - lambda:invokeFunction
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: "*"
+              # Allow writing to ingest buckets
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:Get*
+                  - s3:Put*
+                  - s3:List*
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "arn:aws:s3:::${InternalBucketName}"
+                  - !Sub "arn:aws:s3:::${InternalBucketName}/*"
+                  - !Sub "arn:aws:s3:::${PrivateBucketName}"
+                  - !Sub "arn:aws:s3:::${PrivateBucketName}/*"
+                  - !Sub "arn:aws:s3:::${ProtectedBucketName}"
+                  - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
+                  - !Sub "arn:aws:s3:::${PublicBucketName}"
+                  - !Sub "arn:aws:s3:::${PublicBucketName}/*"
+              # Allow access to dynamoDB
+              - Effect: Allow
+                Action:
+                  - dynamodb:DeleteItem
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetItem
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                  - dynamodb:ListTables
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:UpdateItem
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
+              # Allow access to SQS
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:ChangeMessageVisibility
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueUrl
+                  - sqs:GetQueueAttributes
+                Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
+
+              # Allow state machine interactions
+              - Effect: Allow
+                Action:
+                - states:SendTaskFailure
+                - states:SendTaskSuccess
+                - states:GetActivityTask
+                - states:DescribeActivity
+                - states:DescribeExecution
+                - states:StartExecution
+                - states:StopExecution
+                - states:ListStateMachines
+                Resource: arn:aws:states:*:*:*
+
+              # allow adding/editing/deleting of rules associated with this deployment
+              - Effect: Allow
+                Action:
+                  - events:DisableRule
+                  - events:EnableRule
+                  - events:ListRules
+                  - events:PutRule
+                  - events:DeleteRule
+                  - events:DescribeRule
+                Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${ResourcePrefix}-*"
+
+              # this is needed for running Lambda in a VPC
+              # This might not be needed in the NGAP environment
+              # if all lambdas are already running in a general VPC
+              # environment
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                Resource: '*'
+
+              # allow publishing to SNS
+              - Effect: Allow
+                Action:
+                  - sns:publish
+                Resource: '*'
+
+  StepRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ResourcePrefix}-steprole"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: StepRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: "*"
+
+  ECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ResourcePrefix}-ecs"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: ECSRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:GetMetricStatistics
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetAuthorizationToken
+                  - ecr:GetDownloadUrlForLayer
+                  - ecs:DeregisterContainerInstance
+                  - ecs:DescribeClusters
+                  - ecs:DescribeContainerInstances
+                  - ecs:DescribeServices
+                  - ecs:DiscoverPollEndpoint
+                  - ecs:ListContainerInstances
+                  - ecs:ListServices
+                  - ecs:ListTaskDefinitions
+                  - ecs:ListTasks
+                  - ecs:Poll
+                  - ecs:RegisterContainerInstance
+                  - ecs:RunTask
+                  - ecs:StartTelemetrySession
+                  - ecs:Submit*
+                  - lambda:GetFunction
+                  - lambda:invokeFunction
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: "*"
+
+              # Allow state machine interactions
+              - Effect: Allow
+                Action:
+                - states:SendTaskFailure
+                - states:SendTaskSuccess
+                - states:GetActivityTask
+                - states:DescribeActivity
+                Resource: arn:aws:states:*:*:*
+
+              # Allow writing to ingest buckets
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:Get*
+                  - s3:Put*
+                  - s3:List*
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "arn:aws:s3:::${InternalBucketName}"
+                  - !Sub "arn:aws:s3:::${InternalBucketName}/*"
+                  - !Sub "arn:aws:s3:::${PrivateBucketName}"
+                  - !Sub "arn:aws:s3:::${PrivateBucketName}/*"
+                  - !Sub "arn:aws:s3:::${ProtectedBucketName}"
+                  - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
+                  - !Sub "arn:aws:s3:::${PublicBucketName}"
+                  - !Sub "arn:aws:s3:::${PublicBucketName}/*"
+
+  CumulusInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${ResourcePrefix}-ecs"
+      Path: "/"
+      Roles:
+        - !Ref ECSRole
+
+Outputs:
+  CumulusInstanceProfileArn:
+    Value: !GetAtt CumulusInstanceProfile.Arn
+  EcsRoleArn:
+    Value: !GetAtt ECSRole.Arn
+  LambdaApiGatewayRoleArn:
+    Value: !GetAtt LambdaApiGatewayRole.Arn
+  LambdaProcessingRoleArn:
+    Value: !GetAtt LambdaProcessingRole.Arn
+  StepRoleArn:
+    Value: !GetAtt StepRole.Arn
