@@ -158,6 +158,7 @@ class Granule {
     this.host = get(this.provider, 'host', null);
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
+    this.checksumFiles = {};
 
     this.forceDownload = get(event, 'meta.forceDownload', false);
   }
@@ -165,7 +166,11 @@ class Granule {
   async ingest(granule) {
     // for each granule file
     // download / verify checksum / upload
-    const downloadFiles = granule.files.map(f => this.getBucket(f)).map(f => this.ingestFile(f));
+    const downloadFiles = granule.files
+      .map(f => this.getBucket(f))
+      .filter(f => this.filterChecksumFiles(f))
+      .map(f => this.ingestFile(f));
+
     const files = await Promise.all(downloadFiles);
 
     return {
@@ -190,6 +195,15 @@ class Granule {
     file.bucket = this.buckets.private;
     file.url_path = this.collection.url_path || '';
     return file;
+  }
+
+  filterChecksumFiles(file) {
+    if (file.name.indexOf('.md5') > 0) {
+      this.checksumFiles[file.name.replace('.md5', '')] = file;
+      return false
+    }
+
+    return true
   }
 
   async _validateChecksum (type, value, tempFile, options) {
@@ -260,9 +274,28 @@ class Granule {
       }
 
       try {
-        const validated = await this._validateChecksum(
-          file.checksumType,
-          file.checksumValue,
+        let checksumType = null;
+        let checksumValue = null;
+
+        if (file.checksumType && file.checksumValue) {
+          checksumType = file.checksumType;
+          checksumValue = file.checksumValue;
+        } else if (this.checksumFiles[file.name]) {
+          const checksumInfo = this.checksumFiles[file.name];
+
+          log.info(`downloading ${checksumInfo.name}`);
+          const checksumFilepath = await this.download(checksumInfo.path, checksumInfo.name);
+          log.info(`downloaded ${checksumInfo.name}`);
+
+          // expecting the type is md5
+          checksumType = 'md5';
+          checksumValue = fs.readFileSync(checksumFilepath, 'utf8').split(' ')[0];
+          fs.unlinkSync(checksumFilepath);
+        }
+
+        const validated = this._validateChecksum(
+          checksumType,
+          checksumValue,
           tempFile
         );
 
@@ -274,14 +307,16 @@ class Granule {
           );
         }
       } catch (e) {
-        console.log('e', e)
         throw new errors.InvalidChecksum(
           `Error evaluating checksum for ${file.filename} with type ${file.checksumType} and value ${file.checksumValue}`
         );
       }
 
       // delete temp file
-      fs.unlinkSync(tempFile);
+      fs.stat(tempFile, function (err, stat) {
+        // TODO: figure out why an error is thrown when fs.unlinkSync isn't wrapped in fs.stat
+        if (stat) fs.unlinkSync(tempFile)
+      })
     }
 
     file.filename = `s3://${file.bucket}/${join(file.url_path, file.name)}`;
