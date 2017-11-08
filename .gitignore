@@ -13,3 +13,4 @@ packaged-*
 .vscode
 *-debug.log
 profiles.clj
+kes.js
