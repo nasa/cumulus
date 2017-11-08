@@ -1,5 +1,5 @@
 module.exports = {
-  entry: ['babel-polyfill', 'app/kes.override.js'],
+  entry: ['babel-polyfill', './app/kes.override.js'],
   output: {
     libraryTarget: 'commonjs2',
     filename: 'app/kes.js'

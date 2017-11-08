@@ -14,3 +14,4 @@ packaged-*
 *-debug.log
 profiles.clj
 kes.js
+*.map  

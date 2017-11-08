@@ -121,11 +121,12 @@ const restartECSTasks = async (config) => {
     for (const cluster of clusters) {
       const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
       for (const task of tasks.taskArns) {
-        const confirmation = await ecs.stopTask({
+        console.log(`restarting ECS task ${task}`);
+        await ecs.stopTask({
           task: task,
           cluster: cluster.PhysicalResourceId
         }).promise();
-        console.log(confirmation);
+        console.log(`ECS task ${task} restarted`);
       }
     }
   }
