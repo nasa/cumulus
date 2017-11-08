@@ -26,6 +26,10 @@ Resources:
       Users:
         table: !Ref UsersTableDynamoDB
         records:
+        {{# each default_users}}
+          - username: {{username}}
+            password: {{#if password}}{{ToMd5 password}}{{ else }}OAuth{{/if}}
+        {{/each}}
         {{# each users}}
           - username: {{username}}
             password: {{#if password}}{{ToMd5 password}}{{ else }}OAuth{{/if}}
