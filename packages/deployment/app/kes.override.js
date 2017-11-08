@@ -1,7 +1,9 @@
+/* eslint-disable no-console */
 'use strict';
 
 const { Kes } = require('kes');
 const forge = require('node-forge');
+const AWS = require('aws-sdk');
 
 function generateKeyPair() {
   const rsa = forge.pki.rsa;
@@ -34,7 +36,7 @@ function generateInputTemplates(config, outputs) {
   };
 
   // add cmr password:
-  template.resources.cmr.password = arns.EncryptedCmrPassword
+  template.resources.cmr.password = arns.EncryptedCmrPassword;
 
   if (config.buckets) {
     template.resources.buckets = config.buckets;
@@ -53,7 +55,8 @@ function generateInputTemplates(config, outputs) {
   if (config.stepFunctions) {
     const sfs = {};
     config.stepFunctions.forEach((sf) => {
-      sfs[sf.name] = `s3://${config.buckets.internal}/${config.stackName}/workflows/${sf.name}.json`;
+      sfs[sf.name] = `s3://${config.buckets.internal}/` +
+                     `${config.stackName}/workflows/${sf.name}.json`;
     });
 
     template.resources.templates = sfs;
@@ -80,10 +83,9 @@ function generateInputTemplates(config, outputs) {
 }
 
 function generateWorkflowsList(config) {
-  const workflows = []
+  const workflows = [];
   if (config.stepFunctions) {
     config.stepFunctions.forEach((sf) => {
-      const description =
       workflows.push({
         name: sf.name,
         template: `s3://${config.buckets.internal}/${config.stackName}/workflows/${sf.name}.json`,
@@ -96,6 +98,42 @@ function generateWorkflowsList(config) {
 
   return false;
 }
+
+const restartECSTasks = async (config) => {
+  const cf = new AWS.CloudFormation();
+  const ecs = new AWS.ECS();
+
+  try {
+    let resources = [];
+    const params = { StackName: config.stackName };
+    while (true) { // eslint-disable-line no-constant-condition
+      const data = await cf.listStackResources(params).promise();
+      resources = resources.concat(data.StackResourceSummaries);
+      if (data.NextToken) params.NextToken = data.NextToken;
+      else break;
+    }
+
+    const clusters = resources.filter(item => {
+      if (item.ResourceType === 'AWS::ECS::Cluster') return true;
+      return false;
+    });
+
+    for (const cluster of clusters) {
+      const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
+      for (const task of tasks.taskArns) {
+        const confirmation = await ecs.stopTask({
+          task: task,
+          cluster: cluster.PhysicalResourceId
+        }).promise();
+        console.log(confirmation);
+      }
+    }
+  }
+  catch (err) {
+    console.log(err);
+  }
+};
+
 
 class UpdatedKes extends Kes {
   uploadKeyPair(bucket, key) {
@@ -153,9 +191,9 @@ class UpdatedKes extends Kes {
         const stackName = this.stack;
 
         console.log('Uploading Workflow Input Templates');
-        let uploads = workflowInputs.map((w) => {
+        const uploads = workflowInputs.map((w) => {
           const workflowName = w.ingest_meta.workflow_name;
-          const key = `${stackName}/workflows/${workflowName}.json`
+          const key = `${stackName}/workflows/${workflowName}.json`;
           return this.uploadToS3(
             this.bucket,
             key,
@@ -174,7 +212,8 @@ class UpdatedKes extends Kes {
         }
 
         return Promise.all(uploads);
-      });
+      })
+      .then(() => restartECSTasks(this.config));
   }
 }
 
