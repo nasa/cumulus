@@ -40,6 +40,12 @@ default:
     subnets:
       - subnet-xxxxx #change me
 
+  default_users:
+    - username: pquinn1
+    - username: scisco
+    - username: mhuffnagle2
+    - username: kbaynes
+
   ecs:
     amiid: ami-9eb4b1e5
     instanceType: change-me 
