@@ -4,6 +4,11 @@ module.exports = {
     libraryTarget: 'commonjs2',
     filename: 'app/kes.js'
   },
+  resolve: {
+    alias: {
+      'handlebars' : 'handlebars/dist/handlebars.js'
+    }
+  },
   target: 'node',
   devtool: 'sourcemap',
   module: {
