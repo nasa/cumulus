@@ -561,45 +561,45 @@ Resources:
 
 {{#each ecs.services}}
   # adding TaskDefinition for Lambda/ECS services
-  {{name}}TaskDefinition:
+  {{@key}}TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-      - Name: {{name}}
-        Cpu: {{#if cpu }}{{ cpu }}{{ else }}10{{/if}}
+      - Name: {{@key}}
+        Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}10{{/if}}
         Essential: true
         Environment:
-        {{#each envs}}
+        {{#each this.envs}}
           - Name: {{@key}}
             Value: {{this}}
         {{/each}}
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
-        MemoryReservation: {{#if memory }}{{ memory }}{{ else }}256{{/if}}
-      {{# if commands }}
+        MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
+      {{# if this.commands }}
         Command:
-        {{# each commands }}
+        {{# each this.commands }}
         - {{{ @this }}}
         {{/each}}
       {{/if}}
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref {{name}}EcsLogs
+            awslogs-group: !Ref {{@key}}EcsLogs
             awslogs-region: !Sub ${AWS::Region}
 
-  {{name}}EcsLogs:
+  {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: {{../stackName}}-{{name}}EcsLogs
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
 
-  {{name}}ECSService:
+  {{@key}}ECSService:
     Type: AWS::ECS::Service
     DependsOn:
     - CumulusECSAutoScalingGroup
     Properties:
       Cluster: !Ref CumulusECSCluster
-      DesiredCount: {{# if count}}{{count}}{{ else }} 0 {{/if}}
-      TaskDefinition: !Ref {{name}}TaskDefinition
+      DesiredCount: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
+      TaskDefinition: !Ref {{@key}}TaskDefinition
       DeploymentConfiguration:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
