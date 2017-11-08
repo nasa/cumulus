@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo 'no tests'",
     "build": "webpack --progress",
+    "watch": "webpack --progress -w"
   },
   "keywords": [
     "CUMULUS"
