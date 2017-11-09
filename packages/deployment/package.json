@@ -22,7 +22,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "kes": "^1.2.0",
+    "kes": "^1.2.1",
     "node-forge": "^0.7.1"
   },
   "devDependencies": {
