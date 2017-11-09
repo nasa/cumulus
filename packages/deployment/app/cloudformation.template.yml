@@ -463,7 +463,7 @@ Resources:
   #################################################
   # ECS config BEGIN
   #################################################
-
+{{# if iams.instanceProfile}}
   CumulusECSCluster:
     Type: AWS::ECS::Cluster
 
@@ -520,7 +520,7 @@ Resources:
         - !GetAtt SecurityGroup.GroupId
       ImageId: {{ecs.amiid}}
       InstanceType: {{ecs.instanceType}}
-      IamInstanceProfile: {{ecs.ecsInstanceProfileArn}}
+      IamInstanceProfile: {{iams.instanceProfile}}
       BlockDeviceMappings:
       - DeviceName: "/dev/xvda"
         Ebs:
@@ -608,7 +608,7 @@ Resources:
         MinimumHealthyPercent: 0
 
 {{/each}}
-
+{{/if}}
   #################################################
   # ECS config END
   #################################################
