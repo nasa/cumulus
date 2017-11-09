@@ -3,7 +3,6 @@
 
 const { Kes } = require('kes');
 const forge = require('node-forge');
-const AWS = require('aws-sdk');
 
 function generateKeyPair() {
   const rsa = forge.pki.rsa;
@@ -99,44 +98,46 @@ function generateWorkflowsList(config) {
   return false;
 }
 
-const restartECSTasks = async (config) => {
-  const cf = new AWS.CloudFormation();
-  const ecs = new AWS.ECS();
 
-  try {
-    let resources = [];
-    const params = { StackName: config.stackName };
-    while (true) { // eslint-disable-line no-constant-condition
-      const data = await cf.listStackResources(params).promise();
-      resources = resources.concat(data.StackResourceSummaries);
-      if (data.NextToken) params.NextToken = data.NextToken;
-      else break;
-    }
-
-    const clusters = resources.filter(item => {
-      if (item.ResourceType === 'AWS::ECS::Cluster') return true;
-      return false;
-    });
-
-    for (const cluster of clusters) {
-      const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
-      for (const task of tasks.taskArns) {
-        console.log(`restarting ECS task ${task}`);
-        await ecs.stopTask({
-          task: task,
-          cluster: cluster.PhysicalResourceId
-        }).promise();
-        console.log(`ECS task ${task} restarted`);
-      }
-    }
-  }
-  catch (err) {
-    console.log(err);
-  }
-};
 
 
 class UpdatedKes extends Kes {
+
+  async restartECSTasks(config) {
+    const ecs = new this.AWS.ECS();
+
+    try {
+      let resources = [];
+      const params = { StackName: config.stackName };
+      while (true) { // eslint-disable-line no-constant-condition
+        const data = await this.cf.listStackResources(params).promise();
+        resources = resources.concat(data.StackResourceSummaries);
+        if (data.NextToken) params.NextToken = data.NextToken;
+        else break;
+      }
+
+      const clusters = resources.filter(item => {
+        if (item.ResourceType === 'AWS::ECS::Cluster') return true;
+        return false;
+      });
+
+      for (const cluster of clusters) {
+        const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
+        for (const task of tasks.taskArns) {
+          console.log(`restarting ECS task ${task}`);
+          await ecs.stopTask({
+            task: task,
+            cluster: cluster.PhysicalResourceId
+          }).promise();
+          console.log(`ECS task ${task} restarted`);
+        }
+      }
+    }
+    catch (err) {
+      console.log(err);
+    }
+  }
+
   uploadKeyPair(bucket, key) {
     const pki = forge.pki;
     const keyPair = generateKeyPair();
@@ -214,7 +215,7 @@ class UpdatedKes extends Kes {
 
         return Promise.all(uploads);
       })
-      .then(() => restartECSTasks(this.config));
+      .then(() => this.restartECSTasks(this.config));
   }
 }
 
