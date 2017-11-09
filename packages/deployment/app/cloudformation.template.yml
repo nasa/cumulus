@@ -383,64 +383,64 @@ Resources:
   # Lambda config BEGIN
   #################################################
 {{#each lambdas}}
-  {{name}}LambdaFunction:
+  {{@key}}LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        S3Bucket: {{bucket}}
-        S3Key: {{remote}}
-      FunctionName: {{../stackName}}-{{name}}
+        S3Bucket: {{this.bucket}}
+        S3Key: {{this.remote}}
+      FunctionName: {{../stackName}}-{{@key}}
       Environment:
         Variables:
           stackName: {{../stackName}}
-        {{#each envs}}
+        {{#each this.envs}}
           {{@key}}: {{this}}
         {{/each}}
       {{# if ../es.name}}
-        {{# if passElasticSearchEndpoint }}
+        {{# if this.passElasticSearchEndpoint }}
           ES_HOST: !GetAtt {{../es.name}}Domain.DomainEndpoint
         {{/if}}
       {{/if}}
-      Handler: {{handler}}
-      MemorySize: {{memory}}
-    {{# if apiGateway }}
+      Handler: {{this.handler}}
+      MemorySize: {{this.memory}}
+    {{# if this.apiGateway }}
       Role: {{../iams.lambdaApiGatewayRoleArn}}
       {{else}}
       Role: {{../iams.lambdaProcessingRoleArn}}
     {{/if}}
-      Runtime: {{# if runtime}}{{runtime}}{{else}}nodejs6.10{{/if}}
-      Timeout: {{timeout}}
+      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs6.10{{/if}}
+      Timeout: {{this.timeout}}
       Tags:
         - Key: Project
           Value: {{../stackName}}
 
-{{# if apiGateway }}
-  {{name}}LambdaPermissionApiGateway:
+{{# if this.apiGateway }}
+  {{@key}}LambdaPermissionApiGateway:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
       FunctionName:
         Fn::GetAtt:
-        - {{name}}LambdaFunction
+        - {{@key}}LambdaFunction
         - Arn
       Principal: apigateway.amazonaws.com
 {{/if}}
 
-{{# if logToElasticSearch }}
-  {{name}}LogSubscription:
+{{# if this.logToElasticSearch }}
+  {{@key}}LogSubscription:
     Type: AWS::Logs::SubscriptionFilter
     DependsOn:
-      - {{name}}LogGroup
+      - {{@key}}LogGroup
       - log2elasticsearchLambdaPermissionLog
     Properties:
       DestinationArn: !GetAtt log2elasticsearchLambdaFunction.Arn
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{name}}'
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       FilterPattern: '{ $.name = "cumulus" }'
 
-  {{name}}LogGroup:
+  {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{name}}'
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
 
@@ -455,7 +455,6 @@ Resources:
         - log2elasticsearchLambdaFunction
         - Arn
       Principal: !Sub 'logs.${AWS::Region}.amazonaws.com'
-
 
   #################################################
   # Lambda config END
