@@ -49,7 +49,6 @@ default:
   ecs:
     amiid: ami-9eb4b1e5
     instanceType: change-me 
-    ecsInstanceProfileArn: '{{iams.instanceProfile}}'
     volumeSize: 50
     availabilityZone: 'us-east-1a'
     maxInstances: 1
@@ -60,7 +59,7 @@ default:
     elasticSearchMapping: 4
     version: 5.3
     instanceCount: 1
-    instanceType: m4.large.elasticsearch
+    instanceType: t2.small.elasticsearch
     volumeSize: 35
 
   sns:
