@@ -4,12 +4,27 @@
 const { Kes } = require('kes');
 const forge = require('node-forge');
 
+/**
+ * Generates a public/private key pairs
+ * @function generateKeyPair
+ * @return {object} a forge pki object
+ */
 function generateKeyPair() {
   const rsa = forge.pki.rsa;
   console.log('Generating keys. It might take a few seconds!');
   return rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
 }
 
+/**
+ * Generates a template used for SFScheduler to create cumulus
+ * payloads for step functions. Each step function gets a separate
+ * template
+ * 
+ * @function generateInputTemplates
+ * @param  {object} config Kes Config Object
+ * @param  {array} outputs Array of CloudFormation outputs
+ * @return {array} list of templates
+ */
 function generateInputTemplates(config, outputs) {
   const template = {
     eventSource: 'sfn',
@@ -81,6 +96,14 @@ function generateInputTemplates(config, outputs) {
   return inputs;
 }
 
+/**
+ * Generate a list of workflows (step functions) that are uploaded to S3. This
+ * list is used by the Cumulus Dashboard to show the workflows.
+ *
+ * @function generateWorkflowsList
+ * @param  {object} config Kes Config object
+ * @return {array} Array of objects that include workflow name, template s3 uri and definition
+ */
 function generateWorkflowsList(config) {
   const workflows = [];
   if (config.stepFunctions) {
@@ -98,11 +121,27 @@ function generateWorkflowsList(config) {
   return false;
 }
 
-
-
-
+/**
+ * A subclass of Kes class that overrides opsStack method.
+ * The subclass is checks whether the public/private keys are generated
+ * and uploaded to the deployment bucket. If not, they are generated and
+ * uploaded.
+ *
+ * After the successful deployment of a CloudFormation template, the subclass
+ * generates and uploads payload and stepfunction templates and restart ECS
+ * tasks if there is an active cluster with running tasks.
+ *
+ * @class UpdatedKes
+ */
 class UpdatedKes extends Kes {
 
+  /**
+   * Restart all active tasks in the clusters of a deployed
+   * cloudformation
+   *
+   * @param  {object} config Kes Config object
+   * @return {Promise}
+   */
   async restartECSTasks(config) {
     const ecs = new this.AWS.ECS();
 
@@ -138,6 +177,13 @@ class UpdatedKes extends Kes {
     }
   }
 
+  /**
+   * Uploads the generated private and public key pair
+   * 
+   * @param  {string} bucket the bucket to upload the keys to
+   * @param  {string} key    the key (folder) to use for the uploaded files
+   * @return {Promise} aws promise of the upload to s3
+   */
   uploadKeyPair(bucket, key) {
     const pki = forge.pki;
     const keyPair = generateKeyPair();
@@ -166,6 +212,12 @@ class UpdatedKes extends Kes {
       .then(() => console.log('keys uploaded to S3'));
   }
 
+  /**
+   * Checks if the private/public key exists. If not
+   * generate and upload them
+   *
+   * @return {Promise}
+   */
   crypto() {
     const key = `${this.stack}/crypto`;
 
@@ -181,11 +233,16 @@ class UpdatedKes extends Kes {
       .catch(() => this.uploadKeyPair(this.bucket, key));
   }
 
-  opsStack(ops) {
+  /**
+   * Override opsStack method.
+   *
+   * @return {Promise}
+   */
+  opsStack() {
     // check if public and private key are generated
     // if not generate and upload them
     return this.crypto(this.bucket, this.stack)
-      .then(() => super.opsStack(ops))
+      .then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
         const outputs = r.Stacks[0].Outputs;
