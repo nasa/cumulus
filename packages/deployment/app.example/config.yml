@@ -1,0 +1,29 @@
+
+<change-me>:
+  stackName: change-me-cumulus
+  stackNameNoDash: ChangeMeCumulus
+  stackNoDash: ChangeMeCumulus
+  stageNoDash: dev
+  resourcePrefixNoDash: ChangeMeCumulus
+
+  ecs:
+    instanceType: t2.micro
+    desiredInstances: 0
+
+ buckets:
+    internal: change-me
+    private: change-me
+    protected: change-me
+    public: change-me
+
+  iams:
+    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-lambda-processing
+    stepRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-steprole
+    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/ghrc-cumulus-ecs
+
+  backend:
+    endpoint: https://uat.urs.earthdata.nasa.gov
+    api: https://apigateway-url-to-api-backend/auth/login
+    dashboard: https://dashboard-url/#/auth
