@@ -138,6 +138,6 @@ default:
       targets:
         - lambda: jobs
 
-  stepFunctions: !!inc/file workflows.yml
+  stepFunctions: !!files ['workflows.yml']
 
-  lambdas: !!inc/file lambdas.yml
+  lambdas: !!files [ '../cumulus/packages/deployment/app/api.yml', 'lambdas.yml' ]
