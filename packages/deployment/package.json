@@ -22,7 +22,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "kes": "^1.1.0",
+    "kes": "^1.2.0",
     "node-forge": "^0.7.1"
   },
   "devDependencies": {
@@ -31,6 +31,6 @@
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
     "sinon": "^2.0.0-pre.5",
-    "webpack": "^1.12.13"
+    "webpack": "^3.8.1"
   }
 }
