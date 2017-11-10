@@ -2,6 +2,12 @@ Parameters:
   ConfigS3Bucket:
     Type: String
     Description: Name of an S3 bucket that can hold deployment configuration and artifacts
+  PrivateBucketName:
+    Type: String
+    Description: An alphanumeric stirng for the name of the private bucket for the stack
+  PublicBucketName:
+    Type: String
+    Description: An alphanumeric string for the name of the public bucket for the stack
   StackName:
     Type: String
     Description:
