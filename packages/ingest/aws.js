@@ -557,6 +557,32 @@ class StepFunction {
     }
   }
 
+  static async getExecutionStatus(arn) {
+    const sfn = new AWS.StepFunctions();
+
+    const [execution, executionHistory] = await Promise.all([
+      this.getExecution(arn),
+      this.getExecutionHistory(arn),
+    ]);
+
+    const stateMachine = await sfn.describeStateMachine({
+      stateMachineArn: execution.stateMachineArn
+    }).promise();
+
+    return { execution, executionHistory, stateMachine }
+  }
+
+  static async getExecutionHistory(arn) {
+    const sfn = new AWS.StepFunctions();
+
+    const params = {
+      executionArn: arn
+    };
+
+    const execution = await sfn.getExecutionHistory(params).promise();
+    return execution;
+  }
+
   static async pullEvent(event) {
     if (event.s3_path) {
       const parsed = S3.parseS3Uri(event.s3_path);
