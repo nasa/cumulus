@@ -5,6 +5,7 @@ const fetch = require('node-fetch');
 const log = require('@cumulus/common/log');
 const Task = require('@cumulus/common/task');
 const FieldPattern = require('@cumulus/common/field-pattern');
+const querystring = require('querystring');
 
 const PAGE_SIZE = 2000;
 
@@ -20,9 +21,11 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * @return An array of CMR granules that need ingest
    */
   async run() {
-    const since = new Date(Date.now() - parseDuration(this.config.since)).toISOString();
-    const conceptId = this.message.meta.concept_id;
-    const granules = await this.cmrGranules(this.config.root, since, conceptId);
+    const query = this.config.query || {};
+    if (query.updated_since) {
+      query.updated_since = new Date(Date.now() - parseDuration(query.updated_since)).toISOString();
+    }
+    const granules = await this.cmrGranules(this.config.root, query);
     const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
     const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
     return filtered;
@@ -51,19 +54,24 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
   /**
    * Returns CMR granules updated after the specified date
    * @param {string} root - The CMR root url (protocol and domain without path)
-   * @param {string} since - The ISO date/time of the earliest update date to return
-   * @param {string} id - The collection id
-   * @return An array of all granules updated after the specified date
+   * @param {object} query - The query parameters to serialize and send to a CMR granules search
+   * @return An array of all granules matching the given query
    */
-  async cmrGranules(root, since, id) {
+  async cmrGranules(root, query) {
     const granules = [];
-    const url = `${root}/search/granules.json?updated_since=${since}&collection_concept_id=${id}&page_size=${PAGE_SIZE}&sort_key=revision_date&page_num=`;
+    const params = Object.assign({
+      page_size: PAGE_SIZE,
+      sort_key: 'revision_date'
+    }, query);
+    const baseUrl = `${root}/search/granules.json`;
     const opts = { headers: { 'Client-Id': 'GitC' } };
     let done = false;
     let page = 1;
     while (!done) {
-      log.info('Fetching:', url + page);
-      const response = await fetch(url + page, opts);
+      params.page_num = page;
+      const url = [baseUrl, querystring.stringify(params)].join('?');
+      log.info('Fetching:', url);
+      const response = await fetch(url, opts);
       if (!response.ok) {
         throw new Error(`CMR Error ${response.status} ${response.statusText}`);
       }
@@ -94,9 +102,18 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
         const pattern = new FieldPattern(opts[key], fieldValues);
         transaction[key] = pattern.format({ granule: granule });
       }
-      return {
+      const result = {
         meta: transaction
       };
+      if (this.config.urls) {
+        const pattern = new RegExp(this.config.urls);
+        const urls = (granule.links || []).map((link) => ({
+          url: link.href,
+          version: granule.updated
+        }));
+        result.payload = urls.filter((url) => url.url.match(pattern));
+      }
+      return result;
     });
   }
 
