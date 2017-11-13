@@ -1,20 +1,16 @@
 default:
   stackName: change-me-cumulus
   stackNameNoDash: ChangeMeCumulus
-  stackNoDash: ChangeMeCumulus
-  stageNoDash: dev
-  resourcePrefixNoDash: ChangeMeCumulus
 
-  # override this in your deployment section
-  distribution:
-    endpoint: https://apigateway-url-to-distribution-app/
-    redirect: https://apigateway-url-to-distribution-app/redirect
+  urs_url: https://uat.urs.earthdata.nasa.gov
 
-  # override this in your deployment section
-  backend:
-    endpoint: https://uat.urs.earthdata.nasa.gov
-    api: https://apigateway-url-to-api-backend/auth/login
-    dashboard: https://dashboard-url/#/auth
+  # if not specified the value of the apigatewy backend endpoint is used
+  # api_backend_url: https://apigateway-url-to-api-backend/
+
+  # if not specified the value of the apigateway dist url is used
+  # api_distribution_url: https://apigateway-url-to-distribution-app/
+
+  dashboard_url: https://dashboard-url/ 
 
   params:
     - name: CmrPassword
@@ -41,10 +37,10 @@ default:
       - subnet-xxxxx #change me
 
   default_users:
-    - username: pquinn1
-    - username: scisco
-    - username: mhuffnagle2
-    - username: kbaynes
+    pquinn1: true
+    scisco: true
+    mhuffnagle2: true
+    kbaynes: true
 
   ecs:
     amiid: ami-9eb4b1e5
@@ -65,63 +61,55 @@ default:
   sns:
     # this topic receives all the updates from
     # step functions
-    - name: sftracker
+    sftracker:
       subscriptions:
-        - protocol: lambda
+        lambda:
           endpoint: '!GetAtt sns2elasticsearchLambdaFunction.Arn'
 
   # defining the APIs. Each item will include a separate endpoint
   apis:
     - name: distribution
     - name: backend
+  apiStage: dev
 
   dynamos:
-    - name: CollectionsTable
+    CollectionsTable:
       read: 5
       write: 1
       attributes:
         - name: name
           type: S
+          schema: HASH
         - name: version
           type: S
-      schema:
-        - name: name
-          type: HASH
-        - name: version
-          type: RANGE
+          schema: RANGE
 
-    - name: ProvidersTable
+    ProvidersTable:
       read: 5
       write: 1
       attributes:
         - name: id
           type: S
-      schema:
-        - name: id
-          type: HASH
+          schema: HASH
 
-    - name: RulesTable
+    RulesTable:
       read: 5
       write: 1
       attributes:
         - name: name
           type: S
-      schema:
-        - name: name
-          type: HASH
+          schema: HASH
 
-    - name: UsersTable
+    UsersTable:
       read: 5
       write: 1
       attributes:
         - name: userName
           type: S
-      schema:
-        - name: userName
-          type: HASH
+          schema: HASH
 
   sqs:
-    - name: startSF
+    startSF:
       visibilityTimeout: 20
       retry: 30
       consumer:
@@ -131,7 +119,7 @@ default:
           state: ENABLED
 
   rules:
-    - name: backgroundJobs
+    backgroundJobs:
       schedule: rate(10 minutes)
       state: ENABLED
       targets:
