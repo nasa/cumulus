@@ -10,7 +10,7 @@ This module includes cloudformation templates needed for a successful deployment
 3. Rename `app.example` to `app`.
 4. Execute kes command:
 
-     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment <my-deployment> --template node_modules/cumulus/deployment/app
+     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template node_modules/cumulus/deployment/app
 
 ## config.yml Explained
 
@@ -46,21 +46,21 @@ This module includes cloudformation templates needed for a successful deployment
 | es.instanceCount | 1 | number of elasticsearch nodes
 | es.instanceType | t2.small.elasticsearch | size of the ec2 instance used for the elasticsearch
 | es.volumeSize | 35 | the storage used in each elasticsearch node
-| sns.<name> | N/A | name of the sns topic
-| sns.<name>.subscriptions.lambda.endpoint | sns2elasticsearch | lambda function triggered for each message in the topic
-| apis.<name> | N/A | name of the apigateway application
+| sns.\<name\> | N/A | name of the sns topic
+| sns.\<name\>.subscriptions.lambda.endpoint | sns2elasticsearch | lambda function triggered for each message in the topic
+| apis.\<name\> | N/A | name of the apigateway application
 | apiStage | dev | stage name used for each api gateway deployment stage
-| dynamos.<name> | N/A | name of the dynamoDB table
-| dynamos.<name>.read | 5 | number of reads per second
-| dynamos.<name>.write | 1 | number of writes per second
-| dynamos.<name>.attributes | N/A | list of attributes
-| sqs.<name> | N/A | name of the queue
-| sqs.<name>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
-| sqs.<name>.retry | 30 | number of time the message is returned to the queue before being discarded
-| sqs.<name>.consumer | N/A | list of lambda function queue consumers
-| rules.<name> | N/A | list of cloudwathch rules
-| rules.<name>.schedule | N/A | rule's schedule
-| rules.<name>.state | ENABLED | state of the rule
-| rules.<name>.targets | N/A | list of lambda functions to be invoked
+| dynamos.\<name\> | N/A | name of the dynamoDB table
+| dynamos.\<name\>.read | 5 | number of reads per second
+| dynamos.\<name\>.write | 1 | number of writes per second
+| dynamos.\<name\>.attributes | N/A | list of attributes
+| sqs.\<name\> | N/A | name of the queue
+| sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
+| sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
+| sqs.\<name\>.consumer | N/A | list of lambda function queue consumers
+| rules.\<name\> | N/A | list of cloudwathch rules
+| rules.\<name\>.schedule | N/A | rule's schedule
+| rules.\<name\>.state | ENABLED | state of the rule
+| rules.\<name\>.targets | N/A | list of lambda functions to be invoked
 | stepFunctions | N/A | list of step functions
 | lambdas | N/A | list of lambda functions
