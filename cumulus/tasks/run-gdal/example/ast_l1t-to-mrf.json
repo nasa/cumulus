@@ -1,0 +1,116 @@
+{
+  "workflow_config_template": {
+    "RunGdal": {
+      "additional_files": [{
+        "Bucket": "pq-test",
+        "Key": "empty_tiles/Blank_RGBA_512.png"
+      }],
+      "input_filenames": ["processed.png", "processed.wld", "out.ppg"],
+      "commands": [
+        {
+          "gdal_command": "gdalbuildvrt",
+          "args": [
+            "-q",
+            "-te", "-180", "-90", "180", "90",
+            "-a_srs", "EPSG:4326",
+            "processed.vrt",
+            "processed.png"
+          ]
+        },
+        {
+          "gdal_command": "gdalwarp",
+          "args": [
+            "-of", "VRT",
+            "-r", "average",
+            "-ts", "2621440", "1310720",
+            "-te", "-180", "-90", "180", "90",
+            "-overwrite",
+            "processed.vrt",
+            "resampled.vrt"
+          ]
+        },
+        {
+          "gdal_command": "gdal_translate",
+          "args": [
+            "-q",
+            "-of", "MRF",
+            "-outsize", "2621440", "1310720",
+            "-co", "COMPRESS=PNG",
+            "-co", "BLOCKSIZE=512",
+            "-co", "NOCOPY=true",
+            "-co", "UNIFORM_SCALE=2",
+            "resampled.vrt",
+            "out.mrf"
+          ]
+        },
+        {
+          "gdal_command": "gdalwarp",
+          "args": [
+            "-of", "VRT",
+            "-r", "average",
+            "-overwrite",
+            "-tr", "0.0001373291015625", "0.0001373291015625",
+            "processed.png",
+            "processed.png.vrt"
+          ]
+        },
+        {
+          "gdal_command": "mrf_insert",
+          "args": [
+            "-r", "AVG",
+            "processed.png.vrt",
+            "out.mrf"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "filename": "out.mrf",
+          "dest": {
+            "Bucket": "{resources.buckets.output}",
+            "Key": "{meta.collection_id}/mrfs/{ingest_meta.id}.mrf"
+          }
+        },
+        {
+          "filename": "out.idx",
+          "compress": true,
+          "dest": {
+            "Bucket": "{resources.buckets.output}",
+            "Key": "AST_L1T/mrfs/{ingest_meta.id}.idx.tgz"
+          }
+        },
+        {
+          "filename": "out.ppg",
+          "dest": {
+            "Bucket": "{resources.buckets.output}",
+            "Key": "AST_L1T/mrfs/{ingest_meta.id}.ppg"
+          }
+        }
+      ]
+    }
+  },
+  "ingest_meta": {
+    "task": "RunGdal",
+    "message_source": "local",
+    "id": "id-1234"
+  },
+  "resources": {
+    "buckets": {
+      "output": "pq-test",
+      "config": "pq-test"
+    }
+  },
+  "meta": {
+    "collection_id": "AST_L1T"
+  },
+  "payload": [
+    {
+      "Bucket": "pq-test",
+      "Key": "AST_L1T/pngs/id-1234.png"
+    },
+    {
+      "Bucket": "pq-test",
+      "Key": "AST_L1T/pngs/id-1234.wld"
+    }
+  ]
+}
