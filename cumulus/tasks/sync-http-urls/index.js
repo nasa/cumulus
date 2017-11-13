@@ -2,14 +2,13 @@
 
 const path = require('path');
 const _ = require('lodash');
-
+const request = require('request');
 const log = require('@cumulus/common/log');
 const Task = require('@cumulus/common/task');
 const aws = require('@cumulus/common/aws');
 const concurrency = require('@cumulus/common/concurrency');
 const local = require('@cumulus/common/local-helpers');
 const errorTypes = require('@cumulus/common/errors');
-
 
 const TIMEOUT_TIME_MS = 20 * 1000;
 
@@ -20,9 +19,49 @@ const updatedFiles = (existingKeys, updates) => {
   return _.values(_.omit(keyedUpdates, existingKeys));
 };
 
+/**
+ * Synchronizes a single URL to S3, respecting cookies and redirects, with optional authorization
+ * @param {String} url The URL to sync
+ * @param {String} bucket The bucket to upload to
+ * @param {String} key The S3 key to upload to
+ * @param {Object} auth An object with username / password keys corresponding to basic auth, or null
+ */
+const syncUrl = (url, bucket, key, auth) =>
+  new Promise((resolve, reject) => {
+    const options = {
+      url: url,
+      jar: true,
+      encoding: null // Needed?
+    };
+    if (auth) {
+      options.auth = {
+        user: auth.username,
+        pass: auth.password,
+        sendImmediately: false
+      };
+    }
+
+    request(options, (error, response, body) => {
+      if (error) {
+        return reject(error);
+      }
+
+      aws.s3().putObject({
+        Bucket: bucket,
+        Key: key,
+        ContentType: response.headers['content-type'],
+        ContentLength: response.headers['content-length'],
+        Body: body
+      }, (err) => {
+        if (err) return reject(err);
+        return resolve();
+      });
+    });
+  });
+
 let lastLog = null;
 let intermediates = 0;
-const syncFile = async (bucket, keypath, simulate, file) => {
+const syncFile = async (bucket, keypath, simulate, auth, file) => {
   const destKey = path.join(keypath, file.name || path.basename(file.key || file.url));
   let didLog = false;
   if (!lastLog || new Date() > 5000 + lastLog || simulate) {
@@ -39,7 +78,7 @@ const syncFile = async (bucket, keypath, simulate, file) => {
     log.warn('Simulated call');
   }
   else {
-    await aws.syncUrl(file.url, bucket, destKey);
+    await syncUrl(file.url, bucket, destKey, auth);
   }
   if (didLog) {
     log.debug(`Completed: ${file.url}`);
@@ -54,7 +93,10 @@ module.exports = class SyncHttpUrlsTask extends Task {
 
   async runWithLimitedConnections() {
     // Load existing state
-    let state = await this.source.loadState(this.constructor.name);
+    let state;
+    if (!this.config.stateless) {
+      state = await this.source.loadState(this.constructor.name);
+    }
     if (!state) {
       state = { files: [], completed: [] };
     }
@@ -91,7 +133,9 @@ module.exports = class SyncHttpUrlsTask extends Task {
     else {
       log.info('Sync is incomplete');
     }
-    this.source.saveState(this.constructor.name, state);
+    if (!this.config.stateless) {
+      this.source.saveState(this.constructor.name, state);
+    }
 
     // Terminate correctly
     if (errors) {
@@ -120,7 +164,8 @@ module.exports = class SyncHttpUrlsTask extends Task {
                                      syncFile,
                                      bucket,
                                      keypath,
-                                     simulate);
+                                     simulate,
+                                     this.config.auth);
     const syncLimited = concurrency.limit(this.config.connections || 5, syncIfTimeLeft);
     return concurrency.mapTolerant(files, syncLimited);
   }
