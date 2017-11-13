@@ -19,7 +19,7 @@ function generateKeyPair() {
  * Generates a template used for SFScheduler to create cumulus
  * payloads for step functions. Each step function gets a separate
  * template
- * 
+ *
  * @function generateInputTemplates
  * @param  {object} config Kes Config Object
  * @param  {array} outputs Array of CloudFormation outputs
@@ -58,10 +58,10 @@ function generateInputTemplates(config, outputs) {
 
   if (config.sqs) {
     template.resources.queues = {};
-    config.sqs.forEach((q) => {
-      const queueUrl = arns[`${q.name}SQSOutput`];
+    Object.keys(config.sqs).forEach((queue) => {
+      const queueUrl = arns[`${queue}SQSOutput`];
       if (queueUrl) {
-        template.resources.queues[q.name] = queueUrl;
+        template.resources.queues[queue] = queueUrl;
       }
     });
   }
@@ -179,7 +179,7 @@ class UpdatedKes extends Kes {
 
   /**
    * Uploads the generated private and public key pair
-   * 
+   *
    * @param  {string} bucket the bucket to upload the keys to
    * @param  {string} key    the key (folder) to use for the uploaded files
    * @return {Promise} aws promise of the upload to s3
@@ -246,6 +246,20 @@ class UpdatedKes extends Kes {
       .then(() => this.describeCF())
       .then((r) => {
         const outputs = r.Stacks[0].Outputs;
+
+        const urls = {
+          Dashboard: '#/auth',
+          Api: 'auth/login',
+          Distribution: 'redirect'
+        };
+        console.log('\nHere are the important URLs for this deployment:\n');
+        outputs.forEach((o) => {
+          if (Object.keys(urls).includes(o.OutputKey)) {
+            console.log(`${o.OutputKey}: `, o.OutputValue);
+            console.log('Add this url to URS: ', `${o.OutputValue}${urls[o.OutputKey]}`, '\n');
+          }
+        });
+
         const workflowInputs = generateInputTemplates(this.config, outputs);
         const stackName = this.stack;
 
