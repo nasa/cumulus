@@ -27,12 +27,14 @@ Resources:
         table: !Ref UsersTableDynamoDB
         records:
         {{# each default_users}}
-          - username: {{username}}
-            password: {{#if password}}{{ToMd5 password}}{{ else }}OAuth{{/if}}
+          {{# if this }}
+          - username: {{@key}}
+            password: OAuth
+          {{/if}}
         {{/each}}
         {{# each users}}
           - username: {{username}}
-            password: {{#if password}}{{ToMd5 password}}{{ else }}OAuth{{/if}}
+            password: OAuth
         {{/each}}
 
   #################################################
@@ -43,24 +45,24 @@ Resources:
   # SNS config BEGIN
   #################################################
 {{#each sns}}
-  {{name}}Sns:
+  {{@key}}Sns:
     Type: "AWS::SNS::Topic"
     Properties:
-      DisplayName: {{../stackName}}-{{name}}
+      DisplayName: {{../stackName}}-{{@key}}
       Subscription:
-      {{#each subscriptions}}
-        - Endpoint: {{endpoint}}
-          Protocol: {{protocol}}
+      {{#each this.subscriptions}}
+        - Endpoint: {{this.endpoint}}
+          Protocol: {{@key}}
       {{/each}}
 
-  {{# each subscriptions}}
-  {{../name}}SubscriptionPermission:
+  {{# each this.subscriptions}}
+  {{@../key}}SubscriptionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: {{endpoint}}
+      FunctionName: {{this.endpoint}}
       Action: lambda:InvokeFunction
       Principal: sns.amazonaws.com
-      SourceArn: !Ref {{../name}}Sns
+      SourceArn: !Ref {{@../key}}Sns
   {{/each}}
 
 {{/each}}
@@ -79,7 +81,7 @@ Resources:
 {{/each}}
 
 {{#each stepFunctions}}
-  {{../resourcePrefixNoDash}}{{name}}StateMachine:
+  {{../stackNameNoDash}}{{name}}StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
@@ -138,52 +140,52 @@ Resources:
   # SQS config BEGIN
   #################################################
 {{#each sqs}}
-  {{name}}SQS:
+  {{@key}}SQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{name}}
+      QueueName: {{../stackName}}-{{@key}}
       ReceiveMessageWaitTimeSeconds: 20
-    {{#if retry}}
+    {{#if this.retry}}
       RedrivePolicy:
-        deadLetterTargetArn: !GetAtt [{{name}}FailedSQS, Arn]
-        maxReceiveCount: {{retry}}
+        deadLetterTargetArn: !GetAtt [{{@key}}FailedSQS, Arn]
+        maxReceiveCount: {{this.retry}}
     {{/if}}
-      VisibilityTimeout: {{visibilityTimeout}}
+      VisibilityTimeout: {{this.visibilityTimeout}}
 
-{{#if retry}}
-  {{name}}FailedSQS:
+{{#if this.retry}}
+  {{@key}}FailedSQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{name}}-failed
+      QueueName: {{../stackName}}-{{@key}}-failed
 
 {{/if}}
 
-{{# each consumer }}
-  {{../name}}WatcherRule:
+{{# each this.consumer }}
+  {{@../key}}WatcherRule:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: {{schedule}}
-      State: {{# if state}}{{state}}{{ else }}DISABLED{{/if}}
+      ScheduleExpression: {{this.schedule}}
+      State: {{# if this.state}}{{this.state}}{{ else }}DISABLED{{/if}}
       Targets:
-        - Id: {{../name}}WatcherScheduler
-          Input: !Sub '{"queueUrl": "${ {{../name}}SQS}", "messageLimit": {{messageLimit}} }'
+        - Id: {{@../key}}WatcherScheduler
+          Input: !Sub '{"queueUrl": "${ {{@../key}}SQS}", "messageLimit": {{this.messageLimit}} }'
           Arn:
             Fn::GetAtt:
-            - {{lambda}}LambdaFunction
+            - {{this.lambda}}LambdaFunction
             - Arn
 
-  {{../name}}InvokeLambdaPermission:
+  {{@../key}}InvokeLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName:
         Fn::GetAtt:
-        - {{lambda}}LambdaFunction
+        - {{this.lambda}}LambdaFunction
         - Arn
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn:
         Fn::GetAtt:
-          - {{../name}}WatcherRule
+          - {{@../key}}WatcherRule
           - Arn
 
 {{/each}}
@@ -197,14 +199,14 @@ Resources:
   #################################################
 
 {{# each rules }}
-  {{name}}Rule:
+  {{@key}}Rule:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: {{schedule}}
-      State: {{# if state}}{{state}}{{ else }}DISABLED{{/if}}
+      ScheduleExpression: {{this.schedule}}
+      State: {{# if this.state}}{{this.state}}{{ else }}DISABLED{{/if}}
       Targets:
-        {{# each targets}}
-        - Id: {{../name}}WatcherScheduler
+        {{# each this.targets}}
+        - Id: {{@../key}}WatcherScheduler
           {{# if input}}
           Input: {{input}}
           {{/if}}
@@ -215,7 +217,7 @@ Resources:
         {{/each}}
 
   {{# each targets}}
-  {{../name}}RuleLambdaPermission:
+  {{@../key}}RuleLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName:
@@ -226,7 +228,7 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn:
         Fn::GetAtt:
-          - {{../name}}Rule
+          - {{@../key}}Rule
           - Arn
   {{/each}}
 {{/each}}
@@ -251,23 +253,23 @@ Resources:
   # DynamoDB config BEGIN
   #################################################
 {{#each dynamos}}
-  {{name}}DynamoDB:
+  {{@key}}DynamoDB:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-    {{#each attributes}}
+    {{#each this.attributes}}
       - AttributeName: {{name}}
         AttributeType: {{type}}
     {{/each}}
       KeySchema:
-    {{#each schema}}
+    {{#each this.attributes}}
       - AttributeName: {{name}}
-        KeyType: {{type}}
+        KeyType: {{schema}}
     {{/each}}
       ProvisionedThroughput:
-        ReadCapacityUnits: {{read}}
-        WriteCapacityUnits: {{write}}
-      TableName: {{../stackName}}-{{name}}
+        ReadCapacityUnits: {{this.read}}
+        WriteCapacityUnits: {{this.write}}
+      TableName: {{../stackName}}-{{@key}}
       StreamSpecification:
         StreamViewType: "NEW_IMAGE"
 
@@ -291,7 +293,7 @@ Resources:
     Properties:
       RestApiId:
         Ref: {{name}}RestApi
-      StageName: {{../stageNoDash}}
+      StageName: {{../apiStage}}
 {{/each}}
 
 {{#each apiMethods}}
@@ -394,13 +396,17 @@ Resources:
         Variables:
           stackName: {{../stackName}}
         {{#each this.envs}}
-          {{@key}}: {{this}}
+          {{@key}}: {{{this}}}
         {{/each}}
       {{# if ../es.name}}
         {{# if this.passElasticSearchEndpoint }}
           ES_HOST: !GetAtt {{../es.name}}Domain.DomainEndpoint
         {{/if}}
       {{/if}}
+        {{# if this.urs}}
+          API_ENDPOINT: {{# if ../api_backend_url}} {{../api_backend_url}}auth/login {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/auth/login"]] {{/if}}
+          DEPLOYMENT_ENDPOINT: {{# if ../api_distribution_url}} {{../api_distribution_url}}redirect {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]] {{/if}}
+        {{/if}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
     {{# if this.apiGateway }}
@@ -614,14 +620,24 @@ Resources:
   #################################################
 
 Outputs:
+
+  Dashboard:
+    Value: {{dashboard_url}}
+
+  Api:
+    Value: {{# if api_backend_url}} {{api_backend_url}} {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
+
+  Distribution:
+    Value: {{# if api_distribution_url}} {{api_distribution_url}}redirect {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
+
 {{#each stepFunctions}}
   {{name}}StateMachine:
-    Value: !Ref {{../resourcePrefixNoDash}}{{name}}StateMachine
+    Value: !Ref {{../stackNameNoDash}}{{name}}StateMachine
 {{/each}}
 
 {{#each sqs}}
-  {{name}}SQSOutput:
-    Value: !Ref {{name}}SQS
+  {{@key}}SQSOutput:
+    Value: !Ref {{@key}}SQS
 {{/each}}
 
 {{# if es.name}}
@@ -633,8 +649,8 @@ Outputs:
 {{/if}}
 
 {{#each sns}}
-  {{name}}SnsArn:
-    Value: !Ref {{name}}Sns
+  {{@key}}SnsArn:
+    Value: !Ref {{@key}}Sns
 {{/each}}
 
   EncryptedCmrPassword:
