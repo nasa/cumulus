@@ -17,7 +17,7 @@ This module includes cloudformation templates needed for a successful deployment
 | field | default     | description
 | ----- | ----------- | -----------
 | stackName | (required) | the name used as a prefix in all aws resources
-| resourcePrefixNoDash | (required) | stackName with no dash
+| stackNameNoDash | (required) | stackName with no dash
 | urs_url | uat.urs | urs url used for OAuth
 | api_backend_url | apigateway backend url | the API backend url
 | api_distribution_url | apigateway dist url | the API url used for file distribution

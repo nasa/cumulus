@@ -308,10 +308,10 @@ ApiAuth:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  urs: true
   envs:
-    EARTHDATA_BASE_URL: '{{backend.endpoint}}'
-    DASHBOARD_ENDPOINT: '{{backend.dashboard}}'
-    API_ENDPOINT: '{{backend.api}}'
+    EARTHDATA_BASE_URL: '{{urs_url}}'
+    DASHBOARD_ENDPOINT: '{{dashboard_url}}#/auth'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -338,8 +338,8 @@ ApiDistribution:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  urs: true
   envs:
-    DEPLOYMENT_ENDPOINT: '{{distribution.redirect}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     protected: '{{buckets.protected}}'
