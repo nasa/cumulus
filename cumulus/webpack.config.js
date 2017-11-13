@@ -38,7 +38,9 @@ module.exports = {
   devtool: '#inline-source-map',
   plugins: [
     new CopyWebpackPlugin([
-      { from: 'tasks/generate-mrf/templates', to: 'generate-mrf/templates' }]
+      { from: 'tasks/generate-mrf/templates', to: 'generate-mrf/templates' },
+      { from: 'tasks/run-gdal/dist', to: 'run-gdal' }
+    ]
     )
   ],
   module: {
