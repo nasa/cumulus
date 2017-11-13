@@ -35,7 +35,7 @@ module.exports = class TriggerIngestTask extends Task {
     const id = this.message.ingest_meta.id;
 
     for (const e of this.message.payload) {
-      const key = (e.meta && e.meta.key) || 'Unknown';
+      const key = (e.meta && e.meta.key) || this.config.key || 'Unknown';
       const name = aws.toSfnExecutionName(key.split('/', 3).concat(id), '__');
       log.info(`Starting ingest of ${name}`);
       const payload = { Bucket: bucket, Key: ['TriggerIngest', key].join('/') };
