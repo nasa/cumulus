@@ -2,9 +2,8 @@
 <change-me>:
   stackName: change-me-cumulus
   stackNameNoDash: ChangeMeCumulus
-  stackNoDash: ChangeMeCumulus
-  stageNoDash: dev
-  resourcePrefixNoDash: ChangeMeCumulus
+
+  apiStage: dev
 
   ecs:
     instanceType: t2.micro
@@ -23,7 +22,12 @@
     stepRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-steprole
     instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/ghrc-cumulus-ecs
 
-  backend:
-    endpoint: https://uat.urs.earthdata.nasa.gov
-    api: https://apigateway-url-to-api-backend/auth/login
-    dashboard: https://dashboard-url/#/auth
+    urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
+
+    # if not specified the value of the apigatewy backend endpoint is used
+    # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
+
+    # if not specified the value of the apigateway dist url is used
+    # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
+
+    dashboard_url: https://dashboard-url/ #make sure to include the trailing slash
