@@ -628,7 +628,7 @@ Outputs:
     Value: {{# if api_backend_url}} {{api_backend_url}} {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
 
   Distribution:
-    Value: {{# if api_distribution_url}} {{api_distribution_url}}redirect {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
+    Value: {{# if api_distribution_url}} {{api_distribution_url}} {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
 
 {{#each stepFunctions}}
   {{name}}StateMachine:
