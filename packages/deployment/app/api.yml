@@ -341,6 +341,7 @@ ApiDistribution:
   source: '../cumulus/daac-ops-api/dist/index.js'
   urs: true
   envs:
+    EARTHDATA_BASE_URL: '{{urs_url}}' 
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     protected: '{{buckets.protected}}'
