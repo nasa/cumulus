@@ -23,5 +23,6 @@
   },
   "payload": {
     "out": "anyvalue"
-  }
+  },
+  "exception": "None"
 }
