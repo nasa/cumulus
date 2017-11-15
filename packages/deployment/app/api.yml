@@ -136,6 +136,20 @@ ApiExecutions:
       method: get
       cors: true
       api: backend
+  
+ApiExecutionStatus:
+  handler: daac-ops-api.executionStatus
+  timeout: 20
+  memory: 256
+  source: '../cumulus/daac-ops-api/dist/index.js'
+  envs:
+    UsersTable: '!Ref UsersTableDynamoDB'
+  passElasticSearchEndpoint: true
+  apiGateway:
+    - path: executions/status/{arn}
+      method: get
+      cors: true
+      api: backend
 
 ApiWorkflows:
   handler: daac-ops-api.workflows
