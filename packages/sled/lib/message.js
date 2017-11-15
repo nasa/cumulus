@@ -21,22 +21,35 @@ function getSfnExecutionByName(stateMachineArn, executionName) {
   return [stateMachineArn.replace(':stateMachine:', ':execution:'), executionName].join(':');
 }
 
-function getCurrentSfnTask(stateMachineArn, executionName) {
+function getTaskNameFromExecutionHistory(executionHistory, arn) {
+  const eventsById = [];
+  for (const event of executionHistory.events) {
+    eventsById[event.id] = event;
+  }
+
+  for (const step of executionHistory.events) {
+    if (arn &&
+        ((step.type === 'LambdaFunctionScheduled' &&
+          step.lambdaFunctionScheduledEventDetails.resource === arn) ||
+         (step.type === 'ActivityScheduled' &&
+          step.activityScheduledEventDetails.resource === arn))) {
+      return eventsById[step.previousEventId].stateEnteredEventDetails.name;
+    }
+    else if (step.type === 'TaskStateEntered') return step.stateEnteredEventDetails.name;
+  }
+  throw new Error(`No task found for ${arn}`);
+
+}
+
+function getCurrentSfnTask(stateMachineArn, executionName, arn) {
   const sfn = new AWS.StepFunctions({ apiVersion: '2016-11-23' });
   const executionArn = getSfnExecutionByName(stateMachineArn, executionName);
-  sfn.getExecutionHistory({
+  return sfn.getExecutionHistory({
     executionArn: executionArn,
-    maxResults: 10,
+    maxResults: 40,
     reverseOrder: true
   }).promise()
-    .then((executionHistory) => {
-      for (const step of executionHistory.events) {
-        // Avoid iterating past states that have ended
-        if (step.type.endsWith('StateExited')) break;
-        if (step.type === 'TaskStateEntered') return step.stateEnteredEventDetails.name;
-      }
-      return Promise.reject(`No task found for ${stateMachineArn}#${executionName}`);
-    });
+    .then((executionHistory) => getTaskNameFromExecutionHistory(executionHistory, arn));
 }
 
 //////////////////////////////////
@@ -66,20 +79,24 @@ function loadLocalConfig(event) {
   return Promise.resolve(getConfig(event, task));
 }
 
-function loadStepFunctionConfig(event) {
-  const meta = event.ingest_meta;
-  return getCurrentSfnTask(meta.state_machine, meta.execution_name)
+function loadStepFunctionConfig(event, context) {
+  const meta = event.cumulus_meta;
+  return getCurrentSfnTask(
+    meta.state_machine,
+    meta.execution_name,
+    context.invokedFunctionArn || context.activityArn
+  )
     .then((taskName) => getConfig(event, taskName));
 }
 
-function loadConfig(event) {
+function loadConfig(event, context) {
   const source = event.cumulus_meta.message_source;
   if (!source) throw new Error('cumulus_meta requires a message_source');
   if (source === 'local') {
     return loadLocalConfig(event);
   }
   if (source === 'sfn') {
-    return loadStepFunctionConfig(event);
+    return loadStepFunctionConfig(event, context);
   }
   throw new Error(`Unknown event source: ${source}`);
 }
@@ -140,8 +157,8 @@ function resolvePayload(event, config) {
  * @param {*} event The input message sent to the Lambda
  * @returns {Promise} A promise resolving to a message that is ready to pass to an inner task
  */
-function loadNestedEvent(event) {
-  return loadConfig(event)
+function loadNestedEvent(event, context) {
+  return loadConfig(event, context)
     .then((config) => {
       const finalConfig = resolveConfigTemplates(event, config);
       const finalPayload = resolvePayload(event, config);

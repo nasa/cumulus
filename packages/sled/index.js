@@ -106,7 +106,7 @@ module.exports = function sledHandler(event, context, callback) {
     })
     .then((remoteEvent) => {
       fullEvent = remoteEvent;
-      return message.loadNestedEvent(fullEvent);
+      return message.loadNestedEvent(fullEvent, context);
     })
     .then((nestedEvent) => {
       messageConfig = nestedEvent.messageConfig;
