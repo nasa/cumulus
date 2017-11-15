@@ -3,9 +3,13 @@
     "Example": {
       "bar": "baz",
       "cumulus_message": {
-        "input_path": "$.input",
-        "result_path": "$.out",
-        "output_path": "$.out.config"
+        "input": "{{$.payload.input}}",
+        "outputs": [
+          {
+            "source": "{{$.payload.anykey}}",
+            "destination": "{{$.payload.out}}"
+          }
+        ]
       }
     }
   },
@@ -18,6 +22,6 @@
     "foo": "bar"
   },
   "payload": {
-    "bar": "baz"
+    "out": "anyvalue"
   }
 }
