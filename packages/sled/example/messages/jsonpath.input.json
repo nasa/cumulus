@@ -1,0 +1,25 @@
+{
+  "workflow_config_template": {
+    "Example": {
+      "bar": "baz",
+      "cumulus_message": {
+        "input_path": "$.input",
+        "result_path": "$.out",
+        "output_path": "$.out.payload"
+      }
+    }
+  },
+  "ingest_meta": {
+    "task": "Example",
+    "message_source": "local",
+    "id": "id-1234"
+  },
+  "meta": {
+    "foo": "bar"
+  },
+  "payload": {
+    "input": {
+      "anykey": "anyvalue"
+    }
+  }
+}
