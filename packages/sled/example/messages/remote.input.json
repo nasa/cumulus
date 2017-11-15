@@ -6,7 +6,7 @@
     "message_bucket": "pq-test"
   },
   "replace": {
-    "Key": "pq-test",
-    "Value": "templates.input.json"
+    "Bucket": "pq-test",
+    "Key": "templates.input.json"
   }
 }
