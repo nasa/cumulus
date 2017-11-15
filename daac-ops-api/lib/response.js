@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /**
  * This module helps with returning approporiate
  * response via API Gateway Lambda Proxies
@@ -9,17 +10,32 @@
 
 'use strict';
 
-const forge = require('node-forge');
 const get = require('lodash.get');
-const auth = require('basic-auth');
-const proxy = require('lambda-proxy-utils');
 const log = require('@cumulus/common/log');
+const proxy = require('lambda-proxy-utils');
 const { User } = require('../models');
 const { errorify } = require('./utils');
 
-function resp(context, err, _body, _status = null) {
-  let status = _status;
-  let body = _body;
+const BEARER_REGEX = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9._~+/-]+=*) *$/;
+
+function getToken(req) {
+  if (!req.headers || typeof req.headers !== 'object') {
+    throw new TypeError('argument req is required to have headers property');
+  }
+
+  const authorization = req.headers.authorization;
+
+  const match = BEARER_REGEX.exec(authorization);
+
+  if (!match) {
+    return undefined;
+  }
+
+  return match[1];
+}
+
+
+function resp(context, err, body, status = null, headers = null) {
   if (typeof context.succeed !== 'function') {
     throw new Error('context object with succeed method not provided');
   }
@@ -37,7 +53,10 @@ function resp(context, err, _body, _status = null) {
   }
 
   const res = new proxy.Response({ cors: true, statusCode: status });
-  res.set('Strict-Transport-Security', 'max-age=31536000')
+  res.set('Strict-Transport-Security', 'max-age=31536000');
+  if (headers) {
+    Object.keys(headers).forEach(h => res.set(h, headers[h]));
+  }
   return context.succeed(res.send(body));
 }
 
@@ -50,41 +69,31 @@ function handle(event, context, authCheck, func) {
   if (authCheck) {
     const req = new proxy.Request(event);
 
-    const user = auth(req);
+    const token = getToken(req);
 
-    if (!user) {
+    if (!token) {
       return cb('Invalid Authorization token');
     }
-
-    if (user.pass.startsWith('urs://')) {
-      // URS token passwords take the form "urs://<token>/<timestamp>"
-      // Check the timestamp portion for expiration.
-      const expiration = user.pass.split(/\/(\d+)$/)[1];
-      if (!expiration) {
-        return cb('Invalid Authorization token');
-      }
-      if (new Date(+expiration) < new Date()) {
-        return cb('Session expired');
-      }
-    }
-    else {
-      // do not allow login with a password that doesn't start with urs://
-      // this ensures that login with default password OAuth is not allowed
-      return cb('Invalid Authorization token');
-    }
-
-    // hash password
-    const md = forge.md.md5.create();
-    md.update(user.pass);
 
     // get the user
     const u = new User();
-    return u.get({ userName: user.name }).then((userObj) => {
-      if (userObj.password === md.digest().toHex()) {
-        return func(cb);
+    return u.scan({
+      filter: 'password = :token',
+      values: { ':token': token }
+    }).then((results) => {
+      if (results.Count < 1 || results.Count > 1) {
+        return cb('Invalid Authorization token count');
       }
-      return cb('Invalid Authorization token');
-    }).catch(e => cb(e));
+      const obj = results.Items[0];
+
+      if (!obj.expires) {
+        return cb('Invalid Authorization token expires');
+      }
+      else if (obj.expires < Date.now()) {
+        return cb('Session expired');
+      }
+      return func(cb);
+    }).catch(e => cb('Invalid Authorization token', e));
   }
   return func(cb);
 }
