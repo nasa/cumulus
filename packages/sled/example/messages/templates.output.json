@@ -1,12 +1,12 @@
 {
-  "workflow_config_template": {
+  "workflow_config": {
     "Example": {
       "inlinestr": "prefix{meta.foo}suffix",
       "array": "{[$.meta.foo]}",
       "object": "{{$.meta}}"
     }
   },
-  "ingest_meta": {
+  "cumulus_meta": {
     "task": "Example",
     "message_source": "local",
     "id": "id-1234"
