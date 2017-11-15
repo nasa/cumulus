@@ -226,12 +226,6 @@ class Manager {
     item = omit(item, keysToDelete);
     item.updatedAt = Date.now();
 
-    // merge key and item for validation
-    // TODO: find a way to implement this
-    // as of now this always fail because the updated record is partial
-    //const validationObject = Object.assign({}, key, item);
-    //this.constructor.recordIsValid(validationObject);
-
     // remove the key is not included in the item
     item = omit(item, Object.keys(key));
 
