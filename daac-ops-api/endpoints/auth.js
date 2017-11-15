@@ -87,7 +87,7 @@ function login(event, context, cb) {
               `client_id=${clientId}&` +
               `redirect_uri=${redirectUriParam()}&response_type=code`;
   if (state) {
-    url = `${url}&state=${state}`;
+    url = `${url}&state=${encodeURIComponent(state)}`;
   }
   return cb(null, {
     statusCode: '301',
@@ -99,7 +99,7 @@ function login(event, context, cb) {
 }
 
 function handler(event, context, cb) {
-  if (event.httpMethod === 'GET' && event.resource === '/auth/login') {
+  if (event.httpMethod === 'GET' && event.resource === '/token') {
     return login(event, context, cb);
   }
   return resp(context, new Error('Not found'), 404);
