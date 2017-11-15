@@ -82,12 +82,12 @@ function handle(event, context, authCheck, func) {
       values: { ':token': token }
     }).then((results) => {
       if (results.Count < 1 || results.Count > 1) {
-        return cb('Invalid Authorization token count');
+        return cb('Invalid Authorization token');
       }
       const obj = results.Items[0];
 
       if (!obj.expires) {
-        return cb('Invalid Authorization token expires');
+        return cb('Invalid Authorization token');
       }
       else if (obj.expires < Date.now()) {
         return cb('Session expired');
