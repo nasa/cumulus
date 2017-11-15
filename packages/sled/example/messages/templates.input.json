@@ -1,7 +1,9 @@
 {
   "workflow_config_template": {
     "Example": {
-      "bar": "{meta.foo}"
+      "inlinestr": "prefix{meta.foo}suffix",
+      "array": "{[$.meta.foo]}",
+      "object": "{{$.meta}}"
     }
   },
   "ingest_meta": {
