@@ -248,8 +248,7 @@ class UpdatedKes extends Kes {
         const outputs = r.Stacks[0].Outputs;
 
         const urls = {
-          Dashboard: '#/auth',
-          Api: 'auth/login',
+          Api: 'token',
           Distribution: 'redirect'
         };
         console.log('\nHere are the important URLs for this deployment:\n');

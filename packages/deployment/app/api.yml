@@ -311,25 +311,12 @@ ApiAuth:
   urs: true
   envs:
     EARTHDATA_BASE_URL: '{{urs_url}}'
-    DASHBOARD_ENDPOINT: '{{dashboard_url}}#/auth'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     UsersTable: '!Ref UsersTableDynamoDB'
   apiGateway:
     - api: backend
-      path: auth
-      method: get
-      cors: true
-    - api: backend
-      path: auth/token
-      method: get
-      cors: true
-    - api: backend
-      path: auth/redirect
-      method: get
-      cors: true
-    - api: backend
-      path: auth/login
+      path: token
       method: get
       cors: true
 
