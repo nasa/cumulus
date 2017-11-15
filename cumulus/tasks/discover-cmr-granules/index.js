@@ -7,8 +7,6 @@ const Task = require('@cumulus/common/task');
 const FieldPattern = require('@cumulus/common/field-pattern');
 const querystring = require('querystring');
 
-const PAGE_SIZE = 2000;
-
 /**
  * Task which discovers granules by querying the CMR
  * Input payload: none
@@ -21,14 +19,15 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * @return An array of CMR granules that need ingest
    */
   async run() {
+    // const query = this.config.query || { updated_since: '5d', collection_concept_id: 'C1000000320-LPDAAC_ECS'};
     const query = this.config.query || {};
     if (query.updated_since) {
       query.updated_since = new Date(Date.now() - parseDuration(query.updated_since)).toISOString();
     }
     const granules = await this.cmrGranules(this.config.root, query);
-    const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
-    const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
-    return filtered;
+    // const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
+    // const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
+    // return filtered;
   }
 
   /**
@@ -58,30 +57,38 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * @return An array of all granules matching the given query
    */
   async cmrGranules(root, query) {
+    //NEED SOURCE OF THESE VALUES------//
+    const startDate = '2015-01-01';
+    const endDate = '2015-01-02';
+    //-------//
     const granules = [];
-    const params = Object.assign({
-      page_size: PAGE_SIZE,
-      sort_key: 'revision_date'
-    }, query);
+    const params = Object.assign(query);
+    if (params.updated_since) params.sort_key = 'revision_date';
+    params.collection_concept_id = params.collection_concept_id || 'C1000000320-LPDAAC_ECS';
+    params.pretty = 'true';
+    params.scroll = 'true';
     const baseUrl = `${root}/search/granules.json`;
     const opts = { headers: { 'Client-Id': 'GitC' } };
     let done = false;
-    let page = 1;
+    let scrollID = false;
     while (!done) {
-      params.page_num = page;
-      const url = [baseUrl, querystring.stringify(params)].join('?');
+      // if (params.updated_since) params.page_num = page;
+      let url = [baseUrl, querystring.stringify(params)].join('?');
+      if (!params.updated_since) {
+        url += `&temporal=${startDate}T00%3A00%3A00Z,${endDate}T00%3A00%3A00Z`;
+      }
       log.info('Fetching:', url);
       const response = await fetch(url, opts);
       if (!response.ok) {
         throw new Error(`CMR Error ${response.status} ${response.statusText}`);
       }
       const json = await response.json();
+      console.log(json);
       granules.push(...json.feed.entry);
-      const hits = parseInt(response.headers.get('CMR-Hits'), 10);
-      if (page === 1) log.info(`CMR Granule count: ${hits}`);
-      done = hits <= page * PAGE_SIZE;
-      page++;
+      opts.headers['CMR-Scroll-Id'] = response.headers['_headers']['cmr-scroll-id'];
+      done = (json.feed.entry.length == 0);
     }
+    console.log('----TOTAL----: '+granules.length);
     return granules;
   }
 
