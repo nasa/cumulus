@@ -169,7 +169,7 @@ class Granule {
     const downloadFiles = granule.files
       .map(f => this.getBucket(f))
       .filter(f => this.filterChecksumFiles(f))
-      .map(f => this.ingestFile(f));
+      .map(f => this.ingestFile(f, granule.granuleHandling));
 
     const files = await Promise.all(downloadFiles);
 
@@ -242,19 +242,27 @@ class Granule {
    * Ingest individual files
    * @private
    */
-  async ingestFile(_file) {
+  async ingestFile(_file, duplicateHandling) {
     const file = _file;
     let exists;
 
-    // check if the file exists. if it does skip
-    if (!this.forceDownload) {
-      exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
-    }
-    else {
-      exists = false;
+    // check if the file exists.
+    exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
+
+    if (duplicateHandling == "version") {
+      // check that the bucket has versioning enabled
+      versioning = await S3.getBucketVersioning({Bucket: file.bucket});
+      // if not enabled, make it enabled
+      if (versioning.Status != "Enabled") {
+        versioning = await putBucketVersioning({ Bucket: file.bucket, VersioningConfiguration: { Status: "Enabled"}});
+      }
     }
 
-    if (!exists) {
+    if (!exists || duplicateHandling != "skip") {
+      // Either the file does not exist yet, or it does but
+      // we are replacing it with a more recent one or
+      // adding another version of it to the bucket
+
       // we considered a direct stream from source to S3 but since
       // it doesn't work with FTP connections, we decided to always download
       // and then upload
