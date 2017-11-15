@@ -1,3 +1,5 @@
+const WebpackSourceMapSupport = require("webpack-source-map-support");
+
 module.exports = {
   entry: ['babel-polyfill', './index.js'],
   output: {
@@ -5,15 +7,18 @@ module.exports = {
     filename: 'dist/index.js'
   },
   target: 'node',
-  devtool: 'sourcemap',
+  devtool: 'source-map',
+  plugins: [
+    new WebpackSourceMapSupport()
+  ],
   module: {
-    loaders: [{
+    rules: [{
       test: /\.js?$/,
       exclude: /(node_modules)/,
-      loader: 'babel'
+      loader: 'babel-loader'
     }, {
       test: /\.json$/,
-      loader: 'json'
+      loader: 'json-loader'
     }]
   }
 };
