@@ -1,13 +1,14 @@
 {
-  "workflow_config_template": {
+  "workflow_config": {
     "Example": {
       "bar": "{meta.foo}"
     }
   },
-  "ingest_meta": {
+  "cumulus_meta": {
     "task": "Example",
     "message_source": "local",
-    "id": "id-1234"
+    "id": "id-1234",
+    "message_bucket": "pq-test"
   },
   "meta": {
     "foo": "bar"

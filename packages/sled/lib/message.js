@@ -19,12 +19,12 @@ function loadRemoteEvent(event) {
 // Loading task configuration from workload template
 
 function getConfig(event, taskName) {
-  const config = event.workflow_config_template && event.workflow_config_template[taskName];
+  const config = event.workflow_config && event.workflow_config[taskName];
   return config || {};
 }
 
 function loadLocalConfig(event) {
-  const task = event.ingest_meta.task;
+  const task = event.cumulus_meta.task;
   return Promise.resolve(getConfig(event, task));
 }
 
@@ -34,8 +34,8 @@ function loadStepFunctionConfig(event) {
 }
 
 function loadConfig(event) {
-  const source = event.ingest_meta.message_source;
-  if (!source) throw new Error('ingest_meta requires a message_source');
+  const source = event.cumulus_meta.message_source;
+  if (!source) throw new Error('cumulus_meta requires a message_source');
   if (source === 'local') {
     return loadLocalConfig(event);
   }
