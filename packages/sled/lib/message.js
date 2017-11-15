@@ -3,9 +3,9 @@
 const JsonPath = require('../deps/jsonpath.min');
 const AWS = require('aws-sdk');
 
-///////////////////
-// AWS SDK Setup //
-///////////////////
+/////////////////////////////
+// AWS SDK Setup and Utils //
+/////////////////////////////
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
@@ -15,6 +15,29 @@ if (region) {
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
 AWS.config.setPromisesDependency(Promise);
+
+
+function getSfnExecutionByName(stateMachineArn, executionName) {
+  return [stateMachineArn.replace(':stateMachine:', ':execution:'), executionName].join(':');
+}
+
+function getCurrentSfnTask(stateMachineArn, executionName) {
+  const sfn = new AWS.StepFunctions({ apiVersion: '2016-11-23' });
+  const executionArn = getSfnExecutionByName(stateMachineArn, executionName);
+  sfn.getExecutionHistory({
+    executionArn: executionArn,
+    maxResults: 10,
+    reverseOrder: true
+  }).promise()
+    .then((executionHistory) => {
+      for (const step of executionHistory.events) {
+        // Avoid iterating past states that have ended
+        if (step.type.endsWith('StateExited')) break;
+        if (step.type === 'TaskStateEntered') return step.stateEnteredEventDetails.name;
+      }
+      return Promise.reject(`No task found for ${stateMachineArn}#${executionName}`);
+    });
+}
 
 //////////////////////////////////
 // Input message interpretation //
@@ -44,8 +67,9 @@ function loadLocalConfig(event) {
 }
 
 function loadStepFunctionConfig(event) {
-  // TODO: Implement this
-  throw new Error('loadStepFunctionConfig is not implemented');
+  const meta = event.ingest_meta;
+  return getCurrentSfnTask(meta.state_machine, meta.execution_name)
+    .then((taskName) => getConfig(event, taskName));
 }
 
 function loadConfig(event) {
