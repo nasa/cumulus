@@ -1,6 +1,20 @@
 'use strict';
 
 const JsonPath = require('../deps/jsonpath.min');
+const AWS = require('aws-sdk');
+
+///////////////////
+// AWS SDK Setup //
+///////////////////
+
+const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+if (region) {
+  AWS.config.update({ region: region });
+}
+
+// Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
+AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
+AWS.config.setPromisesDependency(Promise);
 
 //////////////////////////////////
 // Input message interpretation //
@@ -10,8 +24,9 @@ const JsonPath = require('../deps/jsonpath.min');
 
 function loadRemoteEvent(event) {
   if (event.replace) {
-    // TODO Implement this
-    throw new Error('loadRemoteEvent is not implemented when events are in S3');
+    const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+    return s3.getObject(event.replace).promise()
+      .then((data) => JSON.parse(data.Body.toString()));
   }
   return Promise.resolve(event);
 }
@@ -99,22 +114,19 @@ function resolvePayload(event, config) {
  * Interprets an incoming event as a Cumulus workflow message
  *
  * @param {*} event The input message sent to the Lambda
- * @param {*} context The context sent to the Lambda
  * @returns {Promise} A promise resolving to a message that is ready to pass to an inner task
  */
 function loadNestedEvent(event) {
-  return loadRemoteEvent(event)
-    .then((fullEvent) =>
-      loadConfig(fullEvent)
-        .then((config) => {
-          const finalConfig = resolveConfigTemplates(fullEvent, config);
-          const finalPayload = resolvePayload(fullEvent, config);
-          return {
-            payload: finalPayload,
-            config: finalConfig,
-            messageConfig: config.cumulus_message
-          };
-        }));
+  return loadConfig(event)
+    .then((config) => {
+      const finalConfig = resolveConfigTemplates(event, config);
+      const finalPayload = resolvePayload(event, config);
+      return {
+        payload: finalPayload,
+        config: finalConfig,
+        messageConfig: config.cumulus_message
+      };
+    });
 }
 
 /////////////////////////////
@@ -139,9 +151,36 @@ function assignOutputs(nestedResponse, event, messageConfig) {
   return result;
 }
 
+// https://gist.github.com/jed/982883
+// eslint-disable-next-line
+function uuid(a){return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,b)}
+
+// Maximum message payload size that will NOT be stored in S3. Anything bigger will be.
+const MAX_NON_S3_PAYLOAD_SIZE = 10000;
+
 function storeRemoteResponse(event) {
-  // TODO Implement me
-  return Promise.resolve(event);
+  const jsonData = JSON.stringify(event);
+  const roughDataSize = event ? jsonData.length : 0;
+
+  if (roughDataSize < MAX_NON_S3_PAYLOAD_SIZE) {
+    return Promise.resolve(event);
+  }
+
+  const s3Location = {
+    Bucket: event.ingest_meta.message_bucket,
+    Key: ['events', uuid()].join('/')
+  };
+  const s3Params = Object.assign({}, s3Location, {
+    Expires: (7 * 24 * 60 * 60 * 1000) + new Date(), // Expire in a week
+    Body: jsonData || '{}'
+  });
+  const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+
+  return s3.putObject(s3Params).promise()
+    .then(() => ({
+      cumulus_meta: event.cumulus_meta,
+      replace: s3Location
+    }));
 }
 
 /**
@@ -154,6 +193,8 @@ function storeRemoteResponse(event) {
  */
 function createNextEvent(nestedResponse, event, messageConfig) {
   const result = assignOutputs(nestedResponse, event, messageConfig);
+  result.exception = 'None';
+  delete result.replace;
   return storeRemoteResponse(result);
 }
 
@@ -163,5 +204,6 @@ function createNextEvent(nestedResponse, event, messageConfig) {
 
 module.exports = {
   loadNestedEvent: loadNestedEvent,
-  createNextEvent: createNextEvent
+  createNextEvent: createNextEvent,
+  loadRemoteEvent: loadRemoteEvent
 };

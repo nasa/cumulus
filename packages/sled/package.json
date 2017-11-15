@@ -23,12 +23,16 @@
   },
   "homepage": "https://github.com/cumulus-nasa/cumulus#readme",
   "eslintConfig": {
-    "plugins": ["node"],
-    "extends": ["plugin:node/recommended"]
+    "plugins": [
+      "node"
+    ],
+    "extends": [
+      "plugin:node/recommended"
+    ]
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
+    "aws-sdk": "^2.151.0",
     "eslint": "^4.9.0",
     "eslint-plugin-node": "^5.2.0"
   }

@@ -15,5 +15,6 @@
   "payload": {
     "payload": { "anykey": "anyvalue" },
     "config": { "bar": "baz" }
-  }
+  },
+  "exception": "None"
 }
