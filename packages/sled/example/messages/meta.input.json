@@ -3,9 +3,16 @@
     "Example": {
       "bar": "{meta.foo}",
       "cumulus_message": {
-        "meta": {
-          "baz": "{payload.anykey}"
-        }
+        "outputs": [
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          },
+          {
+            "source": "{{$.payload.anykey}}",
+            "destination": "{{$.meta.baz}}"
+          }
+        ]
       }
     }
   },
