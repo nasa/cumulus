@@ -1,5 +1,5 @@
 {
-  "workflow_config_template": {
+  "workflow_config": {
     "Example": {
       "bar": "{meta.foo}",
       "cumulus_message": {
@@ -16,7 +16,7 @@
       }
     }
   },
-  "ingest_meta": {
+  "cumulus_meta": {
     "task": "Example",
     "message_source": "local",
     "id": "id-1234"
