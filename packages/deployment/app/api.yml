@@ -303,8 +303,8 @@ ApiStats:
       cors: true
       api: backend
 
-ApiAuth:
-  handler: daac-ops-api.auth
+ApiToken:
+  handler: daac-ops-api.token
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
