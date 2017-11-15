@@ -97,21 +97,31 @@ module.exports = function sledHandler(event, context, callback) {
   let taskConfig = null;
   let nestedHandler = null;
   let messageConfig = null;
+  let fullEvent = null;
   promiseTaskConfig()
     .then((config) => {
       taskConfig = config.task || {};
       nestedHandler = getNestedHandler(taskConfig.entrypoint || 'index.handler');
-      return message.loadNestedEvent(event, config);
+      return message.loadRemoteEvent(event);
+    })
+    .then((remoteEvent) => {
+      fullEvent = remoteEvent;
+      return message.loadNestedEvent(fullEvent);
     })
     .then((nestedEvent) => {
       messageConfig = nestedEvent.messageConfig;
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
       return invokeHandler(nestedHandler, nestedEvent, context);
     })
-    .then((handlerResponse) => message.createNextEvent(handlerResponse, event, messageConfig))
+    .then((handlerResponse) => message.createNextEvent(handlerResponse, fullEvent, messageConfig))
     .then((nextEvent) => callback(null, nextEvent))
     .catch((err) => {
-      callback(err);
+      if (err.name && err.name.includes('WorkflowError')) {
+        callback(null, Object.assign({}, fullEvent, { payload: null, exception: err.name }));
+      }
+      else {
+        callback(err);
+      }
     });
 };
 

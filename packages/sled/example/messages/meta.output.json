@@ -28,5 +28,6 @@
   "payload": {
     "payload": { "anykey": "anyvalue" },
     "config": { "bar": "bar" }
-  }
+  },
+  "exception": "None"
 }

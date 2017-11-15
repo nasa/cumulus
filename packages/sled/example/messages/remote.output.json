@@ -1,20 +1,26 @@
 {
   "workflow_config": {
     "Example": {
-      "bar": "{meta.foo}"
+      "inlinestr": "prefix{meta.foo}suffix",
+      "array": "{[$.meta.foo]}",
+      "object": "{{$.meta}}"
     }
   },
   "cumulus_meta": {
     "task": "Example",
     "message_source": "local",
-    "id": "id-1234",
-    "message_bucket": "pq-test"
+    "id": "id-1234"
   },
   "meta": {
     "foo": "bar"
   },
   "payload": {
     "payload": { "anykey": "anyvalue" },
-    "config": { "bar": "bar" }
-  }
+    "config": {
+      "inlinestr": "prefixbarsuffix",
+      "array": ["bar"],
+      "object": { "foo": "bar" }
+    }
+  },
+  "exception": "None"
 }
