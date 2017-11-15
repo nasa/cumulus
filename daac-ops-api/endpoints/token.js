@@ -98,6 +98,14 @@ function login(event, context, cb) {
   });
 }
 
+/**
+ * Main handler for the token endpoint
+ * @function handler
+ * @param  {type} event   {description}
+ * @param  {type} context {description}
+ * @param  {type} cb      {description}
+ * @return {type} {description}
+ */
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource === '/token') {
     return login(event, context, cb);
