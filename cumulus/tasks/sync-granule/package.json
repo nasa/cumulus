@@ -49,6 +49,7 @@
     "babel-preset-es2017": "^6.24.1",
     "sinon": "^2.0.0-pre.5",
     "ava": "^0.21.0",
-    "webpack": "^1.12.13"
+    "webpack-source-map-support": "^2.0.1",
+    "webpack": "^3.8.1"
   }
 }
