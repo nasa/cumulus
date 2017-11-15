@@ -2,7 +2,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const jsonpath = require('./deps/jsonpath');
 const message = require('./lib/message');
 
 // The filesystem location of the Lambda module
@@ -15,7 +14,7 @@ const TASK_ROOT = 'example';
  */
 function taskPath(relativePath) {
   return path.resolve(__dirname, TASK_ROOT, relativePath);
-};
+}
 
 /**
  * @returns {Promise} A promise resolving to the parsed contents of cumulus.json
@@ -97,14 +96,19 @@ function invokeHandler(handler, event, context) {
 module.exports = function sledHandler(event, context, callback) {
   let taskConfig = null;
   let nestedHandler = null;
+  let messageConfig = null;
   promiseTaskConfig()
     .then((config) => {
       taskConfig = config.task || {};
       nestedHandler = getNestedHandler(taskConfig.entrypoint || 'index.handler');
       return message.loadNestedEvent(event, config);
     })
-    .then((nestedEvent) => invokeHandler(nestedHandler, nestedEvent, context))
-    .then((handlerResponse) => message.createNextEvent(handlerResponse, event, context))
+    .then((nestedEvent) => {
+      messageConfig = nestedEvent.messageConfig;
+      delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
+      return invokeHandler(nestedHandler, nestedEvent, context);
+    })
+    .then((handlerResponse) => message.createNextEvent(handlerResponse, event, messageConfig))
     .then((nextEvent) => callback(null, nextEvent))
     .catch((err) => {
       callback(err);
@@ -115,9 +119,9 @@ module.exports = function sledHandler(event, context, callback) {
 if (process.argv[2] === 'local') {
   if (!process.argv[3]) throw new Error('Message identifier required');
 
-  const message = process.argv[3];
-  const event = JSON.parse(fs.readFileSync(`example/messages/${message}.input.json`, 'utf8'));
-  const expectedOutputObj = JSON.parse(fs.readFileSync(`example/messages/${message}.output.json`, 'utf8'));
+  const messageName = process.argv[3];
+  const event = JSON.parse(fs.readFileSync(`example/messages/${messageName}.input.json`, 'utf8'));
+  const expectedOutputObj = JSON.parse(fs.readFileSync(`example/messages/${messageName}.output.json`, 'utf8'));
   const expectedOutput = JSON.stringify(expectedOutputObj);
 
   module.exports(event, {}, (err, data) => {
