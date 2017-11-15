@@ -10,8 +10,6 @@ default:
   # if not specified the value of the apigateway dist url is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/
 
-  dashboard_url: https://dashboard-url/ 
-
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}' # this has to be set in .env
