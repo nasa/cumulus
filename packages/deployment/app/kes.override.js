@@ -46,7 +46,7 @@ function generateInputTemplates(config, outputs) {
     stack: config.stackName,
     kms: arns.KmsKeyId,
     cmr: config.cmr,
-    distribution_endpoint: config.distributionEndpoint
+    distribution_endpoint: config.distribution_endpoint
   };
 
   // add cmr password:
@@ -256,6 +256,10 @@ class UpdatedKes extends Kes {
           if (Object.keys(urls).includes(o.OutputKey)) {
             console.log(`${o.OutputKey}: `, o.OutputValue);
             console.log('Add this url to URS: ', `${o.OutputValue}${urls[o.OutputKey]}`, '\n');
+
+            if (o.OutputKey === 'Distribution') {
+              this.config.distribution_endpoint = o.OutputValue;
+            }
           }
         });
 
