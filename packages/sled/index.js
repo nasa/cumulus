@@ -37,7 +37,8 @@ function promiseTaskConfig() {
 
 /**
  * Returns the handler function for the given module.function string
- * @param {String} handlerString The handler location as it would be passed to Lambda (e.g. "index.handler")
+ * @param {String} handlerString The handler location as it would be passed to Lambda (e.g.
+ *                              "index.handler")
  * @returns {Function} The handler function corresponding to the string
  */
 function getNestedHandler(handlerString) {
@@ -66,9 +67,9 @@ function getNestedHandler(handlerString) {
 /**
  * Given a Lambda handler, event, and context, invokes the handler with the given event.
  * @param {Function} handler The Lambda handler to invoke
- * @param {*} event The event to pass to the Lambda.  Note: this is passed verbatim with no interpretation
+ * @param {*} event The event to pass to the Lambda.  Note: this is passed verbatim to the handler
  * @param {*} context The context object for the Lambda. done/succeed/fail methods will not be used
- * @returns {Promise} A Promise that resolves to the callback value of the handler or rejects if it errors
+ * @returns {Promise} A Promise resolving to the handler's callback value or rejecting if it errors
  */
 function invokeHandler(handler, event, context) {
   return new Promise((resolve, reject) => {
