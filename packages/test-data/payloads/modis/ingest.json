@@ -43,6 +43,7 @@
       "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
       "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
       "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
+      "granuleHandling": "replace",
       "files": [
         {
           "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
