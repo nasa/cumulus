@@ -189,17 +189,22 @@ function loadConfig(event, context) {
 function resolvePathStr(event, str) {
   const valueRegex = /^{{(.*)}}$/g;
   const arrayRegex = /^{\[(.*)\]}$/g;
-  const templateRegex = /(?:^|[^\]){([^}]+)}/g;
+  const templateRegex = /{([^}]+)}/g;
 
-  if (str.match(valueRegex)) {
-    return JsonPath.value(event, str.substring(2, str.length - 2));
+  try {
+    if (str.match(valueRegex)) {
+      return JsonPath.value(event, str.substring(2, str.length - 2));
+    }
+
+    if (str.match(arrayRegex)) {
+      return JsonPath.query(event, str.substring(2, str.length - 2));
+    }
+
+    return str.replace(templateRegex, (match, path) => JsonPath.value(event, path));
   }
-
-  if (str.match(arrayRegex)) {
-    return JsonPath.query(event, str.substring(2, str.length - 2));
+  catch (e) {
+    throw new Error(`Could not resolve path "${str}"`);
   }
-
-  return str.replace(templateRegex, (match, path) => JsonPath.value(event, path));
 }
 
 /**
@@ -271,7 +276,7 @@ function loadNestedEvent(event, context) {
       const finalConfig = resolveConfigTemplates(event, config);
       const finalPayload = resolveInput(event, config);
       return {
-        payload: finalPayload,
+        input: finalPayload,
         config: finalConfig,
         messageConfig: config.cumulus_message
       };

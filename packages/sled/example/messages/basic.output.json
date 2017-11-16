@@ -13,7 +13,7 @@
     "foo": "bar"
   },
   "payload": {
-    "payload": { "anykey": "anyvalue" },
+    "input": { "anykey": "anyvalue" },
     "config": { "bar": "baz" }
   },
   "exception": "None"
