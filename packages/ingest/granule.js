@@ -169,7 +169,7 @@ class Granule {
     const downloadFiles = granule.files
       .map(f => this.getBucket(f))
       .filter(f => this.filterChecksumFiles(f))
-      .map(f => this.ingestFile(f, granule.granuleHandling));
+      .map(f => this.ingestFile(f, this.collection.granuleHandling));
 
     const files = await Promise.all(downloadFiles);
 
