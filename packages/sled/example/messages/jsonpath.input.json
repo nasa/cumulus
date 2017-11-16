@@ -6,7 +6,7 @@
         "input": "{{$.payload.input}}",
         "outputs": [
           {
-            "source": "{{$.payload.anykey}}",
+            "source": "{{$.input.anykey}}",
             "destination": "{{$.payload.out}}"
           }
         ]
