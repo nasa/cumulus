@@ -9,7 +9,7 @@
             "destination": "{{$.payload}}"
           },
           {
-            "source": "{{$.payload.anykey}}",
+            "source": "{{$.input.anykey}}",
             "destination": "{{$.meta.baz}}"
           }
         ]
@@ -26,7 +26,7 @@
     "baz": "anyvalue"
   },
   "payload": {
-    "payload": { "anykey": "anyvalue" },
+    "input": { "anykey": "anyvalue" },
     "config": { "bar": "bar" }
   },
   "exception": "None"

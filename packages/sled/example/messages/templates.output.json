@@ -15,7 +15,7 @@
     "foo": "bar"
   },
   "payload": {
-    "payload": { "anykey": "anyvalue" },
+    "input": { "anykey": "anyvalue" },
     "config": {
       "inlinestr": "prefixbarsuffix",
       "array": ["bar"],
