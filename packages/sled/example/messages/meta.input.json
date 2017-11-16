@@ -9,7 +9,7 @@
             "destination": "{{$.payload}}"
           },
           {
-            "source": "{{$.payload.anykey}}",
+            "source": "{{$.input.anykey}}",
             "destination": "{{$.meta.baz}}"
           }
         ]
