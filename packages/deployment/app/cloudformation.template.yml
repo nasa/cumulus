@@ -284,7 +284,7 @@ Resources:
   #################################################
 {{# if apiMethods}}
 {{# each apiDependencies}}
-  ApiGatewayDeploymentWithNewToken{{name}}:
+  ApiGatewayDeployment11162017{{name}}:
     DependsOn:
   {{#each methods}}
     - {{name}}
