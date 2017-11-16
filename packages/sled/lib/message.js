@@ -16,18 +16,41 @@ if (region) {
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
 AWS.config.setPromisesDependency(Promise);
 
-
-function getSfnExecutionByName(stateMachineArn, executionName) {
+/**
+ * Given a state machine arn and execution name, returns the execution's ARN
+ * @param {string} stateMachineArn The ARN of the state machine containing the execution
+ * @param {string} executionName The name of the execution
+ * @returns {string} The execution's ARN
+ */
+function getSfnExecutionArnByName(stateMachineArn, executionName) {
   return [stateMachineArn.replace(':stateMachine:', ':execution:'), executionName].join(':');
 }
 
+/**
+ * Given an execution history object returned by the StepFunctions API and an optional Activity
+ * or Lambda ARN returns the most recent task name started for the given ARN, or if no ARN is
+ * supplied, the most recent task started.
+ *
+ * IMPORTANT! If no ARN is supplied, this message assumes that the most recently started execution
+ * is the desired execution. This WILL BREAK parallel executions, so always supply this if possible.
+ *
+ * @param {string} executionHistory The execution history returned by getExecutionHistory, assumed
+ *                             to be sorted so most recent executions come last
+ * @param {string} arn An ARN to an Activity or Lambda to find. See "IMPORTANT!"
+ * @throws If no matching task is found
+ * @returns {string} The matching task name
+ */
 function getTaskNameFromExecutionHistory(executionHistory, arn) {
   const eventsById = [];
+
+  // Create a lookup table for finding events by their id
   for (const event of executionHistory.events) {
     eventsById[event.id] = event;
   }
 
   for (const step of executionHistory.events) {
+    // Find the ARN in thie history (the API is awful here).  When found, return its
+    // previousEventId's (TaskStateEntered) name
     if (arn &&
         ((step.type === 'LambdaFunctionScheduled' &&
           step.lambdaFunctionScheduledEventDetails.resource === arn) ||
@@ -38,12 +61,24 @@ function getTaskNameFromExecutionHistory(executionHistory, arn) {
     else if (step.type === 'TaskStateEntered') return step.stateEnteredEventDetails.name;
   }
   throw new Error(`No task found for ${arn}`);
-
 }
 
+/**
+ * Given a state machine ARN, an execution name, and an optional Activity or Lambda ARN returns
+ * the most recent task name started for the given ARN in that execution, or if no ARN is
+ * supplied, the most recent task started.
+ *
+ * IMPORTANT! If no ARN is supplied, this message assumes that the most recently started execution
+ * is the desired execution. This WILL BREAK parallel executions, so always supply this if possible.
+ *
+ * @param {string} stateMachineArn The ARN of the state machine containing the execution
+ * @param {string} executionName The name of the step function execution to look up
+ * @param {string} arn An ARN to an Activity or Lambda to find. See "IMPORTANT!"
+ * @returns {string} The name of the task being run
+ */
 function getCurrentSfnTask(stateMachineArn, executionName, arn) {
   const sfn = new AWS.StepFunctions({ apiVersion: '2016-11-23' });
-  const executionArn = getSfnExecutionByName(stateMachineArn, executionName);
+  const executionArn = getSfnExecutionArnByName(stateMachineArn, executionName);
   return sfn.getExecutionHistory({
     executionArn: executionArn,
     maxResults: 40,
@@ -58,6 +93,12 @@ function getCurrentSfnTask(stateMachineArn, executionName, arn) {
 
 // Events stored externally
 
+/**
+ * Looks at a Cumulus message. If the message has part of its data stored remotely in
+ * S3, fetches that data and returns it, otherwise it just returns the full message
+ * @param {*} event The input Lambda event in the Cumulus message protocol
+ * @returns {Promise} Promise that resolves to the full event data
+ */
 function loadRemoteEvent(event) {
   if (event.replace) {
     const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
@@ -69,16 +110,34 @@ function loadRemoteEvent(event) {
 
 // Loading task configuration from workload template
 
+/**
+ * Returns the configuration for the task with the given name, or an empty object if no
+ * such task is configured.
+ * @param {*} event An event in the Cumulus message format with remote parts resolved
+ * @param {*} taskName The name of the Cumulus task
+ * @returns {*} The configuration object
+ */
 function getConfig(event, taskName) {
   const config = event.workflow_config && event.workflow_config[taskName];
   return config || {};
 }
 
+/**
+ * For local testing, returns the config for event.cumulus_meta.task
+ * @param {*} event An event in the Cumulus message format with remote parts resolved
+ * @returns {*} The task's configuration
+ */
 function loadLocalConfig(event) {
   const task = event.cumulus_meta.task;
   return Promise.resolve(getConfig(event, task));
 }
 
+/**
+ * For StepFunctions, returns the configuration corresponding to the current execution
+ * @param {*} event An event in the Cumulus message format with remote parts resolved
+ * @param {*} context The context object passed to AWS Lambda or containing an activityArn
+ * @returns {*} The task's configuration
+ */
 function loadStepFunctionConfig(event, context) {
   const meta = event.cumulus_meta;
   return getCurrentSfnTask(
@@ -89,6 +148,12 @@ function loadStepFunctionConfig(event, context) {
     .then((taskName) => getConfig(event, taskName));
 }
 
+/**
+ * Given a Cumulus message and context, returns the config object for the task
+ * @param {*} event An event in the Cumulus message format with remote parts resolved
+ * @param {*} context The context object passed to AWS Lambda or containing an activityArn
+ * @returns {*} The task's configuration
+ */
 function loadConfig(event, context) {
   const source = event.cumulus_meta.message_source;
   if (!source) throw new Error('cumulus_meta requires a message_source');
