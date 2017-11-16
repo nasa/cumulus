@@ -168,10 +168,28 @@ function loadConfig(event, context) {
 
 // Config templating
 
+/**
+ * Given a Cumulus message (AWS Lambda event) and a string containing a JSONPath
+ * template to interpret, returns the result of interpreting that template.
+ *
+ * Templating comes in three flavors:
+ *   1. Single curly-braces within a string ("some{$.path}value"). The JSONPaths
+ *      are replaced by the first value they match, coerced to string
+ *   2. A string surrounded by double curly-braces ("{{$.path}}").  The function
+ *      returns the first object matched by the JSONPath
+ *   3. A string surrounded by curly and square braces ("{[$.path]}"). The function
+ *      returns an array of all object matching the JSONPath
+ *
+ * It's likely we'll need some sort of bracket-escaping at some point down the line
+ *
+ * @param {*} event The Cumulus message
+ * @param {*} str A string containing a JSONPath template to resolve
+ * @returns {*} The resolved object
+ */
 function resolvePathStr(event, str) {
   const valueRegex = /^{{(.*)}}$/g;
   const arrayRegex = /^{\[(.*)\]}$/g;
-  const templateRegex = /{([^}]+)}/g;
+  const templateRegex = /(?:^|[^\]){([^}]+)}/g;
 
   if (str.match(valueRegex)) {
     return JsonPath.value(event, str.substring(2, str.length - 2));
@@ -184,6 +202,16 @@ function resolvePathStr(event, str) {
   return str.replace(templateRegex, (match, path) => JsonPath.value(event, path));
 }
 
+/**
+ * Recursive helper for resolveConfigTemplates
+ *
+ * Given a config object containing possible JSONPath-templated values, resolves
+ * all the values in the object using JSONPaths into the provided event.
+ *
+ * @param {*} event The event that paths resolve against
+ * @param {*} config A config object, containing paths
+ * @returns {*} A config object with all JSONPaths resolved
+ */
 function resolveConfigObject(event, config) {
   if (typeof config === 'string') {
     return resolvePathStr(event, config);
@@ -200,6 +228,14 @@ function resolveConfigObject(event, config) {
   }
   return config;
 }
+/**
+ * Given a config object containing possible JSONPath-templated values, resolves
+ * all the values in the object using JSONPaths into the provided event.
+ *
+ * @param {*} event The event that paths resolve against
+ * @param {*} config A config object, containing paths
+ * @returns {*} A config object with all JSONPaths resolved
+ */
 
 function resolveConfigTemplates(event, config) {
   const taskConfig = Object.assign({}, config);
@@ -208,7 +244,14 @@ function resolveConfigTemplates(event, config) {
 }
 // Payload determination
 
-function resolvePayload(event, config) {
+/**
+ * Given a Cumulus message and its config, returns the input object to send to the
+ * task, as defined under config.cumulus_message
+ * @param {*} event The Cumulus message
+ * @param {*} config The config object
+ * @returns {*} The object to place on the input key of the task's event
+ */
+function resolveInput(event, config) {
   const inputPath = config.cumulus_message && config.cumulus_message.input;
   if (inputPath) {
     return resolvePathStr(event, inputPath);
@@ -226,7 +269,7 @@ function loadNestedEvent(event, context) {
   return loadConfig(event, context)
     .then((config) => {
       const finalConfig = resolveConfigTemplates(event, config);
-      const finalPayload = resolvePayload(event, config);
+      const finalPayload = resolveInput(event, config);
       return {
         payload: finalPayload,
         config: finalConfig,
@@ -239,6 +282,14 @@ function loadNestedEvent(event, context) {
 // Output message creation //
 /////////////////////////////
 
+/**
+ * Applies a task's return value to an output message as defined in config.cumulus_message
+ *
+ * @param {*} nestedResponse The task's return value
+ * @param {*} event The output message to apply the return value to
+ * @param {*} messageConfig The cumulus_message configuration
+ * @returns {*} The output message with the nested response applied
+ */
 function assignOutputs(nestedResponse, event, messageConfig) {
   const outputs = messageConfig && messageConfig.outputs;
   const result = Object.assign({}, event);
@@ -264,6 +315,11 @@ function uuid(a){return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e
 // Maximum message payload size that will NOT be stored in S3. Anything bigger will be.
 const MAX_NON_S3_PAYLOAD_SIZE = 10000;
 
+/**
+ * Stores part of a response message in S3 if it is too big to send to StepFunctions
+ * @param {*} event The response message
+ * @returns {*} A response message, possibly referencing an S3 object for its contents
+ */
 function storeRemoteResponse(event) {
   const jsonData = JSON.stringify(event);
   const roughDataSize = event ? jsonData.length : 0;
