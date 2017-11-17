@@ -39,6 +39,19 @@ exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient);
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 
+/**
+ * Describes the resources belonging to a given CloudFormation stack
+ *
+ * See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStackResources-property
+ *
+ * @param {string} stackName The name of the CloudFormation stack to query
+ * @return {Array<Object>} The resources belonging to the stack
+ */
+exports.describeCfStackResources = (stackName) =>
+  exports.cf().describeStackResources({ StackName: stackName })
+    .promise()
+    .then((response) => response.StackResources);
+
 exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   obj[fn](opts, (err, data) => {
     if (err) {
@@ -104,9 +117,9 @@ exports.downloadS3File = (s3Obj, filename) => {
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
   const scrubbedS3Objs = s3Objs.map(s3Obj => ({
-      Bucket: s3Obj.Bucket,
-      Key: s3Obj.Key
-    }));
+    Bucket: s3Obj.Bucket,
+    Key: s3Obj.Key
+  }));
   const s3 = exports.s3();
   let i = 0;
   const n = s3Objs.length;
@@ -249,6 +262,9 @@ exports.getPossiblyRemote = async (obj) => {
   }
   return obj;
 };
+
+exports.startPromisedSfnExecution = (executionParams) =>
+  exports.sfn().startExecution(executionParams).promise();
 
 exports.getSfnExecutionByName = (stateMachineArn, executionName) =>
   [stateMachineArn.replace(':stateMachine:', ':execution:'), executionName].join(':');
