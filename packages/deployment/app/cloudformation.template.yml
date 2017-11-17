@@ -284,7 +284,7 @@ Resources:
   #################################################
 {{# if apiMethods}}
 {{# each apiDependencies}}
-  ApiGatewayDeploymentNew{{name}}:
+  ApiGatewayDeployment11162017{{name}}:
     DependsOn:
   {{#each methods}}
     - {{name}}
@@ -404,12 +404,12 @@ Resources:
         {{/if}}
       {{/if}}
         {{# if this.urs}}
-          API_ENDPOINT: {{# if ../api_backend_url}} {{../api_backend_url}}auth/login {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/auth/login"]] {{/if}}
+          API_ENDPOINT: {{# if ../api_backend_url}} {{../api_backend_url}}token {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]] {{/if}}
           DEPLOYMENT_ENDPOINT: {{# if ../api_distribution_url}} {{../api_distribution_url}}redirect {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]] {{/if}}
         {{/if}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-    {{# if this.apiGateway }}
+    {{# if this.apiRole }}
       Role: {{../iams.lambdaApiGatewayRoleArn}}
       {{else}}
       Role: {{../iams.lambdaProcessingRoleArn}}
@@ -620,9 +620,6 @@ Resources:
   #################################################
 
 Outputs:
-
-  Dashboard:
-    Value: {{dashboard_url}}
 
   Api:
     Value: {{# if api_backend_url}} {{api_backend_url}} {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}

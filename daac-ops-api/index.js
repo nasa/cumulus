@@ -1,6 +1,6 @@
 'use strict';
 
-const auth = require('./endpoints/auth');
+const token = require('./endpoints/token');
 const collections = require('./endpoints/collections');
 const granules = require('./endpoints/granules');
 const logs = require('./endpoints/logs');
@@ -10,16 +10,18 @@ const rules = require('./endpoints/rules');
 const workflows = require('./endpoints/workflows');
 const executions = require('./endpoints/executions');
 const executionStatus = require('./endpoints/execution-status');
-const jobs = require('./endpoints/jobs');
 const schemas = require('./endpoints/schemas');
 const stats = require('./endpoints/stats');
 const distribution = require('./endpoints/distribution');
-const bootstrap = require('./lib/bootstrap');
-const authorizer = require('./lib/authorizer');
+
+const jobs = require('./lambdas/jobs');
+const bootstrap = require('./lambdas/bootstrap');
+const scheduler = require('./lambdas/sf-scheduler');
+
 const indexer = require('./es/indexer');
 
 module.exports = {
-  auth,
+  token,
   collections,
   granules,
   logs,
@@ -34,7 +36,7 @@ module.exports = {
   stats,
   distribution,
   bootstrap,
-  authorizer,
+  scheduler: scheduler,
   indexer: indexer.handler,
   logHandler: indexer.logHandler
 };
