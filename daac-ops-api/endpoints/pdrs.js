@@ -46,16 +46,11 @@ async function del(event) {
     throw record;
   }
 
-  await deleteRecord(null, pdrName, 'pdr');
-
   // remove file from s3
-  try {
-    const key = `pdrs/${pdrName}`;
-    await S3.delete(process.env.internal, key);
-  }
-  catch (e) {
-    console.log(e);
-  }
+  const key = `pdrs/${pdrName}`;
+  await S3.delete(process.env.internal, key);
+
+  await deleteRecord(null, pdrName, 'pdr');
 
   return { detail: 'Record deleted' };
 }
