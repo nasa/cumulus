@@ -13,6 +13,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0"
+    "@cumulus/common": "^1.0.0",
+    "lodash": "^4.17.4"
   }
 }
