@@ -56,6 +56,7 @@ ApiCollections:
   handler: daac-ops-api.collections
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -123,6 +124,7 @@ ApiExecutions:
   handler: daac-ops-api.executions
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -141,6 +143,7 @@ ApiExecutionStatus:
   handler: daac-ops-api.executionStatus
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -155,6 +158,7 @@ ApiWorkflows:
   handler: daac-ops-api.workflows
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     bucket: '{{buckets.internal}}'
@@ -173,6 +177,7 @@ ApiRules:
   handler: daac-ops-api.rules
   timeout: 20
   memory: 256
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
     CollectionsTable: '!Ref CollectionsTableDynamoDB'
@@ -209,6 +214,7 @@ ApiProviders:
   handler: daac-ops-api.providers
   timeout: 20
   memory: 256
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
     ProvidersTable: '!Ref ProvidersTableDynamoDB'
@@ -265,6 +271,7 @@ ApiLogs:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
   passElasticSearchEndpoint: true
@@ -282,6 +289,7 @@ ApiSchema:
   handler: daac-ops-api.schemas
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -296,6 +304,7 @@ ApiStats:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
   passElasticSearchEndpoint: true
@@ -322,6 +331,7 @@ ApiToken:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   urs: true
   envs:
     EARTHDATA_BASE_URL: '{{urs_url}}'
@@ -339,6 +349,7 @@ ApiDistribution:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   urs: true
   envs:
     EARTHDATA_BASE_URL: '{{urs_url}}' 

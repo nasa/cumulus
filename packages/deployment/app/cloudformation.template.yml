@@ -409,7 +409,7 @@ Resources:
         {{/if}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-    {{# if this.apiGateway }}
+    {{# if this.apiRole }}
       Role: {{../iams.lambdaApiGatewayRoleArn}}
       {{else}}
       Role: {{../iams.lambdaProcessingRoleArn}}
