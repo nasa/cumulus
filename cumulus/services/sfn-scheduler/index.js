@@ -70,9 +70,8 @@ module.exports.handler = async (invocation) => {
     config.workflows = _.mapKeys(config.workflows, (v, k) => resolver(k));
 
     const collectionsByProviderId = _.groupBy(config.collections, (c) => c.provider_id);
-
     for (const provider of config.providers) {
-      const collections = collectionsByProviderId[provider.id];
+      const collections = collectionsByProviderId[provider.id] || [];
       let offsetMs = 0;
 
       // Stagger collection ingests by 2.9 minutes to avoid overwhelming a provider
