@@ -2,14 +2,13 @@
 
 const get = require('lodash.get');
 const got = require('got');
-const forge = require('node-forge');
 const { User } = require('../models');
 const { resp } = require('../lib/response');
 const logger = require('@cumulus/ingest/log');
 const log = logger.child({ name: 'cumulus-api-auth' });
 
-function redirectUriParam(uri) {
-  const url = uri || process.env.DASHBOARD_ENDPOINT;
+function redirectUriParam() {
+  const url = process.env.API_ENDPOINT;
   return encodeURIComponent(url);
 }
 
@@ -17,11 +16,11 @@ function redirectUriParam(uri) {
  * AWS API Gateway function that handles callbacks from URS authentication, transforming
  * codes into tokens
  */
-function token(event, context, uri) {
+function token(event, context) {
   const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
   const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
 
-  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://urs.earthdata.nasa.gov';
+  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov';
   const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
 
   const code = get(event, 'queryStringParameters.code');
@@ -29,7 +28,7 @@ function token(event, context, uri) {
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
-    const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam(uri)}`;
+    const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam()}`;
 
     // Verify token
     return got.post(EARTHDATA_CHECK_CODE_URL + params, {
@@ -37,36 +36,27 @@ function token(event, context, uri) {
       auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
     }).then((r) => {
       const tokenInfo = r.body;
-      const access = tokenInfo.access_token;
+      const accessToken = tokenInfo.access_token;
 
       // if no access token is given, then the code is wrong
-      if (typeof access === 'undefined') {
+      if (typeof accessToken === 'undefined') {
         return resp(context, new Error('Failed to get Earthdata token'));
       }
 
       const refresh = tokenInfo.refresh_token;
-      const username = tokenInfo.endpoint.split('/').pop();
+      const userName = tokenInfo.endpoint.split('/').pop();
       const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
-
-      const password = `urs://${access}/${refresh}/${expires}`;
-
-      const md = forge.md.md5.create();
-      md.update(password);
-      const passwordHash = md.digest().toHex();
 
       const u = new User();
 
-      return u.get({ userName: username }).then(() =>
-        u.update({ userName: username }, { password: passwordHash }).then(() => {
-          if (state === 'login') {
-            const base64 = new Buffer(`${username}:${password}`).toString('base64');
-            resp(context, null, `{ "token": "${base64}" }`, 200);
-          }
-          else {
-            resp(context, null, JSON.stringify({ user: username, password: password }), 200);
-          }
-        })
-      ).catch(e => {
+      return u.create({ userName, password: accessToken, refresh, expires }).then(() => {
+        if (state) {
+          return resp(context, null, 'Redirecting to the specified state', 301, {
+            Location: `${decodeURIComponent(state)}?token=${accessToken}`
+          });
+        }
+        return resp(context, null, JSON.stringify({ token: accessToken }), 200);
+      }).catch(e => {
         log.error('User is not authorized', e);
         resp(context, e);
       });
@@ -82,40 +72,23 @@ function token(event, context, uri) {
  * AWS API Gateway function that redirects to the correct URS endpoint with the correct client
  * ID to be used with the API
  */
-function redirect(event, context, cb) {
-  const endpoint = process.env.EARTHDATA_BASE_URL;
-  const clientId = process.env.EARTHDATA_CLIENT_ID;
-
-  const url = `${endpoint}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUriParam()}&response_type=code`;
-  return cb(null, {
-    statusCode: '301',
-    body: 'Redirecting to Earthdata Login',
-    headers: {
-      Location: url
-    }
-  });
-}
-
-
-/**
- * AWS API Gateway function that redirects to the correct URS endpoint with the correct client
- * ID to be used with the API
- */
 function login(event, context, cb) {
   const endpoint = process.env.EARTHDATA_BASE_URL;
   const clientId = process.env.EARTHDATA_CLIENT_ID;
-  const redirectUri = process.env.API_ENDPOINT;
 
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
-  if (code && state === 'login') {
-    return token(event, context, redirectUri);
+  if (code) {
+    return token(event, context);
   }
 
-  const url = `${endpoint}/oauth/authorize?` +
+  let url = `${endpoint}/oauth/authorize?` +
               `client_id=${clientId}&` +
-              `redirect_uri=${redirectUriParam(redirectUri)}&state=login&response_type=code`;
+              `redirect_uri=${redirectUriParam()}&response_type=code`;
+  if (state) {
+    url = `${url}&state=${encodeURIComponent(state)}`;
+  }
   return cb(null, {
     statusCode: '301',
     body: 'Redirecting to Earthdata Login',
@@ -125,14 +98,16 @@ function login(event, context, cb) {
   });
 }
 
+/**
+ * Main handler for the token endpoint
+ * @function handler
+ * @param  {type} event   {description}
+ * @param  {type} context {description}
+ * @param  {type} cb      {description}
+ * @return {type} {description}
+ */
 function handler(event, context, cb) {
-  if (event.httpMethod === 'GET' && event.resource === '/auth/token') {
-    return token(event, context);
-  }
-  else if (event.httpMethod === 'GET' && event.resource === '/auth/redirect') {
-    return redirect(event, context, cb);
-  }
-  else if (event.httpMethod === 'GET' && event.resource === '/auth/login') {
+  if (event.httpMethod === 'GET' && event.resource === '/token') {
     return login(event, context, cb);
   }
   return resp(context, new Error('Not found'), 404);
