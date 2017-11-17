@@ -6,7 +6,6 @@ const log = require('@cumulus/common/log');
 const Task = require('@cumulus/common/task');
 const FieldPattern = require('@cumulus/common/field-pattern');
 const querystring = require('querystring');
-
 /**
  * Task which discovers granules by querying the CMR
  * Input payload: none
@@ -20,14 +19,16 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    */
   async run() {
     // const query = this.config.query || { updated_since: '5d', collection_concept_id: 'C1000000320-LPDAAC_ECS'};
-    const query = this.config.query || {};
+    const query = this.config.query || { page_size: 100};
     if (query.updated_since) {
       query.updated_since = new Date(Date.now() - parseDuration(query.updated_since)).toISOString();
     }
-    const granules = await this.cmrGranules(this.config.root, query);
-    // const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
-    // const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
-    // return filtered;
+    this.message.payload = this.message.payload || { scrollID: null };
+    let {scrollID, granules} = await this.cmrGranules(this.config.root, query, this.message.payload['scrollID'], {startDate: this.config.startDate, endDate: this.config.endDate});
+    log.debug(`using scrollID: ${scrollID}`);
+    const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
+    const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
+    return { messages: filtered, scrollID: scrollID };
   }
 
   /**
@@ -56,40 +57,36 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * @param {object} query - The query parameters to serialize and send to a CMR granules search
    * @return An array of all granules matching the given query
    */
-  async cmrGranules(root, query) {
+  async cmrGranules(root, query, scrollID, dateRange) {
     //NEED SOURCE OF THESE VALUES------//
-    const startDate = '2015-01-01';
-    const endDate = '2015-01-02';
+    const startDate = dateRange.startDate;
+    const endDate = dateRange.endDate;
     //-------//
     const granules = [];
     const params = Object.assign(query);
     if (params.updated_since) params.sort_key = 'revision_date';
     params.collection_concept_id = params.collection_concept_id || 'C1000000320-LPDAAC_ECS';
-    params.pretty = 'true';
     params.scroll = 'true';
     const baseUrl = `${root}/search/granules.json`;
     const opts = { headers: { 'Client-Id': 'GitC' } };
-    let done = false;
-    let scrollID = false;
-    while (!done) {
-      // if (params.updated_since) params.page_num = page;
-      let url = [baseUrl, querystring.stringify(params)].join('?');
-      if (!params.updated_since) {
-        url += `&temporal=${startDate}T00%3A00%3A00Z,${endDate}T00%3A00%3A00Z`;
-      }
-      log.info('Fetching:', url);
-      const response = await fetch(url, opts);
-      if (!response.ok) {
-        throw new Error(`CMR Error ${response.status} ${response.statusText}`);
-      }
-      const json = await response.json();
-      console.log(json);
-      granules.push(...json.feed.entry);
-      opts.headers['CMR-Scroll-Id'] = response.headers['_headers']['cmr-scroll-id'];
-      done = (json.feed.entry.length == 0);
+    let url = [baseUrl, querystring.stringify(params)].join('?');
+    if (!params.updated_since) {
+      url += `&temporal=${startDate}T00%3A00%3A00Z,${endDate}T00%3A00%3A00Z`;
     }
+    if (scrollID) opts.headers['CMR-Scroll-Id'] = scrollID;
+    log.info('Fetching:', url);
+    const response = await fetch(url, opts);
+    if (!response.ok) {
+      throw new Error(`CMR Error ${response.status} ${response.statusText}`);
+    }
+    const json = await response.json();
+    console.log(json);
+    granules.push(...json.feed.entry);
+    log.info(`scrollID:${scrollID} cmr-scroll-id:${response.headers['_headers']['cmr-scroll-id']} json.feed.entry.length:${json.feed.entry.length}`);
+    const nextScrollID = (json.feed.entry.length == 0) ? false : response.headers['_headers']['cmr-scroll-id'];
+    log.info(`nextScrollID:${nextScrollID}`);
     console.log('----TOTAL----: '+granules.length);
-    return granules;
+    return { granules: granules, scrollID: nextScrollID };
   }
 
   /**
