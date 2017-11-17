@@ -36,13 +36,12 @@ To use the sled:
 1. Update the task in question to accept/return the above inputs and outputs. Remove all code
    dealing with the Cumulus message protocol.
 2. Add a `cumulus.json` file to the root of the task. It should look like the following:
-```
-   {
-     "task": {
-       "entrypoint": "my-module.my_handler"
-     }
-   }
-```
+
+        {
+          "task": {
+            "entrypoint": "my-module.my_handler"
+          }
+        }
    Where the `entrypoint` specifies the task's handler class, identical to how it would be provided
    to AWS Lambda. If not defined, the sled will assume that `index.handler` should be used (the Lambda default).
 3. Create a zip file of the task, as you ordinarily would for AWS Lambda
