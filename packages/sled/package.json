@@ -4,10 +4,15 @@
   "description": "Protocol wrapper for Cumulus JS files",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node index.js local jsonpath && jasmine",
+    "build": "bin/build",
+    "clean": "rm -rf dist"
   },
   "engines": {
     "node": ">=4.3.0"
+  },
+  "directories": {
+    "test": "tests"
   },
   "repository": {
     "type": "git",
@@ -28,12 +33,17 @@
     ],
     "extends": [
       "plugin:node/recommended"
-    ]
+    ],
+    "rules": {
+      "no-console": "off",
+      "node/no-unpublished-require": "off"
+    }
   },
   "dependencies": {},
   "devDependencies": {
     "aws-sdk": "^2.151.0",
     "eslint": "^4.9.0",
-    "eslint-plugin-node": "^5.2.0"
+    "eslint-plugin-node": "^5.2.0",
+    "jasmine": "^2.8.0"
   }
 }

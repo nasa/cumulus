@@ -4,16 +4,13 @@ const path = require('path');
 const fs = require('fs');
 const message = require('./lib/message');
 
-// The filesystem location of the Lambda module
-const TASK_ROOT = 'example';
-
 /**
- * Returns an absolute path given a relative path within the task directory (TASK_ROOT)
+ * Returns an absolute path given a relative path within the task directory
  * @param {String} relativePath The relative path to resolve
  * @returns {String} The absolute path for the given relative path
  */
 function taskPath(relativePath) {
-  return path.resolve(__dirname, TASK_ROOT, relativePath);
+  return path.resolve(__dirname, exports.config.taskRoot, relativePath);
 }
 
 /**
@@ -94,15 +91,15 @@ function invokeHandler(handler, event, context) {
  * @param {*} context The Lambda context
  * @param {*} callback The Lambda callback, called with a Cumulus protocol output message
  */
-module.exports = function sledHandler(event, context, callback) {
+exports.handler = function sledHandler(event, context, callback, handlerFn, handlerConfig) {
   let taskConfig = null;
   let nestedHandler = null;
   let messageConfig = null;
   let fullEvent = null;
-  promiseTaskConfig()
+  (handlerFn ? Promise.resolve(handlerConfig || {}) : promiseTaskConfig())
     .then((config) => {
       taskConfig = config.task || {};
-      nestedHandler = getNestedHandler(taskConfig.entrypoint || 'index.handler');
+      nestedHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
       return message.loadRemoteEvent(event);
     })
     .then((remoteEvent) => {
@@ -126,6 +123,10 @@ module.exports = function sledHandler(event, context, callback) {
     });
 };
 
+exports.config = {
+  taskRoot: '..' // The filesystem location of the Lambda module
+};
+
 // Local testing. Run the handler.
 if (process.argv[2] === 'local') {
   if (!process.argv[3]) throw new Error('Message identifier required');
@@ -135,7 +136,8 @@ if (process.argv[2] === 'local') {
   const expectedOutputObj = JSON.parse(fs.readFileSync(`example/messages/${messageName}.output.json`, 'utf8'));
   const expectedOutput = JSON.stringify(expectedOutputObj);
 
-  module.exports(event, {}, (err, data) => {
+  exports.config.taskRoot = 'example';
+  exports.handler(event, {}, (err, data) => {
     if (err) {
       console.error('ERROR', err, err.stack);
     }
