@@ -12,7 +12,6 @@ async function download(ingest, bucket, provider, granules) {
   const updatedGranules = [];
 
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
-  log.info('proceed value', proceed)
 
   if (!proceed) {
     const err = new errors.ResourcesLockedError(
@@ -22,7 +21,6 @@ async function download(ingest, bucket, provider, granules) {
     throw err;
   }
 
-  log.info('proceeding with the download')
   for (const g of granules) {
     try {
       const r = await ingest.ingest(g);
@@ -53,7 +51,6 @@ module.exports.handler = function handler(_event, context, cb) {
       return cb(err);
     }
 
-    log.info(granules)
     const IngestClass = granule.selector('ingest', provider.protocol);
     const ingest = new IngestClass(event);
 
