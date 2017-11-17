@@ -13,10 +13,7 @@ async function delay(t) {
 }
 
 async function countLock(bucket, pName) {
-  log.info('countLock')
-  log.info(bucket)
   const list = await aws.S3.list(bucket, `${lockPrefix}/${pName}`);
-  log.info(list)
   return list.Contents.length;
 }
 
@@ -39,16 +36,14 @@ async function proceed(bucket, provider, filename, counter = 0) {
   const count = await countLock(bucket, provider.id);
 
   if (count >= globalConnectionLimit) {
-    log.info({ provider: provider.id }, 'Reached the connection limit, trying again');
+    log.debug({ provider: provider.id }, 'Reached the connection limit, trying again');
     // wait for 5 second and try again
     await delay(5000);
     return proceed(bucket, provider, filename, counter + 1);
   }
 
-  log.info('adding lock')
   // add the lock
   await addLock(bucket, provider.id, filename);
-  log.info('lock added')
   return true;
 }
 
