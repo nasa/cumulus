@@ -25,6 +25,7 @@ class Discover {
       throw new TypeError('Can not construct abstract class.');
     }
 
+    this.stack = get(event, 'resources.stack');
     this.buckets = get(event, 'resources.buckets');
     this.collection = get(event, 'collection.meta');
     this.provider = get(event, 'provider');
@@ -60,7 +61,7 @@ class Discover {
   }
 
   async pdrIsNew(pdr) {
-    const exists = await S3.fileExists(this.buckets.internal, path.join(this.folder, pdr.name));
+    const exists = await S3.fileExists(this.buckets.internal, path.join(this.stack, this.folder, pdr.name));
     return exists ? false : pdr;
   }
 
