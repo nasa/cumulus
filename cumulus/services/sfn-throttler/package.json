@@ -1,0 +1,22 @@
+{
+  "name": "aws-step-function-throttling-service",
+  "version": "0.0.1",
+  "description": "A service to throttle concurrent executions of AWS Step Functions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.145.0",
+    "lodash": "^4.17.4"
+  },
+  "devDependencies": {
+    "eslint": "^4.10.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  }
+}
