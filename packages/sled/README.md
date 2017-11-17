@@ -49,3 +49,26 @@ To use the sled:
 5. Copy the contents of the `dist` directory (a directory named `cumulus-sled`) into the task's zip file
 6. Upload the zip file to AWS Lambda, and specify the Lambda `Handler` as `cumulus-sled.handler`
 7. Put it in a Cumulus workflow!
+
+## Why?
+
+This implementation has a few major advantages over the previous library-based approach:
+
+1. It's very low overhead. It requires no transpilation, and the deployed code size is only around 100KB
+2. It explicitly prevents tasks from making assumptions about data structures like `meta` and `cumulus_meta`
+   that are owned internally and may therefore be broken in future updates. To gain access to fields in these
+   structures, tasks must be passed the data explicitly in the workflow configuration.
+3. It provides clearer ownership of the various data structures.  Operators own `meta`. Cumulus owns `cumulus_meta`.
+   Tasks define their own `config`, `input`, and `output` formats.
+4. The sled greatly simplifies running Lambda functions not explicitly created for Cumulus.  Add a `cumulus.json`
+   (if needed), update the Lambda to read `event.input` instead of `event`, and the handler can "speak" Cumulus.
+5. The approach greatly simplifies testing for tasks, as tasks don't need to set up cumbersome structures to
+   emulate the message protocol and can just supply handlers their inputs and outputs.
+
+## Contributing
+
+Please feel free to extend and modify the code. Because it is run so many places, it requires more careful testing
+and review than most other code.
+
+We would love to add support for languages other than Javascript.  If you know Python well, please consider helping
+create a Python sled!
