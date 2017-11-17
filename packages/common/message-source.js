@@ -60,6 +60,7 @@ const MessageSource = exports.MessageSource = class {
   }
 };
 
+// Used when message size is too big for Lambda messages (32k)
 class StateMachineS3MessageSource extends MessageSource {
   constructor(message, context) {
     super(message, context);
@@ -127,7 +128,6 @@ class StateMachineS3MessageSource extends MessageSource {
   }
 
   performLambdaCallback(handler, callback, error, data) {
-
     if (error || (data && data.exception)) {
       callback(error, data);
       return error;
@@ -185,6 +185,7 @@ class InlineMessageSource extends MessageSource {
 }
 
 
+// Instead of getting message from AWS, get message from stdin
 class StdinMessageSource extends InlineMessageSource {
   constructor(message) {
     super(message);
