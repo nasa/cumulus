@@ -47,7 +47,7 @@ async function del(event) {
   }
 
   // remove file from s3
-  const key = `pdrs/${pdrName}`;
+  const key = `${process.env.stackName}/pdrs/${pdrName}`;
   await S3.delete(process.env.internal, key);
 
   await deleteRecord(null, pdrName, 'pdr');
