@@ -3,6 +3,8 @@
 const Task = require('@cumulus/common/task');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const _ = require('lodash');
+const concurrency = require('@cumulus/common/concurrency');
 
 /**
  * Task which triggers ingest of discovered granules. Starts a state machine execution
@@ -20,7 +22,6 @@ module.exports = class TriggerIngestTask extends Task {
   async run() {
     const s3Promises = [];
     const executions = [];
-    const executionPromises = [];
     const isSfnExecution = this.message.ingest_meta.message_source === 'sfn';
 
     if (!isSfnExecution) {
@@ -34,7 +35,18 @@ module.exports = class TriggerIngestTask extends Task {
     log.info(this.message.payload);
     const id = this.message.ingest_meta.id;
 
-    for (const e of this.message.payload) {
+    let actualMessages;
+    let returnValue;
+    if (Array.isArray(this.message.payload)) {
+      actualMessages = this.message.payload;
+      returnValue = null;
+    }
+    else {
+      actualMessages = this.message.payload.messages;
+      returnValue = _.omit(this.message.payload, 'messages');
+    }
+
+    for (const e of actualMessages) {
       const key = (e.meta && e.meta.key) || this.config.key || 'Unknown';
       const name = aws.toSfnExecutionName(key.split('/', 3).concat(id), '__');
       log.info(`Starting ingest of ${name}`);
@@ -66,13 +78,31 @@ module.exports = class TriggerIngestTask extends Task {
     }
     await Promise.all(s3Promises);
 
-    if (isSfnExecution) {
-      for (const execution of executions) {
-        executionPromises.push(aws.sfn().startExecution(execution).promise());
-      }
-    }
-    await Promise.all(executionPromises);
-    return null;
+    if (isSfnExecution) await this.performStepFunctionExecutions(executions);
+
+    return returnValue;
+  }
+
+  sendSqsExecutions(executions) {
+    const buildEntryFromMessage = (message) => ({
+      Id: message.name,
+      MessageBody: JSON.stringify(message)
+    });
+
+    const sendBatchOfMessagesToSqs = (messages) =>
+      aws.sqs().sendMessageBatch({
+        QueueUrl: this.config.sqsQueueUrl,
+        Entries: messages.map(buildEntryFromMessage)
+      }).promise();
+
+    const sendBatchOfMessagesToSqsButThrottled = concurrency.limit(10, sendBatchOfMessagesToSqs);
+
+    return Promise.all(_.chunk(executions, 10).map(sendBatchOfMessagesToSqsButThrottled));
+  }
+
+  performStepFunctionExecutions(executions) {
+    if (this.config.sqsQueueUrl) return this.sendSqsExecutions(executions);
+    return Promise.all(executions.map(aws.startPromisedSfnExecution));
   }
 
   /**
