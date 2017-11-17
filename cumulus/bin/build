@@ -26,6 +26,8 @@ if [ $# -ne 0 ]; then
     exit 1
 fi
 
+mkdir -p dist
+
 # Moving toward the Cumulus model of building individual tasks
 for task in run-gdal; do
     pushd tasks/$task
