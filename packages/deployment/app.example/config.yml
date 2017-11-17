@@ -16,11 +16,11 @@
     public: change-me
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/ghrc-cumulus-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/ghrc-cumulus-ecs
+    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-processing
+    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-steprole
+    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<iams-prefix>-ecs
 
     urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
