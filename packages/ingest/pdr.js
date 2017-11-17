@@ -116,6 +116,7 @@ class Parse {
     }
 
     this.event = event;
+    this.stack = get(event, 'resources.stack');
     this.pdr = get(event, 'payload.pdr');
     this.buckets = get(event, 'resources.buckets');
     this.collection = get(event, 'collection.meta');
@@ -153,7 +154,12 @@ class Parse {
     const granules = await this.parse(pdrLocalPath);
 
     // upload only if the parse was successful
-    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
+    await this.upload(
+      this.buckets.internal,
+      path.join(this.stack, this.folder),
+      this.pdr.name,
+      pdrLocalPath
+    );
 
     // return list of all granules found in the PDR
     return granules;
