@@ -31,10 +31,13 @@ sf2snsEnd:
   source: '../cumulus/cumulus/tasks/sf-sns-broadcast/dist/index.js'
 
 ScheduleSF:
-  handler: sf-starter.queue
+  handler: daac-ops-api.scheduler
   timeout: 100
   memory: 256
-  source: '../cumulus/cumulus/tasks/sf-starter/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/index.js'
+  envs:
+    CollectionsTable: '!Ref CollectionsTableDynamoDB'
+    ProvidersTable: '!Ref ProvidersTableDynamoDB'
 
 jobs:
   handler: daac-ops-api.jobs
