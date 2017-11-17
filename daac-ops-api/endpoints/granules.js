@@ -100,7 +100,7 @@ async function del(event) {
   }
 
   // remove file from s3
-  const key = `${process.env.stackname}/granules_status/${granuleId}`;
+  const key = `${process.env.stackname}/granules_ingested/${granuleId}`;
   await S3.delete(process.env.internal, key);
 
   await deleteRecord(null, granuleId, 'granule', record.collectionId);
