@@ -2,12 +2,15 @@
 
 const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
+const logger = require('@cumulus/ingest/log');
 const { handle } = require('../lib/response');
 const models = require('../models');
 const Collection = require('../es/collections');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 const examplePayload = require('../tests/data/collections_post.json');
 const { indexCollection, deleteRecord } = require('../es/indexer');
+
+const log = logger.child({ file: 'daac-ops-api/endpionts/collections.js' });
 
 /**
  * List all collections.
@@ -150,7 +153,7 @@ module.exports = handler;
 
 justLocalRun(() => {
   handler(examplePayload, {
-    succeed: r => console.log(r),
-    failed: e => console.log(e)
-  }, (e, r) => console.log(e, r));
+    succeed: r => log.error(r),
+    failed: e => log.error(e)
+  }, (e, r) => log.error(e, r));
 });
