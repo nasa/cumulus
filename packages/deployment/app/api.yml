@@ -31,10 +31,13 @@ sf2snsEnd:
   source: '../cumulus/cumulus/tasks/sf-sns-broadcast/dist/index.js'
 
 ScheduleSF:
-  handler: sf-starter.queue
+  handler: daac-ops-api.scheduler
   timeout: 100
   memory: 256
-  source: '../cumulus/cumulus/tasks/sf-starter/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/index.js'
+  envs:
+    CollectionsTable: '!Ref CollectionsTableDynamoDB'
+    ProvidersTable: '!Ref ProvidersTableDynamoDB'
 
 jobs:
   handler: daac-ops-api.jobs
@@ -56,6 +59,7 @@ ApiCollections:
   handler: daac-ops-api.collections
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -123,6 +127,7 @@ ApiExecutions:
   handler: daac-ops-api.executions
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -136,11 +141,27 @@ ApiExecutions:
       method: get
       cors: true
       api: backend
+  
+ApiExecutionStatus:
+  handler: daac-ops-api.executionStatus
+  timeout: 20
+  memory: 256
+  apiRole: true
+  source: '../cumulus/daac-ops-api/dist/index.js'
+  envs:
+    UsersTable: '!Ref UsersTableDynamoDB'
+  passElasticSearchEndpoint: true
+  apiGateway:
+    - path: executions/status/{arn}
+      method: get
+      cors: true
+      api: backend
 
 ApiWorkflows:
   handler: daac-ops-api.workflows
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     bucket: '{{buckets.internal}}'
@@ -159,6 +180,7 @@ ApiRules:
   handler: daac-ops-api.rules
   timeout: 20
   memory: 256
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
     CollectionsTable: '!Ref CollectionsTableDynamoDB'
@@ -195,6 +217,7 @@ ApiProviders:
   handler: daac-ops-api.providers
   timeout: 20
   memory: 256
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
     ProvidersTable: '!Ref ProvidersTableDynamoDB'
@@ -251,6 +274,7 @@ ApiLogs:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
   passElasticSearchEndpoint: true
@@ -268,6 +292,7 @@ ApiSchema:
   handler: daac-ops-api.schemas
   timeout: 20
   memory: 256
+  apiRole: true
   source: '../cumulus/daac-ops-api/dist/index.js'
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
@@ -282,6 +307,7 @@ ApiStats:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   envs:
     UsersTable: '!Ref UsersTableDynamoDB'
   passElasticSearchEndpoint: true
@@ -303,33 +329,21 @@ ApiStats:
       cors: true
       api: backend
 
-ApiAuth:
-  handler: daac-ops-api.auth
+ApiToken:
+  handler: daac-ops-api.token
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   urs: true
   envs:
     EARTHDATA_BASE_URL: '{{urs_url}}'
-    DASHBOARD_ENDPOINT: '{{dashboard_url}}#/auth'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     UsersTable: '!Ref UsersTableDynamoDB'
   apiGateway:
     - api: backend
-      path: auth
-      method: get
-      cors: true
-    - api: backend
-      path: auth/token
-      method: get
-      cors: true
-    - api: backend
-      path: auth/redirect
-      method: get
-      cors: true
-    - api: backend
-      path: auth/login
+      path: token
       method: get
       cors: true
 
@@ -338,8 +352,10 @@ ApiDistribution:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   urs: true
   envs:
+    EARTHDATA_BASE_URL: '{{urs_url}}' 
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     protected: '{{buckets.protected}}'
