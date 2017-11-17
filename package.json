@@ -27,6 +27,7 @@
     },
     "extends": "airbnb",
     "rules": {
+      "arrow-body-style": [ "error", "as-needed" ],
       "generator-star-spacing": "off",
       "import/no-extraneous-dependencies": "off",
       "import/newline-after-import": "off",
