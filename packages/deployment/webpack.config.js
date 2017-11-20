@@ -1,13 +1,19 @@
 module.exports = {
-  entry: ['babel-polyfill', './index.js'],
+  entry: ['babel-polyfill', './app/kes.override.js'],
   output: {
     libraryTarget: 'commonjs2',
-    filename: 'dist/index.js'
+    filename: 'app/kes.js'
+  },
+  resolve: {
+    symlinks: false,
+    alias: {
+      'handlebars' : 'handlebars/dist/handlebars.js'
+    }
   },
   target: 'node',
-  devtool: 'source-map',
+  devtool: 'cheap-module-eval-source-map',
   module: {
-    rules: [{
+    loaders: [{
       test: /\.js?$/,
       exclude: /(node_modules)/,
       loader: 'babel-loader'
