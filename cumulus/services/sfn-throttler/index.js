@@ -9,8 +9,8 @@ const _ = require('lodash');
  * @param {string} stateMachineArn The ARN of the state machine to check.
  * @return {number} The number of running executions
  */
-async function runningExecutionCount(stateMachineArn) {
-  const data = await aws.sfn.listExecutions({
+const runningExecutionCount = async (stateMachineArn) => {
+  const data = await aws.sfn().listExecutions({
     stateMachineArn,
     statusFilter: 'RUNNING'
   }).promise();
@@ -18,26 +18,26 @@ async function runningExecutionCount(stateMachineArn) {
   const count = data.executions.length;
   log.info(`Found ${count} running executions of ${stateMachineArn}.`);
   return count;
-}
+};
 
-async function fetchMessages(queueUrl, count) {
+const fetchMessages = async (queueUrl, count) => {
   const maxNumberOfMessages = Math.min(count, 10);
 
-  const data = await aws.sqs.receiveMessage({
+  const data = await aws.sqs().receiveMessage({
     QueueUrl: queueUrl,
     MaxNumberOfMessages: maxNumberOfMessages
   }).promise();
 
-  const messages = data.Messages.map(JSON.parse) || [];
+  const messages = data.Messages || [];
   // eslint-disable-next-line max-len
   log.info(`Tried to fetch ${maxNumberOfMessages} messages from ${queueUrl} and got ${messages.length}.`);
   return messages;
-}
+};
 
-function startExecution(stateMachineArn, input) {
-  log.info(`Starting an execution of ${stateMachineArn}`);
+function startExecution(executionParams) {
+  log.info(`Starting an execution of ${executionParams.stateMachineArn}`);
 
-  return aws.sfn.startExecution({ stateMachineArn, input }).promise();
+  return aws.sfn().startExecution(executionParams).promise();
 }
 
 /**
@@ -50,25 +50,25 @@ function startExecution(stateMachineArn, input) {
 function deleteMessage(queueUrl, message) {
   log.info(`Deleting ${message.ReceiptHandle} from ${queueUrl}`);
 
-  aws.sqs.deleteMessage({
+  aws.sqs().deleteMessage({
     QueueUrl: queueUrl,
     ReceiptHandle: message.ReceiptHandle
   }).promise();
 }
 
-async function startExecutions(queueUrl, stateMachineArn, count) {
+const startExecutions = async (queueUrl, stateMachineArn, count) => {
   log.info(`Starting ${count} executions of ${stateMachineArn}`);
 
   const messages = await fetchMessages(queueUrl, count);
 
   const executionPromises = messages.map((message) =>
-    startExecution(stateMachineArn, message.body)
+    startExecution(JSON.parse(message.Body))
       .then(() => deleteMessage(queueUrl, message)));
 
   return Promise.all(executionPromises);
-}
+};
 
-async function manageThrottledStepFunction(queueUrl, stateMachineArn, maxConcurrentExecutions) {
+const manageThrottledStepFunction = async (queueUrl, stateMachineArn, maxConcurrentExecutions) => {
   const count = await runningExecutionCount(stateMachineArn);
   const executionsToStart = maxConcurrentExecutions - count;
 
@@ -91,13 +91,13 @@ async function manageThrottledStepFunction(queueUrl, stateMachineArn, maxConcurr
     stateMachineArn,
     maxConcurrentExecutions,
   );
-}
+};
 
 function mapLogicalIdsToArns(resources) {
   return _.fromPairs(resources.map((r) => [r.LogicalResourceId, r.PhysicalResourceId]));
 }
 
-async function buildExecutionConfigsFromEvent(event) {
+const buildExecutionConfigsFromEvent = async (event) => {
   const stackResources = await aws.describeCfStackResources(event.cloudFormationStackName);
   const arnsByLogicalId = mapLogicalIdsToArns(stackResources);
 
@@ -105,14 +105,14 @@ async function buildExecutionConfigsFromEvent(event) {
     const id = `${event.stateMachinePrefix}${stateMachineConfig.stateMachineName}`;
     return _.set(stateMachineConfig, 'stateMachineArn', arnsByLogicalId[id]);
   });
-}
+};
 
 module.exports.handler = function handler(event) {
   buildExecutionConfigsFromEvent(event)
     .then((executionConfigs) => {
       executionConfigs.forEach((executionConfig) => {
         manageThrottledStepFunction(
-          executionConfig.queueUrl,
+          executionConfig.sqsQueueUrl,
           executionConfig.stateMachineArn,
           executionConfig.maxConcurrentExecutions
         );
