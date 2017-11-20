@@ -263,8 +263,8 @@ exports.getPossiblyRemote = async (obj) => {
   return obj;
 };
 
-exports.startPromisedSfnExecution = (executionParams) =>
-  exports.sfn().startExecution(executionParams).promise();
+exports.startPromisedSfnExecution = (params) =>
+  exports.sfn().startExecution(params).promise();
 
 exports.getSfnExecutionByName = (stateMachineArn, executionName) =>
   [stateMachineArn.replace(':stateMachine:', ':execution:'), executionName].join(':');
