@@ -302,9 +302,9 @@ class SQS {
     const messages = await queue.receiveMessage(params).promise();
 
     // convert body from string to js object
-    if (messages.hasOwnProperty('Messages')) {
+    if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
       messages.Messages.forEach((mes) => {
-        mes.Body = JSON.parse(mes.Body);
+        mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
       });
 
       return messages.Messages;
@@ -503,7 +503,7 @@ class StepFunction {
     const buckets = _get(event, 'resources.buckets');
     const stack = _get(event, 'resources.stack');
 
-    const granuleKey = `${stack}/granules_status/${granuleId}`;
+    const granuleKey = `${stack}/granules_ingested/${granuleId}`;
 
     return {
       bucket: buckets.internal,
@@ -555,6 +555,32 @@ class StepFunction {
       }
       throw e;
     }
+  }
+
+  static async getExecutionStatus(arn) {
+    const sfn = new AWS.StepFunctions();
+
+    const [execution, executionHistory] = await Promise.all([
+      this.getExecution(arn),
+      this.getExecutionHistory(arn)
+    ]);
+
+    const stateMachine = await sfn.describeStateMachine({
+      stateMachineArn: execution.stateMachineArn
+    }).promise();
+
+    return { execution, executionHistory, stateMachine };
+  }
+
+  static async getExecutionHistory(arn) {
+    const sfn = new AWS.StepFunctions();
+
+    const params = {
+      executionArn: arn
+    };
+
+    const execution = await sfn.getExecutionHistory(params).promise();
+    return execution;
   }
 
   static async pullEvent(event) {
