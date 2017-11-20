@@ -1,0 +1,654 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'stack: {{stackName}} | deployed by Kes'
+Parameters:
+  CmrPassword:
+    Type: String
+    Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
+    NoEcho: true
+
+
+Resources:
+
+  #################################################
+  # Cumulus Custom Resource BEGIN
+  #################################################
+  CumulusCustomResource:
+    Type: Custom::Cumulus
+    Properties:
+      ServiceToken: !GetAtt CustomBootstrapLambdaFunction.Arn
+      Cmr:
+        Password: !Ref CmrPassword
+    {{# if es.name}}
+      ElasticSearch:
+        host: !GetAtt {{es.name}}Domain.DomainEndpoint
+        version: {{es.elasticSearchMapping}}
+    {{/if}}
+      Users:
+        table: !Ref UsersTableDynamoDB
+        records:
+        {{# each default_users}}
+          {{# if this }}
+          - username: {{@key}}
+            password: OAuth
+          {{/if}}
+        {{/each}}
+        {{# each users}}
+          - username: {{username}}
+            password: OAuth
+        {{/each}}
+
+  #################################################
+  # Cumulus Custom Resource END
+  #################################################
+
+  #################################################
+  # SNS config BEGIN
+  #################################################
+{{#each sns}}
+  {{@key}}Sns:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      DisplayName: {{../stackName}}-{{@key}}
+      Subscription:
+      {{#each this.subscriptions}}
+        - Endpoint: {{this.endpoint}}
+          Protocol: {{@key}}
+      {{/each}}
+
+  {{# each this.subscriptions}}
+  {{@../key}}SubscriptionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: {{this.endpoint}}
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref {{@../key}}Sns
+  {{/each}}
+
+{{/each}}
+  #################################################
+  # SNS config END
+  #################################################
+
+  #################################################
+  # Step Functions config BEGIN
+  #################################################
+{{#each activities}}
+  {{name}}Activity:
+    Type: AWS::StepFunctions::Activity
+    Properties:
+      Name: {{../stackName}}-{{name}}-Activity
+{{/each}}
+
+{{#each stepFunctions}}
+  {{../stackNameNoDash}}{{name}}StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        !Sub |
+          {{{ToJson definition}}}
+      RoleArn: {{../iams.stepRoleArn}}
+
+{{/each}}
+  #################################################
+  # Step Functions config END
+  #################################################
+
+{{# if es.name}}
+  #################################################
+  # ElasticSearch config BEGIN
+  #################################################
+  {{es.name}}Domain:
+    Type: "AWS::Elasticsearch::Domain"
+    Properties:
+      DomainName: {{stackName}}-{{es.name}}
+      ElasticsearchVersion: {{# if version}}{{es.version}}{{ else }}5.3{{/if}}
+      ElasticsearchClusterConfig:
+        InstanceCount: {{# if instanceCount}}{{es.instanceCount}}{{ else }}'1'{{/if}}
+        InstanceType: {{# if instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: "0"
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp2
+        VolumeSize: {{es.volumeSize}}
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: "true"
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: {{iams.lambdaProcessingRoleArn}}
+            Action: "es:*"
+            Resource:
+              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+          - Effect: "Allow"
+            Principal:
+              AWS: {{iams.lambdaApiGatewayRoleArn}}
+            Action: "es:*"
+            Resource:
+              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+
+
+  #################################################
+  # ElasticSearch config END
+  #################################################
+{{/if}}
+
+  #################################################
+  # SQS config BEGIN
+  #################################################
+{{#each sqs}}
+  {{@key}}SQS:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: {{../stackName}}-{{@key}}
+      ReceiveMessageWaitTimeSeconds: 20
+    {{#if this.retry}}
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt [{{@key}}FailedSQS, Arn]
+        maxReceiveCount: {{this.retry}}
+    {{/if}}
+      VisibilityTimeout: {{this.visibilityTimeout}}
+
+{{#if this.retry}}
+  {{@key}}FailedSQS:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: {{../stackName}}-{{@key}}-failed
+
+{{/if}}
+
+{{# each this.consumer }}
+  {{@../key}}WatcherRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: {{this.schedule}}
+      State: {{# if this.state}}{{this.state}}{{ else }}DISABLED{{/if}}
+      Targets:
+        - Id: {{@../key}}WatcherScheduler
+          Input: !Sub '{"queueUrl": "${ {{@../key}}SQS}", "messageLimit": {{this.messageLimit}} }'
+          Arn:
+            Fn::GetAtt:
+            - {{this.lambda}}LambdaFunction
+            - Arn
+
+  {{@../key}}InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - {{this.lambda}}LambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - {{@../key}}WatcherRule
+          - Arn
+
+{{/each}}
+{{/each}}
+  #################################################
+  # SQS config END
+  #################################################
+
+  #################################################
+  # CloudWatch RULE config BEGIN
+  #################################################
+
+{{# each rules }}
+  {{@key}}Rule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: {{this.schedule}}
+      State: {{# if this.state}}{{this.state}}{{ else }}DISABLED{{/if}}
+      Targets:
+        {{# each this.targets}}
+        - Id: {{@../key}}WatcherScheduler
+          {{# if input}}
+          Input: {{input}}
+          {{/if}}
+          Arn:
+            Fn::GetAtt:
+            - {{lambda}}LambdaFunction
+            - Arn
+        {{/each}}
+
+  {{# each targets}}
+  {{@../key}}RuleLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - {{lambda}}LambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - {{@../key}}Rule
+          - Arn
+  {{/each}}
+{{/each}}
+
+## Generic lambda permission for custom rules
+## created in the dashboard
+  GenericLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - ScheduleSFLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+
+  #################################################
+  # CloudWatch RULE config BEGIN
+  #################################################
+
+  #################################################
+  # DynamoDB config BEGIN
+  #################################################
+{{#each dynamos}}
+  {{@key}}DynamoDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+    {{#each this.attributes}}
+      - AttributeName: {{name}}
+        AttributeType: {{type}}
+    {{/each}}
+      KeySchema:
+    {{#each this.attributes}}
+      - AttributeName: {{name}}
+        KeyType: {{schema}}
+    {{/each}}
+      ProvisionedThroughput:
+        ReadCapacityUnits: {{this.read}}
+        WriteCapacityUnits: {{this.write}}
+      TableName: {{../stackName}}-{{@key}}
+      StreamSpecification:
+        StreamViewType: "NEW_IMAGE"
+
+{{/each}}
+
+  #################################################
+  # DyanmoDB config END
+  #################################################
+
+  #################################################
+  # APIGateway config BEGIN
+  #################################################
+{{# if apiMethods}}
+{{# each apiDependencies}}
+  ApiGatewayDeployment11162017{{name}}:
+    DependsOn:
+  {{#each methods}}
+    - {{name}}
+  {{/each}}
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: {{name}}RestApi
+      StageName: {{../apiStage}}
+{{/each}}
+
+{{#each apiMethods}}
+  {{name}}:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId:
+        Ref: {{resource}}
+      RestApiId:
+        Ref: {{api}}RestApi
+      HttpMethod: {{method}}
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Join:
+          - ''
+          - - 'arn:aws:apigateway:'
+            - Ref: AWS::Region
+            - :lambda:path/2015-03-31/functions/
+            - Fn::GetAtt:
+              - {{lambda}}LambdaFunction
+              - Arn
+            - /invocations
+
+{{/each}}
+
+{{#each apiMethodsOptions}}
+  {{name}}:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''OPTIONS,PUT,POST,GET,DELETE'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: ''
+          StatusCode: '200'
+        RequestTemplates:
+          application/json: '{statusCode:200}'
+        Type: MOCK
+      MethodResponses:
+      - ResponseModels: {}
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: true
+          method.response.header.Access-Control-Allow-Methods: true
+          method.response.header.Access-Control-Allow-Origin: true
+        StatusCode: '200'
+      RequestParameters:
+        method.request.header.Authorization: true
+      ResourceId:
+        Ref: {{resource}}
+      RestApiId:
+        Ref: {{api}}RestApi
+
+{{/each}}
+
+{{#each apiResources}}
+  {{name}}:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+      {{#each parents}}
+        {{this}}
+      {{/each}}
+      PathPart: '{{pathPart}}'
+      RestApiId:
+        Ref: {{api}}RestApi
+
+{{/each}}
+
+{{#each apis}}
+  {{name}}RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: {{../stackName}}-{{name}}
+{{/each}}
+{{/if}}
+  #################################################
+  # APIGateway config END
+  #################################################
+
+  #################################################
+  # Lambda config BEGIN
+  #################################################
+{{#each lambdas}}
+  {{@key}}LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: {{this.bucket}}
+        S3Key: {{this.remote}}
+      FunctionName: {{../stackName}}-{{@key}}
+      Environment:
+        Variables:
+          stackName: {{../stackName}}
+        {{#each this.envs}}
+          {{@key}}: {{{this}}}
+        {{/each}}
+      {{# if ../es.name}}
+        {{# if this.passElasticSearchEndpoint }}
+          ES_HOST: !GetAtt {{../es.name}}Domain.DomainEndpoint
+        {{/if}}
+      {{/if}}
+        {{# if this.urs}}
+          API_ENDPOINT: {{# if ../api_backend_url}} {{../api_backend_url}}token {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]] {{/if}}
+          DEPLOYMENT_ENDPOINT: {{# if ../api_distribution_url}} {{../api_distribution_url}}redirect {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]] {{/if}}
+        {{/if}}
+      Handler: {{this.handler}}
+      MemorySize: {{this.memory}}
+    {{# if this.apiRole }}
+      Role: {{../iams.lambdaApiGatewayRoleArn}}
+      {{else}}
+      Role: {{../iams.lambdaProcessingRoleArn}}
+    {{/if}}
+      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs6.10{{/if}}
+      Timeout: {{this.timeout}}
+      Tags:
+        - Key: Project
+          Value: {{../stackName}}
+
+{{# if this.apiGateway }}
+  {{@key}}LambdaPermissionApiGateway:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - {{@key}}LambdaFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+{{/if}}
+
+{{# if this.logToElasticSearch }}
+  {{@key}}LogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}LogGroup
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn: !GetAtt log2elasticsearchLambdaFunction.Arn
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      FilterPattern: '{ $.name = "cumulus" }'
+
+  {{@key}}LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      RetentionInDays: 30
+{{/if}}
+
+{{/each}}
+
+  log2elasticsearchLambdaPermissionLog:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - log2elasticsearchLambdaFunction
+        - Arn
+      Principal: !Sub 'logs.${AWS::Region}.amazonaws.com'
+
+  #################################################
+  # Lambda config END
+  #################################################
+
+  #################################################
+  # ECS config BEGIN
+  #################################################
+{{# if iams.instanceProfile}}
+  CumulusECSCluster:
+    Type: AWS::ECS::Cluster
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: {{stackName}}-ecs-securitygroup
+      GroupDescription: Security Group for ECS containter instances of {{stackName}}
+      Tags:
+        - Key: Name
+          Value: "{{stackName}}"
+      VpcId: {{vpc.vpcId}}
+
+  CumulusContainerInstanceLaunch:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          commands:
+            01_add_instance_to_cluster:
+              command: !Sub |
+                #!/bin/bash
+                echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
+                echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
+          files:
+            "/etc/cfn/cfn-hup.conf":
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+              mode: '000400'
+              owner: root
+              group: root
+            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.CumulusContainerInstanceLaunch.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}
+                runas=root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                - "/etc/cfn/cfn-hup.conf"
+                - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+    Properties:
+    {{# if vpc.subnets }}
+      AssociatePublicIpAddress: false
+    {{/if}}
+      SecurityGroups:
+        - !GetAtt SecurityGroup.GroupId
+      ImageId: {{ecs.amiid}}
+      InstanceType: {{ecs.instanceType}}
+      IamInstanceProfile: {{iams.instanceProfile}}
+      BlockDeviceMappings:
+      - DeviceName: "/dev/xvda"
+        Ebs:
+          DeleteOnTermination: true
+          VolumeSize: {{ecs.volumeSize}}
+    {{# if ecs.keyPairName }}
+      KeyName: {{ ecs.keyPairName }}
+    {{/if}}
+      UserData:
+        "Fn::Base64": !Join
+          - ""
+          - - "#cloud-config\n"
+            - "\nruncmd:\n"
+            - " - yum install -y aws-cfn-bootstrap\n"
+            - !Sub " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}\n"
+            - !Sub " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
+
+
+  CumulusECSAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 0
+    Properties:
+      AvailabilityZones:
+        - {{ecs.availabilityZone}}
+    {{# if vpc.subnets }}
+      VPCZoneIdentifier:
+      {{#each vpc.subnets}}
+        - {{this}}
+      {{/each}}
+    {{/if}}
+      LaunchConfigurationName: !Ref CumulusContainerInstanceLaunch
+      MinSize: '0'
+      MaxSize: {{ ecs.maxInstances }}
+      DesiredCapacity: {{ ecs.desiredInstances }}
+      Tags:
+      - Key: Name
+        Value: "{{stackName}}-cumulus-ecs"
+        PropagateAtLaunch: true
+
+{{#each ecs.services}}
+  # adding TaskDefinition for Lambda/ECS services
+  {{@key}}TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: {{@key}}
+        Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}10{{/if}}
+        Essential: true
+        Environment:
+        {{#each this.envs}}
+          - Name: {{@key}}
+            Value: {{this}}
+        {{/each}}
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
+        MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
+      {{# if this.commands }}
+        Command:
+        {{# each this.commands }}
+        - {{{ @this }}}
+        {{/each}}
+      {{/if}}
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref {{@key}}EcsLogs
+            awslogs-region: !Sub ${AWS::Region}
+
+  {{@key}}EcsLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+
+  {{@key}}ECSService:
+    Type: AWS::ECS::Service
+    DependsOn:
+    - CumulusECSAutoScalingGroup
+    Properties:
+      Cluster: !Ref CumulusECSCluster
+      DesiredCount: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
+      TaskDefinition: !Ref {{@key}}TaskDefinition
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+
+{{/each}}
+{{/if}}
+  #################################################
+  # ECS config END
+  #################################################
+
+Outputs:
+
+  Api:
+    Value: {{# if api_backend_url}} {{api_backend_url}} {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
+
+  Distribution:
+    Value: {{# if api_distribution_url}} {{api_distribution_url}} {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
+
+{{#each stepFunctions}}
+  {{name}}StateMachine:
+    Value: !Ref {{../stackNameNoDash}}{{name}}StateMachine
+{{/each}}
+
+{{#each sqs}}
+  {{@key}}SQSOutput:
+    Value: !Ref {{@key}}SQS
+{{/each}}
+
+{{# if es.name}}
+  {{es.name}}Domain:
+    Value:
+      Fn::GetAtt:
+        - {{es.name}}Domain
+        - DomainEndpoint
+{{/if}}
+
+{{#each sns}}
+  {{@key}}SnsArn:
+    Value: !Ref {{@key}}Sns
+{{/each}}
+
+  EncryptedCmrPassword:
+    Value: !GetAtt CumulusCustomResource.CmrPassword
