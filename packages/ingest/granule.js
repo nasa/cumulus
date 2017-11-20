@@ -190,7 +190,6 @@ class Granule {
         return file;
       }
     }
-
     // if not found fall back to default
     file.bucket = this.buckets.private;
     file.url_path = this.collection.url_path || '';

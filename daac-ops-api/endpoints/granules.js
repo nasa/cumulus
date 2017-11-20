@@ -99,16 +99,11 @@ async function del(event) {
     );
   }
 
-  await deleteRecord(null, granuleId, 'granule', record.collectionId);
-
   // remove file from s3
-  try {
-    const key = `${process.env.stackname}/granules_status/${granuleId}`;
-    await S3.delete(process.env.internal, key);
-  }
-  catch (e) {
-    console.log(e);
-  }
+  const key = `${process.env.stackname}/granules_ingested/${granuleId}`;
+  await S3.delete(process.env.internal, key);
+
+  await deleteRecord(null, granuleId, 'granule', record.collectionId);
 
   return { detail: 'Record deleted' };
 }
