@@ -55,7 +55,7 @@ module.exports = {
     loaders: [
       {
         test: /\.js$/,
-        exclude: /node_modules(?!\/cumulus-)/,
+        exclude: /node_modules(?!\/cumulus-|\/@cumulus\/)/,
         loader: 'babel',
         query: {
           presets: [require.resolve('babel-preset-es2015')],
