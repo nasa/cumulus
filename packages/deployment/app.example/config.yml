@@ -29,5 +29,3 @@
 
     # if not specified the value of the apigateway dist url is used
     # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
-
-    dashboard_url: https://dashboard-url/ #make sure to include the trailing slash
