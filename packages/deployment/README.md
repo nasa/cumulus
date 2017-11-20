@@ -10,7 +10,7 @@ This module includes cloudformation templates needed for a successful deployment
 3. Rename `app.example` to `app`.
 4. Execute kes command:
 
-     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template node_modules/cumulus/deployment/app
+     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template ../cumulus/packages/deployment/app
 
 ## config.yml Explained
 
@@ -21,7 +21,6 @@ This module includes cloudformation templates needed for a successful deployment
 | urs_url | uat.urs | urs url used for OAuth
 | api_backend_url | apigateway backend url | the API backend url
 | api_distribution_url | apigateway dist url | the API url used for file distribution
-| dashboard_url | (required) | daac ops dashboard
 | shared_data_bucket | cumulus-data-shared | the bucket has the shared data artifacts
 | buckets.internal | (required) | the bucket used for storing deployment artifacts
 | buckets.private | (required) | the bucket used for storing private ingest data
