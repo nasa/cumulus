@@ -78,31 +78,52 @@ module.exports = class TriggerIngestTask extends Task {
     }
     await Promise.all(s3Promises);
 
-    if (isSfnExecution) await this.performStepFunctionExecutions(executions);
+    if (isSfnExecution) await this.triggerStepFunctionExecutions(executions);
 
     return returnValue;
   }
 
-  sendSqsExecutions(executions) {
-    const buildEntryFromMessage = (message) => ({
-      Id: message.name,
-      MessageBody: JSON.stringify(message)
-    });
+  /**
+   * Send a batch of execution parameters to SQS
+   * @param {Array<Object>} startExecutionParams An array of param objects to be
+   *   passed to AWS.StepFunctions.startExecution.
+   * @return {Array<Promise>} An Array of Promises that will be resolved when
+   *   all of the execution params have been sent to SQS.
+   */
+  sendExecutionParamsToSqs(startExecutionParams) {
+    const messages = startExecutionParams.map((params) => ({
+      Id: params.name,
+      MessageBody: JSON.stringify(params)
+    }));
 
-    const sendBatchOfMessagesToSqs = (messages) =>
+    const sendBatchOfMessagesToSqs = (messageEntries) =>
       aws.sqs().sendMessageBatch({
         QueueUrl: this.config.sqsQueueUrl,
-        Entries: messages.map(buildEntryFromMessage)
+        Entries: messageEntries
       }).promise();
 
     const sendBatchOfMessagesToSqsButThrottled = concurrency.limit(10, sendBatchOfMessagesToSqs);
-
-    return Promise.all(_.chunk(executions, 10).map(sendBatchOfMessagesToSqsButThrottled));
+    return _.chunk(messages, 10).map(sendBatchOfMessagesToSqsButThrottled);
   }
 
-  performStepFunctionExecutions(executions) {
-    if (this.config.sqsQueueUrl) return this.sendSqsExecutions(executions);
-    return Promise.all(executions.map(aws.startPromisedSfnExecution));
+  /**
+   * Either trigger step function executions, or send the startExecution parameters
+   * to an SQS queue based on the presence of this.config.sqsQueueUrl.
+   * @param {Array<Object>} startExecutionParams An array of param objects to be
+   *   passed to AWS.StepFunctions.startExecution.
+   * @return {Promise} A promise that will be resolved when all of the executions
+   *   have been started or all of params have been sent to SQS.
+   */
+  triggerStepFunctionExecutions(startExecutionParams) {
+    let promises;
+    if (this.config.sqsQueueUrl) {
+      promises = this.sendExecutionParamsToSqs(startExecutionParams);
+    }
+    else {
+      promises = startExecutionParams.map(aws.startPromisedSfnExecution);
+    }
+
+    return Promise.all(promises);
   }
 
   /**
