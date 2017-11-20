@@ -54,6 +54,10 @@ async function bootstrapUsers(table, records) {
   }
   const user = new Manager(table);
 
+  // delete all user records
+  const existingUsers = await user.scan();
+  await Promise.all(existingUsers.Items.map(u => user.delete({ userName: u.userName })));
+  // add new ones
   const additions = records.map((record) => user.create({
     userName: record.username,
     password: record.password,

@@ -189,13 +189,18 @@ class Manager {
 
   async scan(query, fields) {
     const params = {
-      TableName: this.tableName,
-      FilterExpression: query.filter,
-      ExpressionAttributeValues: query.values
+      TableName: this.tableName
     };
 
-    if (query.names) {
-      params.ExpressionAttributeNames = query.names;
+    if (query) {
+      if (query.filter && query.values) {
+        params.FilterExpression = query.filter;
+        params.ExpressionAttributeValues = query.values;
+      }
+
+      if (query.names) {
+        params.ExpressionAttributeNames = query.names;
+      }
     }
 
     if (fields) {
