@@ -3,3 +3,4 @@ Resources:
     Properties:
       Description: 'Runs GDAL'
       Runtime: nodejs6.10
+      MemorySize: 1536
