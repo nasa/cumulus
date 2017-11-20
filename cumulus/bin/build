@@ -26,4 +26,13 @@ if [ $# -ne 0 ]; then
     exit 1
 fi
 
+# Moving toward the Cumulus model of building individual tasks
+for task in run-gdal; do
+    pushd tasks/$task
+    npm run build
+    rm -rf ../../dist/$task
+    mv dist ../../dist/$task
+    popd
+done
+
 ./node_modules/.bin/webpack

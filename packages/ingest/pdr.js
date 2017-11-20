@@ -25,6 +25,7 @@ class Discover {
       throw new TypeError('Can not construct abstract class.');
     }
 
+    this.stack = get(event, 'resources.stack');
     this.buckets = get(event, 'resources.buckets');
     this.collection = get(event, 'collection.meta');
     this.provider = get(event, 'provider');
@@ -60,7 +61,7 @@ class Discover {
   }
 
   async pdrIsNew(pdr) {
-    const exists = await S3.fileExists(this.buckets.internal, path.join(this.folder, pdr.name));
+    const exists = await S3.fileExists(this.buckets.internal, path.join(this.stack, this.folder, pdr.name));
     return exists ? false : pdr;
   }
 
@@ -116,6 +117,7 @@ class Parse {
     }
 
     this.event = event;
+    this.stack = get(event, 'resources.stack');
     this.pdr = get(event, 'payload.pdr');
     this.buckets = get(event, 'resources.buckets');
     this.collection = get(event, 'collection.meta');
@@ -153,7 +155,12 @@ class Parse {
     const granules = await this.parse(pdrLocalPath);
 
     // upload only if the parse was successful
-    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
+    await this.upload(
+      this.buckets.internal,
+      path.join(this.stack, this.folder),
+      this.pdr.name,
+      pdrLocalPath
+    );
 
     // return list of all granules found in the PDR
     return granules;

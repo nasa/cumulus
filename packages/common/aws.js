@@ -158,7 +158,9 @@ exports.deleteS3Files = (s3Objs, s3opts = {}) => {
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
   let i = 0;
   const n = files.length;
-  log.info(`Starting upload of ${n} key${n === 1 ? '' : 's'}`);
+  if (n > 1) {
+    log.info(`Starting upload of ${n} keys`);
+  }
   const promiseUpload = (filenameOrInfo) => {
     let fileInfo = filenameOrInfo;
     if (typeof fileInfo === 'string') {
@@ -177,7 +179,7 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
     const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
     return exports.promiseS3Upload(opts)
                   .then(() => {
-                    log.info(`Progress: [${i++} of ${n}] ${filename} -> s3://${bucket}/${key}`);
+                    log.info(`Progress: [${++i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
                     return { key: key, bucket: bucket };
                   });
   };
