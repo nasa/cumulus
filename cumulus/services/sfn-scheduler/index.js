@@ -91,8 +91,13 @@ module.exports.handler = async (invocation) => {
           });
           offsetMs += staggerMs;
         }
+        else if (trigger && trigger.type === 'once') {
+          triggerIngest(invocation.resources, provider, collection);
+        }
       }
     }
+    // Run a heartbeat function to avoid terminating
+    setInterval((() => null), 10000000);
   }
   catch (err) {
     log.error('Scheduler failed: ', err.message);
