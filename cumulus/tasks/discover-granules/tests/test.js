@@ -3,7 +3,7 @@
 import test from 'ava';
 import sinon from 'sinon';
 import log from '@cumulus/common/log';
-import mur from '@cumulus/test-data/payloads/mur/discover.json';
+import mur from './fixtures/event1.json';
 import amsr2 from '@cumulus/test-data/payloads/amsr2/discover.json';
 import queue from '@cumulus/ingest/queue';
 import { S3 } from '@cumulus/ingest/aws';
@@ -15,14 +15,14 @@ test.cb('test discovering mur granules', (t) => {
   sinon.stub(S3, 'fileExists').callsFake(() => false);
 
   // make sure queue is not used
-  newMur.meta.useQueue = false;
+  newMur.config.useQueue = false;
   // update discovery rule
   const rule = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])';
-  newMur.collection.meta.provider_path = rule;
+  newMur.config.collection.meta.provider_path = rule;
 
   handler(newMur, {}, (e, r) => {
     S3.fileExists.restore();
-    const granules = r.payload.granules;
+    const granules = r.output.granules;
     t.is(Object.keys(granules).length, 3);
     const g = Object.keys(granules)[0];
     t.is(granules[g].files.length, 2);
@@ -37,13 +37,12 @@ test.cb('test discovering mur granules with queue', (t) => {
 
   // update discovery rule
   const rule = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])';
-  newMur.meta = {};
-  newMur.payload = {};
-  newMur.collection.meta.provider_path = rule;
+  newMur.config.useQueue = true;
+  newMur.config.collection.meta.provider_path = rule;
 
   handler(newMur, {}, (e, r) => {
     S3.fileExists.restore();
-    t.is(r.payload.granules_found, 3);
+    t.is(r.output.granules_found, 3);
     queue.queueGranule.restore();
     t.end(e);
   });
