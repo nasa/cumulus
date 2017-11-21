@@ -62,28 +62,36 @@ const syncUrl = (url, bucket, key, auth) =>
 let lastLog = null;
 let intermediates = 0;
 const syncFile = async (bucket, keypath, simulate, auth, file) => {
-  const destKey = path.join(keypath, file.name || path.basename(file.key || file.url));
-  let didLog = false;
-  if (!lastLog || new Date() > 5000 + lastLog || simulate) {
-    const suppression = intermediates > 0 ? ` (${intermediates} messages supressed)` : '';
-    log.debug(`Starting: ${file.url} -> s3://${bucket}/${destKey}${suppression}`);
-    intermediates = 0;
-    lastLog = +new Date();
-    didLog = true;
+  try {
+    const destKey = path.join(keypath, file.name || path.basename(file.Key || file.url));
+    let didLog = false;
+    if (!lastLog || new Date() > 5000 + lastLog || simulate) {
+      const suppression = intermediates > 0 ? ` (${intermediates} messages supressed)` : '';
+      log.debug(`Starting: ${file.url} -> s3://${bucket}/${destKey}${suppression}`);
+      intermediates = 0;
+      lastLog = +new Date();
+      didLog = true;
+    }
+    else {
+      intermediates++;
+    }
+    if (simulate) {
+      log.warn('Simulated call');
+    }
+    else {
+      await syncUrl(file.url, bucket, destKey, auth);
+    }
+    if (didLog) {
+      log.debug(`Completed: ${file.url}`);
+    }
+    return Object.assign({ Bucket: bucket, Key: destKey }, file);
   }
-  else {
-    intermediates++;
+  catch (e) {
+    log.info(`Exception in syncFile: ${e.stack}`);
+    log.info(`keypath: ${keypath}`);
+    log.info(`file: ${JSON.stringify(file, null, 2)}`);
+    throw e;
   }
-  if (simulate) {
-    log.warn('Simulated call');
-  }
-  else {
-    await syncUrl(file.url, bucket, destKey, auth);
-  }
-  if (didLog) {
-    log.debug(`Completed: ${file.url}`);
-  }
-  return Object.assign({ Bucket: bucket, Key: destKey }, file);
 };
 
 module.exports = class SyncHttpUrlsTask extends Task {
