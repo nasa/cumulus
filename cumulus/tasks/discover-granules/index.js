@@ -13,7 +13,6 @@ function handler(_event, context, cb) {
     log.debug({ payload: _event });
     const event = Object.assign({}, _event);
     const config = get(event, 'config');
-    const input = get(event, 'input');
 
     const queue = get(config, 'useQueue', true);
     const provider = get(config, 'provider', null);
