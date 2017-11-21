@@ -302,12 +302,12 @@ class Granule {
           await this.upload(file.bucket, file.url_path, file.name, tempFile);
         } else {
           throw new errors.InvalidChecksum(
-            `Invalid checksum for ${file.filename} with type ${file.checksumType} and value ${file.checksumValue}`
+            `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`
           );
         }
       } catch (e) {
         throw new errors.InvalidChecksum(
-          `Error evaluating checksum for ${file.filename} with type ${file.checksumType} and value ${file.checksumValue}`
+          `Error evaluating checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`
         );
       }
 
