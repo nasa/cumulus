@@ -9,7 +9,7 @@
     instanceType: t2.micro
     desiredInstances: 0
 
- buckets:
+  buckets:
     internal: <prefix>-internal
     private: <prefix>-private
     protected: <prefix>-protected
