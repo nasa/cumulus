@@ -3,10 +3,10 @@
 import test from 'ava';
 import sinon from 'sinon';
 import log from '@cumulus/common/log';
-import mur from './fixtures/event1.json';
 import amsr2 from '@cumulus/test-data/payloads/amsr2/discover.json';
 import queue from '@cumulus/ingest/queue';
 import { S3 } from '@cumulus/ingest/aws';
+import mur from './fixtures/mur.json';
 import { handler } from '../index';
 
 test.cb('test discovering mur granules', (t) => {
