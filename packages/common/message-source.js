@@ -3,6 +3,7 @@
 const readline = require('readline');
 const aws = require('./aws');
 const log = require('./log');
+const { uuid } = require('./string');
 
 // Maximum message payload size that will NOT be stored in S3. Anything bigger will be.
 const MAX_NON_S3_PAYLOAD_SIZE = 10000;
@@ -159,7 +160,7 @@ class StateMachineS3MessageSource extends MessageSource {
     }
     else {
       log.debug('Using S3 payload');
-      const scopedKey = [handler.name, this.key].join('/');
+      const scopedKey = [handler.name, this.key, uuid()].join('/');
       const params = {
         Bucket: this.bucket,
         Key: scopedKey,
