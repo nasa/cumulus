@@ -62,7 +62,11 @@ default:
     sftracker:
       subscriptions:
         lambda:
-          endpoint: '!GetAtt sns2elasticsearchLambdaFunction.Arn'
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - sns2elasticsearchLambdaFunction
+              - Arn
 
   # defining the APIs. Each item will include a separate endpoint
   apis:
