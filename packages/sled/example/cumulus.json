@@ -1,5 +1,10 @@
 {
-    "task": {
-        "entrypoint": "example.handler"
+  "task": {
+    "entrypoint": "example.handler",
+    "schemas": {
+      "input": "schemas/input.json",
+      "config": "schemas/config.json",
+      "output": "schemas/output.json"
     }
+  }
 }

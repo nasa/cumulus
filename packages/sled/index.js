@@ -3,6 +3,8 @@
 const path = require('path');
 const fs = require('fs');
 const message = require('./lib/message');
+const Ajv = require('ajv');
+const ajv = new Ajv();
 
 /**
  * Returns an absolute path given a relative path within the task directory
@@ -14,11 +16,11 @@ function taskPath(relativePath) {
 }
 
 /**
- * @returns {Promise} A promise resolving to the parsed contents of cumulus.json
+ * @returns {Promise} A promise resolving to the parsed contents of the file passed in
  */
-function promiseTaskConfig() {
+function promiseJsonFile(relativePath) {
   return new Promise((resolve, reject) => {
-    const filePath = taskPath('cumulus.json');
+    const filePath = taskPath(relativePath);
     fs.readFile(filePath, (err, data) => {
       if (err) return reject(err);
       try {
@@ -61,6 +63,26 @@ function getNestedHandler(handlerString) {
   }
 }
 
+function validateMessage(message, schemaFile) {
+  console.log("In validate " + schemaFile);
+  (promiseJsonFile(schemaFile))
+  .then((schema) => {
+    console.log(schema);
+
+    const ajv = new Ajv();
+    const validate = ajv.compile(schema);
+    const valid = validate(message);
+
+    console.log("Valid?: " + valid);
+    return valid;
+  })
+  .catch((err) => {
+    console.log(err);
+    return false;
+  });
+  return false;
+}
+
 /**
  * Given a Lambda handler, event, and context, invokes the handler with the given event.
  * @param {Function} handler The Lambda handler to invoke
@@ -96,9 +118,14 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
   let nestedHandler = null;
   let messageConfig = null;
   let fullEvent = null;
-  (handlerFn ? Promise.resolve(handlerConfig || {}) : promiseTaskConfig())
+  let schemas = null;
+
+
+  (handlerFn ? Promise.resolve(handlerConfig || {}) : promiseJsonFile('cumulus.json'))
     .then((config) => {
       taskConfig = config.task || {};
+      if (taskConfig) schemas = taskConfig.schemas;
+
       nestedHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
       return message.loadRemoteEvent(event);
     })
@@ -108,6 +135,19 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
     })
     .then((nestedEvent) => {
       messageConfig = nestedEvent.messageConfig;
+      //let validInput = null;
+      if (schemas){
+        validateMessage(nestedEvent.input, schemas.input)
+        .then((validInput) => {
+          console.log("valid input " + validInput);
+        })
+        .catch((err) => {
+          console.log("catching some error " + err);
+        });
+        //validConfig = validateMessage(nestedEvent.config, schemas.config);
+      }
+      //console.log("Config: " + validConfig);
+
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
       return invokeHandler(nestedHandler, nestedEvent, context);
     })
