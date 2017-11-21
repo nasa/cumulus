@@ -63,9 +63,8 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     const endDate = dateRange.endDate;
     //-------//
     const granules = [];
-    const params = Object.assign(query);
+    const params = Object.assign({}, query);
     if (params.updated_since) params.sort_key = 'revision_date';
-    params.collection_concept_id = params.collection_concept_id || 'C1000000320-LPDAAC_ECS';
     params.scroll = 'true';
     const baseUrl = `${root}/search/granules.json`;
     const opts = { headers: { 'Client-Id': 'GitC' } };
