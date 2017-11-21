@@ -576,7 +576,7 @@ Resources:
                 - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
     Properties:
     {{# if vpc.subnets }}
-      AssociatePublicIpAddress: false
+      AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
       SecurityGroups:
         - Fn::GetAtt:
