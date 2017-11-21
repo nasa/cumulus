@@ -41,7 +41,7 @@ default:
     kbaynes: true
 
   ecs:
-    amiid: ami-9eb4b1e5
+    amiid: ami-6944c513
     instanceType: change-me 
     volumeSize: 50
     availabilityZone: 'us-east-1a'
