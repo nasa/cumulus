@@ -21,7 +21,6 @@ class Discover {
     }
 
     const config = get(event, 'config');
-    const input = get(event, 'input');
 
     this.buckets = get(config, 'buckets');
     this.collection = get(config, 'collection.meta');
