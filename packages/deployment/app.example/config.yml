@@ -1,7 +1,7 @@
 
-<change-me>:
-  stackName: change-me-cumulus
-  stackNameNoDash: ChangeMeCumulus
+<cumulus-deployment-name>:
+  stackName: <prefix>-cumulus
+  stackNameNoDash: <Prefix>Cumulus
 
   apiStage: dev
 
@@ -9,11 +9,11 @@
     instanceType: t2.micro
     desiredInstances: 0
 
- buckets:
-    internal: change-me
-    private: change-me
-    protected: change-me
-    public: change-me
+  buckets:
+    internal: <prefix>-internal
+    private: <prefix>-private
+    protected: <prefix>-protected
+    public: <prefix>-public
 
   iams:
     ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-ecs
