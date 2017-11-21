@@ -26,23 +26,24 @@ function handler(_event, context, cb) {
 
     const Discover = granule.selector('discover', provider.protocol, queue);
     const discover = new Discover(event);
+    const output = {};
 
     log.debug('Staring granule discovery');
     return discover.discover().then((gs) => {
       if (queue) {
-        event.payload.granules_found = gs.length;
+        output.granules_found = gs.length;
         log.debug(`Discovered ${gs.length} granules`);
       }
       else {
         log.debug(gs);
-        event.payload.granules = gs;
+        output.granules = gs;
       }
 
       if (discover.connected) {
         discover.end();
         log.debug(`Ending ${provider.protocol} connection`);
       }
-      return cb(null, event);
+      return cb(null, output);
     }).catch(e => {
       if (discover.connected) {
         discover.end();
