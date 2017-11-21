@@ -34,9 +34,9 @@ This module includes cloudformation templates needed for a successful deployment
 | vpc.subnets | (required) | the subnets used
 | defaults_users | cumulus core | list of default users included in all deployments
 | ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (differnet for each region)
-| ecs.instanceType | (required) | the instance type of the ec2 machined used for running ecs tasks
+| ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
 | ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks
-| ecs.availabilityZone | us-east-1a | the availibity zone used for launging ec2 machines
+| ecs.availabilityZone | us-east-1a | the availibity zone used for launching ec2 machines
 | ecs.maxInstances | 1 | max number of ec2 instances to launch in an autoscaling group
 | ecs.desiredInstances | 0 | desired number of ec2 instances needed in an autoscaling group
 | es.name | es5 | name of the elasticsearch cluster
