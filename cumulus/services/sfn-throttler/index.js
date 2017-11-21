@@ -57,8 +57,6 @@ function deleteMessage(queueUrl, message) {
 }
 
 const startExecutions = async (queueUrl, stateMachineArn, count) => {
-  log.info(`Starting ${count} executions of ${stateMachineArn}`);
-
   const messages = await fetchMessages(queueUrl, count);
 
   const executionPromises = messages.map((message) =>
