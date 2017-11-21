@@ -86,11 +86,17 @@ class StateMachineS3MessageSource extends MessageSource {
   }
 
   async loadConfigTemplate() {
-    const workflowConfig = this.messageData.workflow_config_template;
-    const meta = this.messageData.ingest_meta;
-    const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
-    log.debug(`TASK NAME is [${taskName}]`);
-    return workflowConfig[taskName];
+    try {
+      const workflowConfig = this.messageData.workflow_config_template;
+      const meta = this.messageData.ingest_meta;
+      const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
+      log.debug(`TASK NAME is [${taskName}]`);
+      return workflowConfig[taskName];
+    }
+    catch (e) {
+      log.info('Exception in loadConfigTemplate');
+      throw e;
+    }
   }
 
   async loadState(taskName) {
@@ -115,12 +121,18 @@ class StateMachineS3MessageSource extends MessageSource {
   }
 
   async loadMessageData() {
-    const message = this.originalMessage;
-    if (!message.payload || !message.payload.Bucket || !message.payload.Key) {
-      return message;
+    try {
+      const message = this.originalMessage;
+      if (!message.payload || !message.payload.Bucket || !message.payload.Key) {
+        return message;
+      }
+      const payloadJson = await aws.s3().getObject(message.payload).promise();
+      return Object.assign({}, message, { payload: JSON.parse(payloadJson.Body) });
     }
-    const payloadJson = await aws.s3().getObject(message.payload).promise();
-    return Object.assign({}, message, { payload: JSON.parse(payloadJson.Body) });
+    catch (e) {
+      log.info('Exception in loadMessageData');
+      throw e;
+    }
   }
 
   static isSourceFor(message) {
