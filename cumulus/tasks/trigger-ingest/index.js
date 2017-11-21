@@ -46,11 +46,15 @@ module.exports = class TriggerIngestTask extends Task {
       returnValue = _.omit(this.message.payload, 'messages');
     }
 
+    // https://gist.github.com/jed/982883
+    // eslint-disable-next-line
+    function uuid(a){return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,uuid)}
+
     for (const e of actualMessages) {
       const key = (e.meta && e.meta.key) || this.config.key || 'Unknown';
       const name = aws.toSfnExecutionName(key.split('/', 3).concat(id), '__');
       log.info(`Starting ingest of ${name}`);
-      const payload = { Bucket: bucket, Key: ['TriggerIngest', key].join('/') };
+      const payload = { Bucket: bucket, Key: ['TriggerIngest', uuid()].join('/') };
 
       const fullMessageData = Object.assign({}, this.message, e);
       fullMessageData.meta = Object.assign({}, this.message.meta, e.meta);
@@ -63,11 +67,12 @@ module.exports = class TriggerIngestTask extends Task {
                                      payload,
                                      { Body: JSON.stringify(fullMessageData.payload) });
 
-      const sfnMessageData = Object.assign({}, fullMessageData, { payload: payload });
+      const sfnMessageData = Object.assign({}, fullMessageData);
       if (!isSfnExecution) {
         log.warn('inline-result: ', JSON.stringify(fullMessageData));
       }
-      else {
+      else if (s3Params.Body.length > 10000) {
+        sfnMessageData.payload = payload;
         s3Promises.push(aws.promiseS3Upload(s3Params));
       }
       executions.push({
