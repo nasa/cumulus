@@ -292,7 +292,7 @@ class Granule {
           fs.unlinkSync(checksumFilepath);
         }
 
-        const validated = this._validateChecksum(
+        const validated = await this._validateChecksum(
           checksumType,
           checksumValue,
           tempFile
