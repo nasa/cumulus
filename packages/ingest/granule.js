@@ -8,6 +8,7 @@ const cksum = require('cksum');
 const checksum = require('checksum');
 const logger = require('./log');
 const errors = require('@cumulus/common/errors');
+const AWS = require('aws-sdk');
 const S3 = require('./aws').S3;
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
@@ -244,21 +245,24 @@ class Granule {
    */
   async ingestFile(_file, duplicateHandling) {
     const file = _file;
-    let exists;
+    let exists = null;
 
     // check if the file exists.
     exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
 
-    if (duplicateHandling == "version") {
+    if (duplicateHandling === 'version') {
+      const s3 = new AWS.S3();
       // check that the bucket has versioning enabled
-      versioning = await S3.getBucketVersioning({Bucket: file.bucket});
+      let versioning = await s3.getBucketVersioning({ Bucket: file.bucket });
       // if not enabled, make it enabled
-      if (versioning.Status != "Enabled") {
-        versioning = await putBucketVersioning({ Bucket: file.bucket, VersioningConfiguration: { Status: "Enabled"}});
+      if (versioning.Status !== 'Enabled') {
+        versioning = await s3.putBucketVersioning({
+          Bucket: file.bucket,
+          VersioningConfiguration: { Status: 'Enabled' } });
       }
     }
 
-    if (!exists || duplicateHandling != "skip") {
+    if (!exists || duplicateHandling !== 'skip') {
       // Either the file does not exist yet, or it does but
       // we are replacing it with a more recent one or
       // adding another version of it to the bucket
@@ -288,7 +292,8 @@ class Granule {
         if (file.checksumType && file.checksumValue) {
           checksumType = file.checksumType;
           checksumValue = file.checksumValue;
-        } else if (this.checksumFiles[file.name]) {
+        }
+        else if (this.checksumFiles[file.name]) {
           const checksumInfo = this.checksumFiles[file.name];
 
           log.info(`downloading ${checksumInfo.name}`);
@@ -309,14 +314,18 @@ class Granule {
 
         if (validated) {
           await this.upload(file.bucket, file.url_path, file.name, tempFile);
-        } else {
+        }
+        else {
           throw new errors.InvalidChecksum(
-            `Invalid checksum for ${file.filename} with type ${file.checksumType} and value ${file.checksumValue}`
+            `Invalid checksum for ${file.filename} with type ${file.checksumType} 
+            and value ${file.checksumValue}`
           );
         }
-      } catch (e) {
+      }
+      catch (e) {
         throw new errors.InvalidChecksum(
-          `Error evaluating checksum for ${file.filename} with type ${file.checksumType} and value ${file.checksumValue}`
+          `Error evaluating checksum for ${file.filename} with type ${file.checksumType} 
+          and value ${file.checksumValue}`
         );
       }
 
