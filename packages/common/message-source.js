@@ -3,7 +3,7 @@
 const readline = require('readline');
 const aws = require('./aws');
 const log = require('./log');
-const { uuid } = require('./string');
+const { uuid } = require('./util');
 
 // Maximum message payload size that will NOT be stored in S3. Anything bigger will be.
 const MAX_NON_S3_PAYLOAD_SIZE = 10000;
