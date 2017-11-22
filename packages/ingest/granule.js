@@ -290,6 +290,9 @@ class Granule {
           checksumType = 'md5';
           checksumValue = fs.readFileSync(checksumFilepath, 'utf8').split(' ')[0];
           fs.unlinkSync(checksumFilepath);
+        } else {
+          // If there is not a checksum, no need to validate
+          return await this.upload(file.bucket, file.url_path, file.name, tempFile);
         }
 
         const validated = await this._validateChecksum(
