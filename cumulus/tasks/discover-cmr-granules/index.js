@@ -18,13 +18,16 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * @return An array of CMR granules that need ingest
    */
   async run() {
-    // const query = this.config.query || { updated_since: '5d', collection_concept_id: 'C1000000320-LPDAAC_ECS'};
-    const query = this.config.query || { page_size: 100};
+    const query = this.config.query || { page_size: 100 };
     if (query.updated_since) {
       query.updated_since = new Date(Date.now() - parseDuration(query.updated_since)).toISOString();
     }
     this.message.payload = this.message.payload || { scrollID: null };
-    let {scrollID, granules} = await this.cmrGranules(this.config.root, query, this.message.payload['scrollID'], {startDate: this.config.startDate, endDate: this.config.endDate});
+
+    const { scrollID, granules } = await this.cmrGranules(
+      this.config.root,
+      query,
+      this.message.payload.scrollID);
     log.debug(`using scrollID: ${scrollID}`);
     const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
     const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
@@ -57,21 +60,14 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * @param {object} query - The query parameters to serialize and send to a CMR granules search
    * @return An array of all granules matching the given query
    */
-  async cmrGranules(root, query, scrollID, dateRange) {
-    //NEED SOURCE OF THESE VALUES------//
-    const startDate = dateRange.startDate;
-    const endDate = dateRange.endDate;
-    //-------//
+  async cmrGranules(root, query, scrollID) {
     const granules = [];
     const params = Object.assign({}, query);
     if (params.updated_since) params.sort_key = 'revision_date';
     params.scroll = 'true';
     const baseUrl = `${root}/search/granules.json`;
     const opts = { headers: { 'Client-Id': 'GitC' } };
-    let url = [baseUrl, querystring.stringify(params)].join('?');
-    if (!params.updated_since) {
-      url += `&temporal=${startDate}T00%3A00%3A00Z,${endDate}T00%3A00%3A00Z`;
-    }
+    const url = [baseUrl, querystring.stringify(params)].join('?');
     if (scrollID) opts.headers['CMR-Scroll-Id'] = scrollID;
     log.info('Fetching:', url);
     const response = await fetch(url, opts);
@@ -79,12 +75,16 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
       throw new Error(`CMR Error ${response.status} ${response.statusText}`);
     }
     const json = await response.json();
-    console.log(json);
+    log.info(json);
     granules.push(...json.feed.entry);
-    log.info(`scrollID:${scrollID} cmr-scroll-id:${response.headers['_headers']['cmr-scroll-id']} json.feed.entry.length:${json.feed.entry.length}`);
-    const nextScrollID = (json.feed.entry.length == 0) ? false : response.headers['_headers']['cmr-scroll-id'];
+    log.info(`scrollID:${scrollID}`,
+             `cmr-scroll-id:${response.headers._headers['cmr-scroll-id']}`,
+             `json.feed.entry.length:${json.feed.entry.length}`);
+    const nextScrollID = (json.feed.entry.length === 0) ?
+                         false :
+                         response.headers._headers['cmr-scroll-id'];
     log.info(`nextScrollID:${nextScrollID}`);
-    console.log('----TOTAL----: '+granules.length);
+    log.info('----TOTAL----: ', granules.length);
     return { granules: granules, scrollID: nextScrollID };
   }
 

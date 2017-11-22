@@ -90,6 +90,16 @@ class StateMachineS3MessageSource extends MessageSource {
     try {
       const workflowConfig = this.messageData.workflow_config_template;
       const meta = this.messageData.ingest_meta;
+      log.info('Checking for arn mapping for ', this.context.invokedFunctionArn);
+      if (workflowConfig.arns_to_name_mappings) {
+        const match = workflowConfig.arns_to_name_mappings.find(({ arn }) =>
+          arn === this.context.invokedFunctionArn
+        );
+        if (match) {
+          log.info('Found configured task name', match.arn, ' -> ', match.name);
+          return workflowConfig[match.name];
+        }
+      }
       const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
       log.debug(`TASK NAME is [${taskName}]`);
       return workflowConfig[taskName];
