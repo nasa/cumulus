@@ -19,3 +19,9 @@ exports.mkdtempSync = (name) => {
   fs.mkdirSync(abspath, 0o700);
   return abspath;
 };
+
+/**
+ * Generate and return an RFC4122 v4 UUID.
+ * @return - An RFC44122 v4 UUID.
+ */
+exports.uuid = require('uuid/v4');
