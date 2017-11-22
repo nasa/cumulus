@@ -3,11 +3,14 @@
 const Task = require('@cumulus/common/task');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
-const { uuid } = require('@cumulus/common/string');
+const { uuid } = require('@cumulus/common/util');
 const _ = require('lodash');
 const concurrency = require('@cumulus/common/concurrency');
 
 /**
+ * NOTE This is a poorly-named class.  It should actually be called something
+ *   like "TriggerStepFunctionExecution".
+ *
  * Task which triggers ingest of discovered granules. Starts a state machine execution
  * for each object specified in the payload, merging its properties into those provided
  * to the input message
