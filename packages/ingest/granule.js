@@ -19,14 +19,17 @@ class Discover {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
-    this.buckets = get(event, 'resources.buckets');
-    this.collection = get(event, 'collection.meta');
-    this.provider = get(event, 'provider');
+
+    const config = get(event, 'config');
+
+    this.buckets = get(config, 'buckets');
+    this.collection = get(config, 'collection.meta');
+    this.provider = get(config, 'provider');
     this.event = event;
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
-    this.path = this.collection.provider_path || '/';
+    this.path = get(this.collection, 'provider_path') || '/';
     this.endpoint = urljoin(this.host, this.path);
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
