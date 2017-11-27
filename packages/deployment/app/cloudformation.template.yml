@@ -633,10 +633,25 @@ Resources:
   {{@key}}TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
+    {{# if this.volumes}}
+      Volumes:
+      {{# each this.volumes}}
+        - Name: {{name}}
+          Host:
+            SourcePath: {{path}} 
+      {{/each}}
+    {{/if}}
       ContainerDefinitions:
       - Name: {{@key}}
         Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}10{{/if}}
         Essential: true
+      {{# if this.volumes}}
+        MountPoints:
+        {{# each this.volumes}}
+          - SourceVolume: {{name}}
+            ContainerPath: {{dst}}
+        {{/each}}
+      {{/if}}
         Environment:
     {{#each this.envs}}
       {{# if this.function}}
