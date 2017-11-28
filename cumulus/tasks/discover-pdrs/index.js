@@ -13,8 +13,11 @@ function handler(_event, context, cb) {
   try {
     log.debug(_event);
     const event = Object.assign({}, _event);
-    const queue = get(event, 'meta.useQueue', true);
-    const provider = get(event, 'provider', null);
+    const config = get(event, 'config');
+    const queue = get(config, 'useQueue', true);
+    const provider = get(config, 'provider', null);
+
+    const output = {};
 
     log.child({ provider: get(provider, 'id') });
 
@@ -27,13 +30,15 @@ function handler(_event, context, cb) {
     const Discover = pdr.selector('discover', provider.protocol, queue);
     const discover = new Discover(event);
 
-    log.debug('Staring PDR discovery');
+    log.debug('Starting PDR discovery');
+
     return discover.discover().then((pdrs) => {
+      console.log('pdrs', pdrs)
       if (queue) {
-        event.payload.pdrs_found = pdrs.length;
+        output.pdrs_found = pdrs.length;
       }
       else {
-        event.payload.pdrs = pdrs;
+        output.pdrs = pdrs;
       }
 
       if (discover.connected) {
@@ -41,7 +46,7 @@ function handler(_event, context, cb) {
         log.debug(`Ending ${provider.protocol} connection`);
       }
 
-      return cb(null, event);
+      return cb(null, output);
     }).catch(e => {
       log.error(e);
 
@@ -52,6 +57,11 @@ function handler(_event, context, cb) {
 
       if (e.toString().includes('ECONNREFUSED')) {
         const err = new errors.RemoteResourceError('Connection Refused');
+        log.error(err);
+        return cb(err);
+      }
+      else if (e.message.includes('Please login with USER and PASS')) {
+        const err = new errors.FTPError('Login incorrect');
         log.error(err);
         return cb(err);
       }
@@ -77,9 +87,9 @@ function handler(_event, context, cb) {
 module.exports.handler = handler;
 
 local.justLocalRun(() => {
-  const payload = require( // eslint-disable-line global-require
-    '@cumulus/test-data/payloads/modis/discover.json'
-  );
-  payload.meta.useQueue = false;
-  handler(payload, {}, (e, r) => console.log(e, r));
+  const filepath = process.argv[3] ? process.argv[3] : './tests/fixtures/input.json';
+  const payload = require(filepath); // eslint-disable-line global-require
+
+  payload.config.useQueue = false;
+  handler(payload, {}, (e) => log.info(e));
 });
