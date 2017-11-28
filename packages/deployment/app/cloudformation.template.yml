@@ -699,6 +699,19 @@ Resources:
     Properties:
       LogGroupName: {{../stackName}}-{{@key}}EcsLogs
 
+  {{@key}}EcsLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}EcsLogs
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      FilterPattern: 'DEBUG'
+
   {{@key}}ECSService:
     Type: AWS::ECS::Service
     DependsOn:
