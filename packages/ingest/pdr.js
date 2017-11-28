@@ -25,10 +25,11 @@ class Discover {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    this.buckets = get(event, 'resources.buckets');
-    this.collection = get(event, 'collection.meta');
-    this.provider = get(event, 'provider');
-    this.folder = get(event, 'meta.pdrFolder', 'pdrs');
+    const config = get(event, 'config');
+    this.buckets = get(config, 'buckets');
+    this.collection = get(config, 'collection.meta');
+    this.provider = get(config, 'provider');
+    this.folder = get(config, 'pdrFolder', 'pdrs');
     this.event = event;
 
     // get authentication information
@@ -37,7 +38,7 @@ class Discover {
     this.path = this.collection.provider_path || '/';
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
-    this.limit = get(event, 'meta.queueLimit', null);
+    this.limit = get(config, 'queueLimit', null);
   }
 
   filterPdrs(pdr) {
@@ -116,11 +117,15 @@ class Parse {
     }
 
     this.event = event;
-    this.pdr = get(event, 'payload.pdr');
-    this.buckets = get(event, 'resources.buckets');
-    this.collection = get(event, 'collection.meta');
-    this.provider = get(event, 'provider');
-    this.folder = get(event, 'meta.pdrFolder', 'pdrs');
+    const config = get(event, 'config');
+    const input = get(event, 'input');
+
+    this.pdr = get(input, 'pdr');
+    this.stack = get(config, 'stack');
+    this.buckets = get(config, 'buckets');
+    this.collection = get(config, 'collection.meta');
+    this.provider = get(config, 'provider');
+    this.folder = get(config, 'pdrFolder', 'pdrs');
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
@@ -211,7 +216,7 @@ class ParseAndQueue extends Parse {
         // get it from S3
         if (g.dataType !== this.collection.name) {
           const bucket = this.buckets.internal;
-          const key = `${this.event.resources.stack}` +
+          const key = `${this.stack}` +
                       `/collections/${g.dataType}.json`;
           let file;
           try {
