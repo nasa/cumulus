@@ -73,6 +73,8 @@ module.exports = {
   // to be returned when the file is missing or forbidden
   FileNotFound: createErrorType('FileNotFound'),
 
+  // if a checksum doesn't match
+  InvalidChecksum: createErrorType('InvalidChecksum'),
 
   // is raised if the PDR file doesn't match the collection
   MismatchPdrCollection: createErrorType('MismatchPdrCollection')
