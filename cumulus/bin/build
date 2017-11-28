@@ -29,6 +29,8 @@ fi
 mkdir -p dist
 
 # Moving toward the Cumulus model of building individual tasks
+mkdir -p dist
+
 for task in run-gdal; do
     pushd tasks/$task
     npm run build
