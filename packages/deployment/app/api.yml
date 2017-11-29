@@ -120,6 +120,7 @@ ApiGranules:
   timeout: 20
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
   envs:
     UsersTable:
       function: Ref
