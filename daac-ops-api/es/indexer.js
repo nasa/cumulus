@@ -329,6 +329,7 @@ async function reingest(g) {
 
   // get the payload of the original execution
   const status = await StepFunction.getExecutionStatus(path.basename(g.execution));
+  const originalMessage = JSON.parse(status.execution.input);
 
   const payload = await Rule.buildPayload({
     workflow: 'IngestGranule',
@@ -338,7 +339,7 @@ async function reingest(g) {
       version: collection[1]
     },
     meta: { granuleId: g.granuleId },
-    payload: JSON.parse(status.execution.input)
+    payload: originalMessage.payload
   });
 
   await partialRecordUpdate(
