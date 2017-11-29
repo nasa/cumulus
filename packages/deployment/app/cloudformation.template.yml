@@ -323,7 +323,7 @@ Resources:
   #################################################
 {{# if apiMethods}}
 {{# each apiDependencies}}
-  ApiGatewayDeployment11162017{{name}}:
+  ApiGatewayDeployment11292017{{name}}:
     DependsOn:
   {{#each methods}}
     - {{name}}
