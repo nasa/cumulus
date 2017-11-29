@@ -568,6 +568,7 @@ Resources:
                     Email:
                       Ref: DockerEmail
                 {{/if}}
+                  - Example: value
                   
           files:
             "/etc/cfn/cfn-hup.conf":
