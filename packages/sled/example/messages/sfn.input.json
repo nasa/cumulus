@@ -1,0 +1,21 @@
+{
+  "workflow_config": {
+    "Example": {
+      "inlinestr": "prefix{meta.foo}suffix",
+      "array": "{[$.meta.foo]}",
+      "object": "{{$.meta}}"
+    }
+  },
+  "cumulus_meta": {
+    "message_source": "sfn",
+    "state_machine": "arn:aws:states:us-east-1:1234:stateMachine:MySfn",
+    "execution_name": "MyExecution__id-1234",
+    "id": "id-1234"
+  },
+  "meta": {
+    "foo": "bar"
+  },
+  "payload": {
+    "anykey": "anyvalue"
+  }
+}
