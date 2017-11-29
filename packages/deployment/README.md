@@ -10,7 +10,7 @@ This module includes cloudformation templates needed for a successful deployment
 3. Rename `app.example` to `app`.
 4. Execute kes command:
 
-     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template node_modules/cumulus/deployment/app
+     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template ../cumulus/packages/deployment/app
 
 ## config.yml Explained
 
@@ -21,7 +21,6 @@ This module includes cloudformation templates needed for a successful deployment
 | urs_url | uat.urs | urs url used for OAuth
 | api_backend_url | apigateway backend url | the API backend url
 | api_distribution_url | apigateway dist url | the API url used for file distribution
-| dashboard_url | (required) | daac ops dashboard
 | shared_data_bucket | cumulus-data-shared | the bucket has the shared data artifacts
 | buckets.internal | (required) | the bucket used for storing deployment artifacts
 | buckets.private | (required) | the bucket used for storing private ingest data
@@ -35,9 +34,9 @@ This module includes cloudformation templates needed for a successful deployment
 | vpc.subnets | (required) | the subnets used
 | defaults_users | cumulus core | list of default users included in all deployments
 | ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (differnet for each region)
-| ecs.instanceType | (required) | the instance type of the ec2 machined used for running ecs tasks
+| ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
 | ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks
-| ecs.availabilityZone | us-east-1a | the availibity zone used for launging ec2 machines
+| ecs.availabilityZone | us-east-1a | the availibity zone used for launching ec2 machines
 | ecs.maxInstances | 1 | max number of ec2 instances to launch in an autoscaling group
 | ecs.desiredInstances | 0 | desired number of ec2 instances needed in an autoscaling group
 | es.name | es5 | name of the elasticsearch cluster

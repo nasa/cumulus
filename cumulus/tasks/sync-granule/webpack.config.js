@@ -5,15 +5,15 @@ module.exports = {
     filename: 'dist/index.js'
   },
   target: 'node',
-  devtool: 'sourcemap',
+  devtool: 'source-map',
   module: {
-    loaders: [{
+    rules: [{
       test: /\.js?$/,
       exclude: /(node_modules)/,
-      loader: 'babel'
+      loader: 'babel-loader'
     }, {
       test: /\.json$/,
-      loader: 'json'
+      loader: 'json-loader'
     }]
   }
 };
