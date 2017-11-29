@@ -10,11 +10,12 @@
  */
 'use strict';
 
+const path = require('path');
 const get = require('lodash.get');
 const zlib = require('zlib');
 const logger = require('@cumulus/ingest/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getExecutionArn, getExecutionUrl, invoke } = require('@cumulus/ingest/aws');
+const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
 const Rule = require('../models/rules');
 
@@ -325,6 +326,10 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
 
 async function reingest(g) {
   const collection = g.collectionId.split('___');
+
+  // get the payload of the original execution
+  const status = await StepFunction.getExecutionStatus(path.basename(g.execution));
+
   const payload = await Rule.buildPayload({
     workflow: 'IngestGranule',
     provider: g.provider,
@@ -333,12 +338,7 @@ async function reingest(g) {
       version: collection[1]
     },
     meta: { granuleId: g.granuleId },
-    payload: {
-      granules: [{
-        granuleId: g.granuleId,
-        files: g.files
-      }]
-    }
+    payload: JSON.parse(status.execution.input)
   });
 
   await partialRecordUpdate(
