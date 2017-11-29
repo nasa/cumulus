@@ -1,0 +1,6 @@
+module.exports = {
+  cksum: 1981551619,
+  md5: 'bdfee63aa364e8ed22eb0779f63d1705',
+  sha1: '37b9cb5a2705145e1a7c7b320d8cb0ba16408628',
+  sha256: 'fce9fe4394ec336c5d7b41e8aca0c412d428ba45c42214ce17078c7d4ae3881e'
+}

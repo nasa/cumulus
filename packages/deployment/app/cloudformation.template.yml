@@ -5,7 +5,16 @@ Parameters:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
     NoEcho: true
-
+  DockerPassword:
+    Type: String
+    Description: 'Password used to access a private docker repository (not required)'
+    Default: NoValue
+    NoEcho: true
+  DockerEmail:
+    Type: String
+    Description: 'Email used to login to a private docker repository (not required)'
+    Default: NoValue
+    NoEcho: true
 
 Resources:
 
@@ -15,16 +24,24 @@ Resources:
   CumulusCustomResource:
     Type: Custom::Cumulus
     Properties:
-      ServiceToken: !GetAtt CustomBootstrapLambdaFunction.Arn
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomBootstrapLambdaFunction
+          - Arn
       Cmr:
-        Password: !Ref CmrPassword
+        Password:
+          Ref: CmrPassword
     {{# if es.name}}
       ElasticSearch:
-        host: !GetAtt {{es.name}}Domain.DomainEndpoint
+        host:
+          Fn::GetAtt:
+            - {{es.name}}Domain
+            - DomainEndpoint
         version: {{es.elasticSearchMapping}}
     {{/if}}
       Users:
-        table: !Ref UsersTableDynamoDB
+        table:
+          Ref: UsersTableDynamoDB
         records:
         {{# each default_users}}
           {{# if this }}
@@ -51,7 +68,15 @@ Resources:
       DisplayName: {{../stackName}}-{{@key}}
       Subscription:
       {{#each this.subscriptions}}
+        {{# if this.endpoint.function}}
+        - Endpoint:
+            {{this.endpoint.function}}:
+            {{#each this.endpoint.array}}
+              - {{@this}}
+            {{/each}}
+        {{else}}
         - Endpoint: {{this.endpoint}}
+        {{/if}}
           Protocol: {{@key}}
       {{/each}}
 
@@ -59,10 +84,19 @@ Resources:
   {{@../key}}SubscriptionPermission:
     Type: AWS::Lambda::Permission
     Properties:
+    {{# if this.endpoint.function}}
+      FunctionName:
+        {{this.endpoint.function}}:
+        {{#each this.endpoint.array}}
+          - {{@this}}
+        {{/each}}
+    {{else}}
       FunctionName: {{this.endpoint}}
+    {{/if}}
       Action: lambda:InvokeFunction
       Principal: sns.amazonaws.com
-      SourceArn: !Ref {{@../key}}Sns
+      SourceArn:
+        Ref: {{@../key}}Sns
   {{/each}}
 
 {{/each}}
@@ -85,8 +119,9 @@ Resources:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
-        !Sub |
+        Fn::Sub: |
           {{{ToJson definition}}}
+
       RoleArn: {{../iams.stepRoleArn}}
 
 {{/each}}
@@ -122,13 +157,13 @@ Resources:
               AWS: {{iams.lambdaProcessingRoleArn}}
             Action: "es:*"
             Resource:
-              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
           - Effect: "Allow"
             Principal:
               AWS: {{iams.lambdaApiGatewayRoleArn}}
             Action: "es:*"
             Resource:
-              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
 
 
   #################################################
@@ -147,7 +182,10 @@ Resources:
       ReceiveMessageWaitTimeSeconds: 20
     {{#if this.retry}}
       RedrivePolicy:
-        deadLetterTargetArn: !GetAtt [{{@key}}FailedSQS, Arn]
+        deadLetterTargetArn:
+          Fn::GetAtt: 
+            - {{@key}}FailedSQS
+            - Arn
         maxReceiveCount: {{this.retry}}
     {{/if}}
       VisibilityTimeout: {{this.visibilityTimeout}}
@@ -168,7 +206,8 @@ Resources:
       State: {{# if this.state}}{{this.state}}{{ else }}DISABLED{{/if}}
       Targets:
         - Id: {{@../key}}WatcherScheduler
-          Input: !Sub '{"queueUrl": "${ {{@../key}}SQS}", "messageLimit": {{this.messageLimit}} }'
+          Input:
+            Fn::Sub: '{"queueUrl": "${ {{@../key}}SQS}", "messageLimit": {{this.messageLimit}} }'
           Arn:
             Fn::GetAtt:
             - {{this.lambda}}LambdaFunction
@@ -284,7 +323,7 @@ Resources:
   #################################################
 {{# if apiMethods}}
 {{# each apiDependencies}}
-  ApiGatewayDeploymentNew{{name}}:
+  ApiGatewayDeployment11292017{{name}}:
     DependsOn:
   {{#each methods}}
     - {{name}}
@@ -395,21 +434,40 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
-        {{#each this.envs}}
+    {{#each this.envs}}
+      {{# if this.function}}
+        {{#if this.array}}
+          {{@key}}:
+            {{this.function}}:
+            {{#each this.array}}
+              - {{this}}
+            {{/each}}          
+        {{/if}}
+        {{#if this.value}}
+          {{@key}}:
+            {{this.function}}: {{this.value}}
+        {{/if}}
+      {{else}}
           {{@key}}: {{{this}}}
-        {{/each}}
-      {{# if ../es.name}}
-        {{# if this.passElasticSearchEndpoint }}
-          ES_HOST: !GetAtt {{../es.name}}Domain.DomainEndpoint
+      {{/if}}
+    {{/each}}
+      {{# if this.urs}}
+        {{# if ../api_backend_url}}
+          API_ENDPOINT: {{../api_backend_url}}token
+        {{else}}
+          API_ENDPOINT:
+            Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]]
+        {{/if}}
+        {{# if ../api_distribution_url}}
+          DEPLOYMENT_ENDPOINT: {{../api_distribution_url}}redirect
+        {{else}}
+          DEPLOYMENT_ENDPOINT:
+            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
-        {{# if this.urs}}
-          API_ENDPOINT: {{# if ../api_backend_url}} {{../api_backend_url}}auth/login {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/auth/login"]] {{/if}}
-          DEPLOYMENT_ENDPOINT: {{# if ../api_distribution_url}} {{../api_distribution_url}}redirect {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]] {{/if}}
-        {{/if}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-    {{# if this.apiGateway }}
+    {{# if this.apiRole }}
       Role: {{../iams.lambdaApiGatewayRoleArn}}
       {{else}}
       Role: {{../iams.lambdaProcessingRoleArn}}
@@ -439,7 +497,10 @@ Resources:
       - {{@key}}LogGroup
       - log2elasticsearchLambdaPermissionLog
     Properties:
-      DestinationArn: !GetAtt log2elasticsearchLambdaFunction.Arn
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       FilterPattern: '{ $.name = "cumulus" }'
 
@@ -460,7 +521,8 @@ Resources:
         Fn::GetAtt:
         - log2elasticsearchLambdaFunction
         - Arn
-      Principal: !Sub 'logs.${AWS::Region}.amazonaws.com'
+      Principal:
+        Fn::Sub: 'logs.${AWS::Region}.amazonaws.com'
 
   #################################################
   # Lambda config END
@@ -490,26 +552,41 @@ Resources:
         config:
           commands:
             01_add_instance_to_cluster:
-              command: !Sub |
-                #!/bin/bash
-                echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
-                echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
+              command:
+                Fn::Sub:
+                  - |
+                    #!/bin/bash
+                    echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
+                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
+
+                {{#if ecs.docker}}
+                    echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
+                    echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
+
+                  - Password:
+                      Ref: DockerPassword
+                    Email:
+                      Ref: DockerEmail
+                {{/if}}
+                  
           files:
             "/etc/cfn/cfn-hup.conf":
-              content: !Sub |
-                [main]
-                stack=${AWS::StackId}
-                region=${AWS::Region}
+              content:
+                Fn::Sub: |
+                  [main]
+                  stack=${AWS::StackId}
+                  region=${AWS::Region}
               mode: '000400'
               owner: root
               group: root
             "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
-              content: !Sub |
-                [cfn-auto-reloader-hook]
-                triggers=post.update
-                path=Resources.CumulusContainerInstanceLaunch.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}
-                runas=root
+              content:
+                Fn::Sub: |
+                  [cfn-auto-reloader-hook]
+                  triggers=post.update
+                  path=Resources.CumulusContainerInstanceLaunch.Metadata.AWS::CloudFormation::Init
+                  action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}
+                  runas=root
           services:
             sysvinit:
               cfn-hup:
@@ -520,10 +597,12 @@ Resources:
                 - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
     Properties:
     {{# if vpc.subnets }}
-      AssociatePublicIpAddress: false
+      AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
       SecurityGroups:
-        - !GetAtt SecurityGroup.GroupId
+        - Fn::GetAtt:
+          - SecurityGroup
+          - GroupId
       ImageId: {{ecs.amiid}}
       InstanceType: {{ecs.instanceType}}
       IamInstanceProfile: {{iams.instanceProfile}}
@@ -536,13 +615,14 @@ Resources:
       KeyName: {{ ecs.keyPairName }}
     {{/if}}
       UserData:
-        "Fn::Base64": !Join
-          - ""
-          - - "#cloud-config\n"
-            - "\nruncmd:\n"
-            - " - yum install -y aws-cfn-bootstrap\n"
-            - !Sub " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}\n"
-            - !Sub " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
+        "Fn::Base64":
+          Fn::Join:
+            - ""
+            - - "#cloud-config\n"
+              - "\nruncmd:\n"
+              - " - yum install -y aws-cfn-bootstrap\n"
+              - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}\n"
+              - Fn::Sub: " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
 
 
   CumulusECSAutoScalingGroup:
@@ -559,7 +639,8 @@ Resources:
         - {{this}}
       {{/each}}
     {{/if}}
-      LaunchConfigurationName: !Ref CumulusContainerInstanceLaunch
+      LaunchConfigurationName:
+        Ref: CumulusContainerInstanceLaunch
       MinSize: '0'
       MaxSize: {{ ecs.maxInstances }}
       DesiredCapacity: {{ ecs.desiredInstances }}
@@ -573,42 +654,95 @@ Resources:
   {{@key}}TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
+    {{# if this.volumes}}
+      Volumes:
+      {{# each this.volumes}}
+        - Name: {{name}}
+          Host:
+            SourcePath: {{path}} 
+      {{/each}}
+    {{/if}}
       ContainerDefinitions:
       - Name: {{@key}}
         Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}10{{/if}}
         Essential: true
-        Environment:
-        {{#each this.envs}}
-          - Name: {{@key}}
-            Value: {{this}}
-        {{/each}}
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
-        MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
-      {{# if this.commands }}
-        Command:
-        {{# each this.commands }}
-        - {{{ @this }}}
+      {{# if this.volumes}}
+        MountPoints:
+        {{# each this.volumes}}
+          - SourceVolume: {{name}}
+            ContainerPath: {{dst}}
         {{/each}}
       {{/if}}
+        Environment:
+    {{#each this.envs}}
+      {{# if this.function}}
+        {{#if this.array}}
+          - Name: {{@key}}
+            Value:
+              {{this.function}}:
+              {{#each this.array}}
+                - {{this}}
+              {{/each}}          
+        {{/if}}
+        {{#if this.value}}
+          - Name: {{@key}}
+            Value:
+              {{this.function}}: {{this.value}}
+        {{/if}}
+      {{else}}
+          - Name: {{@key}}
+            Value: {{{this}}}
+      {{/if}}
+    {{/each}}
+        Image:
+          Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
+        MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
+    {{# if this.commands }}
+        Command:
+      {{# each this.commands }}
+        {{# if this.function}}
+          - {{this.function}}: {{this.value}}
+        {{else}}
+          - {{{ @this }}}
+        {{/if}}
+      {{/each}}
+    {{/if}}
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref {{@key}}EcsLogs
-            awslogs-region: !Sub ${AWS::Region}
+            awslogs-group:
+              Ref: {{@key}}EcsLogs
+            awslogs-region:
+              Fn::Sub: ${AWS::Region}
 
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: {{../stackName}}-{{@key}}EcsLogs
 
+  {{@key}}EcsLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}EcsLogs
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      FilterPattern: 'DEBUG'
+
   {{@key}}ECSService:
     Type: AWS::ECS::Service
     DependsOn:
     - CumulusECSAutoScalingGroup
     Properties:
-      Cluster: !Ref CumulusECSCluster
+      Cluster:
+        Ref: CumulusECSCluster
       DesiredCount: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
-      TaskDefinition: !Ref {{@key}}TaskDefinition
+      TaskDefinition:
+        Ref: {{@key}}TaskDefinition
       DeploymentConfiguration:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
@@ -621,23 +755,32 @@ Resources:
 
 Outputs:
 
-  Dashboard:
-    Value: {{dashboard_url}}
-
   Api:
-    Value: {{# if api_backend_url}} {{api_backend_url}} {{else}} !Join ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
+  {{# if api_backend_url}}
+    Value: {{api_backend_url}}
+  {{else}}
+    Value:
+      Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      {{/if}}
 
   Distribution:
-    Value: {{# if api_distribution_url}} {{api_distribution_url}} {{else}} !Join ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]] {{/if}}
+  {{# if api_distribution_url}}
+    Value: {{api_distribution_url}}
+  {{else}}
+    Value:
+      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+  {{/if}}
 
 {{#each stepFunctions}}
   {{name}}StateMachine:
-    Value: !Ref {{../stackNameNoDash}}{{name}}StateMachine
+    Value:
+      Ref: {{../stackNameNoDash}}{{name}}StateMachine
 {{/each}}
 
 {{#each sqs}}
   {{@key}}SQSOutput:
-    Value: !Ref {{@key}}SQS
+    Value:
+      Ref: {{@key}}SQS
 {{/each}}
 
 {{# if es.name}}
@@ -650,8 +793,12 @@ Outputs:
 
 {{#each sns}}
   {{@key}}SnsArn:
-    Value: !Ref {{@key}}Sns
+    Value:
+      Ref: {{@key}}Sns
 {{/each}}
 
   EncryptedCmrPassword:
-    Value: !GetAtt CumulusCustomResource.CmrPassword
+    Value:
+      Fn::GetAtt:
+        - CumulusCustomResource
+        - CmrPassword

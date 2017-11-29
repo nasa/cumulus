@@ -4,8 +4,6 @@
 const get = require('lodash.get');
 const { S3, invoke, Events } = require('@cumulus/ingest/aws');
 const Manager = require('./base');
-const Provider = require('./providers');
-const Collection = require('./collections');
 const { rule } = require('./schemas');
 
 class Rule extends Manager {
@@ -52,20 +50,6 @@ class Rule extends Manager {
   }
 
   static async buildPayload(item) {
-    // make sure collection exists
-    const c = new Collection();
-    const collection = await c.get({
-      name: item.collection.name,
-      version: item.collection.version
-    });
-
-    let provider = {};
-    // make sure provider exists
-    if (item.provider) {
-      const p = new Provider();
-      provider = await p.get({ id: item.provider });
-    }
-
     // makes sure the workflow exists
     const bucket = process.env.bucket;
     const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
@@ -81,8 +65,8 @@ class Rule extends Manager {
     const template = `s3://${bucket}/${key}`;
     return {
       template,
-      provider,
-      collection,
+      provider: item.provider,
+      collection: item.collection,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
     };

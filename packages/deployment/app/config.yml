@@ -10,8 +10,6 @@ default:
   # if not specified the value of the apigateway dist url is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/
 
-  dashboard_url: https://dashboard-url/ 
-
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}' # this has to be set in .env
@@ -43,7 +41,7 @@ default:
     kbaynes: true
 
   ecs:
-    amiid: ami-9eb4b1e5
+    amiid: ami-6944c513
     instanceType: change-me 
     volumeSize: 50
     availabilityZone: 'us-east-1a'
@@ -64,7 +62,11 @@ default:
     sftracker:
       subscriptions:
         lambda:
-          endpoint: '!GetAtt sns2elasticsearchLambdaFunction.Arn'
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - sns2elasticsearchLambdaFunction
+              - Arn
 
   # defining the APIs. Each item will include a separate endpoint
   apis:
