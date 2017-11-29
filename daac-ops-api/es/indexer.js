@@ -206,7 +206,7 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
   const params = {
     index,
     type,
-    id: payload.id,
+    id: payload.name,
     body: {
       doc: payload,
       doc_as_upsert: true
