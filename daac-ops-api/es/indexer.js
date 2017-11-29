@@ -181,7 +181,6 @@ async function indexCollection(esClient, meta, index = 'cumulus', type = 'collec
       doc_as_upsert: true
     }
   };
-  console.log(JSON.stringify(params))
 
   params.body.doc.timestamp = Date.now();
   await esClient.update(params);
