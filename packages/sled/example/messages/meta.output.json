@@ -1,0 +1,33 @@
+{
+  "workflow_config": {
+    "Example": {
+      "bar": "{meta.foo}",
+      "cumulus_message": {
+        "outputs": [
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          },
+          {
+            "source": "{{$.input.anykey}}",
+            "destination": "{{$.meta.baz}}"
+          }
+        ]
+      }
+    }
+  },
+  "cumulus_meta": {
+    "task": "Example",
+    "message_source": "local",
+    "id": "id-1234"
+  },
+  "meta": {
+    "foo": "bar",
+    "baz": "anyvalue"
+  },
+  "payload": {
+    "input": { "anykey": "anyvalue" },
+    "config": { "bar": "bar" }
+  },
+  "exception": "None"
+}
