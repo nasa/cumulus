@@ -21,11 +21,16 @@ test.cb('test discovering mur granules', (t) => {
   newMur.collection.meta.provider_path = rule;
 
   handler(newMur, {}, (e, r) => {
+    if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
+      log.info('ignoring this test. Test server seems to be down');
+    }
+    else {
+      const granules = r.payload.granules;
+      t.is(Object.keys(granules).length, 3);
+      const g = Object.keys(granules)[0];
+      t.is(granules[g].files.length, 2);
+    }
     S3.fileExists.restore();
-    const granules = r.payload.granules;
-    t.is(Object.keys(granules).length, 3);
-    const g = Object.keys(granules)[0];
-    t.is(granules[g].files.length, 2);
     t.end(e);
   });
 });
@@ -42,8 +47,13 @@ test.cb('test discovering mur granules with queue', (t) => {
   newMur.collection.meta.provider_path = rule;
 
   handler(newMur, {}, (e, r) => {
+    if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
+      log.info('ignoring this test. Test server seems to be down');
+    }
+    else {
+      t.is(r.payload.granules_found, 3);
+    }
     S3.fileExists.restore();
-    t.is(r.payload.granules_found, 3);
     queue.queueGranule.restore();
     t.end(e);
   });
