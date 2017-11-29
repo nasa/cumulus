@@ -3,7 +3,6 @@
 import test from 'ava';
 import sinon from 'sinon';
 import log from '@cumulus/common/log';
-import errors from '@cumulus/common/errors';
 import mur from '@cumulus/test-data/payloads/mur/discover.json';
 import amsr2 from '@cumulus/test-data/payloads/amsr2/discover.json';
 import queue from '@cumulus/ingest/queue';
@@ -22,16 +21,17 @@ test.cb('test discovering mur granules', (t) => {
   newMur.collection.meta.provider_path = rule;
 
   handler(newMur, {}, (e, r) => {
-    S3.fileExists.restore();
-    if (e.message.includes('getaddrinfo ENOTFOUND')) {
+    if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
       log.info('ignoring this test. Test server seems to be down');
-      return t.end();
     }
-    const granules = r.payload.granules;
-    t.is(Object.keys(granules).length, 3);
-    const g = Object.keys(granules)[0];
-    t.is(granules[g].files.length, 2);
-    return t.end(e);
+    else {
+      const granules = r.payload.granules;
+      t.is(Object.keys(granules).length, 3);
+      const g = Object.keys(granules)[0];
+      t.is(granules[g].files.length, 2);
+    }
+    S3.fileExists.restore();
+    t.end(e);
   });
 });
 
@@ -47,14 +47,15 @@ test.cb('test discovering mur granules with queue', (t) => {
   newMur.collection.meta.provider_path = rule;
 
   handler(newMur, {}, (e, r) => {
-    S3.fileExists.restore();
-    if (e.message.includes('getaddrinfo ENOTFOUND')) {
+    if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
       log.info('ignoring this test. Test server seems to be down');
-      return t.end();
     }
-    t.is(r.payload.granules_found, 3);
+    else {
+      t.is(r.payload.granules_found, 3);
+    }
+    S3.fileExists.restore();
     queue.queueGranule.restore();
-    return t.end(e);
+    t.end(e);
   });
 });
 
