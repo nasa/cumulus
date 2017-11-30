@@ -795,6 +795,17 @@ Outputs:
       Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
+  ApiId:
+    Value:
+      Ref: backendRestApi
+  
+  DistributionId:
+    Value:
+      Ref: distributionRestApi
+  
+  ApiStage:
+    Value: {{apiStage}}
+  
 {{#each stepFunctions}}
   {{name}}StateMachine:
     Value:
