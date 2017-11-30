@@ -583,7 +583,7 @@ Resources:
 
                   - Password:
                       Ref: DockerPassword
-                    Email:
+                  - Email:
                       Ref: DockerEmail
                 {{/if}}
                   - Example: value
