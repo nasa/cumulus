@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Deletes ingest tracking data when indgest has completed. This should be the last task in an ingest workflow.'
+      Runtime: nodejs6.10
