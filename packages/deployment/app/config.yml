@@ -39,6 +39,7 @@ default:
     scisco: true
     mhuffnagle2: true
     kbaynes: true
+    sethvincent: true
 
   ecs:
     amiid: ami-6944c513
