@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 const log = require('@cumulus/common/log');
 const Task = require('@cumulus/common/task');
 const FieldPattern = require('@cumulus/common/field-pattern');
-const docClient = require('@cumulus/common/aws').dynamodbDocClient;
+const docClient = require('@cumulus/common/aws').dynamodbDocClient();
 const querystring = require('querystring');
 const moment = require('moment');
 
@@ -31,29 +31,26 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
       this.config.root,
       query,
       this.message.payload.scrollID);
-    log.debug(`using scrollID: ${scrollID}`);
     const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
     const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
+
     // Write the messages to a DynamoDB table so we can track ingest failures
-    filterd.forEach(message => {
-      const { concept_id, granuleId, collection } = message;
+    const messagePromises = filtered.map(msg => {
+      const { granuleId, version, collection } = msg.meta;
       const params = {
         TableName: this.config.ingest_tracking_table,
         Item: {
           'granule-id': granuleId,
-          'cmr-concept-id': concept_id,
+          'version': version,
           'collection': collection,
           'ingest-start-datetime': moment().format(),
-          'message': JSON.stringify(message)
+          'message': JSON.stringify(msg)
         }
       };
-
-      docClient.put(params, (err, _) => {
-        if (err) {
-          throw err;
-        }
-      });
+      return docClient.put(params).promise();
     });
+
+    await Promise.all(messagePromises);
 
     return { messages: filtered, scrollID: scrollID };
   }
