@@ -477,6 +477,20 @@ Resources:
       Tags:
         - Key: Project
           Value: {{../stackName}}
+      
+  {{# if this.launchInVpc }}
+    {{# if ../vpc }}
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+        SubnetIds:
+        {{#each ../vpc.subnets}}
+          - {{this}}
+        {{/each}}
+    {{/if}}
+  {{/if}}
 
 {{# if this.apiGateway }}
   {{@key}}LambdaPermissionApiGateway:
@@ -531,10 +545,7 @@ Resources:
   #################################################
   # ECS config BEGIN
   #################################################
-{{# if iams.instanceProfile}}
-  CumulusECSCluster:
-    Type: AWS::ECS::Cluster
-
+{{# if vpc }}
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -544,6 +555,13 @@ Resources:
         - Key: Name
           Value: "{{stackName}}"
       VpcId: {{vpc.vpcId}}
+
+{{/if}}
+
+{{# if iams.instanceProfile}}
+  CumulusECSCluster:
+    Type: AWS::ECS::Cluster
+
 
   CumulusContainerInstanceLaunch:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -567,8 +585,9 @@ Resources:
                       Ref: DockerPassword
                     Email:
                       Ref: DockerEmail
-                {{/if}}
+                {{else}}
                   - Example: value
+                {{/if}}
                   
           files:
             "/etc/cfn/cfn-hup.conf":
@@ -695,8 +714,12 @@ Resources:
             Value: {{{this}}}
       {{/if}}
     {{/each}}
+      {{# if ../ecs.docker}}
+        Image: {{image}}
+      {{else}}
         Image:
           Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
+      {{/if}}
         MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
     {{# if this.commands }}
         Command:
@@ -772,6 +795,17 @@ Outputs:
       Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
+  ApiId:
+    Value:
+      Ref: backendRestApi
+  
+  DistributionId:
+    Value:
+      Ref: distributionRestApi
+  
+  ApiStage:
+    Value: {{apiStage}}
+  
 {{#each stepFunctions}}
   {{name}}StateMachine:
     Value:
