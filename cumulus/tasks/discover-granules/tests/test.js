@@ -20,7 +20,7 @@ test.cb('test discovering mur granules', (t) => {
   const rule = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])';
   newMur.config.collection.meta.provider_path = rule;
 
-  handler(newMur, {}, (e, r) => {
+  handler(newMur, {}, (e, output) => {
     if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
       log.info('ignoring this test. Test server seems to be down');
     }
