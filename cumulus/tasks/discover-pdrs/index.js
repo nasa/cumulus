@@ -33,7 +33,6 @@ function handler(_event, context, cb) {
     log.debug('Starting PDR discovery');
 
     return discover.discover().then((pdrs) => {
-      console.log('pdrs', pdrs)
       if (queue) {
         output.pdrs_found = pdrs.length;
       }
