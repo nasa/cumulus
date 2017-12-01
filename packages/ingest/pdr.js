@@ -26,6 +26,7 @@ class Discover {
     }
 
     const config = get(event, 'config');
+    this.buckets = get(config, 'stack');
     this.buckets = get(config, 'buckets');
     this.collection = get(config, 'collection.meta');
     this.provider = get(config, 'provider');
@@ -61,7 +62,7 @@ class Discover {
   }
 
   async pdrIsNew(pdr) {
-    const exists = await S3.fileExists(this.buckets.internal, path.join(this.folder, pdr.name));
+    const exists = await S3.fileExists(this.buckets.internal, path.join(this.stack, this.folder, pdr.name));
     return exists ? false : pdr;
   }
 
@@ -117,6 +118,7 @@ class Parse {
     }
 
     this.event = event;
+
     const config = get(event, 'config');
     const input = get(event, 'input');
 
@@ -158,7 +160,12 @@ class Parse {
     const granules = await this.parse(pdrLocalPath);
 
     // upload only if the parse was successful
-    await this.upload(this.buckets.internal, this.folder, this.pdr.name, pdrLocalPath);
+    await this.upload(
+      this.buckets.internal,
+      path.join(this.stack, this.folder),
+      this.pdr.name,
+      pdrLocalPath
+    );
 
     // return list of all granules found in the PDR
     return granules;
