@@ -38,12 +38,12 @@ module.exports.collection = {
       description: 'The folder (url) used to save granules on S3 buckets',
       type: 'string'
     },
-    granuleHandling: {
-      title: 'Granule Handling',
+    duplicateHandling: {
+      title: 'Duplicate Granule Handling',
       description: 'How to handle duplicate granules',
       type: 'string',
       enum: ['skip', 'replace', 'version'],
-      default: "replace"
+      default: 'replace'
     },
     granuleId: {
       title: 'GranuleId Validation Regex',
