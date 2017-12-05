@@ -133,7 +133,7 @@ test.cb('replace duplicate Granule', (t) => {
     host: 'http://localhost:8080'
   };
   sinon.stub(S3, 'fileExists').callsFake(() => true);
-  var uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
+  const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
 
   const newPayload = Object.assign({}, payload);
   newPayload.provider = provider;
@@ -151,10 +151,10 @@ test.cb('replace duplicate Granule', (t) => {
 
 test.cb('skip duplicate Granule', (t) => {
   sinon.stub(S3, 'fileExists').callsFake(() => true);
-  var uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
+  const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
 
   const newPayload = Object.assign({}, payload);
-  newPayload.collection.meta.granuleHandling = "skip";
+  newPayload.collection.meta.duplicateHandling = 'skip';
   handler(newPayload, {}, (e, r) => {
     S3.fileExists.restore();
     S3.upload.restore();
