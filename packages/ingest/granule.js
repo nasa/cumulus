@@ -167,10 +167,11 @@ class Granule {
   async ingest(granule) {
     // for each granule file
     // download / verify checksum / upload
+
     const downloadFiles = granule.files
       .map(f => this.getBucket(f))
       .filter(f => this.filterChecksumFiles(f))
-      .map(f => this.ingestFile(f, this.collection.granuleHandling));
+      .map(f => this.ingestFile(f, this.collection.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
 
@@ -253,12 +254,13 @@ class Granule {
     if (duplicateHandling === 'version') {
       const s3 = new AWS.S3();
       // check that the bucket has versioning enabled
-      let versioning = await s3.getBucketVersioning({ Bucket: file.bucket });
+      let versioning = await s3.getBucketVersioning({ Bucket: file.bucket }).promise();
+
       // if not enabled, make it enabled
       if (versioning.Status !== 'Enabled') {
         versioning = await s3.putBucketVersioning({
           Bucket: file.bucket,
-          VersioningConfiguration: { Status: 'Enabled' } });
+          VersioningConfiguration: { Status: 'Enabled' } }).promise();
       }
     }
 
