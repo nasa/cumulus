@@ -91,11 +91,3 @@ module.exports.handler = function handler(_event, context, cb) {
     throw e;
   }
 };
-
-const { justLocalRun } = require('@cumulus/common/local-helpers');
-
-justLocalRun(() => {
-  const p = require('@cumulus/test-data/payloads/modis/sync-granule-test.json');
-
-  module.exports.handler(p, {}, (e, r) => console.log(e, JSON.stringify(r.payload.granules)));
-});
