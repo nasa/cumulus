@@ -5,7 +5,16 @@ Parameters:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
     NoEcho: true
-
+  DockerPassword:
+    Type: String
+    Description: 'Password used to access a private docker repository (not required)'
+    Default: NoValue
+    NoEcho: true
+  DockerEmail:
+    Type: String
+    Description: 'Email used to login to a private docker repository (not required)'
+    Default: NoValue
+    NoEcho: true
 
 Resources:
 
@@ -314,7 +323,7 @@ Resources:
   #################################################
 {{# if apiMethods}}
 {{# each apiDependencies}}
-  ApiGatewayDeployment11162017{{name}}:
+  ApiGatewayDeployment11292017{{name}}:
     DependsOn:
   {{#each methods}}
     - {{name}}
@@ -468,6 +477,20 @@ Resources:
       Tags:
         - Key: Project
           Value: {{../stackName}}
+      
+  {{# if this.launchInVpc }}
+    {{# if ../vpc }}
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+        SubnetIds:
+        {{#each ../vpc.subnets}}
+          - {{this}}
+        {{/each}}
+    {{/if}}
+  {{/if}}
 
 {{# if this.apiGateway }}
   {{@key}}LambdaPermissionApiGateway:
@@ -522,10 +545,7 @@ Resources:
   #################################################
   # ECS config BEGIN
   #################################################
-{{# if iams.instanceProfile}}
-  CumulusECSCluster:
-    Type: AWS::ECS::Cluster
-
+{{# if vpc }}
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -536,6 +556,13 @@ Resources:
           Value: "{{stackName}}"
       VpcId: {{vpc.vpcId}}
 
+{{/if}}
+
+{{# if iams.instanceProfile}}
+  CumulusECSCluster:
+    Type: AWS::ECS::Cluster
+
+
   CumulusContainerInstanceLaunch:
     Type: AWS::AutoScaling::LaunchConfiguration
     Metadata:
@@ -544,10 +571,24 @@ Resources:
           commands:
             01_add_instance_to_cluster:
               command:
-                Fn::Sub: |
-                  #!/bin/bash
-                  echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
-                  echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
+                Fn::Sub:
+                  - |
+                    #!/bin/bash
+                    echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
+                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
+
+                {{#if ecs.docker}}
+                    echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
+                    echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
+
+                  - Password:
+                      Ref: DockerPassword
+                    Email:
+                      Ref: DockerEmail
+                {{else}}
+                  - Example: value
+                {{/if}}
+                  
           files:
             "/etc/cfn/cfn-hup.conf":
               content:
@@ -673,8 +714,12 @@ Resources:
             Value: {{{this}}}
       {{/if}}
     {{/each}}
+      {{# if ../ecs.docker}}
+        Image: {{image}}
+      {{else}}
         Image:
           Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
+      {{/if}}
         MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
     {{# if this.commands }}
         Command:
@@ -698,6 +743,19 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+
+  {{@key}}EcsLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}EcsLogs
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      FilterPattern: 'DEBUG'
 
   {{@key}}ECSService:
     Type: AWS::ECS::Service
@@ -737,6 +795,17 @@ Outputs:
       Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
+  ApiId:
+    Value:
+      Ref: backendRestApi
+  
+  DistributionId:
+    Value:
+      Ref: distributionRestApi
+  
+  ApiStage:
+    Value: {{apiStage}}
+  
 {{#each stepFunctions}}
   {{name}}StateMachine:
     Value:
