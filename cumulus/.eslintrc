@@ -6,6 +6,7 @@
     "mocha": true
   },
   "rules": {
+    "no-else-return": "off",
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",
     "import/newline-after-import": "off",
