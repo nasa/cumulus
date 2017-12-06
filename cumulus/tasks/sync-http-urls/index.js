@@ -59,31 +59,58 @@ const syncUrl = (url, bucket, key, auth) =>
     });
   });
 
-let lastLog = null;
-let intermediates = 0;
+
+/**
+ * lastLogTime and suppressedMessagesCount are used to store state in the
+ * conditionallyLogSyncFileMessage function.
+ */
+let lastLogTime = 0;
+let suppressedMessagesCount = 0;
+
+/**
+ * Log a message if nothing has been logged in the last 5 seconds or if alwaysLog is true.
+ *
+ * Note: This uses the module-level "lastLogTime" and "suppressedMessagesCount"
+ *       to store state.
+ *
+ * @param  {string} url - The URL being downloaded
+ * @param  {string} bucket - The S3 bucket the file is being synced to
+ * @param  {string} destKey - The S3 key the file is being synced to
+ * @param  {boolean} alwaysLog - A flag to always trigger logging
+ * @returns {boolean} Whether a log message was displayed
+ */
+function conditionallyLogSyncFileMessage(url, bucket, destKey, alwaysLog) {
+  const millisecondsSinceLastLogTime = Date.now() - lastLogTime;
+
+  if (alwaysLog || millisecondsSinceLastLogTime > 5000) {
+    let suppressionSuffix = '';
+    if (suppressedMessagesCount > 0) {
+      suppressionSuffix = ` (${suppressedMessagesCount} messages supressed)`;
+    }
+
+    log.debug(`Starting: ${url} -> s3://${bucket}/${destKey}${suppressionSuffix}`);
+
+    suppressedMessagesCount = 0;
+    lastLogTime = Date.now();
+    return true;
+  }
+  else {
+    suppressedMessagesCount++;
+    return false;
+  }
+}
+
 const syncFile = async (bucket, keypath, simulate, auth, file) => {
   try {
     const destKey = path.join(keypath, file.name || path.basename(file.Key || file.url));
-    let didLog = false;
-    if (!lastLog || new Date() > 5000 + lastLog || simulate) {
-      const suppression = intermediates > 0 ? ` (${intermediates} messages supressed)` : '';
-      log.debug(`Starting: ${file.url} -> s3://${bucket}/${destKey}${suppression}`);
-      intermediates = 0;
-      lastLog = +new Date();
-      didLog = true;
-    }
-    else {
-      intermediates++;
-    }
-    if (simulate) {
-      log.warn('Simulated call');
-    }
-    else {
-      await syncUrl(file.url, bucket, destKey, auth);
-    }
-    if (didLog) {
-      log.debug(`Completed: ${file.url}`);
-    }
+
+    const didLog = conditionallyLogSyncFileMessage(file.url, bucket, destKey, simulate);
+
+    if (simulate) log.warn('Simulated call');
+    else await syncUrl(file.url, bucket, destKey, auth);
+
+    if (didLog) log.debug(`Completed: ${file.url}`);
+
     return Object.assign({ Bucket: bucket, Key: destKey }, file);
   }
   catch (e) {

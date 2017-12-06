@@ -23,6 +23,7 @@
     "max-len": [2, {
       "code": 100,
       "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
-    }]
+    }],
+    "no-else-return": "off"
   }
 }
