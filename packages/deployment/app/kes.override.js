@@ -135,6 +135,16 @@ function generateWorkflowsList(config) {
  */
 class UpdatedKes extends Kes {
 
+  async redployApiGateWay(name, restApiId, stageName) {
+    if (restApiId) {
+      const apigateway = new this.AWS.APIGateway();
+      const r = await apigateway.createDeployment({ restApiId, stageName }).promise();
+      console.log(`${name} endpoints with the id ${restApiId} redeployed.`); 
+      return r;
+    }
+    return true;
+  }
+
   /**
    * Restart all active tasks in the clusters of a deployed
    * cloudformation
@@ -241,6 +251,8 @@ class UpdatedKes extends Kes {
   opsStack() {
     // check if public and private key are generated
     // if not generate and upload them
+    const apis = {};
+
     return this.crypto(this.bucket, this.stack)
       .then(() => super.opsStack())
       .then(() => this.describeCF())
@@ -260,6 +272,20 @@ class UpdatedKes extends Kes {
             if (o.OutputKey === 'Distribution') {
               this.config.distribution_endpoint = o.OutputValue;
             }
+          }
+
+          switch (o.OutputKey) {
+            case 'ApiId':
+              apis.api = o.OutputValue;
+              break;
+            case 'DistributionId':
+              apis.distribution = o.OutputValue;
+              break;
+            case 'ApiStage':
+              apis.stageName = o.OutputValue;
+              break;
+            default:
+              //nothing
           }
         });
 
@@ -289,7 +315,15 @@ class UpdatedKes extends Kes {
 
         return Promise.all(uploads);
       })
-      .then(() => this.restartECSTasks(this.config));
+      .then(() => this.restartECSTasks(this.config))
+      .then(() => {
+        const updates = [
+          this.redployApiGateWay('api', apis.api, apis.stageName),
+          this.redployApiGateWay('distribution', apis.distribution, apis.stageName)
+        ];
+
+        return Promise.all(updates);
+      });
   }
 }
 
