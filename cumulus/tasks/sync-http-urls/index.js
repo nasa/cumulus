@@ -59,7 +59,6 @@ const syncUrl = (url, bucket, key, auth) =>
     });
   });
 
-
 /**
  * lastLogTime and suppressedMessagesCount are used to store state in the
  * conditionallyLogSyncFileMessage function.
@@ -106,10 +105,16 @@ const syncFile = async (bucket, keypath, simulate, auth, file) => {
 
     const didLog = conditionallyLogSyncFileMessage(file.url, bucket, destKey, simulate);
 
-    if (simulate) log.warn('Simulated call');
-    else await syncUrl(file.url, bucket, destKey, auth);
+    if (simulate) {
+      log.warn('Simulated call');
+    }
+    else {
+      await syncUrl(file.url, bucket, destKey, auth);
+    }
 
-    if (didLog) log.debug(`Completed: ${file.url}`);
+    if (didLog) {
+      log.debug(`Completed: ${file.url}`);
+    }
 
     return Object.assign({ Bucket: bucket, Key: destKey }, file);
   }
