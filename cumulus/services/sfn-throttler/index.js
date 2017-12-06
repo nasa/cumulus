@@ -16,7 +16,6 @@ const runningExecutionCount = async (stateMachineArn) => {
   }).promise();
 
   const count = data.executions.length;
-  log.info(`Found ${count} running executions of ${stateMachineArn}.`);
   return count;
 };
 
@@ -30,13 +29,10 @@ const fetchMessages = async (queueUrl, count) => {
 
   const messages = data.Messages || [];
   // eslint-disable-next-line max-len
-  log.info(`Tried to fetch ${maxNumberOfMessages} messages from ${queueUrl} and got ${messages.length}.`);
   return messages;
 };
 
 function startExecution(executionParams) {
-  log.info(`Starting an execution of ${executionParams.stateMachineArn}`);
-
   return aws.sfn().startExecution(executionParams).promise();
 }
 
@@ -48,8 +44,6 @@ function startExecution(executionParams) {
  * @return {Promise}
  */
 function deleteMessage(queueUrl, message) {
-  log.info(`Deleting ${message.ReceiptHandle} from ${queueUrl}`);
-
   aws.sqs().deleteMessage({
     QueueUrl: queueUrl,
     ReceiptHandle: message.ReceiptHandle
@@ -58,6 +52,10 @@ function deleteMessage(queueUrl, message) {
 
 const startExecutions = async (queueUrl, stateMachineArn, count) => {
   const messages = await fetchMessages(queueUrl, count);
+
+  if (messages.length > 0) {
+    log.info(`Starting ${messages.length} executions of ${stateMachineArn}`);
+  }
 
   const executionPromises = messages.map((message) =>
     startExecution(JSON.parse(message.Body))
@@ -73,15 +71,10 @@ const manageThrottledStepFunction = async (queueUrl, stateMachineArn, maxConcurr
   let sleepTimeInMs = 5000;
 
   if (executionsToStart > 0) {
-    log.info('Executions to start: ', executionsToStart);
     await startExecutions(queueUrl, stateMachineArn, executionsToStart);
     sleepTimeInMs = 1000;
   }
-  else {
-    log.info('No executions to start');
-  }
 
-  log.info(`Sleeping for ${sleepTimeInMs} ms before managing ${stateMachineArn} again`);
   setTimeout(
     manageThrottledStepFunction,
     sleepTimeInMs,
@@ -106,6 +99,8 @@ const buildExecutionConfigsFromEvent = async (event) => {
 };
 
 module.exports.handler = function handler(event) {
+  log.info('Starting sfn-throttler service');
+
   buildExecutionConfigsFromEvent(event)
     .then((executionConfigs) => {
       executionConfigs.forEach((executionConfig) => {
