@@ -8,13 +8,15 @@ function handler(_event, context, cb) {
   // send to the step function queue to be executed
 
   const event = Object.assign({}, _event);
-  const granules = get(event, 'payload.granules', []);
+  const input = get(event, 'input');
+  const granules = get(input, 'granules', []);
 
+  const output = {};
   const queues = granules.map(g => queueGranule(event, g));
 
   Promise.all(queues).then(() => {
-    event.payload.granules_queued = queues.length;
-    return cb(null, event);
+    output.granules_queued = queues.length;
+    return cb(null, output);
   }).catch(e => cb(e));
 }
 
