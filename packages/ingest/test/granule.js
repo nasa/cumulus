@@ -1,9 +1,8 @@
-const fs = require('fs');
 const path = require('path');
 
 const test = require('ava');
-const discoverPayload = require('@cumulus/test-data/payloads/modis/discover.json');
-const ingestPayload = require('@cumulus/test-data/payloads/modis/ingest.json');
+const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
+const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 
 const {
   selector,

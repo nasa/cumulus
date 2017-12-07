@@ -1,0 +1,56 @@
+{
+  "config": {
+    "useQueue": false,
+    "stack": "lpdaac-cumulus-phaseIII",
+    "provider": {
+      "id": "MUR",
+      "globalConnectionLimit": 10,
+      "protocol": "ftp",
+      "host": "podaac-ftp.jpl.nasa.gov"
+    },
+    "buckets": {
+      "internal": "ghrc-r-deploy",
+      "private": "ghrc-r-private",
+      "protected": "ghrc-r-protected",
+      "public": "ghrc-r-public"
+    },
+    "collection": {
+      "id": "MOD09GQ",
+      "meta": {
+        "dataType": "MOD09GQ",
+        "name": "MOD09GQ",
+        "version": "006",
+        "process": "modis",
+        "provider_path": "/TEST_B/Cumulus/PDR/TEST_CASES",
+        "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+        "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
+        "files": [
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+            "bucket": "protected",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
+          },
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+            "bucket": "private",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
+          },
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.meta\\.xml$",
+            "bucket": "protected",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.meta.xml"
+          },
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+            "bucket": "public",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_1.jpg"
+          }
+        ]
+      }
+    }
+  },
+  "input": {
+    "event": 1
+  }
+}
