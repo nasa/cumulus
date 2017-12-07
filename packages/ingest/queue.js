@@ -4,33 +4,38 @@ const get = require('lodash.get');
 const { SQS, S3, getExecutionArn, StepFunction } = require('./aws');
 
 async function getTemplate(event) {
-  const templates = get(event, 'resources.templates');
-  const next = get(event, 'ingest_meta.config.next', 'ParsePdr');
+  const config = get(event, 'config');
+  const templates = get(config, 'templates');
+  const next = get(config, 'cumulus_meta.config.next', 'ParsePdr');
 
   const parsed = S3.parseS3Uri(templates[next]);
   const data = await S3.get(parsed.Bucket, parsed.Key);
   const message = JSON.parse(data.Body);
-  message.provider = event.provider;
-  message.collection = event.collection;
-  message.meta = event.meta;
+  message.config.provider = event.provider;
+  message.config.collection = event.collection;
+  message.config.meta = event.meta;
 
   return message;
 }
 
 async function queuePdr(event, pdr) {
-  const queueUrl = get(event, 'resources.queues.startSF');
+  const config = get(event, 'config');
+  const queueUrl = get(config, 'queues.startSF');
   const message = await getTemplate(event);
 
-  message.payload = { pdr };
-  message.ingest_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
+  message.input = { pdr };
+  message.config.cumulus_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
 
   return SQS.sendMessage(queueUrl, message);
 }
 
 async function queueGranule(event, granule) {
-  const queueUrl = get(event, 'resources.queues.startSF');
-  const collectionId = get(event, 'collection.id');
-  const pdr = get(event, 'payload.pdr', null);
+  const config = get(event, 'config');
+  const input = get(event, 'input');
+
+  const queueUrl = get(config, 'queues.startSF');
+  const collectionId = get(config, 'collection.id');
+  const pdr = get(input, 'pdr', null);
   const message = await getTemplate(event);
 
   // check if the granule is already processed
@@ -46,8 +51,8 @@ async function queueGranule(event, granule) {
     }
   }
 
-  message.meta.granuleId = granule.granuleId;
-  message.payload = {
+  message.config.meta.granuleId = granule.granuleId;
+  message.output = {
     granules: [{
       granuleId: granule.granuleId,
       files: granule.files
@@ -55,14 +60,14 @@ async function queueGranule(event, granule) {
   };
 
   if (pdr) {
-    message.payload.pdr = pdr;
+    message.output.pdr = pdr;
   }
 
   const name = `${collectionId.substring(0, 15)}__GRANULE__` +
                `${granule.granuleId.substring(0, 16)}__${Date.now()}`;
-  const arn = getExecutionArn(message.ingest_meta.state_machine, name);
+  const arn = getExecutionArn(message.config.cumulus_meta.state_machine, name);
 
-  message.ingest_meta.execution_name = name;
+  message.config.cumulus_meta.execution_name = name;
   await SQS.sendMessage(queueUrl, message);
   return ['running', arn];
 }
