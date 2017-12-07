@@ -8,14 +8,15 @@ import {
   FTPError,
   RemoteResourceError
 } from '@cumulus/common/errors';
-import modis from '@cumulus/test-data/payloads/modis/discover.json';
 import { S3 } from '@cumulus/ingest/aws';
 import log from '@cumulus/common/log';
+
 import { handler } from '../index';
+import input from './fixtures/input.json';
 
 test.cb('error when provider info is missing', (t) => {
-  const newPayload = Object.assign({}, modis);
-  delete newPayload.provider;
+  const newPayload = Object.assign({}, input);
+  delete newPayload.config.provider;
   handler(newPayload, {}, (e) => {
     t.true(e instanceof ProviderNotFound);
     t.end();
@@ -39,18 +40,19 @@ test.cb('test pdr discovery with FTP assuming all PDRs are new', (t) => {
 
   sinon.stub(S3, 'fileExists').callsFake((b, k) => ps[path.basename(k)]);
 
-  const newPayload = Object.assign({}, modis);
-  newPayload.provider = provider;
-  newPayload.collection.meta.provider_path = '/pdrs';
-  newPayload.meta.useQueue = false;
-  newPayload.payload = {};
-  handler(newPayload, {}, (e, r) => {
+  const newPayload = Object.assign({}, input);
+  newPayload.config.provider = provider;
+  newPayload.config.collection.meta.provider_path = '/pdrs';
+  newPayload.config.useQueue = false;
+  newPayload.input = {};
+
+  handler(newPayload, {}, (e, output) => {
     S3.fileExists.restore();
     if (e instanceof RemoteResourceError) {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
     }
-    t.is(r.payload.pdrs.length, 4);
+    t.is(output.pdrs.length, 4);
     return t.end(e);
   });
 });
@@ -64,9 +66,9 @@ test.cb('test pdr discovery with FTP invalid user/pass', (t) => {
     password: 'testpass'
   };
 
-  const newPayload = Object.assign({}, modis);
-  newPayload.provider = provider;
-  newPayload.payload = {};
+  const newPayload = Object.assign({}, input);
+  newPayload.config.provider = provider;
+  newPayload.input = {};
   handler(newPayload, {}, (e) => {
     if (e instanceof RemoteResourceError) {
       log.info('ignoring this test. Test server seems to be down');
@@ -90,9 +92,9 @@ test.cb('test pdr discovery with FTP connection refused', (t) => {
     password: 'testpass'
   };
 
-  const newPayload = Object.assign({}, modis);
-  newPayload.provider = provider;
-  newPayload.payload = {};
+  const newPayload = Object.assign({}, input);
+  newPayload.config.provider = provider;
+  newPayload.input = {};
   handler(newPayload, {}, (e) => {
     t.true(e instanceof RemoteResourceError);
     t.end();
@@ -116,18 +118,18 @@ test.cb('test pdr discovery with FTP assuming some PDRs are new', (t) => {
 
   sinon.stub(S3, 'fileExists').callsFake((b, k) => ps[path.basename(k)]);
 
-  const newPayload = Object.assign({}, modis);
-  newPayload.provider = provider;
-  newPayload.meta.useQueue = false;
-  newPayload.collection.meta.provider_path = '/pdrs';
-  newPayload.payload = {};
-  handler(newPayload, {}, (e, r) => {
+  const newPayload = Object.assign({}, input);
+  newPayload.config.provider = provider;
+  newPayload.config.useQueue = false;
+  newPayload.config.collection.meta.provider_path = '/pdrs';
+  newPayload.input = {};
+  handler(newPayload, {}, (e, output) => {
     S3.fileExists.restore();
     if (e instanceof RemoteResourceError) {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
     }
-    t.is(r.payload.pdrs.length, 3);
+    t.is(output.pdrs.length, 3);
     return t.end(e);
   });
 });
@@ -147,18 +149,18 @@ test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
 
   sinon.stub(S3, 'fileExists').callsFake((b, k) => ps[path.basename(k)]);
 
-  const newPayload = Object.assign({}, modis);
-  newPayload.provider = provider;
-  newPayload.meta.useQueue = false;
-  newPayload.collection.meta.provider_path = '/';
-  newPayload.payload = {};
-  handler(newPayload, {}, (e, r) => {
+  const newPayload = Object.assign({}, input);
+  newPayload.config.provider = provider;
+  newPayload.config.useQueue = false;
+  newPayload.config.collection.meta.provider_path = '/';
+  newPayload.input = {};
+  handler(newPayload, {}, (e, output) => {
     S3.fileExists.restore();
     if (e instanceof RemoteResourceError) {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
     }
-    t.is(r.payload.pdrs.length, 2);
+    t.is(output.pdrs.length, 2);
     return t.end(e);
   });
 });
