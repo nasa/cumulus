@@ -1,0 +1,66 @@
+{
+  "workflow_config_template": {
+    "RunGdal": {
+      "input_filenames": ["input.tif"],
+      "commands": [
+        {
+          "gdal_command": "gdalwarp",
+          "args": [
+            "-q",
+            "-of", "VRT",
+            "-t_srs", "EPSG:4326",
+            "-srcnodata", "0 0 0",
+            "-dstalpha",
+            "-r", "average",
+            "-overwrite",
+            "input.tif",
+            "input.vrt"
+          ]
+        },
+        {
+          "gdal_command": "gdal_translate",
+          "args": [
+            "-q",
+            "-of", "PNG",
+            "-co", "WORLDFILE=YES",
+            "input.vrt",
+            "processed.png"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "filename": "processed.png",
+          "dest": {
+            "Bucket": "{resources.buckets.output}",
+            "Key": "AST_L1T/pngs/{ingest_meta.id}.png"
+          }
+        },
+        {
+          "filename": "processed.wld",
+          "dest": {
+            "Bucket": "{resources.buckets.output}",
+            "Key": "AST_L1T/pngs/{ingest_meta.id}.wld"
+          }
+        }
+      ]
+    }
+  },
+  "ingest_meta": {
+    "task": "RunGdal",
+    "message_source": "local",
+    "id": "id-1234"
+  },
+  "resources": {
+    "buckets": {
+      "output": "pq-test",
+      "config": "pq-test"
+    }
+  },
+  "meta": {
+  },
+  "payload": [{
+    "Bucket": "pq-test",
+    "Key": "source1_v.tif"
+  }]
+}
