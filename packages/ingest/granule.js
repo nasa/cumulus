@@ -282,7 +282,7 @@ class Granule {
       catch (e) {
         if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
           throw new errors.FileNotFound(
-            `${file.filename} was not found on the server with 403 status`
+            `${file.name} was not found on the server with 403 status`
           );
         }
         throw e;
