@@ -38,7 +38,9 @@ module.exports = {
   devtool: '#inline-source-map',
   plugins: [
     new CopyWebpackPlugin([
-      { from: 'tasks/generate-mrf/templates', to: 'generate-mrf/templates' }]
+      { from: 'tasks/generate-mrf/templates', to: 'generate-mrf/templates' },
+      { from: 'tasks/run-gdal/dist', to: 'run-gdal' }
+    ]
     )
   ],
   module: {
@@ -53,7 +55,7 @@ module.exports = {
     loaders: [
       {
         test: /\.js$/,
-        exclude: /node_modules(?!\/cumulus-)/,
+        exclude: /node_modules(?!\/cumulus-|\/@cumulus\/)/,
         loader: 'babel',
         query: {
           presets: [require.resolve('babel-preset-es2015')],
