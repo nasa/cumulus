@@ -125,3 +125,44 @@ test.cb('download Granule with checksum in file', (t) => {
     return t.end(e);
   });
 });
+
+test.cb('replace duplicate Granule', (t) => {
+  const provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:8080'
+  };
+  sinon.stub(S3, 'fileExists').callsFake(() => true);
+  const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
+
+  const newPayload = Object.assign({}, payload);
+  newPayload.provider = provider;
+  handler(newPayload, {}, (e, r) => {
+    S3.fileExists.restore();
+    S3.upload.restore();
+    if (e instanceof errors.RemoteResourceError) {
+      log.info('ignoring this test. Test server seems to be down');
+      return t.end();
+    }
+    t.true(uploaded.called);
+    return t.end(e);
+  });
+});
+
+test.cb('skip duplicate Granule', (t) => {
+  sinon.stub(S3, 'fileExists').callsFake(() => true);
+  const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
+
+  const newPayload = Object.assign({}, payload);
+  newPayload.collection.meta.duplicateHandling = 'skip';
+  handler(newPayload, {}, (e, r) => {
+    S3.fileExists.restore();
+    S3.upload.restore();
+    if (e instanceof errors.RemoteResourceError) {
+      log.info('ignoring this test. Test server seems to be down');
+      return t.end();
+    }
+    t.false(uploaded.called);
+    return t.end(e);
+  });
+});
