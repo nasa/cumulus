@@ -5,7 +5,6 @@
     "packages/*",
     "*",
     "cumulus/tasks/*",
-    "cumulus/services/*",
-    "daac-ops-api/lambdas/*"
+    "cumulus/services/*"
   ]
 }
