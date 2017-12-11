@@ -1,0 +1,36 @@
+{
+  "name": "@cumulus/deployment",
+  "version": "1.0.0",
+  "description": "Deployment templates for cumulus",
+  "scripts": {
+    "test": "echo 'no tests'",
+    "build": "webpack --progress",
+    "watch": "webpack --progress -w"
+  },
+  "keywords": [
+    "CUMULUS"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "babel": {
+    "presets": [
+      "es2017"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "kes": "^1.2.2",
+    "node-forge": "^0.7.1"
+  },
+  "devDependencies": {
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
+    "sinon": "^2.0.0-pre.5",
+    "webpack": "^3.8.1"
+  }
+}
