@@ -5,9 +5,15 @@
 
   apiStage: dev
 
+  vpc:
+    vpcId: <vpc-id>
+    subnets:
+      - <subnet-id>
+
   ecs:
     instanceType: t2.micro
     desiredInstances: 0
+    availabilityZone: <subnet-id-zone>
 
   buckets:
     internal: <prefix>-internal
@@ -24,8 +30,13 @@
 
     urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigatewy backend endpoint is used
+    # if not specified the value of the apigateway backend endpoint is used
     # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
 
     # if not specified the value of the apigateway dist url is used
     # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
+
+  # URS users who should have access to the dashboard application.
+  users:
+    - username: <user>
+    - username: <user2>
