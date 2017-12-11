@@ -189,13 +189,18 @@ class Manager {
 
   async scan(query, fields) {
     const params = {
-      TableName: this.tableName,
-      FilterExpression: query.filter,
-      ExpressionAttributeValues: query.values
+      TableName: this.tableName
     };
 
-    if (query.names) {
-      params.ExpressionAttributeNames = query.names;
+    if (query) {
+      if (query.filter && query.values) {
+        params.FilterExpression = query.filter;
+        params.ExpressionAttributeValues = query.values;
+      }
+
+      if (query.names) {
+        params.ExpressionAttributeNames = query.names;
+      }
     }
 
     if (fields) {
@@ -225,12 +230,6 @@ class Manager {
     // remove the keysToDelete from item if there
     item = omit(item, keysToDelete);
     item.updatedAt = Date.now();
-
-    // merge key and item for validation
-    // TODO: find a way to implement this
-    // as of now this always fail because the updated record is partial
-    //const validationObject = Object.assign({}, key, item);
-    //this.constructor.recordIsValid(validationObject);
 
     // remove the key is not included in the item
     item = omit(item, Object.keys(key));

@@ -1,5 +1,4 @@
 'use strict';
-
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');

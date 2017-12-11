@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 'use strict';
 
 const fs = require('fs');
@@ -192,7 +193,6 @@ class Granule {
         return file;
       }
     }
-
     // if not found fall back to default
     file.bucket = this.buckets.private;
     file.url_path = this.collection.url_path || '';
@@ -202,42 +202,43 @@ class Granule {
   filterChecksumFiles(file) {
     if (file.name.indexOf('.md5') > 0) {
       this.checksumFiles[file.name.replace('.md5', '')] = file;
-      return false
+      return false;
     }
 
-    return true
+    return true;
   }
 
-  async _validateChecksum (type, value, tempFile, options) {
-    if (!options) options = {}
+  async _validateChecksum(type, value, tempFile, options) {
+    if (!options) options = {};
     let sum = null;
 
     if (type.toLowerCase() === 'cksum') {
-      sum = await this._cksum(tempFile)
-    } else {
-      sum = await this._hash(type, tempFile, options)
+      sum = await this._cksum(tempFile);
+    }
+    else {
+      sum = await this._hash(type, tempFile, options);
     }
 
     return value === sum;
   }
 
-  async _cksum (tempFile) {
-    return new Promise(function (resolve, reject) {
-       fs.createReadStream(tempFile)
-         .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
-         .on('error', reject)
-    });
+  async _cksum(tempFile) {
+    return new Promise((resolve, reject) =>
+      fs.createReadStream(tempFile)
+        .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
+        .on('error', reject)
+    );
   }
 
-  async _hash (type, tempFile) {
+  async _hash(type, tempFile) {
     const options = { algorithm: type };
 
-    return new Promise(function (resolve, reject) {
-       checksum.file(tempFile, options, function (err, sum) {
-         if (err) return reject(err);
-         resolve(sum);
-       });
-    });
+    return new Promise((resolve, reject) =>
+      checksum.file(tempFile, options, (err, sum) => {
+        if (err) return reject(err);
+        return resolve(sum);
+      })
+    );
   }
 
   /**
@@ -307,8 +308,13 @@ class Granule {
           checksumValue = fs.readFileSync(checksumFilepath, 'utf8').split(' ')[0];
           fs.unlinkSync(checksumFilepath);
         }
+        else {
+          // If there is not a checksum, no need to validate
+          file.filename = await this.upload(file.bucket, file.url_path, file.name, tempFile);
+          return file;
+        }
 
-        const validated = this._validateChecksum(
+        const validated = await this._validateChecksum(
           checksumType,
           checksumValue,
           tempFile
@@ -319,23 +325,22 @@ class Granule {
         }
         else {
           throw new errors.InvalidChecksum(
-            `Invalid checksum for ${file.filename} with type ${file.checksumType} 
-            and value ${file.checksumValue}`
+            `Invalid checksum for ${file.name} with ` +
+            `type ${file.checksumType} and value ${file.checksumValue}`
           );
         }
       }
       catch (e) {
         throw new errors.InvalidChecksum(
-          `Error evaluating checksum for ${file.filename} with type ${file.checksumType} 
-          and value ${file.checksumValue}`
+          `Error evaluating checksum for ${file.name} with ` +
+          `type ${file.checksumType} and value ${file.checksumValue}`
         );
       }
 
       // delete temp file
-      fs.stat(tempFile, function (err, stat) {
-        // TODO: figure out why an error is thrown when fs.unlinkSync isn't wrapped in fs.stat
-        if (stat) fs.unlinkSync(tempFile)
-      })
+      fs.stat(tempFile, (err, stat) => {
+        if (stat) fs.unlinkSync(tempFile);
+      });
     }
 
     file.filename = `s3://${file.bucket}/${join(file.url_path, file.name)}`;
