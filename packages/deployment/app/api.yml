@@ -29,13 +29,13 @@ log2elasticsearch:
   source: '../cumulus/daac-ops-api/dist/index.js'
 
 sf2snsStart:
-  handler: daac-ops-api.broadcast.start
+  handler: daac-ops-api.sfStart
   timeout: 100
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
 
 sf2snsEnd:
-  handler: daac-ops-api.broadcast.end
+  handler: daac-ops-api.sfEnd
   timeout: 100
   memory: 256
   source: '../cumulus/daac-ops-api/dist/index.js'
