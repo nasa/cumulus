@@ -11,9 +11,10 @@ async function getTemplate(event) {
   const parsed = S3.parseS3Uri(templates[next]);
   const data = await S3.get(parsed.Bucket, parsed.Key);
   const message = JSON.parse(data.Body);
-  message.config.provider = event.provider;
-  message.config.collection = event.collection;
-  message.config.meta = event.meta;
+
+  message.workflow_config[next].provider = event.provider;
+  message.workflow_config[next].collection = event.collection;
+  message.meta = event.meta || {};
 
   return message;
 }
@@ -32,14 +33,15 @@ async function queuePdr(event, pdr) {
 async function queueGranule(event, granule) {
   const config = get(event, 'config');
   const input = get(event, 'input');
-
   const queueUrl = get(config, 'queues.startSF');
   const collectionId = get(config, 'collection.id');
   const pdr = get(input, 'pdr', null);
+
   const message = await getTemplate(event);
 
   // check if the granule is already processed
   const status = await StepFunction.getGranuleStatus(granule.granuleId, event);
+
   if (status) {
     return status;
   }
@@ -51,8 +53,8 @@ async function queueGranule(event, granule) {
     }
   }
 
-  message.config.meta.granuleId = granule.granuleId;
-  message.output = {
+  message.meta.granuleId = granule.granuleId;
+  message.payload = {
     granules: [{
       granuleId: granule.granuleId,
       files: granule.files
@@ -60,14 +62,14 @@ async function queueGranule(event, granule) {
   };
 
   if (pdr) {
-    message.output.pdr = pdr;
+    message.payload.pdr = pdr;
   }
 
   const name = `${collectionId.substring(0, 15)}__GRANULE__` +
                `${granule.granuleId.substring(0, 16)}__${Date.now()}`;
-  const arn = getExecutionArn(message.config.cumulus_meta.state_machine, name);
+  const arn = getExecutionArn(message.cumulus_meta.state_machine, name);
 
-  message.config.cumulus_meta.execution_name = name;
+  message.cumulus_meta.execution_name = name;
   await SQS.sendMessage(queueUrl, message);
   return ['running', arn];
 }
