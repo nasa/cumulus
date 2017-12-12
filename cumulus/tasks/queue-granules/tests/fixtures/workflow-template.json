@@ -1,0 +1,33 @@
+{
+  "eventSource": "sfn",
+  "workflow_config": {
+    "IngestGranule": {
+      "stack": "lpdaac-cumulus",
+      "cmr": {},
+      "distribution_endpoint": "https://fvk4vim143.execute-api.us-east-1.amazonaws.com/dev/",
+      "buckets": {
+        "internal": "cumulus-devseed-internal",
+         "private": "cumulus-devseed-private",
+         "protected": "cumulus-devseed-protected",
+         "public": "cumulus-devseed-public"
+      },
+      "queues": {
+        "startSF": "https://sqs.us-east-1.amazonaws.com/433612427488/lpdaac-cumulus-startSF"
+      },
+      "templates": {
+        "IngestGranule": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/IngestGranule.json",
+        "ParsePdr": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/ParsePdr.json",
+        "DiscoverPdrs": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json"
+      }
+    }
+  },
+  "cumulus_meta": {
+    "topic_arn": "arn:aws:sns:us-east-1:433612427488:lpdaac-cumulus-sftrackerSns-SJA7NNBL5MK2",
+    "state_machine": "arn:aws:states:us-east-1:433612427488:stateMachine:LpdaacCumulusIngestGranuleStateMachine-N3CLGBXRPAT9",
+    "workflow_name": "IngestGranule",
+    "status": "running"
+  },
+  "meta": {},
+  "exception": "None",
+  "payload": {}
+}
