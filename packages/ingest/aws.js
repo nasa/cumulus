@@ -500,8 +500,8 @@ class KMS {
 
 class StepFunction {
   static granuleExecutionStatus(granuleId, event) {
-    const buckets = _get(event, 'resources.buckets');
-    const stack = _get(event, 'resources.stack');
+    const buckets = _get(event, 'config.buckets');
+    const stack = _get(event, 'config.stack');
 
     const granuleKey = `${stack}/granules_ingested/${granuleId}`;
 
