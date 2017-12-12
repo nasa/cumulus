@@ -12,9 +12,9 @@ async function getTemplate(event) {
   const data = await S3.get(parsed.Bucket, parsed.Key);
   const message = JSON.parse(data.Body);
 
-  message.workflow_config[next].provider = event.provider;
-  message.workflow_config[next].collection = event.collection;
-  message.meta = event.meta || {};
+  message.provider = get(config, 'provider');
+  message.collection = get(config, 'collection');
+  message.meta = get(config, 'meta', {});
 
   return message;
 }
