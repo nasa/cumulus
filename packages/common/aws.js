@@ -26,8 +26,96 @@ const memoize = (fn) => {
   };
 };
 
-const awsClient = (Service, version = null) =>
-  memoize(() => new Service(version ? { apiVersion: version } : {}));
+// From https://github.com/localstack/localstack/blob/master/README.md
+const localStackEndpoints = {
+  apigateway: 'http://localhost:4567',
+  cloudformation: 'http://localhost:4581',
+  cloudwatch: 'http://localhost:4582',
+  dynamodb: 'http://localhost:4569',
+  dynamodbstreams: 'http://localhost:4570',
+  es: 'http://localhost:4571',
+  firehose: 'http://localhost:4573',
+  kinesis: 'http://localhost:4568',
+  lambda: 'http://localhost:4574',
+  redshift: 'http://localhost:4577',
+  route53: 'http://localhost:4580',
+  s3: 'http://localhost:4572',
+  ses: 'http://localhost:4579',
+  sns: 'http://localhost:4575',
+  sqs: 'http://localhost:4576',
+  ssm: 'http://localhost:4583'
+};
+
+
+/**
+ * Test if a given AWS service is supported by LocalStack.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @returns {boolean}
+ */
+function localstackSupportedService(Service) {
+  const serviceIdentifier = Service.serviceIdentifier;
+  return Object.keys(localStackEndpoints).indexOf(serviceIdentifier) !== -1;
+}
+
+
+/**
+ * Create an AWS service object that talks to LocalStack.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {Object} options - options to pass to the service object constructor function
+ * @returns {Object} - an AWS service object
+ */
+function localStackAwsClient(Service, options) {
+  const serviceIdentifier = Service.serviceIdentifier;
+
+  const localStackOptions = Object.assign({}, options, {
+    accessKeyId: 'my-access-key-id',
+    secretAccessKey: 'my-secret-access-key',
+    region: 'us-east-1',
+    endpoint: localStackEndpoints[serviceIdentifier]
+  });
+
+  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
+
+  return new Service(localStackOptions);
+}
+
+/**
+ * Create an AWS service object that does not actually talk to AWS.
+ *
+ * @todo Update this to return a mock AWS client if not supported by localstack
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {Object} options - options to pass to the service object constructor function
+ * @returns {Object} - an AWS service object
+ */
+function testAwsClient(Service, options) {
+  if (localstackSupportedService(Service)) {
+    return localStackAwsClient(Service, options);
+  }
+  return {};
+}
+
+/**
+ * Return a function which, when called, will return an AWS service object
+ *
+ * Note: The returned service objects are cached, so there will only be one
+ *       instance of each service object per process.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {string} version - the API version to use
+ * @returns {Function} - a function which, when called, will return an AWS service object
+ */
+const awsClient = (Service, version = null) => {
+  const options = {};
+  if (version) options.apiVersion = version;
+
+  if (process.env.TEST) {
+    return memoize(() => testAwsClient(Service, options));
+  }
+  return memoize(() => new Service(options));
+};
 
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
@@ -104,9 +192,9 @@ exports.downloadS3File = (s3Obj, filename) => {
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
   const scrubbedS3Objs = s3Objs.map(s3Obj => ({
-      Bucket: s3Obj.Bucket,
-      Key: s3Obj.Key
-    }));
+    Bucket: s3Obj.Bucket,
+    Key: s3Obj.Key
+  }));
   const s3 = exports.s3();
   let i = 0;
   const n = s3Objs.length;
@@ -140,14 +228,14 @@ exports.deleteS3Files = (s3Objs, s3opts = {}) => {
   const s3 = exports.s3();
   let i = 0;
   const n = s3Objs.length;
-  log.info(`Starting deletion of ${n} keys`);
+  log.info(`Starting deletion of ${n} object(s)`);
   const promiseDelete = (s3Obj) => {
     const opts = Object.assign(s3Obj, s3opts);
     return new Promise((resolve, reject) => {
       s3.deleteObject(opts, (err, data) => {
-        if (err) reject(err);
-        log.info(`Progress: [${i++} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${s3Obj.key}`);
-        resolve(data);
+        if (err) return reject(err);
+        log.info(`Progress: [${++i} of ${n}] Deleted s3://${s3Obj.Bucket}/${s3Obj.Key}`);
+        return resolve(data);
       });
     });
   };
