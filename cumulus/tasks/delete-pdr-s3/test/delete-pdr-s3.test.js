@@ -43,7 +43,7 @@ test('Existing PDR is deleted from S3', async (t) => {
     config: {}
   };
 
-  await DeletePdrS3.handler(event, {}, (error) => {
+  return DeletePdrS3.handler(event, {}, (error) => {
     if (error) return t.fail(error);
 
     // Verify that the object does not exist
@@ -53,7 +53,7 @@ test('Existing PDR is deleted from S3', async (t) => {
   });
 });
 
-test('Bucket does not exist', (t) => {
+test('A NoSuchBucket error is returned if the bucket does not exist', (t) => {
   const event = {
     input: {
       bucket: testUtils.randomString(),
@@ -68,7 +68,7 @@ test('Bucket does not exist', (t) => {
   });
 });
 
-test('Object at key does not exist', (t) => {
+test('No error is returned if the object at the key does not exist', (t) => {
   const event = {
     input: {
       bucket: t.context.bucket,
