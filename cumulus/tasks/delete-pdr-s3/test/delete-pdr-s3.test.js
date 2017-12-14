@@ -3,11 +3,8 @@
 const aws = require('@cumulus/common/aws');
 const testUtils = require('@cumulus/common/test-utils');
 const test = require('ava');
-const DeletePdrS3 = require('../index');
-
-function deleteObject(bucket, key) {
-  return aws.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
-}
+const handler = require('../index').handler;
+const pify = require('pify');
 
 // Create an S3 bucket for each test
 test.beforeEach((t) => {
@@ -19,7 +16,7 @@ test.beforeEach((t) => {
 test.afterEach.always(async (t) => {
   const response = await aws.s3().listObjects({ Bucket: t.context.bucket }).promise();
   const keys = response.Contents.map((o) => o.Key);
-  await Promise.all(keys.map((key) => deleteObject(t.context.bucket, key)));
+  await Promise.all(keys.map((key) => aws.deleteS3Object(t.context.bucket, key)));
 
   try {
     await aws.s3().deleteBucket({ Bucket: t.context.bucket }).promise();
@@ -43,14 +40,12 @@ test('Existing PDR is deleted from S3', async (t) => {
     config: {}
   };
 
-  return DeletePdrS3.handler(event, {}, (error) => {
-    if (error) return t.fail(error);
-
-    // Verify that the object does not exist
-    return aws.s3().getObject({ Bucket: t.context.bucket, Key: key }).promise()
-      .then(() => t.fail('S3 object should not exist, but it does.'))
-      .catch((e) => t.is(e.code, 'NoSuchKey'));
-  });
+  return pify(handler)(event, {})
+    .then(() =>
+      aws.s3().getObject({ Bucket: t.context.bucket, Key: key }).promise()
+        .then(() => t.fail('S3 object should not exist, but it does.'))
+        .catch((e) => t.is(e.code, 'NoSuchKey')))
+    .catch((e) => t.fail(e));
 });
 
 test('A NoSuchBucket error is returned if the bucket does not exist', (t) => {
@@ -62,10 +57,12 @@ test('A NoSuchBucket error is returned if the bucket does not exist', (t) => {
     config: {}
   };
 
-  return DeletePdrS3.handler(event, {}, (error) => {
-    if (error.code === 'NoSuchBucket') return t.pass();
-    return t.fail('Expected bucket to not exist');
-  });
+  return pify(handler)(event, {})
+    .then(() => t.fail())
+    .catch((error) => {
+      if (error.code === 'NoSuchBucket') return t.pass();
+      return t.fail('Expected bucket to not exist.');
+    });
 });
 
 test('No error is returned if the object at the key does not exist', (t) => {
@@ -77,8 +74,7 @@ test('No error is returned if the object at the key does not exist', (t) => {
     config: {}
   };
 
-  return DeletePdrS3.handler(event, {}, (error) => {
-    if (error) return t.fail('Object deletion failed');
-    return t.pass();
-  });
+  return pify(handler)(event, {})
+    .then(() => t.pass())
+    .catch(() => t.fail('Object deletion failed'));
 });
