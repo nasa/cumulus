@@ -4,7 +4,6 @@ const path = require('path');
 const fs = require('fs');
 const message = require('./lib/message');
 const Ajv = require('ajv');
-const ajv = new Ajv();
 
 /**
  * Returns an absolute path given a relative path within the task directory
@@ -63,24 +62,22 @@ function getNestedHandler(handlerString) {
   }
 }
 
-function validateMessage(message, schemaFile) {
-  console.log("In validate " + schemaFile);
-  (promiseJsonFile(schemaFile))
-  .then((schema) => {
-    console.log(schema);
+function validateMessage(input, schemaFile) {
+  return new Promise((resolve, reject) => {
+    (promiseJsonFile(schemaFile))
+      .then((schema) => {
+        const ajv = new Ajv();
+        const validate = ajv.compile(schema);
+        const valid = validate(input);
 
-    const ajv = new Ajv();
-    const validate = ajv.compile(schema);
-    const valid = validate(message);
+        return resolve(valid);
+      })
+      .catch((err) => {
+        reject(err);
+      });
 
-    console.log("Valid?: " + valid);
-    return valid;
-  })
-  .catch((err) => {
-    console.log(err);
     return false;
   });
-  return false;
 }
 
 /**
@@ -135,18 +132,15 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
     })
     .then((nestedEvent) => {
       messageConfig = nestedEvent.messageConfig;
-      //let validInput = null;
-      if (schemas){
+      if (schemas) {
         validateMessage(nestedEvent.input, schemas.input)
-        .then((validInput) => {
-          console.log("valid input " + validInput);
-        })
-        .catch((err) => {
-          console.log("catching some error " + err);
-        });
-        //validConfig = validateMessage(nestedEvent.config, schemas.config);
+          .then((validInput) => {
+            if (validInput) console.log("Valid file: " + schemas.input);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       }
-      //console.log("Config: " + validConfig);
 
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
       return invokeHandler(nestedHandler, nestedEvent, context);
