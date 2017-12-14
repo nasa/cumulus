@@ -46,7 +46,6 @@ const localStackEndpoints = {
   ssm: 'http://localhost:4583'
 };
 
-
 /**
  * Test if a given AWS service is supported by LocalStack.
  *
@@ -57,7 +56,6 @@ function localstackSupportedService(Service) {
   const serviceIdentifier = Service.serviceIdentifier;
   return Object.keys(localStackEndpoints).indexOf(serviceIdentifier) !== -1;
 }
-
 
 /**
  * Create an AWS service object that talks to LocalStack.
@@ -166,6 +164,16 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
     }
   });
 };
+
+/**
+ * Delete an object from S3
+ *
+ * @param {string} bucket
+ * @param {string} key
+ * @returns {Promse}
+ */
+exports.deleteS3Object = (bucket, key) =>
+  exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
 
 exports.promiseS3Upload = (params) => {
   const uploadFn = exports.s3().upload.bind(exports.s3());
