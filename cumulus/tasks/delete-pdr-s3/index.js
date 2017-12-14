@@ -26,6 +26,6 @@ function handler(event, context, callback) {
     }
   ])
     .then(() => callback())
-    .catch((e) => callback(e));
+    .catch(callback);
 }
 exports.handler = handler;
