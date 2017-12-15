@@ -34,8 +34,8 @@ test('Existing PDR is deleted from S3', async (t) => {
 
   const event = {
     input: {
-      bucket: t.context.bucket,
-      key: key
+      Bucket: t.context.bucket,
+      Key: key
     },
     config: {}
   };
@@ -51,8 +51,8 @@ test('Existing PDR is deleted from S3', async (t) => {
 test('A NoSuchBucket error is returned if the bucket does not exist', (t) => {
   const event = {
     input: {
-      bucket: testUtils.randomString(),
-      key: testUtils.randomString()
+      Bucket: testUtils.randomString(),
+      Key: testUtils.randomString()
     },
     config: {}
   };
@@ -68,8 +68,8 @@ test('A NoSuchBucket error is returned if the bucket does not exist', (t) => {
 test('No error is returned if the object at the key does not exist', (t) => {
   const event = {
     input: {
-      bucket: t.context.bucket,
-      key: testUtils.randomString()
+      Bucket: t.context.bucket,
+      Key: testUtils.randomString()
     },
     config: {}
   };
