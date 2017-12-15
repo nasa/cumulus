@@ -2,9 +2,9 @@ version: 2
 jobs:
   build:
     docker:
+      - image: circleci/node:6.10
       - name: localstack
         image: localstack/localstack
-      - image: circleci/node:6.10
     working_directory: ~/cumulus
     steps:
       - checkout
