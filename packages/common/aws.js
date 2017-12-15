@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const log = require('./log');
 const string = require('./string');
+const testUtils = require('./test-utils');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
@@ -26,81 +27,6 @@ const memoize = (fn) => {
   };
 };
 
-// From https://github.com/localstack/localstack/blob/master/README.md
-const localStackPorts = {
-  apigateway: 4567,
-  cloudformation: 4581,
-  cloudwatch: 4582,
-  dynamodb: 4569,
-  dynamodbstreams: 4570,
-  es: 4571,
-  firehose: 4573,
-  kinesis: 4568,
-  lambda: 4574,
-  redshift: 4577,
-  route53: 4580,
-  s3: 4572,
-  ses: 4579,
-  sns: 4575,
-  sqs: 4576,
-  ssm: 4583
-};
-
-/**
- * Test if a given AWS service is supported by LocalStack.
- *
- * @param {Function} Service - an AWS service object constructor function
- * @returns {boolean}
- */
-function localstackSupportedService(Service) {
-  const serviceIdentifier = Service.serviceIdentifier;
-  return Object.keys(localStackPorts).indexOf(serviceIdentifier) !== -1;
-}
-
-/**
- * Create an AWS service object that talks to LocalStack.
- *
- * This function expects that the LOCALSTACK_HOST environment variable will be set.
- *
- * @param {Function} Service - an AWS service object constructor function
- * @param {Object} options - options to pass to the service object constructor function
- * @returns {Object} - an AWS service object
- */
-function localStackAwsClient(Service, options) {
-  if (!process.env.LOCALSTACK_HOST) {
-    throw new Error('The LOCALSTACK_HOST environment variable is not set.');
-  }
-
-  const serviceIdentifier = Service.serviceIdentifier;
-
-  const localStackOptions = Object.assign({}, options, {
-    accessKeyId: 'my-access-key-id',
-    secretAccessKey: 'my-secret-access-key',
-    region: 'us-east-1',
-    endpoint: `http://${process.env.LOCALSTACK_HOST}:${localStackPorts[serviceIdentifier]}`
-  });
-
-  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
-
-  return new Service(localStackOptions);
-}
-
-/**
- * Create an AWS service object that does not actually talk to AWS.
- *
- * @todo Update this to return a mock AWS client if not supported by localstack
- *
- * @param {Function} Service - an AWS service object constructor function
- * @param {Object} options - options to pass to the service object constructor function
- * @returns {Object} - an AWS service object
- */
-function testAwsClient(Service, options) {
-  if (localstackSupportedService(Service)) {
-    return localStackAwsClient(Service, options);
-  }
-  return {};
-}
-
 /**
  * Return a function which, when called, will return an AWS service object
  *
@@ -116,7 +42,7 @@ const awsClient = (Service, version = null) => {
   if (version) options.apiVersion = version;
 
   if (process.env.TEST) {
-    return memoize(() => testAwsClient(Service, options));
+    return memoize(() => testUtils.testAwsClient(Service, options));
   }
   return memoize(() => new Service(options));
 };
@@ -239,21 +165,11 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @return A promise that resolves to an Array of the data returned from the deletion operations
  */
 exports.deleteS3Files = (s3Objs, s3opts = {}) => {
-  const s3 = exports.s3();
-  let i = 0;
-  const n = s3Objs.length;
-  log.info(`Starting deletion of ${n} object(s)`);
-  const promiseDelete = (s3Obj) => {
-    const opts = Object.assign(s3Obj, s3opts);
-    return new Promise((resolve, reject) => {
-      s3.deleteObject(opts, (err, data) => {
-        if (err) return reject(err);
-        log.info(`Progress: [${++i} of ${n}] Deleted s3://${s3Obj.Bucket}/${s3Obj.Key}`);
-        return resolve(data);
-      });
-    });
-  };
+  log.info(`Starting deletion of ${s3Objs.length} object(s)`);
+
+  const promiseDelete = (s3Obj) => exports.s3().deleteObject(s3Obj).promise();
   const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
+
   return Promise.all(s3Objs.map(limitedDelete));
 };
 
