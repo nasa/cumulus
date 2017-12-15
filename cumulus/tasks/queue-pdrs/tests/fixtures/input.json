@@ -1,18 +1,25 @@
 {
   "config": {
-    "useQueue": false,
     "stack": "lpdaac-cumulus-phaseIII",
-    "provider": {
-      "id": "MUR",
-      "globalConnectionLimit": 10,
-      "protocol": "ftp",
-      "host": "podaac-ftp.jpl.nasa.gov"
-    },
     "buckets": {
       "internal": "ghrc-r-deploy",
       "private": "ghrc-r-private",
       "protected": "ghrc-r-protected",
       "public": "ghrc-r-public"
+    },
+    "queues": {
+      "startSF": "http://localhost:9324/queue/ghrc-cumulus-dev-startSF"
+    },
+    "templates": {
+      "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json",
+      "ParsePdr": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json"
+    },
+    "cumulus_meta": {
+      "state_machine": "arn:aws:states:us-east-1:xxxxxx:stateMachine:DiscoverPdrsGHRCCumulusdevStateMachine",
+      "state_machine_name": "DiscoverPdrs",
+      "config": {
+        "next": "ParsePdr"
+      }
     },
     "collection": {
       "id": "MOD09GQ",
@@ -51,6 +58,15 @@
     }
   },
   "input": {
-    "event": 1
+    "pdrs": [
+      {
+        "name": "pdrs/PDN.ID1611081200.PDR",
+        "path": "/"
+      },
+      {
+        "name": "pdrs/MYD13A1_5_grans.PDR",
+        "path": "/"
+      }
+    ]
   }
 }
