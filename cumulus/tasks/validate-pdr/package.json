@@ -17,7 +17,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "ava"
+    "test": "env TEST=true ava"
   },
   "ava": {
     "files": ["test"],
