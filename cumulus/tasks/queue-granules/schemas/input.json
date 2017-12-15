@@ -9,9 +9,6 @@
     "config": {
       "type": "object",
       "properties": {
-        "useQueue": {
-          "type": "boolean"
-        },
         "provider": {
           "type": "object",
           "properties": {
@@ -31,6 +28,26 @@
             "private": { "type": "string" },
             "protected": { "type": "string" },
             "public": { "type": "string" }
+          }
+        },
+        "queues": {
+          "type": "object",
+          "properties": {
+            "startSF": { "type": "string" }
+          }
+        },
+        "templates": {
+          "type": "object"
+        },
+        "cumulus_meta": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "properties": {
+                "next": { "type": "string" }
+              }
+            }
           }
         },
         "collection": {

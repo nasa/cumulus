@@ -25,7 +25,7 @@ async function queuePdr(event, pdr) {
   const message = await getTemplate(event);
 
   message.input = { pdr };
-  message.config.cumulus_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
+  message.cumulus_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
 
   return SQS.sendMessage(queueUrl, message);
 }

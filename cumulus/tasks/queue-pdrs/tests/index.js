@@ -34,10 +34,9 @@ test.cb('queue pdrs', (t) => {
       log.info('ignoring this test. Test server seems to be down');
     }
 
-    console.log('output', output)
     t.ifError(e);
-    // t.is(typeof output, 'object');
-    // t.is(output.granules_queued, 3);
+    t.is(typeof output, 'object');
+    t.is(output.pdrs_queued, 2);
 
     S3.fileExists.restore();
     S3.get.restore();

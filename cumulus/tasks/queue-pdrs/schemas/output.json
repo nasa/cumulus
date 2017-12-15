@@ -1,0 +1,10 @@
+{
+  "title": "QueuePdrsOutput",
+  "description": "Describes the output produced by the queue-pdrs task",
+  "type": "object",
+  "properties": {
+    "pdrs_queued": {
+      "type": "integer"
+    }
+  }
+}
