@@ -27,23 +27,23 @@ const memoize = (fn) => {
 };
 
 // From https://github.com/localstack/localstack/blob/master/README.md
-const localStackEndpoints = {
-  apigateway: 'http://localhost:4567',
-  cloudformation: 'http://localhost:4581',
-  cloudwatch: 'http://localhost:4582',
-  dynamodb: 'http://localhost:4569',
-  dynamodbstreams: 'http://localhost:4570',
-  es: 'http://localhost:4571',
-  firehose: 'http://localhost:4573',
-  kinesis: 'http://localhost:4568',
-  lambda: 'http://localhost:4574',
-  redshift: 'http://localhost:4577',
-  route53: 'http://localhost:4580',
-  s3: 'http://localhost:4572',
-  ses: 'http://localhost:4579',
-  sns: 'http://localhost:4575',
-  sqs: 'http://localhost:4576',
-  ssm: 'http://localhost:4583'
+const localStackPorts = {
+  apigateway: 4567,
+  cloudformation: 4581,
+  cloudwatch: 4582,
+  dynamodb: 4569,
+  dynamodbstreams: 4570,
+  es: 4571,
+  firehose: 4573,
+  kinesis: 4568,
+  lambda: 4574,
+  redshift: 4577,
+  route53: 4580,
+  s3: 4572,
+  ses: 4579,
+  sns: 4575,
+  sqs: 4576,
+  ssm: 4583
 };
 
 /**
@@ -54,24 +54,30 @@ const localStackEndpoints = {
  */
 function localstackSupportedService(Service) {
   const serviceIdentifier = Service.serviceIdentifier;
-  return Object.keys(localStackEndpoints).indexOf(serviceIdentifier) !== -1;
+  return Object.keys(localStackPorts).indexOf(serviceIdentifier) !== -1;
 }
 
 /**
  * Create an AWS service object that talks to LocalStack.
+ *
+ * This function expects that the LOCALSTACK_HOST environment variable will be set.
  *
  * @param {Function} Service - an AWS service object constructor function
  * @param {Object} options - options to pass to the service object constructor function
  * @returns {Object} - an AWS service object
  */
 function localStackAwsClient(Service, options) {
+  if (!process.env.LOCALSTACK_HOST) {
+    throw new Error('The LOCALSTACK_HOST environment variable is not set.');
+  }
+
   const serviceIdentifier = Service.serviceIdentifier;
 
   const localStackOptions = Object.assign({}, options, {
     accessKeyId: 'my-access-key-id',
     secretAccessKey: 'my-secret-access-key',
     region: 'us-east-1',
-    endpoint: localStackEndpoints[serviceIdentifier]
+    endpoint: `http://${process.env.LOCALSTACK_HOST}:${localStackPorts[serviceIdentifier]}`
   });
 
   if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
