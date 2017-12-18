@@ -1,0 +1,5 @@
+{
+  "task": {
+    "entrypoint": "discover-granules.handler"
+  }
+}
