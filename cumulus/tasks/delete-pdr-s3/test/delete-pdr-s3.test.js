@@ -43,13 +43,13 @@ test('Existing PDR is deleted from S3', async (t) => {
     config: {}
   };
 
-  return DeletePdrS3.handler(event, {}, (error) => {
+  return DeletePdrS3.handler(event, {}, async (error) => {
     if (error) return t.fail(error);
 
-    // Verify that the object does not exist
-    return aws.s3().getObject({ Bucket: t.context.bucket, Key: key }).promise()
-      .then(() => t.fail('S3 object should not exist, but it does.'))
-      .catch((e) => t.is(e.code, 'NoSuchKey'));
+    if (await aws.s3ObjectExists({ Bucket: t.context.bucket, Key: key })) {
+      t.fail('S3 object should not exist, but it does.');
+    }
+    else t.pass();
   });
 });
 
