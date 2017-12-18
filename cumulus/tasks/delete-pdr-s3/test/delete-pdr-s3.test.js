@@ -40,12 +40,15 @@ test('Existing PDR is deleted from S3', async (t) => {
     config: {}
   };
 
-  return pify(handler)(event, {})
-    .then(() =>
-      aws.s3().getObject({ Bucket: t.context.bucket, Key: key }).promise()
-        .then(() => t.fail('S3 object should not exist, but it does.'))
-        .catch((e) => t.is(e.code, 'NoSuchKey')))
-    .catch((e) => t.fail(e));
+  return handler(event, {}, (error) => {
+    if (error) return t.fail(error);
+
+    return aws.s3ObjectExists({ Bucket: t.context.bucket, Key: key })
+      .then((exists) => {
+        if (exists) t.fail();
+        else t.pass();
+      });
+  });
 });
 
 test('A NoSuchBucket error is returned if the bucket does not exist', (t) => {
