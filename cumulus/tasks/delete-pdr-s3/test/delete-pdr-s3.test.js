@@ -4,7 +4,6 @@ const aws = require('@cumulus/common/aws');
 const testUtils = require('@cumulus/common/test-utils');
 const test = require('ava');
 const handler = require('../index').handler;
-const pify = require('pify');
 
 // Create an S3 bucket for each test
 test.beforeEach((t) => {
@@ -60,12 +59,10 @@ test('A NoSuchBucket error is returned if the bucket does not exist', (t) => {
     config: {}
   };
 
-  return pify(handler)(event, {})
-    .then(() => t.fail())
-    .catch((error) => {
-      if (error.code === 'NoSuchBucket') return t.pass();
-      return t.fail('Expected bucket to not exist.');
-    });
+  return handler(event, {}, (error) => {
+    if (error.code === 'NoSuchBucket') return t.pass();
+    return t.fail('Expected bucket to not exist');
+  });
 });
 
 test('No error is returned if the object at the key does not exist', (t) => {
@@ -77,7 +74,8 @@ test('No error is returned if the object at the key does not exist', (t) => {
     config: {}
   };
 
-  return pify(handler)(event, {})
-    .then(() => t.pass())
-    .catch(() => t.fail('Object deletion failed'));
+  return handler(event, {}, (error) => {
+    if (error) return t.fail('Object deletion failed');
+    return t.pass();
+  });
 });
