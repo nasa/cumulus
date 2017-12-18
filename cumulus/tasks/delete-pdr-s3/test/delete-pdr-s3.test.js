@@ -39,14 +39,13 @@ test('Existing PDR is deleted from S3', async (t) => {
     config: {}
   };
 
-  return handler(event, {}, (error) => {
+  return handler(event, {}, async (error) => {
     if (error) return t.fail(error);
 
-    return aws.s3ObjectExists({ Bucket: t.context.bucket, Key: key })
-      .then((exists) => {
-        if (exists) t.fail();
-        else t.pass();
-      });
+    if (await aws.s3ObjectExists({ Bucket: t.context.bucket, Key: key })) {
+      return t.fail('S3 object should not exist, but it does.');
+    }
+    return t.pass();
   });
 });
 
