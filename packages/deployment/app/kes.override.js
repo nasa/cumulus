@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
 'use strict';
 
-const { Kes } = require('kes');
+const { Kes, Lambda } = require('kes');
 const forge = require('node-forge');
+const utils = require('kes').utils;
 
 /**
  * Generates a public/private key pairs
@@ -121,6 +122,24 @@ function generateWorkflowsList(config) {
   return false;
 }
 
+
+class UpdatedLambda extends Lambda {
+  /**
+   * Copy source code of a given lambda function, zips it, calculate
+   * the hash of the source code and updates the lambda object with
+   * the hash, local and remote locations of the code
+   *
+   * @param {Object} lambda the lambda object
+   * @returns {Promise} returns the updated lambda object
+   */
+  zipLambda(lambda) {
+    console.log(`Zipping ${lambda.local} and injecting sled`);
+    return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => {
+      return lambda;
+    });
+  }
+}
+
 /**
  * A subclass of Kes class that overrides opsStack method.
  * The subclass is checks whether the public/private keys are generated
@@ -134,6 +153,10 @@ function generateWorkflowsList(config) {
  * @class UpdatedKes
  */
 class UpdatedKes extends Kes {
+  constructor(config) {
+    super(config);
+    this.Lambda = UpdatedLambda;
+  }
 
   async redployApiGateWay(name, restApiId, stageName) {
     if (restApiId) {
