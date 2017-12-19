@@ -1,11 +1,13 @@
 sqs2sf:
-  handler: daac-ops-api.starter
+  handler: index.starter
   timeout: 200
   memory: 384
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  npmSource:
+    name: 'hapi-paginate'
+    version: 0.4.1
 
 sns2elasticsearch:
-  handler: daac-ops-api.indexer
+  handler: index.indexer
   timeout: 100
   envs:
     ES_HOST:
@@ -14,10 +16,10 @@ sns2elasticsearch:
         - '{{es.name}}Domain'
         - DomainEndpoint
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
 
 log2elasticsearch:
-  handler: daac-ops-api.logHandler
+  handler: index.logHandler
   timeout: 100
   memory: 256
   envs:
@@ -26,25 +28,27 @@ log2elasticsearch:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
 
 sf2snsStart:
-  handler: daac-ops-api.sfStart
+  handler: index.sfStart
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  useSled: true
+  source: '../cumulus/daac-ops-api/dist/'
 
 sf2snsEnd:
-  handler: daac-ops-api.sfEnd
+  handler: index.sfEnd
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  useSled: true
+  source: '../cumulus/daac-ops-api/dist/'
 
 ScheduleSF:
-  handler: daac-ops-api.scheduler
+  handler: index.scheduler
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     CollectionsTable:
       function: Ref
@@ -54,7 +58,7 @@ ScheduleSF:
       value: ProvidersTableDynamoDB
 
 jobs:
-  handler: daac-ops-api.jobs
+  handler: index.jobs
   timeout: 300
   memory: 512
   envs:
@@ -63,23 +67,23 @@ jobs:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
 
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
-  handler: daac-ops-api.bootstrap
+  handler: index.bootstrap
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     internal: '{{buckets.internal}}'
 
 ApiCollections:
-  handler: daac-ops-api.collections
+  handler: index.collections
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -116,10 +120,10 @@ ApiCollections:
       api: backend
 
 ApiGranules:
-  handler: daac-ops-api.granules
+  handler: index.granules
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   apiRole: true
   envs:
     UsersTable:
@@ -168,11 +172,11 @@ ApiGranules:
       api: backend
 
 ApiExecutions:
-  handler: daac-ops-api.executions
+  handler: index.executions
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -193,11 +197,11 @@ ApiExecutions:
       api: backend
   
 ApiExecutionStatus:
-  handler: daac-ops-api.executionStatus
+  handler: index.executionStatus
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -214,11 +218,11 @@ ApiExecutionStatus:
       api: backend
 
 ApiWorkflows:
-  handler: daac-ops-api.workflows
+  handler: index.workflows
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     bucket: '{{buckets.internal}}'
     UsersTable:
@@ -235,7 +239,7 @@ ApiWorkflows:
       api: backend
 
 ApiRules:
-  handler: daac-ops-api.rules
+  handler: index.rules
   timeout: 20
   memory: 256
   apiRole: true
@@ -266,7 +270,7 @@ ApiRules:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   apiGateway:
     - path: rules
       method: get
@@ -290,7 +294,7 @@ ApiRules:
       api: backend
 
 ApiProviders:
-  handler: daac-ops-api.providers
+  handler: index.providers
   timeout: 20
   memory: 256
   apiRole: true
@@ -307,7 +311,7 @@ ApiProviders:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   apiGateway:
     - path: providers
       method: get
@@ -331,10 +335,10 @@ ApiProviders:
       api: backend
 
 ApiPdrs:
-  handler: daac-ops-api.pdrs
+  handler: index.pdrs
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -360,10 +364,10 @@ ApiPdrs:
       api: backend
 
 ApiLogs:
-  handler: daac-ops-api.logs
+  handler: index.logs
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   apiRole: true
   envs:
     UsersTable:
@@ -385,11 +389,11 @@ ApiLogs:
       api: backend
 
 ApiSchema:
-  handler: daac-ops-api.schemas
+  handler: index.schemas
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -401,10 +405,10 @@ ApiSchema:
       api: backend
 
 ApiStats:
-  handler: daac-ops-api.stats
+  handler: index.stats
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   apiRole: true
   envs:
     UsersTable:
@@ -434,10 +438,10 @@ ApiStats:
       api: backend
 
 ApiToken:
-  handler: daac-ops-api.token
+  handler: index.token
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   apiRole: true
   urs: true
   envs:
@@ -454,10 +458,10 @@ ApiToken:
       cors: true
 
 ApiDistribution:
-  handler: daac-ops-api.distribution
+  handler: index.distribution
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   apiRole: true
   urs: true
   envs:
