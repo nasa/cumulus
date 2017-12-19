@@ -145,13 +145,14 @@ function handler(_event, context, cb) {
     // first we check if there is an output file
     const event = _event;
 
-    const collection = get(event, 'collection');
-    const buckets = get(event, 'resources.buckets');
-    const payload = temporaryPayloadFix(get(event, 'payload', null), collection, buckets);
-    const creds = get(event, 'resources.cmr');
+    const config = get(event, 'config');
+    const collection = get(config, 'collection');
+    const buckets = get(config, 'buckets');
+    const creds = get(config, 'cmr');
+    const input = temporaryPayloadFix(get(event, 'input', null), collection, buckets);
 
     // determine CMR files
-    const cmrFiles = getCmrFiles(payload.granules);
+    const cmrFiles = getCmrFiles(input.granules);
 
     // post all meta files to CMR
     const jobs = cmrFiles.map(c => publish(c, creds));
@@ -159,7 +160,7 @@ function handler(_event, context, cb) {
     return Promise.all(jobs).then((results) => {
       // update output section of the payload
       for (const result of results) {
-        for (const g of payload.granules) {
+        for (const g of input.granules) {
           if (result.granuleId === g.granuleId) {
             delete result.granuleId;
             g.cmr = result;
@@ -167,14 +168,13 @@ function handler(_event, context, cb) {
           }
         }
       }
-      return payload;
-    }).then((r) => {
-      event.payload = r;
-      return cb(null, event);
-    }).catch(e => {
-      log.error(e);
-      cb(e);
-    });
+      return input;
+    })
+      .then((output) => cb(null, output))
+      .catch(e => {
+        log.error(e);
+        cb(e);
+      });
   }
   catch (e) {
     log.error(e);
