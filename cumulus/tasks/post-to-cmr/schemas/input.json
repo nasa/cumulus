@@ -1,0 +1,81 @@
+{
+  "title": "PostToCmrInput",
+  "description": "Describes the input and config used by the post-to-cmr task",
+  "type": "object",
+  "required": ["config", "input"],
+  "additionalProperties": false,
+  "properties": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "granules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "granuleId": { "type": "string" },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "cmr": {
+          "type": "object",
+          "properties": {
+            "provider": { "type": "string" },
+            "clientId": { "type": "string" },
+            "username": { "type": "string" },
+            "password": { "type": "string" }
+          }
+        },
+        "buckets": {
+          "type": "object",
+          "description": "aws s3 buckets used by this task",
+          "properties": {
+            "internal": { "type": "string" },
+            "private": { "type": "string" },
+            "protected": { "type": "string" },
+            "public": { "type": "string" }
+          }
+        },
+        "collection": {
+          "type": "object",
+          "description": "",
+          "required": ["files"],
+          "properties": {
+            "url_path": { "type": "string" },
+            "name": { "type": "string" },
+            "granuleId": { "type": "string" },
+            "dataType": { "type": "string" },
+            "granuleIdExtraction": { "type": "string" },
+            "process": { "type": "string" },
+            "provider_path": { "type": "string" },
+            "version": { "type": "string" },
+            "sampleFileName": { "type": "string" },
+            "id": { "type": "string" },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "regex": { "type": "string" },
+                  "sampleFileName": { "type": "string" },
+                  "bucket": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
