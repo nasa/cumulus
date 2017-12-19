@@ -10,11 +10,12 @@
  */
 'use strict';
 
+const path = require('path');
 const get = require('lodash.get');
 const zlib = require('zlib');
 const logger = require('@cumulus/ingest/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getExecutionArn, getExecutionUrl, invoke } = require('@cumulus/ingest/aws');
+const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
 const Rule = require('../models/rules');
 
@@ -171,69 +172,50 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
 async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
   // adding collection record to ES
   const collectionId = `${meta.name}___${meta.version}`;
-  await esClient.update({
+  const params = {
     index,
     type,
     id: collectionId,
     body: {
-      doc: {
-        name: meta.name,
-        version: meta.version,
-        dataType: meta.dataType,
-        process: meta.process,
-        provider_path: meta.provider_path,
-        url_path: meta.url_path,
-        granuleId: meta.granuleId,
-        granuleIdExtraction: meta.granuleIdExtraction,
-        sampleFileName: meta.sampleFileName,
-        files: meta.files,
-        timestamp: Date.now()
-      },
+      doc: meta,
       doc_as_upsert: true
     }
-  });
+  };
+
+  params.body.doc.timestamp = Date.now();
+  await esClient.update(params);
 }
 
 async function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
-  // adding collection record to ES
-  await esClient.update({
+  const params = {
     index,
     type,
     id: payload.id,
     body: {
-      doc: {
-        id: payload.id,
-        globalConnectionLimit: payload.globalConnectionLimit,
-        protocol: payload.protocol,
-        host: payload.host,
-        port: payload.port,
-        timestamp: Date.now()
-      },
+      doc: payload,
       doc_as_upsert: true
     }
-  });
+  };
+  params.body.doc.timestamp = Date.now();
+
+  // adding collection record to ES
+  await esClient.update(params);
 }
 
 async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
-  // adding collection record to ES
-  await esClient.update({
+  const params = {
     index,
     type,
     id: payload.name,
     body: {
-      doc: {
-        name: payload.name,
-        workflow: payload.workflow,
-        provider: payload.provider,
-        collection: payload.collection,
-        meta: payload.meta,
-        rule: payload.rule,
-        state: payload.state,
-        timestamp: Date.now()
-      },
+      doc: payload,
       doc_as_upsert: true
     }
-  });
+  };
+  params.body.doc.timestamp = Date.now();
+
+  // adding collection record to ES
+  await esClient.update(params);
 }
 
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
@@ -325,6 +307,11 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
 
 async function reingest(g) {
   const collection = g.collectionId.split('___');
+
+  // get the payload of the original execution
+  const status = await StepFunction.getExecutionStatus(path.basename(g.execution));
+  const originalMessage = JSON.parse(status.execution.input);
+
   const payload = await Rule.buildPayload({
     workflow: 'IngestGranule',
     provider: g.provider,
@@ -333,12 +320,7 @@ async function reingest(g) {
       version: collection[1]
     },
     meta: { granuleId: g.granuleId },
-    payload: {
-      granules: [{
-        granuleId: g.granuleId,
-        files: g.files
-      }]
-    }
+    payload: originalMessage.payload
   });
 
   await partialRecordUpdate(
