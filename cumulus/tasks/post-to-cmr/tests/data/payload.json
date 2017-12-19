@@ -1,129 +1,118 @@
 {
-  "eventSource": "sfn",
-  "ingest_meta": {},
-  "workflow_config_template": {},
-  "resources": {
-    "stack": "cumulus-generic-test",
-    "stateMachines": {
-      "download": "arn:aws:states:us-west-2:xxxxxxx:stateMachine:cumulus-generic-test-download",
-      "process": "arn:aws:states:us-west-2:xxxxxxx:stateMachine:cumulus-generic-test-process",
-      "archive": "arn:aws:states:us-west-2:xxxxxxx:stateMachine:cumulus-generic-test-archive",
-      "cmr": "arn:aws:states:us-west-2:xxxxxxx:stateMachine:cumulus-generic-test-cmr"
+  "exception": "None",
+  "config": {
+    "cmr": {
+      "provider": "xxxxxx",
+      "clientId": "xxxxxx",
+      "username": "xxxxxx",
+      "password": "xxxxx"
     },
     "buckets": {
-      "internal": "cumulus-generic-test-internal",
-      "private": "cumulus-generic-test-private",
-      "public": "cumulus-generic-test-public",
-      "protected": "cumulus-generic-test-protected"
-    }
-  },
-  "collection": {
-    "id": "AST_L1A",
-    "trigger": {
-      "type": "timer",
-      "period_s": 1800
+      "protected": "cumulus-protected",
+      "internal": "cumulus-internal",
+      "public": "cumulus-public",
+      "private": "cumulus-private"
     },
-    "stateConfig": {
-      "download": {},
-      "process": {},
-      "archive": {},
-      "cmr": {
-        "enryptionKey": "s3://internal-bucket/key.pem",
-        "username": "username",
-        "password": "password",
-        "cmrProvider": "CUMULUS"
-      }
+    "cumulus_meta": {
+      "state_machine": "arn:aws:states:us-east-1:xxxxxxxx:stateMachine:IngestGranuleLpdaacCumulusPhaseIIIdevStateMachine-VACCPUFABHD6",
+      "state_machine_name": "IngestGranule",
+      "execution_name": "MOD11A1__GRANULE__MOD11A1.A2017200.h19v04.006.2017201090724__1502894154824"
     },
-    "provider": {
-      "id": "MODAPS",
-      "globalConnectionLimit": 10,
-      "protocol": "http",
-      "host": "https://e4ftl01.cr.usgs.gov:40521",
-      "path": "TEST_B/Cumulus/PDR/TEST_CASES"
-    }
-  },
-  "meta": {
-    "pdrName": "PDN.ID1611071307",
-    "granules": {
-      "1A0000-2016111101_000_001": {
-        "published": false,
-        "cmrLink": null
-      }
-    },
-    "collections": {
-      "AST_L1A": {
-        "dataType": "AST_L1A",
-        "name": "AST_L1A",
-        "version": "003",
-        "granuleId": "^1A[\\d]{4}-[\\d]{10}_[\\d]{3}_[\\d]{3}$",
-        "sampleFileName": "pg-PR1A0000-2016121001_001_011",
-        "granuleIdExtraction": "^pg-[P|B]R(1A.*)$",
-        "files": {
-          "origin-hdf5": {
-            "regex": "^(pg-PR1A[0-9]{4}-[0-9]{10}_[0-9]{3}_[0-9]{3})$",
-            "sampleFileName": "pg-PR1A0000-2016121001_000_001",
-            "bucket": "private"
-          },
-          "processed-hdf5": {
-            "regex": "^AST_L1A_[\\d]*_[\\d]*\\.hdf$",
-            "sampleFileName": "AST_L1A_00301052017002700_02242017094829.hdf",
-            "bucket": "protected"
-          },
-          "origin-thumbnail": {
-            "regex": "^(pg-BR1A[0-9]{4}-[0-9]{10}_[0-9]{3}_[0-9]{3})$",
-            "sampleFileName": "pg-BR1A0000-2016121001_000_001",
-            "bucket": "private"
-          },
-          "meta-xml": {
-            "regex": "^AST_L1A_[\\d]*_[\\d]*\\.meta\\.xml$",
-            "sampleFileName": "AST_L1A_00301052017002700_02242017094829.meta.xml",
-            "bucket": "public"
-          },
-          "thumbnail-2": {
-            "regex": "^AST_L1A_[\\d]*_[\\d]*\\_2.jpg$",
-            "sampleFileName": "AST_L1A_00301052017002700_02242017094829_2.jpg",
-            "bucket": "public"
-          },
-          "thumbnail-1": {
-            "regex": "^AST_L1A_[\\d]*_[\\d]*\\_1.jpg$",
-            "sampleFileName": "AST_L1A_00301052017002700_02242017094829_1.jpg",
-            "bucket": "public"
-          },
-          "thumbnail-3": {
-            "regex": "^AST_L1A_[\\d]*_[\\d]*\\_3.jpg$",
-            "sampleFileName": "AST_L1A_00301052017002700_02242017094829_3.jpg",
-            "bucket": "public"
-          }
+    "collection": {
+      "files": [
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "MOD11A1.A2017025.h21v00.006.2017034065104.hdf",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "BROWSE.MOD11A1.A2017025.h21v00.006.2017034065104.hdf",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+          "sampleFileName": "MOD11A1.A2017025.h21v00.006.2017034065104.hdf.met",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.meta\\.xml$",
+          "sampleFileName": "MOD11A1.A2017025.h21v00.006.2017034065104.meta.xml",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017025.h21v00.006.2017034065104_2.jpg",
+          "bucket": "public"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017025.h21v00.006.2017034065104_1.jpg",
+          "bucket": "public"
         }
-      }
+      ],
+      "url_path": "",
+      "name": "MOD11A1",
+      "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "dataType": "MOD11A1",
+      "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
+      "process": "modis",
+      "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
+      "version": "006",
+      "sampleFileName": "MOD11A1.A2017025.h21v00.006.2017034065104.hdf",
+      "id": "MOD11A1"
     }
   },
-  "exception": "None",
-  "payload": {
-    "input": {
-      "AST_L1A": {
-        "granules": [
+  "input": {
+    "granules": [
+      {
+        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+        "files": [
           {
-            "granuleId": "1A0000-2016111101_000_001",
-            "files": {
-              "origin-hdf5": "s3://cumulus-internal/staging/pg-PR1A0000-2016111101_000_001",
-              "origin-thumbnail": "s3://cumulus-internal/staging/pg-BR1A0000-2016111101_000_001"
-            }
+            "checksumType": "CKSUM",
+            "bucket": "cumulus-protected",
+            "checksumValue": 1690464450,
+            "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "fileSize": 6703247,
+            "path": "/TEST_B/Cumulus/MODIS/DATA",
+            "url_path": "",
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+          },
+          {
+            "checksumType": "CKSUM",
+            "bucket": "cumulus-private",
+            "checksumValue": 2689375276,
+            "filename": "s3://cumulus-private/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
+            "fileSize": 20659,
+            "path": "/TEST_B/Cumulus/MODIS/DATA",
+            "url_path": "",
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met"
+          },
+          {
+            "checksumType": "CKSUM",
+            "bucket": "cumulus-private",
+            "checksumValue": 4026661056,
+            "filename": "s3://cumulus-private/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "fileSize": 59849,
+            "path": "/TEST_B/Cumulus/MODIS/DATA",
+            "url_path": "",
+            "name": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+          },
+          {
+            "filename": "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg"
+          },
+          {
+            "filename": "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
+          },
+          {
+            "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }
         ]
       }
-    },
-    "output": {
-      "AST_L1A": {
-        "granules": [
-          {
-            "granuleId": "1A0000-2016111101_000_001",
-            "files": {
-              "meta-xml": "s3://cumulus-internal/staging/1A0000-2016111101_000_001.meta.xml"
-            }
-          }
-        ]
-      }
+    ],
+    "pdr": {
+      "path": "/TEST_B/Cumulus/MODIS/PDR/",
+      "name": "75ae18ce-f7ca-4f10-83c8-5195324170ff.PDR"
     }
   }
 }
