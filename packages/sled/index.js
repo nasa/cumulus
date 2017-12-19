@@ -20,8 +20,11 @@ function taskPath(relativePath) {
 function promiseJsonFile(relativePath) {
   return new Promise((resolve, reject) => {
     const filePath = taskPath(relativePath);
+    console.log('ooooooooooooooooo', relativePath);
     fs.readFile(filePath, (err, data) => {
-      if (err) return reject(err);
+      if (err) {
+        return reject(err);
+      }
       try {
         const result = JSON.parse(data.toString());
         return resolve(result);
@@ -63,16 +66,21 @@ function getNestedHandler(handlerString) {
 }
 
 function validateMessage(input, schemaFile) {
+  console.log('in validate message');
+  console.log(input);
   return new Promise((resolve, reject) => {
     (promiseJsonFile(schemaFile))
       .then((schema) => {
+        console.log(schema);
         const ajv = new Ajv();
         const validate = ajv.compile(schema);
         const valid = validate(input);
-
+        console.log(input);
+        console.log('Valid? ', valid);
         return resolve(valid);
       })
       .catch((err) => {
+        console.log('there was an error rightht here :');
         reject(err);
       });
 
@@ -111,15 +119,16 @@ function invokeHandler(handler, event, context) {
  * @param {*} callback The Lambda callback, called with a Cumulus protocol output message
  */
 exports.handler = function sledHandler(event, context, callback, handlerFn, handlerConfig) {
+  console.log('top of handler');
   let taskConfig = null;
   let nestedHandler = null;
   let messageConfig = null;
   let fullEvent = null;
   let schemas = null;
 
-
   (handlerFn ? Promise.resolve(handlerConfig || {}) : promiseJsonFile('cumulus.json'))
     .then((config) => {
+      console.log('top of config');
       taskConfig = config.task || {};
       if (taskConfig) schemas = taskConfig.schemas;
 
@@ -127,25 +136,53 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
       return message.loadRemoteEvent(event);
     })
     .then((remoteEvent) => {
+      console.log('top of remoteEvent');
       fullEvent = remoteEvent;
       return message.loadNestedEvent(fullEvent, context);
     })
     .then((nestedEvent) => {
+      console.log('top of nestedEvent');
       messageConfig = nestedEvent.messageConfig;
+      console.log(nestedEvent);
+      console.log('=========================================================');
       if (schemas) {
-        validateMessage(nestedEvent.input, schemas.input)
-          .then((validInput) => {
-            if (validInput) console.log("Valid file: " + schemas.input);
-          })
-          .catch((err) => {
-            console.log(err);
-          });
+        console.log('There were schemas');
+        console.log(schemas);
+        try {
+          if (schemas.input) {
+            console.log('in schemas.input');
+            validateMessage(nestedEvent.input, schemas.input)
+              .then((validInput) => {
+                if (validInput) console.log('Valid file: ', schemas.input);
+              })
+              .catch((err) => {
+                console.log('caught input error:');
+                console.log(err);
+              });
+          }
+          if (schemas.config) {
+            validateMessage(nestedEvent.config, schemas.config)
+              .then((validInput) => {
+                if (validInput) console.log('Valid file: ', schemas.config);
+              })
+              .catch((err) => {
+                console.log('caught config error:');
+                console.log(err);
+              });
+          }
+        }
+        catch (e) {
+          console.log("This wasn't valid");
+        }
       }
 
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
       return invokeHandler(nestedHandler, nestedEvent, context);
     })
-    .then((handlerResponse) => message.createNextEvent(handlerResponse, fullEvent, messageConfig))
+    .then((handlerResponse) => {
+      console.log(handlerResponse);
+      return message.createNextEvent(handlerResponse, fullEvent, messageConfig);
+    })
     .then((nextEvent) => callback(null, nextEvent))
     .catch((err) => {
       if (err.name && err.name.includes('WorkflowError')) {
@@ -182,5 +219,9 @@ if (process.argv[2] === 'local') {
       }
       console.log('Success', data);
     }
+  }, (e, {}, cb) => {
+    console.log(e);
+
+    cb(null, e);
   });
 }

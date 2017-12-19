@@ -24,25 +24,40 @@ const runTestHandler = (event, cb) => {
   };
 
   const handlerConfig = {
-    "task": {
-      "entrypoint": "example.handler",
-      "schemas": {
-        "input": "schemas/input.json",
-        "config": "schemas/config.json",
-        "output": "schemas/output.json"
+    task: {
+      entrypoint: 'example.handler',
+      schemas: {
+        input: 'schemas/input.json',
+        config: 'schemas/config.json',
+        output: 'schemas/output.json'
       }
     }
   };
-  sled.config = {"taskRoot": "example"};
+  sled.config = { taskRoot: 'example' };
   sled.handler(event, {}, callback, testHandler, handlerConfig);
 };
 
 describe('Message Parsing', () => {
-
   it('validates the message', (done) => {
-
+    console.log('Starting the test!!!!!!!!!!!!!!!');
     runTestHandler(createMessage({
-      config: { hello: "worldconfig" }
+      config: {
+        hello: 'worldconfig',
+        cumulus_message: {
+          input: { hello: 'worldinput' }
+        }
+      }
+    }), (response) => {
+      //expect(response.payload.config).toEqual({ hello: 'worldconfig' });
+      expect(response.payload.input).toEqual({ hello: 'worldinput' });
+      done();
+    });
+  });
+/*
+  it('has an invalid input', (done) => {
+    runTestHandler(createMessage({
+      config: { hello: 'worldconfig' },
+      input: { hello: 2 }
     }), (response) => {
       expect(response.payload.config).toEqual({ hello: 'worldconfig' });
       done();
@@ -96,9 +111,9 @@ describe('Message Parsing', () => {
   describe('handling of JSONPaths in config', () => {
     it('resolves plain strings in the config as themselves', (done) => {
       runTestHandler(createMessage({
-        config: { hello: 'wor{ld' }
+        config: { hello: 'world' }
       }), (response) => {
-        expect(response.payload.config).toEqual({ hello: 'wor{ld' });
+        expect(response.payload.config).toEqual({ hello: 'world' });
         done();
       });
     });
