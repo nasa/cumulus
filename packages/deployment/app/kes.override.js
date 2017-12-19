@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console, no-param-reassign */
 'use strict';
 
 const { Kes, Lambda } = require('kes');
@@ -137,6 +137,15 @@ class UpdatedLambda extends Lambda {
     return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => {
       return lambda;
     });
+  }
+
+  buildS3Path(lambda) {
+    lambda = super.buildS3Path(lambda);
+
+    if (lambda.useSled) {
+      lambda.handler = 'cumulus-sled.handler';
+    }
+    return lambda;
   }
 }
 
