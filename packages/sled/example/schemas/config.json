@@ -1,2 +1,7 @@
-// config 
-{}
+{
+  "properties": {
+    "hello": {
+      "type": "integer"
+    }
+  }
+}
