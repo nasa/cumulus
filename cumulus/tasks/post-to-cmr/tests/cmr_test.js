@@ -4,7 +4,7 @@ import test from 'ava';
 import sinon from 'sinon';
 import { S3 } from '@cumulus/ingest/aws';
 import cmrjs from '@cumulus/cmrjs';
-import payload from '@cumulus/test-data/payloads/modis/cmr.json';
+import payload from './data/payload.json';
 import { handler } from '../index';
 
 const result = {
@@ -30,11 +30,12 @@ test.cb.serial('should succeed with correct payload', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
-  handler(newPayload, {}, (e, r) => {
+  handler(newPayload, {}, (e, output) => {
+    console.log('output', output.granules[0].cmr)
     cmrjs.CMR.prototype.ingestGranule.restore();
     t.is(e, null);
     t.is(
-      r.payload.granules[0].cmr.link,
+      output.granules[0].cmr.link,
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
     t.end(e);
@@ -43,15 +44,15 @@ test.cb.serial('should succeed with correct payload', (t) => {
 
 test.cb.serial('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.payload.granules = [{
+  newPayload.input.granules = [{
     granuleId: 'some granule',
     files: [{
       filename: 's3://path/to/file.xml'
     }]
   }];
 
-  handler(newPayload, {}, (e, r) => {
-    t.is(r.payload.granules[0].cmr, undefined);
+  handler(newPayload, {}, (e, output) => {
+    t.is(output.granules[0].cmr, undefined);
     t.end();
   });
 });
