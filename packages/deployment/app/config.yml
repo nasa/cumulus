@@ -4,6 +4,8 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov
 
+  sled: ../cumulus/packages/sled/dist/cumulus-sled
+
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
 
