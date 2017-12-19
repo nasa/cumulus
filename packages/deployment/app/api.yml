@@ -2,9 +2,7 @@ sqs2sf:
   handler: index.starter
   timeout: 200
   memory: 384
-  npmSource:
-    name: 'hapi-paginate'
-    version: 0.4.1
+  source: '../cumulus/daac-ops-api/dist/'
 
 sns2elasticsearch:
   handler: index.indexer
