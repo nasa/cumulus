@@ -122,17 +122,17 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
 }
 
 async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
-  const name = get(payload, 'ingest_meta.execution_name');
+  const name = get(payload, 'cumulus_meta.execution_name');
   const pdrName = get(payload, 'payload.pdr.name')
 
   if (pdrName) {
     const arn = getExecutionArn(
-      get(payload, 'ingest_meta.state_machine'),
+      get(payload, 'cumulus_meta.state_machine'),
       name
     );
     const execution = getExecutionUrl(arn);
 
-    const collection = get(payload, 'collection.meta');
+    const collection = get(payload, 'meta.collection');
     const collectionId = `${collection.name}___${collection.version}`;
 
     const stats = {
@@ -153,14 +153,14 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
     const doc = {
       pdrName: get(payload, 'payload.pdr.name'),
       collectionId,
-      status: get(payload, 'ingest_meta.status'),
-      provider: get(payload, 'provider.id'),
+      status: get(payload, 'meta.status'),
+      provider: get(payload, 'meta.provider.id'),
       progress,
       execution,
       PANSent: get(payload, 'payload.pdr.PANSent', false),
       PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
       stats,
-      createdAt: get(payload, 'ingest_meta.createdAt'),
+      createdAt: get(payload, 'cumulus_meta.createdAt'),
       timestamp: Date.now()
     };
 
