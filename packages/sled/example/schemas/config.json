@@ -1,7 +1,7 @@
 {
   "properties": {
     "hello": {
-      "type": "integer"
+      "type": "string"
     }
   }
 }
