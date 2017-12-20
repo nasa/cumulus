@@ -2,6 +2,7 @@
 'use strict';
 
 const { Kes, Lambda } = require('kes');
+const fs = require('fs');
 const omit = require('lodash.omit');
 const forge = require('node-forge');
 const utils = require('kes').utils;
@@ -124,6 +125,12 @@ class UpdatedLambda extends Lambda {
    */
   zipLambda(lambda) {
     console.log(`Zipping ${lambda.local} and injecting sled`);
+
+    // skip if the file with the same hash is zipped
+    if (fs.existsSync(lambda.local)) {
+      return Promise.resolve(lambda);
+    }
+
     return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => lambda);
   }
 
