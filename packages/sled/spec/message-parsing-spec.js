@@ -16,7 +16,7 @@ const createMessage = (props) => ({
 const runTestHandler = (event, cb) => {
   const callback = (err, data) => {
     if (err) throw err;
-    cb(data);
+    cb(null, data);
   };
 
   const testHandler = (evt, context, response) => {
@@ -38,32 +38,36 @@ const runTestHandler = (event, cb) => {
 };
 
 describe('Message Parsing', () => {
-  it('validates the message', (done) => {
+  it('has a valid input', (done) => {
     console.log('Starting the test!!!!!!!!!!!!!!!');
     runTestHandler(createMessage({
-      config: {
-        hello: 'worldconfig',
-        cumulus_message: {
-          input: { hello: 'worldinput' }
-        }
-      }
-    }), (response) => {
-      //expect(response.payload.config).toEqual({ hello: 'worldconfig' });
-      expect(response.payload.input).toEqual({ hello: 'worldinput' });
+      config: { hello: 'world1' },
+      payload: { hello: 3 }
+    }), (err, data) => {
+      console.log('---------------------------------------------');
+      console.log(err);
+      console.log(data);
+      console.log('---------------------------------------------');
       done();
     });
   });
 /*
   it('has an invalid input', (done) => {
-    runTestHandler(createMessage({
-      config: { hello: 'worldconfig' },
-      input: { hello: 2 }
-    }), (response) => {
-      expect(response.payload.config).toEqual({ hello: 'worldconfig' });
-      done();
-    });
+    let a = 0;
+    try {
+      runTestHandler(createMessage({
+        config: { hello: 'world' },
+        payload: { hello: 2 }
+      }), (data) => console.log(data));
+    }
+    catch (e) {
+      a = 1;
+      expect(e).toBe('Invalid input');
+    }
+    expect(a).toEqual(1);
+    done();
   });
-/*
+
   it('passes its config object in the "config" key', (done) => {
     runTestHandler(createMessage({
       config: { hello: 'world' }
@@ -176,42 +180,43 @@ describe('Message Parsing', () => {
       });
     });
 
-    it('allows the "input" key to override the use of payload as input', (done) => {
-      runTestHandler(createMessage({
-        config: {
-          cumulus_message: {
-            input: '{{$.meta.input}}'
-          }
-        },
-        meta: {
-          input: { hello: 'world' }
+
+  it('allows the "input" key to override the use of payload as input', (done) => {
+    runTestHandler(createMessage({
+      config: {
+        cumulus_message: {
+          input: '{{$.meta.input}}'
         }
-      }), (response) => {
-        expect(response.payload.input).toEqual({ hello: 'world' });
-        done();
-      });
+      },
+      meta: {
+        input: { hello: 'world' }
+      }
+    }), (response) => {
+      expect(response.payload.input).toEqual({ hello: 'world' });
+      done();
     });
+  });
 
-    it('allows the "outputs" key to override where the handler output is placed', (done) => {
-      runTestHandler(createMessage({
-        config: {
-          cumulus_message: {
-            outputs: [
-              {
-                source: '{{$.input}}',
-                destination: '{{$.meta.output}}'
-              }
-            ]
-          }
-        },
-        meta: {},
-        payload: { hello: 'world' }
-      }), (response) => {
-        expect(response.meta).toEqual({ output: { hello: 'world' } });
-        done();
-      });
+  it('allows the "outputs" key to override where the handler output is placed', (done) => {
+    runTestHandler(createMessage({
+      config: {
+        cumulus_message: {
+          outputs: [
+            {
+              source: '{{$.input}}',
+              destination: '{{$.meta.output}}'
+            }
+          ]
+        }
+      },
+      meta: {},
+      payload: { hello: 'world' }
+    }), (response) => {
+      expect(response.meta).toEqual({ output: { hello: 'world' } });
+      done();
     });
-
+  });
+/*
     it('sets payload to the empty object when "outputs" does not set it', (done) => {
       runTestHandler(createMessage({
         config: {
