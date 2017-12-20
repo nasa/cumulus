@@ -43,6 +43,7 @@ sf2snsEnd:
   source: '../cumulus/daac-ops-api/dist/'
 
 ScheduleSF:
+  description: 'This lambda function is invoked by scheduled rules created via cumulus API'
   handler: index.scheduler
   timeout: 100
   memory: 256
