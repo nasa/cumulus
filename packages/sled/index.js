@@ -20,7 +20,6 @@ function taskPath(relativePath) {
 function promiseJsonFile(relativePath) {
   return new Promise((resolve, reject) => {
     const filePath = taskPath(relativePath);
-    console.log('ooooooooooooooooo', relativePath);
     const file = fs.readFileSync(filePath);
     try {
       const result = JSON.parse(file.toString());
@@ -62,15 +61,17 @@ function getNestedHandler(handlerString) {
 }
 
 function validateMessage(input, schemaFile) {
-  console.log('in validate message');
-  console.log(input);
   return promiseJsonFile(schemaFile).then((schema) => {
-    console.log(schema);
     const ajv = new Ajv();
     const validate = ajv.compile(schema);
     const valid = validate(input);
-    if (!valid) throw new Error('Invalid input');
-    console.log('Valid? ', valid);
+    if (!valid) {
+      const err = {
+        message: 'The input has validation errors',
+        details: validate.errors
+      };
+      throw err;
+    }
     return valid;
   });
 }
@@ -106,7 +107,6 @@ function invokeHandler(handler, event, context) {
  * @param {*} callback The Lambda callback, called with a Cumulus protocol output message
  */
 exports.handler = function sledHandler(event, context, callback, handlerFn, handlerConfig) {
-  console.log('top of handler');
   let taskConfig = null;
   let nestedHandler = null;
   let messageConfig = null;
@@ -134,9 +134,7 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
               if (validInput) console.log('Valid file: ', schemas.input);
             })
             .catch((err) => {
-              console.log('Got to this one!!!1');
-              console.log(err);
-              throw err;
+              callback(err);
             });
         }
         if (schemas.config) {
@@ -145,8 +143,7 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
               if (validInput) console.log('Valid file: ', schemas.config);
             })
             .catch((err) => {
-              console.log(err);
-              throw err;
+              callback(err);
             });
         }
       }
@@ -160,7 +157,7 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
             if (validInput) console.log('Valid file: ', schemas.output);
           })
           .catch((err) => {
-            throw err;
+            callback(err);
           });
       }
       return message.createNextEvent(handlerResponse, fullEvent, messageConfig);
@@ -180,30 +177,30 @@ exports.config = {
   taskRoot: '..' // The filesystem location of the Lambda module
 };
 
-// Local testing. Run the handler.
-if (process.argv[2] === 'local') {
-  if (!process.argv[3]) throw new Error('Message identifier required');
+// // Local testing. Run the handler.
+// if (process.argv[2] === 'local') {
+//   if (!process.argv[3]) throw new Error('Message identifier required');
 
-  const messageName = process.argv[3];
-  const event = JSON.parse(fs.readFileSync(`example/messages/${messageName}.input.json`, 'utf8'));
-  const expectedOutputObj = JSON.parse(fs.readFileSync(`example/messages/${messageName}.output.json`, 'utf8'));
-  const expectedOutput = JSON.stringify(expectedOutputObj);
+//   const messageName = process.argv[3];
+//   const event = JSON.parse(fs.readFileSync(`example/messages/${messageName}.input.json`, 'utf8'));
+//   const expectedOutputObj = JSON.parse(fs.readFileSync(`example/messages/${messageName}.output.json`, 'utf8'));
+//   const expectedOutput = JSON.stringify(expectedOutputObj);
 
-  exports.config.taskRoot = 'example';
-  exports.handler(event, {}, (err, data) => {
-    if (err) {
-      console.error('ERROR', err, err.stack);
-    }
-    else {
-      const output = JSON.stringify(data);
-      if (output !== expectedOutput) {
-        throw new Error(`Bad output.  Expected:\n${expectedOutput}\nGot:\n${output}`);
-      }
-      console.log('Success', data);
-    }
-  }, (e, {}, cb) => {
-    console.log(e);
+//   exports.config.taskRoot = 'example';
+//   exports.handler(event, {}, (err, data) => {
+//     if (err) {
+//       console.error('ERROR', err, err.stack);
+//     }
+//     else {
+//       const output = JSON.stringify(data);
+//       if (output !== expectedOutput) {
+//         throw new Error(`Bad output.  Expected:\n${expectedOutput}\nGot:\n${output}`);
+//       }
+//       console.log('Success', data);
+//     }
+//   }, (e, {}, cb) => {
+//     console.log(e);
 
-    cb(null, e);
-  });
-}
+//     cb(null, e);
+//   });
+// }
