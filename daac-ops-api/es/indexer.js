@@ -76,11 +76,20 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
   return esClient.update(params);
 }
 
-
+/**
+ * Indexes a step function message to Elastic Search. The message must
+ * comply with the cumulus message protocol
+ *
+ * @param  {object} esClient ElasticSearch Connection object
+ * @param  {object} payload  Cumulus Step Function message
+ * @param  {string} index    Elasticsearch index (default: cumulus)
+ * @param  {string} type     Elasticsearch type (default: execution)
+ * @return {Promise}
+ */
 async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
-  const name = get(payload, 'ingest_meta.execution_name');
+  const name = get(payload, 'cumulus_meta.execution_name');
   const arn = getExecutionArn(
-    get(payload, 'ingest_meta.state_machine'),
+    get(payload, 'cumulus_meta.state_machine'),
     name
   );
   if (arn) {
@@ -91,10 +100,10 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
       arn,
       execution,
       error: get(payload, 'exception', null),
-      type: get(payload, 'ingest_meta.workflow_name'),
-      collectionId: get(payload, 'collection.id'),
-      status: get(payload, 'ingest_meta.status'),
-      createdAt: get(payload, 'ingest_meta.createdAt'),
+      type: get(payload, 'cumulus_meta.workflow_name'),
+      collectionId: get(payload, 'meta.collection.id'),
+      status: get(payload, 'cumulus_meta.status', 'UNKNOWN'),
+      createdAt: get(payload, 'cumulus_meta.createdAt'),
       timestamp: Date.now()
     };
 
