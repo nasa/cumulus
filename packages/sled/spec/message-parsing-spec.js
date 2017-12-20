@@ -15,7 +15,7 @@ const createMessage = (props) => ({
 
 const runTestHandler = (event, cb) => {
   const callback = (err, data) => {
-    if (err) throw err;
+    if (err) return cb(err);
     cb(null, data);
   };
 
@@ -38,36 +38,38 @@ const runTestHandler = (event, cb) => {
 };
 
 describe('Message Parsing', () => {
-  it('has a valid input', (done) => {
+  // it('has a valid input', (done) => {
+  //   let existingError = false;
+  //   runTestHandler(createMessage({
+  //     config: { hello: 'world' },
+  //     payload: { hello: 'world' }
+  //   }), (err, data) => {
+  //     if (err) existingError = true;
+  //     done();
+  //   });
+  //   expect(existingError).toEqual(false);
+  // });
+
+  it('has an invalid input', (done) => {
     console.log('Starting the test!!!!!!!!!!!!!!!');
+    let existingError = false;
     runTestHandler(createMessage({
-      config: { hello: 'world1' },
-      payload: { hello: 3 }
+      config: { hello: 'world' },
+      payload: { hello: 2 }
     }), (err, data) => {
       console.log('---------------------------------------------');
       console.log(err);
-      console.log(data);
+      if (err) {
+        console.log('switching');
+        existingError = true;
+      }
       console.log('---------------------------------------------');
+      expect(err).not.toEqual(null);
+      expect(existingError).toEqual(true);
       done();
     });
   });
 /*
-  it('has an invalid input', (done) => {
-    let a = 0;
-    try {
-      runTestHandler(createMessage({
-        config: { hello: 'world' },
-        payload: { hello: 2 }
-      }), (data) => console.log(data));
-    }
-    catch (e) {
-      a = 1;
-      expect(e).toBe('Invalid input');
-    }
-    expect(a).toEqual(1);
-    done();
-  });
-
   it('passes its config object in the "config" key', (done) => {
     runTestHandler(createMessage({
       config: { hello: 'world' }
