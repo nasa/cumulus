@@ -228,22 +228,21 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
 }
 
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
-  const name = get(payload, 'ingest_meta.execution_name');
+  const name = get(payload, 'cumulus_meta.execution_name');
   const granules = get(payload, 'payload.granules');
 
   if (granules) {
     const arn = getExecutionArn(
-      get(payload, 'ingest_meta.state_machine'),
+      get(payload, 'cumulus_meta.state_machine'),
       name
     );
 
     if (arn) {
       const execution = getExecutionUrl(arn);
 
-      const collection = get(payload, 'collection');
-      const meta = collection.meta || collection;
+      const collection = get(payload, 'meta.collection');
       const exception = get(payload, 'exception');
-      const collectionId = `${meta.name}___${meta.version}`;
+      const collectionId = `${collection.name}___${collection.version}`;
 
       // make sure collection is added
       try {
@@ -255,7 +254,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
       }
       catch (e) {
         // adding collection record to ES
-        await indexCollection(esClient, meta);
+        await indexCollection(esClient, collection);
       }
 
       const done = granules.map((g) => {
@@ -264,13 +263,13 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
             granuleId: g.granuleId,
             pdrName: get(payload, 'payload.pdr.name'),
             collectionId,
-            status: get(payload, 'ingest_meta.status'),
-            provider: get(payload, 'provider.id'),
+            status: get(payload, 'meta.status'),
+            provider: get(payload, 'meta.provider.id'),
             execution,
             cmrLink: get(g, 'cmr.link'),
             files: g.files,
             error: exception,
-            createdAt: get(payload, 'ingest_meta.createdAt'),
+            createdAt: get(payload, 'cumulus_meta.createdAt'),
             timestamp: Date.now()
           };
 
