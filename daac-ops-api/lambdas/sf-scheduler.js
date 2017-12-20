@@ -54,10 +54,7 @@ function schedule(event, context, cb) {
     })
     .then((c) => {
       if (c) {
-        message.meta.collection = {
-          id: c.name,
-          meta: c
-        };
+        message.meta.collection = c;
       }
       return null;
     })
