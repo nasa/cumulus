@@ -9,16 +9,16 @@ async function dispatch(message) {
   const sfPayload = message.Body;
 
   // add creation time
-  sfPayload.ingest_meta.createdAt = Date.now();
+  sfPayload.cumulus_meta.createdAt = Date.now();
 
   const stepfunctions = new AWS.StepFunctions();
   const params = {
-    stateMachineArn: sfPayload.ingest_meta.state_machine,
+    stateMachineArn: sfPayload.cumulus_meta.state_machine,
     input: JSON.stringify(sfPayload)
   };
 
-  if (sfPayload.ingest_meta.execution_name) {
-    params.name = sfPayload.ingest_meta.execution_name;
+  if (sfPayload.cumulus_meta.execution_name) {
+    params.name = sfPayload.cumulus_meta.execution_name;
   }
 
   return stepfunctions.startExecution(params).promise();
