@@ -1,10 +1,19 @@
 'use strict';
 
 const get = require('lodash.get');
+const merge = require('lodash.merge');
 const cryptoRandomString = require('crypto-random-string');
 const { S3, SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
+/**
+ * Builds a cumulus-compatible message and adds it to the startSF queue
+ * startSF queue will then start a stepfunction for the given message
+ *
+ * @param  {object} event   lambda input message
+ * @param  {object} context lambda context 
+ * @param  {function} cb    lambda callback  
+ */
 function schedule(event, context, cb) {
   const template = get(event, 'template');
   const provider = get(event, 'provider', null);
@@ -17,11 +26,11 @@ function schedule(event, context, cb) {
   S3.get(parsed.Bucket, parsed.Key)
     .then((data) => {
       message = JSON.parse(data.Body);
-      message.provider = {};
-      message.collection = {};
-      message.meta = meta;
+      message.meta.provider = {};
+      message.meta.collection = {};
+      message.meta = merge(message.meta, meta);
       message.payload = payload;
-      message.ingest_meta.execution_name = cryptoRandomString(25);
+      message.cumulus_meta.execution_name = cryptoRandomString(25);
 
       return;
     })
@@ -34,7 +43,7 @@ function schedule(event, context, cb) {
     })
     .then((p) => {
       if (p) {
-        message.provider = p;
+        message.meta.provider = p;
       }
 
       if (collection) {
@@ -45,14 +54,14 @@ function schedule(event, context, cb) {
     })
     .then((c) => {
       if (c) {
-        message.collection = {
+        message.meta.collection = {
           id: c.name,
           meta: c
         };
       }
       return null;
     })
-    .then(() => SQS.sendMessage(message.resources.queues.startSF, message))
+    .then(() => SQS.sendMessage(message.meta.queues.startSF, message))
     .then(r => cb(null, r))
     .catch(e => cb(e));
 }
