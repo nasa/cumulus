@@ -2,6 +2,7 @@
 'use strict';
 
 const { Kes, Lambda } = require('kes');
+const omit = require('lodash.omit');
 const forge = require('node-forge');
 const utils = require('kes').utils;
 
@@ -16,6 +17,40 @@ function generateKeyPair() {
   return rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
 }
 
+function baseInputTemplate(config, outputs) {
+  // get cmr password from outputs
+  const cmrPassword = outputs.filter(o => (o.OutputKey === 'EncryptedCmrPassword'));
+
+  const template = {
+    cumulus_meta: {
+      stack: config.stackName,
+      buckets: config.buckets,
+      message_source: 'sfn'
+    },
+    meta: {
+      cmr: config.cmr,
+      distribution_endpoint: config.distribution_endpoint
+    },
+    workflow_config: {},
+    payload: {},
+    exception: null
+  };
+
+  template.meta.cmr.password = cmrPassword[0].OutputValue;
+
+  // add queues
+  if (config.sqs) {
+    template.meta.queues = {};
+    const queueArns = outputs.filter(o => o.OutputKey.includes('SQSOutput'));
+
+    queueArns.forEach((queue) => {
+      template.meta.queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
+    });
+  }
+
+  return template;
+}
+
 /**
  * Generates a template used for SFScheduler to create cumulus
  * payloads for step functions. Each step function gets a separate
@@ -27,74 +62,29 @@ function generateKeyPair() {
  * @return {array} list of templates
  */
 function generateInputTemplates(config, outputs) {
-  const template = {
-    eventSource: 'sfn',
-    resources: {},
-    ingest_meta: {},
-    provider: {},
-    collection: {},
-    meta: {},
-    exception: null,
-    payload: {}
-  };
-
-  const arns = {};
-  outputs.forEach((o) => {
-    arns[o.OutputKey] = o.OutputValue;
-  });
-
-  template.resources = {
-    stack: config.stackName,
-    kms: arns.KmsKeyId,
-    cmr: config.cmr,
-    distribution_endpoint: config.distribution_endpoint
-  };
-
-  // add cmr password:
-  template.resources.cmr.password = arns.EncryptedCmrPassword;
-
-  if (config.buckets) {
-    template.resources.buckets = config.buckets;
-  }
-
-  if (config.sqs) {
-    template.resources.queues = {};
-    Object.keys(config.sqs).forEach((queue) => {
-      const queueUrl = arns[`${queue}SQSOutput`];
-      if (queueUrl) {
-        template.resources.queues[queue] = queueUrl;
-      }
-    });
-  }
-
-  if (config.stepFunctions) {
-    const sfs = {};
-    config.stepFunctions.forEach((sf) => {
-      sfs[sf.name] = `s3://${config.buckets.internal}/` +
-                     `${config.stackName}/workflows/${sf.name}.json`;
-    });
-
-    template.resources.templates = sfs;
-  }
-
-  const inputs = [];
+  const templates = [];
 
   // generate a output template for each workflow
   if (config.stepFunctions) {
     config.stepFunctions.forEach((sf) => {
-      const t = Object.assign({}, template);
-      t.ingest_meta = {
-        topic_arn: arns.sftrackerSnsArn,
-        state_machine: arns[`${sf.name}StateMachine`],
-        workflow_name: sf.name,
-        status: 'running',
-        config: sf.config
-      };
-      inputs.push(t);
+      const msg = baseInputTemplate(config, outputs);
+
+      // add workflow configs for each step function step
+      Object.keys(sf.definition.States).forEach(name => {
+        msg.workflow_config[name] = config.stepFunctions.configs[sf.name][name];
+      });
+
+      // get workflow arn
+      const wfArn = outputs.filter(o => (o.OutputKey === `${sf.name}StateMachine`));
+
+      // update cumulus_meta for each workflow message tempalte
+      msg.cumulus_meta.state_machine = wfArn[0].OutputValue;
+      msg.cumulus_meta.workflow_name = sf.name;
+
+      templates.push(msg);
     });
   }
-
-  return inputs;
+  return templates;
 }
 
 /**
@@ -134,9 +124,7 @@ class UpdatedLambda extends Lambda {
    */
   zipLambda(lambda) {
     console.log(`Zipping ${lambda.local} and injecting sled`);
-    return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => {
-      return lambda;
-    });
+    return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => lambda);
   }
 
   buildS3Path(lambda) {
@@ -171,7 +159,7 @@ class UpdatedKes extends Kes {
     if (restApiId) {
       const apigateway = new this.AWS.APIGateway();
       const r = await apigateway.createDeployment({ restApiId, stageName }).promise();
-      console.log(`${name} endpoints with the id ${restApiId} redeployed.`); 
+      console.log(`${name} endpoints with the id ${restApiId} redeployed.`);
       return r;
     }
     return true;
@@ -275,6 +263,20 @@ class UpdatedKes extends Kes {
       .catch(() => this.uploadKeyPair(this.bucket, key));
   }
 
+  cleanStepFunctionDefinition() {
+    const sFconfigs = {};
+
+    this.config.stepFunctions.forEach((sf) => {
+      sFconfigs[sf.name] = {};
+      Object.keys(sf.definition.States).forEach((n) => {
+        sFconfigs[sf.name][n] = sf.definition.States[n].config;
+        sf.definition.States[n] = omit(sf.definition.States[n], ['config']);
+      });
+    });
+
+    this.config.stepFunctions.configs = sFconfigs;
+  }
+
   /**
    * Override opsStack method.
    *
@@ -284,6 +286,11 @@ class UpdatedKes extends Kes {
     // check if public and private key are generated
     // if not generate and upload them
     const apis = {};
+
+    // remove config variable from all workflow steps
+    // and keep them in a separate variable.
+    // this is needed to prevent stepfunction deployment from crashing
+    this.cleanStepFunctionDefinition();
 
     return this.crypto(this.bucket, this.stack)
       .then(() => super.opsStack())
@@ -326,7 +333,7 @@ class UpdatedKes extends Kes {
 
         console.log('Uploading Workflow Input Templates');
         const uploads = workflowInputs.map((w) => {
-          const workflowName = w.ingest_meta.workflow_name;
+          const workflowName = w.cumulus_meta.workflow_name;
           const key = `${stackName}/workflows/${workflowName}.json`;
           return this.uploadToS3(
             this.bucket,
