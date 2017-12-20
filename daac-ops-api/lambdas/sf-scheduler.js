@@ -11,8 +11,8 @@ const { Provider, Collection } = require('../models');
  * startSF queue will then start a stepfunction for the given message
  *
  * @param  {object} event   lambda input message
- * @param  {object} context lambda context 
- * @param  {function} cb    lambda callback  
+ * @param  {object} context lambda context
+ * @param  {function} cb    lambda callback
  */
 function schedule(event, context, cb) {
   const template = get(event, 'template');
