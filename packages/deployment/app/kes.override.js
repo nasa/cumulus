@@ -2,6 +2,7 @@
 'use strict';
 
 const { Kes, Lambda } = require('kes');
+const pLimit = require('p-limit');
 const fs = require('fs');
 const omit = require('lodash.omit');
 const forge = require('node-forge');
@@ -294,6 +295,8 @@ class UpdatedKes extends Kes {
     // if not generate and upload them
     const apis = {};
 
+    const limit = pLimit(1);
+
     // remove config variable from all workflow steps
     // and keep them in a separate variable.
     // this is needed to prevent stepfunction deployment from crashing
@@ -339,24 +342,26 @@ class UpdatedKes extends Kes {
         const stackName = this.stack;
 
         console.log('Uploading Workflow Input Templates');
-        const uploads = workflowInputs.map((w) => {
-          const workflowName = w.cumulus_meta.workflow_name;
-          const key = `${stackName}/workflows/${workflowName}.json`;
-          return this.uploadToS3(
-            this.bucket,
-            key,
-            JSON.stringify(w)
-          );
-        });
+        const uploads = workflowInputs.map((w) => limit(
+          () => {
+            const workflowName = w.cumulus_meta.workflow_name;
+            const key = `${stackName}/workflows/${workflowName}.json`;
+            return this.uploadToS3(
+              this.bucket,
+              key,
+              JSON.stringify(w)
+            );
+          }
+        ));
 
         const workflows = generateWorkflowsList(this.config);
 
         if (workflows) {
-          uploads.push(this.uploadToS3(
+          uploads.push(limit(() => this.uploadToS3(
             this.bucket,
             `${stackName}/workflows/list.json`,
             JSON.stringify(workflows)
-          ));
+          )));
         }
 
         return Promise.all(uploads);

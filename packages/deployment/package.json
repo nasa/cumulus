@@ -24,7 +24,8 @@
   "dependencies": {
     "kes": "^2.0.0",
     "lodash.omit": "4.5.0",
-    "node-forge": "^0.7.1"
+    "node-forge": "^0.7.1",
+    "p-limit": "^1.1.0"
   },
   "devDependencies": {
     "babel-core": "^6.25.0",
