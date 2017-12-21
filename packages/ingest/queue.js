@@ -31,7 +31,7 @@ async function queuePdr(event, pdr) {
 
 async function queueGranule(event, granule) {
   const queueUrl = get(event, 'resources.queues.startSF');
-  const collectionId = get(event, 'collection.id');
+  const collectionId = get(event, 'collection.name');
   const pdr = get(event, 'payload.pdr', null);
   const message = await getTemplate(event);
 
