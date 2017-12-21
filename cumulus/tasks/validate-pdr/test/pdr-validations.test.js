@@ -1,6 +1,6 @@
 'use strict';
+
 const test = require('ava');
-const log = require('@cumulus/common/log');
 const pdr = require('../pdr-validations');
 const successFixture = require('./fixtures/success-fixture');
 const missingFieldsFixture = require('./fixtures/missing-fields-fixture');
