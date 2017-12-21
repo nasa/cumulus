@@ -61,19 +61,22 @@ function getNestedHandler(handlerString) {
 }
 
 function validateMessage(input, schemaFile) {
-  return promiseJsonFile(schemaFile).then((schema) => {
-    const ajv = new Ajv();
-    const validate = ajv.compile(schema);
-    const valid = validate(input);
-    if (!valid) {
-      const err = {
-        message: 'The input has validation errors',
-        details: validate.errors
-      };
-      throw err;
-    }
-    return valid;
-  });
+  if (input && schemaFile) {
+    return promiseJsonFile(schemaFile).then((schema) => {
+      const ajv = new Ajv();
+      const validate = ajv.compile(schema);
+      const valid = validate(input);
+      if (!valid) {
+        const err = {
+          message: 'The input has validation errors',
+          details: validate.errors
+        };
+        throw err;
+      }
+      return valid;
+    });
+  }
+  return Promise.resolve(true);
 }
 
 /**
@@ -128,34 +131,23 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
     .then((nestedEvent) => {
       messageConfig = nestedEvent.messageConfig;
       if (schemas) {
-        if (schemas.input) {
-          return validateMessage(nestedEvent.input, schemas.input)
-            .then((validInput) => {
-              if (validInput) console.log('Valid file: ', schemas.input);
-            })
-            .catch((err) => {
-              callback(err);
-            });
-        }
-        if (schemas.config) {
-          return validateMessage(nestedEvent.config, schemas.config)
-            .then((validInput) => {
-              if (validInput) console.log('Valid file: ', schemas.config);
-            })
-            .catch((err) => {
-              callback(err);
-            });
-        }
+        return validateMessage(nestedEvent.input, schemas.input)
+          .then(() => validateMessage(nestedEvent.config, schemas.config))
+          .then(() => {
+            delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
+            return invokeHandler(nestedHandler, nestedEvent, context);
+          })
+          .catch((err) => {
+            callback(err);
+          });
       }
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
       return invokeHandler(nestedHandler, nestedEvent, context);
     })
     .then((handlerResponse) => {
-      if (schemas && schemas.output) {
+      if (schemas) {
         return validateMessage(handlerResponse, schemas.output)
-          .then((validInput) => {
-            if (validInput) console.log('Valid file: ', schemas.output);
-          })
+          .then(() => message.createNextEvent(handlerResponse, fullEvent, messageConfig))
           .catch((err) => {
             callback(err);
           });
@@ -177,30 +169,30 @@ exports.config = {
   taskRoot: '..' // The filesystem location of the Lambda module
 };
 
-// // Local testing. Run the handler.
-// if (process.argv[2] === 'local') {
-//   if (!process.argv[3]) throw new Error('Message identifier required');
+// Local testing. Run the handler.
+if (process.argv[2] === 'local') {
+  if (!process.argv[3]) throw new Error('Message identifier required');
 
-//   const messageName = process.argv[3];
-//   const event = JSON.parse(fs.readFileSync(`example/messages/${messageName}.input.json`, 'utf8'));
-//   const expectedOutputObj = JSON.parse(fs.readFileSync(`example/messages/${messageName}.output.json`, 'utf8'));
-//   const expectedOutput = JSON.stringify(expectedOutputObj);
+  const messageName = process.argv[3];
+  const event = JSON.parse(fs.readFileSync(`example/messages/${messageName}.input.json`, 'utf8'));
+  const expectedOutputObj = JSON.parse(fs.readFileSync(`example/messages/${messageName}.output.json`, 'utf8'));
+  const expectedOutput = JSON.stringify(expectedOutputObj);
 
-//   exports.config.taskRoot = 'example';
-//   exports.handler(event, {}, (err, data) => {
-//     if (err) {
-//       console.error('ERROR', err, err.stack);
-//     }
-//     else {
-//       const output = JSON.stringify(data);
-//       if (output !== expectedOutput) {
-//         throw new Error(`Bad output.  Expected:\n${expectedOutput}\nGot:\n${output}`);
-//       }
-//       console.log('Success', data);
-//     }
-//   }, (e, {}, cb) => {
-//     console.log(e);
+  exports.config.taskRoot = 'example';
+  exports.handler(event, {}, (err, data) => {
+    if (err) {
+      console.error('ERROR', err, err.stack);
+    }
+    else {
+      const output = JSON.stringify(data);
+      if (output !== expectedOutput) {
+        throw new Error(`Bad output.  Expected:\n${expectedOutput}\nGot:\n${output}`);
+      }
+      console.log('Success', data);
+    }
+  }, (e, {}, cb) => {
+    console.log(e);
 
-//     cb(null, e);
-//   });
-// }
+    cb(null, e);
+  });
+}
