@@ -1,5 +1,4 @@
 'use strict';
-
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
@@ -40,10 +39,15 @@ async function download(ingest, bucket, provider, granules) {
 module.exports.handler = function handler(_event, context, cb) {
   try {
     const event = Object.assign({}, _event);
-    const buckets = get(event, 'resources.buckets');
-    const collection = get(event, 'collection.meta');
-    const granules = get(event, 'payload.granules');
-    const provider = get(event, 'provider');
+    const config = get(event, 'config', {});
+    const input = get(event, 'input', {});
+
+    const buckets = get(config, 'buckets');
+    const collection = get(config, 'collection.meta');
+    const provider = get(config, 'provider');
+    const granules = get(input, 'granules');
+
+    const output = {};
 
     if (!provider) {
       const err = new errors.ProviderNotFound('Provider info not provided');
@@ -55,17 +59,17 @@ module.exports.handler = function handler(_event, context, cb) {
     const ingest = new IngestClass(event);
 
     return download(ingest, buckets.internal, provider, granules).then((gs) => {
-      event.payload.granules = gs;
+      output.granules = gs;
 
       if (collection.process) {
-        event.meta.process = collection.process;
+        output.process = collection.process;
       }
 
       if (ingest.end) {
         ingest.end();
       }
 
-      return cb(null, event);
+      return cb(null, output);
     }).catch(e => {
       if (ingest.end) {
         ingest.end();

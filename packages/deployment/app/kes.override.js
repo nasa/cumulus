@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
 'use strict';
 
-const { Kes } = require('kes');
+const { Kes, Lambda } = require('kes');
 const forge = require('node-forge');
+const utils = require('kes').utils;
 
 /**
  * Generates a public/private key pairs
@@ -46,7 +47,7 @@ function generateInputTemplates(config, outputs) {
     stack: config.stackName,
     kms: arns.KmsKeyId,
     cmr: config.cmr,
-    distribution_endpoint: config.distributionEndpoint
+    distribution_endpoint: config.distribution_endpoint
   };
 
   // add cmr password:
@@ -121,6 +122,24 @@ function generateWorkflowsList(config) {
   return false;
 }
 
+
+class UpdatedLambda extends Lambda {
+  /**
+   * Copy source code of a given lambda function, zips it, calculate
+   * the hash of the source code and updates the lambda object with
+   * the hash, local and remote locations of the code
+   *
+   * @param {Object} lambda the lambda object
+   * @returns {Promise} returns the updated lambda object
+   */
+  zipLambda(lambda) {
+    console.log(`Zipping ${lambda.local} and injecting sled`);
+    return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => {
+      return lambda;
+    });
+  }
+}
+
 /**
  * A subclass of Kes class that overrides opsStack method.
  * The subclass is checks whether the public/private keys are generated
@@ -134,6 +153,20 @@ function generateWorkflowsList(config) {
  * @class UpdatedKes
  */
 class UpdatedKes extends Kes {
+  constructor(config) {
+    super(config);
+    this.Lambda = UpdatedLambda;
+  }
+
+  async redployApiGateWay(name, restApiId, stageName) {
+    if (restApiId) {
+      const apigateway = new this.AWS.APIGateway();
+      const r = await apigateway.createDeployment({ restApiId, stageName }).promise();
+      console.log(`${name} endpoints with the id ${restApiId} redeployed.`); 
+      return r;
+    }
+    return true;
+  }
 
   /**
    * Restart all active tasks in the clusters of a deployed
@@ -241,6 +274,8 @@ class UpdatedKes extends Kes {
   opsStack() {
     // check if public and private key are generated
     // if not generate and upload them
+    const apis = {};
+
     return this.crypto(this.bucket, this.stack)
       .then(() => super.opsStack())
       .then(() => this.describeCF())
@@ -248,8 +283,7 @@ class UpdatedKes extends Kes {
         const outputs = r.Stacks[0].Outputs;
 
         const urls = {
-          Dashboard: '#/auth',
-          Api: 'auth/login',
+          Api: 'token',
           Distribution: 'redirect'
         };
         console.log('\nHere are the important URLs for this deployment:\n');
@@ -257,6 +291,24 @@ class UpdatedKes extends Kes {
           if (Object.keys(urls).includes(o.OutputKey)) {
             console.log(`${o.OutputKey}: `, o.OutputValue);
             console.log('Add this url to URS: ', `${o.OutputValue}${urls[o.OutputKey]}`, '\n');
+
+            if (o.OutputKey === 'Distribution') {
+              this.config.distribution_endpoint = o.OutputValue;
+            }
+          }
+
+          switch (o.OutputKey) {
+            case 'ApiId':
+              apis.api = o.OutputValue;
+              break;
+            case 'DistributionId':
+              apis.distribution = o.OutputValue;
+              break;
+            case 'ApiStage':
+              apis.stageName = o.OutputValue;
+              break;
+            default:
+              //nothing
           }
         });
 
@@ -286,7 +338,15 @@ class UpdatedKes extends Kes {
 
         return Promise.all(uploads);
       })
-      .then(() => this.restartECSTasks(this.config));
+      .then(() => this.restartECSTasks(this.config))
+      .then(() => {
+        const updates = [
+          this.redployApiGateWay('api', apis.api, apis.stageName),
+          this.redployApiGateWay('distribution', apis.distribution, apis.stageName)
+        ];
+
+        return Promise.all(updates);
+      });
   }
 }
 
