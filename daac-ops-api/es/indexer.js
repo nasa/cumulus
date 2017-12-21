@@ -101,7 +101,7 @@ async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'e
       execution,
       error: get(payload, 'exception', null),
       type: get(payload, 'cumulus_meta.workflow_name'),
-      collectionId: get(payload, 'meta.collection.id'),
+      collectionId: get(payload, 'meta.collection.name'),
       status: get(payload, 'meta.status', 'UNKNOWN'),
       createdAt: get(payload, 'cumulus_meta.createdAt'),
       timestamp: Date.now()
