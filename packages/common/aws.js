@@ -98,10 +98,21 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 };
 
 /**
+ * Delete an object from S3
+ *
+ * @param {string} bucket
+ * @param {string} key
+ * @returns {Promise}
+ */
+exports.deleteS3Object = (bucket, key) =>
+  exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
+
+/**
  * Test if an object exists in S3
  *
  * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
- * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating if the object existss
+ * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
+ *                               if the object exists
  */
 exports.s3ObjectExists = (params) =>
   exports.s3().headObject(params).promise()
@@ -110,7 +121,6 @@ exports.s3ObjectExists = (params) =>
       if (e.code === 'NotFound') return false;
       throw e;
     });
-
 
 exports.promiseS3Upload = (params) => {
   const uploadFn = exports.s3().upload.bind(exports.s3());
