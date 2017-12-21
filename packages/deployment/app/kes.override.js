@@ -22,6 +22,7 @@ function generateKeyPair() {
 function baseInputTemplate(config, outputs) {
   // get cmr password from outputs
   const cmrPassword = outputs.filter(o => (o.OutputKey === 'EncryptedCmrPassword'));
+  const topicArn = outputs.filter(o => (o.OutputKey === 'sftrackerSnsArn'));
 
   const template = {
     cumulus_meta: {
@@ -31,7 +32,8 @@ function baseInputTemplate(config, outputs) {
     },
     meta: {
       cmr: config.cmr,
-      distribution_endpoint: config.distribution_endpoint
+      distribution_endpoint: config.distribution_endpoint,
+      topic_arn: topicArn[0].OutputValue
     },
     workflow_config: {},
     payload: {},
@@ -273,11 +275,29 @@ class UpdatedKes extends Kes {
 
   cleanStepFunctionDefinition() {
     const sFconfigs = {};
+    const test = new RegExp('^\\$\\.');
+
+    const addCurly = (config) => {
+      if (config) {
+        Object.keys(config).forEach(n => {
+          if (typeof config[n] === 'object') {
+            config[n] = addCurly(config[n]);
+          }
+          else if (typeof config[n] === 'string') {
+            const match = config[n].match(test);
+            if (match) {
+              config[n] = `{{${config[n]}}}`;
+            }
+          }
+        });
+      }
+      return config;
+    };
 
     this.config.stepFunctions.forEach((sf) => {
       sFconfigs[sf.name] = {};
       Object.keys(sf.definition.States).forEach((n) => {
-        sFconfigs[sf.name][n] = sf.definition.States[n].config;
+        sFconfigs[sf.name][n] = addCurly(sf.definition.States[n].config);
         sf.definition.States[n] = omit(sf.definition.States[n], ['config']);
       });
     });
