@@ -42,7 +42,7 @@ test.cb('test pdr discovery with FTP assuming all PDRs are new', (t) => {
 
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
-  newPayload.config.collection.meta.provider_path = '/pdrs';
+  newPayload.config.collection.provider_path = '/pdrs';
   newPayload.config.useQueue = false;
   newPayload.input = {};
 
@@ -121,7 +121,7 @@ test.cb('test pdr discovery with FTP assuming some PDRs are new', (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
   newPayload.config.useQueue = false;
-  newPayload.config.collection.meta.provider_path = '/pdrs';
+  newPayload.config.collection.provider_path = '/pdrs';
   newPayload.input = {};
   handler(newPayload, {}, (e, output) => {
     S3.fileExists.restore();
@@ -152,7 +152,7 @@ test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
   newPayload.config.useQueue = false;
-  newPayload.config.collection.meta.provider_path = '/';
+  newPayload.config.collection.provider_path = '/';
   newPayload.input = {};
   handler(newPayload, {}, (e, output) => {
     S3.fileExists.restore();
