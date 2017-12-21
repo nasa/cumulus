@@ -1,7 +1,3 @@
 {
-  "properties": {
-    "hello": {
-      "type": "string"
-    }
-  }
+  "foo": "bar"
 }
