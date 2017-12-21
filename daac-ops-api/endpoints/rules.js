@@ -2,14 +2,12 @@
 'use strict';
 
 const _get = require('lodash.get');
-const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { handle } = require('../lib/response');
 const models = require('../models');
 const { Search } = require('../es/search');
 const { deleteRecord, indexRule } = require('../es/indexer');
 const { RecordDoesNotExist } = require('../lib/errors');
-const postPayload = require('../tests/data/rules_post.json');
 
 /**
  * List all providers.
@@ -107,17 +105,11 @@ async function put(event) {
   }
 
   // if rule type is onetime no change is allowed unless it is a rerun
-  if (originalData.rule.type === 'onetime') {
-    if (action === 'rerun') {
-      await models.Rule.invoke(originalData);
-      return;
-    }
-
-    const err = {
-      message: 'Ingest rule of type "onetime" cannot be edited'
-    };
-    throw err;
+  if (action === 'rerun') {
+    await models.Rule.invoke(originalData);
+    return;
   }
+
   data = await model.update(originalData, data);
   const esClient = await Search.es();
   await indexRule(esClient, data);
@@ -160,7 +152,7 @@ module.exports = handler;
 
 
 justLocalRun(() => {
-  //put({ pathParameters: { name: 'discover_aster' }, body: '{"action":"rerun"}' }).then(r => console.log(r)).catch(e => console.log(e));
+  //put({ pathParameters: { name: 'discover_aster' }, body: '{"action":"rerun"}' }).then(r => console.log(r)).catch(e => console.log(e)); // eslint-disable-line max-len
   //handler(postPayload, {
     //succeed: r => console.log(r),
     //failed: e => console.log(e)

@@ -1,0 +1,18 @@
+{
+  "input": {},
+  "config": {
+    "useQueue": false,
+    "buckets": {
+      "internal": "",
+      "private": "",
+      "protected": "",
+      "public": ""
+    },
+    "provider": {
+      "id": "",
+      "globalConnectionLimit": 20,
+      "protocol": "http",
+      "host": "https://example"
+    }
+  }
+}

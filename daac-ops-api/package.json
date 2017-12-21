@@ -30,6 +30,8 @@
     "basic-auth": "^1.1.0",
     "elasticsearch": "^13.2.0",
     "http-aws-es": "^1.1.3",
+    "crypto-random-string": "^1.0.0",
+    "randomstring": "^1.1.5",
     "lambda-proxy-utils": "^1.4.0",
     "lodash.get": "^4.4.2",
     "lodash.has": "^4.5.2",
