@@ -32,14 +32,12 @@ sf2snsStart:
   handler: index.sfStart
   timeout: 100
   memory: 256
-  useSled: true
   source: '../cumulus/daac-ops-api/dist/'
 
 sf2snsEnd:
   handler: index.sfEnd
   timeout: 100
   memory: 256
-  useSled: true
   source: '../cumulus/daac-ops-api/dist/'
 
 ScheduleSF:
