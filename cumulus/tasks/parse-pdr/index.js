@@ -12,8 +12,9 @@ module.exports.handler = function handler(_event, context, cb) {
     let parse;
     StepFunction.pullEvent(_event).then((ev) => {
       event = ev;
-      const provider = get(event, 'provider', null);
-      const queue = get(event, 'meta.useQueue', true);
+      const config = get(event, 'config');
+      const provider = get(config, 'provider', null);
+      const queue = get(config, 'useQueue', true);
 
       if (!provider) {
         const err = new errors.ProviderNotFound('Provider info not provided');
@@ -30,9 +31,12 @@ module.exports.handler = function handler(_event, context, cb) {
         parse.end();
       }
 
-      event.payload = Object.assign({}, event.payload, payload);
-      return StepFunction.pushEvent(event);
-    }).then(ev => cb(null, ev))
+      const output = Object.assign({}, event.input, payload);
+      return StepFunction.pushEvent(output);
+    }).then(ev => {
+      console.log('ev', ev)
+      cb(null, ev)
+    })
       .catch(e => {
         if (parse && parse.connected) {
           parse.end();

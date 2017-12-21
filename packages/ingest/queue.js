@@ -4,21 +4,23 @@ const get = require('lodash.get');
 const { SQS, S3, getExecutionArn, StepFunction } = require('./aws');
 
 async function getTemplate(event) {
-  const templates = get(event, 'resources.templates');
-  const next = get(event, 'ingest_meta.config.next', 'ParsePdr');
+  const config = get(event, 'config');
+  const templates = get(config, 'templates');
+  const next = get(config, 'next', 'ParsePdr');
 
   const parsed = S3.parseS3Uri(templates[next]);
   const data = await S3.get(parsed.Bucket, parsed.Key);
   const message = JSON.parse(data.Body);
-  message.provider = event.provider;
-  message.collection = event.collection;
-  message.meta = event.meta;
+
+  message.provider = get(config, 'provider');
+  message.collection = get(config, 'collection');
+  message.meta = get(config, 'meta');
 
   return message;
 }
 
 async function queuePdr(event, pdr) {
-  const queueUrl = get(event, 'resources.queues.startSF');
+  const queueUrl = get(event, 'config.queues.startSF');
   const message = await getTemplate(event);
 
   message.payload = { pdr };

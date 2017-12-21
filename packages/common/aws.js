@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const log = require('./log');
 const string = require('./string');
+const testUtils = require('./test-utils');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
@@ -26,8 +27,25 @@ const memoize = (fn) => {
   };
 };
 
-const awsClient = (Service, version = null) =>
-  memoize(() => new Service(version ? { apiVersion: version } : {}));
+/**
+ * Return a function which, when called, will return an AWS service object
+ *
+ * Note: The returned service objects are cached, so there will only be one
+ *       instance of each service object per process.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {string} version - the API version to use
+ * @returns {Function} - a function which, when called, will return an AWS service object
+ */
+const awsClient = (Service, version = null) => {
+  const options = {};
+  if (version) options.apiVersion = version;
+
+  if (process.env.TEST) {
+    return memoize(() => testUtils.testAwsClient(Service, options));
+  }
+  return memoize(() => new Service(options));
+};
 
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
@@ -79,6 +97,21 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   });
 };
 
+/**
+ * Test if an object exists in S3
+ *
+ * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
+ * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating if the object existss
+ */
+exports.s3ObjectExists = (params) =>
+  exports.s3().headObject(params).promise()
+    .then(() => true)
+    .catch((e) => {
+      if (e.code === 'NotFound') return false;
+      throw e;
+    });
+
+
 exports.promiseS3Upload = (params) => {
   const uploadFn = exports.s3().upload.bind(exports.s3());
   return concurrency.toPromise(uploadFn, params);
@@ -104,9 +137,9 @@ exports.downloadS3File = (s3Obj, filename) => {
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
   const scrubbedS3Objs = s3Objs.map(s3Obj => ({
-      Bucket: s3Obj.Bucket,
-      Key: s3Obj.Key
-    }));
+    Bucket: s3Obj.Bucket,
+    Key: s3Obj.Key
+  }));
   const s3 = exports.s3();
   let i = 0;
   const n = s3Objs.length;
@@ -137,21 +170,11 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @return A promise that resolves to an Array of the data returned from the deletion operations
  */
 exports.deleteS3Files = (s3Objs, s3opts = {}) => {
-  const s3 = exports.s3();
-  let i = 0;
-  const n = s3Objs.length;
-  log.info(`Starting deletion of ${n} keys`);
-  const promiseDelete = (s3Obj) => {
-    const opts = Object.assign(s3Obj, s3opts);
-    return new Promise((resolve, reject) => {
-      s3.deleteObject(opts, (err, data) => {
-        if (err) reject(err);
-        log.info(`Progress: [${i++} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${s3Obj.key}`);
-        resolve(data);
-      });
-    });
-  };
+  log.info(`Starting deletion of ${s3Objs.length} object(s)`);
+
+  const promiseDelete = (s3Obj) => exports.s3().deleteObject(s3Obj).promise();
   const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
+
   return Promise.all(s3Objs.map(limitedDelete));
 };
 
