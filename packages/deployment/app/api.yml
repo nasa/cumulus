@@ -1,67 +1,100 @@
 sqs2sf:
-  handler: sf-starter.handler
+  handler: index.starter
   timeout: 200
   memory: 384
-  source: '../cumulus/cumulus/tasks/sf-starter/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
 
 sns2elasticsearch:
-  handler: daac-ops-api.indexer
+  handler: index.indexer
   timeout: 100
-  passElasticSearchEndpoint: true
+  envs:
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
 
 log2elasticsearch:
-  handler: daac-ops-api.logHandler
+  handler: index.logHandler
   timeout: 100
   memory: 256
-  passElasticSearchEndpoint: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  envs:
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  source: '../cumulus/daac-ops-api/dist/'
 
 sf2snsStart:
-  handler: sf-sns-broadcast.start
+  handler: index.sfStart
   timeout: 100
   memory: 256
-  source: '../cumulus/cumulus/tasks/sf-sns-broadcast/dist/index.js'
+  useSled: true
+  source: '../cumulus/daac-ops-api/dist/'
 
 sf2snsEnd:
-  handler: sf-sns-broadcast.end
+  handler: index.sfEnd
   timeout: 100
   memory: 256
-  source: '../cumulus/cumulus/tasks/sf-sns-broadcast/dist/index.js'
+  useSled: true
+  source: '../cumulus/daac-ops-api/dist/'
 
 ScheduleSF:
-  handler: sf-starter.queue
+  handler: index.scheduler
   timeout: 100
   memory: 256
-  source: '../cumulus/cumulus/tasks/sf-starter/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
+  envs:
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
 
 jobs:
-  handler: daac-ops-api.jobs
+  handler: index.jobs
   timeout: 300
   memory: 512
-  passElasticSearchEndpoint: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  envs:
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  source: '../cumulus/daac-ops-api/dist/'
 
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
-  handler: daac-ops-api.bootstrap
+  handler: index.bootstrap
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     internal: '{{buckets.internal}}'
 
 ApiCollections:
-  handler: daac-ops-api.collections
+  handler: index.collections
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
-    CollectionsTable: '!Ref CollectionsTableDynamoDB'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
     internal: '{{buckets.internal}}'
-  passElasticSearchEndpoint: true
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
   apiGateway:
     - path: collections
       method: get
@@ -85,22 +118,39 @@ ApiCollections:
       api: backend
 
 ApiGranules:
-  handler: daac-ops-api.granules
+  handler: index.granules
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
+  apiRole: true
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
-    CollectionsTable: '!Ref CollectionsTableDynamoDB'
-    ProvidersTable: '!Ref ProvidersTableDynamoDB'
-    invoke: '!Ref ScheduleSFLambdaFunction'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+    invoke:
+      function: "Ref"
+      value: ScheduleSFLambdaFunction
     bucket: '{{buckets.internal}}'
     internal: '{{buckets.internal}}'
     cmr_provider: '{{cmr.provider}}'
     cmr_client_id: '{{cmr.clientId}}'
     cmr_username: '{{cmr.username}}'
-    cmr_password: '!GetAtt CumulusCustomResource.CmrPassword'
-  passElasticSearchEndpoint: true
+    cmr_password: 
+      function: "Fn::GetAtt"
+      array:
+        - CumulusCustomResource
+        - CmrPassword
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
   apiGateway:
     - path: granules
       method: get
@@ -120,13 +170,20 @@ ApiGranules:
       api: backend
 
 ApiExecutions:
-  handler: daac-ops-api.executions
+  handler: index.executions
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
-  passElasticSearchEndpoint: true
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
   apiGateway:
     - path: executions
       method: get
@@ -136,15 +193,39 @@ ApiExecutions:
       method: get
       cors: true
       api: backend
-
-ApiWorkflows:
-  handler: daac-ops-api.workflows
+  
+ApiExecutionStatus:
+  handler: index.executionStatus
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
+  source: '../cumulus/daac-ops-api/dist/'
+  envs:
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  apiGateway:
+    - path: executions/status/{arn}
+      method: get
+      cors: true
+      api: backend
+
+ApiWorkflows:
+  handler: index.workflows
+  timeout: 20
+  memory: 256
+  apiRole: true
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
     bucket: '{{buckets.internal}}'
-    UsersTable: '!Ref UsersTableDynamoDB'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
   apiGateway:
     - path: workflows
       method: get
@@ -156,19 +237,38 @@ ApiWorkflows:
       api: backend
 
 ApiRules:
-  handler: daac-ops-api.rules
+  handler: index.rules
   timeout: 20
   memory: 256
+  apiRole: true
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
-    CollectionsTable: '!Ref CollectionsTableDynamoDB'
-    ProvidersTable: '!Ref ProvidersTableDynamoDB'
-    RulesTable: '!Ref RulesTableDynamoDB'
-    invoke: '!Ref ScheduleSFLambdaFunction'
-    invokeArn: '!GetAtt ScheduleSFLambdaFunction.Arn'
     bucket: '{{buckets.internal}}'
-  passElasticSearchEndpoint: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
+    invoke:
+      function: "Ref"
+      value: ScheduleSFLambdaFunction
+    invokeArn:
+      function: "Fn::GetAtt"
+      array:
+        - ScheduleSFLambdaFunction
+        - Arn
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  source: '../cumulus/daac-ops-api/dist/'
   apiGateway:
     - path: rules
       method: get
@@ -192,15 +292,24 @@ ApiRules:
       api: backend
 
 ApiProviders:
-  handler: daac-ops-api.providers
+  handler: index.providers
   timeout: 20
   memory: 256
+  apiRole: true
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
-    ProvidersTable: '!Ref ProvidersTableDynamoDB'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
     internal: '{{buckets.internal}}'
-  passElasticSearchEndpoint: true
-  source: '../cumulus/daac-ops-api/dist/index.js'
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  source: '../cumulus/daac-ops-api/dist/'
   apiGateway:
     - path: providers
       method: get
@@ -224,14 +333,20 @@ ApiProviders:
       api: backend
 
 ApiPdrs:
-  handler: daac-ops-api.pdrs
+  handler: index.pdrs
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
     internal: '{{buckets.internal}}'
-  passElasticSearchEndpoint: true
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
   apiGateway:
     - path: pdrs
       method: get
@@ -247,13 +362,20 @@ ApiPdrs:
       api: backend
 
 ApiLogs:
-  handler: daac-ops-api.logs
+  handler: index.logs
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
+  apiRole: true
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
-  passElasticSearchEndpoint: true
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
   apiGateway:
     - path: stats/logs
       method: get
@@ -265,12 +387,15 @@ ApiLogs:
       api: backend
 
 ApiSchema:
-  handler: daac-ops-api.schemas
+  handler: index.schemas
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  apiRole: true
+  source: '../cumulus/daac-ops-api/dist/'
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
   apiGateway:
     - path: schemas/{schemaName}
       method: get
@@ -278,13 +403,20 @@ ApiSchema:
       api: backend
 
 ApiStats:
-  handler: daac-ops-api.stats
+  handler: index.stats
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
+  apiRole: true
   envs:
-    UsersTable: '!Ref UsersTableDynamoDB'
-  passElasticSearchEndpoint: true
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
   apiGateway:
     - path: stats
       method: get
@@ -303,43 +435,35 @@ ApiStats:
       cors: true
       api: backend
 
-ApiAuth:
-  handler: daac-ops-api.auth
+ApiToken:
+  handler: index.token
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
+  apiRole: true
   urs: true
   envs:
     EARTHDATA_BASE_URL: '{{urs_url}}'
-    DASHBOARD_ENDPOINT: '{{dashboard_url}}#/auth'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
-    UsersTable: '!Ref UsersTableDynamoDB'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
   apiGateway:
     - api: backend
-      path: auth
-      method: get
-      cors: true
-    - api: backend
-      path: auth/token
-      method: get
-      cors: true
-    - api: backend
-      path: auth/redirect
-      method: get
-      cors: true
-    - api: backend
-      path: auth/login
+      path: token
       method: get
       cors: true
 
 ApiDistribution:
-  handler: daac-ops-api.distribution
+  handler: index.distribution
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/'
+  apiRole: true
   urs: true
   envs:
+    EARTHDATA_BASE_URL: '{{urs_url}}' 
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     protected: '{{buckets.protected}}'

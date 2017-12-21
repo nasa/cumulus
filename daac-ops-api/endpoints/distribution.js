@@ -34,7 +34,7 @@ function handler(event, context, cb) {
   const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
   const DEPLOYMENT_ENDPOINT = process.env.DEPLOYMENT_ENDPOINT;
 
-  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://urs.earthdata.nasa.gov';
+  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov';
   const EARTHDATA_GET_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/authorize`;
   const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
 
