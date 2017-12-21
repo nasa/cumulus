@@ -11,9 +11,9 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
+    "test": "ava tests/*.js --serial",
     "build": "webpack --progress",
-    "watch": "webpack --progress -w",
-    "test": "echo 'no test'"
+    "watch": "webpack --progress -w"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -26,7 +26,7 @@
   },
   "babel": {
     "presets": [
-      "es2015",
+      "es2017",
       "@ava/stage-4",
       "@ava/transform-test-files"
     ],
