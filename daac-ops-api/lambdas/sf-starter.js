@@ -11,9 +11,9 @@ const consumer = require('@cumulus/ingest/consumer');
  * @param  {string} arn Step Function's arn
  * @param  {string} name name for the Step Function's execution
  * @param  {object} payload Execution's Payload
- * @return {Promise}
+ * @return {Promise} AWS response
  */
-async function dispatch(arn, name, payload) {
+function dispatch(arn, name, payload) {
   // add creation time
   payload.cumulus_meta.createdAt = Date.now();
 
@@ -33,7 +33,7 @@ async function dispatch(arn, name, payload) {
 /**
  * Extract relevant data from the incoming queue message
  * and pass it to the dispatch function
- * 
+ *
  * @param  {object} message incoming queue message
  * @return {Promise}
  */
