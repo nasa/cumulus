@@ -11,9 +11,9 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "./node_modules/.bin/ava tests/*.js --serial --no-color",
-    "build": "webpack --progress",
-    "watch": "webpack --progress -w"
+    "test": "ava tests/*.js --serial --no-color",
+    "build": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress",
+    "watch": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress -w"
   },
   "ava": {
     "babel": "inherit",
@@ -46,6 +46,6 @@
     "babel-preset-es2017": "^6.24.1",
     "sinon": "^2.0.0-pre.5",
     "ava": "^0.21.0",
-    "webpack": "^1.12.13"
+    "webpack": "~1.12.13"
   }
 }

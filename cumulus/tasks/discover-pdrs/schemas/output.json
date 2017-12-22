@@ -1,0 +1,26 @@
+{
+  "title": "DiscoverPdrsOutput",
+  "description": "Describes the output produced by the discover-pdrs task",
+  "type": "object",
+  "required": ["pdrs", "pdrs_found"],
+  "additionalProperties": false,
+  "properties": {
+    "pdrs_found": { "type": "integer" },
+    "pdrs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "integer" },
+          "size": { "type": "string" },
+          "time": { "type": "string" },
+          "owner": { "type": "string" },
+          "group": { "type": "string" },
+          "path": { "type": "string" }
+        }
+      }
+    }
+  }
+}
