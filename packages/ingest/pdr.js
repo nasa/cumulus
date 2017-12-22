@@ -28,7 +28,7 @@ class Discover {
     const config = get(event, 'config');
     this.stack = get(config, 'stack');
     this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection.meta');
+    this.collection = get(config, 'collection');
     this.provider = get(config, 'provider');
     this.folder = get(config, 'pdrFolder', 'pdrs');
     this.event = event;
