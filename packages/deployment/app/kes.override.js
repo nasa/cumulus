@@ -19,10 +19,21 @@ function generateKeyPair() {
   return rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
 }
 
+function findOutputValue(outputs, key) {
+  return outputs.find((o) => (o.OutputKey === key)).OutputValue;
+}
+
+/**
+ * Creates the base Cumulus message template used to construct a Cumulus
+ * message for Cumulus StepFunctions
+ * @param  {object} config  Kes config object
+ * @param  {object} outputs List of CloudFormations Output key and values
+ * @return {object} a base Cumulus message template
+ */
 function baseInputTemplate(config, outputs) {
   // get cmr password from outputs
-  const cmrPassword = outputs.filter(o => (o.OutputKey === 'EncryptedCmrPassword'));
-  const topicArn = outputs.filter(o => (o.OutputKey === 'sftrackerSnsArn'));
+  const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
+  const topicArn = findOutputValue(outputs, 'sftrackerSnsArn');
 
   const template = {
     cumulus_meta: {
@@ -33,14 +44,14 @@ function baseInputTemplate(config, outputs) {
     meta: {
       cmr: config.cmr,
       distribution_endpoint: config.distribution_endpoint,
-      topic_arn: topicArn[0].OutputValue
+      topic_arn: topicArn
     },
     workflow_config: {},
     payload: {},
     exception: null
   };
 
-  template.meta.cmr.password = cmrPassword[0].OutputValue;
+  template.meta.cmr.password = cmrPassword;
 
   // add queues
   if (config.sqs) {
@@ -56,7 +67,28 @@ function baseInputTemplate(config, outputs) {
 }
 
 /**
- * Generates a template used for SFScheduler to create cumulus
+ * generates a Cumulus message Template for a given step function
+ * @param  {object} template base message template
+ * @param  {object} sf StepFunction definition (part of kes config)
+ * @param  {object} sfConfigs Sled configs for the StepFunction (part of kes config)
+ * @param  {string} wfArn StepFunction Arn
+ * @return {object} stepFunction template
+ */
+function buildStepFunctionMessageTemplate(template, sf, sfConfigs, wfArn) {
+  // add workflow configs for each step function step
+  Object.keys(sf.definition.States).forEach(name => {
+    template.workflow_config[name] = sfConfigs[sf.name][name];
+  });
+
+  // update cumulus_meta for each workflow message tempalte
+  template.cumulus_meta.state_machine = wfArn;
+  template.cumulus_meta.workflow_name = sf.name;
+
+  return msg;
+}
+
+/**
+ * Generates an template used for SFScheduler to create cumulus
  * payloads for step functions. Each step function gets a separate
  * template
  *
@@ -73,19 +105,9 @@ function generateInputTemplates(config, outputs) {
     config.stepFunctions.forEach((sf) => {
       const msg = baseInputTemplate(config, outputs);
 
-      // add workflow configs for each step function step
-      Object.keys(sf.definition.States).forEach(name => {
-        msg.workflow_config[name] = config.stepFunctions.configs[sf.name][name];
-      });
-
       // get workflow arn
-      const wfArn = outputs.filter(o => (o.OutputKey === `${sf.name}StateMachine`));
-
-      // update cumulus_meta for each workflow message tempalte
-      msg.cumulus_meta.state_machine = wfArn[0].OutputValue;
-      msg.cumulus_meta.workflow_name = sf.name;
-
-      templates.push(msg);
+      const wfArn = findOutputValue(outputs, `${sf.name}StateMachine`);
+      templates.push(buildStepFunctionMessageTemplate(msg, sf, config.stepFunctions.configs, wfArn));
     });
   }
   return templates;
@@ -273,6 +295,13 @@ class UpdatedKes extends Kes {
       .catch(() => this.uploadKeyPair(this.bucket, key));
   }
 
+  /**
+   * Because both kes and sled use Mustache for templating,
+   * we have to curly brackes for all the templating values
+   * that has to be passed to sled. this method, looks for
+   * any value that starts with a "$" and put the whole value
+   * inside "{{ }}""
+   */
   cleanStepFunctionDefinition() {
     const sFconfigs = {};
     const test = new RegExp('^\\$\\.');
@@ -294,6 +323,11 @@ class UpdatedKes extends Kes {
       return config;
     };
 
+    // loop through the sled config of each step of 
+    // the step function, add curly brackets to values
+    // with dollar sign and remove config key from the
+    // defintion, otherwise CloudFormation will be mad
+    // at us.
     this.config.stepFunctions.forEach((sf) => {
       sFconfigs[sf.name] = {};
       Object.keys(sf.definition.States).forEach((n) => {
