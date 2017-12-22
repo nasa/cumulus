@@ -92,7 +92,12 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
     get(payload, 'cumulus_meta.state_machine'),
     name
   );
-  if (!arn) return Promise.resolve();
+  if (!arn) {
+    return Promise.reject(
+      new Error('State Machine Arn is missing. Must be included in the cumulus_meta')
+    );
+  }
+
   const execution = getExecutionUrl(arn);
 
   const doc = {
