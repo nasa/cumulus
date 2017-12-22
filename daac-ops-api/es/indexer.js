@@ -84,98 +84,105 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
  * @param  {object} payload  Cumulus Step Function message
  * @param  {string} index    Elasticsearch index (default: cumulus)
  * @param  {string} type     Elasticsearch type (default: execution)
- * @return {Promise}
+ * @return {Promise} elasticsearch update response
  */
-async function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
+function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const arn = getExecutionArn(
     get(payload, 'cumulus_meta.state_machine'),
     name
   );
-  if (arn) {
-    const execution = getExecutionUrl(arn);
+  if (!arn) return Promise.resolve();
+  const execution = getExecutionUrl(arn);
 
-    const doc = {
-      name,
-      arn,
-      execution,
-      error: get(payload, 'exception', null),
-      type: get(payload, 'cumulus_meta.workflow_name'),
-      collectionId: get(payload, 'meta.collection.name'),
-      status: get(payload, 'meta.status', 'UNKNOWN'),
-      createdAt: get(payload, 'cumulus_meta.createdAt'),
-      timestamp: Date.now()
-    };
+  const doc = {
+    name,
+    arn,
+    execution,
+    error: get(payload, 'exception', null),
+    type: get(payload, 'cumulus_meta.workflow_name'),
+    collectionId: get(payload, 'meta.collection.name'),
+    status: get(payload, 'meta.status', 'UNKNOWN'),
+    createdAt: get(payload, 'cumulus_meta.createdAt'),
+    timestamp: Date.now()
+  };
 
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
 
-    await esClient.update({
-      index,
-      type,
-      id: doc.arn,
-      body: {
-        doc,
-        doc_as_upsert: true
-      }
-    });
-  }
+  return esClient.update({
+    index,
+    type,
+    id: doc.arn,
+    body: {
+      doc,
+      doc_as_upsert: true
+    }
+  });
 }
 
-async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
+/**
+ * Extracts PDR info from a StepFunction message and indexes it to ElasticSearch
+ * @param  {object} esClient ElasticSearch Connection object
+ * @param  {object} payload  Cumulus Step Function message
+ * @param  {string} index    Elasticsearch index (default: cumulus)
+ * @param  {string} type     Elasticsearch type (default: pdr)
+ * @return {Promise} Elasticsearch response
+ */
+function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const pdrName = get(payload, 'payload.pdr.name')
 
-  if (pdrName) {
-    const arn = getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
-    );
-    const execution = getExecutionUrl(arn);
+  if (!pdrName) return Promise.resolve();
 
-    const collection = get(payload, 'meta.collection');
-    const collectionId = `${collection.name}___${collection.version}`;
+  const arn = getExecutionArn(
+    get(payload, 'cumulus_meta.state_machine'),
+    name
+  );
+  const execution = getExecutionUrl(arn);
 
-    const stats = {
-      processing: get(payload, 'payload.running', []).length,
-      completed: get(payload, 'payload.completed', []).length,
-      failed: get(payload, 'payload.failed', []).length
-    };
+  const collection = get(payload, 'meta.collection');
+  const collectionId = `${collection.name}___${collection.version}`;
 
-    stats.total = stats.processing + stats.completed + stats.failed;
-    let progress = 0;
-    if (stats.processing > 0 && stats.total > 0) {
-      progress = stats.processing / stats.total;
-    }
-    else if (stats.processing === 0 && stats.total > 0) {
-      progress = 100;
-    }
+  const stats = {
+    processing: get(payload, 'payload.running', []).length,
+    completed: get(payload, 'payload.completed', []).length,
+    failed: get(payload, 'payload.failed', []).length
+  };
 
-    const doc = {
-      pdrName: get(payload, 'payload.pdr.name'),
-      collectionId,
-      status: get(payload, 'meta.status'),
-      provider: get(payload, 'meta.provider.id'),
-      progress,
-      execution,
-      PANSent: get(payload, 'payload.pdr.PANSent', false),
-      PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
-      stats,
-      createdAt: get(payload, 'cumulus_meta.createdAt'),
-      timestamp: Date.now()
-    };
-
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-    await esClient.update({
-      index,
-      type,
-      id: doc.pdrName,
-      body: {
-        doc,
-        doc_as_upsert: true
-      }
-    });
+  stats.total = stats.processing + stats.completed + stats.failed;
+  let progress = 0;
+  if (stats.processing > 0 && stats.total > 0) {
+    progress = stats.processing / stats.total;
   }
+  else if (stats.processing === 0 && stats.total > 0) {
+    progress = 100;
+  }
+
+  const doc = {
+    pdrName: get(payload, 'payload.pdr.name'),
+    collectionId,
+    status: get(payload, 'meta.status'),
+    provider: get(payload, 'meta.provider.id'),
+    progress,
+    execution,
+    PANSent: get(payload, 'payload.pdr.PANSent', false),
+    PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
+    stats,
+    createdAt: get(payload, 'cumulus_meta.createdAt'),
+    timestamp: Date.now()
+  };
+
+  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+  return esClient.update({
+    index,
+    type,
+    id: doc.pdrName,
+    body: {
+      doc,
+      doc_as_upsert: true
+    }
+  });
 }
 
 async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
@@ -227,73 +234,82 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
   await esClient.update(params);
 }
 
+
+/**
+ * Extracts granule info from a stepFunction message and indexs it to
+ * Elasticsearch
+ * @param  {object} esClient ElasticSearch Connection object
+ * @param  {object} payload  Cumulus Step Function message
+ * @param  {string} index    Elasticsearch index (default: cumulus)
+ * @param  {string} type     Elasticsearch type (default: granule)
+ * @return {Promise} Elasticsearch response
+ */
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const granules = get(payload, 'payload.granules');
 
-  if (granules) {
-    const arn = getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
-    );
+  if (!granules) return;
 
-    if (arn) {
-      const execution = getExecutionUrl(arn);
+  const arn = getExecutionArn(
+    get(payload, 'cumulus_meta.state_machine'),
+    name
+  );
 
-      const collection = get(payload, 'meta.collection');
-      const exception = get(payload, 'exception');
-      const collectionId = `${collection.name}___${collection.version}`;
+  if (arn) return;
 
-      // make sure collection is added
-      try {
-        await esClient.get({
-          index,
-          type: 'collection',
-          id: collectionId
-        });
-      }
-      catch (e) {
-        // adding collection record to ES
-        await indexCollection(esClient, collection);
-      }
+  const execution = getExecutionUrl(arn);
 
-      const done = granules.map((g) => {
-        if (g.granuleId) {
-          const doc = {
-            granuleId: g.granuleId,
-            pdrName: get(payload, 'payload.pdr.name'),
-            collectionId,
-            status: get(payload, 'meta.status'),
-            provider: get(payload, 'meta.provider.id'),
-            execution,
-            cmrLink: get(g, 'cmr.link'),
-            files: g.files,
-            error: exception,
-            createdAt: get(payload, 'cumulus_meta.createdAt'),
-            timestamp: Date.now()
-          };
+  const collection = get(payload, 'meta.collection');
+  const exception = get(payload, 'exception');
+  const collectionId = `${collection.name}___${collection.version}`;
 
-          doc.published = get(g, 'cmr.link', false);
-          doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-          return esClient.update({
-            index,
-            type,
-            id: doc.granuleId,
-            parent: collectionId,
-            body: {
-              doc,
-              doc_as_upsert: true
-            }
-          });
-        }
-        return false;
-      });
-
-      return Promise.all(done);
-    }
+  // make sure collection is added
+  try {
+    await esClient.get({
+      index,
+      type: 'collection',
+      id: collectionId
+    });
   }
-  return false;
+  catch (e) {
+    // adding collection record to ES
+    await indexCollection(esClient, collection);
+  }
+
+  const done = granules.map((g) => {
+    if (g.granuleId) {
+      const doc = {
+        granuleId: g.granuleId,
+        pdrName: get(payload, 'payload.pdr.name'),
+        collectionId,
+        status: get(payload, 'meta.status'),
+        provider: get(payload, 'meta.provider.id'),
+        execution,
+        cmrLink: get(g, 'cmr.link'),
+        files: g.files,
+        error: exception,
+        createdAt: get(payload, 'cumulus_meta.createdAt'),
+        timestamp: Date.now()
+      };
+
+      doc.published = get(g, 'cmr.link', false);
+      doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+      return esClient.update({
+        index,
+        type,
+        id: doc.granuleId,
+        parent: collectionId,
+        body: {
+          doc,
+          doc_as_upsert: true
+        }
+      });
+    }
+    return false;
+  });
+
+  return Promise.all(done);
 }
 
 async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
