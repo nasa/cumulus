@@ -34,7 +34,7 @@ const triggerIngest = async (resources, provider, collection) => {
     const executionName = messageData.ingest_meta.execution_name;
 
     const message = JSON.stringify(messageData);
-    log.info(`Starting ingest of ${collection.id}`);
+    log.info(`Starting ingest of ${collection.name}`);
     await aws.sfn().startExecution({
       stateMachineArn: stateMachine,
       input: message,
@@ -84,7 +84,7 @@ module.exports.handler = async (invocation) => {
         const trigger = collection.trigger;
         if (trigger && trigger.type === 'interval') {
           const periodMs = 1000 * trigger.period_s;
-          log.info(`Scheduling ${collection.id}.` +
+          log.info(`Scheduling ${collection.name}.` +
                    `period=${periodMs}ms, offset=${offsetMs % periodMs}ms`);
           doPeriodically(periodMs, offsetMs % periodMs, () => {
             triggerIngest(invocation.resources, provider, collection);

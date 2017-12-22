@@ -12,8 +12,8 @@
   },
   "scripts": {
     "test": "ava tests/*.js --serial --no-color",
-    "build": "webpack --progress",
-    "watch": "webpack --progress -w"
+    "build": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress",
+    "watch": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress -w"
   },
   "ava": {
     "babel": "inherit",

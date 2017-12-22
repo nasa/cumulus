@@ -5,7 +5,6 @@ module.exports = {
     filename: 'dist/index.js'
   },
   target: 'node',
-  devtool: 'sourcemap',
   module: {
     loaders: [{
       test: /\.js?$/,
