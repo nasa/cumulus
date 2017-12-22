@@ -31,8 +31,6 @@ function schedule(event, context, cb) {
       message.meta = merge(message.meta, meta);
       message.payload = payload;
       message.cumulus_meta.execution_name = cryptoRandomString(25);
-
-      return;
     })
     .then(() => {
       if (provider) {
@@ -53,13 +51,10 @@ function schedule(event, context, cb) {
       return null;
     })
     .then((c) => {
-      if (c) {
-        message.meta.collection = c;
-      }
-      return null;
+      if (c) message.meta.collection = c;
     })
     .then(() => SQS.sendMessage(message.meta.queues.startSF, message))
-    .then(r => cb(null, r))
+    .then((r) => cb(null, r))
     .catch(e => cb(e));
 }
 
