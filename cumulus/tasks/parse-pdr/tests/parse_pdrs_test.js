@@ -4,7 +4,7 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 const errors = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
-const modis = require('@cumulus/test-data/payloads/modis/parse.json');
+const modis = require('@cumulus/test-data/payloads/new-message-schema/parse.json');
 
 const pdr = proxyquire('@cumulus/ingest/pdr', {
   '@cumulus/common/aws': {
@@ -20,7 +20,7 @@ const handler = proxyquire('../index', {
 
 test.cb('error when provider info is missing', (t) => {
   const newPayload = Object.assign({}, modis);
-  delete newPayload.provider;
+  delete newPayload.config.provider;
   handler(newPayload, {}, (e) => {
     t.true(e instanceof errors.ProviderNotFound);
     t.end();
@@ -39,16 +39,16 @@ test.cb('parse PDR from FTP endpoint', (t) => {
   const pdrName = 'MOD09GQ.PDR';
 
   const newPayload = Object.assign({}, modis);
-  newPayload.provider = provider;
-  newPayload.meta.useQueue = false;
-  handler(newPayload, {}, (e, r) => {
-    if (e instanceof errors.RemoteResourceError) {
+  newPayload.config.provider = provider;
+  newPayload.config.useQueue = false;
+  handler(newPayload, {}, (e, output) => {
+    if (e instanceof errors.RemoteResourceError || e.code === 'AllAccessDisabled') {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
     }
-    t.is(r.payload.granules.length, r.payload.granulesCount);
-    t.is(r.payload.pdr.name, pdrName);
-    t.is(r.payload.filesCount, 2);
+    t.is(output.granules.length, output.granulesCount);
+    t.is(output.pdr.name, pdrName);
+    t.is(output.filesCount, 2);
     return t.end(e);
   });
 });
@@ -63,16 +63,16 @@ test.cb('parse PDR from HTTP endpoint', (t) => {
   const pdrName = 'MOD09GQ.PDR';
 
   const newPayload = Object.assign({}, modis);
-  newPayload.provider = provider;
-  newPayload.meta.useQueue = false;
-  handler(newPayload, {}, (e, r) => {
-    if (e instanceof errors.RemoteResourceError) {
+  newPayload.config.provider = provider;
+  newPayload.config.useQueue = false;
+  handler(newPayload, {}, (e, output) => {
+    if (e instanceof errors.RemoteResourceError || e.code === 'AllAccessDisabled') {
       log.info('ignoring this test. Test server seems to be down');
       return t.end();
     }
-    t.is(r.payload.granules.length, r.payload.granulesCount);
-    t.is(r.payload.pdr.name, pdrName);
-    t.is(r.payload.filesCount, 2);
+    t.is(output.granules.length, output.granulesCount);
+    t.is(output.pdr.name, pdrName);
+    t.is(output.filesCount, 2);
     return t.end(e);
   });
 });
