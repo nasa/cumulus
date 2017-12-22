@@ -311,7 +311,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
         }
       });
     }
-    return false;
+    return;
   });
 
   return Promise.all(done);
