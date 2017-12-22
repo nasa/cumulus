@@ -12,7 +12,7 @@ const constructStepFunctionInput = (resources, provider, collection) => {
   const meta = JSON.parse(JSON.stringify(collection.meta || {}));
   const startDate = new Date().toISOString();
   const id = uuid.v4();
-  const executionName = aws.toSfnExecutionName([collection.id, id], '__');
+  const executionName = aws.toSfnExecutionName([collection.name, id], '__');
   return {
     workflow_config_template: collection.workflow_config_template,
     resources: resources,

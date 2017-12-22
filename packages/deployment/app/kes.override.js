@@ -1,8 +1,12 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console, no-param-reassign */
 'use strict';
 
-const { Kes } = require('kes');
+const { Kes, Lambda } = require('kes');
+const pLimit = require('p-limit');
+const fs = require('fs');
+const omit = require('lodash.omit');
 const forge = require('node-forge');
+const utils = require('kes').utils;
 
 /**
  * Generates a public/private key pairs
@@ -15,8 +19,76 @@ function generateKeyPair() {
   return rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
 }
 
+function findOutputValue(outputs, key) {
+  return outputs.find((o) => (o.OutputKey === key)).OutputValue;
+}
+
 /**
- * Generates a template used for SFScheduler to create cumulus
+ * Creates the base Cumulus message template used to construct a Cumulus
+ * message for Cumulus StepFunctions
+ * @param  {object} config  Kes config object
+ * @param  {object} outputs List of CloudFormations Output key and values
+ * @return {object} a base Cumulus message template
+ */
+function baseInputTemplate(config, outputs) {
+  // get cmr password from outputs
+  const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
+  const topicArn = findOutputValue(outputs, 'sftrackerSnsArn');
+
+  const template = {
+    cumulus_meta: {
+      stack: config.stackName,
+      buckets: config.buckets,
+      message_source: 'sfn'
+    },
+    meta: {
+      cmr: config.cmr,
+      distribution_endpoint: config.distribution_endpoint,
+      topic_arn: topicArn
+    },
+    workflow_config: {},
+    payload: {},
+    exception: null
+  };
+
+  template.meta.cmr.password = cmrPassword;
+
+  // add queues
+  if (config.sqs) {
+    template.meta.queues = {};
+    const queueArns = outputs.filter(o => o.OutputKey.includes('SQSOutput'));
+
+    queueArns.forEach((queue) => {
+      template.meta.queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
+    });
+  }
+
+  return template;
+}
+
+/**
+ * generates a Cumulus message Template for a given step function
+ * @param  {object} template base message template
+ * @param  {object} sf StepFunction definition (part of kes config)
+ * @param  {object} sfConfigs Sled configs for the StepFunction (part of kes config)
+ * @param  {string} wfArn StepFunction Arn
+ * @return {object} stepFunction template
+ */
+function buildStepFunctionMessageTemplate(template, sf, sfConfigs, wfArn) {
+  // add workflow configs for each step function step
+  Object.keys(sf.definition.States).forEach(name => {
+    template.workflow_config[name] = sfConfigs[sf.name][name];
+  });
+
+  // update cumulus_meta for each workflow message tempalte
+  template.cumulus_meta.state_machine = wfArn;
+  template.cumulus_meta.workflow_name = sf.name;
+
+  return msg;
+}
+
+/**
+ * Generates an template used for SFScheduler to create cumulus
  * payloads for step functions. Each step function gets a separate
  * template
  *
@@ -26,74 +98,19 @@ function generateKeyPair() {
  * @return {array} list of templates
  */
 function generateInputTemplates(config, outputs) {
-  const template = {
-    eventSource: 'sfn',
-    resources: {},
-    ingest_meta: {},
-    provider: {},
-    collection: {},
-    meta: {},
-    exception: null,
-    payload: {}
-  };
-
-  const arns = {};
-  outputs.forEach((o) => {
-    arns[o.OutputKey] = o.OutputValue;
-  });
-
-  template.resources = {
-    stack: config.stackName,
-    kms: arns.KmsKeyId,
-    cmr: config.cmr,
-    distribution_endpoint: config.distribution_endpoint
-  };
-
-  // add cmr password:
-  template.resources.cmr.password = arns.EncryptedCmrPassword;
-
-  if (config.buckets) {
-    template.resources.buckets = config.buckets;
-  }
-
-  if (config.sqs) {
-    template.resources.queues = {};
-    Object.keys(config.sqs).forEach((queue) => {
-      const queueUrl = arns[`${queue}SQSOutput`];
-      if (queueUrl) {
-        template.resources.queues[queue] = queueUrl;
-      }
-    });
-  }
-
-  if (config.stepFunctions) {
-    const sfs = {};
-    config.stepFunctions.forEach((sf) => {
-      sfs[sf.name] = `s3://${config.buckets.internal}/` +
-                     `${config.stackName}/workflows/${sf.name}.json`;
-    });
-
-    template.resources.templates = sfs;
-  }
-
-  const inputs = [];
+  const templates = [];
 
   // generate a output template for each workflow
   if (config.stepFunctions) {
     config.stepFunctions.forEach((sf) => {
-      const t = Object.assign({}, template);
-      t.ingest_meta = {
-        topic_arn: arns.sftrackerSnsArn,
-        state_machine: arns[`${sf.name}StateMachine`],
-        workflow_name: sf.name,
-        status: 'running',
-        config: sf.config
-      };
-      inputs.push(t);
+      const msg = baseInputTemplate(config, outputs);
+
+      // get workflow arn
+      const wfArn = findOutputValue(outputs, `${sf.name}StateMachine`);
+      templates.push(buildStepFunctionMessageTemplate(msg, sf, config.stepFunctions.configs, wfArn));
     });
   }
-
-  return inputs;
+  return templates;
 }
 
 /**
@@ -121,6 +138,37 @@ function generateWorkflowsList(config) {
   return false;
 }
 
+
+class UpdatedLambda extends Lambda {
+  /**
+   * Copy source code of a given lambda function, zips it, calculate
+   * the hash of the source code and updates the lambda object with
+   * the hash, local and remote locations of the code
+   *
+   * @param {Object} lambda the lambda object
+   * @returns {Promise} returns the updated lambda object
+   */
+  zipLambda(lambda) {
+    console.log(`Zipping ${lambda.local} and injecting sled`);
+
+    // skip if the file with the same hash is zipped
+    if (fs.existsSync(lambda.local)) {
+      return Promise.resolve(lambda);
+    }
+
+    return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => lambda);
+  }
+
+  buildS3Path(lambda) {
+    lambda = super.buildS3Path(lambda);
+
+    if (lambda.useSled) {
+      lambda.handler = 'cumulus-sled.handler';
+    }
+    return lambda;
+  }
+}
+
 /**
  * A subclass of Kes class that overrides opsStack method.
  * The subclass is checks whether the public/private keys are generated
@@ -134,6 +182,20 @@ function generateWorkflowsList(config) {
  * @class UpdatedKes
  */
 class UpdatedKes extends Kes {
+  constructor(config) {
+    super(config);
+    this.Lambda = UpdatedLambda;
+  }
+
+  async redployApiGateWay(name, restApiId, stageName) {
+    if (restApiId) {
+      const apigateway = new this.AWS.APIGateway();
+      const r = await apigateway.createDeployment({ restApiId, stageName }).promise();
+      console.log(`${name} endpoints with the id ${restApiId} redeployed.`);
+      return r;
+    }
+    return true;
+  }
 
   /**
    * Restart all active tasks in the clusters of a deployed
@@ -234,6 +296,50 @@ class UpdatedKes extends Kes {
   }
 
   /**
+   * Because both kes and sled use Mustache for templating,
+   * we have to curly brackes for all the templating values
+   * that has to be passed to sled. this method, looks for
+   * any value that starts with a "$" and put the whole value
+   * inside "{{ }}""
+   */
+  cleanStepFunctionDefinition() {
+    const sFconfigs = {};
+    const test = new RegExp('^\\$\\.');
+
+    const addCurly = (config) => {
+      if (config) {
+        Object.keys(config).forEach(n => {
+          if (typeof config[n] === 'object') {
+            config[n] = addCurly(config[n]);
+          }
+          else if (typeof config[n] === 'string') {
+            const match = config[n].match(test);
+            if (match) {
+              config[n] = `{{${config[n]}}}`;
+            }
+          }
+        });
+      }
+      return config;
+    };
+
+    // loop through the sled config of each step of 
+    // the step function, add curly brackets to values
+    // with dollar sign and remove config key from the
+    // defintion, otherwise CloudFormation will be mad
+    // at us.
+    this.config.stepFunctions.forEach((sf) => {
+      sFconfigs[sf.name] = {};
+      Object.keys(sf.definition.States).forEach((n) => {
+        sFconfigs[sf.name][n] = addCurly(sf.definition.States[n].config);
+        sf.definition.States[n] = omit(sf.definition.States[n], ['config']);
+      });
+    });
+
+    this.config.stepFunctions.configs = sFconfigs;
+  }
+
+  /**
    * Override opsStack method.
    *
    * @return {Promise}
@@ -241,6 +347,15 @@ class UpdatedKes extends Kes {
   opsStack() {
     // check if public and private key are generated
     // if not generate and upload them
+    const apis = {};
+
+    const limit = pLimit(1);
+
+    // remove config variable from all workflow steps
+    // and keep them in a separate variable.
+    // this is needed to prevent stepfunction deployment from crashing
+    this.cleanStepFunctionDefinition();
+
     return this.crypto(this.bucket, this.stack)
       .then(() => super.opsStack())
       .then(() => this.describeCF())
@@ -261,35 +376,59 @@ class UpdatedKes extends Kes {
               this.config.distribution_endpoint = o.OutputValue;
             }
           }
+
+          switch (o.OutputKey) {
+            case 'ApiId':
+              apis.api = o.OutputValue;
+              break;
+            case 'DistributionId':
+              apis.distribution = o.OutputValue;
+              break;
+            case 'ApiStage':
+              apis.stageName = o.OutputValue;
+              break;
+            default:
+              //nothing
+          }
         });
 
         const workflowInputs = generateInputTemplates(this.config, outputs);
         const stackName = this.stack;
 
         console.log('Uploading Workflow Input Templates');
-        const uploads = workflowInputs.map((w) => {
-          const workflowName = w.ingest_meta.workflow_name;
-          const key = `${stackName}/workflows/${workflowName}.json`;
-          return this.uploadToS3(
-            this.bucket,
-            key,
-            JSON.stringify(w)
-          );
-        });
+        const uploads = workflowInputs.map((w) => limit(
+          () => {
+            const workflowName = w.cumulus_meta.workflow_name;
+            const key = `${stackName}/workflows/${workflowName}.json`;
+            return this.uploadToS3(
+              this.bucket,
+              key,
+              JSON.stringify(w)
+            );
+          }
+        ));
 
         const workflows = generateWorkflowsList(this.config);
 
         if (workflows) {
-          uploads.push(this.uploadToS3(
+          uploads.push(limit(() => this.uploadToS3(
             this.bucket,
             `${stackName}/workflows/list.json`,
             JSON.stringify(workflows)
-          ));
+          )));
         }
 
         return Promise.all(uploads);
       })
-      .then(() => this.restartECSTasks(this.config));
+      .then(() => this.restartECSTasks(this.config))
+      .then(() => {
+        const updates = [
+          this.redployApiGateWay('api', apis.api, apis.stageName),
+          this.redployApiGateWay('distribution', apis.distribution, apis.stageName)
+        ];
+
+        return Promise.all(updates);
+      });
   }
 }
 
