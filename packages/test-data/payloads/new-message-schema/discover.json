@@ -1,0 +1,68 @@
+{
+  "config": {
+    "stack": "ghrc-cumulus",
+    "buckets": {
+      "internal": "xxxx-r-deploy",
+      "private": "xxxx-r-private",
+      "protected": "xxxx-r-protected",
+      "public": "xxxx-r-public"
+    },
+    "queues": {
+      "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxx/ghrc-cumulus-dev-startSF"
+    },
+    "templates": {
+      "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json",
+      "ParsePdr": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json"
+    },
+    "cumulus_meta": {
+      "state_machine": "arn:aws:states:us-east-1:xxxxxx:stateMachine:DiscoverGranulesGHRCCumulusdevStateMachine",
+      "state_machine_name": "DiscoverGranules",
+      "config": {
+        "next": "IngestGranule"
+      }
+    },
+    "provider": {
+      "id": "LPDAAC",
+      "globalConnectionLimit": 20,
+      "protocol": "http",
+      "host": "https://e4ftl01.cr.usgs.gov:40521"
+    },
+    "collection": {
+      "id": "MOD09GQ",
+      "meta": {
+        "dataType": "MOD09GQ",
+        "name": "MOD09GQ",
+        "version": "006",
+        "process": "modis",
+        "provider_path": "/TEST_B/Cumulus/PDR/TEST_CASES",
+        "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+        "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
+        "files": [
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+            "bucket": "protected",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
+          },
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+            "bucket": "private",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
+          },
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.meta\\.xml$",
+            "bucket": "protected",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.meta.xml"
+          },
+          {
+            "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+            "bucket": "public",
+            "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_1.jpg"
+          }
+        ]
+      }
+    }
+  },
+  "input": {},
+  "exception": "None"
+}
