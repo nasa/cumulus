@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/discover-s3",
+  "name": "@cumulus/discover-s3-granules",
   "version": "1.0.0",
   "description": "Discover granules from an S3 bucket",
   "main": "index.js",
@@ -11,7 +11,7 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "echo 'no tests'",
+    "test": "ava tests/*.js",
     "local": "node index.js | pino",
     "build": "webpack --progress",
     "watch": "webpack --progress -w"
