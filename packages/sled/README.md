@@ -42,7 +42,7 @@ To use the sled:
             "entrypoint": "my-module.my_handler"
           }
         }
-   Where the `entrypoint` specifies the task's handler class, identical to how it would be provided
+   Where the `entrypoint` specifies the task's handler function, identical to how it would be provided
    to AWS Lambda. If not defined, the sled will assume that `index.handler` should be used (the Lambda default).
 3. Create a zip file of the task, as you ordinarily would for AWS Lambda
 4. Run `npm run build` in this directory.  A minimal set of code will be produced in the `dist` directory.
