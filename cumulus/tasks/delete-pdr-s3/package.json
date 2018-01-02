@@ -9,7 +9,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "ssh://git@git.earthdata.nasa.gov:7999/gitc/gibs-prototype.git"
+    "url": "https://github.com/cumulus-nasa/cumulus.git"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -17,14 +17,18 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/ava test/*.js --no-color"
+    "test": "env TEST=true ava"
   },
   "ava": {
+    "files": [
+      "test"
+    ],
     "babel": "inherit",
     "require": [
       "babel-polyfill",
       "babel-register"
-    ]
+    ],
+    "color": false
   },
   "babel": {
     "presets": [
@@ -46,12 +50,12 @@
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
+    "ava": "^0.21.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
     "sinon": "^2.0.0-pre.5",
-    "ava": "^0.21.0",
     "webpack": "^1.12.13"
   }
 }
