@@ -81,6 +81,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
+    "ava": "^0.24.0",
     "babel-core": "^6.13.2",
     "babel-eslint": "^6.1.2",
     "babel-loader": "^6.2.4",
@@ -94,9 +95,9 @@
     "eslint-plugin-jsx-a11y": "^2.1.0",
     "eslint-plugin-react": "^6.0.0",
     "exports-loader": "^0.6.3",
+    "json-loader": "^0.5.4",
     "lerna": "^2.0.0",
     "prepend-loader": "0.0.2",
-    "json-loader": "^0.5.4",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
     "webpack": "^1.13.3",
