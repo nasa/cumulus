@@ -4,6 +4,7 @@ const AWS = require('aws-sdk');
 const concurrency = require('./concurrency');
 const fs = require('fs');
 const path = require('path');
+const url = require('url');
 const log = require('./log');
 const string = require('./string');
 const testUtils = require('./test-utils');
@@ -98,10 +99,21 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 };
 
 /**
+ * Delete an object from S3
+ *
+ * @param {string} bucket
+ * @param {string} key
+ * @returns {Promise}
+ */
+exports.deleteS3Object = (bucket, key) =>
+  exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
+
+/**
  * Test if an object exists in S3
  *
  * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
- * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating if the object existss
+ * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
+ *                               if the object exists
  */
 exports.s3ObjectExists = (params) =>
   exports.s3().headObject(params).promise()
@@ -110,7 +122,6 @@ exports.s3ObjectExists = (params) =>
       if (e.code === 'NotFound') return false;
       throw e;
     });
-
 
 exports.promiseS3Upload = (params) => {
   const uploadFn = exports.s3().upload.bind(exports.s3());
@@ -132,6 +143,17 @@ exports.downloadS3File = (s3Obj, filename) => {
       .on('finish', () => resolve(filename))
       .on('error', reject);
   });
+};
+
+exports.getS3Object = (bucket, key) => {
+  const s3 = exports.s3();
+
+  const params = {
+    Bucket: bucket,
+    Key: key
+  };
+
+  return s3.getObject(params).promise();
 };
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
@@ -255,14 +277,32 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
   });
 };
 
-exports.syncUrl = async (url, bucket, destKey) => {
-  const response = await concurrency.promiseUrl(url);
+exports.syncUrl = async (uri, bucket, destKey) => {
+  const response = await concurrency.promiseUrl(uri);
   await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
 };
 
 exports.getQueueUrl = (sourceArn, queueName) => {
   const arnParts = sourceArn.split(':');
   return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
+};
+
+/**
+* parse an s3 uri to get the bucket and key
+* @param {string} uri must be a uri with the `s3://` protocol
+* @return {object} Returns an object with `Bucket` and `Key` properties
+**/
+exports.parseS3Uri = (uri) => {
+  const parsedUri = url.parse(uri);
+
+  if (parsedUri.protocol !== 's3:') {
+    throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
+  }
+
+  return {
+    Bucket: parsedUri.hostname,
+    Key: parsedUri.path.substring(1)
+  };
 };
 
 exports.getPossiblyRemote = async (obj) => {
@@ -330,6 +370,35 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
      .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
      .map((s) => JSON.parse(`"${s}"`));
+
+/**
+* Send a message to AWS SQS
+* @param {string} queueUrl url of the SQS queue
+* @param {string|object} message either string or object message. If an object it
+* will be serialized into a JSON string.
+* @return {promise}
+**/
+exports.sendSQSMessage = (queueUrl, message) => {
+  let messageBody;
+
+  if (typeof message === 'string') {
+    messageBody = message;
+  }
+  else if (typeof message === 'object') {
+    messageBody = JSON.stringify(message);
+  }
+  else {
+    throw new Error('body type is not accepted');
+  }
+
+  const params = {
+    MessageBody: messageBody,
+    QueueUrl: queueUrl
+  };
+
+  const queue = exports.sqs();
+  return queue.sendMessage(params).promise();
+};
 
 // Test code
 // const prom = exports.listS3Objects('gitc-jn-sips-mock', 'PDR/');
