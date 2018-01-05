@@ -1,0 +1,10 @@
+{
+  "title": "QueueGranulesOutput",
+  "description": "Describes the output produced by the queue-granules task",
+  "type": "object",
+  "properties": {
+    "granules_queued": {
+      "type": "integer"
+    }
+  }
+}
