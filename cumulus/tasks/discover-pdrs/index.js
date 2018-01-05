@@ -45,7 +45,6 @@ function handler(_event, context, cb) {
         log.debug(`Ending ${provider.protocol} connection`);
       }
 
-      console.log('output', output)
       return cb(null, output);
     }).catch(e => {
       log.error(e);
