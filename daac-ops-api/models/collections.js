@@ -19,7 +19,7 @@ function checkRegex(regex, sampleFileName) {
 class Collection extends Manager {
   static recordIsValid(_item, schema = null) {
     const item = _item;
-    super.recordIsValid(item, schema, 'all');
+    super.recordIsValid(item, schema);
 
     // make sure regexes are correct
     // first test granuleId extraction and validation regex
