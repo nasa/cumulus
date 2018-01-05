@@ -5,9 +5,17 @@ const get = require('lodash.get');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const errors = require('@cumulus/common/errors');
 
+/**
+ * Publishes incoming Cumulus Message in its entirety to
+ * a given SNS topic
+ *
+ * @param  {object} message Cumulus message
+ * @param  {boolean} finish  indicates if the message belongs to the end of a stepFunction
+ * @return {Promise} AWS SNS response 
+ */
 async function publish(message, finish = false) {
   const event = await StepFunction.pullEvent(message);
-  const topicArn = get(event, 'ingest_meta.topic_arn', null);
+  const topicArn = get(event, 'meta.topic_arn', null);
   let failed = false;
 
   if (topicArn) {
@@ -15,10 +23,10 @@ async function publish(message, finish = false) {
     if (finish) {
       if (event.exception || event.error) {
         failed = true;
-        event.ingest_meta.status = 'failed';
+        event.meta.status = 'failed';
       }
       else {
-        event.ingest_meta.status = 'completed';
+        event.meta.status = 'completed';
       }
 
       const granuleId = get(event, 'meta.granuleId', null);
@@ -26,9 +34,12 @@ async function publish(message, finish = false) {
         await StepFunction.setGranuleStatus(granuleId, event);
       }
     }
+    else {
+      event.meta.status = 'running';
+    }
 
     const sns = new AWS.SNS();
-    await sns.publish({
+    return sns.publish({
       TopicArn: topicArn,
       Message: JSON.stringify(event)
     }).promise();
