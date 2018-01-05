@@ -31,7 +31,6 @@ test.cb.serial('should succeed with correct payload', (t) => {
     result
   }));
   handler(newPayload, {}, (e, output) => {
-    console.log('output', output.granules[0].cmr)
     cmrjs.CMR.prototype.ingestGranule.restore();
     t.is(e, null);
     t.is(
