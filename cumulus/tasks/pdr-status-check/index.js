@@ -8,8 +8,23 @@ let log = require('@cumulus/ingest/log');
 
 log = log.child({ file: 'pdr-status-check/index.js' });
 
-function pullEvent(_event, cb) {
-  let event;
+/**
+* Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
+* @callback lambdaCallback
+* @param {object} error
+* @param {object} output - output object matching schemas/output.json
+*/
+
+/**
+* Lambda function handler for discovering granules on s3 buckets.
+* See schemas/input.json for detailed expected input.
+*
+* @param  {object} event lambda event object
+* @param  {string} event.s3_path the path of an event stored on s3
+* @param  {lambdaCallback} callback callback function
+* @return {undefined}
+*/
+function pullEvent(event, context, cb) {
   let counter;
   let limit;
   let isFinished;
@@ -19,21 +34,20 @@ function pullEvent(_event, cb) {
     cb(e);
   }
 
-  function checkStatus(ev) {
-    event = ev;
-
-    const pdrName = get(event, 'payload.pdr.name');
+  function checkStatus(eventToCheck) {
+    const payload = eventToCheck.payload;
+    const pdrName = payload.pdr.name;
     log = log.child({ pdrName });
 
-    counter = get(event, 'payload.counter', 0);
-    limit = get(event, 'payload.limit', 30);
-    isFinished = get(event, 'payload.isFinished', false);
-    const runningExecutions = get(event, 'payload.running', []);
+    counter = get(eventToCheck, 'payload.counter', 0);
+    limit = get(eventToCheck, 'payload.limit', 30);
+    isFinished = get(eventToCheck, 'payload.isFinished', false);
+    const runningExecutions = get(eventToCheck, 'payload.running', []);
 
     // if finished, exit
     if (isFinished) {
       log.info('pdr is already finished. Exiting...');
-      return cb(null, event);
+      return cb(null, eventToCheck);
     }
 
     // if this is tried too many times, exit
@@ -45,8 +59,8 @@ function pullEvent(_event, cb) {
     // update the status of each previously running execution
     function updateStatus(arn) {
       return StepFunction.getExecution(arn, true).then((r) => {
-        const completed = get(event, 'payload.completed', []);
-        const failed = get(event, 'payload.failed', []);
+        const completed = get(eventToCheck, 'payload.completed', []);
+        const failed = get(eventToCheck, 'payload.failed', []);
         const running = [];
 
         r.forEach((sf) => {
@@ -74,14 +88,14 @@ function pullEvent(_event, cb) {
 
         if (running.length === 0) {
           isFinished = true;
-          event.payload.isFinished = isFinished;
-          event.payload.running = running.length;
-          event.payload.failed = failed.length;
-          event.payload.completed = completed.length;
+          eventToCheck.payload.isFinished = isFinished;
+          eventToCheck.payload.running = running.length;
+          eventToCheck.payload.failed = failed.length;
+          eventToCheck.payload.completed = completed.length;
         }
         else {
           isFinished = false;
-          event.payload.isFinished = isFinished;
+          eventToCheck.payload.isFinished = isFinished;
           log.info({
             running: running.length,
             completed: completed.length,
@@ -90,15 +104,15 @@ function pullEvent(_event, cb) {
             limit
           }, 'latest status');
 
-          event.payload.counter = counter + 1;
-          event.payload.limit = limit;
-          event.payload.running = running;
-          event.payload.completed = completed;
-          event.payload.failed = failed;
+          eventToCheck.payload.counter = counter + 1;
+          eventToCheck.payload.limit = limit;
+          eventToCheck.payload.running = running;
+          eventToCheck.payload.completed = completed;
+          eventToCheck.payload.failed = failed;
         }
 
-        return StepFunction.pushEvent(event)
-          .then(() => cb(null, event))
+        return StepFunction.pushEvent(eventToCheck)
+          .then(() => cb(null, eventToCheck))
           .catch(handleError);
       });
     }
@@ -107,11 +121,11 @@ function pullEvent(_event, cb) {
       .catch(handleError);
   }
 
-  StepFunction.pullEvent(_event)
+  StepFunction.pullEvent(event)
     .then(checkStatus)
     .catch(handleError);
 }
 
-module.exports.handler = function handler(_event, context, cb) {
-  return pullEvent(_event, cb);
+module.exports.handler = function handler(event, context, cb) {
+  return pullEvent(event, context, cb);
 };
