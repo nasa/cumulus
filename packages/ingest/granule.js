@@ -9,7 +9,7 @@ const cksum = require('cksum');
 const checksum = require('checksum');
 const logger = require('./log');
 const errors = require('@cumulus/common/errors');
-const AWS = require('aws-sdk');
+const aws = require('@cumulus/common/aws');
 const S3 = require('./aws').S3;
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
@@ -90,9 +90,9 @@ class Discover {
     return await this.findNewGranules(updatedFiles);
   }
 
-  async fileIsNew(file) {
-    const exists = await S3.fileExists(file.bucket, file.name);
-    return exists ? false : file;
+  fileIsNew(file) {
+    return aws.s3ObjectExists({ Bucket: file.bucket, Key: file.key })
+      .then((exists) => (exists ? false : file));
   }
 
   async findNewGranules(files) {
@@ -253,7 +253,7 @@ class Granule {
     exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
 
     if (duplicateHandling === 'version') {
-      const s3 = new AWS.S3();
+      const s3 = aws.s3();
       // check that the bucket has versioning enabled
       let versioning = await s3.getBucketVersioning({ Bucket: file.bucket }).promise();
 
