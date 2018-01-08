@@ -15,14 +15,15 @@ function taskPath(relativePath) {
 }
 
 /**
+ * @param {String} relativePath The path to the schema
  * @returns {Promise} A promise resolving to the parsed contents of the file passed in
  */
-function promiseJsonFile(relativePath) {
+function readJsonFile(relativePath) {
   return new Promise((resolve, reject) => {
     const filePath = taskPath(relativePath);
-    const file = fs.readFileSync(filePath);
+    const file = fs.readFileSync(filePath, { encoding: 'utf8' });
     try {
-      const result = JSON.parse(file.toString());
+      const result = JSON.parse(file);
       return resolve(result);
     }
     catch (e) {
@@ -60,21 +61,24 @@ function getNestedHandler(handlerString) {
   }
 }
 
+/**
+ * Given an inputs and the file name of a schema, validates the input.
+ * @param {String} input The input, config, or output to be validated
+ * @param {String} schemaFile The relative path to the schema
+ * @returns {Promise} A Promise resolving to true if Input is valid or rejecting if it errors
+ */
 function validateMessage(input, schemaFile) {
   if (input && schemaFile) {
-    return promiseJsonFile(schemaFile).then((schema) => {
-      const ajv = new Ajv();
-      const validate = ajv.compile(schema);
-      const valid = validate(input);
-      if (!valid) {
-        const err = {
-          message: 'The input has validation errors',
-          details: validate.errors
-        };
-        throw err;
-      }
-      return valid;
-    });
+    return readJsonFile(schemaFile)
+      .then((schema) => {
+        const ajv = new Ajv();
+        const schemaValidator = ajv.compile(schema);
+        const valid = schemaValidator(input);
+        if (!valid) {
+          throw Error('Validation Error', schemaValidator.errors);
+        }
+        return valid;
+      });
   }
   return Promise.resolve(true);
 }
@@ -116,10 +120,10 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
   let fullEvent = null;
   let schemas = null;
 
-  (handlerFn ? Promise.resolve(handlerConfig || {}) : promiseJsonFile('cumulus.json'))
+  (handlerFn ? Promise.resolve(handlerConfig || {}) : readJsonFile('cumulus.json'))
     .then((config) => {
       taskConfig = config.task || {};
-      if (taskConfig) schemas = taskConfig.schemas;
+      schemas = taskConfig.schemas;
 
       nestedHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
       return message.loadRemoteEvent(event);
@@ -137,9 +141,7 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
             delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
             return invokeHandler(nestedHandler, nestedEvent, context);
           })
-          .catch((err) => {
-            callback(err);
-          });
+          .catch(callback);
       }
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
       return invokeHandler(nestedHandler, nestedEvent, context);
@@ -148,9 +150,7 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
       if (schemas) {
         return validateMessage(handlerResponse, schemas.output)
           .then(() => message.createNextEvent(handlerResponse, fullEvent, messageConfig))
-          .catch((err) => {
-            callback(err);
-          });
+          .catch(callback);
       }
       return message.createNextEvent(handlerResponse, fullEvent, messageConfig);
     })
