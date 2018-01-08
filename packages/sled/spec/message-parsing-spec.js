@@ -16,7 +16,7 @@ const createMessage = (props) => ({
 const runTestHandler = (event, cb) => {
   const callback = (err, data) => {
     if (err) return cb(err);
-    cb(null, data);
+    return cb(null, data);
   };
 
   const testHandler = (evt, context, response) => {
