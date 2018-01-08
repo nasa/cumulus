@@ -24,7 +24,7 @@ log = log.child({ file: 'pdr-status-check/index.js' });
 * @param  {lambdaCallback} callback callback function
 * @return {undefined}
 */
-function pullEvent(event, context, cb) {
+module.exports.handler = function handler(event, context, cb) {
   let counter;
   let limit;
   let isFinished;
@@ -47,7 +47,7 @@ function pullEvent(event, context, cb) {
     // if finished, exit
     if (isFinished) {
       log.info('pdr is already finished. Exiting...');
-      return cb(null, eventToCheck);
+      return Promise.resolve(cb(null, eventToCheck));
     }
 
     // if this is tried too many times, exit
@@ -111,9 +111,7 @@ function pullEvent(event, context, cb) {
           eventToCheck.payload.failed = failed;
         }
 
-        return StepFunction.pushEvent(eventToCheck)
-          .then(() => cb(null, eventToCheck))
-          .catch(handleError);
+        return Promise.resolve(cb(null, eventToCheck));
       });
     }
 
@@ -121,11 +119,5 @@ function pullEvent(event, context, cb) {
       .catch(handleError);
   }
 
-  StepFunction.pullEvent(event)
-    .then(checkStatus)
-    .catch(handleError);
-}
-
-module.exports.handler = function handler(event, context, cb) {
-  return pullEvent(event, context, cb);
+  return checkStatus(event).catch(handleError);
 };
