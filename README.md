@@ -6,9 +6,10 @@
 
 ### Prerequisites
 
-* node.js >= 4.3 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm)
+* node.js >= 4.3 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm) and node version 7.6.
+* [pip](https://pip.pypa.io/en/stable/installing/)
 * [yarn](https://yarnpkg.com/en/)
-* AWS CLI (http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+* [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 * Ruby
 * BASH
 * Docker (only required for building new container images)
