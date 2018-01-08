@@ -29,6 +29,15 @@ To run the example, execute `node index.js local <message-name>` in this directo
 `<message-name>` is the basename of the example message under `example/messages/` to use as input
 and output, e.g. `basic` or `jsonpath`.
 
+## Validation
+
+To use the sled validation:
+
+1. Define JSON schemas for the task input, output, and config.
+2. Place a path to these schemas in the `cumulus.json` file per task.
+
+If a schema is not present, its validation will be skipped.
+
 ## Use
 
 To use the sled:
