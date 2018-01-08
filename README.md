@@ -7,15 +7,18 @@
 ### Prerequisites
 
 * node.js >= 4.3 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm)
+* [yarn](https://yarnpkg.com/en/)
 * AWS CLI (http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 * Ruby
 * BASH
 * Docker (only required for building new container images)
+* docker-compose (`pip install docker-compose`)
 
 Install the correct node version:
 
 ```
-nvm install 4.3
+nvm install 7.6
+nvm use 7.6
 ```
 
 Ensure that the aws cli is configured and that the default output format is either JSON or None:
@@ -28,22 +31,22 @@ aws configure
 
 We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
 
-    $ npm install -g lerna
+    $ yarn global add lerna
 
 ### Install Local Dependencies
 
-We use npm for local package management
+We use yarn for local package management
 
-    $ npm install
-    $ npm run bootstrap
+    $ yarn install
+    $ yarn ybootstrap
 
 Building All packages:
 
-    $ npm run build
+    $ yarn build
 
 Build and watch packages:
 
-    $ npm run watch
+    $ yarn watch
 
 ## Running Tests
 
@@ -51,9 +54,13 @@ Turn on the docker containers first:
 
     $ docker-compose up local
 
+If you prefer to run docker in detached mode (i.e. run containers in the background), run:
+
+    $ docker-compose up -d local
+
 Run the test commands next
 
-    $ npm run test
+    $ yarn test
 
 ## Adding New Packages
 
