@@ -1,0 +1,29 @@
+{
+  "title": "PostToCmrOutput",
+  "description": "Describes the output provided by the post-to-cmr task",
+  "type": "object",
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "granuleId": { "type": "string" },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+            }
+          },
+          "cmr": {
+            "type": "object",
+            "properties": {
+              "conceptId": { "type": "string" },
+              "link": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
