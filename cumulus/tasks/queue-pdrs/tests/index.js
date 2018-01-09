@@ -19,7 +19,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(async (t) => {
   await deleteS3Bucket(t.context.bucket);
-  await sqs().deleteQueue({ QueueName: 'testQueue' }).promise();
+  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
 });
 
 test('queue pdrs', async (t) => {
@@ -39,7 +39,7 @@ test('queue pdrs', async (t) => {
   const input = Object.assign({}, inputJSON);
   input.config.templates.ParsePdr = ParsePdrTemplate;
   input.config.buckets.internal = t.context.bucket;
-  input.config.queueus.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
+  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);
