@@ -3,6 +3,7 @@
 const path = require('path');
 const fs = require('fs');
 const message = require('./lib/message');
+const Ajv = require('ajv');
 
 /**
  * Returns an absolute path given a relative path within the task directory
@@ -14,20 +15,16 @@ function taskPath(relativePath) {
 }
 
 /**
- * @returns {Promise} A promise resolving to the parsed contents of cumulus.json
+ * @param {String} relativePath The path to the schema
+ * @returns {Promise} A promise resolving to the parsed contents of the file passed in
  */
-function promiseTaskConfig() {
+function readJsonFile(relativePath) {
   return new Promise((resolve, reject) => {
-    const filePath = taskPath('cumulus.json');
-    fs.readFile(filePath, (err, data) => {
+    const filePath = taskPath(relativePath);
+
+    fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) return reject(err);
-      try {
-        const result = JSON.parse(data.toString());
-        return resolve(result);
-      }
-      catch (e) {
-        return reject(e);
-      }
+      return resolve(JSON.parse(data));
     });
   });
 }
@@ -62,6 +59,27 @@ function getNestedHandler(handlerString) {
 }
 
 /**
+ * Given an inputs and the file name of a schema, validates the input.
+ * @param {String} input A JSON document to be validated
+ * @param {String} schemaFile The relative path to the schema
+ * @returns {Promise} A Promise resolving to true if Input is valid or rejecting if it errors
+ */
+function validateJsonDocument(input, schemaFile) {
+  if (input && schemaFile) {
+    return readJsonFile(schemaFile)
+      .then((schema) => {
+        const ajv = new Ajv();
+        const valid = ajv.validate(schema, input);
+        if (!valid) {
+          throw Error('Validation Error', ajv.errors);
+        }
+        return true;
+      });
+  }
+  return Promise.resolve(true);
+}
+
+/**
  * Given a Lambda handler, event, and context, invokes the handler with the given event.
  * @param {Function} handler The Lambda handler to invoke
  * @param {*} event The event to pass to the Lambda.  Note: this is passed verbatim to the handler
@@ -93,13 +111,14 @@ function invokeHandler(handler, event, context) {
  */
 exports.handler = function sledHandler(event, context, callback, handlerFn, handlerConfig) {
   let taskConfig = null;
-  let nestedHandler = null;
+  let taskHandler = null;
   let messageConfig = null;
   let fullEvent = null;
-  (handlerFn ? Promise.resolve(handlerConfig || {}) : promiseTaskConfig())
+  let schemas = null;
+
+  (handlerFn ? Promise.resolve(handlerConfig || {}) : readJsonFile('cumulus.json'))
     .then((config) => {
       taskConfig = config.task || {};
-      nestedHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
       return message.loadRemoteEvent(event);
     })
     .then((remoteEvent) => {
@@ -108,10 +127,28 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
     })
     .then((nestedEvent) => {
       messageConfig = nestedEvent.messageConfig;
+      taskHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
+      schemas = taskConfig.schemas;
+      if (schemas) { //Run Validation
+        return validateJsonDocument(nestedEvent.input, schemas.input)
+          .then(() => validateJsonDocument(nestedEvent.config, schemas.config))
+          .then(() => {
+            delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
+            return invokeHandler(taskHandler, nestedEvent, context);
+          })
+          .catch(callback);
+      }
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
-      return invokeHandler(nestedHandler, nestedEvent, context);
+      return invokeHandler(taskHandler, nestedEvent, context);
     })
-    .then((handlerResponse) => message.createNextEvent(handlerResponse, fullEvent, messageConfig))
+    .then((handlerResponse) => {
+      if (schemas) {
+        return validateJsonDocument(handlerResponse, schemas.output)
+          .then(() => message.createNextEvent(handlerResponse, fullEvent, messageConfig))
+          .catch(callback);
+      }
+      return message.createNextEvent(handlerResponse, fullEvent, messageConfig);
+    })
     .then((nextEvent) => callback(null, nextEvent))
     .catch((err) => {
       if (err.name && err.name.includes('WorkflowError')) {
@@ -148,5 +185,9 @@ if (process.argv[2] === 'local') {
       }
       console.log('Success', data);
     }
+  }, (e, {}, cb) => {
+    console.log(e);
+
+    cb(null, e);
   });
 }
