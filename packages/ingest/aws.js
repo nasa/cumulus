@@ -48,7 +48,7 @@ function getEndpoint(local = false, port = 8000) {
  * @returns {string} Step Function Execution Arn
  */
 function getExecutionArn(stateMachineArn, executionName) {
-  if (stateMachineArn) {
+  if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
     return `${sfArn}:${executionName}`;
   }
@@ -500,8 +500,8 @@ class KMS {
 
 class StepFunction {
   static granuleExecutionStatus(granuleId, event) {
-    const buckets = _get(event, 'resources.buckets');
-    const stack = _get(event, 'resources.stack');
+    const buckets = _get(event, 'config.buckets');
+    const stack = _get(event, 'config.stack');
 
     const granuleKey = `${stack}/granules_ingested/${granuleId}`;
 
@@ -519,7 +519,6 @@ class StepFunction {
     const status = event.ingest_meta.status;
     return S3.put(d.bucket, d.key, '', null, { arn, status });
   }
-
 
   static async getGranuleStatus(granuleId, event) {
     const d = this.granuleExecutionStatus(granuleId, event);

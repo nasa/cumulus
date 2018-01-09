@@ -12,8 +12,10 @@ function handler(_event, context, cb) {
   try {
     log.debug({ payload: _event });
     const event = Object.assign({}, _event);
-    const queue = get(event, 'meta.useQueue', true);
-    const provider = get(event, 'provider', null);
+    const config = get(event, 'config');
+
+    const queue = get(config, 'useQueue', true);
+    const provider = get(config, 'provider', null);
 
     if (!provider) {
       const err = new ProviderNotFound('Provider info not provided');
@@ -23,23 +25,24 @@ function handler(_event, context, cb) {
 
     const Discover = granule.selector('discover', provider.protocol, queue);
     const discover = new Discover(event);
+    const output = {};
 
     log.debug('Staring granule discovery');
     return discover.discover().then((gs) => {
       if (queue) {
-        event.payload.granules_found = gs.length;
+        output.granules_found = gs.length;
         log.debug(`Discovered ${gs.length} granules`);
       }
       else {
         log.debug(gs);
-        event.payload.granules = gs;
+        output.granules = gs;
       }
 
       if (discover.connected) {
         discover.end();
         log.debug(`Ending ${provider.protocol} connection`);
       }
-      return cb(null, event);
+      return cb(null, output);
     }).catch(e => {
       if (discover.connected) {
         discover.end();
@@ -57,9 +60,9 @@ function handler(_event, context, cb) {
 module.exports.handler = handler;
 
 local.justLocalRun(() => {
-  const payload = require( // eslint-disable-line global-require
-    '@cumulus/test-data/payloads/mur/discover.json'
-  );
-  payload.meta.useQueue = false;
+  const filepath = process.argv[3] ? process.argv[3] : './tests/fixtures/mur.json';
+  const payload = require(filepath); // eslint-disable-line global-require
+
+  payload.config.useQueue = false;
   handler(payload, {}, (e) => log.info(e));
 });

@@ -36,6 +36,7 @@
     "@cumulus/test-data": "^1.0.0",
     "@cumulus/common": "^1.0.0",
     "@cumulus/ingest": "^1.0.0",
+    "@cumulus/sled": "0.0.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
@@ -47,6 +48,6 @@
     "babel-preset-es2017": "^6.24.1",
     "sinon": "^2.0.0-pre.5",
     "ava": "^0.21.0",
-    "webpack": "^1.12.13"
+    "webpack": "~1.12.13"
   }
 }

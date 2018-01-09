@@ -80,6 +80,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
+    "ava": "^0.24.0",
     "babel-core": "^6.13.2",
     "babel-eslint": "^6.1.2",
     "babel-loader": "^6.2.4",

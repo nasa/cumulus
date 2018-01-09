@@ -1,0 +1,49 @@
+{
+  "name": "@cumulus/sled",
+  "version": "0.0.0",
+  "description": "Protocol wrapper for Cumulus JS files",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js local jsonpath && jasmine",
+    "build": "bin/build",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=4.3.0"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cumulus-nasa/cumulus.git"
+  },
+  "keywords": [
+    "Cumulus"
+  ],
+  "author": "Cumulus Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/cumulus-nasa/cumulus/issues"
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus#readme",
+  "eslintConfig": {
+    "plugins": [
+      "node"
+    ],
+    "extends": [
+      "plugin:node/recommended"
+    ],
+    "rules": {
+      "no-console": "off",
+      "node/no-unpublished-require": "off"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "aws-sdk": "^2.151.0",
+    "eslint": "^4.9.0",
+    "eslint-plugin-node": "^5.2.0",
+    "jasmine": "^2.8.0"
+  }
+}

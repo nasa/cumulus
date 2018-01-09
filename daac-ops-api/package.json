@@ -36,6 +36,7 @@
     "lodash.get": "^4.4.2",
     "lodash.has": "^4.5.2",
     "lodash.omit": "^4.5.0",
+    "lodash.merge": "^4.5.0",
     "moment": "^2.18.1",
     "got": "^6.7.1",
     "querystring": "^0.2.0",

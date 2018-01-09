@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+# Create output dir dist/cumulus-sled which will be placed inside of Lambda tasks
+mkdir -p dist/cumulus-sled
+
+# Copy necessary files (exclude tests / examples) to minimize code size
+cp -R index.js package.json lib deps node_modules dist/cumulus-sled
+
+# Remove dev dependencies that are not necessary for Lambda deployment
+cd dist/cumulus-sled
+npm prune --production

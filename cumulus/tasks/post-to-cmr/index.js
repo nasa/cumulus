@@ -3,7 +3,7 @@
 
 const get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { S3 } = require('@cumulus/ingest/aws');
+const { getS3Object } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
@@ -86,7 +86,7 @@ async function getMetadata(xmlFilePath) {
   // GET the metadata text
   // Currently, only supports files that are stored on S3
   const parts = xmlFilePath.match(/^s3:\/\/(.+?)\/(.+)$/);
-  const obj = await S3.get(parts[1], parts[2]);
+  const obj = await getS3Object(parts[1], parts[2]);
 
   return obj.Body.toString();
 }
@@ -132,34 +132,40 @@ async function publish(cmrFile, creds) {
 
 
 /**
- * Lambda function handler
+ * Post to CMR
+ * See the schemas directory for detailed input and output schemas
  *
  * @param {object} event Lambda function payload
+ * @param {object} event.config
+ * @param {object} event.config.collection
+ * @param {object} event.config.buckets
+ * @param {object} event.config.cmr
+ * @param {object} event.input
+ * @param {array} event.input.granules
  * @param {object} context aws lambda context object
  * @param {function} cb lambda callback
  * @returns {object} returns the updated event object
  */
-function handler(_event, context, cb) {
+function postToCMR(event, context, cb) {
   try {
     // we have to post the meta-xml file of all output granules
     // first we check if there is an output file
-    const event = _event;
-
-    const collection = get(event, 'collection');
-    const buckets = get(event, 'resources.buckets');
-    const payload = temporaryPayloadFix(get(event, 'payload', null), collection, buckets);
-    const creds = get(event, 'resources.cmr');
+    const config = get(event, 'config');
+    const collection = get(config, 'collection');
+    const buckets = get(config, 'buckets');
+    const creds = get(config, 'cmr');
+    const input = temporaryPayloadFix(get(event, 'input', null), collection, buckets);
 
     // determine CMR files
-    const cmrFiles = getCmrFiles(payload.granules);
+    const cmrFiles = getCmrFiles(input.granules);
 
     // post all meta files to CMR
-    const jobs = cmrFiles.map(c => publish(c, creds));
+    const jobPromises = cmrFiles.map(c => publish(c, creds));
 
-    return Promise.all(jobs).then((results) => {
+    return Promise.all(jobPromises).then((results) => {
       // update output section of the payload
       for (const result of results) {
-        for (const g of payload.granules) {
+        for (const g of input.granules) {
           if (result.granuleId === g.granuleId) {
             delete result.granuleId;
             g.cmr = result;
@@ -167,14 +173,13 @@ function handler(_event, context, cb) {
           }
         }
       }
-      return payload;
-    }).then((r) => {
-      event.payload = r;
-      return cb(null, event);
-    }).catch(e => {
-      log.error(e);
-      cb(e);
-    });
+      return input;
+    })
+      .then((output) => cb(null, output))
+      .catch(e => {
+        log.error(e);
+        cb(e);
+      });
   }
   catch (e) {
     log.error(e);
@@ -182,8 +187,10 @@ function handler(_event, context, cb) {
   }
 }
 
-module.exports.handler = handler;
+module.exports.handler = function handler(event, context, cb) {
+  return postToCMR(event, context, cb);
+};
 
 justLocalRun(() => {
-  handler(testPayload, {}, (e, r) => log.debug(e, JSON.stringify(r)));
+  postToCMR(testPayload, {}, (e, r) => log.debug(e, JSON.stringify(r)));
 });
