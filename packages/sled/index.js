@@ -115,7 +115,7 @@ function invokeHandler(handler, event, context) {
  */
 exports.handler = function sledHandler(event, context, callback, handlerFn, handlerConfig) {
   let taskConfig = null;
-  let nestedHandler = null;
+  let taskHandler = null;
   let messageConfig = null;
   let fullEvent = null;
   let schemas = null;
@@ -123,9 +123,6 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
   (handlerFn ? Promise.resolve(handlerConfig || {}) : readJsonFile('cumulus.json'))
     .then((config) => {
       taskConfig = config.task || {};
-      schemas = taskConfig.schemas;
-
-      nestedHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
       return message.loadRemoteEvent(event);
     })
     .then((remoteEvent) => {
@@ -134,17 +131,19 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
     })
     .then((nestedEvent) => {
       messageConfig = nestedEvent.messageConfig;
-      if (schemas) {
+      taskHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
+      schemas = taskConfig.schemas;
+      if (schemas) { //Run Validation
         return validateMessage(nestedEvent.input, schemas.input)
           .then(() => validateMessage(nestedEvent.config, schemas.config))
           .then(() => {
             delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
-            return invokeHandler(nestedHandler, nestedEvent, context);
+            return invokeHandler(taskHandler, nestedEvent, context);
           })
           .catch(callback);
       }
       delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
-      return invokeHandler(nestedHandler, nestedEvent, context);
+      return invokeHandler(taskHandler, nestedEvent, context);
     })
     .then((handlerResponse) => {
       if (schemas) {
