@@ -6,7 +6,7 @@
 
 ### Prerequisites
 
-* node.js >= 4.3 (https://nodejs.org/en/). We recommend using nvm (https://github.com/creationix/nvm) and node version 7.6.
+* [NVM](https://github.com/creationix/nvm) and node version 6.10.
 * [pip](https://pip.pypa.io/en/stable/installing/)
 * [yarn](https://yarnpkg.com/en/)
 * [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
