@@ -18,8 +18,8 @@
 Install the correct node version:
 
 ```
-nvm install 7.6
-nvm use 7.6
+nvm install
+nvm use
 ```
 
 Ensure that the aws cli is configured and that the default output format is either JSON or None:
