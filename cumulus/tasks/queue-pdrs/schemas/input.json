@@ -1,0 +1,89 @@
+{
+  "title": "QueuePdrsInput",
+  "description": "Describes the input and config used by the queue-pdrs task",
+  "type": "object",
+  "required": ["config", "input"],
+  "additionalProperties": false,
+  "properties": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "pdrs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "path": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "buckets": {
+          "type": "object",
+          "description": "aws s3 buckets used by this task",
+          "properties": {
+            "internal": { "type": "string" },
+            "private": { "type": "string" },
+            "protected": { "type": "string" },
+            "public": { "type": "string" }
+          }
+        },
+        "queues": {
+          "type": "object",
+          "properties": {
+            "startSF": { "type": "string" }
+          }
+        },
+        "templates": {
+          "type": "object"
+        },
+        "cumulus_meta": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "properties": {
+                "next": { "type": "string" }
+              }
+            }
+          }
+        },
+        "collection": {
+          "type": "object",
+          "description": "",
+          "required": ["id", "meta"],
+          "properties": {
+            "id": { "type": "string" },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "version": { "type": "string" },
+                "provider_path": { "type": "string" },
+                "granuleId": { "type": "string" },
+                "sampleFileName": { "type": "string" },
+                "granuleIdExtraction": { "type": "string" },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "regex": { "type": "string" },
+                      "sampleFileName": { "type": "string" },
+                      "bucket": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
