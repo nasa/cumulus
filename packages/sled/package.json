@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/sled",
+  "name": "@cumulus-test/sled",
   "version": "0.0.0",
   "description": "Protocol wrapper for Cumulus JS files",
   "main": "index.js",
