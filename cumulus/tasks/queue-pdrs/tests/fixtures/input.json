@@ -8,7 +8,7 @@
       "public": "ghrc-r-public"
     },
     "queues": {
-      "startSF": "http://localhost:9324/queue/ghrc-cumulus-dev-startSF"
+      "startSF": "http://localhost:4576/queue/testQueue"
     },
     "templates": {
       "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json",
