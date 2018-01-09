@@ -32,16 +32,7 @@ test('queue granules', async (t) => {
   });
 
   MockAWS.stub('StepFunctions', 'describeExecution').returns({
-    promise: () => Promise.resolve({
-      executionArn: 'string',
-      input: 'string',
-      name: 'string',
-      output: 'string',
-      startDate: 'number',
-      stateMachineArn: 'string',
-      status: 'string',
-      stopDate: 'number'
-    })
+    promise: () => Promise.resolve({})
   });
 
   const input = Object.assign({}, inputJSON);
@@ -52,5 +43,6 @@ test('queue granules', async (t) => {
     t.ifError(e);
     t.is(typeof output, 'object');
     t.is(output.granules_queued, 3);
+    MockAWS.StepFunctions.restore();
   });
 });
