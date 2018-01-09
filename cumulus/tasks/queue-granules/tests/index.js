@@ -38,6 +38,7 @@ test('queue granules', async (t) => {
   const input = Object.assign({}, inputJSON);
   input.config.templates.IngestGranule = IngestGranuleTemplate;
   input.config.buckets.internal = t.context.bucket;
+  input.config.queueus.startSF = `${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);
