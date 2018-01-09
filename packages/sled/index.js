@@ -21,14 +21,11 @@ function taskPath(relativePath) {
 function readJsonFile(relativePath) {
   return new Promise((resolve, reject) => {
     const filePath = taskPath(relativePath);
-    const file = fs.readFileSync(filePath, { encoding: 'utf8' });
-    try {
-      const result = JSON.parse(file);
-      return resolve(result);
-    }
-    catch (e) {
-      return reject(e);
-    }
+
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) return reject(err);
+      return resolve(JSON.parse(data));
+    });
   });
 }
 
@@ -63,21 +60,20 @@ function getNestedHandler(handlerString) {
 
 /**
  * Given an inputs and the file name of a schema, validates the input.
- * @param {String} input The input, config, or output to be validated
+ * @param {String} input A JSON document to be validated
  * @param {String} schemaFile The relative path to the schema
  * @returns {Promise} A Promise resolving to true if Input is valid or rejecting if it errors
  */
-function validateMessage(input, schemaFile) {
+function validateJsonDocument(input, schemaFile) {
   if (input && schemaFile) {
     return readJsonFile(schemaFile)
       .then((schema) => {
         const ajv = new Ajv();
-        const schemaValidator = ajv.compile(schema);
-        const valid = schemaValidator(input);
+        const valid = ajv.validate(schema, input);
         if (!valid) {
-          throw Error('Validation Error', schemaValidator.errors);
+          throw Error('Validation Error', ajv.errors);
         }
-        return valid;
+        return true;
       });
   }
   return Promise.resolve(true);
@@ -134,8 +130,8 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
       taskHandler = handlerFn || getNestedHandler(taskConfig.entrypoint || 'index.handler');
       schemas = taskConfig.schemas;
       if (schemas) { //Run Validation
-        return validateMessage(nestedEvent.input, schemas.input)
-          .then(() => validateMessage(nestedEvent.config, schemas.config))
+        return validateJsonDocument(nestedEvent.input, schemas.input)
+          .then(() => validateJsonDocument(nestedEvent.config, schemas.config))
           .then(() => {
             delete nestedEvent.messageConfig; // eslint-disable-line no-param-reassign
             return invokeHandler(taskHandler, nestedEvent, context);
@@ -147,7 +143,7 @@ exports.handler = function sledHandler(event, context, callback, handlerFn, hand
     })
     .then((handlerResponse) => {
       if (schemas) {
-        return validateMessage(handlerResponse, schemas.output)
+        return validateJsonDocument(handlerResponse, schemas.output)
           .then(() => message.createNextEvent(handlerResponse, fullEvent, messageConfig))
           .catch(callback);
       }
