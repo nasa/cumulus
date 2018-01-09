@@ -17,9 +17,10 @@ test.beforeEach(async (t) => {
   return s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
-test.afterEach.always(async (t) =>
-  await deleteS3Bucket(t.context.bucket)
-);
+test.afterEach.always(async (t) => {
+  await deleteS3Bucket(t.context.bucket);
+  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
+});
 
 test('queue pdrs', async (t) => {
   const bucket = t.context.bucket;
@@ -38,6 +39,7 @@ test('queue pdrs', async (t) => {
   const input = Object.assign({}, inputJSON);
   input.config.templates.ParsePdr = ParsePdrTemplate;
   input.config.buckets.internal = t.context.bucket;
+  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);
