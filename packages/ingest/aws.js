@@ -520,7 +520,6 @@ class StepFunction {
     return S3.put(d.bucket, d.key, '', null, { arn, status });
   }
 
-
   static async getGranuleStatus(granuleId, event) {
     const d = this.granuleExecutionStatus(granuleId, event);
     const exists = await S3.fileExists(d.bucket, d.key);
