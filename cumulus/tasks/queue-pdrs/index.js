@@ -24,7 +24,7 @@ function handler(event, context, cb) {
   const pdrs = event.input.pdrs || [];
   const queuedPdrs = pdrs.map(pdr => queuePdr(event, pdr));
 
-  Promise.all(queuedPdrs).then(() => {
+  return Promise.all(queuedPdrs).then(() => {
     cb(null, { pdrs_queued: queuedPdrs.length });
   }).catch(e => {
     log.error(e);
