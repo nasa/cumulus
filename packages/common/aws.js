@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 'use strict';
 
 const AWS = require('aws-sdk');
@@ -145,6 +146,37 @@ exports.downloadS3File = (s3Obj, filename) => {
   });
 };
 
+/**
+* Put an object on S3
+* @param {object} options
+* @param {object} options.body
+* @param {object} options.bucket name of bucket
+* @param {object} options.key key for object (filepath + filename)
+* @param {object} options.body body of the file
+* @param {string} [options.acl=private] body of the file
+* @param {object} [options.Metadata=null] body of the file
+* @returns {promise} returns response from `S3.putObject` as a promise
+**/
+exports.putS3Object = (options) => {
+  const s3 = exports.s3();
+
+  const params = {
+    Bucket: options.bucket,
+    Key: options.key,
+    Body: options.body,
+    ACL: options.acl,
+    Metadata: options.meta
+  };
+
+  return s3.putObject(params).promise();
+};
+
+/**
+* Get an object from S3
+* @param {string} bucket name of bucket
+* @param {string} key key for object (filepath + filename)
+* @returns {promise} returns response from `S3.getObject` as a promise
+**/
 exports.getS3Object = (bucket, key) => {
   const s3 = exports.s3();
 
@@ -154,6 +186,29 @@ exports.getS3Object = (bucket, key) => {
   };
 
   return s3.getObject(params).promise();
+};
+
+/**
+* Check if a file exists in an S3 object
+* @name fileExists
+* @param {string} bucket name of the S3 bucket
+* @param {string} key key of the file in the S3 bucket
+* @returns {promise} returns the response from `S3.headObject` as a promise
+**/
+exports.fileExists = async (bucket, key) => {
+  const s3 = exports.s3();
+
+  try {
+    const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
+    return r;
+  }
+  catch (e) {
+    // if file is not return false
+    if (e.stack.match(/(NotFound)/)) {
+      return false;
+    }
+    throw e;
+  }
 };
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
@@ -191,13 +246,33 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @param {Object} s3Opts An optional object containing options that influence the behavior of S3
  * @return A promise that resolves to an Array of the data returned from the deletion operations
  */
-exports.deleteS3Files = (s3Objs, s3opts = {}) => {
+exports.deleteS3Files = (s3Objs) => {
   log.info(`Starting deletion of ${s3Objs.length} object(s)`);
 
   const promiseDelete = (s3Obj) => exports.s3().deleteObject(s3Obj).promise();
   const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
 
   return Promise.all(s3Objs.map(limitedDelete));
+};
+
+/**
+* delete a bucket and all its files from S3
+* @param {string} bucket name of the bucket
+* @returns {promise} returns the promise from `S3.deleteBucket`
+**/
+exports.deleteS3Bucket = async (bucket) => {
+  const s3 = exports.s3();
+  const response = await s3.listObjects({ Bucket: bucket }).promise();
+  const keys = response.Contents.map((o) => {
+    return {
+      Bucket: bucket,
+      Key: o.Key
+    };
+  });
+
+  await exports.deleteS3Files(keys);
+  const list = await exports.listS3Objects(bucket);
+  await s3.deleteBucket({ Bucket: bucket }).promise();
 };
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
@@ -400,8 +475,82 @@ exports.sendSQSMessage = (queueUrl, message) => {
   return queue.sendMessage(params).promise();
 };
 
-// Test code
-// const prom = exports.listS3Objects('gitc-jn-sips-mock', 'PDR/');
-// prom.then((list) => {
-//   log.info(list);
-// });
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} stateMachineArn state machine ARN
+ * @param {string} executionName state machine's execution name
+ * @returns {string} Step Function Execution Arn
+ */
+exports.getExecutionArn = (stateMachineArn, executionName) => {
+  if (stateMachineArn && executionName) {
+    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
+    return `${sfArn}:${executionName}`;
+  }
+  return null;
+};
+
+/**
+* Parse event metadata to get location of granule on S3
+* @name setGranuleStatus
+* @param {string} granuleId
+* @param {object} options
+* @param {string} options.stack
+* @param {object} options.buckets
+* @param {string} options.buckets.internal
+* @return {promise}
+**/
+exports.getGranuleS3Params = (granuleId, options) => {
+  const granuleKey = `${options.stack}/granules_ingested/${granuleId}`;
+
+  return {
+    bucket: options.buckets.internal,
+    key: granuleKey
+  };
+};
+
+/**
+* Set the status of a granule
+* @name setGranuleStatus
+* @param {string} granuleId
+* @param {object} options
+* @param {string} options.stateMachineArn
+* @param {string} options.executionName
+* @param {string} options.status
+* @return {promise} returns the response from `S3.put` as a promise
+**/
+exports.setGranuleStatus = async (granuleId, options) => {
+  const status = options.status;
+  const stateMachineArn = options.stateMachineArn;
+  const executionName = options.executionName;
+
+  const { bucket, key } = exports.getGranuleS3Params(granuleId, options);
+  const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
+  await exports.s3().putObject(bucket, key, '', null, { executionArn, status }).promise();
+};
+
+/**
+* Get the status of a granule
+* @name getGranuleStatus
+* @param {string} granuleId
+* @param {object} options
+* @param {string} options.stack
+* @param {object} options.buckets
+* @param {string} options.buckets.internal
+* @return {promise|boolean} if the granule does not exist, this returns `false`,
+* else returns a promise that resolves to an array of [status, arn]
+**/
+exports.getGranuleStatus = async (granuleId, options) => {
+  const { bucket, key } = exports.getGranuleS3Params(granuleId, options);
+  const exists = await exports.fileExists(bucket, key);
+
+  if (exists) {
+    const oarn = exists.Metadata.arn;
+    const status = exists.Metadata.status;
+    if (status === 'failed') {
+      return ['failed', oarn];
+    }
+    return ['completed', oarn];
+  }
+  return false;
+};
