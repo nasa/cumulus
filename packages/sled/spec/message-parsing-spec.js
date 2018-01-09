@@ -1,6 +1,6 @@
 /* global describe, it, expect */
 
-const sled = require('../index').handler;
+const sled = require('../index');
 
 const createMessage = (props) => ({
   workflow_config: { Example: props.config },
@@ -15,23 +15,62 @@ const createMessage = (props) => ({
 
 const runTestHandler = (event, cb) => {
   const callback = (err, data) => {
-    if (err) throw err;
-    cb(data);
+    if (err) return cb(err);
+    return cb(null, data);
   };
 
   const testHandler = (evt, context, response) => {
     response(null, evt);
   };
 
-  sled(event, {}, callback, testHandler);
+  const handlerConfig = {
+    task: {
+      entrypoint: 'example.handler',
+      schemas: {
+        input: 'schemas/input.json',
+        config: 'schemas/config.json',
+        output: 'schemas/output.json'
+      }
+    }
+  };
+  sled.config = { taskRoot: 'example' };
+  sled.handler(event, {}, callback, testHandler, handlerConfig);
 };
 
 describe('Message Parsing', () => {
+  it('has a valid input', (done) => {
+    let existingError = false;
+    runTestHandler(createMessage({
+      config: { hello: 'world' },
+      payload: { hello: 'world' }
+    }), (err, data) => {
+      if (err) existingError = true;
+      done();
+    });
+    expect(existingError).toEqual(false);
+  });
+
+  it('has an invalid input', (done) => {
+    let existingError = false;
+    runTestHandler(createMessage({
+      config: { hello: 'world' },
+      payload: { hello: 2 }
+    }), (err, data) => {
+      if (err) {
+        existingError = true;
+        expect(err).toBeTruthy();
+        return done();
+      }
+      expect(existingError).toEqual(true);
+      return done();
+    });
+  });
+
   it('passes its config object in the "config" key', (done) => {
     runTestHandler(createMessage({
       config: { hello: 'world' }
-    }), (response) => {
-      expect(response.payload.config).toEqual({ hello: 'world' });
+    }), (err, data) => {
+      expect(data.payload.config).toEqual({ hello: 'world' });
       done();
     });
   });
@@ -39,8 +78,8 @@ describe('Message Parsing', () => {
   it('passes its payload object in the "input" key', (done) => {
     runTestHandler(createMessage({
       payload: { hello: 'world' }
-    }), (response) => {
-      expect(response.payload.input).toEqual({ hello: 'world' });
+    }), (err, data) => {
+      expect(data.payload.input).toEqual({ hello: 'world' });
       done();
     });
   });
@@ -48,8 +87,8 @@ describe('Message Parsing', () => {
   it('returns its meta verbatim', (done) => {
     runTestHandler(createMessage({
       meta: { hello: 'world' }
-    }), (response) => {
-      expect(response.meta).toEqual({ hello: 'world' });
+    }), (err, data) => {
+      expect(data.meta).toEqual({ hello: 'world' });
       done();
     });
   });
@@ -57,16 +96,16 @@ describe('Message Parsing', () => {
   it('preserves its workflow_config', (done) => {
     runTestHandler(createMessage({
       config: { hello: 'world' }
-    }), (response) => {
-      expect(response.workflow_config).toEqual({ Example: { hello: 'world' } });
+    }), (err, data) => {
+      expect(data.workflow_config).toEqual({ Example: { hello: 'world' } });
       done();
     });
   });
 
   it('sets "exception" to "None" upon successful invocation', (done) => {
     runTestHandler(Object.assign(createMessage({}), { Exception: 'Something' }),
-      (response) => {
-        expect(response.exception).toEqual('None');
+      (err, data) => {
+        expect(data.exception).toEqual('None');
         done();
       });
   });
@@ -74,9 +113,9 @@ describe('Message Parsing', () => {
   describe('handling of JSONPaths in config', () => {
     it('resolves plain strings in the config as themselves', (done) => {
       runTestHandler(createMessage({
-        config: { hello: 'wor{ld' }
-      }), (response) => {
-        expect(response.payload.config).toEqual({ hello: 'wor{ld' });
+        config: { hello: 'world' }
+      }), (err, data) => {
+        expect(data.payload.config).toEqual({ hello: 'world' });
         done();
       });
     });
@@ -86,8 +125,8 @@ describe('Message Parsing', () => {
       runTestHandler(createMessage({
         config: { hello: 'world {meta.somekey}' },
         meta: { somekey: 'somevalue' }
-      }), (response) => {
-        expect(response.payload.config).toEqual({ hello: 'world somevalue' });
+      }), (err, data) => {
+        expect(data.payload.config).toEqual({ hello: 'world somevalue' });
         done();
       });
     });
@@ -102,8 +141,8 @@ describe('Message Parsing', () => {
             { world: 'world2' }
           ]
         }
-      }), (response) => {
-        expect(response.payload.config).toEqual({ hello: 'world1' });
+      }), (err, data) => {
+        expect(data.payload.config).toEqual({ hello: 'world1' });
         done();
       });
     });
@@ -118,8 +157,8 @@ describe('Message Parsing', () => {
             { world: 'world2' }
           ]
         }
-      }), (response) => {
-        expect(response.payload.config).toEqual({ hello: ['world1', 'world2'] });
+      }), (err, data) => {
+        expect(data.payload.config).toEqual({ hello: ['world1', 'world2'] });
         done();
       });
     });
@@ -133,8 +172,8 @@ describe('Message Parsing', () => {
           cumulus_message: {
           }
         }
-      }), (response) => {
-        expect(response.payload.config).toEqual({ hello: 'world' });
+      }), (err, data) => {
+        expect(data.payload.config).toEqual({ hello: 'world' });
         done();
       });
     });
@@ -149,8 +188,8 @@ describe('Message Parsing', () => {
         meta: {
           input: { hello: 'world' }
         }
-      }), (response) => {
-        expect(response.payload.input).toEqual({ hello: 'world' });
+      }), (err, data) => {
+        expect(data.payload.input).toEqual({ hello: 'world' });
         done();
       });
     });
@@ -169,8 +208,8 @@ describe('Message Parsing', () => {
         },
         meta: {},
         payload: { hello: 'world' }
-      }), (response) => {
-        expect(response.meta).toEqual({ output: { hello: 'world' } });
+      }), (err, data) => {
+        expect(data.meta).toEqual({ output: { hello: 'world' } });
         done();
       });
     });
@@ -189,11 +228,10 @@ describe('Message Parsing', () => {
         },
         meta: {},
         payload: { hello: 'world' }
-      }), (response) => {
-        expect(response.payload).toEqual({});
+      }), (err, data) => {
+        expect(data.payload).toEqual({});
         done();
       });
     });
   });
 });
-
