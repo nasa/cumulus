@@ -17,9 +17,10 @@ test.beforeEach(async (t) => {
   return s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
-test.afterEach.always(async (t) =>
-  await deleteS3Bucket(t.context.bucket)
-);
+test.afterEach.always(async (t) => {
+  await deleteS3Bucket(t.context.bucket);
+  await sqs().deleteQueue({ QueueName: 'testQueue' }).promise();
+});
 
 test('queue granules', async (t) => {
   const bucket = t.context.bucket;
