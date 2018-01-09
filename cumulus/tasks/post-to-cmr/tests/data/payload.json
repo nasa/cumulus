@@ -103,9 +103,6 @@
           },
           {
             "filename": "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
-          },
-          {
-            "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }
         ]
       }
