@@ -24,7 +24,7 @@ function handler(event, context, cb) {
   const granules = event.input.granules || [];
   const queuedGranules = granules.map(g => queueGranule(event, g));
 
-  Promise.all(queuedGranules).then(() => {
+  return Promise.all(queuedGranules).then(() => {
     cb(null, { granules_queued: queuedGranules.length });
   }).catch((e) => {
     log.error(e);
