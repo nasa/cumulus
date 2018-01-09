@@ -1,13 +1,14 @@
 'use strict';
 
 const get = require('lodash.get');
-const { StepFunction } = require('./aws');
 
 const {
+  s3,
   getS3Object,
   sendSQSMessage,
   parseS3Uri,
-  getSfnExecutionByName
+  getSfnExecutionByName,
+  getGranuleStatus
 } = require('@cumulus/common/aws');
 
 /**
@@ -64,7 +65,7 @@ async function queuePdr(event, pdr) {
 * @param {string} event.config.queues.startSF
 * @param {object} pdr
 * @param {string} pdr.name
-* @returns {promise} promise returned from SQS.sendMessage()
+* @returns {promise} returns a promise that resolves to an array of [status, arn]
 **/
 async function queueGranule(event, granule) {
   const queueUrl = event.config.queues.startSF;
@@ -74,7 +75,7 @@ async function queueGranule(event, granule) {
   const message = await getTemplate(event);
 
   // check if the granule is already processed
-  const status = await StepFunction.getGranuleStatus(granule.granuleId, event);
+  const status = await getGranuleStatus(granule.granuleId, event.config);
 
   if (status) {
     return status;
@@ -87,6 +88,7 @@ async function queueGranule(event, granule) {
     }
   }
 
+  if (!message.meta) message.meta = {};
   message.meta.granuleId = granule.granuleId;
   message.payload = {
     granules: [{
