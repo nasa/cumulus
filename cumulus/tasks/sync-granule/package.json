@@ -38,7 +38,8 @@
     "@cumulus/common": "^1.0.0",
     "@cumulus/test-data": "^1.0.0",
     "@cumulus/ingest": "^1.0.0",
-    "lodash.get": "^4.4.2"
+    "lodash.get": "^4.4.2",
+    "@ava/babel-preset-transform-test-files": "^3.0.0"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
