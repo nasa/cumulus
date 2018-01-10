@@ -56,13 +56,17 @@ class Discover {
     const file = _file;
     let test = new RegExp(this.collection.granuleIdExtraction);
     const match = file.name.match(test);
+    //console.log(match);
     if (match) {
-      granuleId = match[1];
+    
+      granuleId = match[0];
       for (const f of this.collection.files) {
         test = new RegExp(f.regex);
+        
         if (file.name.match(test)) {
           file.granuleId = granuleId;
           file.bucket = this.buckets[f.bucket];
+          //console.log("File bucket ",file.bucket);
           if (f.url_path) {
             file.url_path = f.url_path;
           }
@@ -85,25 +89,39 @@ class Discover {
     // select files that match a given collection
     files.forEach(f => {
       const file = this.setGranuleInfo(f);
+      //console.log(file);
       if (file) updatedFiles.push(file);
     });
+    //console.log(updatedFiles);    
     return await this.findNewGranules(updatedFiles);
   }
 
   async fileIsNew(file) {
+  // If the bucket is defined 
+  if(file.bucket){
+  
     const exists = await S3.fileExists(file.bucket, file.name);
     return exists ? false : file;
+    }
+    return false;
+    
+    
   }
 
   async findNewGranules(files) {
+ 
     const checkFiles = files.map(f => this.fileIsNew(f));
+    
     const t = await Promise.all(checkFiles);
+    //console.log(checkFiles);
     const newFiles = t.filter(f => f);
+    
 
     // reorganize by granule
     const granules = {};
     newFiles.forEach(_f => {
       const f = _f;
+      
       const granuleId = f.granuleId;
       delete f.granuleId;
       if (granules[granuleId]) {
@@ -353,6 +371,22 @@ class Granule {
  *
  * @class
  */
+ 
+ class HttpDiscoverGranules extends httpMixin(Discover) {}
+
+/**
+ * Discover Granule from an HTTP endpoint.
+ *
+ * @class
+ */
+ 
+ class HttpDiscoverAndQueueGranules extends httpMixin(DiscoverAndQueue) {}
+
+/**
+ * Discover & queue Granules from an HTTP endpoint.
+ *
+ * @class
+ */
 
 class SftpDiscoverGranules extends sftpMixin(Discover) {}
 
@@ -407,9 +441,9 @@ class HttpGranule extends httpMixin(Granule) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
-* @param {string} type â€“ `discover` or `ingest`
-* @param {string} protocol â€“ `sftp`, `ftp`, or `http`
-* @param {boolean} useQueue â€“ set to `true` to queue granules
+* @param {string} type – `discover` or `ingest`
+* @param {string} protocol – `sftp`, `ftp`, or `http`
+* @param {boolean} useQueue – set to `true` to queue granules
 **/
 function selector(type, protocol, q) {
   if (type === 'discover') {
@@ -418,6 +452,9 @@ function selector(type, protocol, q) {
         return q ? SftpDiscoverAndQueueGranules : SftpDiscoverGranules;
       case 'ftp':
         return q ? FtpDiscoverAndQueueGranules : FtpDiscoverGranules;
+      case 'https':
+      case 'http':
+        return q ? HttpDiscoverAndQueueGranules : HttpDiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -446,3 +483,5 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpDiscoverAndQueueGranules = SftpDiscoverAndQueueGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpDiscoverAndQueueGranules = FtpDiscoverAndQueueGranules;
+module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
+module.exports.HttpDiscoverAndQueueGranules = HttpDiscoverAndQueueGranules;
