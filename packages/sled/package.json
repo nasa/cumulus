@@ -1,6 +1,6 @@
 {
   "name": "@cumulus-test/sled",
-  "version": "1.0.3",
+  "version": "1.0.2-beta.0",
   "description": "Protocol wrapper for Cumulus JS files",
   "main": "index.js",
   "scripts": {

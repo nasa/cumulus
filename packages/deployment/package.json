@@ -1,6 +1,6 @@
 {
   "name": "@cumulus-test/deployment",
-  "version": "1.0.2",
+  "version": "1.0.2-beta.0",
   "description": "Deployment templates for cumulus",
   "scripts": {
     "test": "echo 'no tests'",
