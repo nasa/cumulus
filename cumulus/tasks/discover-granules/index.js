@@ -8,6 +8,18 @@ const logger = require('@cumulus/ingest/log');
 
 const log = logger.child({ file: 'discover-granules/index.js' });
 
+/**
+* Discover granules
+* See schemas/input.json for detailed input schema
+* @param {object} event
+* @param {object} event.config
+* @param {object} event.config.provider
+* @param {object} event.config.buckets
+* @param {object} event.config.collection
+* @param {boolean} [event.config.useQueue=true]
+* @returns {undefined} see schemas/output.json for detailed output schema
+* that is passed to the next task in the workflow
+**/
 function handler(_event, context, cb) {
   try {
     log.debug({ payload: _event });
