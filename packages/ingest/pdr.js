@@ -125,7 +125,7 @@ class Parse {
     this.pdr = get(input, 'pdr');
     this.stack = get(config, 'stack');
     this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection.meta');
+    this.collection = get(config, 'collection');
     this.provider = get(config, 'provider');
     this.folder = get(config, 'pdrFolder', 'pdrs');
 

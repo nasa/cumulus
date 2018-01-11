@@ -6,6 +6,20 @@ const pdr = require('@cumulus/ingest/pdr');
 const log = require('@cumulus/ingest/log');
 const { StepFunction } = require('@cumulus/ingest/aws');
 
+/**
+* Parse a PDR
+* See schemas/input.json for detailed input schema
+* @param {object} event
+* @param {object} event.config
+* @param {string} event.config.stack
+* @param {object} event.config.pdrFolder
+* @param {string} event.config.pdrFolder.pdrs
+* @param {object} event.config.provider
+* @param {object} event.config.buckets
+* @param {object} event.config.collection
+* @returns {undefined} see schemas/output.json for detailed output schema
+* that is passed to the next task in the workflow
+**/
 module.exports.handler = function handler(_event, context, cb) {
   try {
     let event;
