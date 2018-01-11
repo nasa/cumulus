@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/common",
+  "name": "@cumulus-test/common",
   "version": "1.0.0",
   "description": "Common utilities used across tasks",
   "keywords": [
@@ -19,7 +19,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/test-data": "^1.0.0",
+    "@cumulus-test/test-data": "^1.0.0",
     "ajv": "^5.0.4-beta.3",
     "ajv-cli": "^1.1.1",
     "async": "^2.0.0",

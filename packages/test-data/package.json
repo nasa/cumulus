@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/test-data",
+  "name": "@cumulus-test/test-data",
   "version": "1.0.0",
   "description": "Includes the test data for various packages",
   "main": "index.js",

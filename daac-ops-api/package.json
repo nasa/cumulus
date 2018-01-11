@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/daac-ops-api",
+  "name": "@cumulus-test/daac-ops-api",
   "version": "1.0.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
@@ -21,10 +21,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.0.0",
-    "@cumulus/ingest": "^1.0.0",
-    "@cumulus/common": "^1.0.0",
-    "@cumulus/pvl": "^1.0.0",
+    "@cumulus-test/cmrjs": "^1.0.0",
+    "@cumulus-test/ingest": "^1.0.0",
+    "@cumulus-test/common": "^1.0.0",
+    "@cumulus-test/pvl": "^1.0.0",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.95.0",
     "basic-auth": "^1.1.0",

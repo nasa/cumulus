@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/deployment",
+  "name": "@cumulus-test/deployment",
   "version": "1.0.0",
   "description": "Deployment templates for cumulus",
   "scripts": {

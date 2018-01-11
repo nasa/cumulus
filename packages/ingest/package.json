@@ -1,5 +1,5 @@
 {
-  "name": "@cumulus/ingest",
+  "name": "@cumulus-test/ingest",
   "version": "1.0.0",
   "description": "Ingest utilities",
   "scripts": {
@@ -29,9 +29,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0",
-    "@cumulus/pvl": "^1.0.0",
-    "@cumulus/test-data": "^1.0.0",
+    "@cumulus-test/common": "^1.0.0",
+    "@cumulus-test/pvl": "^1.0.0",
+    "@cumulus-test/test-data": "^1.0.0",
     "aws-sdk": "^2.4.11",
     "checksum": "^0.1.1",
     "cksum": "^1.3.0",
