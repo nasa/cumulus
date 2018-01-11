@@ -1,6 +1,6 @@
 {
   "name": "@cumulus-test/sled",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Protocol wrapper for Cumulus JS files",
   "main": "index.js",
   "scripts": {
@@ -39,7 +39,6 @@
       "node/no-unpublished-require": "off"
     }
   },
-  "dependencies": {},
   "devDependencies": {
     "aws-sdk": "^2.151.0",
     "eslint": "^4.9.0",

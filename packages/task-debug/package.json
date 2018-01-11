@@ -1,6 +1,6 @@
 {
   "name": "@cumulus-test/task-debug",
-  "version": "0.0.1",
+  "version": "1.0.2",
   "description": "A harness for debugging workflows.",
   "main": "index.js",
   "repository": {
@@ -17,14 +17,14 @@
     "test": "test"
   },
   "dependencies": {
-    "@cumulus-test/common": "^1.0.0",
+    "@cumulus-test/common": "^1.0.2",
     "commander": "^2.11.0"
   },
   "devDependencies": {
+    "ava": "^0.21.0",
+    "babel-cli": "^6.26.0",
     "babel-core": "^6.25.0",
     "babel-preset-env": "^1.6.0",
-    "babel-cli": "^6.26.0",
-    "sinon": "^2.0.0-pre.5",
-    "ava": "^0.21.0"
+    "sinon": "^2.0.0-pre.5"
   }
 }

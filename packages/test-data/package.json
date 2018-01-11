@@ -1,6 +1,6 @@
 {
   "name": "@cumulus-test/test-data",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Includes the test data for various packages",
   "main": "index.js",
   "repository": {
@@ -11,7 +11,5 @@
     "test": "echo \"Error: no test specified\""
   },
   "author": "Cumulus Authors",
-  "license": "Apache-2.0",
-  "dependencies": {
-  }
+  "license": "Apache-2.0"
 }
