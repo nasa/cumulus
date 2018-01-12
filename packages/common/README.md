@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-Common libraries for used in Cumulus.
+Common libraries used in Cumulus.
 
 ## What is Cumulus?
 
