@@ -19,6 +19,9 @@
   "babel": {
     "presets": [
       "es2015"
+    ],
+    "plugins": [
+      "transform-async-to-generator"
     ]
   },
   "author": "Cumulus Authors",
