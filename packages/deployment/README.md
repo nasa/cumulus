@@ -1,6 +1,14 @@
-# Cumulus Deployment
+# @cumulus/deployment
 
-This module includes cloudformation templates needed for a successful deployment of a Cumulus Instance. The templates can be used with [kes](https://github.com/developmentseed/kes), a node CLI helper for AWS CloudFormation.
+[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
+
+@cumulus/deployment includes cloudformation templates needed for a successful deployment of a Cumulus Instance. The templates can be used with [kes](https://github.com/developmentseed/kes), a node CLI helper for AWS CloudFormation.
+
+## What is Cumulus?
+
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+
+[Cumulus Documentation](https://cumulus-nasa.github.io/)
 
 ## Usage
 
@@ -63,3 +71,10 @@ This module includes cloudformation templates needed for a successful deployment
 | rules.\<name\>.targets | N/A | list of lambda functions to be invoked
 | stepFunctions | N/A | list of step functions
 | lambdas | N/A | list of lambda functions
+
+
+## Contributing
+
+See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)
+
+
