@@ -43,7 +43,7 @@ module.exports.handler = function handler(_event, context, cb) {
     const input = get(event, 'input', {});
 
     const buckets = get(config, 'buckets');
-    const collection = get(config, 'collection.meta');
+    const collection = get(config, 'collection');
     const provider = get(config, 'provider');
     const granules = get(input, 'granules');
 
