@@ -6,7 +6,7 @@
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
-[Cumulus Documentat](https://cumulus-nasa.github.io/)
+[Cumulus Documentation](https://cumulus-nasa.github.io/)
 
 ## PVL
 
