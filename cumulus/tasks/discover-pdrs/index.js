@@ -9,10 +9,37 @@ const local = require('@cumulus/common/local-helpers');
 
 const log = logger.child({ file: 'discover-pdrs/index.js' });
 
-function handler(_event, context, cb) {
+/**
+* Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
+*
+* @callback lambdaCallback
+* @param {object} error - error object
+* @param {object} output - output object matching schemas/output.json
+*/
+
+/**
+* Discover granules
+* See schemas/input.json for detailed input schema
+*
+* @param {Object} event - Lambda event object
+* @param {Object} event.config - configuration object for the task
+* @param {string} event.config.stack - the name of the deployment stack
+* @param {Object} event.config.provider - provider information
+* @param {string} event.config.pdrFolder - folder for the PDRs
+* @param {Object} event.config.buckets - S3 buckets
+* @param {Object} event.config.collection - information about data collection related to task
+* @param {boolean} [event.config.useQueue=true] - boolean to determine if task will queue granules.
+* Default is `true`
+* @param {Object} context - Lambda context object.
+* See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
+* @param  {lambdaCallback} callback - Callback function provided by Lambda.
+* @returns {undefined} - see schemas/output.json for detailed output schema
+* that is passed to the next task in the workflow
+**/
+function handler(event, context, callback) {
   try {
-    log.debug(_event);
-    const event = Object.assign({}, _event);
+    log.debug(event);
+    const ev = Object.assign({}, event);
     const config = get(event, 'config');
     const queue = get(config, 'useQueue', true);
     const provider = get(config, 'provider', null);
@@ -24,11 +51,11 @@ function handler(_event, context, cb) {
     if (!provider) {
       const err = new ProviderNotFound('Provider info not provided');
       log.error(err);
-      return cb(err);
+      return callback(err);
     }
 
     const Discover = pdr.selector('discover', provider.protocol, queue);
-    const discover = new Discover(event);
+    const discover = new Discover(ev);
 
     log.debug('Starting PDR discovery');
 
@@ -45,8 +72,8 @@ function handler(_event, context, cb) {
         log.debug(`Ending ${provider.protocol} connection`);
       }
 
-      return cb(null, output);
-    }).catch(e => {
+      return callback(null, output);
+    }).catch((e) => {
       log.error(e);
 
       if (discover.connected) {
@@ -57,24 +84,24 @@ function handler(_event, context, cb) {
       if (e.toString().includes('ECONNREFUSED')) {
         const err = new errors.RemoteResourceError('Connection Refused');
         log.error(err);
-        return cb(err);
+        return callback(err);
       }
       else if (e.message.includes('Please login with USER and PASS')) {
         const err = new errors.FTPError('Login incorrect');
         log.error(err);
-        return cb(err);
+        return callback(err);
       }
       else if (e.details && e.details.status === 'timeout') {
         const err = new errors.ConnectionTimeout('connection Timed out');
         log.error(err);
-        return cb(err);
+        return callback(err);
       }
       else if (e.details && e.details.status === 'notfound') {
         const err = new errors.HostNotFound(`${e.details.url} not found`);
         log.error(err);
-        return cb(err);
+        return callback(err);
       }
-      return cb(e);
+      return callback(e);
     });
   }
   catch (e) {
