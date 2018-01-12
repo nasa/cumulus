@@ -1,0 +1,23 @@
+{
+  "title": "DiscoverGranulesOutput",
+  "description": "Describes the output produced by the discover-granules task",
+  "type": "object",
+  "required": ["granules", "granules_found"],
+  "additionalProperties": false,
+  "properties": {
+    "granules_found": { "type": "integer" },
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "granuleId": { "type": "string" },
+          "bucket": { "type": "string" },
+          "url_path": { "type": "string" }
+        }
+      }
+    }
+  }
+}

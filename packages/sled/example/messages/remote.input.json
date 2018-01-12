@@ -1,0 +1,12 @@
+{
+  "cumulus_meta": {
+    "task": "Example",
+    "message_source": "local",
+    "id": "id-1234",
+    "message_bucket": "pq-test"
+  },
+  "replace": {
+    "Bucket": "pq-test",
+    "Key": "templates.input.json"
+  }
+}

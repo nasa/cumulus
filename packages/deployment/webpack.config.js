@@ -7,7 +7,7 @@ module.exports = {
   resolve: {
     symlinks: false,
     alias: {
-      'handlebars' : 'handlebars/dist/handlebars.js'
+      'handlebars': 'handlebars/dist/handlebars.js'
     }
   },
   target: 'node',
