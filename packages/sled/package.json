@@ -1,12 +1,13 @@
 {
   "name": "@cumulus/sled",
-  "version": "1.0.0-beta.581d31f4",
+  "version": "1.0.0-beta.581d31f5",
   "description": "Protocol wrapper for Cumulus JS files",
   "main": "index.js",
   "scripts": {
     "test": "node index.js local jsonpath && jasmine",
     "build": "bin/build",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "postinstall": "npm run build"
   },
   "engines": {
     "node": ">=4.3.0"
@@ -39,7 +40,7 @@
       "node/no-unpublished-require": "off"
     }
   },
-  "devDependencies": {
+  "dependencies": {
     "aws-sdk": "^2.151.0",
     "eslint": "^4.9.0",
     "eslint-plugin-node": "^5.2.0",
