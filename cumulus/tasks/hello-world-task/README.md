@@ -2,7 +2,11 @@
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-`@cumulus/hello-world-task` contains code for a lambda function returning json object `{ hello: "Hello World" }`.
+`@cumulus/hello-world-task` contains code for a lambda function returning json object:
+
+```json
+{ hello: "Hello World" }
+```
 
 ## What is Cumulus?
 
