@@ -244,7 +244,7 @@ class ParseAndQueue extends Parse {
 
       g.granuleId = this.extractGranuleId(
         g.files[0].name,
-        events[g.dataType].collection.meta.granuleIdExtraction
+        events[g.dataType].collection.granuleIdExtraction
       );
     }
 
