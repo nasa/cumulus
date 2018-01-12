@@ -1,6 +1,16 @@
-# Cumulus sled (Javascript)
+# @cumulus/sled
 
-Implements an AWS Lambda handler that adapts incoming messages in the Cumulus protocol
+[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
+
+## What is Cumulus?
+
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+
+Read [Cumulus Documentation]https://cumulus-nasa.github.io/)
+
+## What is Sled?
+
+Sled implements an AWS Lambda handler that adapts incoming messages in the Cumulus protocol
 to a format more easily consumable by Cumulus tasks, invokes the tasks, and then adapts
 their response back to the Cumulus message protocol to be sent to the next task.
 
@@ -76,8 +86,4 @@ This implementation has a few major advantages over the previous library-based a
 
 ## Contributing
 
-Please feel free to extend and modify the code. Because it is run so many places, it requires more careful testing
-and review than most other code.
-
-We would love to add support for languages other than Javascript.  If you know Python well, please consider helping
-create a Python sled!
+See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)
