@@ -1,6 +1,6 @@
 {
-  "name": "ingest-workflows",
-  "version": "0.0.0",
+  "name": "@cumulus/cumulus",
+  "version": "1.0.0-beta.581d31f4",
   "description": "Common ingest tasks and workflows",
   "main": "index.js",
   "scripts": {
@@ -35,7 +35,7 @@
     "yargs": "^8.0.2"
   },
   "devDependencies": {
-    "immutable": "^3.8.1",
+    "@cumulus/common": "^1.0.0-beta.581d31f4",
     "ajv": "^5.0.4-beta.3",
     "ajv-cli": "^2.0.0",
     "aws-sdk": "^2.4.9",
@@ -45,9 +45,8 @@
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-async-to-generator": "^6.8.0",
     "babel-polyfill": "^6.13.0",
-    "babel-preset-es2015": "^6.13.2",
     "babel-preset-env": "^1.4.0",
-    "@cumulus/common": "^1.0.0",
+    "babel-preset-es2015": "^6.13.2",
     "eslint": "^3.2.2",
     "eslint-config-airbnb": "^10.0.0",
     "eslint-plugin-import": "^1.13.0",
@@ -56,6 +55,7 @@
     "expect.js": "^0.3.1",
     "exports-loader": "^0.6.3",
     "http-server": "^0.9.0",
+    "immutable": "^3.8.1",
     "json-loader": "^0.5.4",
     "markdown-styles": "^3.1.9",
     "mocha": "^2.5.3",
