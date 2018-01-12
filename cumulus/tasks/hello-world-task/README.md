@@ -2,9 +2,9 @@
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-`@cumulus/hello-world-task` contains code for a lambda function returning json object:
+`@cumulus/hello-world-task` contains code for a lambda function returning javascript object:
 
-```json
+```javascript
 { hello: "Hello World" }
 ```
 
