@@ -10,6 +10,18 @@ const querystring = require('querystring');
 const PAGE_SIZE = 2000;
 
 /**
+  * Invalid Query Error Definition
+  *
+  * @param {string} message -- Error message
+  * @returns {null} null
+ */
+function InvalidQueryError(message) {
+  this.name = 'InvalidQuery Error';
+  this.message = message;
+}
+InvalidQueryError.prototype = new Error();
+
+/**
  * Task which discovers granules by querying the CMR
  * Input payload: none
  * Output payload: Array of objects { meta: {...} } containing meta as specified in the task config
@@ -17,10 +29,38 @@ const PAGE_SIZE = 2000;
  */
 module.exports = class DiscoverCmrGranulesTask extends Task {
   /**
+   * Validate CMR query to avoid the passing of incomplete/invalid queries
+   * Throws InvalidQueryError exception if Invalid
+   *
+   * @param {string} config - Task config parameters
+   * @returns {null} null - Will throw an InvalidQuery Error exception if necessary
+   */
+  validateParameters(config) {
+    if (!config.root) {
+      const error = new InvalidQueryError('Undefined root parameter');
+      throw (error);
+    }
+    if (!config.event) {
+      const error = new InvalidQueryError('Undefined event parameter');
+      throw (error);
+    }
+    if (!config.granule_meta) {
+      const error = new InvalidQueryError('Undefined granule_meta parameters');
+      throw (error);
+    }
+    if (!config.query) {
+      const error = new InvalidQueryError('Undefined query parameters');
+      throw (error);
+    }
+  }
+
+  /**
    * Main task entrypoint
-   * @return An array of CMR granules that need ingest
+   *
+   * @returns {Array} -- An array of CMR granules that need ingest
    */
   async run() {
+    this.validateParameters(this.config);
     const query = this.config.query || {};
     if (query.updated_since) {
       query.updated_since = new Date(Date.now() - parseDuration(query.updated_since)).toISOString();
@@ -34,18 +74,27 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
   /**
    * excludeFiltered - Excludes messages that do not match one of the specified granuleFilter.
    * Allows all messages if matchingKeys is null.
+   *
+   * @param {Hash} messages - messages
+   * @param {Hash} granuleFilter - granuleFilter
+   * @returns {Hash} - Filtered messages
    */
   excludeFiltered(messages, granuleFilter) {
+    /**
+     * Filter Function to be used
+     *
+     * @returns {Hash} - Filtered messages
+     */
     let filterFn = () => true;
     if (granuleFilter) {
       if (granuleFilter.filtered_granule_keys) {
         const keySet = new Set(granuleFilter.filtered_granule_keys);
-        filterFn = msg => keySet.has(msg.meta.key);
+        filterFn = (msg) => keySet.has(msg.meta.key);
       }
       else if (granuleFilter.filtered_granule_key_start) {
         const start = granuleFilter.filtered_granule_key_start;
         const end = granuleFilter.filtered_granule_key_end;
-        filterFn = msg => msg.meta.key >= start && msg.meta.key <= end;
+        filterFn = (msg) => msg.meta.key >= start && msg.meta.key <= end;
       }
     }
     return messages.filter(filterFn);
@@ -53,9 +102,10 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 
   /**
    * Returns CMR granules updated after the specified date
+   *
    * @param {string} root - The CMR root url (protocol and domain without path)
-   * @param {object} query - The query parameters to serialize and send to a CMR granules search
-   * @return An array of all granules matching the given query
+   * @param {Object} query - The query parameters to serialize and send to a CMR granules search
+   * @returns {Array} An array of all granules matching the given query
    */
   async cmrGranules(root, query) {
     const granules = [];
@@ -87,10 +137,12 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 
   /**
    * Builds the output array for the task
-   * @param {array} granules - The granules to output
-   * @param {object} opts - The granule_meta object passed to the task config
-   * @param {object} fieldValues - Field values to apply to the granule_meta (the incoming message)
-   * @return An array of meta objects for each granule created as specified in the task config
+   *
+   * @param {Array} granules - The granules to output
+   * @param {Object} opts - The granule_meta object passed to the task config
+   * @param {Object} fieldValues - Field values to apply to the granule_meta (the incoming message)
+   * @returns {Array} An array of meta objects for each granule created as specified
+   * in the task config
    */
   buildMessages(granules, opts, fieldValues) {
     if (!opts) return granules;
@@ -119,18 +171,20 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 
   /**
    * Entrypoint for Lambda
-   * @param {array} args The arguments passed by AWS Lambda
-   * @return The handler return value
+   *
+   * @param {Array} args - The arguments passed by AWS Lambda
+   * @returns {Hash} -
+   *
+   *  The handler return value
    */
   static handler(...args) {
     return DiscoverCmrGranulesTask.handle(...args);
   }
 };
 
-// To run a small test:
-// node discover-cmr-granules local
-
+// To tun with Visual Studio Code Debugger
+global.__isDebug = true;
 const local = require('@cumulus/common/local-helpers');
 const localTaskName = 'DiscoverCmrGranules';
-local.setupLocalRun(module.exports.handler,
-                    local.collectionMessageInput('MOPITT_DCOSMR_LL_D_STD', localTaskName));
+local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
+  'MOPITT_DCOSMR_LL_D_STD', localTaskName));
