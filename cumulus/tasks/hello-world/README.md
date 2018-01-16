@@ -1,8 +1,8 @@
-# @cumulus/hello-world-task
+# @cumulus/hello-world
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-`@cumulus/hello-world-task` contains code for a lambda function returning javascript object:
+`@cumulus/hello-world` contains code for a lambda function returning javascript object:
 
 ```javascript
 { hello: "Hello World" }

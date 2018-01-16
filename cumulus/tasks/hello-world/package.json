@@ -1,6 +1,6 @@
 {
-  "name": "@cumulus/hello-world-task",
-  "version": "1.0.0-beta.113",
+  "name": "@cumulus/hello-world",
+  "version": "1.0.0-beta.111",
   "description": "Example task",
   "main": "index.js",
   "directories": {
