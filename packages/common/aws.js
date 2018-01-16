@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const log = require('./log');
 const string = require('./string');
+const testUtils = require('./test-utils');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
@@ -26,8 +27,25 @@ const memoize = (fn) => {
   };
 };
 
-const awsClient = (Service, version = null) =>
-  memoize(() => new Service(version ? { apiVersion: version } : {}));
+/**
+ * Return a function which, when called, will return an AWS service object
+ *
+ * Note: The returned service objects are cached, so there will only be one
+ *       instance of each service object per process.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {string} version - the API version to use
+ * @returns {Function} - a function which, when called, will return an AWS service object
+ */
+const awsClient = (Service, version = null) => {
+  const options = {};
+  if (version) options.apiVersion = version;
+
+  if (process.env.TEST) {
+    return memoize(() => testUtils.testAwsClient(Service, options));
+  }
+  return memoize(() => new Service(options));
+};
 
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
@@ -83,6 +101,44 @@ exports.promiseS3Upload = (params) => {
   const uploadFn = exports.s3().upload.bind(exports.s3());
   return concurrency.toPromise(uploadFn, params);
 };
+
+/**
+ * Check if an object exists in S3
+ *
+ * @param {{Bucket: string, Key: string}} s3Object - the object to check for
+ * @returns {Promise.<boolean>} resolves to true if the object exists, false otherwise
+ */
+function s3ObjectExists(s3Object) {
+  return exports.s3().headObject(s3Object).promise()
+    .then(() => true)
+    .catch((err) => {
+      if (err.code === 'NotFound') return false;
+      throw err;
+    });
+}
+exports.s3ObjectExists = s3ObjectExists;
+
+/**
+ * Delete all objects from a bucket and then delete the bucket.
+ *
+ * @param {string} bucket - the bucket to be deleted
+ * @returns {Promise} - resolves when the bucket has been deleted
+ */
+async function recursivelyDeleteS3Bucket(bucket) {
+  const keys = await exports.s3().listObjects({ Bucket: bucket }).promise()
+    .then((response) => response.Contents.map((o) => o.Key));
+
+  await Promise.all(keys.map((key) =>
+    exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise()));
+
+  try {
+    await exports.s3().deleteBucket({ Bucket: bucket }).promise();
+  }
+  catch (err) {
+    if (err.code !== 'NoSuchBucket') throw err;
+  }
+}
+exports.recursivelyDeleteS3Bucket = recursivelyDeleteS3Bucket;
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner

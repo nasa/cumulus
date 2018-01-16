@@ -1,5 +1,6 @@
-const fs = require('fs');
 const path = require('path');
+const aws = require('@cumulus/common/aws');
+const testUtils = require('@cumulus/common/test-utils');
 
 const test = require('ava');
 const discoverPayload = require('@cumulus/test-data/payloads/modis/discover.json');
@@ -17,6 +18,62 @@ const {
   HttpDiscoverAndQueueGranules,
   SftpDiscoverAndQueueGranules
 } = require('../granule');
+
+// Create an S3 bucket for each test
+test.beforeEach((t) => {
+  t.context.bucket = testUtils.randomString(); // eslint-disable-line no-param-reassign
+  return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
+});
+
+// Delete the S3 bucket created in setup
+test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.bucket));
+
+test('findNewGranules returns files which do not yet exist in S3', async (t) => {
+  const event = {
+    collection: {
+      meta: {
+        files: []
+      }
+    },
+    provider: {
+      host: 'localhost'
+    }
+  };
+  const granuleDiscoveryObject = new SftpDiscoverGranules(event);
+
+  await aws.s3().putObject({
+    Bucket: t.context.bucket,
+    Key: 'not-new-key-123',
+    Body: 'asdf'
+  }).promise();
+
+  const files = [
+    { granuleId: 'not-new-id-123', bucket: t.context.bucket, key: 'not-new-key-123' },
+    { granuleId: 'new-id-124', bucket: t.context.bucket, key: 'new-key-124' },
+    { granuleId: 'new-id-125', bucket: t.context.bucket, key: 'new-key-125a' },
+    { granuleId: 'new-id-125', bucket: t.context.bucket, key: 'new-key-125b' }
+  ];
+
+  const expected = [
+    {
+      granuleId: 'new-id-124',
+      files: [
+        { bucket: t.context.bucket, key: 'new-key-124' }
+      ]
+    },
+    {
+      granuleId: 'new-id-125',
+      files: [
+        { bucket: t.context.bucket, key: 'new-key-125a' },
+        { bucket: t.context.bucket, key: 'new-key-125b' }
+      ]
+    }
+  ];
+
+  const actual = await granuleDiscoveryObject.findNewGranules(files);
+
+  t.deepEqual(actual, expected);
+});
 
 /**
 * test that granule.selector() returns the correct class
