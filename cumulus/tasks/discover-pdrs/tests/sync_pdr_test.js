@@ -14,6 +14,9 @@ import log from '@cumulus/common/log';
 import { handler } from '../index';
 import input from './fixtures/input.json';
 
+const aws = require('@cumulus/common/aws');
+const testUtils = require('@cumulus/common/test-utils');
+
 test.cb('error when provider info is missing', (t) => {
   const newPayload = Object.assign({}, input);
   delete newPayload.config.provider;
@@ -110,28 +113,41 @@ test.cb('test pdr discovery with FTP assuming some PDRs are new', (t) => {
     password: 'testpass'
   };
 
-  const ps = {
-    'MYD13A1_5_grans.PDR': false,
-    'PDN.ID1611071307.PDR': true,
-    'PDN.ID1611081200.PDR': false
-  };
-
-  sinon.stub(S3, 'fileExists').callsFake((b, k) => ps[path.basename(k)]);
-
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
   newPayload.config.useQueue = false;
   newPayload.config.collection.provider_path = '/pdrs';
   newPayload.input = {};
-  handler(newPayload, {}, (e, output) => {
-    S3.fileExists.restore();
-    if (e instanceof RemoteResourceError) {
-      log.info('ignoring this test. Test server seems to be down');
-      return t.end();
-    }
-    t.is(output.pdrs.length, 3);
-    return t.end(e);
-  });
+
+  const internalBucketName = testUtils.randomString();
+  newPayload.config.buckets.internal = internalBucketName;
+  aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+    .then(() => {
+      const Key = [
+        newPayload.config.stack,
+        newPayload.config.collection.provider_path.replace(/^\//, ''),
+        'PDN.ID1611071307.PDR'
+      ].join('/');
+
+      return aws.s3().putObject({
+        Bucket: internalBucketName,
+        Key,
+        Body: 'PDN.ID1611071307.PDR'
+      }).promise();
+    })
+    .then(() => handler(newPayload, {}, (e, output) => {
+      if (e) {
+        if (e instanceof RemoteResourceError) {
+          log.info('ignoring this test. Test server seems to be down');
+          return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
+        }
+        return aws.recursivelyDeleteS3Bucket(internalBucketName)
+          .then(() => t.end(e));
+      }
+
+      t.is(output.pdrs.length, 3);
+      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
+    }));
 });
 
 test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
@@ -141,26 +157,31 @@ test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
     host: 'http://localhost:8080'
   };
 
-  const ps = {
-    'MYD13A1_5_grans.PDR': false,
-    'PDN.ID1611071307.PDR': true,
-    'PDN.ID1611081200.PDR': false
-  };
-
-  sinon.stub(S3, 'fileExists').callsFake((b, k) => ps[path.basename(k)]);
-
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
   newPayload.config.useQueue = false;
   newPayload.config.collection.provider_path = '/';
   newPayload.input = {};
-  handler(newPayload, {}, (e, output) => {
-    S3.fileExists.restore();
-    if (e instanceof RemoteResourceError) {
-      log.info('ignoring this test. Test server seems to be down');
-      return t.end();
-    }
-    t.is(output.pdrs.length, 2);
-    return t.end(e);
-  });
+
+  const internalBucketName = testUtils.randomString();
+  newPayload.config.buckets.internal = internalBucketName;
+  aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+    .then(() => aws.s3().putObject({
+      Bucket: internalBucketName,
+      Key: 'lpdaac-cumulus-phaseIII/pdrs/pdrs/PDN.ID1611071307.PDR',
+      Body: 'PDN.ID1611071307.PDR'
+    }).promise())
+    .then(() => handler(newPayload, {}, (e, output) => {
+      if (e) {
+        if (e instanceof RemoteResourceError) {
+          log.info('ignoring this test. Test server seems to be down');
+          return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
+        }
+        return aws.recursivelyDeleteS3Bucket(internalBucketName)
+          .then(() => t.end(e));
+      }
+
+      t.is(output.pdrs.length, 2);
+      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
+    }));
 });

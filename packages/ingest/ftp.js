@@ -4,9 +4,8 @@ const os = require('os');
 const fs = require('fs');
 const JSFtp = require('jsftp');
 const join = require('path').join;
-const urljoin = require('url-join');
 const logger = require('./log');
-const S3 = require('./aws').S3;
+const aws = require('@cumulus/common/aws');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
 
@@ -53,10 +52,26 @@ module.exports.ftpMixin = superclass => class extends superclass {
     return this.upload(bucket, key, filename, tempFile);
   }
 
+  /**
+   * Upload a file to S3
+   *
+   * @param {string} bucket - the S3 bucket to upload to
+   * @param {string} key - the base path of the S3 key
+   * @param {string} filename - the filename to be uploaded to
+   * @param {string} tempFile - the location of the file to be uploaded
+   * @returns {Promise.<string>} - the S3 URL that the file was uploaded to
+   */
   async upload(bucket, key, filename, tempFile) {
-    await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
+    const fullKey = join(key, filename);
+
+    await aws.s3().putObject({
+      Bucket: bucket,
+      Key: fullKey,
+      Body: fs.createReadStream(tempFile)
+    }).promise();
+
     log.info(`uploaded ${filename} to ${bucket}`);
-    return urljoin('s3://', bucket, key, filename);
+    return `s3://${bucket}/${fullKey}`;
   }
 
   /**
