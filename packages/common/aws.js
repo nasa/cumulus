@@ -105,9 +105,7 @@ exports.promiseS3Upload = (params) => {
 /**
  * Check if an object exists in S3
  *
- * @param {Object} s3Object
- * @param {string} s3Object.Bucket - the bucket containing the S3 object
- * @param {string} s3Object.Key - the key where the S3 object is located
+ * @param {{Bucket: string, Key: string}} s3Object - the object to check for
  * @returns {Promise.<boolean>} resolves to true if the object exists, false otherwise
  */
 function s3ObjectExists(s3Object) {
