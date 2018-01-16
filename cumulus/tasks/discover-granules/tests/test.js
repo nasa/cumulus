@@ -6,15 +6,12 @@ import { handler as sled } from '@cumulus/sled';
 import log from '@cumulus/common/log';
 import amsr2 from '@cumulus/test-data/payloads/amsr2/discover.json';
 import queue from '@cumulus/ingest/queue';
-import { S3 } from '@cumulus/ingest/aws';
 import mur from './fixtures/mur.json';
 import sledInput from './fixtures/sled-input.json';
 import { handler } from '../index';
 
 test.cb('test discovering mur granules', (t) => {
   const newMur = JSON.parse(JSON.stringify(mur));
-
-  sinon.stub(S3, 'fileExists').callsFake(() => false);
 
   // make sure queue is not used
   newMur.config.useQueue = false;
@@ -29,7 +26,6 @@ test.cb('test discovering mur granules', (t) => {
       const g = Object.keys(granules)[0];
       t.is(granules[g].files.length, 2);
     }
-    S3.fileExists.restore();
     t.end(e);
   });
 });
@@ -37,7 +33,6 @@ test.cb('test discovering mur granules', (t) => {
 test.cb('test discovering mur granules with queue', (t) => {
   const newMur = Object.assign({}, mur);
   sinon.stub(queue, 'queueGranule').callsFake(() => true);
-  sinon.stub(S3, 'fileExists').callsFake(() => false);
 
   // update discovery rule
   const rule = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])';
@@ -51,12 +46,10 @@ test.cb('test discovering mur granules with queue', (t) => {
     else {
       t.is(output.granules_found, 3);
     }
-    S3.fileExists.restore();
     queue.queueGranule.restore();
     t.end(e);
   });
 });
-
 
 test.cb('test discovering amsr2 granules using SFTP', (t) => {
   if (!process.env.JAXA_HOST || !process.env.JAXA_PORT) {
@@ -86,15 +79,12 @@ test.cb('test discovering amsr2 granules using SFTP', (t) => {
 });
 
 test.cb('test running in sled', (t) => {
-  sinon.stub(S3, 'fileExists').callsFake(() => false);
-
   function callback (err, output) {
     t.ifError(err);
     const granules = output.payload.granules;
     t.is(Object.keys(granules).length, 3);
     const g = Object.keys(granules)[0];
     t.is(granules[g].files.length, 2);
-    S3.fileExists.restore();
     t.end();
   }
 
