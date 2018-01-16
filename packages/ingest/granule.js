@@ -355,67 +355,57 @@ class Granule {
 }
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using HTTP or HTTPS.
  */
+class HttpDiscoverGranules extends httpMixin(Discover) {}
 
+/**
+ * A class for discovering granules using HTTP or HTTPS and queueing them to SQS.
+ */
+class HttpDiscoverAndQueueGranules extends httpMixin(DiscoverAndQueue) {}
+
+/**
+ * A class for discovering granules using SFTP.
+ */
 class SftpDiscoverGranules extends sftpMixin(Discover) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using SFTP and queueing them to SQS.
  */
-
 class SftpDiscoverAndQueueGranules extends sftpMixin(DiscoverAndQueue) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using FTP.
  */
-
 class FtpDiscoverGranules extends ftpMixin(Discover) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using FTP and queueing them to SQS.
  */
-
 class FtpDiscoverAndQueueGranules extends ftpMixin(DiscoverAndQueue) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * Ingest Granule from an FTP endpoint.
  */
-
 class FtpGranule extends ftpMixin(Granule) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * Ingest Granule from an SFTP endpoint.
  */
-
 class SftpGranule extends sftpMixin(Granule) {}
 
-
 /**
- * Ingest Granule from a HTTP endpoint.
- *
- * @class
+ * Ingest Granule from an HTTP endpoint.
  */
-
 class HttpGranule extends httpMixin(Granule) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
-* @param {string} type – `discover` or `ingest`
-* @param {string} protocol – `sftp`, `ftp`, or `http`
-* @param {boolean} useQueue – set to `true` to queue granules
+*
+* @param {string} type -`discover` or `ingest`
+* @param {string} protocol -`sftp`, `ftp`, or `http`
+* @param {boolean} q - set to `true` to queue granules
+* @returns {function} - a constructor to create a granule discovery object
 **/
 function selector(type, protocol, q) {
   if (type === 'discover') {
@@ -424,6 +414,9 @@ function selector(type, protocol, q) {
         return q ? SftpDiscoverAndQueueGranules : SftpDiscoverGranules;
       case 'ftp':
         return q ? FtpDiscoverAndQueueGranules : FtpDiscoverGranules;
+      case 'http':
+      case 'https':
+        return q ? HttpDiscoverAndQueueGranules : HttpDiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -452,3 +445,5 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpDiscoverAndQueueGranules = SftpDiscoverAndQueueGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpDiscoverAndQueueGranules = FtpDiscoverAndQueueGranules;
+module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
+module.exports.HttpDiscoverAndQueueGranules = HttpDiscoverAndQueueGranules;
