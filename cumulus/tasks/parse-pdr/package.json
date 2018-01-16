@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/parse-pdr",
-  "version": "1.0.0-beta.113",
+  "version": "1.0.0-beta.114",
   "description": "Download and Parse a given PDR",
   "main": "index.js",
   "directories": {
@@ -42,6 +42,7 @@
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
+    "json-loader": "^0.5.7",
     "lodash.get": "^4.4.2",
     "webpack": "^1.12.13"
   },
