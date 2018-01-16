@@ -16,7 +16,7 @@ log = log.child({ file: 'pdr-status-check/index.js' });
 */
 
 /**
-* Lambda function handler for discovering granules on s3 buckets.
+* Lambda function handler for checking the status of a workflow (step function) execution. Expects a payload object which includes the name of a PDR.
 * See schemas/input.json for detailed expected input.
 *
 * @param  {object} event lambda event object
