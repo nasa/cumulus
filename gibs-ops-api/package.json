@@ -1,6 +1,6 @@
 {
-  "name": "gibs-ops-api",
-  "version": "0.1.0",
+  "name": "@cumulus/gibs-ops-api",
+  "version": "1.0.0-beta.581d31f4",
   "description": "Implements the API backing the GIBS Ops Dashboard",
   "main": "lambda.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "test-ci": "npm run lint && npm run mocha-junit"
   },
   "dependencies": {
+    "@cumulus/common": "^1.0.0-beta.581d31f4",
     "aws-sdk": "^2.45.0",
     "aws-serverless-express": "^2.2.0",
     "babel-plugin-extensible-destructuring": "^4.1.0",
@@ -29,7 +30,6 @@
     "extensible-runtime": "^4.1.0",
     "http-aws-es": "^2.0.5",
     "immutable": "^3.8.1",
-    "@cumulus/common": "^1.0.0",
     "js-yaml": "^3.8.3",
     "lodash": "^4.17.4",
     "request": "^2.81.0",

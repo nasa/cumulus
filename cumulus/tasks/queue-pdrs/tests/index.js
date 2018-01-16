@@ -18,8 +18,13 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await deleteS3Bucket(t.context.bucket);
-  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
+  try {
+    await deleteS3Bucket(t.context.bucket);
+    await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
+  }
+  catch (e) {
+    // resource didn't exist
+  }
 });
 
 test('queue pdrs', async (t) => {

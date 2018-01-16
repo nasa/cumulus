@@ -27,7 +27,7 @@ class Discover {
     const config = get(event, 'config');
 
     this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection.meta');
+    this.collection = get(config, 'collection');
     this.provider = get(config, 'provider');
     this.event = event;
 
@@ -157,7 +157,7 @@ class Granule {
     const config = get(event, 'config');
 
     this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection.meta');
+    this.collection = get(config, 'collection');
     this.provider = get(config, 'provider');
     this.event = event;
 
