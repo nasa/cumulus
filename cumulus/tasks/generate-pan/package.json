@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/generate-pan",
-  "version": "1.0.0-beta.581d31f4",
+  "version": "1.0.0-beta.581d31f5",
   "description": "SIPS handler PAN generation/upload task",
   "main": "index.js",
   "keywords": [
