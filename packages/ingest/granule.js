@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 'use strict';
 
+const aws = require('@cumulus/common/aws');
 const fs = require('fs');
 const get = require('lodash.get');
 const join = require('path').join;
@@ -9,8 +10,6 @@ const cksum = require('cksum');
 const checksum = require('checksum');
 const logger = require('./log');
 const errors = require('@cumulus/common/errors');
-const AWS = require('aws-sdk');
-const S3 = require('./aws').S3;
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
@@ -94,9 +93,21 @@ class Discover {
     return await this.findNewGranules(updatedFiles);
   }
 
-  async fileIsNew(file) {
-    const exists = await S3.fileExists(file.bucket, file.name);
-    return exists ? false : file;
+  /**
+   * Determine if a file does not yet exist in S3.
+   *
+   * @param {Object} file - the file that's being looked for
+   * @param {string} file.bucket - the bucket to look in
+   * @param {string} file.name - the name of the file (in S3)
+   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
+   *   when the object exists in S3, or the passed-in file object if it does
+   *   not already exist in S3.
+   */
+  fileIsNew(file) {
+    return aws.s3ObjectExists({
+      Bucket: file.bucket,
+      Key: file.name
+    }).then((exists) => (exists ? false : file));
   }
 
   async findNewGranules(files) {
@@ -256,16 +267,15 @@ class Granule {
     let exists = null;
 
     // check if the file exists.
-    exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
+    exists = await aws.s3ObjectExists({ Bucket: file.bucket, Key: join(file.url_path, file.name) });
 
     if (duplicateHandling === 'version') {
-      const s3 = new AWS.S3();
       // check that the bucket has versioning enabled
-      let versioning = await s3.getBucketVersioning({ Bucket: file.bucket }).promise();
+      let versioning = await aws.s3().getBucketVersioning({ Bucket: file.bucket }).promise();
 
       // if not enabled, make it enabled
       if (versioning.Status !== 'Enabled') {
-        versioning = await s3.putBucketVersioning({
+        versioning = await aws.s3().putBucketVersioning({
           Bucket: file.bucket,
           VersioningConfiguration: { Status: 'Enabled' } }).promise();
       }
