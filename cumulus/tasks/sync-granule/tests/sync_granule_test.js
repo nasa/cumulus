@@ -156,7 +156,7 @@ test.cb('skip duplicate Granule', (t) => {
   const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
 
   const newPayload = Object.assign({}, payload);
-  newPayload.collection.meta.duplicateHandling = 'skip';
+  newPayload.config.collection.duplicateHandling = 'skip';
   handler(newPayload, {}, (e, r) => {
     S3.fileExists.restore();
     S3.upload.restore();

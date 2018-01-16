@@ -51,6 +51,18 @@ Build and watch packages:
 
 ## Running Tests
 
+### LocalStack
+
+[LocalStack](https://github.com/localstack/localstack) provides local versions of most AWS services for testing.
+
+The LocalStack repository has [installation instructions](https://github.com/localstack/localstack#installing).
+
+Before running tests, start the LocalStack servers:
+
+    $ localstack start
+
+### Docker containers
+
 Turn on the docker containers first:
 
     $ docker-compose up local
@@ -58,6 +70,8 @@ Turn on the docker containers first:
 If you prefer to run docker in detached mode (i.e. run containers in the background), run:
 
     $ docker-compose up -d local
+
+### Run tests
 
 Run the test commands next
 
