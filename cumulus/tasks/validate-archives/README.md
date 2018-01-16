@@ -1,4 +1,4 @@
-# @cumulus/trigger-process-pdrs
+# @cumulus/validate-archives
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
