@@ -23,8 +23,10 @@
     ]
   },
   "keywords": [
-    "CUMULUS"
-  ],
+    "GIBS",
+    "CUMULUS",
+    "NASA"
+  ]
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
