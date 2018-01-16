@@ -1,6 +1,6 @@
 # GIBS Dashboard
 
-A dashboard for operating GIBS running in AWS.
+A dashboard for operating [Global Imagery Browse Services (GIBS)](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/global-imagery-browse-services-gibs) running in AWS.
 
 ## Project Layout
 
@@ -18,7 +18,7 @@ A dashboard for operating GIBS running in AWS.
 * **config/** - Configuration files for AWS.
 * **test/** - Tests.
 
-This project is setup using these technologies.
+This project is setup using these technologies:
 
 * React
 * Redux
