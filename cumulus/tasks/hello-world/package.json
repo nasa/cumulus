@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.0.0-beta.114",
+  "version": "1.0.0-beta.115",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -40,6 +40,7 @@
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
+    "json-loader": "^0.5.7",
     "webpack": "^1.12.13"
   },
   "devDependencies": {
