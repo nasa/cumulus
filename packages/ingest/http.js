@@ -1,5 +1,6 @@
 'use strict';
 
+const aws = require('@cumulus/common/aws');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -9,10 +10,8 @@ const http = require('http');
 const https = require('https');
 const mkdirp = require('mkdirp');
 const pump = require('pump');
-const S3 = require('./aws').S3;
 const syncUrl = require('@cumulus/common/aws').syncUrl;
 const errors = require('@cumulus/common/errors');
-
 
 async function downloadToDisk(url, filepath) {
   const transport = url.indexOf('https://') === 0 ? https : http;
@@ -102,9 +101,25 @@ module.exports.httpMixin = superclass => class extends superclass {
     return urljoin('s3://', bucket, key, filename);
   }
 
-  async upload(bucket, key, filename, tempfile) {
-    await S3.upload(bucket, path.join(key, filename), fs.createReadStream(tempfile));
-    return urljoin('s3://', bucket, key, filename);
+  /**
+   * Upload a file to S3
+   *
+   * @param {string} bucket - the S3 bucket to upload to
+   * @param {string} key - the base path of the S3 key
+   * @param {string} filename - the filename to be uploaded to
+   * @param {string} tempFile - the location of the file to be uploaded
+   * @returns {Promise<string>} - the S3 URL that the file was uploaded to
+   */
+  async upload(bucket, key, filename, tempFile) {
+    const fullKey = `${key}/${filename}`;
+
+    await aws.s3().putObject({
+      Bucket: bucket,
+      Key: fullKey,
+      Body: fs.createReadStream(tempFile)
+    }).promise();
+
+    return `s3://${bucket}/${fullKey}`;
   }
 
   /**

@@ -8,6 +8,7 @@ const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 const sftpMixin = require('./sftp');
+const aws = require('@cumulus/common/aws');
 const { S3 } = require('./aws');
 const queue = require('./queue');
 
@@ -62,9 +63,20 @@ class Discover {
     return this.findNewPdrs(files);
   }
 
-  async pdrIsNew(pdr) {
-    const exists = await S3.fileExists(this.buckets.internal, path.join(this.stack, this.folder, pdr.name));
-    return exists ? false : pdr;
+  /**
+   * Determine if a PDR does not yet exist in S3.
+   *
+   * @param {Object} pdr - the PDR that's being looked for
+   * @param {string} pdr.name - the name of the PDR (in S3)
+   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
+   *   when the object does already exists in S3, or the passed-in PDR object
+   *   if it does not already exist in S3.
+   */
+  pdrIsNew(pdr) {
+    return aws.s3ObjectExists({
+      Bucket: this.buckets.internal,
+      Key: path.join(this.stack, this.folder, pdr.name)
+    }).then((exists) => (exists ? false : pdr));
   }
 
   /**
