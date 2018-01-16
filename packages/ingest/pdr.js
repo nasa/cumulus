@@ -7,6 +7,7 @@ const { MismatchPdrCollection } = require('@cumulus/common/errors');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
+const sftpMixin = require('./sftp');
 const { S3 } = require('./aws');
 const queue = require('./queue');
 
@@ -283,6 +284,14 @@ class FtpDiscover extends ftpMixin(Discover) {}
 class HttpDiscover extends httpMixin(Discover) {}
 
 /**
+ * Disocver PDRs from a SFTP endpoint.
+ *
+ * @class
+ */
+
+class SftpDiscover extends sftpMixin(Discover) {}
+
+/**
  * Disocver PDRs from a FTP endpoint.
  *
  * @class
@@ -297,6 +306,14 @@ class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
  */
 
 class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
+
+/**
+ * Disocver PDRs from a SFTP endpoint.
+ *
+ * @class
+ */
+
+class SftpDiscoverAndQueue extends sftpMixin(DiscoverAndQueue) {}
 
 /**
  * Parse PDRs downloaded from a FTP endpoint.
@@ -315,6 +332,14 @@ class FtpParse extends ftpMixin(Parse) {}
 class HttpParse extends httpMixin(Parse) {}
 
 /**
+ * Parse PDRs downloaded from a SFTP endpoint.
+ *
+ * @class
+ */
+
+class SftpParse extends sftpMixin(Parse) {}
+
+/**
  * Parse PDRs downloaded from a FTP endpoint.
  *
  * @class
@@ -330,6 +355,22 @@ class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
 
 class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
 
+/**
+ * Parse PDRs downloaded from a SFTP endpoint.
+ *
+ * @classc
+ */
+
+class SftpParseAndQueue extends sftpMixin(ParseAndQueue) {}
+
+/**
+ * Select a class for discovering PDRs based on protocol 
+ * 
+ * @param {string} type - `discover` or `parse`
+ * @param {string} protocol - `sftp`, `ftp`, or `http`
+ * @param {boolean} q - set to `true` to queue pdrs
+ * @returns {function} - a constructor to create a PDR discovery object
+ */
 function selector(type, protocol, q) {
   if (type === 'discover') {
     switch (protocol) {
@@ -337,6 +378,8 @@ function selector(type, protocol, q) {
         return q ? HttpDiscoverAndQueue : HttpDiscover;
       case 'ftp':
         return q ? FtpDiscoverAndQueue : FtpDiscover;
+      case 'sftp':
+        return q ? SftpDiscoverAndQueue : SftpDiscover;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -347,6 +390,8 @@ function selector(type, protocol, q) {
         return q ? HttpParseAndQueue : HttpParse;
       case 'ftp':
         return q ? FtpParseAndQueue : FtpParse;
+      case 'sftp':
+        return q ? SftpParseAndQueue : SftpParseAndQueue;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -358,7 +403,10 @@ function selector(type, protocol, q) {
 module.exports.selector = selector;
 module.exports.HttpParse = HttpParse;
 module.exports.FtpParse = FtpParse;
+module.exports.SftpParse = SftpParse;
 module.exports.FtpDiscover = FtpDiscover;
 module.exports.HttpDiscover = HttpDiscover;
+module.exports.SftpDiscover = SftpDiscover;
 module.exports.FtpDiscoverAndQueue = FtpDiscoverAndQueue;
 module.exports.HttpDiscoverAndQueue = HttpDiscoverAndQueue;
+module.exports.SftpDiscoverAndQueue = SftpDiscoverAndQueue;
