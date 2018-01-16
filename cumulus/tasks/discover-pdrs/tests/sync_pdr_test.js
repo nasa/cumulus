@@ -181,6 +181,47 @@ test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
           .then(() => t.end(e));
       }
 
+      console.log(output.pdrs);
+      t.is(output.pdrs.length, 2);
+      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
+    }));
+});
+
+test.cb('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
+  const provider = {
+    id: 'MODAPS',
+    protocol: 'sftp',
+    host: 'localhost',
+    port: 2222,
+    username: 'user',
+    password: 'password'
+  };
+
+  const newPayload = Object.assign({}, input);
+  newPayload.config.provider = provider;
+  newPayload.config.useQueue = false;
+  newPayload.config.collection.provider_path = 'test-data/pdrs';
+  newPayload.input = {};
+
+  const internalBucketName = testUtils.randomString();
+  newPayload.config.buckets.internal = internalBucketName;
+  aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+    .then(() => aws.s3().putObject({
+      Bucket: internalBucketName,
+      Key: 'lpdaac-cumulus-phaseIII/pdrs/pdrs/PDN.ID1611071307.PDR',
+      Body: 'PDN.ID1611071307.PDR'
+    }).promise())
+    .then(() => handler(newPayload, {}, (e, output) => {
+      if (e) {
+        if (e instanceof RemoteResourceError) {
+          log.info('ignoring this test. Test server seems to be down');
+          return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
+        }
+        return aws.recursivelyDeleteS3Bucket(internalBucketName)
+          .then(() => t.end(e));
+      }
+
+      console.log(output.pdrs);
       t.is(output.pdrs.length, 2);
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
     }));
