@@ -42,7 +42,7 @@ test.cb('test discovering mur granules with queue', (t) => {
   // update discovery rule
   const rule = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])';
   newMur.config.useQueue = true;
-  newMur.config.collection.meta.provider_path = rule;
+  newMur.config.collection.provider_path = rule;
 
   handler(newMur, {}, (e, output) => {
     if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
