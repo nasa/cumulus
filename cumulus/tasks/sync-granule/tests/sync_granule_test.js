@@ -153,7 +153,7 @@ test.cb('download Granule with checksum in file', (t) => {
       }));
 });
 
-// TODO Get this test working
+// TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
 // test.cb('replace duplicate Granule', (t) => {
 //   const provider = {
 //     id: 'MODAPS',
@@ -177,7 +177,7 @@ test.cb('download Granule with checksum in file', (t) => {
 //   });
 // });
 
-// TODO Get this test working
+// TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
 // test.cb('skip duplicate Granule', (t) => {
 //   sinon.stub(S3, 'fileExists').callsFake(() => true);
 //   const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
