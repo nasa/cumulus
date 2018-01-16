@@ -12,12 +12,12 @@ jobs:
       - run:
           name: Installing Dependencies
           command: |
-            sudo npm install -g lerna
-            npm install
-            npm run bootstrap
+            sudo yarn global add lerna
+            yarn install
+            yarn ybootstrap
 
       - run:
           name: Running Test
           environment:
             LOCALSTACK_HOST: localstack
-          command: npm test
+          command: yarn test

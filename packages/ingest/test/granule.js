@@ -12,8 +12,10 @@ const {
   SftpGranule,
   HttpGranule,
   FtpDiscoverGranules,
+  HttpDiscoverGranules,
   SftpDiscoverGranules,
   FtpDiscoverAndQueueGranules,
+  HttpDiscoverAndQueueGranules,
   SftpDiscoverAndQueueGranules
 } = require('../granule');
 
@@ -82,8 +84,12 @@ const selectorTypes = [
   { cls: FtpGranule, type: 'ingest', protocol: 'ftp' },
   { cls: SftpGranule, type: 'ingest', protocol: 'sftp' },
   { cls: FtpDiscoverGranules, type: 'discover', protocol: 'ftp' },
+  { cls: HttpDiscoverGranules, type: 'discover', protocol: 'http' },
+  { cls: HttpDiscoverGranules, type: 'discover', protocol: 'https' },
   { cls: SftpDiscoverGranules, type: 'discover', protocol: 'sftp' },
   { cls: FtpDiscoverAndQueueGranules, type: 'discover', protocol: 'ftp', queue: true },
+  { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'http', queue: true },
+  { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'https', queue: true },
   { cls: SftpDiscoverAndQueueGranules, type: 'discover', protocol: 'sftp', queue: true }
 ];
 
