@@ -9,7 +9,7 @@ module.exports = {
   module: {
     rules: [{
       test: /\.js?$/,
-      exclude: /(node_modules)/,
+      exclude: /node_modules(?!\/@cumulus)/,
       loader: 'babel-loader'
     }, {
       test: /\.json$/,
