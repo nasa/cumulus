@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-pdrs",
-  "version": "1.0.0-beta.581d31f5",
+  "version": "1.0.0-beta.581d31f6",
   "description": "Discover PDRs in FTP and HTTP endpoints",
   "main": "index.js",
   "directories": {
@@ -13,7 +13,8 @@
   "scripts": {
     "test": "ava tests/*.js --serial --no-color",
     "build": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress",
-    "watch": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress -w"
+    "watch": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress -w",
+    "postinstall": "npm run build"
   },
   "ava": {
     "babel": "inherit",
