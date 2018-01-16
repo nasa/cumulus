@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.0.0-beta.113",
+  "version": "1.0.0-beta.114",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -25,7 +25,6 @@
   },
   "babel": {
     "presets": [
-      "es2015",
       "es2017"
     ],
     "plugins": [
