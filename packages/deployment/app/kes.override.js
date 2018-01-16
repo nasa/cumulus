@@ -84,7 +84,7 @@ function buildStepFunctionMessageTemplate(template, sf, sfConfigs, wfArn) {
   template.cumulus_meta.state_machine = wfArn;
   template.cumulus_meta.workflow_name = sf.name;
 
-  return msg;
+  return template;
 }
 
 /**
