@@ -181,7 +181,6 @@ test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
           .then(() => t.end(e));
       }
 
-      console.log(output.pdrs);
       t.is(output.pdrs.length, 2);
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
     }));
@@ -208,7 +207,7 @@ test.cb('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
   aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => aws.s3().putObject({
       Bucket: internalBucketName,
-      Key: 'lpdaac-cumulus-phaseIII/pdrs/pdrs/PDN.ID1611071307.PDR',
+      Key: 'lpdaac-cumulus-phaseIII/pdrs/PDN.ID1611071307.PDR',
       Body: 'PDN.ID1611071307.PDR'
     }).promise())
     .then(() => handler(newPayload, {}, (e, output) => {
@@ -221,8 +220,7 @@ test.cb('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
           .then(() => t.end(e));
       }
 
-      console.log(output.pdrs);
-      t.is(output.pdrs.length, 2);
+      t.is(output.pdrs.length, 3);
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
     }));
 });
