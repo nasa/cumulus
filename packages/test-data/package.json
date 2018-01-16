@@ -2,7 +2,11 @@
   "name": "@cumulus/test-data",
   "version": "1.0.0-beta.581d31f4",
   "description": "Includes the test data for various packages",
-  "main": "index.js",
+  "keywords": [
+    "GIBS",
+    "CUMULUS",
+    "NASA"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
