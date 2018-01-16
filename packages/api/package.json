@@ -1,12 +1,13 @@
 {
-  "name": "@cumulus/daac-ops-api",
-  "version": "1.0.0-beta.581d31f4",
+  "name": "@cumulus/api",
+  "version": "1.0.0-beta.581d31f6",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "scripts": {
     "test": "echo 'no tests'",
     "build": "webpack --progress",
-    "watch": "webpack --progress -w"
+    "watch": "webpack --progress -w",
+    "postinstall": "npm run build"
   },
   "keywords": [
     "Cumulus"
@@ -20,7 +21,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.0.0-beta.581d31f4",
+    "@cumulus/cmrjs": "^1.0.0-beta.581d31f6",
     "@cumulus/common": "^1.0.0-beta.581d31f4",
     "@cumulus/ingest": "^1.0.0-beta.581d31f4",
     "@cumulus/pvl": "^1.0.0-beta.581d31f4",
@@ -41,15 +42,16 @@
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
-    "randomstring": "^1.1.5"
-  },
-  "devDependencies": {
-    "ava": "^0.21.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
-    "sinon": "^2.0.0-pre.5",
-    "webpack": "^1.12.13"
+    "webpack": "^1.12.13",
+    "json-loader": "^0.5.4",
+    "randomstring": "^1.1.5"
+  },
+  "devDependencies": {
+    "ava": "^0.21.0",
+    "sinon": "^2.0.0-pre.5"
   }
 }
