@@ -2,7 +2,7 @@ sqs2sf:
   handler: index.starter
   timeout: 200
   memory: 384
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
 
 sns2elasticsearch:
   handler: index.indexer
@@ -14,7 +14,7 @@ sns2elasticsearch:
         - '{{es.name}}Domain'
         - DomainEndpoint
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
 
 log2elasticsearch:
   handler: index.logHandler
@@ -26,26 +26,26 @@ log2elasticsearch:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
 
 sf2snsStart:
   handler: index.sfStart
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
 
 sf2snsEnd:
   handler: index.sfEnd
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
 
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
   handler: index.scheduler
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     CollectionsTable:
       function: Ref
@@ -64,14 +64,14 @@ jobs:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
 
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
   handler: index.bootstrap
   timeout: 100
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     internal: '{{buckets.internal}}'
 
@@ -80,7 +80,7 @@ ApiCollections:
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -120,7 +120,7 @@ ApiGranules:
   handler: index.granules
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   apiRole: true
   envs:
     UsersTable:
@@ -173,7 +173,7 @@ ApiExecutions:
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -198,7 +198,7 @@ ApiExecutionStatus:
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -219,7 +219,7 @@ ApiWorkflows:
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     bucket: '{{buckets.internal}}'
     UsersTable:
@@ -267,7 +267,7 @@ ApiRules:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   apiGateway:
     - path: rules
       method: get
@@ -308,7 +308,7 @@ ApiProviders:
       array:
         - '{{es.name}}Domain'
         - DomainEndpoint
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   apiGateway:
     - path: providers
       method: get
@@ -335,7 +335,7 @@ ApiPdrs:
   handler: index.pdrs
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -364,7 +364,7 @@ ApiLogs:
   handler: index.logs
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   apiRole: true
   envs:
     UsersTable:
@@ -390,7 +390,7 @@ ApiSchema:
   timeout: 20
   memory: 256
   apiRole: true
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   envs:
     UsersTable:
       function: Ref
@@ -405,7 +405,7 @@ ApiStats:
   handler: index.stats
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   apiRole: true
   envs:
     UsersTable:
@@ -438,7 +438,7 @@ ApiToken:
   handler: index.token
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   apiRole: true
   urs: true
   envs:
@@ -458,7 +458,7 @@ ApiDistribution:
   handler: index.distribution
   timeout: 20
   memory: 256
-  source: '../cumulus/daac-ops-api/dist/'
+  source: '../cumulus/packages/api/dist/'
   apiRole: true
   urs: true
   envs:
