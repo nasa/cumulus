@@ -195,4 +195,3 @@ test.cb('download Granule with checksum in file', (t) => {
 //     return t.end(e);
 //   });
 // });
->>>>>>> Stashed changes
