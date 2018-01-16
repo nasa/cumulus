@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/tee",
-  "version": "1.0.0-beta.581d31f4",
+  "version": "1.0.0-beta.581d31f5",
   "description": "Task for testing that splits output",
   "main": "index.js",
   "keywords": [
