@@ -125,7 +125,7 @@ class Parse {
     this.pdr = get(input, 'pdr');
     this.stack = get(config, 'stack');
     this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection.meta');
+    this.collection = get(config, 'collection');
     this.provider = get(config, 'provider');
     this.folder = get(config, 'pdrFolder', 'pdrs');
 
@@ -244,7 +244,7 @@ class ParseAndQueue extends Parse {
 
       g.granuleId = this.extractGranuleId(
         g.files[0].name,
-        events[g.dataType].collection.meta.granuleIdExtraction
+        events[g.dataType].collection.granuleIdExtraction
       );
     }
 

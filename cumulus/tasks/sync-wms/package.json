@@ -1,18 +1,18 @@
 {
-  "name": "gitc-sync-wms",
-  "version": "0.0.0",
+  "name": "@cumulus/sync-wms",
+  "version": "1.0.0-beta.581d31f4",
   "description": "Transforms input granule info to WMS URLs for URL sync",
   "main": "index.js",
   "keywords": [
     "GIBS"
   ],
   "repository": {
-    "type" : "git",
+    "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0"
+    "@cumulus/common": "^1.0.0-beta.581d31f4"
   }
 }
