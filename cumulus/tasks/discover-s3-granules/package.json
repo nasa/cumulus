@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-s3-granules",
-  "version": "1.0.0-beta.581d31f5",
+  "version": "1.0.0-beta.581d31f6",
   "description": "Discover granules from an S3 bucket",
   "main": "index.js",
   "directories": {
@@ -14,7 +14,8 @@
     "test": "env TEST=true ava tests/*.js --serial",
     "local": "node index.js | pino",
     "build": "webpack --progress",
-    "watch": "webpack --progress -w"
+    "watch": "webpack --progress -w",
+    "postinstall": "npm run build"
   },
   "ava": {
     "babel": "inherit",
