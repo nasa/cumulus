@@ -1,3 +1,13 @@
+# @cumulus/task-debug
+
+[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
+
+## What is Cumulus?
+
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+
+[Cumulus Documentation](https://cumulus-nasa.github.io/)
+
 # Task Debug Harness
 
 This package provides an executable that can run a workflow defined in a yml file to aid in
@@ -32,3 +42,7 @@ is always used.
 to add branching support later.
 * Because of the dynamic loading of tasks it is recommend to use node 8 without transpiling when
 debugging to avoid the need to generate and deal with source maps
+
+## Contributing
+
+See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-http-tiles",
-  "version": "1.0.0-beta.581d31f4",
+  "version": "1.0.0-beta.581d31f6",
   "description": "Crawls an HTTP endpoint to discover tiled imagery",
   "main": "index.js",
   "keywords": [
