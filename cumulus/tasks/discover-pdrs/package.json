@@ -11,17 +11,20 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "ava tests/*.js --serial --no-color",
+    "test": "env TEST=true ava",
     "build": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress",
     "watch": "mkdir -p dist && cp cumulus.json dist/ && webpack --progress -w",
     "postinstall": "npm run build"
   },
   "ava": {
+    "files": "tests",
     "babel": "inherit",
     "require": [
       "babel-polyfill",
       "babel-register"
-    ]
+    ],
+    "serial": true,
+    "color": false
   },
   "babel": {
     "presets": [
