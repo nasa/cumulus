@@ -15,13 +15,14 @@ const aws = require('@cumulus/common/aws');
 
 test.beforeEach(async (t) => {
   t.context.bucket = testUtils.randomString();
-  await sqs().createQueue({ QueueName: 'testQueue' }).promise();
+  t.context.queue = testUtils.randomString();
+  await sqs().createQueue({ QueueName: t.context.queue }).promise();
   await s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
 test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.bucket);
-  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
+  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}` }).promise();
 });
 
 test('queue granules', async (t) => {
@@ -41,7 +42,7 @@ test('queue granules', async (t) => {
   const input = Object.assign({}, inputJSON);
   input.config.templates.IngestGranule = IngestGranuleTemplate;
   input.config.buckets.internal = t.context.bucket;
-  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
+  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}`;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);
