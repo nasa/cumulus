@@ -2,6 +2,7 @@
 
 const _get = require('lodash.get');
 const url = require('url');
+const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
 const moment = require('moment');
 const logger = require('./log');
@@ -582,31 +583,51 @@ class StepFunction {
     return execution;
   }
 
+  /**
+   * Fetch an event from S3
+   *
+   * @param {Object} event - an event to be fetched from S3
+   * @param {string} event.s3_path - the S3 location of the event
+   * @returns {Promise.<Object>} - the parsed event from S3
+   */
   static async pullEvent(event) {
     if (event.s3_path) {
       const parsed = S3.parseS3Uri(event.s3_path);
-      const file = await S3.get(parsed.Bucket, parsed.Key);
+      const file = await aws.getS3Object(parsed.Bucket, parsed.Key);
 
       return JSON.parse(file.Body.toString());
     }
     return event;
   }
 
-  static async pushEvent(event) {
+  /**
+   * Push an event to S3 if the length of the event is greater than 32000 bytes
+   *
+   * The event must have the following properties:
+   * - resources.stack
+   * - ingest_meta.execution_name
+   * - resources.buckets.internal
+   *
+   * @param {Object} event - an event to be pushed to S3
+   * @returns {Promise.<Object>} - a Promise that resoles to an Object with an
+   *   s3_path property indicating where the event was pushed to
+   */
+  static pushEvent(event) {
     const str = JSON.stringify(event);
-    if (str.length > 32000) {
-      const stack = event.resources.stack;
-      const name = event.ingest_meta.execution_name;
-      const key = `${stack}/payloads/${name}.json`;
-      const bucket = event.resources.buckets.internal;
 
-      await S3.put(bucket, key, str);
-      return {
-        s3_path: `s3://${bucket}/${key}`
-      };
-    }
+    if (str.length <= 32000) return Promise.resolve(event);
 
-    return event;
+    const stack = event.resources.stack;
+    const name = event.ingest_meta.execution_name;
+    const key = `${stack}/payloads/${name}.json`;
+    const bucket = event.resources.buckets.internal;
+
+    return aws.s3().putObject({
+      Bucket: bucket,
+      Key: key,
+      Body: str
+    }).promise()
+      .then(() => ({ s3_path: `s3://${bucket}/${key}` }));
   }
 
   static async stop(arn, cause, error) {
