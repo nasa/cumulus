@@ -4,12 +4,14 @@
 import test from 'ava';
 import MockAWS from '@mapbox/mock-aws-sdk-js';
 
-import { s3, sqs, putS3Object, deleteS3Bucket } from '@cumulus/common/aws';
+import { s3, sqs, recursivelyDeleteS3Bucket } from '@cumulus/common/aws';
 import testUtils from '@cumulus/common/test-utils';
 
 import { handler } from '../index';
 import inputJSON from './fixtures/input.json';
 import workflowTemplate from './fixtures/workflow-template.json';
+
+const aws = require('@cumulus/common/aws');
 
 test.beforeEach(async (t) => {
   t.context.bucket = testUtils.randomString();
@@ -18,24 +20,19 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  try {
-    await deleteS3Bucket(t.context.bucket);
-    await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
-  }
-  catch (e) {
-    // resource didn't exist
-  }
+  await recursivelyDeleteS3Bucket(t.context.bucket);
+  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
 });
 
 test('queue pdrs', async (t) => {
-  const bucket = t.context.bucket;
-  const ParsePdrTemplate = `s3://${bucket}/dev/workflows/ParsePdr.json`;
+  const Bucket = t.context.bucket;
+  const ParsePdrTemplate = `s3://${Bucket}/dev/workflows/ParsePdr.json`;
 
-  await putS3Object({
-    bucket,
-    key: 'dev/workflows/ParsePdr.json',
-    body: JSON.stringify(workflowTemplate)
-  });
+  await aws.s3().putObject({
+    Bucket,
+    Key: 'dev/workflows/ParsePdr.json',
+    Body: JSON.stringify(workflowTemplate)
+  }).promise();
 
   MockAWS.stub('StepFunctions', 'describeExecution').returns({
     promise: () => Promise.resolve({})

@@ -147,46 +147,14 @@ exports.downloadS3File = (s3Obj, filename) => {
 };
 
 /**
-* Put an object on S3
-* @param {object} options
-* @param {object} options.body
-* @param {object} options.bucket name of bucket
-* @param {object} options.key key for object (filepath + filename)
-* @param {object} options.body body of the file
-* @param {string} [options.acl=private] body of the file
-* @param {object} [options.Metadata=null] body of the file
-* @returns {promise} returns response from `S3.putObject` as a promise
-**/
-exports.putS3Object = (options) => {
-  const s3 = exports.s3();
-
-  const params = {
-    Bucket: options.bucket,
-    Key: options.key,
-    Body: options.body,
-    ACL: options.acl,
-    Metadata: options.meta
-  };
-
-  return s3.putObject(params).promise();
-};
-
-/**
 * Get an object from S3
-* @param {string} bucket name of bucket
-* @param {string} key key for object (filepath + filename)
-* @returns {promise} returns response from `S3.getObject` as a promise
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
-exports.getS3Object = (bucket, key) => {
-  const s3 = exports.s3();
-
-  const params = {
-    Bucket: bucket,
-    Key: key
-  };
-
-  return s3.getObject(params).promise();
-};
+exports.getS3Object = (bucket, key) =>
+  exports.s3().getObject({ Bucket: bucket, Key: key }).promise();
 
 /**
 * Check if a file exists in an S3 object
@@ -256,23 +224,20 @@ exports.deleteS3Files = (s3Objs) => {
 };
 
 /**
-* delete a bucket and all its files from S3
-* @param {string} bucket name of the bucket
-* @returns {promise} returns the promise from `S3.deleteBucket`
+* Delete a bucket and all of its objects from S3
+*
+* @param {string} bucket - name of the bucket
+* @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.deleteS3Bucket = async (bucket) => {
-  const s3 = exports.s3();
-  const response = await s3.listObjects({ Bucket: bucket }).promise();
-  const keys = response.Contents.map((o) => {
-    return {
-      Bucket: bucket,
-      Key: o.Key
-    };
-  });
+exports.recursivelyDeleteS3Bucket = async (bucket) => {
+  const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
+  const s3Objects = response.Contents.map((o) => ({
+    Bucket: bucket,
+    Key: o.Key
+  }));
 
-  await exports.deleteS3Files(keys);
-  const list = await exports.listS3Objects(bucket);
-  await s3.deleteBucket({ Bucket: bucket }).promise();
+  await exports.deleteS3Files(s3Objects);
+  await exports.s3().deleteBucket({ Bucket: bucket }).promise();
 };
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
@@ -322,13 +287,15 @@ exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
 
 /**
  * List the objects in an S3 bucket
- * @param {string} bucket The name of the bucket
- * @param {string} prefix Only objects with keys starting with this prefix will be included
- * (useful for searching folders in buckets, e.g., '/PDR')
- * @param {boolean} skipFolders If true don't return objects that are folders (defaults to true)
- * @return A promise that resolves to the list of objects. Each S3 object is represented
- * as a JS object with the following attributes:
- * `Key`, `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`
+ *
+ * @param {string} bucket - The name of the bucket
+ * @param {string} prefix - Only objects with keys starting with this prefix
+ *   will be included (useful for searching folders in buckets, e.g., '/PDR')
+ * @param {boolean} skipFolders - If true don't return objects that are folders
+ *   (defaults to true)
+ * @returns {Promise} - A promise that resolves to the list of objects. Each S3
+ *   object is represented as a JS object with the following attributes: `Key`,
+ * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
 exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
   log.info(`Listing objects in s3://${bucket}`);
@@ -337,19 +304,16 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
   };
   if (prefix) params.Prefix = prefix;
 
-  return new Promise((resolve, reject) => {
-    exports.s3().listObjects(params, (err, data) => {
-      if (err) reject(err);
-
+  return exports.s3().listObjects(params).promise()
+    .then((data) => {
       let contents = data.Contents || [];
       if (skipFolders) {
         // Filter out any references to folders
         contents = contents.filter((obj) => !obj.Key.endsWith('/'));
       }
 
-      resolve(contents);
+      return contents;
     });
-  });
 };
 
 exports.syncUrl = async (uri, bucket, destKey) => {
