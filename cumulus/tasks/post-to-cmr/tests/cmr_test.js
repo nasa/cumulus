@@ -1,14 +1,14 @@
 'use strict';
 
-import fs from 'fs';
-import test from 'ava';
-import sinon from 'sinon';
-import aws from '@cumulus/common/aws';
-import testUtils from '@cumulus/common/test-utils';
+const fs = require('fs');
+const test = require('ava');
+const sinon = require('sinon');
+const aws = require('@cumulus/common/aws');
+const testUtils = require('@cumulus/common/test-utils');
 
-import cmrjs from '@cumulus/cmrjs';
-import payload from './data/payload.json';
-import { handler } from '../index';
+const cmrjs = require('@cumulus/cmrjs');
+const payload = require('./data/payload.json');
+const { handler } = require('../index');
 
 const result = {
   'concept-id': 'testingtesging'
