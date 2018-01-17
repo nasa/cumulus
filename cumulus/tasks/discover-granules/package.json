@@ -11,12 +11,15 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "ava tests/*.js --no-color --serial",
+    "test": "env TEST=true ava",
     "local": "node index.js | pino",
     "build": "webpack --progress",
     "watch": "webpack --progress -w"
   },
   "ava": {
+    "files": "tests",
+    "color": false,
+    "serial": true,
     "babel": "inherit",
     "require": [
       "babel-polyfill",
