@@ -11,13 +11,17 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "ava tests/*.js --serial --no-color --verbose",
+    "test": "env TEST=true ava",
     "build": "webpack --progress",
     "watch": "webpack --progress -w"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "ava": {
+    "files": "tests",
+    "serial": true,
+    "color": false,
+    "verbose": true,
     "babel": "inherit",
     "require": [
       "babel-polyfill",
