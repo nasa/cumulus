@@ -4,38 +4,36 @@
 import test from 'ava';
 import MockAWS from '@mapbox/mock-aws-sdk-js';
 
-import { s3, sqs, putS3Object, deleteS3Bucket } from '@cumulus/common/aws';
+import { s3, sqs, recursivelyDeleteS3Bucket } from '@cumulus/common/aws';
 import testUtils from '@cumulus/common/test-utils';
 
 import { handler } from '../index';
 import inputJSON from './fixtures/input.json';
 import workflowTemplate from './fixtures/workflow-template.json';
 
+const aws = require('@cumulus/common/aws');
+
 test.beforeEach(async (t) => {
   t.context.bucket = testUtils.randomString();
-  await sqs().createQueue({ QueueName: 'testQueue' }).promise();
-  return s3().createBucket({ Bucket: t.context.bucket }).promise();
+  t.context.queue = testUtils.randomString();
+  await sqs().createQueue({ QueueName: t.context.queue }).promise();
+  await s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
 test.afterEach.always(async (t) => {
-  try {
-    await deleteS3Bucket(t.context.bucket);
-    await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue` }).promise();
-  }
-  catch (e) {
-    // resource didn't exist
-  }
+  await recursivelyDeleteS3Bucket(t.context.bucket);
+  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}` }).promise();
 });
 
 test('queue granules', async (t) => {
-  const bucket = t.context.bucket;
-  const IngestGranuleTemplate = `s3://${bucket}/dev/workflows/IngestGranule.json`;
+  const Bucket = t.context.bucket;
+  const IngestGranuleTemplate = `s3://${Bucket}/dev/workflows/IngestGranule.json`;
 
-  await putS3Object({
-    bucket,
-    key: 'dev/workflows/IngestGranule.json',
-    body: JSON.stringify(workflowTemplate)
-  });
+  await aws.s3().putObject({
+    Bucket,
+    Key: 'dev/workflows/IngestGranule.json',
+    Body: JSON.stringify(workflowTemplate)
+  }).promise();
 
   MockAWS.stub('StepFunctions', 'describeExecution').returns({
     promise: () => Promise.resolve({})
@@ -44,7 +42,7 @@ test('queue granules', async (t) => {
   const input = Object.assign({}, inputJSON);
   input.config.templates.IngestGranule = IngestGranuleTemplate;
   input.config.buckets.internal = t.context.bucket;
-  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
+  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}`;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);

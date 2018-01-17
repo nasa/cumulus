@@ -1,28 +1,38 @@
 'use strict';
 
 const logger = require('./log');
-const aws = require('./aws');
+const aws = require('@cumulus/common/aws');
 const lockPrefix = 'lock';
 
 const log = logger.child({ file: 'ingest/lock.js' });
 
-async function delay(t) {
+function delay(t) {
   return new Promise((resolve) => {
     setTimeout(resolve, t);
   });
 }
 
-async function countLock(bucket, pName) {
-  const list = await aws.S3.list(bucket, `${lockPrefix}/${pName}`);
-  return list.Contents.length;
+function countLock(bucket, pName) {
+  return aws.s3().listObjectsV2({
+    Bucket: bucket,
+    Prefix: pName
+  }).promise()
+    .then((data) => data.Contents.length);
 }
 
-async function addLock(bucket, pName, filename) {
-  return aws.S3.put(bucket, `${lockPrefix}/${pName}/${filename}`, '');
+function addLock(bucket, pName, filename) {
+  return aws.s3().putObject({
+    Bucket: bucket,
+    Key: `${lockPrefix}/${pName}/${filename}`,
+    Body: ''
+  }).promise();
 }
 
-async function removeLock(bucket, pName, filename) {
-  return aws.S3.delete(bucket, `${lockPrefix}/${pName}/${filename}`);
+function removeLock(bucket, pName, filename) {
+  return aws.s3().deleteObject({
+    Bucket: bucket,
+    Key: `${lockPrefix}/${pName}/${filename}`
+  }).promise();
 }
 
 async function proceed(bucket, provider, filename, counter = 0) {
