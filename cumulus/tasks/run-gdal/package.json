@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/run-gdal",
-  "version": "1.0.0-beta.581d31f4",
+  "version": "1.0.0-beta.581d31f5",
   "description": "Runs gdal commands as a task",
   "main": "index.js",
   "keywords": [
