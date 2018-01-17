@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/post-to-cmr",
-  "version": "1.0.0-beta.111",
+  "version": "1.0.0-beta.120",
   "description": "Post a given granule to CMR",
   "main": "index.js",
   "directories": {
@@ -26,8 +26,7 @@
   "babel": {
     "presets": [
       "es2015",
-      "@ava/stage-4",
-      "@ava/transform-test-files"
+      "es2017"
     ],
     "plugins": [
       "transform-async-to-generator"
@@ -36,14 +35,17 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "babel-core": "^6.25.0",
-    "babel-loader": "^6.2.4",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1",
     "@cumulus/cmrjs": "^1.0.0-beta.581d31f4",
     "@cumulus/common": "^1.0.0-beta.581d31f4",
     "@cumulus/ingest": "^1.0.0-beta.581d31f4",
     "@cumulus/test-data": "^1.0.0-beta.581d31f4",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.14.0",
+    "babel-preset-es2017": "^6.24.1",
+    "json-loader": "^0.5.7",
     "lodash.get": "^4.4.2",
     "webpack": "^1.12.13"
   },
