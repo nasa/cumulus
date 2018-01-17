@@ -3,7 +3,9 @@
   "version": "1.0.0-beta.581d31f4",
   "description": "Common utilities used across tasks",
   "keywords": [
-    "GIBS"
+    "GIBS",
+    "CUMULUS",
+    "NASA"
   ],
   "repository": {
     "type": "git",
@@ -15,6 +17,14 @@
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
     "test": "npm run mocha",
     "test-ci": "npm run lint && npm run mocha-junit"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ],
+    "plugins": [
+      "transform-async-to-generator"
+    ]
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
