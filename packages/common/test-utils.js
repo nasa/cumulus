@@ -81,6 +81,6 @@ function testAwsClient(Service, options) {
   if (localstackSupportedService(Service)) {
     return localStackAwsClient(Service, options);
   }
-  return {};
+  return new Service(Object.assign(options, { endpoint: 'http://you-forgot-to-stub-an-aws-call' }));
 }
 exports.testAwsClient = testAwsClient;
