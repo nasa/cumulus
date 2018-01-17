@@ -221,6 +221,9 @@ test.cb('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
       }
 
       t.is(output.pdrs.length, 3);
+      t.is(output.pdrs[0].name, 'MOD09GQ.PDR');
+      t.is(output.pdrs[1].name, 'MYD13A1_5_grans.PDR');
+      t.is(output.pdrs[2].name, 'PDN.ID1611081200.PDR');
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
     }));
 });
