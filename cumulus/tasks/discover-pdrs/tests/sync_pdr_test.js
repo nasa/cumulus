@@ -1,18 +1,18 @@
 'use strict';
 
-import test from 'ava';
-import path from 'path';
-import sinon from 'sinon';
-import {
+const test = require('ava');
+const path = require('path');
+const sinon = require('sinon');
+const {
   ProviderNotFound,
   FTPError,
   RemoteResourceError
-} from '@cumulus/common/errors';
-import { S3 } from '@cumulus/ingest/aws';
-import log from '@cumulus/common/log';
+} = require('@cumulus/common/errors');
+const { S3 } = require('@cumulus/ingest/aws');
+const log = require('@cumulus/common/log');
 
-import { handler } from '../index';
-import input from './fixtures/input.json';
+const { handler } = require('../index');
+const input = require('./fixtures/input.json');
 
 const aws = require('@cumulus/common/aws');
 const testUtils = require('@cumulus/common/test-utils');
