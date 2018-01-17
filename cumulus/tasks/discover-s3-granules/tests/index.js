@@ -1,11 +1,11 @@
 /* eslint-disable no-param-reassign */
 'use strict';
 
-import test from 'ava';
-import aws from '@cumulus/common/aws';
-import testUtils from '@cumulus/common/test-utils';
-import input from './fixtures/input.json';
-import { handler } from '../index';
+const test = require('ava');
+const aws = require('@cumulus/common/aws');
+const testUtils = require('@cumulus/common/test-utils');
+const input = require('./fixtures/input.json');
+const { handler } = require('../index');
 
 async function deleteBucket(bucket) {
   const response = await aws.s3().listObjects({ Bucket: bucket }).promise();
