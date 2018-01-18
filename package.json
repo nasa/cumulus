@@ -6,7 +6,7 @@
     "test": "lerna run test",
     "bootstrap": "lerna bootstrap",
     "ybootstrap": "lerna bootstrap --npm-client=yarn",
-    "version": "lerna publish --skip-git --skip-npm --canary=beta",
+    "update": "lerna publish --skip-git --skip-npm --cd-version=prerelease",
     "clean": "lerna clean",
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch"
