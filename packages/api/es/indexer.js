@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* functions for transforming and indexing Cumulus Payloads
  * in ElasticSearch. These functions are specifically designed
- * to transform data for use in daac-ops-api
+ * to transform data for use in cumulus api
  *
  * The module accepts the following kinds of workflows (state machines):
  * - ParsePdrs
@@ -19,7 +19,7 @@ const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cum
 const { Search } = require('./search');
 const Rule = require('../models/rules');
 
-const log = logger.child({ file: 'daac-ops-api/es/indexer.js' });
+const log = logger.child({ file: 'packages/api/es/indexer.js' });
 
 async function indexLog(payloads, index = 'cumulus', type = 'logs') {
   const esClient = await Search.es();
