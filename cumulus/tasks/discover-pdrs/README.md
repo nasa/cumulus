@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-This Lambda function returns a list of granules in an S3 bucket.
+Discover PDRs in FTP and HTTP endpoints
 
 ## What is Cumulus?
 
