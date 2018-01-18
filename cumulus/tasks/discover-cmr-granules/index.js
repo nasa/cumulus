@@ -10,16 +10,29 @@ const querystring = require('querystring');
 const PAGE_SIZE = 2000;
 
 /**
-  * Invalid Query Error Definition
-  *
-  * @param {string} message -- Error message
-  * @returns {null} null
+ * Validate presence of parameter in config
+ *
+ * @param {hash} config - Configuration
+ * @param {string} param - Param to test
+ * @returns {bool} - true or will throw an exception if required
  */
-function InvalidQueryError(message) {
-  this.name = 'InvalidQuery Error';
-  this.message = message;
+function validateParameter(config, param) {
+  if (config[param]) return true;
+  throw new Error(`Undefined ${param} parameter`);
 }
-InvalidQueryError.prototype = new Error();
+
+/**
+ * Validate required parameters in Config
+ *
+ * @param {hash} config - config to test
+ * @returns {bool} - true or exception
+ */
+function validateParameters(config) {
+  const params = ['root', 'event', 'granule_meta', 'query'];
+  for (const p of params) validateParameter(config, p);
+
+  return true;
+}
 
 /**
  * Task which discovers granules by querying the CMR
@@ -28,39 +41,13 @@ InvalidQueryError.prototype = new Error();
  *                 for each discovered granule
  */
 module.exports = class DiscoverCmrGranulesTask extends Task {
-  /**
-   * Validate CMR query to avoid the passing of incomplete/invalid queries
-   * Throws InvalidQueryError exception if Invalid
-   *
-   * @param {string} config - Task config parameters
-   * @returns {null} null - Will throw an InvalidQuery Error exception if necessary
-   */
-  validateParameters(config) {
-    if (!config.root) {
-      const error = new InvalidQueryError('Undefined root parameter');
-      throw (error);
-    }
-    if (!config.event) {
-      const error = new InvalidQueryError('Undefined event parameter');
-      throw (error);
-    }
-    if (!config.granule_meta) {
-      const error = new InvalidQueryError('Undefined granule_meta parameters');
-      throw (error);
-    }
-    if (!config.query) {
-      const error = new InvalidQueryError('Undefined query parameters');
-      throw (error);
-    }
-  }
-
-  /**
+    /**
    * Main task entrypoint
    *
    * @returns {Array} -- An array of CMR granules that need ingest
    */
   async run() {
-    this.validateParameters(this.config);
+    validateParameters(this.config);
     const query = this.config.query || {};
     if (query.updated_since) {
       query.updated_since = new Date(Date.now() - parseDuration(query.updated_since)).toISOString();
@@ -182,7 +169,8 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
   }
 };
 
-// To tun with Visual Studio Code Debugger
+// To use with Visual Studio Code Debugger, uncomment next block
+//
 global.__isDebug = true;
 const local = require('@cumulus/common/local-helpers');
 const localTaskName = 'DiscoverCmrGranules';
