@@ -23,7 +23,7 @@ test('check with invalid query parameters', async (t) => {
   delete newPayload.workflow_config_template.DiscoverCmrGranules.query;
 
   const [errors] = await testHelpers.run(DiscoverCmrGranules, newPayload);
-  t.is(errors, 'Undefined query parameters');
+  t.is(errors, 'Undefined query parameter');
 });
 
 test('check with invalid root parameter', async (t) => {
@@ -50,5 +50,5 @@ test('check with invalid granule_meta parameter', async (t) => {
   delete newPayload.workflow_config_template.DiscoverCmrGranules.granule_meta;
 
   const [errors] = await testHelpers.run(DiscoverCmrGranules, newPayload);
-  t.is(errors, 'Undefined granule_meta parameters');
+  t.is(errors, 'Undefined granule_meta parameter');
 });
