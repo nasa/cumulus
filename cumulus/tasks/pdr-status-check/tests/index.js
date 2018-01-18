@@ -1,10 +1,10 @@
 'use strict';
 
-import test from 'ava';
-import sinon from 'sinon';
-import { StepFunction } from '@cumulus/ingest/aws';
-import { IncompleteError } from '@cumulus/common/errors';
-import { handler } from '../index';
+const test = require('ava');
+const sinon = require('sinon');
+const { StepFunction } = require('@cumulus/ingest/aws');
+const { IncompleteError } = require('@cumulus/common/errors');
+const { handler } = require('../index');
 
 test.cb('finished pdr status returns immediately', (t) => {
   const input = {
