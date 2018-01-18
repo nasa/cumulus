@@ -1,15 +1,15 @@
 /* eslint-disable no-param-reassign */
 'use strict';
 
-import test from 'ava';
-import MockAWS from '@mapbox/mock-aws-sdk-js';
+const test = require('ava');
+const MockAWS = require('@mapbox/mock-aws-sdk-js');
 
-import { s3, sqs, recursivelyDeleteS3Bucket } from '@cumulus/common/aws';
-import testUtils from '@cumulus/common/test-utils';
+const { s3, sqs, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const testUtils = require('@cumulus/common/test-utils');
 
-import { handler } from '../index';
-import inputJSON from './fixtures/input.json';
-import workflowTemplate from './fixtures/workflow-template.json';
+const { handler } = require('../index');
+const inputJSON = require('./fixtures/input.json');
+const workflowTemplate = require('./fixtures/workflow-template.json');
 
 const aws = require('@cumulus/common/aws');
 

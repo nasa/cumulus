@@ -1,8 +1,8 @@
-# @cumulus/discover-pdrs
+# @cumulus/discover-granules
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-This Lambda function returns a list of granules in an S3 bucket.
+Discover Granules in FTP/HTTP/SFTP endpoints
 
 ## What is Cumulus?
 

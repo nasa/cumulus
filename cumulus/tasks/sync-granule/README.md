@@ -1,8 +1,8 @@
-# @cumulus/discover-pdrs
+# @cumulus/sync-granule
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-This Lambda function returns a list of granules in an S3 bucket.
+Download a given granule from a given provider to S3
 
 ## What is Cumulus?
 

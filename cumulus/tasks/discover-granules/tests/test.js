@@ -1,14 +1,14 @@
 'use strict';
 
-import test from 'ava';
-import sinon from 'sinon';
-import { handler as sled } from '@cumulus/sled';
-import log from '@cumulus/common/log';
-import amsr2 from '@cumulus/test-data/payloads/amsr2/discover.json';
-import queue from '@cumulus/ingest/queue';
-import mur from './fixtures/mur.json';
-import sledInput from './fixtures/sled-input.json';
-import { handler } from '../index';
+const test = require('ava');
+const sinon = require('sinon');
+const sled = require('@cumulus/sled').handler;
+const log = require('@cumulus/common/log');
+const amsr2 = require('@cumulus/test-data/payloads/amsr2/discover.json');
+const queue = require('@cumulus/ingest/queue');
+const mur = require('./fixtures/mur.json');
+const sledInput = require('./fixtures/sled-input.json');
+const { handler } = require('../index');
 
 test.cb('test discovering mur granules', (t) => {
   const newMur = JSON.parse(JSON.stringify(mur));
