@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.0.0-beta.581d31f6",
+  "version": "1.0.0-beta.2",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -29,7 +29,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/test-data": "^1.0.0-beta.581d31f4",
+    "@cumulus/test-data": "^1.0.0-beta.2",
     "ajv": "^5.0.4-beta.3",
     "ajv-cli": "^1.1.1",
     "async": "^2.0.0",

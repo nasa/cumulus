@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmrjs",
-  "version": "1.0.0-beta.581d31f6",
+  "version": "1.0.0-beta.2",
   "description": "A node SDK for CMR",
   "scripts": {
     "test": "echo 'no tests'"
@@ -23,11 +23,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.581d31f4",
+    "@cumulus/common": "^1.0.0-beta.2",
     "got": "^7.1.0",
+    "json-loader": "^0.5.4",
     "lodash.property": "^4.4.2",
     "public-ip": "^2.3.5",
-    "xml2js": "^0.4.17",
-    "json-loader": "^0.5.4"
+    "xml2js": "^0.4.17"
   }
 }
