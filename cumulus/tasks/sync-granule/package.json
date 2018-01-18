@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.0.0-beta.581d31f5",
+  "version": "1.0.0-beta.2",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -38,15 +38,15 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.581d31f6",
-    "@cumulus/ingest": "^1.0.0-beta.581d31f6",
-    "@cumulus/test-data": "^1.0.0-beta.581d31f4",
+    "@cumulus/common": "^1.0.0-beta.2",
+    "@cumulus/ingest": "^1.0.0-beta.2",
+    "@cumulus/test-data": "^1.0.0-beta.2",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
-    "webpack": "^3.8.1",
-    "lodash.get": "^4.4.2"
+    "lodash.get": "^4.4.2",
+    "webpack": "^3.8.1"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
