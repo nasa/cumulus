@@ -91,7 +91,7 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ### Update the Cumulus Version number
 
-Every Pull Request that makes a change to the cumulus code base, must update the Cumulus version number using semantic versioning.
+Every Pull Request that makes a change to the cumulus code base must update the Cumulus version number using semantic versioning.
 
 Lerna handles the process of deciding which version number should be used as long as the developer decides whether the change is a patch or a minor/major change.
 
