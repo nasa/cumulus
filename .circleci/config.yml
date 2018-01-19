@@ -12,7 +12,6 @@ jobs:
       - run:
           name: Installing Dependencies
           command: |
-            sudo yarn global add lerna
             yarn install
             yarn ybootstrap
       - run:
@@ -30,14 +29,13 @@ jobs:
       - run:
           name: Install Dependencies
           command: |
-            sudo yarn global add lerna
             yarn install
       - run:
           name: Publishing to NPM
           command: |
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-            VERSION=$(cat lerna.json | jq .version)
-            lerna publish --skip-git --repo-version $VERSION --yes
+            VERSION=$(cat lerna.json | jq .version --raw-output)
+            npm run publish
 
 workflows:
   version: 2
