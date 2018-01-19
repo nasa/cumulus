@@ -87,13 +87,27 @@ Make sure to name the package as `@cumulus/package-name`.
 
 We use a global versioning approach, meaning version numbers in cumulus are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage our versioning. Any change will force lerna to increment the version of all packages.
 
+Read more about the semantic versioning [here](https://docs.npmjs.com/getting-started/semantic-versioning).
+
+### Update the Cumulus Version number
+
+Every Pull Request that makes a change to the cumulus code base, must update the Cumulus version number using semantic versioning.
+
+Lerna handles the process of deciding which version number should be used as long as the developer decides whether the change is a patch or a minor/major change.
+
+To update cumulus' version number run:
+
+     $ npm run update
+
+You will be prompted to select the type of change (patch/minor/majon). Until the final version 1.0.0 of cumulus is released, you MUST select `prerelease` from the list.
+
+Lerna will update the version of all packages after the selection. You then have to commit the changes that are made by Lerna.
+
+This must be the final step of your PR submission. Any PR submission that does not include a version update will be rejected.
+
 ### Publishing to NPM
 
-    $ lerna publish
-
-To specify the level of change for the new version
-
-    $ lerna publish --cd-version (major | minor | patch | prerelease)
+All packages on master branch are automatically published to NPM.
 
 ## Running command in all package folders
 
