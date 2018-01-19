@@ -1,11 +1,12 @@
 version: 2
+
 jobs:
-  build:
+  build_and_test:
     docker:
       - image: circleci/node:6.10
       - name: localstack
         image: localstack/localstack
-    working_directory: ~/cumulus
+    working_directory: ~/project
     steps:
       - checkout
 
@@ -21,3 +22,34 @@ jobs:
           environment:
             LOCALSTACK_HOST: localstack
           command: yarn test
+
+  build_and_publish:
+    docker:
+      - image: circleci/node:6.10
+    working_directory: ~/project
+      - run:
+        name: Install Dependencies
+          command: |
+            sudo yarn global add lerna
+            yarn install
+
+      - run:
+          name: Publishing to NPM
+          command: |
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            VERSION=$(cat lerna.json | jq .version)
+            lerna publish --skip-git --repo-version $VERSION --yes
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - build_and_test
+      - build_and_publish:
+          requires:
+            - build_and_test
+          filters:
+            tags:
+              only: /^v[\d]\.[\d]{1,2}\.[\d]{1,2}.*/
+            # branches:
+              # only: master
