@@ -85,7 +85,7 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ## Versioning
 
-We use a global versioning approach, meaning version numbers in cumulus are consistent across all packages and tasks, and semantic versioning to track minor, major, and patch version (i.e. 1.0.0). We use Lerna to manage our versioning. Any change will force lerna to increment the version of all packages.
+We use a global versioning approach, meaning version numbers in cumulus are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage our versioning. Any change will force lerna to increment the version of all packages.
 
 ### Publishing to NPM
 
