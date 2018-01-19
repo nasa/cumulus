@@ -6,6 +6,8 @@
     "test": "lerna run test",
     "bootstrap": "lerna bootstrap",
     "ybootstrap": "lerna bootstrap --npm-client=yarn",
+    "update": "lerna publish --skip-git --skip-npm",
+    "publish": "lerna publish --skip-git --repo-version $VERSION --yes",
     "clean": "lerna clean",
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch"
@@ -46,7 +48,7 @@
     "eslint-plugin-react": "^6.0.0",
     "exports-loader": "^0.6.3",
     "json-loader": "^0.5.4",
-    "lerna": "^2.0.0",
+    "lerna": "^2.7.1",
     "prepend-loader": "0.0.2",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
