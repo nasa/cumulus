@@ -27,6 +27,7 @@ jobs:
     docker:
       - image: circleci/node:6.10
     working_directory: ~/project
+    steps:
       - run:
         name: Install Dependencies
           command: |
