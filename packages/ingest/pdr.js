@@ -263,7 +263,7 @@ class ParseAndQueue extends Parse {
 }
 
 /**
- * Disocver PDRs from a FTP endpoint.
+ * Discover PDRs from a FTP endpoint.
  *
  * @class
  */
@@ -271,7 +271,7 @@ class ParseAndQueue extends Parse {
 class FtpDiscover extends ftpMixin(Discover) {}
 
 /**
- * Disocver PDRs from a HTTP endpoint.
+ * Discover PDRs from a HTTP endpoint.
  *
  * @class
  */
@@ -279,7 +279,7 @@ class FtpDiscover extends ftpMixin(Discover) {}
 class HttpDiscover extends httpMixin(Discover) {}
 
 /**
- * Disocver PDRs from a SFTP endpoint.
+ * Discover PDRs from a SFTP endpoint.
  *
  * @class
  */
@@ -287,7 +287,7 @@ class HttpDiscover extends httpMixin(Discover) {}
 class SftpDiscover extends sftpMixin(Discover) {}
 
 /**
- * Disocver PDRs from a FTP endpoint.
+ * Discover and Queue PDRs from a FTP endpoint.
  *
  * @class
  */
@@ -295,7 +295,7 @@ class SftpDiscover extends sftpMixin(Discover) {}
 class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
 
 /**
- * Disocver PDRs from a HTTP endpoint.
+ * Discover and Queue PDRs from a HTTP endpoint.
  *
  * @class
  */
@@ -303,7 +303,7 @@ class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
 class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
 
 /**
- * Disocver PDRs from a SFTP endpoint.
+ * Discover and Queue PDRs from a SFTP endpoint.
  *
  * @class
  */
@@ -335,7 +335,7 @@ class HttpParse extends httpMixin(Parse) {}
 class SftpParse extends sftpMixin(Parse) {}
 
 /**
- * Parse PDRs downloaded from a FTP endpoint.
+ * Parse and Queue PDRs downloaded from a FTP endpoint.
  *
  * @class
  */
@@ -343,7 +343,7 @@ class SftpParse extends sftpMixin(Parse) {}
 class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
 
 /**
- * Parse PDRs downloaded from a HTTP endpoint.
+ * Parse and Queue PDRs downloaded from a HTTP endpoint.
  *
  * @class
  */
@@ -351,7 +351,7 @@ class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
 class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
 
 /**
- * Parse PDRs downloaded from a SFTP endpoint.
+ * Parse and Queue PDRs downloaded from a SFTP endpoint.
  *
  * @classc
  */
