@@ -83,9 +83,17 @@ Create a new folder under `packages` if it is a common library or create folder 
 
 Make sure to name the package as `@cumulus/package-name`.
 
-## Publishing to NPM
+## Versioning
+
+We use a global versioning approach, meaning version numbers in cumulus are consistent across all packages and tasks. We use Lerna to manage our versioning. Any change, whether patch, minor, or major, will force lerna to increment the version of all packages.
+
+### Publishing to NPM
 
     $ lerna publish
+
+To specify the level of change for the new version
+
+    $ lerna publish --cd-version (major | minor | patch | premajor | preminor | prepatch | prerelease)
 
 ## Running command in all package folders
 
@@ -94,4 +102,3 @@ Make sure to name the package as `@cumulus/package-name`.
 ## Cleaning Up all the repos
 
     $ npm run clean
-
