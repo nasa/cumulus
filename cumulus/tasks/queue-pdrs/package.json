@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-pdrs",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "description": "Add discovered PDRs to a queue",
   "main": "index.js",
   "directories": {
@@ -9,6 +9,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "test": "env TEST=true ava tests/*.js",
@@ -34,8 +37,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.3",
-    "@cumulus/ingest": "^1.0.0-beta.3",
+    "@cumulus/common": "^1.0.0-beta.4",
+    "@cumulus/ingest": "^1.0.0-beta.4",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
