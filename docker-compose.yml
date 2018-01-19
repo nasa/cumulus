@@ -9,6 +9,7 @@ services:
       - elasticsearch
       - ftp
       - http
+      - sftp
 
   sqs:
     image: vsouza/sqs-local
@@ -40,4 +41,12 @@ services:
       - "8080:80"
     volumes:
       - "./packages/test-data:/var/www/html"
+
+  sftp:
+    image: atmoz/sftp
+    ports:
+      - "2222:22"
+    volumes:
+      - "./packages/test-data:/home/user/test-data:ro"
+    command: user:password
 
