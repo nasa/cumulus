@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/pdr-status-check",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "description": "Checks execution status of granules in a PDR",
   "main": "index.js",
   "directories": {
@@ -9,6 +9,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "test": "ava tests/*.js --serial",
@@ -35,9 +38,9 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.3",
-    "@cumulus/ingest": "^1.0.0-beta.3",
-    "@cumulus/test-data": "^1.0.0-beta.3",
+    "@cumulus/common": "^1.0.0-beta.4",
+    "@cumulus/ingest": "^1.0.0-beta.4",
+    "@cumulus/test-data": "^1.0.0-beta.4",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
