@@ -29,7 +29,7 @@ jobs:
     working_directory: ~/project
     steps:
       - run:
-        name: Install Dependencies
+          name: Install Dependencies
           command: |
             sudo yarn global add lerna
             yarn install
