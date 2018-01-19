@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/tee",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "Task for testing that splits output",
   "main": "index.js",
   "keywords": [
@@ -14,7 +14,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.2",
+    "@cumulus/common": "^1.0.0-beta.3",
     "ftp": "^0.3.10",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1",
