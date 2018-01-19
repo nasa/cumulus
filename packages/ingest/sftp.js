@@ -10,7 +10,6 @@ const logger = require('./log');
 const S3 = require('./aws').S3;
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-
 const log = logger.child({ file: 'ingest/sftp.js' });
 
 //const PathIsInvalid = errors.createErrorType('PathIsInvalid');
@@ -23,7 +22,7 @@ module.exports = superclass => class extends superclass {
     this.decrypted = false;
     this.options = {
       host: this.host,
-      port: this.port || 21,
+      port: this.port || 22,
       user: this.username,
       password: this.password
     };
