@@ -9,14 +9,12 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
-
       - run:
           name: Installing Dependencies
           command: |
             sudo yarn global add lerna
             yarn install
             yarn ybootstrap
-
       - run:
           name: Running Test
           environment:
@@ -28,12 +26,12 @@ jobs:
       - image: circleci/node:6.10
     working_directory: ~/project
     steps:
+      - checkout
       - run:
           name: Install Dependencies
           command: |
             sudo yarn global add lerna
             yarn install
-
       - run:
           name: Publishing to NPM
           command: |
@@ -50,7 +48,5 @@ workflows:
           requires:
             - build_and_test
           filters:
-            tags:
-              only: /^v[\d]\.[\d]{1,2}\.[\d]{1,2}.*/
-            # branches:
-              # only: master
+            branches:
+              only: message-updates
