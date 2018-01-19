@@ -47,4 +47,4 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: CUMULUS-185 
+              only: message-updates
