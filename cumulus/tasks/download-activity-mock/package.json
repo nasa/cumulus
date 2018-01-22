@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/dowload-activity-mock",
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-beta.6",
   "description": "Mock for provider gateway",
   "main": "index.js",
   "keywords": [
@@ -34,7 +34,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.4",
+    "@cumulus/common": "^1.0.0-beta.6",
     "ftp": "^0.3.10",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1",

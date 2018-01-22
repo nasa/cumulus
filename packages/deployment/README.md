@@ -18,7 +18,7 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 3. Rename `app.example` to `app`.
 4. Execute kes command:
 
-     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template ../cumulus/packages/deployment/app
+     $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template node_modules/@cumulus/deployment/app
 
 ## config.yml Explained
 
