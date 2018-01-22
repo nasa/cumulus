@@ -21,8 +21,10 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
      $ ./node_modules/.bin/kes cf deploy --kes-folder app --deployment \<my-deployment\> --template node_modules/@cumulus/deployment/app
 
 All additions to app/api.yml should contain sources with a path to the corresponding npm installed packages, not a path to the folder in the local cumulus repository.
+
 For example:
-    $   source: 'node_modules/@cumulus/api/dist/'
+
+    $ source: 'node_modules/@cumulus/api/dist/'
 
 ## config.yml Explained
 
