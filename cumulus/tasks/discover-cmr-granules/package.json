@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-cmr-granules",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "description": "Discovers granules from the CMR",
   "main": "index.js",
   "keywords": [
@@ -13,7 +13,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.5",
+    "@cumulus/common": "^1.0.0-beta.6",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1"
   }
