@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/validate-pdr",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "description": "SIPS handler PDR processing task",
   "main": "index.js",
   "keywords": [
@@ -38,9 +38,9 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.5",
-    "@cumulus/ingest": "^1.0.0-beta.5",
-    "@cumulus/pvl": "^1.0.0-beta.5",
+    "@cumulus/common": "^1.0.0-beta.6",
+    "@cumulus/ingest": "^1.0.0-beta.6",
+    "@cumulus/pvl": "^1.0.0-beta.6",
     "ftp": "^0.3.10",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1",
