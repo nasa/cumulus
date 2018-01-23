@@ -13,8 +13,12 @@ jobs:
       - restore_cache:
           keys:
             - dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
-            # fallback to using the latest cache if no exact match is found
             - dependencies-
+
+      - restore_cache:
+          keys:
+            - build-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
+            - build-
 
       - run:
           name: Installing Dependencies
@@ -45,7 +49,11 @@ jobs:
             - ./cumulus/packages/ingest/node_modules
             - ./cumulus/packages/deployment/node_modules
             - ./cumulus/packages/sled/node_modules
+          keys: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
 
+
+      - save_cache:
+          paths:
             - ./cumulus/tasks/discover-pdr/dist
             - ./cumulus/tasks/discover-pdrs/dist
             - ./cumulus/tasks/discover-granules/dist
@@ -67,7 +75,7 @@ jobs:
             - ./cumulus/packages/deployment/dist
             - ./cumulus/packages/sled/dist
 
-          key: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
+          key: build-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
 
       - run:
           name: Running Test
