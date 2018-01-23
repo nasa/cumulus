@@ -4,8 +4,10 @@
   "description": "A service to throttle concurrent executions of AWS Step Functions.",
   "main": "index.js",
   "scripts": {
-    "test": "ava"
+    "test": "echo 'no tests'"
   },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
