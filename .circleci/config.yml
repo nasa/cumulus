@@ -11,10 +11,10 @@ jobs:
       - checkout
 
       - restore_cache:
-        keys:
-        - dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
-        # fallback to using the latest cache if no exact match is found
-        - dependencies-
+          keys:
+            - dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - dependencies-
 
       - run:
           name: Installing Dependencies
