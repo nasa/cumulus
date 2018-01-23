@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/run-gdal",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "Runs gdal commands as a task",
   "main": "index.js",
   "keywords": [
@@ -28,6 +28,6 @@
     "webpack": "^1.12.13"
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.6"
+    "@cumulus/common": "^1.0.0-beta.7"
   }
 }
