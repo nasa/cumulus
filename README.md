@@ -26,6 +26,7 @@ Ensure that the aws cli is configured and that the default output format is eith
 
 ```
 aws configure
+
 ```
 
 ### Install Lerna
