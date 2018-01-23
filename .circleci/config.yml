@@ -49,7 +49,7 @@ jobs:
             - ./cumulus/packages/ingest/node_modules
             - ./cumulus/packages/deployment/node_modules
             - ./cumulus/packages/sled/node_modules
-          keys: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
+          key: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
 
 
       - save_cache:
