@@ -10,6 +10,9 @@
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "env TEST=true ava tests/*.js --serial",
     "local": "node index.js | pino",
