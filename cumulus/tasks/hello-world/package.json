@@ -16,6 +16,9 @@
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "ava": {
     "babel": "inherit",
     "require": [
