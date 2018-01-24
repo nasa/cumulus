@@ -9,6 +9,7 @@ const cksum = require('cksum');
 const checksum = require('checksum');
 const logger = require('./log');
 const errors = require('@cumulus/common/errors');
+const AWS = require('aws-sdk');
 const S3 = require('./aws').S3;
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
@@ -167,10 +168,11 @@ class Granule {
   async ingest(granule) {
     // for each granule file
     // download / verify checksum / upload
+
     const downloadFiles = granule.files
       .map(f => this.getBucket(f))
       .filter(f => this.filterChecksumFiles(f))
-      .map(f => this.ingestFile(f));
+      .map(f => this.ingestFile(f, this.collection.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
 
@@ -243,19 +245,31 @@ class Granule {
    * Ingest individual files
    * @private
    */
-  async ingestFile(_file) {
+  async ingestFile(_file, duplicateHandling) {
     const file = _file;
-    let exists;
+    let exists = null;
 
-    // check if the file exists. if it does skip
-    if (!this.forceDownload) {
-      exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
-    }
-    else {
-      exists = false;
+    // check if the file exists.
+    exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
+
+    if (duplicateHandling === 'version') {
+      const s3 = new AWS.S3();
+      // check that the bucket has versioning enabled
+      let versioning = await s3.getBucketVersioning({ Bucket: file.bucket }).promise();
+
+      // if not enabled, make it enabled
+      if (versioning.Status !== 'Enabled') {
+        versioning = await s3.putBucketVersioning({
+          Bucket: file.bucket,
+          VersioningConfiguration: { Status: 'Enabled' } }).promise();
+      }
     }
 
-    if (!exists) {
+    if (!exists || duplicateHandling !== 'skip') {
+      // Either the file does not exist yet, or it does but
+      // we are replacing it with a more recent one or
+      // adding another version of it to the bucket
+
       // we considered a direct stream from source to S3 but since
       // it doesn't work with FTP connections, we decided to always download
       // and then upload
@@ -268,7 +282,7 @@ class Granule {
       catch (e) {
         if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
           throw new errors.FileNotFound(
-            `${file.filename} was not found on the server with 403 status`
+            `${file.name} was not found on the server with 403 status`
           );
         }
         throw e;
@@ -335,67 +349,57 @@ class Granule {
 }
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using HTTP or HTTPS.
  */
+class HttpDiscoverGranules extends httpMixin(Discover) {}
 
+/**
+ * A class for discovering granules using HTTP or HTTPS and queueing them to SQS.
+ */
+class HttpDiscoverAndQueueGranules extends httpMixin(DiscoverAndQueue) {}
+
+/**
+ * A class for discovering granules using SFTP.
+ */
 class SftpDiscoverGranules extends sftpMixin(Discover) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using SFTP and queueing them to SQS.
  */
-
 class SftpDiscoverAndQueueGranules extends sftpMixin(DiscoverAndQueue) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using FTP.
  */
-
 class FtpDiscoverGranules extends ftpMixin(Discover) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * A class for discovering granules using FTP and queueing them to SQS.
  */
-
 class FtpDiscoverAndQueueGranules extends ftpMixin(DiscoverAndQueue) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * Ingest Granule from an FTP endpoint.
  */
-
 class FtpGranule extends ftpMixin(Granule) {}
 
 /**
- * Ingest Granule from a FTP endpoint.
- *
- * @class
+ * Ingest Granule from an SFTP endpoint.
  */
-
 class SftpGranule extends sftpMixin(Granule) {}
 
-
 /**
- * Ingest Granule from a HTTP endpoint.
- *
- * @class
+ * Ingest Granule from an HTTP endpoint.
  */
-
 class HttpGranule extends httpMixin(Granule) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
-* @param {string} type – `discover` or `ingest`
-* @param {string} protocol – `sftp`, `ftp`, or `http`
-* @param {boolean} useQueue – set to `true` to queue granules
+*
+* @param {string} type -`discover` or `ingest`
+* @param {string} protocol -`sftp`, `ftp`, or `http`
+* @param {boolean} q - set to `true` to queue granules
+* @returns {function} - a constructor to create a granule discovery object
 **/
 function selector(type, protocol, q) {
   if (type === 'discover') {
@@ -404,6 +408,9 @@ function selector(type, protocol, q) {
         return q ? SftpDiscoverAndQueueGranules : SftpDiscoverGranules;
       case 'ftp':
         return q ? FtpDiscoverAndQueueGranules : FtpDiscoverGranules;
+      case 'http':
+      case 'https':
+        return q ? HttpDiscoverAndQueueGranules : HttpDiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -432,3 +439,5 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpDiscoverAndQueueGranules = SftpDiscoverAndQueueGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpDiscoverAndQueueGranules = FtpDiscoverAndQueueGranules;
+module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
+module.exports.HttpDiscoverAndQueueGranules = HttpDiscoverAndQueueGranules;
