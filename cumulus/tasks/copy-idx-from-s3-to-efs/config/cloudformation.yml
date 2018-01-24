@@ -1,0 +1,5 @@
+Resources:
+  Fn:
+    Properties:
+      Description: 'Copy idx file from S3 to EFS for OnEarth 2.0.'
+      Runtime: nodejs6.10
