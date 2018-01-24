@@ -1,8 +1,8 @@
 sqs2sf:
-  handler: sf-starter.handler
+  handler: daac-ops-api.starter
   timeout: 200
   memory: 384
-  source: '../cumulus/cumulus/tasks/sf-starter/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/index.js'
 
 sns2elasticsearch:
   handler: daac-ops-api.indexer
@@ -29,16 +29,16 @@ log2elasticsearch:
   source: '../cumulus/daac-ops-api/dist/index.js'
 
 sf2snsStart:
-  handler: sf-sns-broadcast.start
+  handler: daac-ops-api.sfStart
   timeout: 100
   memory: 256
-  source: '../cumulus/cumulus/tasks/sf-sns-broadcast/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/index.js'
 
 sf2snsEnd:
-  handler: sf-sns-broadcast.end
+  handler: daac-ops-api.sfEnd
   timeout: 100
   memory: 256
-  source: '../cumulus/cumulus/tasks/sf-sns-broadcast/dist/index.js'
+  source: '../cumulus/daac-ops-api/dist/index.js'
 
 ScheduleSF:
   handler: daac-ops-api.scheduler

@@ -13,18 +13,22 @@ const errorTypes = require('@cumulus/common/errors');
 const TIMEOUT_TIME_MS = 20 * 1000;
 
 const updatedFiles = (existingKeys, updates) => {
-  const toKey = (file) => file.url + file.version;
+  const toKey = (file) => file.url + file.version; // eslint-disable-line require-jsdoc
   const keyedUpdates = _.keyBy(updates, toKey);
 
   return _.values(_.omit(keyedUpdates, existingKeys));
 };
 
 /**
- * Synchronizes a single URL to S3, respecting cookies and redirects, with optional authorization
- * @param {String} url The URL to sync
- * @param {String} bucket The bucket to upload to
- * @param {String} key The S3 key to upload to
- * @param {Object} auth An object with username / password keys corresponding to basic auth, or null
+ * Synchronizes a single http or https URL to S3, respecting cookies and
+ * redirects, with optional authorization
+ *
+ * @param {string} url - The URL to sync
+ * @param {string} bucket - The bucket to upload to
+ * @param {string} key - The S3 key to upload to
+ * @param {Object} auth - An object with username / password keys corresponding
+ *   to basic auth, or null
+ * @returns {Promise} - resolves to undefined once the object is uploaded to S3
  */
 const syncUrl = (url, bucket, key, auth) =>
   new Promise((resolve, reject) => {
@@ -72,10 +76,10 @@ let suppressedMessagesCount = 0;
  * Note: This uses the module-level "lastLogTime" and "suppressedMessagesCount"
  *       to store state.
  *
- * @param  {string} url - The URL being downloaded
- * @param  {string} bucket - The S3 bucket the file is being synced to
- * @param  {string} destKey - The S3 key the file is being synced to
- * @param  {boolean} alwaysLog - A flag to always trigger logging
+ * @param {string} url - The URL being downloaded
+ * @param {string} bucket - The S3 bucket the file is being synced to
+ * @param {string} destKey - The S3 key the file is being synced to
+ * @param {boolean} alwaysLog - A flag to always trigger logging
  * @returns {boolean} Whether a log message was displayed
  */
 function conditionallyLogSyncFileMessage(url, bucket, destKey, alwaysLog) {
@@ -93,28 +97,40 @@ function conditionallyLogSyncFileMessage(url, bucket, destKey, alwaysLog) {
     lastLogTime = Date.now();
     return true;
   }
-  else {
-    suppressedMessagesCount++;
-    return false;
-  }
+
+  suppressedMessagesCount++;
+  return false;
 }
 
-const syncFile = async (bucket, keypath, simulate, auth, file) => {
+/**
+ * Fetch a file over http or https and upload it to S3
+ *
+ * The name of the object in S3 will be either file.name, the basename of
+ * file.Key, or the basename of file.url (in that order).
+ *
+ * @param {string} bucket - the bucket to upload the file to
+ * @param {string} keypath - the base of the S3 key where the file will be
+ *   uploaded
+ * @param {boolean} simulate - if true then the file is not actually fetched and
+ *   uploaded.  Defaults to false.
+ * @param {Object} auth - optional authentication for the http download
+ * @param {string} auth.username - auth username
+ * @param {string} auth.password - auth password
+ * @param {Object} file - an object describing the file to be synced
+ * @param {string} file.url - the URL to be synced
+ * @returns {Promise} - resolves to a copy of the file parameter with Bucket
+ *   and Key properties set.
+ */
+const syncFile = async (bucket, keypath, simulate = false, auth, file) => {
   try {
     const destKey = path.join(keypath, file.name || path.basename(file.Key || file.url));
 
     const didLog = conditionallyLogSyncFileMessage(file.url, bucket, destKey, simulate);
 
-    if (simulate) {
-      log.warn('Simulated call');
-    }
-    else {
-      await syncUrl(file.url, bucket, destKey, auth);
-    }
+    if (simulate) log.warn('Simulated call');
+    else await syncUrl(file.url, bucket, destKey, auth);
 
-    if (didLog) {
-      log.debug(`Completed: ${file.url}`);
-    }
+    if (didLog) log.debug(`Completed: ${file.url}`);
 
     return Object.assign({ Bucket: bucket, Key: destKey }, file);
   }
@@ -212,8 +228,9 @@ module.exports = class SyncHttpUrlsTask extends Task {
 
   /**
    * Entrypoint for Lambda
-   * @param {array} args The arguments passed by AWS Lambda
-   * @return The handler return value
+   *
+   * @param {Array} args - The arguments passed by AWS Lambda
+   * @returns {*} - The handler return value
    */
   static handler(...args) {
     return SyncHttpUrlsTask.handle(...args);
