@@ -5,7 +5,7 @@
   "scripts": {
     "test": "lerna run test",
     "bootstrap": "lerna bootstrap",
-    "ybootstrap": "lerna bootstrap --npmClient=yarn",
+    "ybootstrap": "lerna bootstrap --npm-client=yarn",
     "clean": "lerna clean",
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch"
@@ -19,6 +19,7 @@
     "CUMULUS",
     "NASA"
   ],
+<<<<<<< HEAD
   "eslintConfig": {
     "parser": "babel-eslint",
     "env": {
@@ -71,6 +72,8 @@
       ]
     }
   },
+=======
+>>>>>>> master
   "babel": {
     "presets": [
       "es2015"
@@ -92,12 +95,13 @@
     "eslint": "^3.2.2",
     "eslint-config-airbnb": "^10.0.0",
     "eslint-plugin-import": "^1.13.0",
+    "eslint-plugin-jsdoc": "^3.3.1",
     "eslint-plugin-jsx-a11y": "^2.1.0",
     "eslint-plugin-react": "^6.0.0",
     "exports-loader": "^0.6.3",
+    "json-loader": "^0.5.4",
     "lerna": "^2.0.0",
     "prepend-loader": "0.0.2",
-    "json-loader": "^0.5.4",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
     "webpack": "^1.13.3",
