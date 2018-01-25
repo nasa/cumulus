@@ -1,0 +1,77 @@
+sqs2sf:
+  handler: index.starter
+  timeout: 200
+  memory: 384
+  source: 'node_modules/@cumulus/api/dist/'
+
+sns2elasticsearch:
+  handler: index.indexer
+  timeout: 100
+  envs:
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/'
+
+log2elasticsearch:
+  handler: index.logHandler
+  timeout: 100
+  memory: 256
+  envs:
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  source: 'node_modules/@cumulus/api/dist/'
+
+sf2snsStart:
+  handler: index.sfStart
+  timeout: 100
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/'
+
+sf2snsEnd:
+  handler: index.sfEnd
+  timeout: 100
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/'
+
+ScheduleSF:
+  description: 'This lambda function is invoked by scheduled rules created via cumulus API'
+  handler: index.scheduler
+  timeout: 100
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+
+jobs:
+  handler: index.jobs
+  timeout: 300
+  memory: 512
+  envs:
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+  source: 'node_modules/@cumulus/api/dist/'
+
+# used as custom resource for cloudformation manipulation
+CustomBootstrap:
+  handler: index.bootstrap
+  timeout: 100
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    internal: '{{buckets.internal}}'
+
