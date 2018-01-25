@@ -8,6 +8,16 @@ This module build the Cumulus API for the Cumulus framework. It uses a combinati
 
 For the full documentation of the API see: https://cumulus-nasa.github.io/cumulus-api
 
+### Config
+Includes the Kes configuration files needed for the deployment of the Api:
+- `config/lambdas.yml`: Includes that Lambdas that do internal Api related tasks such as listening to SNS events or consuming SQS queues
+- `config/api_v1.yml`: Includes all the Api endpoints and is versioned. Future versions of the Api should duplicate and rename this file
+- `config/distribution.yml`: Includes config needed for the distribution endpoint that handles file downloads with EarthLogin
+
+### How the Versioning should be handled?
+
+Refer to this document: ![Versioning](api_versioning.md)
+
 ## What is Cumulus?
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
