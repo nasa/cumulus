@@ -54,8 +54,7 @@ async function addLock(bucket, pName, filename) {
 }
 
 async function removeLock(bucket, pName, filename) {
-  console.log("removee lock bu not really");
-  //return aws.S3.delete(bucket, `${lockPrefix}/${pName}/${filename}`);
+  return aws.S3.delete(bucket, `${lockPrefix}/${pName}/${filename}`);
 }
 
 async function proceed(bucket, provider, filename, counter = 0) {
