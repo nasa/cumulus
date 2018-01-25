@@ -13,8 +13,18 @@ async function delay(t) {
 }
 
 async function countLock(bucket, pName) {
-  const list = await aws.S3.list(bucket, `${lockPrefix}/${pName}`);
-  return list.Contents.length;
+  var list = await aws.S3.list(bucket, `${lockPrefix}/${pName}`);
+  var count = list.Contents.length;
+  var item;
+  for (item in list.Contents) {
+    var date = list.Contents[item].LastModified;
+    var diff = new Date() - date;
+    if (diff > 300000) {
+      removeOldLock(bucket, list.Contents[item].Key);
+      count--;
+    }
+  }
+  return count;
 }
 
 async function addLock(bucket, pName, filename) {
@@ -23,6 +33,10 @@ async function addLock(bucket, pName, filename) {
 
 async function removeLock(bucket, pName, filename) {
   return aws.S3.delete(bucket, `${lockPrefix}/${pName}/${filename}`);
+}
+
+async function removeOldLock(bucket, key) {
+  return aws.S3.delete(bucket, key);
 }
 
 async function proceed(bucket, provider, filename, counter = 0) {
