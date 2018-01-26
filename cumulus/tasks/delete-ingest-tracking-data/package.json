@@ -1,5 +1,5 @@
 {
-  "name": "delete-ingest-tracking-data",
+  "name": "@cumulus/delete-ingest-tracking-data",
   "version": "0.0.1",
   "description": "Task to delete ingest tracking data when ingest has completed.",
   "main": "index.js",
