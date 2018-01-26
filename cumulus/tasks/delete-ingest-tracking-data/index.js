@@ -23,7 +23,7 @@ module.exports = class DeleteIngestTrackingData extends Task {
     const tableName = this.config.ingest_tracking_table;
     const granuleId = this.config.granule_meta.granuleId;
     const version = this.config.granule_meta.version;
-    const payload = await message.payload;
+    const payload = message.payload;
 
     // Delete the tracking data for the given granule from DynamoDB
     // This should be abstracted out to allow other key stores to be used. See
