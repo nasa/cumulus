@@ -4,7 +4,7 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov
 
-  sled: ../cumulus/packages/sled/dist/
+  sled: node_modules/@cumulus/sled/dist/
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
@@ -132,4 +132,8 @@ default:
 
   stepFunctions: !!files ['workflows.yml']
 
-  lambdas: !!files [ '../cumulus/packages/deployment/app/api.yml', 'lambdas.yml' ]
+  lambdas: !!files [
+    'node_modules/@cumulus/api/config/api_v1.yml',
+    'node_modules/@cumulus/api/config/distribution.yml',
+    'node_modules/@cumulus/api/config/lambdas.yml',
+    'lambdas.yml' ]

@@ -1,80 +1,3 @@
-sqs2sf:
-  handler: index.starter
-  timeout: 200
-  memory: 384
-  source: 'node_modules/@cumulus/api/dist/'
-
-sns2elasticsearch:
-  handler: index.indexer
-  timeout: 100
-  envs:
-    ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
-  memory: 256
-  source: 'node_modules/@cumulus/api/dist/'
-
-log2elasticsearch:
-  handler: index.logHandler
-  timeout: 100
-  memory: 256
-  envs:
-    ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
-  source: 'node_modules/@cumulus/api/dist/'
-
-sf2snsStart:
-  handler: index.sfStart
-  timeout: 100
-  memory: 256
-  source: 'node_modules/@cumulus/api/dist/'
-
-sf2snsEnd:
-  handler: index.sfEnd
-  timeout: 100
-  memory: 256
-  source: 'node_modules/@cumulus/api/dist/'
-
-ScheduleSF:
-  description: 'This lambda function is invoked by scheduled rules created via cumulus API'
-  handler: index.scheduler
-  timeout: 100
-  memory: 256
-  source: 'node_modules/@cumulus/api/dist/'
-  envs:
-    CollectionsTable:
-      function: Ref
-      value: CollectionsTableDynamoDB
-    ProvidersTable:
-      function: Ref
-      value: ProvidersTableDynamoDB
-
-jobs:
-  handler: index.jobs
-  timeout: 300
-  memory: 512
-  envs:
-    ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
-  source: 'node_modules/@cumulus/api/dist/'
-
-# used as custom resource for cloudformation manipulation
-CustomBootstrap:
-  handler: index.bootstrap
-  timeout: 100
-  memory: 256
-  source: 'node_modules/@cumulus/api/dist/'
-  envs:
-    internal: '{{buckets.internal}}'
-
 ApiCollections:
   handler: index.collections
   timeout: 20
@@ -95,16 +18,39 @@ ApiCollections:
         - '{{es.name}}Domain'
         - DomainEndpoint
   apiGateway:
-    - path: collections
+    # v1 paths
+    - path: v1/collections
       method: get
       cors: true
       api: backend
-    - path: collections/{collectionName}/{version}
+    - path: v1/collections
+      method: post
+      cors: true
+      api: backend
+    - path: v1/collections/{collectionName}/{version}
+      method: get
+      cors: true
+      api: backend
+    - path: v1/collections/{collectionName}/{version}
+      method: put
+      cors: true
+      api: backend
+    - path: v1/collections/{collectionName}/{version}
+      method: delete
+      cors: true
+      api: backend
+
+    # default paths
+    - path: collections
       method: get
       cors: true
       api: backend
     - path: collections
       method: post
+      cors: true
+      api: backend
+    - path: collections/{collectionName}/{version}
+      method: get
       cors: true
       api: backend
     - path: collections/{collectionName}/{version}
@@ -115,6 +61,7 @@ ApiCollections:
       method: delete
       cors: true
       api: backend
+
 
 ApiGranules:
   handler: index.granules
@@ -151,6 +98,25 @@ ApiGranules:
         - '{{es.name}}Domain'
         - DomainEndpoint
   apiGateway:
+    # v1 paths
+    - path: v1/granules
+      method: get
+      cors: true
+      api: backend
+    - path: v1/granules/{granuleName}
+      method: get
+      cors: true
+      api: backend
+    - path: v1/granules/{granuleName}
+      method: put
+      cors: true
+      api: backend
+    - path: v1/granules/{granuleName}
+      method: delete
+      cors: true
+      api: backend
+
+    # default paths      
     - path: granules
       method: get
       cors: true
@@ -168,6 +134,7 @@ ApiGranules:
       cors: true
       api: backend
 
+
 ApiExecutions:
   handler: index.executions
   timeout: 20
@@ -184,6 +151,17 @@ ApiExecutions:
         - '{{es.name}}Domain'
         - DomainEndpoint
   apiGateway:
+    #v1 paths
+    - path: v1/executions
+      method: get
+      cors: true
+      api: backend
+    - path: v1/executions/{arn}
+      method: get
+      cors: true
+      api: backend
+
+    # default paths
     - path: executions
       method: get
       cors: true
@@ -209,7 +187,14 @@ ApiExecutionStatus:
         - '{{es.name}}Domain'
         - DomainEndpoint
   apiGateway:
-    - path: executions/status/{arn}
+    #v1 paths
+    - path: v1/executions/status/{arn}
+      method: get
+      cors: true
+      api: backend
+
+    # default paths
+    - path: v1/executions/status/{arn}
       method: get
       cors: true
       api: backend
@@ -226,6 +211,17 @@ ApiWorkflows:
       function: Ref
       value: UsersTableDynamoDB
   apiGateway:
+    #v1 paths
+    - path: v1/workflows
+      method: get
+      cors: true
+      api: backend
+    - path: v1/workflows/{name}
+      method: get
+      cors: true
+      api: backend
+
+    # default paths
     - path: workflows
       method: get
       cors: true
@@ -269,6 +265,29 @@ ApiRules:
         - DomainEndpoint
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
+    #v1 paths
+    - path: v1/rules
+      method: get
+      cors: true
+      api: backend
+    - path: v1/rules/{name}
+      method: get
+      cors: true
+      api: backend
+    - path: v1/rules
+      method: post
+      cors: true
+      api: backend
+    - path: v1/rules/{name}
+      method: put
+      cors: true
+      api: backend
+    - path: v1/rules/{name}
+      method: delete
+      cors: true
+      api: backend
+
+    # default paths
     - path: rules
       method: get
       cors: true
@@ -310,6 +329,29 @@ ApiProviders:
         - DomainEndpoint
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
+    #v1 paths
+    - path: v1/providers
+      method: get
+      cors: true
+      api: backend
+    - path: v1/providers/{id}
+      method: get
+      cors: true
+      api: backend
+    - path: v1/providers
+      method: post
+      cors: true
+      api: backend
+    - path: v1/providers/{id}
+      method: put
+      cors: true
+      api: backend
+    - path: v1/providers/{id}
+      method: delete
+      cors: true
+      api: backend
+
+    # default paths
     - path: providers
       method: get
       cors: true
@@ -347,6 +389,21 @@ ApiPdrs:
         - '{{es.name}}Domain'
         - DomainEndpoint
   apiGateway:
+    #v1 paths
+    - path: v1/pdrs
+      method: get
+      cors: true
+      api: backend
+    - path: v1/pdrs/{pdrName}
+      method: get
+      cors: true
+      api: backend
+    - path: v1/pdrs/{pdrName}
+      method: delete
+      cors: true
+      api: backend
+
+    # default paths
     - path: pdrs
       method: get
       cors: true
@@ -376,6 +433,17 @@ ApiLogs:
         - '{{es.name}}Domain'
         - DomainEndpoint
   apiGateway:
+    #v1 paths
+    - path: v1/stats/logs
+      method: get
+      cors: true
+      api: backend
+    - path: v1/logs
+      method: get
+      cors: true
+      api: backend
+
+    # default paths
     - path: stats/logs
       method: get
       cors: true
@@ -396,6 +464,13 @@ ApiSchema:
       function: Ref
       value: UsersTableDynamoDB
   apiGateway:
+    #v1 paths
+    - path: v1/schemas/{schemaName}
+      method: get
+      cors: true
+      api: backend
+
+    # default paths
     - path: schemas/{schemaName}
       method: get
       cors: true
@@ -417,6 +492,25 @@ ApiStats:
         - '{{es.name}}Domain'
         - DomainEndpoint
   apiGateway:
+    #v1 paths
+    - path: v1/stats
+      method: get
+      cors: true
+      api: backend
+    - path: v1/stats/histogram
+      method: get
+      cors: true
+      api: backend
+    - path: v1/stats/aggregate
+      method: get
+      cors: true
+      api: backend
+    - path: v1/stats/average
+      method: get
+      cors: true
+      api: backend
+
+    # default paths
     - path: stats
       method: get
       cors: true
@@ -449,27 +543,33 @@ ApiToken:
       function: Ref
       value: UsersTableDynamoDB
   apiGateway:
+    #v1 paths
+    - api: backend
+      path: v1/token
+      method: get
+      cors: true
+
+    # default paths 
     - api: backend
       path: token
       method: get
       cors: true
 
-ApiDistribution:
-  handler: index.distribution
-  timeout: 20
-  memory: 256
+ApiVersion:
+  handler: index.version
+  timeout: 10
+  memory: 128
   source: 'node_modules/@cumulus/api/dist/'
-  apiRole: true
-  urs: true
-  envs:
-    EARTHDATA_BASE_URL: '{{urs_url}}' 
-    EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
-    EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
-    protected: '{{buckets.protected}}'
   apiGateway:
-    - api: distribution
-      path: 'redirect'
+    #v1 paths
+    - api: backend
+      path: v1/version
       method: get
-    - api: distribution
-      path: '{granuleId}'
+      cors: true
+
+    # default paths 
+    - api: backend
+      path: version 
       method: get
+      cors: true
+
