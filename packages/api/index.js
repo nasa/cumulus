@@ -1,49 +1,30 @@
 'use strict';
 
-const token = require('./endpoints/token');
-const collections = require('./endpoints/collections');
-const granules = require('./endpoints/granules');
-const logs = require('./endpoints/logs');
-const pdrs = require('./endpoints/pdrs');
-const providers = require('./endpoints/providers');
-const rules = require('./endpoints/rules');
-const workflows = require('./endpoints/workflows');
-const executions = require('./endpoints/executions');
-const executionStatus = require('./endpoints/execution-status');
-const schemas = require('./endpoints/schemas');
-const stats = require('./endpoints/stats');
-const distribution = require('./endpoints/distribution');
+exports.token = require('./endpoints/token');
+exports.collections = require('./endpoints/collections');
+exports.granules = require('./endpoints/granules');
+exports.logs = require('./endpoints/logs');
+exports.pdrs = require('./endpoints/pdrs');
+exports.providers = require('./endpoints/providers');
+exports.rules = require('./endpoints/rules');
+exports.workflows = require('./endpoints/workflows');
+exports.executions = require('./endpoints/executions');
+exports.executionStatus = require('./endpoints/execution-status');
+exports.schemas = require('./endpoints/schemas');
+exports.stats = require('./endpoints/stats');
+exports.version = require('./endpoints/version');
+exports.distribution = require('./endpoints/distribution');
 
-const jobs = require('./lambdas/jobs');
-const bootstrap = require('./lambdas/bootstrap');
-const scheduler = require('./lambdas/sf-scheduler');
-const broadcast = require('./lambdas/sf-sns-broadcast');
-const starter = require('./lambdas/sf-starter');
-const queue = require('./lambdas/queue');
+exports.jobs = require('./lambdas/jobs');
+exports.bootstrap = require('./lambdas/bootstrap');
+exports.scheduler = require('./lambdas/sf-scheduler');
+exports.starter = require('./lambdas/sf-starter');
+exports.queue = require('./lambdas/queue');
 
 const indexer = require('./es/indexer');
+const broadcast = require('./lambdas/sf-sns-broadcast');
 
-module.exports = {
-  token,
-  collections,
-  granules,
-  logs,
-  pdrs,
-  providers,
-  rules,
-  workflows,
-  executions,
-  executionStatus,
-  jobs,
-  schemas,
-  stats,
-  distribution,
-  bootstrap,
-  sfStart: broadcast.start,
-  sfEnd: broadcast.end,
-  starter,
-  queue,
-  scheduler: scheduler,
-  indexer: indexer.handler,
-  logHandler: indexer.logHandler
-};
+exports.sfStart = broadcast.start;
+exports.sfEnd = broadcast.end;
+exports.indexer = indexer.handler;
+exports.logHandler = indexer.logHandler;
