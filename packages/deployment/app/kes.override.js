@@ -149,14 +149,23 @@ class UpdatedLambda extends Lambda {
    * @returns {Promise} returns the updated lambda object
    */
   zipLambda(lambda) {
-    console.log(`Zipping ${lambda.local} and injecting sled`);
+    let msg = `Zipping ${lambda.local}`;
 
     // skip if the file with the same hash is zipped
     if (fs.existsSync(lambda.local)) {
       return Promise.resolve(lambda);
     }
 
-    return utils.zip(lambda.local, [lambda.source, this.config.sled]).then(() => lambda);
+    const fileList = [lambda.source];
+
+    if (lambda.useSled) {
+      fileList.push(this.config.sled);
+      msg += 'and injecting sled';
+    }
+
+    console.log(`${msg} for ${lambda.name}`);
+
+    return utils.zip(lambda.local, fileList).then(() => lambda);
   }
 
   buildS3Path(lambda) {
