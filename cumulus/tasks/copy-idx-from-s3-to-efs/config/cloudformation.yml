@@ -18,8 +18,15 @@ Resources:
       DesiredCount: 1
 
   Task:
+    Volumes:
+      - Name: OnEarthConfigEFSVolume
+        Host:
+          SourcePath: /var/www
     Properties:
       ContainerDefinitions:
       - Cpu: '512'
         Memory: '2048'
+        MountPoints:
+          - ContainerPath: /var/www
+            SourceVolume: OnEarthConfigEFSVolume
         
