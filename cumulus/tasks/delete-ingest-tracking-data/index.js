@@ -14,7 +14,8 @@ module.exports = class DeleteIngestTrackingData extends Task {
 
   /**
    * Main task entry point
-   * @return Any An object/array, etc., that consists of the value of given key in the
+   *
+   * @returns {*} Any An object/array, etc., that consists of the value of given key in the
    * message payload
    */
   async run() {
@@ -25,7 +26,7 @@ module.exports = class DeleteIngestTrackingData extends Task {
     const payload = await message.payload;
 
     // Delete the tracking data for the given granule from DynamoDB
-    // TODO This should be abstracted out to allow other key stores to be used. See
+    // This should be abstracted out to allow other key stores to be used. See
     // JIRA issue GITC-557
     const params = {
       TableName: tableName,
@@ -44,8 +45,9 @@ module.exports = class DeleteIngestTrackingData extends Task {
 
   /**
    * Entry point for Lambda
-   * @param {array} args The arguments passed by AWS Lambda
-   * @return The handler return value
+   *
+   * @param {Array} args - The arguments passed by AWS Lambda
+   * @returns {*} The handler return value
    */
   static handler(...args) {
     return DeleteIngestTrackingData.handle(...args);
