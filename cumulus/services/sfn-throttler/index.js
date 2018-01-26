@@ -6,10 +6,11 @@ const _ = require('lodash');
 
 /**
  * Queries AWS to determine the number of running excutions of a given state machine.
- * @param {string} stateMachineArn The ARN of the state machine to check.
- * @return {number} The number of running executions
+ *
+ * @param {string} stateMachineArn - The ARN of the state machine to check.
+ * @returns {number} The number of running executions
  */
-const runningExecutionCount = async (stateMachineArn) => {
+const runningExecutionCount = async(stateMachineArn) => {
   const data = await aws.sfn().listExecutions({
     stateMachineArn,
     statusFilter: 'RUNNING'
@@ -19,7 +20,14 @@ const runningExecutionCount = async (stateMachineArn) => {
   return count;
 };
 
-const fetchMessages = async (queueUrl, count) => {
+/**
+ * Fetches messages from the queue
+ *
+ * @param {string} queueUrl - Message Queue
+ * @param {int} count - number of messages
+ * @returns {Hash} messages
+ */
+const fetchMessages = async(queueUrl, count) => {
   const maxNumberOfMessages = Math.min(count, 10);
 
   const data = await aws.sqs().receiveMessage({
@@ -32,16 +40,23 @@ const fetchMessages = async (queueUrl, count) => {
   return messages;
 };
 
+/**
+ * Start execution
+ *
+ * @param {*} executionParams - Execution parameters
+ * @returns {*} promise
+ */
 function startExecution(executionParams) {
   return aws.sfn().startExecution(executionParams).promise();
 }
 
 /**
  * Delete a message from an SQS queue.
- * @param {string} queueUrl The URL of the SQS queue.
- * @param {Object} message An SQS message, in the same format as received from
+ *
+ * @param {string} queueUrl - The URL of the SQS queue.
+ * @param {Object} message - An SQS message, in the same format as received from
  *   AWS.SQS.receiveMessage().
- * @return {Promise}
+ * @returns {Promise} - Promise
  */
 function deleteMessage(queueUrl, message) {
   aws.sqs().deleteMessage({
@@ -50,7 +65,15 @@ function deleteMessage(queueUrl, message) {
   }).promise();
 }
 
-const startExecutions = async (queueUrl, stateMachineArn, count) => {
+/**
+ * Starts Execution
+ *
+ * @param {*} queueUrl - QueueUrl
+ * @param {*} stateMachineArn - StateMachone ARN
+ * @param {*} count - Count
+ * @returns {Promise} - Promise
+ */
+const startExecutions = async(queueUrl, stateMachineArn, count) => {
   const messages = await fetchMessages(queueUrl, count);
 
   if (messages.length > 0) {
@@ -64,7 +87,15 @@ const startExecutions = async (queueUrl, stateMachineArn, count) => {
   return Promise.all(executionPromises);
 };
 
-const manageThrottledStepFunction = async (queueUrl, stateMachineArn, maxConcurrentExecutions) => {
+/**
+ * Manage Step Function
+ *
+ * @param {*} queueUrl - Queue URL
+ * @param {*} stateMachineArn - State Machine ARN
+ * @param {*} maxConcurrentExecutions - Max Concurrent Execution
+ * @returns {*} Not sure
+ */
+const manageThrottledStepFunction = async(queueUrl, stateMachineArn, maxConcurrentExecutions) => {
   const count = await runningExecutionCount(stateMachineArn);
   const executionsToStart = maxConcurrentExecutions - count;
 
@@ -84,11 +115,23 @@ const manageThrottledStepFunction = async (queueUrl, stateMachineArn, maxConcurr
   );
 };
 
+/**
+ * Map Logical Ids to Arns
+ *
+ * @param {*} resources - resources
+ * @returns {*} Updated resources
+ */
 function mapLogicalIdsToArns(resources) {
   return _.fromPairs(resources.map((r) => [r.LogicalResourceId, r.PhysicalResourceId]));
 }
 
-const buildExecutionConfigsFromEvent = async (event) => {
+/**
+ * Build Execution Config From Event
+ *
+ * @param {*} event - Event
+ * @returns {*} event
+ */
+const buildExecutionConfigsFromEvent = async(event) => {
   const stackResources = await aws.describeCfStackResources(event.cloudFormationStackName);
   const arnsByLogicalId = mapLogicalIdsToArns(stackResources);
 
