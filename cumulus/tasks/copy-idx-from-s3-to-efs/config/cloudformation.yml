@@ -17,49 +17,9 @@ Resources:
     Properties:
       DesiredCount: 1
 
-  OnEarthConfigEFS:
-    Type: 'AWS::EFS::FileSystem'
-
-  OnEarthConfigEFSMountUsEast1a:
-    Type: "AWS::EFS::MountTarget"
-    Properties:
-      FileSystemId: !Ref OnEarthConfigEFS
-      SecurityGroups:
-        - !Ref OnEarthConfigEFSSecurityGroup
-      SubnetId: subnet-6f0db035
-
-  OnEarthConfigEFSMountUsEast1b:
-    Type: "AWS::EFS::MountTarget"
-    Properties:
-      FileSystemId: !Ref OnEarthConfigEFS
-      SecurityGroups:
-        - !Ref OnEarthConfigEFSSecurityGroup
-      SubnetId: subnet-f972629c
-
-  OnEarthConfigEFSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: EFS Security Group
-      VpcId: !Ref 'VpcId'
-      SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref EcsSecurityGroup
-          IpProtocol: '-1'
-
-  EcsSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: ECS Security Group
-      VpcId: !Ref 'VpcId'
-
   Task:
     Properties:
-      Volumes:
-        - Name: OnEarthConfigEFSVolume
-          Host:
-            SourcePath: /var/www
       ContainerDefinitions:
       - Cpu: '512'
         Memory: '2048'
-        MountPoints:
-            - ContainerPath: /var/www
-              SourceVolume: OnEarthConfigEFSVolume
+        
