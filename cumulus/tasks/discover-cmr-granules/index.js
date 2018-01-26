@@ -5,9 +5,9 @@ const fetch = require('node-fetch');
 const log = require('@cumulus/common/log');
 const Task = require('@cumulus/common/task');
 const FieldPattern = require('@cumulus/common/field-pattern');
+const docClient = require('@cumulus/common/aws').dynamodbDocClient();
 const querystring = require('querystring');
-
-const PAGE_SIZE = 2000;
+const moment = require('moment');
 
 /**
  * Validate presence of parameter in config
@@ -48,14 +48,38 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    */
   async run() {
     validateParameters(this.config);
-    const query = this.config.query || {};
+    const query = this.config.query;
     if (query.updated_since) {
       query.updated_since = new Date(Date.now() - parseDuration(query.updated_since)).toISOString();
     }
-    const granules = await this.cmrGranules(this.config.root, query);
+    this.message.payload = this.message.payload || { scrollID: null };
+
+    const { scrollID, granules } = await this.cmrGranules(
+      this.config.root,
+      query,
+      this.message.payload.scrollID);
     const messages = this.buildMessages(granules, this.config.granule_meta, this.message.meta);
     const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
-    return filtered;
+
+    // Write the messages to a DynamoDB table so we can track ingest failures
+    const messagePromises = filtered.map(msg => {
+      const { granuleId, version, collection } = msg.meta;
+      const params = {
+        TableName: this.config.ingest_tracking_table,
+        Item: {
+          'granule-id': granuleId,
+          'version': version,
+          'collection': collection,
+          'ingest-start-datetime': moment().format(),
+          'message': JSON.stringify(msg)
+        }
+      };
+      return docClient.put(params).promise();
+    });
+
+    await Promise.all(messagePromises);
+
+    return { messages: filtered, scrollID: scrollID };
   }
 
   /**
@@ -94,32 +118,32 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    * @param {Object} query - The query parameters to serialize and send to a CMR granules search
    * @returns {Array} An array of all granules matching the given query
    */
-  async cmrGranules(root, query) {
+  async cmrGranules(root, query, scrollID) {
     const granules = [];
-    const params = Object.assign({
-      page_size: PAGE_SIZE,
-      sort_key: 'revision_date'
-    }, query);
+    const params = Object.assign({}, query);
+    if (params.updated_since) params.sort_key = 'revision_date';
+    params.scroll = 'true';
     const baseUrl = `${root}/search/granules.json`;
     const opts = { headers: { 'Client-Id': 'GitC' } };
-    let done = false;
-    let page = 1;
-    while (!done) {
-      params.page_num = page;
-      const url = [baseUrl, querystring.stringify(params)].join('?');
-      log.info('Fetching:', url);
-      const response = await fetch(url, opts);
-      if (!response.ok) {
-        throw new Error(`CMR Error ${response.status} ${response.statusText}`);
-      }
-      const json = await response.json();
-      granules.push(...json.feed.entry);
-      const hits = parseInt(response.headers.get('CMR-Hits'), 10);
-      if (page === 1) log.info(`CMR Granule count: ${hits}`);
-      done = hits <= page * PAGE_SIZE;
-      page++;
+    const url = [baseUrl, querystring.stringify(params)].join('?');
+    if (scrollID) opts.headers['CMR-Scroll-Id'] = scrollID;
+    log.info('Fetching:', url);
+    const response = await fetch(url, opts);
+    if (!response.ok) {
+      throw new Error(`CMR Error ${response.status} ${response.statusText}`);
     }
-    return granules;
+    const json = await response.json();
+    log.info(json);
+    granules.push(...json.feed.entry);
+    log.info(`scrollID:${scrollID}`,
+             `cmr-scroll-id:${response.headers._headers['cmr-scroll-id']}`,
+             `json.feed.entry.length:${json.feed.entry.length}`);
+    const nextScrollID = (json.feed.entry.length === 0) ?
+                         false :
+                         response.headers._headers['cmr-scroll-id'];
+    log.info(`nextScrollID:${nextScrollID}`);
+    log.info('----TOTAL----: ', granules.length);
+    return { granules: granules, scrollID: nextScrollID };
   }
 
   /**
