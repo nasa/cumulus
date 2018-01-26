@@ -5,6 +5,7 @@ set -e
 # Create output dir dist/cumulus-sled which will be placed inside of Lambda tasks
 rm -rf dist
 mkdir -p dist/cumulus-sled
+mkdir -p node_modules
 
 # Copy necessary files (exclude tests / examples) to minimize code size
 cp -R index.js package.json lib deps node_modules dist/cumulus-sled
