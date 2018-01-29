@@ -35,11 +35,17 @@ default:
       - subnet-xxxxx #change me
 
   default_users:
+    aimeeb: true
+    jennyhliu: true
+    jnorton1: true
+    kbaynes: true
+    kkelly: true
+    lfrederick: true
+    mhuffnagle2: true
     pquinn1: true
     scisco: true
-    mhuffnagle2: true
-    kbaynes: true
     sethvincent: true
+
 
   ecs:
     amiid: ami-6944c513
