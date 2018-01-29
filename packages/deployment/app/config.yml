@@ -46,7 +46,6 @@ default:
     scisco: true
     sethvincent: true
 
-
   ecs:
     amiid: ami-6944c513
     instanceType: change-me 
