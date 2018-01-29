@@ -3,6 +3,7 @@
 const readline = require('readline');
 const aws = require('./aws');
 const log = require('./log');
+const { uuid } = require('./util');
 
 // Maximum message payload size that will NOT be stored in S3. Anything bigger will be.
 const MAX_NON_S3_PAYLOAD_SIZE = 10000;
@@ -60,6 +61,7 @@ const MessageSource = exports.MessageSource = class {
   }
 };
 
+// Used when message size is too big for Lambda messages (32k)
 class StateMachineS3MessageSource extends MessageSource {
   constructor(message, context) {
     super(message, context);
@@ -85,11 +87,27 @@ class StateMachineS3MessageSource extends MessageSource {
   }
 
   async loadConfigTemplate() {
-    const workflowConfig = this.messageData.workflow_config_template;
-    const meta = this.messageData.ingest_meta;
-    const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
-    log.debug(`TASK NAME is [${taskName}]`);
-    return workflowConfig[taskName];
+    try {
+      const workflowConfig = this.messageData.workflow_config_template;
+      const meta = this.messageData.ingest_meta;
+      log.info('Checking for arn mapping for ', this.context.invokedFunctionArn);
+      if (workflowConfig.arns_to_name_mappings) {
+        const match = workflowConfig.arns_to_name_mappings.find(({ arn }) =>
+          arn === this.context.invokedFunctionArn
+        );
+        if (match) {
+          log.info('Found configured task name', match.arn, ' -> ', match.name);
+          return workflowConfig[match.name];
+        }
+      }
+      const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
+      log.debug(`TASK NAME is [${taskName}]`);
+      return workflowConfig[taskName];
+    }
+    catch (e) {
+      log.info('Exception in loadConfigTemplate');
+      throw e;
+    }
   }
 
   async loadState(taskName) {
@@ -114,12 +132,18 @@ class StateMachineS3MessageSource extends MessageSource {
   }
 
   async loadMessageData() {
-    const message = this.originalMessage;
-    if (!message.payload || !message.payload.Bucket || !message.payload.Key) {
-      return message;
+    try {
+      const message = this.originalMessage;
+      if (!message.payload || !message.payload.Bucket || !message.payload.Key) {
+        return message;
+      }
+      const payloadJson = await aws.s3().getObject(message.payload).promise();
+      return Object.assign({}, message, { payload: JSON.parse(payloadJson.Body) });
     }
-    const payloadJson = await aws.s3().getObject(message.payload).promise();
-    return Object.assign({}, message, { payload: JSON.parse(payloadJson.Body) });
+    catch (e) {
+      log.info('Exception in loadMessageData');
+      throw e;
+    }
   }
 
   static isSourceFor(message) {
@@ -127,7 +151,6 @@ class StateMachineS3MessageSource extends MessageSource {
   }
 
   performLambdaCallback(handler, callback, error, data) {
-
     if (error || (data && data.exception)) {
       callback(error, data);
       return error;
@@ -147,7 +170,7 @@ class StateMachineS3MessageSource extends MessageSource {
     }
     else {
       log.debug('Using S3 payload');
-      const scopedKey = [handler.name, this.key].join('/');
+      const scopedKey = [handler.name, this.key, uuid()].join('/');
       const params = {
         Bucket: this.bucket,
         Key: scopedKey,
@@ -185,6 +208,7 @@ class InlineMessageSource extends MessageSource {
 }
 
 
+// Instead of getting message from AWS, get message from stdin
 class StdinMessageSource extends InlineMessageSource {
   constructor(message) {
     super(message);
