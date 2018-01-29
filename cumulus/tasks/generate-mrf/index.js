@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const spawnSync = require('child_process').spawnSync;
-
 const Task = require('@cumulus/common/task');
 const log = require('@cumulus/common/log');
 const util = require('@cumulus/common/util');
