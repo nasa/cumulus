@@ -366,8 +366,8 @@ class UpdatedKes extends Kes {
     };
 
     return new Promise((resolve, reject) => {
-      request(options).on('error', (err) => {
-        reject(err);
+      request(options, (err, response, body) => {
+        if (err) reject(err);
       })
       .pipe(file);
 
@@ -397,9 +397,8 @@ class UpdatedKes extends Kes {
 
     return new Promise((resolve, reject) => {
       request(options, (err, response, body) => {
+        if (err) reject(err);
         resolve(JSON.parse(body).tag_name);
-      }).on('error', (err) => {
-        reject(err);
       });
     });
   };
