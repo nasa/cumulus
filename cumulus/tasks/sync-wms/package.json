@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-wms",
-  "version": "1.0.0-1.0.0-beta.9.0",
+  "version": "1.0.0-1.0.0-beta.9.1",
   "description": "Transforms input granule info to WMS URLs for URL sync",
   "main": "index.js",
   "keywords": [
@@ -13,6 +13,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-1.0.0-beta.9.0"
+    "@cumulus/common": "^1.0.0-1.0.0-beta.9.1"
   }
 }
