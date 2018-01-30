@@ -10,7 +10,7 @@ const utils = require('kes').utils;
 const request = require('request');
 
 /**
- * Generates a public/private key pairs 
+ * Generates public/private key pairs
  * @function generateKeyPair
  * @return {object} a forge pki object
  */
@@ -57,7 +57,7 @@ function baseInputTemplate(config, outputs) {
   // add queues
   if (config.sqs) {
     template.meta.queues = {};
-    const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
+    const queueArns = outputs.filter(o => o.OutputKey.includes('SQSOutput'));
 
     queueArns.forEach((queue) => {
       template.meta.queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
@@ -351,7 +351,7 @@ class UpdatedKes extends Kes {
 
     const addCurly = (config) => {
       if (config) {
-        Object.keys(config).forEach((n) => {
+        Object.keys(config).forEach(n => {
           if (typeof config[n] === 'object') {
             config[n] = addCurly(config[n]);
           }
@@ -388,7 +388,6 @@ class UpdatedKes extends Kes {
    * @return {Promise}
    */
   opsStack() {
-    console.log('IN OPSSTACK');
     // check if public and private key are generated
     // if not generate and upload them
     const apis = {};
