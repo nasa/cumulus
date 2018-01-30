@@ -7,9 +7,10 @@ const fs = require('fs');
 const omit = require('lodash.omit');
 const forge = require('node-forge');
 const utils = require('kes').utils;
+const request = require('request');
 
 /**
- * Generates a public/private key pairs
+ * Generates public/private key pairs
  * @function generateKeyPair
  * @return {object} a forge pki object
  */
@@ -138,8 +139,11 @@ function generateWorkflowsList(config) {
   return false;
 }
 
-
 class UpdatedLambda extends Lambda {
+  constructor(config) {
+    super(config);
+    this.config = config;
+  }
   /**
    * Copy source code of a given lambda function, zips it, calculate
    * the hash of the source code and updates the lambda object with
@@ -150,17 +154,15 @@ class UpdatedLambda extends Lambda {
    */
   zipLambda(lambda) {
     let msg = `Zipping ${lambda.local}`;
-
     // skip if the file with the same hash is zipped
     if (fs.existsSync(lambda.local)) {
       return Promise.resolve(lambda);
     }
-
     const fileList = [lambda.source];
 
     if (lambda.useSled) {
-      fileList.push(this.config.sled);
-      msg += 'and injecting sled';
+      fileList.push(this.config.message_adapter_filename);
+      msg += ' and injecting sled';
     }
 
     console.log(`${msg} for ${lambda.name}`);
@@ -171,9 +173,6 @@ class UpdatedLambda extends Lambda {
   buildS3Path(lambda) {
     lambda = super.buildS3Path(lambda);
 
-    if (lambda.useSled) {
-      lambda.handler = 'cumulus-sled.handler';
-    }
     return lambda;
   }
 }
@@ -194,6 +193,7 @@ class UpdatedKes extends Kes {
   constructor(config) {
     super(config);
     this.Lambda = UpdatedLambda;
+    this.messageAdapterGitPath = `${config.repo_owner}/${config.message_adapter_repo}`;
   }
 
   async redployApiGateWay(name, restApiId, stageName) {
@@ -332,7 +332,7 @@ class UpdatedKes extends Kes {
       return config;
     };
 
-    // loop through the sled config of each step of 
+    // loop through the sled config of each step of
     // the step function, add curly brackets to values
     // with dollar sign and remove config key from the
     // defintion, otherwise CloudFormation will be mad
@@ -347,6 +347,84 @@ class UpdatedKes extends Kes {
 
     this.config.stepFunctions.configs = sFconfigs;
   }
+
+  /**
+   * `downloadZipfile` downloads zipfile from remote location and stores on disk
+   *
+   * @param {String} fileUrl - URL file location
+   * @param {String} localFilename - Where to store file locally
+   */
+  downloadZipfile(fileUrl, localFilename) {
+    const file = fs.createWriteStream(localFilename);
+    const options = {
+      uri: fileUrl,
+      headers: {
+        'Accept': 'application/octet-stream',
+        'Content-Type': 'application/zip',
+        'Content-Transfer-Encoding': 'binary'
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      request(options, (err, response, body) => {
+        if (err) reject(err);
+      })
+      .pipe(file);
+
+      file.on('finish', () => {
+        console.log(`Completed download of ${fileUrl} to ${localFilename}`);
+        resolve();
+      })
+      .on('error', (err) => {
+        reject(err);
+      });
+    });
+  };
+
+  /**
+   * Fetches the latest release version of the cumulus message adapter
+   *
+   * @return {Promise} Promise resolution is string of latest github release, e.g. 'v0.0.1'
+   */
+  fetchLatestMessageAdapterRelease() {
+    const options = {
+      url: `https://api.github.com/repos/${messageAdapterGitPath}/releases/latest`,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': '@cumulus/deployment' // Required by Github API
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      request(options, (err, response, body) => {
+        if (err) reject(err);
+        resolve(JSON.parse(body).tag_name);
+      });
+    });
+  };
+
+  /**
+   * Determines which release version should be downloaded from
+   * cumulus-message-adapter repository and then downloads that file.
+   *
+   * @return {Promise}
+   */
+  fetchMessageAdapter() {
+    const messageAdapterVersion = this.config.message_adapter_version;
+    const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
+    const messageAdapterFilename = this.config.message_adapter_filename;
+
+    if (!messageAdapterVersion) {
+      return this.fetchLatestMessageAdapterRelease()
+        .then((latestReleaseVersion) => {
+          const releaseLocation = `${releaseDownloadBaseUrl}/${latestReleaseVersion}/${messageAdapterFilename}`;
+          return this.downloadZipfile(releaseLocation, messageAdapterFilename);
+        });
+    } else {
+      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/${messageAdapterFilename}`;
+      return this.downloadZipfile(releaseLocation, messageAdapterFilename);
+    }
+  };
 
   /**
    * Override opsStack method.
@@ -366,6 +444,7 @@ class UpdatedKes extends Kes {
     this.cleanStepFunctionDefinition();
 
     return this.crypto(this.bucket, this.stack)
+      .then(() => this.fetchMessageAdapter())
       .then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
