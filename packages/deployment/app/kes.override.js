@@ -357,19 +357,20 @@ class UpdatedKes extends Kes {
     const options = {
       uri: fileUrl,
       headers: {
-        Accept: 'application/octet-stream',
+        'Accept': 'application/octet-stream',
         'Content-Type': 'application/zip',
         'Content-Transfer-Encoding': 'binary'
       }
     };
     return new Promise((resolve, reject) => {
-      request(options, (response) => {
-        resolve(response);
-      })
-      .on('error', (err) => {
+      request(options).on('error', (err) => {
         reject(err);
-      })
-      .pipe(file);
+      }).pipe(file);
+
+      file.on('finish', () => {
+        console.log(`Completed download of ${fileUrl} to ${localFilename}`);
+        resolve();
+      });
     });
   };
 
