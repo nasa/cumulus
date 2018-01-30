@@ -172,9 +172,6 @@ class UpdatedLambda extends Lambda {
   buildS3Path(lambda) {
     lambda = super.buildS3Path(lambda);
 
-    if (lambda.useSled) {
-      lambda.handler = 'cumulus-sled.handler';
-    }
     return lambda;
   }
 }
@@ -349,6 +346,33 @@ class UpdatedKes extends Kes {
     this.config.stepFunctions.configs = sFconfigs;
   }
 
+  /**
+   * `downloadZipfile` downloads zipfile from remote location and stores on disk
+   *
+   * @param {String} fileUrl - URL file location
+   * @param {String} localFilename - Where to store file locally
+   */
+  downloadZipfile(fileUrl, localFilename) {
+    const file = fs.createWriteStream(localFilename);
+    const options = {
+      uri: fileUrl,
+      headers: {
+        Accept: 'application/octet-stream',
+        'Content-Type': 'application/zip',
+        'Content-Transfer-Encoding': 'binary'
+      }
+    };
+    return new Promise((resolve, reject) => {
+      request(options, (response) => {
+        resolve(response);
+      })
+      .on('error', (err) => {
+        reject(err);
+      })
+      .pipe(file);
+    });
+  };
+
   fetchMessageAdapter() {
     const messageAdapterVersion = this.config.message_adapter;
     if (!messageAdapterVersion) {
@@ -359,7 +383,7 @@ class UpdatedKes extends Kes {
       const releaseDownloadBaseUrl = 'https://github.com/cumulus-nasa/cumulus-message-adapter/releases/download';
       // Should the 'cumulus-message-adapter.zip' have a release suffix?
       const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/cumulus-message-adapter.zip`;
-      return utils.downloadZipfile(releaseLocation, MESSAGE_ADAPTER_FILENAME);
+      return this.downloadZipfile(releaseLocation, MESSAGE_ADAPTER_FILENAME);
     }
   };
 
@@ -382,7 +406,7 @@ class UpdatedKes extends Kes {
 
     return this.crypto(this.bucket, this.stack)
       .then(() => this.fetchMessageAdapter())
-      //.then(() => super.opsStack())
+      .then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
         const outputs = r.Stacks[0].Outputs;
