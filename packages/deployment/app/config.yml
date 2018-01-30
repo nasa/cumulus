@@ -4,7 +4,9 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov
 
-  message_adapter: v0.0.1
+  repo_owner: cumulus-nasa
+  message_adapter_version: v0.0.1
+  message_adapter_repo: cumulus-message-adapter
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/

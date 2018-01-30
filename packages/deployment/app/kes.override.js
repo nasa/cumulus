@@ -139,8 +139,6 @@ function generateWorkflowsList(config) {
   return false;
 }
 
-const MESSAGE_ADAPTER_FILENAME = 'cumulus-message-adapter.zip';
-
 class UpdatedLambda extends Lambda {
   /**
    * Copy source code of a given lambda function, zips it, calculate
@@ -160,7 +158,7 @@ class UpdatedLambda extends Lambda {
 
     if (lambda.useSled) {
       fileList.push(MESSAGE_ADAPTER_FILENAME);
-      msg += 'and injecting sled';
+      msg += ' and injecting sled';
     }
 
     console.log(`${msg} for ${lambda.name}`);
@@ -192,6 +190,8 @@ class UpdatedKes extends Kes {
   constructor(config) {
     super(config);
     this.Lambda = UpdatedLambda;
+    this.messageAdapterFilename = 'cumulus-message-adapter.zip';
+    this.messageAdapterGitPath = `${config.repo_owner}/${config.message_adapter_repo}`;
   }
 
   async redployApiGateWay(name, restApiId, stageName) {
@@ -374,17 +374,37 @@ class UpdatedKes extends Kes {
     });
   };
 
+  fetchLatestMessageAdapterRelease() {
+    const options = {
+      url: `https://api.github.com/repos/${messageAdapterGitPath}/releases/latest`,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': '@cumulus/deployment' // Required by Github API
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      request(options, (err, response, body) => {
+        resolve(JSON.parse(body).tag_name);
+      }).on('error', (err) => {
+        reject(err);
+      });
+    });
+  };
+
   fetchMessageAdapter() {
-    const messageAdapterVersion = this.config.message_adapter;
+    const messageAdapterVersion = this.config.message_adapter_version;
+    const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
+
     if (!messageAdapterVersion) {
-      // There are no production releases, so this will fail
-      // request.get('https://api.github.com/repos/cumulus-nasa/cumulus-message-adapter/releases/latest')
-      throw new Error('Please specify a message_adapter release tag in config.yml');
+      return this.fetchLatestMessageAdapterRelease()
+        .then((latestReleaseVersion) => {
+          const releaseLocation = `${releaseDownloadBaseUrl}/${latestReleaseVersion}/cumulus-message-adapter.zip`;
+          return this.downloadZipfile(releaseLocation, this.messageAdapterFilename);
+        });
     } else {
-      const releaseDownloadBaseUrl = 'https://github.com/cumulus-nasa/cumulus-message-adapter/releases/download';
-      // Should the 'cumulus-message-adapter.zip' have a release suffix?
       const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/cumulus-message-adapter.zip`;
-      return this.downloadZipfile(releaseLocation, MESSAGE_ADAPTER_FILENAME);
+      return this.downloadZipfile(releaseLocation, this.messageAdapterFilename);
     }
   };
 
