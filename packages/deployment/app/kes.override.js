@@ -139,26 +139,7 @@ function generateWorkflowsList(config) {
   return false;
 }
 
-const getContent = function(fileUrl) {
-  const file = fs.createWriteStream('cumulus-message-adapter.zip');
-  const options = {
-    uri: fileUrl,
-    headers: {
-      Accept: 'application/octet-stream',
-      'Content-Type': 'application/zip',
-      'Content-Transfer-Encoding': 'binary'
-    }
-  };
-  return new Promise((resolve, reject) => {
-    request(options, (response) => {
-      resolve(response);
-    })
-    .on('error', (err) => {
-      reject(err);
-    })
-    .pipe(file);
-  });
-};
+const MESSAGE_ADAPTER_FILENAME = 'cumulus-message-adapter.zip';
 
 class UpdatedLambda extends Lambda {
   /**
@@ -171,35 +152,21 @@ class UpdatedLambda extends Lambda {
    */
   zipLambda(lambda) {
     let msg = `Zipping ${lambda.local}`;
-    const messageAdapterVersion = this.config.message_adapter;
-    if (!messageAdapterVersion) {
-      // There are no production releases, so this will fail
-      // request.get('https://api.github.com/repos/cumulus-nasa/cumulus-message-adapter/releases/latest')
-      throw new Error('Please specify a message_adapter release tag in config.yml');
-    }
- else {
-      const releaseDownloadBaseUrl = 'https://github.com/cumulus-nasa/cumulus-message-adapter/releases/download';
-      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/cumulus-message-adapter.zip`;
-      return getContent(releaseLocation)
-        .then(() => {
-          const fileList = [lambda.source];
-
-          if (lambda.useSled) {
-            fileList.push('cumulus-message-adapter.zip');
-            msg += 'and injecting sled';
-          }
-
-          console.log(`${msg} for ${lambda.name}`);
-          console.log(`lambda.local: ${  lambda.local}`);
-
-          return utils.zip(lambda.local, fileList).then(() => lambda);
-        });
-    }
-
     // skip if the file with the same hash is zipped
-    // if (fs.existsSync(lambda.local)) {
-    //   return Promise.resolve(lambda);
-    // }
+    if (fs.existsSync(lambda.local)) {
+      return Promise.resolve(lambda);
+    }
+    const fileList = [lambda.source];
+
+    if (lambda.useSled) {
+      fileList.push(MESSAGE_ADAPTER_FILENAME);
+      msg += 'and injecting sled';
+    }
+
+    console.log(`${msg} for ${lambda.name}`);
+    console.log(`lambda.local: ${lambda.local}`);
+
+    return utils.zip(lambda.local, fileList).then(() => lambda);
   }
 
   buildS3Path(lambda) {
@@ -382,6 +349,20 @@ class UpdatedKes extends Kes {
     this.config.stepFunctions.configs = sFconfigs;
   }
 
+  fetchMessageAdapter() {
+    const messageAdapterVersion = this.config.message_adapter;
+    if (!messageAdapterVersion) {
+      // There are no production releases, so this will fail
+      // request.get('https://api.github.com/repos/cumulus-nasa/cumulus-message-adapter/releases/latest')
+      throw new Error('Please specify a message_adapter release tag in config.yml');
+    } else {
+      const releaseDownloadBaseUrl = 'https://github.com/cumulus-nasa/cumulus-message-adapter/releases/download';
+      // Should the 'cumulus-message-adapter.zip' have a release suffix?
+      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/cumulus-message-adapter.zip`;
+      return utils.downloadZipfile(releaseLocation, MESSAGE_ADAPTER_FILENAME);
+    }
+  };
+
   /**
    * Override opsStack method.
    *
@@ -400,6 +381,7 @@ class UpdatedKes extends Kes {
     this.cleanStepFunctionDefinition();
 
     return this.crypto(this.bucket, this.stack)
+      .then(() => this.fetchMessageAdapter())
       //.then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
