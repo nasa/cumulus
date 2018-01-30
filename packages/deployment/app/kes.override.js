@@ -9,6 +9,9 @@ const forge = require('node-forge');
 const utils = require('kes').utils;
 const request = require('request');
 
+// Used by both UpdatedLambda and UpdatedKes classes
+const messageAdapterFilename = 'cumulus-message-adapter.zip';
+
 /**
  * Generates public/private key pairs
  * @function generateKeyPair
@@ -157,7 +160,7 @@ class UpdatedLambda extends Lambda {
     const fileList = [lambda.source];
 
     if (lambda.useSled) {
-      fileList.push(MESSAGE_ADAPTER_FILENAME);
+      fileList.push(messageAdapterFilename);
       msg += ' and injecting sled';
     }
 
@@ -190,7 +193,6 @@ class UpdatedKes extends Kes {
   constructor(config) {
     super(config);
     this.Lambda = UpdatedLambda;
-    this.messageAdapterFilename = 'cumulus-message-adapter.zip';
     this.messageAdapterGitPath = `${config.repo_owner}/${config.message_adapter_repo}`;
   }
 
@@ -415,12 +417,12 @@ class UpdatedKes extends Kes {
     if (!messageAdapterVersion) {
       return this.fetchLatestMessageAdapterRelease()
         .then((latestReleaseVersion) => {
-          const releaseLocation = `${releaseDownloadBaseUrl}/${latestReleaseVersion}/${this.messageAdapterFilename}`;
-          return this.downloadZipfile(releaseLocation, this.messageAdapterFilename);
+          const releaseLocation = `${releaseDownloadBaseUrl}/${latestReleaseVersion}/${messageAdapterFilename}`;
+          return this.downloadZipfile(releaseLocation, messageAdapterFilename);
         });
     } else {
-      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/${this.messageAdapterFilename}`;
-      return this.downloadZipfile(releaseLocation, this.messageAdapterFilename);
+      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/${messageAdapterFilename}`;
+      return this.downloadZipfile(releaseLocation, messageAdapterFilename);
     }
   };
 
