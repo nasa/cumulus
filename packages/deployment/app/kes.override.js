@@ -362,18 +362,28 @@ class UpdatedKes extends Kes {
         'Content-Transfer-Encoding': 'binary'
       }
     };
+
     return new Promise((resolve, reject) => {
       request(options).on('error', (err) => {
         reject(err);
-      }).pipe(file);
+      })
+      .pipe(file);
 
       file.on('finish', () => {
         console.log(`Completed download of ${fileUrl} to ${localFilename}`);
         resolve();
+      })
+      .on('error', (err) => {
+        reject(err);
       });
     });
   };
 
+  /**
+   * Fetches the latest release version of the cumulus message adapter
+   *
+   * @return {Promise} Promise resolution is string of latest github release, e.g. 'v0.0.1'
+   */
   fetchLatestMessageAdapterRelease() {
     const options = {
       url: `https://api.github.com/repos/${messageAdapterGitPath}/releases/latest`,
@@ -392,6 +402,12 @@ class UpdatedKes extends Kes {
     });
   };
 
+  /**
+   * Determines which release version should be downloaded from
+   * cumulus-message-adapter repository and then downloads that file.
+   *
+   * @return {Promise}
+   */
   fetchMessageAdapter() {
     const messageAdapterVersion = this.config.message_adapter_version;
     const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
