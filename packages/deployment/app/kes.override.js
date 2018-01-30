@@ -415,11 +415,11 @@ class UpdatedKes extends Kes {
     if (!messageAdapterVersion) {
       return this.fetchLatestMessageAdapterRelease()
         .then((latestReleaseVersion) => {
-          const releaseLocation = `${releaseDownloadBaseUrl}/${latestReleaseVersion}/cumulus-message-adapter.zip`;
+          const releaseLocation = `${releaseDownloadBaseUrl}/${latestReleaseVersion}/${this.messageAdapterFilename}`;
           return this.downloadZipfile(releaseLocation, this.messageAdapterFilename);
         });
     } else {
-      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/cumulus-message-adapter.zip`;
+      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/${this.messageAdapterFilename}`;
       return this.downloadZipfile(releaseLocation, this.messageAdapterFilename);
     }
   };
