@@ -7,9 +7,10 @@ const fs = require('fs');
 const omit = require('lodash.omit');
 const forge = require('node-forge');
 const utils = require('kes').utils;
+const request = require('request');
 
 /**
- * Generates a public/private key pairs
+ * Generates a public/private key pairs 
  * @function generateKeyPair
  * @return {object} a forge pki object
  */
@@ -56,7 +57,7 @@ function baseInputTemplate(config, outputs) {
   // add queues
   if (config.sqs) {
     template.meta.queues = {};
-    const queueArns = outputs.filter(o => o.OutputKey.includes('SQSOutput'));
+    const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
 
     queueArns.forEach((queue) => {
       template.meta.queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
@@ -138,6 +139,26 @@ function generateWorkflowsList(config) {
   return false;
 }
 
+const getContent = function(fileUrl) {
+  const file = fs.createWriteStream('cumulus-message-adapter.zip');
+  const options = {
+    uri: fileUrl,
+    headers: {
+      Accept: 'application/octet-stream',
+      'Content-Type': 'application/zip',
+      'Content-Transfer-Encoding': 'binary'
+    }
+  };
+  return new Promise((resolve, reject) => {
+    request(options, (response) => {
+      resolve(response);
+    })
+    .on('error', (err) => {
+      reject(err);
+    })
+    .pipe(file);
+  });
+};
 
 class UpdatedLambda extends Lambda {
   /**
@@ -150,22 +171,35 @@ class UpdatedLambda extends Lambda {
    */
   zipLambda(lambda) {
     let msg = `Zipping ${lambda.local}`;
+    const messageAdapterVersion = this.config.message_adapter;
+    if (!messageAdapterVersion) {
+      // There are no production releases, so this will fail
+      // request.get('https://api.github.com/repos/cumulus-nasa/cumulus-message-adapter/releases/latest')
+      throw new Error('Please specify a message_adapter release tag in config.yml');
+    }
+ else {
+      const releaseDownloadBaseUrl = 'https://github.com/cumulus-nasa/cumulus-message-adapter/releases/download';
+      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/cumulus-message-adapter.zip`;
+      return getContent(releaseLocation)
+        .then(() => {
+          const fileList = [lambda.source];
+
+          if (lambda.useSled) {
+            fileList.push('cumulus-message-adapter.zip');
+            msg += 'and injecting sled';
+          }
+
+          console.log(`${msg} for ${lambda.name}`);
+          console.log(`lambda.local: ${  lambda.local}`);
+
+          return utils.zip(lambda.local, fileList).then(() => lambda);
+        });
+    }
 
     // skip if the file with the same hash is zipped
-    if (fs.existsSync(lambda.local)) {
-      return Promise.resolve(lambda);
-    }
-
-    const fileList = [lambda.source];
-
-    if (lambda.useSled) {
-      fileList.push(this.config.sled);
-      msg += 'and injecting sled';
-    }
-
-    console.log(`${msg} for ${lambda.name}`);
-
-    return utils.zip(lambda.local, fileList).then(() => lambda);
+    // if (fs.existsSync(lambda.local)) {
+    //   return Promise.resolve(lambda);
+    // }
   }
 
   buildS3Path(lambda) {
@@ -317,7 +351,7 @@ class UpdatedKes extends Kes {
 
     const addCurly = (config) => {
       if (config) {
-        Object.keys(config).forEach(n => {
+        Object.keys(config).forEach((n) => {
           if (typeof config[n] === 'object') {
             config[n] = addCurly(config[n]);
           }
@@ -332,7 +366,7 @@ class UpdatedKes extends Kes {
       return config;
     };
 
-    // loop through the sled config of each step of 
+    // loop through the sled config of each step of
     // the step function, add curly brackets to values
     // with dollar sign and remove config key from the
     // defintion, otherwise CloudFormation will be mad
@@ -354,6 +388,7 @@ class UpdatedKes extends Kes {
    * @return {Promise}
    */
   opsStack() {
+    console.log('IN OPSSTACK');
     // check if public and private key are generated
     // if not generate and upload them
     const apis = {};
@@ -366,7 +401,7 @@ class UpdatedKes extends Kes {
     this.cleanStepFunctionDefinition();
 
     return this.crypto(this.bucket, this.stack)
-      .then(() => super.opsStack())
+      //.then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
         const outputs = r.Stacks[0].Outputs;
