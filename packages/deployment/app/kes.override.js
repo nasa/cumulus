@@ -166,7 +166,6 @@ class UpdatedLambda extends Lambda {
     }
 
     console.log(`${msg} for ${lambda.name}`);
-    console.log(`lambda.local: ${lambda.local}`);
 
     return utils.zip(lambda.local, fileList).then(() => lambda);
   }
