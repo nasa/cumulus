@@ -9,9 +9,6 @@ const forge = require('node-forge');
 const utils = require('kes').utils;
 const request = require('request');
 
-// Used by both UpdatedLambda and UpdatedKes classes
-const messageAdapterFilename = 'cumulus-message-adapter.zip';
-
 /**
  * Generates public/private key pairs
  * @function generateKeyPair
@@ -143,6 +140,10 @@ function generateWorkflowsList(config) {
 }
 
 class UpdatedLambda extends Lambda {
+  constructor(config) {
+    super(config);
+    this.config = config;
+  }
   /**
    * Copy source code of a given lambda function, zips it, calculate
    * the hash of the source code and updates the lambda object with
@@ -160,7 +161,7 @@ class UpdatedLambda extends Lambda {
     const fileList = [lambda.source];
 
     if (lambda.useSled) {
-      fileList.push(messageAdapterFilename);
+      fileList.push(this.config.message_adapter_filename);
       msg += ' and injecting sled';
     }
 
@@ -412,6 +413,7 @@ class UpdatedKes extends Kes {
   fetchMessageAdapter() {
     const messageAdapterVersion = this.config.message_adapter_version;
     const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
+    const messageAdapterFilename = this.config.message_adapter_filename;
 
     if (!messageAdapterVersion) {
       return this.fetchLatestMessageAdapterRelease()
