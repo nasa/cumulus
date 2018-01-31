@@ -35,7 +35,10 @@ module.exports = class RunGdalTask extends Task {
     const downloads = files.map((s3file, i) =>
       aws.downloadS3File(s3file, path.join('/tmp', config.input_filenames[i]))
     );
-    await Promise.all(downloads);
+
+    await Promise.all(
+      downloads.concat(
+        this.promiseSpawn('mkdir', ['-p', 'in', 'out', 'work', 'logs'])));
 
     for (const command of config.commands) {
       await this.runGdalCommand(command.gdal_command, command.args);
@@ -73,7 +76,7 @@ module.exports = class RunGdalTask extends Task {
    */
   runGdalCommand(command, args) {
     const program = path.resolve(process.cwd(), 'bin', command);
-    if (!command.match(/^[a-z0-9\-_]+$/g) || !fs.existsSync(program)) {
+    if (!command.match(/^[a-z0-9\-_\.]+$/g) || !fs.existsSync(program)) {
       if (!fs.existsSync(program)) {
         throw new Error(`No such program: ${program} (dir: ${__dirname}, cwd: ${process.cwd()})`);
       }
@@ -90,9 +93,17 @@ module.exports = class RunGdalTask extends Task {
    */
   promiseSpawn(program, args) {
     log.info(`Spawning: ${program} "${args.join('", "')}"`);
-    const process = spawn(program, args || [], { stdio: 'inherit', cwd: '/tmp' });
+    const proc = spawn(program, args || [], {
+      stdio: 'inherit',
+      cwd: '/tmp',
+      env: {
+        PYTHONPATH: path.resolve(process.cwd(), 'lib64/python2.7/site-packages/'),
+        LD_LIBRARY_PATH: path.resolve(process.cwd(), 'lib'),
+        PATH: [process.env.PATH, path.resolve(process.cwd(), 'bin')].join(':')
+      }
+    });
     return new Promise((resolve, reject) => {
-      process.on('close', (code) => {
+      proc.on('close', (code) => {
         if (code === 0) {
           resolve(0);
         }
