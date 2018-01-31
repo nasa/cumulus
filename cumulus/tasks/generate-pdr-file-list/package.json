@@ -1,6 +1,7 @@
 {
   "name": "@cumulus/generate-pdr-file-list",
-  "version": "1.0.0-beta.11",
+  "private": true,
+  "version": "1.0.0-beta.10",
   "description": "SIPS handler PDR processing task",
   "main": "index.js",
   "keywords": [
@@ -34,9 +35,9 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.11",
-    "@cumulus/ingest": "^1.0.0-beta.11",
-    "@cumulus/pvl": "^1.0.0-beta.11",
+    "@cumulus/common": "^1.0.0-beta.10",
+    "@cumulus/ingest": "^1.0.0-beta.10",
+    "@cumulus/pvl": "^1.0.0-beta.10",
     "ftp": "^0.3.10",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1",
