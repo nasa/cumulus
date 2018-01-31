@@ -1,6 +1,10 @@
 {
   "lerna": "2.7.1",
+<<<<<<< HEAD
   "version": "1.0.0-beta.10",
+=======
+  "version": "1.0.0-1.0.0-beta.9.1",
+>>>>>>> df2858b0938d740ce0c4126fa8b5cd4d00a066d9
   "packages": [
     "packages/*",
     "cumulus/tasks/*",
