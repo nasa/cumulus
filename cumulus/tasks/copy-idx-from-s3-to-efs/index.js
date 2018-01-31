@@ -37,12 +37,13 @@ async function copyIdx(dirname, payload) {
         log.info(`Decompressing ${idxFilename}...`);
 
         // Decompress the file
-        const ls = spawn('tar', ['-xvzf', idxFilename, '--strip=1', '-C', dirname]);
+        const ls = spawn('tar', ['-xzf', idxFilename, '--strip=1', '-C', dirname]);
 
         ls.on('close', (code) => {
           if (code !== 0) {
-            log.error(`tar exited with code ${code} untared to ${dirname}`);
-          } else {
+            throw new Error(`tar exited with code ${code} untared to ${dirname}`);
+          }
+          else {
             fs.renameSync(path.join(dirname, 'out.idx'), outFilename);
             log.info(`Created idx file: ${outFilename}`);
 
@@ -51,7 +52,7 @@ async function copyIdx(dirname, payload) {
           }
         });
       }
-    }  
+    }
   }
   return true;
 }
@@ -80,10 +81,11 @@ module.exports = class CopyIdxFileToS3Task extends Task {
 
     if (!payload || payload.length === 0) {
       log.info('No files to copy');
-    } else {
+    }
+    else {
       copyIdx(dirname, payload);
     }
-    return payload; 
+    return payload;
   }
 
   /**
@@ -98,19 +100,12 @@ module.exports = class CopyIdxFileToS3Task extends Task {
 };
 
 // Testing in Visual Studio Code
-//global.__isDebug = true;
-const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
-//const dirname = './tempdata';
-//copyIdx(dirname, payload.payload);
-
 global.__isDebug = true;
+
+const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
 const local = require('@cumulus/common/local-helpers');
 const localTaskName = 'CopyIdxFromS3';
 const configFile = path.join(__dirname, './test/ast_l1t.yml');
 
-function PayloadFn(p) {
-  return payload;
-};
-
 local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
-  'AST_L1T_DAY', localTaskName, PayloadFn, configFile));
+  'AST_L1T_DAY', localTaskName, () => payload, configFile));
