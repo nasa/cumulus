@@ -1,42 +1,22 @@
 'use strict';
 
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const ProviderNotFound = require('@cumulus/common/errors').ProviderNotFound;
 const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
 const logger = require('@cumulus/ingest/log');
-const local = require('@cumulus/common/local-helpers');
 
 const log = logger.child({ file: 'discover-pdrs/index.js' });
 
 /**
-* Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
-*
-* @callback lambdaCallback
-* @param {object} error - error object
-* @param {object} output - output object matching schemas/output.json
-*/
-
-/**
-* Discover granules
-* See schemas/input.json for detailed input schema
-*
-* @param {Object} event - Lambda event object
-* @param {Object} event.config - configuration object for the task
-* @param {string} event.config.stack - the name of the deployment stack
-* @param {Object} event.config.provider - provider information
-* @param {string} event.config.pdrFolder - folder for the PDRs
-* @param {Object} event.config.buckets - S3 buckets
-* @param {Object} event.config.collection - information about data collection related to task
-* @param {boolean} [event.config.useQueue=true] - boolean to determine if task will queue granules.
-* Default is `true`
-* @param {Object} context - Lambda context object.
-* See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
-* @param  {lambdaCallback} callback - Callback function provided by Lambda.
-* @returns {undefined} - see schemas/output.json for detailed output schema
-* that is passed to the next task in the workflow
-**/
-function handler(event, context, callback) {
+ * Discover PDRs
+ *
+ * @param {Object} event - a simplified Cumulus event with input and config properties
+ * @param {Object} _context - the AWS Lambda context, not used
+ * @returns {Array.<Object>} - an array of objects describing PDRs
+ */
+function discoverPdrs(event, _context) {
   try {
     log.debug(event);
     const ev = Object.assign({}, event);
@@ -46,76 +26,69 @@ function handler(event, context, callback) {
 
     const output = {};
 
-    log.child({ provider: get(provider, 'id') });
+    if (!provider) throw new ProviderNotFound('Provider info not provided');
 
-    if (!provider) {
-      const err = new ProviderNotFound('Provider info not provided');
-      log.error(err);
-      return callback(err);
-    }
+    log.child({ provider: get(provider, 'id') });
 
     const Discover = pdr.selector('discover', provider.protocol, queue);
     const discover = new Discover(ev);
 
     log.debug('Starting PDR discovery');
 
-    return discover.discover().then((pdrs) => {
-      if (queue) {
-        output.pdrs_found = pdrs.length;
-      }
-      else {
-        output.pdrs = pdrs;
-      }
+    return discover.discover()
+      .then((pdrs) => {
+        if (queue) output.pdrs_found = pdrs.length;
+        else output.pdrs = pdrs;
 
-      if (discover.connected) {
-        discover.end();
-        log.debug(`Ending ${provider.protocol} connection`);
-      }
+        if (discover.connected) {
+          log.debug(`Ending ${provider.protocol} connection`);
+          discover.end();
+        }
 
-      return callback(null, output);
-    }).catch((e) => {
-      log.error(e);
+        return output;
+      })
+      .catch((e) => {
+        log.error(e);
 
-      if (discover.connected) {
-        discover.end();
-        log.debug(`Ending ${provider.protocol} connection`);
-      }
+        if (discover.connected) {
+          log.debug(`Ending ${provider.protocol} connection`);
+          discover.end();
+        }
 
-      if (e.toString().includes('ECONNREFUSED')) {
-        const err = new errors.RemoteResourceError('Connection Refused');
-        log.error(err);
-        return callback(err);
-      }
-      else if (e.message.includes('Please login with USER and PASS')) {
-        const err = new errors.FTPError('Login incorrect');
-        log.error(err);
-        return callback(err);
-      }
-      else if (e.details && e.details.status === 'timeout') {
-        const err = new errors.ConnectionTimeout('connection Timed out');
-        log.error(err);
-        return callback(err);
-      }
-      else if (e.details && e.details.status === 'notfound') {
-        const err = new errors.HostNotFound(`${e.details.url} not found`);
-        log.error(err);
-        return callback(err);
-      }
-      return callback(e);
-    });
+        let errorToThrow = e;
+
+        if (e.toString().includes('ECONNREFUSED')) {
+          errorToThrow = new errors.RemoteResourceError('Connection Refused');
+        }
+        else if (e.message.includes('Please login with USER and PASS')) {
+          errorToThrow = new errors.FTPError('Login incorrect');
+        }
+        else if (e.details && e.details.status === 'timeout') {
+          errorToThrow = new errors.ConnectionTimeout('connection Timed out');
+        }
+        else if (e.details && e.details.status === 'notfound') {
+          errorToThrow = new errors.HostNotFound(`${e.details.url} not found`);
+        }
+
+        throw errorToThrow;
+      });
   }
-  catch (e) {
-    log.error(e);
-    throw e;
+  catch (err) {
+    log.error(err);
+    throw err;
   }
 }
+exports.discoverPdrs = discoverPdrs; // exported to support testing
 
-module.exports.handler = handler;
-
-local.justLocalRun(() => {
-  const filepath = process.argv[3] ? process.argv[3] : './tests/fixtures/input.json';
-  const payload = require(filepath); // eslint-disable-line global-require
-
-  payload.config.useQueue = false;
-  handler(payload, {}, (e) => log.info(e));
-});
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(discoverPdrs, event, context, callback);
+}
+exports.handler = handler;
