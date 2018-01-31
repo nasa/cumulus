@@ -1,6 +1,7 @@
 {
   "name": "@cumulus/filter-payload",
-  "version": "1.0.0-beta.11",
+  "private": true,
+  "version": "1.0.0-beta.10",
   "description": "Task to filter the payload from one task to the next",
   "main": "index.js",
   "keywords": [
@@ -34,7 +35,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.11"
+    "@cumulus/common": "^1.0.0-beta.10"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
