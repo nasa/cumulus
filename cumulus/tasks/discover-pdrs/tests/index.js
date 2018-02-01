@@ -9,7 +9,6 @@ const {
   RemoteResourceError
 } = require('@cumulus/common/errors');
 const { S3 } = require('@cumulus/ingest/aws');
-const log = require('@cumulus/common/log');
 
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');
@@ -17,14 +16,10 @@ const input = require('./fixtures/input.json');
 const aws = require('@cumulus/common/aws');
 const testUtils = require('@cumulus/common/test-utils');
 
-test('error when provider info is missing', (t) => {
-  const event = {};
-  const context = {};
-
-  t.throws(() => {
-    discoverPdrs(event, context);
-  }, ProviderNotFound);
-});
+test('error when provider info is missing', (t) =>
+  discoverPdrs({})
+    .then(t.fail)
+    .catch((e) => t.true(e instanceof ProviderNotFound)));
 
 test('test pdr discovery with FTP assuming all PDRs are new', (t) => {
   const testInput = Object.assign({}, input);
