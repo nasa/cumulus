@@ -160,7 +160,7 @@ class UpdatedLambda extends Lambda {
     }
     const fileList = [lambda.source];
 
-    if (lambda.useSled) {
+    if (lambda.useMessageAdapter) {
       fileList.push(this.config.message_adapter_filename);
       msg += ' and injecting sled';
     }
