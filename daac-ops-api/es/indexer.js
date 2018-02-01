@@ -252,7 +252,6 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
 
       const done = granules.map((g) => {
         if (g.granuleId) {
-
           const doc = {
             granuleId: g.granuleId,
             pdrName: get(payload, 'payload.pdr.name'),
