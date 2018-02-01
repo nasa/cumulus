@@ -18,6 +18,7 @@ const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
 const Rule = require('../models/rules');
+const uniqBy = require('lodash.uniqby');
 
 const log = logger.child({ file: 'daac-ops-api/es/indexer.js' });
 
@@ -251,6 +252,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
 
       const done = granules.map((g) => {
         if (g.granuleId) {
+
           const doc = {
             granuleId: g.granuleId,
             pdrName: get(payload, 'payload.pdr.name'),
@@ -259,7 +261,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
             provider: get(payload, 'provider.id'),
             execution,
             cmrLink: get(g, 'cmr.link'),
-            files: g.files,
+            files: uniqBy(g.files, 'filename'),
             error: exception,
             createdAt: get(payload, 'ingest_meta.createdAt'),
             timestamp: Date.now()
@@ -407,6 +409,6 @@ module.exports = {
 };
 
 justLocalRun(() => {
-  //const a = {};
-  //handler(a, {}, (e, r) => log.info(e, r));
+  // const a = {};
+  // handler(a, {}, (e, r) => log.info(e, r));
 });
