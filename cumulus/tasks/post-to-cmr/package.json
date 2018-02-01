@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/post-to-cmr",
-  "version": "1.0.0-beta.11",
+  "version": "1.0.0-beta.12",
   "description": "Post a given granule to CMR",
   "main": "index.js",
   "directories": {
@@ -38,10 +38,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.0.0-beta.11",
-    "@cumulus/common": "^1.0.0-beta.11",
-    "@cumulus/ingest": "^1.0.0-beta.11",
-    "@cumulus/test-data": "^1.0.0-beta.11",
+    "@cumulus/cmrjs": "^1.0.0-beta.12",
+    "@cumulus/common": "^1.0.0-beta.12",
+    "@cumulus/ingest": "^1.0.0-beta.12",
+    "@cumulus/test-data": "^1.0.0-beta.12",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
