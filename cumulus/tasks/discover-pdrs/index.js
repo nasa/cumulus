@@ -31,7 +31,7 @@ function discoverPdrs(event) {
     if (!provider) {
       const err = new ProviderNotFound('Provider info not provided');
       log.error(err);
-      throw err;
+      return Promise.reject(err);
     }
 
     const Discover = pdr.selector('discover', provider.protocol, queue);
