@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/sfn-scheduler",
   "private": true,
-  "version": "1.0.0-beta.12",
+  "version": "1.0.0-beta.13",
   "description": "Runs ingest timers as configured in /config/products.json",
   "main": "index.js",
   "keywords": [
@@ -17,7 +17,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.12",
+    "@cumulus/common": "^1.0.0-beta.13",
     "lodash": "^4.17.4",
     "uuid": "^3.0.1"
   }
