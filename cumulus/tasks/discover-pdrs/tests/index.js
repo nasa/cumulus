@@ -53,7 +53,7 @@ test('test pdr discovery with FTP assuming all PDRs are new', (t) => {
     .catch((err) => {
       S3.fileExists.restore();
       if (err instanceof RemoteResourceError) {
-        log.info('ignoring this test. Test server seems to be down');
+        t.pass('ignoring this test. Test server seems to be down');
       }
       else throw err;
     });
@@ -76,7 +76,7 @@ test('test pdr discovery with FTP invalid user/pass', (t) => {
     .then(t.fail)
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
-        log.info('ignoring this test. Test server seems to be down');
+        t.pass('ignoring this test. Test server seems to be down');
       }
       else {
         t.true(e instanceof FTPError);
@@ -144,7 +144,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', (t) => {
     })
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
-        log.info('ignoring this test. Test server seems to be down');
+        t.pass('ignoring this test. Test server seems to be down');
         return aws.recursivelyDeleteS3Bucket(internalBucketName);
       }
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
@@ -179,7 +179,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
     })
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
-        log.info('ignoring this test. Test server seems to be down');
+        t.pass('ignoring this test. Test server seems to be down');
         return aws.recursivelyDeleteS3Bucket(internalBucketName);
       }
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
@@ -220,7 +220,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
     })
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
-        log.info('ignoring this test. Test server seems to be down');
+        t.pass('ignoring this test. Test server seems to be down');
         return aws.recursivelyDeleteS3Bucket(internalBucketName);
       }
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
