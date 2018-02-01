@@ -13,10 +13,9 @@ const log = logger.child({ file: 'discover-pdrs/index.js' });
  * Discover PDRs
  *
  * @param {Object} event - a simplified Cumulus event with input and config properties
- * @param {Object} _context - the AWS Lambda context, not used
- * @returns {Array.<Object>} - an array of objects describing PDRs
+ * @returns {Promise.<Array>} - resolves to an array describing PDRs
  */
-function discoverPdrs(event, _context) {
+function discoverPdrs(event) {
   try {
     log.debug(event);
     const ev = Object.assign({}, event);
@@ -26,56 +25,59 @@ function discoverPdrs(event, _context) {
 
     const output = {};
 
-    if (!provider) throw new ProviderNotFound('Provider info not provided');
-
     log.child({ provider: get(provider, 'id') });
+
+    if (!provider) {
+      throw new ProviderNotFound('Provider info not provided');
+    }
 
     const Discover = pdr.selector('discover', provider.protocol, queue);
     const discover = new Discover(ev);
 
     log.debug('Starting PDR discovery');
 
-    return discover.discover()
-      .then((pdrs) => {
-        if (queue) output.pdrs_found = pdrs.length;
-        else output.pdrs = pdrs;
+    return discover.discover().then((pdrs) => {
+      if (queue) {
+        output.pdrs_found = pdrs.length;
+      }
+      else {
+        output.pdrs = pdrs;
+      }
 
-        if (discover.connected) {
-          log.debug(`Ending ${provider.protocol} connection`);
-          discover.end();
-        }
+      if (discover.connected) {
+        discover.end();
+        log.debug(`Ending ${provider.protocol} connection`);
+      }
 
-        return output;
-      })
-      .catch((e) => {
-        log.error(e);
+      return output;
+    })
+    .catch((e) => {
+      log.error(e);
 
-        if (discover.connected) {
-          log.debug(`Ending ${provider.protocol} connection`);
-          discover.end();
-        }
+      if (discover.connected) {
+        discover.end();
+        log.debug(`Ending ${provider.protocol} connection`);
+      }
 
-        let errorToThrow = e;
+      if (e.toString().includes('ECONNREFUSED')) {
+        throw new errors.RemoteResourceError('Connection Refused');
+      }
+      else if (e.message.includes('Please login with USER and PASS')) {
+        throw new errors.FTPError('Login incorrect');
+      }
+      else if (e.details && e.details.status === 'timeout') {
+        throw new errors.ConnectionTimeout('connection Timed out');
+      }
+      else if (e.details && e.details.status === 'notfound') {
+        throw new errors.HostNotFound(`${e.details.url} not found`);
+      }
 
-        if (e.toString().includes('ECONNREFUSED')) {
-          errorToThrow = new errors.RemoteResourceError('Connection Refused');
-        }
-        else if (e.message.includes('Please login with USER and PASS')) {
-          errorToThrow = new errors.FTPError('Login incorrect');
-        }
-        else if (e.details && e.details.status === 'timeout') {
-          errorToThrow = new errors.ConnectionTimeout('connection Timed out');
-        }
-        else if (e.details && e.details.status === 'notfound') {
-          errorToThrow = new errors.HostNotFound(`${e.details.url} not found`);
-        }
-
-        throw errorToThrow;
-      });
+      throw e;
+    });
   }
-  catch (err) {
-    log.error(err);
-    throw err;
+  catch (e) {
+    log.error(e);
+    throw e;
   }
 }
 exports.discoverPdrs = discoverPdrs; // exported to support testing
