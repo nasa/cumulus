@@ -6,6 +6,7 @@ const ProviderNotFound = require('@cumulus/common/errors').ProviderNotFound;
 const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
 const logger = require('@cumulus/ingest/log');
+const local = require('@cumulus/common/local-helpers');
 
 const log = logger.child({ file: 'discover-pdrs/index.js' });
 
@@ -28,7 +29,9 @@ function discoverPdrs(event) {
     log.child({ provider: get(provider, 'id') });
 
     if (!provider) {
-      throw new ProviderNotFound('Provider info not provided');
+      const err = new ProviderNotFound('Provider info not provided');
+      log.error(err);
+      throw err;
     }
 
     const Discover = pdr.selector('discover', provider.protocol, queue);
@@ -60,16 +63,24 @@ function discoverPdrs(event) {
       }
 
       if (e.toString().includes('ECONNREFUSED')) {
-        throw new errors.RemoteResourceError('Connection Refused');
+        const err = new errors.RemoteResourceError('Connection Refused');
+        log.error(err);
+        throw err;
       }
       else if (e.message.includes('Please login with USER and PASS')) {
-        throw new errors.FTPError('Login incorrect');
+        const err = new errors.FTPError('Login incorrect');
+        log.error(err);
+        throw err;
       }
       else if (e.details && e.details.status === 'timeout') {
-        throw new errors.ConnectionTimeout('connection Timed out');
+        const err = new errors.ConnectionTimeout('connection Timed out');
+        log.error(err);
+        throw err;
       }
       else if (e.details && e.details.status === 'notfound') {
-        throw new errors.HostNotFound(`${e.details.url} not found`);
+        const err = new errors.HostNotFound(`${e.details.url} not found`);
+        log.error(err);
+        throw err;
       }
 
       throw e;
@@ -94,3 +105,11 @@ function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(discoverPdrs, event, context, callback);
 }
 exports.handler = handler;
+
+local.justLocalRun(() => {
+  const filepath = process.argv[3] ? process.argv[3] : './tests/fixtures/input.json';
+  const payload = require(filepath); // eslint-disable-line global-require
+
+  payload.config.useQueue = false;
+  cumulusMessageAdapter.runCumulusTask(discoverPdrs, payload, {}, (e) => log.info(e));
+});
