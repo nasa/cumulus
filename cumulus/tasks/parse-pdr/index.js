@@ -1,17 +1,10 @@
 'use strict';
 
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
 const log = require('@cumulus/ingest/log');
-
-/**
-* Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
-*
-* @callback lambdaCallback
-* @param {object} error - error object
-* @param {object} output - output object matching schemas/output.json
-*/
 
 /**
 * Parse a PDR
@@ -24,13 +17,10 @@ const log = require('@cumulus/ingest/log');
 * @param {Object} event.config.provider - provider information
 * @param {Object} event.config.buckets - S3 buckets
 * @param {Object} event.config.collection - information about data collection related to task
-* @param {Object} context - Lambda context object.
-* See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
-* @param  {lambdaCallback} callback - Callback function provided by Lambda.
-* @returns {undefined} see schemas/output.json for detailed output schema
+* @returns {Promise.<Object>} - see schemas/output.json for detailed output schema
 * that is passed to the next task in the workflow
 **/
-module.exports.handler = function handler(event, context, callback) {
+function parsePdr(event) {
   const config = get(event, 'config');
   const provider = get(config, 'provider', null);
   const queue = get(config, 'useQueue', true);
@@ -38,7 +28,7 @@ module.exports.handler = function handler(event, context, callback) {
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
     log.error(err);
-    return callback(err);
+    return Promise.reject(err);
   }
 
   const Parse = pdr.selector('parse', provider.protocol, queue);
@@ -51,21 +41,35 @@ module.exports.handler = function handler(event, context, callback) {
       }
 
       const output = Object.assign({}, event.input, payload);
-      callback(null, output);
+      return output;
     })
     .catch((e) => {
       if (e.toString().includes('ECONNREFUSED')) {
         const err = new errors.RemoteResourceError('Connection Refused');
         log.error(err);
-        return callback(err);
+        throw err;
       }
       else if (e.details && e.details.status === 'timeout') {
         const err = new errors.ConnectionTimeout('connection Timed out');
         log.error(err);
-        return callback(err);
+        throw err;
       }
 
       log.error(e);
-      return callback(e);
+      throw e;
     });
-};
+}
+exports.parsePdr = parsePdr; // exported to support testing
+
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(parsePdr, event, context, callback);
+}
+exports.handler = handler;
