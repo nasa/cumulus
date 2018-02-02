@@ -10,7 +10,7 @@ If you have any questions or ideas, or notice any problems or bugs, first [searc
 
 ## Pull Requests
 
-If you want to submit your own contributions, follow these steps;
+If you want to submit your own contributions, follow these steps:
 
 * Fork the Cumulus repo
 * Create a new branch from the branch you'd like to contribute to
@@ -22,7 +22,7 @@ If you want to submit your own contributions, follow these steps;
 
 ## Guidelines
 
-We ask that you follow these guidelines with your contributions;
+We ask that you follow these guidelines with your contributions:
 
 ### Tests
 
@@ -41,4 +41,4 @@ Improve contributing guidelines. Fixes #10
 Improve contributing docs and consolidate them in the standard location https://help.github.com/articles/setting-guidelines-for-repository-contributors/
 ```
 
-### For more information on Cumulus governance, see the [Cumulus Code Contribution Guidelines](https://docs.google.com/document/d/14J_DS6nyQ32BpeVjdR-YKfzHAzFB299tKghPGshXUTU/edit).
+### For more information on Cumulus governance, see the [Cumulus Code Contribution Guidelines](https://docs.google.com/document/d/14J_DS6nyQ32BpeVjdR-YKfzHAzFB299tKghPGshXUTU/edit) and [the Cumulus Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus).
