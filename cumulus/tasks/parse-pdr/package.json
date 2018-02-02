@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@cumulus/common": "^1.0.0-beta.12",
+    "@cumulus/cumulus-message-adapter-js": "0.0.1-beta.2",
     "@cumulus/ingest": "^1.0.0-beta.12",
     "@cumulus/test-data": "^1.0.0-beta.12",
     "babel-core": "^6.25.0",
