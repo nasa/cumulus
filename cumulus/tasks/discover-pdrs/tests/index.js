@@ -9,58 +9,52 @@ const {
   RemoteResourceError
 } = require('@cumulus/common/errors');
 const { S3 } = require('@cumulus/ingest/aws');
-const log = require('@cumulus/common/log');
 
-const { handler } = require('../index');
+const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');
 
 const aws = require('@cumulus/common/aws');
 const testUtils = require('@cumulus/common/test-utils');
 
-test.cb('error when provider info is missing', (t) => {
-  const newPayload = Object.assign({}, input);
-  delete newPayload.config.provider;
-  handler(newPayload, {}, (e) => {
-    t.true(e instanceof ProviderNotFound);
-    t.end();
-  });
-});
+test('error when provider info is missing', (t) =>
+  discoverPdrs({})
+    .then(t.fail)
+    .catch((e) => t.true(e instanceof ProviderNotFound)));
 
-test.cb('test pdr discovery with FTP assuming all PDRs are new', (t) => {
-  const provider = {
+test('test pdr discovery with FTP assuming all PDRs are new', (t) => {
+  const testInput = Object.assign({}, input);
+  testInput.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
     host: 'localhost',
     username: 'testuser',
     password: 'testpass'
   };
+  testInput.config.collection.provider_path = '/pdrs';
+  testInput.config.useQueue = false;
 
   const ps = {
     'MYD13A1_5_grans.PDR': false,
     'PDN.ID1611071307.PDR': false,
     'PDN.ID1611081200.PDR': false
   };
-
   sinon.stub(S3, 'fileExists').callsFake((b, k) => ps[path.basename(k)]);
 
-  const newPayload = Object.assign({}, input);
-  newPayload.config.provider = provider;
-  newPayload.config.collection.provider_path = '/pdrs';
-  newPayload.config.useQueue = false;
-  newPayload.input = {};
-
-  handler(newPayload, {}, (e, output) => {
-    S3.fileExists.restore();
-    if (e instanceof RemoteResourceError) {
-      log.info('ignoring this test. Test server seems to be down');
-      return t.end();
-    }
-    t.is(output.pdrs.length, 4);
-    return t.end(e);
-  });
+  return discoverPdrs(testInput, {})
+    .then((result) => {
+      S3.fileExists.restore();
+      t.is(result.pdrs.length, 4);
+    })
+    .catch((err) => {
+      S3.fileExists.restore();
+      if (err instanceof RemoteResourceError) {
+        t.pass('ignoring this test. Test server seems to be down');
+      }
+      else throw err;
+    });
 });
 
-test.cb('test pdr discovery with FTP invalid user/pass', (t) => {
+test('test pdr discovery with FTP invalid user/pass', (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -72,20 +66,21 @@ test.cb('test pdr discovery with FTP invalid user/pass', (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
   newPayload.input = {};
-  handler(newPayload, {}, (e) => {
-    if (e instanceof RemoteResourceError) {
-      log.info('ignoring this test. Test server seems to be down');
-      t.end();
-    }
-    else {
-      t.true(e instanceof FTPError);
-      t.true(e.message.includes('Login incorrect'));
-      t.end();
-    }
-  });
+
+  return discoverPdrs(newPayload, {})
+    .then(t.fail)
+    .catch((e) => {
+      if (e instanceof RemoteResourceError) {
+        t.pass('ignoring this test. Test server seems to be down');
+      }
+      else {
+        t.true(e instanceof FTPError);
+        t.true(e.message.includes('Login incorrect'));
+      }
+    });
 });
 
-test.cb('test pdr discovery with FTP connection refused', (t) => {
+test('test pdr discovery with FTP connection refused', (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -98,13 +93,15 @@ test.cb('test pdr discovery with FTP connection refused', (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
   newPayload.input = {};
-  handler(newPayload, {}, (e) => {
-    t.true(e instanceof RemoteResourceError);
-    t.end();
-  });
+
+  return discoverPdrs(newPayload, {})
+    .then(t.fail)
+    .catch((e) => {
+      t.true(e instanceof RemoteResourceError);
+    });
 });
 
-test.cb('test pdr discovery with FTP assuming some PDRs are new', (t) => {
+test('test pdr discovery with FTP assuming some PDRs are new', (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -121,7 +118,7 @@ test.cb('test pdr discovery with FTP assuming some PDRs are new', (t) => {
 
   const internalBucketName = testUtils.randomString();
   newPayload.config.buckets.internal = internalBucketName;
-  aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+  return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => {
       const Key = [
         newPayload.config.stack,
@@ -135,22 +132,21 @@ test.cb('test pdr discovery with FTP assuming some PDRs are new', (t) => {
         Body: 'PDN.ID1611071307.PDR'
       }).promise();
     })
-    .then(() => handler(newPayload, {}, (e, output) => {
-      if (e) {
-        if (e instanceof RemoteResourceError) {
-          log.info('ignoring this test. Test server seems to be down');
-          return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
-        }
-        return aws.recursivelyDeleteS3Bucket(internalBucketName)
-          .then(() => t.end(e));
-      }
-
+    .then(() => discoverPdrs(newPayload, {}))
+    .then((output) => {
       t.is(output.pdrs.length, 3);
-      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
-    }));
+      return aws.recursivelyDeleteS3Bucket(internalBucketName);
+    })
+    .catch((e) => {
+      if (e instanceof RemoteResourceError) {
+        t.pass('ignoring this test. Test server seems to be down');
+        return aws.recursivelyDeleteS3Bucket(internalBucketName);
+      }
+      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
+    });
 });
 
-test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
+test('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'http',
@@ -165,28 +161,27 @@ test.cb('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
 
   const internalBucketName = testUtils.randomString();
   newPayload.config.buckets.internal = internalBucketName;
-  aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+  return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => aws.s3().putObject({
       Bucket: internalBucketName,
       Key: 'lpdaac-cumulus-phaseIII/pdrs/pdrs/PDN.ID1611071307.PDR',
       Body: 'PDN.ID1611071307.PDR'
     }).promise())
-    .then(() => handler(newPayload, {}, (e, output) => {
-      if (e) {
-        if (e instanceof RemoteResourceError) {
-          log.info('ignoring this test. Test server seems to be down');
-          return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
-        }
-        return aws.recursivelyDeleteS3Bucket(internalBucketName)
-          .then(() => t.end(e));
-      }
-
+    .then(() => discoverPdrs(newPayload, {}))
+    .then((output) => {
       t.is(output.pdrs.length, 2);
-      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
-    }));
+      return aws.recursivelyDeleteS3Bucket(internalBucketName);
+    })
+    .catch((e) => {
+      if (e instanceof RemoteResourceError) {
+        t.pass('ignoring this test. Test server seems to be down');
+        return aws.recursivelyDeleteS3Bucket(internalBucketName);
+      }
+      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
+    });
 });
 
-test.cb('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
+test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -204,26 +199,25 @@ test.cb('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
 
   const internalBucketName = testUtils.randomString();
   newPayload.config.buckets.internal = internalBucketName;
-  aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+  return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => aws.s3().putObject({
       Bucket: internalBucketName,
       Key: 'lpdaac-cumulus-phaseIII/pdrs/PDN.ID1611071307.PDR',
       Body: 'PDN.ID1611071307.PDR'
     }).promise())
-    .then(() => handler(newPayload, {}, (e, output) => {
-      if (e) {
-        if (e instanceof RemoteResourceError) {
-          log.info('ignoring this test. Test server seems to be down');
-          return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
-        }
-        return aws.recursivelyDeleteS3Bucket(internalBucketName)
-          .then(() => t.end(e));
-      }
-
+    .then(() => discoverPdrs(newPayload, {}))
+    .then((output) => {
       t.is(output.pdrs.length, 3);
       t.is(output.pdrs[0].name, 'MOD09GQ.PDR');
       t.is(output.pdrs[1].name, 'MYD13A1_5_grans.PDR');
       t.is(output.pdrs[2].name, 'PDN.ID1611081200.PDR');
-      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.end);
-    }));
+      return aws.recursivelyDeleteS3Bucket(internalBucketName);
+    })
+    .catch((e) => {
+      if (e instanceof RemoteResourceError) {
+        t.pass('ignoring this test. Test server seems to be down');
+        return aws.recursivelyDeleteS3Bucket(internalBucketName);
+      }
+      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
+    });
 });
