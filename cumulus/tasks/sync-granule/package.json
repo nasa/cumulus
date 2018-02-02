@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.0.0-beta.12",
+  "version": "1.0.0-beta.13",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -41,9 +41,9 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.12",
-    "@cumulus/ingest": "^1.0.0-beta.12",
-    "@cumulus/test-data": "^1.0.0-beta.12",
+    "@cumulus/common": "^1.0.0-beta.13",
+    "@cumulus/ingest": "^1.0.0-beta.13",
+    "@cumulus/test-data": "^1.0.0-beta.13",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
