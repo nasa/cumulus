@@ -15,7 +15,7 @@ const mkdirp = require('mkdirp');
  * @param {Hash} payload - Payload from previous task
  * @returns {boolean} true
  */
-async function copyIdx(dirname, payload) {
+const copyIdx = async (dirname, payload) => {
   // Make sure the target directory exists
   if (!fs.existsSync(dirname)) {
     mkdirp.sync(dirname);
@@ -100,7 +100,7 @@ module.exports = class CopyIdxFileToS3Task extends Task {
 };
 
 // Testing in Visual Studio Code
-global.__isDebug = true;
+// global.__isDebug = true;
 
 const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
 const local = require('@cumulus/common/local-helpers');
