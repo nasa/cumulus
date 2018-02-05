@@ -388,7 +388,7 @@ class UpdatedKes extends Kes {
    */
   fetchLatestMessageAdapterRelease() {
     const options = {
-      url: `https://api.github.com/repos/${messageAdapterGitPath}/releases/latest`,
+      url: `https://api.github.com/repos/${this.messageAdapterGitPath}/releases/latest`,
       headers: {
         'Accept': 'application/json',
         'User-Agent': '@cumulus/deployment' // Required by Github API
