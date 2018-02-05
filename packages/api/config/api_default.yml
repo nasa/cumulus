@@ -1,4 +1,4 @@
-ApiCollectionsV1:
+ApiCollectionsDefault:
   handler: index.collections
   timeout: 20
   memory: 256
@@ -16,29 +16,29 @@ ApiCollectionsV1:
       function: Ref
       value: ElasticSearchDomain
   apiGateway:
-    # v1 paths
-    - path: v1/collections
+    # Default paths
+    - path: collections
       method: get
       cors: true
       api: backend
-    - path: v1/collections
+    - path: collections
       method: post
       cors: true
       api: backend
-    - path: v1/collections/{collectionName}/{version}
+    - path: collections/{collectionName}/{version}
       method: get
       cors: true
       api: backend
-    - path: v1/collections/{collectionName}/{version}
+    - path: collections/{collectionName}/{version}
       method: put
       cors: true
       api: backend
-    - path: v1/collections/{collectionName}/{version}
+    - path: collections/{collectionName}/{version}
       method: delete
       cors: true
       api: backend
 
-ApiGranulesV1:
+ApiGranulesDefault:
   handler: index.granules
   timeout: 20
   memory: 256
@@ -69,25 +69,25 @@ ApiGranulesV1:
       function: Ref
       value: ElasticSearchDomain
   apiGateway:
-    # v1 paths
-    - path: v1/granules
+    # Default paths
+    - path: granules
       method: get
       cors: true
       api: backend
-    - path: v1/granules/{granuleName}
+    - path: granules/{granuleName}
       method: get
       cors: true
       api: backend
-    - path: v1/granules/{granuleName}
+    - path: granules/{granuleName}
       method: put
       cors: true
       api: backend
-    - path: v1/granules/{granuleName}
+    - path: granules/{granuleName}
       method: delete
       cors: true
       api: backend
 
-ApiExecutionsV1:
+ApiExecutionsDefault:
   handler: index.executions
   timeout: 20
   memory: 256
@@ -101,17 +101,17 @@ ApiExecutionsV1:
       function: Ref
       value: ElasticSearchDomain
   apiGateway:
-    #v1 paths
-    - path: v1/executions
+    #default paths
+    - path: executions
       method: get
       cors: true
       api: backend
-    - path: v1/executions/{arn}
+    - path: executions/{arn}
       method: get
       cors: true
       api: backend
   
-ApiExecutionStatusV1:
+ApiExecutionStatusDefault:
   handler: index.executionStatus
   timeout: 20
   memory: 256
@@ -125,13 +125,13 @@ ApiExecutionStatusV1:
       function: Ref
       value: ElasticSearchDomain
   apiGateway:
-    #v1 paths
-    - path: v1/executions/status/{arn}
+    #default paths
+    - path: executions/status/{arn}
       method: get
       cors: true
       api: backend
 
-ApiWorkflowsV1:
+ApiWorkflowsDefault:
   handler: index.workflows
   timeout: 20
   memory: 256
@@ -143,17 +143,17 @@ ApiWorkflowsV1:
       function: Ref
       value: UsersTableDynamoDB
   apiGateway:
-    #v1 paths
-    - path: v1/workflows
+    #default paths
+    - path: workflows
       method: get
       cors: true
       api: backend
-    - path: v1/workflows/{name}
+    - path: workflows/{name}
       method: get
       cors: true
       api: backend
 
-ApiRulesV1:
+ApiRulesDefault:
   handler: index.rules
   timeout: 20
   memory: 256
@@ -183,29 +183,29 @@ ApiRulesV1:
       value: ElasticSearchDomain
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
-    #v1 paths
-    - path: v1/rules
+    #default paths
+    - path: rules
       method: get
       cors: true
       api: backend
-    - path: v1/rules/{name}
+    - path: rules/{name}
       method: get
       cors: true
       api: backend
-    - path: v1/rules
+    - path: rules
       method: post
       cors: true
       api: backend
-    - path: v1/rules/{name}
+    - path: rules/{name}
       method: put
       cors: true
       api: backend
-    - path: v1/rules/{name}
+    - path: rules/{name}
       method: delete
       cors: true
       api: backend
 
-ApiProvidersV1:
+ApiProvidersDefault:
   handler: index.providers
   timeout: 20
   memory: 256
@@ -223,29 +223,29 @@ ApiProvidersV1:
       value: ElasticSearchDomain
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
-    #v1 paths
-    - path: v1/providers
+    #default paths
+    - path: providers
       method: get
       cors: true
       api: backend
-    - path: v1/providers/{id}
+    - path: providers/{id}
       method: get
       cors: true
       api: backend
-    - path: v1/providers
+    - path: providers
       method: post
       cors: true
       api: backend
-    - path: v1/providers/{id}
+    - path: providers/{id}
       method: put
       cors: true
       api: backend
-    - path: v1/providers/{id}
+    - path: providers/{id}
       method: delete
       cors: true
       api: backend
 
-ApiPdrsV1:
+ApiPdrsDefault:
   handler: index.pdrs
   timeout: 20
   memory: 256
@@ -259,21 +259,21 @@ ApiPdrsV1:
       function: Ref
       value: ElasticSearchDomain
   apiGateway:
-    #v1 paths
-    - path: v1/pdrs
+    #default paths
+    - path: pdrs
       method: get
       cors: true
       api: backend
-    - path: v1/pdrs/{pdrName}
+    - path: pdrs/{pdrName}
       method: get
       cors: true
       api: backend
-    - path: v1/pdrs/{pdrName}
+    - path: pdrs/{pdrName}
       method: delete
       cors: true
       api: backend
 
-ApiLogsV1:
+ApiLogsDefault:
   handler: index.logs
   timeout: 20
   memory: 256
@@ -287,17 +287,17 @@ ApiLogsV1:
       function: Ref
       value: ElasticSearchDomain
   apiGateway:
-    #v1 paths
-    - path: v1/stats/logs
+    #default paths
+    - path: stats/logs
       method: get
       cors: true
       api: backend
-    - path: v1/logs
+    - path: logs
       method: get
       cors: true
       api: backend
 
-ApiSchemaV1:
+ApiSchemaDefault:
   handler: index.schemas
   timeout: 20
   memory: 256
@@ -308,14 +308,14 @@ ApiSchemaV1:
       function: Ref
       value: UsersTableDynamoDB
   apiGateway:
-    #v1 paths
-    - path: v1/schemas/{schemaName}
+    #default paths
+    - path: schemas/{schemaName}
       method: get
       cors: true
       api: backend
 
 
-ApiStatsV1:
+ApiStatsDefault:
   handler: index.stats
   timeout: 20
   memory: 256
@@ -329,25 +329,25 @@ ApiStatsV1:
       function: Ref
       value: ElasticSearchDomain
   apiGateway:
-    #v1 paths
-    - path: v1/stats
+    #default paths
+    - path: stats
       method: get
       cors: true
       api: backend
-    - path: v1/stats/histogram
+    - path: stats/histogram
       method: get
       cors: true
       api: backend
-    - path: v1/stats/aggregate
+    - path: stats/aggregate
       method: get
       cors: true
       api: backend
-    - path: v1/stats/average
+    - path: stats/average
       method: get
       cors: true
       api: backend
 
-ApiTokenV1:
+ApiTokenDefault:
   handler: index.token
   timeout: 20
   memory: 256
@@ -362,21 +362,21 @@ ApiTokenV1:
       function: Ref
       value: UsersTableDynamoDB
   apiGateway:
-    #v1 paths
+    #default paths
     - api: backend
-      path: v1/token
+      path: token
       method: get
       cors: true
 
-ApiVersionV1:
+ApiVersionDefault:
   handler: index.version
   timeout: 20
-  memory: 256
+  memory: 256 
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
-    #v1 paths
+    #default paths
     - api: backend
-      path: v1/version
+      path: version
       method: get
       cors: true
 
