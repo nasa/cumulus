@@ -7,6 +7,9 @@ let log = require('@cumulus/ingest/log');
 
 log = log.child({ file: 'pdr-status-check/index.js' });
 
+// The default number of times to re-check for completion
+const defaultRetryLimit = 30;
+
 /**
  * Determine the number of times this check has been performed
  *
@@ -20,12 +23,10 @@ const getCounterFromEvent = (event) => event.input.counter || 0;
 /**
  * Determine the maximum number of times this check may be performed
  *
- * If not set, defaults to 30.
- *
  * @param {Object} event - a simple Cumulus event
  * @returns {integer} - the limit on how many times this check may be run
  */
-const getLimitFromEvent = (event) => event.input.limit || 30;
+const getLimitFromEvent = (event) => event.input.limit || defaultRetryLimit;
 
 /**
  * Group Step Function executions into "completed", "aborted", "failed",
