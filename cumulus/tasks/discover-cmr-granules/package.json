@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/discover-cmr-granules",
   "private": true,
-  "version": "1.0.0-beta.16",
+  "version": "1.0.0-beta.17",
   "description": "Discovers granules from the CMR",
   "main": "index.js",
   "keywords": [
@@ -11,11 +11,39 @@
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
+  "scripts": {
+    "eslint": "eslint -c ../../../.eslintrc.json *.js",
+    "test": "ava test/*.js",
+    "local": "node index.js | pino"
+  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.16",
+    "@cumulus/common": "^1.0.0-beta.17",
+    "moment": "^2.19.2",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "es2017",
+      "@ava/stage-4",
+      "@ava/transform-test-files"
+    ]
+  },
+  "devDependencies": {
+    "ava": "^0.21.0",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
+    "sinon": "^2.0.0-pre.5"
   }
 }
