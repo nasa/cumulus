@@ -8,6 +8,15 @@ const logger = require('@cumulus/ingest/log');
 
 const log = logger.child({ file: 'sync-granule/index.js' });
 
+/**
+ * Ingest a list of granules
+ *
+ * @param {Object} ingest - an ingest object
+ * @param {string} bucket - the name of an S3 bucket, used for locking
+ * @param {string} provider - the name of a provider, used for locking
+ * @param {Object[]} granules - the granules to be ingested
+ * @returns {Promise.<Array>} - the list of successfully ingested granules
+ */
 async function download(ingest, bucket, provider, granules) {
   const updatedGranules = [];
 
@@ -37,6 +46,12 @@ async function download(ingest, bucket, provider, granules) {
   return updatedGranules;
 }
 
+/**
+ * Ingest a list of granules
+ *
+ * @param {Object} event - contains input and config parameters
+ * @returns {Promise.<Object>} - a description of the ingested granules
+ */
 function syncGranule(event) {
   const config = event.config;
   const input = event.input;
