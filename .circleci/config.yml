@@ -79,7 +79,11 @@ jobs:
           name: Running Test
           environment:
             LOCALSTACK_HOST: localstack
-          command: yarn test
+          command: |
+            docker run -d -p "20:20" -p "21:21" -p "47400-47470:47400-47470" -e FTP_USER=testuser -e FTP_PASS=testpass -e PASV_ADDRESS=127.0.0.1 -v $(pwd)/packages/test-data:/home/vsftpd bogem/ftp
+            docker run -d -p "8080:80" -v $(pwd)/packages/test-data:/var/www/html centos/httpd
+            docker run -d -p "2222:22" -v $(pwd)/packages/test-data:/home/user/test-data:ro atmoz/sftp user:password
+            yarn test
 
   build_and_publish:
     docker:
