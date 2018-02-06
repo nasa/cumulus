@@ -21,18 +21,21 @@ function delay(t) {
 * @returns {boolean} - Number of locks remaining in bucket
 **/
 async function checkOldLocks(bucket, list) {
-  let count = list.length;
-  let item;
-  for (item in list) {
-    const date = list[item].LastModified;
-    const diff = new Date() - date;
-    const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
-    if (diff > fiveMinutes) {
-      aws.S3.delete(bucket, list[item].Key);
-      count--;
+  if (list) {
+    let count = list.length;
+    let item;
+    for (item in list) {
+      const date = list[item].LastModified;
+      const diff = new Date() - date;
+      const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
+      if (diff > fiveMinutes) {
+        aws.S3.delete(bucket, list[item].Key);
+        count--;
+      }
     }
+    return count;
   }
-  return count;
+  return 0;
 }
 
 /**
