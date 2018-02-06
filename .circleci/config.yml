@@ -48,7 +48,6 @@ jobs:
             - ./cumulus/packages/pvl/node_modules
             - ./cumulus/packages/ingest/node_modules
             - ./cumulus/packages/deployment/node_modules
-            - ./cumulus/packages/sled/node_modules
           key: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
 
 
@@ -73,7 +72,6 @@ jobs:
             - ./cumulus/packages/pvl/dist
             - ./cumulus/packages/ingest/dist
             - ./cumulus/packages/deployment/dist
-            - ./cumulus/packages/sled/dist
 
           key: build-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
 
