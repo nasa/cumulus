@@ -35,8 +35,8 @@ async function publish(message, finish = false) {
   }
 
   if (failed) {
-    const error = get(event, 'exception.Error');
-    const cause = get(event, 'exception.Cause');
+    const error = get(event, 'exception.Error', get(event, 'error.Error'));
+    const cause = get(event, 'exception.Cause', get(event, 'error.Cause'));
     if (error) {
       if (errors[error]) {
         throw new errors[error](cause);
