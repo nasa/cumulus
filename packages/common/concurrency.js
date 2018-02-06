@@ -39,7 +39,7 @@ const toPromise = (fn, ...args) =>
 
 /**
  * Returns a promise that resolves to the result of calling the given function if
- * condition returns true or null if condition is false. Useful for chaining.
+ * condition returns false or null if condition is true. Useful for chaining.
  * @param {function} condition - A function which determines whether fn is called.
  * @param {function} fn - The function to call if condition returns true
  * @param {*} args - Arguments to pass to calls to both condition and fn
