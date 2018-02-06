@@ -34,7 +34,7 @@
     "yargs": "^8.0.2"
   },
   "devDependencies": {
-    "@cumulus/common": "^1.0.0-beta.581d31f4",
+    "@cumulus/common": "^1.0.0-beta.17",
     "ajv": "^5.0.4-beta.3",
     "ajv-cli": "^2.0.0",
     "aws-sdk": "^2.4.9",
