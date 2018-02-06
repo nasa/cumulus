@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.0.0-beta.16",
+  "version": "1.0.0-beta.17",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "scripts": {
@@ -24,10 +24,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.0.0-beta.16",
-    "@cumulus/common": "^1.0.0-beta.16",
-    "@cumulus/ingest": "^1.0.0-beta.16",
-    "@cumulus/pvl": "^1.0.0-beta.16",
+    "@cumulus/cmrjs": "^1.0.0-beta.17",
+    "@cumulus/common": "^1.0.0-beta.17",
+    "@cumulus/ingest": "^1.0.0-beta.17",
+    "@cumulus/pvl": "^1.0.0-beta.17",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.95.0",
     "babel-core": "^6.25.0",
