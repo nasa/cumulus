@@ -1,28 +1,6 @@
 version: '2'
 services:
   local:
-    image: peopleperhour/dynamodb
-    ports:
-      - "8000:8000"
-    depends_on:
-      - sqs
-      - elasticsearch
-      - ftp
-      - http
-      - sftp
-
-  sqs:
-    image: vsouza/sqs-local
-    ports:
-      - "9324:9324"
-
-  elasticsearch:
-    image: elasticsearch:2.3.5
-    ports:
-      - "9200:9200"
-      - "9300:9200"
-
-  ftp:
     image: bogem/ftp
     volumes:
       - "./packages/test-data:/home/vsftpd"
@@ -34,6 +12,9 @@ services:
       - FTP_USER=testuser
       - FTP_PASS=testpass
       - PASV_ADDRESS=127.0.0.1
+    depends_on:
+      - http
+      - sftp
 
   http:
     image: centos/httpd
