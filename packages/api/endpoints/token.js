@@ -112,7 +112,7 @@ function login(event, context, cb) {
  * @return {type} {description}
  */
 function handler(event, context, cb) {
-  if (event.httpMethod === 'GET' && event.resource === '/token') {
+  if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
     return login(event, context, cb);
   }
   return resp(context, new Error('Not found'), 404);
