@@ -73,7 +73,7 @@ class TestSource extends messageSource.MessageSource {
  */
 exports.run = async (TaskClass, input) => {
   messageSource.messageSources.unshift(TestSource);
-  log.mute('info', 'log', 'debug');
+  log.mute('info', 'log', 'debug', 'error');
   try {
     let data;
     let error;
