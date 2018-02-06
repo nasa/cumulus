@@ -1,4 +1,4 @@
-ApiCollections:
+ApiCollectionsV1:
   handler: index.collections
   timeout: 20
   memory: 256
@@ -11,12 +11,10 @@ ApiCollections:
     CollectionsTable:
       function: Ref
       value: CollectionsTableDynamoDB
-    internal: '{{buckets.internal}}'
+    internal: '{{parent.buckets.internal}}'
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   apiGateway:
     # v1 paths
     - path: v1/collections
@@ -40,30 +38,7 @@ ApiCollections:
       cors: true
       api: backend
 
-    # default paths
-    - path: collections
-      method: get
-      cors: true
-      api: backend
-    - path: collections
-      method: post
-      cors: true
-      api: backend
-    - path: collections/{collectionName}/{version}
-      method: get
-      cors: true
-      api: backend
-    - path: collections/{collectionName}/{version}
-      method: put
-      cors: true
-      api: backend
-    - path: collections/{collectionName}/{version}
-      method: delete
-      cors: true
-      api: backend
-
-
-ApiGranules:
+ApiGranulesV1:
   handler: index.granules
   timeout: 20
   memory: 256
@@ -82,21 +57,17 @@ ApiGranules:
     invoke:
       function: "Ref"
       value: ScheduleSFLambdaFunction
-    bucket: '{{buckets.internal}}'
-    internal: '{{buckets.internal}}'
-    cmr_provider: '{{cmr.provider}}'
-    cmr_client_id: '{{cmr.clientId}}'
-    cmr_username: '{{cmr.username}}'
+    bucket: '{{parent.buckets.internal}}'
+    internal: '{{parent.buckets.internal}}'
+    cmr_provider: '{{parent.cmr.provider}}'
+    cmr_client_id: '{{parent.cmr.clientId}}'
+    cmr_username: '{{parent.cmr.username}}'
     cmr_password: 
-      function: "Fn::GetAtt"
-      array:
-        - CumulusCustomResource
-        - CmrPassword
+      function: "Ref"
+      value: "CmrPassword"
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   apiGateway:
     # v1 paths
     - path: v1/granules
@@ -116,26 +87,7 @@ ApiGranules:
       cors: true
       api: backend
 
-    # default paths      
-    - path: granules
-      method: get
-      cors: true
-      api: backend
-    - path: granules/{granuleName}
-      method: get
-      cors: true
-      api: backend
-    - path: granules/{granuleName}
-      method: put
-      cors: true
-      api: backend
-    - path: granules/{granuleName}
-      method: delete
-      cors: true
-      api: backend
-
-
-ApiExecutions:
+ApiExecutionsV1:
   handler: index.executions
   timeout: 20
   memory: 256
@@ -146,10 +98,8 @@ ApiExecutions:
       function: Ref
       value: UsersTableDynamoDB
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   apiGateway:
     #v1 paths
     - path: v1/executions
@@ -160,18 +110,8 @@ ApiExecutions:
       method: get
       cors: true
       api: backend
-
-    # default paths
-    - path: executions
-      method: get
-      cors: true
-      api: backend
-    - path: executions/{arn}
-      method: get
-      cors: true
-      api: backend
   
-ApiExecutionStatus:
+ApiExecutionStatusV1:
   handler: index.executionStatus
   timeout: 20
   memory: 256
@@ -182,10 +122,8 @@ ApiExecutionStatus:
       function: Ref
       value: UsersTableDynamoDB
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   apiGateway:
     #v1 paths
     - path: v1/executions/status/{arn}
@@ -193,20 +131,14 @@ ApiExecutionStatus:
       cors: true
       api: backend
 
-    # default paths
-    - path: v1/executions/status/{arn}
-      method: get
-      cors: true
-      api: backend
-
-ApiWorkflows:
+ApiWorkflowsV1:
   handler: index.workflows
   timeout: 20
   memory: 256
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
-    bucket: '{{buckets.internal}}'
+    bucket: '{{parent.buckets.internal}}'
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
@@ -221,23 +153,13 @@ ApiWorkflows:
       cors: true
       api: backend
 
-    # default paths
-    - path: workflows
-      method: get
-      cors: true
-      api: backend
-    - path: workflows/{name}
-      method: get
-      cors: true
-      api: backend
-
-ApiRules:
+ApiRulesV1:
   handler: index.rules
   timeout: 20
   memory: 256
   apiRole: true
   envs:
-    bucket: '{{buckets.internal}}'
+    bucket: '{{parent.buckets.internal}}'
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
@@ -254,15 +176,11 @@ ApiRules:
       function: "Ref"
       value: ScheduleSFLambdaFunction
     invokeArn:
-      function: "Fn::GetAtt"
-      array:
-        - ScheduleSFLambdaFunction
-        - Arn
+      function: "Ref"
+      value: ScheduleSFLambdaFunction
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
     #v1 paths
@@ -287,29 +205,7 @@ ApiRules:
       cors: true
       api: backend
 
-    # default paths
-    - path: rules
-      method: get
-      cors: true
-      api: backend
-    - path: rules/{name}
-      method: get
-      cors: true
-      api: backend
-    - path: rules
-      method: post
-      cors: true
-      api: backend
-    - path: rules/{name}
-      method: put
-      cors: true
-      api: backend
-    - path: rules/{name}
-      method: delete
-      cors: true
-      api: backend
-
-ApiProviders:
+ApiProvidersV1:
   handler: index.providers
   timeout: 20
   memory: 256
@@ -321,12 +217,10 @@ ApiProviders:
     ProvidersTable:
       function: Ref
       value: ProvidersTableDynamoDB
-    internal: '{{buckets.internal}}'
+    internal: '{{parent.buckets.internal}}'
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
     #v1 paths
@@ -351,29 +245,7 @@ ApiProviders:
       cors: true
       api: backend
 
-    # default paths
-    - path: providers
-      method: get
-      cors: true
-      api: backend
-    - path: providers/{id}
-      method: get
-      cors: true
-      api: backend
-    - path: providers
-      method: post
-      cors: true
-      api: backend
-    - path: providers/{id}
-      method: put
-      cors: true
-      api: backend
-    - path: providers/{id}
-      method: delete
-      cors: true
-      api: backend
-
-ApiPdrs:
+ApiPdrsV1:
   handler: index.pdrs
   timeout: 20
   memory: 256
@@ -382,12 +254,10 @@ ApiPdrs:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
-    internal: '{{buckets.internal}}'
+    internal: '{{parent.buckets.internal}}'
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   apiGateway:
     #v1 paths
     - path: v1/pdrs
@@ -403,21 +273,7 @@ ApiPdrs:
       cors: true
       api: backend
 
-    # default paths
-    - path: pdrs
-      method: get
-      cors: true
-      api: backend
-    - path: pdrs/{pdrName}
-      method: get
-      cors: true
-      api: backend
-    - path: pdrs/{pdrName}
-      method: delete
-      cors: true
-      api: backend
-
-ApiLogs:
+ApiLogsV1:
   handler: index.logs
   timeout: 20
   memory: 256
@@ -428,10 +284,8 @@ ApiLogs:
       function: Ref
       value: UsersTableDynamoDB
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   apiGateway:
     #v1 paths
     - path: v1/stats/logs
@@ -443,17 +297,7 @@ ApiLogs:
       cors: true
       api: backend
 
-    # default paths
-    - path: stats/logs
-      method: get
-      cors: true
-      api: backend
-    - path: logs
-      method: get
-      cors: true
-      api: backend
-
-ApiSchema:
+ApiSchemaV1:
   handler: index.schemas
   timeout: 20
   memory: 256
@@ -470,13 +314,8 @@ ApiSchema:
       cors: true
       api: backend
 
-    # default paths
-    - path: schemas/{schemaName}
-      method: get
-      cors: true
-      api: backend
 
-ApiStats:
+ApiStatsV1:
   handler: index.stats
   timeout: 20
   memory: 256
@@ -487,10 +326,8 @@ ApiStats:
       function: Ref
       value: UsersTableDynamoDB
     ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+      function: Ref
+      value: ElasticSearchDomain
   apiGateway:
     #v1 paths
     - path: v1/stats
@@ -510,25 +347,7 @@ ApiStats:
       cors: true
       api: backend
 
-    # default paths
-    - path: stats
-      method: get
-      cors: true
-      api: backend
-    - path: stats/histogram
-      method: get
-      cors: true
-      api: backend
-    - path: stats/aggregate
-      method: get
-      cors: true
-      api: backend
-    - path: stats/average
-      method: get
-      cors: true
-      api: backend
-
-ApiToken:
+ApiTokenV1:
   handler: index.token
   timeout: 20
   memory: 256
@@ -536,7 +355,7 @@ ApiToken:
   apiRole: true
   urs: true
   envs:
-    EARTHDATA_BASE_URL: '{{urs_url}}'
+    EARTHDATA_BASE_URL: '{{parent.urs_url}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     UsersTable:
@@ -549,16 +368,10 @@ ApiToken:
       method: get
       cors: true
 
-    # default paths 
-    - api: backend
-      path: token
-      method: get
-      cors: true
-
-ApiVersion:
+ApiVersionV1:
   handler: index.version
-  timeout: 10
-  memory: 128
+  timeout: 20
+  memory: 256
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
     #v1 paths
@@ -567,9 +380,4 @@ ApiVersion:
       method: get
       cors: true
 
-    # default paths 
-    - api: backend
-      path: version 
-      method: get
-      cors: true
 

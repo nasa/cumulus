@@ -13,7 +13,7 @@ function deletePdr(s3Object) {
 }
 
 /**
- * @param {Object} event - see https://github.com/cumulus-nasa/cumulus/blob/master/packages/sled/README.md
+ * @param {Object} event - see https://github.com/cumulus-nasa/cumulus-nasa.github.io/blob/develop/docs/cumulus-task-message-flow.md
  * @param {Object} context - see https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
  * @param {Function} callback - see https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
  * @returns {Promise}

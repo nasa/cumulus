@@ -60,7 +60,8 @@ module.exports.httpMixin = superclass => class extends superclass {
         for (const line of lines) {
           const split = line.trim().split(pattern);
           if (split.length === 3) {
-            if (split[1].match(/^(.*\.[\w\d]{2,4})$/) !== null) {
+          // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6) 
+            if (split[1].match(/^(.*\.[\w\d]{1,4})$/) !== null) {
               const name = split[1];
               files.push({
                 name,

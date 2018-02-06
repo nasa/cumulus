@@ -1,5 +1,5 @@
 lambda-gdal.zip: Dockerfile
-	docker run --rm --entrypoint cat $$(docker build -q .) /tmp/task.zip > $@; \
+	docker run --rm --entrypoint cat $$(docker build -t gdalbuild:latest -q .) /tmp/task.zip > $@; \
   mv $@ ../deps;
 
 clean:
