@@ -102,10 +102,10 @@ module.exports = class CopyIdxFileToS3Task extends Task {
 // Testing in Visual Studio Code
 // global.__isDebug = true;
 
-const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
-const local = require('@cumulus/common/local-helpers');
-const localTaskName = 'CopyIdxFromS3';
-const configFile = path.join(__dirname, './test/ast_l1t.yml');
+//const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
+//const local = require('@cumulus/common/local-helpers');
+//const localTaskName = 'CopyIdxFromS3';
+//const configFile = path.join(__dirname, './test/ast_l1t.yml');
 
-local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
-  'AST_L1T_DAY', localTaskName, () => payload, configFile));
+//local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
+//  'AST_L1T_DAY', localTaskName, () => payload, configFile));
