@@ -12,12 +12,44 @@ function delay(t) {
   });
 }
 
-function countLock(bucket, pName) {
-  return aws.s3().listObjectsV2({
+/**
+* Check Old Locks
+* Checks all locks and removes those older than five minutes
+*
+* @param {Object} bucket - The AWS S3 bucket with the locks to check
+* @param {string} list - The list of locks in the bucket
+* @returns {boolean} - Number of locks remaining in bucket
+**/
+async function checkOldLocks(bucket, list) {
+  let count = list.length;
+  let item;
+  for (item in list) {
+    const date = list[item].LastModified;
+    const diff = new Date() - date;
+    const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
+    if (diff > fiveMinutes) {
+      aws.S3.delete(bucket, list[item].Key);
+      count--;
+    }
+  }
+  return count;
+}
+
+/**
+* Count Lock
+* Counts the number of locks in a bucket
+*
+* @param {Object} bucket - The AWS S3 bucket to check
+* @param {string} pName - The provider name
+* @returns {integer} - Number of current locks in the bucket
+**/
+async function countLock(bucket, pName) {
+  const list = aws.s3().listObjectsV2({
     Bucket: bucket,
-    Prefix: pName
-  }).promise()
-    .then((data) => data.Contents.length);
+    Prefix: `${lockPrefix}/${pName}`
+  }).promise();
+  const count = checkOldLocks(bucket, list.Contents);
+  return count;
 }
 
 function addLock(bucket, pName, filename) {
