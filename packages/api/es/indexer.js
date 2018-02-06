@@ -18,6 +18,7 @@ const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
 const Rule = require('../models/rules');
+const uniqBy = require('lodash.uniqby');
 
 const log = logger.child({ file: 'packages/api/es/indexer.js' });
 
@@ -253,14 +254,14 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const granules = get(payload, 'payload.granules');
 
-  if (!granules) return;
+  if (!granules) return Promise.resolve();
 
   const arn = getExecutionArn(
     get(payload, 'cumulus_meta.state_machine'),
     name
   );
 
-  if (arn) return;
+  if (arn) return Promise.resolve();
 
   const execution = getExecutionUrl(arn);
 
@@ -291,7 +292,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
         provider: get(payload, 'meta.provider.id'),
         execution,
         cmrLink: get(g, 'cmr.link'),
-        files: g.files,
+        files: uniqBy(g.files, 'filename'),
         error: exception,
         createdAt: get(payload, 'cumulus_meta.createdAt'),
         timestamp: Date.now()
@@ -311,7 +312,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
         }
       });
     }
-    return;
+    return Promise.resolve();
   });
 
   return Promise.all(done);
@@ -436,6 +437,6 @@ module.exports = {
 };
 
 justLocalRun(() => {
-  //const a = {};
-  //handler(a, {}, (e, r) => log.info(e, r));
+  // const a = {};
+  // handler(a, {}, (e, r) => log.info(e, r));
 });
