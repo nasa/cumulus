@@ -116,7 +116,6 @@ _templates:
       workflow_config_template:
         DiscoverCmrGranules:
           root: 'https://cmr.earthdata.nasa.gov'
-          since: 5d
           event: wms-map-found
           granule_meta:
             key: '{meta.collection}/{granule.id}'
@@ -125,6 +124,9 @@ _templates:
             date:
               type: date
               value: '{granule.time_start}'
+          query:
+              collection_concept_id: C191855458-LARC
+              updated_since: 20d
 
         CreateWmsUrls:
           filename: '{meta.key}.png'
