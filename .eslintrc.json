@@ -60,6 +60,10 @@
         "location": "anywhere"
       }
     ],
+    "no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_" }
+    ],
     "no-useless-escape": "off",
     "no-console": "warn",
     "spaced-comment": "off",

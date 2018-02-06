@@ -5,9 +5,16 @@ default:
   urs_url: https://uat.urs.earthdata.nasa.gov
 
   repo_owner: cumulus-nasa
-  message_adapter_version: v0.0.1
   message_adapter_repo: cumulus-message-adapter
   message_adapter_filename: cumulus-message-adapter.zip
+
+  nested_templates:
+    CumulusApiDefault:
+      cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_default.config.yml
+    CumulusApiV1:
+      cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_v1.config.yml
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
@@ -62,22 +69,7 @@ default:
     instanceType: t2.small.elasticsearch
     volumeSize: 35
 
-  sns:
-    # this topic receives all the updates from
-    # step functions
-    sftracker:
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - sns2elasticsearchLambdaFunction
-              - Arn
-
   # defining the APIs. Each item will include a separate endpoint
-  apis:
-    - name: distribution
-    - name: backend
   apiStage: dev
 
   dynamos:
@@ -116,6 +108,22 @@ default:
           type: S
           schema: HASH
 
+  sns:
+    # this topic receives all the updates from
+    # step functions
+    sftracker:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - sns2elasticsearchLambdaFunction
+              - Arn
+
+  apis:
+    - name: distribution
+    - name: backend
+
   sqs:
     startSF:
       visibilityTimeout: 20
@@ -136,7 +144,6 @@ default:
   stepFunctions: !!files ['workflows.yml']
 
   lambdas: !!files [
-    'node_modules/@cumulus/api/config/api_v1.yml',
+    'lambdas.yml',
     'node_modules/@cumulus/api/config/distribution.yml',
-    'node_modules/@cumulus/api/config/lambdas.yml',
-    'lambdas.yml' ]
+    'node_modules/@cumulus/api/config/lambdas.yml']

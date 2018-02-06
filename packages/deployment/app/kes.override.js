@@ -160,7 +160,7 @@ class UpdatedLambda extends Lambda {
     }
     const fileList = [lambda.source];
 
-    if (lambda.useSled) {
+    if (lambda.useMessageAdapter) {
       fileList.push(this.config.message_adapter_filename);
       msg += ' and injecting sled';
     }
@@ -388,7 +388,7 @@ class UpdatedKes extends Kes {
    */
   fetchLatestMessageAdapterRelease() {
     const options = {
-      url: `https://api.github.com/repos/${messageAdapterGitPath}/releases/latest`,
+      url: `https://api.github.com/repos/${this.messageAdapterGitPath}/releases/latest`,
       headers: {
         'Accept': 'application/json',
         'User-Agent': '@cumulus/deployment' // Required by Github API
