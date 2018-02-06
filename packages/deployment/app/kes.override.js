@@ -162,7 +162,7 @@ class UpdatedLambda extends Lambda {
 
     if (lambda.useMessageAdapter) {
       fileList.push(this.config.message_adapter_filename);
-      msg += ' and injecting sled';
+      msg += ' and injecting message adapter';
     }
 
     console.log(`${msg} for ${lambda.name}`);
@@ -305,9 +305,9 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Because both kes and sled use Mustache for templating,
+   * Because both kes and message adapter use Mustache for templating,
    * we have to curly brackes for all the templating values
-   * that has to be passed to sled. this method, looks for
+   * that has to be passed to the message adapter. this method, looks for
    * any value that starts with a "$" and put the whole value
    * inside "{{ }}""
    */
@@ -332,7 +332,7 @@ class UpdatedKes extends Kes {
       return config;
     };
 
-    // loop through the sled config of each step of
+    // loop through the message adapter config of each step of
     // the step function, add curly brackets to values
     // with dollar sign and remove config key from the
     // defintion, otherwise CloudFormation will be mad

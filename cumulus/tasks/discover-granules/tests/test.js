@@ -2,12 +2,10 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const sled = require('@cumulus/sled').handler;
 const log = require('@cumulus/common/log');
 const amsr2 = require('@cumulus/test-data/payloads/amsr2/discover.json');
 const queue = require('@cumulus/ingest/queue');
 const mur = require('./fixtures/mur.json');
-const sledInput = require('./fixtures/sled-input.json');
 const { handler } = require('../index');
 
 test.cb('test discovering mur granules', (t) => {
@@ -76,17 +74,4 @@ test.cb('test discovering amsr2 granules using SFTP', (t) => {
       t.end(e);
     });
   }
-});
-
-test.cb('test running in sled', (t) => {
-  function callback (err, output) {
-    t.ifError(err);
-    const granules = output.payload.granules;
-    t.is(Object.keys(granules).length, 3);
-    const g = Object.keys(granules)[0];
-    t.is(granules[g].files.length, 2);
-    t.end();
-  }
-
-  sled(sledInput, {}, callback, handler)
 });
