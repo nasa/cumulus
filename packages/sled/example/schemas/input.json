@@ -1,7 +1,0 @@
-{
-  "properties": {
-    "hello": {
-      "type": "string"
-    }
-  }
-}
