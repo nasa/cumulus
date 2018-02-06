@@ -1,5 +1,6 @@
 'use strict';
-const get = require('lodash.get');
+
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
@@ -36,62 +37,53 @@ async function download(ingest, bucket, provider, granules) {
   return updatedGranules;
 }
 
-module.exports.handler = function handler(_event, context, cb) {
-  try {
-    const event = Object.assign({}, _event);
-    const config = get(event, 'config', {});
-    const input = get(event, 'input', {});
+function syncGranule(event) {
+  const config = event.config;
+  const input = event.input;
 
-    const buckets = get(config, 'buckets');
-    const collection = get(config, 'collection');
-    const provider = get(config, 'provider');
-    const granules = get(input, 'granules');
+  if (!config.provider) {
+    const err = new errors.ProviderNotFound('Provider info not provided');
+    log.error(err);
+    return Promise.reject(err);
+  }
 
-    const output = {};
+  const IngestClass = granule.selector('ingest', config.provider.protocol);
+  const ingest = new IngestClass(event);
 
-    if (!provider) {
-      const err = new errors.ProviderNotFound('Provider info not provided');
-      log.error(err);
-      return cb(err);
-    }
+  return download(ingest, config.buckets.internal, config.provider, input.granules)
+    .then((granules) => {
+      if (ingest.end) ingest.end();
 
-    const IngestClass = granule.selector('ingest', provider.protocol);
-    const ingest = new IngestClass(event);
+      const output = { granules };
+      if (config.collection.process) output.process = config.collection.process;
 
-    return download(ingest, buckets.internal, provider, granules).then((gs) => {
-      output.granules = gs;
+      return output;
+    }).catch((e) => {
+      if (ingest.end) ingest.end();
 
-      if (collection.process) {
-        output.process = collection.process;
-      }
-
-      if (ingest.end) {
-        ingest.end();
-      }
-
-      return cb(null, output);
-    }).catch(e => {
-      if (ingest.end) {
-        ingest.end();
-      }
-
+      let errorToThrow = e;
       if (e.toString().includes('ECONNREFUSED')) {
-        const err = new errors.RemoteResourceError('Connection Refused');
-        log.error(err);
-        return cb(err);
+        errorToThrow = new errors.RemoteResourceError('Connection Refused');
       }
       else if (e.details && e.details.status === 'timeout') {
-        const err = new errors.ConnectionTimeout('connection Timed out');
-        log.error(err);
-        return cb(err);
+        errorToThrow = new errors.ConnectionTimeout('connection Timed out');
       }
 
-      log.error(e);
-      return cb(e);
+      log.error(errorToThrow);
+      throw errorToThrow;
     });
-  }
-  catch (e) {
-    log.error(e);
-    throw e;
-  }
-};
+}
+exports.syncGranule = syncGranule;
+
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(syncGranule, event, context, callback);
+}
+exports.handler = handler;
