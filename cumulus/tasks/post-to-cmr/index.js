@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 'use strict';
 
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getS3Object } = require('@cumulus/common/aws');
@@ -142,54 +143,55 @@ async function publish(cmrFile, creds) {
  * @param {object} event.config.cmr
  * @param {object} event.input
  * @param {array} event.input.granules
- * @param {object} context aws lambda context object
- * @param {function} cb lambda callback
  * @returns {object} returns the updated event object
  */
-function postToCMR(event, context, cb) {
-  try {
-    // we have to post the meta-xml file of all output granules
-    // first we check if there is an output file
-    const config = get(event, 'config');
-    const collection = get(config, 'collection');
-    const buckets = get(config, 'buckets');
-    const creds = get(config, 'cmr');
-    const input = temporaryPayloadFix(get(event, 'input', null), collection, buckets);
+function postToCMR(event) {
+  // we have to post the meta-xml file of all output granules
+  // first we check if there is an output file
+  const config = get(event, 'config');
+  const collection = get(config, 'collection');
+  const buckets = get(config, 'buckets');
+  const creds = get(config, 'cmr');
+  const input = temporaryPayloadFix(get(event, 'input', null), collection, buckets);
 
-    // determine CMR files
-    const cmrFiles = getCmrFiles(input.granules);
+  // determine CMR files
+  const cmrFiles = getCmrFiles(input.granules);
 
-    // post all meta files to CMR
-    const jobPromises = cmrFiles.map(c => publish(c, creds));
+  // post all meta files to CMR
+  const jobPromises = cmrFiles.map((c) => publish(c, creds));
 
-    return Promise.all(jobPromises).then((results) => {
-      // update output section of the payload
-      for (const result of results) {
-        for (const g of input.granules) {
-          if (result.granuleId === g.granuleId) {
-            delete result.granuleId;
-            g.cmr = result;
-            break;
-          }
+  return Promise.all(jobPromises).then((results) => {
+    // update output section of the payload
+    for (const result of results) {
+      for (const g of input.granules) {
+        if (result.granuleId === g.granuleId) {
+          delete result.granuleId;
+          g.cmr = result;
+          break;
         }
       }
-      return input;
-    })
-      .then((output) => cb(null, output))
-      .catch(e => {
-        log.error(e);
-        cb(e);
-      });
-  }
-  catch (e) {
-    log.error(e);
-    return cb(e);
-  }
+    }
+    return input;
+  })
+    .catch((e) => {
+      log.error(e);
+      throw e;
+    });
 }
+exports.postToCMR = postToCMR;
 
-module.exports.handler = function handler(event, context, cb) {
-  return postToCMR(event, context, cb);
-};
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(postToCMR, event, context, callback);
+}
+exports.handler = handler;
 
 justLocalRun(() => {
   postToCMR(testPayload, {}, (e, r) => log.debug(e, JSON.stringify(r)));

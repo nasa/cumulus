@@ -8,12 +8,13 @@ const testUtils = require('@cumulus/common/test-utils');
 
 const cmrjs = require('@cumulus/cmrjs');
 const payload = require('./data/payload.json');
-const { handler } = require('../index');
+const { postToCMR } = require('../index');
 
 const result = {
   'concept-id': 'testingtesging'
 };
 
+// eslint-disable-next-line require-jsdoc
 async function deleteBucket(bucket) {
   const response = await aws.s3().listObjects({ Bucket: bucket }).promise();
   const keys = response.Contents.map((o) => o.Key);
@@ -23,7 +24,7 @@ async function deleteBucket(bucket) {
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = testUtils.randomString();
+  t.context.bucket = testUtils.randomString(); // eslint-disable-line no-param-reassign
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
@@ -31,49 +32,57 @@ test.afterEach.always(async (t) => {
   deleteBucket(t.context.bucket);
 });
 
-test.cb.serial('should succeed if cmr correctly identifies the xml as invalid', (t) => {
+test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
-  aws.promiseS3Upload({
+  return aws.promiseS3Upload({
     Bucket: t.context.bucket,
     Key: 'meta.cmr.xml',
     Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
   }).then(() => {
     const newPayload = JSON.parse(JSON.stringify(payload));
     newPayload.input.granules[0].files.push({ filename: `s3://${t.context.bucket}/meta.cmr.xml` });
-    handler(newPayload, {}, (e) => {
-      cmrjs.CMR.prototype.getToken.restore();
-      t.true(e instanceof cmrjs.ValidationError);
-      t.end();
-    });
+
+    return postToCMR(newPayload)
+      .then(() => {
+        cmrjs.CMR.prototype.getToken.restore();
+        t.fail();
+      })
+      .catch((e) => {
+        cmrjs.CMR.prototype.getToken.restore();
+        t.true(e instanceof cmrjs.ValidationError);
+      });
   });
 });
 
-test.cb.serial('should succeed with correct payload', (t) => {
+test('should succeed with correct payload', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
 
-  aws.promiseS3Upload({
+  return aws.promiseS3Upload({
     Bucket: t.context.bucket,
     Key: 'meta.cmr.xml',
     Body: fs.createReadStream('tests/data/meta.xml')
   }).then(() => {
     newPayload.input.granules[0].files.push({ filename: `s3://${t.context.bucket}/meta.cmr.xml` });
-    handler(newPayload, {}, (e, output) => {
-      cmrjs.CMR.prototype.ingestGranule.restore();
-      t.is(e, null);
-      t.is(
-        output.granules[0].cmr.link,
-        `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
-      );
-      t.end(e);
-    });
+    return postToCMR(newPayload)
+      .then((output) => {
+        cmrjs.CMR.prototype.ingestGranule.restore();
+        t.is(
+          output.granules[0].cmr.link,
+          `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+        );
+      })
+      .catch(() => {
+        cmrjs.CMR.prototype.ingestGranule.restore();
+        t.fail();
+      });
   });
 });
 
-test.cb.serial('Should skip cmr step if the metadata file uri is missing', (t) => {
+test('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.input.granules = [{
     granuleId: 'some granule',
@@ -82,12 +91,9 @@ test.cb.serial('Should skip cmr step if the metadata file uri is missing', (t) =
     }]
   }];
 
-  handler(newPayload, {}, (e, output) => {
-    t.is(output.granules[0].cmr, undefined);
-    t.end();
-  });
+  return postToCMR(newPayload)
+    .then((output) => {
+      t.is(output.granules[0].cmr, undefined);
+    })
+    .catch(t.fail);
 });
-
-// test.after(() => {
-//   S3.get.restore();
-// });
