@@ -3,6 +3,7 @@
   "version": "1.0.0-beta.17",
   "description": "Task to delete ingest tracking data when ingest has completed.",
   "main": "index.js",
+  "private": true,
   "keywords": [
     "GIBS",
     "INGEST",
