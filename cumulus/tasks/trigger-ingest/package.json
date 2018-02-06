@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/trigger-ingest",
   "private": true,
-  "version": "1.0.0-beta.16",
+  "version": "1.0.0-beta.17",
   "description": "Transforms input granule info to WMS URLs for URL sync",
   "main": "index.js",
   "keywords": [
@@ -14,7 +14,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.16",
+    "@cumulus/common": "^1.0.0-beta.17",
     "lodash": "^4.17.4"
   }
 }
