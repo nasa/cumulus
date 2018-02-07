@@ -1,123 +1,177 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
-const get = require('lodash.get');
-const { StepFunction } = require('@cumulus/ingest/aws');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const aws = require('@cumulus/common/aws');
 const { IncompleteError } = require('@cumulus/common/errors');
 let log = require('@cumulus/ingest/log');
 
 log = log.child({ file: 'pdr-status-check/index.js' });
 
-/**
-* Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
-* @callback lambdaCallback
-* @param {object} error
-* @param {object} output - output object matching schemas/output.json
-*/
+// The default number of times to re-check for completion
+const defaultRetryLimit = 30;
 
 /**
-* Lambda function handler for checking the status of a workflow (step function) execution. Expects a payload object which includes the name of a PDR.
-* See schemas/input.json for detailed expected input.
-*
-* @param  {object} event lambda event object
-* @param  {string} event.s3_path the path of an event stored on s3
-* @param  {lambdaCallback} callback callback function
-* @return {undefined}
-*/
-module.exports.handler = function handler(event, context, cb) {
-  let counter;
-  let limit;
-  let isFinished;
+ * Determine the number of times this check has been performed
+ *
+ * If not set, defaults to 0.
+ *
+ * @param {Object} event - a simple Cumulus event
+ * @returns {integer} - the number of times this check has been run
+ */
+const getCounterFromEvent = (event) => event.input.counter || 0;
 
-  function handleError(e) {
-    log.error(e);
-    cb(e);
+/**
+ * Determine the maximum number of times this check may be performed
+ *
+ * @param {Object} event - a simple Cumulus event
+ * @returns {integer} - the limit on how many times this check may be run
+ */
+const getLimitFromEvent = (event) => event.input.limit || defaultRetryLimit;
+
+/**
+ * Group Step Function executions into "completed", "aborted", "failed",
+ * and "running".
+ *
+ * @param {Array.<Object>} executions - described Step Function executions
+ * @returns {Object} - executions grouped by status
+ */
+function groupExecutionsByStatus(executions) {
+  const result = {
+    completed: [],
+    aborted: [],
+    failed: [],
+    running: []
+  };
+
+  executions.forEach((execution) => {
+    if (execution.status === 'SUCCEEDED') result.completed.push(execution);
+    else if (execution.status === 'FAILED') result.failed.push(execution);
+    else if (execution.status === 'ABORTED') result.aborted.push(execution);
+    else result.running.push(execution);
+  });
+
+  return result;
+}
+
+/**
+ * Display output
+ *
+ * @param {Object} output - the output of the task
+ * @returns {undefined} - no return value
+ */
+function logStatus(output) {
+  log.info({
+    running: output.running.length,
+    completed: output.completed.length,
+    failed: output.failed.length,
+    counter: output.counter,
+    limit: output.limit
+  }, 'latest status');
+}
+
+/**
+ * Create a task return value for a set of executions
+ *
+ * Example output:
+ *   {
+ *     isFinished: false,
+ *     running: ['arn:123'],
+ *     failed: [
+ *       { arn: 'arn:456', reason: 'Workflow Aborted' }
+ *     ],
+ *     completed: []
+ *   }
+ *
+ * @param {Object} event - the event that came into checkPdrStatuses
+ * @param {Object} groupedExecutions - a map of execution statuses grouped
+ *   by status
+ * @returns {Object} - a description of the results of this task execution
+ */
+function buildOutput(event, groupedExecutions) {
+  // eslint-disable-next-line require-jsdoc
+  const getExecutionArn = (execution) => execution.executionArn;
+
+  // eslint-disable-next-line require-jsdoc
+  const parseFailedExecution = (execution) => {
+    let reason = 'Workflow Failed';
+    if (execution.output) reason = JSON.parse(execution.output).exception;
+    return { arn: execution.executionArn, reason };
+  };
+
+  // eslint-disable-next-line require-jsdoc
+  const parseAbortedExecution = (execution) => {
+    let reason = 'Workflow Aborted';
+    if (execution.output) reason = JSON.parse(execution.output).exception;
+    return { arn: execution.executionArn, reason };
+  };
+
+  const running = groupedExecutions.running.map(getExecutionArn);
+
+  const failed = (event.input.failed || [])
+    .concat(groupedExecutions.aborted.map(parseAbortedExecution))
+    .concat(groupedExecutions.failed.map(parseFailedExecution));
+
+  const completed = (event.input.completed || [])
+    .concat(groupedExecutions.completed.map(getExecutionArn));
+
+  const output = {
+    isFinished: groupedExecutions.running.length === 0,
+    running,
+    failed,
+    completed
+  };
+
+  if (!output.isFinished) {
+    output.counter = getCounterFromEvent(event) + 1;
+    output.limit = getLimitFromEvent(event);
   }
 
-  function checkStatus(eventToCheck) {
-    const payload = eventToCheck.payload;
-    const pdrName = payload.pdr.name;
-    log = log.child({ pdrName });
+  return output;
+}
 
-    counter = get(eventToCheck, 'payload.counter', 0);
-    limit = get(eventToCheck, 'payload.limit', 30);
-    isFinished = get(eventToCheck, 'payload.isFinished', false);
-    const runningExecutions = get(eventToCheck, 'payload.running', []);
+/**
+ * Checks a list of Step Function Executions to see if they are all in
+ * terminal states.
+ *
+ * @param {Object} event - a Cumulus Message that has been sent through the
+ *   Cumulus Message Adapter
+ * @returns {Promise.<Object>} - an object describing the status of Step
+ *   Function executions related to a PDR
+ */
+function checkPdrStatuses(event) {
+  const runningExecutionArns = event.input.running || [];
 
-    // if finished, exit
-    if (isFinished) {
-      log.info('pdr is already finished. Exiting...');
-      return Promise.resolve(cb(null, eventToCheck));
-    }
+  const promisedExecutionDescriptions = runningExecutionArns.map((executionArn) =>
+    aws.sfn().describeExecution({ executionArn }).promise());
 
-    // if this is tried too many times, exit
-    if (counter >= limit) {
-      const err = new IncompleteError(`PDR didn't complete after ${counter} checks`);
-      handleError(err);
-    }
+  return Promise.all(promisedExecutionDescriptions)
+    .then(groupExecutionsByStatus)
+    .then((groupedExecutions) => {
+      const counter = getCounterFromEvent(event) + 1;
+      const exceededLimit = counter >= getLimitFromEvent(event);
 
-    // update the status of each previously running execution
-    function updateStatus(arn) {
-      return StepFunction.getExecution(arn, true).then((r) => {
-        const completed = get(eventToCheck, 'payload.completed', []);
-        const failed = get(eventToCheck, 'payload.failed', []);
-        const running = [];
+      const executionsAllDone = groupedExecutions.running.length === 0;
 
-        r.forEach((sf) => {
-          if (sf.status === 'SUCCEEDED') {
-            completed.push(sf.executionArn);
-          }
-          else if (sf.status === 'FAILED') {
-            const output = get(sf, 'output', '{ "exception": "Workflow Failed" }');
-            failed.push({
-              arn: sf.executionArn,
-              reason: JSON.parse(output).exception
-            });
-          }
-          else if (sf.status === 'ABORTED') {
-            const output = get(sf, 'output', '{ "exception": "Workflow Aborted" }');
-            failed.push({
-              arn: sf.executionArn,
-              reason: JSON.parse(output).exception
-            });
-          }
-          else {
-            running.push(sf.executionArn);
-          }
-        });
+      if (!executionsAllDone && exceededLimit) {
+        throw new IncompleteError(`PDR didn't complete after ${counter} checks`);
+      }
 
-        if (running.length === 0) {
-          isFinished = true;
-          eventToCheck.payload.isFinished = isFinished;
-          eventToCheck.payload.running = running.length;
-          eventToCheck.payload.failed = failed.length;
-          eventToCheck.payload.completed = completed.length;
-        }
-        else {
-          isFinished = false;
-          eventToCheck.payload.isFinished = isFinished;
-          log.info({
-            running: running.length,
-            completed: completed.length,
-            failed: failed.length,
-            counter,
-            limit
-          }, 'latest status');
+      const output = buildOutput(event, groupedExecutions);
+      if (!output.isFinished) logStatus(output);
+      return output;
+    });
+}
+exports.checkPdrStatuses = checkPdrStatuses;
 
-          eventToCheck.payload.counter = counter + 1;
-          eventToCheck.payload.limit = limit;
-          eventToCheck.payload.running = running;
-          eventToCheck.payload.completed = completed;
-          eventToCheck.payload.failed = failed;
-        }
-
-        return Promise.resolve(cb(null, eventToCheck));
-      });
-    }
-
-    return Promise.all(runningExecutions.map(updateStatus))
-      .catch(handleError);
-  }
-
-  return checkStatus(event).catch(handleError);
-};
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(checkPdrStatuses, event, context, callback);
+}
+exports.handler = handler;
