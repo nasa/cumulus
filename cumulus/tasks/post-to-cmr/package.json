@@ -14,17 +14,20 @@
     "access": "public"
   },
   "scripts": {
-    "test": "TEST=true ava tests/*.js --serial --no-color",
+    "test": "env TEST=true ava",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
   },
   "ava": {
+    "files": "tests",
     "babel": "inherit",
     "require": [
       "babel-polyfill",
       "babel-register"
-    ]
+    ],
+    "serial": true,
+    "color": false
   },
   "babel": {
     "presets": [
@@ -40,6 +43,7 @@
   "dependencies": {
     "@cumulus/cmrjs": "^1.0.0-beta.17",
     "@cumulus/common": "^1.0.0-beta.17",
+    "@cumulus/cumulus-message-adapter-js": "0.0.1-beta.2",
     "@cumulus/ingest": "^1.0.0-beta.17",
     "@cumulus/test-data": "^1.0.0-beta.17",
     "babel-core": "^6.25.0",
