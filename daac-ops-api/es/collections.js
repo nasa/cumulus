@@ -79,7 +79,7 @@ class Collection extends BaseSearch {
     const res = await super.query();
 
     // get aggregations for results
-    const names = res.results.map(r => r.name);
+    const names = res.results.map((r) => r.name).filter((name) => (name));
     res.results = await this.getStats(res.results, names);
 
     return res;
