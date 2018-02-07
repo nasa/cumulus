@@ -1,60 +1,112 @@
 'use strict';
 
+const _ = require('lodash');
 const test = require('ava');
 const sinon = require('sinon');
-const { StepFunction } = require('@cumulus/ingest/aws');
-const { IncompleteError } = require('@cumulus/common/errors');
-const { handler } = require('../index');
+const aws = require('@cumulus/common/aws');
+const { checkPdrStatuses } = require('../index');
 
-test.cb('finished pdr status returns immediately', (t) => {
-  const input = {
-    payload: {
-      pdr: { name: 'finished' },
-      isFinished: true
+test('valid output when no running executions', (t) => {
+  const event = {
+    input: {
+      running: []
     }
   };
 
-  handler(input, {}, (e, output) => {
-    t.ifError(e);
-    t.is(typeof output, 'object');
-    t.true(output.payload.isFinished);
-    t.end();
-  });
+  return checkPdrStatuses(event)
+    .then((output) => {
+      const expectedOutput = {
+        isFinished: true,
+        running: [],
+        failed: [],
+        completed: []
+      };
+
+      t.deepEqual(output, expectedOutput);
+    });
 });
 
-test.cb('catch counter over limit error', (t) => {
-  const input = {
-    payload: {
-      pdr: { name: 'over limit' },
-      limit: 1,
-      counter: 1
+test('error thrown when limit exceeded', (t) => {
+  const stubSfnClient = {
+    describeExecution: ({ executionArn }) => ({
+      promise: () => Promise.resolve({
+        status: 'RUNNING',
+        executionArn
+      })
+    })
+  };
+  const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
+
+  const event = {
+    input: {
+      running: ['arn:123'],
+      counter: 2,
+      limit: 3
     }
   };
 
-  handler(input, {}, (e) => {
-    t.true(e instanceof IncompleteError);
-    t.end();
-  });
+  return checkPdrStatuses(event)
+    .then(() => {
+      stub.restore();
+      t.fail();
+    })
+    .catch((err) => {
+      stub.restore();
+      t.is(err.name, 'IncompleteWorkflowError');
+    });
 });
 
-test.cb('check running executions', (t) => {
-  sinon.stub(StepFunction, 'getExecution')
-    .returns(Promise.resolve([{
-      status: 'SUCCEEDED'
-    }]));
+test('returns the correct results in the nominal case', (t) => {
+  const executionStatuses = {
+    'arn:1': 'RUNNING',
+    'arn:2': 'SUCCEEDED',
+    'arn:3': 'FAILED',
+    'arn:4': 'ABORTED'
+  };
 
-  const input = {
-    payload: {
-      pdr: { name: 'completed' },
-      running: ['1']
+  const stubSfnClient = {
+    describeExecution: ({ executionArn }) => ({
+      promise: () => Promise.resolve({
+        executionArn,
+        status: executionStatuses[executionArn]
+      })
+    })
+  };
+  const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
+
+  const event = {
+    input: {
+      running: ['arn:1', 'arn:2', 'arn:3', 'arn:4'],
+      completed: ['arn:5'],
+      failed: [{ arn: 'arn:6', reason: 'OutOfCheese' }],
+      counter: 5,
+      limit: 10
     }
   };
 
-  handler(input, {}, (e, output) => {
-    t.ifError(e);
-    t.is(typeof output, 'object');
-    t.is(output.payload.completed, 1);
-    t.true(output.payload.isFinished);
-    t.end();
-  });
+  return checkPdrStatuses(event)
+    .then((output) => {
+      stub.restore();
+
+      t.false(output.isFinished);
+      t.is(output.counter, 6);
+      t.is(output.limit, 10);
+
+      t.deepEqual(output.running, ['arn:1']);
+      t.deepEqual(output.completed.sort(), ['arn:2', 'arn:5'].sort());
+
+      t.is(output.failed.length, 3);
+      const expectedFailed = [
+        { arn: 'arn:6', reason: 'OutOfCheese' },
+        { arn: 'arn:3', reason: 'Workflow Failed' },
+        { arn: 'arn:4', reason: 'Workflow Aborted' }
+      ];
+      expectedFailed.forEach((expectedItem) => {
+        const matches = (o) => _.isEqual(expectedItem, o); // eslint-disable-line require-jsdoc
+        t.true(
+          _.some(output.failed, matches),
+          `${JSON.stringify(expectedItem)} not found in ${JSON.stringify(output.failed)}`
+        );
+      });
+    });
 });
