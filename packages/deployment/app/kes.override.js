@@ -434,6 +434,28 @@ class UpdatedKes extends Kes {
   }
 
   /**
+   * Determine the version of the cumulus-message-adapter to use
+   *
+   * @returns {Promise.<string>} - the message adapter version
+   */
+  messageAdapterVersion() {
+    if (this.config.message_adapter_version) {
+      return Promise.resolve(this.config.message_adapter_version);
+    }
+    return this.fetchLatestMessageAdapterRelease();
+  }
+
+  /**
+   * The Github URL of the cumulus-message-adapter zip file
+   *
+   * @returns {Promise.<string>} - the URL to fetch the cumulus-message-adapter from
+   */
+  messageAdapterUrl() {
+    return this.messageAdapterVersion()
+      .then((version) => `https://github.com/${this.messageAdapterGitPath}/releases/download/${version}/${this.config.message_adapter_filename}`); // eslint-disable-line max-len
+  }
+
+  /**
    * Determines which release version should be downloaded from
    * cumulus-message-adapter repository and then downloads that file.
    *
@@ -442,27 +464,18 @@ class UpdatedKes extends Kes {
   fetchMessageAdapter() {
     if (!this.config.message_adapter_filename) return Promise.resolve();
 
-    const messageAdapterVersion = this.config.message_adapter_version;
-    const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
     const messageAdapterFilename = this.config.message_adapter_filename;
 
-    const releaseLocation = `${releaseDownloadBaseUrl}/` +
-                            `${messageAdapterVersion}/${messageAdapterFilename}`;
-    let adapterVersion = Promise.resolve(releaseLocation);
-    if (!messageAdapterVersion) {
-      adapterVersion = this.fetchLatestMessageAdapterRelease()
-        .then((latestReleaseVersion) => `${releaseDownloadBaseUrl}/` +
-                                        `${latestReleaseVersion}/${messageAdapterFilename}`);
-    }
+    // Construct message adapter folder names
+    const kesBuildFolder = path.join(this.config.kesFolder, 'build');
 
-    // message adapter folder
-    const folderName = path.basename(messageAdapterFilename, '.zip');
-    const kesFolder = path.join(this.config.kesFolder, 'build');
-    const adapterUnzipPath = path.join(process.cwd(), kesFolder, 'adapter', folderName);
-    const adapterZipPath = path.join(process.cwd(), kesFolder, messageAdapterFilename);
+    const unzipFolderName = path.basename(messageAdapterFilename, '.zip');
+    const adapterUnzipPath = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
-    return adapterVersion
-      .then((location) => this.downloadZipfile(location, adapterZipPath))
+    const adapterZipPath = path.join(process.cwd(), kesBuildFolder, messageAdapterFilename);
+
+    return this.messageAdapterUrl(messageAdapterFilename)
+      .then((url) => this.downloadZipfile(url, adapterZipPath))
       .then(() => this.extractZipFile(adapterZipPath, adapterUnzipPath));
   }
 
