@@ -15,10 +15,16 @@ const mkdirp = require('mkdirp');
  * @param {Hash} payload - Payload from previous task
  * @returns {boolean} true
  */
-async function copyIdx(dirname, payload) {
+const copyIdx = async (dirname, payload) => {
   // Make sure the target directory exists
   if (!fs.existsSync(dirname)) {
-    mkdirp.sync(dirname);
+    try {
+      mkdirp.sync(dirname);
+    }
+    catch (e) {
+      log.error(`copyIdx mkdirp exception ${e}`);
+      throw e;
+    }
   }
 
   for (const p of payload) {
@@ -29,9 +35,9 @@ async function copyIdx(dirname, payload) {
       const basename = path.basename(key);
       const idxFilename = path.join(dirname, basename);
       const outFilename = idxFilename.replace('.tgz', '');
+      log.info(`Downloading ${idxFilename} from S3 ${bucket}/${key}...`);
 
       await aws.downloadS3File(p, idxFilename);
-      log.info(`Downloaded ${idxFilename} from S3 ${bucket}/${key}`);
 
       if (idxFilename.indexOf('.tgz') > 0) {
         log.info(`Decompressing ${idxFilename}...`);
@@ -55,7 +61,7 @@ async function copyIdx(dirname, payload) {
     }
   }
   return true;
-}
+};
 
 /**
  * Task to copy idx file from S3 to EFS.
@@ -100,12 +106,12 @@ module.exports = class CopyIdxFileToS3Task extends Task {
 };
 
 // Testing in Visual Studio Code
-global.__isDebug = true;
+//global.__isDebug = true;
 
-const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
-const local = require('@cumulus/common/local-helpers');
-const localTaskName = 'CopyIdxFromS3';
-const configFile = path.join(__dirname, './test/ast_l1t.yml');
+//const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
+//const local = require('@cumulus/common/local-helpers');
+//const localTaskName = 'CopyIdxFromS3';
+//const configFile = path.join(__dirname, './test/ast_l1t.yml');
 
-local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
-  'AST_L1T_DAY', localTaskName, () => payload, configFile));
+//local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
+//  'AST_L1T_DAY', localTaskName, () => payload, configFile));
