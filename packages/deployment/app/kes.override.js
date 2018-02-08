@@ -473,7 +473,7 @@ class UpdatedKes extends Kes {
    */
   compileCF() {
     // return Promise.resolve();
-    return this.fetchMessageAdapter().then(super.compileCF);
+    return this.fetchMessageAdapter().then(() => super.compileCF());
   }
 
   /**
