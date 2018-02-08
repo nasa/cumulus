@@ -9,12 +9,15 @@ const {
   FtpGranule,
   SftpGranule,
   HttpGranule,
+  S3Granule,
   FtpDiscoverGranules,
   HttpDiscoverGranules,
   SftpDiscoverGranules,
+  S3DiscoverGranules,
   FtpDiscoverAndQueueGranules,
   HttpDiscoverAndQueueGranules,
-  SftpDiscoverAndQueueGranules
+  SftpDiscoverAndQueueGranules,
+  S3DiscoverAndQueueGranules
 } = require('../granule');
 
 /**
@@ -25,14 +28,17 @@ const selectorTypes = [
   { cls: HttpGranule, type: 'ingest', protocol: 'http' },
   { cls: FtpGranule, type: 'ingest', protocol: 'ftp' },
   { cls: SftpGranule, type: 'ingest', protocol: 'sftp' },
+  { cls: S3Granule, type: 'ingest', protocol: 's3' },
   { cls: FtpDiscoverGranules, type: 'discover', protocol: 'ftp' },
   { cls: HttpDiscoverGranules, type: 'discover', protocol: 'http' },
   { cls: HttpDiscoverGranules, type: 'discover', protocol: 'https' },
   { cls: SftpDiscoverGranules, type: 'discover', protocol: 'sftp' },
+  { cls: S3DiscoverGranules, type: 'discover', protocol: 's3' },
   { cls: FtpDiscoverAndQueueGranules, type: 'discover', protocol: 'ftp', queue: true },
   { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'http', queue: true },
   { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'https', queue: true },
-  { cls: SftpDiscoverAndQueueGranules, type: 'discover', protocol: 'sftp', queue: true }
+  { cls: SftpDiscoverAndQueueGranules, type: 'discover', protocol: 'sftp', queue: true },
+  { cls: S3DiscoverAndQueueGranules, type: 'discover', protocol: 's3', queue: true }
 ];
 
 selectorTypes.forEach((item) => {
