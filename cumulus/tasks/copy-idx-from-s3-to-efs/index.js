@@ -18,6 +18,7 @@ const mkdirp = require('mkdirp');
 const copyIdx = async (dirname, payload) => {
   // Make sure the target directory exists
   if (!fs.existsSync(dirname)) {
+<<<<<<< HEAD
     try {
       mkdirp.sync(dirname);
     }
@@ -25,6 +26,9 @@ const copyIdx = async (dirname, payload) => {
       log.error(`copyIdx mkdirp exception ${e}`);
       throw e;
     }
+=======
+    mkdirp.sync(dirname);
+>>>>>>> e1eed3b0f50cde73d0199a55e3fcb879856e609c
   }
 
   for (const p of payload) {
@@ -35,9 +39,15 @@ const copyIdx = async (dirname, payload) => {
       const basename = path.basename(key);
       const idxFilename = path.join(dirname, basename);
       const outFilename = idxFilename.replace('.tgz', '');
+<<<<<<< HEAD
       log.info(`Downloading ${idxFilename} from S3 ${bucket}/${key}...`);
 
       await aws.downloadS3File(p, idxFilename);
+=======
+
+      await aws.downloadS3File(p, idxFilename);
+      log.info(`Downloaded ${idxFilename} from S3 ${bucket}/${key}`);
+>>>>>>> e1eed3b0f50cde73d0199a55e3fcb879856e609c
 
       if (idxFilename.indexOf('.tgz') > 0) {
         log.info(`Decompressing ${idxFilename}...`);
@@ -61,7 +71,11 @@ const copyIdx = async (dirname, payload) => {
     }
   }
   return true;
+<<<<<<< HEAD
 };
+=======
+}
+>>>>>>> e1eed3b0f50cde73d0199a55e3fcb879856e609c
 
 /**
  * Task to copy idx file from S3 to EFS.
@@ -106,10 +120,12 @@ module.exports = class CopyIdxFileToS3Task extends Task {
 };
 
 // Testing in Visual Studio Code
+
 //global.__isDebug = true;
 //const payload = require('@cumulus/test-data/payloads/payload_ast_l1t_ll.json');
 //const local = require('@cumulus/common/local-helpers');
 //const localTaskName = 'CopyIdxFromS3';
 //const configFile = path.join(__dirname, './test/ast_l1t.yml');
+
 //local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
 //  'AST_L1T_DAY', localTaskName, () => payload, configFile));
