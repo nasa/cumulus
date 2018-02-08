@@ -437,34 +437,33 @@ class UpdatedKes extends Kes {
    * Determines which release version should be downloaded from
    * cumulus-message-adapter repository and then downloads that file.
    *
-   * @returns {Promise} returns the path of the extracted message adapter
+   * @returns {Promise} returns the path of the extracted message adapter or an empty response
    */
   fetchMessageAdapter() {
-    if (this.config.message_adapter_filename) {
-      const messageAdapterVersion = this.config.message_adapter_version;
-      const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
-      const messageAdapterFilename = this.config.message_adapter_filename;
+    if (!this.config.message_adapter_filename) return Promise.resolve();
 
-      const releaseLocation = `${releaseDownloadBaseUrl}/` +
-                              `${messageAdapterVersion}/${messageAdapterFilename}`;
-      let adapterVersion = Promise.resolve(releaseLocation);
-      if (!messageAdapterVersion) {
-        adapterVersion = this.fetchLatestMessageAdapterRelease()
-          .then((latestReleaseVersion) => `${releaseDownloadBaseUrl}/` +
-                                          `${latestReleaseVersion}/${messageAdapterFilename}`);
-      }
+    const messageAdapterVersion = this.config.message_adapter_version;
+    const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
+    const messageAdapterFilename = this.config.message_adapter_filename;
 
-      // message adapter folder
-      const folderName = path.basename(messageAdapterFilename, '.zip');
-      const kesFolder = path.join(this.config.kesFolder, 'build');
-      const adapterUnzipPath = path.join(process.cwd(), kesFolder, 'adapter', folderName);
-      const adapterZipPath = path.join(process.cwd(), kesFolder, messageAdapterFilename);
-
-      return adapterVersion
-        .then((location) => this.downloadZipfile(location, adapterZipPath))
-        .then(() => this.extractZipFile(adapterZipPath, adapterUnzipPath));
+    const releaseLocation = `${releaseDownloadBaseUrl}/` +
+                            `${messageAdapterVersion}/${messageAdapterFilename}`;
+    let adapterVersion = Promise.resolve(releaseLocation);
+    if (!messageAdapterVersion) {
+      adapterVersion = this.fetchLatestMessageAdapterRelease()
+        .then((latestReleaseVersion) => `${releaseDownloadBaseUrl}/` +
+                                        `${latestReleaseVersion}/${messageAdapterFilename}`);
     }
-    return Promise.resolve();
+
+    // message adapter folder
+    const folderName = path.basename(messageAdapterFilename, '.zip');
+    const kesFolder = path.join(this.config.kesFolder, 'build');
+    const adapterUnzipPath = path.join(process.cwd(), kesFolder, 'adapter', folderName);
+    const adapterZipPath = path.join(process.cwd(), kesFolder, messageAdapterFilename);
+
+    return adapterVersion
+      .then((location) => this.downloadZipfile(location, adapterZipPath))
+      .then(() => this.extractZipFile(adapterZipPath, adapterUnzipPath));
   }
 
   /**
@@ -474,8 +473,7 @@ class UpdatedKes extends Kes {
    */
   compileCF() {
     // return Promise.resolve();
-    return this.fetchMessageAdapter()
-    .then(() => super.compileCF());
+    return this.fetchMessageAdapter().then(super.compileCF());
   }
 
   /**
