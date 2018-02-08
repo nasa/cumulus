@@ -18,17 +18,17 @@ async function publish(message, finish = false) {
   const topicArn = get(event, 'meta.topic_arn', null);
   let failed = false;
 
+  if ((event.exception && Object.keys(event.exception).length > 0) || event.error) {
+    failed = true;
+    event.meta.status = 'failed';
+  }
+  else {
+    event.meta.status = 'completed';
+  }
+
   if (topicArn) {
     // if this is the sns call at the end of the execution
     if (finish) {
-      if (event.exception || event.error) {
-        failed = true;
-        event.meta.status = 'failed';
-      }
-      else {
-        event.meta.status = 'completed';
-      }
-
       const granuleId = get(event, 'meta.granuleId', null);
       if (granuleId) {
         await StepFunction.setGranuleStatus(granuleId, event);
@@ -43,7 +43,6 @@ async function publish(message, finish = false) {
       TopicArn: topicArn,
       Message: JSON.stringify(event)
     }).promise();
-    return event;
   }
 
   if (failed) {
