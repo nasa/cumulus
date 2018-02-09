@@ -11,7 +11,7 @@ const consumer = require('@cumulus/ingest/consumer');
  * @returns {Promise} - AWS SF Start Execution response
  */
 function dispatch(message) {
-  const input = { ...message.Body };
+  const input = Object.assign({}, message.Body);
 
   input.cumulus_meta.createdAt = Date.now();
 
