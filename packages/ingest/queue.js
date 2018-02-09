@@ -50,7 +50,7 @@ async function queuePdr(event, pdr) {
   const queueUrl = event.config.queues.startSF;
   const message = await getTemplate(event);
 
-  message.input = { pdr };
+  message.payload = { pdr };
   message.cumulus_meta.execution_name = uuidv4();
 
   return sendSQSMessage(queueUrl, message);
@@ -68,7 +68,6 @@ async function queuePdr(event, pdr) {
 **/
 async function queueGranule(event, granule) {
   const queueUrl = event.config.queues.startSF;
-  const collectionId = event.config.collection.name;
   const pdr = event.input.pdr;
 
   const message = await getTemplate(event);
