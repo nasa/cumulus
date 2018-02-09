@@ -1,5 +1,6 @@
 {
   "name": "@cumulus/copy-idx-from-s3-to-efs",
+  "private": true,
   "version": "1.0.0",
   "description": "Task to copy idx file from S3 to EFS for OnEarth 2.0.",
   "main": "index.js",
