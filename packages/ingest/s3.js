@@ -13,11 +13,11 @@ module.exports.s3Mixin = superclass => class extends superclass {
    * @return {Promise}
    * @private
    */
-  async sync(apath, bucket, key, filename) {
+  async sync(filepath, bucket, key, filename) {
     const fullKey = path.join(key, filename);
     const params = {
       Bucket: bucket,
-      CopySource: apath.replace(/^s3:\//, ''),
+      CopySource: filepath.replace(/^s3:\//, ''),
       Key: fullKey,
       ACL: 'private'
     };
@@ -52,10 +52,10 @@ module.exports.s3Mixin = superclass => class extends superclass {
    * @return {Promise}
    * @private
    */
-  async download(apath, filename) {
+  async download(filepath, filename) {
     // let's stream to file
     const tempFile = path.join(os.tmpdir(), filename);
-    const params = aws.parseS3Uri(`${apath.replace(/\/+$/, '')}/${filename}`);
+    const params = aws.parseS3Uri(`${filepath.replace(/\/+$/, '')}/${filename}`);
     return aws.downloadS3File(params, tempFile);
   }
 
