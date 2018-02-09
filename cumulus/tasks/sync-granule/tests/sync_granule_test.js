@@ -1,5 +1,7 @@
 'use strict';
 
+const os = require('os');
+const fs = require('fs');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
@@ -10,7 +12,7 @@ const testUtils = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
 
 const { syncGranule } = require('../index');
-/*
+
 test('error when provider info is missing', (t) => {
   const newPayload = Object.assign({}, payload);
   delete newPayload.config.provider;
@@ -60,7 +62,7 @@ test('download Granule from FTP endpoint', (t) => {
       else throw e;
     });
 });
-*/
+
 test('download Granule from HTTP endpoint', (t) => {
   const provider = {
     id: 'MODAPS',
@@ -107,15 +109,31 @@ test('download Granule from S3 endpoint', (t) => {
   const newPayload = Object.assign({}, payload);
   newPayload.config.provider = provider;
 
-  // path must start with s3://
+  // update path to start with s3://, upload the granule files to s3 for testing,
+  // update information of test files
   for (let i = 0; i < newPayload.input.granules.length; i++) {
     let granule = newPayload.input.granules[i];
+
     for (let j = 0; j < granule.files.length; j++) {
       newPayload.input.granules[i].files[j].path =
-        newPayload.input.granules[i].files[j].path.replace(/^\//,'s3://');
+        newPayload.input.granules[i].files[j].path.replace(/^\//, 's3://');
+
+      newPayload.input.granules[i].files[j].fileSize = 9;
+      newPayload.input.granules[i].files[j].checksumType = 'CKSUM';
+      newPayload.input.granules[i].files[j].checksumValue = 275331806;
+
+      let f = newPayload.input.granules[i].files[j];
+      const params = aws.parseS3Uri(`${f.path.replace(/\/+$/, '')}/${f.name}`);
+      aws.s3().createBucket({ Bucket: params.Bucket }).promise()
+        .then(() => aws.s3().putObject({
+          Bucket: params.Bucket,
+          Key: params.Key,
+          Body: 'test data'
+        }).promise()).then();
     }
   }
-  newPayload.input.pdr.path = newPayload.input.pdr.path.replace(/^\//,'s3://');
+
+  newPayload.input.pdr.path = newPayload.input.pdr.path.replace(/^\//, 's3://');
 
   const protectedBucketName = testUtils.randomString();
   const internalBucketName = testUtils.randomString();
@@ -137,14 +155,13 @@ test('download Granule from S3 endpoint', (t) => {
       return aws.recursivelyDeleteS3Bucket(internalBucketName);
     })
     .catch((e) => {
-      console.log(e);
       if (e instanceof errors.RemoteResourceError) {
         t.pass('ignoring this test. Test server seems to be down');
       }
       else throw e;
     });
 });
-/*
+
 test('download Granule with checksum in file', (t) => {
   const provider = {
     id: 'MODAPS',
@@ -190,7 +207,7 @@ test('download Granule with checksum in file', (t) => {
           else throw e;
         }));
 });
-*/
+
 // // TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
 // // test.cb('replace duplicate Granule', (t) => {
 // //   const provider = {
