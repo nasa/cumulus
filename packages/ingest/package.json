@@ -60,7 +60,8 @@
     "pump": "^1.0.2",
     "simplecrawler": "^1.1.4",
     "ssh2": "^0.5.5",
-    "url-join": "^1.0.0"
+    "url-join": "^1.0.0",
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",

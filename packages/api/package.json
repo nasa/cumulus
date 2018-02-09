@@ -35,7 +35,6 @@
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
     "basic-auth": "^1.1.0",
-    "crypto-random-string": "^1.0.0",
     "elasticsearch": "^13.2.0",
     "form-data": "^2.1.2",
     "got": "^6.7.1",
@@ -52,6 +51,7 @@
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
     "randomstring": "^1.1.5",
+    "uuid": "^3.2.1",
     "webpack": "^1.12.13"
   },
   "devDependencies": {
