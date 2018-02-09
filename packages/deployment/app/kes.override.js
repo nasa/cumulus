@@ -3,16 +3,19 @@
 
 const { Kes, Lambda } = require('kes');
 const pLimit = require('p-limit');
-const fs = require('fs');
+const fs = require('fs-extra');
+const path = require('path');
 const omit = require('lodash.omit');
 const forge = require('node-forge');
 const utils = require('kes').utils;
 const request = require('request');
+const extract = require('extract-zip');
 
 /**
  * Generates public/private key pairs
+ *
  * @function generateKeyPair
- * @return {object} a forge pki object
+ * @returns {Object} a forge pki object
  */
 function generateKeyPair() {
   const rsa = forge.pki.rsa;
@@ -27,9 +30,10 @@ function findOutputValue(outputs, key) {
 /**
  * Creates the base Cumulus message template used to construct a Cumulus
  * message for Cumulus StepFunctions
- * @param  {object} config  Kes config object
- * @param  {object} outputs List of CloudFormations Output key and values
- * @return {object} a base Cumulus message template
+ *
+ * @param  {Object} config - Kes config object
+ * @param  {Object} outputs - List of CloudFormations Output key and values
+ * @returns {Object} a base Cumulus message template
  */
 function baseInputTemplate(config, outputs) {
   // get cmr password from outputs
@@ -57,7 +61,7 @@ function baseInputTemplate(config, outputs) {
   // add queues
   if (config.sqs) {
     template.meta.queues = {};
-    const queueArns = outputs.filter(o => o.OutputKey.includes('SQSOutput'));
+    const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
 
     queueArns.forEach((queue) => {
       template.meta.queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
@@ -69,15 +73,16 @@ function baseInputTemplate(config, outputs) {
 
 /**
  * generates a Cumulus message Template for a given step function
- * @param  {object} template base message template
- * @param  {object} sf StepFunction definition (part of kes config)
- * @param  {object} sfConfigs Sled configs for the StepFunction (part of kes config)
- * @param  {string} wfArn StepFunction Arn
- * @return {object} stepFunction template
+ *
+ * @param  {Object} template - base message template
+ * @param  {Object} sf - StepFunction definition (part of kes config)
+ * @param  {Object} sfConfigs - Sled configs for the StepFunction (part of kes config)
+ * @param  {string} wfArn - StepFunction Arn
+ * @returns {Object} stepFunction template
  */
 function buildStepFunctionMessageTemplate(template, sf, sfConfigs, wfArn) {
   // add workflow configs for each step function step
-  Object.keys(sf.definition.States).forEach(name => {
+  Object.keys(sf.definition.States).forEach((name) => {
     template.workflow_config[name] = sfConfigs[sf.name][name];
   });
 
@@ -94,9 +99,9 @@ function buildStepFunctionMessageTemplate(template, sf, sfConfigs, wfArn) {
  * template
  *
  * @function generateInputTemplates
- * @param  {object} config Kes Config Object
- * @param  {array} outputs Array of CloudFormation outputs
- * @return {array} list of templates
+ * @param  {Object} config - Kes Config Object
+ * @param  {Array} outputs - Array of CloudFormation outputs
+ * @returns {Array} list of templates
  */
 function generateInputTemplates(config, outputs) {
   const templates = [];
@@ -108,7 +113,9 @@ function generateInputTemplates(config, outputs) {
 
       // get workflow arn
       const wfArn = findOutputValue(outputs, `${sf.name}StateMachine`);
-      templates.push(buildStepFunctionMessageTemplate(msg, sf, config.stepFunctions.configs, wfArn));
+      templates.push(buildStepFunctionMessageTemplate(
+        msg, sf, config.stepFunctions.configs, wfArn
+      ));
     });
   }
   return templates;
@@ -119,8 +126,8 @@ function generateInputTemplates(config, outputs) {
  * list is used by the Cumulus Dashboard to show the workflows.
  *
  * @function generateWorkflowsList
- * @param  {object} config Kes Config object
- * @return {array} Array of objects that include workflow name, template s3 uri and definition
+ * @param  {Object} config - Kes Config object
+ * @returns {Array} Array of objects that include workflow name, template s3 uri and definition
  */
 function generateWorkflowsList(config) {
   const workflows = [];
@@ -149,7 +156,7 @@ class UpdatedLambda extends Lambda {
    * the hash of the source code and updates the lambda object with
    * the hash, local and remote locations of the code
    *
-   * @param {Object} lambda the lambda object
+   * @param {Object} lambda - the lambda object
    * @returns {Promise} returns the updated lambda object
    */
   zipLambda(lambda) {
@@ -161,7 +168,8 @@ class UpdatedLambda extends Lambda {
     const fileList = [lambda.source];
 
     if (lambda.useMessageAdapter) {
-      fileList.push(this.config.message_adapter_filename);
+      const kesFolder = path.join(this.config.kesFolder, 'build', 'adapter');
+      fileList.push(kesFolder);
       msg += ' and injecting message adapter';
     }
 
@@ -210,8 +218,8 @@ class UpdatedKes extends Kes {
    * Restart all active tasks in the clusters of a deployed
    * cloudformation
    *
-   * @param  {object} config Kes Config object
-   * @return {Promise}
+   * @param  {Object} config - Kes Config object
+   * @returns {Promise} undefined
    */
   async restartECSTasks(config) {
     const ecs = new this.AWS.ECS();
@@ -226,7 +234,7 @@ class UpdatedKes extends Kes {
         else break;
       }
 
-      const clusters = resources.filter(item => {
+      const clusters = resources.filter((item) => {
         if (item.ResourceType === 'AWS::ECS::Cluster') return true;
         return false;
       });
@@ -251,9 +259,9 @@ class UpdatedKes extends Kes {
   /**
    * Uploads the generated private and public key pair
    *
-   * @param  {string} bucket the bucket to upload the keys to
-   * @param  {string} key    the key (folder) to use for the uploaded files
-   * @return {Promise} aws promise of the upload to s3
+   * @param  {string} bucket - the bucket to upload the keys to
+   * @param  {string} key - the key (folder) to use for the uploaded files
+   * @returns {Promise} aws promise of the upload to s3
    */
   uploadKeyPair(bucket, key) {
     const pki = forge.pki;
@@ -287,7 +295,7 @@ class UpdatedKes extends Kes {
    * Checks if the private/public key exists. If not
    * generate and upload them
    *
-   * @return {Promise}
+   * @returns {Promise} undefined
    */
   crypto() {
     const key = `${this.stack}/crypto`;
@@ -310,6 +318,8 @@ class UpdatedKes extends Kes {
    * that has to be passed to the message adapter. this method, looks for
    * any value that starts with a "$" and put the whole value
    * inside "{{ }}""
+   *
+   * @returns {Object} updated config object
    */
   cleanStepFunctionDefinition() {
     const sFconfigs = {};
@@ -317,7 +327,7 @@ class UpdatedKes extends Kes {
 
     const addCurly = (config) => {
       if (config) {
-        Object.keys(config).forEach(n => {
+        Object.keys(config).forEach((n) => {
           if (typeof config[n] === 'object') {
             config[n] = addCurly(config[n]);
           }
@@ -351,22 +361,23 @@ class UpdatedKes extends Kes {
   /**
    * `downloadZipfile` downloads zipfile from remote location and stores on disk
    *
-   * @param {String} fileUrl - URL file location
-   * @param {String} localFilename - Where to store file locally
+   * @param {string} fileUrl - URL file location
+   * @param {string} localFilename - Where to store file locally
+   * @returns {Promise} undefinied
    */
   downloadZipfile(fileUrl, localFilename) {
     const file = fs.createWriteStream(localFilename);
     const options = {
       uri: fileUrl,
       headers: {
-        'Accept': 'application/octet-stream',
+        Accept: 'application/octet-stream',
         'Content-Type': 'application/zip',
         'Content-Transfer-Encoding': 'binary'
       }
     };
 
     return new Promise((resolve, reject) => {
-      request(options, (err, response, body) => {
+      request(options, (err) => {
         if (err) reject(err);
       })
       .pipe(file);
@@ -379,18 +390,37 @@ class UpdatedKes extends Kes {
         reject(err);
       });
     });
-  };
+  }
+
+  /**
+   * unzip a given zip file to the given destination
+   *
+   * @param {string} filename - the zip file to extract
+   * @param {string} dst - the destination to extract the file
+   * @returns {Promise} the path of the extracted zip
+   */
+  extractZipFile(filename, dst) {
+    // create the destination folder it doesn't exist
+    fs.mkdirpSync(dst);
+    return new Promise((resolve, reject) => {
+      extract(filename, { dir: dst }, (err) => {
+        if (err) return reject(err);
+        console.log(`${filename} extracted to ${dst}`);
+        return resolve(dst);
+      });
+    });
+  }
 
   /**
    * Fetches the latest release version of the cumulus message adapter
    *
-   * @return {Promise} Promise resolution is string of latest github release, e.g. 'v0.0.1'
+   * @returns {Promise} Promise resolution is string of latest github release, e.g. 'v0.0.1'
    */
   fetchLatestMessageAdapterRelease() {
     const options = {
       url: `https://api.github.com/repos/${this.messageAdapterGitPath}/releases/latest`,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'User-Agent': '@cumulus/deployment' // Required by Github API
       }
     };
@@ -401,35 +431,68 @@ class UpdatedKes extends Kes {
         resolve(JSON.parse(body).tag_name);
       });
     });
-  };
+  }
+
+  /**
+   * Determine the version of the cumulus-message-adapter to use
+   *
+   * @returns {Promise.<string>} - the message adapter version
+   */
+  messageAdapterVersion() {
+    if (this.config.message_adapter_version) {
+      return Promise.resolve(this.config.message_adapter_version);
+    }
+    return this.fetchLatestMessageAdapterRelease();
+  }
+
+  /**
+   * The Github URL of the cumulus-message-adapter zip file
+   *
+   * @returns {Promise.<string>} - the URL to fetch the cumulus-message-adapter from
+   */
+  messageAdapterUrl() {
+    return this.messageAdapterVersion()
+      .then((version) => `https://github.com/${this.messageAdapterGitPath}/releases/download/${version}/${this.config.message_adapter_filename}`); // eslint-disable-line max-len
+  }
 
   /**
    * Determines which release version should be downloaded from
    * cumulus-message-adapter repository and then downloads that file.
    *
-   * @return {Promise}
+   * @returns {Promise} returns the path of the extracted message adapter or an empty response
    */
   fetchMessageAdapter() {
-    const messageAdapterVersion = this.config.message_adapter_version;
-    const releaseDownloadBaseUrl = `https://github.com/${this.messageAdapterGitPath}/releases/download`;
+    if (!this.config.message_adapter_filename) return Promise.resolve();
+
     const messageAdapterFilename = this.config.message_adapter_filename;
 
-    if (!messageAdapterVersion) {
-      return this.fetchLatestMessageAdapterRelease()
-        .then((latestReleaseVersion) => {
-          const releaseLocation = `${releaseDownloadBaseUrl}/${latestReleaseVersion}/${messageAdapterFilename}`;
-          return this.downloadZipfile(releaseLocation, messageAdapterFilename);
-        });
-    } else {
-      const releaseLocation = `${releaseDownloadBaseUrl}/${messageAdapterVersion}/${messageAdapterFilename}`;
-      return this.downloadZipfile(releaseLocation, messageAdapterFilename);
-    }
-  };
+    // Construct message adapter folder names
+    const kesBuildFolder = path.join(this.config.kesFolder, 'build');
+
+    const unzipFolderName = path.basename(messageAdapterFilename, '.zip');
+    const adapterUnzipPath = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
+
+    const adapterZipPath = path.join(process.cwd(), kesBuildFolder, messageAdapterFilename);
+
+    return this.messageAdapterUrl(messageAdapterFilename)
+      .then((url) => this.downloadZipfile(url, adapterZipPath))
+      .then(() => this.extractZipFile(adapterZipPath, adapterUnzipPath));
+  }
+
+  /**
+   * Override CF compilation to inject Sled
+   *
+   * @returns {Promise} returns the promise of an AWS response object
+   */
+  compileCF() {
+    // return Promise.resolve();
+    return this.fetchMessageAdapter().then(() => super.compileCF());
+  }
 
   /**
    * Override opsStack method.
    *
-   * @return {Promise}
+   * @returns {Promise} aws response
    */
   opsStack() {
     // check if public and private key are generated
@@ -444,7 +507,6 @@ class UpdatedKes extends Kes {
     this.cleanStepFunctionDefinition();
 
     return this.crypto(this.bucket, this.stack)
-      .then(() => this.fetchMessageAdapter())
       .then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
