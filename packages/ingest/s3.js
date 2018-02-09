@@ -61,9 +61,9 @@ module.exports.s3Mixin = superclass => class extends superclass {
         if (err) return reject(err);
         fs.writeFile(tempFile, data.Body, (err) => {
           if (err) return reject(err);
+          return resolve(tempFile);
         });
       });
-      return resolve(tempFile);
     });
   }
 
@@ -98,10 +98,8 @@ module.exports.s3Mixin = superclass => class extends superclass {
   async list() {
     let files = [];
     const s3params = aws.parseS3Uri(this.path);
-    //TODO remove MaxKeys
     let params = {
       Bucket: s3params.Bucket,
-      MaxKeys: 3,
       Prefix: s3params.Key || '/',
       FetchOwner: true
     };
