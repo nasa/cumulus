@@ -50,7 +50,6 @@
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
-    "randomstring": "^1.1.5",
     "uuid": "^3.2.1",
     "webpack": "^1.12.13"
   },
