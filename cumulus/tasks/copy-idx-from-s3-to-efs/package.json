@@ -1,27 +1,24 @@
 {
-  "name": "@common/gitc-discover-cmr-granules",
+  "name": "@cumulus/copy-idx-from-s3-to-efs",
   "version": "1.0.0",
-  "description": "Discovers granules from the CMR",
+  "description": "Task to copy idx file from S3 to EFS for OnEarth 2.0.",
   "main": "index.js",
+  "private": true,
   "keywords": [
-    "GIBS"
+    "GIBS",
+    "INGEST"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
-  "scripts": {
-    "eslint": "eslint -c ../../../.eslintrc.json *.js",
-    "test": "ava test/*.js",
-    "local": "node index.js | pino"
-  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
-  "dependencies": {
-    "@cumulus/common": "^1.0.0",
-    "moment": "^2.19.2",
-    "node-fetch": "^1.6.1",
-    "parse-duration": "^0.1.1"
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "ava test/*.js"
   },
   "ava": {
     "babel": "inherit",
@@ -37,12 +34,19 @@
       "@ava/transform-test-files"
     ]
   },
+  "dependencies": {
+    "@cumulus/common": "^1.0.0",
+    "@cumulus/test-data": "^1.0.0"
+  },
   "devDependencies": {
-    "sinon": "^2.0.0-pre.5",
-    "ava": "^0.21.0",
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1"
+    "babel-preset-es2017": "^6.24.1",
+    "sinon": "^2.0.0-pre.5",
+    "ava": "^0.21.0",
+    "webpack": "^1.12.13"
   }
 }
