@@ -13,12 +13,12 @@ module.exports.s3Mixin = superclass => class extends superclass {
    * @return {Promise}
    * @private
    */
-  async sync(_path, bucket, key, filename) {
-    const source = _path.replace(/^s3:\//, '');
+  async sync(apath, bucket, key, filename) {
+    const fullKey = path.join(key, filename);
     const params = {
       Bucket: bucket,
-      CopySource: _path.replace(/^s3:\//, ''),
-      Key: path.join(key, filename),
+      CopySource: apath.replace(/^s3:\//, ''),
+      Key: fullKey,
       ACL: 'private'
     };
     await aws.s3().copyObject(params).promise();
@@ -52,40 +52,30 @@ module.exports.s3Mixin = superclass => class extends superclass {
    * @return {Promise}
    * @private
    */
-  async download(_path, filename) {
+  async download(apath, filename) {
     // let's stream to file
     const tempFile = path.join(os.tmpdir(), filename);
-    const params = aws.parseS3Uri(`${_path.replace(/\/+$/, '')}/${filename}`);
-    return new Promise((resolve, reject) => {
-      aws.s3().getObject(params, (err, data) => {
-        if (err) return reject(err);
-        fs.writeFile(tempFile, data.Body, (err) => {
-          if (err) return reject(err);
-          return resolve(tempFile);
-        });
-      });
-    });
+    const params = aws.parseS3Uri(`${apath.replace(/\/+$/, '')}/${filename}`);
+    return aws.downloadS3File(params, tempFile);
   }
 
-  async _list(params, files) {
+  async listfile(params, files) {
     return new Promise((resolve, reject) => {
       aws.s3().listObjectsV2(params, (err, data) => {
         if (err) return reject(err);
-        let result = data.Contents.map(d => ({
+        const result = data.Contents.map(d => ({
           name: path.basename(d.Key),
           size: d.Size,
           time: d.LastModified,
           owner: d.Owner.DisplayName,
           path: `s3://${data.Name}/${path.dirname(d.Key)}/`
         }));
-        files = files.concat(result);
+        const totalfiles = files.concat(result);
         if (data.IsTruncated) {
           params.ContinuationToken = data.NextContinuationToken;
-          return this._list(params, files).then((r) => {
-            return resolve(r);
-          }).catch(e => reject(e));
+          return this.listfile(params, totalfiles).then(resolve).catch(reject);
         }
-        else return resolve(files);
+        else return resolve(totalfiles);
       });
     });
   }
@@ -95,14 +85,13 @@ module.exports.s3Mixin = superclass => class extends superclass {
    * @return {Promise}
    * @private
    */
-  async list() {
-    let files = [];
+  list() {
     const s3params = aws.parseS3Uri(this.path);
-    let params = {
+    const params = {
       Bucket: s3params.Bucket,
       Prefix: s3params.Key || '/',
       FetchOwner: true
     };
-    return this._list(params, files);
+    return this.listfile(params, []);
   }
 };
