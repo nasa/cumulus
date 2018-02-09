@@ -1,0 +1,17 @@
+{
+    "payload": [
+        {
+            "Bucket":"gibs-pq-public",
+            "Key":"archive/geographic/aster_l1t/mrfs/AST_L1T_LL/AST_L1T_LL20150101022759_.mrf"
+          },
+          {
+            "Bucket":"gibs-pq-public",
+            "Key":"archive/geographic/aster_l1t/mrfs/AST_L1T_LL/AST_L1T_LL20150101022759_.ppg"
+          },
+          {
+            "Bucket":"gibs-pq-public",
+            "Key":"archive/geographic/aster_l1t/mrfs/AST_L1T_LL/AST_L1T_LL20150101022759_.idx.tgz"
+          }
+    ]
+}
+  
