@@ -1,79 +1,60 @@
-/* eslint-disable require-yield, no-param-reassign */
 'use strict';
 
-const get = require('lodash.get');
-const AWS = require('aws-sdk');
+const uuidv4 = require('uuid/v4');
+const { sfn } = require('@cumulus/common/aws');
 const consumer = require('@cumulus/ingest/consumer');
 
 /**
- * Starts a new stepfunction witht the given payload
+ * Starts a new stepfunction with the given payload
  *
- * @param  {string} arn Step Function's arn
- * @param  {string} name name for the Step Function's execution
- * @param  {object} payload Execution's Payload
- * @return {Promise} AWS response
+ * @param {Object} message - incoming queue message
+ * @returns {Promise} - AWS SF Start Execution response
  */
-function dispatch(arn, name, payload) {
-  // add creation time
-  payload.cumulus_meta.createdAt = Date.now();
+function dispatch(message) {
+  const input = { ...message.Body };
 
-  const stepfunctions = new AWS.StepFunctions();
-  const params = {
-    stateMachineArn: arn,
-    input: JSON.stringify(payload)
-  };
+  input.cumulus_meta.createdAt = Date.now();
 
-  if (payload.cumulus_meta.execution_name) {
-    params.name = name;
+  if (!input.cumulus_meta.execution_name) {
+    input.cumulus_meta.execution_name = uuidv4();
   }
 
-  return stepfunctions.startExecution(params).promise();
+  return sfn().startExecution({
+    stateMachineArn: message.Body.cumulus_meta.state_machine,
+    input: JSON.stringify(input),
+    name: input.cumulus_meta.execution_name
+  }).promise();
 }
 
 /**
- * Extract relevant data from the incoming queue message
- * and pass it to the dispatch function
+ * This is an SQS Queue consumer.
  *
- * @param  {object} message incoming queue message
- * @return {Promise}
+ * It reads messages from a given sqs queue based on the configuration provided
+ * in the event object
+ *
+ * The default is to read 1 message from a given queueUrl and quit after 120
+ * seconds
+ *
+ * @param {Object} event - lambda input message
+ * @param {string} event.queueUrl - AWS SQS url
+ * @param {string} event.messageLimit - number of messages to read from SQS on
+ *   each query (default 1)
+ * @param {string} event.timeLimit - how many seconds the lambda function will
+ *   remain active and query the queue (defatul 120 s)
+ * @param {Object} _context - lambda context
+ * @param {function} cb - lambda callback
+ * @returns {undefined} - undefind
  */
-function prepareDispatch(message) {
-  return dispatch(
-    message.Body.cumulus_meta.state_machine,
-    message.Body.cumulus_meta.execution_name,
-    message.Body
-  );
-}
+function handler(event, _context, cb) {
+  const messageLimit = event.messageLimit || 1;
+  const timeLimit = event.timeLimit || 120;
 
-/**
- * This is a sqs Queue consumer.
- * It reads messages from a given sqs queue based on
- * the configuration provided in the event object
- *
- * The default is to read 1 message from a given queueUrl
- * and quit after 120 seconds
- *
- * @param  {object} event   lambda input message
- * @param  {string} event.queueUrl AWS SQS url
- * @param  {string} event.messageLimit number of messages to read from
- *     SQS on each query (default 1)
- * @param  {string} event.timeLimit how many seconds the lambda
- *     function will remain active and query the queue (defatul 120 s)
- * @param  {object} context lambda context
- * @param  {function} cb    lambda callback
- */
-function handler(event, context, cb) {
-  const queueUrl = get(event, 'queueUrl', null);
-  const messageLimit = get(event, 'messageLimit', 1);
-  const timeLimit = get(event, 'timeLimit', 120);
-
-  if (queueUrl) {
-    const con = new consumer.Consume(queueUrl, messageLimit, timeLimit);
-    con.read(prepareDispatch).then(r => cb(null, r)).catch(e => cb(e));
+  if (event.queueUrl) {
+    const con = new consumer.Consume(event.queueUrl, messageLimit, timeLimit);
+    con.read(dispatch)
+      .then((r) => cb(null, r))
+      .catch(cb);
   }
-  else {
-    cb(new Error('queueUrl is missing'));
-  }
+  else cb(new Error('queueUrl is missing'));
 }
-
 module.exports = handler;
