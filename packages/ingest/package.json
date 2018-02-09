@@ -3,12 +3,13 @@
   "version": "1.0.0-beta.17",
   "description": "Ingest utilities",
   "scripts": {
-    "test": "ava test/*.js"
+    "test": "env TEST=true ava"
   },
   "publishConfig": {
     "access": "public"
   },
   "ava": {
+    "files": "test",
     "babel": "inherit",
     "require": [
       "babel-polyfill",
