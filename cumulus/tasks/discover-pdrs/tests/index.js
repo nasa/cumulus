@@ -222,3 +222,63 @@ test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
       return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
     });
 });
+
+test('test pdr discovery with S3 assuming some PDRs are new', (t) => {
+  const provider = {
+    id: 'MODAPS',
+    protocol: 's3'
+  };
+
+  const newPayload = Object.assign({}, input);
+  newPayload.config.provider = provider;
+  newPayload.config.useQueue = false;
+  newPayload.config.collection.provider_path = 's3://MODAPS/test-data/pdrs';
+  newPayload.input = {};
+
+  // upload test data to s3
+  const pdrs = [
+    'MOD09GQ.PDR',
+    'MYD13A1_5_grans.PDR',
+    'this_is_not_PDR_file',
+    'PDN.ID1611071307.PDR',
+    'PDN.ID1611081200.PDR'
+  ];
+  pdrs.forEach((pdr) => {
+    const params = aws.parseS3Uri(`${newPayload.config.collection.provider_path}/${pdr}`);
+    aws.s3().createBucket({ Bucket: params.Bucket }).promise()
+      .then(() => aws.s3().putObject({
+        Bucket: params.Bucket,
+        Key: params.Key,
+        Body: 'test data'
+      }).promise());
+  });
+
+  const internalBucketName = testUtils.randomString();
+  newPayload.config.buckets.internal = internalBucketName;
+  return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+    .then(() => aws.s3().putObject({
+      Bucket: internalBucketName,
+      Key: 'lpdaac-cumulus-phaseIII/pdrs/PDN.ID1611071307.PDR',
+      Body: 'PDN.ID1611071307.PDR'
+    }).promise())
+    .then(() => discoverPdrs(newPayload, {}))
+    .then((output) => {
+      t.is(output.pdrs.length, 3);
+      const names = output.pdrs.map(p => p.name);
+      t.true(names.includes('MOD09GQ.PDR'));
+      t.true(names.includes('MYD13A1_5_grans.PDR'));
+      t.true(names.includes('PDN.ID1611081200.PDR'));
+      return aws.recursivelyDeleteS3Bucket(internalBucketName);
+    })
+    .catch((e) => {
+      if (e instanceof RemoteResourceError) {
+        t.pass('ignoring this test. Test server seems to be down');
+        return aws.recursivelyDeleteS3Bucket(internalBucketName);
+      }
+      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
+    })
+    .finally(() => {
+      const params = aws.parseS3Uri(newPayload.config.collection.provider_path);
+      aws.recursivelyDeleteS3Bucket(params.Bucket);
+    });
+});
