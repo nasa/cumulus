@@ -223,7 +223,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
     });
 });
 
-test('test pdr discovery with S3 assuming some PDRs are new', (t) => {
+test('test pdr discovery with S3 assuming some PDRs are new', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 's3'
@@ -232,7 +232,8 @@ test('test pdr discovery with S3 assuming some PDRs are new', (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.provider = provider;
   newPayload.config.useQueue = false;
-  newPayload.config.collection.provider_path = 's3://MODAPS/test-data/pdrs';
+  const pdrBucketName = testUtils.randomString();
+  newPayload.config.collection.provider_path = `s3://${pdrBucketName}/test-data/pdrs`;
   newPayload.input = {};
 
   // upload test data to s3
@@ -243,15 +244,18 @@ test('test pdr discovery with S3 assuming some PDRs are new', (t) => {
     'PDN.ID1611071307.PDR',
     'PDN.ID1611081200.PDR'
   ];
-  pdrs.forEach((pdr) => {
-    const params = aws.parseS3Uri(`${newPayload.config.collection.provider_path}/${pdr}`);
-    aws.s3().createBucket({ Bucket: params.Bucket }).promise()
-      .then(() => aws.s3().putObject({
-        Bucket: params.Bucket,
-        Key: params.Key,
-        Body: 'test data'
-      }).promise());
-  });
+
+  await aws.s3().createBucket({ Bucket: pdrBucketName}).promise()
+    .then(() => {
+      pdrs.forEach((pdr) => {
+        const params = aws.parseS3Uri(`${newPayload.config.collection.provider_path}/${pdr}`);
+        aws.s3().putObject({
+          Bucket: params.Bucket,
+          Key: params.Key,
+          Body: 'test data'
+        }).promise();
+      });
+    });
 
   const internalBucketName = testUtils.randomString();
   newPayload.config.buckets.internal = internalBucketName;
@@ -268,16 +272,16 @@ test('test pdr discovery with S3 assuming some PDRs are new', (t) => {
       t.true(names.includes('MOD09GQ.PDR'));
       t.true(names.includes('MYD13A1_5_grans.PDR'));
       t.true(names.includes('PDN.ID1611081200.PDR'));
-      return aws.recursivelyDeleteS3Bucket(internalBucketName);
+      return t.pass();
     })
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-        return aws.recursivelyDeleteS3Bucket(internalBucketName);
+        return t.pass('ignoring this test. Test server seems to be down');
       }
-      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
+      return t.fail;
     })
     .finally(() => {
+      aws.recursivelyDeleteS3Bucket(internalBucketName);
       const params = aws.parseS3Uri(newPayload.config.collection.provider_path);
       aws.recursivelyDeleteS3Bucket(params.Bucket);
     });

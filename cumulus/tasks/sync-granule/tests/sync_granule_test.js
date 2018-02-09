@@ -1,7 +1,5 @@
 'use strict';
 
-const os = require('os');
-const fs = require('fs');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
@@ -100,7 +98,7 @@ test('download Granule from HTTP endpoint', (t) => {
     });
 });
 
-test('download Granule from S3 endpoint', (t) => {
+test('download Granule from S3 endpoint', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 's3'
@@ -111,6 +109,7 @@ test('download Granule from S3 endpoint', (t) => {
 
   // update path to start with s3://, upload the granule files to s3 for testing,
   // update information of test files
+  let testBuckets = [];
   for (let i = 0; i < newPayload.input.granules.length; i++) {
     let granule = newPayload.input.granules[i];
 
@@ -124,12 +123,13 @@ test('download Granule from S3 endpoint', (t) => {
 
       let f = newPayload.input.granules[i].files[j];
       const params = aws.parseS3Uri(`${f.path.replace(/\/+$/, '')}/${f.name}`);
-      aws.s3().createBucket({ Bucket: params.Bucket }).promise()
+      testBuckets.push(params.Bucket);
+      await aws.s3().createBucket({ Bucket: params.Bucket }).promise()
         .then(() => aws.s3().putObject({
           Bucket: params.Bucket,
           Key: params.Key,
           Body: 'test data'
-        }).promise()).then();
+        }).promise());
     }
   }
 
@@ -152,13 +152,17 @@ test('download Granule from S3 endpoint', (t) => {
         `s3://${protectedBucketName}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
       );
 
-      return aws.recursivelyDeleteS3Bucket(internalBucketName);
+      return t.pass();
     })
     .catch((e) => {
       if (e instanceof errors.RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
+        return t.pass('ignoring this test. Test server seems to be down');
       }
       else throw e;
+    })
+    .finally(() => {
+      aws.recursivelyDeleteS3Bucket(internalBucketName);
+      testBuckets.forEach((bucket) => {aws.recursivelyDeleteS3Bucket(bucket)});
     });
 });
 
