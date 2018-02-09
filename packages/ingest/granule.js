@@ -72,7 +72,10 @@ class Discover {
         }
       }
 
-      return file;
+      // if collection regex matched, the following will be true
+      if (file.granuleId && file.bucket) {
+        return file;
+      }
     }
     return false;
   }
