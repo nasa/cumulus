@@ -40,6 +40,12 @@ sf2snsEnd:
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
 
+kinesisConsumer:
+  handler: index.kinesisConsumer
+  timeout: 100
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/'
+
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
   handler: index.scheduler

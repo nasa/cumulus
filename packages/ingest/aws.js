@@ -21,9 +21,9 @@ const log = logger.child({ file: 'ingest/aws.js' });
  * @returns {object} the options for AWS service classes
  */
 
-function getEndpoint(local = false, port = 8000) {
+function getEndpoint(local = false, port = 4569) {
   const args = {};
-  if (process.env.IS_LOCAL === 'true' || local) {
+  if (true) {//(process.env.IS_LOCAL === 'true' || local) {
     // use dummy access info
     AWS.config.update({
       accessKeyId: 'myKeyId',

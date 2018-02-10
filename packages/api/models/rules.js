@@ -87,18 +87,18 @@ class Rule extends Manager {
       throw err;
     }
 
-    const payload = await Rule.buildPayload(item);
+    //const payload = await Rule.buildPayload(item);
 
-    switch (item.rule.type) {
-      case 'onetime':
-        await invoke(process.env.invoke, payload);
-        break;
-      case 'scheduled':
-        await this.addRule(item, payload);
-        break;
-      default:
-        throw new Error('Type not supported');
-    }
+    // switch (item.rule.type) {
+    //   case 'onetime':
+    //     await invoke(process.env.invoke, payload);
+    //     break;
+    //   case 'scheduled':
+    //     await this.addRule(item, payload);
+    //     break;
+    //   default:
+    //     throw new Error('Type not supported');
+    // }
 
     // if recurring set the cloudwatch rule
 
