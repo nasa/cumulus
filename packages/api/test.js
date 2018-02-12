@@ -78,9 +78,9 @@ test('it should look up subscription-type rules which are associated with the co
   const createResult = model.create(rule1Params);
 
   return createResult.then(() => {
-    return getRules(event).then((result) => {
-      t.is(result.length, 1);
-    })
+    return getRules(event)
+  }).then((result) => {
+    t.is(result.length, 1);
   });
 });
 
@@ -88,9 +88,9 @@ test('it should not return rules which are disabled', t => {
   const createResult = Promise.all([model.create(rule1Params), model.create(disabledRuleParams)]);
 
   return createResult.then(() => {
-    return getRules(event).then((result) => {
-      t.is(result.length, 1);
-    })
+    return getRules(event)
+  }).then((result) => {
+    t.is(result.length, 1);
   });
 });
 
@@ -98,14 +98,36 @@ test('it should create a onetime rule for each associated workflow', t => {
   const createResult = Promise.all([model.create(rule1Params), model.create(rule2Params)]);
 
   return createResult.then((rules) => {
-    return createOneTimeRules(rules).then((result) => {
-      result.forEach((rule, idx) => {
-        t.is(rule.workflow, `test-workflow-${idx+1}`);
-        t.is(rule.rule.type, 'onetime');
-      });
+    return createOneTimeRules(rules)
+  }).then((result) => {
+    result.forEach((rule, idx) => {
+      t.is(rule.workflow, `test-workflow-${idx+1}`);
+      t.is(rule.rule.type, 'onetime');
     });
   });
 });
+
+// test('it should create a onetime rule for each associated workflow', t => {
+//   const createResult = Promise.all([model.create(rule1Params), model.create(rule2Params)]);
+
+//   return createResult.then((rules) => {
+//     return handler(event).then(() => {
+//       return model.scan({
+//         collection: {
+//           name: testCollectionName
+//         },
+//         rule: {type: 'onetime'}
+//       })
+//       .then((results) => {
+//         t.is(results.Items.length, 2);
+//         results.Items.forEach((rule, idx) => {
+//           t.is(rule.workflow, `test-workflow-${idx+1}`);
+//           t.is(rule.rule.type, 'onetime');
+//         });
+//       })
+//     });
+//   });
+// });
 
 test('it should throw an error if message does not include a collection', t => {
   const invalidMessage = {};
