@@ -1,10 +1,12 @@
 /* eslint-disable require-yield */
 'use strict';
+const ajv = new require('ajv')();
 
 const manager = require('../models/base');
 const models = require('../models');
 const model = new models.Rule();
 model.tableName = 'rule';
+const messageSchema = require('./kinesis-consumer-event-schema.json');
 
 async function getRules(event) {
   const collection = event.collection;
@@ -33,6 +35,11 @@ async function createOneTimeRules(subscriptionRules) {
   return await Promise.all(oneTimeRulePromises);
 }
 
+async function validateMessage(event) {
+  const validate = ajv.compile(messageSchema);
+  return await validate(event);
+}
+
 function handler(event, context, cb) {
   return event;
 }
@@ -40,5 +47,6 @@ function handler(event, context, cb) {
 module.exports = {
   createOneTimeRules,
   getRules,
-  handler
+  handler,
+  validateMessage
 };

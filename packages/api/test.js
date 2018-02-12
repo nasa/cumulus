@@ -3,7 +3,12 @@
 import test from 'ava';
 const sinon = require('sinon');
 
-const { createOneTimeRules, getRules, handler } = require('./lambdas/kinesis-consumer');
+const {
+  createOneTimeRules,
+  getRules,
+  handler,
+  validateMessage
+} = require('./lambdas/kinesis-consumer');
 const manager = require('./models/base');
 const models = require('./models');
 const Rule = require('./models/rules');
@@ -103,4 +108,29 @@ test('it should create a onetime rule for each associated workflow', t => {
   });
 });
 
-test.todo('it should validate message format');
+test('it should throw an error if message does not include a collection', t => {
+  const invalidMessage = {};
+  return validateMessage(invalidMessage)
+    .catch((err) => {
+      t.is(err.message, 'validation failed');
+      t.is(err.errors[0].message, 'should have required property \'collection\'');
+    });
+});
+
+test('it should throw an error if message collection has wrong data type', t => {
+  const invalidMessage = {collection: {}};
+  return validateMessage(invalidMessage)
+    .catch((err) => {
+      t.is(err.message, 'validation failed');
+      t.is(err.errors[0].dataPath, '.collection');
+      t.is(err.errors[0].message, 'should be string');
+    });
+});
+
+test('it should not throw if message is', t => {
+  const validMessage = {collection: 'confection-collection'};
+  return validateMessage(validMessage)
+    .then((result) => {
+      t.is(result, validMessage);
+    });
+});
