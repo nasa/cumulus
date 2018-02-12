@@ -6,29 +6,75 @@ const { StepFunction } = require('@cumulus/ingest/aws');
 const errors = require('@cumulus/common/errors');
 
 /**
+ * Determines if there was a valid exception in the input message
+ *
+ * @param {Object} event - aws event object
+ * @returns {boolean} true if there was an exception, false otherwise
+ */
+function eventFailed(event) {
+  if (event.exception) {
+    if (typeof event.exception === 'object') {
+      // this is needed to avoid flagging cases like "exeption: {}" or "exection: 'none'"
+      if (Object.keys(event.exception).length > 0) {
+        return true;
+      }
+    }
+  }
+  // Error and error keys are not part of the cumulus message
+  // and if they appear in the message something is seriouly wrong
+  else if (event.Error || event.error) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * if the cumulus message shows that a previous step failed,
+ * this function extract the error message from the cumulus message
+ * and fail the function with that information. This ensures that the
+ * Step Function workflow fails with the correct error info
+ *
+ * @param {Object} event - aws event object
+ * @returns {undefined} throws an error and does not return anything
+ */
+function makeLambdaFunctionFail(event) {
+  const error = get(event, 'exception.Error', get(event, 'error.Error'));
+  const cause = get(event, 'exception.Cause', get(event, 'error.Cause'));
+  if (error) {
+    if (errors[error]) {
+      throw new errors[error](cause);
+    }
+    else if (error === 'TypeError') {
+      throw new TypeError(cause);
+    }
+    throw new Error(cause);
+  }
+
+  throw new Error('Step Function failed for an unknown reason.');
+}
+
+/**
  * Publishes incoming Cumulus Message in its entirety to
  * a given SNS topic
  *
  * @param  {Object} message - Cumulus message
- * @param  {boolean} finish - indicates if the message belongs to the end of a stepFunction
+ * @param  {boolean} finished - indicates if the message belongs to the end of a stepFunction
  * @returns {Promise} AWS SNS response
  */
-async function publish(message, finish = false) {
+async function publish(message, finished = false) {
   const event = await StepFunction.pullEvent(message);
   const topicArn = get(event, 'meta.topic_arn', null);
-  let failed = false;
-
-  if ((event.exception && Object.keys(event.exception).length > 0) || event.error) {
-    failed = true;
-    event.meta.status = 'failed';
-  }
-  else {
-    event.meta.status = 'completed';
-  }
+  const failed = eventFailed(event);
 
   if (topicArn) {
     // if this is the sns call at the end of the execution
-    if (finish) {
+    if (finished) {
+      if (failed) {
+        event.meta.status = 'failed';
+      }
+      else {
+        event.meta.status = 'completed';
+      }
       const granuleId = get(event, 'meta.granuleId', null);
       if (granuleId) {
         await StepFunction.setGranuleStatus(granuleId, event);
@@ -46,19 +92,7 @@ async function publish(message, finish = false) {
   }
 
   if (failed) {
-    const error = get(event, 'exception.Error');
-    const cause = get(event, 'exception.Cause');
-    if (error) {
-      if (errors[error]) {
-        throw new errors[error](cause);
-      }
-      else if (error === 'TypeError') {
-        throw new TypeError(cause);
-      }
-      throw new Error(cause);
-    }
-
-    throw new Error('Step Function failed for an unknown reason.');
+    makeLambdaFunctionFail(event);
   }
 
   return event;
