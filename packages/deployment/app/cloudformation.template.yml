@@ -163,12 +163,12 @@ Resources:
 {{/each}}
 
 {{#each stepFunctions}}
-  {{../stackNameNoDash}}{{name}}StateMachine:
+  {{../stackNameNoDash}}{{@key}}StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
         Fn::Sub: |
-          {{{ToJson definition}}}
+          {{{ToJson this}}}
 
       RoleArn: {{../iams.stepRoleArn}}
 
@@ -857,9 +857,9 @@ Outputs:
     Value: {{apiStage}}
   
 {{#each stepFunctions}}
-  {{name}}StateMachine:
+  {{@key}}StateMachine:
     Value:
-      Ref: {{../stackNameNoDash}}{{name}}StateMachine
+      Ref: {{../stackNameNoDash}}{{@key}}StateMachine
 {{/each}}
 
 {{#each sqs}}

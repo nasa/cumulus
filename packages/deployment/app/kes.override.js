@@ -65,22 +65,24 @@ function fixCumulusMessageSyntax(cumulusConfig) {
  * @returns {Object} updated kes config object
  */
 function extractCumulusConfigFromSF(config) {
-  const cumulusConfigs = {};
+  const workflowConfigs = {};
 
   // loop through the message adapter config of each step of
   // the step function, add curly brackets to values
   // with dollar sign and remove config key from the
   // defintion, otherwise CloudFormation will be mad
   // at us.
-  config.stepFunctions.forEach((sf) => {
-    cumulusConfigs[sf.name] = {};
-    Object.keys(sf.definition.States).forEach((n) => {
-      cumulusConfigs[sf.name][n] = fixCumulusMessageSyntax(sf.definition.States[n].CumulusConfig);
-      sf.definition.States[n] = omit(sf.definition.States[n], ['CumulusConfig']);
+  Object.keys(config.stepFunctions).forEach((name) => {
+    const sf = config.stepFunctions[name];
+    workflowConfigs[name] = {};
+    Object.keys(sf.States).forEach((n) => {
+      workflowConfigs[name][n] = fixCumulusMessageSyntax(sf.States[n].CumulusConfig);
+      sf.States[n] = omit(sf.States[n], ['CumulusConfig']);
     });
+    config.stepFunctions[name] = sf;
   });
 
-  config.stepFunctions.cumulusConfigs = cumulusConfigs;
+  config.workflowConfigs = workflowConfigs;
   return config;
 }
 
@@ -149,20 +151,22 @@ function baseInputTemplate(config, outputs) {
  * generates a Cumulus message Template for a given step function
  *
  * @param  {Object} template - base message template
+ * @param  {string} name - the StepFunction name
  * @param  {Object} sf - StepFunction definition (part of kes config)
- * @param  {Object} sfConfigs - Sled configs for the StepFunction (part of kes config)
+ * @param  {Object} sfConfig - Cumulus message adapter config for the
+ *                             StepFunction (part of kes config)
  * @param  {string} wfArn - StepFunction Arn
  * @returns {Object} stepFunction template
  */
-function buildStepFunctionMessageTemplate(template, sf, sfConfigs, wfArn) {
+function buildStepFunctionMessageTemplate(template, name, sf, sfConfig, wfArn) {
   // add workflow configs for each step function step
-  Object.keys(sf.definition.States).forEach((name) => {
-    template.workflow_config[name] = sfConfigs[sf.name][name];
+  Object.keys(sf.States).forEach((state) => {
+    template.workflow_config[state] = sfConfig[state];
   });
 
   // update cumulus_meta for each workflow message tempalte
   template.cumulus_meta.state_machine = wfArn;
-  template.cumulus_meta.workflow_name = sf.name;
+  template.meta.workflow_name = name;
 
   return template;
 }
@@ -182,13 +186,14 @@ function generateInputTemplates(config, outputs) {
 
   // generate a output template for each workflow
   if (config.stepFunctions) {
-    config.stepFunctions.forEach((sf) => {
+    Object.keys(config.stepFunctions).forEach((name) => {
+      const sf = config.stepFunctions[name];
       const msg = baseInputTemplate(config, outputs);
 
       // get workflow arn
-      const wfArn = findOutputValue(outputs, `${sf.name}StateMachine`);
+      const wfArn = findOutputValue(outputs, `${name}StateMachine`);
       templates.push(buildStepFunctionMessageTemplate(
-        msg, sf, config.stepFunctions.cumulusConfigs, wfArn
+        msg, name, sf, config.workflowConfigs[name], wfArn
       ));
     });
   }
@@ -206,11 +211,11 @@ function generateInputTemplates(config, outputs) {
 function generateWorkflowsList(config) {
   const workflows = [];
   if (config.stepFunctions) {
-    config.stepFunctions.forEach((sf) => {
+    Object.keys(config.stepFunctions).forEach((name) => {
       workflows.push({
-        name: sf.name,
-        template: `s3://${config.buckets.internal}/${config.stackName}/workflows/${sf.name}.json`,
-        definition: sf.definition
+        name: name,
+        template: `s3://${config.buckets.internal}/${config.stackName}/workflows/${name}.json`,
+        definition: config.stepFunctions[name]
       });
     });
 
@@ -576,7 +581,7 @@ class UpdatedKes extends Kes {
         console.log('Uploading Workflow Input Templates');
         const uploads = workflowInputs.map((w) => limit(
           () => {
-            const workflowName = w.cumulus_meta.workflow_name;
+            const workflowName = w.meta.workflow_name;
             const key = `${stackName}/workflows/${workflowName}.json`;
             return this.uploadToS3(
               this.bucket,
@@ -614,4 +619,5 @@ class UpdatedKes extends Kes {
 // we have to add other functions as properties of the kes
 // class to allow testing them with ava
 UpdatedKes.fixCumulusMessageSyntax = fixCumulusMessageSyntax;
+UpdatedKes.extractCumulusConfigFromSF = extractCumulusConfigFromSF;
 module.exports = UpdatedKes;
