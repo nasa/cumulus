@@ -4,9 +4,12 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
-const logger = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 
-const log = logger.child({ file: 'sync-granule/index.js' });
+// const log = logger.child({
+//   sender: 'sync-granule',
+//   timestamp: Date.now(),
+//   executions: process.env.EXECUTIONS });
 
 /**
  * Ingest a list of granules
@@ -56,6 +59,8 @@ exports.syncGranule = function syncGranule(event) {
   const config = event.config;
   const input = event.input;
 
+  log.info('This is the log message.');
+
   if (!config.provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
     log.error(err);
@@ -98,5 +103,16 @@ exports.syncGranule = function syncGranule(event) {
  * @returns {undefined} - does not return a value
  */
 exports.handler = function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(syncGranule, event, context, callback);
+  cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, callback);
 };
+
+const { justLocalRun } = require('@cumulus/common/local-helpers');
+justLocalRun(() => {
+  const p = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
+  // or whatever file you're using.
+
+  process.env.EXECUTIONS = p.config.cumulus_meta.execution_name; //would be set in m adapter handler
+  process.env.SENDER = 'sync-granule'; //would be set in m adapter handler
+
+  exports.syncGranule(p).then(r => console.log(r));
+});
