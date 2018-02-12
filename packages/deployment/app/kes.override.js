@@ -86,6 +86,17 @@ function extractCumulusConfigFromSF(config) {
   return config;
 }
 
+/**
+ * Returns the OutputValue of a Cloudformation Outputs
+ *
+ * @param {Object} outputs - list of CloudFormation Outputs 
+ * @param {string} key - the key to return the value of
+ *
+ * @returns {string} the output value
+ */
+function findOutputValue(outputs, key) {
+  return outputs.find((o) => (o.OutputKey === key)).OutputValue;
+}
 
 /**
  * Generates public/private key pairs
@@ -99,8 +110,70 @@ function generateKeyPair() {
   return rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
 }
 
-function findOutputValue(outputs, key) {
-  return outputs.find((o) => (o.OutputKey === key)).OutputValue;
+/**
+ * Genrates private/public keys and Upload them to a given bucket
+ *
+ * @param {string} bucket - the bucket to upload the keys to
+ * @param {string} key - the key (folder) to use for the uploaded files
+ * @param {Object} s3 - an instance of the AWS S3 class
+ * @returns {Promise} undefined
+ */
+async function uploadKeyPair(bucket, key, s3) {
+  const pki = forge.pki;
+  const keyPair = generateKeyPair();
+  console.log('Keys Generated');
+
+  // upload the private key
+  const privateKey = pki.privateKeyToPem(keyPair.privateKey);
+  const params1 = {
+    Bucket: bucket,
+    Key: `${key}/private.pem`,
+    ACL: 'private',
+    Body: privateKey
+  };
+
+  // upload the public key
+  const publicKey = pki.publicKeyToPem(keyPair.publicKey);
+  const params2 = {
+    Bucket: bucket,
+    Key: `${key}/public.pub`,
+    ACL: 'private',
+    Body: publicKey
+  };
+
+  await s3.putObject(params1).promise();
+  await s3.putObject(params2).promise();
+
+  console.log('keys uploaded to S3');
+}
+
+/**
+ * Checks if the private/public key exists. If not, it
+ * generates and uploads them
+ *
+ * @param {string} stack - name of the stack
+ * @param {string} bucket - the bucket to upload the keys to
+ * @param {Object} s3 - an instance of AWS S3 class
+ * @returns {Promise} undefined
+ */
+async function crypto(stack, bucket, s3) {
+  const key = `${stack}/crypto`;
+
+  // check if files are generated
+  try {
+    await s3.headObject({
+      Key: `${key}/public.pub`,
+      Bucket: bucket
+    }).promise();
+
+    await s3.headObject({
+      Key: `${key}/public.pub`,
+      Bucket: bucket
+    }).promise();
+  }
+  catch (e) {
+    await uploadKeyPair(bucket, key, s3);
+  }
 }
 
 /**
@@ -335,61 +408,7 @@ class UpdatedKes extends Kes {
     }
   }
 
-  /**
-   * Uploads the generated private and public key pair
-   *
-   * @param  {string} bucket - the bucket to upload the keys to
-   * @param  {string} key - the key (folder) to use for the uploaded files
-   * @returns {Promise} aws promise of the upload to s3
-   */
-  uploadKeyPair(bucket, key) {
-    const pki = forge.pki;
-    const keyPair = generateKeyPair();
-    console.log('Keys Generated');
 
-    // upload the private key
-    const privateKey = pki.privateKeyToPem(keyPair.privateKey);
-    const params1 = {
-      Bucket: bucket,
-      Key: `${key}/private.pem`,
-      ACL: 'private',
-      Body: privateKey
-    };
-
-    // upload the public key
-    const publicKey = pki.publicKeyToPem(keyPair.publicKey);
-    const params2 = {
-      Bucket: bucket,
-      Key: `${key}/public.pub`,
-      ACL: 'private',
-      Body: publicKey
-    };
-
-    return this.s3.putObject(params1).promise()
-      .then(() => this.s3.putObject(params2).promise())
-      .then(() => console.log('keys uploaded to S3'));
-  }
-
-  /**
-   * Checks if the private/public key exists. If not
-   * generate and upload them
-   *
-   * @returns {Promise} undefined
-   */
-  crypto() {
-    const key = `${this.stack}/crypto`;
-
-    // check if files are generated
-    return this.s3.headObject({
-      Key: `${key}/public.pub`,
-      Bucket: this.bucket
-    }).promise()
-      .then(() => this.s3.headObject({
-        Key: `${key}/public.pub`,
-        Bucket: this.bucket
-      }).promise())
-      .catch(() => this.uploadKeyPair(this.bucket, key));
-  }
 
   /**
    * `downloadZipfile` downloads zipfile from remote location and stores on disk
@@ -539,7 +558,7 @@ class UpdatedKes extends Kes {
     // this is needed to prevent stepfunction deployment from crashing
     this.config = extractCumulusConfigFromSF(this.config);
 
-    return this.crypto(this.bucket, this.stack)
+    return crypto(this.bucket, this.stack, this.s3)
       .then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
