@@ -1,7 +1,7 @@
 'use strict';
 
 import { queuePdr } from '@cumulus/ingest/queue';
-import log from '@cumulus/ingest/log';
+const log = require('@cumulus/common/log');
 
 /**
 * Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
