@@ -10,7 +10,12 @@ module.exports.s3Mixin = superclass => class extends superclass {
 
   /**
    * Downloads a given url and upload to a given S3 location
-   * @return {Promise}
+   *
+   * @param {string} filepath - the locatio of the file to be uploaded
+   * @param {string} bucket - the S3 bucket to upload to
+   * @param {string} key - the base path of the S3 key
+   * @param {string} filename - the filename to be uploaded
+   * @returns {Promise} a promise
    * @private
    */
   async sync(filepath, bucket, key, filename) {
@@ -49,8 +54,10 @@ module.exports.s3Mixin = superclass => class extends superclass {
   /**
    * Downloads the file to disk, difference with sync is that
    * this method involves no uploading to S3
-   * @return {Promise}
-   * @private
+   *
+   * @param {string} filepath - the path of the file to be downloaded
+   * @param {string} filename - the name of the file to be downloaded
+   * @returns {Promise} a promise
    */
   async download(filepath, filename) {
     // let's stream to file
@@ -59,11 +66,18 @@ module.exports.s3Mixin = superclass => class extends superclass {
     return aws.downloadS3File(params, tempFile);
   }
 
-  async listfile(params, files) {
+  /**
+   * recursively list files from a S3 location
+   *
+   * @param {*} params - s3 request parameters
+   * @param {*} files - files already retrieved
+   * @returns {*} - list of files
+   */
+  async listfiles(params, files) {
     return new Promise((resolve, reject) => {
       aws.s3().listObjectsV2(params, (err, data) => {
         if (err) return reject(err);
-        const result = data.Contents.map(d => ({
+        const result = data.Contents.map((d) => ({
           name: path.basename(d.Key),
           size: d.Size,
           time: d.LastModified,
@@ -72,17 +86,19 @@ module.exports.s3Mixin = superclass => class extends superclass {
         }));
         const totalfiles = files.concat(result);
         if (data.IsTruncated) {
-          params.ContinuationToken = data.NextContinuationToken;
-          return this.listfile(params, totalfiles).then(resolve).catch(reject);
+          const newParams = Object.assign({}, params);
+          newParams.ContinuationToken = data.NextContinuationToken;
+          return this.listfiles(newParams, totalfiles).then(resolve).catch(reject);
         }
-        else return resolve(totalfiles);
+        return resolve(totalfiles);
       });
     });
   }
 
   /**
    * List all PDR files from a given endpoint
-   * @return {Promise}
+   *
+   * @returns {Promise} a promise
    * @private
    */
   list() {
@@ -92,6 +108,6 @@ module.exports.s3Mixin = superclass => class extends superclass {
       Prefix: s3params.Key || '/',
       FetchOwner: true
     };
-    return this.listfile(params, []);
+    return this.listfiles(params, []);
   }
 };
