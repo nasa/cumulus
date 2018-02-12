@@ -73,6 +73,12 @@ class Manager {
     }).promise();
   }
 
+  static async describeTable(params) {
+    const endpoint = getEndpoint();
+    const dynamodb = new AWS.DynamoDB(endpoint);
+    return await dynamodb.describeTable(params).promise();
+  }
+
   /**
    * constructor of Manager class
    *
