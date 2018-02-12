@@ -87,25 +87,23 @@ class Rule extends Manager {
       throw err;
     }
 
-    //const payload = await Rule.buildPayload(item);
+    const payload = await Rule.buildPayload(item);
 
-    // switch (item.rule.type) {
-    //   case 'onetime':
-    //     await invoke(process.env.invoke, payload);
-    //     break;
-    //   case 'scheduled':
-    //     await this.addRule(item, payload);
-    //     break;
-    //   default:
-    //     throw new Error('Type not supported');
-    // }
-
-    // if recurring set the cloudwatch rule
-
-    // TODO: implement subscription
-
-    // if onetime and enabled launch lambda function
-
+    switch (item.rule.type) {
+      case 'onetime':
+        await invoke(process.env.invoke, payload);
+        break;
+      case 'scheduled':
+        await this.addRule(item, payload);
+        break;
+      case 'subscription':
+        // TODO: CUMULUS-226
+        // - Should create an event source for the kinesis-consumer lambda task
+        // - Shouls require a kinesis ARN
+        break;
+      default:
+        throw new Error('Type not supported');
+    }
 
     // save
     return super.create(item);

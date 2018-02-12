@@ -1,22 +1,47 @@
 'use strict';
 
 import test from 'ava';
+const sinon = require('sinon');
 
-const kinesisConsumer = require('./lambdas/kinesis-consumer');
+const { createOneTimeRules, getRules, handler } = require('./lambdas/kinesis-consumer');
 const manager = require('./models/base');
 const models = require('./models');
+const Rule = require('./models/rules');
 const model = new models.Rule();
 const tableName = 'rule';
 model.tableName = tableName;
 const ruleName = 'testRule';
+const testCollectionName = 'test-collection';
 
-const ruleTableParams = {
-  name: 'name',
-  type: 'S',
-  schema: 'HASH'
+// TODO: This should look like a CNM
+const event = {
+  collection: testCollectionName
 };
 
+const commonRuleParams = {
+  name: ruleName,
+  collection: {
+    name: testCollectionName,
+    version: '0.0.0'
+  },
+  rule: {
+    type: 'subscription'
+  },
+  state: 'ENABLED',
+};
+
+const rule1Params = Object.assign({}, commonRuleParams, {workflow: 'test-workflow-1'});
+const rule2Params = Object.assign({}, commonRuleParams, {workflow: 'test-workflow-2'});
+
 test.before(async t => {
+  sinon.stub(Rule, 'buildPayload').resolves(true);
+
+  const ruleTableParams = {
+    name: 'name',
+    type: 'S',
+    schema: 'HASH'
+  };
+
   await manager.describeTable({TableName: tableName})
     .catch((err) => {
       if (err.name === 'ResourceNotFoundException') {
@@ -41,29 +66,29 @@ test.after(async t => {
     });
 });
 
-test('my passing test', t => {
-  const createResult = model.create({
-    name: ruleName,
-    workflow: 'test-workflow',
-    collection: {
-      name: 'test-collection',
-      version: '0.0.0'
-    },
-    rule: {
-      type: 'scheduled'
-    },
-    state: 'DISABLED',
-  });
+// TODO - should also find some rules which should not be discovered
+test('it should look up subscription-type rules which are associated with the collection', t => {
+  const createResult = model.create(rule1Params);
 
   return createResult.then(() => {
-    return model.get({name: ruleName}).then((isFound) => {
-      t.is(isFound.name, ruleName);
+    return getRules(event).then((result) => {
+      t.is(result.length, 1);
+    })
+  });
+});
+
+test('it should create a onetime rule for each associated workflow', t => {
+  const createResult = Promise.all([model.create(rule1Params), model.create(rule2Params)]);
+
+  return createResult.then((rules) => {
+    return createOneTimeRules(rules).then((result) => {
+      result.forEach((rule, idx) => {
+        t.is(rule.workflow, `test-workflow-${idx+1}`);
+        t.is(rule.rule.type, 'onetime');
+      });
     });
   });
 });
 
 test.todo('it should validate message format');
-
-test.todo('it should look up subscription-type rules which are associated with the collection');
-
-test.todo('it should create a onetime rule per subscription-type rule for each associated workflow');
+test.todo('it should not return rules which are disabled');
