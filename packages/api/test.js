@@ -18,15 +18,9 @@ const ruleTableParams = {
 
 test.before(async t => {
   await manager.describeTable({TableName: tableName})
-    .then((data) => {
-      return data;
-    })
     .catch((err) => {
       if (err.name === 'ResourceNotFoundException') {
-        console.log('creating table');
-        return manager.createTable(tableName, ruleTableParams).then((result) => {
-          return result;
-        });
+        return manager.createTable(tableName, ruleTableParams);
       } else {
         throw err;
       }
@@ -36,10 +30,7 @@ test.before(async t => {
 test.after(async t => {
   await manager.describeTable({TableName: tableName})
     .then((data) => {
-      console.log('deleting table');
-      return manager.deleteTable(tableName).then((result) => {
-        return result;
-      });
+      return manager.deleteTable(tableName);
     })
     .catch((err) => {
       if (err.name === 'ResourceNotFoundException') {
@@ -50,7 +41,7 @@ test.after(async t => {
     });
 });
 
-test('my passing test', async t => {
+test('my passing test', t => {
   const createResult = model.create({
     name: ruleName,
     workflow: 'test-workflow',
@@ -64,15 +55,11 @@ test('my passing test', async t => {
     state: 'DISABLED',
   });
 
-  await manager.describeTable({TableName: tableName})
-    .then((result) => {
-      console.log(result);
-    })
-  // return createResult.then((result) => {
-  //   return model.get({name: ruleName}).then((isFound) => {
-  //     t.is(isFound.name, ruleName);
-  //   });
-  // });
+  return createResult.then(() => {
+    return model.get({name: ruleName}).then((isFound) => {
+      t.is(isFound.name, ruleName);
+    });
+  });
 });
 
 test.todo('it should validate message format');
