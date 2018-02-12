@@ -7,18 +7,33 @@
  * @param {string} level - type of log (info, error)
  * @returns {JSON} - the JSON to be logged
  */
-function log(message, level) {
+function log(level, args) {
   const executions = process.env.EXECUTIONS; //set in handler from cumulus_meta
   const sender = process.env.SENDER; //set in handler from AWS context
   const time = new Date();
+  var message = '';
 
   const output = {
     executions: executions,
     timestamp: time.toISOString(),
-    msg: message,
     sender: sender,
     level: level
   };
+  console.log(args);
+  if (args.length === 1) message = args[0];
+  else {
+    for (const arg of args) {
+      if ((typeof arg) === 'string') message += arg;
+      else {
+        for (const key in arg) {
+          output[key] = arg[key];
+        }
+      }
+    }
+  }
+
+  output.message = message;
+
   if (level === 'info') console.log(output);
   else console.err(output);
 }
@@ -29,8 +44,8 @@ function log(message, level) {
  * @param {string} message - Message of log
  * @returns {JSON} - the JSON to be logged
  */
-function info(message) {
-  return log(message, 'info');
+function info(...args) {
+  return log('info', args);
 }
 
 /**
@@ -39,8 +54,8 @@ function info(message) {
  * @param {Object} message - Error to log
  * @returns {JSON} - the JSON to be logged
  */
-function error(message) {
-  log(message, 'error');
+function error(...args) {
+  log('error', args);
 }
 
 module.exports.info = info;
