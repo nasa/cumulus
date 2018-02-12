@@ -9,7 +9,7 @@ const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const testPayload = require('@cumulus/test-data/payloads/modis/cmr.json');
-const log = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 
 /**
  * The output returned by Cumulus-py has a broken payload
