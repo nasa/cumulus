@@ -32,6 +32,10 @@ const commonRuleParams = {
 
 const rule1Params = Object.assign({}, commonRuleParams, {workflow: 'test-workflow-1'});
 const rule2Params = Object.assign({}, commonRuleParams, {workflow: 'test-workflow-2'});
+const disabledRuleParams = Object.assign({}, commonRuleParams, {
+  workflow: 'test-workflow-1',
+  state: 'DISABLED'
+});
 
 test.before(async t => {
   sinon.stub(Rule, 'buildPayload').resolves(true);
@@ -66,9 +70,18 @@ test.after(async t => {
     });
 });
 
-// TODO - should also find some rules which should not be discovered
 test('it should look up subscription-type rules which are associated with the collection', t => {
   const createResult = model.create(rule1Params);
+
+  return createResult.then(() => {
+    return getRules(event).then((result) => {
+      t.is(result.length, 1);
+    })
+  });
+});
+
+test('it should not return rules which are disabled', t => {
+  const createResult = Promise.all([model.create(rule1Params), model.create(disabledRuleParams)]);
 
   return createResult.then(() => {
     return getRules(event).then((result) => {
@@ -91,4 +104,3 @@ test('it should create a onetime rule for each associated workflow', t => {
 });
 
 test.todo('it should validate message format');
-test.todo('it should not return rules which are disabled');
