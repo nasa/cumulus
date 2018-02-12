@@ -1,36 +1,47 @@
 'use strict';
 
-const tagged = (log, tag, thisObj) =>
-  log.bind(thisObj || console, `[${tag}]`);
+/**
+ * Logs the stuff in the format we decided on
+ *
+ * @param {string} message - Message of log
+ * @param {string} level - type of log (info, error)
+ * @returns {JSON} - the JSON to be logged
+ */
+function log(message, level) {
+  const executions = process.env.EXECUTIONS; //set in handler from cumulus_meta
+  const sender = process.env.SENDER; //set in handler from AWS context
+  const time = new Date();
 
-const use = (log, error = null) =>
-  Object.assign({}, module.exports, {
-    log: log,
-    info: tagged(log, 'INFO'),
-    warn: tagged(log, 'WARN'),
-    debug: tagged(log, 'DEBUG'),
-    error: tagged(error || log, 'ERROR')
-  });
+  const output = {
+    executions: executions,
+    timestamp: time.toISOString(),
+    msg: message,
+    sender: sender,
+    level: level
+  };
+  if (level === 'info') console.log(output);
+  else console.err(output);
+}
 
-const logs = use(console.log, console.error); // eslint-disable-line no-console
-module.exports = Object.assign({}, logs);
+/**
+ * Logs the message
+ *
+ * @param {string} message - Message of log
+ * @returns {JSON} - the JSON to be logged
+ */
+function info(message) {
+  return log(message, 'info');
+}
 
-const reset = () => {
-  Object.assign(module.exports, logs);
-};
+/**
+ * Logs the error
+ *
+ * @param {Object} message - Error to log
+ * @returns {JSON} - the JSON to be logged
+ */
+function error(message) {
+  log(message, 'error');
+}
 
-module.exports = {
-  use: use,
-  tagged: tagged,
-  mute: (...levels) => {
-    reset();
-    for (const level of levels) {
-      module.exports[level] = () => null;
-    }
-  },
-  unmute: () => {
-    reset();
-  }
-};
-
-reset();
+module.exports.info = info;
+module.exports.error = error;
