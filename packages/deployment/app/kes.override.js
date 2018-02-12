@@ -339,6 +339,9 @@ class UpdatedKes extends Kes {
           }
         });
       }
+      else {
+        config = {};
+      }
       return config;
     };
 
