@@ -4,7 +4,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
-const log = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 
 /**
 * Parse a PDR

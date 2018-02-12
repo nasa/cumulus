@@ -1,10 +1,10 @@
 'use strict';
 
 /**
- * Logs the stuff in the format we decided on
+ * Constructs JSON to log
  *
- * @param {string} message - Message of log
- * @param {string} level - type of log (info, error)
+ * @param {string} level - type of log (info, error, debug, warn)
+ * @param {string} args - Message to log and any other information
  * @returns {JSON} - the JSON to be logged
  */
 function log(level, args) {
@@ -19,29 +19,25 @@ function log(level, args) {
     sender: sender,
     level: level
   };
-  console.log(args);
-  if (args.length === 1) message = args[0];
-  else {
-    for (const arg of args) {
-      if ((typeof arg) === 'string') message += arg;
-      else {
-        for (const key in arg) {
-          output[key] = arg[key];
-        }
+  for (const arg of args) {
+    if ((typeof arg) === 'string') message += arg;
+    else {
+      for (const key in arg) {
+        output[key] = arg[key];
       }
     }
   }
 
   output.message = message;
 
-  if (level === 'info') console.log(output);
-  else console.err(output);
+  if (level === 'error') console.err(output);
+  else console.log(output);
 }
 
 /**
  * Logs the message
  *
- * @param {string} message - Message of log
+ * @param {string} args - Includes message and any other information to log
  * @returns {JSON} - the JSON to be logged
  */
 function info(...args) {
@@ -51,12 +47,34 @@ function info(...args) {
 /**
  * Logs the error
  *
- * @param {Object} message - Error to log
+ * @param {Object} args - Includes error and any other information to log
  * @returns {JSON} - the JSON to be logged
  */
 function error(...args) {
   log('error', args);
 }
 
+/**
+ * Logs the debugger messsages
+ *
+ * @param {Object} args - Includes debugger message and any other information to log
+ * @returns {JSON} - the JSON to be logged
+ */
+function debug(...args) {
+  log('debug', args);
+}
+
+/**
+ * Logs the Warning messsage
+ *
+ * @param {Object} args - Includes Warn message and any other information to log
+ * @returns {JSON} - the JSON to be logged
+ */
+function warn(...args) {
+  log('warn', args);
+}
+
 module.exports.info = info;
 module.exports.error = error;
+module.exports.debug = debug;
+module.exports.warn = warn;
