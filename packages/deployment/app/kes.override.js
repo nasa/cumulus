@@ -13,6 +13,8 @@
  *    - @uploadKeyPair
  *    - @crypto
  * - Creates Cumulus Message Templates for each Step Function Workflow
+ *    - @template
+ *    - @generateTemplates
  * - Adds Cumulus Message Adapter code to any Lambda Function that uses it
  * - Uploads the public/private keys and the templates to S3
  * - Restart Existing ECS tasks after each deployment
