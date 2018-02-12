@@ -1,4 +1,19 @@
 /* eslint-disable no-console, no-param-reassign */
+/**
+ * This module override the Kes Class and the Lambda class of Kes
+ * to support specific needs of the Cumulus Deployment.
+ *
+ * In Specific, this module change the default Kes Deployment in the following ways:
+ *
+ * - Adds the ability to add Cumulus Configuration for each Step Function Task
+ * - Generates a public and private key to encrypt private information
+ * - Creates Cumulus Message Templates for each Step Function Workflow
+ * - Adds Cumulus Message Adapter code to any Lambda Function that uses it
+ * - Uploads the public/private keys and the templates to S3
+ * - Restart Existing ECS tasks after each deployment
+ * - Redeploy API Gateway endpoints after Each Deployment
+ *
+ */
 'use strict';
 
 const { Kes, Lambda } = require('kes');
@@ -10,6 +25,65 @@ const forge = require('node-forge');
 const utils = require('kes').utils;
 const request = require('request');
 const extract = require('extract-zip');
+
+
+/**
+ * Because both kes and message adapter use Mustache for templating,
+ * we add curly brackes to items that are using the [$] and {$} syntax
+ * to produce {{$}} and {[$]}
+ *
+ * @param {Object} cumulusConfig - the CumulusConfig portion of a task definition
+ * @returns {Object} updated CumulusConfig
+ */
+function fixCumulusMessageSyntax(cumulusConfig) {
+  const test = new RegExp('^([\\{]{1}|[\\[]{1})(\\$\\..*)([\\]]{1}|[\\}]{1})$');
+  if (cumulusConfig) {
+    Object.keys(cumulusConfig).forEach((n) => {
+      if (typeof cumulusConfig[n] === 'object') {
+        cumulusConfig[n] = fixCumulusMessageSyntax(cumulusConfig[n]);
+      }
+      else if (typeof cumulusConfig[n] === 'string') {
+        const match = cumulusConfig[n].match(test);
+        if (match) {
+          cumulusConfig[n] = `{${match[0]}}`;
+        }
+      }
+    });
+  }
+  else {
+    cumulusConfig = {};
+  }
+  return cumulusConfig;
+}
+
+
+/**
+ * Extracts Cumulus Configuration from each Step Function Workflow
+ * and returns it as a separate object
+ *
+ * @param {Object} config - Kes config object
+ * @returns {Object} updated kes config object
+ */
+function extractCumulusConfigFromSF(config) {
+  const cumulusConfigs = {};
+
+  // loop through the message adapter config of each step of
+  // the step function, add curly brackets to values
+  // with dollar sign and remove config key from the
+  // defintion, otherwise CloudFormation will be mad
+  // at us.
+  config.stepFunctions.forEach((sf) => {
+    cumulusConfigs[sf.name] = {};
+    Object.keys(sf.definition.States).forEach((n) => {
+      cumulusConfigs[sf.name][n] = fixCumulusMessageSyntax(sf.definition.States[n].CumulusConfig);
+      sf.definition.States[n] = omit(sf.definition.States[n], ['CumulusConfig']);
+    });
+  });
+
+  config.stepFunctions.cumulusConfigs = cumulusConfigs;
+  return config;
+}
+
 
 /**
  * Generates public/private key pairs
@@ -114,7 +188,7 @@ function generateInputTemplates(config, outputs) {
       // get workflow arn
       const wfArn = findOutputValue(outputs, `${sf.name}StateMachine`);
       templates.push(buildStepFunctionMessageTemplate(
-        msg, sf, config.stepFunctions.configs, wfArn
+        msg, sf, config.stepFunctions.cumulusConfigs, wfArn
       ));
     });
   }
@@ -313,55 +387,6 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Because both kes and message adapter use Mustache for templating,
-   * we have to curly brackes for all the templating values
-   * that has to be passed to the message adapter. this method, looks for
-   * any value that starts with a "$" and put the whole value
-   * inside "{{ }}""
-   *
-   * @returns {Object} updated config object
-   */
-  cleanStepFunctionDefinition() {
-    const sFconfigs = {};
-    const test = new RegExp('^\\$\\.');
-
-    const addCurly = (config) => {
-      if (config) {
-        Object.keys(config).forEach((n) => {
-          if (typeof config[n] === 'object') {
-            config[n] = addCurly(config[n]);
-          }
-          else if (typeof config[n] === 'string') {
-            const match = config[n].match(test);
-            if (match) {
-              config[n] = `{{${config[n]}}}`;
-            }
-          }
-        });
-      }
-      else {
-        config = {};
-      }
-      return config;
-    };
-
-    // loop through the message adapter config of each step of
-    // the step function, add curly brackets to values
-    // with dollar sign and remove config key from the
-    // defintion, otherwise CloudFormation will be mad
-    // at us.
-    this.config.stepFunctions.forEach((sf) => {
-      sFconfigs[sf.name] = {};
-      Object.keys(sf.definition.States).forEach((n) => {
-        sFconfigs[sf.name][n] = addCurly(sf.definition.States[n].config);
-        sf.definition.States[n] = omit(sf.definition.States[n], ['config']);
-      });
-    });
-
-    this.config.stepFunctions.configs = sFconfigs;
-  }
-
-  /**
    * `downloadZipfile` downloads zipfile from remote location and stores on disk
    *
    * @param {string} fileUrl - URL file location
@@ -507,7 +532,7 @@ class UpdatedKes extends Kes {
     // remove config variable from all workflow steps
     // and keep them in a separate variable.
     // this is needed to prevent stepfunction deployment from crashing
-    this.cleanStepFunctionDefinition();
+    this.config = extractCumulusConfigFromSF(this.config);
 
     return this.crypto(this.bucket, this.stack)
       .then(() => super.opsStack())
@@ -585,4 +610,8 @@ class UpdatedKes extends Kes {
   }
 }
 
+// because commonjs does not support default export
+// we have to add other functions as properties of the kes
+// class to allow testing them with ava
+UpdatedKes.fixCumulusMessageSyntax = fixCumulusMessageSyntax;
 module.exports = UpdatedKes;
