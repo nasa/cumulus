@@ -23,7 +23,7 @@ const log = logger.child({ file: 'ingest/aws.js' });
 
 function getEndpoint(local = false, port = 4569) {
   const args = {};
-  if (true) {//(process.env.IS_LOCAL === 'true' || local) {
+  if (process.env.IS_LOCAL === 'true' || local) {
     // use dummy access info
     AWS.config.update({
       accessKeyId: 'myKeyId',
