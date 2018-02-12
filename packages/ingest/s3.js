@@ -6,7 +6,7 @@ const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
 
-module.exports.s3Mixin = superclass => class extends superclass {
+module.exports.s3Mixin = (superclass) => class extends superclass {
 
   /**
    * Downloads a given url and upload to a given S3 location
