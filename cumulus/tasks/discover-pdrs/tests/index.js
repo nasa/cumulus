@@ -208,7 +208,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
       t.is(output.pdrs.length, 3);
-      const names = output.pdrs.map(p => p.name);
+      const names = output.pdrs.map((p) => p.name);
       t.true(names.includes('MOD09GQ.PDR'));
       t.true(names.includes('MYD13A1_5_grans.PDR'));
       t.true(names.includes('PDN.ID1611081200.PDR'));
@@ -245,7 +245,7 @@ test('test pdr discovery with S3 assuming some PDRs are new', async (t) => {
     'PDN.ID1611081200.PDR'
   ];
 
-  await aws.s3().createBucket({ Bucket: pdrBucketName}).promise()
+  await aws.s3().createBucket({ Bucket: pdrBucketName }).promise()
     .then(() => {
       pdrs.forEach((pdr) => {
         const params = aws.parseS3Uri(`${newPayload.config.collection.provider_path}/${pdr}`);
@@ -268,7 +268,7 @@ test('test pdr discovery with S3 assuming some PDRs are new', async (t) => {
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
       t.is(output.pdrs.length, 3);
-      const names = output.pdrs.map(p => p.name);
+      const names = output.pdrs.map((p) => p.name);
       t.true(names.includes('MOD09GQ.PDR'));
       t.true(names.includes('MYD13A1_5_grans.PDR'));
       t.true(names.includes('PDN.ID1611081200.PDR'));
