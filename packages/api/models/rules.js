@@ -99,7 +99,7 @@ class Rule extends Manager {
       case 'subscription':
         // TODO: CUMULUS-226
         // - Should create an event source for the kinesis-consumer lambda task
-        // - Shouls require a kinesis ARN
+        // - Should require a kinesis ARN
         break;
       default:
         throw new Error('Type not supported');
