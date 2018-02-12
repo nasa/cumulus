@@ -98,7 +98,7 @@ test('download Granule from HTTP endpoint', (t) => {
     });
 });
 
-test('download Granule from S3 endpoint', async (t) => {
+test('download Granule from S3 endpoint', (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 's3'
@@ -109,29 +109,24 @@ test('download Granule from S3 endpoint', async (t) => {
 
   // update path to start with s3://, upload the granule files to s3 for testing,
   // update information of test files
-  let testBuckets = [];
-  for (let i = 0; i < newPayload.input.granules.length; i++) {
-    let granule = newPayload.input.granules[i];
-
-    for (let j = 0; j < granule.files.length; j++) {
-      newPayload.input.granules[i].files[j].path =
-        newPayload.input.granules[i].files[j].path.replace(/^\//, 's3://');
-
-      newPayload.input.granules[i].files[j].fileSize = 9;
-      newPayload.input.granules[i].files[j].checksumType = 'CKSUM';
-      newPayload.input.granules[i].files[j].checksumValue = 275331806;
-
-      let f = newPayload.input.granules[i].files[j];
-      const params = aws.parseS3Uri(`${f.path.replace(/\/+$/, '')}/${f.name}`);
+  const testBuckets = [];
+  newPayload.input.granules.forEach((granule) => {
+    granule.files.forEach(async (file) => {
+      file.path = file.path.replace(/^\//, 's3://'); // eslint-disable-line no-param-reassign
+      file.fileSize = 9; // eslint-disable-line no-param-reassign
+      file.checksumType = 'CKSUM'; // eslint-disable-line no-param-reassign
+      file.checksumValue = 275331806; // eslint-disable-line no-param-reassign
+      const params = aws.parseS3Uri(`${file.path.replace(/\/+$/, '')}/${file.name}`);
       testBuckets.push(params.Bucket);
-      await aws.s3().createBucket({ Bucket: params.Bucket }).promise()
+      await aws.s3().waitFor('bucketNotExists', { Bucket: params.Bucket }).promise()
+        .then(() => aws.s3().createBucket({ Bucket: params.Bucket }).promise())
         .then(() => aws.s3().putObject({
           Bucket: params.Bucket,
           Key: params.Key,
           Body: 'test data'
         }).promise());
-    }
-  }
+    });
+  });
 
   newPayload.input.pdr.path = newPayload.input.pdr.path.replace(/^\//, 's3://');
 
@@ -158,11 +153,11 @@ test('download Granule from S3 endpoint', async (t) => {
       if (e instanceof errors.RemoteResourceError) {
         return t.pass('ignoring this test. Test server seems to be down');
       }
-      else throw e;
+      throw e;
     })
     .finally(() => {
       aws.recursivelyDeleteS3Bucket(internalBucketName);
-      testBuckets.forEach((bucket) => {aws.recursivelyDeleteS3Bucket(bucket)});
+      testBuckets.forEach((bucket) => aws.recursivelyDeleteS3Bucket(bucket));
     });
 });
 
