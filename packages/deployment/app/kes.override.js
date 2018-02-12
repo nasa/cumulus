@@ -6,7 +6,12 @@
  * In Specific, this module change the default Kes Deployment in the following ways:
  *
  * - Adds the ability to add Cumulus Configuration for each Step Function Task
+ *    - @fixCumulusMessageSyntax
+ *    - @extractCumulusConfigFromSF
  * - Generates a public and private key to encrypt private information
+ *    - @generateKeyPair
+ *    - @uploadKeyPair
+ *    - @crypto
  * - Creates Cumulus Message Templates for each Step Function Workflow
  * - Adds Cumulus Message Adapter code to any Lambda Function that uses it
  * - Uploads the public/private keys and the templates to S3
@@ -17,7 +22,6 @@
 'use strict';
 
 const { Kes, Lambda } = require('kes');
-const pLimit = require('p-limit');
 const fs = require('fs-extra');
 const path = require('path');
 const omit = require('lodash.omit');
@@ -89,7 +93,7 @@ function extractCumulusConfigFromSF(config) {
 /**
  * Returns the OutputValue of a Cloudformation Outputs
  *
- * @param {Object} outputs - list of CloudFormation Outputs 
+ * @param {Object} outputs - list of CloudFormation Outputs
  * @param {string} key - the key to return the value of
  *
  * @returns {string} the output value
@@ -177,125 +181,116 @@ async function crypto(stack, bucket, s3) {
 }
 
 /**
- * Creates the base Cumulus message template used to construct a Cumulus
- * message for Cumulus StepFunctions
+ * Generates a Cumulus Message template for a Cumulus Workflow
  *
- * @param  {Object} config - Kes config object
- * @param  {Object} outputs - List of CloudFormations Output key and values
- * @returns {Object} a base Cumulus message template
+ * @param {string} name - name of the workflow
+ * @param {Object} workflow - the Step Function workflow object
+ * @param {Object} config - Kes config object
+ * @param {Array} outputs - an list of Cloudformation outputs
+ *
+ * @returns {Object} a Cumulus Messge template
  */
-function baseInputTemplate(config, outputs) {
+function template(name, workflow, config, outputs) {
   // get cmr password from outputs
   const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
+  const cmr = Object.assign({}, config.cmr, { password: cmrPassword });
+
+  // add the sns topic arn used for monitoring workflows
   const topicArn = findOutputValue(outputs, 'sftrackerSnsArn');
 
-  const template = {
+  // add the current workflows's state machine arn
+  const stateMachineArn = findOutputValue(outputs, `${name}StateMachine`);
+
+  // add queues
+  const queues = {};
+  if (config.sqs) {
+    const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
+
+    queueArns.forEach((queue) => {
+      queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
+    });
+  }
+
+  // add the cumulus message config of the current workflow
+  const workflowConfig = {};
+  Object.keys(workflow.States).forEach((state) => {
+    workflowConfig[state] = config.workflowConfigs[name][state];
+  });
+
+  // add the s3 uri to all the workflow templates for teh current stack
+  const templatesUris = {};
+  Object.keys(config.stepFunctions).forEach((sf) => {
+    templatesUris[sf] = `s3://${config.buckets.internal}/${config.stack}/${sf}.json`;
+  });
+
+  const t = {
     cumulus_meta: {
-      stack: config.stackName,
-      buckets: config.buckets,
-      message_source: 'sfn'
+      message_source: 'sfn',
+      system_bucket: config.buckets.internal,
+      state_machine: stateMachineArn,
+      execution_name: null,
+      workflow_start_time: null
     },
     meta: {
-      cmr: config.cmr,
+      workflow_name: name,
+      stack: config.stackName,
+      buckets: config.buckets,
+      cmr: cmr,
       distribution_endpoint: config.distribution_endpoint,
-      topic_arn: topicArn
+      topic_arn: topicArn,
+      collection: {},
+      provider: {},
+      templates: templatesUris,
+      queues
     },
-    workflow_config: {},
+    workflow_config: workflowConfig,
     payload: {},
     exception: null
   };
 
-  template.meta.cmr.password = cmrPassword;
-
-  // add queues
-  if (config.sqs) {
-    template.meta.queues = {};
-    const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
-
-    queueArns.forEach((queue) => {
-      template.meta.queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
-    });
-  }
-
-  return template;
+  return t;
 }
 
 /**
- * generates a Cumulus message Template for a given step function
+ * Generates a Cumulus Message templates for the all the workflows
+ * in the stack and upload to s3
  *
- * @param  {Object} template - base message template
- * @param  {string} name - the StepFunction name
- * @param  {Object} sf - StepFunction definition (part of kes config)
- * @param  {Object} sfConfig - Cumulus message adapter config for the
- *                             StepFunction (part of kes config)
- * @param  {string} wfArn - StepFunction Arn
- * @returns {Object} stepFunction template
- */
-function buildStepFunctionMessageTemplate(template, name, sf, sfConfig, wfArn) {
-  // add workflow configs for each step function step
-  Object.keys(sf.States).forEach((state) => {
-    template.workflow_config[state] = sfConfig[state];
-  });
-
-  // update cumulus_meta for each workflow message tempalte
-  template.cumulus_meta.state_machine = wfArn;
-  template.meta.workflow_name = name;
-
-  return template;
-}
-
-/**
- * Generates an template used for SFScheduler to create cumulus
- * payloads for step functions. Each step function gets a separate
- * template
+ * @param {Object} config - Kes config object
+ * @param {Array} outputs - an list of Cloudformation outputs
+ * @param {function} uploader - an uploader function
  *
- * @function generateInputTemplates
- * @param  {Object} config - Kes Config Object
- * @param  {Array} outputs - Array of CloudFormation outputs
- * @returns {Array} list of templates
+ * @returns {Promise} undefined
  */
-function generateInputTemplates(config, outputs) {
-  const templates = [];
+async function generateTemplates(config, outputs, uploader) {
+  fs.writeFileSync('config.json', JSON.stringify(config));
+  fs.writeFileSync('outputs.json', JSON.stringify(outputs));
 
-  // generate a output template for each workflow
+  // this function only works if there are step functions defined in the deployment
   if (config.stepFunctions) {
-    Object.keys(config.stepFunctions).forEach((name) => {
-      const sf = config.stepFunctions[name];
-      const msg = baseInputTemplate(config, outputs);
+    const bucket = config.buckets.internal;
+    const stack = config.stackName;
+    const templates = Object.keys(config.stepFunctions)
+      .map((name) => template(name, config.stepFunctions[name], config, outputs));
 
-      // get workflow arn
-      const wfArn = findOutputValue(outputs, `${name}StateMachine`);
-      templates.push(buildStepFunctionMessageTemplate(
-        msg, name, sf, config.workflowConfigs[name], wfArn
-      ));
-    });
-  }
-  return templates;
-}
-
-/**
- * Generate a list of workflows (step functions) that are uploaded to S3. This
- * list is used by the Cumulus Dashboard to show the workflows.
- *
- * @function generateWorkflowsList
- * @param  {Object} config - Kes Config object
- * @returns {Array} Array of objects that include workflow name, template s3 uri and definition
- */
-function generateWorkflowsList(config) {
-  const workflows = [];
-  if (config.stepFunctions) {
-    Object.keys(config.stepFunctions).forEach((name) => {
+    // uploads the generated templates to S3
+    const workflows = [];
+    console.log('Uploading Workflow Input Templates');
+    for (const t of templates) {
+      const name = t.meta.workflow_name;
+      const key = `${stack}/workflows/${name}.json`;
+      await uploader(bucket, key, JSON.stringify(t));
       workflows.push({
-        name: name,
-        template: `s3://${config.buckets.internal}/${config.stackName}/workflows/${name}.json`,
+        name,
+        template: `s3://${bucket}/${key}`,
         definition: config.stepFunctions[name]
       });
-    });
+    }
 
-    return workflows;
+    // generate list of workflows and upload it to S3
+    // this is used by the /workflows endpoint of the API to return list
+    // of existing workflows
+    await uploader(bucket, stack, `${stack}/workflows/list.json`, JSON.stringify(workflows));
   }
-
-  return false;
 }
 
 class UpdatedLambda extends Lambda {
@@ -407,8 +402,6 @@ class UpdatedKes extends Kes {
       console.log(err);
     }
   }
-
-
 
   /**
    * `downloadZipfile` downloads zipfile from remote location and stores on disk
@@ -551,14 +544,12 @@ class UpdatedKes extends Kes {
     // if not generate and upload them
     const apis = {};
 
-    const limit = pLimit(1);
-
     // remove config variable from all workflow steps
     // and keep them in a separate variable.
     // this is needed to prevent stepfunction deployment from crashing
     this.config = extractCumulusConfigFromSF(this.config);
 
-    return crypto(this.bucket, this.stack, this.s3)
+    return crypto(this.stack, this.bucket, this.s3)
       .then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
@@ -594,33 +585,7 @@ class UpdatedKes extends Kes {
           }
         });
 
-        const workflowInputs = generateInputTemplates(this.config, outputs);
-        const stackName = this.stack;
-
-        console.log('Uploading Workflow Input Templates');
-        const uploads = workflowInputs.map((w) => limit(
-          () => {
-            const workflowName = w.meta.workflow_name;
-            const key = `${stackName}/workflows/${workflowName}.json`;
-            return this.uploadToS3(
-              this.bucket,
-              key,
-              JSON.stringify(w)
-            );
-          }
-        ));
-
-        const workflows = generateWorkflowsList(this.config);
-
-        if (workflows) {
-          uploads.push(limit(() => this.uploadToS3(
-            this.bucket,
-            `${stackName}/workflows/list.json`,
-            JSON.stringify(workflows)
-          )));
-        }
-
-        return Promise.all(uploads);
+        return generateTemplates(this.config, outputs, this.uploadToS3.bind(this));
       })
       .then(() => this.restartECSTasks(this.config))
       .then(() => {
@@ -637,6 +602,7 @@ class UpdatedKes extends Kes {
 // because commonjs does not support default export
 // we have to add other functions as properties of the kes
 // class to allow testing them with ava
+UpdatedKes.template = template;
 UpdatedKes.fixCumulusMessageSyntax = fixCumulusMessageSyntax;
 UpdatedKes.extractCumulusConfigFromSF = extractCumulusConfigFromSF;
 module.exports = UpdatedKes;
