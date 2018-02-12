@@ -96,7 +96,7 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
   }
 
   /**
-   * List all PDR files from a given endpoint
+   * List all files from a given endpoint
    *
    * @returns {Promise} a promise
    * @private
