@@ -10,9 +10,8 @@ const {
   validateMessage
 } = require('./lambdas/kinesis-consumer');
 const manager = require('./models/base');
-const models = require('./models');
 const Rule = require('./models/rules');
-const model = new models.Rule();
+const model = new Rule();
 const tableName = 'rule';
 model.tableName = tableName;
 const ruleName = 'testRule';
