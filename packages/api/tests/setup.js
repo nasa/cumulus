@@ -1,6 +1,5 @@
 const manager = require('../models/base');
 const tableName = 'rule';
-process.env.RulesTable = tableName;
 
 const ruleTableParams = {
   name: 'name',

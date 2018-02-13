@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const AWS = require('aws-sdk');
+
 const { getEndpoint } = require('@cumulus/ingest/aws');
 const dynamodb = new AWS.DynamoDB(getEndpoint());
 
