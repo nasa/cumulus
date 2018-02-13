@@ -90,7 +90,7 @@ exports.syncGranule = function syncGranule(event) {
 };
 
 /**
- * Lambda handler
+ * Lambda handler for fun
  *
  * @param {Object} event - a Cumulus Message
  * @param {Object} context - an AWS Lambda context
