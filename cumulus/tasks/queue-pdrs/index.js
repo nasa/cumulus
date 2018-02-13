@@ -27,7 +27,7 @@ function handler(event, context, cb) {
     config.queueUrl,
     config.templateUri,
     config.provider,
-    config.collection, 
+    config.collection,
     pdr
   ));
 
