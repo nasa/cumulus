@@ -33,7 +33,7 @@ test('parse PDR from FTP endpoint', (t) => {
   newPayload.config.useQueue = false;
 
   const internalBucketName = testUtils.randomString();
-  newPayload.config.buckets.internal = internalBucketName;
+  newPayload.config.bucket = internalBucketName;
 
   return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => parsePdr(newPayload))
@@ -66,7 +66,7 @@ test('parse PDR from HTTP endpoint', (t) => {
   newPayload.config.useQueue = false;
 
   const internalBucketName = testUtils.randomString();
-  newPayload.config.buckets.internal = internalBucketName;
+  newPayload.config.bucket = internalBucketName;
 
   return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => parsePdr(newPayload))
