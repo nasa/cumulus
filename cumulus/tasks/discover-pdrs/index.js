@@ -24,7 +24,7 @@ function discoverPdrs(event) {
 
     const output = {};
 
-    log.info({ provider: get(provider, 'id') });
+    log.info('Received the provider', { provider: get(provider, 'id') });
 
     if (!provider) {
       const err = new ProviderNotFound('Provider info not provided');
