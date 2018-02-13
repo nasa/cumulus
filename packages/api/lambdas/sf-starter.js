@@ -15,7 +15,7 @@ const consumer = require('@cumulus/ingest/consumer');
  */
 function dispatch(arn, name, payload) {
   // add creation time
-  payload.cumulus_meta.createdAt = Date.now();
+  payload.cumulus_meta.workflow_start_time = Date.now();
 
   const stepfunctions = new AWS.StepFunctions();
   const params = {
