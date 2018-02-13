@@ -146,13 +146,22 @@ class Discover {
 class DiscoverAndQueue extends Discover {
   async findNewGranules(files) {
     const granules = await super.findNewGranules(files);
-    return Promise.all(granules.map(g => queue.queueGranule(this.event, g)));
+    return Promise.all(granules.map(g => queue.queueGranule(
+      g,
+      this.queueUrl,
+      this.templateUri,
+      this.provider,
+      this.collection,
+      null,
+      this.stack,
+      this.bucket
+     )));
   }
 }
 
 
 /**
- * This is a base class for ingesting and parsing a single PDR
+ * This is a bse class for ingesting and parsing a single PDR
  * It must be mixed with a FTP or HTTP mixing to work
  *
  * @class
