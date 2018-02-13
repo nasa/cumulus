@@ -6,17 +6,17 @@ const AWS = require('aws-sdk');
 const { getEndpoint } = require('@cumulus/ingest/aws');
 const dynamodb = new AWS.DynamoDB(getEndpoint());
 
+const tableName = 'rule';
+process.env.RulesTable = tableName;
 const {
   createOneTimeRules,
   getSubscriptionRules,
   handler,
   validateMessage
-} = require('./lambdas/kinesis-consumer');
-const manager = require('./models/base');
-const Rule = require('./models/rules');
+} = require('../lambdas/kinesis-consumer');
+const manager = require('../models/base');
+const Rule = require('../models/rules');
 const model = new Rule();
-const tableName = 'rule';
-model.tableName = tableName;
 const testCollectionName = 'test-collection';
 
 // TODO: This should look like a CNM
@@ -62,9 +62,7 @@ let createdRules;
 test.before(async () => {
   sinon.stub(Rule, 'buildPayload').resolves(true);
 
-  const createResult = Promise.all(
-    [model.create(rule1Params), model.create(rule2Params), model.create(disabledRuleParams)]
-  );
+  const createResult = Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)));
 
   await manager.describeTable({TableName: tableName})
     .then((data) => {
