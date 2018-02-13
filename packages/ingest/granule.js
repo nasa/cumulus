@@ -169,17 +169,19 @@ class DiscoverAndQueue extends Discover {
  */
 
 class Granule {
-  constructor(event) {
+  constructor(
+    buckets,
+    collection,
+    provider,
+    forceDownload = false
+  ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    const config = get(event, 'config');
-
-    this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection');
-    this.provider = get(config, 'provider');
-    this.event = event;
+    this.buckets = buckets;
+    this.collection = collection;
+    this.provider = provider;
 
     this.collection.url_path = this.collection.url_path || '';
     this.port = get(this.provider, 'port', 21);
@@ -188,7 +190,7 @@ class Granule {
     this.password = get(this.provider, 'password', null);
     this.checksumFiles = {};
 
-    this.forceDownload = get(config, 'forceDownload', false);
+    this.forceDownload = forceDownload;
   }
 
   async ingest(granule) {
