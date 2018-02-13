@@ -9,17 +9,14 @@ const dynamodb = new AWS.DynamoDB(getEndpoint());
 const tableName = 'rule';
 process.env.RulesTable = tableName;
 const {
-  createOneTimeRules,
   getSubscriptionRules,
-  handler,
-  validateMessage
+  handler
 } = require('../lambdas/kinesis-consumer');
 const manager = require('../models/base');
 const Rule = require('../models/rules');
 const model = new Rule();
 const testCollectionName = 'test-collection';
 
-// TODO: This should look like a CNM
 const event = {
   collection: testCollectionName
 };
@@ -57,28 +54,16 @@ const ruleTableParams = {
   schema: 'HASH'
 };
 
-let createdRules;
-
 test.before(async () => {
   sinon.stub(Rule, 'buildPayload').resolves(true);
-
   const createResult = Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)));
 
   await manager.describeTable({TableName: tableName})
-    .then((data) => {
-      return createResult.then((created) => {
-        createdRules = created;
-        return;
-      });
-    })
+    .then(createResult)
     .catch((err) => {
       console.log('in before block')
       if (err.name === 'ResourceNotFoundException') {
-        return manager.createTable(tableName, ruleTableParams).then(createResult)
-        .then((created) => {
-          createdRules = created;
-          return;
-        });
+        return manager.createTable(tableName, ruleTableParams).then(createResult);
       } else {
         throw err;
       }
@@ -99,44 +84,43 @@ test.after(async () => {
     });
 });
 
+// getSubscriptionRule tests
 test('it should look up subscription-type rules which are associated with the collection, but not those that are disabled', t => {
   return getSubscriptionRules(event).then((result) => {
     t.is(result.length, 2);
   });
 });
 
-// FIXME - This is returning 3 at the moment because it doesn't filter out the disabled rule.
-test.skip('it should create a onetime rule for each associated workflow', t => {
-  return createOneTimeRules(createdRules).then((result) => {
-    t.is(result.length, 2);
-    result.forEach((rule, idx) => {
-      t.is(rule.workflow, `test-workflow-${idx+1}`);
-      t.is(rule.rule.type, 'onetime');
-    });
-  });  
-});
-
-test.skip('it should create a onetime rule for each associated workflow', t => {
+// handler tests
+test('it should create a onetime rule for each associated workflow', t => {
   return handler(event).then(() => {
     return model.scan({
-      collection: {
-        name: testCollectionName
+      names: {
+        '#col': 'collection',
+        '#nm': 'name',
+        '#st': 'state',
+        '#rl': 'rule',
+        '#tp': 'type'
       },
-      rule: {type: 'onetime'}
-    })
+      filter: '#st = :enabledState AND #col.#nm = :collectionName AND #rl.#tp = :ruleType',
+      values: {
+        ':enabledState': 'ENABLED',
+        ':collectionName': testCollectionName,
+        ':ruleType': 'onetime'
+      }
+    });
   })
   .then((results) => {
     t.is(results.Items.length, 2);
-    results.Items.forEach((rule, idx) => {
-      t.is(rule.workflow, `test-workflow-${idx+1}`);
-      t.is(rule.rule.type, 'onetime');
-    });
+    const workflowNames = results.Items.map(i => i.workflow).sort();
+    t.deepEqual(workflowNames, ['test-workflow-1', 'test-workflow-2']);
+    results.Items.forEach(r => t.is(r.rule.type, 'onetime'));
   });  
 });
 
 test('it should throw an error if message does not include a collection', t => {
   const invalidMessage = {};
-  return validateMessage(invalidMessage)
+  return handler(invalidMessage)
     .catch((err) => {
       t.is(err.message, 'validation failed');
       t.is(err.errors[0].message, 'should have required property \'collection\'');
@@ -145,7 +129,7 @@ test('it should throw an error if message does not include a collection', t => {
 
 test('it should throw an error if message collection has wrong data type', t => {
   const invalidMessage = {collection: {}};
-  return validateMessage(invalidMessage)
+  return handler(invalidMessage)
     .catch((err) => {
       t.is(err.message, 'validation failed');
       t.is(err.errors[0].dataPath, '.collection');
@@ -153,10 +137,7 @@ test('it should throw an error if message collection has wrong data type', t => 
     });
 });
 
-test('it should not throw if message is', t => {
+test('it should not throw if message is valid', t => {
   const validMessage = {collection: 'confection-collection'};
-  return validateMessage(validMessage)
-    .then((result) => {
-      t.is(result, validMessage);
-    });
+  return handler(validMessage).then(r => t.deepEqual(r, []));
 });

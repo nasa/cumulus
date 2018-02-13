@@ -46,15 +46,14 @@ async function validateMessage(event) {
 }
 
 async function handler(event, context, cb) {
-  return await getSubscriptionRules(event)
+  return await validateMessage(event)
+    .then(getSubscriptionRules)
     .then((subscriptionRules) => {
       return createOneTimeRules(subscriptionRules);
     });
 }
 
 module.exports = {
-  createOneTimeRules,
   getSubscriptionRules,
-  handler,
-  validateMessage
+  handler
 };
