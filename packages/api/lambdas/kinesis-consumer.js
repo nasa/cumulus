@@ -8,15 +8,21 @@ const model = new Rule();
 model.tableName = 'rule';
 const messageSchema = require('./kinesis-consumer-event-schema.json');
 
-async function getRules(event) {
+async function getSubscriptionRules(event) {
   const collection = event.collection;
   const subscriptionRules = await model.scan({
-    filter: {
-      type: 'subscription',
-      collection: {
-        name: collection
-      },
-      state: 'ENABLED'
+    names: {
+      '#col': 'collection',
+      '#nm': 'name',
+      '#st': 'state',
+      '#rl': 'rule',
+      '#tp': 'type'
+    },
+    filter: '#st = :enabledState AND #col.#nm = :collectionName AND #rl.#tp = :ruleType',
+    values: {
+      ':enabledState': 'ENABLED',
+      ':collectionName': collection,
+      ':ruleType': 'subscription'
     }
   });
 
@@ -40,13 +46,16 @@ async function validateMessage(event) {
   return await validate(event);
 }
 
-function handler(event, context, cb) {
-  return event;
+async function handler(event, context, cb) {
+  return await getSubscriptionRules(event)
+    .then((subscriptionRules) => {
+      return createOneTimeRules(subscriptionRules);
+    });
 }
 
 module.exports = {
   createOneTimeRules,
-  getRules,
+  getSubscriptionRules,
   handler,
   validateMessage
 };

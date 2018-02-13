@@ -195,7 +195,8 @@ class Manager {
 
   async scan(query, fields) {
     const params = {
-      TableName: this.tableName
+      TableName: this.tableName,
+      
     };
 
     if (query) {
