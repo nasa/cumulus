@@ -79,7 +79,6 @@ jobs:
           name: Running Test
           environment:
             LOCALSTACK_HOST: localstack
-            IS_LOCAL: true
           command: yarn test
 
   build_and_publish:
