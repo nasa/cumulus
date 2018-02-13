@@ -222,7 +222,7 @@ function template(name, workflow, config, outputs) {
   // add the s3 uri to all the workflow templates for teh current stack
   const templatesUris = {};
   Object.keys(config.stepFunctions).forEach((sf) => {
-    templatesUris[sf] = `s3://${config.buckets.internal}/${config.stack}/${sf}.json`;
+    templatesUris[sf] = `s3://${config.buckets.internal}/${config.stack}/workflows/${sf}.json`;
   });
 
   const t = {
