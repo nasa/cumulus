@@ -54,9 +54,6 @@ exports.syncGranule = function syncGranule(event) {
   const config = event.config;
   const input = event.input;
 
-  // log.info('This is the log message.', 'with multiple strings',
-  // { firstextra: 'first extra stuff', second: '2nd extra' }, { third: 'third extra stuff' });
-
   if (!config.provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
     log.error(err);
