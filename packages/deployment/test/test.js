@@ -84,7 +84,7 @@ test('generate a template', (t) => {
   t.is(tt.meta.cmr.password, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
   t.is(
     tt.meta.templates.DiscoverPdrs,
-    's3://cumulus-devseed-internal/lpdaac-cumulus/DiscoverPdrs.json'
+    's3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json'
   );
   t.truthy(tt.meta.queues.startSF);
   t.truthy(tt.workflow_config.DiscoverPdrs);
