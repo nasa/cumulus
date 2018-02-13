@@ -3,6 +3,7 @@
 const AWS = require('aws-sdk');
 const get = require('lodash.get');
 const { StepFunction } = require('@cumulus/ingest/aws');
+const { setGranuleStatus } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 
 /**
@@ -77,7 +78,14 @@ async function publish(message, finished = false) {
       }
       const granuleId = get(event, 'meta.granuleId', null);
       if (granuleId) {
-        await StepFunction.setGranuleStatus(granuleId, event);
+        await setGranuleStatus(
+          granuleId,
+          event.meta.stack,
+          event.meta.buckets.internal,
+          event.cumulus_meta.state_machine,
+          event.cumulus_meta.execution_name,
+          event.meta.status
+        );
       }
     }
     else {
