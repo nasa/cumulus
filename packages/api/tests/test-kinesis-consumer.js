@@ -107,3 +107,5 @@ test('it should not throw if message is valid', t => {
   const validMessage = {collection: 'confection-collection'};
   return handler(validMessage).then(r => t.deepEqual(r, []));
 });
+
+test.todo('it should send a valid payload to the onetime rule');
