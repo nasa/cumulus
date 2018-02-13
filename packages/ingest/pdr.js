@@ -22,20 +22,27 @@ const log = logger.child({ file: 'ingest/pdr.js' });
  * @abstract
  */
 class Discover {
-  constructor(event) {
+  constructor(
+    stack,
+    bucket,
+    collection,
+    provider,
+    queueUrl,
+    templateUri,
+    folder = 'pdrs',
+    queueLimit = null
+  ) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    const config = get(event, 'config');
-    this.stack = get(config, 'stack');
-    this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection');
-    this.provider = get(config, 'provider');
-    this.folder = get(config, 'pdrFolder', 'pdrs');
-    this.queueUrl = get(config, 'queueUrl', null);
-    this.templateUri = get(config, 'templateUri', null);
-    this.event = event;
+    this.stack = stack;
+    this.bucket = bucket;
+    this.collection = collection;
+    this.provider = provider;
+    this.folder = folder;
+    this.queueUrl = queueUrl;
+    this.templateUri = templateUri;
 
     // get authentication information
     this.port = get(this.provider, 'port', 21);
@@ -43,7 +50,7 @@ class Discover {
     this.path = this.collection.provider_path || '/';
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
-    this.limit = get(config, 'queueLimit', null);
+    this.limit = queueLimit;
   }
 
   filterPdrs(pdr) {
@@ -76,7 +83,7 @@ class Discover {
    */
   pdrIsNew(pdr) {
     return aws.s3ObjectExists({
-      Bucket: this.buckets.internal,
+      Bucket: this.bucket,
       Key: path.join(this.stack, this.folder, pdr.name)
     }).then((exists) => (exists ? false : pdr));
   }
