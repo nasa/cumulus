@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/validate-archives",
   "private": true,
-  "version": "1.0.0-beta.17",
+  "version": "1.0.0-beta.18",
   "description": "SIPS handler archive validation task",
   "main": "index.js",
   "keywords": [
@@ -35,7 +35,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.17",
+    "@cumulus/common": "^1.0.0-beta.18",
     "checksum": "^0.1.1",
     "ftp": "^0.3.10",
     "gunzip-maybe": "^1.4.1",
