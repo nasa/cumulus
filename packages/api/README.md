@@ -24,4 +24,17 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)
 
+## Running Tests
 
+Running tests for kinesis-consumer depends on localstack. Once you have installed localstack, you can start it for dynamoDB only:
+
+```
+SERVICES=dynamodb localstack start
+```
+
+Then you can run tests locally by using node >= 8.0:
+
+```bash
+nvm use 8.0
+npm run test
+```
