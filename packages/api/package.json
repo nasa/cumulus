@@ -4,6 +4,8 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "scripts": {
+    "pretest": "IS_LOCAL=true node ./tests/setup.js",
+    "posttest": "IS_LOCAL=true node ./tests/teardown.js",
     "test": "IS_LOCAL=true ava tests/test-*.js",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",

@@ -1,6 +1,6 @@
 'use strict';
 
-import test from 'ava';
+const test = require('ava');
 const sinon = require('sinon');
 const AWS = require('aws-sdk');
 const { getEndpoint } = require('@cumulus/ingest/aws');
@@ -8,11 +8,7 @@ const dynamodb = new AWS.DynamoDB(getEndpoint());
 
 const tableName = 'rule';
 process.env.RulesTable = tableName;
-const {
-  getSubscriptionRules,
-  handler
-} = require('../lambdas/kinesis-consumer');
-const manager = require('../models/base');
+const { getSubscriptionRules, handler } = require('../lambdas/kinesis-consumer');
 const Rule = require('../models/rules');
 const model = new Rule();
 const testCollectionName = 'test-collection';
@@ -48,40 +44,9 @@ const disabledRuleParams = Object.assign({}, commonRuleParams, {
   state: 'DISABLED'
 });
 
-const ruleTableParams = {
-  name: 'name',
-  type: 'S',
-  schema: 'HASH'
-};
-
 test.before(async () => {
   sinon.stub(Rule, 'buildPayload').resolves(true);
-  const createResult = Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)));
-
-  await manager.describeTable({TableName: tableName})
-    .then(createResult)
-    .catch((err) => {
-      console.log('in before block')
-      if (err.name === 'ResourceNotFoundException') {
-        return manager.createTable(tableName, ruleTableParams).then(createResult);
-      } else {
-        throw err;
-      }
-    });
-});
-
-test.after(async () => {
-  await manager.describeTable({TableName: tableName})
-    .then((data) => {
-      return manager.deleteTable(tableName);
-    })
-    .catch((err) => {
-      if (err.name === 'ResourceNotFoundException') {
-        return;
-      } else {
-        throw err;
-      }
-    });
+  await Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)));
 });
 
 // getSubscriptionRule tests
