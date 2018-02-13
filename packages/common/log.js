@@ -30,8 +30,7 @@ function log(level, args) {
 
   output.message = message;
 
-  if (level === 'error') console.err(output);
-  else console.log(output);
+  console.log(output);
 }
 
 /**
