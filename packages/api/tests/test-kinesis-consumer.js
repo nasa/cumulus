@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const AWS = require('aws-sdk');
+AWS.config.update({region:'us-east-1'});
 
 const { getEndpoint } = require('@cumulus/ingest/aws');
 const dynamodb = new AWS.DynamoDB(getEndpoint());
