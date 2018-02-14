@@ -4,9 +4,9 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "scripts": {
-    "pretest": "LOCALSTACK_HOST=localhost IS_LOCAL=true node ./tests/setup.js",
-    "posttest": "LOCALSTACK_HOST=localhost IS_LOCAL=true node ./tests/teardown.js",
-    "test": "LOCALSTACK_HOST=localhost IS_LOCAL=true ava tests/test-*.js",
+    "pretest": "IS_LOCAL=true node ./tests/setup.js",
+    "posttest": "IS_LOCAL=true node ./tests/teardown.js",
+    "test": "IS_LOCAL=true ava tests/test-*.js",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
