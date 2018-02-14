@@ -36,5 +36,5 @@ Then you can run tests locally by using node >= 8.0:
 
 ```bash
 nvm use 8.0
-npm run test
+LOCALSTACK_HOST=localhost npm run test
 ```
