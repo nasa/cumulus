@@ -37,13 +37,11 @@ test('queueGranule generates unique exeuction names', async (t) => {
 
   // Properly set the Queue URL.  This is needed because LocalStack always
   // returns the QueueUrl as "localhost", even if that is not where it should
-  // actually be found.
-  console.log(`XXX ${createQueueResponse.QueueUrl} XXX`);
+  // actually be found.  CircleCI breaks without this.
   const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
   returnedQueueUrl.host = undefined;
   returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
   const QueueUrl = url.format(returnedQueueUrl);
-  console.log(`XXX ${QueueUrl} XXX`);
 
   // Perform the test
   const granuleIds = [
@@ -63,12 +61,12 @@ test('queueGranule generates unique exeuction names', async (t) => {
   };
 
   // Stop time and enqueue the granules
-  // this.clock = sinon.useFakeTimers(Date.now());
+  this.clock = sinon.useFakeTimers(Date.now());
   await Promise.all(granuleIds.map((granuleId) => {
     const granule = { granuleId, files: [] };
     return queueGranule(event, granule);
   }));
-  // this.clock.restore();
+  this.clock.restore();
 
   // Get messages from the queue
   const receiveMessageResponse = await sqs().receiveMessage({
