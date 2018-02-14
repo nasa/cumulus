@@ -2,7 +2,6 @@
 'use strict';
 const ajv = new require('ajv')();
 
-const manager = require('../models/base');
 const Rule = require('../models/rules');
 const model = new Rule();
 const messageSchema = require('./kinesis-consumer-event-schema.json');

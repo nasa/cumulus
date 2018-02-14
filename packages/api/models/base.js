@@ -4,6 +4,7 @@ const Ajv = require('ajv');
 const AWS = require('aws-sdk');
 const omit = require('lodash.omit');
 const { getEndpoint } = require('@cumulus/ingest/aws');
+const { testAwsClient } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 
@@ -33,7 +34,12 @@ class Manager {
   }
 
   static async createTable(tableName, hash, range = null) {
-    const dynamodb = new AWS.DynamoDB(getEndpoint());
+    let dynamodb;
+    if (process.env.LOCALSTACK_HOST) {
+      dynamodb = testAwsClient(AWS.DynamoDB);
+    } else {
+      dynamodb = new AWS.DynamoDB(getEndpoint());
+    }
 
     const params = {
       TableName: tableName,
@@ -67,7 +73,13 @@ class Manager {
   }
 
   static async deleteTable(tableName) {
-    const dynamodb = new AWS.DynamoDB(getEndpoint());
+    let dynamodb;
+    if (process.env.LOCALSTACK_HOST) {
+      dynamodb = testAwsClient(AWS.DynamoDB);
+    } else {
+      dynamodb = new AWS.DynamoDB(getEndpoint());
+    }
+
     await dynamodb.deleteTable({
       TableName: tableName
     }).promise();
@@ -88,7 +100,17 @@ class Manager {
   constructor(tableName, schema = {}) {
     this.tableName = tableName;
     this.schema = schema; // variable for the record's json schema
-    this.dynamodb = new AWS.DynamoDB.DocumentClient(getEndpoint());
+    if (process.env.LOCALSTACK_HOST) {
+      AWS.config.update({
+        accessKeyId: 'my-access-key-id',
+        secretAccessKey: 'my-secret-access-key',
+        region: 'us-east-1',
+        endpoint: `http://${process.env.LOCALSTACK_HOST}:4569`
+      });
+      this.dynamodb = new AWS.DynamoDB.DocumentClient();
+    } else {
+      this.dynamodb = new AWS.DynamoDB.DocumentClient(getEndpoint());
+    }
     this.removeAdditional = false;
   }
 
