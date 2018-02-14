@@ -11,6 +11,82 @@ const spawn = require('child_process').spawn;
  *
  */
 module.exports = class RunGdalTask extends Task {
+
+  /**
+   * Compute the minimum bounding rectangle for the given polygon. Assumes the maximum
+   * longitudinal distance * between points is less than 180 degrees.
+   * NOTE: This will NOT work for polygons covering poles.
+   * @param {string} polyString  A polygon from a CMR metadata response. See #splitPolygonAtAntimeridian
+   * @returns {Array} An array containing the mbr in the form [latBL, lonBL, latUR, lonRU] where
+   * latBL = latitude of the bottom left corner
+   * lonBL = longitude of the bottom left corner
+   * latUR = latitude of the upper right corner
+   * lonUR = longitude of the upper right corner
+   */
+  static mbr(polyString) {
+    const coords = polyString.split(' ');
+    let minLat = 360.0;
+    let minLon = 360.0;
+    let maxLat = -360.0;
+    let maxLon = -360.0;
+    for (let i = 1; i < coords.length / 2; i++) {
+      const lat = parseFloat(coords[i * 2]);
+      const lon = parseFloat(coords[(i * 2) + 1]);
+
+      if (lon > maxLon) maxLon = lon;
+      if (lon < minLon) minLon = lon;
+      if (lat > maxLat) maxLat = lat;
+      if (lat < minLat) minLat = lat;
+    }
+
+    if (maxLon - minLon > 180.0) {
+      const tmp = minLon;
+      minLon = maxLon;
+      maxLon = tmp;
+    }
+
+    return [minLat, minLon, maxLat, maxLon];
+  }
+
+  /**
+   *
+   * - @param {string} polyStirng A polygon from a CMR metadata response. See #splitPolygonAtAntimeridian
+   */
+  static doesCrossAntimeridian(polyString) {
+    let doesCross = false;
+    const coords = polyString.split(' ');
+    let prevLon = parseFloat(coords[1]);
+    for (let i = 1; i < coords.length / 2; i++) {
+      const lon = parseFloat(coords[(i * 2) + 1]);
+      if (prevLon - lon > 0) {
+        doesCross = true;
+        break;
+      }
+      prevLon = lon;
+    }
+
+    return doesCross;
+  }
+
+  /**
+   *
+   * @param {string} polyString A polygon from a CMR metadata response. This has the form
+   * "lat_0 lon_0 lat_1 lon_1 ... lat_n lon_n lat_0 lon_0"
+   *
+   * Note that the first and last point must be the same.
+   */
+  static splitPolygonAtAntimeridian(polyString) {
+    const leftPoly = [];
+    const rightPoly = [];
+
+    const ords = polyString.split(' ');
+    for (let i = 0; i < ords.length / 2; i++) {
+      // const lon =
+    }
+
+    return [leftPoly, rightPoly];
+  }
+
   /**
    * Main task entrypoint
    * @return A payload suitable for syncing via http url sync

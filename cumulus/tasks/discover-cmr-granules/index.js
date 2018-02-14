@@ -28,7 +28,7 @@ function validateParameter(config, param) {
  * @returns {bool} - true or exception
  */
 function validateParameters(config) {
-  const params = ['root', 'event', 'granule_meta', 'query'];
+  const params = ['root', 'granule_meta', 'query'];
   for (const p of params) validateParameter(config, p);
 
   return true;
@@ -62,16 +62,16 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
 
     // Write the messages to a DynamoDB table so we can track ingest failures
-    const messagePromises = filtered.map(msg => {
+    const messagePromises = filtered.map((msg) => {
       const { granuleId, version, collection } = msg.meta;
       const params = {
         TableName: this.config.ingest_tracking_table,
         Item: {
           'granule-id': granuleId,
-          'version': version,
-          'collection': collection,
+          version: version,
+          collection: collection,
           'ingest-start-datetime': moment().format(),
-          'message': JSON.stringify(msg)
+          message: JSON.stringify(msg)
         }
       };
       return docClient.put(params).promise();
@@ -116,6 +116,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
    *
    * @param {string} root - The CMR root url (protocol and domain without path)
    * @param {Object} query - The query parameters to serialize and send to a CMR granules search
+   * @param {string} scrollID - The scroll id to pass to the CMR harvesting API
    * @returns {Array} An array of all granules matching the given query
    */
   async cmrGranules(root, query, scrollID) {
@@ -195,8 +196,9 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 
 // To use with Visual Studio Code Debugger, uncomment next block
 //
-//global.__isDebug = true;
-//const local = require('@cumulus/common/local-helpers');
-//const localTaskName = 'DiscoverCmrGranules';
-//local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
-//  'MOPITT_DCOSMR_LL_D_STD', localTaskName));
+// global.__isDebug = true;
+// const local = require('@cumulus/common/local-helpers');
+// const localTaskName = 'DiscoverCmrGranules';
+// local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
+//  'AST_L1T_DAY', localTaskName, (o) => o, `${local.fileRoot()}/cumulus/tasks/copy-idx-from-s3-to-efs/test/ast_l1t.yml`));
+
