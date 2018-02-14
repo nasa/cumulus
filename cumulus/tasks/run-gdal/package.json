@@ -18,6 +18,19 @@
     "watch": "webpack --progress -w",
     "clean": "rm -rf dist"
   },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "ava test/*.js"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
   "devDependencies": {
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",

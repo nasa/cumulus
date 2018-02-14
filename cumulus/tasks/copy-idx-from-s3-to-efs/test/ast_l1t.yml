@@ -50,6 +50,8 @@ _templates:
             #temporal: 2015-01-01T00:00:00Z,2015-01-02T18:39:00Z # Exactly 949 (+1 that has no day_night_flag)
           granule_meta:
             key: '{meta.collection}/{granule.id}'
+            polygons: '{granule.polygons}'
+            box: '{granule.box}'
             granuleId: '{granule.id}'
             version: '{granule.updated}'
             date:

@@ -119,6 +119,8 @@ _templates:
           event: wms-map-found
           granule_meta:
             key: '{meta.collection}/{granule.id}'
+            polygons: '{granule.polygons}'
+            box: '{granule.box}'
             granuleId: '{granule.id}'
             version: '{granule.updated}'
             date:
