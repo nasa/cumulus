@@ -3,5 +3,6 @@ const tableName = 'rule';
 
 async function deleteRulesTable() {
   await manager.deleteTable(tableName);
+}
 
 deleteRulesTable();
