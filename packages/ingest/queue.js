@@ -58,6 +58,7 @@ async function queuePdr(event, pdr) {
 
 /**
 * Create a message from a template stored on S3
+*
 * @param {object} event
 * @param {object} event.config
 * @param {object} event.config.queues
