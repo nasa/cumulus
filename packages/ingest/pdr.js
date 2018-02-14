@@ -105,13 +105,10 @@ class Discover {
  * @abstract
  */
 class DiscoverAndQueue extends Discover {
-  async findNewPdrs(_pdrs) {
-    let pdrs = _pdrs;
-    pdrs = await super.findNewPdrs(pdrs);
-    if (this.limit) {
-      pdrs = pdrs.slice(0, this.limit);
-    }
-    return Promise.all(pdrs.map(p => queue.queuePdr(this.event, p)));
+  async findNewPdrs(pdrs) {
+    let newPdrs = await super.findNewPdrs(pdrs);
+    if (this.limit) newPdrs = newPdrs.slice(0, this.limit);
+    return Promise.all(newPdrs.map((p) => queue.queuePdr(this.event, p)));
   }
 }
 
@@ -185,14 +182,13 @@ class Parse {
   }
 
   /**
-   * This async method parse a PDR and returns all the granules in it
+   * This method parses a PDR and returns all the granules in it
    *
    * @param {string} pdrLocalPath PDR path on disk
    * @return {Promise}
    * @public
    */
-
-  async parse(pdrLocalPath) {
+  parse(pdrLocalPath) {
     // catching all parse errors here to mark the pdr as failed
     // if any error occured
     const parsed = parsePdr(pdrLocalPath, this.collection, this.pdr.name);
@@ -376,8 +372,8 @@ class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
 class SftpParseAndQueue extends sftpMixin(ParseAndQueue) {}
 
 /**
- * Select a class for discovering PDRs based on protocol 
- * 
+ * Select a class for discovering PDRs based on protocol
+ *
  * @param {string} type - `discover` or `parse`
  * @param {string} protocol - `sftp`, `ftp`, or `http`
  * @param {boolean} q - set to `true` to queue pdrs

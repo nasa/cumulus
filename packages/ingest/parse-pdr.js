@@ -110,12 +110,11 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
     const specs = group.objects('FILE_SPEC');
     let dataType = group.get('DATA_TYPE');
 
-    if (!dataType) {
-      const error = new PDRParsingError('DATA_TYPE is missing');
-      throw error;
-    }
+    if (!dataType) throw new PDRParsingError('DATA_TYPE is missing');
+
     dataType = dataType.value;
 
+    // FIXME This is a very generic error
     if (specs.length === 0) {
       throw new Error();
     }
