@@ -3,6 +3,7 @@
 
 const get = require('lodash.get');
 const { S3, invoke, Events } = require('@cumulus/ingest/aws');
+const aws = require('@cumulus/ingest/aws');
 const Manager = require('./base');
 const { rule } = require('./schemas');
 
@@ -26,10 +27,18 @@ class Rule extends Manager {
   }
 
   async delete(item) {
-    if (item.rule.type === 'scheduled') {
-      const name = `${process.env.stackName}-custom-${item.name}`;
-      await Events.deleteTarget(this.targetId, name);
-      await Events.deleteEvent(name);
+    switch (item.rule.type) {
+      case 'scheduled': {
+        const name = `${process.env.stackName}-custom-${item.name}`;
+        await Events.deleteTarget(this.targetId, name);
+        await Events.deleteEvent(name);
+        break;
+      }
+      case 'kinesis':
+        this.deleteKinesisEventSource(item);
+        break;
+      default:
+        throw new Error('Type not supported');
     }
     return super.delete({ name: item.name });
   }
@@ -39,12 +48,28 @@ class Rule extends Manager {
       original.state = updated.state;
     }
 
+    let valueUpdated = false;
     if (updated.rule && updated.rule.value) {
       original.rule.value = updated.rule.value;
+      valueUpdated = true;
     }
 
-    const payload = await Rule.buildPayload(original);
-    await this.addRule(original, payload);
+    switch (original.rule.type) {
+      case 'scheduled': {
+        const payload = await Rule.buildPayload(original);
+        await this.addRule(original, payload);
+        break;
+      }
+      case 'kinesis':
+        if (valueUpdated) {
+          this.deleteKinesisEventSource(original);
+          this.addKinesisEventSource(original);
+        }
+        else this.updateKinesisEventSource(original);
+        break;
+      default:
+        throw new Error('Type not supported');
+    }
 
     return super.update({ name: original.name }, updated);
   }
@@ -57,7 +82,7 @@ class Rule extends Manager {
 
     if (!exists) {
       const err = {
-        message: 'Woflow doesn\'t exist'
+        message: 'Workflow doesn\'t exist'
       };
       throw err;
     }
@@ -96,20 +121,63 @@ class Rule extends Manager {
       case 'scheduled':
         await this.addRule(item, payload);
         break;
+      case 'kinesis':
+        await this.addKinesisEventSource(item);
+        break;
       default:
         throw new Error('Type not supported');
     }
 
-    // if recurring set the cloudwatch rule
-
-    // TODO: implement subscription
-
-    // if onetime and enabled launch lambda function
-
-
     // save
     return super.create(item);
   }
+
+  /**
+   * add an event source to the kinesis consumer lambda function
+   *
+   * @param {*} item - the rule item
+   * @returns {Promise} a promise
+   */
+  async addKinesisEventSource(item) {
+    const params = {
+      EventSourceArn: item.rule.value,
+      FunctionName: process.env.kinesisConsumer,
+      StartingPosition: LATEST, // eslint-disable-line no-undef
+      Enabled: item.state
+    };
+    return await aws.lambda.createEventSourceMapping(params).promise()
+      .then((data) => {
+        item.rule.arn = data.UUID;
+      });
+  }
+
+  /**
+   * update an event source, only the state can be updated
+   *
+   * @param {*} item - the rule item
+   * @returns {Promise} a promise
+   */
+  async updateKinesisEventSource(item) {
+    const params = {
+      UUID: item.rule.arn,
+      Enabled: item.state
+    };
+    return await aws.lambda.updateEventSourceMapping(params).promise();
+  }
+
+  /**
+   * delete an event source the from kinesis consumer lambda function
+   *
+   * @param {*} item - the rule item
+   * @returns {Promise} a promise
+   */
+  async deleteKinesisEventSource(item) {
+    const params = {
+      UUID: item.rule.arn
+    };
+    return await aws.lambda.deleteEventSourceMapping(params).promise();
+  }
+
 }
 
 module.exports = Rule;
