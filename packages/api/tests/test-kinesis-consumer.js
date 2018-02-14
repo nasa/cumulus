@@ -53,9 +53,14 @@ test('it should look up subscription-type rules which are associated with the co
   });
 });
 
+function testCallback(err, object) {
+  if (err) throw err;
+  return object;
+};
+
 // handler tests
 test('it should create a onetime rule for each associated workflow', t => {
-  return handler(event).then(() => {
+  return handler(event, {}, testCallback).then(() => {
     return model.scan({
       names: {
         '#col': 'collection',
@@ -82,7 +87,7 @@ test('it should create a onetime rule for each associated workflow', t => {
 
 test('it should throw an error if message does not include a collection', t => {
   const invalidMessage = {};
-  return handler(invalidMessage)
+  return handler(invalidMessage, {}, testCallback)
     .catch((err) => {
       t.is(err.message, 'validation failed');
       t.is(err.errors[0].message, 'should have required property \'collection\'');
@@ -91,7 +96,7 @@ test('it should throw an error if message does not include a collection', t => {
 
 test('it should throw an error if message collection has wrong data type', t => {
   const invalidMessage = {collection: {}};
-  return handler(invalidMessage)
+  return handler(invalidMessage, {}, testCallback)
     .catch((err) => {
       t.is(err.message, 'validation failed');
       t.is(err.errors[0].dataPath, '.collection');
@@ -101,7 +106,7 @@ test('it should throw an error if message collection has wrong data type', t => 
 
 test('it should not throw if message is valid', t => {
   const validMessage = {collection: 'confection-collection'};
-  return handler(validMessage).then(r => t.deepEqual(r, []));
+  return handler(validMessage, {}, testCallback).then(r => t.deepEqual(r, []));
 });
 
 test.todo('it should send a valid payload to the onetime rule');
