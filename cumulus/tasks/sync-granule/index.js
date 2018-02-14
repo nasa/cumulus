@@ -52,7 +52,7 @@ async function download(ingest, bucket, provider, granules) {
  * @param {Object} event - contains input and config parameters
  * @returns {Promise.<Object>} - a description of the ingested granules
  */
-function syncGranule(event) {
+exports.syncGranule = function syncGranule(event) {
   const config = event.config;
   const input = event.input;
 
@@ -87,8 +87,7 @@ function syncGranule(event) {
       log.error(errorToThrow);
       throw errorToThrow;
     });
-}
-exports.syncGranule = syncGranule;
+};
 
 /**
  * Lambda handler
@@ -98,7 +97,6 @@ exports.syncGranule = syncGranule;
  * @param {Function} callback - an AWS Lambda handler
  * @returns {undefined} - does not return a value
  */
-function handler(event, context, callback) {
+exports.handler = function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(syncGranule, event, context, callback);
-}
-exports.handler = handler;
+};
