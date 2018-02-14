@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const url = require('url');
 const { recursivelyDeleteS3Bucket, s3, sqs } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const { queueGranule } = require('../queue');
@@ -33,7 +34,16 @@ test('queueGranule generates unique exeuction names', async (t) => {
 
   // Create the queue
   const createQueueResponse = await sqs().createQueue({ QueueName: randomString() }).promise();
-  const QueueUrl = createQueueResponse.QueueUrl;
+
+  // Properly set the Queue URL.  This is needed because LocalStack always
+  // returns the QueueUrl as "localhost", even if that is not where it should
+  // actually be found.
+  console.log(`XXX ${createQueueResponse.QueueUrl} XXX`);
+  const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+  returnedQueueUrl.host = undefined;
+  returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+  const QueueUrl = url.format(returnedQueueUrl);
+  console.log(`XXX ${QueueUrl} XXX`);
 
   // Perform the test
   const granuleIds = [
