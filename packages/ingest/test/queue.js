@@ -53,12 +53,12 @@ test('queueGranule generates unique exeuction names', async (t) => {
   };
 
   // Stop time and enqueue the granules
-  this.clock = sinon.useFakeTimers(Date.now());
+  // this.clock = sinon.useFakeTimers(Date.now());
   await Promise.all(granuleIds.map((granuleId) => {
     const granule = { granuleId, files: [] };
     return queueGranule(event, granule);
   }));
-  this.clock.restore();
+  // this.clock.restore();
 
   // Get messages from the queue
   const receiveMessageResponse = await sqs().receiveMessage({
