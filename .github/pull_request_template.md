@@ -11,6 +11,6 @@ Addresses [CUMULUS-XX: Develop amazing new feature](https://bugs.earthdata.nasa.
 Things that should succeed before merging.
 
 - [ ] Unit tests
-- [ ] Adhoc testin
+- [ ] Adhoc testing
 
-Reviewers: @friends
+Reviewers: @tag-your-friends
