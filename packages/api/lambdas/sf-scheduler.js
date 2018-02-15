@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const merge = require('lodash.merge');
-const cryptoRandomString = require('crypto-random-string');
+const uuidv4 = require('uuid/v4');
 const { S3, SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
@@ -30,7 +30,7 @@ function schedule(event, context, cb) {
       message.meta.collection = {};
       message.meta = merge(message.meta, meta);
       message.payload = payload;
-      message.cumulus_meta.execution_name = cryptoRandomString(25);
+      message.cumulus_meta.execution_name = uuidv4();
     })
     .then(() => {
       if (provider) {
