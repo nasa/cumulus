@@ -9,7 +9,7 @@ const PVLTextString = require('./lib/models').PVLTextString;
 const patterns = require('./lib/patterns');
 const checkRegexes = require('./lib/utils').checkRegexes;
 
-function parseValue (value) {
+function parseValue (value, key) {
   const numericValue = checkRegexes(value, patterns.numericPatterns);
   const dateTimeValue = checkRegexes(value, patterns.dateTimePatterns);
   const textStringValue = checkRegexes(value, patterns.textStringPatterns);
@@ -21,7 +21,7 @@ function parseValue (value) {
   if (parsed) {
     return parsed;
   } else {
-    throw new Error(`Failed to parse value: '${value}'`);
+    throw new Error(`Failed to parse value ('${value}') of ${key}`);
   }
 }
 
@@ -62,7 +62,7 @@ function pvlToJS (pvlString) {
     } else if (['END_OBJECT', 'END_GROUP'].includes(key)) {
       aggregates.pop();
     } else {
-      aggregates[aggregates.length - 1].add(key, parseValue(value));
+      aggregates[aggregates.length - 1].add(key, parseValue(value, key));
     }
   });
 
