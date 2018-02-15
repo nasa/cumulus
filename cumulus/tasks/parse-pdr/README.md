@@ -9,7 +9,7 @@
 
 | field name | default | description
 | --------   | ------- | ----------
-| usuQueue   | true    | Whether to add discovered granules to the queue for processing
+| useQueue   | true    | Whether to add discovered granules to the queue for processing
 | provider   | (required) | The cumulus-api provider object
 | collection | (required) | The cumulus-api collection object
 | bucket     | (required) | The internal bucket name (used for record keeping)

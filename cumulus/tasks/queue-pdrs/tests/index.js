@@ -27,7 +27,6 @@ test.afterEach.always(async (t) => {
 test('queue pdrs', async (t) => {
   const Bucket = t.context.bucket;
   const ParsePdrTemplate = `s3://${Bucket}/dev/workflows/ParsePdr.json`;
-  console.log(ParsePdrTemplate)
 
   await aws.s3().putObject({
     Bucket,
