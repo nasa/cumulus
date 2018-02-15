@@ -330,6 +330,33 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
     });
 };
 
+/**
+ * Fetch complete list of S3 objects
+ *
+ * listObjectsV2 is limited to 1,000 results per call.  This function continues
+ * listing objects until there are no more to be fetched.
+ *
+ * The passed params must be compatible with the listObjectsV2 call.
+ *
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
+ *
+ * @param {Object} params - params for the s3.listObjectsV2 call
+ * @returns {Promise.<Array>} - resolves to an array of objects corresponding to
+ *   the Contents property of the listObjectsV2 response
+ */
+async function listS3ObjectsV2(params) {
+  const data = await exports.s3().listObjectsV2(params).promise();
+
+  if (data.IsTruncated) {
+    const newParams = Object.assign({}, params);
+    newParams.ContinuationToken = data.NextContinuationToken;
+    return data.Contents.concat(await exports.listS3ObjectsV2(newParams));
+  }
+
+  return data.Contents;
+}
+exports.listS3ObjectsV2 = listS3ObjectsV2;
+
 exports.syncUrl = async (uri, bucket, destKey) => {
   const response = await concurrency.promiseUrl(uri);
   await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
