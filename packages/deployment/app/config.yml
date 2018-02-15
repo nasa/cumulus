@@ -150,5 +150,4 @@ default:
 
   lambdas: !!files [
     'lambdas.yml',
-    'node_modules/@cumulus/api/config/distribution.yml',
     'node_modules/@cumulus/api/config/lambdas.yml']
