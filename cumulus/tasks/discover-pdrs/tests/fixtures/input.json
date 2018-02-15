@@ -2,18 +2,15 @@
   "config": {
     "useQueue": false,
     "stack": "lpdaac-cumulus-phaseIII",
+    "queueUrl": "http://somequeue.com",
+    "templateUri": "s3://path/to/template.json",
     "provider": {
       "id": "MUR",
       "globalConnectionLimit": 10,
       "protocol": "ftp",
       "host": "podaac-ftp.jpl.nasa.gov"
     },
-    "buckets": {
-      "internal": "ghrc-r-deploy",
-      "private": "ghrc-r-private",
-      "protected": "ghrc-r-protected",
-      "public": "ghrc-r-public"
-    },
+    "bucket": "ghrc-r-deploy",
     "collection": {
       "dataType": "MOD09GQ",
       "name": "MOD09GQ",

@@ -40,6 +40,7 @@ Resources:
   #################################################
 {{# if apiMethods}}
 {{# each apiDependencies}}
+  {{# if apiDeploy }}
   ApiGatewayDeployment{{../parent.apiStage}}{{name}}:
     DependsOn:
   {{#each methods}}
@@ -50,6 +51,7 @@ Resources:
       RestApiId:
         Ref: {{name}}RestApi
       StageName: {{../parent.apiStage}}
+  {{/if}}
 {{/each}}
 
 {{#each apiMethods}}
