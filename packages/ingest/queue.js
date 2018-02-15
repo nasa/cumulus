@@ -11,70 +11,73 @@ const {
 } = require('@cumulus/common/aws');
 
 /**
-* Create a message from a template stored on S3
-* @param {object} event
-* @param {object} event.config
-* @param {array} event.config.templates
-* @param {object} event.config.cumulus_meta
-* @param {object} event.config.cumulus_meta.config
-* @param {string} event.config.cumulus_meta.config.next name of the next function in the workflow
-* @returns {object} message object
-**/
-async function getTemplate(event) {
-  const config = event.config;
-  const templates = get(config, 'templates');
-  const nextTask = get(config, 'cumulus_meta.config.next', 'ParsePdr');
+  * Create a message from a template stored on S3
+  *
+  * @param {string} templateUri - S3 uri to the workflow template
+  * @param {Object} provider - Cumulus provider object
+  * @param {Object} collection - Cumulus collection object
+  * @returns {Promise} message object
+  **/
+async function getTemplate(templateUri, provider, collection) {
 
-  const parsedS3Uri = parseS3Uri(templates[nextTask]);
+  const parsedS3Uri = parseS3Uri(templateUri);
   const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
   const message = JSON.parse(data.Body);
 
-  message.provider = config.provider;
-  message.collection = config.collection;
-  message.meta = config.meta;
+  message.meta.provider = provider;
+  message.meta.collection = collection;
 
   return message;
 }
 
 /**
-* Create a message from a template stored on S3
-* @param {object} event
-* @param {object} event.config
-* @param {object} event.config.queues
-* @param {string} event.config.queues.startSF
-* @param {object} pdr
-* @param {string} pdr.name
-* @returns {promise} promise returned from SQS.sendMessage()
-**/
-async function queuePdr(event, pdr) {
-  const queueUrl = event.config.queues.startSF;
-  const message = await getTemplate(event);
+  * Create a message from a template stored on S3
+  *
+  * @param {string} queueUrl - The SQS url
+  * @param {string} templateUri - S3 uri to the workflow template
+  * @param {Object} provider - Cumulus provider object
+  * @param {Object} collection - Cumulus collection object
+  * @param {Object} pdr - the PDR object
+  * @param {string} pdr.name - name of the PDR
+  * @returns {Promise} promise returned from SQS.sendMessage()
+  **/
+async function queuePdr(queueUrl, templateUri, provider, collection, pdr) {
+  const message = await getTemplate(templateUri, provider, collection);
 
   message.payload = { pdr };
-  message.cumulus_meta.execution_name = uuidv4();
+  message.cumulus_meta.execution_name = uuidv4();;
 
   return sendSQSMessage(queueUrl, message);
 }
 
 /**
-* Create a message from a template stored on S3
-*
-* @param {object} event
-* @param {object} event.config
-* @param {object} event.config.queues
-* @param {string} event.config.queues.startSF
-* @param {object} pdr
-* @param {string} pdr.name
-* @returns {promise} returns a promise that resolves to an array of [status, arn]
-**/
-async function queueGranule(event, granule) {
-  const queueUrl = event.config.queues.startSF;
-  const pdr = event.input.pdr;
 
-  const message = await getTemplate(event);
+  * Create a message from a template stored on S3
+  *
+  * @param {object} granule
+  * @param {string} templateUri - S3 uri to the workflow template
+  * @param {Object} provider - Cumulus provider object
+  * @param {Object} collection - Cumulus collection object
+  * @param {Object} pdr - the PDR object
+  * @param {string} pdr.name - name of the PDR
+  * @param {string} stack = the deployment stackname
+  * @param {string} bucket - the deployment bucket name
+  * @returns {promise} returns a promise that resolves to an array of [status, arn]
+  **/
+async function queueGranule(
+  granule,
+  queueUrl,
+  templateUri,
+  provider,
+  collection,
+  pdr,
+  stack,
+  bucket
+) {
+  const message = await getTemplate(templateUri, provider, collection);
 
   // check if the granule is already processed
-  const status = await getGranuleStatus(granule.granuleId, event.config);
+  const status = await getGranuleStatus(granule.granuleId, stack, bucket);
 
   if (status) {
     return status;
@@ -87,8 +90,6 @@ async function queueGranule(event, granule) {
     }
   }
 
-  if (!message.meta) message.meta = {};
-  message.meta.granuleId = granule.granuleId;
   message.payload = {
     granules: [{
       granuleId: granule.granuleId,

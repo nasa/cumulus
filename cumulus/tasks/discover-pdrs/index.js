@@ -18,11 +18,14 @@ const log = logger.child({ file: 'discover-pdrs/index.js' });
  */
 function discoverPdrs(event) {
   try {
-    log.debug(event);
-    const ev = Object.assign({}, event);
-    const config = get(event, 'config');
+    const config = get(event, 'config', {});
     const queue = get(config, 'useQueue', true);
-    const provider = get(config, 'provider', null);
+    const stack = config.stack;
+    const bucket = config.bucket;
+    const queueUrl = config.queueUrl;
+    const templateUri = config.templateUri;
+    const collection = config.collection;
+    const provider = config.provider;
 
     const output = {};
 
@@ -35,7 +38,14 @@ function discoverPdrs(event) {
     }
 
     const Discover = pdr.selector('discover', provider.protocol, queue);
-    const discover = new Discover(ev);
+    const discover = new Discover(
+      stack,
+      bucket,
+      collection,
+      provider,
+      queueUrl,
+      templateUri
+    );
 
     log.debug('Starting PDR discovery');
 
