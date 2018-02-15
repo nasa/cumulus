@@ -89,8 +89,7 @@ test('it should throw an error if message does not include a collection', t => {
   const invalidMessage = {};
   return handler(invalidMessage, {}, testCallback)
     .catch((err) => {
-      t.is(err.message, 'validation failed');
-      t.is(err.errors[0].message, 'should have required property \'collection\'');
+      t.is(err, 'should have required property \'collection\'');
     });
 });
 
@@ -98,9 +97,7 @@ test('it should throw an error if message collection has wrong data type', t => 
   const invalidMessage = {collection: {}};
   return handler(invalidMessage, {}, testCallback)
     .catch((err) => {
-      t.is(err.message, 'validation failed');
-      t.is(err.errors[0].dataPath, '.collection');
-      t.is(err.errors[0].message, 'should be string');
+      t.is(err, '.collection should be string');
     });
 });
 

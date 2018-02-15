@@ -20,7 +20,7 @@ exports.bootstrap = require('./lambdas/bootstrap');
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
 exports.queue = require('./lambdas/queue');
-exports.kinesisConsumer = require('./lambdas/kinesis-consumer');
+exports.kinesisConsumer = require('./lambdas/kinesis-consumer').handler;
 
 const indexer = require('./es/indexer');
 const broadcast = require('./lambdas/sf-sns-broadcast');

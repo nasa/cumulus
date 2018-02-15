@@ -59,7 +59,7 @@ async function createOneTimeRules(subscriptionRules) {
  * @returns {(error|object)} Throws an Ajv.ValidationError if event object is invalid. Returns the event object if event is valid.
  */
 async function validateMessage(event) {
-  const ajv = new Ajv();
+  const ajv = new Ajv({allErrors: true});
   const validate = ajv.compile(messageSchema);
   return await validate(event);
 }
@@ -80,7 +80,21 @@ function handler(event, context, cb) {
       return createOneTimeRules(subscriptionRules);
     })
     .then((results) => cb(null, results))
-    .catch((err) => cb(err));
+    .catch((err) => {
+      if (Ajv.ValidationError.prototype.isPrototypeOf(err)) {
+        const validationErrorMessage = err.errors.map((errObject) => {
+          let errorMessage = '';
+          if (errObject.dataPath) {
+            errorMessage += `${errObject.dataPath} `;
+          }
+          errorMessage += errObject.message
+          return errorMessage;
+        }).join('.\n');
+        cb(validationErrorMessage);
+      } else {
+        cb(err);
+      }
+    });
 }
 
 module.exports = {
