@@ -1,26 +1,8 @@
 {
   "config": {
-    "stack": "lpdaac-cumulus-phaseIII",
-    "buckets": {
-      "internal": "ghrc-r-deploy",
-      "private": "ghrc-r-private",
-      "protected": "ghrc-r-protected",
-      "public": "ghrc-r-public"
-    },
-    "queues": {
-      "startSF": "http://localhost:4576/queue/testQueue"
-    },
-    "templates": {
-      "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json",
-      "ParsePdr": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json"
-    },
-    "cumulus_meta": {
-      "state_machine": "arn:aws:states:us-east-1:xxxxxx:stateMachine:DiscoverPdrsGHRCCumulusdevStateMachine",
-      "state_machine_name": "DiscoverPdrs",
-      "config": {
-        "next": "ParsePdr"
-      }
-    },
+    "queues": "http://localhost:4576/queue/testQueue",
+    "templateUri": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json",
+    "provider": {},
     "collection": {
       "dataType": "MOD09GQ",
       "name": "MOD09GQ",
