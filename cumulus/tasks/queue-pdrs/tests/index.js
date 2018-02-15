@@ -39,9 +39,8 @@ test('queue pdrs', async (t) => {
   });
 
   const input = Object.assign({}, inputJSON);
-  input.config.templates.ParsePdr = ParsePdrTemplate;
-  input.config.buckets.internal = t.context.bucket;
-  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
+  input.config.templateUri = ParsePdrTemplate;
+  input.config.queueUrl = `http://${process.env.LOCALSTACK_HOST}:4576/queue/testQueue`;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);
