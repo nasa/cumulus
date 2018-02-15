@@ -82,6 +82,6 @@ workflows:
       - build_and_publish:
           requires:
             - build_and_test
-          # filters:
-          #   branches:
-          #     only: message-updates
+          filters:
+            branches:
+              only: message-updates
