@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
-
+const uuidv4 = require('uuid/v4');
 const {
   getS3Object,
   sendSQSMessage,
@@ -45,12 +45,13 @@ async function queuePdr(queueUrl, templateUri, provider, collection, pdr) {
   const message = await getTemplate(templateUri, provider, collection);
 
   message.payload = { pdr };
-  message.cumulus_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
+  message.cumulus_meta.execution_name = uuidv4();;
 
   return sendSQSMessage(queueUrl, message);
 }
 
 /**
+
   * Create a message from a template stored on S3
   *
   * @param {object} granule
@@ -100,11 +101,10 @@ async function queueGranule(
     message.payload.pdr = pdr;
   }
 
-  const name = `${collection.name.substring(0, 15)}__GRANULE__` +
-               `${granule.granuleId.substring(0, 16)}__${Date.now()}`;
-  const arn = getSfnExecutionByName(message.cumulus_meta.state_machine, name);
+  const executionName = uuidv4();
+  const arn = getSfnExecutionByName(message.cumulus_meta.state_machine, executionName);
 
-  message.cumulus_meta.execution_name = name;
+  message.cumulus_meta.execution_name = executionName;
   await sendSQSMessage(queueUrl, message);
   return ['running', arn];
 }
