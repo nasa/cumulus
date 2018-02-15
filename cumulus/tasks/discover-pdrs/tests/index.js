@@ -252,7 +252,7 @@ test('test pdr discovery with S3 assuming some PDRs are new', async (t) => {
   });
 
   const internalBucketName = testUtils.randomString();
-  newPayload.config.buckets.internal = internalBucketName;
+  newPayload.config.bucket = internalBucketName;
   return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => aws.s3().putObject({
       Bucket: internalBucketName,
