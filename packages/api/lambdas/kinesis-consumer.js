@@ -1,6 +1,6 @@
 /* eslint-disable require-yield */
 'use strict';
-const ajv = new require('ajv')();
+const Ajv = require('ajv');
 
 const Rule = require('../models/rules');
 const model = new Rule();
@@ -59,6 +59,7 @@ async function createOneTimeRules(subscriptionRules) {
  * @returns {(error|object)} Throws an Ajv.ValidationError if event object is invalid. Returns the event object if event is valid.
  */
 async function validateMessage(event) {
+  const ajv = new Ajv();
   const validate = ajv.compile(messageSchema);
   return await validate(event);
 }
@@ -72,8 +73,8 @@ async function validateMessage(event) {
  * @param {*} cb callback function to explicitly return information back to the caller.
  * @returns {(error|string)} Success message or error
  */
-async function handler(event, context, cb) {
-  return await validateMessage(event)
+function handler(event, context, cb) {
+  return validateMessage(event)
     .then(getSubscriptionRules)
     .then((subscriptionRules) => {
       return createOneTimeRules(subscriptionRules);
