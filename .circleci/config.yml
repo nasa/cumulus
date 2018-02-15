@@ -15,16 +15,11 @@ jobs:
             - dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
             - dependencies-
 
-      - restore_cache:
-          keys:
-            - build-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
-            - build-
-
       - run:
           name: Installing Dependencies
           command: |
             yarn install
-            yarn ybootstrap
+            yarn bootstrap-no-build
 
       - save_cache:
           paths:
@@ -49,31 +44,6 @@ jobs:
             - ./cumulus/packages/ingest/node_modules
             - ./cumulus/packages/deployment/node_modules
           key: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
-
-
-      - save_cache:
-          paths:
-            - ./cumulus/tasks/discover-pdr/dist
-            - ./cumulus/tasks/discover-pdrs/dist
-            - ./cumulus/tasks/discover-granules/dist
-            - ./cumulus/tasks/discover-s3-granules/dist
-            - ./cumulus/tasks/hello-world/dist
-            - ./cumulus/tasks/parse-pdr/dist
-            - ./cumulus/tasks/pdr-status-check/dist
-            - ./cumulus/tasks/post-to-cmr/dist
-            - ./cumulus/tasks/queue-granules/dist
-            - ./cumulus/tasks/queue-pdrs/dist
-            - ./cumulus/tasks/run-gdal/dist
-            - ./cumulus/tasks/sync-granule/dist
-            - ./cumulus/gibs-ops-api/dist
-            - ./cumulus/packages/api/dist
-            - ./cumulus/packages/cmrjs/dist
-            - ./cumulus/packages/common/dist
-            - ./cumulus/packages/pvl/dist
-            - ./cumulus/packages/ingest/dist
-            - ./cumulus/packages/deployment/dist
-
-          key: build-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
 
       - run:
           name: Running Test
