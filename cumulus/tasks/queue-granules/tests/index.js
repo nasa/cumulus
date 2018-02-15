@@ -40,9 +40,9 @@ test('queue granules', async (t) => {
   });
 
   const input = Object.assign({}, inputJSON);
-  input.config.templates.IngestGranule = IngestGranuleTemplate;
-  input.config.buckets.internal = t.context.bucket;
-  input.config.queues.startSF = `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}`;
+  input.config.templateUri = IngestGranuleTemplate;
+  input.config.bucket = t.context.bucket;
+  input.config.queueUrl = `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}`;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);
