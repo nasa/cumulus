@@ -6,7 +6,7 @@
     "test": "ava --no-color",
     "build": "babel app/kes.override.js -o app/kes.js",
     "watch": "babel app/kes.override.js -o app/kes.js -w",
-    "prepare": "npm run build"
+    "prepublish": "npm run build"
   },
   "keywords": [
     "CUMULUS"
