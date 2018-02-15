@@ -24,7 +24,10 @@ test('queueGranule generates unique exeuction names', async (t) => {
   const messageTemplate = {
     cumulus_meta: {
       state_machine: randomString()
-    }
+    },
+    meta: {},
+    payload: {},
+    exception: null
   };
   await s3().putObject({
     Bucket: templateBucketName,
@@ -51,11 +54,11 @@ test('queueGranule generates unique exeuction names', async (t) => {
 
   const event = {
     config: {
-      buckets: { internal: internalBucketName },
+      bucket: internalBucketName,
       collection: { name: 'MOD13Q1' },
-      queues: { startSF: QueueUrl },
+      queueUrl: QueueUrl,
       stack: randomString(),
-      templates: { ParsePdr: `s3://${templateBucketName}/${templateKey}` }
+      templateUri: `s3://${templateBucketName}/${templateKey}`
     },
     input: {}
   };
@@ -64,7 +67,16 @@ test('queueGranule generates unique exeuction names', async (t) => {
   this.clock = sinon.useFakeTimers(Date.now());
   await Promise.all(granuleIds.map((granuleId) => {
     const granule = { granuleId, files: [] };
-    return queueGranule(event, granule);
+    return queueGranule(
+      granule,
+      event.config.queueUrl,
+      event.config.templateUri,
+      null,
+      event.config.collection,
+      null,
+      event.config.stack,
+      event.config.bucket
+    );
   }));
   this.clock.restore();
 
