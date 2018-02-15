@@ -67,47 +67,22 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
   }
 
   /**
-   * recursively list files from a S3 location
-   *
-   * @param {*} params - s3 request parameters
-   * @param {*} files - files already retrieved
-   * @returns {*} - list of files
-   */
-  async listfiles(params, files) {
-    return new Promise((resolve, reject) => {
-      aws.s3().listObjectsV2(params, (err, data) => {
-        if (err) return reject(err);
-        const result = data.Contents.map((d) => ({
-          name: path.basename(d.Key),
-          size: d.Size,
-          time: d.LastModified,
-          owner: d.Owner.DisplayName,
-          path: `s3://${data.Name}/${path.dirname(d.Key)}/`
-        }));
-        const totalfiles = files.concat(result);
-        if (data.IsTruncated) {
-          const newParams = Object.assign({}, params);
-          newParams.ContinuationToken = data.NextContinuationToken;
-          return this.listfiles(newParams, totalfiles).then(resolve).catch(reject);
-        }
-        return resolve(totalfiles);
-      });
-    });
-  }
-
-  /**
    * List all files from a given endpoint
    *
    * @returns {Promise} a promise
    * @private
    */
-  list() {
-    const s3params = aws.parseS3Uri(this.path);
-    const params = {
-      Bucket: s3params.Bucket,
-      Prefix: s3params.Key || '/',
-      FetchOwner: true
-    };
-    return this.listfiles(params, []);
+  async list() {
+    const { Bucket, Prefix } = aws.parseS3Uri(this.path);
+
+    const objects = await aws.listS3ObjectsV2({ Bucket, Prefix, FetchOwner: true });
+
+    return objects.map((object) => ({
+      name: path.basename(object.Key),
+      size: object.Size,
+      time: object.LastModified,
+      owner: object.Owner.DisplayName,
+      path: `s3://${Bucket}/${path.dirname(object.Key)}/`
+    }));
   }
 };
