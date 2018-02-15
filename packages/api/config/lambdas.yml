@@ -45,6 +45,10 @@ kinesisConsumer:
   timeout: 100
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
 
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
