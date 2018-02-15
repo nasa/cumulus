@@ -117,7 +117,7 @@ function generateKeyPair() {
 }
 
 /**
- * Genrates private/public keys and Upload them to a given bucket
+ * Generates private/public keys and Upload them to a given bucket
  *
  * @param {string} bucket - the bucket to upload the keys to
  * @param {string} key - the key (folder) to use for the uploaded files
