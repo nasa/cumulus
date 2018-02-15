@@ -245,17 +245,11 @@ test('test pdr discovery with S3 assuming some PDRs are new', async (t) => {
     'PDN.ID1611081200.PDR'
   ];
 
-  await aws.s3().createBucket({ Bucket: pdrBucketName }).promise()
-    .then(() => {
-      pdrs.forEach((pdr) => {
-        const params = aws.parseS3Uri(`${newPayload.config.collection.provider_path}/${pdr}`);
-        aws.s3().putObject({
-          Bucket: params.Bucket,
-          Key: params.Key,
-          Body: 'test data'
-        }).promise();
-      });
-    });
+  await aws.s3().createBucket({ Bucket: pdrBucketName }).promise();
+  pdrs.forEach(async (pdr) => {
+    const params = aws.parseS3Uri(`${newPayload.config.collection.provider_path}/${pdr}`);
+    await aws.s3().putObject({ Bucket: params.Bucket, Key: params.Key, Body: 'test data' }).promise();
+  });
 
   const internalBucketName = testUtils.randomString();
   newPayload.config.buckets.internal = internalBucketName;
