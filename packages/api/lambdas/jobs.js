@@ -105,18 +105,18 @@ async function checkExecution(arn, url, timestamp, esClient) {
   else {
     if (output.error) {
       input.exception = output.error;
-      input.ingest_meta.status = 'failed';
+      input.meta.status = 'failed';
       await handlePayload(output);
       return;
     }
 
-    if (!output.ingest_meta) {
-      output.ingest_meta = {
+    if (!output.meta) {
+      output.meta = {
         status: r.status
       };
     }
     else {
-      output.ingest_meta.status = r.status;
+      output.meta.status = r.status;
     }
 
     await handlePayload(output);

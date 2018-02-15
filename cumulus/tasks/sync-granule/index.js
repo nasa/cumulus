@@ -55,22 +55,31 @@ async function download(ingest, bucket, provider, granules) {
 exports.syncGranule = function syncGranule(event) {
   const config = event.config;
   const input = event.input;
+  const buckets = config.buckets;
+  const provider = config.provider;
+  const collection = config.collection;
+  const forceDownload = config.forceDownload || false;
 
-  if (!config.provider) {
+  if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
     log.error(err);
     return Promise.reject(err);
   }
 
-  const IngestClass = granule.selector('ingest', config.provider.protocol);
-  const ingest = new IngestClass(event);
+  const IngestClass = granule.selector('ingest', provider.protocol);
+  const ingest = new IngestClass(
+    buckets,
+    collection,
+    provider,
+    forceDownload
+  );
 
-  return download(ingest, config.buckets.internal, config.provider, input.granules)
+  return download(ingest, buckets.internal, provider, input.granules)
     .then((granules) => {
       if (ingest.end) ingest.end();
 
       const output = { granules };
-      if (config.collection.process) output.process = config.collection.process;
+      if (collection.process) output.process = collection.process;
 
       return output;
     }).catch((e) => {
@@ -98,5 +107,5 @@ exports.syncGranule = function syncGranule(event) {
  * @returns {undefined} - does not return a value
  */
 exports.handler = function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(syncGranule, event, context, callback);
+  cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, callback);
 };

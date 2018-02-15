@@ -514,10 +514,10 @@ class StepFunction {
 
   static async setGranuleStatus(granuleId, event) {
     const d = this.granuleExecutionStatus(granuleId, event);
-    const sm = event.ingest_meta.state_machine;
-    const en = event.ingest_meta.execution_name;
+    const sm = event.cumulus_meta.state_machine;
+    const en = event.cumulus_meta.execution_name;
     const arn = getExecutionArn(sm, en);
-    const status = event.ingest_meta.status;
+    const status = event.meta.status;
     return S3.put(d.bucket, d.key, '', null, { arn, status });
   }
 
@@ -617,10 +617,10 @@ class StepFunction {
 
     if (str.length <= 32000) return Promise.resolve(event);
 
-    const stack = event.resources.stack;
-    const name = event.ingest_meta.execution_name;
+    const stack = event.meta.stack;
+    const name = event.cumulus_meta.execution_name;
     const key = `${stack}/payloads/${name}.json`;
-    const bucket = event.resources.buckets.internal;
+    const bucket = event.meta.buckets.internal;
 
     return aws.s3().putObject({
       Bucket: bucket,
