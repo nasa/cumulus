@@ -34,7 +34,7 @@ function handler(event, context, cb) {
         meta: collection
       };
     }
-    message.ingest_meta.execution_name = generateRandomName();
+    message.cumulus_meta.execution_name = generateRandomName();
 
     aws.SQS.sendMessage(message.resources.queues.startSF, message)
        .then(r => cb(null, r))

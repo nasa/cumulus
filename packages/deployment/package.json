@@ -1,9 +1,9 @@
 {
   "name": "@cumulus/deployment",
-  "version": "1.0.0-beta.17",
+  "version": "1.0.0-beta.18",
   "description": "Deployment templates for cumulus",
   "scripts": {
-    "test": "echo 'no tests'",
+    "test": "ava --no-color",
     "build": "babel app/kes.override.js -o app/kes.js",
     "watch": "babel app/kes.override.js -o app/kes.js -w",
     "prepare": "npm run build"
@@ -17,6 +17,13 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
   },
   "babel": {
     "presets": [
@@ -34,6 +41,9 @@
     "request": "^2.83.0"
   },
   "devDependencies": {
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
+    "ava": "^0.25.0",
     "babel-cli": "^6.25.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
