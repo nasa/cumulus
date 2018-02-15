@@ -523,56 +523,52 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
 
 /**
 * Parse event metadata to get location of granule on S3
-* @name setGranuleStatus
-* @param {string} granuleId
-* @param {object} options
-* @param {string} options.stack
-* @param {object} options.buckets
-* @param {string} options.buckets.internal
-* @return {promise}
+*
+* @param {string} granuleId - the granule id
+* @param {string} stack = the deployment stackname
+* @param {string} bucket - the deployment bucket name
+* @returns {string} - s3 path
 **/
-exports.getGranuleS3Params = (granuleId, options) => {
-  const granuleKey = `${options.stack}/granules_ingested/${granuleId}`;
-
-  return {
-    bucket: options.buckets.internal,
-    key: granuleKey
-  };
+exports.getGranuleS3Params = (granuleId, stack, bucket) => {
+  return `${stack}/granules_ingested/${granuleId}`;
 };
 
 /**
 * Set the status of a granule
 * @name setGranuleStatus
 * @param {string} granuleId
-* @param {object} options
-* @param {string} options.stateMachineArn
-* @param {string} options.executionName
-* @param {string} options.status
+* @param {string} stack = the deployment stackname
+* @param {string} bucket - the deployment bucket name
+* @param {string} stateMachineArn
+* @param {string} executionName
+* @param {string} status
 * @return {promise} returns the response from `S3.put` as a promise
 **/
-exports.setGranuleStatus = async (granuleId, options) => {
-  const status = options.status;
-  const stateMachineArn = options.stateMachineArn;
-  const executionName = options.executionName;
-
-  const { bucket, key } = exports.getGranuleS3Params(granuleId, options);
+exports.setGranuleStatus = async (
+  granuleId,
+  stack,
+  bucket,
+  stateMachineArn,
+  executionName,
+  status
+) => {
+  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
   const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
   await exports.s3().putObject(bucket, key, '', null, { executionArn, status }).promise();
 };
 
 /**
 * Get the status of a granule
+*
 * @name getGranuleStatus
 * @param {string} granuleId
-* @param {object} options
-* @param {string} options.stack
-* @param {object} options.buckets
-* @param {string} options.buckets.internal
+* @param {string} stack = the deployment stackname
+* @param {string} bucket - the deployment bucket name
 * @return {promise|boolean} if the granule does not exist, this returns `false`,
 * else returns a promise that resolves to an array of [status, arn]
 **/
-exports.getGranuleStatus = async (granuleId, options) => {
-  const { bucket, key } = exports.getGranuleS3Params(granuleId, options);
+exports.getGranuleStatus = async (granuleId, stack, bucket) => {
+  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
   const exists = await exports.fileExists(bucket, key);
 
   if (exists) {

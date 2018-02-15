@@ -1,18 +1,8 @@
-/* eslint-disable require-yield */
 'use strict';
 
 const get = require('lodash.get');
-const randomstring = require('randomstring');
 const aws = require('@cumulus/ingest/aws');
-
-function generateRandomName() {
-  const r = [];
-  for (let i = 0; i < 5; i++) {
-    r.push(randomstring.generate(7));
-  }
-
-  return r.join('-');
-}
+const uuidv4 = require('uuid/v4');
 
 function handler(event, context, cb) {
   const template = get(event, 'template');
@@ -27,6 +17,7 @@ function handler(event, context, cb) {
     message.provider = provider;
     message.meta = meta;
     message.payload = payload;
+    message.cumulus_meta.execution_name = uuidv4();
 
     if (collection) {
       message.collection = {
@@ -34,12 +25,10 @@ function handler(event, context, cb) {
         meta: collection
       };
     }
-    message.ingest_meta.execution_name = generateRandomName();
 
-    aws.SQS.sendMessage(message.resources.queues.startSF, message)
-       .then(r => cb(null, r))
-      .catch(e => cb(e));
-  }).catch(e => cb(e));
+    return aws.SQS.sendMessage(message.resources.queues.startSF, message)
+        .then((r) => cb(null, r));
+  })
+  .catch(cb);
 }
-
 module.exports = handler;
