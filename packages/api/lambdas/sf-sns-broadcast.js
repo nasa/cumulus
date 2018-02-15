@@ -15,7 +15,7 @@ const errors = require('@cumulus/common/errors');
 function eventFailed(event) {
   if (event.exception) {
     if (typeof event.exception === 'object') {
-      // this is needed to avoid flagging cases like "exeption: {}" or "exection: 'none'"
+      // this is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
       if (Object.keys(event.exception).length > 0) {
         return true;
       }

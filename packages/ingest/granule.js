@@ -161,7 +161,7 @@ class DiscoverAndQueue extends Discover {
 
 
 /**
- * This is a bse class for ingesting and parsing a single PDR
+ * This is a base class for ingesting and parsing a single PDR
  * It must be mixed with a FTP or HTTP mixing to work
  *
  * @class
