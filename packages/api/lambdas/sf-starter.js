@@ -13,7 +13,7 @@ const consumer = require('@cumulus/ingest/consumer');
 function dispatch(message) {
   const input = Object.assign({}, message.Body);
 
-  input.cumulus_meta.createdAt = Date.now();
+  input.cumulus_meta.workflow_start_time = Date.now();
 
   if (!input.cumulus_meta.execution_name) {
     input.cumulus_meta.execution_name = uuidv4();

@@ -92,7 +92,13 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
   // temporary fix for PVL not recognizing quoted strings as symbols
   pdrString = pdrString.replace(/"/g, '');
 
-  let parsed = pvl.pvlToJS(pdrString);
+  let parsed;
+  try {
+    parsed = pvl.pvlToJS(pdrString);
+  }
+  catch (e) {
+    throw new PDRParsingError(e.message);
+  }
 
   // check if the PDR has groups
   // if so, get the objects inside the first group
