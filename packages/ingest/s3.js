@@ -9,13 +9,13 @@ const urljoin = require('url-join');
 module.exports.s3Mixin = (superclass) => class extends superclass {
 
   /**
-   * Downloads a given url and upload to a given S3 location
+   * Copies an object from one S3 location to another
    *
-   * @param {string} filepath - the locatio of the file to be uploaded
+   * @param {string} filepath - the S3 URI of the file to be uploaded
    * @param {string} bucket - the S3 bucket to upload to
-   * @param {string} key - the base path of the S3 key
-   * @param {string} filename - the filename to be uploaded
-   * @returns {Promise} a promise
+   * @param {string} key - the S3 key of the destination location
+   * @param {string} filename - the detination file name
+   * @returns {Promise} the S3 URI of the destination file
    * @private
    */
   async sync(filepath, bucket, key, filename) {
@@ -34,10 +34,10 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    * Upload a file to S3
    *
    * @param {string} bucket - the S3 bucket to upload to
-   * @param {string} key - the base path of the S3 key
+   * @param {string} key - the S3 key of the destination location
    * @param {string} filename - the filename to be uploaded to
    * @param {string} tempFile - the location of the file to be uploaded
-   * @returns {Promise<string>} - the S3 URL that the file was uploaded to
+   * @returns {Promise<string>} - the S3 URI of the destination file
    */
   async upload(bucket, key, filename, tempFile) {
     const fullKey = `${key}/${filename}`;
@@ -55,11 +55,11 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    * Downloads the file to disk, difference with sync is that
    * this method involves no uploading to S3
    *
-   * @param {string} filepath - the path of the file to be downloaded
+   * @param {string} filepath - the S3 URI of the file to be downloaded
    * @param {string} filename - the name of the file to be downloaded
-   * @returns {Promise} a promise
+   * @returns {Promise} - the path of the destination file
    */
-  async download(filepath, filename) {
+  download(filepath, filename) {
     // let's stream to file
     const tempFile = path.join(os.tmpdir(), filename);
     const params = aws.parseS3Uri(`${filepath.replace(/\/+$/, '')}/${filename}`);
@@ -69,7 +69,7 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
   /**
    * List all files from a given endpoint
    *
-   * @returns {Promise} a promise
+   * @returns {Promise} file list of the endpoint
    * @private
    */
   async list() {
