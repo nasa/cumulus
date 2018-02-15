@@ -370,20 +370,20 @@ Resources:
   # APIGateway config BEGIN
   #################################################
 {{# if apiMethods}}
-{{# each apiDependencies}}
-  ApiGatewayDeployment{{../apiStage}}{{name}}:
-{{# if methods }}
-    DependsOn:
-  {{#each methods}}
-    - {{name}}
-  {{/each}}
-{{/if}}
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      RestApiId:
-        Ref: {{name}}RestApi
-      StageName: {{../apiStage}}
-{{/each}}
+# {{# each apiDependencies}}
+#   ApiGatewayDeployment{{../apiStage}}{{name}}:
+# {{# if methods }}
+#     DependsOn:
+#   {{#each methods}}
+#     - {{name}}
+#   {{/each}}
+# {{/if}}
+#     Type: AWS::ApiGateway::Deployment
+#     Properties:
+#       RestApiId:
+#         Ref: {{name}}RestApi
+#       StageName: {{../apiStage}}
+# {{/each}}
 
 {{#each apiMethods}}
   {{name}}:
@@ -458,6 +458,7 @@ Resources:
         Ref: {{api}}RestApi
 
 {{/each}}
+{{/if}}
 
 {{#each apis}}
   {{name}}RestApi:
@@ -465,7 +466,7 @@ Resources:
     Properties:
       Name: {{../stackName}}-{{name}}
 {{/each}}
-{{/if}}
+
   #################################################
   # APIGateway config END
   #################################################
