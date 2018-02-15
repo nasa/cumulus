@@ -22,6 +22,7 @@ const log = require('@cumulus/ingest/log');
 **/
 function parsePdr(event) {
   const config = get(event, 'config');
+  const input = get(event, 'input');
   const provider = get(config, 'provider', null);
   const queue = get(config, 'useQueue', true);
 
@@ -32,7 +33,15 @@ function parsePdr(event) {
   }
 
   const Parse = pdr.selector('parse', provider.protocol, queue);
-  const parse = new Parse(event);
+  const parse = new Parse(
+    input.pdr,
+    config.stack,
+    config.bucket,
+    config.collection,
+    provider,
+    config.queueUrl,
+    config.templateUri
+  );
 
   return parse.ingest()
     .then((payload) => {
