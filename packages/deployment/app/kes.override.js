@@ -254,7 +254,7 @@ function template(name, workflow, config, outputs) {
 }
 
 /**
- * Generates a Cumulus Message templates for the all the workflows
+ * Generate a Cumulus Message templates for the all the workflows
  * in the stack and upload to s3
  *
  * @param {Object} config - Kes config object
@@ -264,9 +264,6 @@ function template(name, workflow, config, outputs) {
  * @returns {Promise} undefined
  */
 async function generateTemplates(config, outputs, uploader) {
-  fs.writeFileSync('config.json', JSON.stringify(config));
-  fs.writeFileSync('outputs.json', JSON.stringify(outputs));
-
   // this function only works if there are step functions defined in the deployment
   if (config.stepFunctions) {
     const bucket = config.buckets.internal;
@@ -276,7 +273,7 @@ async function generateTemplates(config, outputs, uploader) {
 
     // uploads the generated templates to S3
     const workflows = [];
-    console.log('Uploading Workflow Input Templates');
+    console.log('Uploading Cumulus Message Templates for each Workflow ...');
     for (const t of templates) {
       const name = t.meta.workflow_name;
       const key = `${stack}/workflows/${name}.json`;
