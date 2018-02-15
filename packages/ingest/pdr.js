@@ -23,18 +23,27 @@ const log = logger.child({ file: 'ingest/pdr.js' });
  * @abstract
  */
 class Discover {
-  constructor(event) {
+  constructor(
+    stack,
+    bucket,
+    collection,
+    provider,
+    queueUrl,
+    templateUri,
+    folder = 'pdrs',
+    queueLimit = null
+  ) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    const config = get(event, 'config');
-    this.stack = get(config, 'stack');
-    this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection');
-    this.provider = get(config, 'provider');
-    this.folder = get(config, 'pdrFolder', 'pdrs');
-    this.event = event;
+    this.stack = stack;
+    this.bucket = bucket;
+    this.collection = collection;
+    this.provider = provider;
+    this.folder = folder;
+    this.queueUrl = queueUrl;
+    this.templateUri = templateUri;
 
     // get authentication information
     this.port = get(this.provider, 'port', 21);
@@ -42,7 +51,7 @@ class Discover {
     this.path = this.collection.provider_path || '/';
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
-    this.limit = get(config, 'queueLimit', null);
+    this.limit = queueLimit;
   }
 
   filterPdrs(pdr) {
@@ -75,7 +84,7 @@ class Discover {
    */
   pdrIsNew(pdr) {
     return aws.s3ObjectExists({
-      Bucket: this.buckets.internal,
+      Bucket: this.bucket,
       Key: path.join(this.stack, this.folder, pdr.name)
     }).then((exists) => (exists ? false : pdr));
   }
@@ -106,13 +115,16 @@ class Discover {
  * @abstract
  */
 class DiscoverAndQueue extends Discover {
-  async findNewPdrs(_pdrs) {
-    let pdrs = _pdrs;
-    pdrs = await super.findNewPdrs(pdrs);
-    if (this.limit) {
-      pdrs = pdrs.slice(0, this.limit);
-    }
-    return Promise.all(pdrs.map(p => queue.queuePdr(this.event, p)));
+  async findNewPdrs(pdrs) {
+    let newPdrs = await super.findNewPdrs(pdrs);
+    if (this.limit) newPdrs = newPdrs.slice(0, this.limit);
+    return Promise.all(newPdrs.map((p) => queue.queuePdr(
+      this.queueUrl,
+      this.templateUri,
+      this.provider,
+      this.collection,
+      p
+    )));
   }
 }
 
@@ -124,24 +136,28 @@ class DiscoverAndQueue extends Discover {
  * @class
  * @abstract
  */
-
 class Parse {
-  constructor(event) {
+  constructor(
+    pdr,
+    stack,
+    bucket,
+    collection,
+    provider,
+    queueUrl,
+    templateUri,
+    folder = 'pdrs') {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    this.event = event;
-
-    const config = get(event, 'config');
-    const input = get(event, 'input');
-
-    this.pdr = get(input, 'pdr');
-    this.stack = get(config, 'stack');
-    this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection');
-    this.provider = get(config, 'provider');
-    this.folder = get(config, 'pdrFolder', 'pdrs');
+    this.pdr = pdr;
+    this.stack = stack;
+    this.bucket = bucket;
+    this.collection = collection;
+    this.provider = provider;
+    this.folder = folder;
+    this.queueUrl = queueUrl;
+    this.templateUri = templateUri;
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
@@ -175,7 +191,7 @@ class Parse {
 
     // upload only if the parse was successful
     await this.upload(
-      this.buckets.internal,
+      this.bucket,
       path.join(this.stack, this.folder),
       this.pdr.name,
       pdrLocalPath
@@ -186,14 +202,13 @@ class Parse {
   }
 
   /**
-   * This async method parse a PDR and returns all the granules in it
+   * This method parses a PDR and returns all the granules in it
    *
    * @param {string} pdrLocalPath PDR path on disk
    * @return {Promise}
    * @public
    */
-
-  async parse(pdrLocalPath) {
+  parse(pdrLocalPath) {
     // catching all parse errors here to mark the pdr as failed
     // if any error occured
     const parsed = parsePdr(pdrLocalPath, this.collection, this.pdr.name);
@@ -224,19 +239,17 @@ class Parse {
 class ParseAndQueue extends Parse {
   async ingest() {
     const payload = await super.ingest();
-    const events = {};
+    const collections = {};
 
     //payload.granules = payload.granules.slice(0, 10);
 
     // make sure all parsed granules have the correct collection
     for (const g of payload.granules) {
-      if (!events[g.dataType]) {
-        events[g.dataType] = JSON.parse(JSON.stringify(this.event));
-
+      if (!collections[g.dataType]) {
         // if the collection is not provided in the payload
         // get it from S3
         if (g.dataType !== this.collection.name) {
-          const bucket = this.buckets.internal;
+          const bucket = this.bucket;
           const key = `${this.stack}` +
                       `/collections/${g.dataType}.json`;
           let file;
@@ -249,29 +262,38 @@ class ParseAndQueue extends Parse {
             );
           }
 
-          events[g.dataType].collection = {
-            id: g.dataType,
-            meta: JSON.parse(file.Body.toString())
-          };
+          collections[g.dataType] = JSON.parse(file.Body.toString());
+        }
+        else {
+          collections[g.dataType] = this.collection;
         }
       }
 
       g.granuleId = this.extractGranuleId(
         g.files[0].name,
-        events[g.dataType].collection.granuleIdExtraction
+        collections[g.dataType].granuleIdExtraction
       );
     }
 
     log.info(`Queueing ${payload.granules.length} granules to be processed`);
 
     const names = await Promise.all(
-      payload.granules.map(g => queue.queueGranule(events[g.dataType], g))
+      payload.granules.map((g) => queue.queueGranule(
+        g,
+        this.queueUrl,
+        this.templateUri,
+        this.provider,
+        collections[g.dataType],        
+        this.pdr,
+        this.stack,
+        this.bucket
+      ))
     );
 
     let isFinished = false;
-    const running = names.filter(n => n[0] === 'running').map(n => n[1]);
-    const completed = names.filter(n => n[0] === 'completed').map(n => n[1]);
-    const failed = names.filter(n => n[0] === 'failed').map(n => n[1]);
+    const running = names.filter((n) => n[0] === 'running').map((n) => n[1]);
+    const completed = names.filter((n) => n[0] === 'completed').map((n) => n[1]);
+    const failed = names.filter((n) => n[0] === 'failed').map((n) => n[1]);
     if (running.length === 0) {
       isFinished = true;
     }
