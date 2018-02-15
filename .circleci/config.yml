@@ -61,6 +61,12 @@ jobs:
           name: Install Dependencies
           command: |
             yarn install
+
+            # short fix for deployment package missing dependencies during deploy
+            cd packages/deployment
+            npm install
+            cd ~/project
+
       - run:
           name: Publishing to NPM
           command: |
@@ -76,6 +82,6 @@ workflows:
       - build_and_publish:
           requires:
             - build_and_test
-          filters:
-            branches:
-              only: message-updates
+          # filters:
+          #   branches:
+          #     only: message-updates
