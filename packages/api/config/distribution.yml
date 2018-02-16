@@ -7,10 +7,10 @@ ApiDistribution:
   apiRole: true
   urs: true
   envs:
-    EARTHDATA_BASE_URL: '{{urs_url}}' 
+    EARTHDATA_BASE_URL: '{{parent.urs_url}}' 
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
-    protected: '{{buckets.protected}}'
+    protected: '{{parent.buckets.protected}}'
   apiGateway:
     - api: distribution
       path: 'redirect'

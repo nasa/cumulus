@@ -92,7 +92,13 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
   // temporary fix for PVL not recognizing quoted strings as symbols
   pdrString = pdrString.replace(/"/g, '');
 
-  let parsed = pvl.pvlToJS(pdrString);
+  let parsed;
+  try {
+    parsed = pvl.pvlToJS(pdrString);
+  }
+  catch (e) {
+    throw new PDRParsingError(e.message);
+  }
 
   // check if the PDR has groups
   // if so, get the objects inside the first group
@@ -110,12 +116,11 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
     const specs = group.objects('FILE_SPEC');
     let dataType = group.get('DATA_TYPE');
 
-    if (!dataType) {
-      const error = new PDRParsingError('DATA_TYPE is missing');
-      throw error;
-    }
+    if (!dataType) throw new PDRParsingError('DATA_TYPE is missing');
+
     dataType = dataType.value;
 
+    // FIXME This is a very generic error
     if (specs.length === 0) {
       throw new Error();
     }
