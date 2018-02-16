@@ -44,6 +44,7 @@ async function createOneTimeRules(subscriptionRules) {
     const oneTimeRuleParams = Object.assign({}, subscriptionRule);
     delete oneTimeRuleParams['createdAt'];
     delete oneTimeRuleParams['updatedAt'];
+    oneTimeRuleParams.name = `${subscriptionRule.name}_${Date.now().toString()}`;
     oneTimeRuleParams.rule.type = 'onetime';
     return model.create(oneTimeRuleParams);
   });
@@ -74,26 +75,18 @@ async function validateMessage(event) {
  * @returns {(error|string)} Success message or error
  */
 function handler(event, context, cb) {
-  return validateMessage(event)
+  // TODO: update me to enable batch processing
+  const dataBlob = event.Records[0].kinesis.data;
+  const dataString = Buffer.from(dataBlob, 'base64').toString();
+  const eventObject = JSON.parse(dataString);
+  return validateMessage(eventObject)
     .then(getSubscriptionRules)
     .then((subscriptionRules) => {
       return createOneTimeRules(subscriptionRules);
     })
     .then((results) => cb(null, results))
     .catch((err) => {
-      if (Ajv.ValidationError.prototype.isPrototypeOf(err)) {
-        const validationErrorMessage = err.errors.map((errObject) => {
-          let errorMessage = '';
-          if (errObject.dataPath) {
-            errorMessage += `${errObject.dataPath} `;
-          }
-          errorMessage += errObject.message
-          return errorMessage;
-        }).join('.\n');
-        cb(validationErrorMessage);
-      } else {
-        cb(err);
-      }
+      cb(JSON.stringify(err));
     });
 }
 
