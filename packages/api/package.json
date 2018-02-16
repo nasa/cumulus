@@ -9,6 +9,14 @@
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
   },
+  "ava": {
+    "files": "tests",
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
   "publishConfig": {
     "access": "public"
   },
