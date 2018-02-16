@@ -1,6 +1,11 @@
 default:
 
+  apiDeploy: true
   apis:
+    - name: distribution
     - name: backend
 
-  lambdas: !!files [ 'node_modules/@cumulus/api/config/api_default.yml' ]
+  lambdas: !!files [
+    'node_modules/@cumulus/api/config/distribution.yml',
+    'node_modules/@cumulus/api/config/api_default.yml'
+  ]

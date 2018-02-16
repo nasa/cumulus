@@ -104,10 +104,10 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
     arn,
     execution,
     error: get(payload, 'exception', null),
-    type: get(payload, 'cumulus_meta.workflow_name'),
+    type: get(payload, 'meta.workflow_name'),
     collectionId: get(payload, 'meta.collection.name'),
     status: get(payload, 'meta.status', 'UNKNOWN'),
-    createdAt: get(payload, 'cumulus_meta.createdAt'),
+    createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
     timestamp: Date.now()
   };
 
@@ -172,7 +172,7 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
     PANSent: get(payload, 'payload.pdr.PANSent', false),
     PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
     stats,
-    createdAt: get(payload, 'cumulus_meta.createdAt'),
+    createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
     timestamp: Date.now()
   };
 
@@ -292,7 +292,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
         cmrLink: get(g, 'cmr.link'),
         files: uniqBy(g.files, 'filename'),
         error: exception,
-        createdAt: get(payload, 'cumulus_meta.createdAt'),
+        createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
         timestamp: Date.now()
       };
 
