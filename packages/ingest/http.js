@@ -12,6 +12,7 @@ const mkdirp = require('mkdirp');
 const pump = require('pump');
 const syncUrl = require('@cumulus/common/aws').syncUrl;
 const errors = require('@cumulus/common/errors');
+const log = require('@cumulus/common/log');
 
 async function downloadToDisk(url, filepath) {
   const transport = url.indexOf('https://') === 0 ? https : http;
@@ -112,15 +113,18 @@ module.exports.httpMixin = superclass => class extends superclass {
    * @returns {Promise<string>} - the S3 URL that the file was uploaded to
    */
   async upload(bucket, key, filename, tempFile) {
-    const fullKey = `${key}/${filename}`;
+    const fullKey = path.join(key, filename);
 
     await aws.s3().putObject({
       Bucket: bucket,
       Key: fullKey,
       Body: fs.createReadStream(tempFile)
     }).promise();
+    
+    const s3Uri = `s3://${bucket}/${fullKey}`;
+    log.info(`uploaded ${s3Uri}`);
 
-    return `s3://${bucket}/${fullKey}`;
+    return s3Uri;
   }
 
   /**
