@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.0.0-beta.17",
+  "version": "1.0.0-beta.19",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "scripts": {
@@ -24,10 +24,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.0.0-beta.17",
-    "@cumulus/common": "^1.0.0-beta.17",
-    "@cumulus/ingest": "^1.0.0-beta.17",
-    "@cumulus/pvl": "^1.0.0-beta.17",
+    "@cumulus/cmrjs": "^1.0.0-beta.19",
+    "@cumulus/common": "^1.0.0-beta.19",
+    "@cumulus/ingest": "^1.0.0-beta.19",
+    "@cumulus/pvl": "^1.0.0-beta.19",
     "ajv": "^5.2.2",
     "aws-sdk": "^2.95.0",
     "babel-core": "^6.25.0",
@@ -35,7 +35,6 @@
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
     "basic-auth": "^1.1.0",
-    "crypto-random-string": "^1.0.0",
     "elasticsearch": "^13.2.0",
     "form-data": "^2.1.2",
     "got": "^6.7.1",
@@ -51,7 +50,7 @@
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
-    "randomstring": "^1.1.5",
+    "uuid": "^3.2.1",
     "webpack": "^1.12.13"
   },
   "devDependencies": {

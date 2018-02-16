@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.0.0-beta.17",
+  "version": "1.0.0-beta.19",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -18,8 +18,16 @@
     "lint": "eslint .",
     "mocha": "mocha-webpack test/**/*.js",
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
-    "test": "npm run mocha",
+    "test": "npm run mocha && env TEST=true ava",
     "test-ci": "npm run lint && npm run mocha-junit"
+  },
+  "ava": {
+    "files": "tests",
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
   },
   "babel": {
     "presets": [
@@ -32,7 +40,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/test-data": "^1.0.0-beta.17",
+    "@cumulus/test-data": "^1.0.0-beta.19",
     "ajv": "^5.0.4-beta.3",
     "ajv-cli": "^1.1.1",
     "async": "^2.0.0",
@@ -66,5 +74,8 @@
     "uuid": "^3.1.0",
     "webpack": "^1.13.3",
     "webpack-node-externals": "^1.5.4"
+  },
+  "devDependencies": {
+    "ava": "^0.25.0"
   }
 }

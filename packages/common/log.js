@@ -8,9 +8,8 @@ const util = require('util');
  * @param {string} args - Message to log
  * @returns {undefined} - log is printed to stdout, nothing is returned
  */
-function log(level, messages, additionalKeys) {
+function log(level, args, additionalKeys) {
   const time = new Date();
-  //const writeMessage = '';
   let output = {
     level,
     executions: process.env.EXECUTIONS,
@@ -18,10 +17,7 @@ function log(level, messages, additionalKeys) {
     sender: process.env.SENDER
   };
 
-  //const messageLogger = new console.Console(writeMessage, process.stderr);
-  const message = util.format(messages);
-  //console.log(message);
-  console.log('------');
+  const message = util.format.apply(null, args);
   output.message = message;
 
   if (additionalKeys) output = Object.assign({}, additionalKeys, output);
