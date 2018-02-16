@@ -1,36 +1,42 @@
 'use strict';
+const util = require('util');
 
 /**
  * Constructs JSON to log
  *
  * @param {string} level - type of log (info, error, debug, warn)
- * @param {string} args - Message to log and any other information
- * @returns {undefined} - the JSON to be logged
+ * @param {string} args - Message to log
+ * @returns {undefined} - log is printed to stdout, nothing is returned
  */
-function log(level, args) {
-  const executions = process.env.EXECUTIONS; //set in handler from cumulus_meta
-  const sender = process.env.SENDER; //set in handler from AWS context
+function log(level, messages, additionalKeys) {
   const time = new Date();
-  var message = '';
-
-  const output = {
-    executions: executions,
+  //const writeMessage = '';
+  let output = {
+    level,
+    executions: process.env.EXECUTIONS,
     timestamp: time.toISOString(),
-    sender: sender,
-    level: level
+    sender: process.env.SENDER
   };
-  for (const arg of args) {
-    if ((typeof arg) === 'string') message = message + arg + ' ';
-    else {
-      for (const key in arg) {
-        output[key] = arg[key];
-      }
-    }
-  }
 
+  //const messageLogger = new console.Console(writeMessage, process.stderr);
+  const message = util.format(messages);
+  //console.log(message);
+  console.log('------');
   output.message = message;
-  if (level === 'error') console.error(output);
-  else console.log(output);
+
+  if (additionalKeys) output = Object.assign({}, additionalKeys, output);
+  console.log(JSON.stringify(output));
+}
+
+/**
+ * Constructs JSON to log
+ *
+ * @param {string} additionalKeys - Any additional key value pairs the user chooses to log
+ * @param {string} args - Message to log and any other information
+ * @returns {undefined} - log is printed to stdout, nothing is returned
+ */
+function logAdditionalKeys(additionalKeys, ...args) {
+  log('info', args, additionalKeys);
 }
 
 /**
@@ -98,3 +104,4 @@ module.exports.debug = debug;
 module.exports.warn = warn;
 module.exports.fatal = fatal;
 module.exports.trace = trace;
+module.exports.logAdditionalKeys = logAdditionalKeys;
