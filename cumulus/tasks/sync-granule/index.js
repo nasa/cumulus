@@ -63,6 +63,8 @@ exports.syncGranule = function syncGranule(event) {
   const IngestClass = granule.selector('ingest', config.provider.protocol);
   const ingest = new IngestClass(event);
 
+  log.info('Some message', 'second message');
+
   return download(ingest, config.buckets.internal, config.provider, input.granules)
     .then((granules) => {
       if (ingest.end) ingest.end();
@@ -99,12 +101,12 @@ exports.handler = function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, callback);
 };
 
-// const { justLocalRun } = require('@cumulus/common/local-helpers');
-// justLocalRun(() => {
-//   const p = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
+justLocalRun(() => {
+  const p = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 
-//   process.env.EXECUTIONS = p.config.cumulus_meta.execution_name; //would be set in m adapter handler
-//   process.env.SENDER = 'sync-granule'; //would be set in m adapter handler
+  process.env.EXECUTIONS = p.config.cumulus_meta.execution_name; //would be set in m adapter handler
+  process.env.SENDER = 'sync-granule'; //would be set in m adapter handler
 
-//   exports.syncGranule(p).then(r => console.log(r));
-// });
+  exports.syncGranule(p).then(r => console.log(r));
+});
