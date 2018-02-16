@@ -65,6 +65,18 @@ async function validateMessage(event) {
   return await validate(event);
 }
 
+async function processRecord(record) {
+  const dataBlob = record.kinesis.data;
+  const dataString = Buffer.from(dataBlob, 'base64').toString();
+  const eventObject = JSON.parse(dataString);
+
+  await validateMessage(eventObject)
+    .then(getSubscriptionRules)
+    .then((subscriptionRules) => {
+      return createOneTimeRules(subscriptionRules);
+    });
+}
+
 /**
  * `handler` Looks up enabled 'subsciption'-type rules associated with the collection in the event argument. It
  * creates new onetime rules for each rule found to trigger the workflow defined in the 'subscription'-type rule.
@@ -75,16 +87,10 @@ async function validateMessage(event) {
  * @returns {(error|string)} Success message or error
  */
 function handler(event, context, cb) {
-  // TODO: update me to enable batch processing
-  const dataBlob = event.Records[0].kinesis.data;
-  const dataString = Buffer.from(dataBlob, 'base64').toString();
-  const eventObject = JSON.parse(dataString);
-  return validateMessage(eventObject)
-    .then(getSubscriptionRules)
-    .then((subscriptionRules) => {
-      return createOneTimeRules(subscriptionRules);
-    })
-    .then((results) => cb(null, results))
+  const records = event.Records;
+
+  return Promise.all(records.map(r => processRecord(r)))
+    .then((results) => cb(null, results.filter(r => r !== undefined)))
     .catch((err) => {
       cb(JSON.stringify(err));
     });

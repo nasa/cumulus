@@ -24,7 +24,10 @@ const eventData = JSON.stringify({
 });
 
 const event = {
-  Records: [{kinesis: {data: new Buffer(eventData).toString('base64')}}]
+  Records: [
+    {kinesis: {data: new Buffer(eventData).toString('base64')}},
+    {kinesis: {data: new Buffer(eventData).toString('base64')}}
+  ]
 };
 
 const commonRuleParams = {
@@ -98,9 +101,14 @@ test('it should create a onetime rule for each associated workflow', async t => 
     });
   })
   .then((results) => {
-    t.is(results.Items.length, 2);
+    t.is(results.Items.length, 4);
     const workflowNames = results.Items.map(i => i.workflow).sort();
-    t.deepEqual(workflowNames, ['test-workflow-1', 'test-workflow-2']);
+    t.deepEqual(workflowNames, [
+      'test-workflow-1',
+      'test-workflow-1',
+      'test-workflow-2',
+      'test-workflow-2'
+    ]);
     results.Items.forEach(r => t.is(r.rule.type, 'onetime'));
   });  
 });
