@@ -32,9 +32,8 @@ Running tests for kinesis-consumer depends on localstack. Once you have installe
 SERVICES=dynamodb localstack start
 ```
 
-Then you can run tests locally by using node >= 8.0:
+Then you can run tests locally via:
 
 ```bash
-nvm use 8.0
 LOCALSTACK_HOST=localhost npm run test
 ```
