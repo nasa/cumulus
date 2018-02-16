@@ -21,8 +21,25 @@ const log = require('@cumulus/common/log');
 * @return {undefined}
 **/
 function handler(event, context, cb) {
+  const config = event.config;
+  const stack = config.stack;
+  const bucket = config.bucket;
+  const queueUrl = config.queueUrl;
+  const templateUri = config.templateUri;
+  const provider = config.provider;
+  const collection = config.collection;
   const granules = event.input.granules || [];
-  const queuedGranules = granules.map(g => queueGranule(event, g));
+
+  const queuedGranules = granules.map(g => queueGranule(
+    g,
+    queueUrl,
+    templateUri,
+    provider,
+    collection,
+    null,
+    stack,
+    bucket
+  ));
 
   return Promise.all(queuedGranules).then(() => {
     cb(null, { granules_queued: queuedGranules.length });

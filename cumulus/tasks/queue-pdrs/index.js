@@ -22,7 +22,14 @@ const log = require('@cumulus/common/log');
 **/
 function handler(event, context, cb) {
   const pdrs = event.input.pdrs || [];
-  const queuedPdrs = pdrs.map(pdr => queuePdr(event, pdr));
+  const config = event.config;
+  const queuedPdrs = pdrs.map((pdr) => queuePdr(
+    config.queueUrl,
+    config.templateUri,
+    config.provider,
+    config.collection,
+    pdr
+  ));
 
   return Promise.all(queuedPdrs).then(() => {
     cb(null, { pdrs_queued: queuedPdrs.length });

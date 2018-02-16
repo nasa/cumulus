@@ -1,14 +1,15 @@
 {
   "name": "@cumulus/ingest",
-  "version": "1.0.0-beta.17",
+  "version": "1.0.0-beta.19",
   "description": "Ingest utilities",
   "scripts": {
-    "test": "ava test/*.js"
+    "test": "env TEST=true ava"
   },
   "publishConfig": {
     "access": "public"
   },
   "ava": {
+    "files": "test",
     "babel": "inherit",
     "require": [
       "babel-polyfill",
@@ -37,9 +38,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.17",
-    "@cumulus/pvl": "^1.0.0-beta.17",
-    "@cumulus/test-data": "^1.0.0-beta.17",
+    "@cumulus/common": "^1.0.0-beta.19",
+    "@cumulus/pvl": "^1.0.0-beta.19",
+    "@cumulus/test-data": "^1.0.0-beta.19",
     "aws-sdk": "^2.4.11",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
@@ -59,8 +60,10 @@
     "pino": "^4.7.1",
     "pump": "^1.0.2",
     "simplecrawler": "^1.1.4",
+    "sinon": "^4.2.2",
     "ssh2": "^0.5.5",
-    "url-join": "^1.0.0"
+    "url-join": "^1.0.0",
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",

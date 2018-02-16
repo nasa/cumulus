@@ -163,12 +163,12 @@ Resources:
 {{/each}}
 
 {{#each stepFunctions}}
-  {{../stackNameNoDash}}{{name}}StateMachine:
+  {{../stackNameNoDash}}{{@key}}StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
         Fn::Sub: |
-          {{{ToJson definition}}}
+          {{{ToJson this}}}
 
       RoleArn: {{../iams.stepRoleArn}}
 
@@ -370,20 +370,20 @@ Resources:
   # APIGateway config BEGIN
   #################################################
 {{# if apiMethods}}
-{{# each apiDependencies}}
-  ApiGatewayDeployment{{../apiStage}}{{name}}:
-{{# if methods }}
-    DependsOn:
-  {{#each methods}}
-    - {{name}}
-  {{/each}}
-{{/if}}
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      RestApiId:
-        Ref: {{name}}RestApi
-      StageName: {{../apiStage}}
-{{/each}}
+# {{# each apiDependencies}}
+#   ApiGatewayDeployment{{../apiStage}}{{name}}:
+# {{# if methods }}
+#     DependsOn:
+#   {{#each methods}}
+#     - {{name}}
+#   {{/each}}
+# {{/if}}
+#     Type: AWS::ApiGateway::Deployment
+#     Properties:
+#       RestApiId:
+#         Ref: {{name}}RestApi
+#       StageName: {{../apiStage}}
+# {{/each}}
 
 {{#each apiMethods}}
   {{name}}:
@@ -458,6 +458,7 @@ Resources:
         Ref: {{api}}RestApi
 
 {{/each}}
+{{/if}}
 
 {{#each apis}}
   {{name}}RestApi:
@@ -465,7 +466,7 @@ Resources:
     Properties:
       Name: {{../stackName}}-{{name}}
 {{/each}}
-{{/if}}
+
   #################################################
   # APIGateway config END
   #################################################
@@ -857,9 +858,9 @@ Outputs:
     Value: {{apiStage}}
   
 {{#each stepFunctions}}
-  {{name}}StateMachine:
+  {{@key}}StateMachine:
     Value:
-      Ref: {{../stackNameNoDash}}{{name}}StateMachine
+      Ref: {{../stackNameNoDash}}{{@key}}StateMachine
 {{/each}}
 
 {{#each sqs}}

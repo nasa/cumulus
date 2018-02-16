@@ -117,7 +117,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', (t) => {
   newPayload.input = {};
 
   const internalBucketName = testUtils.randomString();
-  newPayload.config.buckets.internal = internalBucketName;
+  newPayload.config.bucket = internalBucketName;
   return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => {
       const Key = [
@@ -160,7 +160,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
   newPayload.input = {};
 
   const internalBucketName = testUtils.randomString();
-  newPayload.config.buckets.internal = internalBucketName;
+  newPayload.config.bucket = internalBucketName;
   return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => aws.s3().putObject({
       Bucket: internalBucketName,
@@ -200,7 +200,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
   newPayload.input = {};
 
   const internalBucketName = testUtils.randomString();
-  newPayload.config.buckets.internal = internalBucketName;
+  newPayload.config.bucket = internalBucketName;
   return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => aws.s3().putObject({
       Bucket: internalBucketName,
