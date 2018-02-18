@@ -61,7 +61,7 @@ async (collectionConfig, resources, collection, granuleFilterFn, granuleId) => {
   const granuleFilter = granuleFilterFn(collectionId);
   sfInput.workflow_config_template[firstStep].granule_filter = granuleFilter;
 
-  const executionName = sfInput.ingest_meta.execution_name;
+  const executionName = sfInput.cumulus_meta.execution_name;
   const { uuid } = parseExecutionName(executionName);
 
   console.info(`Starting execution of ${stateMachine} for ${JSON.stringify(granuleFilter)}`);
