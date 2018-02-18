@@ -2,8 +2,8 @@
 'use strict';
 
 const get = require('lodash.get');
-const { S3, invoke, Events } = require('@cumulus/ingest/aws');
-const aws = require('@cumulus/ingest/aws');
+const { invoke, Events } = require('@cumulus/ingest/aws');
+const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
 const { rule } = require('./schemas');
 
@@ -43,6 +43,13 @@ class Rule extends Manager {
     return super.delete({ name: item.name });
   }
 
+  /**
+   * update a rule item
+   *
+   * @param {*} original - the original rule
+   * @param {*} updated - key/value fields for update, may not be a complete rule item
+   * @returns {Promise} the response from database updates
+   */
   async update(original, updated) {
     if (updated.state) {
       original.state = updated.state;
@@ -62,8 +69,9 @@ class Rule extends Manager {
       }
       case 'kinesis':
         if (valueUpdated) {
-          this.deleteKinesisEventSource(original);
-          this.addKinesisEventSource(original);
+          await this.deleteKinesisEventSource(original);
+          await this.addKinesisEventSource(original);
+          updated.rule.arn = original.rule.arn;
         }
         else this.updateKinesisEventSource(original);
         break;
@@ -78,7 +86,7 @@ class Rule extends Manager {
     // makes sure the workflow exists
     const bucket = process.env.bucket;
     const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
-    const exists = S3.fileExists(bucket, key);
+    const exists = await aws.fileExists(bucket, key);
 
     if (!exists) {
       const err = {
@@ -112,15 +120,17 @@ class Rule extends Manager {
       throw err;
     }
 
-    const payload = await Rule.buildPayload(item);
-
     switch (item.rule.type) {
-      case 'onetime':
+      case 'onetime': {
+        const payload = await Rule.buildPayload(item);
         await invoke(process.env.invoke, payload);
         break;
-      case 'scheduled':
+      }
+      case 'scheduled': {
+        const payload = await Rule.buildPayload(item);
         await this.addRule(item, payload);
         break;
+      }
       case 'kinesis':
         await this.addKinesisEventSource(item);
         break;
@@ -129,7 +139,7 @@ class Rule extends Manager {
     }
 
     // save
-    return super.create(item);
+    return await super.create(item);
   }
 
   /**
@@ -137,45 +147,46 @@ class Rule extends Manager {
    *
    * @param {*} item - the rule item
    * @returns {Promise} a promise
+   * @returns {Promise} updated rule item
    */
   async addKinesisEventSource(item) {
     const params = {
       EventSourceArn: item.rule.value,
       FunctionName: process.env.kinesisConsumer,
-      StartingPosition: LATEST, // eslint-disable-line no-undef
-      Enabled: item.state
+      StartingPosition: 'LATEST',
+      Enabled: item.state === 'ENABLED'
     };
-    return await aws.lambda.createEventSourceMapping(params).promise()
-      .then((data) => {
-        item.rule.arn = data.UUID;
-      });
+
+    const data = await aws.lambda().createEventSourceMapping(params).promise();
+    item.rule.arn = data.UUID;
+    return item;
   }
 
   /**
    * update an event source, only the state can be updated
    *
    * @param {*} item - the rule item
-   * @returns {Promise} a promise
+   * @returns {Promise} the response from event source update
    */
   async updateKinesisEventSource(item) {
     const params = {
       UUID: item.rule.arn,
-      Enabled: item.state
+      Enabled: item.state === 'ENABLED'
     };
-    return await aws.lambda.updateEventSourceMapping(params).promise();
+    return await aws.lambda().updateEventSourceMapping(params).promise();
   }
 
   /**
    * delete an event source the from kinesis consumer lambda function
    *
    * @param {*} item - the rule item
-   * @returns {Promise} a promise
+   * @returns {Promise} the response from event source delete
    */
   async deleteKinesisEventSource(item) {
     const params = {
       UUID: item.rule.arn
     };
-    return await aws.lambda.deleteEventSourceMapping(params).promise();
+    return await aws.lambda().deleteEventSourceMapping(params).promise();
   }
 
 }
