@@ -13,7 +13,7 @@
         "type": "object",
         "properties": {
           "granuleId": { "type": "string" },
-          "files": { "type": "string" }
+          "files": { "type": "array" }
         }
       }
     }
