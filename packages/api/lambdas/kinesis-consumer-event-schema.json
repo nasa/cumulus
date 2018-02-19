@@ -1,0 +1,9 @@
+{
+  "$async": true,
+  "properties": {
+    "collection": {
+      "type": "string"
+    }
+  },
+  "required": ["collection"]
+}
