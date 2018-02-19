@@ -1,0 +1,60 @@
+{
+  "title": "DiscoverGranulesConfig",
+  "description": "Describes the config used by the discover-granules task",
+  "type": "object",
+  "properties": {
+    "useQueue": {
+      "type": "boolean"
+    },
+    "provider": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "id": { "type": "string" },
+        "globalConnectionLimit": { "type": "integer" },
+        "port": { "type": "integer" },
+        "host": { "type": "string" },
+        "username": { "type": "string" },
+        "username": { "type": "password" },
+        "protocol": {
+          "type": "string",
+          "enum": ["ftp", "sftp", "http", "https"]
+        }
+      }
+    },
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "properties": {
+        "internal": { "type": "string" },
+        "private": { "type": "string" },
+        "protected": { "type": "string" },
+        "public": { "type": "string" }
+      }
+    },
+    "collection": {
+      "type": "object",
+      "required": ["name", "files"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "provider_path": { "type": "string" },
+        "url_path": { "type": "string" },
+        "granuleId": { "type": "string" },
+        "sampleFileName": { "type": "string" },
+        "granuleIdExtraction": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "regex": { "type": "string" },
+              "sampleFileName": { "type": "string" },
+              "bucket": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
