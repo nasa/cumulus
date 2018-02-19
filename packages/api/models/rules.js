@@ -96,16 +96,14 @@ class Rule extends Manager {
       case 'scheduled':
         await this.addRule(item, payload);
         break;
+      case 'kinesis':
+        // TODO: CUMULUS-226
+        // - Should create an event source for the kinesis-consumer lambda task
+        // - Should require a kinesis ARN
+        break;
       default:
         throw new Error('Type not supported');
     }
-
-    // if recurring set the cloudwatch rule
-
-    // TODO: implement subscription
-
-    // if onetime and enabled launch lambda function
-
 
     // save
     return super.create(item);
