@@ -14,7 +14,7 @@
           "files": {
             "type": "array",
             "items": {
-              "type": "object",
+              "type": "object"
             }
           }
         }
