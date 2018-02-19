@@ -1,4 +1,18 @@
 {
   "title": "DiscoverS3GranulesOutput",
-  "description": "Describes the output provided by the discover-s3-granules task",
+  "description": "Describes the output produced by the discover-s3-granules task",
+  "type": "object",
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "granuleId": { "type": "string" },
+          "files": { "type": "string" }
+        }
+      }
+    }
+  }
 }
