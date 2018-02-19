@@ -10,7 +10,7 @@ const messageSchema = require('./kinesis-consumer-event-schema.json');
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled, 'kinesis'-type rules associated with the * collection declared in the event
  *
  * @param {object} event lambda event
- * @returnss {array} List of zero or more rules found from table scan
+ * @returns {array} List of zero or more rules found from table scan
  */
 async function getKinesisRules(event) {
   const collection = event.collection;
