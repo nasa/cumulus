@@ -64,10 +64,7 @@ function testCallback(err, object) {
 
 test.before(async () => {
   sinon.stub(Rule, 'buildPayload').resolves(true);
-  await manager.createTable(tableName, ruleTableParams)
-    .then(() => {
-      Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)));
-    });
+  await manager.createTable(tableName, ruleTableParams);
 });
 
 test.after.always(async () => {
@@ -75,11 +72,13 @@ test.after.always(async () => {
 });
 
 // getSubscriptionRule tests
-// TODO(Aimee): Rewrite test
-test.skip('it should look up subscription-type rules which are associated with the collection, but not those that are disabled', t => {
-  return getSubscriptionRules(JSON.parse(eventData)).then((result) => {
-    t.is(result.length, 2);
-  });
+test('it should look up subscription-type rules which are associated with the collection, but not those that are disabled', t => {
+  return Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)))
+    .then(() => {
+      return getSubscriptionRules(JSON.parse(eventData))
+    }).then((result) => {
+      t.is(result.length, 2);
+    });
 });
 
 // handler tests
