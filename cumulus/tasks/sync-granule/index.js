@@ -107,13 +107,3 @@ exports.syncGranule = function syncGranule(event) {
 exports.handler = function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, callback);
 };
-
-// const { justLocalRun } = require('@cumulus/common/local-helpers');
-// justLocalRun(() => {
-//   const p = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
-
-//   process.env.EXECUTIONS = p.config.cumulus_meta.execution_name; //would be set in m adapter handler
-//   process.env.SENDER = 'sync-granule'; //would be set in m adapter handler
-
-//   exports.syncGranule(p).then(r => console.log(r));
-// });
