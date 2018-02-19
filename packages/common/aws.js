@@ -45,6 +45,9 @@ const awsClient = (Service, version = null) => {
   if (version) options.apiVersion = version;
 
   if (process.env.TEST) {
+    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
+      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
+    }
     return memoize(() => testUtils.testAwsClient(Service, options));
   }
   return memoize(() => new Service(options));
@@ -56,7 +59,7 @@ exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
 exports.sqs = awsClient(AWS.SQS, '2012-11-05');
 exports.cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 exports.dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
-exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient);
+exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 
@@ -329,33 +332,6 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
       return contents;
     });
 };
-
-/**
- * Fetch complete list of S3 objects
- *
- * listObjectsV2 is limited to 1,000 results per call.  This function continues
- * listing objects until there are no more to be fetched.
- *
- * The passed params must be compatible with the listObjectsV2 call.
- *
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
- *
- * @param {Object} params - params for the s3.listObjectsV2 call
- * @returns {Promise.<Array>} - resolves to an array of objects corresponding to
- *   the Contents property of the listObjectsV2 response
- */
-async function listS3ObjectsV2(params) {
-  const data = await exports.s3().listObjectsV2(params).promise();
-
-  if (data.IsTruncated) {
-    const newParams = Object.assign({}, params);
-    newParams.ContinuationToken = data.NextContinuationToken;
-    return data.Contents.concat(await exports.listS3ObjectsV2(newParams));
-  }
-
-  return data.Contents;
-}
-exports.listS3ObjectsV2 = listS3ObjectsV2;
 
 exports.syncUrl = async (uri, bucket, destKey) => {
   const response = await concurrency.promiseUrl(uri);

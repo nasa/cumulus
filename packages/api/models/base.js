@@ -1,10 +1,8 @@
 'use strict';
 
 const Ajv = require('ajv');
-const AWS = require('aws-sdk');
 const omit = require('lodash.omit');
-const { getEndpoint } = require('@cumulus/ingest/aws');
-const { testAwsClient } = require('@cumulus/common/test-utils');
+const aws = require('@cumulus/common/aws');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 
@@ -23,7 +21,6 @@ class Manager {
       const validate = ajv.compile(schema);
       const valid = validate(item);
       if (!valid) {
-        //console.log(validate.errors);
         const err = {
           message: 'The record has validation errors',
           detail: validate.errors
@@ -34,13 +31,6 @@ class Manager {
   }
 
   static async createTable(tableName, hash, range = null) {
-    let dynamodb;
-    if (process.env.LOCALSTACK_HOST) {
-      dynamodb = testAwsClient(AWS.DynamoDB);
-    } else {
-      dynamodb = new AWS.DynamoDB(getEndpoint());
-    }
-
     const params = {
       TableName: tableName,
       AttributeDefinitions: [{
@@ -69,18 +59,11 @@ class Manager {
       });
     }
 
-    return dynamodb.createTable(params).promise();
+    return aws.dynamodb().createTable(params).promise();
   }
 
   static async deleteTable(tableName) {
-    let dynamodb;
-    if (process.env.LOCALSTACK_HOST) {
-      dynamodb = testAwsClient(AWS.DynamoDB);
-    } else {
-      dynamodb = new AWS.DynamoDB(getEndpoint());
-    }
-
-    await dynamodb.deleteTable({
+    await aws.dynamodb().deleteTable({
       TableName: tableName
     }).promise();
   }
@@ -94,17 +77,7 @@ class Manager {
   constructor(tableName, schema = {}) {
     this.tableName = tableName;
     this.schema = schema; // variable for the record's json schema
-    if (process.env.LOCALSTACK_HOST) {
-      AWS.config.update({
-        accessKeyId: 'my-access-key-id',
-        secretAccessKey: 'my-secret-access-key',
-        region: 'us-east-1',
-        endpoint: `http://${process.env.LOCALSTACK_HOST}:4569`
-      });
-      this.dynamodb = new AWS.DynamoDB.DocumentClient();
-    } else {
-      this.dynamodb = new AWS.DynamoDB.DocumentClient(getEndpoint());
-    }
+    this.dynamodbDocClient = aws.dynamodbDocClient();
     this.removeAdditional = false;
   }
 
@@ -122,7 +95,7 @@ class Manager {
     };
 
     try {
-      const r = await this.dynamodb.get(params).promise();
+      const r = await this.dynamodbDocClient.get(params).promise();
       if (!r.Item) {
         throw new RecordDoesNotExist();
       }
@@ -148,7 +121,7 @@ class Manager {
       params.RequestItems[this.tableName].AttributesToGet = attributes;
     }
 
-    return this.dynamodb.batchGet(params).promise();
+    return this.dynamodbDocClient.batchGet(params).promise();
   }
 
   async batchWrite(_deletes, _puts) {
@@ -173,7 +146,7 @@ class Manager {
       }
     };
 
-    return this.dynamodb.batchWrite(params).promise();
+    return this.dynamodbDocClient.batchWrite(params).promise();
   }
 
   /**
@@ -195,7 +168,7 @@ class Manager {
         Item: item
       };
 
-      await this.dynamodb.put(params).promise();
+      await this.dynamodbDocClient.put(params).promise();
     };
 
     if (items instanceof Array) {
@@ -229,7 +202,7 @@ class Manager {
       params.ProjectionExpression = fields;
     }
 
-    return this.dynamodb.scan(params).promise();
+    return this.dynamodbDocClient.scan(params).promise();
   }
 
   async delete(item) {
@@ -238,7 +211,7 @@ class Manager {
       Key: item
     };
 
-    return this.dynamodb.delete(params).promise();
+    return this.dynamodbDocClient.delete(params).promise();
   }
 
   async update(key, _item, keysToDelete = []) {
@@ -273,7 +246,7 @@ class Manager {
 
     params.AttributeUpdates = attributeUpdates;
 
-    const response = await this.dynamodb.update(params).promise();
+    const response = await this.dynamodbDocClient.update(params).promise();
     return response.Attributes;
   }
 
