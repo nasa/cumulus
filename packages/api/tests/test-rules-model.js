@@ -7,10 +7,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 test('create, update and delete a kinesis type rule', async (t) => {
   process.env.RulesTable = `RulesTable_${randomString()}`;
   process.env.stackName = 'my-stackName';
-  //process.env.bucket = 'my-bucket';
   process.env.kinesisConsumer = 'my-kinesisConsumer';
-  //process.env.invokeArn = 'invokeArn';
-  //process.env.IS_LOCAL = 'true';
 
   const originalRule = {
     name: 'my_kinesis_rule',
