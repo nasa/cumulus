@@ -1,0 +1,26 @@
+{
+  "title": "PostToCmrConfig",
+  "description": "Describes the config used by the post-to-cmr task",
+  "type": "object",
+  "properties": {
+    "cmr": {
+      "type": "object",
+      "properties": {
+        "provider": { "type": "string" },
+        "clientId": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+      }
+    },
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "properties": {
+        "internal": { "type": "string" },
+        "private": { "type": "string" },
+        "protected": { "type": "string" },
+        "public": { "type": "string" }
+      }
+    }
+  }
+}
