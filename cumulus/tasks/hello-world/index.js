@@ -1,29 +1,28 @@
 'use strict';
 
-const Task = require('@cumulus/common/task');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
-module.exports = class HelloWorld extends Task {
-  /**
-   * Main task entrypoint
-   * @return A payload suitable for syncing via http url sync
-   */
-  async run() {
-    return { hello: "Hello World" };
-  }
+/* eslint-disable no-unused-vars */
 
-  /**
-   * Entrypoint for Lambda
-   * @param {array} args The arguments passed by AWS Lambda
-   * @return The handler return value
-   */
-  static handler(...args) {
-    return HelloWorld.handle(...args);
-  }
-};
-
-/*
-*Another example without using Task Class
-module.exports.handler = function handler(_event, context, cb) {
-  return cb(null, "Hello World");
-}
+/**
+* Return sample 'hello world' JSON
+*
+* @param {Object} event - input from the message adapter
+* @returns {Object} sample JSON object
 */
+function helloWorld(event) {
+  return { hello: 'Hello World' };
+}
+/**
+* Lambda handler
+*
+* @param {Object} event - a Cumulus Message
+* @param {Object} context - an AWS Lambda context
+* @param {Function} callback - an AWS Lambda handler
+* @returns {undefined} - does not return a value
+*/
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(helloWorld, event, context, callback);
+}
+
+exports.handler = handler;
