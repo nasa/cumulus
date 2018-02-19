@@ -96,7 +96,7 @@ class Rule extends Manager {
       case 'scheduled':
         await this.addRule(item, payload);
         break;
-      case 'subscription':
+      case 'kinesis':
         // TODO: CUMULUS-226
         // - Should create an event source for the kinesis-consumer lambda task
         // - Should require a kinesis ARN

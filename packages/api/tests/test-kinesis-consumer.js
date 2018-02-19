@@ -7,7 +7,7 @@ const tableName = 'rule';
 process.env.RulesTable = tableName;
 process.env.stackName = 'test-stack';
 process.env.bucket = 'test-bucket';
-const { getSubscriptionRules, handler } = require('../lambdas/kinesis-consumer');
+const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
 const manager = require('../models/base');
 const Rule = require('../models/rules');
 const model = new Rule();
@@ -36,7 +36,7 @@ const commonRuleParams = {
     version: '0.0.0'
   },
   rule: {
-    type: 'subscription'
+    type: 'kinesis'
   },
   state: 'ENABLED'
 };
@@ -71,11 +71,11 @@ test.after.always(async () => {
   await manager.deleteTable(tableName);
 });
 
-// getSubscriptionRule tests
-test('it should look up subscription-type rules which are associated with the collection, but not those that are disabled', t => {
+// getKinesisRule tests
+test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', t => {
   return Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)))
     .then(() => {
-      return getSubscriptionRules(JSON.parse(eventData))
+      return getKinesisRules(JSON.parse(eventData))
     }).then((result) => {
       t.is(result.length, 2);
     });
