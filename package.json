@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Cumulus Framework for ingesting and processing Nasa Earth data streams",
   "scripts": {
-    "test": "lerna run --scope @cumulus/api test",
+    "test": "lerna run test",
     "bootstrap": "lerna bootstrap",
     "ybootstrap": "lerna bootstrap --npm-client=yarn",
     "bootstrap-no-build": "lerna bootstrap --npm-client=yarn --ignore-scripts",
