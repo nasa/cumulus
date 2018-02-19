@@ -4,30 +4,22 @@ const aws = require('@cumulus/common/aws');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const urljoin = require('url-join');
 
 module.exports.s3Mixin = (superclass) => class extends superclass {
 
   /**
-   * Copies an object from one S3 location to another
+   * Build a discovery or ingest object with S3-specific properties
    *
-   * @param {string} filepath - the S3 URI of the file to be uploaded
-   * @param {string} bucket - the S3 bucket to upload to
-   * @param {string} key - the S3 key of the destination location
-   * @param {string} filename - the detination file name
-   * @returns {Promise} the S3 URI of the destination file
-   * @private
+   * @param {Object} event - a Cumulus event
    */
-  async sync(filepath, bucket, key, filename) {
-    const fullKey = path.join(key, filename);
-    const params = {
-      Bucket: bucket,
-      CopySource: filepath.replace(/^s3:\//, ''),
-      Key: fullKey,
-      ACL: 'private'
-    };
-    await aws.s3().copyObject(params).promise();
-    return urljoin('s3://', bucket, key, filename);
+  constructor(event) {
+    super(event);
+
+    this.sourceBucket = this.provider.host;
+
+    // Defaults to null, not "/" like in other mixins
+    this.path = this.collection.provider_path || null;
+    this.keyPrefix = this.path;
   }
 
   /**
@@ -52,18 +44,23 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
   }
 
   /**
-   * Downloads the file to disk, difference with sync is that
-   * this method involves no uploading to S3
+   * Fetch object from S3 to disk
    *
-   * @param {string} filepath - the S3 URI of the file to be downloaded
+   * @param {string} s3Path - the S3 key path of the file to be downloaded
    * @param {string} filename - the name of the file to be downloaded
-   * @returns {Promise} - the path of the destination file
+   * @returns {Promise} - the filename where the object was downloaded to
    */
-  download(filepath, filename) {
-    // let's stream to file
+  download(s3Path, filename) {
     const tempFile = path.join(os.tmpdir(), filename);
-    const params = aws.parseS3Uri(`${filepath.replace(/\/+$/, '')}/${filename}`);
-    return aws.downloadS3File(params, tempFile);
+
+    const Key = s3Path ? `${s3Path}/${filename}` : filename;
+
+    const s3Obj = {
+      Key,
+      Bucket: this.sourceBucket
+    };
+
+    return aws.downloadS3File(s3Obj, tempFile);
   }
 
   /**
@@ -73,16 +70,27 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    * @private
    */
   async list() {
-    const { Bucket, Prefix } = aws.parseS3Uri(this.path);
+    const params = {
+      Bucket: this.sourceBucket,
+      FetchOwner: true
+    };
+    if (this.keyPrefix) params.Prefix = this.keyPrefix;
 
-    const objects = await aws.listS3ObjectsV2({ Bucket, Prefix, FetchOwner: true });
+    const objects = await aws.listS3ObjectsV2(params);
 
-    return objects.map((object) => ({
-      name: path.basename(object.Key),
-      size: object.Size,
-      time: object.LastModified,
-      owner: object.Owner.DisplayName,
-      path: `s3://${Bucket}/${path.dirname(object.Key)}/`
-    }));
+    return objects.map((object) => {
+      const file = {
+        name: path.basename(object.Key),
+        size: object.Size,
+        time: object.LastModified,
+        owner: object.Owner.DisplayName,
+        path: path.dirname(object.Key),
+        key: object.Key
+      };
+
+      if (file.path === '.') file.path = null;
+
+      return file;
+    });
   }
 };
