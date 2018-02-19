@@ -75,14 +75,14 @@ test.after.always(async () => {
 });
 
 // getSubscriptionRule tests
-test('it should look up subscription-type rules which are associated with the collection, but not those that are disabled', t => {
+test.serial('it should look up subscription-type rules which are associated with the collection, but not those that are disabled', t => {
   return getSubscriptionRules(JSON.parse(eventData)).then((result) => {
     t.is(result.length, 2);
   });
 });
 
 // handler tests
-test('it should create a onetime rule for each associated workflow', async t => {
+test.serial('it should create a onetime rule for each associated workflow', async t => {
   await handler(event, {}, testCallback).then(() => {
     return model.scan({
       names: {
@@ -113,7 +113,7 @@ test('it should create a onetime rule for each associated workflow', async t => 
   });  
 });
 
-test('it should throw an error if message does not include a collection', t => {
+test.serial('it should throw an error if message does not include a collection', t => {
   const invalidMessage = JSON.stringify({});
   const event = {
     Records: [{kinesis: {data: new Buffer(invalidMessage).toString('base64')}}]
@@ -126,7 +126,7 @@ test('it should throw an error if message does not include a collection', t => {
     });
 });
 
-test('it should throw an error if message collection has wrong data type', t => {
+test.serial('it should throw an error if message collection has wrong data type', t => {
   const invalidMessage = JSON.stringify({collection: {}});
   const event = {
     Records: [{kinesis: {data: new Buffer(invalidMessage).toString('base64')}}]
@@ -139,7 +139,7 @@ test('it should throw an error if message collection has wrong data type', t => 
     });
 });
 
-test('it should not throw if message is valid', t => {
+test.serial('it should not throw if message is valid', t => {
   const validMessage = JSON.stringify({collection: 'confection-collection'});
   const event = {
     Records: [{kinesis: {data: new Buffer(validMessage).toString('base64')}}]
