@@ -1,6 +1,6 @@
 {
   "title": "PostToCmrOutput",
-  "description": "Describes the output provided by the post-to-cmr task",
+  "description": "Describes the output produced by the post-to-cmr task",
   "type": "object",
   "properties": {
     "granules": {
