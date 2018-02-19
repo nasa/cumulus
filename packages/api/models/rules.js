@@ -58,6 +58,7 @@ class Rule extends Manager {
     let valueUpdated = false;
     if (updated.rule && updated.rule.value) {
       original.rule.value = updated.rule.value;
+      if (updated.rule.type === undefined) updated.rule.type = original.rule.type;
       valueUpdated = true;
     }
 
@@ -73,7 +74,9 @@ class Rule extends Manager {
           await this.addKinesisEventSource(original);
           updated.rule.arn = original.rule.arn;
         }
-        else this.updateKinesisEventSource(original);
+        else {
+          await this.updateKinesisEventSource(original);
+        }
         break;
       default:
         throw new Error('Type not supported');
@@ -177,7 +180,7 @@ class Rule extends Manager {
   }
 
   /**
-   * delete an event source the from kinesis consumer lambda function
+   * deletes an event source from the kinesis consumer lambda function
    *
    * @param {*} item - the rule item
    * @returns {Promise} the response from event source delete
