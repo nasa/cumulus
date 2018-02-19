@@ -1,0 +1,31 @@
+{
+  "title": "PdrStatusCheckOutput",
+  "description": "Describes the output produced by the pdr-status-check task",
+  "type": "object",
+  "properties": {
+    "running": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "completed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "running": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "arn": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "counter": { "type": "integer" },
+    "limit": { "type": "integer" }
+  }
+}
