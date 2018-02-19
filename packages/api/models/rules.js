@@ -35,7 +35,7 @@ class Rule extends Manager {
         break;
       }
       case 'kinesis':
-        this.deleteKinesisEventSource(item);
+        await this.deleteKinesisEventSource(item);
         break;
       default:
         throw new Error('Type not supported');
