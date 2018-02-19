@@ -1,0 +1,17 @@
+{
+  "title": "SyncGranuleInput",
+  "description": "Describes the input expected by the sync-granule task",
+  "type": "object",
+  "required": [],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          
+        }
+      }
+    }
+  }
+}

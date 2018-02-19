@@ -1,0 +1,21 @@
+{
+  "title": "SyncGranuleOutput",
+  "description": "Describes the output produced by the sync-granule task",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "process": {
+      "type": "string"
+    },
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "granuleId": { "type": "string" },
+          "files": { "type": "string" }
+        }
+      }
+    }
+  }
+}
