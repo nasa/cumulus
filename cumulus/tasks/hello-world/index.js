@@ -26,3 +26,4 @@ function handler(event, context, callback) {
 }
 
 exports.handler = handler;
+exports.helloWorld = helloWorld; // exported to support testing
