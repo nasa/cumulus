@@ -92,7 +92,14 @@ async function getMetadata(xmlFilePath) {
  * @returns {Object} CMR's success response which includes the concept-id
  */
 async function publish(cmrFile, creds, bucket, stack) {
-  const password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
+  let password;
+  try {
+    password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
+  }
+  catch (e) {
+    log.error('Decrypting password failed, using unencrypted password');
+    password = creds.password;
+  }
   const cmr = new CMR(
     creds.provider,
     creds.clientId,
@@ -201,7 +208,9 @@ async function postToCMR(event) {
   for (const c of cmrFiles) {
     results.push(await publish(c, creds, bucket, stack));
   }
-  return buildOutput(results, input, inputGranules, regex);
+  return {
+    granules: buildOutput(results, input, inputGranules, regex)
+  };
 }
 exports.postToCMR = postToCMR;
 
