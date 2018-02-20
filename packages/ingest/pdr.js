@@ -2,7 +2,7 @@
 
 const path = require('path');
 const get = require('lodash.get');
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 const { MismatchPdrCollection } = require('@cumulus/common/errors');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
@@ -11,8 +11,6 @@ const sftpMixin = require('./sftp');
 const aws = require('@cumulus/common/aws');
 const { S3 } = require('./aws');
 const queue = require('./queue');
-
-const log = logger.child({ file: 'ingest/pdr.js' });
 
 /**
  * This is a base class for discovering PDRs
