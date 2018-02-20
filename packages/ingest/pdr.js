@@ -283,7 +283,7 @@ class ParseAndQueue extends Parse {
         this.queueUrl,
         this.templateUri,
         this.provider,
-        collections[g.dataType],        
+        collections[g.dataType],
         this.pdr,
         this.stack,
         this.bucket
@@ -431,8 +431,8 @@ class SftpParseAndQueue extends sftpMixin(ParseAndQueue) {}
 class S3ParseAndQueue extends s3Mixin(ParseAndQueue) {}
 
 /**
- * Select a class for discovering PDRs based on protocol 
- * 
+ * Select a class for discovering PDRs based on protocol
+ *
  * @param {string} type - `discover` or `parse`
  * @param {string} protocol - `sftp`, `ftp`, `http` or 's3'
  * @param {boolean} q - set to `true` to queue pdrs
@@ -462,7 +462,7 @@ function selector(type, protocol, q) {
       case 'sftp':
         return q ? SftpParseAndQueue : SftpParseAndQueue;
       case 's3':
-        return q ? S3ParseAndQueue : S3ParseAndQueue;
+        return q ? S3ParseAndQueue : S3Parse;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
