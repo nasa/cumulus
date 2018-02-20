@@ -1,79 +1,63 @@
 /* eslint-disable no-param-reassign */
 'use strict';
 
-const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
+const path = require('path');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getS3Object } = require('@cumulus/common/aws');
+const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
-const testPayload = require('@cumulus/test-data/payloads/modis/cmr.json');
+const testPayload = require('@cumulus/test-data/payloads/new-message-schema/cmr.json');
 const log = require('@cumulus/common/log');
 
 /**
- * The output returned by Cumulus-py has a broken payload
- * where files are not correctly grouped together. This function
- * will fix the returned output by cumulus-py until a fix is
- * issued there
+ * Extract the granule ID from the a given s3 uri
  *
+ * @param {string} uri - the s3 uri of the file
+ * @param {string} regex - the regex for extracting the ID
+ * @returns {string} the granule
  */
-function temporaryPayloadFix(payload) {
-  if (payload.granules) {
-    const granules = {};
+function getGranuleId(uri, regex) {
+  const filename = path.basename(uri);
+  const test = new RegExp(regex);
+  const match = filename.match(test);
 
-    // first find the main granule object
-    payload.granules.forEach(g => {
-      if (granules[g.granuleId]) {
-        if (g.files && Array.isArray(g.files)) {
-          granules[g.granuleId].files = granules[g.granuleId].files.concat(g.files);
-          delete g.files;
-          Object.assign(granules[g.granuleId], g);
-        }
-      }
-      else {
-        granules[g.granuleId] = g;
-      }
-    });
-
-    payload.granules = Object.keys(granules).map(g => granules[g]);
+  if (match) {
+    return match[1];
   }
-  return payload;
+  return match;
 }
 
-function getCmrFiles(granules) {
-  let files = [];
-  const expectedFormats = [/.*\.cmr\.xml$/];
-  granules.forEach(granule => {
-    files = files.concat(granule.files.map((file) => {
+/**
+ * returns a list of CMR xml files
+ *
+ * @param {Array} input - an array of s3 uris
+ * @param {string} granuleIdExtraction - a regex for extracting granule IDs
+ * @returns {Array} an array of objects that includes CMR xmls uris and granuleIds
+ */
+function getCmrFiles(input, granuleIdExtraction) {
+  const files = [];
+  const expectedFormat = /.*\.cmr\.xml$/;
+
+  input.forEach((filename) => {
+    if (filename.match(expectedFormat)) {
       const r = {
-        granuleId: granule.granuleId
+        filename,
+        granuleId: getGranuleId(filename, granuleIdExtraction)
       };
-
-      if (file.cmrFile) {
-        r.file = file;
-        r.file.granuleId = granule.granuleId;
-        return r.file;
-      }
-
-      for (const regex of expectedFormats) {
-        if (file.filename && file.filename.match(regex)) {
-          r.file = file;
-          r.file.granuleId = granule.granuleId;
-          return r.file;
-        }
-      }
-      return null;
-    }));
+      files.push(r);
+    }
   });
 
-  return files.filter(f => f);
+  return files;
 }
 
 /**
  * getMetadata
  *
- * @param {string} xmlFilePath S3 URI to the xml metadata document
+ * @param {string} xmlFilePath - S3 URI to the xml metadata document
  * @returns {string} returns stringified xml document downloaded from S3
  */
 async function getMetadata(xmlFilePath) {
@@ -92,27 +76,30 @@ async function getMetadata(xmlFilePath) {
   return obj.Body.toString();
 }
 
-async function decryptPassword(password) {
+/**
+ * function for posting cmr xml files from S3 to CMR
+ *
+ * @param {Object} cmrFile - an object representing the cmr file
+ * @param {string} cmrFile.granuleId - the granuleId of the cmr xml File
+ * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
+ * @param {Object} creds - credentials needed to post to the CMR
+ * @param {string} creds.provider - the name of the Provider used on the CMR side
+ * @param {string} creds.clientId - the clientId used to generate CMR token
+ * @param {string} creds.username - the CMR username
+ * @param {string} creds.password - the encrypted CMR password
+ * @param {string} bucket - the bucket name where public/private keys are stored
+ * @param {string} stack - the deployment stack name
+ * @returns {Object} CMR's success response which includes the concept-id
+ */
+async function publish(cmrFile, creds, bucket, stack) {
+  let password;
   try {
-    const pass = await DefaultProvider.decrypt(password);
-    return pass;
+    password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
   }
   catch (e) {
-    return password;
+    log.error('Decrypting password failed, using unencrypted password');
+    password = creds.password;
   }
-}
-
-
-/**
- * function for posting xml strings to CMR
- *
- * @param {string} xml The strigified xml document that has to be posted to CMR
- * @param {string} cmrProvider The name of of the CMR provider to be used
- * @returns {object} CMR's success response which includes the concept-id
- */
-
-async function publish(cmrFile, creds) {
-  const password = await decryptPassword(creds.password);
   const cmr = new CMR(
     creds.provider,
     creds.clientId,
@@ -122,13 +109,66 @@ async function publish(cmrFile, creds) {
 
   const xml = await getMetadata(cmrFile.filename);
   const res = await cmr.ingestGranule(xml);
+  const conceptId = res.result['concept-id'];
+
+  log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
 
   return {
     granuleId: cmrFile.granuleId,
-    conceptId: res.result['concept-id'],
+    filename: cmrFile.filename,
+    conceptId,
     link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
           `?concept_id=${res.result['concept-id']}`
   };
+}
+
+/**
+ * Builds the output of the post-to-cmr task
+ *
+ * @param {Array} results - list of results returned by publish function
+ * @param {Array} input - the task input array
+ * @param {Array} granules - an array of the granules
+ * @param {string} regex - regex needed to extract granuleId from filenames
+ * @returns {Array} an updated array of granules
+ */
+function buildOutput(results, input, granules, regex) {
+  const granulesHash = {};
+  const filesHash = {};
+
+  // create hash list of the granules
+  // and a hash list of files
+  granules.forEach((g) => {
+    granulesHash[g.granuleId] = g;
+    g.files.forEach((f) => {
+      filesHash[f.filename] = g.granuleId;
+    });
+  });
+
+  // add results to corresponding granules
+  results.forEach((r) => {
+    if (granulesHash[r.granuleId]) {
+      granulesHash[r.granuleId].cmrLink = r.link;
+      granulesHash[r.granuleId].published = true;
+    }
+  });
+
+  // add input files to corresponding granules
+  // the process involve getting granuleId of each file
+  // match it against the granuleObj and adding the new files to the
+  // file list
+  input.forEach((f) => {
+    if (!filesHash[f]) {
+      const granuleId = getGranuleId(f, regex);
+      const uriParsed = parseS3Uri(f);
+      granulesHash[granuleId].files.push({
+        filename: f,
+        bucket: uriParsed.Bucket,
+        name: path.basename(f)
+      });
+    }
+  });
+
+  return Object.keys(granulesHash).map((k) => granulesHash[k]);
 }
 
 
@@ -136,47 +176,41 @@ async function publish(cmrFile, creds) {
  * Post to CMR
  * See the schemas directory for detailed input and output schemas
  *
- * @param {object} event Lambda function payload
- * @param {object} event.config
- * @param {object} event.config.collection
- * @param {object} event.config.buckets
- * @param {object} event.config.cmr
- * @param {object} event.input
- * @param {array} event.input.granules
- * @returns {object} returns the updated event object
+ * @param {Object} event -Lambda function payload
+ * @param {Object} event.config - the config object
+ * @param {string} event.config.bucket - the bucket name where public/private keys
+ *                                       are stored
+ * @param {string} event.config.stack - the deployment stack name
+ * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
+ *                                                    from filenames
+ * @param {Object} event.config.cmr - the cmr object containing user/pass and provider
+ * @param {Array} event.config.input_granules - an array of granules
+ * @param {Array} event.input - an array of s3 uris
+ * @returns {Promise} returns the promise of an updated event object
  */
-function postToCMR(event) {
+async function postToCMR(event) {
   // we have to post the meta-xml file of all output granules
   // first we check if there is an output file
   const config = get(event, 'config');
-  const collection = get(config, 'collection');
-  const buckets = get(config, 'buckets');
+  const bucket = get(config, 'bucket'); // the name of the bucket with private/public keys
+  const stack = get(config, 'stack'); // the name of the deployment stack
+  const regex = get(config, 'granuleIdExtraction', '(.*)');
   const creds = get(config, 'cmr');
-  const input = temporaryPayloadFix(get(event, 'input', null), collection, buckets);
+  const inputGranules = get(config, 'input_granules', {});
+  const input = get(event, 'input', []);
 
   // determine CMR files
-  const cmrFiles = getCmrFiles(input.granules);
+  const cmrFiles = getCmrFiles(input, regex);
 
   // post all meta files to CMR
-  const jobPromises = cmrFiles.map((c) => publish(c, creds));
-
-  return Promise.all(jobPromises).then((results) => {
-    // update output section of the payload
-    for (const result of results) {
-      for (const g of input.granules) {
-        if (result.granuleId === g.granuleId) {
-          delete result.granuleId;
-          g.cmr = result;
-          break;
-        }
-      }
-    }
-    return input;
-  })
-    .catch((e) => {
-      log.error(e);
-      throw e;
-    });
+  // doing this in a synchronous for loop to avoid DDoSing CMR
+  const results = [];
+  for (const c of cmrFiles) {
+    results.push(await publish(c, creds, bucket, stack));
+  }
+  return {
+    granules: buildOutput(results, input, inputGranules, regex)
+  };
 }
 exports.postToCMR = postToCMR;
 
@@ -194,5 +228,6 @@ function handler(event, context, callback) {
 exports.handler = handler;
 
 justLocalRun(() => {
-  postToCMR(testPayload, {}, (e, r) => log.debug(e, JSON.stringify(r)));
+  handler(testPayload, {}, (e, r) => console.log(e, JSON.stringify(r)));
 });
+
