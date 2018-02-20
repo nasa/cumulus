@@ -288,7 +288,7 @@ async function generateTemplates(config, outputs, uploader) {
     // generate list of workflows and upload it to S3
     // this is used by the /workflows endpoint of the API to return list
     // of existing workflows
-    await uploader(bucket, stack, `${stack}/workflows/list.json`, JSON.stringify(workflows));
+    await uploader(bucket, `${stack}/workflows/list.json`, JSON.stringify(workflows));
   }
 }
 

@@ -1,10 +1,8 @@
 'use strict';
 
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 const aws = require('@cumulus/common/aws');
 const lockPrefix = 'lock';
-
-const log = logger.child({ file: 'ingest/lock.js' });
 
 function delay(t) {
   return new Promise((resolve) => {

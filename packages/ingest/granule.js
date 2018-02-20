@@ -8,15 +8,13 @@ const join = require('path').join;
 const urljoin = require('url-join');
 const cksum = require('cksum');
 const checksum = require('checksum');
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 const s3Mixin = require('./s3').s3Mixin;
-
-const log = logger.child({ file: 'ingest/granule.js' });
 
 class Discover {
   constructor(event) {

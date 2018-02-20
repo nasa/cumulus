@@ -1,7 +1,7 @@
 'use strict';
 
 const queueGranule = require('@cumulus/ingest/queue').queueGranule;
-const log = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 
 /**
 * Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
