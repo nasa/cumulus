@@ -77,15 +77,15 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
     });
   });
 
-  log.debug('XML object parsed', logDetails);
+  //log.debug('XML object parsed', logDetails);
   const identifier = property(identifierPath)(xmlObject);
   logDetails.granuleId = identifier;
 
   try {
     await validate(type, xmlString, identifier, provider);
-    log.debug('XML object is valid', logDetails);
+    //log.debug('XML object is valid', logDetails);
 
-    log.info('Pushing xml metadata to CMR', logDetails);
+    //log.info('Pushing xml metadata to CMR', logDetails);
     const response = await got.put(
       `${getUrl('ingest', provider)}${type}s/${identifier}`,
       {
@@ -97,7 +97,7 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
       }
     );
 
-    log.info('Metadata pushed to CMR.', logDetails);
+    //log.info('Metadata pushed to CMR.', logDetails);
 
     xmlObject = await new Promise((resolve, reject) => {
       parseString(response.body, xmlParseOptions, (err, res) => {
@@ -115,7 +115,7 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
     return xmlObject;
   }
   catch (e) {
-    log.error(e, logDetails);
+    //log.error(e, logDetails);
     throw e;
   }
 }
