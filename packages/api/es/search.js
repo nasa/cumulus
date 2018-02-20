@@ -23,9 +23,9 @@ class BaseSearch {
     let esConfig;
 
     // this is needed for getting temporary credentials from IAM role
-    if (process.env.MODE === 'local') {
+    if (process.env.TEST) {
       esConfig = {
-        host: 'localhost:9200'
+        host: `${process.env.LOCALSTACK_HOST}:4571`
       };
     }
     else {
