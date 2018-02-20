@@ -6,22 +6,6 @@ const os = require('os');
 const path = require('path');
 
 module.exports.s3Mixin = (superclass) => class extends superclass {
-
-  /**
-   * Build a discovery or ingest object with S3-specific properties
-   *
-   * @param {Object} event - a Cumulus event
-   */
-  constructor(event) {
-    super(event);
-
-    this.sourceBucket = this.provider.host;
-
-    // Defaults to null, not "/" like in other mixins
-    this.path = this.collection.provider_path || null;
-    this.keyPrefix = this.path;
-  }
-
   /**
    * Upload a file to S3
    *
@@ -53,11 +37,13 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
   download(s3Path, filename) {
     const tempFile = path.join(os.tmpdir(), filename);
 
+    // Handle the case where the s3Path is null, meaning that the S3 object
+    // we're fetching is at the top level of the bucket.
     const Key = s3Path ? `${s3Path}/${filename}` : filename;
 
     const s3Obj = {
       Key,
-      Bucket: this.sourceBucket
+      Bucket: this.provider.host
     };
 
     return aws.downloadS3File(s3Obj, tempFile);
@@ -71,10 +57,17 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    */
   async list() {
     const params = {
-      Bucket: this.sourceBucket,
+      Bucket: this.host,
       FetchOwner: true
     };
-    if (this.keyPrefix) params.Prefix = this.keyPrefix;
+
+    // The constructor defaults the path to '/' if one is not specified when
+    // this object is created.  That is a problem in the case of S3 because
+    // S3 keys do not start with a leading slash.  This module is mixed in to
+    // a number of different types of objects, not all of which have the same
+    // constructor arguments.  We can't override the constructor here because
+    // of that.  As a result, we need to test for a default path of '/'.
+    if (this.path && this.path !== '/') params.Prefix = this.path;
 
     const objects = await aws.listS3ObjectsV2(params);
 
@@ -88,6 +81,8 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
         key: object.Key
       };
 
+      // If the object is at the top level of the bucket, path.dirname is going
+      // to return "." as the dirname.  It should instead be null.
       if (file.path === '.') file.path = null;
 
       return file;
