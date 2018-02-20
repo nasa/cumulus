@@ -460,7 +460,7 @@ function selector(type, protocol, q) {
       case 'ftp':
         return q ? FtpParseAndQueue : FtpParse;
       case 'sftp':
-        return q ? SftpParseAndQueue : SftpParseAndQueue;
+        return q ? SftpParseAndQueue : SftpParse;
       case 's3':
         return q ? S3ParseAndQueue : S3Parse;
       default:
