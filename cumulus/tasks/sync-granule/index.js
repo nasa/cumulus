@@ -4,9 +4,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
-const logger = require('@cumulus/ingest/log');
-
-const log = logger.child({ file: 'sync-granule/index.js' });
+const log = require('@cumulus/common/log');
 
 /**
  * Ingest a list of granules

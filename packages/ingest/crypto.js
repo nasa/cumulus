@@ -12,17 +12,21 @@ const { S3, KMS } = require('./aws');
 class S3KeyPairProvider {
   /**
    * Encrypt the given string using the given public key stored in the internal bucket
-   * @param {String} - The string to encrypt
-   * @param {String} - The name of the public key to use for encryption
-   * @return the decrypted string
+   *
+   * @param {string} str - The string to encrypt
+   * @param {string} keyId - The name of the public key to use for encryption
+   * @param {string} bucket - the optional bucket name. if not provided will
+   *                          use env variable "internal"
+   * @param {stack} stack - the optional stack name. if not provided will
+   *                        use env variable "stackName"
+   * @returns {Promise} the encrypted string
    */
-  static async encrypt(str, keyId = 'public.pub') {
+  static async encrypt(str, keyId = 'public.pub', bucket = null, stack = null) {
     // Download the publickey
     const pki = forge.pki;
-    const pub = await S3.get(
-      process.env.internal,
-      `${process.env.stackName}/crypto/${keyId}`
-    );
+    const b = bucket || process.env.internal;
+    const s = stack || process.env.stackName;
+    const pub = await S3.get(b, `${s}/crypto/${keyId}`);
 
     const publicKey = pki.publicKeyFromPem(pub.Body.toString());
     return forge.util.encode64(publicKey.encrypt(str));
@@ -30,16 +34,20 @@ class S3KeyPairProvider {
 
   /**
    * Decrypt the given string using the given private key stored in the internal bucket
-   * @param {String} - The encrypted string to decrypt
-   * @param {String} - The name of the private key to use for decryption
-   * @return the decrypted string
+   *
+   * @param {string} str - The string to encrypt
+   * @param {string} keyId - The name of the public key to use for encryption
+   * @param {string} bucket - the optional bucket name. if not provided will
+   *                          use env variable "internal"
+   * @param {stack} stack - the optional stack name. if not provided will
+   *                        use env variable "stackName"
+   * @returns {Promise} the encrypted string
    */
-  static async decrypt(str, keyId = 'private.pem') {
+  static async decrypt(str, keyId = 'private.pem', bucket = null, stack = null) {
     const pki = forge.pki;
-    const priv = await S3.get(
-      process.env.internal,
-      `${process.env.stackName}/crypto/${keyId}`
-    );
+    const b = bucket || process.env.internal;
+    const s = stack || process.env.stackName;
+    const priv = await S3.get(b, `${s}/crypto/${keyId}`);
 
     const decoded = forge.util.decode64(str);
     const privateKey = pki.privateKeyFromPem(priv.Body.toString());
