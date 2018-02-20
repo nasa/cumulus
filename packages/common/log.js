@@ -2,10 +2,11 @@
 const util = require('util');
 
 /**
- * Constructs JSON to log
+ * Constructs JSON to log and logs it
  *
  * @param {string} level - type of log (info, error, debug, warn)
  * @param {string} args - Message to log
+ * @param {JSON} additionalKeys - Any additional keys to log, can be null
  * @returns {undefined} - log is printed to stdout, nothing is returned
  */
 function log(level, args, additionalKeys) {
@@ -17,11 +18,12 @@ function log(level, args, additionalKeys) {
     sender: process.env.SENDER
   };
 
-  const message = util.format.apply(null, args);
-  output.message = message;
+  output.message = util.format.apply(null, args);
 
   if (additionalKeys) output = Object.assign({}, additionalKeys, output);
-  console.log(JSON.stringify(output));
+
+  if (level === 'error') console.error(JSON.stringify(output));
+  else console.log(JSON.stringify(output));
 }
 
 /**
