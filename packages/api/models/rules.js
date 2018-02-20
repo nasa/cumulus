@@ -153,18 +153,16 @@ class Rule extends Manager {
    */
   async addKinesisEventSource(item) {
     // use the existing event source mapping if it already exists
-    const listParams = {
-      EventSourceArn: item.rule.value,
-      FunctionName: process.env.kinesisConsumer
-    };
+    const listParams = { FunctionName: process.env.kinesisConsumer };
     const listData = await aws.lambda(listParams).listEventSourceMappings().promise();
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
-      const maps = listData.EventSourceMappings;
-      for (let i = 0; i < maps.length; i++) {
-        if (maps[i].EventSourceArn === item.rule.value) {
-          item.rule.arn = maps[i].UUID;
-          return item;
-        }
+      const mappingExists = listData.EventSourceMappings
+        .find((mapping) => { // eslint-disable-line arrow-body-style
+          return (mapping.EventSourceArn === item.rule.value);
+        });
+      if (mappingExists) {
+        item.rule.arn = mappingExists.UUID;
+        return item;
       }
     }
 
@@ -203,7 +201,7 @@ class Rule extends Manager {
    */
   async deleteKinesisEventSource(item) {
     if (await this.isEventSourceMappingShared(item)) {
-      return {};
+      return undefined;
     }
 
     const params = {
