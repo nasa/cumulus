@@ -169,8 +169,6 @@ test('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
     }).promise())
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
-      console.log("---------------");
-      console.log(output);
       t.is(output.pdrs.length, 2);
       return aws.recursivelyDeleteS3Bucket(internalBucketName);
     })
