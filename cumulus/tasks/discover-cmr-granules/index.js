@@ -142,7 +142,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
                          false :
                          response.headers._headers['cmr-scroll-id'];
     log.info(`nextScrollID:${nextScrollID}`);
-    log.info('----TOTAL----: ', granules.length.toString());
+    log.info('----TOTAL----: ', granules.length);
     return { granules: granules, scrollID: nextScrollID };
   }
 
