@@ -37,8 +37,6 @@ class Rule extends Manager {
       case 'kinesis':
         await this.deleteKinesisEventSource(item);
         break;
-      default:
-        throw new Error('Type not supported');
     }
     return super.delete({ name: item.name });
   }
@@ -78,8 +76,6 @@ class Rule extends Manager {
           await this.updateKinesisEventSource(original);
         }
         break;
-      default:
-        throw new Error('Type not supported');
     }
 
     return super.update({ name: original.name }, updated);
@@ -123,14 +119,13 @@ class Rule extends Manager {
       throw err;
     }
 
+    const payload = await Rule.buildPayload(item);
     switch (item.rule.type) {
       case 'onetime': {
-        const payload = await Rule.buildPayload(item);
         await invoke(process.env.invoke, payload);
         break;
       }
       case 'scheduled': {
-        const payload = await Rule.buildPayload(item);
         await this.addRule(item, payload);
         break;
       }
