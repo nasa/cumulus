@@ -45,6 +45,9 @@ const awsClient = (Service, version = null) => {
   if (version) options.apiVersion = version;
 
   if (process.env.TEST) {
+    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
+      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
+    }
     return memoize(() => testUtils.testAwsClient(Service, options));
   }
   return memoize(() => new Service(options));
@@ -56,7 +59,7 @@ exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
 exports.sqs = awsClient(AWS.SQS, '2012-11-05');
 exports.cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 exports.dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
-exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient);
+exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 
