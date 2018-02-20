@@ -232,7 +232,7 @@ module.exports.rule = {
       properties: {
         type: {
           type: 'string',
-          enum: ['onetime', 'scheduled', 'subscription']
+          enum: ['onetime', 'scheduled', 'kinesis']
         },
         value: {
           type: 'string'
