@@ -26,6 +26,7 @@ function discoverPdrs(event) {
     const templateUri = config.templateUri;
     const collection = config.collection;
     const provider = config.provider;
+    // FIXME Can config.folder not be used?
 
     const output = {};
 
