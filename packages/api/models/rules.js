@@ -37,6 +37,8 @@ class Rule extends Manager {
       case 'kinesis':
         await this.deleteKinesisEventSource(item);
         break;
+      default:
+        break;
     }
     return super.delete({ name: item.name });
   }
@@ -75,6 +77,8 @@ class Rule extends Manager {
         else {
           await this.updateKinesisEventSource(original);
         }
+        break;
+      default:
         break;
     }
 
@@ -148,6 +152,23 @@ class Rule extends Manager {
    * @returns {Promise} updated rule item
    */
   async addKinesisEventSource(item) {
+    // use the existing event source mapping if it already exists
+    const listParams = {
+      EventSourceArn: item.rule.value,
+      FunctionName: process.env.kinesisConsumer
+    };
+    const listData = await aws.lambda(listParams).listEventSourceMappings().promise();
+    if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
+      const maps = listData.EventSourceMappings;
+      for (let i = 0; i < maps.length; i++) {
+        if (maps[i].EventSourceArn === item.rule.value) {
+          item.rule.arn = maps[i].UUID;
+          return item;
+        }
+      }
+    }
+
+    // create event source mapping
     const params = {
       EventSourceArn: item.rule.value,
       FunctionName: process.env.kinesisConsumer,
@@ -181,10 +202,39 @@ class Rule extends Manager {
    * @returns {Promise} the response from event source delete
    */
   async deleteKinesisEventSource(item) {
+    if (await this.isEventSourceMappingShared(item)) {
+      return {};
+    }
+
     const params = {
       UUID: item.rule.arn
     };
     return await aws.lambda().deleteEventSourceMapping(params).promise();
+  }
+
+  /**
+   * check if a rule's event source mapping is shared with other rules
+   *
+   * @param {Object} item - the rule item
+   * @returns {boolean} return true if no other rules share the same event source mapping
+   */
+  async isEventSourceMappingShared(item) {
+    const kinesisRules = await super.scan({
+      names: {
+        '#nm': 'name',
+        '#rl': 'rule',
+        '#tp': 'type',
+        '#arn': 'arn'
+      },
+      filter: '#nm <> :name AND #rl.#tp = :ruleType AND #rl.#arn = :arn',
+      values: {
+        ':name': item.name,
+        ':ruleType': item.rule.type,
+        ':arn': item.rule.arn
+      }
+    });
+
+    return (kinesisRules.Count && kinesisRules.Count > 0);
   }
 
 }
