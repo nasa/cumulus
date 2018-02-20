@@ -1,0 +1,145 @@
+
+{
+  "cumulus_meta": {
+    "message_source": "local",
+    "task": "CmrStep",
+    "execution_name": "test6",
+    "state_machine": "arn:aws:states:us-east-1:00000000000:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
+    "workflow_start_time": 1518507471571,
+    "system_bucket": "cumulus-devseed-internal"
+  },
+  "meta": {
+    "templates": {
+      "ParsePdr": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/ParsePdr.json",
+      "DiscoverPdrs": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json",
+      "IngestGranule": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/IngestGranule.json"
+    },
+    "input_granules": [
+      {
+        "granuleId": "1A0000-2017033001_000_004",
+        "files": [
+          {
+            "name": "pg-PR1A0000-2017033001_000_004",
+            "bucket": "cumulus-devseed-private",
+            "checksumValue": 3847895586,
+            "filename": "s3://cumulus-devseed-private/pg-PR1A0000-2017033001_000_004",
+            "fileSize": 116509740,
+            "path": "/TEST_B/Cumulus/DATA/ID1703301200",
+            "url_path": "",
+            "checksumType": "CKSUM"
+          },
+          {
+            "name": "pg-BR1A0000-2017033001_000_004",
+            "bucket": "cumulus-devseed-private",
+            "checksumValue": 2818119139,
+            "filename": "s3://cumulus-devseed-private/pg-BR1A0000-2017033001_000_004",
+            "fileSize": 153602,
+            "path": "/TEST_B/Cumulus/DATA/ID1703301200",
+            "url_path": "",
+            "checksumType": "CKSUM"
+          }
+        ]
+      }
+    ],
+    "status": "running",
+    "workflow_name": "IngestGranule",
+    "collection": {
+      "files": [
+        {
+          "regex": "^MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "MYD09A1.A2017025.h21v00.006.2017034065104.hdf",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^BROWSE\\.MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.(hdf|HDF)$",
+          "sampleFileName": "BROWSE.MYD09A1.A2017025.h21v00.006.2017034065104.hdf",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+          "sampleFileName": "MYD09A1.A2017025.h21v00.006.2017034065104.hdf.met",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$",
+          "http": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml",
+          "s3": "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml",
+          "sampleFileName": "MYD09A1.A2017025.h21v00.006.2017034065104.cmr.xml",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+          "http": "http://cumulus-devseed-public.s3.amazonaws.com/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
+          "s3": "s3://cumulus-devseed-public/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
+          "sampleFileName": "MYD09A1.A2017025.h21v00.006.2017034065104_1.jpg",
+          "bucket": "public"
+        }
+      ],
+      "name": "MYD09A1",
+      "granuleId": "^MYD09A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "dataType": "MYD09A1",
+      "granuleIdExtraction": "(MYD09A1\\..*)\\.hdf",
+      "process": "modis",
+      "provider_path": "/MODOPS/MODAPS/EDC/CUMULUS/FPROC/PDR/",
+      "version": "006",
+      "duplicateHandling": "replace",
+      "sampleFileName": "MYD09A1.A2017025.h21v00.006.2017034065104.hdf"
+    },
+    "cmr": {
+      "username": "devseed",
+      "password": "",
+      "clientId": "CUMULUS",
+      "provider": "CUMULUS"
+    },
+    "topic_arn": "arn:aws:sns:us-east-1:00000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
+    "provider": {
+      "protocol": "http",
+      "globalConnectionLimit": 10,
+      "host": "https://example.com",
+      "updatedAt": 1517326673419,
+      "id": "LPDAAC_HTTPS",
+      "createdAt": 1517326673419
+    },
+    "buckets": {
+      "protected": "cumulus-devseed-protected",
+      "internal": "cumulus-devseed-internal",
+      "private": "cumulus-devseed-private",
+      "public": "cumulus-devseed-public"
+    },
+    "stack": "lpdaac-cumulus",
+    "distribution_endpoint": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/",
+    "queues": {
+      "startSF": "https://sqs.us-east-1.amazonaws.com/00000000000/lpdaac-cumulus-startSF"
+    }
+  },
+  "workflow_config": {
+    "StopStatus": {},
+    "WorkflowFailed": {},
+    "ChooseProcess": {},
+    "ModisProcess": {
+      "distribution_endpoint": "{{$.meta.distribution_endpoint}}",
+      "files_config": "{{$.meta.collection.files}}",
+      "buckets": "{{$.meta.buckets}}",
+      "cumulus_message": {
+        "input": "{[$.payload.granules[*].files[*].filename]}"
+      },
+      "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
+      "url_path": "{{$.meta.collection.url_path}}"
+    },
+    "Report": {},
+    "SyncGranule": {
+      "buckets": "{{$.meta.buckets}}",
+      "collection": "{{$.meta.collection}}",
+      "provider": "{{$.meta.provider}}"
+    },
+    "CmrStep": {}
+  },
+  "exception": "None",
+  "payload": [
+    "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
+    "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
+    "s3://cumulus-devseed-protected/BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
+    "s3://cumulus-devseed-public/MYD09A1.A2016105.h12v09.006.2016234195422_1.jpg",
+    "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.cmr.xml"
+  ]
+}
