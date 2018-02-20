@@ -2,9 +2,8 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const url = require('url');
 const { recursivelyDeleteS3Bucket, s3, sqs } = require('@cumulus/common/aws');
-const { randomString } = require('@cumulus/common/test-utils');
+const { createQueue, randomString } = require('@cumulus/common/test-utils');
 const { queueGranule } = require('../queue');
 
 // Addresses CUMULUS-258
@@ -35,16 +34,7 @@ test('queueGranule generates unique exeuction names', async (t) => {
     Body: JSON.stringify(messageTemplate)
   }).promise();
 
-  // Create the queue
-  const createQueueResponse = await sqs().createQueue({ QueueName: randomString() }).promise();
-
-  // Properly set the Queue URL.  This is needed because LocalStack always
-  // returns the QueueUrl as "localhost", even if that is not where it should
-  // actually be found.  CircleCI breaks without this.
-  const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
-  returnedQueueUrl.host = undefined;
-  returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
-  const QueueUrl = url.format(returnedQueueUrl);
+  const QueueUrl = await createQueue();
 
   // Perform the test
   const granuleIds = [
