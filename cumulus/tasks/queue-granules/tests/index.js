@@ -5,7 +5,7 @@ const test = require('ava');
 const MockAWS = require('@mapbox/mock-aws-sdk-js');
 
 const { s3, sqs, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const testUtils = require('@cumulus/common/test-utils');
+const { createQueue, randomString } = require('@cumulus/common/test-utils');
 
 const { handler } = require('../index');
 const inputJSON = require('./fixtures/input.json');
@@ -14,16 +14,16 @@ const workflowTemplate = require('./fixtures/workflow-template.json');
 const aws = require('@cumulus/common/aws');
 
 test.beforeEach(async (t) => {
-  t.context.bucket = testUtils.randomString();
-  t.context.queue = testUtils.randomString();
-  await sqs().createQueue({ QueueName: t.context.queue }).promise();
+  t.context.bucket = randomString();
+  t.context.queueUrl = await createQueue();
   await s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
-test.afterEach.always(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.bucket);
-  await sqs().deleteQueue({ QueueUrl: `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}` }).promise();
-});
+test.afterEach.always(async (t) =>
+  Promise.all([
+    recursivelyDeleteS3Bucket(t.context.bucket),
+    sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
+  ]));
 
 test('queue granules', async (t) => {
   const Bucket = t.context.bucket;
@@ -42,7 +42,7 @@ test('queue granules', async (t) => {
   const input = Object.assign({}, inputJSON);
   input.config.templateUri = IngestGranuleTemplate;
   input.config.bucket = t.context.bucket;
-  input.config.queueUrl = `http://${process.env.LOCALSTACK_HOST}:4576/queue/${t.context.queue}`;
+  input.config.queueUrl = t.context.queueUrl;
 
   return handler(input, {}, (e, output) => {
     t.ifError(e);
