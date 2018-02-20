@@ -43,7 +43,7 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
 
     const s3Obj = {
       Key,
-      Bucket: this.provider.host
+      Bucket: this.host
     };
 
     return aws.downloadS3File(s3Obj, tempFile);
@@ -56,6 +56,29 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    * @private
    */
   async list() {
+    // There are two different "path" variables being set here, which gets
+    // confusing.  "this.path" originally comes from
+    // "event.config.collection.provider_path".  In the case of S3, it refers
+    // to the prefix used when searching for objects.  That should be the
+    // _only_ time that variable is used.
+    //
+    // The other use of "path" here is in reference to the file that was
+    // discovered.  It's easiest to explain using an example.  Given this URL:
+    //
+    // s3://my-bucket/some/path/my-file.pdr
+    //
+    // file.path = "some/path"
+    // file.name = "my-file.pdr"
+    //
+    // Here's an example where the object is at the top level of the bucket:
+    //
+    // s3://my-bucket/my-file.pdr
+    //
+    // file.path = null
+    // file.name = "my-file.pdr"
+    //
+    // file.path should not be used anywhere outside of this file.
+
     const params = {
       Bucket: this.host,
       FetchOwner: true
@@ -77,8 +100,7 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
         size: object.Size,
         time: object.LastModified,
         owner: object.Owner.DisplayName,
-        path: path.dirname(object.Key),
-        key: object.Key
+        path: path.dirname(object.Key)
       };
 
       // If the object is at the top level of the bucket, path.dirname is going
