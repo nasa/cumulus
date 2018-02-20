@@ -146,7 +146,10 @@ function handler(event, context, cb) {
   });
 }
 
-module.exports = handler;
+module.exports = {
+  handler,
+  bootstrapElasticSearch
+};
 
 justLocalRun(() => {
   //const a = {};
