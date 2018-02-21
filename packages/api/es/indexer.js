@@ -13,14 +13,12 @@
 const path = require('path');
 const get = require('lodash.get');
 const zlib = require('zlib');
-const logger = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
-
-const log = logger.child({ file: 'packages/api/es/indexer.js' });
 
 async function indexLog(payloads, index = 'cumulus', type = 'logs') {
   const esClient = await Search.es();
@@ -291,14 +289,14 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
         status: get(payload, 'meta.status'),
         provider: get(payload, 'meta.provider.id'),
         execution,
-        cmrLink: get(g, 'cmr.link'),
+        cmrLink: get(g, 'cmrLink'),
         files: uniqBy(g.files, 'filename'),
         error: exception,
         createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
         timestamp: Date.now()
       };
 
-      doc.published = get(g, 'cmr.link', false);
+      doc.published = get(g, 'published', false);
       doc.duration = (doc.timestamp - doc.createdAt) / 1000;
 
       return esClient.update({
