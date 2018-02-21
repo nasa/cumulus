@@ -2,7 +2,7 @@ const fs = require('fs');
 const got = require('got');
 const property = require('lodash.property');
 const { parseString } = require('xml2js');
-//import log from '@cumulus/common/log';
+const log = require('@cumulus/common/log');
 const {
   validate,
   ValidationError,
