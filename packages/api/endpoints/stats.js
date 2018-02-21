@@ -2,7 +2,7 @@
 
 const _get = require('lodash.get');
 const moment = require('moment');
-const log = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 const handle = require('../lib/response').handle;
 const Stats = require('../es/stats');
 
