@@ -13,14 +13,12 @@
 const path = require('path');
 const get = require('lodash.get');
 const zlib = require('zlib');
-const logger = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
-
-const log = logger.child({ file: 'packages/api/es/indexer.js' });
 
 /**
  * Returns the collectionId used in elasticsearch
@@ -526,7 +524,7 @@ function logHandler(event, context, cb) {
     try {
       const logs = JSON.parse(r.toString());
       log.debug(logs);
-      return indexLog(logs.logEvents)
+      return indexLog(undefined, logs.logEvents)
         .then((s) => cb(null, s))
         .catch(cb);
     }
