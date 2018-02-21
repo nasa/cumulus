@@ -4,12 +4,10 @@ const os = require('os');
 const fs = require('fs');
 const JSFtp = require('jsftp');
 const join = require('path').join;
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 const aws = require('@cumulus/common/aws');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-
-const log = logger.child({ file: 'ingest/ftp.js' });
 
 module.exports.ftpMixin = superclass => class extends superclass {
 
