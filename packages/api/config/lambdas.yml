@@ -40,6 +40,20 @@ sf2snsEnd:
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
 
+kinesisConsumer:
+  handler: index.kinesisConsumer
+  timeout: 100
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
+    invoke:
+      function: Ref
+      value: ScheduleSFLambdaFunction
+    bucket: '{{buckets.internal}}'
+
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
   handler: index.scheduler

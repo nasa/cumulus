@@ -232,7 +232,7 @@ module.exports.rule = {
       properties: {
         type: {
           type: 'string',
-          enum: ['onetime', 'scheduled', 'subscription']
+          enum: ['onetime', 'scheduled', 'sns', 'kinesis']
         },
         value: {
           type: 'string'
@@ -360,7 +360,7 @@ module.exports.provider = {
     protocol: {
       title: 'Protocol',
       type: 'string',
-      enum: ['http', 'ftp', 'sftp'],
+      enum: ['http', 'ftp', 'sftp', 's3'],
       default: 'http'
     },
     host: {
