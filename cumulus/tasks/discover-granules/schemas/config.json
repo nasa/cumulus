@@ -8,14 +8,13 @@
     },
     "provider": {
       "type": "object",
-      "required": [],
       "properties": {
         "id": { "type": "string" },
-        "globalConnectionLimit": { "type": "integer" },
-        "port": { "type": "integer" },
-        "host": { "type": "string" },
         "username": { "type": "string" },
-        "username": { "type": "password" },
+        "password": { "type": "string" },
+        "host": { "type": "string" },
+        "port": { "type": "integer" },
+        "globalConnectionLimit": { "type": "integer" },
         "protocol": {
           "type": "string",
           "enum": ["ftp", "sftp", "http", "https"]
