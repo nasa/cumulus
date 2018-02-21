@@ -1,11 +1,11 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, require-jsdoc */
 'use strict';
 
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const testUtils = require('@cumulus/common/test-utils');
 const input = require('./fixtures/input.json');
-const { handler } = require('../index');
+const { discoverS3 } = require('../index');
 
 async function deleteBucket(bucket) {
   const response = await aws.s3().listObjects({ Bucket: bucket }).promise();
@@ -25,28 +25,23 @@ test.beforeEach((t) => {
 });
 
 test.afterEach.always(async (t) => {
-  deleteBucket(t.context.bucket);
+  await deleteBucket(t.context.bucket);
 });
 
-test.cb('empty bucket results in empty granules array', (t) => {
+test('empty bucket results in empty granules array', async (t) => {
   const newPayload = Object.assign({}, input);
-  const bucketType = newPayload.config.bucket_type;
-  newPayload.config.buckets[bucketType] = t.context.bucket;
+  newPayload.config.bucket = t.context.bucket;
 
-  handler(newPayload, {}, (e, output) => {
-    t.ifError(e);
-    t.true(output && typeof output === 'object');
-    t.true(output.granules && Array.isArray(output.granules));
-    t.true(output.granules.length === 0);
-    t.end();
-  });
+  const output = await discoverS3(newPayload);
+  t.true(output && typeof output === 'object');
+  t.true(output.granules && Array.isArray(output.granules));
+  t.true(output.granules.length === 0);
 });
 
-test.cb('filter using file_type', (t) => {
+test('filter using file_type', async (t) => {
   const newPayload = Object.assign({}, input);
-  const bucketType = newPayload.config.bucket_type;
-  newPayload.config.buckets[bucketType] = t.context.bucket;
-  newPayload.config.collection.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
+  newPayload.config.bucket = t.context.bucket;
+  newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
   newPayload.config.file_type = '.h5';
 
   const keys = [
@@ -54,24 +49,19 @@ test.cb('filter using file_type', (t) => {
     `GW1AM2_${testUtils.randomString()}.txt`
   ];
 
-  Promise.all(keys.map((key) =>
+  await Promise.all(keys.map((key) =>
     putObject(t.context.bucket, key)
-  )).then(() => {
-    handler(newPayload, {}, (e, output) => {
-      t.ifError(e);
-      t.true(output && typeof output === 'object');
-      t.true(output.granules && Array.isArray(output.granules));
-      t.true(output.granules.length === 1);
-      t.end();
-    });
-  });
+  ));
+  const output = await discoverS3(newPayload);
+  t.true(output && typeof output === 'object');
+  t.true(output.granules && Array.isArray(output.granules));
+  t.true(output.granules.length === 1);
 });
 
-test.cb('use file_prefix', (t) => {
+test('use file_prefix', async (t) => {
   const newPayload = Object.assign({}, input);
-  const bucketType = newPayload.config.bucket_type;
-  newPayload.config.buckets[bucketType] = t.context.bucket;
-  newPayload.config.collection.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
+  newPayload.config.bucket = t.context.bucket;
+  newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
   newPayload.config.file_type = null;
   newPayload.config.file_prefix = 'GW1AM2_';
 
@@ -80,24 +70,20 @@ test.cb('use file_prefix', (t) => {
     `${testUtils.randomString()}.h5`
   ];
 
-  Promise.all(keys.map((key) =>
+  await Promise.all(keys.map((key) =>
     putObject(t.context.bucket, key)
-  )).then(() => {
-    handler(newPayload, {}, (e, output) => {
-      t.ifError(e);
-      t.true(output && typeof output === 'object');
-      t.true(output.granules && Array.isArray(output.granules));
-      t.true(output.granules.length === 1);
-      t.end();
-    });
-  });
+  ));
+
+  const output = await discoverS3(newPayload);
+  t.true(output && typeof output === 'object');
+  t.true(output.granules && Array.isArray(output.granules));
+  t.true(output.granules.length === 1);
 });
 
-test.cb('file_type and file_prefix', (t) => {
+test('file_type and file_prefix', async (t) => {
   const newPayload = Object.assign({}, input);
-  const bucketType = newPayload.config.bucket_type;
-  newPayload.config.buckets[bucketType] = t.context.bucket;
-  newPayload.config.collection.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
+  newPayload.config.bucket = t.context.bucket;
+  newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
 
   const keys = [
     `GW1AM2_${testUtils.randomString()}.h5`,
@@ -105,15 +91,11 @@ test.cb('file_type and file_prefix', (t) => {
     `${testUtils.randomString()}.h5`
   ];
 
-  Promise.all(keys.map((key) =>
+  await Promise.all(keys.map((key) =>
     putObject(t.context.bucket, key)
-  )).then(() => {
-    handler(newPayload, {}, (e, output) => {
-      t.ifError(e);
-      t.true(output && typeof output === 'object');
-      t.true(output.granules && Array.isArray(output.granules));
-      t.true(output.granules.length === 1);
-      t.end();
-    });
-  });
+  ));
+  const output = await discoverS3(newPayload);
+  t.true(output && typeof output === 'object');
+  t.true(output.granules && Array.isArray(output.granules));
+  t.true(output.granules.length === 1);
 });

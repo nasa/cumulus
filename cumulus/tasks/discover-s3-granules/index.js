@@ -1,14 +1,16 @@
 'use strict';
 
 const { listS3Objects } = require('@cumulus/common/aws');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
 
 /**
 * filterByFileType
 *
 * @private
-* @param  {string} fileType
-* @param  {array} contents array of strings with filenames
-* @return {array} filtered array of files
+* @param  {string} fileType - the file type
+* @param  {Array} contents - array of strings with filenames
+* @returns {Array} filtered array of files
 */
 function filterByFileType(fileType, contents) {
   const suffix = fileType.startsWith('.') ? fileType : '.' + fileType;
@@ -19,11 +21,10 @@ function filterByFileType(fileType, contents) {
 * createGranuleObject
 *
 * @private
-* @param  {string} filename
-* @param  {string} bucket name of bucket
-* @param  {regexp} filenameRegExp used to filter files by regex
-* @param  {array} contents array of strings with filenames
-* @return {array} filtered array of files
+* @param  {string} filename - the filename
+* @param  {string} bucket - name of bucket
+* @param  {RegExp} filenameRegExp - used to filter files by regex
+* @returns {Array} filtered array of files
 */
 function createGranuleObject(filename, bucket, filenameRegExp) {
   const match = filename.match(filenameRegExp);
@@ -41,12 +42,12 @@ function createGranuleObject(filename, bucket, filenameRegExp) {
 * createOutput
 *
 * @private
-* @param  {array} list array of strings with filenames
-* @param  {object} options
-* @param  {string} options.bucket name of bucket
-* @param  {regexp} options.filenameRegExp used to filter files by regex
-* @param  {string} [options.fileType]
-* @return {array} array of objects with `granuleId` and `files` properties
+* @param  {Array} list - array of strings with filenames
+* @param  {Object} options - the options config
+* @param  {string} options.bucket - name of bucket
+* @param  {RegExp} options.filenameRegExp - used to filter files by regex
+* @param  {string} [options.fileType] - the optional fileType
+* @returns {Array} array of objects with `granuleId` and `files` properties
 * filtered by `options.fileType`
 */
 function createGranules(list, options) {
@@ -75,40 +76,51 @@ function createGranules(list, options) {
 
 /**
 * Lambda function handler for discovering granules on s3 buckets.
-* See schemas/input.json for detailed expected input.
+* See schemas/config.json for detailed expected input.
 *
-* @param  {object} event lambda event object
-* @param  {object} event.config
-* @param  {object} event.config.buckets
-* @param  {object} event.config.bucket_type
-* @param  {object} event.config.file_type
-* @param  {object} event.config.collection
-* @param  {string} event.config.collection.granuleIdExtraction string used to
-  create RegExp for matching filenames
-* @param  {object} context Lambda context object. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
-* @param  {lambdaCallback} callback callback function
-* @return {undefined}
+* @param  {Object} event - lambda event object
+* @param  {Object} event.config - task config object
+* @param  {string} event.config.bucket - the bucket to search for files
+* @param  {string} event.config.file_type - the type of the files to search for
+* @param  {string} event.config.file_prefix - the prefix of the files
+* @param  {string} event.config.granuleIdExtraction - the regex used to extract
+                                                      granule Id from file names
+* @returns {Promise.<Object>} an object that includes the granules
 */
-function handler(event, context, callback) {
+async function discoverS3(event) {
   const config = event.config;
   const fileType = config.file_type;
   const prefix = config.file_prefix;
-
-  const bucketType = config.bucket_type;
-  const buckets = config.buckets;
-  const bucket = buckets[bucketType];
-
-  const collection = config.collection;
-  const filenameRegExp = new RegExp(collection.granuleIdExtraction);
+  const bucket = config.bucket;
+  const granuleIdExtraction = config.granuleIdExtraction;
+  const filenameRegExp = new RegExp(granuleIdExtraction);
 
   const outputOptions = { fileType, filenameRegExp, bucket };
 
-  listS3Objects(bucket, prefix)
-    .then((list) => {
-      const granules = createGranules(list, outputOptions);
-      callback(null, { granules });
-    })
-    .catch(callback);
+  const list = await listS3Objects(bucket, prefix);
+  const granules = createGranules(list, outputOptions);
+  return {
+    granules
+  };
 }
 
-module.exports.handler = handler;
+module.exports.discoverS3 = discoverS3;
+
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  return cumulusMessageAdapter.runCumulusTask(discoverS3, event, context, callback);
+}
+exports.handler = handler;
+
+// use node index.js local to invoke this
+justLocalRun(() => {
+  const payload = require('@cumulus/test-data/cumulus_messages/discover-s3-granules.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => console.log(e, r));
+});
