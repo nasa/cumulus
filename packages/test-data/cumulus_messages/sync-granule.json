@@ -1,0 +1,169 @@
+
+{
+  "cumulus_meta": {
+    "message_source": "local",
+    "task": "SyncGranule",
+    "system_bucket": "cumulus-devseed-internal",
+    "state_machine": "arn:aws:states:us-east-1:000000000000:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
+    "execution_name": "test15",
+    "workflow_start_time": 1519146447212
+  },
+  "meta": {
+    "workflow_name": "IngestGranule",
+    "stack": "lpdaac-cumulus",
+    "buckets": {
+      "internal": "cumulus-devseed-internal",
+      "private": "cumulus-devseed-private",
+      "protected": "cumulus-devseed-protected",
+      "public": "cumulus-devseed-public"
+    },
+    "cmr": {
+      "username": "devseed",
+      "provider": "CUMULUS",
+      "clientId": "CUMULUS",
+      "password": ""
+    },
+    "distribution_endpoint": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/",
+    "topic_arn": "arn:aws:sns:us-east-1:000000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
+    "collection": {
+      "files": [
+        {
+          "regex": "^(pg-PR1A[0-9]{4}-[0-9]{10}_[0-9]{3}_[0-9]{3})$",
+          "sampleFileName": "pg-PR1A0000-2016121001_000_001",
+          "bucket": "private"
+        },
+        {
+          "regex": "^AST_L1A_[\\d]*_[\\d]*\\.hdf$",
+          "sampleFileName": "AST_L1A_00301052017002700_02242017094829.hdf",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^(pg-BR1A[0-9]{4}-[0-9]{10}_[0-9]{3}_[0-9]{3})$",
+          "sampleFileName": "pg-BR1A0000-2016121001_000_001",
+          "bucket": "private"
+        },
+        {
+          "regex": "^AST_L1A_[\\d]*_[\\d]*\\.cmr\\.xml$",
+          "sampleFileName": "AST_L1A_00301052017002700_02242017094829.cmr.xml",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^AST_L1A_[\\d]*_[\\d]*_.*\\.jpg$",
+          "sampleFileName": "AST_L1A_00301052017002700_02242017094829_2.jpg",
+          "bucket": "public"
+        }
+      ],
+      "name": "AST_L1A",
+      "granuleId": "^1A[\\d]{4}-[\\d]{10}_[\\d]{3}_[\\d]{3}$",
+      "process": "aster",
+      "dataType": "AST_L1A",
+      "granuleIdExtraction": "^pg-[P|B]R(1A.*)$",
+      "provider_path": "/TEST_B/Cumulus/PDR/",
+      "version": "003",
+      "url_path": "/",
+      "updatedAt": 1517326637137,
+      "duplicateHandling": "replace",
+      "sampleFileName": "pg-PR1A0000-2016121001_001_011",
+      "createdAt": 1517326637117
+    },
+    "provider": {
+      "protocol": "http",
+      "globalConnectionLimit": 10,
+      "host": "https://e4ftl01.cr.usgs.gov:40521",
+      "updatedAt": 1517326673419,
+      "id": "LPDAAC_HTTPS",
+      "createdAt": 1517326673419
+    },
+    "templates": {
+      "IngestGranule": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/IngestGranule.json",
+      "ParsePdr": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/ParsePdr.json",
+      "DiscoverPdrs": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json"
+    },
+    "queues": {
+      "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"
+    },
+    "status": "running"
+  },
+  "workflow_config": {
+    "Report": {},
+    "SyncGranule": {
+      "buckets": "{{$.meta.buckets}}",
+      "provider": "{{$.meta.provider}}",
+      "collection": "{{$.meta.collection}}",
+      "cumulus_message": {
+        "outputs": [
+          {
+            "source": "{{$.granules}}",
+            "destination": "{{$.meta.input_granules}}"
+          },
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          }
+        ]
+      }
+    },
+    "ChooseProcess": {},
+    "AsterProcess": {
+      "buckets": "{{$.meta.buckets}}",
+      "distribution_endpoint": "{{$.meta.distribution_endpoint}}",
+      "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
+      "files_config": "{{$.meta.collection.files}}",
+      "url_path": "{{$.meta.collection.url_path}}",
+      "cumulus_message": {
+        "input": "{[$.payload.granules[*].files[*].filename]}",
+        "outputs": [
+          {
+            "source": "{{$}}",
+            "destination": "{{$.meta.all_the_files}}"
+          },
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          }
+        ]
+      }
+    },
+    "ModisProcess": {
+      "buckets": "{{$.meta.buckets}}",
+      "collection": "{{$.meta.collection}}"
+    },
+    "CmrStep": {
+      "bucket": "{{$.meta.buckets.internal}}",
+      "stack": "{{$.meta.stack}}",
+      "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
+      "cmr": "{{$.meta.cmr}}",
+      "input_granules": "{{$.meta.input_granules}}"
+    },
+    "StopStatus": {},
+    "WorkflowFailed": {}
+  },
+  "payload": {
+    "granules": [
+      {
+        "granuleId": "1A0000-2018021501_001_009",
+        "files": [
+          {
+            "path": "/TEST_B/Cumulus/DATA/ID1802151325",
+            "name": "pg-PR1A0000-2018021501_001_009",
+            "fileSize": 116511229,
+            "checksumType": "CKSUM",
+            "checksumValue": 2852751863
+          },
+          {
+            "path": "/TEST_B/Cumulus/DATA/ID1802151325",
+            "name": "pg-BR1A0000-2018021501_001_009",
+            "fileSize": 171347,
+            "checksumType": "CKSUM",
+            "checksumValue": 1536677884
+          }
+        ]
+      }
+    ],
+    "pdr": {
+      "path": "/TEST_B/Cumulus/PDR/",
+      "name": "PDN.ID1802151325.PDR"
+    }
+  },
+  "exception": null
+}
