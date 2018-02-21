@@ -5,9 +5,7 @@ const AWS = require('aws-sdk');
 const got = require('got');
 const FormData = require('form-data');
 const querystring = require('querystring');
-const logger = require('@cumulus/ingest/log');
-
-const log = logger.child({ name: 'cumulus-distribution' });
+const log = require('@cumulus/common/log');
 
 /**
  * An AWS API Gateway function that either requests authentication,
