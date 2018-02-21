@@ -3,9 +3,8 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const aws = require('@cumulus/common/aws');
 const { IncompleteError } = require('@cumulus/common/errors');
-let log = require('@cumulus/ingest/log');
-
-log = log.child({ file: 'pdr-status-check/index.js' });
+const log = require('@cumulus/common/log');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
@@ -175,3 +174,9 @@ function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(checkPdrStatuses, event, context, callback);
 }
 exports.handler = handler;
+
+// use node index.js local to invoke this
+justLocalRun(() => {
+  const payload = require('@cumulus/test-data/cumulus_messages/pdr-status-check.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => console.log(e, r));
+});

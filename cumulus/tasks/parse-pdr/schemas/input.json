@@ -1,0 +1,14 @@
+{
+  "title": "ParsePdrInput",
+  "description": "Describes the input expected by the parse-pdr task",
+  "type": "object",
+  "properties": {
+    "pdr": {
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    }
+  }
+}
