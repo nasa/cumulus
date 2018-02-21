@@ -2,42 +2,11 @@
   "title": "DiscoverS3GranulesConfig",
   "description": "Describes the config used by the discover-s3-granules task",
   "type": "object",
+  "required": ["bucket", "granuleIdExtraction"],
   "properties": {
     "file_type": { "type": "string" },
-    "bucket_type": { "type": "string" },
-    "buckets": {
-      "type": "object",
-      "description": "aws s3 buckets used by this task",
-      "properties": {
-        "internal": { "type": "string" },
-        "private": { "type": "string" },
-        "protected": { "type": "string" },
-        "public": { "type": "string" }
-      }
-    },
-    "collection": {
-      "type": "object",
-      "description": "",
-      "required": ["granuleIdExtraction"],
-      "properties": {
-        "name": { "type": "string" },
-        "version": { "type": "string" },
-        "provider_path": { "type": "string" },
-        "granuleId": { "type": "string" },
-        "sampleFileName": { "type": "string" },
-        "granuleIdExtraction": { "type": "string" },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "regex": { "type": "string" },
-              "sampleFileName": { "type": "string" },
-              "bucket": { "type": "string" }
-            }
-          }
-        }
-      }
-    }
+    "file_prefix": { "type": "string" },
+    "bucket": { "type": "string" },
+    "granuleIdExtraction": { "type": "string" }
   }
 }
