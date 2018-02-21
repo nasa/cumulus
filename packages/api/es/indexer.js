@@ -478,6 +478,13 @@ async function reingest(g, index) {
   };
 }
 
+/**
+ * processes the incoming cumulus message and pass it through a number
+ * of indexers
+ *
+ * @param  {Object} event - incoming cumulus message
+ * @returns {Promise} object with response from the three indexer
+ */
 async function handlePayload(event) {
   let payload;
   const source = get(event, 'EventSource');
@@ -492,11 +499,26 @@ async function handlePayload(event) {
 
   const esClient = await Search.es();
 
-  await indexStepFunction(esClient, payload);
-  await pdr(esClient, payload);
-  await granule(esClient, payload);
+  // allowing to set index name via env variable
+  // to support testing
+  const esIndex = process.env.ES_INDEX;
+
+  return {
+    sf: await indexStepFunction(esClient, payload, esIndex),
+    pdr: await pdr(esClient, payload, esIndex),
+    granule: await granule(esClient, payload, esIndex)
+  };
 }
 
+/**
+ * processes the incoming log events coming from AWS
+ * CloudWatch
+ *
+ * @param  {Object} event - incoming message from CloudWatch
+ * @param  {Object} context - aws lambda context object
+ * @param  {function} cb - aws lambda callback function
+ * @returns {Promise} undefined
+ */
 function logHandler(event, context, cb) {
   log.debug(event);
   const payload = new Buffer(event.awslogs.data, 'base64');
@@ -505,8 +527,8 @@ function logHandler(event, context, cb) {
       const logs = JSON.parse(r.toString());
       log.debug(logs);
       return indexLog(logs.logEvents)
-        .then(s => cb(null, s))
-        .catch(err => cb(err));
+        .then((s) => cb(null, s))
+        .catch(cb);
     }
     catch (err) {
       log.error(e);
@@ -515,6 +537,14 @@ function logHandler(event, context, cb) {
   });
 }
 
+/**
+ * Lambda function handler for sns2elasticsearch
+ *
+ * @param  {Object} event - incoming message sns
+ * @param  {Object} context - aws lambda context object
+ * @param  {function} cb - aws lambda callback function
+ * @returns {Promise} undefined
+ */
 function handler(event, context, cb) {
   // we can handle both incoming message from SNS as well as direct payload
   log.debug(JSON.stringify(event));
@@ -522,16 +552,17 @@ function handler(event, context, cb) {
   let jobs = [];
 
   if (records) {
-    jobs = records.map(r => handlePayload(r));
+    jobs = records.map(handlePayload);
   }
   else {
     jobs.push(handlePayload(event));
   }
 
-  Promise.all(jobs).then(r => {
+  return Promise.all(jobs).then((r) => {
     log.info(`Updated ${r.length} es records`);
     cb(null, r);
-  }).catch(e => cb(e));
+    return r;
+  }).catch(cb);
 }
 
 module.exports = {
