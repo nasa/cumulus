@@ -19,7 +19,7 @@ test.beforeEach(async (t) => {
   await s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
-test.afterEach.always(async (t) =>
+test.afterEach.always((t) =>
   Promise.all([
     recursivelyDeleteS3Bucket(t.context.bucket),
     sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
