@@ -17,7 +17,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name", "filename"],
+              "required": ["name", "path"],
               "properties": {
                 "name": {
                   "type": "string"
@@ -26,6 +26,9 @@
                   "type": "string"
                 },
                 "bucket": {
+                  "type": "string"
+                },
+                "path": {
                   "type": "string"
                 }
               }
