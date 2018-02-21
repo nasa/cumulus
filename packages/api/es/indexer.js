@@ -89,6 +89,17 @@ async function indexLog(payloads, index = 'cumulus', type = 'logs') {
   return esClient.bulk({ body: body });
 }
 
+/**
+ * Partially updates an existing ElasticSearch record
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {string} id       - id of the Elasticsearch record
+ * @param  {string} type     - Elasticsearch type (default: execution)
+ * @param  {Object} doc      - Partial updated document
+ * @param  {strint} parent   - id of the parent (optional)
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @returns {Promise} elasticsearch update response
+ */
 async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cumulus') {
   if (!esClient) {
     esClient = await Search.es();
@@ -113,7 +124,6 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
     params.parent = parent;
   }
 
-  console.log(`Updated ${id}`);
   return esClient.update(params);
 }
 
