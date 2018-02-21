@@ -121,11 +121,11 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
  * Indexes a step function message to Elastic Search. The message must
  * comply with the cumulus message protocol
  *
- * @param  {object} esClient ElasticSearch Connection object
- * @param  {object} payload  Cumulus Step Function message
- * @param  {string} index    Elasticsearch index (default: cumulus)
- * @param  {string} type     Elasticsearch type (default: execution)
- * @return {Promise} elasticsearch update response
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: execution)
+ * @returns {Promise} elasticsearch update response
  */
 function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
   const name = get(payload, 'cumulus_meta.execution_name');
@@ -175,7 +175,7 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
  * @param  {string} type     - Elasticsearch type (default: pdr)
  * @returns {Promise} Elasticsearch response
  */
-async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
+function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
   const pdrName = get(pdrObj, 'name');
@@ -242,7 +242,7 @@ async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
  * @param  {string} type     - Elasticsearch type (default: collection)
  * @returns {Promise} Elasticsearch response
  */
-async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
+function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
   // adding collection record to ES
   const collectionId = constructCollectionId(meta.name, meta.version);
   const params = {
@@ -268,7 +268,7 @@ async function indexCollection(esClient, meta, index = 'cumulus', type = 'collec
  * @param  {string} type     - Elasticsearch type (default: provider)
  * @returns {Promise} Elasticsearch response
  */
-async function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
+function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
   const params = {
     index,
     type,
@@ -293,7 +293,7 @@ async function indexProvider(esClient, payload, index = 'cumulus', type = 'provi
  * @param  {string} type     - Elasticsearch type (default: rule)
  * @returns {Promise} Elasticsearch response
  */
-async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
+function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
   const params = {
     index,
     type,
@@ -502,6 +502,7 @@ module.exports = {
   indexCollection,
   indexProvider,
   indexRule,
+  indexStepFunction,
   handlePayload,
   partialRecordUpdate,
   deleteRecord,
