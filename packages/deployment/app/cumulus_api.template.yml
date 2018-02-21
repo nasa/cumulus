@@ -19,6 +19,9 @@ Parameters:
   ScheduleSFLambdaFunction:
     Type: String
     Description: 'ScheduleSF lambda function arn'
+  kinesisConsumerLambdaFunction:
+    Type: String
+    Description: 'kinesisConsumer lambda function arn'
 {{#each parent.apis}}
   {{name}}RestApi:
     Type: String
