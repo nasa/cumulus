@@ -7,6 +7,8 @@ const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const { randomString } = require('@cumulus/common/test-utils');
 const granuleSuccess = require('./data/granule_success.json');
 const granuleFailure = require('./data/granule_failed.json');
+const pdrFailure = require('./data/pdr_failure.json');
+const pdrSuccess = require('./data/pdr_success.json');
 
 const esIndex = randomString();
 let esClient;
@@ -60,7 +62,7 @@ test('test indexing multiple successful granule records', async (t) => {
   granule.granuleId = randomString();
   const granule2 = Object.assign({}, granule);
   granule2.granuleId = randomString();
-  newPayload.payload.granules.push(granule2); 
+  newPayload.payload.granules.push(granule2);
   const collection = newPayload.meta.collection;
   const response = await indexer.granule(esClient, newPayload, esIndex, type);
 
@@ -229,4 +231,111 @@ test('test indexing a collection record', async (t) => {
   t.is(record._source.name, collection.name);
   t.is(record._source.version, collection.version);
   t.is(typeof record._source.timestamp, 'number');
+});
+
+test('test indexing a failed pdr record', async (t) => {
+  const type = 'pdr';
+  const payload = pdrFailure.payload;
+  payload.pdr.name = randomString();
+  const collection = pdrFailure.meta.collection;
+  const r = await indexer.pdr(esClient, pdrFailure, esIndex, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+
+  // check the record exists
+  const response = await esClient.get({
+    index: esIndex,
+    type,
+    id: payload.pdr.name
+  });
+  const record = response._source;
+
+  t.is(record.status, 'failed');
+  t.is(record.collectionId, collectionId);
+  t.is(response._id, payload.pdr.name);
+  t.is(record.pdrName, payload.pdr.name);
+
+  // check stats
+  const stats = record.stats;
+  t.is(stats.total, 1);
+  t.is(stats.failed, 1);
+  t.is(stats.processing, 0);
+  t.is(stats.completed, 0);
+  t.is(record.progress, 100);
+});
+
+test('test indexing a successful pdr record', async (t) => {
+  const type = 'pdr';
+  pdrSuccess.meta.pdr.name = randomString();
+  const pdr = pdrSuccess.meta.pdr;
+  const collection = pdrSuccess.meta.collection;
+  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+
+  // check the record exists
+  const response = await esClient.get({
+    index: esIndex,
+    type,
+    id: pdr.name
+  });
+  const record = response._source;
+
+  t.is(record.status, 'completed');
+  t.is(record.collectionId, collectionId);
+  t.is(response._id, pdr.name);
+  t.is(record.pdrName, pdr.name);
+
+  // check stats
+  const stats = record.stats;
+  t.is(stats.total, 3);
+  t.is(stats.failed, 1);
+  t.is(stats.processing, 0);
+  t.is(stats.completed, 2);
+  t.is(record.progress, 100);
+});
+
+test('test indexing a running pdr record', async (t) => {
+  const type = 'pdr';
+  pdrSuccess.meta.pdr.name = randomString();
+  pdrSuccess.meta.status = 'running';
+  pdrSuccess.payload.running.push('arn');
+  const pdr = pdrSuccess.meta.pdr;
+  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  // check the record exists
+  const response = await esClient.get({
+    index: esIndex,
+    type,
+    id: pdr.name
+  });
+  const record = response._source;
+
+  t.is(record.status, 'running');
+
+  // check stats
+  const stats = record.stats;
+  t.is(stats.total, 4);
+  t.is(stats.failed, 1);
+  t.is(stats.processing, 1);
+  t.is(stats.completed, 2);
+  t.is(record.progress, 75);
+});
+
+test('test indexing a running pdr when pdr is missing', async (t) => {
+  const type = 'pdr';
+  delete pdrSuccess.meta.pdr;
+  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
+
+  // make sure record is created
+  t.is(r, undefined);
 });
