@@ -114,10 +114,8 @@ function handler(event, context, callback) {
 }
 exports.handler = handler;
 
+// use node index.js local to invoke this
 local.justLocalRun(() => {
-  const filepath = process.argv[3] ? process.argv[3] : './tests/fixtures/input.json';
-  const payload = require(filepath); // eslint-disable-line global-require
-
-  payload.config.useQueue = false;
-  cumulusMessageAdapter.runCumulusTask(discoverPdrs, payload, {}, (e) => log.info(e));
+  const payload = require('@cumulus/test-data/cumulus_messages/discover-pdrs.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => console.log(e, r));
 });
