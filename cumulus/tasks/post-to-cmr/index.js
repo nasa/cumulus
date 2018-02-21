@@ -9,7 +9,6 @@ const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
-const testPayload = require('@cumulus/test-data/payloads/new-message-schema/cmr.json');
 const log = require('@cumulus/common/log');
 
 /**
@@ -227,7 +226,8 @@ function handler(event, context, callback) {
 }
 exports.handler = handler;
 
+// use node index.js local to invoke this
 justLocalRun(() => {
-  handler(testPayload, {}, (e, r) => console.log(e, JSON.stringify(r)));
+  const payload = require('@cumulus/test-data/cumulus_messages/post-to-cmr.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => console.log(e, r));
 });
-
