@@ -4,9 +4,7 @@ const get = require('lodash.get');
 const ProviderNotFound = require('@cumulus/common/errors').ProviderNotFound;
 const local = require('@cumulus/common/local-helpers');
 const granule = require('@cumulus/ingest/granule');
-const logger = require('@cumulus/ingest/log');
-
-const log = logger.child({ file: 'discover-granules/index.js' });
+const log = require('@cumulus/common/log');
 
 /**
 * Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
