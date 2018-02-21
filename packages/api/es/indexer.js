@@ -231,6 +231,15 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   });
 }
 
+/**
+ * Indexes the collection on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} meta     - the collection record
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: collection)
+ * @returns {Promise} Elasticsearch response
+ */
 async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
   // adding collection record to ES
   const collectionId = constructCollectionId(meta.name, meta.version);
@@ -245,7 +254,7 @@ async function indexCollection(esClient, meta, index = 'cumulus', type = 'collec
   };
 
   params.body.doc.timestamp = Date.now();
-  await esClient.update(params);
+  return esClient.update(params);
 }
 
 /**
@@ -254,7 +263,7 @@ async function indexCollection(esClient, meta, index = 'cumulus', type = 'collec
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - the provider record
  * @param  {string} index    - Elasticsearch index (default: cumulus)
- * @param  {string} type     - Elasticsearch type (default: granule)
+ * @param  {string} type     - Elasticsearch type (default: provider)
  * @returns {Promise} Elasticsearch response
  */
 async function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
@@ -279,7 +288,7 @@ async function indexProvider(esClient, payload, index = 'cumulus', type = 'provi
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - the Rule record
  * @param  {string} index    - Elasticsearch index (default: cumulus)
- * @param  {string} type     - Elasticsearch type (default: granule)
+ * @param  {string} type     - Elasticsearch type (default: rule)
  * @returns {Promise} Elasticsearch response
  */
 async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
