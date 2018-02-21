@@ -2,7 +2,7 @@
   "title": "DiscoverGranulesOutput",
   "description": "Describes the output produced by the discover-granules task",
   "type": "object",
-  "required": ["granules", "granules_found"],
+  "required": ["granules"],
   "additionalProperties": false,
   "properties": {
     "granules_found": { "type": "integer" },
