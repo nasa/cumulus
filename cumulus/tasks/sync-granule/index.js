@@ -5,6 +5,7 @@ const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
 const logger = require('@cumulus/ingest/log');
+const local = require('@cumulus/common/local-helpers');
 
 const log = logger.child({ file: 'sync-granule/index.js' });
 
@@ -109,3 +110,9 @@ exports.syncGranule = function syncGranule(event) {
 exports.handler = function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, callback);
 };
+
+// use node index.js local to invoke this
+local.justLocalRun(() => {
+  const payload = require('@cumulus/test-data/cumulus_messages/sync-granule.json'); // eslint-disable-line global-require, max-len
+  exports.handler(payload, {}, (e, r) => console.log(e, r));
+});
