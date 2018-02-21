@@ -12,7 +12,7 @@
       "DiscoverPdrs": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json",
       "IngestGranule": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/IngestGranule.json"
     },
-    "status": "running",
+    "status": "completed",
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/111111111111/lpdaac-cumulus-startSF"
     },
