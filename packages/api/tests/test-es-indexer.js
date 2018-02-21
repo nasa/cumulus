@@ -53,6 +53,41 @@ test('test indexing a successful granule record', async (t) => {
   t.is(deconstructed, collection.name);
 });
 
+test('test indexing multiple successful granule records', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+  const type = 'granule';
+  const granule = newPayload.payload.granules[0];
+  granule.granuleId = randomString();
+  const granule2 = Object.assign({}, granule);
+  granule2.granuleId = randomString();
+  newPayload.payload.granules.push(granule2); 
+  const collection = newPayload.meta.collection;
+  const response = await indexer.granule(esClient, newPayload, esIndex, type);
+
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+
+  t.is(response.length, 2);
+  const promises = response.map((r) => {
+    t.is(r.result, 'created');
+
+    // check the record exists
+    return esClient.get({
+      index: esIndex,
+      type,
+      id: r._id,
+      parent: collectionId
+    });
+  });
+
+  const records = await Promise.all(promises);
+  records.forEach((record) => {
+    t.is(record._source.status, 'completed');
+    t.is(record._parent, collectionId);
+    t.is(record._source.cmrLink, granule.cmrLink);
+    t.is(record._source.published, granule.published);
+  });
+});
+
 test('test indexing a failed granule record', async (t) => {
   const type = 'granule';
   const granule = granuleFailure.payload.granules[0];
@@ -129,54 +164,23 @@ test('test indexing a granule record in meta section', async (t) => {
   t.is(record._source.published, false);
 });
 
-// test('create and delete a kinesis type rule', async (t) => {
-//   // create rule
-//   const rules = new models.Rule();
-//   return rules.create(kinesisRule)
-//     .then(async (rule) => {
-//       t.is(rule.name, kinesisRule.name);
-//       t.is(rule.rule.value, kinesisRule.rule.value);
-//       t.false(rule.rule.arn === undefined);
-//       // delete rule
-//       await rules.delete(rule);
-//     });
-// });
+test('test indexing a rule record', async (t) => {
+  const testRecord = {
+    name: randomString()
+  };
 
-// test('update a kinesis type rule state, arn does not change', async (t) => {
-//   // create rule
-//   const rules = new models.Rule();
-//   await rules.create(kinesisRule);
-//   const rule = await rules.get({ name: kinesisRule.name });
+  const r = await indexer.indexRule(esClient, testRecord, esIndex);
 
-//   // update rule state
-//   const updated = { name: rule.name, state: 'ENABLED' };
-//   // deep copy rule
-//   const newRule = Object.assign({}, rule);
-//   newRule.rule = Object.assign({}, rule.rule);
-//   await rules.update(newRule, updated);
+  // make sure record is created
+  t.is(r.result, 'created');
 
-//   t.true(newRule.state === 'ENABLED');
-//   //arn doesn't change
-//   t.is(newRule.rule.arn, rule.rule.arn);
-// });
+  // check the record exists
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'rule',
+    id: testRecord.name
+  });
 
-// test('update a kinesis type rule value, resulting in new arn', async (t) => {
-//   // create rule
-//   const rules = new models.Rule();
-//   await rules.create(kinesisRule);
-//   const rule = await rules.get({ name: kinesisRule.name });
-
-//   // update rule value
-//   const updated = {
-//     name: rule.name,
-//     rule: { type: rule.rule.type, value: 'my-new-kinesis-arn' }
-//   };
-//   // deep copy rule
-//   const newRule = Object.assign({}, rule);
-//   newRule.rule = Object.assign({}, rule.rule);
-//   await rules.update(newRule, updated);
-
-//   t.is(newRule.name, rule.name);
-//   t.not(newRule.rule.vale, rule.rule.value);
-//   t.not(newRule.rule.arn, rule.rule.arn);
-// });
+  t.is(record._id, testRecord.name);
+  t.is(typeof record._source.timestamp, 'number');
+});
