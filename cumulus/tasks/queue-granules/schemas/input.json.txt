@@ -1,16 +1,12 @@
 {
-  "title": "DiscoverGranulesOutput",
-  "description": "Describes the output produced by the discover-granules task",
+  "title": "QueueGranulesInput",
+  "description": "Describes the input and config used by the queue-granules task",
   "type": "object",
-  "required": ["granules"],
-  "additionalProperties": false,
   "properties": {
-    "granules_found": { "type": "integer" },
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
         "properties": {
           "name": { "type": "string" },
           "granuleId": { "type": "string" },
