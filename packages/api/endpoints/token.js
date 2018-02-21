@@ -4,8 +4,7 @@ const get = require('lodash.get');
 const got = require('got');
 const { User } = require('../models');
 const { resp } = require('../lib/response');
-const logger = require('@cumulus/ingest/log');
-const log = logger.child({ name: 'cumulus-api-auth' });
+const log = require('@cumulus/common/log');
 
 function redirectUriParam() {
   const url = process.env.API_ENDPOINT;
