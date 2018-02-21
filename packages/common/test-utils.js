@@ -186,6 +186,6 @@ exports.validateConfig = validateConfig;
  * @returns {boolean} - whether the object is valid or not
  */
 async function validateOutput(t, data) {
-  return validateJSON(t, './schemas/input.json', data);
+  return validateJSON(t, './schemas/output.json', data);
 }
 exports.validateOutput = validateOutput;
