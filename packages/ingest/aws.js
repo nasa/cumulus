@@ -265,15 +265,6 @@ class S3 {
 
 
 class SQS {
-  static async createQueue(name) {
-    const queue = sqs();
-    const params = {
-      QueueName: name
-    };
-
-    return queue.createQueue(params).promise();
-  }
-
   static async getUrl(name) {
     const queue = sqs();
     const u = await queue.getQueueUrl({ QueueName: name }).promise();
