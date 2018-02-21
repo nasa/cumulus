@@ -2,6 +2,8 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const fs = require('fs');
+const path = require('path');
 const aws = require('@cumulus/common/aws');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -13,9 +15,10 @@ const granuleFailure = require('./data/granule_failed.json');
 const pdrFailure = require('./data/pdr_failure.json');
 const pdrSuccess = require('./data/pdr_success.json');
 
+const esIndex = randomString();
 process.env.bucket = randomString();
 process.env.stackName = 'my-stack';
-const esIndex = randomString();
+process.env.ES_INDEX = esIndex;
 let esClient;
 
 
@@ -519,4 +522,31 @@ test('reingest a granule', async (t) => {
     parent: collectionId
   });
   t.is(record._source.status, 'running');
+});
+
+test('pass a sns message to main handler', async (t) => {
+  const txt = fs.readFileSync(path.join(
+    __dirname, '/data/sns_message_granule.txt'
+  ), 'utf8');
+
+  const event = JSON.parse(JSON.parse(txt.toString()));
+  const resp = await indexer.handler(event, {}, (e, r) => {});
+
+  t.is(resp.length, 1);
+  t.truthy(resp[0].sf);
+  t.truthy(resp[0].granule);
+  t.falsy(resp[0].pdr);
+
+  const msg = JSON.parse(event.Records[0].Sns.Message)
+  const granule = msg.payload.granules[0];
+  const collection = msg.meta.collection;
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  // test granule record is added
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'granule',
+    id: granule.granuleId,
+    parent: collectionId
+  });
+  t.is(record._id, granule.granuleId);
 });
