@@ -293,7 +293,7 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
  */
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const name = get(payload, 'cumulus_meta.execution_name');
-  const granules = get(payload, 'payload.granules');
+  const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
   if (!granules) return Promise.resolve();
 
