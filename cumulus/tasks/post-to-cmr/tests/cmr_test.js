@@ -35,13 +35,16 @@ test.afterEach.always(async (t) => {
 test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  const granuleId = newPayload.config.input_granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
   return aws.promiseS3Upload({
     Bucket: t.context.bucket,
-    Key: 'meta.cmr.xml',
+    Key: key,
     Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
   }).then(() => {
-    const newPayload = JSON.parse(JSON.stringify(payload));
-    newPayload.input.granules[0].files.push({ filename: `s3://${t.context.bucket}/meta.cmr.xml` });
+    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
 
     return postToCMR(newPayload)
       .then(() => {
@@ -60,22 +63,24 @@ test('should succeed with correct payload', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
+  const granuleId = newPayload.config.input_granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
     Bucket: t.context.bucket,
-    Key: 'meta.cmr.xml',
-    Body: fs.createReadStream('tests/data/meta.xml')
+    Key: key,
+    Body: fs.createReadStream(`tests/data/meta.xml`)
   }).then(() => {
-    newPayload.input.granules[0].files.push({ filename: `s3://${t.context.bucket}/meta.cmr.xml` });
+    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
     return postToCMR(newPayload)
       .then((output) => {
         cmrjs.CMR.prototype.ingestGranule.restore();
         t.is(
-          output.granules[0].cmr.link,
+          output.granules[0].cmrLink,
           `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
         );
       })
-      .catch(() => {
+      .catch((e) => {
         cmrjs.CMR.prototype.ingestGranule.restore();
         t.fail();
       });
