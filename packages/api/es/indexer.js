@@ -22,6 +22,46 @@ const uniqBy = require('lodash.uniqby');
 
 const log = logger.child({ file: 'packages/api/es/indexer.js' });
 
+/**
+ * Returns the collectionId used in elasticsearch
+ * which is a combination of collection name and version
+ *
+ * @param {string} name - collection name
+ * @param {string} version - collection version
+ * @returns {string} collectionId
+ */
+function constructCollectionId(name, version) {
+  return `${name}___${version}`;
+}
+
+/**
+ * Returns the name and version of a collection based on
+ * the collectionId used in elasticsearch indexing
+ *
+ * @param {string} collectionId - collectionId used in elasticsearch index
+ * @returns {Object} name and version as object
+ */
+function deconstructCollectionId(collectionId) {
+  const deconstructed = collectionId.split('___');
+  return {
+    name: deconstructed[0],
+    version: deconstructed[1]
+  };
+}
+
+/**
+ * Ensures that the exception is returned as a string
+ *
+ * @param {*} exception - the exception
+ * @returns {string} an stringified exception
+ */
+function prepareException(exception) {
+  if (typeof exception === 'object') {
+    return JSON.stringify(exception);
+  }
+  return exception;
+}
+
 async function indexLog(payloads, index = 'cumulus', type = 'logs') {
   const esClient = await Search.es();
   const body = [];
@@ -105,7 +145,7 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
     name,
     arn,
     execution,
-    error: get(payload, 'exception', null),
+    error: prepareException(payload.exception),
     type: get(payload, 'meta.workflow_name'),
     collectionId: get(payload, 'meta.collection.name'),
     status: get(payload, 'meta.status', 'UNKNOWN'),
@@ -147,7 +187,7 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const execution = getExecutionUrl(arn);
 
   const collection = get(payload, 'meta.collection');
-  const collectionId = `${collection.name}___${collection.version}`;
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   const stats = {
     processing: get(payload, 'payload.running', []).length,
@@ -193,7 +233,7 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
 
 async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
   // adding collection record to ES
-  const collectionId = `${meta.name}___${meta.version}`;
+  const collectionId = constructCollectionId(meta.name, meta.version);
   const params = {
     index,
     type,
@@ -242,13 +282,14 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
 
 
 /**
- * Extracts granule info from a stepFunction message and indexs it to
- * Elasticsearch
- * @param  {object} esClient ElasticSearch Connection object
- * @param  {object} payload  Cumulus Step Function message
- * @param  {string} index    Elasticsearch index (default: cumulus)
- * @param  {string} type     Elasticsearch type (default: granule)
- * @return {Promise} Elasticsearch response
+ * Extracts granule info from a stepFunction message and indexes it to
+ * an ElasticSearh
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
  */
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const name = get(payload, 'cumulus_meta.execution_name');
@@ -261,13 +302,14 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
     name
   );
 
-  if (arn) return Promise.resolve();
+  if (!arn) return Promise.resolve();
 
   const execution = getExecutionUrl(arn);
 
   const collection = get(payload, 'meta.collection');
-  const exception = get(payload, 'exception');
-  const collectionId = `${collection.name}___${collection.version}`;
+  const exception = prepareException(payload.exception);
+
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   // make sure collection is added
   try {
@@ -286,7 +328,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
     if (g.granuleId) {
       const doc = {
         granuleId: g.granuleId,
-        pdrName: get(payload, 'payload.pdr.name'),
+        // pdrName: get(payload, 'payload.pdr.name'),
         collectionId,
         status: get(payload, 'meta.status'),
         provider: get(payload, 'meta.provider.id'),
@@ -336,7 +378,7 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
 }
 
 async function reingest(g) {
-  const collection = g.collectionId.split('___');
+  const { name: collection } = deconstructCollectionId(g.collectionId);
 
   // get the payload of the original execution
   const status = await StepFunction.getExecutionStatus(path.basename(g.execution));
@@ -425,6 +467,8 @@ function handler(event, context, cb) {
 }
 
 module.exports = {
+  constructCollectionId,
+  deconstructCollectionId,
   handler,
   logHandler,
   indexCollection,
@@ -433,7 +477,9 @@ module.exports = {
   handlePayload,
   partialRecordUpdate,
   deleteRecord,
-  reingest
+  reingest,
+  granule,
+  pdr
 };
 
 justLocalRun(() => {
