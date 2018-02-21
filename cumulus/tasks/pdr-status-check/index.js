@@ -3,9 +3,7 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const aws = require('@cumulus/common/aws');
 const { IncompleteError } = require('@cumulus/common/errors');
-let log = require('@cumulus/ingest/log');
-
-log = log.child({ file: 'pdr-status-check/index.js' });
+const log = require('@cumulus/common/log');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;

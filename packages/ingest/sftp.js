@@ -5,12 +5,11 @@ const os = require('os');
 const Client = require('ssh2').Client;
 const join = require('path').join;
 const urljoin = require('url-join');
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 //const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-const log = logger.child({ file: 'ingest/sftp.js' });
 
 //const PathIsInvalid = errors.createErrorType('PathIsInvalid');
 
