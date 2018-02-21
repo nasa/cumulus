@@ -1,6 +1,8 @@
 'use strict';
 
 const crypto = require('crypto');
+const url = require('url');
+const aws = require('./aws');
 
 /**
  * Generate a 40-character random string
@@ -84,3 +86,24 @@ function testAwsClient(Service, options) {
   return new Service(Object.assign(options, { endpoint: 'http://you-forgot-to-stub-an-aws-call' }));
 }
 exports.testAwsClient = testAwsClient;
+
+/**
+ * Create an SQS queue for testing
+ *
+ * @returns {string} - an SQS queue URL
+ */
+async function createQueue() {
+  const createQueueResponse = await aws.sqs().createQueue({
+    QueueName: exports.randomString()
+  }).promise();
+
+  // Properly set the Queue URL.  This is needed because LocalStack always
+  // returns the QueueUrl as "localhost", even if that is not where it should
+  // actually be found.  CircleCI breaks without this.
+  const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+  returnedQueueUrl.host = undefined;
+  returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+
+  return url.format(returnedQueueUrl);
+}
+exports.createQueue = createQueue;
