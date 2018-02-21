@@ -2,14 +2,35 @@
   "title": "SyncGranuleInput",
   "description": "Describes the input expected by the sync-granule task",
   "type": "object",
-  "required": [],
+  "required": ["granules"],
   "properties": {
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
+        "required": ["granuleId", "files"],
         "properties": {
-          
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "filename"],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                },
+                "bucket": {
+                  "type": "string"
+                }
+              }
+            }
+          }
         }
       }
     }
