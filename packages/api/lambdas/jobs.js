@@ -3,7 +3,7 @@
 
 const get = require('lodash.get');
 const pLimit = require('p-limit');
-const log = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('../es/search');
 const { handlePayload, partialRecordUpdate } = require('../es/indexer');
