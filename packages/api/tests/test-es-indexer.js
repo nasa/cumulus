@@ -303,11 +303,12 @@ test('test indexing a successful pdr record', async (t) => {
 
 test('test indexing a running pdr record', async (t) => {
   const type = 'pdr';
-  pdrSuccess.meta.pdr.name = randomString();
-  pdrSuccess.meta.status = 'running';
-  pdrSuccess.payload.running.push('arn');
-  const pdr = pdrSuccess.meta.pdr;
-  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
+  const newPayload = JSON.parse(JSON.stringify(pdrSuccess));
+  newPayload.meta.pdr.name = randomString();
+  newPayload.meta.status = 'running';
+  newPayload.payload.running.push('arn');
+  const pdr = newPayload.meta.pdr;
+  const r = await indexer.pdr(esClient, newPayload, esIndex, type);
 
   // make sure record is created
   t.is(r.result, 'created');
@@ -338,4 +339,58 @@ test('test indexing a running pdr when pdr is missing', async (t) => {
 
   // make sure record is created
   t.is(r, undefined);
+});
+
+test('test indexing a step function with missing arn', async(t) => {
+  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+  delete newPayload.cumulus_meta.state_machine;
+
+  const promise = indexer.indexStepFunction(esClient, newPayload, esIndex);
+  const error = await t.throws(promise);
+  t.is(error.message, 'State Machine Arn is missing. Must be included in the cumulus_meta');
+});
+
+test('test indexing a successful step function', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(pdrSuccess));
+  newPayload.cumulus_meta.execution_name = randomString();
+
+  const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  // check the record exists
+  const response = await esClient.get({
+    index: esIndex,
+    type: 'execution',
+    id: r._id
+  });
+  const record = response._source;
+
+  t.is(record.status, 'completed');
+  t.is(record.type, newPayload.meta.workflow_name);
+  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
+});
+
+test('test indexing a failed step function', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(pdrFailure));
+  newPayload.cumulus_meta.execution_name = randomString();
+
+  const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  // check the record exists
+  const response = await esClient.get({
+    index: esIndex,
+    type: 'execution',
+    id: r._id
+  });
+  const record = response._source;
+
+  t.is(record.status, 'failed');
+  t.is(record.type, newPayload.meta.workflow_name);
+  t.is(typeof record.error, 'string');
+  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
