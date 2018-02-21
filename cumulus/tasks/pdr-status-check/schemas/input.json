@@ -15,17 +15,14 @@
         "type": "string"
       }
     },
-    "running": {
+    "failed": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "arn": { "type": "string" },
-          "reason": { "type": "string" }
-        }
+        "type": "string"
       }
     },
     "counter": { "type": "integer" },
-    "limit": { "type": "integer" }
+    "limit": { "type": "integer" },
+    "isFinished": { "type": "boolean" }
   }
 }
