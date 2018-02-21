@@ -2,13 +2,15 @@
   "title": "SyncGranuleConfig",
   "description": "Describes the config used by the sync-granule task",
   "type": "object",
-  "required": ["provider"],
+  "required": ["buckets", "collection", "provider"],
   "properties": {
     "forceDownload": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false
     },
     "provider": {
       "type": "object",
+      "required": ["username", "password", "host", "protocol"],
       "properties": {
         "id": { "type": "string" },
         "username": { "type": "string" },
@@ -35,24 +37,28 @@
     "collection": {
       "type": "object",
       "description": "",
-      "required": ["process"],
+      "required": [
+        "process",
+        "url_path",
+        "files",
+        "name",
+        "granuleIdExtraction",
+        "provider_path"
+      ],
       "properties": {
         "name": { "type": "string" },
         "process": { "type": "string" },
-        "version": { "type": "string" },
         "provider_path": { "type": "string" },
         "url_path": { "type": "string" },
         "duplicateHandling": { "type": "string" },
-        "granuleId": { "type": "string" },
-        "sampleFileName": { "type": "string" },
         "granuleIdExtraction": { "type": "string" },
         "files": {
           "type": "array",
           "items": {
             "type": "object",
+            "required": ["regex", "bucket"],
             "properties": {
               "regex": { "type": "string" },
-              "sampleFileName": { "type": "string" },
               "bucket": { "type": "string" }
             }
           }
