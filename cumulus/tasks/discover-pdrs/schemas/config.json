@@ -1,0 +1,54 @@
+{
+  "title": "DiscoverPdrsConfig",
+  "description": "Describes the config used by the discover-pdrs task",
+  "type": "object",
+  "required": [
+    "provider",
+    "collection",
+    "bucket",
+    "stack"
+  ],
+  "properties": {
+    "useQueue": {
+      "type": "boolean"
+    },
+    "queueUrl": {
+      "type": "string"
+    },
+    "templateUri": {
+      "type": "string",
+      "description": "the S3 uri to the cumulus-message template for the parse pdr workflow"
+    },
+    "stack": {
+      "description": "The name of the Task's CloudFormation Task, useful as a prefix",
+      "type": "string"
+    },
+    "provider": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "host": { "type": "string" },
+        "port": { "type": "integer" },
+        "globalConnectionLimit": { "type": "integer" },
+        "protocol": {
+          "type": "string",
+          "enum": ["ftp", "sftp", "http", "https"]
+        }
+      }
+    },
+    "bucket": {
+      "description": "aws s3 buckets used by this task",
+      "type": "string"
+    },
+    "collection": {
+      "type": "object",
+      "required": ["name", "granuleIdExtraction"],
+      "properties": {
+        "name": { "type": "string" },
+        "granuleIdExtraction": { "type": "string" }
+      }
+    }
+  }
+}
