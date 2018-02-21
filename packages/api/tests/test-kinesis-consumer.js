@@ -7,6 +7,7 @@ const tableName = 'rule';
 process.env.RulesTable = tableName;
 process.env.stackName = 'test-stack';
 process.env.bucket = 'test-bucket';
+process.env.kinesisConsumer = 'test-kinesisConsumer';
 const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
 const manager = require('../models/base');
 const Rule = require('../models/rules');
@@ -36,7 +37,8 @@ const commonRuleParams = {
     version: '0.0.0'
   },
   rule: {
-    type: 'kinesis'
+    type: 'kinesis',
+    value: 'test-kinesisarn'
   },
   state: 'ENABLED'
 };
