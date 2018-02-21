@@ -4,7 +4,12 @@ const test = require('ava');
 const mur = require('./fixtures/mur.json');
 const { cloneDeep } = require('lodash');
 const { recursivelyDeleteS3Bucket, s3, sqs } = require('@cumulus/common/aws');
-const { createQueue, randomString } = require('@cumulus/common/test-utils');
+const {
+  createQueue,
+  randomString,
+  validateConfig,
+  validateOutput
+} = require('@cumulus/common/test-utils');
 const { discoverGranules } = require('../index');
 
 async function uploadMessageTemplate(Bucket) {
@@ -32,8 +37,11 @@ test('test discovering mur granules', async (t) => {
   const event = cloneDeep(mur);
   event.config.useQueue = false;
 
+  await validateConfig(t, event.config);
+
   try {
     const output = await discoverGranules(event);
+    await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
   }
@@ -60,8 +68,11 @@ test('test discovering mur granules over FTP with queue', async (t) => {
   event.config.templateUri = await uploadMessageTemplate(messageTemplateBucket);
   event.config.useQueue = true;
 
+  await validateConfig(t, event.config);
+
   try {
     const output = await discoverGranules(event);
+    await validateOutput(t, output);
     t.is(output.granules.length, 3);
   }
   catch (e) {
