@@ -264,6 +264,15 @@ async function indexProvider(esClient, payload, index = 'cumulus', type = 'provi
   await esClient.update(params);
 }
 
+/**
+ * Indexes the rule type on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - the Rule record
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
+ */
 async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
   const params = {
     index,
@@ -277,9 +286,8 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
   params.body.doc.timestamp = Date.now();
 
   // adding collection record to ES
-  await esClient.update(params);
+  return esClient.update(params);
 }
-
 
 /**
  * Extracts granule info from a stepFunction message and indexes it to
