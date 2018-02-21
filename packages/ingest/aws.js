@@ -5,10 +5,8 @@ const url = require('url');
 const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
 const moment = require('moment');
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
-
-const log = logger.child({ file: 'ingest/aws.js' });
 
 /**
  * getEndpoint returns proper AWS arguments for various
