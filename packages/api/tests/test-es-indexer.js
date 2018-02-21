@@ -6,6 +6,7 @@ const { Search } = require('../es/search');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const { randomString } = require('@cumulus/common/test-utils');
 const granuleSuccess = require('./data/granule_success.json');
+const granuleFailure = require('./data/granule_failed.json');
 
 const esIndex = randomString();
 let esClient;
@@ -25,12 +26,13 @@ test.after.always(async () => {
 test('test indexing a granule record', async (t) => {
   const type = 'granule';
   const granule = granuleSuccess.payload.granules[0];
+  const collection = granuleSuccess.meta.collection;
   const r = await indexer.granule(esClient, granuleSuccess, esIndex, type);
- 
+
   // make sure record is created
   t.is(r[0].result, 'created');
 
-  const collectionId = `${granuleSuccess.meta.collection.name}___${granuleSuccess.meta.collection.version}`; 
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
 
   // check the record exists
   const record = await esClient.get({
@@ -45,6 +47,53 @@ test('test indexing a granule record', async (t) => {
   t.is(record._id, granule.granuleId);
   t.is(record._source.cmrLink, granule.cmrLink);
   t.is(record._source.published, granule.published);
+
+  const { name: deconstructed } = indexer.deconstructCollectionId(record._parent);
+  t.is(deconstructed, collection.name);
+});
+
+test('test indexing a failed granule record', async (t) => {
+  const type = 'granule';
+  const granule = granuleFailure.payload.granules[0];
+  const collection = granuleFailure.meta.collection;
+  const r = await indexer.granule(esClient, granuleFailure, esIndex, type);
+
+  // make sure record is created
+  t.is(r[0].result, 'created');
+
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+
+  // check the record exists
+  const record = await esClient.get({
+    index: esIndex,
+    type,
+    id: granule.granuleId,
+    parent: collectionId
+  });
+
+  t.deepEqual(record._source.files, granule.files);
+  t.is(record._id, granule.granuleId);
+  t.is(record._source.published, false);
+  t.is(record._source.error, JSON.stringify(granuleFailure.exception));
+});
+
+test('test indexing a record without state_machine info', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+  const type = 'granule';
+  delete newPayload.cumulus_meta.state_machine;
+
+  const r = await indexer.granule(esClient, newPayload, esIndex, type);
+  t.is(r, undefined);
+});
+
+test('test indexing a record without a granule', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+  const type = 'granule';
+  delete newPayload.payload;
+  delete newPayload.meta;
+
+  const r = await indexer.granule(esClient, newPayload, esIndex, type);
+  t.is(r, undefined);
 });
 
 // test('create and delete a kinesis type rule', async (t) => {
