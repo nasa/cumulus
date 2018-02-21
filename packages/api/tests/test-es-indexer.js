@@ -1,15 +1,20 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
+const aws = require('@cumulus/common/aws');
+const { StepFunction } = require('@cumulus/ingest/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
-const { randomString } = require('@cumulus/common/test-utils');
 const granuleSuccess = require('./data/granule_success.json');
 const granuleFailure = require('./data/granule_failed.json');
 const pdrFailure = require('./data/pdr_failure.json');
 const pdrSuccess = require('./data/pdr_success.json');
 
+process.env.bucket = randomString();
+process.env.stackName = 'my-stack';
 const esIndex = randomString();
 let esClient;
 
@@ -18,11 +23,15 @@ test.before(async () => {
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
   esClient = await Search.es();
+
+  // create buckets
+  await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
 });
 
 test.after.always(async () => {
   // remove elasticsearch index
   await esClient.indices.delete({ index: esIndex });
+  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
 test('indexing a successful granule record', async (t) => {
@@ -462,4 +471,52 @@ test('delete a provider record', async (t) => {
   });
   const error = await t.throws(promise);
   t.is(error.message, 'Not Found');
+});
+
+test('reingest a granule', async (t) => {
+  const input = JSON.stringify(granuleSuccess);
+  const fakeSFResponse = {
+    execution: {
+      input
+    }
+  };
+
+  const payload = JSON.parse(input);
+  const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
+  await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
+
+  payload.payload.granules[0].granuleId = randomString();
+  const r = await indexer.granule(esClient, payload, esIndex);
+
+  sinon.stub(
+    StepFunction,
+    'getExecutionStatus'
+  ).callsFake(() => Promise.resolve(fakeSFResponse));
+
+  const collectionId = indexer.constructCollectionId(
+    granuleSuccess.meta.collection.name,
+    granuleSuccess.meta.collection.version
+  );
+
+  // check the record exists
+  let record = await esClient.get({
+    index: esIndex,
+    type: 'granule',
+    id: r[0]._id,
+    parent: collectionId
+  });
+
+  t.is(record._source.status, 'completed');
+
+  const response = await indexer.reingest(record._source, esIndex);
+  t.is(response.action, 'reingest');
+  t.is(response.status, 'SUCCESS');
+
+  record = await esClient.get({
+    index: esIndex,
+    type: 'granule',
+    id: r[0]._id,
+    parent: collectionId
+  });
+  t.is(record._source.status, 'running');
 });

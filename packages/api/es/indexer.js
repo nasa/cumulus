@@ -437,7 +437,14 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
   return esClient.delete(params);
 }
 
-async function reingest(g) {
+/**
+ * start the re-ingest of a given granule object
+ *
+ * @param  {Object} g - the granule object
+ * @param  {string} index - cumulus index name (optional)
+ * @returns {Promise} an object show the start of the re-ingest
+ */
+async function reingest(g, index) {
   const { name: collection } = deconstructCollectionId(g.collectionId);
 
   // get the payload of the original execution
@@ -451,7 +458,7 @@ async function reingest(g) {
       name: collection[0],
       version: collection[1]
     },
-    meta: { granuleId: g.granuleId },
+    meta: originalMessage.meta,
     payload: originalMessage.payload
   });
 
@@ -460,7 +467,8 @@ async function reingest(g) {
     g.granuleId,
     'granule',
     { status: 'running' },
-    g.collectionId
+    g.collectionId,
+    index
   );
   await invoke(process.env.invoke, payload);
   return {
