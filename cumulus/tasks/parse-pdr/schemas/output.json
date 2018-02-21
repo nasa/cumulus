@@ -1,0 +1,42 @@
+{
+  "title": "ParsePdrOutput",
+  "description": "Describes the output produced by the parse-pdr task",
+  "type": "object",
+  "properties": {
+    "pdr": {
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "granuleId": { "type": "string" },
+          "dataType": { "type": "string" },
+          "granuleSize": { "type": "number" },
+          "granuleCount": { "type": "number" },
+          "filesCount": { "type": "number" },
+          "totalSize": { "type": "number" },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": { "type": "string" },
+                "name": { "type": "string" },
+                "fileSize": { "type": "number" },
+                "checksumType": { "type": "string" },
+                "checksumValue": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
