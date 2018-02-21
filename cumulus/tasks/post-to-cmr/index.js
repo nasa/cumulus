@@ -9,7 +9,6 @@ const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
-const testPayload = require('@cumulus/test-data/payloads/new-message-schema/cmr.json');
 const log = require('@cumulus/common/log');
 
 /**
