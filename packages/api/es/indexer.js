@@ -62,8 +62,20 @@ function prepareException(exception) {
   return exception;
 }
 
-async function indexLog(payloads, index = 'cumulus', type = 'logs') {
-  const esClient = await Search.es();
+/**
+ * Extracts granule info from a stepFunction message and indexes it to
+ * an ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Array} payloads  - an array of log payloads
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
+ */
+async function indexLog(esClient, payloads, index = 'cumulus', type = 'logs') {
+  if (!esClient) {
+    esClient = await Search.es();
+  }
   const body = [];
 
   payloads.forEach((p) => {
@@ -321,7 +333,7 @@ function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
 
 /**
  * Extracts granule info from a stepFunction message and indexes it to
- * an ElasticSearh
+ * an ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
@@ -398,6 +410,16 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   return Promise.all(done);
 }
 
+/**
+ * delete a record from ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {string} id       - id of the Elasticsearch record
+ * @param  {string} type     - Elasticsearch type (default: execution)
+ * @param  {strint} parent   - id of the parent (optional)
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @returns {Promise} elasticsearch delete response
+ */
 async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
   if (!esClient) {
     esClient = await Search.es();
