@@ -5,10 +5,8 @@ const get = require('lodash.get');
 const ProviderNotFound = require('@cumulus/common/errors').ProviderNotFound;
 const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
-const logger = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 const local = require('@cumulus/common/local-helpers');
-
-const log = logger.child({ file: 'discover-pdrs/index.js' });
 
 /**
  * Discover PDRs
@@ -29,7 +27,7 @@ function discoverPdrs(event) {
 
     const output = {};
 
-    log.child({ provider: get(provider, 'id') });
+    log.info('Received the provider', { provider: get(provider, 'id') });
 
     if (!provider) {
       const err = new ProviderNotFound('Provider info not provided');
@@ -116,10 +114,8 @@ function handler(event, context, callback) {
 }
 exports.handler = handler;
 
+// use node index.js local to invoke this
 local.justLocalRun(() => {
-  const filepath = process.argv[3] ? process.argv[3] : './tests/fixtures/input.json';
-  const payload = require(filepath); // eslint-disable-line global-require
-
-  payload.config.useQueue = false;
-  cumulusMessageAdapter.runCumulusTask(discoverPdrs, payload, {}, (e) => log.info(e));
+  const payload = require('@cumulus/test-data/cumulus_messages/discover-pdrs.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => console.log(e, r));
 });
