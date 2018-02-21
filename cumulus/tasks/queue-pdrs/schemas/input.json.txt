@@ -1,0 +1,19 @@
+{
+  "title": "QueuePdrsInput",
+  "description": "Describes the input expected by the queue-pdrs task",
+  "type": "object",
+  "required": ["pdrs"],
+  "additionalProperties": false,
+  "properties": {
+    "pdrs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" }
+        }
+      }
+    }
+  }
+}
