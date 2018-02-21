@@ -25,7 +25,7 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test('test indexing a successful granule record', async (t) => {
+test('indexing a successful granule record', async (t) => {
   const type = 'granule';
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
@@ -55,7 +55,7 @@ test('test indexing a successful granule record', async (t) => {
   t.is(deconstructed, collection.name);
 });
 
-test('test indexing multiple successful granule records', async (t) => {
+test('indexing multiple successful granule records', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
   const type = 'granule';
   const granule = newPayload.payload.granules[0];
@@ -90,7 +90,7 @@ test('test indexing multiple successful granule records', async (t) => {
   });
 });
 
-test('test indexing a failed granule record', async (t) => {
+test('indexing a failed granule record', async (t) => {
   const type = 'granule';
   const granule = granuleFailure.payload.granules[0];
   const collection = granuleFailure.meta.collection;
@@ -116,7 +116,7 @@ test('test indexing a failed granule record', async (t) => {
   t.is(record._source.error, JSON.stringify(granuleFailure.exception));
 });
 
-test('test indexing a granule record without state_machine info', async (t) => {
+test('indexing a granule record without state_machine info', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
   const type = 'granule';
   delete newPayload.cumulus_meta.state_machine;
@@ -125,7 +125,7 @@ test('test indexing a granule record without state_machine info', async (t) => {
   t.is(r, undefined);
 });
 
-test('test indexing a granule record without a granule', async (t) => {
+test('indexing a granule record without a granule', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
   const type = 'granule';
   delete newPayload.payload;
@@ -135,7 +135,7 @@ test('test indexing a granule record without a granule', async (t) => {
   t.is(r, undefined);
 });
 
-test('test indexing a granule record in meta section', async (t) => {
+test('indexing a granule record in meta section', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
   const type = 'granule';
   delete newPayload.payload;
@@ -166,7 +166,7 @@ test('test indexing a granule record in meta section', async (t) => {
   t.is(record._source.published, false);
 });
 
-test('test indexing a rule record', async (t) => {
+test('indexing a rule record', async (t) => {
   const testRecord = {
     name: randomString()
   };
@@ -187,7 +187,7 @@ test('test indexing a rule record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test('test indexing a provider record', async (t) => {
+test('indexing a provider record', async (t) => {
   const testRecord = {
     id: randomString()
   };
@@ -208,7 +208,7 @@ test('test indexing a provider record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test('test indexing a collection record', async (t) => {
+test('indexing a collection record', async (t) => {
   const collection = {
     name: randomString(),
     version: '001'
@@ -233,7 +233,7 @@ test('test indexing a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test('test indexing a failed pdr record', async (t) => {
+test('indexing a failed pdr record', async (t) => {
   const type = 'pdr';
   const payload = pdrFailure.payload;
   payload.pdr.name = randomString();
@@ -267,7 +267,7 @@ test('test indexing a failed pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test('test indexing a successful pdr record', async (t) => {
+test('indexing a successful pdr record', async (t) => {
   const type = 'pdr';
   pdrSuccess.meta.pdr.name = randomString();
   const pdr = pdrSuccess.meta.pdr;
@@ -301,7 +301,7 @@ test('test indexing a successful pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test('test indexing a running pdr record', async (t) => {
+test('indexing a running pdr record', async (t) => {
   const type = 'pdr';
   const newPayload = JSON.parse(JSON.stringify(pdrSuccess));
   newPayload.meta.pdr.name = randomString();
@@ -332,7 +332,7 @@ test('test indexing a running pdr record', async (t) => {
   t.is(record.progress, 75);
 });
 
-test('test indexing a running pdr when pdr is missing', async (t) => {
+test('indexing a running pdr when pdr is missing', async (t) => {
   const type = 'pdr';
   delete pdrSuccess.meta.pdr;
   const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
@@ -341,7 +341,7 @@ test('test indexing a running pdr when pdr is missing', async (t) => {
   t.is(r, undefined);
 });
 
-test('test indexing a step function with missing arn', async(t) => {
+test('indexing a step function with missing arn', async(t) => {
   const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
   delete newPayload.cumulus_meta.state_machine;
 
@@ -350,7 +350,7 @@ test('test indexing a step function with missing arn', async(t) => {
   t.is(error.message, 'State Machine Arn is missing. Must be included in the cumulus_meta');
 });
 
-test('test indexing a successful step function', async (t) => {
+test('indexing a successful step function', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(pdrSuccess));
   newPayload.cumulus_meta.execution_name = randomString();
 
@@ -372,7 +372,7 @@ test('test indexing a successful step function', async (t) => {
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
-test('test indexing a failed step function', async (t) => {
+test('indexing a failed step function', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(pdrFailure));
   newPayload.cumulus_meta.execution_name = randomString();
 
@@ -393,4 +393,41 @@ test('test indexing a failed step function', async (t) => {
   t.is(record.type, newPayload.meta.workflow_name);
   t.is(typeof record.error, 'string');
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
+});
+
+test('partially updating a provider record', async (t) => {
+  const testRecord = {
+    id: randomString()
+  };
+  const type = 'provider';
+
+  let r = await indexer.indexProvider(esClient, testRecord, esIndex, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+  t.is(r._id, testRecord.id);
+
+  // now partially update it
+  const updatedRecord = {
+    host: 'example.com'
+  };
+  r = await indexer.partialRecordUpdate(
+    esClient,
+    testRecord.id,
+    type,
+    updatedRecord,
+    undefined,
+    esIndex
+  );
+
+  t.is(r.result, 'updated');
+  // check the record exists
+  const record = await esClient.get({
+    index: esIndex,
+    type,
+    id: testRecord.id
+  });
+
+  t.is(record._id, testRecord.id);
+  t.is(record._source.host, updatedRecord.host);
 });
