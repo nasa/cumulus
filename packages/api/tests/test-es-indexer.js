@@ -205,3 +205,28 @@ test('test indexing a provider record', async (t) => {
   t.is(record._id, testRecord.id);
   t.is(typeof record._source.timestamp, 'number');
 });
+
+test('test indexing a collection record', async (t) => {
+  const collection = {
+    name: randomString(),
+    version: '001'
+  };
+
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const r = await indexer.indexCollection(esClient, collection, esIndex);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  // check the record exists
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'collection',
+    id: collectionId
+  });
+
+  t.is(record._id, collectionId);
+  t.is(record._source.name, collection.name);
+  t.is(record._source.version, collection.version);
+  t.is(typeof record._source.timestamp, 'number');
+});
