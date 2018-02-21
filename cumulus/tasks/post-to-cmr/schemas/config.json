@@ -2,9 +2,29 @@
   "title": "PostToCmrConfig",
   "description": "Describes the config used by the post-to-cmr task",
   "type": "object",
+  "required": [
+    "bucket",
+    "stack",
+    "cmr",
+    "input_granules"
+  ],
   "properties": {
+    "bucket": {
+      "type": "string",
+      "description": "the bucket the has the private/public key needed for decrypting cmr password"
+    },
+    "stack": {
+      "type": "string",
+      "description": "The name of the deployment stack"
+    },
+    "granuleIdExtraction": {
+      "type": "string",
+      "description": "The regex needed for extracting granuleId from filenames"
+    },
     "cmr": {
       "type": "object",
+      "description": "credentials needed to post metadata to CMR",
+      "required": ["provider", "clientId", "username", "password"],
       "properties": {
         "provider": { "type": "string" },
         "clientId": { "type": "string" },
@@ -12,15 +32,8 @@
         "password": { "type": "string" }
       }
     },
-    "buckets": {
-      "type": "object",
-      "description": "aws s3 buckets used by this task",
-      "properties": {
-        "internal": { "type": "string" },
-        "private": { "type": "string" },
-        "protected": { "type": "string" },
-        "public": { "type": "string" }
-      }
+    "input_granules": {
+
     }
   }
 }
