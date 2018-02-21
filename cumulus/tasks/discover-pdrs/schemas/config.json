@@ -2,21 +2,26 @@
   "title": "DiscoverPdrsConfig",
   "description": "Describes the config used by the discover-pdrs task",
   "type": "object",
-  "required": ["provider", "collection", "buckets"],
+  "required": [
+    "provider",
+    "collection",
+    "bucket",
+    "stack"
+  ],
   "properties": {
     "useQueue": {
       "type": "boolean"
     },
-    "queueLimit": {
-      "type": "integer"
-    },
-    "pdrFolder": {
+    "queueUrl": {
       "type": "string"
+    },
+    "templateUri": {
+      "type": "string",
+      "description": "the S3 uri to the cumulus-message template for the parse pdr workflow"
     },
     "stack": {
       "description": "The name of the Task's CloudFormation Task, useful as a prefix",
-      "type": "string",
-      "minLength": 1
+      "type": "string"
     },
     "provider": {
       "type": "object",
@@ -33,15 +38,9 @@
         }
       }
     },
-    "buckets": {
-      "type": "object",
+    "bucket": {
       "description": "aws s3 buckets used by this task",
-      "properties": {
-        "internal": { "type": "string" },
-        "private": { "type": "string" },
-        "protected": { "type": "string" },
-        "public": { "type": "string" }
-      }
+      "type": "string"
     },
     "collection": {
       "type": "object",
