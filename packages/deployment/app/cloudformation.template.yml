@@ -40,6 +40,10 @@ Resources:
           Fn::GetAtt:
             - ScheduleSFLambdaFunction
             - Arn
+        kinesisConsumerLambdaFunction:
+          Fn::GetAtt:
+            - kinesisConsumerLambdaFunction
+            - Arn
       {{#each ../apis}}
         {{name}}RestApi:
           Ref: {{name}}RestApi
