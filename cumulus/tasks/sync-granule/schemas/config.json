@@ -10,7 +10,7 @@
     },
     "provider": {
       "type": "object",
-      "required": ["username", "password", "host", "protocol"],
+      "required": ["host", "protocol"],
       "properties": {
         "id": { "type": "string" },
         "username": { "type": "string" },
