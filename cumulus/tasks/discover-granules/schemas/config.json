@@ -2,12 +2,14 @@
   "title": "DiscoverGranulesConfig",
   "description": "Describes the config used by the discover-granules task",
   "type": "object",
+  "required": [ "provider" ],
   "properties": {
     "useQueue": {
       "type": "boolean"
     },
     "provider": {
       "type": "object",
+      "required": [ "protocol" ],
       "properties": {
         "id": { "type": "string" },
         "username": { "type": "string" },
