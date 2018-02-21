@@ -1,7 +1,8 @@
 {
-  "title": "PostToCmrOutput",
-  "description": "Describes the output produced by the post-to-cmr task",
+  "title": "SyncGranuleInput",
+  "description": "Describes the input expected by the sync-granule task",
   "type": "object",
+  "required": ["granules"],
   "properties": {
     "granules": {
       "type": "array",
@@ -16,7 +17,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name"],
+              "required": ["name", "path"],
               "properties": {
                 "name": {
                   "type": "string"
@@ -25,6 +26,9 @@
                   "type": "string"
                 },
                 "bucket": {
+                  "type": "string"
+                },
+                "path": {
                   "type": "string"
                 }
               }
