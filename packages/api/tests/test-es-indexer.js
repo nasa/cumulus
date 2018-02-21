@@ -431,3 +431,35 @@ test('partially updating a provider record', async (t) => {
   t.is(record._id, testRecord.id);
   t.is(record._source.host, updatedRecord.host);
 });
+
+test('delete a provider record', async (t) => {
+  const testRecord = {
+    id: randomString()
+  };
+  const type = 'provider';
+
+  let r = await indexer.indexProvider(esClient, testRecord, esIndex, type);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+  t.is(r._id, testRecord.id);
+
+  r = await indexer.deleteRecord(
+    esClient,
+    testRecord.id,
+    type,
+    undefined,
+    esIndex
+  );
+
+  t.is(r.result, 'deleted');
+
+  // check the record exists
+  const promise = esClient.get({
+    index: esIndex,
+    type,
+    id: testRecord.id
+  });
+  const error = await t.throws(promise);
+  t.is(error.message, 'Not Found');
+});
