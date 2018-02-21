@@ -248,6 +248,15 @@ async function indexCollection(esClient, meta, index = 'cumulus', type = 'collec
   await esClient.update(params);
 }
 
+/**
+ * Indexes the provider type on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - the provider record
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
+ */
 async function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
   const params = {
     index,
@@ -261,7 +270,7 @@ async function indexProvider(esClient, payload, index = 'cumulus', type = 'provi
   params.body.doc.timestamp = Date.now();
 
   // adding collection record to ES
-  await esClient.update(params);
+  return esClient.update(params);
 }
 
 /**

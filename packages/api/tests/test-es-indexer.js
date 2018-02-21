@@ -184,3 +184,24 @@ test('test indexing a rule record', async (t) => {
   t.is(record._id, testRecord.name);
   t.is(typeof record._source.timestamp, 'number');
 });
+
+test('test indexing a provider record', async (t) => {
+  const testRecord = {
+    id: randomString()
+  };
+
+  const r = await indexer.indexProvider(esClient, testRecord, esIndex);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  // check the record exists
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'provider',
+    id: testRecord.id
+  });
+
+  t.is(record._id, testRecord.id);
+  t.is(typeof record._source.timestamp, 'number');
+});
