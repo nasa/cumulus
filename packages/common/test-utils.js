@@ -1,8 +1,10 @@
 'use strict';
 
+const Ajv = require('ajv');
 const crypto = require('crypto');
 const url = require('url');
 const aws = require('./aws');
+const { readFile } = require('fs');
 
 /**
  * Generate a 40-character random string
@@ -107,3 +109,83 @@ async function createQueue() {
   return url.format(returnedQueueUrl);
 }
 exports.createQueue = createQueue;
+
+/**
+ * Read a file and return a promise with the data
+ *
+ * Takes the same parameters as fs.readFile:
+ *
+ * https://nodejs.org/docs/v6.10.3/api/fs.html#fs_fs_readfile_file_options_callback
+ *
+ * @param {string|Buffer|integer} file - filename or file descriptor
+ * @param {any} options - encoding and flag options
+ * @returns {Promise} - the contents of the file
+ */
+function promisedReadFile(file, options) {
+  return new Promise((resolve, reject) => {
+    readFile(file, options, (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
+
+/**
+ * Validate an object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {string} schemaFilename - the filename of the schema
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateJSON(t, schemaFilename, data) {
+  const schema = await promisedReadFile(schemaFilename, 'utf8').then(JSON.parse);
+  const ajv = new Ajv();
+  const valid = (new Ajv()).validate(schema, data);
+  if (!valid) t.fail(`input validation failed: ${ajv.errorsText()}`);
+  return valid;
+}
+
+/**
+ * Validate a task input object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateInput(t, data) {
+  return validateJSON(t, './schemas/input.json', data);
+}
+exports.validateInput = validateInput;
+
+/**
+ * Validate a task config object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateConfig(t, data) {
+  return validateJSON(t, './schemas/config.json', data);
+}
+exports.validateConfig = validateConfig;
+
+/**
+ * Validate a task output object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateOutput(t, data) {
+  return validateJSON(t, './schemas/input.json', data);
+}
+exports.validateOutput = validateOutput;
