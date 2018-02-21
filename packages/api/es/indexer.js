@@ -168,15 +168,17 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
 
 /**
  * Extracts PDR info from a StepFunction message and indexes it to ElasticSearch
- * @param  {object} esClient ElasticSearch Connection object
- * @param  {object} payload  Cumulus Step Function message
- * @param  {string} index    Elasticsearch index (default: cumulus)
- * @param  {string} type     Elasticsearch type (default: pdr)
- * @return {Promise} Elasticsearch response
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: pdr)
+ * @returns {Promise} Elasticsearch response
  */
-function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
+async function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const name = get(payload, 'cumulus_meta.execution_name');
-  const pdrName = get(payload, 'payload.pdr.name')
+  const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
+  const pdrName = get(pdrObj, 'name');
 
   if (!pdrName) return Promise.resolve();
 
@@ -198,21 +200,21 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   stats.total = stats.processing + stats.completed + stats.failed;
   let progress = 0;
   if (stats.processing > 0 && stats.total > 0) {
-    progress = stats.processing / stats.total;
+    progress = ((stats.total - stats.processing) / stats.total) * 100;
   }
   else if (stats.processing === 0 && stats.total > 0) {
     progress = 100;
   }
 
   const doc = {
-    pdrName: get(payload, 'payload.pdr.name'),
+    pdrName,
     collectionId,
     status: get(payload, 'meta.status'),
     provider: get(payload, 'meta.provider.id'),
     progress,
     execution,
-    PANSent: get(payload, 'payload.pdr.PANSent', false),
-    PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
+    PANSent: get(pdrObj, 'PANSent', false),
+    PANmessage: get(pdrObj, 'PANmessage', 'N/A'),
     stats,
     createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
     timestamp: Date.now()
@@ -223,7 +225,7 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   return esClient.update({
     index,
     type,
-    id: doc.pdrName,
+    id: pdrName,
     body: {
       doc,
       doc_as_upsert: true
