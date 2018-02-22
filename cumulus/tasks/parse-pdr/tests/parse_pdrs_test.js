@@ -6,6 +6,7 @@ const test = require('ava');
 const testUtils = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/common/errors');
 const modis = require('@cumulus/test-data/payloads/new-message-schema/parse.json');
+const { cloneDeep } = require('lodash');
 
 const { parsePdr } = require('../index');
 
@@ -29,7 +30,7 @@ test('parse PDR from FTP endpoint', (t) => {
 
   const pdrName = 'MOD09GQ.PDR';
 
-  const newPayload = Object.assign({}, modis);
+  const newPayload = cloneDeep(modis);
   newPayload.config.provider = provider;
   newPayload.config.useQueue = false;
 
@@ -62,7 +63,7 @@ test('parse PDR from HTTP endpoint', (t) => {
 
   const pdrName = 'MOD09GQ.PDR';
 
-  const newPayload = Object.assign({}, modis);
+  const newPayload = cloneDeep(modis);
   newPayload.config.provider = provider;
   newPayload.config.useQueue = false;
 
