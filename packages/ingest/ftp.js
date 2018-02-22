@@ -18,7 +18,8 @@ module.exports.ftpMixin = superclass => class extends superclass {
       host: this.host,
       port: this.port || 21,
       user: this.username || 'anonymous',
-      pass: this.password || 'password'
+      pass: this.password || 'password',
+      useList: this.useList || false
     };
 
     this.connected = false;
