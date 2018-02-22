@@ -22,6 +22,7 @@ function discoverPdrs(event) {
     const bucket = config.bucket;
     const queueUrl = config.queueUrl;
     const templateUri = config.templateUri;
+    const useList = config.useList || false;
     const collection = config.collection;
     const provider = config.provider;
 
@@ -42,7 +43,8 @@ function discoverPdrs(event) {
       collection,
       provider,
       queueUrl,
-      templateUri
+      templateUri,
+      useList
     );
 
     log.debug('Starting PDR discovery');
