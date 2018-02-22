@@ -143,6 +143,19 @@ class Discover {
  * @abstract
  */
 class DiscoverAndQueue extends Discover {
+  /**
+   * Creates an instance of DiscoverAndQueue
+   *
+   * @param {Object} event - a Cumulus event
+   * @memberof DiscoverAndQueue
+   */
+  constructor(event) {
+    super(event);
+
+    this.queueUrl = event.config.queueUrl;
+    this.templateUri = event.config.templateUri;
+  }
+
   async findNewGranules(files) {
     const granules = await super.findNewGranules(files);
     return Promise.all(granules.map(g => queue.queueGranule(
@@ -153,7 +166,7 @@ class DiscoverAndQueue extends Discover {
       this.collection,
       null,
       this.stack,
-      this.bucket
+      this.buckets.internal
      )));
   }
 }
