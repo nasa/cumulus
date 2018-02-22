@@ -27,6 +27,7 @@ class Discover {
     provider,
     queueUrl,
     templateUri,
+    useList,
     folder = 'pdrs',
     queueLimit = null
   ) {
@@ -41,6 +42,7 @@ class Discover {
     this.folder = folder;
     this.queueUrl = queueUrl;
     this.templateUri = templateUri;
+    this.useList = useList;
 
     // get authentication information
     this.port = get(this.provider, 'port', 21);
