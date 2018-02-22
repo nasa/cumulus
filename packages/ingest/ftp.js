@@ -51,28 +51,6 @@ module.exports.ftpMixin = superclass => class extends superclass {
   }
 
   /**
-   * Upload a file to S3
-   *
-   * @param {string} bucket - the S3 bucket to upload to
-   * @param {string} key - the base path of the S3 key
-   * @param {string} filename - the filename to be uploaded to
-   * @param {string} tempFile - the location of the file to be uploaded
-   * @returns {Promise.<string>} - the S3 URL that the file was uploaded to
-   */
-  async upload(bucket, key, filename, tempFile) {
-    const fullKey = join(key, filename);
-
-    await aws.s3().putObject({
-      Bucket: bucket,
-      Key: fullKey,
-      Body: fs.createReadStream(tempFile)
-    }).promise();
-
-    log.info(`uploaded ${filename} to ${bucket}`);
-    return `s3://${bucket}/${fullKey}`;
-  }
-
-  /**
    * Downloads the file to disk, difference with sync is that
    * this method involves no uploading to S3
    * @return {Promise}
