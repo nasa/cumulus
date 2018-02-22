@@ -20,8 +20,60 @@ const { Search } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
 
-async function indexLog(payloads, index = 'cumulus', type = 'logs') {
-  const esClient = await Search.es();
+/**
+ * Returns the collectionId used in elasticsearch
+ * which is a combination of collection name and version
+ *
+ * @param {string} name - collection name
+ * @param {string} version - collection version
+ * @returns {string} collectionId
+ */
+function constructCollectionId(name, version) {
+  return `${name}___${version}`;
+}
+
+/**
+ * Returns the name and version of a collection based on
+ * the collectionId used in elasticsearch indexing
+ *
+ * @param {string} collectionId - collectionId used in elasticsearch index
+ * @returns {Object} name and version as object
+ */
+function deconstructCollectionId(collectionId) {
+  const deconstructed = collectionId.split('___');
+  return {
+    name: deconstructed[0],
+    version: deconstructed[1]
+  };
+}
+
+/**
+ * Ensures that the exception is returned as a string
+ *
+ * @param {*} exception - the exception
+ * @returns {string} an stringified exception
+ */
+function prepareException(exception) {
+  if (typeof exception === 'object') {
+    return JSON.stringify(exception);
+  }
+  return exception;
+}
+
+/**
+ * Extracts granule info from a stepFunction message and indexes it to
+ * an ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Array} payloads  - an array of log payloads
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
+ */
+async function indexLog(esClient, payloads, index = 'cumulus', type = 'logs') {
+  if (!esClient) {
+    esClient = await Search.es();
+  }
   const body = [];
 
   payloads.forEach((p) => {
@@ -47,6 +99,17 @@ async function indexLog(payloads, index = 'cumulus', type = 'logs') {
   return esClient.bulk({ body: body });
 }
 
+/**
+ * Partially updates an existing ElasticSearch record
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {string} id       - id of the Elasticsearch record
+ * @param  {string} type     - Elasticsearch type (default: execution)
+ * @param  {Object} doc      - Partial updated document
+ * @param  {strint} parent   - id of the parent (optional)
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @returns {Promise} elasticsearch update response
+ */
 async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cumulus') {
   if (!esClient) {
     esClient = await Search.es();
@@ -71,7 +134,6 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
     params.parent = parent;
   }
 
-  console.log(`Updated ${id}`);
   return esClient.update(params);
 }
 
@@ -79,11 +141,11 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
  * Indexes a step function message to Elastic Search. The message must
  * comply with the cumulus message protocol
  *
- * @param  {object} esClient ElasticSearch Connection object
- * @param  {object} payload  Cumulus Step Function message
- * @param  {string} index    Elasticsearch index (default: cumulus)
- * @param  {string} type     Elasticsearch type (default: execution)
- * @return {Promise} elasticsearch update response
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: execution)
+ * @returns {Promise} elasticsearch update response
  */
 function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
   const name = get(payload, 'cumulus_meta.execution_name');
@@ -103,7 +165,7 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
     name,
     arn,
     execution,
-    error: get(payload, 'exception', null),
+    error: prepareException(payload.exception),
     type: get(payload, 'meta.workflow_name'),
     collectionId: get(payload, 'meta.collection.name'),
     status: get(payload, 'meta.status', 'UNKNOWN'),
@@ -126,15 +188,17 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
 
 /**
  * Extracts PDR info from a StepFunction message and indexes it to ElasticSearch
- * @param  {object} esClient ElasticSearch Connection object
- * @param  {object} payload  Cumulus Step Function message
- * @param  {string} index    Elasticsearch index (default: cumulus)
- * @param  {string} type     Elasticsearch type (default: pdr)
- * @return {Promise} Elasticsearch response
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: pdr)
+ * @returns {Promise} Elasticsearch response
  */
 function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const name = get(payload, 'cumulus_meta.execution_name');
-  const pdrName = get(payload, 'payload.pdr.name')
+  const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
+  const pdrName = get(pdrObj, 'name');
 
   if (!pdrName) return Promise.resolve();
 
@@ -145,7 +209,7 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   const execution = getExecutionUrl(arn);
 
   const collection = get(payload, 'meta.collection');
-  const collectionId = `${collection.name}___${collection.version}`;
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   const stats = {
     processing: get(payload, 'payload.running', []).length,
@@ -156,21 +220,21 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   stats.total = stats.processing + stats.completed + stats.failed;
   let progress = 0;
   if (stats.processing > 0 && stats.total > 0) {
-    progress = stats.processing / stats.total;
+    progress = ((stats.total - stats.processing) / stats.total) * 100;
   }
   else if (stats.processing === 0 && stats.total > 0) {
     progress = 100;
   }
 
   const doc = {
-    pdrName: get(payload, 'payload.pdr.name'),
+    pdrName,
     collectionId,
     status: get(payload, 'meta.status'),
     provider: get(payload, 'meta.provider.id'),
     progress,
     execution,
-    PANSent: get(payload, 'payload.pdr.PANSent', false),
-    PANmessage: get(payload, 'payload.pdr.PANmessage', 'N/A'),
+    PANSent: get(pdrObj, 'PANSent', false),
+    PANmessage: get(pdrObj, 'PANmessage', 'N/A'),
     stats,
     createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
     timestamp: Date.now()
@@ -181,7 +245,7 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   return esClient.update({
     index,
     type,
-    id: doc.pdrName,
+    id: pdrName,
     body: {
       doc,
       doc_as_upsert: true
@@ -189,9 +253,18 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
   });
 }
 
-async function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
+/**
+ * Indexes the collection on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} meta     - the collection record
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: collection)
+ * @returns {Promise} Elasticsearch response
+ */
+function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
   // adding collection record to ES
-  const collectionId = `${meta.name}___${meta.version}`;
+  const collectionId = constructCollectionId(meta.name, meta.version);
   const params = {
     index,
     type,
@@ -203,10 +276,19 @@ async function indexCollection(esClient, meta, index = 'cumulus', type = 'collec
   };
 
   params.body.doc.timestamp = Date.now();
-  await esClient.update(params);
+  return esClient.update(params);
 }
 
-async function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
+/**
+ * Indexes the provider type on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - the provider record
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: provider)
+ * @returns {Promise} Elasticsearch response
+ */
+function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
   const params = {
     index,
     type,
@@ -219,10 +301,19 @@ async function indexProvider(esClient, payload, index = 'cumulus', type = 'provi
   params.body.doc.timestamp = Date.now();
 
   // adding collection record to ES
-  await esClient.update(params);
+  return esClient.update(params);
 }
 
-async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
+/**
+ * Indexes the rule type on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - the Rule record
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: rule)
+ * @returns {Promise} Elasticsearch response
+ */
+function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
   const params = {
     index,
     type,
@@ -235,22 +326,22 @@ async function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
   params.body.doc.timestamp = Date.now();
 
   // adding collection record to ES
-  await esClient.update(params);
+  return esClient.update(params);
 }
 
-
 /**
- * Extracts granule info from a stepFunction message and indexs it to
- * Elasticsearch
- * @param  {object} esClient ElasticSearch Connection object
- * @param  {object} payload  Cumulus Step Function message
- * @param  {string} index    Elasticsearch index (default: cumulus)
- * @param  {string} type     Elasticsearch type (default: granule)
- * @return {Promise} Elasticsearch response
+ * Extracts granule info from a stepFunction message and indexes it to
+ * an ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} type     - Elasticsearch type (default: granule)
+ * @returns {Promise} Elasticsearch response
  */
 async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const name = get(payload, 'cumulus_meta.execution_name');
-  const granules = get(payload, 'payload.granules');
+  const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
   if (!granules) return Promise.resolve();
 
@@ -259,13 +350,14 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
     name
   );
 
-  if (arn) return Promise.resolve();
+  if (!arn) return Promise.resolve();
 
   const execution = getExecutionUrl(arn);
 
   const collection = get(payload, 'meta.collection');
-  const exception = get(payload, 'exception');
-  const collectionId = `${collection.name}___${collection.version}`;
+  const exception = prepareException(payload.exception);
+
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   // make sure collection is added
   try {
@@ -284,7 +376,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
     if (g.granuleId) {
       const doc = {
         granuleId: g.granuleId,
-        pdrName: get(payload, 'payload.pdr.name'),
+        // pdrName: get(payload, 'payload.pdr.name'),
         collectionId,
         status: get(payload, 'meta.status'),
         provider: get(payload, 'meta.provider.id'),
@@ -316,6 +408,16 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   return Promise.all(done);
 }
 
+/**
+ * delete a record from ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {string} id       - id of the Elasticsearch record
+ * @param  {string} type     - Elasticsearch type (default: execution)
+ * @param  {strint} parent   - id of the parent (optional)
+ * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @returns {Promise} elasticsearch delete response
+ */
 async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
   if (!esClient) {
     esClient = await Search.es();
@@ -333,8 +435,15 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
   return esClient.delete(params);
 }
 
-async function reingest(g) {
-  const collection = g.collectionId.split('___');
+/**
+ * start the re-ingest of a given granule object
+ *
+ * @param  {Object} g - the granule object
+ * @param  {string} index - cumulus index name (optional)
+ * @returns {Promise} an object show the start of the re-ingest
+ */
+async function reingest(g, index) {
+  const { name: collection } = deconstructCollectionId(g.collectionId);
 
   // get the payload of the original execution
   const status = await StepFunction.getExecutionStatus(path.basename(g.execution));
@@ -347,7 +456,7 @@ async function reingest(g) {
       name: collection[0],
       version: collection[1]
     },
-    meta: { granuleId: g.granuleId },
+    meta: originalMessage.meta,
     payload: originalMessage.payload
   });
 
@@ -356,7 +465,8 @@ async function reingest(g) {
     g.granuleId,
     'granule',
     { status: 'running' },
-    g.collectionId
+    g.collectionId,
+    index
   );
   await invoke(process.env.invoke, payload);
   return {
@@ -366,6 +476,13 @@ async function reingest(g) {
   };
 }
 
+/**
+ * processes the incoming cumulus message and pass it through a number
+ * of indexers
+ *
+ * @param  {Object} event - incoming cumulus message
+ * @returns {Promise} object with response from the three indexer
+ */
 async function handlePayload(event) {
   let payload;
   const source = get(event, 'EventSource');
@@ -380,11 +497,26 @@ async function handlePayload(event) {
 
   const esClient = await Search.es();
 
-  await indexStepFunction(esClient, payload);
-  await pdr(esClient, payload);
-  await granule(esClient, payload);
+  // allowing to set index name via env variable
+  // to support testing
+  const esIndex = process.env.ES_INDEX;
+
+  return {
+    sf: await indexStepFunction(esClient, payload, esIndex),
+    pdr: await pdr(esClient, payload, esIndex),
+    granule: await granule(esClient, payload, esIndex)
+  };
 }
 
+/**
+ * processes the incoming log events coming from AWS
+ * CloudWatch
+ *
+ * @param  {Object} event - incoming message from CloudWatch
+ * @param  {Object} context - aws lambda context object
+ * @param  {function} cb - aws lambda callback function
+ * @returns {Promise} undefined
+ */
 function logHandler(event, context, cb) {
   log.debug(event);
   const payload = new Buffer(event.awslogs.data, 'base64');
@@ -392,9 +524,9 @@ function logHandler(event, context, cb) {
     try {
       const logs = JSON.parse(r.toString());
       log.debug(logs);
-      return indexLog(logs.logEvents)
-        .then(s => cb(null, s))
-        .catch(err => cb(err));
+      return indexLog(undefined, logs.logEvents)
+        .then((s) => cb(null, s))
+        .catch(cb);
     }
     catch (err) {
       log.error(e);
@@ -403,6 +535,14 @@ function logHandler(event, context, cb) {
   });
 }
 
+/**
+ * Lambda function handler for sns2elasticsearch
+ *
+ * @param  {Object} event - incoming message sns
+ * @param  {Object} context - aws lambda context object
+ * @param  {function} cb - aws lambda callback function
+ * @returns {Promise} undefined
+ */
 function handler(event, context, cb) {
   // we can handle both incoming message from SNS as well as direct payload
   log.debug(JSON.stringify(event));
@@ -410,28 +550,34 @@ function handler(event, context, cb) {
   let jobs = [];
 
   if (records) {
-    jobs = records.map(r => handlePayload(r));
+    jobs = records.map(handlePayload);
   }
   else {
     jobs.push(handlePayload(event));
   }
 
-  Promise.all(jobs).then(r => {
+  return Promise.all(jobs).then((r) => {
     log.info(`Updated ${r.length} es records`);
     cb(null, r);
-  }).catch(e => cb(e));
+    return r;
+  }).catch(cb);
 }
 
 module.exports = {
+  constructCollectionId,
+  deconstructCollectionId,
   handler,
   logHandler,
   indexCollection,
   indexProvider,
   indexRule,
+  indexStepFunction,
   handlePayload,
   partialRecordUpdate,
   deleteRecord,
-  reingest
+  reingest,
+  granule,
+  pdr
 };
 
 justLocalRun(() => {
