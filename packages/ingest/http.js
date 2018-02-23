@@ -1,15 +1,14 @@
 'use strict';
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
 const Crawler = require('simplecrawler');
 const http = require('http');
 const https = require('https');
+const log = require('@cumulus/common/log');
 const mkdirp = require('mkdirp');
 const pump = require('pump');
-const syncUrl = require('@cumulus/common/aws').syncUrl;
 const errors = require('@cumulus/common/errors');
 
 /**
@@ -28,6 +27,7 @@ async function downloadToDisk(url, filepath) {
         err.code = res.statusCode;
         return reject(err);
       }
+      // FIXME The download directory will exist, so this mkdirp can be removed
       return mkdirp(path.dirname(filepath), (err) => {
         if (err) return reject(err);
         const file = fs.createWriteStream(filepath);
@@ -96,35 +96,20 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     });
   }
 
-  /**
-   * Downloads a given url and upload to a given S3 location
+ /**
+   * Download a remote file to disk
    *
-   * @param {string} _path - the path to download the file from
-   * @param {string} bucket - the bucket to upload the file to
-   * @param {string} key - the file prefix on s3
-   * @param {string} filename - the filename
-   * @returns {Promise.<string>} a s3 uri
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} localPath - the full local destination file path
+   * @returns {Promise.<string>} - the path that the file was saved to
    */
-  async sync(_path, bucket, key, filename) {
-    await syncUrl(urljoin(this.host, _path, filename), bucket, path.join(key, filename));
-    return urljoin('s3://', bucket, key, filename);
-  }
+  async download(remotePath, localPath) {
+    const remoteUrl = urljoin(this.host, remotePath);
 
-  /**
-   * Downloads the file to disk, difference with sync is that
-   * this method involves no uploading to S3
-   *
-   * @param {string} _path - the path to download the file from
-   * @param {string} filename - the filename
-   * @returns {Promise.<string>} the path to the temp file
-   */
-  async download(_path, filename) {
-    // let's stream to file
-    const tempFile = path.join(os.tmpdir(), filename);
-    const uri = urljoin(this.host, _path, filename);
+    log.info(`Downloading ${remoteUrl} to ${localPath}`);
+    await downloadToDisk(remoteUrl, localPath);
+    log.info(`Finishing downloading ${remoteUrl}`);
 
-    await downloadToDisk(uri, tempFile);
-
-    return tempFile;
+    return localPath;
   }
 };
