@@ -107,7 +107,16 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const remoteUrl = urljoin(this.host, remotePath);
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
-    await downloadToDisk(remoteUrl, localPath);
+    try {
+      await downloadToDisk(remoteUrl, localPath);
+    }
+    catch (e) {
+      if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
+        const message = `${path.basename(remotePath)} was not found on the server with 403 status`;
+        throw new errors.FileNotFound(message);
+      }
+      else throw e;
+    }
     log.info(`Finishing downloading ${remoteUrl}`);
 
     return localPath;

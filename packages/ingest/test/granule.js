@@ -54,20 +54,27 @@ selectorSyncTypes.forEach((item) => {
 });
 
 /**
-* test the granule._validateChecksum() method
+* test the granule.validateChecksum() method
 **/
 
 const sums = require('./fixtures/sums');
 
 Object.keys(sums).forEach((key) => {
-  test(`granule._validateChecksum ${key}`, async (t) => {
+  test(`granule.validateChecksum ${key}`, async (t) => {
     const granule = new HttpGranule(
       ingestPayload.config.buckets,
       ingestPayload.config.collection,
       ingestPayload.config.provider
     );
     const filepath = path.join(__dirname, 'fixtures', `${key}.txt`);
-    const validated = await granule._validateChecksum(key, sums[key], filepath);
-    t.true(validated);
+    try {
+      const file = { checksumType: key, checksumValue: sums[key] };
+      await granule.validateChecksum(file, filepath, null);
+      await granule.validateChecksum(key, sums[key], filepath);
+      t.pass();
+    }
+    catch (e) {
+      t.fail(e);
+    }
   });
 });
