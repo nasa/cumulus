@@ -1,28 +1,25 @@
 'use strict';
 
-const test = require('ava');
-const errors = require('@cumulus/common/errors');
-const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
-const payloadChecksumFile = require(
-  '@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'
-);
-const testUtils = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
+const errors = require('@cumulus/common/errors');
+const fs = require('fs-extra');
+const path = require('path');
+const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
+const test = require('ava');
 
+const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
+
+const {
+  findGitRepoRootDirectory,
+  randomString,
+  validateConfig,
+  validateInput,
+  validateOutput
+} = require('@cumulus/common/test-utils');
+const { cloneDeep } = require('lodash');
 const { syncGranule } = require('../index');
 
-test('error when provider info is missing', (t) => {
-  const newPayload = Object.assign({}, payload);
-  delete newPayload.config.provider;
-
-  return syncGranule(newPayload)
-    .then(t.fail)
-    .catch((e) => {
-      t.true(e instanceof errors.ProviderNotFound);
-    });
-});
-
-test('download Granule from FTP endpoint', (t) => {
+test('download Granule from FTP endpoint', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -31,18 +28,22 @@ test('download Granule from FTP endpoint', (t) => {
     password: 'testpass'
   };
 
-  const newPayload = Object.assign({}, payload);
+  const newPayload = cloneDeep(payload);
   newPayload.config.provider = provider;
 
-  const protectedBucketName = testUtils.randomString();
-  const internalBucketName = testUtils.randomString();
+  const protectedBucketName = randomString();
+  const internalBucketName = randomString();
 
   newPayload.config.buckets.protected = protectedBucketName;
   newPayload.config.buckets.internal = internalBucketName;
 
+  await validateInput(t, newPayload.input);
+  await validateConfig(t, newPayload.config);
+
   return aws.s3().createBucket({ Bucket: protectedBucketName }).promise()
     .then(() => aws.s3().createBucket({ Bucket: internalBucketName }).promise())
     .then(() => syncGranule(newPayload))
+    .then((output) => validateOutput(t, output).then(() => output))
     .then((output) => {
       t.is(output.granules.length, 1);
       t.is(output.granules[0].files.length, 1);
@@ -61,87 +62,126 @@ test('download Granule from FTP endpoint', (t) => {
     });
 });
 
-test('download Granule from HTTP endpoint', (t) => {
-  const provider = {
+test('download Granule from HTTP endpoint', async (t) => {
+  const granuleUrlPath = randomString();
+
+  // Figure out the directory paths that we're working with
+  const gitRepoRootDirectory = await findGitRepoRootDirectory();
+  const tmpTestDataDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', granuleUrlPath);
+
+  const granuleFilename = 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf';
+
+  const event = cloneDeep(payload);
+  event.config.buckets.internal = randomString();
+  event.config.buckets.protected = randomString();
+  event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
     host: 'http://localhost:8080'
   };
+  event.input.granules[0].files[0].path = `/${granuleUrlPath}`;
 
-  const newPayload = Object.assign({}, payload);
-  newPayload.config.provider = provider;
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
-  const protectedBucketName = testUtils.randomString();
-  const internalBucketName = testUtils.randomString();
+  await fs.ensureDir(tmpTestDataDirectory);
+  try {
+    await Promise.all([
+      fs.copy(
+        path.join(gitRepoRootDirectory, 'packages', 'test-data', 'granules', granuleFilename),
+        path.join(tmpTestDataDirectory, granuleFilename)),
+      aws.s3().createBucket({ Bucket: event.config.buckets.internal }).promise(),
+      aws.s3().createBucket({ Bucket: event.config.buckets.protected }).promise()
+    ]);
 
-  newPayload.config.buckets.protected = protectedBucketName;
-  newPayload.config.buckets.internal = internalBucketName;
+    const output = await syncGranule(event);
 
-  return aws.s3().createBucket({ Bucket: protectedBucketName }).promise()
-    .then(() => aws.s3().createBucket({ Bucket: internalBucketName }).promise())
-    .then(() => syncGranule(newPayload))
-    .then((output) => {
-      t.is(output.granules.length, 1);
-      t.is(output.granules[0].files.length, 1);
-      t.is(
-        output.granules[0].files[0].filename,
-        `s3://${protectedBucketName}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
-      );
-
-      return aws.recursivelyDeleteS3Bucket(internalBucketName);
-    })
-    .catch((e) => {
-      if (e instanceof errors.RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-      }
-      else throw e;
-    });
+    await validateOutput(t, output);
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 1);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${event.config.buckets.protected}/${granuleFilename}`
+    );
+  }
+  catch (e) {
+    if (e instanceof errors.RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else t.fail(e);
+  }
+  finally {
+    await Promise.all([
+      fs.remove(tmpTestDataDirectory),
+      aws.recursivelyDeleteS3Bucket(event.config.buckets.internal),
+      aws.recursivelyDeleteS3Bucket(event.config.buckets.protected)
+    ]);
+  }
 });
 
-test('download Granule with checksum in file', (t) => {
-  const provider = {
+test('download granule over HTTP with checksum in file', async (t) => {
+  const granuleUrlPath = randomString();
+
+  // Figure out the directory paths that we're working with
+  const gitRepoRootDirectory = await findGitRepoRootDirectory();
+  const tmpTestDataDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', granuleUrlPath);
+
+  const granuleFilename = '20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2';
+  const checksumFilename = '20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2.md5';
+
+  const event = cloneDeep(payloadChecksumFile);
+  event.config.buckets.internal = randomString();
+  event.config.buckets.private = randomString();
+  event.config.buckets.protected = randomString();
+  event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
     host: 'http://localhost:8080'
   };
+  event.input.granules[0].files[0].path = `/${granuleUrlPath}`;
+  event.input.granules[0].files[1].path = `/${granuleUrlPath}`;
 
-  const newPayload = Object.assign({}, payloadChecksumFile);
-  newPayload.config.provider = provider;
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
-  const internalBucketName = testUtils.randomString();
-  const privateBucketName = testUtils.randomString();
-  const protectedBucketName = testUtils.randomString();
+  await fs.ensureDir(tmpTestDataDirectory);
+  try {
+    await Promise.all([
+      fs.copy(
+        path.join(gitRepoRootDirectory, 'packages', 'test-data', 'granules', granuleFilename),
+        path.join(tmpTestDataDirectory, granuleFilename)),
+      fs.copy(
+        path.join(gitRepoRootDirectory, 'packages', 'test-data', 'granules', checksumFilename),
+        path.join(tmpTestDataDirectory, checksumFilename)),
+      aws.s3().createBucket({ Bucket: event.config.buckets.internal }).promise(),
+      aws.s3().createBucket({ Bucket: event.config.buckets.private }).promise(),
+      aws.s3().createBucket({ Bucket: event.config.buckets.protected }).promise()
+    ]);
 
-  newPayload.config.buckets.internal = internalBucketName;
-  newPayload.config.buckets.private = privateBucketName;
-  newPayload.config.buckets.protected = protectedBucketName;
+    const output = await syncGranule(event);
 
-  return aws.s3().createBucket({ Bucket: protectedBucketName }).promise()
-    .then(() => aws.s3().createBucket({ Bucket: internalBucketName }).promise())
-    .then(() => aws.s3().createBucket({ Bucket: privateBucketName }).promise())
-    .then(() => syncGranule(newPayload))
-    .then((output) => {
-      t.is(output.granules.length, 1);
-      t.is(output.granules[0].files.length, 1);
-      t.is(
-        output.granules[0].files[0].filename,
-        `s3://${privateBucketName}/20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2` // eslint-disable-line max-len
-      );
-
-      return aws.recursivelyDeleteS3Bucket(protectedBucketName)
-        .then(() => aws.recursivelyDeleteS3Bucket(internalBucketName))
-        .then(() => aws.recursivelyDeleteS3Bucket(privateBucketName));
-    })
-    .catch((e) =>
-      aws.recursivelyDeleteS3Bucket(protectedBucketName)
-        .then(() => aws.recursivelyDeleteS3Bucket(internalBucketName))
-        .then(() => aws.recursivelyDeleteS3Bucket(privateBucketName))
-        .then(() => {
-          if (e instanceof errors.RemoteResourceError) {
-            t.pass('ignoring this test. Test server seems to be down');
-          }
-          else throw e;
-        }));
+    await validateOutput(t, output);
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 1);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${event.config.buckets.private}/${granuleFilename}` // eslint-disable-line max-len
+    );
+  }
+  catch (e) {
+    if (e instanceof errors.RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else t.fail(e);
+  }
+  finally {
+    await Promise.all([
+      fs.remove(tmpTestDataDirectory),
+      aws.recursivelyDeleteS3Bucket(event.config.buckets.internal),
+      aws.recursivelyDeleteS3Bucket(event.config.buckets.private),
+      aws.recursivelyDeleteS3Bucket(event.config.buckets.protected)
+    ]);
+  }
 });
 
 // // TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
