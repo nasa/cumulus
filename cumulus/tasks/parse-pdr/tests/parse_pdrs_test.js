@@ -62,10 +62,9 @@ test('parse PDR from HTTP endpoint', async (t) => {
 
   // Figure out the directory paths that we're working with
   const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const httpTestDataDirectory = path.join(gitRepoRootDirectory, 'http-test-data');
-  const providerPathDirectory = path.join(httpTestDataDirectory, providerPath);
+  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
 
-  // Create HTTP directory and internal bucket
+  // Create providerPathDirectory and internal bucket
   await Promise.all([
     fs.ensureDir(providerPathDirectory),
     s3().createBucket({ Bucket: internalBucketName }).promise()
@@ -122,10 +121,9 @@ test('parse PDR from SFTP endpoint', async (t) => {
 
   // Figure out the directory paths that we're working with
   const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const sftpTestDataDirectory = path.join(gitRepoRootDirectory, 'sftp-test-data');
-  const providerPathDirectory = path.join(sftpTestDataDirectory, providerPath);
+  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
 
-  // Create SFTP directory and internal bucket
+  // Create providerPathDirectory and internal bucket
   await Promise.all([
     fs.ensureDir(providerPathDirectory),
     s3().createBucket({ Bucket: internalBucketName }).promise()

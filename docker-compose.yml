@@ -21,12 +21,12 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - "./http-test-data:/var/www/html"
+      - "./tmp-test-data:/var/www/html"
 
   sftp:
     image: atmoz/sftp
     ports:
       - "2222:22"
     volumes:
-      - "./sftp-test-data:/home/user/test-data:ro"
+      - "./tmp-test-data:/home/user/test-data:ro"
     command: user:password
