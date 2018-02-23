@@ -74,11 +74,6 @@ module.exports = superclass => class extends superclass {
     return this.upload(bucket, key, filename, tempFile);
   }
 
-  async upload(bucket, key, filename, tempFile) {
-    await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
-    return urljoin('s3://', bucket, key, filename);
-  }
-
   /**
    * Downloads the file to disk, difference with sync is that
    * this method involves no uploading to S3
