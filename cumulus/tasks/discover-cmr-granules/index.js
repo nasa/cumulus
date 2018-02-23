@@ -195,8 +195,8 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
 
 // To use with Visual Studio Code Debugger, uncomment next block
 //
-global.__isDebug = true;
-const local = require('@cumulus/common/local-helpers');
-const localTaskName = 'DiscoverCmrGranules';
-local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
-  'MOPITT_DCOSMR_LL_D_STD', localTaskName));
+//global.__isDebug = true;
+//const local = require('@cumulus/common/local-helpers');
+//const localTaskName = 'DiscoverCmrGranules';
+//local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
+//  'MOPITT_DCOSMR_LL_D_STD', localTaskName));
