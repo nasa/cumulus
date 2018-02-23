@@ -9,14 +9,11 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
+        "additionalProperties": true,
         "properties": {
           "name": { "type": "string" },
-          "type": { "type": "integer" },
-          "size": { "type": "string" },
+          "size": { "type": "integer" },
           "time": { "type": "string" },
-          "owner": { "type": "string" },
-          "group": { "type": "string" },
           "path": { "type": "string" }
         }
       }
