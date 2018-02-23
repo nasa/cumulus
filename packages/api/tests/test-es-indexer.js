@@ -127,7 +127,8 @@ test.serial('indexing a failed granule record', async (t) => {
   t.is(record._source.status, 'failed');
   t.is(record._id, granule.granuleId);
   t.is(record._source.published, false);
-  t.is(record._source.error, JSON.stringify(granuleFailure.exception));
+  t.is(record._source.error.Error, granuleFailure.exception.Error);
+  t.is(record._source.error.Cause, granuleFailure.exception.Cause);
 });
 
 test.serial('indexing a granule record without state_machine info', async (t) => {
@@ -405,7 +406,7 @@ test.serial('indexing a failed step function', async (t) => {
 
   t.is(record.status, 'failed');
   t.is(record.type, newPayload.meta.workflow_name);
-  t.is(typeof record.error, 'string');
+  t.is(typeof record.error, 'object');
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 

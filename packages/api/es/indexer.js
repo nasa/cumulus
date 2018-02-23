@@ -48,14 +48,24 @@ function deconstructCollectionId(collectionId) {
 }
 
 /**
- * Ensures that the exception is returned as a string
+ * Ensures that the exception is returned as an object
  *
  * @param {*} exception - the exception
  * @returns {string} an stringified exception
  */
-function prepareException(exception) {
-  if (typeof exception === 'object') {
-    return JSON.stringify(exception);
+function parseException(exception) {
+  // null is considered object
+  if (exception === null) {
+    return {};
+  }
+
+  const type = typeof exception;
+  if (typeof exception !== 'object') {
+    const converted = JSON.stringify(exception);
+    if (converted === 'undefined') {
+      return {};
+    }
+    exception = { Error: 'Unknown Error', Cause: converted };
   }
   return exception;
 }
@@ -165,7 +175,7 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
     name,
     arn,
     execution,
-    error: prepareException(payload.exception),
+    error: parseException(payload.exception),
     type: get(payload, 'meta.workflow_name'),
     collectionId: get(payload, 'meta.collection.name'),
     status: get(payload, 'meta.status', 'UNKNOWN'),
@@ -355,7 +365,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
   const execution = getExecutionUrl(arn);
 
   const collection = get(payload, 'meta.collection');
-  const exception = prepareException(payload.exception);
+  const exception = parseException(payload.exception);
 
   const collectionId = constructCollectionId(collection.name, collection.version);
 
