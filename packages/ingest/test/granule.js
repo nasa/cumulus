@@ -82,3 +82,14 @@ Object.keys(sums).forEach((key) => {
     }
   });
 });
+
+test('filter files using regex', (t) => {
+  const payload = Object.assign({}, discoverPayload);
+  payload.config.collection.granuleIdExtraction = '^example$';
+  const discover = new HttpDiscoverGranules(discoverPayload);
+  const file = {
+    name: 'example'
+  };
+  const result = discover.setGranuleInfo(file);
+  t.true(result === false);
+});
