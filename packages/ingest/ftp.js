@@ -8,6 +8,7 @@ const log = require('@cumulus/common/log');
 const aws = require('@cumulus/common/aws');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
+const { omit } = require('lodash');
 
 module.exports.ftpMixin = superclass => class extends superclass {
 
@@ -137,14 +138,12 @@ module.exports.ftpMixin = superclass => class extends superclass {
           return reject(err);
         }
 
-        return resolve(data.map(d => ({
+        return resolve(data.map((d) => ({
           name: d.name,
-          type: d.type,
-          size: d.size,
-          time: d.date,
-          owner: d.owner,
-          group: d.group,
-          path: path
+          path: path,
+          size: parseInt(d.size, 10),
+          time: d.time,
+          type: d.type
         })));
       });
     });
@@ -161,7 +160,11 @@ module.exports.ftpMixin = superclass => class extends superclass {
 
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, this.path);
+
     log.info(`${files.length} files were found on ${this.host}`);
-    return files;
+
+    // Type 'type' field is required to support recursive file listing, but
+    // should not be part of the returned result.
+    return files.map((file) => omit(file, 'type'));
   }
 };
