@@ -40,10 +40,10 @@ function constructCollectionId(name, version) {
  * @returns {Object} name and version as object
  */
 function deconstructCollectionId(collectionId) {
-  const deconstructed = collectionId.split('___');
+  const [name, version] = collectionId.split('___');
   return {
-    name: deconstructed[0],
-    version: deconstructed[1]
+    name,
+    version
   };
 }
 
@@ -376,7 +376,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
     if (g.granuleId) {
       const doc = {
         granuleId: g.granuleId,
-        // pdrName: get(payload, 'payload.pdr.name'),
+        pdrName: get(payload, 'meta.pdr.name'),
         collectionId,
         status: get(payload, 'meta.status'),
         provider: get(payload, 'meta.provider.id'),
@@ -556,11 +556,13 @@ function handler(event, context, cb) {
     jobs.push(handlePayload(event));
   }
 
-  return Promise.all(jobs).then((r) => {
-    log.info(`Updated ${r.length} es records`);
-    cb(null, r);
-    return r;
-  }).catch(cb);
+  return Promise.all(jobs)
+    .then((r) => {
+      log.info(`Updated ${r.length} es records`);
+      cb(null, r);
+      return r;
+    })
+    .catch(cb);
 }
 
 module.exports = {
