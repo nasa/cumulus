@@ -1,6 +1,5 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -12,8 +11,14 @@ const mkdirp = require('mkdirp');
 const pump = require('pump');
 const syncUrl = require('@cumulus/common/aws').syncUrl;
 const errors = require('@cumulus/common/errors');
-const log = require('@cumulus/common/log');
 
+/**
+ * Downloads a given http URL to disk
+ *
+ * @param {string} url - a http(s) url
+ * @param {string} filepath - the local path to save the downloaded file
+ * @returns {Promise} undefined
+ */
 async function downloadToDisk(url, filepath) {
   const transport = url.indexOf('https://') === 0 ? https : http;
   return new Promise((resolve, reject) => {
@@ -35,14 +40,13 @@ async function downloadToDisk(url, filepath) {
   });
 }
 
-module.exports.httpMixin = superclass => class extends superclass {
+module.exports.httpMixin = (superclass) => class extends superclass {
 
   /**
    * List all PDR files from a given endpoint
-   * @return {Promise}
-   * @private
+   *
+   * @returns {Promise.<Array>} of a list of files
    */
-
   list() {
     const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
     const c = new Crawler(urljoin(this.host, this.path));
@@ -94,46 +98,26 @@ module.exports.httpMixin = superclass => class extends superclass {
 
   /**
    * Downloads a given url and upload to a given S3 location
-   * @return {Promise}
-   * @private
+   *
+   * @param {string} _path - the path to download the file from
+   * @param {string} bucket - the bucket to upload the file to
+   * @param {string} key - the file prefix on s3
+   * @param {string} filename - the filename
+   * @returns {Promise.<string>} a s3 uri
    */
-
   async sync(_path, bucket, key, filename) {
     await syncUrl(urljoin(this.host, _path, filename), bucket, path.join(key, filename));
     return urljoin('s3://', bucket, key, filename);
   }
 
   /**
-   * Upload a file to S3
-   *
-   * @param {string} bucket - the S3 bucket to upload to
-   * @param {string} key - the base path of the S3 key
-   * @param {string} filename - the filename to be uploaded to
-   * @param {string} tempFile - the location of the file to be uploaded
-   * @returns {Promise<string>} - the S3 URL that the file was uploaded to
-   */
-  async upload(bucket, key, filename, tempFile) {
-    const fullKey = path.join(key, filename);
-
-    await aws.s3().putObject({
-      Bucket: bucket,
-      Key: fullKey,
-      Body: fs.createReadStream(tempFile)
-    }).promise();
-
-    const s3Uri = `s3://${bucket}/${fullKey}`;
-    log.info(`uploaded ${s3Uri}`);
-
-    return s3Uri;
-  }
-
-  /**
    * Downloads the file to disk, difference with sync is that
    * this method involves no uploading to S3
-   * @return {Promise}
-   * @private
+   *
+   * @param {string} _path - the path to download the file from
+   * @param {string} filename - the filename
+   * @returns {Promise.<string>} the path to the temp file
    */
-
   async download(_path, filename) {
     // let's stream to file
     const tempFile = path.join(os.tmpdir(), filename);

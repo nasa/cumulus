@@ -8,6 +8,7 @@ const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 const sftpMixin = require('./sftp');
 const aws = require('@cumulus/common/aws');
+const { baseProtocol } = require('./protocol');
 
 /**
  * This is a base class for discovering PDRs
@@ -189,7 +190,7 @@ class Parse {
  * @class
  */
 
-class FtpDiscover extends ftpMixin(Discover) {}
+class FtpDiscover extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
  * Discover PDRs from a HTTP endpoint.
@@ -197,7 +198,7 @@ class FtpDiscover extends ftpMixin(Discover) {}
  * @class
  */
 
-class HttpDiscover extends httpMixin(Discover) {}
+class HttpDiscover extends httpMixin(baseProtocol(Discover)) {}
 
 /**
  * Discover PDRs from a SFTP endpoint.
@@ -205,7 +206,7 @@ class HttpDiscover extends httpMixin(Discover) {}
  * @class
  */
 
-class SftpDiscover extends sftpMixin(Discover) {}
+class SftpDiscover extends sftpMixin(baseProtocol(Discover)) {}
 
 /**
  * Parse PDRs downloaded from a FTP endpoint.
@@ -213,7 +214,7 @@ class SftpDiscover extends sftpMixin(Discover) {}
  * @class
  */
 
-class FtpParse extends ftpMixin(Parse) {}
+class FtpParse extends ftpMixin(baseProtocol(Parse)) {}
 
 /**
  * Parse PDRs downloaded from a HTTP endpoint.
@@ -221,7 +222,7 @@ class FtpParse extends ftpMixin(Parse) {}
  * @class
  */
 
-class HttpParse extends httpMixin(Parse) {}
+class HttpParse extends httpMixin(baseProtocol(Parse)) {}
 
 /**
  * Parse PDRs downloaded from a SFTP endpoint.
@@ -229,7 +230,7 @@ class HttpParse extends httpMixin(Parse) {}
  * @class
  */
 
-class SftpParse extends sftpMixin(Parse) {}
+class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
 
 /**
  * Select a class for discovering PDRs based on protocol
