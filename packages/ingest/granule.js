@@ -1,36 +1,39 @@
 /* eslint-disable no-param-reassign */
 'use strict';
 
+const aws = require('@cumulus/common/aws');
 const fs = require('fs');
 const get = require('lodash.get');
 const join = require('path').join;
 const urljoin = require('url-join');
 const cksum = require('cksum');
 const checksum = require('checksum');
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
-const AWS = require('aws-sdk');
-const S3 = require('./aws').S3;
 const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
-
-const log = logger.child({ file: 'ingest/granule.js' });
+const s3Mixin = require('./s3').s3Mixin;
+const { baseProtocol } = require('./protocol');
 
 class Discover {
   constructor(event) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
-    this.buckets = get(event, 'resources.buckets');
-    this.collection = get(event, 'collection.meta');
-    this.provider = get(event, 'provider');
+
+    const config = get(event, 'config');
+
+    this.buckets = get(config, 'buckets');
+    this.collection = get(config, 'collection');
+    this.provider = get(config, 'provider');
     this.event = event;
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
-    this.path = this.collection.provider_path || '/';
+    this.path = get(this.collection, 'provider_path') || '/';
+
     this.endpoint = urljoin(this.host, this.path);
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
@@ -93,9 +96,21 @@ class Discover {
     return await this.findNewGranules(updatedFiles);
   }
 
-  async fileIsNew(file) {
-    const exists = await S3.fileExists(file.bucket, file.name);
-    return exists ? false : file;
+  /**
+   * Determine if a file does not yet exist in S3.
+   *
+   * @param {Object} file - the file that's being looked for
+   * @param {string} file.bucket - the bucket to look in
+   * @param {string} file.name - the name of the file (in S3)
+   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
+   *   when the object exists in S3, or the passed-in file object if it does
+   *   not already exist in S3.
+   */
+  fileIsNew(file) {
+    return aws.s3ObjectExists({
+      Bucket: file.bucket,
+      Key: file.name
+    }).then((exists) => (exists ? false : file));
   }
 
   async findNewGranules(files) {
@@ -132,9 +147,31 @@ class Discover {
  * @abstract
  */
 class DiscoverAndQueue extends Discover {
+  /**
+   * Creates an instance of DiscoverAndQueue
+   *
+   * @param {Object} event - a Cumulus event
+   * @memberof DiscoverAndQueue
+   */
+  constructor(event) {
+    super(event);
+
+    this.queueUrl = event.config.queueUrl;
+    this.templateUri = event.config.templateUri;
+  }
+
   async findNewGranules(files) {
     const granules = await super.findNewGranules(files);
-    return Promise.all(granules.map(g => queue.queueGranule(this.event, g)));
+    return Promise.all(granules.map(g => queue.queueGranule(
+      g,
+      this.queueUrl,
+      this.templateUri,
+      this.provider,
+      this.collection,
+      null,
+      this.stack,
+      this.buckets.internal
+     )));
   }
 }
 
@@ -148,15 +185,19 @@ class DiscoverAndQueue extends Discover {
  */
 
 class Granule {
-  constructor(event) {
+  constructor(
+    buckets,
+    collection,
+    provider,
+    forceDownload = false
+  ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    this.buckets = get(event, 'resources.buckets');
-    this.collection = get(event, 'collection.meta');
-    this.provider = get(event, 'provider');
-    this.event = event;
+    this.buckets = buckets;
+    this.collection = collection;
+    this.provider = provider;
 
     this.collection.url_path = this.collection.url_path || '';
     this.port = get(this.provider, 'port', 21);
@@ -165,7 +206,7 @@ class Granule {
     this.password = get(this.provider, 'password', null);
     this.checksumFiles = {};
 
-    this.forceDownload = get(event, 'meta.forceDownload', false);
+    this.forceDownload = forceDownload;
   }
 
   async ingest(granule) {
@@ -253,16 +294,15 @@ class Granule {
     let exists = null;
 
     // check if the file exists.
-    exists = await S3.fileExists(file.bucket, join(file.url_path, file.name));
+    exists = await aws.s3ObjectExists({ Bucket: file.bucket, Key: join(file.url_path, file.name) });
 
     if (duplicateHandling === 'version') {
-      const s3 = new AWS.S3();
       // check that the bucket has versioning enabled
-      let versioning = await s3.getBucketVersioning({ Bucket: file.bucket }).promise();
+      let versioning = await aws.s3().getBucketVersioning({ Bucket: file.bucket }).promise();
 
       // if not enabled, make it enabled
       if (versioning.Status !== 'Enabled') {
-        versioning = await s3.putBucketVersioning({
+        versioning = await aws.s3().putBucketVersioning({
           Bucket: file.bucket,
           VersioningConfiguration: { Status: 'Enabled' } }).promise();
       }
@@ -354,53 +394,68 @@ class Granule {
 /**
  * A class for discovering granules using HTTP or HTTPS.
  */
-class HttpDiscoverGranules extends httpMixin(Discover) {}
+class HttpDiscoverGranules extends httpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using HTTP or HTTPS and queueing them to SQS.
  */
-class HttpDiscoverAndQueueGranules extends httpMixin(DiscoverAndQueue) {}
+class HttpDiscoverAndQueueGranules extends httpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * A class for discovering granules using SFTP.
  */
-class SftpDiscoverGranules extends sftpMixin(Discover) {}
+class SftpDiscoverGranules extends sftpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using SFTP and queueing them to SQS.
  */
-class SftpDiscoverAndQueueGranules extends sftpMixin(DiscoverAndQueue) {}
+class SftpDiscoverAndQueueGranules extends sftpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * A class for discovering granules using FTP.
  */
-class FtpDiscoverGranules extends ftpMixin(Discover) {}
+class FtpDiscoverGranules extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using FTP and queueing them to SQS.
  */
-class FtpDiscoverAndQueueGranules extends ftpMixin(DiscoverAndQueue) {}
+class FtpDiscoverAndQueueGranules extends ftpMixin(baseProtocol(DiscoverAndQueue)) {}
+
+/**
+ * A class for discovering granules using s3
+ */
+class S3DiscoverGranules extends s3Mixin(baseProtocol(Discover)) {}
+
+/**
+ * A class for discovering granules using s3 and queueing them to SQS.
+ */
+class S3DiscoverAndQueueGranules extends s3Mixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Ingest Granule from an FTP endpoint.
  */
-class FtpGranule extends ftpMixin(Granule) {}
+class FtpGranule extends ftpMixin(baseProtocol(Granule)) {}
 
 /**
  * Ingest Granule from an SFTP endpoint.
  */
-class SftpGranule extends sftpMixin(Granule) {}
+class SftpGranule extends sftpMixin(baseProtocol(Granule)) {}
 
 /**
  * Ingest Granule from an HTTP endpoint.
  */
-class HttpGranule extends httpMixin(Granule) {}
+class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
+
+/**
+ * Ingest Granule from an s3 endpoint.
+ */
+class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
 *
 * @param {string} type -`discover` or `ingest`
-* @param {string} protocol -`sftp`, `ftp`, or `http`
+* @param {string} protocol -`sftp`, `ftp`, `http` or `s3`
 * @param {boolean} q - set to `true` to queue granules
 * @returns {function} - a constructor to create a granule discovery object
 **/
@@ -414,6 +469,8 @@ function selector(type, protocol, q) {
       case 'http':
       case 'https':
         return q ? HttpDiscoverAndQueueGranules : HttpDiscoverGranules;
+      case 's3':
+        return q ? S3DiscoverAndQueueGranules : S3DiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -426,6 +483,8 @@ function selector(type, protocol, q) {
         return FtpGranule;
       case 'http':
         return HttpGranule;
+      case 's3':
+        return S3Granule;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -438,9 +497,12 @@ module.exports.selector = selector;
 module.exports.HttpGranule = HttpGranule;
 module.exports.FtpGranule = FtpGranule;
 module.exports.SftpGranule = SftpGranule;
+module.exports.S3Granule = S3Granule;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpDiscoverAndQueueGranules = SftpDiscoverAndQueueGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpDiscoverAndQueueGranules = FtpDiscoverAndQueueGranules;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
 module.exports.HttpDiscoverAndQueueGranules = HttpDiscoverAndQueueGranules;
+module.exports.S3DiscoverGranules = S3DiscoverGranules;
+module.exports.S3DiscoverAndQueueGranules = S3DiscoverAndQueueGranules;

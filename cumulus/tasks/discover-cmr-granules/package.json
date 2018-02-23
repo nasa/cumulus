@@ -1,5 +1,6 @@
 {
-  "name": "@common/gitc-discover-cmr-granules",
+  "name": "@cumulus/discover-cmr-granules",
+  "private": true,
   "version": "1.0.0",
   "description": "Discovers granules from the CMR",
   "main": "index.js",
@@ -38,11 +39,11 @@
     ]
   },
   "devDependencies": {
-    "sinon": "^2.0.0-pre.5",
     "ava": "^0.21.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1"
+    "babel-preset-es2017": "^6.24.1",
+    "sinon": "^2.0.0-pre.5"
   }
 }

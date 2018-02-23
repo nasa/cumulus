@@ -1,19 +1,18 @@
 # Cumulus Framework
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg&circle-token=4a16cbbdacb6396c709309ef5ac87479c9dc8bd1)](https://circleci.com/gh/cumulus-nasa/cumulus)
+[![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 
 ## Installing and deploying
 
 ### Prerequisites
 
 * [NVM](https://github.com/creationix/nvm) and node version 6.10.
-* [pip](https://pip.pypa.io/en/stable/installing/)
 * [yarn](https://yarnpkg.com/en/)
 * [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
-* Ruby
 * BASH
-* Docker (only required for building new container images)
-* docker-compose (`pip install docker-compose`)
+* Docker (only required for testing)
+* docker-compose (only required for testing `pip install docker-compose`)
 
 Install the correct node version:
 
@@ -52,6 +51,18 @@ Build and watch packages:
 
 ## Running Tests
 
+### LocalStack
+
+[LocalStack](https://github.com/localstack/localstack) provides local versions of most AWS services for testing.
+
+The LocalStack repository has [installation instructions](https://github.com/localstack/localstack#installing).
+
+Before running tests, start the LocalStack servers:
+
+    $ localstack start
+
+### Docker containers
+
 Turn on the docker containers first:
 
     $ docker-compose up local
@@ -59,6 +70,8 @@ Turn on the docker containers first:
 If you prefer to run docker in detached mode (i.e. run containers in the background), run:
 
     $ docker-compose up -d local
+
+### Run tests
 
 Run the test commands next
 
@@ -70,9 +83,31 @@ Create a new folder under `packages` if it is a common library or create folder 
 
 Make sure to name the package as `@cumulus/package-name`.
 
-## Publishing to NPM
+## Versioning
 
-    $ lerna publish
+We use a global versioning approach, meaning version numbers in cumulus are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage our versioning. Any change will force lerna to increment the version of all packages.
+
+Read more about the semantic versioning [here](https://docs.npmjs.com/getting-started/semantic-versioning).
+
+### Update the Cumulus Version number
+
+Every Pull Request that makes a change to the cumulus code base must update the Cumulus version number using semantic versioning.
+
+Lerna handles the process of deciding which version number should be used as long as the developer decides whether the change is a patch or a minor/major change.
+
+To update cumulus' version number run:
+
+     $ npm run update
+
+You will be prompted to select the type of change (patch/minor/major). Until the final version 1.0.0 of cumulus is released, you MUST select `prerelease` from the list.
+
+Lerna will update the version of all packages after the selection. You then have to commit the changes that are made by Lerna.
+
+This must be the final step of your PR submission. Any PR submission that does not include a version update will be rejected.
+
+### Publishing to NPM
+
+All packages on master branch are automatically published to NPM.
 
 ## Running command in all package folders
 
@@ -81,4 +116,3 @@ Make sure to name the package as `@cumulus/package-name`.
 ## Cleaning Up all the repos
 
     $ npm run clean
-

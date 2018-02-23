@@ -1,11 +1,14 @@
+/* eslint-disable no-param-reassign */
 'use strict';
 
 const AWS = require('aws-sdk');
 const concurrency = require('./concurrency');
 const fs = require('fs');
 const path = require('path');
+const url = require('url');
 const log = require('./log');
 const string = require('./string');
+const testUtils = require('./test-utils');
 const promiseRetry = require('promise-retry');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -27,8 +30,28 @@ const memoize = (fn) => {
   };
 };
 
-const awsClient = (Service, version = null) =>
-  memoize(() => new Service(version ? { apiVersion: version } : {}));
+/**
+ * Return a function which, when called, will return an AWS service object
+ *
+ * Note: The returned service objects are cached, so there will only be one
+ *       instance of each service object per process.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {string} version - the API version to use
+ * @returns {Function} - a function which, when called, will return an AWS service object
+ */
+const awsClient = (Service, version = null) => {
+  const options = {};
+  if (version) options.apiVersion = version;
+
+  if (process.env.TEST) {
+    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
+      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
+    }
+    return memoize(() => testUtils.testAwsClient(Service, options));
+  }
+  return memoize(() => new Service(options));
+};
 
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
@@ -36,7 +59,7 @@ exports.lambda = awsClient(AWS.Lambda, '2015-03-31');
 exports.sqs = awsClient(AWS.SQS, '2012-11-05');
 exports.cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 exports.dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
-exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient);
+exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 
@@ -93,6 +116,31 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
   });
 };
 
+/**
+ * Delete an object from S3
+ *
+ * @param {string} bucket
+ * @param {string} key
+ * @returns {Promise}
+ */
+exports.deleteS3Object = (bucket, key) =>
+  exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
+
+/**
+ * Test if an object exists in S3
+ *
+ * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
+ * @returns {Promise<boolean>} - a Promise that will resolve to a boolean indicating
+ *                               if the object exists
+ */
+exports.s3ObjectExists = (params) =>
+  exports.s3().headObject(params).promise()
+    .then(() => true)
+    .catch((e) => {
+      if (e.code === 'NotFound') return false;
+      throw e;
+    });
+
 exports.promiseS3Upload = (params) => {
   const uploadFn = exports.s3().upload.bind(exports.s3());
   return concurrency.toPromise(uploadFn, params);
@@ -113,6 +161,39 @@ exports.downloadS3File = (s3Obj, filename) => {
       .on('finish', () => resolve(filename))
       .on('error', reject);
   });
+};
+
+/**
+* Get an object from S3
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} - returns response from `S3.getObject` as a promise
+**/
+exports.getS3Object = (bucket, key) =>
+  exports.s3().getObject({ Bucket: bucket, Key: key }).promise();
+
+/**
+* Check if a file exists in an S3 object
+* @name fileExists
+* @param {string} bucket name of the S3 bucket
+* @param {string} key key of the file in the S3 bucket
+* @returns {promise} returns the response from `S3.headObject` as a promise
+**/
+exports.fileExists = async (bucket, key) => {
+  const s3 = exports.s3();
+
+  try {
+    const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
+    return r;
+  }
+  catch (e) {
+    // if file is not return false
+    if (e.stack.match(/(NotFound)/)) {
+      return false;
+    }
+    throw e;
+  }
 };
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
@@ -150,23 +231,30 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @param {Object} s3Opts An optional object containing options that influence the behavior of S3
  * @return A promise that resolves to an Array of the data returned from the deletion operations
  */
-exports.deleteS3Files = (s3Objs, s3opts = {}) => {
-  const s3 = exports.s3();
-  let i = 0;
-  const n = s3Objs.length;
-  log.info(`Starting deletion of ${n} keys`);
-  const promiseDelete = (s3Obj) => {
-    const opts = Object.assign(s3Obj, s3opts);
-    return new Promise((resolve, reject) => {
-      s3.deleteObject(opts, (err, data) => {
-        if (err) reject(err);
-        log.info(`Progress: [${i++} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${s3Obj.key}`);
-        resolve(data);
-      });
-    });
-  };
+exports.deleteS3Files = (s3Objs) => {
+  log.info(`Starting deletion of ${s3Objs.length} object(s)`);
+
+  const promiseDelete = (s3Obj) => exports.s3().deleteObject(s3Obj).promise();
   const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
+
   return Promise.all(s3Objs.map(limitedDelete));
+};
+
+/**
+* Delete a bucket and all of its objects from S3
+*
+* @param {string} bucket - name of the bucket
+* @returns {Promise} - the promised result of `S3.deleteBucket`
+**/
+exports.recursivelyDeleteS3Bucket = async (bucket) => {
+  const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
+  const s3Objects = response.Contents.map((o) => ({
+    Bucket: bucket,
+    Key: o.Key
+  }));
+
+  await exports.deleteS3Files(s3Objects);
+  await exports.s3().deleteBucket({ Bucket: bucket }).promise();
 };
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
@@ -216,13 +304,15 @@ exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
 
 /**
  * List the objects in an S3 bucket
- * @param {string} bucket The name of the bucket
- * @param {string} prefix Only objects with keys starting with this prefix will be included
- * (useful for searching folders in buckets, e.g., '/PDR')
- * @param {boolean} skipFolders If true don't return objects that are folders (defaults to true)
- * @return A promise that resolves to the list of objects. Each S3 object is represented
- * as a JS object with the following attributes:
- * `Key`, `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`
+ *
+ * @param {string} bucket - The name of the bucket
+ * @param {string} prefix - Only objects with keys starting with this prefix
+ *   will be included (useful for searching folders in buckets, e.g., '/PDR')
+ * @param {boolean} skipFolders - If true don't return objects that are folders
+ *   (defaults to true)
+ * @returns {Promise} - A promise that resolves to the list of objects. Each S3
+ *   object is represented as a JS object with the following attributes: `Key`,
+ * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
 exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
   log.info(`Listing objects in s3://${bucket}`);
@@ -231,29 +321,71 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
   };
   if (prefix) params.Prefix = prefix;
 
-  return new Promise((resolve, reject) => {
-    exports.s3().listObjects(params, (err, data) => {
-      if (err) reject(err);
-
+  return exports.s3().listObjects(params).promise()
+    .then((data) => {
       let contents = data.Contents || [];
       if (skipFolders) {
         // Filter out any references to folders
         contents = contents.filter((obj) => !obj.Key.endsWith('/'));
       }
 
-      resolve(contents);
+      return contents;
     });
-  });
 };
 
-exports.syncUrl = async (url, bucket, destKey) => {
-  const response = await concurrency.promiseUrl(url);
+/**
+ * Fetch complete list of S3 objects
+ *
+ * listObjectsV2 is limited to 1,000 results per call.  This function continues
+ * listing objects until there are no more to be fetched.
+ *
+ * The passed params must be compatible with the listObjectsV2 call.
+ *
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
+ *
+ * @param {Object} params - params for the s3.listObjectsV2 call
+ * @returns {Promise.<Array>} - resolves to an array of objects corresponding to
+ *   the Contents property of the listObjectsV2 response
+ */
+async function listS3ObjectsV2(params) {
+  const data = await exports.s3().listObjectsV2(params).promise();
+
+  if (data.IsTruncated) {
+    const newParams = Object.assign({}, params);
+    newParams.ContinuationToken = data.NextContinuationToken;
+    return data.Contents.concat(await exports.listS3ObjectsV2(newParams));
+  }
+
+  return data.Contents;
+}
+exports.listS3ObjectsV2 = listS3ObjectsV2;
+
+exports.syncUrl = async (uri, bucket, destKey) => {
+  const response = await concurrency.promiseUrl(uri);
   await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
 };
 
 exports.getQueueUrl = (sourceArn, queueName) => {
   const arnParts = sourceArn.split(':');
   return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
+};
+
+/**
+* parse an s3 uri to get the bucket and key
+* @param {string} uri must be a uri with the `s3://` protocol
+* @return {object} Returns an object with `Bucket` and `Key` properties
+**/
+exports.parseS3Uri = (uri) => {
+  const parsedUri = url.parse(uri);
+
+  if (parsedUri.protocol !== 's3:') {
+    throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
+  }
+
+  return {
+    Bucket: parsedUri.hostname,
+    Key: parsedUri.path.substring(1)
+  };
 };
 
 exports.getPossiblyRemote = async (obj) => {
@@ -348,8 +480,107 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
      .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
      .map((s) => JSON.parse(`"${s}"`));
 
-// Test code
-// const prom = exports.listS3Objects('gitc-jn-sips-mock', 'PDR/');
-// prom.then((list) => {
-//   log.info(list);
-// });
+/**
+* Send a message to AWS SQS
+* @param {string} queueUrl url of the SQS queue
+* @param {string|object} message either string or object message. If an object it
+* will be serialized into a JSON string.
+* @return {promise}
+**/
+exports.sendSQSMessage = (queueUrl, message) => {
+  let messageBody;
+
+  if (typeof message === 'string') {
+    messageBody = message;
+  }
+  else if (typeof message === 'object') {
+    messageBody = JSON.stringify(message);
+  }
+  else {
+    throw new Error('body type is not accepted');
+  }
+
+  const params = {
+    MessageBody: messageBody,
+    QueueUrl: queueUrl
+  };
+
+  const queue = exports.sqs();
+  return queue.sendMessage(params).promise();
+};
+
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} stateMachineArn state machine ARN
+ * @param {string} executionName state machine's execution name
+ * @returns {string} Step Function Execution Arn
+ */
+exports.getExecutionArn = (stateMachineArn, executionName) => {
+  if (stateMachineArn && executionName) {
+    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
+    return `${sfArn}:${executionName}`;
+  }
+  return null;
+};
+
+/**
+* Parse event metadata to get location of granule on S3
+*
+* @param {string} granuleId - the granule id
+* @param {string} stack = the deployment stackname
+* @param {string} bucket - the deployment bucket name
+* @returns {string} - s3 path
+**/
+exports.getGranuleS3Params = (granuleId, stack, bucket) => {
+  return `${stack}/granules_ingested/${granuleId}`;
+};
+
+/**
+* Set the status of a granule
+* @name setGranuleStatus
+* @param {string} granuleId
+* @param {string} stack = the deployment stackname
+* @param {string} bucket - the deployment bucket name
+* @param {string} stateMachineArn
+* @param {string} executionName
+* @param {string} status
+* @return {promise} returns the response from `S3.put` as a promise
+**/
+exports.setGranuleStatus = async (
+  granuleId,
+  stack,
+  bucket,
+  stateMachineArn,
+  executionName,
+  status
+) => {
+  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
+  const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
+  await exports.s3().putObject(bucket, key, '', null, { executionArn, status }).promise();
+};
+
+/**
+* Get the status of a granule
+*
+* @name getGranuleStatus
+* @param {string} granuleId
+* @param {string} stack = the deployment stackname
+* @param {string} bucket - the deployment bucket name
+* @return {promise|boolean} if the granule does not exist, this returns `false`,
+* else returns a promise that resolves to an array of [status, arn]
+**/
+exports.getGranuleStatus = async (granuleId, stack, bucket) => {
+  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
+  const exists = await exports.fileExists(bucket, key);
+
+  if (exists) {
+    const oarn = exists.Metadata.arn;
+    const status = exists.Metadata.status;
+    if (status === 'failed') {
+      return ['failed', oarn];
+    }
+    return ['completed', oarn];
+  }
+  return false;
+};

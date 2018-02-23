@@ -1,57 +1,14 @@
 # @cumulus/common
 
-Common libraries for interacting with Cumulus ingest
+[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-## Tasks
+Common libraries used in Cumulus.
 
-Cumulus tasks written in node.js should extend [`Task`](./task.js) to benefit from
-the protocol parsing and message interpretation it provides. A minimal task
-class is as follows:
+## What is Cumulus?
 
-```javascript
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
-const Task = require('@cumulus/common/task');
-
-module.exports = class MyTask extends Task {
-  run() {
-    // Read inputs
-    // this.config contains task configuration with all variables resolved
-    // this.message contains the incoming message, with this.message.payload
-    // being the input from the previous step
-
-    // Do actual work
-
-    // Return output, which is the incoming message with its payload overwritten
-    // to contain the output of this task. The result may optionally be a promise.
-    return Object.assign({}, this.message, { payload: someOutput });
-  }
-
-
-  /**
-   * Entrypoint for Lambda
-   */
-  static handler(...args) {
-    return MyTask.handle(...args);
-  }
-}
-```
-
-Several modules provide support for working with Tasks and the message protocol:
-
- * [@cumulus/common/config](./config.js)
-   Utilities for working with configuration YAML files and resolving their resources
- * [@cumulus/common/local-helpers](./local-helpers.js):
-   Provides methods for setting up message payloads for use in development / local testing
- * [@cumulus/common/step-functions](./step-functions.js):
-   Provides initial inputs for step functions
- * [@cumulus/common/field-pattern](./field-pattern.js)
-   String template interpretation, as used by the configuration parser
- * [@cumulus/common/message-source](./message-source.js)
-   Utilities for serializing messages being sent to/from AWS Step Functions, STDIN/STDOUT, etc
- * [@cumulus/common/schema](./schema.js)
-   JSON schema validation
- * [@cumulus/common/test-helpers](./test-helpers.js)
-   Utilities for generating tasks and messages in unit tests
+[Cumulus Documentation](https://cumulus-nasa.github.io/)
 
 ## General Utilities
 
@@ -69,3 +26,11 @@ Several modules provide support for working with Tasks and the message protocol:
    Utilities for manipulating strings
  * [@cumulus/common/util](./util.js)
    Other misc general utilities
+ * [@cumulus/common/test-utils](./test-utils.js)
+   Utilities for writing tests
+ * [@cumulus/common/local-helpers](./local-helpers.js):
+   Provides methods for setting up message payloads for use in development / local testing
+
+## Contributing
+
+See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)

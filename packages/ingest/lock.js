@@ -1,29 +1,13 @@
 'use strict';
 
-const logger = require('./log');
-const aws = require('./aws');
+const log = require('@cumulus/common/log');
+const aws = require('@cumulus/common/aws');
 const lockPrefix = 'lock';
 
-const log = logger.child({ file: 'ingest/lock.js' });
-
-async function delay(t) {
+function delay(t) {
   return new Promise((resolve) => {
     setTimeout(resolve, t);
   });
-}
-
-/**
-* Count Lock
-* Counts the number of locks in a bucket
-*
-* @param {Object} bucket - The AWS S3 bucket to check
-* @param {String} pName - The provider name
-* @returns {Integer} - Number of current locks in the bucket
-**/
-async function countLock(bucket, pName) {
-  var list = await aws.S3.list(bucket, `${lockPrefix}/${pName}`);
-  var count = checkOldLocks(bucket, list.Contents);
-  return count;
 }
 
 /**
@@ -31,30 +15,57 @@ async function countLock(bucket, pName) {
 * Checks all locks and removes those older than five minutes
 *
 * @param {Object} bucket - The AWS S3 bucket with the locks to check
-* @param {String} list - The list of locks in the bucket
-* @returns {Boolean} - Number of locks remaining in bucket
+* @param {string} list - The list of locks in the bucket
+* @returns {boolean} - Number of locks remaining in bucket
 **/
 async function checkOldLocks(bucket, list) {
-  var count = list.length;
-  var item;
-  for (item in list) {
-    var date = list[item].LastModified;
-    var diff = new Date() - date;
-    const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
-    if (diff > fiveMinutes) {
-      aws.S3.delete(bucket, list[item].Key);
-      count--;
+  if (list) {
+    let count = list.length;
+    let item;
+    for (item in list) {
+      const date = list[item].LastModified;
+      const diff = new Date() - date;
+      const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
+      if (diff > fiveMinutes) {
+        aws.S3.delete(bucket, list[item].Key);
+        count--;
+      }
     }
+    return count;
   }
+  return 0;
+}
+
+/**
+* Count Lock
+* Counts the number of locks in a bucket
+*
+* @param {Object} bucket - The AWS S3 bucket to check
+* @param {string} pName - The provider name
+* @returns {integer} - Number of current locks in the bucket
+**/
+async function countLock(bucket, pName) {
+  const list = aws.s3().listObjectsV2({
+    Bucket: bucket,
+    Prefix: `${lockPrefix}/${pName}`
+  }).promise();
+  const count = checkOldLocks(bucket, list.Contents);
   return count;
 }
 
-async function addLock(bucket, pName, filename) {
-  return aws.S3.put(bucket, `${lockPrefix}/${pName}/${filename}`, '');
+function addLock(bucket, pName, filename) {
+  return aws.s3().putObject({
+    Bucket: bucket,
+    Key: `${lockPrefix}/${pName}/${filename}`,
+    Body: ''
+  }).promise();
 }
 
-async function removeLock(bucket, pName, filename) {
-  return aws.S3.delete(bucket, `${lockPrefix}/${pName}/${filename}`);
+function removeLock(bucket, pName, filename) {
+  return aws.s3().deleteObject({
+    Bucket: bucket,
+    Key: `${lockPrefix}/${pName}/${filename}`
+  }).promise();
 }
 
 async function proceed(bucket, provider, filename, counter = 0) {
