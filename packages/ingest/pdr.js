@@ -1,13 +1,15 @@
 'use strict';
 
-const path = require('path');
+const aws = require('@cumulus/common/aws');
+const fs = require('fs-extra');
+const ftpMixin = require('./ftp').ftpMixin;
 const get = require('lodash.get');
+const httpMixin = require('./http').httpMixin;
 const log = require('@cumulus/common/log');
 const parsePdr = require('./parse-pdr').parsePdr;
-const ftpMixin = require('./ftp').ftpMixin;
-const httpMixin = require('./http').httpMixin;
+const path = require('path');
 const sftpMixin = require('./sftp');
-const aws = require('@cumulus/common/aws');
+
 const { baseProtocol } = require('./protocol');
 
 /**
@@ -134,23 +136,33 @@ class Parse {
   /**
    * Copy the PDR to S3 and parse it
    *
-   * @return {Promise}
+   * @returns {Promise} - the list of granules in the PDR
    * @public
    */
   async ingest() {
-    // download
-    const pdrLocalPath = await this.download(this.pdr.path, this.pdr.name);
+    // download the PDR
+    const downloadDir = await this.createDownloadDirectory();
+    const pdrLocalPath = path.join(downloadDir, this.pdr.name);
+    const pdrRemotePath = path.join(this.pdr.path, this.pdr.name);
+    await this.download(pdrRemotePath, pdrLocalPath);
 
-    // parse the PDR
-    const granules = await this.parse(pdrLocalPath);
+    let granules;
+    try {
+      // parse the PDR
+      granules = await this.parse(pdrLocalPath);
 
-    // upload only if the parse was successful
-    await this.upload(
-      this.bucket,
-      path.join(this.stack, this.folder),
-      this.pdr.name,
-      pdrLocalPath
-    );
+      // upload only if the parse was successful
+      await this.upload(
+        this.bucket,
+        path.join(this.stack, this.folder),
+        this.pdr.name,
+        pdrLocalPath
+      );
+    }
+    finally {
+      // Clean up the temporary download directory
+      await fs.remove(downloadDir);
+    }
 
     // return list of all granules found in the PDR
     return granules;
