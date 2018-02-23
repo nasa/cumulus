@@ -3,11 +3,11 @@
 const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const get = require('lodash.get');
-const join = require('path').join;
+const os = require('os');
+const path = require('path');
 const urljoin = require('url-join');
 const cksum = require('cksum');
 const checksum = require('checksum');
-const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
@@ -67,7 +67,7 @@ class Discover {
             file.url_path = f.url_path;
           }
           else {
-            file.url_path = this.collection.url_path || '/';
+            file.url_path = this.collection.url_path || '';
           }
         }
       }
@@ -210,16 +210,13 @@ class Granule {
    *
    * @param {Object} file - the file object to be checked
    * @param {string} fileLocalPath - the path to the file on the filesystem
-   * @param {string} downloadDir - a directory where checksums can be downloaded
-   *   to.  The expectation is that the caller will handle cleaning up this
-   *   directory.
    * @param {Object} [options={}] - options for the this._hash method
    * @returns {undefined} - no return value, but throws an error if the
    *   checksum is invalid
    * @memberof Granule
    */
-  async validateChecksum(file, fileLocalPath, downloadDir, options = {}) {
-    const [type, value] = await this.getChecksumFromFile(file, downloadDir);
+  async validateChecksum(file, fileLocalPath, options = {}) {
+    const [type, value] = await this.getChecksumFromFile(file);
 
     if (!type || !value) return;
 
@@ -264,22 +261,32 @@ class Granule {
     }
   }
 
-  async getChecksumFromFile(file, downloadDir) {
+  async getChecksumFromFile(file) {
     if (file.checksumType && file.checksumValue) {
       return [file.checksumType, file.checksumValue];
     }
     else if (this.checksumFiles[file.name]) {
-      // Fetch the checksum file
       const checksumInfo = this.checksumFiles[file.name];
-      const checksumRemotePath = join(checksumInfo.path, checksumInfo.name);
-      const checksumLocalPath = join(downloadDir, checksumInfo.name);
-      await this.download(checksumRemotePath, checksumLocalPath);
 
-      const checksumValue = (await fs.readFile(checksumLocalPath, 'utf8')).split(' ')[0];
+      const checksumRemotePath = path.join(checksumInfo.path, checksumInfo.name);
+
+      const downloadDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
+      const checksumLocalPath = path.join(downloadDir, checksumInfo.name);
+
+      let checksumValue;
+      try {
+        await this.download(checksumRemotePath, checksumLocalPath);
+        checksumValue = (await fs.readFile(checksumLocalPath, 'utf8')).split(' ')[0];
+      }
+      finally {
+        await fs.remove(downloadDir);
+      }
 
       // assuming the type is md5
       return ['md5', checksumValue];
     }
+
+    // No checksum found
     return [null, null];
   }
 
@@ -291,7 +298,7 @@ class Granule {
     // Check if the file exists
     const exists = await aws.s3ObjectExists({
       Bucket: file.bucket,
-      Key: join(file.url_path, file.name)
+      Key: path.join(file.url_path, file.name)
     });
 
     // Exit early if we can
@@ -310,14 +317,14 @@ class Granule {
 
     const downloadDir = await this.createDownloadDirectory();
     try {
-      const fileLocalPath = join(downloadDir, file.name);
-      const fileRemotePath = join(file.path, file.name);
+      const fileLocalPath = path.join(downloadDir, file.name);
+      const fileRemotePath = path.join(file.path, file.name);
 
       // Download the file
       await this.download(fileRemotePath, fileLocalPath);
 
       // Validate the checksum
-      await this.validateChecksum(file, fileLocalPath, downloadDir);
+      await this.validateChecksum(file, fileLocalPath);
 
       // Upload the file
       const filename = await this.upload(file.bucket, file.url_path, file.name, fileLocalPath);
