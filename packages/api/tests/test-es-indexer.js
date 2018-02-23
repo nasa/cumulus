@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const fs = require('fs');
+const clone = require('lodash.clonedeep');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const { StepFunction } = require('@cumulus/ingest/aws');
@@ -17,7 +18,7 @@ const pdrSuccess = require('./data/pdr_success.json');
 
 const esIndex = randomString();
 process.env.bucket = randomString();
-process.env.stackName = 'my-stack';
+process.env.stackName = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
 
@@ -32,12 +33,13 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  // remove elasticsearch index
-  await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  Promise.all([
+    esClient.indices.delete({ index: esIndex }),
+    aws.recursivelyDeleteS3Bucket(process.env.bucket)
+  ]);
 });
 
-test('indexing a successful granule record', async (t) => {
+test.serial('indexing a successful granule record', async (t) => {
   const type = 'granule';
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
@@ -67,12 +69,12 @@ test('indexing a successful granule record', async (t) => {
   t.is(deconstructed, collection.name);
 });
 
-test('indexing multiple successful granule records', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+test.serial('indexing multiple successful granule records', async (t) => {
+  const newPayload = clone(granuleSuccess);
   const type = 'granule';
   const granule = newPayload.payload.granules[0];
   granule.granuleId = randomString();
-  const granule2 = Object.assign({}, granule);
+  const granule2 = clone(granule);
   granule2.granuleId = randomString();
   newPayload.payload.granules.push(granule2);
   const collection = newPayload.meta.collection;
@@ -102,7 +104,7 @@ test('indexing multiple successful granule records', async (t) => {
   });
 });
 
-test('indexing a failed granule record', async (t) => {
+test.serial('indexing a failed granule record', async (t) => {
   const type = 'granule';
   const granule = granuleFailure.payload.granules[0];
   const collection = granuleFailure.meta.collection;
@@ -125,11 +127,12 @@ test('indexing a failed granule record', async (t) => {
   t.is(record._source.status, 'failed');
   t.is(record._id, granule.granuleId);
   t.is(record._source.published, false);
-  t.is(record._source.error, JSON.stringify(granuleFailure.exception));
+  t.is(record._source.error.Error, granuleFailure.exception.Error);
+  t.is(record._source.error.Cause, granuleFailure.exception.Cause);
 });
 
-test('indexing a granule record without state_machine info', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+test.serial('indexing a granule record without state_machine info', async (t) => {
+  const newPayload = clone(granuleSuccess);
   const type = 'granule';
   delete newPayload.cumulus_meta.state_machine;
 
@@ -137,8 +140,8 @@ test('indexing a granule record without state_machine info', async (t) => {
   t.is(r, undefined);
 });
 
-test('indexing a granule record without a granule', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+test.serial('indexing a granule record without a granule', async (t) => {
+  const newPayload = clone(granuleSuccess);
   const type = 'granule';
   delete newPayload.payload;
   delete newPayload.meta;
@@ -147,8 +150,8 @@ test('indexing a granule record without a granule', async (t) => {
   t.is(r, undefined);
 });
 
-test('indexing a granule record in meta section', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+test.serial('indexing a granule record in meta section', async (t) => {
+  const newPayload = clone(granuleSuccess);
   const type = 'granule';
   delete newPayload.payload;
   newPayload.meta.status = 'running';
@@ -178,7 +181,7 @@ test('indexing a granule record in meta section', async (t) => {
   t.is(record._source.published, false);
 });
 
-test('indexing a rule record', async (t) => {
+test.serial('indexing a rule record', async (t) => {
   const testRecord = {
     name: randomString()
   };
@@ -199,7 +202,7 @@ test('indexing a rule record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test('indexing a provider record', async (t) => {
+test.serial('indexing a provider record', async (t) => {
   const testRecord = {
     id: randomString()
   };
@@ -220,7 +223,7 @@ test('indexing a provider record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test('indexing a collection record', async (t) => {
+test.serial('indexing a collection record', async (t) => {
   const collection = {
     name: randomString(),
     version: '001'
@@ -245,7 +248,7 @@ test('indexing a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test('indexing a failed pdr record', async (t) => {
+test.serial('indexing a failed pdr record', async (t) => {
   const type = 'pdr';
   const payload = pdrFailure.payload;
   payload.pdr.name = randomString();
@@ -279,7 +282,7 @@ test('indexing a failed pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test('indexing a successful pdr record', async (t) => {
+test.serial('indexing a successful pdr record', async (t) => {
   const type = 'pdr';
   pdrSuccess.meta.pdr.name = randomString();
   const pdr = pdrSuccess.meta.pdr;
@@ -313,9 +316,9 @@ test('indexing a successful pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test('indexing a running pdr record', async (t) => {
+test.serial('indexing a running pdr record', async (t) => {
   const type = 'pdr';
-  const newPayload = JSON.parse(JSON.stringify(pdrSuccess));
+  const newPayload = clone(pdrSuccess);
   newPayload.meta.pdr.name = randomString();
   newPayload.meta.status = 'running';
   newPayload.payload.running.push('arn');
@@ -344,7 +347,7 @@ test('indexing a running pdr record', async (t) => {
   t.is(record.progress, 75);
 });
 
-test('indexing a running pdr when pdr is missing', async (t) => {
+test.serial('indexing a running pdr when pdr is missing', async (t) => {
   const type = 'pdr';
   delete pdrSuccess.meta.pdr;
   const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
@@ -353,8 +356,8 @@ test('indexing a running pdr when pdr is missing', async (t) => {
   t.is(r, undefined);
 });
 
-test('indexing a step function with missing arn', async(t) => {
-  const newPayload = JSON.parse(JSON.stringify(granuleSuccess));
+test.serial('indexing a step function with missing arn', async(t) => {
+  const newPayload = clone(granuleSuccess);
   delete newPayload.cumulus_meta.state_machine;
 
   const promise = indexer.indexStepFunction(esClient, newPayload, esIndex);
@@ -362,8 +365,8 @@ test('indexing a step function with missing arn', async(t) => {
   t.is(error.message, 'State Machine Arn is missing. Must be included in the cumulus_meta');
 });
 
-test('indexing a successful step function', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(pdrSuccess));
+test.serial('indexing a successful step function', async (t) => {
+  const newPayload = clone(pdrSuccess);
   newPayload.cumulus_meta.execution_name = randomString();
 
   const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
@@ -384,8 +387,8 @@ test('indexing a successful step function', async (t) => {
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
-test('indexing a failed step function', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(pdrFailure));
+test.serial('indexing a failed step function', async (t) => {
+  const newPayload = clone(pdrFailure);
   newPayload.cumulus_meta.execution_name = randomString();
 
   const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
@@ -403,11 +406,11 @@ test('indexing a failed step function', async (t) => {
 
   t.is(record.status, 'failed');
   t.is(record.type, newPayload.meta.workflow_name);
-  t.is(typeof record.error, 'string');
+  t.is(typeof record.error, 'object');
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
-test('partially updating a provider record', async (t) => {
+test.serial('partially updating a provider record', async (t) => {
   const testRecord = {
     id: randomString()
   };
@@ -444,7 +447,7 @@ test('partially updating a provider record', async (t) => {
   t.is(record._source.host, updatedRecord.host);
 });
 
-test('delete a provider record', async (t) => {
+test.serial('delete a provider record', async (t) => {
   const testRecord = {
     id: randomString()
   };
@@ -476,7 +479,7 @@ test('delete a provider record', async (t) => {
   t.is(error.message, 'Not Found');
 });
 
-test('reingest a granule', async (t) => {
+test.serial('reingest a granule', async (t) => {
   const input = JSON.stringify(granuleSuccess);
   const fakeSFResponse = {
     execution: {
@@ -524,20 +527,20 @@ test('reingest a granule', async (t) => {
   t.is(record._source.status, 'running');
 });
 
-test('pass a sns message to main handler', async (t) => {
+test.serial('pass a sns message to main handler', async (t) => {
   const txt = fs.readFileSync(path.join(
     __dirname, '/data/sns_message_granule.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, (e, r) => {});
+  const resp = await indexer.handler(event, {}, (e) => {});
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);
   t.truthy(resp[0].granule);
   t.falsy(resp[0].pdr);
 
-  const msg = JSON.parse(event.Records[0].Sns.Message)
+  const msg = JSON.parse(event.Records[0].Sns.Message);
   const granule = msg.payload.granules[0];
   const collection = msg.meta.collection;
   const collectionId = indexer.constructCollectionId(collection.name, collection.version);
@@ -549,4 +552,43 @@ test('pass a sns message to main handler', async (t) => {
     parent: collectionId
   });
   t.is(record._id, granule.granuleId);
+});
+
+test.serial('pass a sns message to main handler with parse info', async (t) => {
+  const txt = fs.readFileSync(path.join(
+    __dirname, '/data/sns_message_parse_pdr.txt'
+  ), 'utf8');
+
+  const event = JSON.parse(JSON.parse(txt.toString()));
+  const resp = await indexer.handler(event, {}, () => {});
+
+  t.is(resp.length, 1);
+  t.truthy(resp[0].sf);
+  t.falsy(resp[0].granule);
+  t.truthy(resp[0].pdr);
+
+  const msg = JSON.parse(event.Records[0].Sns.Message);
+  const pdr = msg.payload.pdr;
+  // test granule record is added
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'pdr',
+    id: pdr.name
+  });
+  t.is(record._id, pdr.name);
+  t.falsy(record._source.error);
+});
+
+test.serial('pass a sns message to main handler with discoverpdr info', async (t) => {
+  const txt = fs.readFileSync(path.join(
+    __dirname, '/data/sns_message_discover_pdr.txt'
+  ), 'utf8');
+
+  const event = JSON.parse(JSON.parse(txt.toString()));
+  const resp = await indexer.handler(event, {}, () => {});
+
+  t.is(resp.length, 1);
+  t.truthy(resp[0].sf);
+  t.falsy(resp[0].granule);
+  t.falsy(resp[0].pdr);
 });
