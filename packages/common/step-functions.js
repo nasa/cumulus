@@ -1,7 +1,7 @@
 'use strict';
 
 const aws = require('./aws');
-const uuid = require('uuid');
+const uuidv4 = require('uuid/v4');
 
 /**
  * Constructs the input to pass to the step functions to kick off ingest. The execution name
@@ -11,8 +11,8 @@ const constructStepFunctionInput = (resources, provider, collection) => {
   const stateMachine = collection.workflow;
   const meta = JSON.parse(JSON.stringify(collection.meta || {}));
   const startDate = new Date().toISOString();
-  const id = uuid.v4();
-  const executionName = aws.toSfnExecutionName([collection.id, id], '__');
+  const id = uuidv4();
+  const executionName = aws.toSfnExecutionName([collection.name, id], '__');
   return {
     workflow_config_template: collection.workflow_config_template,
     resources: resources,

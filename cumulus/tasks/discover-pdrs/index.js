@@ -1,48 +1,64 @@
 'use strict';
 
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const ProviderNotFound = require('@cumulus/common/errors').ProviderNotFound;
 const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
-const logger = require('@cumulus/ingest/log');
+const log = require('@cumulus/common/log');
 const local = require('@cumulus/common/local-helpers');
 
-const log = logger.child({ file: 'discover-pdrs/index.js' });
-
-function handler(_event, context, cb) {
+/**
+ * Discover PDRs
+ *
+ * @param {Object} event - a simplified Cumulus event with input and config properties
+ * @returns {Promise.<Array>} - resolves to an array describing PDRs
+ */
+function discoverPdrs(event) {
   try {
-    log.debug(_event);
-    const event = Object.assign({}, _event);
-    const queue = get(event, 'meta.useQueue', true);
-    const provider = get(event, 'provider', null);
+    const config = get(event, 'config', {});
+    const queue = get(config, 'useQueue', true);
+    const stack = config.stack;
+    const bucket = config.bucket;
+    const queueUrl = config.queueUrl;
+    const templateUri = config.templateUri;
+    const collection = config.collection;
+    const provider = config.provider;
+    // FIXME Can config.folder not be used?
 
-    log.child({ provider: get(provider, 'id') });
+    const output = {};
+
+    log.info('Received the provider', { provider: get(provider, 'id') });
 
     if (!provider) {
       const err = new ProviderNotFound('Provider info not provided');
       log.error(err);
-      return cb(err);
+      return Promise.reject(err);
     }
 
     const Discover = pdr.selector('discover', provider.protocol, queue);
-    const discover = new Discover(event);
+    const discover = new Discover(
+      stack,
+      bucket,
+      collection,
+      provider,
+      queueUrl,
+      templateUri
+    );
 
-    log.debug('Staring PDR discovery');
+    log.debug('Starting PDR discovery');
+
     return discover.discover().then((pdrs) => {
-      if (queue) {
-        event.payload.pdrs_found = pdrs.length;
-      }
-      else {
-        event.payload.pdrs = pdrs;
-      }
+      output.pdrs = pdrs;
 
       if (discover.connected) {
         discover.end();
         log.debug(`Ending ${provider.protocol} connection`);
       }
 
-      return cb(null, event);
-    }).catch(e => {
+      return output;
+    })
+    .catch((e) => {
       log.error(e);
 
       if (discover.connected) {
@@ -53,19 +69,25 @@ function handler(_event, context, cb) {
       if (e.toString().includes('ECONNREFUSED')) {
         const err = new errors.RemoteResourceError('Connection Refused');
         log.error(err);
-        return cb(err);
+        throw err;
+      }
+      else if (e.message.includes('Please login with USER and PASS')) {
+        const err = new errors.FTPError('Login incorrect');
+        log.error(err);
+        throw err;
       }
       else if (e.details && e.details.status === 'timeout') {
         const err = new errors.ConnectionTimeout('connection Timed out');
         log.error(err);
-        return cb(err);
+        throw err;
       }
       else if (e.details && e.details.status === 'notfound') {
         const err = new errors.HostNotFound(`${e.details.url} not found`);
         log.error(err);
-        return cb(err);
+        throw err;
       }
-      return cb(e);
+
+      throw e;
     });
   }
   catch (e) {
@@ -73,13 +95,23 @@ function handler(_event, context, cb) {
     throw e;
   }
 }
+exports.discoverPdrs = discoverPdrs; // exported to support testing
 
-module.exports.handler = handler;
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(discoverPdrs, event, context, callback);
+}
+exports.handler = handler;
 
+// use node index.js local to invoke this
 local.justLocalRun(() => {
-  const payload = require( // eslint-disable-line global-require
-    '@cumulus/test-data/payloads/modis/discover.json'
-  );
-  payload.meta.useQueue = false;
+  const payload = require('@cumulus/test-data/cumulus_messages/discover-pdrs.json'); // eslint-disable-line global-require, max-len
   handler(payload, {}, (e, r) => console.log(e, r));
 });

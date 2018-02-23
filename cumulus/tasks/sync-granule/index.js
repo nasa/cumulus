@@ -1,12 +1,21 @@
 'use strict';
-const get = require('lodash.get');
+
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
-const logger = require('@cumulus/ingest/log');
+const local = require('@cumulus/common/local-helpers');
+const log = require('@cumulus/common/log');
 
-const log = logger.child({ file: 'sync-granule/index.js' });
-
+/**
+ * Ingest a list of granules
+ *
+ * @param {Object} ingest - an ingest object
+ * @param {string} bucket - the name of an S3 bucket, used for locking
+ * @param {string} provider - the name of a provider, used for locking
+ * @param {Object[]} granules - the granules to be ingested
+ * @returns {Promise.<Array>} - the list of successfully ingested granules
+ */
 async function download(ingest, bucket, provider, granules) {
   const updatedGranules = [];
 
@@ -36,57 +45,72 @@ async function download(ingest, bucket, provider, granules) {
   return updatedGranules;
 }
 
-module.exports.handler = function handler(_event, context, cb) {
-  try {
-    const event = Object.assign({}, _event);
-    const buckets = get(event, 'resources.buckets');
-    const collection = get(event, 'collection.meta');
-    const granules = get(event, 'payload.granules');
-    const provider = get(event, 'provider');
+/**
+ * Ingest a list of granules
+ *
+ * @param {Object} event - contains input and config parameters
+ * @returns {Promise.<Object>} - a description of the ingested granules
+ */
+exports.syncGranule = function syncGranule(event) {
+  const config = event.config;
+  const input = event.input;
+  const buckets = config.buckets;
+  const provider = config.provider;
+  const collection = config.collection;
+  const forceDownload = config.forceDownload || false;
 
-    if (!provider) {
-      const err = new errors.ProviderNotFound('Provider info not provided');
-      log.error(err);
-      return cb(err);
-    }
+  if (!provider) {
+    const err = new errors.ProviderNotFound('Provider info not provided');
+    log.error(err);
+    return Promise.reject(err);
+  }
 
-    const IngestClass = granule.selector('ingest', provider.protocol);
-    const ingest = new IngestClass(event);
+  const IngestClass = granule.selector('ingest', provider.protocol);
+  const ingest = new IngestClass(
+    buckets,
+    collection,
+    provider,
+    forceDownload
+  );
 
-    return download(ingest, buckets.internal, provider, granules).then((gs) => {
-      event.payload.granules = gs;
+  return download(ingest, buckets.internal, provider, input.granules)
+    .then((granules) => {
+      if (ingest.end) ingest.end();
 
-      if (collection.process) {
-        event.meta.process = collection.process;
-      }
+      const output = { granules };
+      if (collection.process) output.process = collection.process;
 
-      if (ingest.end) {
-        ingest.end();
-      }
+      return output;
+    }).catch((e) => {
+      if (ingest.end) ingest.end();
 
-      return cb(null, event);
-    }).catch(e => {
-      if (ingest.end) {
-        ingest.end();
-      }
-
+      let errorToThrow = e;
       if (e.toString().includes('ECONNREFUSED')) {
-        const err = new errors.RemoteResourceError('Connection Refused');
-        log.error(err);
-        return cb(err);
+        errorToThrow = new errors.RemoteResourceError('Connection Refused');
       }
       else if (e.details && e.details.status === 'timeout') {
-        const err = new errors.ConnectionTimeout('connection Timed out');
-        log.error(err);
-        return cb(err);
+        errorToThrow = new errors.ConnectionTimeout('connection Timed out');
       }
 
-      log.error(e);
-      return cb(e);
+      log.error(errorToThrow);
+      throw errorToThrow;
     });
-  }
-  catch (e) {
-    log.error(e);
-    throw e;
-  }
 };
+
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+exports.handler = function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, callback);
+};
+
+// use node index.js local to invoke this
+local.justLocalRun(() => {
+  const payload = require('@cumulus/test-data/cumulus_messages/sync-granule.json'); // eslint-disable-line global-require, max-len
+  exports.handler(payload, {}, (e, r) => console.log(e, r));
+});
