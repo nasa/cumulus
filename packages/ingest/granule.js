@@ -12,6 +12,7 @@ const errors = require('@cumulus/common/errors');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
+const { baseProtocol } = require('./protocol');
 
 class Discover {
   constructor(event) {
@@ -346,32 +347,32 @@ class Granule {
 /**
  * A class for discovering granules using HTTP or HTTPS.
  */
-class HttpDiscoverGranules extends httpMixin(Discover) {}
+class HttpDiscoverGranules extends httpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using SFTP.
  */
-class SftpDiscoverGranules extends sftpMixin(Discover) {}
+class SftpDiscoverGranules extends sftpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using FTP.
  */
-class FtpDiscoverGranules extends ftpMixin(Discover) {}
+class FtpDiscoverGranules extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
  * Ingest Granule from an FTP endpoint.
  */
-class FtpGranule extends ftpMixin(Granule) {}
+class FtpGranule extends ftpMixin(baseProtocol(Granule)) {}
 
 /**
  * Ingest Granule from an SFTP endpoint.
  */
-class SftpGranule extends sftpMixin(Granule) {}
+class SftpGranule extends sftpMixin(baseProtocol(Granule)) {}
 
 /**
  * Ingest Granule from an HTTP endpoint.
  */
-class HttpGranule extends httpMixin(Granule) {}
+class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
