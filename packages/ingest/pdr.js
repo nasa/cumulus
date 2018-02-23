@@ -2,36 +2,47 @@
 
 const path = require('path');
 const get = require('lodash.get');
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 const { MismatchPdrCollection } = require('@cumulus/common/errors');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 const sftpMixin = require('./sftp');
+const s3Mixin = require('./s3').s3Mixin;
+const aws = require('@cumulus/common/aws');
 const { S3 } = require('./aws');
 const queue = require('./queue');
-
-const log = logger.child({ file: 'ingest/pdr.js' });
+const { baseProtocol } = require('./protocol');
 
 /**
  * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
  */
 class Discover {
-  constructor(event) {
+  constructor(
+    stack,
+    bucket,
+    collection,
+    provider,
+    queueUrl,
+    templateUri,
+    folder = 'pdrs',
+    queueLimit = null
+  ) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    this.stack = get(event, 'resources.stack');
-    this.buckets = get(event, 'resources.buckets');
-    this.collection = get(event, 'collection.meta');
-    this.provider = get(event, 'provider');
-    this.folder = get(event, 'meta.pdrFolder', 'pdrs');
-    this.event = event;
+    this.stack = stack;
+    this.bucket = bucket;
+    this.collection = collection;
+    this.provider = provider;
+    this.folder = folder;
+    this.queueUrl = queueUrl;
+    this.templateUri = templateUri;
 
     // get authentication information
     this.port = get(this.provider, 'port', 21);
@@ -39,7 +50,7 @@ class Discover {
     this.path = this.collection.provider_path || '/';
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
-    this.limit = get(event, 'meta.queueLimit', null);
+    this.limit = queueLimit;
   }
 
   filterPdrs(pdr) {
@@ -61,9 +72,20 @@ class Discover {
     return this.findNewPdrs(files);
   }
 
-  async pdrIsNew(pdr) {
-    const exists = await S3.fileExists(this.buckets.internal, path.join(this.stack, this.folder, pdr.name));
-    return exists ? false : pdr;
+  /**
+   * Determine if a PDR does not yet exist in S3.
+   *
+   * @param {Object} pdr - the PDR that's being looked for
+   * @param {string} pdr.name - the name of the PDR (in S3)
+   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
+   *   when the object does already exists in S3, or the passed-in PDR object
+   *   if it does not already exist in S3.
+   */
+  pdrIsNew(pdr) {
+    return aws.s3ObjectExists({
+      Bucket: this.bucket,
+      Key: path.join(this.stack, this.folder, pdr.name)
+    }).then((exists) => (exists ? false : pdr));
   }
 
   /**
@@ -86,44 +108,55 @@ class Discover {
 
 /**
  * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
  */
 class DiscoverAndQueue extends Discover {
-  async findNewPdrs(_pdrs) {
-    let pdrs = _pdrs;
-    pdrs = await super.findNewPdrs(pdrs);
-    if (this.limit) {
-      pdrs = pdrs.slice(0, this.limit);
-    }
-    return Promise.all(pdrs.map(p => queue.queuePdr(this.event, p)));
+  async findNewPdrs(pdrs) {
+    let newPdrs = await super.findNewPdrs(pdrs);
+    if (this.limit) newPdrs = newPdrs.slice(0, this.limit);
+    return Promise.all(newPdrs.map((p) => queue.queuePdr(
+      this.queueUrl,
+      this.templateUri,
+      this.provider,
+      this.collection,
+      p
+    )));
   }
 }
 
 
 /**
  * This is a base class for ingesting and parsing a single PDR
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
  */
-
 class Parse {
-  constructor(event) {
+  constructor(
+    pdr,
+    stack,
+    bucket,
+    collection,
+    provider,
+    queueUrl,
+    templateUri,
+    folder = 'pdrs') {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    this.event = event;
-    this.stack = get(event, 'resources.stack');
-    this.pdr = get(event, 'payload.pdr');
-    this.buckets = get(event, 'resources.buckets');
-    this.collection = get(event, 'collection.meta');
-    this.provider = get(event, 'provider');
-    this.folder = get(event, 'meta.pdrFolder', 'pdrs');
+    this.pdr = pdr;
+    this.stack = stack;
+    this.bucket = bucket;
+    this.collection = collection;
+    this.provider = provider;
+    this.folder = folder;
+    this.queueUrl = queueUrl;
+    this.templateUri = templateUri;
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
@@ -157,7 +190,7 @@ class Parse {
 
     // upload only if the parse was successful
     await this.upload(
-      this.buckets.internal,
+      this.bucket,
       path.join(this.stack, this.folder),
       this.pdr.name,
       pdrLocalPath
@@ -168,14 +201,13 @@ class Parse {
   }
 
   /**
-   * This async method parse a PDR and returns all the granules in it
+   * This method parses a PDR and returns all the granules in it
    *
    * @param {string} pdrLocalPath PDR path on disk
    * @return {Promise}
    * @public
    */
-
-  async parse(pdrLocalPath) {
+  parse(pdrLocalPath) {
     // catching all parse errors here to mark the pdr as failed
     // if any error occured
     const parsed = parsePdr(pdrLocalPath, this.collection, this.pdr.name);
@@ -198,7 +230,7 @@ class Parse {
 
 /**
  * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
@@ -206,20 +238,18 @@ class Parse {
 class ParseAndQueue extends Parse {
   async ingest() {
     const payload = await super.ingest();
-    const events = {};
+    const collections = {};
 
     //payload.granules = payload.granules.slice(0, 10);
 
     // make sure all parsed granules have the correct collection
     for (const g of payload.granules) {
-      if (!events[g.dataType]) {
-        events[g.dataType] = JSON.parse(JSON.stringify(this.event));
-
+      if (!collections[g.dataType]) {
         // if the collection is not provided in the payload
         // get it from S3
         if (g.dataType !== this.collection.name) {
-          const bucket = this.buckets.internal;
-          const key = `${this.event.resources.stack}` +
+          const bucket = this.bucket;
+          const key = `${this.stack}` +
                       `/collections/${g.dataType}.json`;
           let file;
           try {
@@ -231,29 +261,38 @@ class ParseAndQueue extends Parse {
             );
           }
 
-          events[g.dataType].collection = {
-            id: g.dataType,
-            meta: JSON.parse(file.Body.toString())
-          };
+          collections[g.dataType] = JSON.parse(file.Body.toString());
+        }
+        else {
+          collections[g.dataType] = this.collection;
         }
       }
 
       g.granuleId = this.extractGranuleId(
         g.files[0].name,
-        events[g.dataType].collection.meta.granuleIdExtraction
+        collections[g.dataType].granuleIdExtraction
       );
     }
 
     log.info(`Queueing ${payload.granules.length} granules to be processed`);
 
     const names = await Promise.all(
-      payload.granules.map(g => queue.queueGranule(events[g.dataType], g))
+      payload.granules.map((g) => queue.queueGranule(
+        g,
+        this.queueUrl,
+        this.templateUri,
+        this.provider,
+        collections[g.dataType],
+        this.pdr,
+        this.stack,
+        this.bucket
+      ))
     );
 
     let isFinished = false;
-    const running = names.filter(n => n[0] === 'running').map(n => n[1]);
-    const completed = names.filter(n => n[0] === 'completed').map(n => n[1]);
-    const failed = names.filter(n => n[0] === 'failed').map(n => n[1]);
+    const running = names.filter((n) => n[0] === 'running').map((n) => n[1]);
+    const completed = names.filter((n) => n[0] === 'completed').map((n) => n[1]);
+    const failed = names.filter((n) => n[0] === 'failed').map((n) => n[1]);
     if (running.length === 0) {
       isFinished = true;
     }
@@ -268,7 +307,7 @@ class ParseAndQueue extends Parse {
  * @class
  */
 
-class FtpDiscover extends ftpMixin(Discover) {}
+class FtpDiscover extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
  * Discover PDRs from a HTTP endpoint.
@@ -276,7 +315,7 @@ class FtpDiscover extends ftpMixin(Discover) {}
  * @class
  */
 
-class HttpDiscover extends httpMixin(Discover) {}
+class HttpDiscover extends httpMixin(baseProtocol(Discover)) {}
 
 /**
  * Discover PDRs from a SFTP endpoint.
@@ -284,7 +323,15 @@ class HttpDiscover extends httpMixin(Discover) {}
  * @class
  */
 
-class SftpDiscover extends sftpMixin(Discover) {}
+class SftpDiscover extends sftpMixin(baseProtocol(Discover)) {}
+
+/**
+ * Discover PDRs from a S3 endpoint.
+ *
+ * @class
+ */
+
+class S3Discover extends s3Mixin(baseProtocol(Discover)) {}
 
 /**
  * Discover and Queue PDRs from a FTP endpoint.
@@ -292,7 +339,7 @@ class SftpDiscover extends sftpMixin(Discover) {}
  * @class
  */
 
-class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
+class FtpDiscoverAndQueue extends ftpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Discover and Queue PDRs from a HTTP endpoint.
@@ -300,7 +347,7 @@ class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
  * @class
  */
 
-class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
+class HttpDiscoverAndQueue extends httpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Discover and Queue PDRs from a SFTP endpoint.
@@ -308,23 +355,15 @@ class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
  * @class
  */
 
-class SftpDiscoverAndQueue extends sftpMixin(DiscoverAndQueue) {}
+class SftpDiscoverAndQueue extends sftpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
- * Parse PDRs downloaded from a FTP endpoint.
+ * Discover and Queue PDRs from a S3 endpoint.
  *
  * @class
  */
 
-class FtpParse extends ftpMixin(Parse) {}
-
-/**
- * Parse PDRs downloaded from a HTTP endpoint.
- *
- * @class
- */
-
-class HttpParse extends httpMixin(Parse) {}
+class S3DiscoverAndQueue extends s3Mixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Parse PDRs downloaded from a SFTP endpoint.
@@ -332,7 +371,7 @@ class HttpParse extends httpMixin(Parse) {}
  * @class
  */
 
-class SftpParse extends sftpMixin(Parse) {}
+class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
 
 /**
  * Parse and Queue PDRs downloaded from a FTP endpoint.
@@ -340,7 +379,7 @@ class SftpParse extends sftpMixin(Parse) {}
  * @class
  */
 
-class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
+class FtpParse extends ftpMixin(baseProtocol(Parse)) {}
 
 /**
  * Parse and Queue PDRs downloaded from a HTTP endpoint.
@@ -348,7 +387,32 @@ class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
  * @class
  */
 
-class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
+class HttpParse extends httpMixin(baseProtocol(Parse)) {}
+
+
+/**
+ * Parse PDRs downloaded from a S3 endpoint.
+ *
+ * @class
+ */
+
+class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
+
+/**
+ * Parse and Queue PDRs downloaded from a FTP endpoint.
+ *
+ * @class
+ */
+
+class FtpParseAndQueue extends ftpMixin(baseProtocol(ParseAndQueue)) {}
+
+/**
+ * Parse and Queue PDRs downloaded from a HTTP endpoint.
+ *
+ * @class
+ */
+
+class HttpParseAndQueue extends httpMixin(baseProtocol(ParseAndQueue)) {}
 
 /**
  * Parse and Queue PDRs downloaded from a SFTP endpoint.
@@ -356,13 +420,21 @@ class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
  * @classc
  */
 
-class SftpParseAndQueue extends sftpMixin(ParseAndQueue) {}
+class SftpParseAndQueue extends sftpMixin(baseProtocol(ParseAndQueue)) {}
 
 /**
- * Select a class for discovering PDRs based on protocol 
- * 
+ * Parse and Queue PDRs downloaded from a S3 endpoint.
+ *
+ * @classc
+ */
+
+class S3ParseAndQueue extends s3Mixin(baseProtocol(ParseAndQueue)) {}
+
+/**
+ * Select a class for discovering PDRs based on protocol
+ *
  * @param {string} type - `discover` or `parse`
- * @param {string} protocol - `sftp`, `ftp`, or `http`
+ * @param {string} protocol - `sftp`, `ftp`, `http` or 's3'
  * @param {boolean} q - set to `true` to queue pdrs
  * @returns {function} - a constructor to create a PDR discovery object
  */
@@ -375,6 +447,8 @@ function selector(type, protocol, q) {
         return q ? FtpDiscoverAndQueue : FtpDiscover;
       case 'sftp':
         return q ? SftpDiscoverAndQueue : SftpDiscover;
+      case 's3':
+        return q ? S3DiscoverAndQueue : S3Discover;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -386,7 +460,9 @@ function selector(type, protocol, q) {
       case 'ftp':
         return q ? FtpParseAndQueue : FtpParse;
       case 'sftp':
-        return q ? SftpParseAndQueue : SftpParseAndQueue;
+        return q ? SftpParseAndQueue : SftpParse;
+      case 's3':
+        return q ? S3ParseAndQueue : S3Parse;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -399,9 +475,12 @@ module.exports.selector = selector;
 module.exports.HttpParse = HttpParse;
 module.exports.FtpParse = FtpParse;
 module.exports.SftpParse = SftpParse;
+module.exports.S3Parse = S3Parse;
 module.exports.FtpDiscover = FtpDiscover;
 module.exports.HttpDiscover = HttpDiscover;
 module.exports.SftpDiscover = SftpDiscover;
+module.exports.S3Discover = S3Discover;
 module.exports.FtpDiscoverAndQueue = FtpDiscoverAndQueue;
 module.exports.HttpDiscoverAndQueue = HttpDiscoverAndQueue;
 module.exports.SftpDiscoverAndQueue = SftpDiscoverAndQueue;
+module.exports.S3DiscoverAndQueue = S3DiscoverAndQueue;
