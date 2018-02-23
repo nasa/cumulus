@@ -178,3 +178,50 @@ test('parse PDR from SFTP endpoint', async (t) => {
     ]);
   }
 });
+
+test('Parse a PDR from an S3 provider', async (t) => {
+  const internalBucket = randomString();
+  const bucket = randomString();
+  const pdrName = 'MOD09GQ.PDR';
+
+  await Promise.all([
+    s3().createBucket({ Bucket: bucket }).promise(),
+    s3().createBucket({ Bucket: internalBucket }).promise()
+  ]);
+
+  await s3().putObject({
+    Bucket: bucket,
+    Key: pdrName,
+    Body: fs.createReadStream('../../../packages/test-data/pdrs/MOD09GQ.PDR')
+  }).promise();
+
+  const event = cloneDeep(modis);
+  event.config.bucket = internalBucket;
+  event.config.useQueue = false;
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: bucket
+  };
+
+  event.input.pdr.path = '';
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  let output;
+  try {
+    output = await parsePdr(event);
+  }
+  finally {
+    await Promise.all([
+      recursivelyDeleteS3Bucket(bucket),
+      recursivelyDeleteS3Bucket(internalBucket)
+    ]);
+  }
+
+  await validateOutput(t, output);
+  t.is(output.granules.length, output.granulesCount);
+  t.is(output.pdr.name, pdrName);
+  t.is(output.filesCount, 2);
+});
