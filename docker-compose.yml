@@ -21,7 +21,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - "./packages/test-data:/var/www/html"
+      - "./http-test-data:/var/www/html"
 
   sftp:
     image: atmoz/sftp

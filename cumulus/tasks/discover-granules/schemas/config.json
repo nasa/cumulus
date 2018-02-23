@@ -4,9 +4,6 @@
   "type": "object",
   "required": [ "provider" ],
   "properties": {
-    "useQueue": {
-      "type": "boolean"
-    },
     "provider": {
       "type": "object",
       "required": [ "host", "protocol" ],
