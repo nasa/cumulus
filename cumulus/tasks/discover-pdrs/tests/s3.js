@@ -79,7 +79,7 @@ test('test pdr discovery with S3 and a queue when there are no PDRs', async (t) 
 
   const output = await discoverPdrs(event);
 
-  t.is(output.pdrs_found, 0);
+  t.is(output.pdrs.length, 0);
 });
 
 test('test pdr discovery with S3 and witout queuing when there are no PDRs', async (t) => {
@@ -147,7 +147,7 @@ test('test pdr discovery with S3 when no PDRs are new', async (t) => {
 
   const output = await discoverPdrs(event);
 
-  t.is(output.pdrs_found, 0);
+  t.is(output.pdrs.length, 0);
 });
 
 test('test pdr discovery with S3 when some PDRs are new', async (t) => {
@@ -202,7 +202,7 @@ test('test pdr discovery with S3 when some PDRs are new', async (t) => {
 
   const output = await discoverPdrs(event);
 
-  t.is(output.pdrs_found, 1);
+  t.is(output.pdrs.length, 1);
 });
 
 
@@ -237,5 +237,5 @@ test('test pdr discovery with S3 when all PDRs are new', async (t) => {
 
   const output = await discoverPdrs(event);
 
-  t.is(output.pdrs_found, 1);
+  t.is(output.pdrs.length, 1);
 });
