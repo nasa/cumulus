@@ -18,14 +18,14 @@ module.exports.baseProtocol = superclass => class extends superclass {
   /**
    * List files of a given path
    *
-   * @returns {*} returns the list of files
+   * @returns {Array.<Object>} returns the list of files
    */
   list() {
     throw new TypeError('method not implemented');
-  } 
+  }
 
   /**
-   * Downloads a given url and upload to a given S3 location
+   * Download a given url and upload to a given S3 location
    *
    * @returns {*} undefined
    */
@@ -64,7 +64,7 @@ module.exports.baseProtocol = superclass => class extends superclass {
   }
 
   /**
-   * Downloads the file to disk, difference with sync is that
+   * Download the file to disk, difference with sync is that
    * this method involves no uploading to S3
    *
    * @returns {*} undefined
@@ -74,7 +74,7 @@ module.exports.baseProtocol = superclass => class extends superclass {
   }
 
   /**
-   * Writes data to the server
+   * Write data to the server
    *
    * @returns {*} undefined
    */
