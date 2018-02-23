@@ -3,14 +3,11 @@
 const path = require('path');
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
-const { MismatchPdrCollection } = require('@cumulus/common/errors');
 const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 const sftpMixin = require('./sftp');
 const aws = require('@cumulus/common/aws');
-const { S3 } = require('./aws');
-const queue = require('./queue');
 
 /**
  * This is a base class for discovering PDRs
@@ -25,10 +22,7 @@ class Discover {
     bucket,
     collection,
     provider,
-    queueUrl,
-    templateUri,
     folder = 'pdrs',
-    queueLimit = null
   ) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
@@ -39,8 +33,6 @@ class Discover {
     this.collection = collection;
     this.provider = provider;
     this.folder = folder;
-    this.queueUrl = queueUrl;
-    this.templateUri = templateUri;
 
     // get authentication information
     this.port = get(this.provider, 'port', 21);
@@ -48,12 +40,6 @@ class Discover {
     this.path = this.collection.provider_path || '/';
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
-    this.limit = queueLimit;
-  }
-
-  filterPdrs(pdr) {
-    const test = new RegExp(/^(.*\.PDR)$/);
-    return pdr.name.match(test) !== null;
   }
 
   /**
@@ -61,13 +47,10 @@ class Discover {
    * @return {Promise}
    * @public
    */
-
   async discover() {
-    let files = await this.list();
-
-    // filter out non pdr files
-    files = files.filter(f => this.filterPdrs(f));
-    return this.findNewPdrs(files);
+    const files = await this.list();
+    const pdrs = files.filter((file) => file.name.endsWith('.PDR'));
+    return this.findNewPdrs(pdrs);
   }
 
   /**
@@ -105,28 +88,6 @@ class Discover {
 }
 
 /**
- * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
- *
- * @class
- * @abstract
- */
-class DiscoverAndQueue extends Discover {
-  async findNewPdrs(pdrs) {
-    let newPdrs = await super.findNewPdrs(pdrs);
-    if (this.limit) newPdrs = newPdrs.slice(0, this.limit);
-    return Promise.all(newPdrs.map((p) => queue.queuePdr(
-      this.queueUrl,
-      this.templateUri,
-      this.provider,
-      this.collection,
-      p
-    )));
-  }
-}
-
-
-/**
  * This is a base class for ingesting and parsing a single PDR
  * It must be mixed with a FTP or HTTP mixing to work
  *
@@ -140,8 +101,6 @@ class Parse {
     bucket,
     collection,
     provider,
-    queueUrl,
-    templateUri,
     folder = 'pdrs') {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
@@ -153,8 +112,6 @@ class Parse {
     this.collection = collection;
     this.provider = provider;
     this.folder = folder;
-    this.queueUrl = queueUrl;
-    this.templateUri = templateUri;
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
@@ -227,79 +184,6 @@ class Parse {
 }
 
 /**
- * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
- *
- * @class
- * @abstract
- */
-class ParseAndQueue extends Parse {
-  async ingest() {
-    const payload = await super.ingest();
-    const collections = {};
-
-    //payload.granules = payload.granules.slice(0, 10);
-
-    // make sure all parsed granules have the correct collection
-    for (const g of payload.granules) {
-      if (!collections[g.dataType]) {
-        // if the collection is not provided in the payload
-        // get it from S3
-        if (g.dataType !== this.collection.name) {
-          const bucket = this.bucket;
-          const key = `${this.stack}` +
-                      `/collections/${g.dataType}.json`;
-          let file;
-          try {
-            file = await S3.get(bucket, key);
-          }
-          catch (e) {
-            throw new MismatchPdrCollection(
-              `${g.dataType} dataType in ${this.pdr.name} doesn't match ${this.collection.name}`
-            );
-          }
-
-          collections[g.dataType] = JSON.parse(file.Body.toString());
-        }
-        else {
-          collections[g.dataType] = this.collection;
-        }
-      }
-
-      g.granuleId = this.extractGranuleId(
-        g.files[0].name,
-        collections[g.dataType].granuleIdExtraction
-      );
-    }
-
-    log.info(`Queueing ${payload.granules.length} granules to be processed`);
-
-    const names = await Promise.all(
-      payload.granules.map((g) => queue.queueGranule(
-        g,
-        this.queueUrl,
-        this.templateUri,
-        this.provider,
-        collections[g.dataType],        
-        this.pdr,
-        this.stack,
-        this.bucket
-      ))
-    );
-
-    let isFinished = false;
-    const running = names.filter((n) => n[0] === 'running').map((n) => n[1]);
-    const completed = names.filter((n) => n[0] === 'completed').map((n) => n[1]);
-    const failed = names.filter((n) => n[0] === 'failed').map((n) => n[1]);
-    if (running.length === 0) {
-      isFinished = true;
-    }
-
-    return { running, completed, failed, isFinished };
-  }
-}
-
-/**
  * Discover PDRs from a FTP endpoint.
  *
  * @class
@@ -322,30 +206,6 @@ class HttpDiscover extends httpMixin(Discover) {}
  */
 
 class SftpDiscover extends sftpMixin(Discover) {}
-
-/**
- * Discover and Queue PDRs from a FTP endpoint.
- *
- * @class
- */
-
-class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
-
-/**
- * Discover and Queue PDRs from a HTTP endpoint.
- *
- * @class
- */
-
-class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
-
-/**
- * Discover and Queue PDRs from a SFTP endpoint.
- *
- * @class
- */
-
-class SftpDiscoverAndQueue extends sftpMixin(DiscoverAndQueue) {}
 
 /**
  * Parse PDRs downloaded from a FTP endpoint.
@@ -372,46 +232,21 @@ class HttpParse extends httpMixin(Parse) {}
 class SftpParse extends sftpMixin(Parse) {}
 
 /**
- * Parse and Queue PDRs downloaded from a FTP endpoint.
- *
- * @class
- */
-
-class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
-
-/**
- * Parse and Queue PDRs downloaded from a HTTP endpoint.
- *
- * @class
- */
-
-class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
-
-/**
- * Parse and Queue PDRs downloaded from a SFTP endpoint.
- *
- * @classc
- */
-
-class SftpParseAndQueue extends sftpMixin(ParseAndQueue) {}
-
-/**
  * Select a class for discovering PDRs based on protocol
  *
  * @param {string} type - `discover` or `parse`
  * @param {string} protocol - `sftp`, `ftp`, or `http`
- * @param {boolean} q - set to `true` to queue pdrs
  * @returns {function} - a constructor to create a PDR discovery object
  */
-function selector(type, protocol, q) {
+function selector(type, protocol) {
   if (type === 'discover') {
     switch (protocol) {
       case 'http':
-        return q ? HttpDiscoverAndQueue : HttpDiscover;
+        return HttpDiscover;
       case 'ftp':
-        return q ? FtpDiscoverAndQueue : FtpDiscover;
+        return FtpDiscover;
       case 'sftp':
-        return q ? SftpDiscoverAndQueue : SftpDiscover;
+        return SftpDiscover;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -419,11 +254,11 @@ function selector(type, protocol, q) {
   else if (type === 'parse') {
     switch (protocol) {
       case 'http':
-        return q ? HttpParseAndQueue : HttpParse;
+        return HttpParse;
       case 'ftp':
-        return q ? FtpParseAndQueue : FtpParse;
+        return FtpParse;
       case 'sftp':
-        return q ? SftpParseAndQueue : SftpParseAndQueue;
+        return SftpParse;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -439,6 +274,3 @@ module.exports.SftpParse = SftpParse;
 module.exports.FtpDiscover = FtpDiscover;
 module.exports.HttpDiscover = HttpDiscover;
 module.exports.SftpDiscover = SftpDiscover;
-module.exports.FtpDiscoverAndQueue = FtpDiscoverAndQueue;
-module.exports.HttpDiscoverAndQueue = HttpDiscoverAndQueue;
-module.exports.SftpDiscoverAndQueue = SftpDiscoverAndQueue;

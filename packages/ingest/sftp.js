@@ -6,10 +6,10 @@ const Client = require('ssh2').Client;
 const join = require('path').join;
 const urljoin = require('url-join');
 const log = require('@cumulus/common/log');
-//const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
+const { omit } = require('lodash');
 
 //const PathIsInvalid = errors.createErrorType('PathIsInvalid');
 
@@ -135,14 +135,12 @@ module.exports = superclass => class extends superclass {
           }
           return reject(err);
         }
-        return resolve(list.map(i => ({
+        return resolve(list.map((i) => ({
           name: i.filename,
+          path: path,
           type: i.longname.substr(0, 1),
           size: i.attrs.size,
-          time: i.attrs.mtime,
-          owner: i.attrs.uid,
-          group: i.attrs.gid,
-          path: path
+          time: i.attrs.mtime * 1000
         })));
       });
     });
@@ -158,6 +156,9 @@ module.exports = superclass => class extends superclass {
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, this.path);
     log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
-    return files;
+
+    // Type 'type' field is required to support recursive file listing, but
+    // should not be part of the returned result.
+    return files.map((file) => omit(file, 'type'));
   }
 };
