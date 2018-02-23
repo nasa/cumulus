@@ -2,20 +2,34 @@
   "title": "DiscoverGranulesOutput",
   "description": "Describes the output produced by the discover-granules task",
   "type": "object",
-  "required": ["granules"],
+  "required": [ "granules" ],
   "additionalProperties": false,
   "properties": {
-    "granules_found": { "type": "integer" },
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
+        "required": [ "granuleId", "files" ],
         "properties": {
-          "name": { "type": "string" },
           "granuleId": { "type": "string" },
-          "bucket": { "type": "string" },
-          "url_path": { "type": "string" }
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [ "name", "path" ],
+              "properties": {
+                "name": { "type": "string" },
+                "path": { "type": "string" },
+                "size": { "type": "integer" },
+                "time": {
+                  "description": "The number of milliseconds since January 1, 1970, 00:00:00 UTC",
+                  "type": "integer"
+                },
+                "bucket": { "type": "string" },
+                "url_path": { "type": "string" }
+              }
+            }
+          }
         }
       }
     }
