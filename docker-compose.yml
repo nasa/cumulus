@@ -28,6 +28,5 @@ services:
     ports:
       - "2222:22"
     volumes:
-      - "./packages/test-data:/home/user/test-data:ro"
+      - "./sftp-test-data:/home/user/test-data:ro"
     command: user:password
-
