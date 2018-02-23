@@ -20,6 +20,7 @@ function discoverPdrs(event) {
     const bucket = config.bucket;
     const collection = config.collection;
     const provider = config.provider;
+    // FIXME Can config.folder not be used?
 
     log.info('Received the provider', { provider: get(provider, 'id') });
 

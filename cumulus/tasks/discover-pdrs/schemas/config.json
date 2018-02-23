@@ -24,7 +24,7 @@
         "globalConnectionLimit": { "type": "integer" },
         "protocol": {
           "type": "string",
-          "enum": ["ftp", "sftp", "http", "https"]
+          "enum": ["ftp", "sftp", "http", "https", "s3"]
         }
       }
     },
