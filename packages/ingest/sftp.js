@@ -114,10 +114,10 @@ module.exports = superclass => class extends superclass {
     return new Promise((resolve, reject) => {
       this.sftp.fastGet(remoteFile, tempFile, (e) => {
         if (e) return reject(e);
-        log.info({ filename }, `Finishing downloading ${this.filename}`);
-        return (resolve(tempFile));
+        log.info({ filename }, `Finishing downloading ${path}`);
+        return resolve(tempFile);
       });
-      this.client.on('error', (e) => reject(e));
+      this.client.on('error', reject);
     });
   }
 
