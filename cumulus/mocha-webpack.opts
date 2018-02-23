@@ -1,3 +1,0 @@
---webpack-config webpack.config-test.js
---timeout 5000
-{test/*,lib/test/*,test/!(helpers)/**,tasks/*/test/**,services/*/test/**}
