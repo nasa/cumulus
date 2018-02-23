@@ -453,7 +453,7 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
  * @returns {Promise} an object show the start of the re-ingest
  */
 async function reingest(g, index) {
-  const { name: collection } = deconstructCollectionId(g.collectionId);
+  const { name, version } = deconstructCollectionId(g.collectionId);
 
   // get the payload of the original execution
   const status = await StepFunction.getExecutionStatus(path.basename(g.execution));
@@ -463,8 +463,8 @@ async function reingest(g, index) {
     workflow: 'IngestGranule',
     provider: g.provider,
     collection: {
-      name: collection[0],
-      version: collection[1]
+      name,
+      version
     },
     meta: originalMessage.meta,
     payload: originalMessage.payload

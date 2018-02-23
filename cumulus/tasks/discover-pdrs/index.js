@@ -24,6 +24,7 @@ function discoverPdrs(event) {
     const templateUri = config.templateUri;
     const collection = config.collection;
     const provider = config.provider;
+    // FIXME Can config.folder not be used?
 
     const output = {};
 
@@ -48,12 +49,7 @@ function discoverPdrs(event) {
     log.debug('Starting PDR discovery');
 
     return discover.discover().then((pdrs) => {
-      if (queue) {
-        output.pdrs_found = pdrs.length;
-      }
-      else {
-        output.pdrs = pdrs;
-      }
+      output.pdrs = pdrs;
 
       if (discover.connected) {
         discover.end();
