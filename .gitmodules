@@ -1,3 +1,0 @@
-[submodule "schemas/docson"]
-	path = cumulus/docs/docson
-	url = https://github.com/lbovet/docson.git
