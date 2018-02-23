@@ -1,10 +1,13 @@
+/* eslint-disable no-console */
 'use strict';
 
 const Ajv = require('ajv');
 const crypto = require('crypto');
+const path = require('path');
 const url = require('url');
 const aws = require('./aws');
 const { readFile } = require('fs');
+const fs = require('fs-extra');
 
 /**
  * Generate a 40-character random string
@@ -141,10 +144,16 @@ function promisedReadFile(file, options) {
  * @returns {boolean} - whether the object is valid or not
  */
 async function validateJSON(t, schemaFilename, data) {
+  const schemaName = path.basename(schemaFilename).split('.')[0];
   const schema = await promisedReadFile(schemaFilename, 'utf8').then(JSON.parse);
   const ajv = new Ajv();
-  const valid = (new Ajv()).validate(schema, data);
-  if (!valid) t.fail(`input validation failed: ${ajv.errorsText()}`);
+  const valid = ajv.validate(schema, data);
+  if (!valid) {
+    const message = `${schemaName} validation failed: ${ajv.errorsText()}`;
+    console.log(message);
+    console.log(JSON.stringify(data, null, 2));
+    return t.fail(message);
+  }
   return valid;
 }
 
@@ -189,3 +198,24 @@ async function validateOutput(t, data) {
   return validateJSON(t, './schemas/output.json', data);
 }
 exports.validateOutput = validateOutput;
+
+/**
+ * Determine the path of the current git repo
+ *
+ * @param {string} dirname - the directory to start searching from.  Defaults to
+ *   `process.cwd()`
+ * @returns {string} - the filesystem path of the current git repo
+ */
+async function findGitRepoRootDirectory(dirname) {
+  if (dirname === undefined) return findGitRepoRootDirectory(path.dirname(process.cwd()));
+
+  if (await fs.pathExists(path.join(dirname, '.git'))) return dirname;
+
+  // This indicates that we've reached the root of the filesystem
+  if (path.dirname(dirname) === dirname) {
+    throw new Error('Unable to determine git repo root directory');
+  }
+
+  return findGitRepoRootDirectory(path.dirname(dirname));
+}
+exports.findGitRepoRootDirectory = findGitRepoRootDirectory;
