@@ -42,7 +42,7 @@ const extract = require('extract-zip');
  * @returns {Object} updated CumulusConfig
  */
 function fixCumulusMessageSyntax(cumulusConfig) {
-  const test = new RegExp('^([\\{]{1}|[\\[]{1})(\\$\\..*)([\\]]{1}|[\\}]{1})$');
+  const test = new RegExp('^([\\{]{1}|[\\[]{1})(\\$.*)([\\]]{1}|[\\}]{1})$');
   if (cumulusConfig) {
     Object.keys(cumulusConfig).forEach((n) => {
       if (typeof cumulusConfig[n] === 'object') {

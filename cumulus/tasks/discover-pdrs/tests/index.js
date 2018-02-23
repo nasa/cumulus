@@ -208,7 +208,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
       t.is(output.pdrs.length, 3);
-      const names = output.pdrs.map(p => p.name);
+      const names = output.pdrs.map((p) => p.name);
       t.true(names.includes('MOD09GQ.PDR'));
       t.true(names.includes('MYD13A1_5_grans.PDR'));
       t.true(names.includes('PDN.ID1611081200.PDR'));
