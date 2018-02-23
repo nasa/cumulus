@@ -389,13 +389,6 @@ class FtpParse extends ftpMixin(baseProtocol(Parse)) {}
 
 class HttpParse extends httpMixin(baseProtocol(Parse)) {}
 
-/**
- * Parse PDRs downloaded from a SFTP endpoint.
- *
- * @class
- */
-
-class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
 
 /**
  * Parse PDRs downloaded from a S3 endpoint.
