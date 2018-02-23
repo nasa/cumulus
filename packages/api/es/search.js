@@ -24,6 +24,10 @@ class BaseSearch {
 
     // this is needed for getting temporary credentials from IAM role
     if (process.env.TEST) {
+      if (!process.env.LOCALSTACK_HOST) {
+        throw new Error('The LOCALSTACK_HOST environment variable is not set.');
+      }
+
       esConfig = {
         host: `${process.env.LOCALSTACK_HOST}:4571`
       };
