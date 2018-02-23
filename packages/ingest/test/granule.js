@@ -11,10 +11,7 @@ const {
   HttpGranule,
   FtpDiscoverGranules,
   HttpDiscoverGranules,
-  SftpDiscoverGranules,
-  FtpDiscoverAndQueueGranules,
-  HttpDiscoverAndQueueGranules,
-  SftpDiscoverAndQueueGranules
+  SftpDiscoverGranules
 } = require('../granule');
 
 /**
@@ -26,10 +23,6 @@ const selectorDiscoverTypes = [
   { cls: HttpDiscoverGranules, type: 'discover', protocol: 'http' },
   { cls: HttpDiscoverGranules, type: 'discover', protocol: 'https' },
   { cls: SftpDiscoverGranules, type: 'discover', protocol: 'sftp' },
-  { cls: FtpDiscoverAndQueueGranules, type: 'discover', protocol: 'ftp', queue: true },
-  { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'http', queue: true },
-  { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'https', queue: true },
-  { cls: SftpDiscoverAndQueueGranules, type: 'discover', protocol: 'sftp', queue: true }
 ];
 
 const selectorSyncTypes = [

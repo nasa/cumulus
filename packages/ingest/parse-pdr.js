@@ -62,8 +62,14 @@ function parseSpec(pdrName, spec) {
     throw new PDRParsingError('FILE_CKSUM_VALUE', pdrName);
   }
 
-  const name = filename;
-  return { path, name, fileSize, checksumType, checksumValue };
+  const parsedSpec = {
+    path,
+    fileSize,
+    name: filename
+  };
+  if (checksumType) parsedSpec.checksumType = checksumType;
+  if (checksumValue) parsedSpec.checksumValue = checksumValue;
+  return parsedSpec;
 }
 module.exports.parseSpec = parseSpec;
 
@@ -79,7 +85,8 @@ function extractGranuleId(fileName, regex) {
 
 module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
   // then read the file and and pass it to parser
-  const pdrFile = fs.readFileSync(pdrFilePath);
+  const pdrFile = fs.readFileSync(pdrFilePath, 'utf8');
+
   const obj = {
     granules: []
   };
@@ -87,7 +94,7 @@ module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
   // because MODAPS PDRs do not follow the standard ODL spec
   // we have to make sure there are spaces before and after every
   // question mark
-  let pdrString = pdrFile.toString().replace(/((\w*)=(\w*))/g, '$2 = $3');
+  let pdrString = pdrFile.replace(/((\w*)=(\w*))/g, '$2 = $3');
 
   // temporary fix for PVL not recognizing quoted strings as symbols
   pdrString = pdrString.replace(/"/g, '');
