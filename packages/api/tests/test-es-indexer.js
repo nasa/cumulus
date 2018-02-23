@@ -532,14 +532,14 @@ test.serial('pass a sns message to main handler', async (t) => {
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, (e, r) => {});
+  const resp = await indexer.handler(event, {}, (e) => {});
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);
   t.truthy(resp[0].granule);
   t.falsy(resp[0].pdr);
 
-  const msg = JSON.parse(event.Records[0].Sns.Message)
+  const msg = JSON.parse(event.Records[0].Sns.Message);
   const granule = msg.payload.granules[0];
   const collection = msg.meta.collection;
   const collectionId = indexer.constructCollectionId(collection.name, collection.version);
@@ -551,4 +551,43 @@ test.serial('pass a sns message to main handler', async (t) => {
     parent: collectionId
   });
   t.is(record._id, granule.granuleId);
+});
+
+test.serial('pass a sns message to main handler with parse info', async (t) => {
+  const txt = fs.readFileSync(path.join(
+    __dirname, '/data/sns_message_parse_pdr.txt'
+  ), 'utf8');
+
+  const event = JSON.parse(JSON.parse(txt.toString()));
+  const resp = await indexer.handler(event, {}, () => {});
+
+  t.is(resp.length, 1);
+  t.truthy(resp[0].sf);
+  t.falsy(resp[0].granule);
+  t.truthy(resp[0].pdr);
+
+  const msg = JSON.parse(event.Records[0].Sns.Message);
+  const pdr = msg.payload.pdr;
+  // test granule record is added
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'pdr',
+    id: pdr.name
+  });
+  t.is(record._id, pdr.name);
+  t.falsy(record._source.error);
+});
+
+test.serial('pass a sns message to main handler with discoverpdr info', async (t) => {
+  const txt = fs.readFileSync(path.join(
+    __dirname, '/data/sns_message_discover_pdr.txt'
+  ), 'utf8');
+
+  const event = JSON.parse(JSON.parse(txt.toString()));
+  const resp = await indexer.handler(event, {}, () => {});
+
+  t.is(resp.length, 1);
+  t.truthy(resp[0].sf);
+  t.falsy(resp[0].granule);
+  t.falsy(resp[0].pdr);
 });
