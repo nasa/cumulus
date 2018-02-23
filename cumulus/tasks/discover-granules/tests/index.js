@@ -134,3 +134,58 @@ test('discover granules using HTTP', async (t) => {
     ]);
   }
 });
+
+test('discover granules using S3', async (t) => {
+  const internalBucketName = randomString();
+  const sourceBucketName = randomString();
+  const providerPath = randomString();
+
+  // Figure out the directory paths that we're working with
+  const gitRepoRootDirectory = await findGitRepoRootDirectory();
+  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+
+  // Create providerPathDirectory and internal bucket
+  await Promise.all([
+    fs.ensureDir(providerPathDirectory),
+    s3().createBucket({ Bucket: internalBucketName }).promise(),
+    s3().createBucket({ Bucket: sourceBucketName }).promise()
+  ]);
+
+  // State sample files
+  const files = [
+    'granule-1.nc', 'granule-1.nc.md5',
+    'granule-2.nc', 'granule-2.nc.md5',
+    'granule-3.nc', 'granule-3.nc.md5'
+  ];
+  await Promise.all(files.map((file) =>
+    s3().putObject({
+      Bucket: sourceBucketName,
+      Key: `${providerPath}/${file}`,
+      Body: `This is ${file}`
+    }).promise()));
+
+  const event = cloneDeep(mur);
+  event.config.collection.provider_path = providerPath;
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: sourceBucketName
+  };
+
+  await validateConfig(t, event.config);
+
+  try {
+    const output = await discoverGranules(event);
+    await validateOutput(t, output);
+    t.is(output.granules.length, 3);
+    t.is(output.granules[0].files.length, 2);
+  }
+  finally {
+    // Clean up
+    await Promise.all([
+      recursivelyDeleteS3Bucket(internalBucketName),
+      recursivelyDeleteS3Bucket(sourceBucketName),
+      fs.remove(providerPathDirectory)
+    ]);
+  }
+});
