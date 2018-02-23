@@ -7,27 +7,6 @@ const path = require('path');
 
 module.exports.s3Mixin = (superclass) => class extends superclass {
   /**
-   * Upload a file to S3
-   *
-   * @param {string} bucket - the S3 bucket to upload to
-   * @param {string} key - the S3 key of the destination location
-   * @param {string} filename - the filename to be uploaded to
-   * @param {string} tempFile - the location of the file to be uploaded
-   * @returns {Promise<string>} - the S3 URI of the destination file
-   */
-  async upload(bucket, key, filename, tempFile) {
-    const fullKey = `${key}/${filename}`;
-
-    await aws.s3().putObject({
-      Bucket: bucket,
-      Key: fullKey,
-      Body: fs.createReadStream(tempFile)
-    }).promise();
-
-    return `s3://${bucket}/${fullKey}`;
-  }
-
-  /**
    * Fetch object from S3 to disk
    *
    * @param {string} s3Path - the S3 key path of the file to be downloaded
