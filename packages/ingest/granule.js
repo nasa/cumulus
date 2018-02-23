@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
 const aws = require('@cumulus/common/aws');
@@ -10,7 +9,6 @@ const cksum = require('cksum');
 const checksum = require('checksum');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
-const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
@@ -80,14 +78,10 @@ class Discover {
 
   async discover() {
     // get list of files that matches a given path
-    const files = await this.list();
+    const updatedFiles = (await this.list())
+      .map((file) => this.setGranuleInfo(file))
+      .filter((file) => file);
 
-    const updatedFiles = [];
-    // select files that match a given collection
-    files.forEach(f => {
-      const file = this.setGranuleInfo(f);
-      if (file) updatedFiles.push(file);
-    });
     return await this.findNewGranules(updatedFiles);
   }
 
@@ -133,43 +127,6 @@ class Discover {
     return Object.keys(granules).map(k => granules[k]);
   }
 }
-
-/**
- * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
- *
- * @class
- * @abstract
- */
-class DiscoverAndQueue extends Discover {
-  /**
-   * Creates an instance of DiscoverAndQueue
-   *
-   * @param {Object} event - a Cumulus event
-   * @memberof DiscoverAndQueue
-   */
-  constructor(event) {
-    super(event);
-
-    this.queueUrl = event.config.queueUrl;
-    this.templateUri = event.config.templateUri;
-  }
-
-  async findNewGranules(files) {
-    const granules = await super.findNewGranules(files);
-    return Promise.all(granules.map(g => queue.queueGranule(
-      g,
-      this.queueUrl,
-      this.templateUri,
-      this.provider,
-      this.collection,
-      null,
-      this.stack,
-      this.buckets.internal
-     )));
-  }
-}
-
 
 /**
  * This is a base class for ingesting and parsing a single PDR
@@ -392,29 +349,14 @@ class Granule {
 class HttpDiscoverGranules extends httpMixin(Discover) {}
 
 /**
- * A class for discovering granules using HTTP or HTTPS and queueing them to SQS.
- */
-class HttpDiscoverAndQueueGranules extends httpMixin(DiscoverAndQueue) {}
-
-/**
  * A class for discovering granules using SFTP.
  */
 class SftpDiscoverGranules extends sftpMixin(Discover) {}
 
 /**
- * A class for discovering granules using SFTP and queueing them to SQS.
- */
-class SftpDiscoverAndQueueGranules extends sftpMixin(DiscoverAndQueue) {}
-
-/**
  * A class for discovering granules using FTP.
  */
 class FtpDiscoverGranules extends ftpMixin(Discover) {}
-
-/**
- * A class for discovering granules using FTP and queueing them to SQS.
- */
-class FtpDiscoverAndQueueGranules extends ftpMixin(DiscoverAndQueue) {}
 
 /**
  * Ingest Granule from an FTP endpoint.
@@ -436,19 +378,18 @@ class HttpGranule extends httpMixin(Granule) {}
 *
 * @param {string} type -`discover` or `ingest`
 * @param {string} protocol -`sftp`, `ftp`, or `http`
-* @param {boolean} q - set to `true` to queue granules
 * @returns {function} - a constructor to create a granule discovery object
 **/
-function selector(type, protocol, q) {
+function selector(type, protocol) {
   if (type === 'discover') {
     switch (protocol) {
       case 'sftp':
-        return q ? SftpDiscoverAndQueueGranules : SftpDiscoverGranules;
+        return SftpDiscoverGranules;
       case 'ftp':
-        return q ? FtpDiscoverAndQueueGranules : FtpDiscoverGranules;
+        return FtpDiscoverGranules;
       case 'http':
       case 'https':
-        return q ? HttpDiscoverAndQueueGranules : HttpDiscoverGranules;
+        return HttpDiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -474,8 +415,5 @@ module.exports.HttpGranule = HttpGranule;
 module.exports.FtpGranule = FtpGranule;
 module.exports.SftpGranule = SftpGranule;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
-module.exports.SftpDiscoverAndQueueGranules = SftpDiscoverAndQueueGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
-module.exports.FtpDiscoverAndQueueGranules = FtpDiscoverAndQueueGranules;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
-module.exports.HttpDiscoverAndQueueGranules = HttpDiscoverAndQueueGranules;
