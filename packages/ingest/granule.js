@@ -75,7 +75,10 @@ class Discover {
         }
       }
 
-      return file;
+      // if collection regex matched, the following will be true
+      if (file.granuleId && file.bucket) {
+        return file;
+      }
     }
     return false;
   }
@@ -421,12 +424,12 @@ class FtpDiscoverAndQueueGranules extends ftpMixin(baseProtocol(DiscoverAndQueue
 /**
  * A class for discovering granules using s3
  */
-class S3DiscoverGranules extends s3Mixin(Discover) {}
+class S3DiscoverGranules extends s3Mixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using s3 and queueing them to SQS.
  */
-class S3DiscoverAndQueueGranules extends s3Mixin(DiscoverAndQueue) {}
+class S3DiscoverAndQueueGranules extends s3Mixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Ingest Granule from an FTP endpoint.
@@ -446,7 +449,7 @@ class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
 /**
  * Ingest Granule from an s3 endpoint.
  */
-class S3Granule extends s3Mixin(Granule) {}
+class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
