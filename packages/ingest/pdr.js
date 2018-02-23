@@ -331,7 +331,7 @@ class SftpDiscover extends sftpMixin(baseProtocol(Discover)) {}
  * @class
  */
 
-class S3Discover extends s3Mixin(Discover) {}
+class S3Discover extends s3Mixin(baseProtocol(Discover)) {}
 
 /**
  * Discover and Queue PDRs from a FTP endpoint.
@@ -363,10 +363,18 @@ class SftpDiscoverAndQueue extends sftpMixin(baseProtocol(DiscoverAndQueue)) {}
  * @class
  */
 
-class S3DiscoverAndQueue extends s3Mixin(DiscoverAndQueue) {}
+class S3DiscoverAndQueue extends s3Mixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
- * Parse PDRs downloaded from a FTP endpoint.
+ * Parse PDRs downloaded from a SFTP endpoint.
+ *
+ * @class
+ */
+
+class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
+
+/**
+ * Parse and Queue PDRs downloaded from a FTP endpoint.
  *
  * @class
  */
@@ -374,7 +382,7 @@ class S3DiscoverAndQueue extends s3Mixin(DiscoverAndQueue) {}
 class FtpParse extends ftpMixin(baseProtocol(Parse)) {}
 
 /**
- * Parse PDRs downloaded from a HTTP endpoint.
+ * Parse and Queue PDRs downloaded from a HTTP endpoint.
  *
  * @class
  */
@@ -395,7 +403,7 @@ class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
  * @class
  */
 
-class S3Parse extends s3Mixin(Parse) {}
+class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
 
 /**
  * Parse and Queue PDRs downloaded from a FTP endpoint.
@@ -427,7 +435,7 @@ class SftpParseAndQueue extends sftpMixin(baseProtocol(ParseAndQueue)) {}
  * @classc
  */
 
-class S3ParseAndQueue extends s3Mixin(ParseAndQueue) {}
+class S3ParseAndQueue extends s3Mixin(baseProtocol(ParseAndQueue)) {}
 
 /**
  * Select a class for discovering PDRs based on protocol
