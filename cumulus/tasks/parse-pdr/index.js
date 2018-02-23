@@ -46,12 +46,8 @@ function parsePdr(event) {
 
   return parse.ingest()
     .then((payload) => {
-      if (parse.connected) {
-        parse.end();
-      }
-
-      const output = Object.assign({}, event.input, payload);
-      return output;
+      if (parse.connected) parse.end();
+      return Object.assign({}, event.input, payload);
     })
     .catch((e) => {
       if (e.toString().includes('ECONNREFUSED')) {
