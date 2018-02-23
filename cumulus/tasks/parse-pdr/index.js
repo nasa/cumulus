@@ -1,60 +1,91 @@
 'use strict';
 
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
-const log = require('@cumulus/ingest/log');
-const { StepFunction } = require('@cumulus/ingest/aws');
+const log = require('@cumulus/common/log');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
 
-module.exports.handler = function handler(_event, context, cb) {
-  try {
-    let event;
-    let parse;
-    StepFunction.pullEvent(_event).then((ev) => {
-      event = ev;
-      const provider = get(event, 'provider', null);
-      const queue = get(event, 'meta.useQueue', true);
+/**
+* Parse a PDR
+* See schemas/input.json for detailed input schema
+*
+* @param {Object} event - Lambda event object
+* @param {Object} event.config - configuration object for the task
+* @param {string} event.config.stack - the name of the deployment stack
+* @param {string} event.config.pdrFolder - folder for the PDRs
+* @param {Object} event.config.provider - provider information
+* @param {Object} event.config.buckets - S3 buckets
+* @param {Object} event.config.collection - information about data collection related to task
+* @returns {Promise.<Object>} - see schemas/output.json for detailed output schema
+* that is passed to the next task in the workflow
+**/
+function parsePdr(event) {
+  const config = get(event, 'config');
+  const input = get(event, 'input');
+  const provider = get(config, 'provider', null);
+  const queue = get(config, 'useQueue', true);
 
-      if (!provider) {
-        const err = new errors.ProviderNotFound('Provider info not provided');
-        log.error(err);
-        return cb(err);
-      }
+  if (!provider) {
+    const err = new errors.ProviderNotFound('Provider info not provided');
+    log.error(err);
+    return Promise.reject(err);
+  }
 
-      const Parse = pdr.selector('parse', provider.protocol, queue);
-      parse = new Parse(event);
+  const Parse = pdr.selector('parse', provider.protocol, queue);
+  const parse = new Parse(
+    input.pdr,
+    config.stack,
+    config.bucket,
+    config.collection,
+    provider,
+    config.queueUrl,
+    config.templateUri
+  );
 
-      return parse.ingest();
-    }).then((payload) => {
-      if (parse && parse.connected) {
+  return parse.ingest()
+    .then((payload) => {
+      if (parse.connected) {
         parse.end();
       }
 
-      event.payload = Object.assign({}, event.payload, payload);
-      return StepFunction.pushEvent(event);
-    }).then(ev => cb(null, ev))
-      .catch(e => {
-        if (parse && parse.connected) {
-          parse.end();
-        }
+      const output = Object.assign({}, event.input, payload);
+      return output;
+    })
+    .catch((e) => {
+      if (e.toString().includes('ECONNREFUSED')) {
+        const err = new errors.RemoteResourceError('Connection Refused');
+        log.error(err);
+        throw err;
+      }
+      else if (e.details && e.details.status === 'timeout') {
+        const err = new errors.ConnectionTimeout('connection Timed out');
+        log.error(err);
+        throw err;
+      }
 
-        if (e.toString().includes('ECONNREFUSED')) {
-          const err = new errors.RemoteResourceError('Connection Refused');
-          log.error(err);
-          return cb(err);
-        }
-        else if (e.details && e.details.status === 'timeout') {
-          const err = new errors.ConnectionTimeout('connection Timed out');
-          log.error(err);
-          return cb(err);
-        }
+      log.error(e);
+      throw e;
+    });
+}
+exports.parsePdr = parsePdr; // exported to support testing
 
-        log.error(e);
-        return cb(e);
-      });
-  }
-  catch (e) {
-    log.error(e);
-    throw e;
-  }
-};
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(parsePdr, event, context, callback);
+}
+exports.handler = handler;
+
+// use node index.js local to invoke this
+justLocalRun(() => {
+  const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => console.log(e, r));
+});

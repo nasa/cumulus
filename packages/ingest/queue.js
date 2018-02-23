@@ -1,40 +1,84 @@
 'use strict';
 
 const get = require('lodash.get');
-const { SQS, S3, getExecutionArn, StepFunction } = require('./aws');
+const uuidv4 = require('uuid/v4');
+const {
+  getS3Object,
+  sendSQSMessage,
+  parseS3Uri,
+  getSfnExecutionByName,
+  getGranuleStatus
+} = require('@cumulus/common/aws');
 
-async function getTemplate(event) {
-  const templates = get(event, 'resources.templates');
-  const next = get(event, 'ingest_meta.config.next', 'ParsePdr');
+/**
+  * Create a message from a template stored on S3
+  *
+  * @param {string} templateUri - S3 uri to the workflow template
+  * @param {Object} provider - Cumulus provider object
+  * @param {Object} collection - Cumulus collection object
+  * @returns {Promise} message object
+  **/
+async function getTemplate(templateUri, provider, collection) {
 
-  const parsed = S3.parseS3Uri(templates[next]);
-  const data = await S3.get(parsed.Bucket, parsed.Key);
+  const parsedS3Uri = parseS3Uri(templateUri);
+  const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
   const message = JSON.parse(data.Body);
-  message.provider = event.provider;
-  message.collection = event.collection;
-  message.meta = event.meta;
+
+  message.meta.provider = provider;
+  message.meta.collection = collection;
 
   return message;
 }
 
-async function queuePdr(event, pdr) {
-  const queueUrl = get(event, 'resources.queues.startSF');
-  const message = await getTemplate(event);
+/**
+  * Create a message from a template stored on S3
+  *
+  * @param {string} queueUrl - The SQS url
+  * @param {string} templateUri - S3 uri to the workflow template
+  * @param {Object} provider - Cumulus provider object
+  * @param {Object} collection - Cumulus collection object
+  * @param {Object} pdr - the PDR object
+  * @param {string} pdr.name - name of the PDR
+  * @returns {Promise} promise returned from SQS.sendMessage()
+  **/
+async function queuePdr(queueUrl, templateUri, provider, collection, pdr) {
+  const message = await getTemplate(templateUri, provider, collection);
 
   message.payload = { pdr };
-  message.ingest_meta.execution_name = `${pdr.name}__PDR__${Date.now()}`;
+  message.cumulus_meta.execution_name = uuidv4();
 
-  return SQS.sendMessage(queueUrl, message);
+  return sendSQSMessage(queueUrl, message);
 }
 
-async function queueGranule(event, granule) {
-  const queueUrl = get(event, 'resources.queues.startSF');
-  const collectionId = get(event, 'collection.id');
-  const pdr = get(event, 'payload.pdr', null);
-  const message = await getTemplate(event);
+/**
+
+  * Create a message from a template stored on S3
+  *
+  * @param {object} granule
+  * @param {string} templateUri - S3 uri to the workflow template
+  * @param {Object} provider - Cumulus provider object
+  * @param {Object} collection - Cumulus collection object
+  * @param {Object} pdr - the PDR object
+  * @param {string} pdr.name - name of the PDR
+  * @param {string} stack = the deployment stackname
+  * @param {string} bucket - the deployment bucket name
+  * @returns {promise} returns a promise that resolves to an array of [status, arn]
+  **/
+async function queueGranule(
+  granule,
+  queueUrl,
+  templateUri,
+  provider,
+  collection,
+  pdr,
+  stack,
+  bucket
+) {
+  const message = await getTemplate(templateUri, provider, collection);
 
   // check if the granule is already processed
-  const status = await StepFunction.getGranuleStatus(granule.granuleId, event);
+  const status = await getGranuleStatus(granule.granuleId, stack, bucket);
+
   if (status) {
     return status;
   }
@@ -46,7 +90,6 @@ async function queueGranule(event, granule) {
     }
   }
 
-  message.meta.granuleId = granule.granuleId;
   message.payload = {
     granules: [{
       granuleId: granule.granuleId,
@@ -58,12 +101,11 @@ async function queueGranule(event, granule) {
     message.payload.pdr = pdr;
   }
 
-  const name = `${collectionId.substring(0, 15)}__GRANULE__` +
-               `${granule.granuleId.substring(0, 16)}__${Date.now()}`;
-  const arn = getExecutionArn(message.ingest_meta.state_machine, name);
+  const executionName = uuidv4();
+  const arn = getSfnExecutionByName(message.cumulus_meta.state_machine, executionName);
 
-  message.ingest_meta.execution_name = name;
-  await SQS.sendMessage(queueUrl, message);
+  message.cumulus_meta.execution_name = executionName;
+  await sendSQSMessage(queueUrl, message);
   return ['running', arn];
 }
 
