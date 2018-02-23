@@ -61,7 +61,7 @@ module.exports.httpMixin = superclass => class extends superclass {
         for (const line of lines) {
           const split = line.trim().split(pattern);
           if (split.length === 3) {
-          // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6) 
+          // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
             if (split[1].match(/^(.*\.[\w\d]{1,4})$/) !== null) {
               const name = split[1];
               files.push({
@@ -120,7 +120,7 @@ module.exports.httpMixin = superclass => class extends superclass {
       Key: fullKey,
       Body: fs.createReadStream(tempFile)
     }).promise();
-    
+
     const s3Uri = `s3://${bucket}/${fullKey}`;
     log.info(`uploaded ${s3Uri}`);
 
