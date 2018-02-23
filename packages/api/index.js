@@ -16,7 +16,7 @@ exports.version = require('./endpoints/version');
 exports.distribution = require('./endpoints/distribution');
 
 exports.jobs = require('./lambdas/jobs');
-exports.bootstrap = require('./lambdas/bootstrap');
+exports.bootstrap = require('./lambdas/bootstrap').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
 exports.queue = require('./lambdas/queue');

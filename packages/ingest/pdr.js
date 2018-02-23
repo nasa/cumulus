@@ -8,13 +8,13 @@ const httpMixin = require('./http').httpMixin;
 const log = require('@cumulus/common/log');
 const parsePdr = require('./parse-pdr').parsePdr;
 const path = require('path');
+const s3Mixin = require('./s3').s3Mixin;
 const sftpMixin = require('./sftp');
-
 const { baseProtocol } = require('./protocol');
 
 /**
  * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
@@ -92,7 +92,7 @@ class Discover {
 
 /**
  * This is a base class for ingesting and parsing a single PDR
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
@@ -221,6 +221,13 @@ class HttpDiscover extends httpMixin(baseProtocol(Discover)) {}
 class SftpDiscover extends sftpMixin(baseProtocol(Discover)) {}
 
 /**
+ * Discover PDRs from a S3 endpoint.
+ *
+ * @class
+ */
+class S3Discover extends s3Mixin(baseProtocol(Discover)) {}
+
+/**
  * Parse PDRs downloaded from a FTP endpoint.
  *
  * @class
@@ -245,10 +252,17 @@ class HttpParse extends httpMixin(baseProtocol(Parse)) {}
 class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
 
 /**
+ * Parse PDRs downloaded from a S3 endpoint.
+ *
+ * @class
+ */
+class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
+
+/**
  * Select a class for discovering PDRs based on protocol
  *
  * @param {string} type - `discover` or `parse`
- * @param {string} protocol - `sftp`, `ftp`, or `http`
+ * @param {string} protocol - `sftp`, `ftp`, `http` or 's3'
  * @returns {function} - a constructor to create a PDR discovery object
  */
 function selector(type, protocol) {
@@ -260,6 +274,8 @@ function selector(type, protocol) {
         return FtpDiscover;
       case 'sftp':
         return SftpDiscover;
+      case 's3':
+        return S3Discover;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -272,6 +288,8 @@ function selector(type, protocol) {
         return FtpParse;
       case 'sftp':
         return SftpParse;
+      case 's3':
+        return S3Parse;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -281,9 +299,11 @@ function selector(type, protocol) {
 }
 
 module.exports.selector = selector;
-module.exports.HttpParse = HttpParse;
-module.exports.FtpParse = FtpParse;
-module.exports.SftpParse = SftpParse;
 module.exports.FtpDiscover = FtpDiscover;
+module.exports.FtpParse = FtpParse;
 module.exports.HttpDiscover = HttpDiscover;
+module.exports.HttpParse = HttpParse;
+module.exports.S3Discover = S3Discover;
+module.exports.S3Parse = S3Parse;
 module.exports.SftpDiscover = SftpDiscover;
+module.exports.SftpParse = SftpParse;
