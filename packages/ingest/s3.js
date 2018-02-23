@@ -90,7 +90,14 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
     // a number of different types of objects, not all of which have the same
     // constructor arguments.  We can't override the constructor here because
     // of that.  As a result, we need to test for a default path of '/'.
-    if (this.path && this.path !== '/') params.Prefix = this.path;
+    // also handle the edge case where leading / in key creates incorrect path
+    // by remove the first slash if it exists
+    if (this.path && this.path !== '/') {
+      if (this.path[0] === '/') {
+        this.path = this.path.substr(1);
+      }
+      params.Prefix = this.path;
+    }
 
     const objects = await aws.listS3ObjectsV2(params);
 
