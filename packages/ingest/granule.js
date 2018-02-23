@@ -1,7 +1,7 @@
 'use strict';
 
 const aws = require('@cumulus/common/aws');
-const fs = require('fs');
+const fs = require('fs-extra');
 const get = require('lodash.get');
 const join = require('path').join;
 const urljoin = require('url-join');
@@ -205,18 +205,32 @@ class Granule {
     return true;
   }
 
-  async _validateChecksum(type, value, tempFile, options) {
-    if (!options) options = {};
+  /**
+   * Validate a file's checksum and throw an exception if it's invalid
+   *
+   * @param {Object} file - the file object to be checked
+   * @param {string} fileLocalPath - the path to the file on the filesystem
+   * @param {string} downloadDir - a directory where checksums can be downloaded
+   *   to.  The expectation is that the caller will handle cleaning up this
+   *   directory.
+   * @param {Object} [options={}] - options for the this._hash method
+   * @returns {undefined} - no return value, but throws an error if the
+   *   checksum is invalid
+   * @memberof Granule
+   */
+  async validateChecksum(file, fileLocalPath, downloadDir, options = {}) {
+    const [type, value] = await this.getChecksumFromFile(file, downloadDir);
+
+    if (!type || !value) return;
+
     let sum = null;
+    if (type.toLowerCase() === 'cksum') sum = await this._cksum(fileLocalPath);
+    else sum = await this._hash(type, fileLocalPath, options);
 
-    if (type.toLowerCase() === 'cksum') {
-      sum = await this._cksum(tempFile);
+    if (value !== sum) {
+      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
+      throw new errors.InvalidChecksum(message);
     }
-    else {
-      sum = await this._hash(type, tempFile, options);
-    }
-
-    return value === sum;
   }
 
   async _cksum(tempFile) {
@@ -238,109 +252,82 @@ class Granule {
     );
   }
 
+  async enableDuplicateHandling(bucket) {
+    // check that the bucket has versioning enabled
+    const versioning = await aws.s3().getBucketVersioning({ Bucket: bucket }).promise();
+
+    // if not enabled, make it enabled
+    if (versioning.Status !== 'Enabled') {
+      return aws.s3().putBucketVersioning({
+        Bucket: bucket,
+        VersioningConfiguration: { Status: 'Enabled' } }).promise();
+    }
+  }
+
+  async getChecksumFromFile(file, downloadDir) {
+    if (file.checksumType && file.checksumValue) {
+      return [file.checksumType, file.checksumValue];
+    }
+    else if (this.checksumFiles[file.name]) {
+      // Fetch the checksum file
+      const checksumInfo = this.checksumFiles[file.name];
+      const checksumRemotePath = join(checksumInfo.path, checksumInfo.name);
+      const checksumLocalPath = join(downloadDir, checksumInfo.name);
+      await this.download(checksumRemotePath, checksumLocalPath);
+
+      const checksumValue = (await fs.readFile(checksumLocalPath, 'utf8')).split(' ')[0];
+
+      // assuming the type is md5
+      return ['md5', checksumValue];
+    }
+    return [null, null];
+  }
+
   /**
    * Ingest individual files
    * @private
    */
-  async ingestFile(_file, duplicateHandling) {
-    const file = _file;
-    let exists = null;
+  async ingestFile(file, duplicateHandling) {
+    // Check if the file exists
+    const exists = await aws.s3ObjectExists({
+      Bucket: file.bucket,
+      Key: join(file.url_path, file.name)
+    });
 
-    // check if the file exists.
-    exists = await aws.s3ObjectExists({ Bucket: file.bucket, Key: join(file.url_path, file.name) });
+    // Exit early if we can
+    if (exists && duplicateHandling === 'skip') return file;
 
-    if (duplicateHandling === 'version') {
-      // check that the bucket has versioning enabled
-      let versioning = await aws.s3().getBucketVersioning({ Bucket: file.bucket }).promise();
+    // Enable duplicate handling
+    if (duplicateHandling === 'version') this.enableDuplicateHandling(file.bucket);
 
-      // if not enabled, make it enabled
-      if (versioning.Status !== 'Enabled') {
-        versioning = await aws.s3().putBucketVersioning({
-          Bucket: file.bucket,
-          VersioningConfiguration: { Status: 'Enabled' } }).promise();
-      }
+    // Either the file does not exist yet, or it does but
+    // we are replacing it with a more recent one or
+    // adding another version of it to the bucket
+
+    // we considered a direct stream from source to S3 but since
+    // it doesn't work with FTP connections, we decided to always download
+    // and then upload
+
+    const downloadDir = await this.createDownloadDirectory();
+    try {
+      const fileLocalPath = join(downloadDir, file.name);
+      const fileRemotePath = join(file.path, file.name);
+
+      // Download the file
+      await this.download(fileRemotePath, fileLocalPath);
+
+      // Validate the checksum
+      await this.validateChecksum(file, fileLocalPath, downloadDir);
+
+      // Upload the file
+      const filename = await this.upload(file.bucket, file.url_path, file.name, fileLocalPath);
+
+      return Object.assign({}, file, { filename });
     }
-
-    if (!exists || duplicateHandling !== 'skip') {
-      // Either the file does not exist yet, or it does but
-      // we are replacing it with a more recent one or
-      // adding another version of it to the bucket
-
-      // we considered a direct stream from source to S3 but since
-      // it doesn't work with FTP connections, we decided to always download
-      // and then upload
-      let tempFile;
-      try {
-        log.info(`downloading ${file.name}`);
-        tempFile = await this.download(file.path, file.name);
-        log.info(`downloaded ${file.name}`);
-      }
-      catch (e) {
-        if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
-          throw new errors.FileNotFound(
-            `${file.name} was not found on the server with 403 status`
-          );
-        }
-        throw e;
-      }
-
-      try {
-        let checksumType = null;
-        let checksumValue = null;
-
-        if (file.checksumType && file.checksumValue) {
-          checksumType = file.checksumType;
-          checksumValue = file.checksumValue;
-        }
-        else if (this.checksumFiles[file.name]) {
-          const checksumInfo = this.checksumFiles[file.name];
-
-          log.info(`downloading ${checksumInfo.name}`);
-          const checksumFilepath = await this.download(checksumInfo.path, checksumInfo.name);
-          log.info(`downloaded ${checksumInfo.name}`);
-
-          // expecting the type is md5
-          checksumType = 'md5';
-          checksumValue = fs.readFileSync(checksumFilepath, 'utf8').split(' ')[0];
-          fs.unlinkSync(checksumFilepath);
-        }
-        else {
-          // If there is not a checksum, no need to validate
-          file.filename = await this.upload(file.bucket, file.url_path, file.name, tempFile);
-          return file;
-        }
-
-        const validated = await this._validateChecksum(
-          checksumType,
-          checksumValue,
-          tempFile
-        );
-
-        if (validated) {
-          await this.upload(file.bucket, file.url_path, file.name, tempFile);
-        }
-        else {
-          throw new errors.InvalidChecksum(
-            `Invalid checksum for ${file.name} with ` +
-            `type ${file.checksumType} and value ${file.checksumValue}`
-          );
-        }
-      }
-      catch (e) {
-        throw new errors.InvalidChecksum(
-          `Error evaluating checksum for ${file.name} with ` +
-          `type ${file.checksumType} and value ${file.checksumValue}`
-        );
-      }
-
-      // delete temp file
-      fs.stat(tempFile, (err, stat) => {
-        if (stat) fs.unlinkSync(tempFile);
-      });
+    finally {
+      // Delete the temp directory
+      await fs.remove(downloadDir);
     }
-
-    file.filename = `s3://${file.bucket}/${join(file.url_path, file.name)}`;
-    return file;
   }
 }
 
