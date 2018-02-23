@@ -36,10 +36,8 @@
     },
     "collection": {
       "type": "object",
-      "description": "",
       "required": [
         "process",
-        "url_path",
         "files",
         "name",
         "granuleIdExtraction",
