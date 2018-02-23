@@ -1,6 +1,5 @@
 'use strict';
 
-const fs = require('fs');
 const os = require('os');
 const Client = require('ssh2').Client;
 const join = require('path').join;
@@ -8,10 +7,7 @@ const log = require('@cumulus/common/log');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
 
-const { s3 } = require('@cumulus/common/aws');
 const { omit } = require('lodash');
-
-//const PathIsInvalid = errors.createErrorType('PathIsInvalid');
 
 module.exports = superclass => class extends superclass {
 
@@ -72,28 +68,6 @@ module.exports = superclass => class extends superclass {
   async sync(path, bucket, key, filename) {
     const tempFile = await this.download(path, filename);
     return this.upload(bucket, key, filename, tempFile);
-  }
-
-  /**
-   * Upload a file to S3
-   *
-   * @param {string} bucket - the S3 bucket to upload to
-   * @param {string} key - the base path of the S3 key
-   * @param {string} filename - the filename to be uploaded to
-   * @param {string} tempFile - the location of the file to be uploaded
-   * @returns {Promise.<string>} - the S3 URL that the file was uploaded to
-   */
-  async upload(bucket, key, filename, tempFile) {
-    const fullKey = join(key, filename);
-
-    await s3().putObject({
-      Bucket: bucket,
-      Key: fullKey,
-      Body: fs.createReadStream(tempFile)
-    }).promise();
-
-    log.info(`uploaded ${filename} to ${bucket}`);
-    return `s3://${bucket}/${fullKey}`;
   }
 
   /**
