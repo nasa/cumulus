@@ -12,6 +12,7 @@ const errors = require('@cumulus/common/errors');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
+const s3Mixin = require('./s3').s3Mixin;
 const { baseProtocol } = require('./protocol');
 
 class Discover {
@@ -354,6 +355,11 @@ class SftpDiscoverGranules extends sftpMixin(baseProtocol(Discover)) {}
 class FtpDiscoverGranules extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
+ * A class for discovering granules using S3.
+ */
+class S3DiscoverGranules extends s3Mixin(baseProtocol(Discover)) {}
+
+/**
  * Ingest Granule from an FTP endpoint.
  */
 class FtpGranule extends ftpMixin(baseProtocol(Granule)) {}
@@ -369,10 +375,15 @@ class SftpGranule extends sftpMixin(baseProtocol(Granule)) {}
 class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
 
 /**
+ * Ingest Granule from an s3 endpoint.
+ */
+class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
+
+/**
 * Select a class for discovering or ingesting granules based on protocol
 *
 * @param {string} type -`discover` or `ingest`
-* @param {string} protocol -`sftp`, `ftp`, or `http`
+* @param {string} protocol -`sftp`, `ftp`, `http` or `s3`
 * @returns {function} - a constructor to create a granule discovery object
 **/
 function selector(type, protocol) {
@@ -385,6 +396,8 @@ function selector(type, protocol) {
       case 'http':
       case 'https':
         return HttpDiscoverGranules;
+      case 's3':
+        return S3DiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -397,6 +410,8 @@ function selector(type, protocol) {
         return FtpGranule;
       case 'http':
         return HttpGranule;
+      case 's3':
+        return S3Granule;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -406,9 +421,11 @@ function selector(type, protocol) {
 }
 
 module.exports.selector = selector;
-module.exports.HttpGranule = HttpGranule;
-module.exports.FtpGranule = FtpGranule;
-module.exports.SftpGranule = SftpGranule;
-module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
+module.exports.FtpGranule = FtpGranule;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
+module.exports.HttpGranule = HttpGranule;
+module.exports.S3Granule = S3Granule;
+module.exports.S3DiscoverGranules = S3DiscoverGranules;
+module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
+module.exports.SftpGranule = SftpGranule;
