@@ -4,13 +4,10 @@ const os = require('os');
 const fs = require('fs');
 const JSFtp = require('jsftp');
 const join = require('path').join;
-const urljoin = require('url-join');
-const logger = require('./log');
-const S3 = require('./aws').S3;
+const log = require('@cumulus/common/log');
+const aws = require('@cumulus/common/aws');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-
-const log = logger.child({ file: 'ingest/ftp.js' });
 
 module.exports.ftpMixin = superclass => class extends superclass {
 
@@ -51,12 +48,6 @@ module.exports.ftpMixin = superclass => class extends superclass {
   async sync(path, bucket, key, filename) {
     const tempFile = await this.download(path, filename);
     return this.upload(bucket, key, filename, tempFile);
-  }
-
-  async upload(bucket, key, filename, tempFile) {
-    await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
-    log.info(`uploaded ${filename} to ${bucket}`);
-    return urljoin('s3://', bucket, key, filename);
   }
 
   /**

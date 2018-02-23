@@ -5,13 +5,11 @@ const os = require('os');
 const Client = require('ssh2').Client;
 const join = require('path').join;
 const urljoin = require('url-join');
-const logger = require('./log');
+const log = require('@cumulus/common/log');
 //const errors = require('@cumulus/common/errors');
 const S3 = require('./aws').S3;
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-
-const log = logger.child({ file: 'ingest/sftp.js' });
 
 //const PathIsInvalid = errors.createErrorType('PathIsInvalid');
 
@@ -23,7 +21,7 @@ module.exports = superclass => class extends superclass {
     this.decrypted = false;
     this.options = {
       host: this.host,
-      port: this.port || 21,
+      port: this.port || 22,
       user: this.username,
       password: this.password
     };
@@ -74,11 +72,6 @@ module.exports = superclass => class extends superclass {
   async sync(path, bucket, key, filename) {
     const tempFile = await this.download(path, filename);
     return this.upload(bucket, key, filename, tempFile);
-  }
-
-  async upload(bucket, key, filename, tempFile) {
-    await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
-    return urljoin('s3://', bucket, key, filename);
   }
 
   /**

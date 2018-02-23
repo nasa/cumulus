@@ -19,6 +19,58 @@ Parameters:
 Resources:
 
   #################################################
+  #  BEGIN
+  #################################################
+{{#each nested_templates}}
+  {{@key}}NestedStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+        CmrPassword:
+          Ref: CmrPassword
+        ElasticSearchDomain:
+          Fn::GetAtt:
+            - {{../es.name}}Domain
+            - DomainEndpoint
+        log2elasticsearchLambdaFunction:
+          Fn::GetAtt:
+            - log2elasticsearchLambdaFunction
+            - Arn
+        ScheduleSFLambdaFunction:
+          Fn::GetAtt:
+            - ScheduleSFLambdaFunction
+            - Arn
+        kinesisConsumerLambdaFunction:
+          Fn::GetAtt:
+            - kinesisConsumerLambdaFunction
+            - Arn
+      {{#each ../apis}}
+        {{name}}RestApi:
+          Ref: {{name}}RestApi
+        {{name}}RestApiRootId:
+          Fn::GetAtt:
+            - {{name}}RestApi
+            - RootResourceId
+      {{/each}}
+      {{# each ../dynamos}}
+        {{@key}}DynamoDB:
+          Ref: {{@key}}DynamoDB
+      {{/each}}
+      {{# if ../vpc }}
+        SecurityGroupId:
+          Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+      {{/if}}
+      TemplateURL: {{this.url}} 
+
+{{/each}}
+ 
+  #################################################
+  # Nested CloudFormation Templates config BEGIN
+  #################################################
+
+  #################################################
   # Cumulus Custom Resource BEGIN
   #################################################
   CumulusCustomResource:
@@ -115,12 +167,12 @@ Resources:
 {{/each}}
 
 {{#each stepFunctions}}
-  {{../stackNameNoDash}}{{name}}StateMachine:
+  {{../stackNameNoDash}}{{@key}}StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
         Fn::Sub: |
-          {{{ToJson definition}}}
+          {{{ToJson this}}}
 
       RoleArn: {{../iams.stepRoleArn}}
 
@@ -322,18 +374,20 @@ Resources:
   # APIGateway config BEGIN
   #################################################
 {{# if apiMethods}}
-{{# each apiDependencies}}
-  ApiGatewayDeployment11292017{{name}}:
-    DependsOn:
-  {{#each methods}}
-    - {{name}}
-  {{/each}}
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      RestApiId:
-        Ref: {{name}}RestApi
-      StageName: {{../apiStage}}
-{{/each}}
+# {{# each apiDependencies}}
+#   ApiGatewayDeployment{{../apiStage}}{{name}}:
+# {{# if methods }}
+#     DependsOn:
+#   {{#each methods}}
+#     - {{name}}
+#   {{/each}}
+# {{/if}}
+#     Type: AWS::ApiGateway::Deployment
+#     Properties:
+#       RestApiId:
+#         Ref: {{name}}RestApi
+#       StageName: {{../apiStage}}
+# {{/each}}
 
 {{#each apiMethods}}
   {{name}}:
@@ -408,6 +462,7 @@ Resources:
         Ref: {{api}}RestApi
 
 {{/each}}
+{{/if}}
 
 {{#each apis}}
   {{name}}RestApi:
@@ -415,7 +470,7 @@ Resources:
     Properties:
       Name: {{../stackName}}-{{name}}
 {{/each}}
-{{/if}}
+
   #################################################
   # APIGateway config END
   #################################################
@@ -807,9 +862,9 @@ Outputs:
     Value: {{apiStage}}
   
 {{#each stepFunctions}}
-  {{name}}StateMachine:
+  {{@key}}StateMachine:
     Value:
-      Ref: {{../stackNameNoDash}}{{name}}StateMachine
+      Ref: {{../stackNameNoDash}}{{@key}}StateMachine
 {{/each}}
 
 {{#each sqs}}

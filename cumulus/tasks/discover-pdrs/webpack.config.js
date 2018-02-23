@@ -5,11 +5,10 @@ module.exports = {
     filename: 'dist/index.js'
   },
   target: 'node',
-  devtool: 'sourcemap',
   module: {
     loaders: [{
       test: /\.js?$/,
-      exclude: /(node_modules)/,
+      exclude: /node_modules(?!\/@cumulus)/,
       loader: 'babel'
     }, {
       test: /\.json$/,

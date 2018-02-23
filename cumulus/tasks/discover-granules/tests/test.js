@@ -1,88 +1,80 @@
 'use strict';
 
-import test from 'ava';
-import sinon from 'sinon';
-import log from '@cumulus/common/log';
-import mur from '@cumulus/test-data/payloads/mur/discover.json';
-import amsr2 from '@cumulus/test-data/payloads/amsr2/discover.json';
-import queue from '@cumulus/ingest/queue';
-import { S3 } from '@cumulus/ingest/aws';
-import { handler } from '../index';
+const test = require('ava');
+const mur = require('./fixtures/mur.json');
+const { cloneDeep } = require('lodash');
+const { recursivelyDeleteS3Bucket, s3, sqs } = require('@cumulus/common/aws');
+const { createQueue, randomString } = require('@cumulus/common/test-utils');
+const { discoverGranules } = require('../index');
 
-test.cb('test discovering mur granules', (t) => {
-  const newMur = JSON.parse(JSON.stringify(mur));
+async function uploadMessageTemplate(Bucket) {
+  const templateKey = randomString();
 
-  sinon.stub(S3, 'fileExists').callsFake(() => false);
+  const messageTemplate = {
+    cumulus_meta: {
+      state_machine: randomString()
+    },
+    meta: {},
+    payload: {},
+    exception: null
+  };
 
-  // make sure queue is not used
-  newMur.meta.useQueue = false;
-  // update discovery rule
-  const rule = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])';
-  newMur.collection.meta.provider_path = rule;
+  await s3().putObject({
+    Bucket,
+    Key: templateKey,
+    Body: JSON.stringify(messageTemplate)
+  }).promise();
 
-  handler(newMur, {}, (e, r) => {
-    if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
-      log.info('ignoring this test. Test server seems to be down');
-    }
-    else {
-      const granules = r.payload.granules;
-      t.is(Object.keys(granules).length, 3);
-      const g = Object.keys(granules)[0];
-      t.is(granules[g].files.length, 2);
-    }
-    S3.fileExists.restore();
-    t.end(e);
-  });
-});
+  return `s3://${Bucket}/${templateKey}`;
+}
 
-test.cb('test discovering mur granules with queue', (t) => {
-  const newMur = Object.assign({}, mur);
-  sinon.stub(queue, 'queueGranule').callsFake(() => true);
-  sinon.stub(S3, 'fileExists').callsFake(() => false);
+test('test discovering mur granules', async (t) => {
+  const event = cloneDeep(mur);
+  event.config.useQueue = false;
 
-  // update discovery rule
-  const rule = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])';
-  newMur.meta = {};
-  newMur.payload = {};
-  newMur.collection.meta.provider_path = rule;
-
-  handler(newMur, {}, (e, r) => {
-    if (e && e.message.includes('getaddrinfo ENOTFOUND')) {
-      log.info('ignoring this test. Test server seems to be down');
-    }
-    else {
-      t.is(r.payload.granules_found, 3);
-    }
-    S3.fileExists.restore();
-    queue.queueGranule.restore();
-    t.end(e);
-  });
-});
-
-
-test.cb('test discovering amsr2 granules using SFTP', (t) => {
-  if (!process.env.JAXA_HOST || !process.env.JAXA_PORT) {
-    log.info('Skipping SFTP test because credentials are not set');
-    t.end();
+  try {
+    const output = await discoverGranules(event);
+    t.is(output.granules.length, 3);
+    t.is(output.granules[0].files.length, 2);
   }
-  else {
-    const payload = Object.assign({}, amsr2);
-    payload.provider.host = process.env.JAXA_HOST;
-    payload.provider.port = process.env.JAXA_PORT;
-    payload.provider.username = process.env.JAXA_USER;
-    payload.provider.password = process.env.JAXA_PASS;
-    payload.provider.encrypted = true;
+  catch (e) {
+    if (e.message.includes('getaddrinfo ENOTFOUND')) {
+      t.pass('Ignoring this test. Test server seems to be down');
+    }
+    else t.fail(e);
+  }
+});
 
-    // update discovery rule
-    payload.meta.useQueue = false;
-    payload.payload = {};
+test('test discovering mur granules over FTP with queue', async (t) => {
+  const internalBucket = randomString();
+  const messageTemplateBucket = randomString();
+  await Promise.all([
+    s3().createBucket({ Bucket: messageTemplateBucket }).promise(),
+    s3().createBucket({ Bucket: internalBucket }).promise()
+  ]);
 
-    handler(payload, {}, (e, r) => {
-      const granules = r.payload.granules;
-      t.true(Object.keys(granules).length > 5);
-      const g = Object.keys(granules)[0];
-      t.is(granules[g].files.length, 1);
-      t.end(e);
-    });
+  const event = cloneDeep(mur);
+  event.config.buckets.internal = internalBucket;
+  event.config.collection.provider_path = '/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])'; // eslint-disable-line max-len
+  event.config.queueUrl = await createQueue();
+  event.config.templateUri = await uploadMessageTemplate(messageTemplateBucket);
+  event.config.useQueue = true;
+
+  try {
+    const output = await discoverGranules(event);
+    t.is(output.granules.length, 3);
+  }
+  catch (e) {
+    if (e.message.includes('getaddrinfo ENOTFOUND')) {
+      t.pass('Ignoring this test. Test server seems to be down');
+    }
+    else t.fail(e);
+  }
+  finally {
+    await Promise.all([
+      sqs().deleteQueue({ QueueUrl: event.config.queueUrl }).promise(),
+      recursivelyDeleteS3Bucket(internalBucket),
+      recursivelyDeleteS3Bucket(messageTemplateBucket)
+    ]);
   }
 });

@@ -1,6 +1,7 @@
 {
-  "name": "gitc-http-sync",
-  "version": "0.0.0",
+  "name": "@cumulus/sync-http-urls",
+  "private": true,
+  "version": "1.0.0",
   "description": "Synchronizes http links to s3",
   "main": "index.js",
   "keywords": [
