@@ -197,7 +197,6 @@ test('Parse a PDR from an S3 provider', async (t) => {
 
   const event = cloneDeep(modis);
   event.config.bucket = internalBucket;
-  event.config.useQueue = false;
   event.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
