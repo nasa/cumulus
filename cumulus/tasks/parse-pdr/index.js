@@ -25,23 +25,14 @@ function parsePdr(event) {
   const config = get(event, 'config');
   const input = get(event, 'input');
   const provider = get(config, 'provider', null);
-  const queue = get(config, 'useQueue', true);
 
-  if (!provider) {
-    const err = new errors.ProviderNotFound('Provider info not provided');
-    log.error(err);
-    return Promise.reject(err);
-  }
-
-  const Parse = pdr.selector('parse', provider.protocol, queue);
+  const Parse = pdr.selector('parse', provider.protocol);
   const parse = new Parse(
     input.pdr,
     config.stack,
     config.bucket,
     config.collection,
-    provider,
-    config.queueUrl,
-    config.templateUri
+    provider
   );
 
   return parse.ingest()
