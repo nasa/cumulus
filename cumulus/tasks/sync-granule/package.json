@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.0.0-beta.19",
+  "version": "1.0.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -41,10 +41,10 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0-beta.19",
+    "@cumulus/common": "^1.0.0",
     "@cumulus/cumulus-message-adapter-js": "~0.0.1-beta.3",
-    "@cumulus/ingest": "^1.0.0-beta.19",
-    "@cumulus/test-data": "^1.0.0-beta.19",
+    "@cumulus/ingest": "^1.0.0",
+    "@cumulus/test-data": "^1.0.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
@@ -56,6 +56,7 @@
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.21.0",
+    "lodash": "^4.17.5",
     "proxyquire": "^1.8.0",
     "sinon": "^2.0.0-pre.5"
   }

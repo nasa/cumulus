@@ -45,7 +45,7 @@ async function queuePdr(queueUrl, templateUri, provider, collection, pdr) {
   const message = await getTemplate(templateUri, provider, collection);
 
   message.payload = { pdr };
-  message.cumulus_meta.execution_name = uuidv4();;
+  message.cumulus_meta.execution_name = uuidv4();
 
   return sendSQSMessage(queueUrl, message);
 }
