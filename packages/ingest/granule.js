@@ -14,6 +14,8 @@ const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
+const s3Mixin = require('./s3').s3Mixin;
+const { baseProtocol } = require('./protocol');
 
 class Discover {
   constructor(event) {
@@ -73,7 +75,10 @@ class Discover {
         }
       }
 
-      return file;
+      // if collection regex matched, the following will be true
+      if (file.granuleId && file.bucket) {
+        return file;
+      }
     }
     return false;
   }
@@ -389,53 +394,68 @@ class Granule {
 /**
  * A class for discovering granules using HTTP or HTTPS.
  */
-class HttpDiscoverGranules extends httpMixin(Discover) {}
+class HttpDiscoverGranules extends httpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using HTTP or HTTPS and queueing them to SQS.
  */
-class HttpDiscoverAndQueueGranules extends httpMixin(DiscoverAndQueue) {}
+class HttpDiscoverAndQueueGranules extends httpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * A class for discovering granules using SFTP.
  */
-class SftpDiscoverGranules extends sftpMixin(Discover) {}
+class SftpDiscoverGranules extends sftpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using SFTP and queueing them to SQS.
  */
-class SftpDiscoverAndQueueGranules extends sftpMixin(DiscoverAndQueue) {}
+class SftpDiscoverAndQueueGranules extends sftpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * A class for discovering granules using FTP.
  */
-class FtpDiscoverGranules extends ftpMixin(Discover) {}
+class FtpDiscoverGranules extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
  * A class for discovering granules using FTP and queueing them to SQS.
  */
-class FtpDiscoverAndQueueGranules extends ftpMixin(DiscoverAndQueue) {}
+class FtpDiscoverAndQueueGranules extends ftpMixin(baseProtocol(DiscoverAndQueue)) {}
+
+/**
+ * A class for discovering granules using s3
+ */
+class S3DiscoverGranules extends s3Mixin(baseProtocol(Discover)) {}
+
+/**
+ * A class for discovering granules using s3 and queueing them to SQS.
+ */
+class S3DiscoverAndQueueGranules extends s3Mixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Ingest Granule from an FTP endpoint.
  */
-class FtpGranule extends ftpMixin(Granule) {}
+class FtpGranule extends ftpMixin(baseProtocol(Granule)) {}
 
 /**
  * Ingest Granule from an SFTP endpoint.
  */
-class SftpGranule extends sftpMixin(Granule) {}
+class SftpGranule extends sftpMixin(baseProtocol(Granule)) {}
 
 /**
  * Ingest Granule from an HTTP endpoint.
  */
-class HttpGranule extends httpMixin(Granule) {}
+class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
+
+/**
+ * Ingest Granule from an s3 endpoint.
+ */
+class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 
 /**
 * Select a class for discovering or ingesting granules based on protocol
 *
 * @param {string} type -`discover` or `ingest`
-* @param {string} protocol -`sftp`, `ftp`, or `http`
+* @param {string} protocol -`sftp`, `ftp`, `http` or `s3`
 * @param {boolean} q - set to `true` to queue granules
 * @returns {function} - a constructor to create a granule discovery object
 **/
@@ -449,6 +469,8 @@ function selector(type, protocol, q) {
       case 'http':
       case 'https':
         return q ? HttpDiscoverAndQueueGranules : HttpDiscoverGranules;
+      case 's3':
+        return q ? S3DiscoverAndQueueGranules : S3DiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -461,6 +483,8 @@ function selector(type, protocol, q) {
         return FtpGranule;
       case 'http':
         return HttpGranule;
+      case 's3':
+        return S3Granule;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -473,9 +497,12 @@ module.exports.selector = selector;
 module.exports.HttpGranule = HttpGranule;
 module.exports.FtpGranule = FtpGranule;
 module.exports.SftpGranule = SftpGranule;
+module.exports.S3Granule = S3Granule;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpDiscoverAndQueueGranules = SftpDiscoverAndQueueGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpDiscoverAndQueueGranules = FtpDiscoverAndQueueGranules;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
 module.exports.HttpDiscoverAndQueueGranules = HttpDiscoverAndQueueGranules;
+module.exports.S3DiscoverGranules = S3DiscoverGranules;
+module.exports.S3DiscoverAndQueueGranules = S3DiscoverAndQueueGranules;

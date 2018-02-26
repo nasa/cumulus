@@ -8,13 +8,15 @@ const parsePdr = require('./parse-pdr').parsePdr;
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
 const sftpMixin = require('./sftp');
+const s3Mixin = require('./s3').s3Mixin;
 const aws = require('@cumulus/common/aws');
 const { S3 } = require('./aws');
 const queue = require('./queue');
+const { baseProtocol } = require('./protocol');
 
 /**
  * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
@@ -108,7 +110,7 @@ class Discover {
 
 /**
  * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
@@ -130,7 +132,7 @@ class DiscoverAndQueue extends Discover {
 
 /**
  * This is a base class for ingesting and parsing a single PDR
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
@@ -230,7 +232,7 @@ class Parse {
 
 /**
  * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
+ * It must be mixed with a FTP, HTTP or S3 mixing to work
  *
  * @class
  * @abstract
@@ -282,7 +284,7 @@ class ParseAndQueue extends Parse {
         this.queueUrl,
         this.templateUri,
         this.provider,
-        collections[g.dataType],        
+        collections[g.dataType],
         this.pdr,
         this.stack,
         this.bucket
@@ -307,7 +309,7 @@ class ParseAndQueue extends Parse {
  * @class
  */
 
-class FtpDiscover extends ftpMixin(Discover) {}
+class FtpDiscover extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
  * Discover PDRs from a HTTP endpoint.
@@ -315,7 +317,7 @@ class FtpDiscover extends ftpMixin(Discover) {}
  * @class
  */
 
-class HttpDiscover extends httpMixin(Discover) {}
+class HttpDiscover extends httpMixin(baseProtocol(Discover)) {}
 
 /**
  * Discover PDRs from a SFTP endpoint.
@@ -323,7 +325,15 @@ class HttpDiscover extends httpMixin(Discover) {}
  * @class
  */
 
-class SftpDiscover extends sftpMixin(Discover) {}
+class SftpDiscover extends sftpMixin(baseProtocol(Discover)) {}
+
+/**
+ * Discover PDRs from a S3 endpoint.
+ *
+ * @class
+ */
+
+class S3Discover extends s3Mixin(baseProtocol(Discover)) {}
 
 /**
  * Discover and Queue PDRs from a FTP endpoint.
@@ -331,7 +341,7 @@ class SftpDiscover extends sftpMixin(Discover) {}
  * @class
  */
 
-class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
+class FtpDiscoverAndQueue extends ftpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Discover and Queue PDRs from a HTTP endpoint.
@@ -339,7 +349,7 @@ class FtpDiscoverAndQueue extends ftpMixin(DiscoverAndQueue) {}
  * @class
  */
 
-class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
+class HttpDiscoverAndQueue extends httpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Discover and Queue PDRs from a SFTP endpoint.
@@ -347,23 +357,15 @@ class HttpDiscoverAndQueue extends httpMixin(DiscoverAndQueue) {}
  * @class
  */
 
-class SftpDiscoverAndQueue extends sftpMixin(DiscoverAndQueue) {}
+class SftpDiscoverAndQueue extends sftpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
- * Parse PDRs downloaded from a FTP endpoint.
+ * Discover and Queue PDRs from a S3 endpoint.
  *
  * @class
  */
 
-class FtpParse extends ftpMixin(Parse) {}
-
-/**
- * Parse PDRs downloaded from a HTTP endpoint.
- *
- * @class
- */
-
-class HttpParse extends httpMixin(Parse) {}
+class S3DiscoverAndQueue extends s3Mixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Parse PDRs downloaded from a SFTP endpoint.
@@ -371,7 +373,7 @@ class HttpParse extends httpMixin(Parse) {}
  * @class
  */
 
-class SftpParse extends sftpMixin(Parse) {}
+class SftpParse extends sftpMixin(baseProtocol(Parse)) {}
 
 /**
  * Parse and Queue PDRs downloaded from a FTP endpoint.
@@ -379,7 +381,7 @@ class SftpParse extends sftpMixin(Parse) {}
  * @class
  */
 
-class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
+class FtpParse extends ftpMixin(baseProtocol(Parse)) {}
 
 /**
  * Parse and Queue PDRs downloaded from a HTTP endpoint.
@@ -387,7 +389,32 @@ class FtpParseAndQueue extends ftpMixin(ParseAndQueue) {}
  * @class
  */
 
-class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
+class HttpParse extends httpMixin(baseProtocol(Parse)) {}
+
+
+/**
+ * Parse PDRs downloaded from a S3 endpoint.
+ *
+ * @class
+ */
+
+class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
+
+/**
+ * Parse and Queue PDRs downloaded from a FTP endpoint.
+ *
+ * @class
+ */
+
+class FtpParseAndQueue extends ftpMixin(baseProtocol(ParseAndQueue)) {}
+
+/**
+ * Parse and Queue PDRs downloaded from a HTTP endpoint.
+ *
+ * @class
+ */
+
+class HttpParseAndQueue extends httpMixin(baseProtocol(ParseAndQueue)) {}
 
 /**
  * Parse and Queue PDRs downloaded from a SFTP endpoint.
@@ -395,13 +422,21 @@ class HttpParseAndQueue extends httpMixin(ParseAndQueue) {}
  * @classc
  */
 
-class SftpParseAndQueue extends sftpMixin(ParseAndQueue) {}
+class SftpParseAndQueue extends sftpMixin(baseProtocol(ParseAndQueue)) {}
+
+/**
+ * Parse and Queue PDRs downloaded from a S3 endpoint.
+ *
+ * @classc
+ */
+
+class S3ParseAndQueue extends s3Mixin(baseProtocol(ParseAndQueue)) {}
 
 /**
  * Select a class for discovering PDRs based on protocol
  *
  * @param {string} type - `discover` or `parse`
- * @param {string} protocol - `sftp`, `ftp`, or `http`
+ * @param {string} protocol - `sftp`, `ftp`, `http` or 's3'
  * @param {boolean} q - set to `true` to queue pdrs
  * @returns {function} - a constructor to create a PDR discovery object
  */
@@ -414,6 +449,8 @@ function selector(type, protocol, q) {
         return q ? FtpDiscoverAndQueue : FtpDiscover;
       case 'sftp':
         return q ? SftpDiscoverAndQueue : SftpDiscover;
+      case 's3':
+        return q ? S3DiscoverAndQueue : S3Discover;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -425,7 +462,9 @@ function selector(type, protocol, q) {
       case 'ftp':
         return q ? FtpParseAndQueue : FtpParse;
       case 'sftp':
-        return q ? SftpParseAndQueue : SftpParseAndQueue;
+        return q ? SftpParseAndQueue : SftpParse;
+      case 's3':
+        return q ? S3ParseAndQueue : S3Parse;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -438,9 +477,12 @@ module.exports.selector = selector;
 module.exports.HttpParse = HttpParse;
 module.exports.FtpParse = FtpParse;
 module.exports.SftpParse = SftpParse;
+module.exports.S3Parse = S3Parse;
 module.exports.FtpDiscover = FtpDiscover;
 module.exports.HttpDiscover = HttpDiscover;
 module.exports.SftpDiscover = SftpDiscover;
+module.exports.S3Discover = S3Discover;
 module.exports.FtpDiscoverAndQueue = FtpDiscoverAndQueue;
 module.exports.HttpDiscoverAndQueue = HttpDiscoverAndQueue;
 module.exports.SftpDiscoverAndQueue = SftpDiscoverAndQueue;
+module.exports.S3DiscoverAndQueue = S3DiscoverAndQueue;

@@ -22,7 +22,7 @@ function eventFailed(event) {
     }
   }
   // Error and error keys are not part of the cumulus message
-  // and if they appear in the message something is seriouly wrong
+  // and if they appear in the message something is seriously wrong
   else if (event.Error || event.error) {
     return true;
   }

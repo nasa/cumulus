@@ -1,19 +1,18 @@
 # Cumulus Framework
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg&circle-token=4a16cbbdacb6396c709309ef5ac87479c9dc8bd1)](https://circleci.com/gh/cumulus-nasa/cumulus)
+[![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 
 ## Installing and deploying
 
 ### Prerequisites
 
 * [NVM](https://github.com/creationix/nvm) and node version 6.10.
-* [pip](https://pip.pypa.io/en/stable/installing/)
 * [yarn](https://yarnpkg.com/en/)
 * [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
-* Ruby
 * BASH
-* Docker (only required for building new container images)
-* docker-compose (`pip install docker-compose`)
+* Docker (only required for testing)
+* docker-compose (only required for testing `pip install docker-compose`)
 
 Install the correct node version:
 
