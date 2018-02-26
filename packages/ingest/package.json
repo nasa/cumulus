@@ -50,9 +50,11 @@
     "babel-register": "^6.26.0",
     "checksum": "^0.1.1",
     "cksum": "^1.3.0",
+    "fs-extra": "^5.0.0",
     "got": "^7.1.0",
     "jsftp": "^2.0.0",
     "json-loader": "~0.5.7",
+    "lodash": "^4.17.5",
     "lodash.get": "^4.4.2",
     "mkdirp": "^0.5.1",
     "moment": "^2.6.0",
@@ -68,6 +70,7 @@
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
-    "ava": "^0.23.0"
+    "ava": "^0.23.0",
+    "fs-extra": "^5.0.0"
   }
 }
