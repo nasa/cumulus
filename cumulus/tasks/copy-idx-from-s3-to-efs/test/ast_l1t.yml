@@ -101,6 +101,36 @@ _templates:
             - Blank_RGBA_512.png
             - mrfgen_configuration_file.xml
 
+          alternate_commands:
+            - gdal_command: gdalwarp
+              args: [
+                -of, GTiff,
+                -cutline, /tmp/left_side_cmr.json,
+                -crop_to_cutline,
+                -t_srs, EPSG:4326,
+                -tr, 0.0001373291015625, 0.0001373291015625,
+                -srcnodata, "0 0 0",
+                -dstalpha,
+                -r, near,
+                -overwrite,
+                input.tif,
+                in/processed_left_4326.tif
+              ]
+            - gdal_command: gdalwarp
+              args: [
+                -of, GTiff,
+                -cutline, /tmp/right_side_cmr.json,
+                -crop_to_cutline,
+                -t_srs, EPSG:4326,
+                -tr, 0.0001373291015625, 0.0001373291015625,
+                -srcnodata, "0 0 0",
+                -dstalpha,
+                -r, near,
+                -overwrite,
+                input.tif,
+                in/processed_right_4326.tif
+              ]
+
           commands:
             - gdal_command: gdalwarp
               args: [
