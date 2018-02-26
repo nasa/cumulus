@@ -79,7 +79,12 @@ module.exports = class FieldPattern {
         nestedValue = nestedValue[keypath.shift()];
       }
       if (nestedValue) {
-        result = result.replace(`{${field}}`, nestedValue);
+        if (Array.isArray(nestedValue)) {
+          result = result.replace(`{${field}}`, JSON.stringify(nestedValue));
+        }
+        else {
+          result = result.replace(`{${field}}`, nestedValue);
+        }
       }
     }
     return this.stringToValue(result);
