@@ -94,13 +94,10 @@
   "exception": "None",
   "workflow_config": {
     "ParsePdr": {
-      "queueUrl": "{{$.meta.queues.startSF}}",
       "bucket": "{{$.meta.buckets.internal}}",
       "collection": "{{$.meta.collection}}",
       "provider": "{{$.meta.provider}}",
-      "stack": "{{$.meta.stack}}",
-      "useQueue": true,
-      "templateUri": "{{$.meta.templates.IngestGranule}}"
+      "stack": "{{$.meta.stack}}"
     },
     "StopStatus": {},
     "WaitForSomeTime": {},

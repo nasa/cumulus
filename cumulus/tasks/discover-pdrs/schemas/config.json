@@ -9,16 +9,6 @@
     "stack"
   ],
   "properties": {
-    "useQueue": {
-      "type": "boolean"
-    },
-    "queueUrl": {
-      "type": "string"
-    },
-    "templateUri": {
-      "type": "string",
-      "description": "the S3 uri to the cumulus-message template for the parse pdr workflow"
-    },
     "stack": {
       "description": "The name of the Task's CloudFormation Task, useful as a prefix",
       "type": "string"
