@@ -20,7 +20,7 @@
         "globalConnectionLimit": { "type": "integer" },
         "protocol": {
           "type": "string",
-          "enum": ["ftp", "sftp", "http", "https"]
+          "enum": ["ftp", "sftp", "http", "https", "s3"]
         }
       }
     },
@@ -36,10 +36,8 @@
     },
     "collection": {
       "type": "object",
-      "description": "",
       "required": [
         "process",
-        "url_path",
         "files",
         "name",
         "granuleIdExtraction",
