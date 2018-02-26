@@ -24,6 +24,7 @@ function discoverPdrs(event) {
     const templateUri = config.templateUri;
     const collection = config.collection;
     const provider = config.provider;
+    // FIXME Can config.folder not be used?
 
     const output = {};
 
@@ -48,12 +49,7 @@ function discoverPdrs(event) {
     log.debug('Starting PDR discovery');
 
     return discover.discover().then((pdrs) => {
-      if (queue) {
-        output.pdrs_found = pdrs.length;
-      }
-      else {
-        output.pdrs = pdrs;
-      }
+      output.pdrs = pdrs;
 
       if (discover.connected) {
         discover.end();
@@ -114,10 +110,8 @@ function handler(event, context, callback) {
 }
 exports.handler = handler;
 
+// use node index.js local to invoke this
 local.justLocalRun(() => {
-  const filepath = process.argv[3] ? process.argv[3] : './tests/fixtures/input.json';
-  const payload = require(filepath); // eslint-disable-line global-require
-
-  payload.config.useQueue = false;
-  cumulusMessageAdapter.runCumulusTask(discoverPdrs, payload, {}, (e) => log.info(e));
+  const payload = require('@cumulus/test-data/cumulus_messages/discover-pdrs.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => console.log(e, r));
 });
