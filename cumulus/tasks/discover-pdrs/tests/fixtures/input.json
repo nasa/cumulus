@@ -1,9 +1,6 @@
 {
   "config": {
-    "useQueue": false,
     "stack": "lpdaac-cumulus-phaseIII",
-    "queueUrl": "http://somequeue.com",
-    "templateUri": "s3://path/to/template.json",
     "provider": {
       "id": "MUR",
       "globalConnectionLimit": 10,
