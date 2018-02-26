@@ -54,6 +54,9 @@
           }
         }
       }
+    },
+    "useList": {
+      "type": "boolean"
     }
   }
 }
