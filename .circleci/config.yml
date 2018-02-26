@@ -84,4 +84,4 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: message-updates
+              only: master 
