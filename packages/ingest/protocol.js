@@ -1,9 +1,10 @@
 'use strict';
 
-const path = require('path');
 const aws = require('@cumulus/common/aws');
-const fs = require('fs');
+const fs = require('fs-extra');
 const log = require('@cumulus/common/log');
+const os = require('os');
+const path = require('path');
 
 /**
  * the base class mixin used by all the protocol sub-classes
@@ -13,7 +14,17 @@ const log = require('@cumulus/common/log');
  * by other mixins. It also provides a unified upload method
  * to S3
  */
-module.exports.baseProtocol = superclass => class extends superclass {
+module.exports.baseProtocol = (superclass) => class extends superclass {
+
+  /**
+   * Create a temporary directory
+   *
+   * @returns {string} - a temporary directory name
+   */
+  createDownloadDirectory() {
+    const prefix = `${os.tmpdir()}${path.sep}`;
+    return fs.mkdtemp(prefix);
+  }
 
   /**
    * List files of a given path
@@ -64,12 +75,13 @@ module.exports.baseProtocol = superclass => class extends superclass {
   }
 
   /**
-   * Download the file to disk, difference with sync is that
-   * this method involves no uploading to S3
+   * Download a remote file to disk
    *
-   * @returns {*} undefined
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} localPath - the full local destination file path
+   * @returns {Promise.<string>} - the path that the file was saved to
    */
-  download() {
+  download(remotePath, localPath) { // eslint-disable-line no-unused-vars
     throw new TypeError('method not implemented');
   }
 
