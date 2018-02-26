@@ -7,7 +7,6 @@ const exampleOutputs = require('./fixtures/outputs.json');
 test('test cumulus message syntax fix', (t) => {
   const fix = kes.fixCumulusMessageSyntax;
   const testObj = {
-    useQueue: true,
     someKey: 'myKey{meta.stack}end',
     stack: '{$.meta.stack}',
     collections: '[$.meta.collections]',
@@ -19,7 +18,6 @@ test('test cumulus message syntax fix', (t) => {
   const returnObj = fix(Object.assign({}, testObj));
   t.is(`{${testObj.stack}}`, returnObj.stack);
   t.is(`{${testObj.collections}}`, returnObj.collections);
-  t.is(testObj.useQueue, returnObj.useQueue);
   t.is(testObj.someKey, returnObj.someKey);
   t.is(testObj.obj.key1, returnObj.obj.key1);
 });
@@ -32,7 +30,6 @@ test('handing CumulusConfig in workflows', (t) => {
         States: {
           MyTask1: {
             CumulusConfig: {
-              useQueue: true,
               collection: '{$.meta.collection}'
             }
           },
