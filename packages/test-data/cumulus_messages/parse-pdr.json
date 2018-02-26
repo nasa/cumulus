@@ -80,13 +80,10 @@
   "workflow_config": {
     "StatusReport": {},
     "ParsePdr": {
-      "useQueue": true,
       "provider": "{{$.meta.provider}}",
       "collection": "{{$.meta.collection}}",
       "bucket": "{{$.meta.buckets.internal}}",
-      "stack": "{{$.meta.stack}}",
-      "templateUri": "{{$.meta.templates.IngestGranule}}",
-      "queueUrl": "{{$.meta.queues.startSF}}"
+      "stack": "{{$.meta.stack}}"
     },
     "CheckStatus": {},
     "CheckAgainChoice": {},

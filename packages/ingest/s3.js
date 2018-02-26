@@ -2,30 +2,31 @@
 
 const aws = require('@cumulus/common/aws');
 const fs = require('fs');
+const log = require('@cumulus/common/log');
 const os = require('os');
 const path = require('path');
 
 module.exports.s3Mixin = (superclass) => class extends superclass {
-  /**
-   * Fetch object from S3 to disk
+   /**
+   * Download a remote file to disk
    *
-   * @param {string} s3Path - the S3 key path of the file to be downloaded
-   * @param {string} filename - the name of the file to be downloaded
-   * @returns {Promise} - the filename where the object was downloaded to
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} localPath - the full local destination file path
+   * @returns {Promise.<string>} - the path that the file was saved to
    */
-  download(s3Path, filename) {
-    const tempFile = path.join(os.tmpdir(), filename);
-
-    // Handle the case where the s3Path is null, meaning that the S3 object
-    // we're fetching is at the top level of the bucket.
-    const Key = s3Path ? `${s3Path}/${filename}` : filename;
+  async download(remotePath, localPath) {
+    const remoteUrl = `s3://${this.host}/${remotePath}`;
+    log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     const s3Obj = {
-      Key,
-      Bucket: this.host
+      Bucket: this.host,
+      Key: remotePath
     };
 
-    return aws.downloadS3File(s3Obj, tempFile);
+    const retval = await aws.downloadS3File(s3Obj, localPath);
+    log.info(`Finishing downloading ${remoteUrl}`);
+
+    return retval;
   }
 
   /**
@@ -83,10 +84,9 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
     return objects.map((object) => {
       const file = {
         name: path.basename(object.Key),
+        path: path.dirname(object.Key),
         size: object.Size,
-        time: object.LastModified,
-        owner: object.Owner.DisplayName,
-        path: path.dirname(object.Key)
+        time: (new Date(object.LastModified)).valueOf()
       };
 
       // If the object is at the top level of the bucket, path.dirname is going

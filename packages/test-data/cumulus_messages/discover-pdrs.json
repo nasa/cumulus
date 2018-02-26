@@ -80,9 +80,6 @@
   "workflow_config": {
     "StartStatus": {},
     "DiscoverPdrs": {
-      "templateUri": "{{$.meta.templates.ParsePdr}}",
-      "useQueue": true,
-      "queueUrl": "{{$.meta.queues.startSF}}",
       "stack": "{{$.meta.stack}}",
       "provider": "{{$.meta.provider}}",
       "bucket": "{{$.meta.buckets.internal}}",
