@@ -116,6 +116,9 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
 
   const internalBucketName = randomString();
   newPayload.config.bucket = internalBucketName;
+
+  await validateConfig(t, newPayload.config);
+
   return s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => {
       const Key = [
