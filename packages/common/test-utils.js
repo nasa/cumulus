@@ -114,26 +114,6 @@ async function createQueue() {
 exports.createQueue = createQueue;
 
 /**
- * Read a file and return a promise with the data
- *
- * Takes the same parameters as fs.readFile:
- *
- * https://nodejs.org/docs/v6.10.3/api/fs.html#fs_fs_readfile_file_options_callback
- *
- * @param {string|Buffer|integer} file - filename or file descriptor
- * @param {any} options - encoding and flag options
- * @returns {Promise} - the contents of the file
- */
-function promisedReadFile(file, options) {
-  return new Promise((resolve, reject) => {
-    readFile(file, options, (err, data) => {
-      if (err) reject(err);
-      else resolve(data);
-    });
-  });
-}
-
-/**
  * Validate an object using json-schema
  *
  * Issues a test failure if there were validation errors
@@ -145,7 +125,7 @@ function promisedReadFile(file, options) {
  */
 async function validateJSON(t, schemaFilename, data) {
   const schemaName = path.basename(schemaFilename).split('.')[0];
-  const schema = await promisedReadFile(schemaFilename, 'utf8').then(JSON.parse);
+  const schema = await fs.readFile(schemaFilename, 'utf8').then(JSON.parse);
   const ajv = new Ajv();
   const valid = ajv.validate(schema, data);
   if (!valid) {
