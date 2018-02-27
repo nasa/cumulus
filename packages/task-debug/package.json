@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/task-debug",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A harness for debugging workflows.",
   "main": "index.js",
   "repository": {
@@ -18,7 +18,7 @@
     "test": "test"
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0",
+    "@cumulus/common": "^1.0.1",
     "commander": "^2.11.0"
   },
   "devDependencies": {

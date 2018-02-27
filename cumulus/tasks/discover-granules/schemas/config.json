@@ -2,12 +2,11 @@
   "title": "DiscoverGranulesConfig",
   "description": "Describes the config used by the discover-granules task",
   "type": "object",
+  "required": [ "provider" ],
   "properties": {
-    "useQueue": {
-      "type": "boolean"
-    },
     "provider": {
       "type": "object",
+      "required": [ "host", "protocol" ],
       "properties": {
         "id": { "type": "string" },
         "username": { "type": "string" },
@@ -17,7 +16,7 @@
         "globalConnectionLimit": { "type": "integer" },
         "protocol": {
           "type": "string",
-          "enum": ["ftp", "sftp", "http", "https"]
+          "enum": ["ftp", "sftp", "http", "https", "s3"]
         }
       }
     },
@@ -54,6 +53,9 @@
           }
         }
       }
+    },
+    "useList": {
+      "type": "boolean"
     }
   }
 }
