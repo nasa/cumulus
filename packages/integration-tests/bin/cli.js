@@ -17,6 +17,7 @@ program
 
 program
   .command('workflow')
+  .description('Execute a workflow and determine if the workflow completes successfully')
   .action(() => {
     testRunner.testWorkflow(program.stackName, program.bucketName,
                             program.workflow, program.inputFile);
