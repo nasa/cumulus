@@ -2,59 +2,56 @@
 
 const test = require('ava');
 const path = require('path');
-const sinon = require('sinon');
-const {
-  ProviderNotFound,
-  FTPError,
-  RemoteResourceError
-} = require('@cumulus/common/errors');
-const { S3 } = require('@cumulus/ingest/aws');
+const fs = require('fs-extra');
+const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
+const { cloneDeep } = require('lodash');
 
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');
 
-const aws = require('@cumulus/common/aws');
-const testUtils = require('@cumulus/common/test-utils');
+const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const {
+  findTestDataDirectory,
+  findTmpTestDataDirectory,
+  randomString,
+  validateConfig,
+  validateOutput
+} = require('@cumulus/common/test-utils');
 
-test('error when provider info is missing', (t) =>
-  discoverPdrs({})
-    .then(t.fail)
-    .catch((e) => t.true(e instanceof ProviderNotFound)));
-
-test('test pdr discovery with FTP assuming all PDRs are new', (t) => {
-  const testInput = Object.assign({}, input);
-  testInput.config.provider = {
+test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
+  const event = cloneDeep(input);
+  event.config.bucket = randomString();
+  event.config.collection.provider_path = '/pdrs';
+  event.config.useList = true;
+  event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
     host: 'localhost',
     username: 'testuser',
     password: 'testpass'
   };
-  testInput.config.collection.provider_path = '/pdrs';
-  testInput.config.useQueue = false;
 
-  const ps = {
-    'MYD13A1_5_grans.PDR': false,
-    'PDN.ID1611071307.PDR': false,
-    'PDN.ID1611081200.PDR': false
-  };
-  sinon.stub(S3, 'fileExists').callsFake((b, k) => ps[path.basename(k)]);
+  await validateConfig(t, event.config);
 
-  return discoverPdrs(testInput, {})
-    .then((result) => {
-      S3.fileExists.restore();
-      t.is(result.pdrs.length, 4);
-    })
-    .catch((err) => {
-      S3.fileExists.restore();
-      if (err instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-      }
-      else throw err;
-    });
+  await s3().createBucket({ Bucket: event.config.bucket }).promise();
+
+  try {
+    const output = await discoverPdrs(event);
+    await validateOutput(t, output);
+    t.is(output.pdrs.length, 4);
+  }
+  catch (err) {
+    if (err instanceof RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else t.fail(err);
+  }
+  finally {
+    await recursivelyDeleteS3Bucket(event.config.bucket);
+  }
 });
 
-test('test pdr discovery with FTP invalid user/pass', (t) => {
+test('test pdr discovery with FTP invalid user/pass', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -63,9 +60,11 @@ test('test pdr discovery with FTP invalid user/pass', (t) => {
     password: 'testpass'
   };
 
-  const newPayload = Object.assign({}, input);
+  const newPayload = cloneDeep(input);
   newPayload.config.provider = provider;
   newPayload.input = {};
+
+  await validateConfig(t, newPayload.config);
 
   return discoverPdrs(newPayload, {})
     .then(t.fail)
@@ -80,19 +79,21 @@ test('test pdr discovery with FTP invalid user/pass', (t) => {
     });
 });
 
-test('test pdr discovery with FTP connection refused', (t) => {
+test('test pdr discovery with FTP connection refused', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
     host: 'localhost',
-    port: '30', // using port that doesn't exist to nonresponsiveness
+    port: 30, // using port that doesn't exist to nonresponsiveness
     username: 'testuser1',
     password: 'testpass'
   };
 
-  const newPayload = Object.assign({}, input);
+  const newPayload = cloneDeep(input);
   newPayload.config.provider = provider;
   newPayload.input = {};
+
+  await validateConfig(t, newPayload.config);
 
   return discoverPdrs(newPayload, {})
     .then(t.fail)
@@ -101,7 +102,7 @@ test('test pdr discovery with FTP connection refused', (t) => {
     });
 });
 
-test('test pdr discovery with FTP assuming some PDRs are new', (t) => {
+test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -110,15 +111,18 @@ test('test pdr discovery with FTP assuming some PDRs are new', (t) => {
     password: 'testpass'
   };
 
-  const newPayload = Object.assign({}, input);
+  const newPayload = cloneDeep(input);
+  newPayload.config.useList = true;
   newPayload.config.provider = provider;
-  newPayload.config.useQueue = false;
   newPayload.config.collection.provider_path = '/pdrs';
   newPayload.input = {};
 
-  const internalBucketName = testUtils.randomString();
+  const internalBucketName = randomString();
   newPayload.config.bucket = internalBucketName;
-  return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
+
+  await validateConfig(t, newPayload.config);
+
+  return s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => {
       const Key = [
         newPayload.config.stack,
@@ -126,7 +130,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', (t) => {
         'PDN.ID1611071307.PDR'
       ].join('/');
 
-      return aws.s3().putObject({
+      return s3().putObject({
         Bucket: internalBucketName,
         Key,
         Body: 'PDN.ID1611071307.PDR'
@@ -135,90 +139,161 @@ test('test pdr discovery with FTP assuming some PDRs are new', (t) => {
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
       t.is(output.pdrs.length, 3);
-      return aws.recursivelyDeleteS3Bucket(internalBucketName);
+      return validateOutput(t, output);
     })
+    .then(() => recursivelyDeleteS3Bucket(internalBucketName))
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
         t.pass('ignoring this test. Test server seems to be down');
-        return aws.recursivelyDeleteS3Bucket(internalBucketName);
+        return recursivelyDeleteS3Bucket(internalBucketName);
       }
-      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
+      return recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
     });
 });
 
-test('test pdr discovery with HTTP assuming some PDRs are new', (t) => {
-  const provider = {
-    id: 'MODAPS',
-    protocol: 'http',
-    host: 'http://localhost:8080'
-  };
+test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
+  const internalBucketName = randomString();
+  const providerPath = randomString();
 
-  const newPayload = Object.assign({}, input);
-  newPayload.config.provider = provider;
-  newPayload.config.useQueue = false;
-  newPayload.config.collection.provider_path = '/';
-  newPayload.input = {};
+  // Figure out the directory paths that we're working with
+  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
-  const internalBucketName = testUtils.randomString();
-  newPayload.config.bucket = internalBucketName;
-  return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
-    .then(() => aws.s3().putObject({
+  // Create providerPathDirectory and internal bucket
+  await Promise.all([
+    fs.ensureDir(providerPathDirectory),
+    s3().createBucket({ Bucket: internalBucketName }).promise()
+  ]);
+
+  try {
+    // Copy the PDRs to the HTTP directory
+    const pdrFilenames = await fs.readdir(testDataDirectory);
+
+    const oldPdr = pdrFilenames[0];
+    const newPdrs = pdrFilenames.slice(1);
+
+    await Promise.all(pdrFilenames.map((pdrFilename) => fs.copy(
+      path.join(testDataDirectory, pdrFilename),
+      path.join(providerPathDirectory, pdrFilename))));
+
+    // Build the event
+    const event = cloneDeep(input);
+    event.config.bucket = internalBucketName;
+    event.config.provider = {
+      id: 'MODAPS',
+      protocol: 'http',
+      host: 'http://localhost:8080'
+    };
+    event.config.collection.provider_path = providerPath;
+    event.input = {};
+
+    // Mark one of the PDRs as not new
+    await s3().putObject({
       Bucket: internalBucketName,
-      Key: 'lpdaac-cumulus-phaseIII/pdrs/pdrs/PDN.ID1611071307.PDR',
-      Body: 'PDN.ID1611071307.PDR'
-    }).promise())
-    .then(() => discoverPdrs(newPayload, {}))
-    .then((output) => {
-      t.is(output.pdrs.length, 2);
-      return aws.recursivelyDeleteS3Bucket(internalBucketName);
-    })
-    .catch((e) => {
-      if (e instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-        return aws.recursivelyDeleteS3Bucket(internalBucketName);
-      }
-      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
-    });
-});
+      // 'pdrs' is the default 'folder' value in the Discover contructor
+      Key: `${event.config.stack}/pdrs/${oldPdr}`,
+      Body: 'Pretend this is a PDR'
+    }).promise();
 
-test('test pdr discovery with SFTP assuming some PDRs are new', (t) => {
-  const provider = {
-    id: 'MODAPS',
-    protocol: 'sftp',
-    host: 'localhost',
-    port: 2222,
-    username: 'user',
-    password: 'password'
-  };
+    await validateConfig(t, event.config);
+    let output;
+    try {
+      output = await discoverPdrs(event, {});
 
-  const newPayload = Object.assign({}, input);
-  newPayload.config.provider = provider;
-  newPayload.config.useQueue = false;
-  newPayload.config.collection.provider_path = 'test-data/pdrs';
-  newPayload.input = {};
+      await validateOutput(t, output);
 
-  const internalBucketName = testUtils.randomString();
-  newPayload.config.bucket = internalBucketName;
-  return aws.s3().createBucket({ Bucket: internalBucketName }).promise()
-    .then(() => aws.s3().putObject({
-      Bucket: internalBucketName,
-      Key: 'lpdaac-cumulus-phaseIII/pdrs/PDN.ID1611071307.PDR',
-      Body: 'PDN.ID1611071307.PDR'
-    }).promise())
-    .then(() => discoverPdrs(newPayload, {}))
-    .then((output) => {
       t.is(output.pdrs.length, 3);
       const names = output.pdrs.map((p) => p.name);
-      t.true(names.includes('MOD09GQ.PDR'));
-      t.true(names.includes('MYD13A1_5_grans.PDR'));
-      t.true(names.includes('PDN.ID1611081200.PDR'));
-      return aws.recursivelyDeleteS3Bucket(internalBucketName);
-    })
-    .catch((e) => {
+      newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
+    }
+    catch (e) {
       if (e instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-        return aws.recursivelyDeleteS3Bucket(internalBucketName);
+        t.pass('Ignoring this test. Test server seems to be down');
       }
-      return aws.recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
-    });
+      else t.fail(e);
+    }
+  }
+  finally {
+    // Clean up
+    await Promise.all([
+      recursivelyDeleteS3Bucket(internalBucketName),
+      fs.remove(providerPathDirectory)
+    ]);
+  }
+});
+
+test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
+  const internalBucketName = randomString();
+  const providerPath = randomString();
+
+  // Figure out the directory paths that we're working with
+  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
+
+  // Create providerPathDirectory and internal bucket
+  await Promise.all([
+    fs.ensureDir(providerPathDirectory),
+    s3().createBucket({ Bucket: internalBucketName }).promise()
+  ]);
+
+  try {
+    // Copy the PDRs to the SFTP directory
+    const pdrFilenames = await fs.readdir(testDataDirectory);
+
+    const oldPdr = pdrFilenames[0];
+    const newPdrs = pdrFilenames.slice(1);
+
+    await Promise.all(pdrFilenames.map((pdrFilename) => fs.copy(
+      path.join(testDataDirectory, pdrFilename),
+      path.join(providerPathDirectory, pdrFilename))));
+
+    // Build the event
+    const event = cloneDeep(input);
+    event.config.bucket = internalBucketName;
+    event.config.provider = {
+      id: 'MODAPS',
+      protocol: 'sftp',
+      host: 'localhost',
+      port: 2222,
+      username: 'user',
+      password: 'password'
+    };
+    // The test-data prefix is required because of the way that the sftp
+    // container is configured in docker-compose.yml.
+    event.config.collection.provider_path = `test-data/${providerPath}`;
+    event.input = {};
+
+    // Mark one of the PDRs as not new
+    await s3().putObject({
+      Bucket: internalBucketName,
+      // 'pdrs' is the default 'folder' value in the Discover contructor
+      Key: `${event.config.stack}/pdrs/${oldPdr}`,
+      Body: 'Pretend this is a PDR'
+    }).promise();
+
+    await validateConfig(t, event.config);
+    let output;
+    try {
+      output = await discoverPdrs(event, {});
+
+      await validateOutput(t, output);
+
+      t.is(output.pdrs.length, 3);
+      const names = output.pdrs.map((p) => p.name);
+      newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
+    }
+    catch (e) {
+      if (e instanceof RemoteResourceError) {
+        t.pass('Ignoring this test. Test server seems to be down');
+      }
+      else t.fail(e);
+    }
+  }
+  finally {
+    // Clean up
+    await Promise.all([
+      recursivelyDeleteS3Bucket(internalBucketName),
+      fs.remove(providerPathDirectory)
+    ]);
+  }
 });
