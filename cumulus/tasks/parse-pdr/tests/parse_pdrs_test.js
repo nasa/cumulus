@@ -9,7 +9,8 @@ const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { cloneDeep } = require('lodash');
 const {
-  findGitRepoRootDirectory,
+  findTestDataDirectory,
+  findTmpTestDataDirectory,
   randomString,
   validateConfig,
   validateInput,
@@ -19,7 +20,12 @@ const {
 const { parsePdr } = require('../index');
 
 test('parse PDR from FTP endpoint', async (t) => {
-  const provider = {
+  const internalBucketName = randomString();
+
+  const newPayload = cloneDeep(modis);
+
+  newPayload.config.bucket = internalBucketName;
+  newPayload.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
     host: 'localhost',
@@ -27,21 +33,13 @@ test('parse PDR from FTP endpoint', async (t) => {
     password: 'testpass'
   };
 
-  const pdrName = 'MOD09GQ.PDR';
-
-  const newPayload = cloneDeep(modis);
-  newPayload.config.provider = provider;
-
-  const internalBucketName = randomString();
-  newPayload.config.bucket = internalBucketName;
-
   await validateConfig(t, newPayload.config);
 
   return s3().createBucket({ Bucket: internalBucketName }).promise()
     .then(() => parsePdr(newPayload))
     .then((output) => {
       t.is(output.granules.length, output.granulesCount);
-      t.is(output.pdr.name, pdrName);
+      t.is(output.pdr.name, newPayload.input.pdr.name);
       t.is(output.filesCount, 2);
       return output;
     })
@@ -61,8 +59,8 @@ test('parse PDR from HTTP endpoint', async (t) => {
   const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
-  const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
   await Promise.all([
@@ -73,7 +71,7 @@ test('parse PDR from HTTP endpoint', async (t) => {
   const pdrName = 'MOD09GQ.PDR';
 
   await fs.copy(
-    path.join(gitRepoRootDirectory, 'packages', 'test-data', 'pdrs', pdrName),
+    path.join(testDataDirectory, pdrName),
     path.join(providerPathDirectory, pdrName));
 
   const newPayload = cloneDeep(modis);
@@ -118,10 +116,7 @@ test('parse PDR from HTTP endpoint', async (t) => {
 test('parse PDR from SFTP endpoint', async (t) => {
   const internalBucketName = randomString();
   const providerPath = randomString();
-
-  // Figure out the directory paths that we're working with
-  const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
   await Promise.all([
@@ -130,10 +125,6 @@ test('parse PDR from SFTP endpoint', async (t) => {
   ]);
 
   const pdrName = 'MOD09GQ.PDR';
-
-  await fs.copy(
-    path.join(gitRepoRootDirectory, 'packages', 'test-data', 'pdrs', pdrName),
-    path.join(providerPathDirectory, pdrName));
 
   const newPayload = cloneDeep(modis);
   newPayload.config.bucket = internalBucketName;
@@ -158,7 +149,14 @@ test('parse PDR from SFTP endpoint', async (t) => {
   await validateConfig(t, newPayload.config);
 
   try {
+    // Stage the file to be downloaded
+    const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+    await fs.copy(
+      path.join(testDataDirectory, pdrName),
+      path.join(providerPathDirectory, pdrName));
+
     const output = await parsePdr(newPayload);
+
     await validateOutput(t, output);
     t.is(output.granules.length, output.granulesCount);
     t.is(output.pdr.name, pdrName);

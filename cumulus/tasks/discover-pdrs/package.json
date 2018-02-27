@@ -26,7 +26,6 @@
       "babel-polyfill",
       "babel-register"
     ],
-    "serial": true,
     "color": false
   },
   "babel": {
