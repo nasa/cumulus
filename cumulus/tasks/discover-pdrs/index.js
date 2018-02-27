@@ -29,7 +29,8 @@ function discoverPdrs(event) {
       stack,
       bucket,
       collection,
-      provider
+      provider,
+      config.useList
     );
 
     log.debug('Starting PDR discovery');
