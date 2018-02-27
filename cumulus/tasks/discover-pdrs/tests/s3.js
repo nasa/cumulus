@@ -21,7 +21,8 @@ test.beforeEach(async (t) => {
         id: randomString(),
         protocol: 's3'
       },
-      stack: randomString()
+      stack: randomString(),
+      useList: true
     }
   };
 

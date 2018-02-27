@@ -25,7 +25,7 @@ class Discover {
     bucket,
     collection,
     provider,
-    useList,
+    useList = false,
     folder = 'pdrs',
   ) {
     if (this.constructor === Discover) {
