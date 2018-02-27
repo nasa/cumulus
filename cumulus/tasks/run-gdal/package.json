@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@cumulus/run-gdal",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Runs gdal commands as a task",
   "main": "index.js",
   "keywords": [
@@ -25,10 +25,9 @@
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
-    "sinon": "^2.0.0-pre.5",
     "webpack": "^1.12.13"
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0"
+    "@cumulus/common": "^1.0.1"
   }
 }

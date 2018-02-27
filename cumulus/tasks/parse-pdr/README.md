@@ -9,13 +9,10 @@
 
 | field name | default | description
 | --------   | ------- | ----------
-| useQueue   | true    | Whether to add discovered granules to the queue for processing
 | provider   | (required) | The cumulus-api provider object
 | collection | (required) | The cumulus-api collection object
 | bucket     | (required) | The internal bucket name (used for record keeping)
 | stack      | (required) | Cumulus deployment stack name
-| templateUri | (required)| The S3 Uri to the Cumulus message template of the IngestGranule workflow
-| queueUrl   | (required) | The SQS url to the cumulus-api StepFunction Starter Queue
 
 ### Input
 
@@ -25,7 +22,8 @@
 
 ## What is Cumulus?
 
-Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
+Cumulus is a cloud-based data ingest, archive, distribution and management
+prototype for NASA's future Earth science data streams.
 
 [Cumulus Documentation](https://cumulus-nasa.github.io/)
 
