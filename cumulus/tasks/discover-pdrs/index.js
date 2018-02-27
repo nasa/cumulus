@@ -18,7 +18,6 @@ function discoverPdrs(event) {
     const config = get(event, 'config', {});
     const stack = config.stack;
     const bucket = config.bucket;
-    const useList = config.useList || false;
     const collection = config.collection;
     const provider = config.provider;
     // FIXME Can config.folder not be used?
@@ -30,8 +29,8 @@ function discoverPdrs(event) {
       stack,
       bucket,
       collection,
-      useList,
-      provider
+      provider,
+      config.useList
     );
 
     log.debug('Starting PDR discovery');
