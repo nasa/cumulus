@@ -25,6 +25,7 @@ class Discover {
     bucket,
     collection,
     provider,
+    useList = false,
     folder = 'pdrs',
   ) {
     if (this.constructor === Discover) {
@@ -36,6 +37,7 @@ class Discover {
     this.collection = collection;
     this.provider = provider;
     this.folder = folder;
+    this.useList = useList;
 
     // get authentication information
     this.port = get(this.provider, 'port', 21);
