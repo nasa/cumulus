@@ -11,7 +11,8 @@ const input = require('./fixtures/input.json');
 
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
-  findGitRepoRootDirectory,
+  findTestDataDirectory,
+  findTmpTestDataDirectory,
   randomString,
   validateConfig,
   validateOutput
@@ -21,6 +22,7 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/pdrs';
+  event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -110,6 +112,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   };
 
   const newPayload = cloneDeep(input);
+  newPayload.config.useList = true;
   newPayload.config.provider = provider;
   newPayload.config.collection.provider_path = '/pdrs';
   newPayload.input = {};
@@ -153,9 +156,8 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
   const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
-  const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const testDataDirectory = path.join(gitRepoRootDirectory, 'packages', 'test-data', 'pdrs');
-  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
   await Promise.all([
@@ -225,9 +227,8 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
   const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
-  const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const testDataDirectory = path.join(gitRepoRootDirectory, 'packages', 'test-data', 'pdrs');
-  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
   await Promise.all([
