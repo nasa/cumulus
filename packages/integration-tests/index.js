@@ -1,16 +1,17 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
+const { s3, sfn } = require('@cumulus/common/aws');
 
+const executionStatusNumRetries = 20;
 const waitPeriodMs = 5000;
 
 /**
  * Wait for the defined number of milliseconds
  *
  * @param {integer} waitPeriod - number of milliseconds to wait
- * @returns {Promise} ?????
+ * @returns {Promise.<undefined>} - promise resolves after a given time period
  */
 function timeout(waitPeriod) {
   return new Promise((resolve) => setTimeout(resolve, waitPeriod));
@@ -26,9 +27,8 @@ function timeout(waitPeriod) {
 async function getWorkflowList(stackName, bucketName) {
   const key = `${stackName}/workflows/list.json`;
 
-  const workflowJson = await aws.s3().getObject({ Bucket: bucketName, Key: key }).promise();
-
-  return JSON.parse(workflowJson.Body.toString());
+  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
+    .then((workflowJson) => JSON.parse(workflowJson.Body.toString()));
 }
 
 /**
@@ -41,9 +41,8 @@ async function getWorkflowList(stackName, bucketName) {
  */
 async function getWorkflowTemplate(stackName, bucketName, workflowName) {
   const key = `${stackName}/workflows/${workflowName}.json`;
-  const templateJson = await aws.s3().getObject({ Bucket: bucketName, Key: key }).promise();
-
-  return JSON.parse(templateJson.Body.toString());
+  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
+    .then((templateJson) => JSON.parse(templateJson.Body.toString()));
 }
 
 /**
@@ -56,9 +55,8 @@ async function getWorkflowTemplate(stackName, bucketName, workflowName) {
  * @returns {string} - workflow arn
  */
 async function getWorkflowArn(stackName, bucketName, workflowName) {
-  const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
-
-  return template.cumulus_meta.state_machine;
+  return getWorkflowTemplate(stackName, bucketName, workflowName)
+   .then((template) => template.cumulus_meta.state_machine);
 }
 
 /**
@@ -69,11 +67,8 @@ async function getWorkflowArn(stackName, bucketName, workflowName) {
  * @returns {string} status
  */
 async function getExecutionStatus(executionArn) {
-  const status = await aws.sfn().describeExecution({
-    executionArn: executionArn
-  }).promise();
-
-  return status.status;
+  return sfn().describeExecution({ executionArn }).promise()
+    .then((status) => status.status);
 }
 
 /**
@@ -84,11 +79,17 @@ async function getExecutionStatus(executionArn) {
  */
 async function waitForCompletedExecution(executionArn) {
   let executionStatus = await getExecutionStatus(executionArn);
+  let statusCheckCount = 0;
 
   // While execution is running, check status on a time interval
-  while (executionStatus === 'RUNNING') {
+  while (executionStatus === 'RUNNING' && statusCheckCount < executionStatusNumRetries) {
     await timeout(waitPeriodMs);
     executionStatus = await getExecutionStatus(executionArn);
+    statusCheckCount++;
+  }
+
+  if (executionStatus === 'RUNNING' && statusCheckCount === executionStatusNumRetries) {
+    console.log(`Execution status check timed out, exceeded ${executionStatusNumRetries} status checks.`);
   }
 
   return executionStatus;
@@ -99,7 +100,7 @@ async function waitForCompletedExecution(executionArn) {
  *
  * @param {string} workflowArn - ARN for the workflow
  * @param {string} inputFile - path to input JSON
- * @returns {Object} execution details: {executionArn, startDate}
+ * @returns {Promise.<Object>} execution details: {executionArn, startDate}
  */
 async function startWorkflowExecution(workflowArn, inputFile) {
   const rawInput = await fs.readFile(inputFile, 'utf8');
@@ -116,7 +117,7 @@ async function startWorkflowExecution(workflowArn, inputFile) {
     name: parsedInput.cumulus_meta.execution_name
   };
 
-  return aws.sfn().startExecution(workflowParams).promise();
+  return sfn().startExecution(workflowParams).promise();
 }
 
 /**
@@ -133,13 +134,14 @@ async function startWorkflowExecution(workflowArn, inputFile) {
 async function executeWorkflow(stackName, bucketName, workflowName, inputFile) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
   const execution = await startWorkflowExecution(workflowArn, inputFile);
+  const executionArn = execution.executionArn;
 
-  console.log(`Executing workflow: ${workflowName}. Execution ARN ${execution.executionArn}`);
+  console.log(`Executing workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
   // Wait for the execution to complete to get the status
-  const status = await waitForCompletedExecution(execution.executionArn);
+  const status = await waitForCompletedExecution(executionArn);
 
-  return { status: status, arn: execution.executionArn };
+  return { status, executionArn };
 }
 
 /**
@@ -149,22 +151,21 @@ async function executeWorkflow(stackName, bucketName, workflowName, inputFile) {
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {string} inputFile - path to input JSON file
- * @returns {*} none
+ * @returns {*} undefined
  */
 async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
   try {
     const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, inputFile);
 
     if (workflowStatus.status === 'SUCCEEDED') {
-      console.log('Workflow ' + workflowName + ' execution succeeded.');
+      console.log(`Workflow ${workflowName} execution succeeded.`);
     }
     else {
-      console.log('Workflow ' + workflowName +
-                  ' execution failed with state: ' + workflowStatus.status);
+      console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
     }
   }
   catch (err) {
-    console.log('Error executing workflow ' + workflowName + ' ' + err);
+    console.log(`Error executing workflow ${workflowName}. Error: ${err}`);
   }
 }
 
