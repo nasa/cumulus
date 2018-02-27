@@ -736,7 +736,6 @@
         "ParsePdr": {
             "StatusReport": {},
             "ParsePdr": {
-                "useQueue": true,
                 "provider": "{{$.meta.provider}}",
                 "collection": "{{$.meta.collection}}"
             },
@@ -750,7 +749,6 @@
             "StartStatus": {},
             "DiscoverPdrs": {
                 "next": "ParsePdr",
-                "useQueue": false,
                 "testing": "what{cumulus_meta.stack}is",
                 "queues": "{{$.meta.queues}}",
                 "stack": "{{$.cumulus_meta.stack}}",

@@ -1,16 +1,14 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
 const aws = require('@cumulus/common/aws');
-const fs = require('fs');
+const fs = require('fs-extra');
 const get = require('lodash.get');
-const join = require('path').join;
+const os = require('os');
+const path = require('path');
 const urljoin = require('url-join');
 const cksum = require('cksum');
 const checksum = require('checksum');
-const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
-const queue = require('./queue');
 const sftpMixin = require('./sftp');
 const ftpMixin = require('./ftp').ftpMixin;
 const httpMixin = require('./http').httpMixin;
@@ -70,7 +68,7 @@ class Discover {
             file.url_path = f.url_path;
           }
           else {
-            file.url_path = this.collection.url_path || '/';
+            file.url_path = this.collection.url_path || '';
           }
         }
       }
@@ -85,14 +83,10 @@ class Discover {
 
   async discover() {
     // get list of files that matches a given path
-    const files = await this.list();
+    const updatedFiles = (await this.list())
+      .map((file) => this.setGranuleInfo(file))
+      .filter((file) => file);
 
-    const updatedFiles = [];
-    // select files that match a given collection
-    files.forEach(f => {
-      const file = this.setGranuleInfo(f);
-      if (file) updatedFiles.push(file);
-    });
     return await this.findNewGranules(updatedFiles);
   }
 
@@ -138,43 +132,6 @@ class Discover {
     return Object.keys(granules).map(k => granules[k]);
   }
 }
-
-/**
- * This is a base class for discovering PDRs
- * It must be mixed with a FTP or HTTP mixing to work
- *
- * @class
- * @abstract
- */
-class DiscoverAndQueue extends Discover {
-  /**
-   * Creates an instance of DiscoverAndQueue
-   *
-   * @param {Object} event - a Cumulus event
-   * @memberof DiscoverAndQueue
-   */
-  constructor(event) {
-    super(event);
-
-    this.queueUrl = event.config.queueUrl;
-    this.templateUri = event.config.templateUri;
-  }
-
-  async findNewGranules(files) {
-    const granules = await super.findNewGranules(files);
-    return Promise.all(granules.map(g => queue.queueGranule(
-      g,
-      this.queueUrl,
-      this.templateUri,
-      this.provider,
-      this.collection,
-      null,
-      this.stack,
-      this.buckets.internal
-     )));
-  }
-}
-
 
 /**
  * This is a base class for ingesting and parsing a single PDR
@@ -252,18 +209,29 @@ class Granule {
     return true;
   }
 
-  async _validateChecksum(type, value, tempFile, options) {
-    if (!options) options = {};
+  /**
+   * Validate a file's checksum and throw an exception if it's invalid
+   *
+   * @param {Object} file - the file object to be checked
+   * @param {string} fileLocalPath - the path to the file on the filesystem
+   * @param {Object} [options={}] - options for the this._hash method
+   * @returns {undefined} - no return value, but throws an error if the
+   *   checksum is invalid
+   * @memberof Granule
+   */
+  async validateChecksum(file, fileLocalPath, options = {}) {
+    const [type, value] = await this.getChecksumFromFile(file);
+
+    if (!type || !value) return;
+
     let sum = null;
+    if (type.toLowerCase() === 'cksum') sum = await this._cksum(fileLocalPath);
+    else sum = await this._hash(type, fileLocalPath, options);
 
-    if (type.toLowerCase() === 'cksum') {
-      sum = await this._cksum(tempFile);
+    if (value !== sum) {
+      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
+      throw new errors.InvalidChecksum(message);
     }
-    else {
-      sum = await this._hash(type, tempFile, options);
-    }
-
-    return value === sum;
   }
 
   async _cksum(tempFile) {
@@ -285,109 +253,92 @@ class Granule {
     );
   }
 
+  async enableDuplicateHandling(bucket) {
+    // check that the bucket has versioning enabled
+    const versioning = await aws.s3().getBucketVersioning({ Bucket: bucket }).promise();
+
+    // if not enabled, make it enabled
+    if (versioning.Status !== 'Enabled') {
+      return aws.s3().putBucketVersioning({
+        Bucket: bucket,
+        VersioningConfiguration: { Status: 'Enabled' } }).promise();
+    }
+  }
+
+  async getChecksumFromFile(file) {
+    if (file.checksumType && file.checksumValue) {
+      return [file.checksumType, file.checksumValue];
+    }
+    else if (this.checksumFiles[file.name]) {
+      const checksumInfo = this.checksumFiles[file.name];
+
+      const checksumRemotePath = path.join(checksumInfo.path, checksumInfo.name);
+
+      const downloadDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
+      const checksumLocalPath = path.join(downloadDir, checksumInfo.name);
+
+      let checksumValue;
+      try {
+        await this.download(checksumRemotePath, checksumLocalPath);
+        checksumValue = (await fs.readFile(checksumLocalPath, 'utf8')).split(' ')[0];
+      }
+      finally {
+        await fs.remove(downloadDir);
+      }
+
+      // assuming the type is md5
+      return ['md5', checksumValue];
+    }
+
+    // No checksum found
+    return [null, null];
+  }
+
   /**
    * Ingest individual files
    * @private
    */
-  async ingestFile(_file, duplicateHandling) {
-    const file = _file;
-    let exists = null;
+  async ingestFile(file, duplicateHandling) {
+    // Check if the file exists
+    const exists = await aws.s3ObjectExists({
+      Bucket: file.bucket,
+      Key: path.join(file.url_path, file.name)
+    });
 
-    // check if the file exists.
-    exists = await aws.s3ObjectExists({ Bucket: file.bucket, Key: join(file.url_path, file.name) });
+    // Exit early if we can
+    if (exists && duplicateHandling === 'skip') return file;
 
-    if (duplicateHandling === 'version') {
-      // check that the bucket has versioning enabled
-      let versioning = await aws.s3().getBucketVersioning({ Bucket: file.bucket }).promise();
+    // Enable duplicate handling
+    if (duplicateHandling === 'version') this.enableDuplicateHandling(file.bucket);
 
-      // if not enabled, make it enabled
-      if (versioning.Status !== 'Enabled') {
-        versioning = await aws.s3().putBucketVersioning({
-          Bucket: file.bucket,
-          VersioningConfiguration: { Status: 'Enabled' } }).promise();
-      }
+    // Either the file does not exist yet, or it does but
+    // we are replacing it with a more recent one or
+    // adding another version of it to the bucket
+
+    // we considered a direct stream from source to S3 but since
+    // it doesn't work with FTP connections, we decided to always download
+    // and then upload
+
+    const downloadDir = await this.createDownloadDirectory();
+    try {
+      const fileLocalPath = path.join(downloadDir, file.name);
+      const fileRemotePath = path.join(file.path, file.name);
+
+      // Download the file
+      await this.download(fileRemotePath, fileLocalPath);
+
+      // Validate the checksum
+      await this.validateChecksum(file, fileLocalPath);
+
+      // Upload the file
+      const filename = await this.upload(file.bucket, file.url_path, file.name, fileLocalPath);
+
+      return Object.assign({}, file, { filename });
     }
-
-    if (!exists || duplicateHandling !== 'skip') {
-      // Either the file does not exist yet, or it does but
-      // we are replacing it with a more recent one or
-      // adding another version of it to the bucket
-
-      // we considered a direct stream from source to S3 but since
-      // it doesn't work with FTP connections, we decided to always download
-      // and then upload
-      let tempFile;
-      try {
-        log.info(`downloading ${file.name}`);
-        tempFile = await this.download(file.path, file.name);
-        log.info(`downloaded ${file.name}`);
-      }
-      catch (e) {
-        if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
-          throw new errors.FileNotFound(
-            `${file.name} was not found on the server with 403 status`
-          );
-        }
-        throw e;
-      }
-
-      try {
-        let checksumType = null;
-        let checksumValue = null;
-
-        if (file.checksumType && file.checksumValue) {
-          checksumType = file.checksumType;
-          checksumValue = file.checksumValue;
-        }
-        else if (this.checksumFiles[file.name]) {
-          const checksumInfo = this.checksumFiles[file.name];
-
-          log.info(`downloading ${checksumInfo.name}`);
-          const checksumFilepath = await this.download(checksumInfo.path, checksumInfo.name);
-          log.info(`downloaded ${checksumInfo.name}`);
-
-          // expecting the type is md5
-          checksumType = 'md5';
-          checksumValue = fs.readFileSync(checksumFilepath, 'utf8').split(' ')[0];
-          fs.unlinkSync(checksumFilepath);
-        }
-        else {
-          // If there is not a checksum, no need to validate
-          file.filename = await this.upload(file.bucket, file.url_path, file.name, tempFile);
-          return file;
-        }
-
-        const validated = await this._validateChecksum(
-          checksumType,
-          checksumValue,
-          tempFile
-        );
-
-        if (validated) {
-          await this.upload(file.bucket, file.url_path, file.name, tempFile);
-        }
-        else {
-          throw new errors.InvalidChecksum(
-            `Invalid checksum for ${file.name} with ` +
-            `type ${file.checksumType} and value ${file.checksumValue}`
-          );
-        }
-      }
-      catch (e) {
-        throw new errors.InvalidChecksum(
-          `Error evaluating checksum for ${file.name} with ` +
-          `type ${file.checksumType} and value ${file.checksumValue}`
-        );
-      }
-
-      // delete temp file
-      fs.stat(tempFile, (err, stat) => {
-        if (stat) fs.unlinkSync(tempFile);
-      });
+    finally {
+      // Delete the temp directory
+      await fs.remove(downloadDir);
     }
-
-    file.filename = `s3://${file.bucket}/${join(file.url_path, file.name)}`;
-    return file;
   }
 }
 
@@ -397,19 +348,9 @@ class Granule {
 class HttpDiscoverGranules extends httpMixin(baseProtocol(Discover)) {}
 
 /**
- * A class for discovering granules using HTTP or HTTPS and queueing them to SQS.
- */
-class HttpDiscoverAndQueueGranules extends httpMixin(baseProtocol(DiscoverAndQueue)) {}
-
-/**
  * A class for discovering granules using SFTP.
  */
 class SftpDiscoverGranules extends sftpMixin(baseProtocol(Discover)) {}
-
-/**
- * A class for discovering granules using SFTP and queueing them to SQS.
- */
-class SftpDiscoverAndQueueGranules extends sftpMixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * A class for discovering granules using FTP.
@@ -417,19 +358,9 @@ class SftpDiscoverAndQueueGranules extends sftpMixin(baseProtocol(DiscoverAndQue
 class FtpDiscoverGranules extends ftpMixin(baseProtocol(Discover)) {}
 
 /**
- * A class for discovering granules using FTP and queueing them to SQS.
- */
-class FtpDiscoverAndQueueGranules extends ftpMixin(baseProtocol(DiscoverAndQueue)) {}
-
-/**
- * A class for discovering granules using s3
+ * A class for discovering granules using S3.
  */
 class S3DiscoverGranules extends s3Mixin(baseProtocol(Discover)) {}
-
-/**
- * A class for discovering granules using s3 and queueing them to SQS.
- */
-class S3DiscoverAndQueueGranules extends s3Mixin(baseProtocol(DiscoverAndQueue)) {}
 
 /**
  * Ingest Granule from an FTP endpoint.
@@ -456,21 +387,20 @@ class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 *
 * @param {string} type -`discover` or `ingest`
 * @param {string} protocol -`sftp`, `ftp`, `http` or `s3`
-* @param {boolean} q - set to `true` to queue granules
 * @returns {function} - a constructor to create a granule discovery object
 **/
-function selector(type, protocol, q) {
+function selector(type, protocol) {
   if (type === 'discover') {
     switch (protocol) {
       case 'sftp':
-        return q ? SftpDiscoverAndQueueGranules : SftpDiscoverGranules;
+        return SftpDiscoverGranules;
       case 'ftp':
-        return q ? FtpDiscoverAndQueueGranules : FtpDiscoverGranules;
+        return FtpDiscoverGranules;
       case 'http':
       case 'https':
-        return q ? HttpDiscoverAndQueueGranules : HttpDiscoverGranules;
+        return HttpDiscoverGranules;
       case 's3':
-        return q ? S3DiscoverAndQueueGranules : S3DiscoverGranules;
+        return S3DiscoverGranules;
       default:
         throw new Error(`Protocol ${protocol} is not supported.`);
     }
@@ -494,15 +424,11 @@ function selector(type, protocol, q) {
 }
 
 module.exports.selector = selector;
-module.exports.HttpGranule = HttpGranule;
-module.exports.FtpGranule = FtpGranule;
-module.exports.SftpGranule = SftpGranule;
-module.exports.S3Granule = S3Granule;
-module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
-module.exports.SftpDiscoverAndQueueGranules = SftpDiscoverAndQueueGranules;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
-module.exports.FtpDiscoverAndQueueGranules = FtpDiscoverAndQueueGranules;
+module.exports.FtpGranule = FtpGranule;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
-module.exports.HttpDiscoverAndQueueGranules = HttpDiscoverAndQueueGranules;
+module.exports.HttpGranule = HttpGranule;
+module.exports.S3Granule = S3Granule;
 module.exports.S3DiscoverGranules = S3DiscoverGranules;
-module.exports.S3DiscoverAndQueueGranules = S3DiscoverAndQueueGranules;
+module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
+module.exports.SftpGranule = SftpGranule;
