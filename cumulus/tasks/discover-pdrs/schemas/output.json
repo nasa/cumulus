@@ -1,0 +1,26 @@
+{
+  "title": "DiscoverPdrsOutput",
+  "description": "Describes the output produced by the discover-pdrs task",
+  "type": "object",
+  "required": ["pdrs"],
+  "additionalProperties": false,
+  "properties": {
+    "pdrs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [ "name", "path" ],
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "size": { "type": "integer" },
+          "time": {
+            "description": "The number of milliseconds since January 1, 1970, 00:00:00 UTC",
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

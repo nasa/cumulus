@@ -1,0 +1,43 @@
+{
+  "title": "ParsePdrConfig",
+  "description": "Describes the config used by the parse-pdr task",
+  "type": "object",
+  "properties": {
+    "pdrFolder": {
+      "type": "string"
+    },
+    "stack": {
+      "description": "The name of the Task's CloudFormation Task, useful as a prefix",
+      "type": "string"
+    },
+    "provider": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "globalConnectionLimit": { "type": "integer" },
+        "protocol": {
+          "type": "string",
+          "enum": ["ftp", "sftp", "http", "https", "s3"]
+        }
+      }
+    },
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "properties": {
+        "internal": { "type": "string" },
+        "private": { "type": "string" },
+        "protected": { "type": "string" },
+        "public": { "type": "string" }
+      }
+    },
+    "collection": {
+      "type": "object",
+      "required": ["name", "granuleIdExtraction"],
+      "properties": {
+        "name": { "type": "string" },
+        "granuleIdExtraction": { "type": "string" }
+      }
+    }
+  }
+}

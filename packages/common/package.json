@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "description": "Common utilities used across tasks",
   "keywords": [
-    "GIBS"
+    "GIBS",
+    "CUMULUS",
+    "NASA"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
@@ -13,8 +18,24 @@
     "lint": "eslint .",
     "mocha": "mocha-webpack test/**/*.js",
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
-    "test": "npm run mocha",
+    "test": "npm run mocha && env TEST=true ava",
     "test-ci": "npm run lint && npm run mocha-junit"
+  },
+  "ava": {
+    "files": "tests",
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ],
+    "plugins": [
+      "transform-async-to-generator"
+    ]
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -40,6 +61,7 @@
     "expect.js": "^0.3.1",
     "exports-loader": "^0.6.3",
     "follow-redirects": "^1.2.4",
+    "fs-extra": "^5.0.0",
     "glob": "^7.1.1",
     "js-yaml": "^3.8.3",
     "lodash": "^4.13.1",
@@ -53,5 +75,9 @@
     "uuid": "^3.1.0",
     "webpack": "^1.13.3",
     "webpack-node-externals": "^1.5.4"
+  },
+  "devDependencies": {
+    "ajv": "^5.5.2",
+    "ava": "^0.25.0"
   }
 }

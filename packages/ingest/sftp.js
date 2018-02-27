@@ -1,21 +1,14 @@
 'use strict';
 
-const fs = require('fs');
-const os = require('os');
 const Client = require('ssh2').Client;
 const join = require('path').join;
-const urljoin = require('url-join');
-const logger = require('./log');
-//const errors = require('@cumulus/common/errors');
-const S3 = require('./aws').S3;
+const log = require('@cumulus/common/log');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
 
-const log = logger.child({ file: 'ingest/sftp.js' });
+const { omit } = require('lodash');
 
-//const PathIsInvalid = errors.createErrorType('PathIsInvalid');
-
-module.exports = superclass => class extends superclass {
+module.exports = (superclass) => class extends superclass {
 
   constructor(...args) {
     super(...args);
@@ -23,7 +16,7 @@ module.exports = superclass => class extends superclass {
     this.decrypted = false;
     this.options = {
       host: this.host,
-      port: this.port || 21,
+      port: this.port || 22,
       user: this.username,
       password: this.password
     };
@@ -65,44 +58,27 @@ module.exports = superclass => class extends superclass {
     return this.client.end();
   }
 
-  /**
-   * Downloads a given url and upload to a given S3 location
-   * @return {Promise}
-   * @private
+   /**
+   * Download a remote file to disk
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} localPath - the full local destination file path
+   * @returns {Promise.<string>} - the path that the file was saved to
    */
-
-  async sync(path, bucket, key, filename) {
-    const tempFile = await this.download(path, filename);
-    return this.upload(bucket, key, filename, tempFile);
-  }
-
-  async upload(bucket, key, filename, tempFile) {
-    await S3.upload(bucket, join(key, filename), fs.createReadStream(tempFile));
-    return urljoin('s3://', bucket, key, filename);
-  }
-
-  /**
-   * Downloads the file to disk, difference with sync is that
-   * this method involves no uploading to S3
-   * @return {Promise}
-   * @private
-   */
-
-  async download(path, filename) {
-    // let's stream to file
+  async download(remotePath, localPath) {
     if (!this.connected) await this.connect();
 
-    const tempFile = join(os.tmpdir(), filename);
-    const remoteFile = join(path, filename);
-    log.info({ filename }, `Downloading to ${tempFile}`);
+    const remoteUrl = `sftp://${this.host}${remotePath}`;
+    log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     return new Promise((resolve, reject) => {
-      this.sftp.fastGet(remoteFile, tempFile, (e) => {
+      this.sftp.fastGet(remotePath, localPath, (e) => {
         if (e) return reject(e);
-        log.info({ filename }, `Finishing downloading ${this.filename}`);
-        return (resolve(tempFile));
+
+        log.info(`Finishing downloading ${remoteUrl}`);
+        return resolve(localPath);
       });
-      this.client.on('error', (e) => reject(e));
+      this.client.on('error', reject);
     });
   }
 
@@ -137,14 +113,12 @@ module.exports = superclass => class extends superclass {
           }
           return reject(err);
         }
-        return resolve(list.map(i => ({
+        return resolve(list.map((i) => ({
           name: i.filename,
+          path: path,
           type: i.longname.substr(0, 1),
           size: i.attrs.size,
-          time: i.attrs.mtime,
-          owner: i.attrs.uid,
-          group: i.attrs.gid,
-          path: path
+          time: i.attrs.mtime * 1000
         })));
       });
     });
@@ -160,6 +134,9 @@ module.exports = superclass => class extends superclass {
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, this.path);
     log.info({ host: this.host }, `${files.length} files were found on ${this.host}`);
-    return files;
+
+    // Type 'type' field is required to support recursive file listing, but
+    // should not be part of the returned result.
+    return files.map((file) => omit(file, 'type'));
   }
 };

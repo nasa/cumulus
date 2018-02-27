@@ -1,19 +1,23 @@
 'use strict';
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
 const Crawler = require('simplecrawler');
 const http = require('http');
 const https = require('https');
+const log = require('@cumulus/common/log');
 const mkdirp = require('mkdirp');
 const pump = require('pump');
-const S3 = require('./aws').S3;
-const syncUrl = require('@cumulus/common/aws').syncUrl;
 const errors = require('@cumulus/common/errors');
 
-
+/**
+ * Downloads a given http URL to disk
+ *
+ * @param {string} url - a http(s) url
+ * @param {string} filepath - the local path to save the downloaded file
+ * @returns {Promise} undefined
+ */
 async function downloadToDisk(url, filepath) {
   const transport = url.indexOf('https://') === 0 ? https : http;
   return new Promise((resolve, reject) => {
@@ -23,6 +27,7 @@ async function downloadToDisk(url, filepath) {
         err.code = res.statusCode;
         return reject(err);
       }
+      // FIXME The download directory will exist, so this mkdirp can be removed
       return mkdirp(path.dirname(filepath), (err) => {
         if (err) return reject(err);
         const file = fs.createWriteStream(filepath);
@@ -35,14 +40,13 @@ async function downloadToDisk(url, filepath) {
   });
 }
 
-module.exports.httpMixin = superclass => class extends superclass {
+module.exports.httpMixin = (superclass) => class extends superclass {
 
   /**
    * List all PDR files from a given endpoint
-   * @return {Promise}
-   * @private
+   *
+   * @returns {Promise.<Array>} of a list of files
    */
-
   list() {
     const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
     const c = new Crawler(urljoin(this.host, this.path));
@@ -61,7 +65,7 @@ module.exports.httpMixin = superclass => class extends superclass {
         for (const line of lines) {
           const split = line.trim().split(pattern);
           if (split.length === 3) {
-          // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6) 
+          // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
             if (split[1].match(/^(.*\.[\w\d]{1,4})$/) !== null) {
               const name = split[1];
               files.push({
@@ -92,36 +96,29 @@ module.exports.httpMixin = superclass => class extends superclass {
     });
   }
 
-  /**
-   * Downloads a given url and upload to a given S3 location
-   * @return {Promise}
-   * @private
+ /**
+   * Download a remote file to disk
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} localPath - the full local destination file path
+   * @returns {Promise.<string>} - the path that the file was saved to
    */
+  async download(remotePath, localPath) {
+    const remoteUrl = urljoin(this.host, remotePath);
 
-  async sync(_path, bucket, key, filename) {
-    await syncUrl(urljoin(this.host, _path, filename), bucket, path.join(key, filename));
-    return urljoin('s3://', bucket, key, filename);
-  }
+    log.info(`Downloading ${remoteUrl} to ${localPath}`);
+    try {
+      await downloadToDisk(remoteUrl, localPath);
+    }
+    catch (e) {
+      if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
+        const message = `${path.basename(remotePath)} was not found on the server with 403 status`;
+        throw new errors.FileNotFound(message);
+      }
+      else throw e;
+    }
+    log.info(`Finishing downloading ${remoteUrl}`);
 
-  async upload(bucket, key, filename, tempfile) {
-    await S3.upload(bucket, path.join(key, filename), fs.createReadStream(tempfile));
-    return urljoin('s3://', bucket, key, filename);
-  }
-
-  /**
-   * Downloads the file to disk, difference with sync is that
-   * this method involves no uploading to S3
-   * @return {Promise}
-   * @private
-   */
-
-  async download(_path, filename) {
-    // let's stream to file
-    const tempFile = path.join(os.tmpdir(), filename);
-    const uri = urljoin(this.host, _path, filename);
-
-    await downloadToDisk(uri, tempFile);
-
-    return tempFile;
+    return localPath;
   }
 };

@@ -1,0 +1,201 @@
+/* eslint-disable no-console */
+'use strict';
+
+const Ajv = require('ajv');
+const crypto = require('crypto');
+const path = require('path');
+const url = require('url');
+const aws = require('./aws');
+const { readFile } = require('fs');
+const fs = require('fs-extra');
+
+/**
+ * Generate a 40-character random string
+ *
+ * @returns {string} - a random string
+ */
+exports.randomString = () => crypto.randomBytes(20).toString('hex');
+
+// From https://github.com/localstack/localstack/blob/master/README.md
+const localStackPorts = {
+  apigateway: 4567,
+  cloudformation: 4581,
+  cloudwatch: 4582,
+  dynamodb: 4569,
+  dynamodbstreams: 4570,
+  es: 4571,
+  firehose: 4573,
+  kinesis: 4568,
+  lambda: 4574,
+  redshift: 4577,
+  route53: 4580,
+  s3: 4572,
+  ses: 4579,
+  sns: 4575,
+  sqs: 4576,
+  ssm: 4583
+};
+
+/**
+ * Test if a given AWS service is supported by LocalStack.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @returns {boolean}
+ */
+function localstackSupportedService(Service) {
+  const serviceIdentifier = Service.serviceIdentifier;
+  return Object.keys(localStackPorts).indexOf(serviceIdentifier) !== -1;
+}
+
+/**
+ * Create an AWS service object that talks to LocalStack.
+ *
+ * This function expects that the LOCALSTACK_HOST environment variable will be set.
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {Object} options - options to pass to the service object constructor function
+ * @returns {Object} - an AWS service object
+ */
+function localStackAwsClient(Service, options) {
+  if (!process.env.LOCALSTACK_HOST) {
+    throw new Error('The LOCALSTACK_HOST environment variable is not set.');
+  }
+
+  const serviceIdentifier = Service.serviceIdentifier;
+
+  const localStackOptions = Object.assign({}, options, {
+    accessKeyId: 'my-access-key-id',
+    secretAccessKey: 'my-secret-access-key',
+    region: 'us-east-1',
+    endpoint: `http://${process.env.LOCALSTACK_HOST}:${localStackPorts[serviceIdentifier]}`
+  });
+
+  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
+
+  return new Service(localStackOptions);
+}
+
+/**
+ * Create an AWS service object that does not actually talk to AWS.
+ *
+ * @todo Update this to return a mock AWS client if not supported by localstack
+ *
+ * @param {Function} Service - an AWS service object constructor function
+ * @param {Object} options - options to pass to the service object constructor function
+ * @returns {Object} - an AWS service object
+ */
+function testAwsClient(Service, options) {
+  if (localstackSupportedService(Service)) {
+    return localStackAwsClient(Service, options);
+  }
+  return new Service(Object.assign(options, { endpoint: 'http://you-forgot-to-stub-an-aws-call' }));
+}
+exports.testAwsClient = testAwsClient;
+
+/**
+ * Create an SQS queue for testing
+ *
+ * @returns {string} - an SQS queue URL
+ */
+async function createQueue() {
+  const createQueueResponse = await aws.sqs().createQueue({
+    QueueName: exports.randomString()
+  }).promise();
+
+  // Properly set the Queue URL.  This is needed because LocalStack always
+  // returns the QueueUrl as "localhost", even if that is not where it should
+  // actually be found.  CircleCI breaks without this.
+  const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+  returnedQueueUrl.host = undefined;
+  returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+
+  return url.format(returnedQueueUrl);
+}
+exports.createQueue = createQueue;
+
+/**
+ * Validate an object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {string} schemaFilename - the filename of the schema
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateJSON(t, schemaFilename, data) {
+  const schemaName = path.basename(schemaFilename).split('.')[0];
+  const schema = await fs.readFile(schemaFilename, 'utf8').then(JSON.parse);
+  const ajv = new Ajv();
+  const valid = ajv.validate(schema, data);
+  if (!valid) {
+    const message = `${schemaName} validation failed: ${ajv.errorsText()}`;
+    console.log(message);
+    console.log(JSON.stringify(data, null, 2));
+    return t.fail(message);
+  }
+  return valid;
+}
+
+/**
+ * Validate a task input object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateInput(t, data) {
+  return validateJSON(t, './schemas/input.json', data);
+}
+exports.validateInput = validateInput;
+
+/**
+ * Validate a task config object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateConfig(t, data) {
+  return validateJSON(t, './schemas/config.json', data);
+}
+exports.validateConfig = validateConfig;
+
+/**
+ * Validate a task output object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateOutput(t, data) {
+  return validateJSON(t, './schemas/output.json', data);
+}
+exports.validateOutput = validateOutput;
+
+/**
+ * Determine the path of the current git repo
+ *
+ * @param {string} dirname - the directory to start searching from.  Defaults to
+ *   `process.cwd()`
+ * @returns {string} - the filesystem path of the current git repo
+ */
+async function findGitRepoRootDirectory(dirname) {
+  if (dirname === undefined) return findGitRepoRootDirectory(path.dirname(process.cwd()));
+
+  if (await fs.pathExists(path.join(dirname, '.git'))) return dirname;
+
+  // This indicates that we've reached the root of the filesystem
+  if (path.dirname(dirname) === dirname) {
+    throw new Error('Unable to determine git repo root directory');
+  }
+
+  return findGitRepoRootDirectory(path.dirname(dirname));
+}
+exports.findGitRepoRootDirectory = findGitRepoRootDirectory;
