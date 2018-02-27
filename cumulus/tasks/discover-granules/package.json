@@ -23,7 +23,6 @@
   "ava": {
     "files": "tests",
     "color": false,
-    "serial": true,
     "babel": "inherit",
     "require": [
       "babel-polyfill",
