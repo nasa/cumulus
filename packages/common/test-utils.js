@@ -182,13 +182,9 @@ exports.validateOutput = validateOutput;
 /**
  * Determine the path of the current git repo
  *
- * @param {string} dirname - the directory to start searching from.  Defaults to
- *   `process.cwd()`
- * @returns {string} - the filesystem path of the current git repo
+ * @returns {Promise.<string>} - the filesystem path of the current git repo
  */
 async function findGitRepoRootDirectory(dirname) {
-  if (dirname === undefined) return findGitRepoRootDirectory(path.dirname(process.cwd()));
-
   if (await fs.pathExists(path.join(dirname, '.git'))) return dirname;
 
   // This indicates that we've reached the root of the filesystem
@@ -199,3 +195,25 @@ async function findGitRepoRootDirectory(dirname) {
   return findGitRepoRootDirectory(path.dirname(dirname));
 }
 exports.findGitRepoRootDirectory = findGitRepoRootDirectory;
+
+/**
+ * Determine the path of the .tmp-test-data directory
+ *
+ * @returns {Promise.<string>} - the filesystem path of the .tmp-test-data directory
+ */
+function findTmpTestDataDirectory() {
+  return exports.findGitRepoRootDirectory(process.cwd())
+    .then((gitRepoRoot) => path.join(gitRepoRoot, '.tmp-test-data'));
+}
+exports.findTmpTestDataDirectory = findTmpTestDataDirectory;
+
+/**
+ * Determine the path of the packages/test-data directory
+ *
+ * @returns {Promise.<string>} - the filesystem path of the packages/test-data directory
+ */
+function findTestDataDirectory() {
+  return exports.findGitRepoRootDirectory(process.cwd())
+    .then((gitRepoRoot) => path.join(gitRepoRoot, 'packages', 'test-data'));
+}
+exports.findTestDataDirectory = findTestDataDirectory;
