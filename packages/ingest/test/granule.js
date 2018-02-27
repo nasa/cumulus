@@ -13,11 +13,7 @@ const {
   FtpDiscoverGranules,
   HttpDiscoverGranules,
   SftpDiscoverGranules,
-  S3DiscoverGranules,
-  FtpDiscoverAndQueueGranules,
-  HttpDiscoverAndQueueGranules,
-  SftpDiscoverAndQueueGranules,
-  S3DiscoverAndQueueGranules
+  S3DiscoverGranules
 } = require('../granule');
 
 /**
@@ -29,12 +25,7 @@ const selectorDiscoverTypes = [
   { cls: HttpDiscoverGranules, type: 'discover', protocol: 'http' },
   { cls: HttpDiscoverGranules, type: 'discover', protocol: 'https' },
   { cls: SftpDiscoverGranules, type: 'discover', protocol: 'sftp' },
-  { cls: S3DiscoverGranules, type: 'discover', protocol: 's3' },
-  { cls: FtpDiscoverAndQueueGranules, type: 'discover', protocol: 'ftp', queue: true },
-  { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'http', queue: true },
-  { cls: HttpDiscoverAndQueueGranules, type: 'discover', protocol: 'https', queue: true },
-  { cls: SftpDiscoverAndQueueGranules, type: 'discover', protocol: 'sftp', queue: true },
-  { cls: S3DiscoverAndQueueGranules, type: 'discover', protocol: 's3', queue: true }
+  { cls: S3DiscoverGranules, type: 'discover', protocol: 's3' }
 ];
 
 const selectorSyncTypes = [
@@ -67,21 +58,28 @@ selectorSyncTypes.forEach((item) => {
 });
 
 /**
-* test the granule._validateChecksum() method
+* test the granule.validateChecksum() method
 **/
 
 const sums = require('./fixtures/sums');
 
 Object.keys(sums).forEach((key) => {
-  test(`granule._validateChecksum ${key}`, async (t) => {
+  test(`granule.validateChecksum ${key}`, async (t) => {
     const granule = new HttpGranule(
       ingestPayload.config.buckets,
       ingestPayload.config.collection,
       ingestPayload.config.provider
     );
     const filepath = path.join(__dirname, 'fixtures', `${key}.txt`);
-    const validated = await granule._validateChecksum(key, sums[key], filepath);
-    t.true(validated);
+    try {
+      const file = { checksumType: key, checksumValue: sums[key] };
+      await granule.validateChecksum(file, filepath, null);
+      await granule.validateChecksum(key, sums[key], filepath);
+      t.pass();
+    }
+    catch (e) {
+      t.fail(e);
+    }
   });
 });
 
