@@ -7,7 +7,7 @@ const mur = require('./fixtures/mur.json');
 const { cloneDeep } = require('lodash');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
-  findGitRepoRootDirectory,
+  findTmpTestDataDirectory,
   randomString,
   validateConfig,
   validateOutput
@@ -39,8 +39,7 @@ test('discover granules using SFTP', async (t) => {
   const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
-  const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
   await Promise.all([
@@ -98,8 +97,7 @@ test('discover granules using HTTP', async (t) => {
   const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
-  const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
   await Promise.all([
@@ -153,8 +151,7 @@ test('discover granules using S3', async (t) => {
   const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
-  const gitRepoRootDirectory = await findGitRepoRootDirectory();
-  const providerPathDirectory = path.join(gitRepoRootDirectory, 'tmp-test-data', providerPath);
+  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
   await Promise.all([
