@@ -35,15 +35,6 @@ test('check with invalid root parameter', async (t) => {
   t.is(errors, 'Undefined root parameter');
 });
 
-test('check with invalid event parameter', async (t) => {
-  // Remove event parameter for  DiscoverCmrGranules Task
-  const newPayload = _.cloneDeep(message); //Object assign will not work here
-  delete newPayload.workflow_config_template.DiscoverCmrGranules.event;
-
-  const [errors] = await testHelpers.run(DiscoverCmrGranules, newPayload);
-  t.is(errors, 'Undefined event parameter');
-});
-
 test('check with invalid granule_meta parameter', async (t) => {
   // Remove granule_meta parameter for  DiscoverCmrGranules Task
   const newPayload = _.cloneDeep(message); //Object assign will not work here

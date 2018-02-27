@@ -14,10 +14,20 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "echo 'no tests'",
+    "test": "ava test/*.js",
     "build": "webpack && unzip -o -q deps/lambda-gdal.zip -d dist",
     "watch": "webpack --progress -w",
     "clean": "rm -rf dist"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
   },
   "devDependencies": {
     "ava": "^0.21.0",
@@ -28,6 +38,7 @@
     "webpack": "^1.12.13"
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0"
+    "@cumulus/common": "^1.0.0",
+    "rimraf": "^2.6.2"
   }
 }

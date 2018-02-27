@@ -50,6 +50,8 @@ _templates:
             #temporal: 2015-01-01T00:00:00Z,2015-01-02T18:39:00Z # Exactly 949 (+1 that has no day_night_flag)
           granule_meta:
             key: '{meta.collection}/{granule.id}'
+            polygons: '{granule.polygons}'
+            box: '{granule.box}'
             granuleId: '{granule.id}'
             version: '{granule.updated}'
             date:
@@ -98,6 +100,36 @@ _templates:
             - input.tif
             - Blank_RGBA_512.png
             - mrfgen_configuration_file.xml
+
+          alternate_commands:
+            - gdal_command: gdalwarp
+              args: [
+                -of, GTiff,
+                -cutline, /tmp/left_side_cmr.json,
+                -crop_to_cutline,
+                -t_srs, EPSG:4326,
+                -tr, 0.0001373291015625, 0.0001373291015625,
+                -srcnodata, "0 0 0",
+                -dstalpha,
+                -r, near,
+                -overwrite,
+                input.tif,
+                in/processed_left_4326.tif
+              ]
+            - gdal_command: gdalwarp
+              args: [
+                -of, GTiff,
+                -cutline, /tmp/right_side_cmr.json,
+                -crop_to_cutline,
+                -t_srs, EPSG:4326,
+                -tr, 0.0001373291015625, 0.0001373291015625,
+                -srcnodata, "0 0 0",
+                -dstalpha,
+                -r, near,
+                -overwrite,
+                input.tif,
+                in/processed_right_4326.tif
+              ]
 
           commands:
             - gdal_command: gdalwarp
