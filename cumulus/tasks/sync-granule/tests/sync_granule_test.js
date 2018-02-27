@@ -1,10 +1,9 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
-const path = require('path');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
+const path = require('path');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
@@ -46,189 +45,189 @@ test.afterEach.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(t.context.protectedBucketName)
 ]));
 
-// test('error when provider info is missing', async (t) => {
-//   delete t.context.event.config.provider;
+test('error when provider info is missing', async (t) => {
+  delete t.context.event.config.provider;
 
-//   try {
-//     await syncGranule(t.context.event);
-//     t.fail();
-//   }
-//   catch (error) {
-//     t.true(error instanceof errors.ProviderNotFound);
-//   }
-// });
+  try {
+    await syncGranule(t.context.event);
+    t.fail();
+  }
+  catch (error) {
+    t.true(error instanceof errors.ProviderNotFound);
+  }
+});
 
-// test('download Granule from FTP endpoint', async (t) => {
-//   t.context.event.config.provider = {
-//     id: 'MODAPS',
-//     protocol: 'ftp',
-//     host: 'localhost',
-//     username: 'testuser',
-//     password: 'testpass'
-//   };
+test('download Granule from FTP endpoint', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'ftp',
+    host: 'localhost',
+    username: 'testuser',
+    password: 'testpass'
+  };
 
-//   validateConfig(t, t.context.event.config);
-//   validateInput(t, t.context.event.input);
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
 
-//   try {
-//     const output = await syncGranule(t.context.event);
+  try {
+    const output = await syncGranule(t.context.event);
 
-//     validateOutput(t, output);
+    validateOutput(t, output);
 
-//     t.is(output.granules.length, 1);
-//     t.is(output.granules[0].files.length, 1);
-//     t.is(
-//       output.granules[0].files[0].filename,
-//       `s3://${t.context.protectedBucketName}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
-//     );
-//   }
-//   catch (e) {
-//     if (e instanceof errors.RemoteResourceError) {
-//       t.pass('ignoring this test. Test server seems to be down');
-//     }
-//     else throw e;
-//   }
-// });
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 1);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.protectedBucketName}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
+    );
+  }
+  catch (e) {
+    if (e instanceof errors.RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else throw e;
+  }
+});
 
-// test('download Granule from HTTP endpoint', async (t) => {
-//   const granulePath = randomString();
-//   const localGranulePath = path.join(await findTmpTestDataDirectory(), granulePath);
+test('download Granule from HTTP endpoint', async (t) => {
+  const granulePath = randomString();
+  const localGranulePath = path.join(await findTmpTestDataDirectory(), granulePath);
 
-//   t.context.event.config.provider = {
-//     id: 'MODAPS',
-//     protocol: 'http',
-//     host: 'http://localhost:8080'
-//   };
-//   t.context.event.input.granules[0].files[0].path = `/${granulePath}`;
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:8080'
+  };
+  t.context.event.input.granules[0].files[0].path = `/${granulePath}`;
 
-//   validateConfig(t, t.context.event.config);
-//   validateInput(t, t.context.event.input);
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
 
-//   await fs.mkdir(localGranulePath);
-//   try {
-//     const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  await fs.mkdir(localGranulePath);
+  try {
+    const granuleFilename = t.context.event.input.granules[0].files[0].name;
 
-//     // Stage the file to be downloaded
-//     await fs.copy(
-//       path.join(await findTestDataDirectory(), 'granules', granuleFilename),
-//       path.join(localGranulePath, granuleFilename)
-//     );
+    // Stage the file to be downloaded
+    await fs.copy(
+      path.join(await findTestDataDirectory(), 'granules', granuleFilename),
+      path.join(localGranulePath, granuleFilename)
+    );
 
-//     const output = await syncGranule(t.context.event);
+    const output = await syncGranule(t.context.event);
 
-//     validateOutput(t, output);
+    validateOutput(t, output);
 
-//     t.is(output.granules.length, 1);
-//     t.is(output.granules[0].files.length, 1);
-//     t.is(
-//       output.granules[0].files[0].filename,
-//       `s3://${t.context.protectedBucketName}/${granuleFilename}`
-//     );
-//   }
-//   catch (e) {
-//     if (e instanceof errors.RemoteResourceError) {
-//       t.pass('ignoring this test. Test server seems to be down');
-//     }
-//     else throw e;
-//   }
-//   finally {
-//     fs.remove(localGranulePath);
-//   }
-// });
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 1);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.protectedBucketName}/${granuleFilename}`
+    );
+  }
+  catch (e) {
+    if (e instanceof errors.RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else throw e;
+  }
+  finally {
+    fs.remove(localGranulePath);
+  }
+});
 
-// test('download Granule from SFTP endpoint', async (t) => {
-//   const granulePath = randomString();
-//   const localGranulePath = path.join(await findTmpTestDataDirectory(), granulePath);
+test('download Granule from SFTP endpoint', async (t) => {
+  const granulePath = randomString();
+  const localGranulePath = path.join(await findTmpTestDataDirectory(), granulePath);
 
-//   t.context.event.config.provider = t.context.event.config.provider = {
-//     id: 'MODAPS',
-//     protocol: 'sftp',
-//     host: 'localhost',
-//     port: 2222,
-//     username: 'user',
-//     password: 'password'
-//   };
+  t.context.event.config.provider = t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'sftp',
+    host: 'localhost',
+    port: 2222,
+    username: 'user',
+    password: 'password'
+  };
 
-//   // The test-data prefix is required because of the way that the sftp
-//   // container is configured in docker-compose.yml.
-//   t.context.event.input.granules[0].files[0].path = `test-data/${granulePath}`;
+  // The test-data prefix is required because of the way that the sftp
+  // container is configured in docker-compose.yml.
+  t.context.event.input.granules[0].files[0].path = `test-data/${granulePath}`;
 
-//   validateConfig(t, t.context.event.config);
-//   validateInput(t, t.context.event.input);
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
 
-//   await fs.mkdir(localGranulePath);
-//   try {
-//     const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  await fs.mkdir(localGranulePath);
+  try {
+    const granuleFilename = t.context.event.input.granules[0].files[0].name;
 
-//     // Stage the file to be downloaded
-//     await fs.copy(
-//       path.join(await findTestDataDirectory(), 'granules', granuleFilename),
-//       path.join(localGranulePath, granuleFilename)
-//     );
+    // Stage the file to be downloaded
+    await fs.copy(
+      path.join(await findTestDataDirectory(), 'granules', granuleFilename),
+      path.join(localGranulePath, granuleFilename)
+    );
 
-//     const output = await syncGranule(t.context.event);
+    const output = await syncGranule(t.context.event);
 
-//     validateOutput(t, output);
+    validateOutput(t, output);
 
-//     t.is(output.granules.length, 1);
-//     t.is(output.granules[0].files.length, 1);
-//     t.is(
-//       output.granules[0].files[0].filename,
-//       `s3://${t.context.protectedBucketName}/${granuleFilename}`
-//     );
-//   }
-//   catch (e) {
-//     if (e instanceof errors.RemoteResourceError) {
-//       t.pass('ignoring this test. Test server seems to be down');
-//     }
-//     else throw e;
-//   }
-//   finally {
-//     fs.remove(localGranulePath);
-//   }
-// });
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 1);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.protectedBucketName}/${granuleFilename}`
+    );
+  }
+  catch (e) {
+    if (e instanceof errors.RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else throw e;
+  }
+  finally {
+    fs.remove(localGranulePath);
+  }
+});
 
-// test('download granule from S3 provider', async (t) => {
-//   const granuleFilePath = randomString();
-//   const granuleFileName = payload.input.granules[0].files[0].name;
+test('download granule from S3 provider', async (t) => {
+  const granuleFilePath = randomString();
+  const granuleFileName = payload.input.granules[0].files[0].name;
 
-//   t.context.event.config.provider = {
-//     id: 'MODAPS',
-//     protocol: 's3',
-//     host: randomString()
-//   };
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString()
+  };
 
-//   t.context.event.input.granules[0].files[0].path = granuleFilePath;
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
 
-//   validateConfig(t, t.context.event.config);
-//   validateInput(t, t.context.event.input);
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
 
-//   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
-//   try {
-//     // Stage the file that's going to be downloaded
-//     await s3().putObject({
-//       Bucket: t.context.event.config.provider.host,
-//       Key: `${granuleFilePath}/${granuleFileName}`,
-//       Body: fs.createReadStream(`../../../packages/test-data/granules/${granuleFileName}`)
-//     }).promise();
+  try {
+    // Stage the file that's going to be downloaded
+    await s3().putObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: `${granuleFilePath}/${granuleFileName}`,
+      Body: fs.createReadStream(`../../../packages/test-data/granules/${granuleFileName}`)
+    }).promise();
 
-//     const output = await syncGranule(t.context.event);
+    const output = await syncGranule(t.context.event);
 
-//     validateOutput(t, output);
+    validateOutput(t, output);
 
-//     t.is(output.granules.length, 1);
-//     t.is(output.granules[0].files.length, 1);
-//     t.is(
-//       output.granules[0].files[0].filename,
-//       `s3://${t.context.protectedBucketName}/${granuleFileName}` // eslint-disable-line max-len
-//     );
-//   }
-//   finally {
-//     // Clean up
-//     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
-//   }
-// });
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 1);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.protectedBucketName}/${granuleFileName}` // eslint-disable-line max-len
+    );
+  }
+  finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
 
 test('download granule with checksum in file from an HTTP endpoint', async (t) => {
   const event = cloneDeep(payloadChecksumFile);
