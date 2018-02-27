@@ -22,6 +22,7 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/pdrs';
+  event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -111,6 +112,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   };
 
   const newPayload = cloneDeep(input);
+  newPayload.config.useList = true;
   newPayload.config.provider = provider;
   newPayload.config.collection.provider_path = '/pdrs';
   newPayload.input = {};
