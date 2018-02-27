@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/delete-pdr-ftp",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SIPS handler PDR discovery task",
   "main": "index.js",
   "keywords": [
@@ -35,7 +35,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0",
+    "@cumulus/common": "^1.0.1",
     "ftp": "^0.3.10",
     "node-fetch": "^1.6.1",
     "parse-duration": "^0.1.1",
