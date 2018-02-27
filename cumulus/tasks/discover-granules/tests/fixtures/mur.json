@@ -1,6 +1,5 @@
 {
   "config": {
-    "useQueue": false,
     "provider": {
       "id": "MUR",
       "globalConnectionLimit": 10,
