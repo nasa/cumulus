@@ -163,8 +163,6 @@ test('parse PDR from SFTP endpoint', async (t) => {
     t.is(output.filesCount, 2);
   }
   catch (err) {
-    console.log(err.stack);
-
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
     }
@@ -172,10 +170,10 @@ test('parse PDR from SFTP endpoint', async (t) => {
   }
   finally {
     // Clean up
-    // await Promise.all([
-    //   recursivelyDeleteS3Bucket(internalBucketName),
-    //   fs.remove(providerPathDirectory)
-    // ]);
+    await Promise.all([
+      recursivelyDeleteS3Bucket(internalBucketName),
+      fs.remove(providerPathDirectory)
+    ]);
   }
 });
 
