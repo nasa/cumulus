@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/trigger-mrf-gen",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Invokes MRFGen for every group of images passed to it",
   "main": "index.js",
   "keywords": [
@@ -32,7 +32,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.0.0"
+    "@cumulus/common": "^1.0.1"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
