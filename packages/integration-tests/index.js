@@ -25,7 +25,7 @@ function timeout(waitPeriod) {
  * @param {string} workflowName - workflow name
  * @returns {Promise.<Object>} template as a JSON object
  */
-async function getWorkflowTemplate(stackName, bucketName, workflowName) {
+function getWorkflowTemplate(stackName, bucketName, workflowName) {
   const key = `${stackName}/workflows/${workflowName}.json`;
   return s3().getObject({ Bucket: bucketName, Key: key }).promise()
     .then((templateJson) => JSON.parse(templateJson.Body.toString()));
