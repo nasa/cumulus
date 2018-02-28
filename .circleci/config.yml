@@ -29,7 +29,7 @@ jobs:
             sudo service apache2 start
 
             # start sftp service
-            sudo bash /usr/sbin/sftpd.sh
+            sudo bash /usr/sbin/sftp.sh
             sudo ln -s /home/circeci/project/.tmp-test-data /home/user
 
             yarn install
