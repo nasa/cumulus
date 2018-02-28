@@ -79,7 +79,7 @@ test('parse PDR from HTTP endpoint', async (t) => {
   newPayload.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
   newPayload.input = {
     pdr: {
