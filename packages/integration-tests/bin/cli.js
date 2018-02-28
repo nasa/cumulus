@@ -30,7 +30,7 @@ function verifyRequiredParameter(paramConfig) {
  * @returns {boolean} - true if all params are not null
  */
 function verifyWorkflowParameters(requiredParams) {
-  return requiredParams.map((param) => verifyRequiredParameter(param)).includes(false) === false;
+  return requiredParams.map(verifyRequiredParameter).includes(false) === false;
 }
 
 program
