@@ -96,7 +96,7 @@ test('download Granule from HTTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
   t.context.event.input.granules[0].files[0].path = `/${granulePath}`;
 
@@ -238,7 +238,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
 
   const granulePath = randomString();
@@ -288,7 +288,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 //   const provider = {
 //     id: 'MODAPS',
 //     protocol: 'http',
-//     host: 'http://localhost:8080'
+//     host: 'http://localhost:3030'
 //   };
 //   sinon.stub(S3, 'fileExists').callsFake(() => true);
 //   const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');

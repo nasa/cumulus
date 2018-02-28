@@ -182,7 +182,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
     event.config.provider = {
       id: 'MODAPS',
       protocol: 'http',
-      host: 'http://localhost:8080'
+      host: 'http://localhost:3030'
     };
     event.config.collection.provider_path = providerPath;
     event.input = {};

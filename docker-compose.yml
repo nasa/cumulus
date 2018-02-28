@@ -19,7 +19,7 @@ services:
   http:
     image: centos/httpd
     ports:
-      - "8080:80"
+      - "3030:80"
     volumes:
       - "./.tmp-test-data:/var/www/html:ro"
 
