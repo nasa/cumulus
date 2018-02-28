@@ -18,26 +18,12 @@ function timeout(waitPeriod) {
 }
 
 /**
- * Get the list of workflows for the stack
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @returns {Object} list as a JSON object
- */
-async function getWorkflowList(stackName, bucketName) {
-  const key = `${stackName}/workflows/list.json`;
-
-  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
-    .then((workflowJson) => JSON.parse(workflowJson.Body.toString()));
-}
-
-/**
  * Get the template JSON from S3 for the workflow
  *
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @returns {Object} template as a JSON object
+ * @returns {Promise.<Object>} template as a JSON object
  */
 async function getWorkflowTemplate(stackName, bucketName, workflowName) {
   const key = `${stackName}/workflows/${workflowName}.json`;
@@ -52,9 +38,9 @@ async function getWorkflowTemplate(stackName, bucketName, workflowName) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @returns {string} - workflow arn
+ * @returns {Promise.<string>} - workflow arn
  */
-async function getWorkflowArn(stackName, bucketName, workflowName) {
+function getWorkflowArn(stackName, bucketName, workflowName) {
   return getWorkflowTemplate(stackName, bucketName, workflowName)
    .then((template) => template.cumulus_meta.state_machine);
 }
@@ -66,7 +52,7 @@ async function getWorkflowArn(stackName, bucketName, workflowName) {
  * @param {string} executionArn - ARN of the execution
  * @returns {string} status
  */
-async function getExecutionStatus(executionArn) {
+function getExecutionStatus(executionArn) {
   return sfn().describeExecution({ executionArn }).promise()
     .then((status) => status.status);
 }
@@ -88,7 +74,8 @@ async function waitForCompletedExecution(executionArn) {
     statusCheckCount++;
   }
 
-  if (executionStatus === 'RUNNING' && statusCheckCount === executionStatusNumRetries) {
+  if (executionStatus === 'RUNNING' && statusCheckCount >= executionStatusNumRetries) {
+    //eslint-disable-next-line max-len
     console.log(`Execution status check timed out, exceeded ${executionStatusNumRetries} status checks.`);
   }
 
@@ -109,7 +96,8 @@ async function startWorkflowExecution(workflowArn, inputFile) {
 
   // Give this execution a unique name
   parsedInput.cumulus_meta.execution_name = uuidv4();
-  parsedInput.cumulus_meta.workflow_start_time = null;
+  parsedInput.cumulus_meta.workflow_start_time = Date.now();
+  parsedInput.cumulus_meta.state_machine = workflowArn;
 
   const workflowParams = {
     stateMachineArn: workflowArn,
@@ -170,3 +158,4 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 }
 
 exports.testWorkflow = testWorkflow;
+exports.executeWorkflow = executeWorkflow;
