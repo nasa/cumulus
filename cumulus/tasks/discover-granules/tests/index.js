@@ -119,7 +119,7 @@ test('discover granules using HTTP', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
 
   await validateConfig(t, event.config);
