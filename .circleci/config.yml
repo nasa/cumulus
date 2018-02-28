@@ -21,7 +21,7 @@ jobs:
             # start ftp
             sudo rm -rf /home/vsftpd
             sudo ln -s /home/circeci/project/.tmp-test-data /home/vsftpd
-            sudo service vsftpd start
+            sudo service vsftpd start || true
 
             # start http service
             sudo rm -rf /var/www/html
