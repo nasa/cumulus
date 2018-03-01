@@ -8,7 +8,6 @@ const models = require('../models');
 const Collection = require('../es/collections');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 const examplePayload = require('../tests/data/collections_post.json');
-const { indexCollection, deleteRecord } = require('../es/indexer');
 
 /**
  * List all collections.
@@ -17,8 +16,8 @@ const { indexCollection, deleteRecord } = require('../es/indexer');
  * @return {undefined}
  */
 function list(event, cb) {
-  const collection = new Collection(event);
-  collection.query().then((res) => cb(null, res)).catch(cb);
+  const collections = new models.Collection();
+  return collections.scan().then(res => cb(null, res)).catch(cb);
 }
 
 /**
@@ -110,19 +109,18 @@ function del(event, cb) {
 
   return c.get({ name, version })
     .then(() => c.delete({ name, version }))
-    .then(() => Collection.es())
-    .then((esClient) => deleteRecord(esClient, id, 'collection'))
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(e => cb(e));
 }
 
 function handler(event, context) {
   const httpMethod = _get(event, 'httpMethod');
+
   if (!httpMethod) {
     return context.fail('HttpMethod is missing');
   }
 
-  return handle(event, context, true, (cb) => {
+  return handle(event, context, !process.env.TEST, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
