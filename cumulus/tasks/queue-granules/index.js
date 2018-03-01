@@ -1,52 +1,42 @@
 'use strict';
 
-const queueGranule = require('@cumulus/ingest/queue').queueGranule;
-const log = require('@cumulus/common/log');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 
 /**
-* Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
-* @callback lambdaCallback
-* @param {object} error
-* @param {object} output - output object matching schemas/output.json
-* @param {integer} output.granules_queued
-*/
-
-/**
-* For each Granule, generate a new SF messages send to the step function queue to be executed
-* @param  {object} event lambda event object
-* @param  {object} event.input
-* @param  {array} event.input.granules
-* @param  {object} context Lambda context object. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
-* @param  {lambdaCallback} callback callback function
-* @return {undefined}
+* See schemas/input.json and schemas/config.json for detailed event description
+*
+* @param {Object} event - Lambda event object
+* @returns {Promise} - see schemas/output.json for detailed output schema
+*   that is passed to the next task in the workflow
 **/
-function handler(event, context, cb) {
-  const config = event.config;
-  const stack = config.stack;
-  const bucket = config.bucket;
-  const queueUrl = config.queueUrl;
-  const templateUri = config.templateUri;
-  const provider = config.provider;
-  const collection = config.collection;
+async function queueGranules(event) {
   const granules = event.input.granules || [];
 
-  const queuedGranules = granules.map(g => queueGranule(
-    g,
-    queueUrl,
-    templateUri,
-    provider,
-    collection,
-    null,
-    stack,
-    bucket
-  ));
+  await Promise.all(
+    granules.map((granule) => enqueueGranuleIngestMessage(
+      granule,
+      event.config.queueUrl,
+      event.config.granuleIngestMessageTemplateUri,
+      event.config.provider,
+      event.config.collection,
+      event.input.pdr
+    ))
+  );
 
-  return Promise.all(queuedGranules).then(() => {
-    cb(null, { granules_queued: queuedGranules.length });
-  }).catch((e) => {
-    log.error(e);
-    cb(e);
-  });
+  return { granules_queued: granules.length };
 }
+exports.queueGranules = queueGranules;
 
-module.exports.handler = handler;
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(queueGranules, event, context, callback);
+}
+exports.handler = handler;
