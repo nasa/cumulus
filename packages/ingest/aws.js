@@ -198,8 +198,6 @@ class S3 {
   }
 
   static async put(bucket, key, body, acl = 'private', meta = null) {
-    const s3 = new AWS.S3();
-
     const params = {
       Bucket: bucket,
       Key: key,
@@ -211,7 +209,7 @@ class S3 {
       params.Metadata = meta;
     }
 
-    return s3.putObject(params).promise();
+    return aws.s3().putObject(params).promise();
   }
 
   static async get(bucket, key) {
