@@ -139,9 +139,7 @@ test('parse PDR from SFTP endpoint', async (t) => {
   newPayload.input = {
     pdr: {
       name: pdrName,
-      // The test-data prefix is required because of the way that the sftp
-      // container is configured in docker-compose.yml.
-      path: `/test-data/${providerPath}`
+      path: providerPath
     }
   };
 
