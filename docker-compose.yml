@@ -22,7 +22,7 @@ services:
     image: cumuluss/circleci:node-6.10
     volumes:
       - ".:/home/circleci/project"
-      - "./.tmp-test-data:/home/vsftpd:ro"
+      - "./packages/test-data:/home/vsftpd:ro"
       - "./.tmp-test-data:/var/www/html:ro"
       - "./.tmp-test-data:/home/user"
     ports:
