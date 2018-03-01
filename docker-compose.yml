@@ -20,6 +20,7 @@ services:
 
   test:
     image: cumuluss/circleci:node-6.10
+    command: /bin/bash
     volumes:
       - ".:/home/circleci/project"
       - "./packages/test-data:/home/vsftpd:ro"
