@@ -57,9 +57,7 @@ test('discover granules using SFTP', async (t) => {
     fs.outputFile(path.join(providerPathDirectory, file), `This is ${file}`)));
 
   const event = cloneDeep(mur);
-  // The test-data prefix is required in the provider_path because of the way
-  // that the sftp container is configured in docker-compose.yml.
-  event.config.collection.provider_path = `test-data/${providerPath}`;
+  event.config.collection.provider_path = providerPath;
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
