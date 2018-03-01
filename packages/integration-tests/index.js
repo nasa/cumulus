@@ -144,17 +144,14 @@ async function executeWorkflow(stackName, bucketName, workflowName, inputFile) {
  */
 async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
   try {
-   // const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, inputFile);
+    const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, inputFile);
 
-    const executionArn = 'arn:aws:states:us-east-1:000000000000:execution:TestCumulusHelloWorldWorkfl-1IR2c2HPmZVw:d622611c-8c72-4191-950d-66066009b443';
-    console.log(await lambda.getLambdaOutputPayload(executionArn, 'test-cumulus-HelloWorld'));
-
-    // if (workflowStatus.status === 'SUCCEEDED') {
-    //   console.log(`Workflow ${workflowName} execution succeeded.`);
-    // }
-    // else {
-    //   console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
-    // }
+    if (workflowStatus.status === 'SUCCEEDED') {
+      console.log(`Workflow ${workflowName} execution succeeded.`);
+    }
+    else {
+      console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
+    }
   }
   catch (err) {
     console.log(`Error executing workflow ${workflowName}. Error: ${err}`);
