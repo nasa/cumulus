@@ -1,0 +1,19 @@
+{
+  "title": "QueueGranulesConfig",
+  "description": "Describes the config used by the queue-granules task",
+  "type": "object",
+  "required": [
+    "collection",
+    "provider",
+    "queueUrl",
+    "stack",
+    "granuleIngestMessageTemplateUri"
+  ],
+  "properties": {
+    "collection": { "type": "object" },
+    "provider": { "type": "object" },
+    "queueUrl": { "type": "string" },
+    "stack": { "type": "string" },
+    "granuleIngestMessageTemplateUri": { "type": "string" }
+  }
+}
