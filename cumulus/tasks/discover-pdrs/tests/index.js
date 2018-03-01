@@ -258,9 +258,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       username: 'user',
       password: 'password'
     };
-    // The test-data prefix is required because of the way that the sftp
-    // container is configured in docker-compose.yml.
-    event.config.collection.provider_path = `test-data/${providerPath}`;
+    event.config.collection.provider_path = providerPath;
     event.input = {};
 
     // Mark one of the PDRs as not new
