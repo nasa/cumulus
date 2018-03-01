@@ -89,7 +89,7 @@ class Rule extends Manager {
     // makes sure the workflow exists
     const bucket = process.env.bucket;
     const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
-    const exists = await aws.fileExists(bucket, key);
+    const exists = await aws.s3ObjectExists(bucket, key);
 
     if (!exists) {
       const err = {
