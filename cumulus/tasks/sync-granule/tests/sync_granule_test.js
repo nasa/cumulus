@@ -148,9 +148,7 @@ test('download Granule from SFTP endpoint', async (t) => {
     password: 'password'
   };
 
-  // The test-data prefix is required because of the way that the sftp
-  // container is configured in docker-compose.yml.
-  t.context.event.input.granules[0].files[0].path = `test-data/${granulePath}`;
+  t.context.event.input.granules[0].files[0].path = granulePath;
 
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
