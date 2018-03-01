@@ -136,9 +136,6 @@ test('download Granule from HTTP endpoint', async (t) => {
 });
 
 test('download Granule from SFTP endpoint', async (t) => {
-  const granulePath = randomString();
-  const localGranulePath = path.join(await findTmpTestDataDirectory(), granulePath);
-
   t.context.event.config.provider = t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -148,20 +145,13 @@ test('download Granule from SFTP endpoint', async (t) => {
     password: 'password'
   };
 
-  t.context.event.input.granules[0].files[0].path = granulePath;
+  t.context.event.input.granules[0].files[0].path = '/granules';
 
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
-  await fs.mkdir(localGranulePath);
   try {
     const granuleFilename = t.context.event.input.granules[0].files[0].name;
-
-    // Stage the file to be downloaded
-    await fs.copy(
-      path.join(await findTestDataDirectory(), 'granules', granuleFilename),
-      path.join(localGranulePath, granuleFilename)
-    );
 
     const output = await syncGranule(t.context.event);
 
@@ -179,9 +169,6 @@ test('download Granule from SFTP endpoint', async (t) => {
       t.pass('ignoring this test. Test server seems to be down');
     }
     else throw e;
-  }
-  finally {
-    fs.remove(localGranulePath);
   }
 });
 

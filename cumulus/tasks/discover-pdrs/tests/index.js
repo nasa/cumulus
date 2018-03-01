@@ -224,17 +224,12 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
 
 test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
   const internalBucketName = randomString();
-  const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
   const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
-  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
-  await Promise.all([
-    fs.ensureDir(providerPathDirectory),
-    s3().createBucket({ Bucket: internalBucketName }).promise()
-  ]);
+  await s3().createBucket({ Bucket: internalBucketName }).promise();
 
   try {
     // Copy the PDRs to the SFTP directory
@@ -242,10 +237,6 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
 
     const oldPdr = pdrFilenames[0];
     const newPdrs = pdrFilenames.slice(1);
-
-    await Promise.all(pdrFilenames.map((pdrFilename) => fs.copy(
-      path.join(testDataDirectory, pdrFilename),
-      path.join(providerPathDirectory, pdrFilename))));
 
     // Build the event
     const event = cloneDeep(input);
@@ -258,13 +249,13 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       username: 'user',
       password: 'password'
     };
-    event.config.collection.provider_path = providerPath;
+    event.config.collection.provider_path =  'pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
     await s3().putObject({
       Bucket: internalBucketName,
-      // 'pdrs' is the default 'folder' value in the Discover contructor
+      // 'pdrs' is the default 'folder' value in the Discover constructor
       Key: `${event.config.stack}/pdrs/${oldPdr}`,
       Body: 'Pretend this is a PDR'
     }).promise();
@@ -289,9 +280,6 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
   }
   finally {
     // Clean up
-    await Promise.all([
-      recursivelyDeleteS3Bucket(internalBucketName),
-      fs.remove(providerPathDirectory)
-    ]);
+    await recursivelyDeleteS3Bucket(internalBucketName);
   }
 });
