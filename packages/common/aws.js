@@ -173,6 +173,30 @@ exports.downloadS3File = (s3Obj, filename) => {
 exports.getS3Object = (bucket, key) =>
   exports.s3().getObject({ Bucket: bucket, Key: key }).promise();
 
+/**
+* Check if a file exists in an S3 object
+* @name fileExists
+* @param {string} bucket name of the S3 bucket
+* @param {string} key key of the file in the S3 bucket
+* @returns {promise} returns the response from `S3.headObject` as a promise
+**/
+exports.fileExists = async (bucket, key) => {
+  const s3 = exports.s3();
+
+  try {
+    const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
+    return r;
+  }
+  catch (e) {
+    // if file is not return false
+    if (e.stack.match(/(NotFound)/)) {
+      return false;
+    }
+    throw e;
+  }
+};
+
+
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
   const scrubbedS3Objs = s3Objs.map(s3Obj => ({
