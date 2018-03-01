@@ -20,7 +20,7 @@ jobs:
           command: |
             # start ftp
             sudo rm -rf /home/vsftpd
-            sudo ln -s /home/circleci/project/.tmp-test-data /home/vsftpd
+            sudo ln -s /home/circleci/project/packages/test-data /home/vsftpd
             sudo service vsftpd start || true
 
             # start http service
