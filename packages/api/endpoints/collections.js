@@ -18,9 +18,7 @@ const { indexCollection, deleteRecord } = require('../es/indexer');
  */
 function list(event, cb) {
   const collection = new Collection(event);
-  collection.query().then(res => cb(null, res)).catch((e) => {
-    cb(e);
-  });
+  collection.query().then((res) => cb(null, res)).catch(cb);
 }
 
 /**
@@ -63,10 +61,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return c.create(data)
-          .then(() => Collection.es())
-          .then(esClient => indexCollection(esClient, data))
           .then(() => cb(null, { message: 'Record saved', record: data }))
-          .catch(err => cb(err));
+          .catch(cb);
       }
       return cb(e);
     });
@@ -97,9 +93,7 @@ function put(event, cb) {
   return c.get({ name, version }).then((originalData) => {
     data = Object.assign({}, originalData, data);
     return c.create(data);
-  }).then(() => Collection.es())
-    .then(esClient => indexCollection(esClient, data))
-    .then(() => cb(null, data))
+  }).then(() => cb(null, data))
     .catch((err) => {
       if (err instanceof RecordDoesNotExist) {
         return cb({ message: 'Record does not exist' });

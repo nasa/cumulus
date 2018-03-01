@@ -14,6 +14,7 @@ exports.schemas = require('./endpoints/schemas');
 exports.stats = require('./endpoints/stats');
 exports.version = require('./endpoints/version');
 exports.distribution = require('./endpoints/distribution');
+exports.dbIndexer = require('./lambdas/db-indexer');
 
 exports.jobs = require('./lambdas/jobs');
 exports.bootstrap = require('./lambdas/bootstrap').handler;

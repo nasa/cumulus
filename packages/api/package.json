@@ -60,6 +60,7 @@
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
     "uuid": "^3.2.1",
+    "dynamodb-data-types": "^3.0.0",
     "webpack": "^1.12.13"
   },
   "devDependencies": {
