@@ -6,7 +6,7 @@ services:
     volumes:
       - "./packages/test-data:/home/vsftpd:ro"
       - "./.tmp-test-data:/var/www/html:ro"
-      - "./.tmp-test-data:/home/user"
+      - "./packages/test-data:/home/user"
     ports:
       - "20:20"
       - "21:21"
@@ -25,7 +25,7 @@ services:
       - ".:/home/circleci/project"
       - "./packages/test-data:/home/vsftpd:ro"
       - "./.tmp-test-data:/var/www/html:ro"
-      - "./.tmp-test-data:/home/user"
+      - "./packages/test-data:/home/user"
     ports:
       - "20:20"
       - "21:21"

@@ -29,8 +29,8 @@ jobs:
             sudo service apache2 start
 
             # start sftp service
-            # sudo bash /usr/sbin/sftp.sh user:password
-            # sudo ln -s /home/circleci/project/.tmp-test-data /home/user
+            sudo bash /usr/sbin/sftp.sh user:password
+            sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
 
             yarn install
             yarn bootstrap-no-build
