@@ -39,6 +39,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "^1.0.1",
+    "@cumulus/cumulus-message-adapter-js": "0.0.1-beta.3",
     "@cumulus/ingest": "^1.0.1",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
@@ -51,6 +52,7 @@
   },
   "devDependencies": {
     "@mapbox/mock-aws-sdk-js": "0.0.5",
-    "ava": "^0.21.0"
+    "ava": "^0.21.0",
+    "lodash": "^4.17.5"
   }
 }
