@@ -36,11 +36,11 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
-test('returns list of collections', async t => {
+test('default returns list of collections', t => {
   return collections.create(testCollection)
     .then(coll => collections.get({name: testCollection.name}))
-    .then(async () => {
-      return await new Promise((resolve, reject) => {
+    .then(() => {
+      return new Promise((resolve, reject) => {
         collectionsEndpoint(
           {
             httpMethod: 'list'
