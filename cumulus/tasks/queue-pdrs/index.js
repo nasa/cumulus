@@ -3,6 +3,13 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueParsePdrMessage } = require('@cumulus/ingest/queue');
 
+/**
+* See schemas/input.json and schemas/config.json for detailed event description
+*
+* @param {Object} event - Lambda event object
+* @returns {Promise} - see schemas/output.json for detailed output schema
+*   that is passed to the next task in the workflow
+**/
 async function queuePdrs(event) {
   const pdrs = event.input.pdrs || [];
 
