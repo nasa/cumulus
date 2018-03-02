@@ -1,32 +1,44 @@
-version: '2'
+version: '3'
 services:
   local:
-    image: bogem/ftp
+    image: cumuluss/circleci:node-6.10
+    command: start
     volumes:
-      - "./packages/test-data:/home/vsftpd"
+      - "./packages/test-data:/home/vsftpd:ro"
+      - "./.tmp-test-data:/var/www/html:ro"
+      - "./packages/test-data:/home/user"
     ports:
       - "20:20"
       - "21:21"
       - "47400-47470:47400-47470"
-    environment:
-      - FTP_USER=testuser
-      - FTP_PASS=testpass
-      - PASV_ADDRESS=127.0.0.1
+      - "3030:3030"
+      - "2222:2222"
+    links:
+      - localstack
     depends_on:
-      - http
-      - sftp
+      - localstack
 
-  http:
-    image: centos/httpd
-    ports:
-      - "8080:80"
+  test:
+    image: cumuluss/circleci:node-6.10
+    command: /bin/bash
     volumes:
+      - ".:/home/circleci/project"
+      - "./packages/test-data:/home/vsftpd:ro"
       - "./.tmp-test-data:/var/www/html:ro"
-
-  sftp:
-    image: atmoz/sftp
+      - "./packages/test-data:/home/user"
     ports:
-      - "2222:22"
-    volumes:
-      - "./.tmp-test-data:/home/user/test-data:ro"
-    command: user:password
+      - "20:20"
+      - "21:21"
+      - "47400-47470:47400-47470"
+      - "3030:3030"
+      - "2222:2222"
+    links:
+      - localstack
+    depends_on:
+      - localstack
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - 4567-4582:4567-4582
+      - 8080:8080
