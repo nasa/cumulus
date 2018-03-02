@@ -1,16 +1,15 @@
-#!/usr/bin/env node
+'use strict';
 
-// TEST=true IS_LOCAL=true LOCALSTACK_HOST=localhost tests/test-db-indexer.js
+const test = require('ava');
 
-const { randomString } = require('@cumulus/common/test-utils');
-
-process.env.CollectionsTable = `CollectionsTable_${randomString()}`;
+process.env.CollectionsTable = 'Test_CollectionsTable';
 process.env.stackName = 'my-stackName';
 process.env.internal = 'my-bucket';
 
 const models = require('../models');
 const aws = require('@cumulus/common/aws');
 const collectionsEndpoint = require('../endpoints/collections');
+const collections = new models.Collection();
 
 const testCollection = {
   "name": "collection-125",
@@ -24,30 +23,33 @@ const testCollection = {
 };
 
 const hash = { name: 'name', type: 'S' };
-async function createTable() {
+async function setup() {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
   await models.Manager.createTable(process.env.CollectionsTable, hash);
 }
 
-function processResponse(r) {
-  return console.log(JSON.parse(r.body).Items);
+async function teardown() {
+  models.Manager.deleteTable(process.env.CollectionsTable);
+  await aws.recursivelyDeleteS3Bucket(process.env.internal);
 }
 
-const collections = new models.Collection();
-createTable().then(() => {
-  console.log('table created')
+test.before(async () => setup());
+test.after.always(async () => teardown());
+
+test('returns list of collections', async t => {
   return collections.create(testCollection)
-    .then(coll => {
-      return collections.get({name: testCollection.name});
-    })
+    .then(coll => collections.get({name: testCollection.name}))
     .then(async () => {
-      return await collectionsEndpoint(
-        {
-          httpMethod: 'list'
-        },
-        {
-          succeed: (r) => processResponse(r)
-        });
-    })
-    .catch(e => console.log(e.stack));
+      return await new Promise((resolve, reject) => {
+        collectionsEndpoint(
+          {
+            httpMethod: 'list'
+          },
+          {
+            succeed: (r) => resolve(t.is(JSON.parse(r.body).Items.length, 1)),
+            fail: (e) => reject(e)
+          }
+        )     
+      });
+    });
 });
