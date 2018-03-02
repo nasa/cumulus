@@ -1,33 +1,22 @@
 'use strict';
 
-const get = require('lodash.get');
 const uuidv4 = require('uuid/v4');
 const {
   getS3Object,
   sendSQSMessage,
-  parseS3Uri,
-  getSfnExecutionByName,
-  getGranuleStatus
+  parseS3Uri
 } = require('@cumulus/common/aws');
 
 /**
   * Create a message from a template stored on S3
   *
   * @param {string} templateUri - S3 uri to the workflow template
-  * @param {Object} provider - Cumulus provider object
-  * @param {Object} collection - Cumulus collection object
   * @returns {Promise} message object
   **/
-async function getTemplate(templateUri, provider, collection) {
-
+async function getMessageFromTemplate(templateUri) {
   const parsedS3Uri = parseS3Uri(templateUri);
   const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
-  const message = JSON.parse(data.Body);
-
-  message.meta.provider = provider;
-  message.meta.collection = collection;
-
-  return message;
+  return JSON.parse(data.Body);
 }
 
 /**
@@ -42,7 +31,7 @@ async function getTemplate(templateUri, provider, collection) {
   * @returns {Promise} promise returned from SQS.sendMessage()
   **/
 async function queuePdr(queueUrl, templateUri, provider, collection, pdr) {
-  const message = await getTemplate(templateUri, provider, collection);
+  const message = await getMessageFromTemplate(templateUri, provider, collection);
 
   message.payload = { pdr };
   message.cumulus_meta.execution_name = uuidv4();
@@ -51,44 +40,28 @@ async function queuePdr(queueUrl, templateUri, provider, collection, pdr) {
 }
 
 /**
-
-  * Create a message from a template stored on S3
-  *
-  * @param {object} granule
-  * @param {string} templateUri - S3 uri to the workflow template
-  * @param {Object} provider - Cumulus provider object
-  * @param {Object} collection - Cumulus collection object
-  * @param {Object} pdr - the PDR object
-  * @param {string} pdr.name - name of the PDR
-  * @param {string} stack = the deployment stackname
-  * @param {string} bucket - the deployment bucket name
-  * @returns {promise} returns a promise that resolves to an array of [status, arn]
-  **/
-async function queueGranule(
+ * Enqueue a granule to be ingested
+ *
+ * @param {Object} granule - the granule to be enqueued for ingest
+ * @param {string} queueUrl - the SQS queue to add the message to
+ * @param {string} granuleIngestMessageTemplateUri - the S3 URI of template for
+ * a granule ingest message
+ * @param {Object} provider - the provider config to be attached to the message
+ * @param {Object} collection - the collection config to be attached to the
+ *   message
+ * @param {Object} pdr - an optional PDR to be configured in the message payload
+ * @returns {Promise} - resolves when the message has been enqueued
+ */
+async function enqueueGranuleIngestMessage(
   granule,
   queueUrl,
-  templateUri,
+  granuleIngestMessageTemplateUri,
   provider,
   collection,
-  pdr,
-  stack,
-  bucket
+  pdr
 ) {
-  const message = await getTemplate(templateUri, provider, collection);
-
-  // check if the granule is already processed
-  const status = await getGranuleStatus(granule.granuleId, stack, bucket);
-
-  if (status) {
-    return status;
-  }
-
-  // if size is larger than 450mb skip
-  for (const f of granule.files) {
-    if (f.fileSize > 450000000) {
-      return { completed: granule.granuleId };
-    }
-  }
+  // Build the message from a template
+  const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
 
   message.payload = {
     granules: [{
@@ -96,18 +69,13 @@ async function queueGranule(
       files: granule.files
     }]
   };
+  if (pdr) message.payload.pdr = pdr;
 
-  if (pdr) {
-    message.payload.pdr = pdr;
-  }
+  message.meta.provider = provider;
+  message.meta.collection = collection;
 
-  const executionName = uuidv4();
-  const arn = getSfnExecutionByName(message.cumulus_meta.state_machine, executionName);
-
-  message.cumulus_meta.execution_name = executionName;
-  await sendSQSMessage(queueUrl, message);
-  return ['running', arn];
+  return sendSQSMessage(queueUrl, message);
 }
+exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
 
 module.exports.queuePdr = queuePdr;
-module.exports.queueGranule = queueGranule;
