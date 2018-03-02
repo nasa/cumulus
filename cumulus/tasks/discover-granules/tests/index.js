@@ -36,30 +36,12 @@ test('discover granules using FTP', async (t) => {
 
 test('discover granules using SFTP', async (t) => {
   const internalBucketName = randomString();
-  const providerPath = randomString();
-
-  // Figure out the directory paths that we're working with
-  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
-  await Promise.all([
-    fs.ensureDir(providerPathDirectory),
-    s3().createBucket({ Bucket: internalBucketName }).promise()
-  ]);
-
-  // State sample files
-  const files = [
-    'granule-1.nc', 'granule-1.nc.md5',
-    'granule-2.nc', 'granule-2.nc.md5',
-    'granule-3.nc', 'granule-3.nc.md5'
-  ];
-  await Promise.all(files.map((file) =>
-    fs.outputFile(path.join(providerPathDirectory, file), `This is ${file}`)));
+  await s3().createBucket({ Bucket: internalBucketName }).promise();
 
   const event = cloneDeep(mur);
-  // The test-data prefix is required in the provider_path because of the way
-  // that the sftp container is configured in docker-compose.yml.
-  event.config.collection.provider_path = `test-data/${providerPath}`;
+  event.config.collection.provider_path = 'granules/fake_granules';
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -85,10 +67,7 @@ test('discover granules using SFTP', async (t) => {
   }
   finally {
     // Clean up
-    await Promise.all([
-      recursivelyDeleteS3Bucket(internalBucketName),
-      fs.remove(providerPathDirectory)
-    ]);
+    await recursivelyDeleteS3Bucket(internalBucketName);
   }
 });
 
@@ -119,7 +98,7 @@ test('discover granules using HTTP', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
 
   await validateConfig(t, event.config);
