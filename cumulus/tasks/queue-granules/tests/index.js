@@ -14,11 +14,15 @@ const {
 const { queueGranules } = require('../index');
 
 test.beforeEach(async (t) => {
+  t.context.stateMachineArn = randomString();
+
   t.context.templateBucket = randomString();
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
   t.context.messageTemplate = {
-    cumulus_meta: {},
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn
+    },
     meta: {}
   };
   const messageTemplateKey = `${randomString()}/template.json`;
@@ -33,7 +37,6 @@ test.beforeEach(async (t) => {
       collection: { name: 'collection-name' },
       provider: { name: 'provider-name' },
       queueUrl: await createQueue(),
-      stack: '',
       granuleIngestMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
     },
     input: {
@@ -104,14 +107,20 @@ test('Granules are added to the queue', async (t) => {
 });
 
 test('The correct message is enqueued without a PDR', async (t) => {
-  const fileName = randomString();
-  const granuleId = randomString();
+  const fileNameA = randomString();
+  const granuleIdA = randomString();
+  const fileNameB = randomString();
+  const granuleIdB = randomString();
 
   const event = t.context.event;
   event.input.granules = [
     {
-      granuleId,
-      files: [{ name: fileName }]
+      granuleId: granuleIdA,
+      files: [{ name: fileNameA }]
+    },
+    {
+      granuleId: granuleIdB,
+      files: [{ name: fileNameB }]
     }
   ];
 
@@ -122,16 +131,11 @@ test('The correct message is enqueued without a PDR', async (t) => {
 
   await validateOutput(t, output);
 
-  // Get messages from the queue
-  const receiveMessageResponse = await sqs().receiveMessage({
-    QueueUrl: t.context.event.config.queueUrl,
-    MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
-  }).promise();
-  const messages = receiveMessageResponse.Messages;
-
-  const expectedMessage = {
-    cumulus_meta: {},
+  const expectedMessages = {};
+  expectedMessages[granuleIdA] = {
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn
+    },
     meta: {
       collection: { name: 'collection-name' },
       provider: { name: 'provider-name' }
@@ -139,17 +143,50 @@ test('The correct message is enqueued without a PDR', async (t) => {
     payload: {
       granules: [
         {
-          granuleId,
-          files: [{ name: fileName }]
+          granuleId: granuleIdA,
+          files: [{ name: fileNameA }]
+        }
+      ]
+    }
+  };
+  expectedMessages[granuleIdB] = {
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn
+    },
+    meta: {
+      collection: { name: 'collection-name' },
+      provider: { name: 'provider-name' }
+    },
+    payload: {
+      granules: [
+        {
+          granuleId: granuleIdB,
+          files: [{ name: fileNameB }]
         }
       ]
     }
   };
 
-  t.deepEqual(JSON.parse(messages[0].Body), expectedMessage);
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: t.context.event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1
+  }).promise();
+  const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
+
+  const receivedGranuleIds = messages.map((message) => message.payload.granules[0].granuleId);
+  t.true(receivedGranuleIds.includes(granuleIdA));
+  t.true(receivedGranuleIds.includes(granuleIdB));
+
+  t.is(messages.length, 2);
+  messages.forEach((message) => {
+    const granuleId = message.payload.granules[0].granuleId;
+    t.deepEqual(message, expectedMessages[granuleId]);
+  });
 });
 
-test('The correct message is enqueued without a PDR', async (t) => {
+test('The correct message is enqueued with a PDR', async (t) => {
   const fileName = randomString();
   const granuleId = randomString();
   const pdrName = randomString();
@@ -180,7 +217,9 @@ test('The correct message is enqueued without a PDR', async (t) => {
   const messages = receiveMessageResponse.Messages;
 
   const expectedMessage = {
-    cumulus_meta: {},
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn
+    },
     meta: {
       collection: { name: 'collection-name' },
       provider: { name: 'provider-name' }
