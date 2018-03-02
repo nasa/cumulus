@@ -57,9 +57,7 @@ Build and watch packages:
 
 The LocalStack repository has [installation instructions](https://github.com/localstack/localstack#installing).
 
-Before running tests, start the LocalStack servers:
-
-    $ localstack start
+Localstack is included in the docker-compose file. You only need to run the docker-compose command in the next section in order to use it with your tests.
 
 ### Docker containers
 
