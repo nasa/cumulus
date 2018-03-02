@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const path = require('path');
 const url = require('url');
 const aws = require('./aws');
-const { readFile } = require('fs');
 const fs = require('fs-extra');
 
 /**
@@ -217,3 +216,16 @@ function findTestDataDirectory() {
     .then((gitRepoRoot) => path.join(gitRepoRoot, 'packages', 'test-data'));
 }
 exports.findTestDataDirectory = findTestDataDirectory;
+
+/**
+ * Prettify and display something to the console.
+ *
+ * This is only intended to be used during debugging.
+ *
+ * @param {Object|Array} object - an object or array to be stringifyed
+ * @returns {undefined} - no return value
+ */
+function jlog(object) {
+  console.log(JSON.stringify(object, null, 2));
+}
+exports.jlog = jlog;
