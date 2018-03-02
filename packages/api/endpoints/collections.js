@@ -34,8 +34,9 @@ function get(event, cb) {
     .then((res) => {
       const collection = new Collection(event);
       return collection.getStats([res], [res.name]);
-    }).then(res => cb(null, res[0]))
-      .catch((e) => cb(e));
+    })
+    .then(res => cb(null, res[0]))
+    .catch(e => cb(e));
 }
 
 /**
