@@ -79,7 +79,7 @@ test('parse PDR from HTTP endpoint', async (t) => {
   newPayload.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
   newPayload.input = {
     pdr: {
@@ -115,14 +115,9 @@ test('parse PDR from HTTP endpoint', async (t) => {
 
 test('parse PDR from SFTP endpoint', async (t) => {
   const internalBucketName = randomString();
-  const providerPath = randomString();
-  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
-  await Promise.all([
-    fs.ensureDir(providerPathDirectory),
-    s3().createBucket({ Bucket: internalBucketName }).promise()
-  ]);
+  await s3().createBucket({ Bucket: internalBucketName }).promise();
 
   const pdrName = 'MOD09GQ.PDR';
 
@@ -139,9 +134,7 @@ test('parse PDR from SFTP endpoint', async (t) => {
   newPayload.input = {
     pdr: {
       name: pdrName,
-      // The test-data prefix is required because of the way that the sftp
-      // container is configured in docker-compose.yml.
-      path: `/test-data/${providerPath}`
+      path: 'pdrs'
     }
   };
 
@@ -149,12 +142,6 @@ test('parse PDR from SFTP endpoint', async (t) => {
   await validateConfig(t, newPayload.config);
 
   try {
-    // Stage the file to be downloaded
-    const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
-    await fs.copy(
-      path.join(testDataDirectory, pdrName),
-      path.join(providerPathDirectory, pdrName));
-
     const output = await parsePdr(newPayload);
 
     await validateOutput(t, output);
@@ -170,10 +157,7 @@ test('parse PDR from SFTP endpoint', async (t) => {
   }
   finally {
     // Clean up
-    await Promise.all([
-      recursivelyDeleteS3Bucket(internalBucketName),
-      fs.remove(providerPathDirectory)
-    ]);
+    await recursivelyDeleteS3Bucket(internalBucketName);
   }
 });
 
