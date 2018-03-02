@@ -96,7 +96,7 @@ test('download Granule from HTTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
   t.context.event.input.granules[0].files[0].path = `/${granulePath}`;
 
@@ -136,9 +136,6 @@ test('download Granule from HTTP endpoint', async (t) => {
 });
 
 test('download Granule from SFTP endpoint', async (t) => {
-  const granulePath = randomString();
-  const localGranulePath = path.join(await findTmpTestDataDirectory(), granulePath);
-
   t.context.event.config.provider = t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -148,22 +145,13 @@ test('download Granule from SFTP endpoint', async (t) => {
     password: 'password'
   };
 
-  // The test-data prefix is required because of the way that the sftp
-  // container is configured in docker-compose.yml.
-  t.context.event.input.granules[0].files[0].path = `test-data/${granulePath}`;
+  t.context.event.input.granules[0].files[0].path = '/granules';
 
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
-  await fs.mkdir(localGranulePath);
   try {
     const granuleFilename = t.context.event.input.granules[0].files[0].name;
-
-    // Stage the file to be downloaded
-    await fs.copy(
-      path.join(await findTestDataDirectory(), 'granules', granuleFilename),
-      path.join(localGranulePath, granuleFilename)
-    );
 
     const output = await syncGranule(t.context.event);
 
@@ -181,9 +169,6 @@ test('download Granule from SFTP endpoint', async (t) => {
       t.pass('ignoring this test. Test server seems to be down');
     }
     else throw e;
-  }
-  finally {
-    fs.remove(localGranulePath);
   }
 });
 
@@ -238,7 +223,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:8080'
+    host: 'http://localhost:3030'
   };
 
   const granulePath = randomString();
@@ -288,7 +273,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 //   const provider = {
 //     id: 'MODAPS',
 //     protocol: 'http',
-//     host: 'http://localhost:8080'
+//     host: 'http://localhost:3030'
 //   };
 //   sinon.stub(S3, 'fileExists').callsFake(() => true);
 //   const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
