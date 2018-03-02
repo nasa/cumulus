@@ -6,14 +6,13 @@
     "collection",
     "provider",
     "queueUrl",
-    "stack",
     "granuleIngestMessageTemplateUri"
   ],
+  "additionalProperties": false,
   "properties": {
     "collection": { "type": "object" },
     "provider": { "type": "object" },
     "queueUrl": { "type": "string" },
-    "stack": { "type": "string" },
     "granuleIngestMessageTemplateUri": { "type": "string" }
   }
 }
