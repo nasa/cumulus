@@ -6,7 +6,7 @@ const log = require('@cumulus/common/log');
 
 /**
 * Discover granules
-* See schemas/input.json for detailed input schema
+* See schemas/input.json and schemas/config.json for detailed event description
 *
 * @param {Object} event - Lambda event object
 * @returns {Promise} - see schemas/output.json for detailed output schema
