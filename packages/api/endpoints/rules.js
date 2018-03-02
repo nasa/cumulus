@@ -16,10 +16,8 @@ const { RecordDoesNotExist } = require('../lib/errors');
  * @return {undefined}
  */
 function list(event, cb) {
-  const search = new Search(event, 'rule');
-  search.query().then(response => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+  const rules = new models.Rule();
+  return rules.scan().then(res => cb(null, res)).catch(cb);
 }
 
 /**
@@ -129,7 +127,7 @@ async function del(event) {
 }
 
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  return handle(event, context, !process.env.TEST /* authCheck */, cb => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
@@ -149,12 +147,3 @@ function handler(event, context) {
 }
 
 module.exports = handler;
-
-
-justLocalRun(() => {
-  //put({ pathParameters: { name: 'discover_aster' }, body: '{"action":"rerun"}' }).then(r => console.log(r)).catch(e => console.log(e)); // eslint-disable-line max-len
-  //handler(postPayload, {
-    //succeed: r => console.log(r),
-    //failed: e => console.log(e)
-  //}, (e, r) => console.log(e, r));
-});

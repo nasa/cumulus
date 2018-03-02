@@ -12,10 +12,12 @@ const aws = require('./aws');
 exports.randomString = () => crypto.randomBytes(20).toString('hex');
 
 // From https://github.com/localstack/localstack/blob/master/README.md
+// REVIEW(aimee): not really sure how this is working for cloudwatchlogs, since the service identifier for AWS.CloudWatchLogs is cloudwatchlogs. Perhaps there are no tests which include cloudwatchlogs.
 const localStackPorts = {
   apigateway: 4567,
   cloudformation: 4581,
   cloudwatch: 4582,
+  cloudwatchevents: 4582,
   dynamodb: 4569,
   dynamodbstreams: 4570,
   es: 4571,

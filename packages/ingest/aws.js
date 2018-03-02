@@ -98,7 +98,7 @@ function sqs(local) {
 
 class Events {
   static async putEvent(name, schedule, state, description = null, role = null) {
-    const cwevents = new AWS.CloudWatchEvents();
+    const cwevents = new aws.cloudwatchevents();
 
     const params = {
       Name: name,

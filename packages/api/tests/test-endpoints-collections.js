@@ -2,9 +2,10 @@
 
 const test = require('ava');
 
+// TODO(aimee): Dry this setup for all api package tests.
 process.env.CollectionsTable = 'Test_CollectionsTable';
-process.env.stackName = 'my-stackName';
-process.env.internal = 'my-bucket';
+process.env.stackName = 'test-stack';
+process.env.internal = 'test-bucket';
 
 const models = require('../models');
 const aws = require('@cumulus/common/aws');
