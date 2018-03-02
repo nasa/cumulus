@@ -2,9 +2,8 @@
   "title": "QueueGranulesOutput",
   "description": "Describes the output produced by the queue-granules task",
   "type": "object",
+  "required": [ "granules_queued" ],
   "properties": {
-    "granules_queued": {
-      "type": "integer"
-    }
+    "granules_queued": { "type": "integer" }
   }
 }
