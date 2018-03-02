@@ -121,7 +121,7 @@ function handler(event, context) {
     return context.fail('HttpMethod is missing');
   }
 
-  return handle(event, context, !process.env.TEST, (cb) => {
+  return handle(event, context, !process.env.TEST /* authCheck */, cb => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
