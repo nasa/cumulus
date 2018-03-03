@@ -1,9 +1,9 @@
-#!/usr/bin/env node
 'use strict';
 
-const fs = require('fs');
 const archiver = require('archiver');
+const fs = require('fs');
 const path = require('path');
+const test = require('ava');
 
 process.env.LOCALSTACK_HOST='localhost'
 process.env.IS_LOCAL = true
@@ -38,7 +38,7 @@ const dbIndexerFnName = 'test-dbIndexer';
 // Test that if our dynamos are hooked up to the db-indexer lambda function,
 // records show up in elasticsearch 'hooked-up': the dynamo has a stream and the
 // lambda has an event source mapping to that dynamo stream.
-async function setup() {
+test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   const hash = { name: 'name', type: 'S' };
@@ -90,21 +90,19 @@ async function setup() {
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 }
 
-async function teardown() {
+test.after.always(async () => {
   await models.Manager.deleteTable(process.env.CollectionsTable);
   await aws.lambda().deleteFunction({FunctionName: dbIndexerFnName})
     .promise()
     .catch(e => console.log(e));
 }
 
-async function testEs() {
+test.only('creates a collection in dynamodb and es', async t => {
   return await collections.create(testCollection)
     .then(collection => collections.get({name: testCollection.name}))
-    .then(res => console.log(res)) 
+    .then(res => {
+      t.is(res);
+      console.log(res);
+    })
     .catch(e => console.log(e))
-}
-
-setup()
-  .then(testEs())
-  .then(teardown())
-  .catch(e => console.log(e));
+});
