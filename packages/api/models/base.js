@@ -44,6 +44,10 @@ class Manager {
       ProvisionedThroughput: {
         ReadCapacityUnits: 5,
         WriteCapacityUnits: 5
+      },
+      StreamSpecification: {
+        StreamEnabled: true,
+        StreamViewType: 'NEW_IMAGE'
       }
     };
 
