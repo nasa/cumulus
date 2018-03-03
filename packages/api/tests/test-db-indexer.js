@@ -1,13 +1,11 @@
 'use strict';
 
+// LOCALSTACK_HOST=localhost npm test
 const archiver = require('archiver');
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 
-process.env.LOCALSTACK_HOST='localhost'
-process.env.IS_LOCAL = true
-process.env.TEST = true
 process.env.CollectionsTable = 'Test_CollectionsTable';
 process.env.stackName = 'test-stack';
 process.env.internal = 'test-bucket';
@@ -86,23 +84,21 @@ test.before(async () => {
         .promise();
     })
     .catch(e => console.log(e));
-
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
-}
+});
 
 test.after.always(async () => {
   await models.Manager.deleteTable(process.env.CollectionsTable);
   await aws.lambda().deleteFunction({FunctionName: dbIndexerFnName})
     .promise()
     .catch(e => console.log(e));
-}
+  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+});
 
 test.only('creates a collection in dynamodb and es', async t => {
   return await collections.create(testCollection)
     .then(collection => collections.get({name: testCollection.name}))
     .then(res => {
-      t.is(res);
-      console.log(res);
+      t.is(res.name, 'collection-125');
     })
     .catch(e => console.log(e))
 });
