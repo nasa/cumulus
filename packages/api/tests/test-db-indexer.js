@@ -15,14 +15,14 @@ const aws = require('@cumulus/common/aws');
 const collections = new models.Collection();
 
 const testCollection = {
-  "name": "collection-125",
-  "version": "0.0.0",
-  "provider_path": "/",
-  "duplicateHandling": "replace",
-  "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
-  "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
-  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-  "files": []
+  'name': 'collection-125',
+  'version': '0.0.0',
+  'provider_path': '/',
+  'duplicateHandling': 'replace',
+  'granuleId': '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+  'granuleIdExtraction': '(MOD09GQ\\.(.*))\\.hdf',
+  'sampleFileName': 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
+  'files': []
 };
 
 const codeDirectory = 'dist/'
@@ -95,7 +95,7 @@ test.after.always(async () => {
 });
 
 test.only('creates a collection in dynamodb and es', async t => {
-  return await collections.create(testCollection)
+  await collections.create(testCollection)
     .then(collection => collections.get({name: testCollection.name}))
     .then(res => {
       t.is(res.name, 'collection-125');
