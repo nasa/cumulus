@@ -63,3 +63,5 @@ test('default returns list of rules', t => {
       });
     });
 });
+
+test.todo('post creates a rule');
