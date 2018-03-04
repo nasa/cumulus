@@ -26,30 +26,29 @@ const res = {
   name: testCollection.name,
   version: testCollection.version
 }
-//bootstrap.bootstrapElasticSearch('http://localhost:4571');
 
 async function testIndexCollection() {
   const esClient = await Search.es();
   const collections = new models.Collection();
   const hash = { name: 'name', type: 'S' };
 
-  await collections.create(testCollection)
-    .then(() => bootstrap.bootstrapElasticSearch('http://localhost:4571'))
-    .then(() => indexCollection(esClient, testCollection))
-    //.then(result => console.log(result))
-    .then(() => collections.get({name: testCollection.name}))
-    .then(result => {
-      console.log(result)
-      const collection = new Collection({});
-      return collection.query();
-    })
-    .then(result => console.log(result))
-    .catch(e => console.log(e));
-  // await esClient.indices.delete({index: 'cumulus'})
-  //   .then(body => {
-  //     console.log(body);
-  //     return;
-  //   });
-     
+  // await collections.create(testCollection)
+  //   .then(() => bootstrap.bootstrapElasticSearch('http://localhost:4571'))
+  //   .then(() => indexCollection(esClient, testCollection))
+  //   //.then(result => console.log(result))
+  //   .then(() => collections.get({name: testCollection.name}))
+  //   .then(result => {
+  //     console.log(result)
+  //     const collection = new Collection({});
+  //     return collection.query();
+  //   })
+  //   .then(result => console.log(result))
+  //   .catch(e => console.log(e));
+
+  await esClient.indices.delete({index: 'cumulus'})
+    .then(body => {
+      console.log(body);
+      return;
+    });  
 }
 testIndexCollection();
