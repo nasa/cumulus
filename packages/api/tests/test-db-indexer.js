@@ -17,7 +17,7 @@ const collections = new models.Collection();
 const EsCollection = require('../es/collections');
 
 const testCollection = {
-  'name': 'collection-000',
+  'name': 'collection-006',
   'version': '0.0.0',
   'provider_path': '/',
   'duplicateHandling': 'replace',
@@ -102,17 +102,15 @@ test.after.always(async () => {
 
 test.only('creates a collection in dynamodb and es', async t => {
   return await collections.create(testCollection)
-    .then(result => {
-      console.log('created collection')
-      //t.is(result.name, testCollection.name);
-    })
     .then(() => {
       const esCollection = new EsCollection({});
       return esCollection.query();
     })
     .then(result => {
-      console.log(result);
-      t.is(result.results.length, 1);
+      // search is limited to returning 1 result at the moment, which is
+      // strange, so just check for name here.
+      t.is(result.results[0].name, testCollection.name);
+      t.is(result.results[0].version, testCollection.version);
     })
     .catch(e => console.log(e));
 });
