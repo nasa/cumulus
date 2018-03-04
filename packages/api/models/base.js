@@ -172,7 +172,7 @@ class Manager {
         Item: item
       };
 
-      await this.dynamodbDocClient.put(params).promise();
+      await this.dynamodbDocClient.put(params)//.promise(); <- this was causing tests to stall
     };
 
     if (items instanceof Array) {
