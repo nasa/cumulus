@@ -172,7 +172,8 @@ class Manager {
         Item: item
       };
 
-      await this.dynamodbDocClient.put(params)//.promise(); <- this was causing tests to stall
+      //await aws.dynamodb().putItem(params).promise(); //<- this was causing tests to stall
+      await aws.dynamodbDocClient().put(params).promise();
     };
 
     if (items instanceof Array) {
