@@ -72,7 +72,9 @@ async function processRecord(record) {
 
   await validateMessage(eventObject)
     .then(getKinesisRules)
-    .then(kinesisRules => createOneTimeRules(kinesisRules));
+    .then((kinesisRules) => {
+      return createOneTimeRules(kinesisRules);
+    });
 }
 
 /**
@@ -88,8 +90,10 @@ function handler(event, context, cb) {
   const records = event.Records;
 
   return Promise.all(records.map(r => processRecord(r)))
-    .then(results => cb(null, results.filter(r => r !== undefined)))
-    .catch(err => cb(JSON.stringify(err)));
+    .then((results) => cb(null, results.filter(r => r !== undefined)))
+    .catch((err) => {
+      cb(JSON.stringify(err));
+    });
 }
 
 module.exports = {
