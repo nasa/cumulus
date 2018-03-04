@@ -41,15 +41,15 @@ class BaseSearch {
       }
 
       esConfig = {
-        host: process.env.ES_HOST || host || 'docker.for.mac.localhost:4571'
-        // connectionClass: httpAwsEs,
-        // amazonES: {
-        //   region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-        //   credentials: aws.config.credentials
-        // },
+        host: process.env.ES_HOST || host || 'localhost:9200',
+        connectionClass: httpAwsEs,
+        amazonES: {
+          region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+          credentials: aws.config.credentials
+        },
 
-        // // Note that this doesn't abort the query.
-        // requestTimeout: 50000  // milliseconds
+        // Note that this doesn't abort the query.
+        requestTimeout: 50000  // milliseconds
       };
     }
 

@@ -59,6 +59,12 @@ test.before(async () => {
         Role: 'testRole',
         Code: {
           ZipFile: contents
+        },
+        Environment: {
+          Variables: {
+            'TEST': 'true',
+            'LOCALSTACK_HOST': 'docker.for.mac.localhost'
+          }
         }
       })
       .promise()
