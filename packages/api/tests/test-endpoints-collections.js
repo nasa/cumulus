@@ -2,7 +2,6 @@
 
 const test = require('ava');
 
-// TODO(aimee): Dry this setup for all api package tests.
 process.env.CollectionsTable = 'Test_CollectionsTable';
 process.env.stackName = 'test-stack';
 process.env.internal = 'test-bucket';
@@ -55,8 +54,8 @@ test('GET returns an existing collection', t => {
     }
   };
   return testEndpoint(collectionsEndpoint, getEvent, response => {
-    const collection = JSON.parse(response.body);
-    t.is(collection.name, testCollection.name);
+    const { name } = JSON.parse(response.body);
+    t.is(name, testCollection.name);
   });
 });
 
@@ -88,8 +87,8 @@ test('PUT updates an existing collection', t => {
     httpMethod: 'PUT'
   };
   return testEndpoint(collectionsEndpoint, updateEvent, response => {
-    const record = JSON.parse(response.body);
-    t.is(record.provider_path, newPath);
+    const { provider_path } = JSON.parse(response.body);
+    t.is(provider_path, newPath);
   });
 });
 

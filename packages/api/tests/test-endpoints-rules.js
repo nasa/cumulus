@@ -64,8 +64,8 @@ test('GET gets a rule', t => {
     httpMethod: 'GET'
   };
   return testEndpoint(rulesEndpoint, getEvent, response => {
-    const rule = JSON.parse(response.body);
-    t.is(rule.name, testRule.name);
+    const { name } = JSON.parse(response.body);
+    t.is(name, testRule.name);
   });
 });
 
@@ -91,8 +91,8 @@ test('PUT updates a rule', t => {
     httpMethod: 'PUT'
   };
   return testEndpoint(rulesEndpoint, updateEvent, response => {
-    const updatedRule = JSON.parse(response.body);
-    t.is(updatedRule.state, 'ENABLED');
+    const { state } = JSON.parse(response.body);
+    t.is(state, 'ENABLED');
   });
 });
 
