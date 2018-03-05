@@ -2,6 +2,8 @@
   "title": "QueuePdrsOutput",
   "description": "Describes the output produced by the queue-pdrs task",
   "type": "object",
+  "required": [ "pdrs_queued" ],
+  "additionalProperties": false,
   "properties": {
     "pdrs_queued": {
       "type": "integer"
