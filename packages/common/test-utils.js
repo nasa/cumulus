@@ -131,7 +131,8 @@ async function validateJSON(t, schemaFilename, data) {
     const message = `${schemaName} validation failed: ${ajv.errorsText()}`;
     console.log(message);
     console.log(JSON.stringify(data, null, 2));
-    return t.fail(message);
+    t.fail(message);
+    throw new Error(message);
   }
   return valid;
 }
