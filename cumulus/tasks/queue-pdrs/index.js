@@ -1,42 +1,41 @@
 'use strict';
 
-import { queuePdr } from '@cumulus/ingest/queue';
-const log = require('@cumulus/common/log');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const { enqueueParsePdrMessage } = require('@cumulus/ingest/queue');
 
 /**
-* Callback function provided by aws lambda. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
-* @callback lambdaCallback
-* @param {object} error
-* @param {object} output - output object matching schemas/output.json
-* @param {integer} output.pdrs_queued
-*/
-
-/**
-* For each PDR, generate a new SF messages send to the step function queue to be executed
-* @param  {object} event lambda event object
-* @param  {object} event.input
-* @param  {array} event.input.pdrs
-* @param  {object} context Lambda context object. See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
-* @param  {lambdaCallback} callback callback function
-* @return {undefined}
+* See schemas/input.json and schemas/config.json for detailed event description
+*
+* @param {Object} event - Lambda event object
+* @returns {Promise} - see schemas/output.json for detailed output schema
+*   that is passed to the next task in the workflow
 **/
-function handler(event, context, cb) {
+async function queuePdrs(event) {
   const pdrs = event.input.pdrs || [];
-  const config = event.config;
-  const queuedPdrs = pdrs.map((pdr) => queuePdr(
-    config.queueUrl,
-    config.templateUri,
-    config.provider,
-    config.collection,
-    pdr
-  ));
 
-  return Promise.all(queuedPdrs).then(() => {
-    cb(null, { pdrs_queued: queuedPdrs.length });
-  }).catch(e => {
-    log.error(e);
-    return cb(e);
-  });
+  await Promise.all(
+    pdrs.map((pdr) => enqueueParsePdrMessage(
+      pdr,
+      event.config.queueUrl,
+      event.config.parsePdrMessageTemplateUri,
+      event.config.provider,
+      event.config.collection
+    ))
+  );
+
+  return { pdrs_queued: pdrs.length };
 }
+exports.queuePdrs = queuePdrs;
 
-module.exports.handler = handler;
+/**
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
+function handler(event, context, callback) {
+  cumulusMessageAdapter.runCumulusTask(queuePdrs, event, context, callback);
+}
+exports.handler = handler;
