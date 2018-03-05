@@ -60,6 +60,7 @@ exports.sqs = awsClient(AWS.SQS, '2012-11-05');
 exports.cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
 exports.cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 exports.dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
+exports.dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
 exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
