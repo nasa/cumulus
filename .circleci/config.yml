@@ -8,6 +8,7 @@ jobs:
         image: localstack/localstack
         environment:
           LAMBDA_EXECUTOR: docker
+          LAMBDA_REMOTE_DOCKER: false
     working_directory: ~/project
     steps:
       - checkout
