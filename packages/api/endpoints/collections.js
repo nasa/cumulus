@@ -76,6 +76,7 @@ function post(event, cb) {
 function put(event, cb) {
   const pname = _get(event.pathParameters, 'collectionName');
   const pversion = _get(event.pathParameters, 'version');
+
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
 
