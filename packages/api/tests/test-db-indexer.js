@@ -63,7 +63,7 @@ test.before(async () => {
         Environment: {
           Variables: {
             'TEST': 'true',
-            'LOCALSTACK_HOST': 'docker.for.mac.localhost'
+            'LOCALSTACK_HOST': process.env.LOCALSTACK_HOST === 'localstack' ? process.env.LOCALSTACK_HOST : 'docker.for.mac.localhost';
           }
         }
       })
