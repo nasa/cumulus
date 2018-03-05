@@ -32,9 +32,10 @@ const codeDirectory = 'dist/'
 const tmpZipFile = path.join('/tmp/test.zip');
 const output = fs.createWriteStream(tmpZipFile)
 const archive = archiver('zip', {
-  zlib: { level: 9 } // Sets the compression level.
+  zlib: { level: 9 }
 });
 const dbIndexerFnName = 'test-dbIndexer';
+const hash = { name: 'name', type: 'S' };
 
 // Test that if our dynamos are hooked up to the db-indexer lambda function,
 // records show up in elasticsearch 'hooked-up': the dynamo has a stream and the
@@ -42,7 +43,6 @@ const dbIndexerFnName = 'test-dbIndexer';
 test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  const hash = { name: 'name', type: 'S' };
   // create collections table
   await models.Manager.createTable(process.env.CollectionsTable, hash);
   await bootstrap.bootstrapElasticSearch('http://localhost:4571');
