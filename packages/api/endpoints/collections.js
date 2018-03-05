@@ -90,10 +90,12 @@ function put(event, cb) {
   const c = new models.Collection();
 
   // get the record first
-  return c.get({ name }).then((originalData) => {
-    data = Object.assign({}, originalData, data);
-    return c.create(data);
-  }).then(() => cb(null, data))
+  return c.get({ name })
+    .then((originalData) => {
+      data = Object.assign({}, originalData, data);
+      return c.create(data);
+    })
+    .then(() => cb(null, data))
     .catch((err) => {
       if (err instanceof RecordDoesNotExist) {
         return cb({ message: 'Record does not exist' });
