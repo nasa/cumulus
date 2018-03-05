@@ -1,5 +1,5 @@
 const test = require('ava');
-const { recursivelyDeleteS3Bucket, s3, sqs } = require('@cumulus/common/aws');
+const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   randomString,
   validateConfig,
@@ -21,8 +21,7 @@ test.beforeEach(async (t) => {
         id: randomString(),
         protocol: 's3'
       },
-      stack: randomString(),
-      useList: true
+      stack: randomString()
     }
   };
 
