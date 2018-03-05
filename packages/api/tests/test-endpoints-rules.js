@@ -61,9 +61,32 @@ test('default returns list of rules', t => {
   });
 });
 
+test('GET gets a rule', t => {
+  const getEvent = {
+    pathParameters: {
+      name: testRule.name
+    },
+    httpMethod: 'GET'
+  };
+  return new Promise((resolve, reject) => {
+    rulesEndpoint(
+      getEvent,
+      {
+        succeed: (r) => {
+          const rule = JSON.parse(r.body);
+          t.is(rule.name, testRule.name);
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
+});
+
+
 test.todo('POST returns a record exists when one exists');
 
-test('post creates a rule', t => {
+test('POST creates a rule', t => {
   const newRule = Object.assign({}, testRule, {name: 'make_waffles'});
   return new Promise((resolve, reject) => {
     rulesEndpoint(
@@ -76,6 +99,51 @@ test('post creates a rule', t => {
           const { message, record } = JSON.parse(r.body);
           t.is(message, 'Record saved');
           t.is(record.name, newRule.name);
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
+});
+
+test('PUT updates a rule', t => {
+  const updateEvent = {
+    body: JSON.stringify({state: 'ENABLED'}),
+    pathParameters: {
+      name: testRule.name
+    },
+    httpMethod: 'PUT'
+  };
+  return new Promise((resolve, reject) => {
+    rulesEndpoint(
+      updateEvent,
+      {
+        succeed: (r) => {
+          const updatedRule = JSON.parse(r.body);
+          t.is(updatedRule.state, 'ENABLED');
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
+});
+
+test('DELETE deletes a rule', t => {
+  const deleteEvent = {
+    pathParameters: {
+      name: testRule.name
+    },
+    httpMethod: 'DELETE'
+  };
+  return new Promise((resolve, reject) => {
+    rulesEndpoint(
+      deleteEvent,
+      {
+        succeed: (r) => {
+          const { message } = JSON.parse(r.body);
+          t.is(message, 'Record deleted');
           resolve();
         },
         fail: (e) => reject(e)

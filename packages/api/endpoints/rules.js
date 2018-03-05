@@ -104,9 +104,7 @@ async function put(event) {
     return;
   }
 
-  data = await model.update(originalData, data);
-  const esClient = await Search.es();
-  await indexRule(esClient, data);
+  return await model.update(originalData, data);
 }
 
 async function del(event) {
@@ -117,8 +115,6 @@ async function del(event) {
 
   const record = await model.get({ name });
   await model.delete(record);
-  const esClient = await Search.es();
-  await deleteRecord(esClient, name, 'rule');
   return { message: 'Record deleted' };
 }
 
