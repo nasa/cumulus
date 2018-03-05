@@ -26,6 +26,7 @@ class Discover {
     this.buckets = get(config, 'buckets');
     this.collection = get(config, 'collection');
     this.provider = get(config, 'provider');
+    this.useList = get(config, 'useList');
     this.event = event;
 
     this.port = get(this.provider, 'port', 21);

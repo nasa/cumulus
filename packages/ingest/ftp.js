@@ -8,11 +8,14 @@ const recursion = require('./recursion');
 const { omit } = require('lodash');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {
-
+  // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP 
+  // servers return inconsistent results when using
+  // 'STAT' command. We can use 'LIST' in those cases by
+  // setting the variable `useList` to true
   constructor(...args) {
     super(...args);
     this.decrypted = false;
-    this.options = {
+    this.ftpClientOptions = {
       host: this.host,
       port: this.port || 21,
       user: this.username || 'anonymous',
@@ -27,12 +30,12 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
   async decrypt() {
     if (!this.decrypted && this.provider.encrypted) {
       if (this.password) {
-        this.options.pass = await Crypto.decrypt(this.password);
+        this.ftpClientOptions.pass = await Crypto.decrypt(this.password);
         this.decrypted = true;
       }
 
       if (this.username) {
-        this.options.user = await Crypto.decrypt(this.username);
+        this.ftpClientOptions.user = await Crypto.decrypt(this.username);
         this.decrypted = true;
       }
     }
@@ -51,7 +54,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
 
     if (!this.decrypted) await this.decrypt();
 
-    const client = new JSFtp(this.options);
+    const client = new JSFtp(this.ftpClientOptions);
 
     return new Promise((resolve, reject) => {
       client.on('error', reject);
@@ -77,7 +80,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
   async write(path, filename, body) {
     if (!this.decrypted) await this.decrypt();
 
-    const client = new JSFtp(this.options);
+    const client = new JSFtp(this.ftpClientOptions);
     return new Promise((resolve, reject) => {
       client.on('error', reject);
       const input = new Buffer(body);
@@ -92,7 +95,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
   async _list(path, _counter = 0) {
     if (!this.decrypted) await this.decrypt();
     let counter = _counter;
-    const client = new JSFtp(this.options);
+    const client = new JSFtp(this.ftpClientOptions);
     return new Promise((resolve, reject) => {
       client.on('error', reject);
       client.ls(path, (err, data) => {
