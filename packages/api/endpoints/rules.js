@@ -54,12 +54,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return model.create(data)
-          .then((r) => {
-            data = r;
-            return Search.es();
-          }).then(esClient => indexRule(esClient, data))
-            .then(() => cb(null, { message: 'Record saved', record: data }))
-            .catch(err => cb(err));
+          .then(r => cb(null, { message: 'Record saved', record: r }))
+          .catch(err => cb(err));
       }
       return cb(e);
     });

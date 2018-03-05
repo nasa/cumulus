@@ -36,6 +36,7 @@ async function setup() {
     Key: workflowfile,
     Body: 'test data'
   }).promise();
+  await rules.create(testRule);
 }
 
 async function teardown() {
@@ -47,21 +48,38 @@ test.before(async () => setup());
 test.after.always(async () => teardown());
 
 test('default returns list of rules', t => {
-  return rules.create(testRule)
-    .then(rule => rules.get({name: testRule.name}))
-    .then(r => {
-      return new Promise((resolve, reject) => {
-        rulesEndpoint(
-          {
-            httpMethod: 'list'
-          },
-          {
-            succeed: (r) => resolve(t.is(JSON.parse(r.body).Items.length, 1)),
-            fail: (e) => reject(e)
-          }
-        )     
-      });
-    });
+  return new Promise((resolve, reject) => {
+    rulesEndpoint(
+      {
+        httpMethod: 'list'
+      },
+      {
+        succeed: (r) => resolve(t.is(JSON.parse(r.body).Items.length, 1)),
+        fail: (e) => reject(e)
+      }
+    )
+  });
 });
 
-test.todo('post creates a rule');
+test.todo('POST returns a record exists when one exists');
+
+test('post creates a rule', t => {
+  const newRule = Object.assign({}, testRule, {name: 'make_waffles'});
+  return new Promise((resolve, reject) => {
+    rulesEndpoint(
+      {
+        httpMethod: 'POST',
+        body: JSON.stringify(newRule)
+      },
+      {
+        succeed: (r) => {
+          const { message, record } = JSON.parse(r.body);
+          t.is(message, 'Record saved');
+          t.is(record.name, newRule.name);
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
+});
