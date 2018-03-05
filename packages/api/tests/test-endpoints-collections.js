@@ -35,67 +35,53 @@ async function teardown() {
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 }
 
+function testCollectionsEndpoint(event, testCallback) {
+  return new Promise((resolve, reject) => {
+    collectionsEndpoint(event, {
+      succeed: response => resolve(testCallback(response)),
+      fail: e => reject(e)
+    });
+  });
+}
+
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
-test('default returns list of collections', t => {
-  return new Promise((resolve, reject) => {
-    collectionsEndpoint(
-      {
-        httpMethod: 'list'
-      },
-      {
-        succeed: (r) => resolve(t.is(JSON.parse(r.body).Items.length, 1)),
-        fail: (e) => reject(e)
-      }
-    )     
+test.only('default returns list of collections', t => {
+  const listEvent = { httpMethod: 'list' };
+  return testCollectionsEndpoint(listEvent, response => {
+    t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
 
 test.only('GET returns an existing collection', t => {
-  return new Promise((resolve, reject) => {
-    collectionsEndpoint(
-      {
-        httpMethod: 'GET',
-        pathParameters: {
-          collectionName: testCollection.name,
-          version: testCollection.version
-        }
-      },
-      {
-        succeed: (r) => {
-          const collection = JSON.parse(r.body);
-          t.is(collection.name, testCollection.name);
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  const getEvent = {
+    httpMethod: 'GET',
+    pathParameters: {
+      collectionName: testCollection.name,
+      version: testCollection.version
+    }
+  };
+  return testCollectionsEndpoint(getEvent, response => {
+    const collection = JSON.parse(response.body);
+    t.is(collection.name, testCollection.name);
   });
 });
 
-test('POST creates a new collection', t => {
+test.only('POST creates a new collection', t => {
   const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
-  return new Promise((resolve, reject) => {
-    collectionsEndpoint(
-      {
-        httpMethod: 'POST',
-        body: JSON.stringify(newCollection)
-      },
-      {
-        succeed: (r) => {
-          const { message, record } = JSON.parse(r.body);
-          t.is(message, 'Record saved');
-          t.is(record.name, newCollection.name);
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  const postEvent = {
+    httpMethod: 'POST',
+    body: JSON.stringify(newCollection)
+  };
+  return testCollectionsEndpoint(postEvent, response => {
+    const { message, record } = JSON.parse(response.body);
+    t.is(message, 'Record saved');
+    t.is(record.name, newCollection.name);
   });
 });
 
-test('PUT updates an existing collection', t => {
+test.only('PUT updates an existing collection', t => {
   const newPath = '/new_path';
   const updateEvent = {
     body: JSON.stringify({
@@ -109,23 +95,13 @@ test('PUT updates an existing collection', t => {
     },
     httpMethod: 'PUT'
   };
-  return new Promise((resolve, reject) => {
-    collectionsEndpoint(
-      updateEvent,
-      {
-        succeed: (r) => {
-          console.log(r);
-          const record = JSON.parse(r.body);
-          t.is(record.provider_path, newPath);
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  return testCollectionsEndpoint(updateEvent, response => {
+    const record = JSON.parse(response.body);
+    t.is(record.provider_path, newPath);
   });
 });
 
-test('DELETE deletes an existing collection', t => {
+test.only('DELETE deletes an existing collection', t => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -133,18 +109,9 @@ test('DELETE deletes an existing collection', t => {
       version: testCollection.version,
     }
   };
-  return new Promise((resolve, reject) => {
-    collectionsEndpoint(
-      deleteEvent,
-      {
-        succeed: (r) => {
-          const { message } = JSON.parse(r.body);
-          t.is(message, 'Record deleted');
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  return testCollectionsEndpoint(deleteEvent, response => {
+    const { message } = JSON.parse(response.body);
+    t.is(message, 'Record deleted');
   });
 });
 
