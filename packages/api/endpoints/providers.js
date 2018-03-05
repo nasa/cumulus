@@ -4,8 +4,6 @@
 const _get = require('lodash.get');
 const handle = require('../lib/response').handle;
 const models = require('../models');
-const Search = require('../es/search').Search;
-const { deleteRecord, indexProvider } = require('../es/indexer');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 
 /**
@@ -15,10 +13,8 @@ const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
  * @return {undefined}
  */
 function list(event, cb) {
-  const search = new Search(event, 'provider');
-  search.query().then(response => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+  const providers = new models.Provider();
+  return providers.scan().then(res => cb(null, res)).catch(cb);
 }
 
 /**
@@ -35,10 +31,11 @@ function get(event, cb) {
 
   const p = new models.Provider();
   return p.get({ id })
-    .then((res) => {
+    .then(res => {
       delete res.password;
       cb(null, res);
-    }).catch((e) => cb(e));
+    })
+    .catch(e => cb(e));
 }
 
 /**
@@ -58,12 +55,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return p.create(data)
-          .then((r) => {
-            data = r;
-            return Search.es();
-          }).then(esClient => indexProvider(esClient, data))
-            .then(() => cb(null, { message: 'Record saved', record: data }))
-            .catch(err => cb(err));
+          .then(data => cb(null, { message: 'Record saved', record: data }))
+          .catch(err => cb(err));
       }
       return cb(e);
     });
@@ -91,17 +84,12 @@ function put(event, cb) {
   return p.get({ id }).then((d) => {
     originalData = d;
     return p.update({ id }, data);
-  }).then(() => {
-    data = Object.assign({}, originalData, data);
-    return Search.es();
-  }).then(esClient => indexProvider(esClient, data))
-    .then(() => cb(null, data))
-    .catch((err) => {
-      if (err instanceof RecordDoesNotExist) {
-        return cb({ message: 'Record does not exist' });
-      }
-      return cb(err);
-    });
+  })
+  .then(data => cb(null, data))
+  .catch(err => {
+    if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
+    return cb(err);
+  });
 }
 
 function del(event, cb) {
@@ -110,14 +98,12 @@ function del(event, cb) {
 
   return p.get({ id })
     .then(() => p.delete({ id }))
-    .then(() => Search.es())
-    .then((esClient) => deleteRecord(esClient, id, 'provider'))
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(e => cb(e));
 }
 
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  handle(event, context, !process.env.TEST /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }

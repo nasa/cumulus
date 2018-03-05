@@ -5,8 +5,6 @@ const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { handle } = require('../lib/response');
 const models = require('../models');
-const { Search } = require('../es/search');
-const { deleteRecord, indexRule } = require('../es/indexer');
 const { RecordDoesNotExist } = require('../lib/errors');
 
 /**
