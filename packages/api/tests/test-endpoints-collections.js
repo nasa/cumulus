@@ -27,6 +27,7 @@ const hash = { name: 'name', type: 'S' };
 async function setup() {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
   await models.Manager.createTable(process.env.CollectionsTable, hash);
+  await collections.create(testCollection);
 }
 
 async function teardown() {
@@ -38,19 +39,89 @@ test.before(async () => setup());
 test.after.always(async () => teardown());
 
 test('default returns list of collections', t => {
-  return collections.create(testCollection)
-    .then(coll => collections.get({name: testCollection.name}))
-    .then(() => {
-      return new Promise((resolve, reject) => {
-        collectionsEndpoint(
-          {
-            httpMethod: 'list'
-          },
-          {
-            succeed: (r) => resolve(t.is(JSON.parse(r.body).Items.length, 1)),
-            fail: (e) => reject(e)
-          }
-        )     
-      });
-    });
+  return new Promise((resolve, reject) => {
+    collectionsEndpoint(
+      {
+        httpMethod: 'list'
+      },
+      {
+        succeed: (r) => resolve(t.is(JSON.parse(r.body).Items.length, 1)),
+        fail: (e) => reject(e)
+      }
+    )     
+  });
+});
+
+test('POST creates a new collection', t => {
+  const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
+  return new Promise((resolve, reject) => {
+    collectionsEndpoint(
+      {
+        httpMethod: 'POST',
+        body: JSON.stringify(newCollection)
+      },
+      {
+        succeed: (r) => {
+          const { message, record } = JSON.parse(r.body);
+          t.is(message, 'Record saved');
+          t.is(record.name, newCollection.name);
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
+});
+
+test('PUT updates an existing collection', t => {
+  const newPath = '/new_path';
+  const updateEvent = {
+    body: JSON.stringify({
+      name: testCollection.name,
+      version: testCollection.version,
+      provider_path: newPath
+    }),
+    pathParameters: {
+      collectionName: testCollection.name,
+      version: testCollection.version,
+    },
+    httpMethod: 'PUT'
+  };
+  return new Promise((resolve, reject) => {
+    collectionsEndpoint(
+      updateEvent,
+      {
+        succeed: (r) => {
+          console.log(r);
+          const record = JSON.parse(r.body);
+          t.is(record.provider_path, newPath);
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
+});
+
+test('DELETE deletes an existing collection', t => {
+  const deleteEvent = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      collectionName: testCollection.name,
+      version: testCollection.version,
+    }
+  };
+  return new Promise((resolve, reject) => {
+    collectionsEndpoint(
+      deleteEvent,
+      {
+        succeed: (r) => {
+          const { message } = JSON.parse(r.body);
+          t.is(message, 'Record deleted');
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
 });

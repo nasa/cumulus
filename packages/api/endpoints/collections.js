@@ -76,7 +76,6 @@ function post(event, cb) {
 function put(event, cb) {
   const pname = _get(event.pathParameters, 'collectionName');
   const pversion = _get(event.pathParameters, 'version');
-
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
 
@@ -90,7 +89,7 @@ function put(event, cb) {
   const c = new models.Collection();
 
   // get the record first
-  return c.get({ name, version }).then((originalData) => {
+  return c.get({ name }).then((originalData) => {
     data = Object.assign({}, originalData, data);
     return c.create(data);
   }).then(() => cb(null, data))
@@ -105,11 +104,10 @@ function put(event, cb) {
 function del(event, cb) {
   const name = _get(event.pathParameters, 'collectionName');
   const version = _get(event.pathParameters, 'version');
-  const id = `${name}___${version}`;
   const c = new models.Collection();
 
-  return c.get({ name, version })
-    .then(() => c.delete({ name, version }))
+  return c.get({ name })
+    .then(() => c.delete({ name }))
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(e => cb(e));
 }
