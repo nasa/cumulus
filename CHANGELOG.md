@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
 - Added a `jlog` function to `common/test-utils` to aid in test debugging
 - Integration test package with command line tool [CUMULUS-200] by @laurenfrederick
+- Test for FTP `useList` flag [CUMULUS-334] by @kkelly51
 
 ### Updated
 - The `queue-pdrs` task now uses the [cumulus-message-adapter-js](https://github.com/cumulus-nasa/cumulus-message-adapter-js)
