@@ -40,7 +40,7 @@ test.after.always(async () => teardown());
 
 test('default returns list of collections', t => {
   const listEvent = { httpMethod: 'list' };
-  return testEndpoint(collectionsEndpoint, listEvent, response => {
+  return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
@@ -53,7 +53,7 @@ test('GET returns an existing collection', t => {
       version: testCollection.version
     }
   };
-  return testEndpoint(collectionsEndpoint, getEvent, response => {
+  return testEndpoint(collectionsEndpoint, getEvent, (response) => {
     const { name } = JSON.parse(response.body);
     t.is(name, testCollection.name);
   });
@@ -65,7 +65,7 @@ test('POST creates a new collection', t => {
     httpMethod: 'POST',
     body: JSON.stringify(newCollection)
   };
-  return testEndpoint(collectionsEndpoint, postEvent, response => {
+  return testEndpoint(collectionsEndpoint, postEvent, (response) => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
     t.is(record.name, newCollection.name);
@@ -86,7 +86,7 @@ test('PUT updates an existing collection', t => {
     },
     httpMethod: 'PUT'
   };
-  return testEndpoint(collectionsEndpoint, updateEvent, response => {
+  return testEndpoint(collectionsEndpoint, updateEvent, (response) => {
     const { provider_path } = JSON.parse(response.body);
     t.is(provider_path, newPath);
   });
@@ -100,7 +100,7 @@ test('DELETE deletes an existing collection', t => {
       version: testCollection.version,
     }
   };
-  return testEndpoint(collectionsEndpoint, deleteEvent, response => {
+  return testEndpoint(collectionsEndpoint, deleteEvent, (response) => {
     const { message } = JSON.parse(response.body);
     t.is(message, 'Record deleted');
   });

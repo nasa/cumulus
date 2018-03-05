@@ -51,7 +51,7 @@ test.after.always(async () => teardown());
 
 test('default returns list of rules', t => {
   const listEvent = { httpMethod: 'list ' };
-  return testEndpoint(rulesEndpoint, listEvent, response => {
+  return testEndpoint(rulesEndpoint, listEvent, (response) => {
     t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
@@ -63,7 +63,7 @@ test('GET gets a rule', t => {
     },
     httpMethod: 'GET'
   };
-  return testEndpoint(rulesEndpoint, getEvent, response => {
+  return testEndpoint(rulesEndpoint, getEvent, (response) => {
     const { name } = JSON.parse(response.body);
     t.is(name, testRule.name);
   });
@@ -75,7 +75,7 @@ test('POST creates a rule', t => {
     httpMethod: 'POST',
     body: JSON.stringify(newRule)
   };
-  return testEndpoint(rulesEndpoint, postEvent, response => {
+  return testEndpoint(rulesEndpoint, postEvent, (response) => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
     t.is(record.name, newRule.name);
@@ -90,7 +90,7 @@ test('PUT updates a rule', t => {
     },
     httpMethod: 'PUT'
   };
-  return testEndpoint(rulesEndpoint, updateEvent, response => {
+  return testEndpoint(rulesEndpoint, updateEvent, (response) => {
     const { state } = JSON.parse(response.body);
     t.is(state, 'ENABLED');
   });
@@ -103,7 +103,7 @@ test('DELETE deletes a rule', t => {
     },
     httpMethod: 'DELETE'
   };
-  return testEndpoint(rulesEndpoint, deleteEvent, response => {
+  return testEndpoint(rulesEndpoint, deleteEvent, (response) => {
     const { message } = JSON.parse(response.body);
     t.is(message, 'Record deleted');
   });

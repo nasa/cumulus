@@ -53,7 +53,7 @@ test.after.always(async () => teardown());
 
 test('default returns list of providers', t => {
   const listEvent = { httpMethod: 'list' };
-  return testEndpoint(providerEndpoint, listEvent, response => {
+  return testEndpoint(providerEndpoint, listEvent, (response) => {
     t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
@@ -63,7 +63,7 @@ test('GET returns an existing provider', t => {
     httpMethod: 'GET',
     pathParameters: { id: testProvider.id }
   };
-  return testEndpoint(providerEndpoint, getEvent, response => {
+  return testEndpoint(providerEndpoint, getEvent, (response) => {
     t.is(JSON.parse(response.body).id, testProvider.id);
   });
 });
@@ -75,7 +75,7 @@ test('POST creates a new provider', t => {
     httpMethod: 'POST',
     body: JSON.stringify(newProvider)
   };
-  return testEndpoint(providerEndpoint, postEvent, response => {
+  return testEndpoint(providerEndpoint, postEvent, (response) => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
     t.is(record.id, newProviderId);
@@ -89,7 +89,7 @@ test('PUT updates an existing provider', t => {
     pathParameters: { id: testProvider.id },
     body: JSON.stringify({ globalConnectionLimit: updatedLimit })
   };
-  return testEndpoint(providerEndpoint, putEvent, response => {
+  return testEndpoint(providerEndpoint, putEvent, (response) => {
     const { globalConnectionLimit } = JSON.parse(response.body);
     t.is(globalConnectionLimit, updatedLimit);
   });
@@ -100,7 +100,7 @@ test('DELETE deletes an existing provider', t => {
     httpMethod: 'DELETE',
     pathParameters: { id: testProvider.id }
   };
-  return testEndpoint(providerEndpoint, deleteEvent, response => {
+  return testEndpoint(providerEndpoint, deleteEvent, (response) => {
     const { message } = JSON.parse(response.body);
     t.is(message, 'Record deleted');
   });
