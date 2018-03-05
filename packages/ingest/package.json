@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ingest",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Ingest utilities",
   "scripts": {
     "test": "env TEST=true ava"
@@ -38,9 +38,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.1",
+    "@cumulus/common": "^1.1.0",
     "@cumulus/pvl": "^1.0.0",
-    "@cumulus/test-data": "^1.0.1",
+    "@cumulus/test-data": "^1.1.0",
     "aws-sdk": "^2.4.11",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
@@ -72,6 +72,6 @@
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.23.0",
     "fs-extra": "^5.0.0",
-    "proxyrequire": "^1.0.21"
+    "proxyquire": "^2.0.0"
   }
 }
