@@ -49,14 +49,14 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
-test.only('default returns list of rules', t => {
+test('default returns list of rules', t => {
   const listEvent = { httpMethod: 'list ' };
   return testEndpoint(rulesEndpoint, listEvent, response => {
     t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
 
-test.only('GET gets a rule', t => {
+test('GET gets a rule', t => {
   const getEvent = {
     pathParameters: {
       name: testRule.name
@@ -69,7 +69,7 @@ test.only('GET gets a rule', t => {
   });
 });
 
-test.only('POST creates a rule', t => {
+test('POST creates a rule', t => {
   const newRule = Object.assign({}, testRule, {name: 'make_waffles'});
   const postEvent = {
     httpMethod: 'POST',
@@ -82,7 +82,7 @@ test.only('POST creates a rule', t => {
   });
 });
 
-test.only('PUT updates a rule', t => {
+test('PUT updates a rule', t => {
   const updateEvent = {
     body: JSON.stringify({state: 'ENABLED'}),
     pathParameters: {
