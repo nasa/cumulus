@@ -30,7 +30,7 @@ function get(event, cb) {
   const version = _get(event.pathParameters, 'version');
 
   const c = new models.Collection();
-  return c.get({ name })
+  return c.get({ name, version })
     .then((res) => {
       const collection = new Collection(event);
       return collection.getStats([res], [res.name]);
@@ -90,7 +90,7 @@ function put(event, cb) {
   const c = new models.Collection();
 
   // get the record first
-  return c.get({ name })
+  return c.get({ name, version })
     .then((originalData) => {
       data = Object.assign({}, originalData, data);
       return c.create(data);
@@ -109,8 +109,8 @@ function del(event, cb) {
   const version = _get(event.pathParameters, 'version');
   const c = new models.Collection();
 
-  return c.get({ name })
-    .then(() => c.delete({ name }))
+  return c.get({ name, version })
+    .then(() => c.delete({ name, version }))
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(e => cb(e));
 }

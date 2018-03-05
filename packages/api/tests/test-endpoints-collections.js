@@ -24,9 +24,11 @@ const testCollection = {
 };
 
 const hash = { name: 'name', type: 'S' };
+const range = { name: 'version', type: 'S' };
+
 async function setup() {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
-  await models.Manager.createTable(process.env.CollectionsTable, hash);
+  await models.Manager.createTable(process.env.CollectionsTable, hash, range);
   await collections.create(testCollection);
 }
 
