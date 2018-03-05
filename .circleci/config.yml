@@ -19,7 +19,7 @@ jobs:
           name: Installing Dependencies
           command: |
             yarn install
-            yarn bootstrap-no-build
+            yarn ybootstrap
 
       - save_cache:
           paths:
