@@ -43,7 +43,8 @@ test.after.always(async () => teardown());
 test('default returns list of collections', t => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
-    t.is(JSON.parse(response.body).Items.length, 1);
+    const { results } = JSON.parse(response.body);
+    t.is(results.length, 1);
   });
 });
 

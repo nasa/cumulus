@@ -2,7 +2,7 @@
 'use strict';
 
 const _get = require('lodash.get');
-const handle = require('../lib/response').handle;
+const { handle, listResponse } = require('../lib/response');
 const models = require('../models');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 
@@ -14,7 +14,10 @@ const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
  */
 function list(event, cb) {
   const providers = new models.Provider();
-  return providers.scan().then(res => cb(null, res)).catch(cb);
+  return providers
+    .scan()
+    .then(results => cb(null, listResponse(event, results)))
+    .catch(e => cb(e));
 }
 
 /**

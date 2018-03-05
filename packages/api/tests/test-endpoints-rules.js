@@ -52,7 +52,8 @@ test.after.always(async () => teardown());
 test('default returns list of rules', t => {
   const listEvent = { httpMethod: 'list ' };
   return testEndpoint(rulesEndpoint, listEvent, (response) => {
-    t.is(JSON.parse(response.body).Items.length, 1);
+    const { results } = JSON.parse(response.body);
+    t.is(results.length, 1);
   });
 });
 

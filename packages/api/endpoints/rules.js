@@ -3,7 +3,7 @@
 
 const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { handle } = require('../lib/response');
+const { handle, listResponse } = require('../lib/response');
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
 
@@ -15,7 +15,10 @@ const { RecordDoesNotExist } = require('../lib/errors');
  */
 function list(event, cb) {
   const rules = new models.Rule();
-  return rules.scan().then(res => cb(null, res)).catch(cb);
+  return rules
+    .scan()
+    .then(results => cb(null, listResponse(event, results)))
+    .catch(e => cb(e));
 }
 
 /**

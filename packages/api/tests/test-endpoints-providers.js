@@ -54,7 +54,8 @@ test.after.always(async () => teardown());
 test('default returns list of providers', t => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(providerEndpoint, listEvent, (response) => {
-    t.is(JSON.parse(response.body).Items.length, 1);
+    const { results } = JSON.parse(response.body);
+    t.is(results.length, 1);
   });
 });
 
