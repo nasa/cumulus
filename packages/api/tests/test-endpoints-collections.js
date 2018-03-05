@@ -125,3 +125,9 @@ test('DELETE deletes an existing collection', t => {
     )
   });
 });
+
+test.todo('GET returns existing collection');
+test.todo('POST without name and version returns error message');
+test.todo('PUT with invalid name and version returns error message');
+// Multiple tests
+test.todo('Test methods return not found');
