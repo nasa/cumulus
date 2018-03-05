@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
  - Integration test package with command line tool [CUMULUS-200] by @laurenfrederick
+ - Test for FPT useList flag [CUMULUS-334] by @kkelly51
 
 ## [v1.0.1] - 2018-02-27
 
