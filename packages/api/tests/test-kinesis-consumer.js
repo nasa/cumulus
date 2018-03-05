@@ -26,8 +26,8 @@ const eventData = JSON.stringify({
 
 const event = {
   Records: [
-    {kinesis: {data: new Buffer(eventData).toString('base64')}},
-    {kinesis: {data: new Buffer(eventData).toString('base64')}}
+    { kinesis: { data: new Buffer(eventData).toString('base64') } },
+    { kinesis: { data: new Buffer(eventData).toString('base64') } }
   ]
 };
 
@@ -59,10 +59,17 @@ const disabledRuleParams = Object.assign({}, commonRuleParams, {
   state: 'DISABLED'
 });
 
+/**
+ * Callback used for testing
+ *
+ * @param {*} err - error
+ * @param {Object} object - object
+ * @returns {Object} object, if no error is thrown
+ */
 function testCallback(err, object) {
   if (err) throw err;
   return object;
-};
+}
 
 test.before(async () => {
   sinon.stub(Rule, 'buildPayload').resolves(true);
@@ -74,17 +81,17 @@ test.after.always(async () => {
 });
 
 // getKinesisRule tests
-test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', t => {
-  return Promise.all([rule1Params, rule2Params, disabledRuleParams].map(x => model.create(x)))
-    .then(() => {
-      return getKinesisRules(JSON.parse(eventData))
-    }).then((result) => {
+// eslint-disable-next-line max-len
+test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', (t) =>
+  Promise.all([rule1Params, rule2Params, disabledRuleParams].map((x) => model.create(x)))
+    .then(() => getKinesisRules(JSON.parse(eventData)))
+    .then((result) => {
       t.is(result.length, 2);
-    });
-});
+    })
+);
 
 // handler tests
-test('it should create a onetime rule for each associated workflow', async t => {
+test('it should create a onetime rule for each associated workflow', async (t) => {
   await handler(event, {}, testCallback).then(() => {
     return model.scan({
       names: {
@@ -104,23 +111,26 @@ test('it should create a onetime rule for each associated workflow', async t => 
   })
   .then((results) => {
     t.is(results.Items.length, 4);
-    const workflowNames = results.Items.map(i => i.workflow).sort();
+
+    const workflowNames = results.Items.map((i) => i.workflow).sort();
     t.deepEqual(workflowNames, [
       'test-workflow-1',
       'test-workflow-1',
       'test-workflow-2',
       'test-workflow-2'
     ]);
-    results.Items.forEach(r => t.is(r.rule.type, 'onetime'));
-  });  
+    results.Items.forEach((r) => t.is(r.rule.type, 'onetime'));
+
+    results.Items.forEach((r) => t.deepEqual({ collection: 'test-collection' }, r.payload));
+  });
 });
 
-test('it should throw an error if message does not include a collection', t => {
+test('it should throw an error if message does not include a collection', (t) => {
   const invalidMessage = JSON.stringify({});
-  const event = {
-    Records: [{kinesis: {data: new Buffer(invalidMessage).toString('base64')}}]
+  const kinesisEvent = {
+    Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
   };
-  return handler(event, {}, testCallback)
+  return handler(kinesisEvent, {}, testCallback)
     .catch((err) => {
       const errObject = JSON.parse(err);
       t.is(errObject.errors[0].dataPath, '');
@@ -128,12 +138,12 @@ test('it should throw an error if message does not include a collection', t => {
     });
 });
 
-test('it should throw an error if message collection has wrong data type', t => {
-  const invalidMessage = JSON.stringify({collection: {}});
-  const event = {
-    Records: [{kinesis: {data: new Buffer(invalidMessage).toString('base64')}}]
+test('it should throw an error if message collection has wrong data type', (t) => {
+  const invalidMessage = JSON.stringify({ collection: {} });
+  const kinesisEvent = {
+    Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
   };
-  return handler(event, {}, testCallback)
+  return handler(kinesisEvent, {}, testCallback)
     .catch((err) => {
       const errObject = JSON.parse(err);
       t.is(errObject.errors[0].dataPath, '.collection');
@@ -141,10 +151,10 @@ test('it should throw an error if message collection has wrong data type', t => 
     });
 });
 
-test('it should not throw if message is valid', t => {
-  const validMessage = JSON.stringify({collection: 'confection-collection'});
-  const event = {
-    Records: [{kinesis: {data: new Buffer(validMessage).toString('base64')}}]
+test('it should not throw if message is valid', (t) => {
+  const validMessage = JSON.stringify({ collection: 'confection-collection' });
+  const kinesisEvent = {
+    Records: [{ kinesis: { data: new Buffer(validMessage).toString('base64') } }]
   };
-  return handler(event, {}, testCallback).then(r => t.deepEqual(r, []));
+  return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, []));
 });
