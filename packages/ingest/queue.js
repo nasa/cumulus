@@ -1,6 +1,5 @@
 'use strict';
 
-const uuidv4 = require('uuid/v4');
 const {
   getS3Object,
   sendSQSMessage,
@@ -20,24 +19,33 @@ async function getMessageFromTemplate(templateUri) {
 }
 
 /**
-  * Create a message from a template stored on S3
-  *
-  * @param {string} queueUrl - The SQS url
-  * @param {string} templateUri - S3 uri to the workflow template
-  * @param {Object} provider - Cumulus provider object
-  * @param {Object} collection - Cumulus collection object
-  * @param {Object} pdr - the PDR object
-  * @param {string} pdr.name - name of the PDR
-  * @returns {Promise} promise returned from SQS.sendMessage()
-  **/
-async function queuePdr(queueUrl, templateUri, provider, collection, pdr) {
-  const message = await getMessageFromTemplate(templateUri, provider, collection);
+ * Enqueue a PDR to be parsed
+ *
+ * @param {Object} pdr - the PDR to be enqueued for parsing
+ * @param {string} queueUrl - the SQS queue to add the message to
+ * @param {string} parsePdrMessageTemplateUri - the S3 URI of template for
+ * a granule ingest message
+ * @param {Object} provider - the provider config to be attached to the message
+ * @param {Object} collection - the collection config to be attached to the
+ *   message
+ * @returns {Promise} - resolves when the message has been enqueued
+ */
+async function enqueueParsePdrMessage(
+  pdr,
+  queueUrl,
+  parsePdrMessageTemplateUri,
+  provider,
+  collection) {
+  const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
+
+  message.meta.provider = provider;
+  message.meta.collection = collection;
 
   message.payload = { pdr };
-  message.cumulus_meta.execution_name = uuidv4();
 
   return sendSQSMessage(queueUrl, message);
 }
+module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
 
 /**
  * Enqueue a granule to be ingested
@@ -77,5 +85,3 @@ async function enqueueGranuleIngestMessage(
   return sendSQSMessage(queueUrl, message);
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
-
-module.exports.queuePdr = queuePdr;
