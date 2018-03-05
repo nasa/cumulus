@@ -29,7 +29,7 @@ const testCollection = {
 };
 
 const codeDirectory = 'dist/'
-const tmpZipFile = path.join('test.zip');
+const tmpZipFile = path.join('/tmp/test.zip');
 const output = fs.createWriteStream(tmpZipFile)
 const archive = archiver('zip', {
   zlib: { level: 9 } // Sets the compression level.
@@ -63,7 +63,7 @@ test.before(async () => {
         Environment: {
           Variables: {
             'TEST': 'true',
-            'LOCALSTACK_HOST': process.env.LOCALSTACK_HOST === 'localstack' ? process.env.LOCALSTACK_HOST : 'docker.for.mac.localhost';
+            'LOCALSTACK_HOST': process.env.LOCALSTACK_HOST === 'localstack' ? process.env.LOCALSTACK_HOST : 'docker.for.mac.localhost'
           }
         }
       })
