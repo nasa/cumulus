@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Kinesis message content is passed to the triggered workflow [CUMULUS-359]
+
 ## [v1.1.0] - 2018-03-05
 
 ### Added
