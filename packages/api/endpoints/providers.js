@@ -31,7 +31,7 @@ function get(event, cb) {
 
   const p = new models.Provider();
   return p.get({ id })
-    .then(res => {
+    .then((res) => {
       delete res.password;
       cb(null, res);
     })
@@ -86,7 +86,7 @@ function put(event, cb) {
     return p.update({ id }, data);
   })
   .then(data => cb(null, data))
-  .catch(err => {
+  .catch((err) => {
     if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
     return cb(err);
   });

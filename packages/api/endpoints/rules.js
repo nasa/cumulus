@@ -32,7 +32,8 @@ function get(event, cb) {
     .then((res) => {
       delete res.password;
       cb(null, res);
-    }).catch((e) => cb(e));
+    })
+    .catch(e => cb(e));
 }
 
 /**
@@ -55,7 +56,7 @@ function post(event, cb) {
           .then(r => cb(null, { message: 'Record saved', record: r }))
           .catch(err => cb(err));
       }
-      return cb(e);
+      return cb(e => cb(e));
     });
 }
 
