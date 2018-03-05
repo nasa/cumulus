@@ -72,6 +72,6 @@
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.23.0",
     "fs-extra": "^5.0.0",
-    "proxyrequire": "^1.0.21"
+    "proxyquire": "^2.0.0"
   }
 }
