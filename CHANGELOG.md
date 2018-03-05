@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.1.0] - 2018-03-05
+
 ### Added
 - Added a `jlog` function to `common/test-utils` to aid in test debugging
 - Integration test package with command line tool [CUMULUS-200] by @laurenfrederick
