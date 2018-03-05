@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
- - Integration test package with command line tool [CUMULUS-200] by @laurenfrederick
+- Added a `jlog` function to `common/test-utils` to aid in test debugging
+- Integration test package with command line tool [CUMULUS-200] by @laurenfrederick
+
+### Updated
+- The `queue-pdrs` task now uses the [cumulus-message-adapter-js](https://github.com/cumulus-nasa/cumulus-message-adapter-js)
+  library
+- Updated the `queue-pdrs` JSON schemas
+- The test-utils schema validation functions now throw an error if validation
+  fails
+- The `queue-granules` task now uses the [cumulus-message-adapter-js](https://github.com/cumulus-nasa/cumulus-message-adapter-js)
+  library
+- Updated the `queue-granules` JSON schemas
+
+### Removed
+- Removed the `getSfnExecutionByName` function from `common/aws`
+- Removed the `getGranuleStatus` function from `common/aws`
 
 ## [v1.0.1] - 2018-02-27
 
