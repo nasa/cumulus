@@ -40,7 +40,7 @@ const hash = { name: 'name', type: 'S' };
 // Test that if our dynamos are hooked up to the db-indexer lambda function,
 // records show up in elasticsearch 'hooked-up': the dynamo has a stream and the
 // lambda has an event source mapping to that dynamo stream.
-test.skip.before(async () => {
+test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   // create collections table
@@ -101,14 +101,18 @@ test.skip.before(async () => {
   .catch(e => console.log(e));
 });
 
-test.skip.after.always(async () => {
+test.after.always(async () => {
   await models.Manager.deleteTable(process.env.CollectionsTable);
   await aws.lambda().deleteFunction({FunctionName: dbIndexerFnName}).promise();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
 
-// skipping - may take some jujitsu to get this to pass on circleci
-test.skip('creates a collection in dynamodb and es', async t => {
+// TODO(aimee): This test works locally but skipping because it's broken on CI
+// CI requires we build dist/index.js (update bootstrap commmand)
+// And then add a docker executor, which is done in part by LAMBDA_EXECUTOR: docker as an env variable to the localstack/localstack docker image for ci
+// But it still appears docker isn't running: `Cannot connect to the Docker daemon at unix:///var/run/docker.sock`
+// 
+test('creates a collection in dynamodb and es', async t => {
   return await collections.create(testCollection)
     .then(() => {
       const esCollection = new EsCollection({});
