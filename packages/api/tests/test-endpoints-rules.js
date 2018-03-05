@@ -11,6 +11,8 @@ const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
 const models = require('../models');
 const aws = require('@cumulus/common/aws');
 const rulesEndpoint = require('../endpoints/rules');
+const { testEndpoint } = require('./testUtils');
+
 const rules = new models.Rule();
 
 const testRule = {
@@ -47,67 +49,40 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
-test('default returns list of rules', t => {
-  return new Promise((resolve, reject) => {
-    rulesEndpoint(
-      {
-        httpMethod: 'list'
-      },
-      {
-        succeed: (r) => resolve(t.is(JSON.parse(r.body).Items.length, 1)),
-        fail: (e) => reject(e)
-      }
-    )
+test.only('default returns list of rules', t => {
+  const listEvent = { httpMethod: 'list ' };
+  return testEndpoint(rulesEndpoint, listEvent, response => {
+    t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
 
-test('GET gets a rule', t => {
+test.only('GET gets a rule', t => {
   const getEvent = {
     pathParameters: {
       name: testRule.name
     },
     httpMethod: 'GET'
   };
-  return new Promise((resolve, reject) => {
-    rulesEndpoint(
-      getEvent,
-      {
-        succeed: (r) => {
-          const rule = JSON.parse(r.body);
-          t.is(rule.name, testRule.name);
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  return testEndpoint(rulesEndpoint, getEvent, response => {
+    const rule = JSON.parse(response.body);
+    t.is(rule.name, testRule.name);
   });
 });
 
-
-test.todo('POST returns a record exists when one exists');
-
-test('POST creates a rule', t => {
+test.only('POST creates a rule', t => {
   const newRule = Object.assign({}, testRule, {name: 'make_waffles'});
-  return new Promise((resolve, reject) => {
-    rulesEndpoint(
-      {
-        httpMethod: 'POST',
-        body: JSON.stringify(newRule)
-      },
-      {
-        succeed: (r) => {
-          const { message, record } = JSON.parse(r.body);
-          t.is(message, 'Record saved');
-          t.is(record.name, newRule.name);
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  const postEvent = {
+    httpMethod: 'POST',
+    body: JSON.stringify(newRule)
+  };
+  return testEndpoint(rulesEndpoint, postEvent, response => {
+    const { message, record } = JSON.parse(response.body);
+    t.is(message, 'Record saved');
+    t.is(record.name, newRule.name);
   });
 });
 
-test('PUT updates a rule', t => {
+test.only('PUT updates a rule', t => {
   const updateEvent = {
     body: JSON.stringify({state: 'ENABLED'}),
     pathParameters: {
@@ -115,18 +90,9 @@ test('PUT updates a rule', t => {
     },
     httpMethod: 'PUT'
   };
-  return new Promise((resolve, reject) => {
-    rulesEndpoint(
-      updateEvent,
-      {
-        succeed: (r) => {
-          const updatedRule = JSON.parse(r.body);
-          t.is(updatedRule.state, 'ENABLED');
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  return testEndpoint(rulesEndpoint, updateEvent, response => {
+    const updatedRule = JSON.parse(response.body);
+    t.is(updatedRule.state, 'ENABLED');
   });
 });
 
@@ -137,17 +103,11 @@ test('DELETE deletes a rule', t => {
     },
     httpMethod: 'DELETE'
   };
-  return new Promise((resolve, reject) => {
-    rulesEndpoint(
-      deleteEvent,
-      {
-        succeed: (r) => {
-          const { message } = JSON.parse(r.body);
-          t.is(message, 'Record deleted');
-          resolve();
-        },
-        fail: (e) => reject(e)
-      }
-    )
+  return testEndpoint(rulesEndpoint, deleteEvent, response => {
+    const { message } = JSON.parse(response.body);
+    t.is(message, 'Record deleted');
   });
 });
+
+test.todo('POST returns a record exists when one exists');
+

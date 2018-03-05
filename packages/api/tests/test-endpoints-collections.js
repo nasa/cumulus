@@ -39,14 +39,14 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
-test.only('default returns list of collections', t => {
+test('default returns list of collections', t => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(collectionsEndpoint, listEvent, response => {
     t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
 
-test.only('GET returns an existing collection', t => {
+test('GET returns an existing collection', t => {
   const getEvent = {
     httpMethod: 'GET',
     pathParameters: {
@@ -60,7 +60,7 @@ test.only('GET returns an existing collection', t => {
   });
 });
 
-test.only('POST creates a new collection', t => {
+test('POST creates a new collection', t => {
   const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
   const postEvent = {
     httpMethod: 'POST',
@@ -73,7 +73,7 @@ test.only('POST creates a new collection', t => {
   });
 });
 
-test.only('PUT updates an existing collection', t => {
+test('PUT updates an existing collection', t => {
   const newPath = '/new_path';
   const updateEvent = {
     body: JSON.stringify({
@@ -93,7 +93,7 @@ test.only('PUT updates an existing collection', t => {
   });
 });
 
-test.only('DELETE deletes an existing collection', t => {
+test('DELETE deletes an existing collection', t => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
