@@ -11,6 +11,7 @@ const models = require('../models');
 const aws = require('@cumulus/common/aws');
 const collectionsEndpoint = require('../endpoints/collections');
 const collections = new models.Collection();
+const { testEndpoint } = require('./testUtils');
 
 const testCollection = {
   "name": "collection-125",
@@ -35,21 +36,12 @@ async function teardown() {
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 }
 
-function testCollectionsEndpoint(event, testCallback) {
-  return new Promise((resolve, reject) => {
-    collectionsEndpoint(event, {
-      succeed: response => resolve(testCallback(response)),
-      fail: e => reject(e)
-    });
-  });
-}
-
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
 test.only('default returns list of collections', t => {
   const listEvent = { httpMethod: 'list' };
-  return testCollectionsEndpoint(listEvent, response => {
+  return testEndpoint(collectionsEndpoint, listEvent, response => {
     t.is(JSON.parse(response.body).Items.length, 1);
   });
 });
@@ -62,7 +54,7 @@ test.only('GET returns an existing collection', t => {
       version: testCollection.version
     }
   };
-  return testCollectionsEndpoint(getEvent, response => {
+  return testEndpoint(collectionsEndpoint, getEvent, response => {
     const collection = JSON.parse(response.body);
     t.is(collection.name, testCollection.name);
   });
@@ -74,7 +66,7 @@ test.only('POST creates a new collection', t => {
     httpMethod: 'POST',
     body: JSON.stringify(newCollection)
   };
-  return testCollectionsEndpoint(postEvent, response => {
+  return testEndpoint(collectionsEndpoint, postEvent, response => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
     t.is(record.name, newCollection.name);
@@ -95,7 +87,7 @@ test.only('PUT updates an existing collection', t => {
     },
     httpMethod: 'PUT'
   };
-  return testCollectionsEndpoint(updateEvent, response => {
+  return testEndpoint(collectionsEndpoint, updateEvent, response => {
     const record = JSON.parse(response.body);
     t.is(record.provider_path, newPath);
   });
@@ -109,7 +101,7 @@ test.only('DELETE deletes an existing collection', t => {
       version: testCollection.version,
     }
   };
-  return testCollectionsEndpoint(deleteEvent, response => {
+  return testEndpoint(collectionsEndpoint, deleteEvent, response => {
     const { message } = JSON.parse(response.body);
     t.is(message, 'Record deleted');
   });
