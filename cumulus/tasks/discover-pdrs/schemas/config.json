@@ -41,6 +41,8 @@
       }
     },
     "useList": {
+      "description": "flag to tell ftp server to use 'LIST' instead of 'STAT'",
+      "default": false,
       "type": "boolean"
     }
   }
