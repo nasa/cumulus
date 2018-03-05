@@ -68,7 +68,7 @@ test.before(async () => {
         }
       })
       .promise()
-      .then(res => {
+      .then((res) => {
         fs.unlinkSync(tmpZipFile);
         resolve(res);
       });
@@ -118,7 +118,7 @@ test('creates a collection in dynamodb and es', async t => {
       const esCollection = new EsCollection({});
       return esCollection.query();
     })
-    .then(result => {
+    .then((result) => {
       // search is limited to returning 1 result at the moment, which is
       // strange, so just check for name here.
       t.is(result.results[0].name, testCollection.name);
