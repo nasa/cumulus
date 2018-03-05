@@ -30,7 +30,7 @@ function get(event, cb) {
   const version = _get(event.pathParameters, 'version');
 
   const c = new models.Collection();
-  return c.get({ name, version })
+  return c.get({ name })
     .then((res) => {
       const collection = new Collection(event);
       return collection.getStats([res], [res.name]);

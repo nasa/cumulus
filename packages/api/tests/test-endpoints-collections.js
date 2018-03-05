@@ -52,6 +52,28 @@ test('default returns list of collections', t => {
   });
 });
 
+test.only('GET returns an existing collection', t => {
+  return new Promise((resolve, reject) => {
+    collectionsEndpoint(
+      {
+        httpMethod: 'GET',
+        pathParameters: {
+          collectionName: testCollection.name,
+          version: testCollection.version
+        }
+      },
+      {
+        succeed: (r) => {
+          const collection = JSON.parse(r.body);
+          t.is(collection.name, testCollection.name);
+          resolve();
+        },
+        fail: (e) => reject(e)
+      }
+    )
+  });
+});
+
 test('POST creates a new collection', t => {
   const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
   return new Promise((resolve, reject) => {
