@@ -6,6 +6,8 @@ jobs:
       - image: circleci/node:6.10
       - name: localstack
         image: localstack/localstack
+        environment:
+          LAMBDA_EXECUTOR: docker
     working_directory: ~/project
     steps:
       - checkout
@@ -19,7 +21,7 @@ jobs:
           name: Installing Dependencies
           command: |
             yarn install
-            yarn bootstrap-no-build
+            yarn ybootstrap
 
       - save_cache:
           paths:
