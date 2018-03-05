@@ -112,7 +112,7 @@ test.after.always(async () => {
 // And then add a docker executor, which is done in part by LAMBDA_EXECUTOR: docker as an env variable to the localstack/localstack docker image for ci
 // But it still appears docker isn't running: `Cannot connect to the Docker daemon at unix:///var/run/docker.sock`
 // 
-test.only('creates a collection in dynamodb and es', async t => {
+test('creates a collection in dynamodb and es', async t => {
   return await collections.create(testCollection)
     .then(() => {
       const esCollection = new EsCollection({});
