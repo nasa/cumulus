@@ -7,10 +7,11 @@ const model = new Rule();
 const messageSchema = require('./kinesis-consumer-event-schema.json');
 
 /**
- * `getKinesisRules` scans and returns DynamoDB rules table for enabled, 'kinesis'-type rules associated with the * collection declared in the event
+ * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
+ * 'kinesis'-type rules associated with the * collection declared in the event
  *
- * @param {object} event lambda event
- * @returns {array} List of zero or more rules found from table scan
+ * @param {Object} event - lambda event
+ * @returns {Array} List of zero or more rules found from table scan
  */
 async function getKinesisRules(event) {
   const collection = event.collection;
@@ -34,18 +35,21 @@ async function getKinesisRules(event) {
 }
 
 /**
- * `createOneTimeRules` creates new rules with the same data as a kinesis-type rule, except the type is modified to 'onetime'.
+ * `createOneTimeRules` creates new rules with the same data as a kinesis-type rule,
+ * except the type is modified to 'onetime'.
  *
- * @param {array} kinesisRules list of rule objects
- * @returns {array} Array of promises for model.create
+ * @param {Array} kinesisRules - list of rule objects
+ * @param {Object} eventObject - kinesis message input
+ * @returns {Array} Array of promises for model.create
  */
-async function createOneTimeRules(kinesisRules) {
+async function createOneTimeRules(kinesisRules, eventObject) {
   const oneTimeRulePromises = kinesisRules.map((kinesisRule) => {
     const oneTimeRuleParams = Object.assign({}, kinesisRule);
     delete oneTimeRuleParams['createdAt'];
     delete oneTimeRuleParams['updatedAt'];
     oneTimeRuleParams.name = `${kinesisRule.name}_${Date.now().toString()}`;
     oneTimeRuleParams.rule.type = 'onetime';
+    oneTimeRuleParams.payload = eventObject;
     return model.create(oneTimeRuleParams);
   });
 
@@ -53,18 +57,26 @@ async function createOneTimeRules(kinesisRules) {
 }
 
 /**
- * `validateMessage` validates an event as being valid for creating a workflow. See the messageSchema defined at
- * the top of this file.
+ * `validateMessage` validates an event as being valid for creating a workflow.
+ * See the messageSchema defined at the top of this file.
  *
- * @param {object} event lambda event
- * @returns {(error|object)} Throws an Ajv.ValidationError if event object is invalid. Returns the event object if event is valid.
+ * @param {Object} event - lambda event
+ * @returns {(error|Object)} Throws an Ajv.ValidationError if event object is invalid.
+ * Returns the event object if event is valid.
  */
 async function validateMessage(event) {
-  const ajv = new Ajv({allErrors: true});
+  const ajv = new Ajv({ allErrors: true });
   const validate = ajv.compile(messageSchema);
   return await validate(event);
 }
 
+/**
+ * Process data sent to a kinesis stream. Validate the data and
+ * create rules.
+ *
+ * @param {*} record - input to the kinesis stream
+ * @returns {Promise} promise
+ */
 async function processRecord(record) {
   const dataBlob = record.kinesis.data;
   const dataString = Buffer.from(dataBlob, 'base64').toString();
@@ -73,24 +85,25 @@ async function processRecord(record) {
   await validateMessage(eventObject)
     .then(getKinesisRules)
     .then((kinesisRules) => {
-      return createOneTimeRules(kinesisRules);
+      return createOneTimeRules(kinesisRules, eventObject);
     });
 }
 
 /**
- * `handler` Looks up enabled 'kinesis'-type rules associated with the collection in the event argument. It
- * creates new onetime rules for each rule found to trigger the workflow defined in the 'kinesis'-type rule.
+ * `handler` Looks up enabled 'kinesis'-type rules associated with the collection
+ * in the event argument. It creates new onetime rules for each rule found to trigger
+ * the workflow defined in the 'kinesis'-type rule.
  *
- * @param {*} event lambda event
- * @param {*} context lambda context
- * @param {*} cb callback function to explicitly return information back to the caller.
+ * @param {*} event - lambda event
+ * @param {*} context - lambda context
+ * @param {*} cb - callback function to explicitly return information back to the caller.
  * @returns {(error|string)} Success message or error
  */
 function handler(event, context, cb) {
   const records = event.Records;
 
-  return Promise.all(records.map(r => processRecord(r)))
-    .then((results) => cb(null, results.filter(r => r !== undefined)))
+  return Promise.all(records.map((r) => processRecord(r)))
+    .then((results) => cb(null, results.filter((r) => r !== undefined)))
     .catch((err) => {
       cb(JSON.stringify(err));
     });
