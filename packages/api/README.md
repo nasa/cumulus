@@ -35,5 +35,6 @@ LAMBDA_EXECUTOR=docker localstack start
 Then you can run tests locally via:
 
 ```bash
-LOCALSTACK_HOST=localhost npm run test
+export DOCKERHOST=$(ifconfig | grep -E "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d: | head -n1)
+LOCALSTACK_HOST=localhost DOCKERHOST=${DOCKERHOST} npm run test
 ```
