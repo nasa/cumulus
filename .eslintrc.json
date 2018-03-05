@@ -8,7 +8,6 @@
     "mocha": true
   },
   "rules": {
-    "complexity": ["error", 10],
     "require-jsdoc": ["error", {
       "require": {
         "FunctionDeclaration": true,
