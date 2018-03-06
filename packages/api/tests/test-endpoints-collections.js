@@ -51,7 +51,7 @@ test('default returns list of collections', t => {
   });
 });
 
-test.only('GET returns an existing collection', t => {
+test('GET returns an existing collection', t => {
   const getEvent = {
     httpMethod: 'GET',
     pathParameters: {

@@ -37,92 +37,96 @@ const archive = archiver('zip', {
 const dbIndexerFnName = 'test-dbIndexer';
 const hash = { name: 'name', type: 'S' };
 
-// Test that if our dynamos are hooked up to the db-indexer lambda function,
-// records show up in elasticsearch 'hooked-up': the dynamo has a stream and the
-// lambda has an event source mapping to that dynamo stream.
-test.skip.before(async () => {
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+/**
+ * TODO(aimee): This test works locally but not on CI. Running localstack on CI for this test requires:
+ * - built packages/api/dist/index.js (packages are not built for circle ci). This is fixable.
+ * - A docker executor for lambdas, which is done in part by LAMBDA_EXECUTOR: docker as an env variable to the localstack/localstack docker image for ci
+ *   But it still appears docker isn't running: `Cannot connect to the Docker daemon at unix:///var/run/docker.sock`
+**/
+if (process.env.IS_LOCAL === 'true') {
+  // Test that if our dynamos are hooked up to the db-indexer lambda function,
+  // records show up in elasticsearch 'hooked-up': the dynamo has a stream and the
+  // lambda has an event source mapping to that dynamo stream.
+  test.before(async () => {
+    await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  // create collections table
-  await models.Manager.createTable(process.env.CollectionsTable, hash);
-  await bootstrap.bootstrapElasticSearch('http://localhost:4571');
+    // create collections table
+    await models.Manager.createTable(process.env.CollectionsTable, hash);
+    await bootstrap.bootstrapElasticSearch('http://localhost:4571');
 
-  // create the lambda function
-  await new Promise((resolve) => {
-    output.on('close', () => {
-      const contents = fs.readFileSync(tmpZipFile)
+    // create the lambda function
+    await new Promise((resolve) => {
+      output.on('close', () => {
+        const contents = fs.readFileSync(tmpZipFile)
 
-      aws.lambda().createFunction({
-        FunctionName: dbIndexerFnName,
-        Runtime: 'nodejs6.10',
-        Handler: 'index.dbIndexer', // point to the db indexer
-        Role: 'testRole',
-        Code: {
-          ZipFile: contents
-        },
-        Environment: {
-          Variables: {
-            'TEST': 'true',
-            'LOCALSTACK_HOST': process.env.DOCKERHOST
+        aws.lambda().createFunction({
+          FunctionName: dbIndexerFnName,
+          Runtime: 'nodejs6.10',
+          Handler: 'index.dbIndexer', // point to the db indexer
+          Role: 'testRole',
+          Code: {
+            ZipFile: contents
+          },
+          Environment: {
+            Variables: {
+              'TEST': 'true',
+              'LOCALSTACK_HOST': process.env.DOCKERHOST
+            }
           }
-        }
-      })
-      .promise()
-      .then((res) => {
-        fs.unlinkSync(tmpZipFile);
-        resolve(res);
+        })
+        .promise()
+        .then((res) => {
+          fs.unlinkSync(tmpZipFile);
+          resolve(res);
+        });
       });
-    });
 
-    archive.pipe(output)
-    archive.directory(codeDirectory, false);
-    archive.finalize()
-  })
-  .catch(e => console.log(e));
-
-  //get the dynamo collections table stream arn and add it as an event source to the lambda
-  await new Promise((resolve, reject) => {
-    aws.dynamodbstreams().listStreams({TableName: process.env.CollectionsTable}, (err, data) => {
-      if (err) reject(err);
-      const collectionsTableStreamArn = data.Streams.find(s => s.TableName === 'test-stack-CollectionsTable').StreamArn;
-      const eventSourceMappingParams = {
-        EventSourceArn: collectionsTableStreamArn,
-        FunctionName: dbIndexerFnName,
-        StartingPosition: 'TRIM_HORIZON',
-        BatchSize: 10
-      };
-
-      aws.lambda().createEventSourceMapping(eventSourceMappingParams, (err, data) => {
-        if (err) reject(err);
-        resolve(data);
-      });
-    });
-  })
-  .catch(e => console.log(e));
-});
-
-test.skip.after.always(async () => {
-  await models.Manager.deleteTable(process.env.CollectionsTable);
-  await aws.lambda().deleteFunction({FunctionName: dbIndexerFnName}).promise();
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
-});
-
-// TODO(aimee): This test works locally but skipping because it's broken on CI
-// CI requires we build dist/index.js (update bootstrap commmand)
-// And then add a docker executor, which is done in part by LAMBDA_EXECUTOR: docker as an env variable to the localstack/localstack docker image for ci
-// But it still appears docker isn't running: `Cannot connect to the Docker daemon at unix:///var/run/docker.sock`
-// 
-test.skip('creates a collection in dynamodb and es', async t => {
-  return await collections.create(testCollection)
-    .then(() => {
-      const esCollection = new EsCollection({});
-      return esCollection.query();
-    })
-    .then((result) => {
-      // search is limited to returning 1 result at the moment, which is
-      // strange, so just check for name here.
-      t.is(result.results[0].name, testCollection.name);
-      t.is(result.results[0].version, testCollection.version);
+      archive.pipe(output)
+      archive.directory(codeDirectory, false);
+      archive.finalize()
     })
     .catch(e => console.log(e));
-});
+
+    //get the dynamo collections table stream arn and add it as an event source to the lambda
+    await new Promise((resolve, reject) => {
+      aws.dynamodbstreams().listStreams({TableName: process.env.CollectionsTable}, (err, data) => {
+        if (err) reject(err);
+        const collectionsTableStreamArn = data.Streams.find(s => s.TableName === 'test-stack-CollectionsTable').StreamArn;
+        const eventSourceMappingParams = {
+          EventSourceArn: collectionsTableStreamArn,
+          FunctionName: dbIndexerFnName,
+          StartingPosition: 'TRIM_HORIZON',
+          BatchSize: 10
+        };
+
+        aws.lambda().createEventSourceMapping(eventSourceMappingParams, (err, data) => {
+          if (err) reject(err);
+          resolve(data);
+        });
+      });
+    })
+    .catch(e => console.log(e));
+  });
+
+  test.after.always(async () => {
+    await models.Manager.deleteTable(process.env.CollectionsTable);
+    await aws.lambda().deleteFunction({FunctionName: dbIndexerFnName}).promise();
+    await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  });
+
+  test('creates a collection in dynamodb and es', async t => {
+    return await collections.create(testCollection)
+      .then(() => {
+        const esCollection = new EsCollection({});
+        return esCollection.query();
+      })
+      .then((result) => {
+        // search is limited to returning 1 result at the moment, which is
+        // strange, so just check for name here.
+        t.is(result.results[0].name, testCollection.name);
+        t.is(result.results[0].version, testCollection.version);
+      })
+      .catch(e => console.log(e));
+  });
+}
+
