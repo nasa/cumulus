@@ -1,24 +1,26 @@
 'use strict';
 
-const os = require('os');
-const fs = require('fs');
 const JSFtp = require('jsftp');
 const join = require('path').join;
 const log = require('@cumulus/common/log');
-const aws = require('@cumulus/common/aws');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
+const { omit } = require('lodash');
 
-module.exports.ftpMixin = superclass => class extends superclass {
-
+module.exports.ftpMixin = (superclass) => class extends superclass {
+  // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP 
+  // servers return inconsistent results when using
+  // 'STAT' command. We can use 'LIST' in those cases by
+  // setting the variable `useList` to true
   constructor(...args) {
     super(...args);
     this.decrypted = false;
-    this.options = {
+    this.ftpClientOptions = {
       host: this.host,
       port: this.port || 21,
       user: this.username || 'anonymous',
-      pass: this.password || 'password'
+      pass: this.password || 'password',
+      useList: this.useList || false
     };
 
     this.connected = false;
@@ -28,47 +30,42 @@ module.exports.ftpMixin = superclass => class extends superclass {
   async decrypt() {
     if (!this.decrypted && this.provider.encrypted) {
       if (this.password) {
-        this.options.pass = await Crypto.decrypt(this.password);
+        this.ftpClientOptions.pass = await Crypto.decrypt(this.password);
         this.decrypted = true;
       }
 
       if (this.username) {
-        this.options.user = await Crypto.decrypt(this.username);
+        this.ftpClientOptions.user = await Crypto.decrypt(this.username);
         this.decrypted = true;
       }
     }
   }
 
-  /**
-   * Downloads a given url and upload to a given S3 location
-   * @return {Promise}
-   * @private
+ /**
+   * Download a remote file to disk
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} localPath - the full local destination file path
+   * @returns {Promise.<string>} - the path that the file was saved to
    */
+  async download(remotePath, localPath) {
+    const remoteUrl = `ftp://${this.host}${remotePath}`;
+    log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
-  async sync(path, bucket, key, filename) {
-    const tempFile = await this.download(path, filename);
-    return this.upload(bucket, key, filename, tempFile);
-  }
-
-  /**
-   * Downloads the file to disk, difference with sync is that
-   * this method involves no uploading to S3
-   * @return {Promise}
-   * @private
-   */
-  async download(path, filename) {
     if (!this.decrypted) await this.decrypt();
 
-    // let's stream to file
-    const tempFile = join(os.tmpdir(), filename);
-    const client = new JSFtp(this.options);
+    const client = new JSFtp(this.ftpClientOptions);
 
     return new Promise((resolve, reject) => {
       client.on('error', reject);
-      client.get(join(path, filename), tempFile, (err) => {
+      client.get(remotePath, localPath, (err) => {
         client.destroy();
-        if (err) return reject(err);
-        return resolve(tempFile);
+
+        if (err) reject(err);
+        else {
+          log.info(`Finishing downloading ${remoteUrl}`);
+          resolve(localPath);
+        }
       });
     });
   }
@@ -83,7 +80,7 @@ module.exports.ftpMixin = superclass => class extends superclass {
   async write(path, filename, body) {
     if (!this.decrypted) await this.decrypt();
 
-    const client = new JSFtp(this.options);
+    const client = new JSFtp(this.ftpClientOptions);
     return new Promise((resolve, reject) => {
       client.on('error', reject);
       const input = new Buffer(body);
@@ -98,7 +95,7 @@ module.exports.ftpMixin = superclass => class extends superclass {
   async _list(path, _counter = 0) {
     if (!this.decrypted) await this.decrypt();
     let counter = _counter;
-    const client = new JSFtp(this.options);
+    const client = new JSFtp(this.ftpClientOptions);
     return new Promise((resolve, reject) => {
       client.on('error', reject);
       client.ls(path, (err, data) => {
@@ -115,14 +112,12 @@ module.exports.ftpMixin = superclass => class extends superclass {
           return reject(err);
         }
 
-        return resolve(data.map(d => ({
+        return resolve(data.map((d) => ({
           name: d.name,
-          type: d.type,
-          size: d.size,
-          time: d.date,
-          owner: d.owner,
-          group: d.group,
-          path: path
+          path: path,
+          size: parseInt(d.size, 10),
+          time: d.time,
+          type: d.type
         })));
       });
     });
@@ -139,7 +134,11 @@ module.exports.ftpMixin = superclass => class extends superclass {
 
     const listFn = this._list.bind(this);
     const files = await recursion(listFn, this.path);
+
     log.info(`${files.length} files were found on ${this.host}`);
-    return files;
+
+    // Type 'type' field is required to support recursive file listing, but
+    // should not be part of the returned result.
+    return files.map((file) => omit(file, 'type'));
   }
 };

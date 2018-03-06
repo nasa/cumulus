@@ -198,6 +198,7 @@ exports.fileExists = async (bucket, key) => {
   }
 };
 
+
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
   const scrubbedS3Objs = s3Objs.map(s3Obj => ({
@@ -401,9 +402,6 @@ exports.getPossiblyRemote = async (obj) => {
 exports.startPromisedSfnExecution = (params) =>
   exports.sfn().startExecution(params).promise();
 
-exports.getSfnExecutionByName = (stateMachineArn, executionName) =>
-  [stateMachineArn.replace(':stateMachine:', ':execution:'), executionName].join(':');
-
 const getCurrentSfnTaskWithoutRetry = async (stateMachineArn, executionName) => {
   const sfn = exports.sfn();
   const executionArn = exports.getSfnExecutionByName(stateMachineArn, executionName);
@@ -484,31 +482,22 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
 
 /**
 * Send a message to AWS SQS
-* @param {string} queueUrl url of the SQS queue
-* @param {string|object} message either string or object message. If an object it
-* will be serialized into a JSON string.
-* @return {promise}
+*
+* @param {string} queueUrl - url of the SQS queue
+* @param {string|Object} message - either string or object message. If an
+*   object it will be serialized into a JSON string.
+* @returns {Promise} - resolves when the messsage has been sent
 **/
 exports.sendSQSMessage = (queueUrl, message) => {
   let messageBody;
+  if (typeof message === 'string') messageBody = message;
+  else if (typeof message === 'object') messageBody = JSON.stringify(message);
+  else throw new Error('body type is not accepted');
 
-  if (typeof message === 'string') {
-    messageBody = message;
-  }
-  else if (typeof message === 'object') {
-    messageBody = JSON.stringify(message);
-  }
-  else {
-    throw new Error('body type is not accepted');
-  }
-
-  const params = {
+  return exports.sqs().sendMessage({
     MessageBody: messageBody,
     QueueUrl: queueUrl
-  };
-
-  const queue = exports.sqs();
-  return queue.sendMessage(params).promise();
+  }).promise();
 };
 
 /**
@@ -560,29 +549,4 @@ exports.setGranuleStatus = async (
   const key = exports.getGranuleS3Params(granuleId, stack, bucket);
   const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
   await exports.s3().putObject(bucket, key, '', null, { executionArn, status }).promise();
-};
-
-/**
-* Get the status of a granule
-*
-* @name getGranuleStatus
-* @param {string} granuleId
-* @param {string} stack = the deployment stackname
-* @param {string} bucket - the deployment bucket name
-* @return {promise|boolean} if the granule does not exist, this returns `false`,
-* else returns a promise that resolves to an array of [status, arn]
-**/
-exports.getGranuleStatus = async (granuleId, stack, bucket) => {
-  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
-  const exists = await exports.fileExists(bucket, key);
-
-  if (exists) {
-    const oarn = exists.Metadata.arn;
-    const status = exists.Metadata.status;
-    if (status === 'failed') {
-      return ['failed', oarn];
-    }
-    return ['completed', oarn];
-  }
-  return false;
 };

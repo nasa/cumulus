@@ -9,12 +9,16 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
+        "required": [ "name", "path" ],
         "properties": {
           "name": { "type": "string" },
+          "path": { "type": "string" },
           "size": { "type": "integer" },
-          "time": { "type": "string" },
-          "path": { "type": "string" }
+          "time": {
+            "description": "The number of milliseconds since January 1, 1970, 00:00:00 UTC",
+            "type": "integer"
+          }
         }
       }
     }

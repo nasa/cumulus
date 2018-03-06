@@ -1,8 +1,12 @@
+/* eslint-disable no-console */
 'use strict';
 
+const Ajv = require('ajv');
 const crypto = require('crypto');
+const path = require('path');
 const url = require('url');
 const aws = require('./aws');
+const fs = require('fs-extra');
 
 /**
  * Generate a 40-character random string
@@ -108,3 +112,122 @@ async function createQueue() {
   return url.format(returnedQueueUrl);
 }
 exports.createQueue = createQueue;
+
+/**
+ * Validate an object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {string} schemaFilename - the filename of the schema
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateJSON(t, schemaFilename, data) {
+  const schemaName = path.basename(schemaFilename).split('.')[0];
+  const schema = await fs.readFile(schemaFilename, 'utf8').then(JSON.parse);
+  const ajv = new Ajv();
+  const valid = ajv.validate(schema, data);
+  if (!valid) {
+    const message = `${schemaName} validation failed: ${ajv.errorsText()}`;
+    console.log(message);
+    console.log(JSON.stringify(data, null, 2));
+    t.fail(message);
+    throw new Error(message);
+  }
+  return valid;
+}
+
+/**
+ * Validate a task input object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateInput(t, data) {
+  return validateJSON(t, './schemas/input.json', data);
+}
+exports.validateInput = validateInput;
+
+/**
+ * Validate a task config object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateConfig(t, data) {
+  return validateJSON(t, './schemas/config.json', data);
+}
+exports.validateConfig = validateConfig;
+
+/**
+ * Validate a task output object using json-schema
+ *
+ * Issues a test failure if there were validation errors
+ *
+ * @param {Object} t - an ava test
+ * @param {Object} data - the object to be validated
+ * @returns {boolean} - whether the object is valid or not
+ */
+async function validateOutput(t, data) {
+  return validateJSON(t, './schemas/output.json', data);
+}
+exports.validateOutput = validateOutput;
+
+/**
+ * Determine the path of the current git repo
+ *
+ * @returns {Promise.<string>} - the filesystem path of the current git repo
+ */
+async function findGitRepoRootDirectory(dirname) {
+  if (await fs.pathExists(path.join(dirname, '.git'))) return dirname;
+
+  // This indicates that we've reached the root of the filesystem
+  if (path.dirname(dirname) === dirname) {
+    throw new Error('Unable to determine git repo root directory');
+  }
+
+  return findGitRepoRootDirectory(path.dirname(dirname));
+}
+exports.findGitRepoRootDirectory = findGitRepoRootDirectory;
+
+/**
+ * Determine the path of the .tmp-test-data directory
+ *
+ * @returns {Promise.<string>} - the filesystem path of the .tmp-test-data directory
+ */
+function findTmpTestDataDirectory() {
+  return exports.findGitRepoRootDirectory(process.cwd())
+    .then((gitRepoRoot) => path.join(gitRepoRoot, '.tmp-test-data'));
+}
+exports.findTmpTestDataDirectory = findTmpTestDataDirectory;
+
+/**
+ * Determine the path of the packages/test-data directory
+ *
+ * @returns {Promise.<string>} - the filesystem path of the packages/test-data directory
+ */
+function findTestDataDirectory() {
+  return exports.findGitRepoRootDirectory(process.cwd())
+    .then((gitRepoRoot) => path.join(gitRepoRoot, 'packages', 'test-data'));
+}
+exports.findTestDataDirectory = findTestDataDirectory;
+
+/**
+ * Prettify and display something to the console.
+ *
+ * This is only intended to be used during debugging.
+ *
+ * @param {Object|Array} object - an object or array to be stringifyed
+ * @returns {undefined} - no return value
+ */
+function jlog(object) {
+  console.log(JSON.stringify(object, null, 2));
+}
+exports.jlog = jlog;

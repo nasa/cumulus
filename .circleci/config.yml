@@ -3,7 +3,7 @@ version: 2
 jobs:
   build_and_test:
     docker:
-      - image: circleci/node:6.10
+      - image: cumuluss/circleci:node-6.10
       - name: localstack
         image: localstack/localstack
     working_directory: ~/project
@@ -18,6 +18,20 @@ jobs:
       - run:
           name: Installing Dependencies
           command: |
+            # start ftp
+            sudo rm -rf /home/vsftpd
+            sudo ln -s /home/circleci/project/packages/test-data /home/vsftpd
+            sudo service vsftpd start || true
+
+            # start http service
+            sudo rm -rf /var/www/html
+            sudo ln -s /home/circleci/project/.tmp-test-data /var/www/html
+            sudo service apache2 start
+
+            # start sftp service
+            sudo bash /usr/sbin/sftp.sh user:password
+            sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
+
             yarn install
             yarn bootstrap-no-build
 
@@ -72,7 +86,7 @@ jobs:
           command: |
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
             VERSION=$(cat lerna.json | jq .version --raw-output)
-            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes
+            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
 
 workflows:
   version: 2

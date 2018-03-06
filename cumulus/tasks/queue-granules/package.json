@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-granules",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Add discovered granules to the queue",
   "main": "index.js",
   "directories": {
@@ -38,8 +38,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.0.0",
-    "@cumulus/ingest": "^1.0.0",
+    "@cumulus/common": "^1.1.0",
+    "@cumulus/cumulus-message-adapter-js": "0.0.1-beta.3",
+    "@cumulus/ingest": "^1.1.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
@@ -52,6 +53,6 @@
   "devDependencies": {
     "@mapbox/mock-aws-sdk-js": "0.0.5",
     "ava": "^0.21.0",
-    "sinon": "^2.0.0-pre.5"
+    "lodash": "^4.17.5"
   }
 }

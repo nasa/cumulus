@@ -1,13 +1,12 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const get = require('lodash.get');
 const granule = require('@cumulus/ingest/granule');
 const log = require('@cumulus/common/log');
 
 /**
 * Discover granules
-* See schemas/input.json for detailed input schema
+* See schemas/input.json and schemas/config.json for detailed event description
 *
 * @param {Object} event - Lambda event object
 * @returns {Promise} - see schemas/output.json for detailed output schema
@@ -15,9 +14,8 @@ const log = require('@cumulus/common/log');
 **/
 async function discoverGranules(event) {
   const protocol = event.config.provider.protocol;
-  const useQueue = get(event.config, 'useQueue', true);
 
-  const Discover = granule.selector('discover', protocol, useQueue);
+  const Discover = granule.selector('discover', protocol);
   const discover = new Discover(event);
 
   let granules;
