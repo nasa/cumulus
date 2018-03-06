@@ -9,6 +9,7 @@ process.env.internal = 'test-bucket';
 
 const models = require('../models');
 const aws = require('@cumulus/common/aws');
+const bootstrap = require('../lambdas/bootstrap');
 const collectionsEndpoint = require('../endpoints/collections');
 const collections = new models.Collection();
 const EsCollection = require('../es/collections');
@@ -29,10 +30,11 @@ const hash = { name: 'name', type: 'S' };
 const range = { name: 'version', type: 'S' };
 
 async function setup() {
+  await bootstrap.bootstrapElasticSearch('http://localhost:4571');
+  sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
   await models.Manager.createTable(process.env.CollectionsTable, hash, range);
   await collections.create(testCollection);
-  sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
 }
 
 async function teardown() {
@@ -43,6 +45,7 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
+// TODO(aimee): Add a collection to ES. List uses ES and we don't have any collections in ES.
 test('default returns list of collections', t => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {

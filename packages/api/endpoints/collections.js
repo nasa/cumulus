@@ -3,7 +3,7 @@
 const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const log = require('@cumulus/common/log');
-const { handle, listResponse } = require('../lib/response');
+const { handle } = require('../lib/response');
 const models = require('../models');
 const Collection = require('../es/collections');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
@@ -16,11 +16,8 @@ const examplePayload = require('../tests/data/collections_post.json');
  * @return {undefined}
  */
 function list(event, cb) {
-  const collections = new models.Collection();
-  return collections
-    .scan()
-    .then(results => cb(null, listResponse(event, results)))
-    .catch(e => cb(e));
+  const collection = new Collection(event);
+  collection.query().then(res => cb(null, res)).catch(cb);
 }
 
 /**

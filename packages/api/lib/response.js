@@ -98,17 +98,5 @@ function handle(event, context, authCheck, func) {
   return func(cb);
 }
 
-function listResponse(event, results) {
-  let params = {};
-  if (event.queryStringParameters) {
-    params = event.queryStringParameters;
-  }
-  const limit = parseInt((params.limit) ? params.limit : 1, 10);
-  const page = parseInt((params.skip) ? params.skip : page, 10);
-  const meta = { limit, page, count: results.Items.length };
-  return { meta, results: results.Items };
-}
-
 module.exports.handle = handle;
 module.exports.resp = resp;
-module.exports.listResponse = listResponse;

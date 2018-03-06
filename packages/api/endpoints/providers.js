@@ -5,6 +5,7 @@ const _get = require('lodash.get');
 const { handle, listResponse } = require('../lib/response');
 const models = require('../models');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
+const { Search } = require('../es/search');
 
 /**
  * List all providers.
@@ -13,11 +14,8 @@ const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
  * @return {undefined}
  */
 function list(event, cb) {
-  const providers = new models.Provider();
-  return providers
-    .scan()
-    .then(results => cb(null, listResponse(event, results)))
-    .catch(e => cb(e));
+  const search = new Search(event, 'provider');
+  search.query().then(response => cb(null, response)).catch(cb);
 }
 
 /**

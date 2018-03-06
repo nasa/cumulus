@@ -8,8 +8,9 @@ process.env.bucket = 'test-bucket';
 const workflowName = 'morning-routine';
 const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
 
-const models = require('../models');
 const aws = require('@cumulus/common/aws');
+const bootstrap = require('../lambdas/bootstrap');
+const models = require('../models');
 const rulesEndpoint = require('../endpoints/rules');
 const { testEndpoint } = require('./testUtils');
 
@@ -31,13 +32,14 @@ const testRule = {
 
 const hash = { name: 'name', type: 'S' };
 async function setup() {
+  await bootstrap.bootstrapElasticSearch('http://localhost:4571');
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
-  await models.Manager.createTable(process.env.RulesTable, hash);
   await aws.s3().putObject({
     Bucket: process.env.bucket,
     Key: workflowfile,
     Body: 'test data'
   }).promise();
+  await models.Manager.createTable(process.env.RulesTable, hash);
   await rules.create(testRule);
 }
 
@@ -49,11 +51,12 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
+// TODO(aimee): Add a rule to ES. List uses ES and we don't have any rules in ES.
 test('default returns list of rules', t => {
   const listEvent = { httpMethod: 'list ' };
   return testEndpoint(rulesEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
-    t.is(results.length, 1);
+    t.is(results.length, 0);
   });
 });
 

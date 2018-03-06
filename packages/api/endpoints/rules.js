@@ -6,6 +6,7 @@ const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { handle, listResponse } = require('../lib/response');
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
+const { Search } = require('../es/search');
 
 /**
  * List all providers.
@@ -14,11 +15,8 @@ const { RecordDoesNotExist } = require('../lib/errors');
  * @return {undefined}
  */
 function list(event, cb) {
-  const rules = new models.Rule();
-  return rules
-    .scan()
-    .then(results => cb(null, listResponse(event, results)))
-    .catch(e => cb(e));
+  const search = new Search(event, 'rule');
+  search.query().then(response => cb(null, response)).catch(cb);
 }
 
 /**

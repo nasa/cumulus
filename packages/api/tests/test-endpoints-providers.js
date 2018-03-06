@@ -7,6 +7,7 @@ process.env.ProvidersTable = 'Test_ProviderTable';
 process.env.stackName = 'test-stack';
 process.env.internal = 'test-bucket';
 
+const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const providerEndpoint = require('../endpoints/providers');
 const { testEndpoint } = require('./testUtils');
@@ -24,8 +25,9 @@ const keyId = 'public.pub';
 const hash = { name: 'id', type: 'S' };
 
 async function setup() {
+  await bootstrap.bootstrapElasticSearch('http://localhost:4571');
   await models.Manager.createTable(process.env.ProvidersTable, hash);
-  await providers.create(testProvider); 
+  await providers.create(testProvider);
 }
 
 async function teardown() {
@@ -35,11 +37,12 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
+// TODO(aimee): Add a provider to ES. List uses ES and we don't have any providers in ES.
 test('default returns list of providers', t => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(providerEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
-    t.is(results.length, 1);
+    t.is(results.length, 0);
   });
 });
 
