@@ -1,6 +1,5 @@
 'use strict';
 
-// LOCALSTACK_HOST=localhost npm test
 const archiver = require('archiver');
 const aws = require('@cumulus/common/aws');
 const fs = require('fs');
@@ -129,4 +128,3 @@ if (process.env.IS_LOCAL === 'true') {
       .catch(e => console.log(e));
   });
 }
-
