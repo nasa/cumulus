@@ -1,5 +1,6 @@
 'use strict';
 
+const sinon = require('sinon');
 const test = require('ava');
 
 process.env.CollectionsTable = 'Test_CollectionsTable';
@@ -10,6 +11,7 @@ const models = require('../models');
 const aws = require('@cumulus/common/aws');
 const collectionsEndpoint = require('../endpoints/collections');
 const collections = new models.Collection();
+const EsCollection = require('../es/collections');
 const { testEndpoint } = require('./testUtils');
 
 const testCollection = {
@@ -30,6 +32,7 @@ async function setup() {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
   await models.Manager.createTable(process.env.CollectionsTable, hash, range);
   await collections.create(testCollection);
+  sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
 }
 
 async function teardown() {

@@ -1,8 +1,6 @@
 'use strict';
 
 const aws = require('@cumulus/common/aws');
-const { pki } = require('node-forge');
-const sinon = require('sinon');
 const test = require('ava');
 
 process.env.ProvidersTable = 'Test_ProviderTable';
