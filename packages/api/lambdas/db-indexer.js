@@ -12,7 +12,8 @@ function indexRecord(esClient, record) {
   if (record.eventSource !== 'aws:dynamodb') {
     return Promise.resolve();
   }
-  const stack = process.env.stackName;
+
+  let stack = process.env.stackName;
 
   //determine whether the record should be indexed
   const acceptedTables = ['Collection', 'Provider', 'Rule'];
@@ -22,6 +23,11 @@ function indexRecord(esClient, record) {
   });
 
   let tableName = record.eventSourceARN.match(/table\/(.*)\/stream/);
+  if (process.env.TEST && process.env.LOCALSTACK_HOST) {
+    stack = 'test-stack';
+    tableName = record.eventSourceARN.match(/table\/(.*)/);
+  }
+
   const tableIndex = Object.keys(tableConfig).indexOf(tableName[1]);
   if (!tableName || (tableName && tableIndex === -1)) {
     return Promise.resolve();
@@ -43,7 +49,10 @@ function indexRecord(esClient, record) {
     else {
       id = keys[idKeys[0]];
     }
-    return indexer.deleteRecord(esClient, id, currentTable);
+    return indexer
+      .deleteRecord(esClient, id, currentTable)
+      // Important to catch this error. Uncaught errors will cause the handler to fail and other records will not be updated.
+      .catch(e => console.log(e));
   }
   return tableConfig[tableName](esClient, data);
 }
