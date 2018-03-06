@@ -23,6 +23,14 @@
     },
     "counter": { "type": "integer" },
     "limit": { "type": "integer" },
-    "isFinished": { "type": "boolean" }
+    "isFinished": { "type": "boolean" },
+    "pdr": {
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    }
   }
 }

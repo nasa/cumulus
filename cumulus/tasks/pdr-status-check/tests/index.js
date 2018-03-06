@@ -9,7 +9,8 @@ const { checkPdrStatuses } = require('../index');
 test('valid output when no running executions', (t) => {
   const event = {
     input: {
-      running: []
+      running: [],
+      pdr: { name: 'test.PDR', path: 'test-path' }
     }
   };
 
@@ -19,7 +20,8 @@ test('valid output when no running executions', (t) => {
         isFinished: true,
         running: [],
         failed: [],
-        completed: []
+        completed: [],
+        pdr: { name: 'test.PDR', path: 'test-path' }
       };
 
       t.deepEqual(output, expectedOutput);
