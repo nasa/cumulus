@@ -127,4 +127,8 @@ if (process.env.IS_LOCAL === 'true') {
       })
       .catch(e => console.log(e));
   });
+} else {
+  test('db-indexer TODO test', t => {
+    t.is(1+1, 2);
+  });
 }
