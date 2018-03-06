@@ -13,14 +13,14 @@ const collections = new models.Collection();
 const { testEndpoint } = require('./testUtils');
 
 const testCollection = {
-  "name": "collection-125",
-  "version": "0.0.0",
-  "provider_path": "/",
-  "duplicateHandling": "replace",
-  "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
-  "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
-  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-  "files": []
+  'name': 'collection-125',
+  'version': '0.0.0',
+  'provider_path': '/',
+  'duplicateHandling': 'replace',
+  'granuleId': '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+  'granuleIdExtraction': '(MOD09GQ\\.(.*))\\.hdf',
+  'sampleFileName': 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
+  'files': []
 };
 
 const hash = { name: 'name', type: 'S' };
@@ -48,7 +48,7 @@ test('default returns list of collections', t => {
   });
 });
 
-test('GET returns an existing collection', t => {
+test.only('GET returns an existing collection', t => {
   const getEvent = {
     httpMethod: 'GET',
     pathParameters: {
