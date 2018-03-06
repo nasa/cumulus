@@ -4,8 +4,8 @@
   "description": "Deployment templates for cumulus",
   "scripts": {
     "test": "ava --no-color",
-    "build": "babel app/kes.override.js -o app/kes.js",
-    "watch": "babel app/kes.override.js -o app/kes.js -w",
+    "build": "babel lib -d app",
+    "watch": "babel lib -d app -w",
     "prepublish": "npm run build"
   },
   "keywords": [
