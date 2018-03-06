@@ -117,7 +117,8 @@ function buildOutput(event, groupedExecutions) {
     isFinished: groupedExecutions.running.length === 0,
     running,
     failed,
-    completed
+    completed,
+    pdr: event.input.pdr
   };
 
   if (!output.isFinished) {
