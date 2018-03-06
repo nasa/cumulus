@@ -12,7 +12,7 @@ function indexRecord(esClient, record) {
   if (record.eventSource !== 'aws:dynamodb') {
     return Promise.resolve();
   }
-  const stack = process.env.stackName || 'test-stack';
+  const stack = process.env.stackName;
 
   //determine whether the record should be indexed
   const acceptedTables = ['Collection', 'Provider', 'Rule'];
@@ -21,7 +21,7 @@ function indexRecord(esClient, record) {
     tableConfig[`${stack}-${a}sTable`] = indexer[`index${a}`];
   });
 
-  let tableName = record.eventSourceARN.match(/table\/(.*)/);
+  let tableName = record.eventSourceARN.match(/table\/(.*)\/stream/);
   const tableIndex = Object.keys(tableConfig).indexOf(tableName[1]);
   if (!tableName || (tableName && tableIndex === -1)) {
     return Promise.resolve();
