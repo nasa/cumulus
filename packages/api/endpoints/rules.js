@@ -106,7 +106,7 @@ async function put(event) {
     return;
   }
 
-  return await model.update(originalData, data);
+  return model.update(originalData, data);
 }
 
 async function del(event) {
@@ -115,8 +115,7 @@ async function del(event) {
 
   name = name.replace(/%20/g, ' ');
 
-  const record = await model.get({ name });
-  await model.delete(record);
+  await model.get({ name }).then(record => model.delete(record));
   return { message: 'Record deleted' };
 }
 
