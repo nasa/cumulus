@@ -3,7 +3,7 @@
 
 const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { handle, listResponse } = require('../lib/response');
+const { handle } = require('../lib/response');
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { Search } = require('../es/search');
