@@ -19,33 +19,19 @@ const testProvider = {
   globalConnectionLimit: 1,
   protocol: 'http',
   host: 'https://oco.jpl.nasa.gov/',
-  port: 80,
-  username: 'tester',
-  password: 'superlongverysecretpassw0rd'
+  port: 80
 };
 const keyId = 'public.pub';
 
 const hash = { name: 'id', type: 'S' };
 
 async function setup() {
-  const publicKey = { encrypt: str => 'public-key-encrypted' };
-  sinon.stub(pki, 'publicKeyFromPem').returns(publicKey);
-
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
-  const putObjectParams = {
-    Bucket: process.env.internal,
-    Key: `${process.env.stackName}/crypto/${keyId}`,
-    Body: 'test-key'
-  };
-
-  await aws.s3().putObject(putObjectParams).promise();
   await models.Manager.createTable(process.env.ProvidersTable, hash);
   await providers.create(testProvider); 
 }
 
 async function teardown() {
   await models.Manager.deleteTable(process.env.ProvidersTable);
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
 }
 
 test.before(async () => setup());
