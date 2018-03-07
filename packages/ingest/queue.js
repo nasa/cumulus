@@ -123,14 +123,6 @@ async function queueWorkflowMessage(event) {
     };
   }
 
-  console.log('Message2: ' + JSON.stringify(message));
-
-  // const x = sendSQSMessage(message.resources.queues.startSF, message);
-
-  // console.log('\n\nQueue message ' + x);
-
-  // return x;
-
   return sendSQSMessage(queueUrl, message);
 }
 exports.queueWorkflowMessage = queueWorkflowMessage;
