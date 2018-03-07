@@ -37,11 +37,11 @@ async function getKinesisRules(event) {
 
 /**
  * Queue a workflow message for the kinesis rule with the message passed
- * to kinesis as the payload 
- * 
- * @param {*} kinesisRule - kinesis rule to queue the message for
- * @param {*} eventObject - message passed to kinesis
- * @param {Promise} - promise resolved when the message is queued
+ * to kinesis as the payload
+ *
+ * @param {Object} kinesisRule - kinesis rule to queue the message for
+ * @param {Object} eventObject - message passed to kinesis
+ * @returns {Promise} promise resolved when the message is queued
  */
 async function queueMessageForRule(kinesisRule, eventObject) {
   const item = {

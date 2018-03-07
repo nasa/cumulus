@@ -92,8 +92,9 @@ exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
 
 /**
  * Queue a workflow to be picked up by SF starter
- * 
- * @param {*} event - event to queue with workflow and payload info
+ *
+ * @param {Object} event - event to queue with workflow and payload info
+ * @returns {Promise} - resolves when the message has been enqueued
  */
 async function queueWorkflowMessage(event) {
   const template = get(event, 'template');
