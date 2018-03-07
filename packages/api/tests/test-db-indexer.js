@@ -37,6 +37,7 @@ const archive = archiver('zip', {
 });
 const dbIndexerFnName = 'test-dbIndexer';
 const hash = { name: 'name', type: 'S' };
+const range = { name: 'version', type: 'S' };
 
 /**
  * TODO(aimee): This test works locally but not on CI. Running localstack on CI for this test requires:
@@ -44,7 +45,7 @@ const hash = { name: 'name', type: 'S' };
  * - A docker executor for lambdas, which is done in part by LAMBDA_EXECUTOR: docker as an env variable to the localstack/localstack docker image for ci
  *   But it still appears docker isn't running: `Cannot connect to the Docker daemon at unix:///var/run/docker.sock`
 **/
-if (process.env.IS_LOCAL === 'true') {
+if (process.env.LOCALSTACK_HOST === 'localhost') {
   // Test that if our dynamos are hooked up to the db-indexer lambda function,
   // records show up in elasticsearch 'hooked-up': the dynamo has a stream and the
   // lambda has an event source mapping to that dynamo stream.
@@ -52,7 +53,7 @@ if (process.env.IS_LOCAL === 'true') {
     await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
     // create collections table
-    await models.Manager.createTable(process.env.CollectionsTable, hash);
+    await models.Manager.createTable(process.env.CollectionsTable, hash, range);
     // create an object only in dynamo to test error condition
     await collections.create(collectionOnlyInDynamo);
     await bootstrap.bootstrapElasticSearch('http://localhost:4571');
@@ -73,7 +74,8 @@ if (process.env.IS_LOCAL === 'true') {
           Environment: {
             Variables: {
               'TEST': 'true',
-              'LOCALSTACK_HOST': process.env.DOCKERHOST
+              'LOCALSTACK_HOST': process.env.DOCKERHOST,
+              'stackName': process.env.stackName
             }
           }
         })
@@ -88,7 +90,7 @@ if (process.env.IS_LOCAL === 'true') {
       archive.directory(codeDirectory, false);
       archive.finalize()
     })
-    .catch(e => console.log(e));
+    .catch(console.log);
 
     //get the dynamo collections table stream arn and add it as an event source to the lambda
     await new Promise((resolve, reject) => {
@@ -108,7 +110,7 @@ if (process.env.IS_LOCAL === 'true') {
         });
       });
     })
-    .catch(e => console.log(e));
+    .catch(console.log);
   });
 
   test.after.always(async () => {
@@ -117,9 +119,7 @@ if (process.env.IS_LOCAL === 'true') {
     await aws.recursivelyDeleteS3Bucket(process.env.internal);
   });
 
-  // Tests currently fail - regex in db-indexer needs to be updated to pick up table
-  // name when there is no trailing /stream like there is for localstack.
-  test.skip('creates a collection in dynamodb and es', async t => {
+  test('creates a collection in dynamodb and es', async t => {
     const { name } = testCollection;
     await collections.create(testCollection)
       .then(() => {
@@ -132,21 +132,20 @@ if (process.env.IS_LOCAL === 'true') {
         t.is(result.results[0].name, testCollection.name);
         t.is(result.results[0].version, testCollection.version);
       })
-      //.then(collections.delete({ name }))
-      .catch(e => console.log(e));
+      .then(() => collections.delete({ name }))
+      .catch(console.log);
   });
 
   test.skip('thrown error is caught', async t => {
     const { name } = collectionOnlyInDynamo;
     await collections.delete({ name })
       .then((result) => {
-        console.log(result)
         // search is limited to returning 1 result at the moment, which is
         // strange, so just check for name here.
         t.is(result.results[0].name, testCollection.name);
         t.is(result.results[0].version, testCollection.version);
       })
-      .catch(e => console.log(e));
+      .catch(console.log);
   });
 } else {
   test('db-indexer TODO test', t => {
