@@ -22,7 +22,7 @@ function indexRecord(esClient, record) {
     tableConfig[`${stack}-${a}sTable`] = indexer[`index${a}`];
   });
 
-  let tableName = record.eventSourceARN.match(/table\/(.*)\/stream/);
+  let tableName = record.eventSourceARN.match(/table\/(.[^\/]*)/);
 
   const tableIndex = Object.keys(tableConfig).indexOf(tableName[1]);
   if (!tableName || (tableName && tableIndex === -1)) {
@@ -48,7 +48,7 @@ function indexRecord(esClient, record) {
     return indexer
       .deleteRecord(esClient, id, currentTable)
       // Important to catch this error. Uncaught errors will cause the handler to fail and other records will not be updated.
-      .catch(e => console.log(e));
+      .catch(console.log);
   }
   return tableConfig[tableName](esClient, data);
 }
