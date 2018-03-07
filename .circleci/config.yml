@@ -31,8 +31,17 @@ jobs:
       - restore_cache:
           keys:
             - packages-{{ checksum "global-hash" }}
+
+      - restore_cache:
+          keys:
             - cumulus-tasks-{{ checksum "global-hash" }}
+
+      - restore_cache:
+          keys:
             - gitc-tasks-{{ checksum "global-hash" }}
+
+      - restore_cache:
+          keys:
             - services-{{ checksum "global-hash" }}
 
       - run:
@@ -55,6 +64,7 @@ jobs:
             yarn bootstrap-no-build
 
       - save_cache:
+          key: packages-{{ checksum "global-hash" }}
           paths:
             - ./packages/deployment/node_modules
             - ./packages/pvl/node_modules
@@ -65,9 +75,9 @@ jobs:
             - ./packages/ingest/node_modules
             - ./packages/integration-tests/node_modules
             - ./packages/task-debug/node_modules
-          key: packages-{{ checksum "global-hash" }}
 
       - save_cache:
+          key: cumulus-tasks-{{ checksum "global-hash" }}
           paths:
             - ./cumulus/tasks/hello-world/node_modules
             - ./cumulus/tasks/discover-granules/node_modules
@@ -79,9 +89,9 @@ jobs:
             - ./cumulus/tasks/queue-pdrs/node_modules
             - ./cumulus/tasks/sync-granule/node_modules
             - ./cumulus/tasks/discover-s3-granules/node_modules
-          key: cumulus-tasks-{{ checksum "global-hash" }}
 
       - save_cache:
+          key: gitc-tasks-{{ checksum "global-hash" }}
           paths:
             - ./cumulus/tasks/copy-idx-from-s3-to-efs/node_modules
             - ./cumulus/tasks/delete-ingest-tracking-data/node_modules
@@ -105,13 +115,12 @@ jobs:
             - ./cumulus/tasks/discover-pdr/node_modules
             - ./cumulus/tasks/generate-pdr-file-list/node_modules
             - ./cumulus/tasks/validate-pdr/node_modules
-          key: gitc-tasks-{{ checksum "global-hash" }}
       
       - save_cache:
+          key: services-{{ checksum "global-hash" }}
           paths:
             - ./cumulus/services/sfn-scheduler/node_modules
             - ./cumulus/services/sfn-throttler/node_modules
-          key: services-{{ checksum "global-hash" }}
 
       - run:
           name: Running Test
