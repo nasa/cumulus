@@ -36,7 +36,7 @@ function get(event, cb) {
       return collection.getStats([res], [res.name]);
     })
     .then(res => cb(null, res[0]))
-    .catch(e => cb(e));
+    .catch(cb);
 }
 
 /**
@@ -112,7 +112,7 @@ function del(event, cb) {
   return c.get({ name, version })
     .then(() => c.delete({ name, version }))
     .then(() => cb(null, { message: 'Record deleted' }))
-    .catch(e => cb(e));
+    .catch(cb);
 }
 
 function handler(event, context) {

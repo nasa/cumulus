@@ -34,7 +34,7 @@ function get(event, cb) {
       delete res.password;
       cb(null, res);
     })
-    .catch(e => cb(e));
+    .catch(cb);
 }
 
 /**
@@ -55,9 +55,9 @@ function post(event, cb) {
       if (e instanceof RecordDoesNotExist) {
         return model.create(data)
           .then(r => cb(null, { message: 'Record saved', record: r }))
-          .catch(err => cb(err));
+          .catch(cb);
       }
-      return cb(e => cb(e));
+      return cb(e);
     });
 }
 

@@ -36,7 +36,7 @@ function get(event, cb) {
       delete res.password;
       cb(null, res);
     })
-    .catch(e => cb(e));
+    .catch(cb);
 }
 
 /**
@@ -100,7 +100,7 @@ function del(event, cb) {
   return p.get({ id })
     .then(() => p.delete({ id }))
     .then(() => cb(null, { message: 'Record deleted' }))
-    .catch(e => cb(e));
+    .catch(cb);
 }
 
 function handler(event, context) {
