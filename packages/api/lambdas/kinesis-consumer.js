@@ -5,6 +5,7 @@ const Ajv = require('ajv');
 const Rule = require('../models/rules');
 const model = new Rule();
 const messageSchema = require('./kinesis-consumer-event-schema.json');
+const { queueWorkflowMessage } = require('@cumulus/ingest/queue');
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
@@ -35,25 +36,23 @@ async function getKinesisRules(event) {
 }
 
 /**
- * `createOneTimeRules` creates new rules with the same data as a kinesis-type rule,
- * except the type is modified to 'onetime'.
- *
- * @param {Array} kinesisRules - list of rule objects
- * @param {Object} eventObject - kinesis message input
- * @returns {Array} Array of promises for model.create
+ * Queue a workflow message for the kinesis rule with the message passed
+ * to kinesis as the payload 
+ * 
+ * @param {*} kinesisRule - kinesis rule to queue the message for
+ * @param {*} eventObject - message passed to kinesis
+ * @param {Promise} - promise resolved when the message is queued
  */
-async function createOneTimeRules(kinesisRules, eventObject) {
-  const oneTimeRulePromises = kinesisRules.map((kinesisRule) => {
-    const oneTimeRuleParams = Object.assign({}, kinesisRule);
-    delete oneTimeRuleParams['createdAt'];
-    delete oneTimeRuleParams['updatedAt'];
-    oneTimeRuleParams.name = `${kinesisRule.name}_${Date.now().toString()}`;
-    oneTimeRuleParams.rule.type = 'onetime';
-    oneTimeRuleParams.payload = eventObject;
-    return model.create(oneTimeRuleParams);
-  });
+async function queueMessageForRule(kinesisRule, eventObject) {
+  const item = {
+    workflow: kinesisRule.workflow,
+    provider: kinesisRule.provider,
+    collection: kinesisRule.collection,
+    payload: eventObject
+  };
 
-  return await Promise.all(oneTimeRulePromises);
+  return Rule.buildPayload(item)
+    .then((payload) => queueWorkflowMessage(payload));
 }
 
 /**
@@ -84,9 +83,9 @@ async function processRecord(record) {
 
   await validateMessage(eventObject)
     .then(getKinesisRules)
-    .then((kinesisRules) => {
-      return createOneTimeRules(kinesisRules, eventObject);
-    });
+    .then((kinesisRules) => (
+      kinesisRules.map((kinesisRule) => queueMessageForRule(kinesisRule, eventObject))
+    ));
 }
 
 /**
