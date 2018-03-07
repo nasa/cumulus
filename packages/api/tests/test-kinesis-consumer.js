@@ -81,8 +81,6 @@ test.beforeEach(async (t) => {
 
   t.context.queueUrl = await createQueue();
 
-  console.log(t.context.queueUrl);
-
   t.context.messageTemplate = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
@@ -96,15 +94,15 @@ test.beforeEach(async (t) => {
     Body: JSON.stringify(t.context.messageTemplate)
   }).promise();
 
-  sinon.stub(Rule, 'buildPayload').callsFake((item) => {
-    return {
+  sinon.stub(Rule, 'buildPayload').callsFake((item) =>
+    Promise.resolve({
       template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
       provider: item.provider,
       collection: item.collection,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
-    };
-  });
+    })
+  );
 
   t.context.tableName = randomString();
   process.env.RulesTable = t.context.tableName;
@@ -114,7 +112,8 @@ test.beforeEach(async (t) => {
 
   const model = new Rule(t.context.tableName);
   await manager.createTable(t.context.tableName, ruleTableParams);
-  await Promise.all([rule1Params, rule2Params, disabledRuleParams].map((rule) => model.create(rule)));
+  await Promise.all([rule1Params, rule2Params, disabledRuleParams]
+    .map((rule) => model.create(rule)));
 });
 
 test.afterEach(async (t) => {
@@ -123,62 +122,64 @@ test.afterEach(async (t) => {
     sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise(),
     manager.deleteTable(t.context.tableName)
   ]);
-  sinon.restore(Rule.buildPayload);
+  Rule.buildPayload.restore();
 });
 
 // getKinesisRule tests
 // eslint-disable-next-line max-len
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', (t) => {
-  getKinesisRules(JSON.parse(eventData))
+  return getKinesisRules(JSON.parse(eventData))
     .then((result) => {
       t.is(result.length, 2);
     });
 });
 
 // handler tests
-// test.serial('it should create a onetime rule for each associated workflow', async (t) => {
-//   await handler(event, {}, testCallback);
-//   await sqs().receiveMessage({
-//       QueueUrl: t.context.queueUrl,
-//       MaxNumberOfMessages: 10,
-//       WaitTimeSeconds: 1
-//     }).promise()
-//     .then((receiveMessageResponse) => {
-//       console.log(receiveMessageResponse);
-//       t.is(receiveMessageResponse.Messages.length, 4);
-//     });
-// });
+test.serial('it should create a onetime rule for each associated workflow', async (t) => {
+  await handler(event, {}, testCallback);
+  await sqs().receiveMessage({
+    QueueUrl: t.context.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1
+  }).promise()
+  .then((receiveMessageResponse) => {
+    t.is(receiveMessageResponse.Messages.length, 4);
+    receiveMessageResponse.Messages.map((message) => (
+      t.is(JSON.stringify(JSON.parse(message.Body).payload), JSON.stringify({ collection: 'test-collection' }))
+    ));
+  });
+});
 
-// test('it should throw an error if message does not include a collection', (t) => {
-//   const invalidMessage = JSON.stringify({});
-//   const kinesisEvent = {
-//     Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
-//   };
-//   return handler(kinesisEvent, {}, testCallback)
-//     .catch((err) => {
-//       const errObject = JSON.parse(err);
-//       t.is(errObject.errors[0].dataPath, '');
-//       t.is(errObject.errors[0].message, 'should have required property \'collection\'');
-//     });
-// });
+test.serial('it should throw an error if message does not include a collection', (t) => {
+  const invalidMessage = JSON.stringify({});
+  const kinesisEvent = {
+    Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
+  };
+  return handler(kinesisEvent, {}, testCallback)
+    .catch((err) => {
+      const errObject = JSON.parse(err);
+      t.is(errObject.errors[0].dataPath, '');
+      t.is(errObject.errors[0].message, 'should have required property \'collection\'');
+    });
+});
 
-// test('it should throw an error if message collection has wrong data type', (t) => {
-//   const invalidMessage = JSON.stringify({ collection: {} });
-//   const kinesisEvent = {
-//     Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
-//   };
-//   return handler(kinesisEvent, {}, testCallback)
-//     .catch((err) => {
-//       const errObject = JSON.parse(err);
-//       t.is(errObject.errors[0].dataPath, '.collection');
-//       t.is(errObject.errors[0].message, 'should be string');
-//     });
-// });
+test.serial('it should throw an error if message collection has wrong data type', (t) => {
+  const invalidMessage = JSON.stringify({ collection: {} });
+  const kinesisEvent = {
+    Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
+  };
+  return handler(kinesisEvent, {}, testCallback)
+    .catch((err) => {
+      const errObject = JSON.parse(err);
+      t.is(errObject.errors[0].dataPath, '.collection');
+      t.is(errObject.errors[0].message, 'should be string');
+    });
+});
 
-// test('it should not throw if message is valid', (t) => {
-//   const validMessage = JSON.stringify({ collection: 'confection-collection' });
-//   const kinesisEvent = {
-//     Records: [{ kinesis: { data: new Buffer(validMessage).toString('base64') } }]
-//   };
-//   return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, []));
-// });
+test.serial('it should not throw if message is valid', (t) => {
+  const validMessage = JSON.stringify({ collection: 'confection-collection' });
+  const kinesisEvent = {
+    Records: [{ kinesis: { data: new Buffer(validMessage).toString('base64') } }]
+  };
+  return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[]]));
+});

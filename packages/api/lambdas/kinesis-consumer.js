@@ -3,7 +3,6 @@
 const Ajv = require('ajv');
 
 const Rule = require('../models/rules');
-const model = new Rule();
 const messageSchema = require('./kinesis-consumer-event-schema.json');
 const { queueWorkflowMessage } = require('@cumulus/ingest/queue');
 
@@ -16,6 +15,7 @@ const { queueWorkflowMessage } = require('@cumulus/ingest/queue');
  */
 async function getKinesisRules(event) {
   const collection = event.collection;
+  const model = new Rule();
   const kinesisRules = await model.scan({
     names: {
       '#col': 'collection',
@@ -81,12 +81,11 @@ async function processRecord(record) {
   const dataString = Buffer.from(dataBlob, 'base64').toString();
   const eventObject = JSON.parse(dataString);
 
-  await validateMessage(eventObject)
+  return validateMessage(eventObject)
     .then(getKinesisRules)
-    .then((kinesisRules) => {
-      console.log(kinesisRules);
-      kinesisRules.map(async (kinesisRule) => await queueMessageForRule(kinesisRule, eventObject));
-    });
+    .then((kinesisRules) => (
+      Promise.all(kinesisRules.map((kinesisRule) => queueMessageForRule(kinesisRule, eventObject)))
+    ));
 }
 
 /**
