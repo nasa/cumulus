@@ -2,7 +2,7 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { handle, listResponse } = require('../lib/response');
+const { handle } = require('../lib/response');
 const models = require('../models');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 const { Search } = require('../es/search');
