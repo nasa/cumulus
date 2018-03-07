@@ -23,10 +23,6 @@ function indexRecord(esClient, record) {
   });
 
   let tableName = record.eventSourceARN.match(/table\/(.*)\/stream/);
-  if (process.env.TEST && process.env.LOCALSTACK_HOST) {
-    stack = 'test-stack';
-    tableName = record.eventSourceARN.match(/table\/(.*)/);
-  }
 
   const tableIndex = Object.keys(tableConfig).indexOf(tableName[1]);
   if (!tableName || (tableName && tableIndex === -1)) {
