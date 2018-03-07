@@ -83,9 +83,10 @@ async function processRecord(record) {
 
   await validateMessage(eventObject)
     .then(getKinesisRules)
-    .then((kinesisRules) => (
-      kinesisRules.map((kinesisRule) => queueMessageForRule(kinesisRule, eventObject))
-    ));
+    .then((kinesisRules) => {
+      console.log(kinesisRules);
+      kinesisRules.map(async (kinesisRule) => await queueMessageForRule(kinesisRule, eventObject));
+    });
 }
 
 /**
