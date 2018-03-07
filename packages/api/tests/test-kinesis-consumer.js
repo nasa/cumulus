@@ -7,7 +7,6 @@ const { sqs, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { createQueue, randomString } = require('@cumulus/common/test-utils');
 
 const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
-const queue = require('../lambdas/queue');
 const manager = require('../models/base');
 const Rule = require('../models/rules');
 const testCollectionName = 'test-collection';
@@ -66,10 +65,7 @@ const disabledRuleParams = Object.assign({}, commonRuleParams, {
  * @returns {Object} object, if no error is thrown
  */
 function testCallback(err, object) {
-  if (err) {
-    console.log('ERROR: ' + err);
-    throw err;
-  }
+  if (err) throw err;
   return object;
 }
 
