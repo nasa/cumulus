@@ -45,7 +45,8 @@ async function teardown() {
 test.before(async () => setup());
 test.after.always(async () => teardown());
 
-// TODO(aimee): Add a collection to ES. List uses ES and we don't have any collections in ES.
+// TODO(aimee): Debug why this is _passing_ - we don't expect to already have a
+// collection in ES.
 test('default returns list of collections', t => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
