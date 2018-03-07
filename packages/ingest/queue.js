@@ -5,13 +5,15 @@ const {
   sendSQSMessage,
   parseS3Uri
 } = require('@cumulus/common/aws');
+const get = require('lodash.get');
+const uuidv4 = require('uuid/v4');
 
 /**
-  * Create a message from a template stored on S3
-  *
-  * @param {string} templateUri - S3 uri to the workflow template
-  * @returns {Promise} message object
-  **/
+ * Create a message from a template stored on S3
+ *
+ * @param {string} templateUri - S3 uri to the workflow template
+ * @returns {Promise} message object
+ **/
 async function getMessageFromTemplate(templateUri) {
   const parsedS3Uri = parseS3Uri(templateUri);
   const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
@@ -41,7 +43,9 @@ async function enqueueParsePdrMessage(
   message.meta.provider = provider;
   message.meta.collection = collection;
 
-  message.payload = { pdr };
+  message.payload = {
+    pdr
+  };
 
   return sendSQSMessage(queueUrl, message);
 }
@@ -85,3 +89,48 @@ async function enqueueGranuleIngestMessage(
   return sendSQSMessage(queueUrl, message);
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
+
+/**
+ * Queue a workflow to be picked up by SF starter
+ * 
+ * @param {*} event - event to queue with workflow and payload info
+ */
+async function queueWorkflowMessage(event) {
+  const template = get(event, 'template');
+  const provider = get(event, 'provider', {});
+  const collection = get(event, 'collection', {});
+  const payload = get(event, 'payload', {});
+
+  const message = await getMessageFromTemplate(template);
+
+  let queueUrl = null;
+
+  if (message.resources) {
+    queueUrl = message.resources.queues.startSF;
+  }
+  else {
+    queueUrl = message.meta.queues.startSF;
+  }
+
+  message.provider = provider;
+  message.payload = payload;
+  message.cumulus_meta.execution_name = uuidv4();
+
+  if (collection) {
+    message.collection = {
+      id: collection.name,
+      meta: collection
+    };
+  }
+
+  console.log('Message2: ' + JSON.stringify(message));
+
+  // const x = sendSQSMessage(message.resources.queues.startSF, message);
+
+  // console.log('\n\nQueue message ' + x);
+
+  // return x;
+
+  return sendSQSMessage(queueUrl, message);
+}
+exports.queueWorkflowMessage = queueWorkflowMessage;
