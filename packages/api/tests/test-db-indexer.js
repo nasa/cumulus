@@ -127,8 +127,6 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
         return esCollection.query();
       })
       .then((result) => {
-        // search is limited to returning 1 result at the moment, which is
-        // strange, so just check for name here.
         t.is(result.results[0].name, testCollection.name);
         t.is(result.results[0].version, testCollection.version);
       })
@@ -140,8 +138,6 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
     const { name } = collectionOnlyInDynamo;
     await collections.delete({ name })
       .then((result) => {
-        // search is limited to returning 1 result at the moment, which is
-        // strange, so just check for name here.
         t.is(result.results[0].name, testCollection.name);
         t.is(result.results[0].version, testCollection.version);
       })
