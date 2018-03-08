@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Removed
+- Unused queue lambda in api/lambdas [CUMULUS-359]
+
+### Fixed
+- Kinesis message content is passed to the triggered workflow [CUMULUS-359]
+- Kinesis message queues a workflow message and does not write to rules table [CUMULUS-359]
+
 ## [v1.1.0] - 2018-03-05
 
 ### Added
