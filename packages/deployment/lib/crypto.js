@@ -21,7 +21,7 @@ function generateKeyPair() {
  * @param {string} bucket - the bucket to upload the keys to
  * @param {string} key - the key (folder) to use for the uploaded files
  * @param {Object} s3 - an instance of the AWS S3 class
- * @returns {Promise} undefined
+ * @returns {Promise} resolves `undefined` when upload is complete
  */
 async function uploadKeyPair(bucket, key, s3) {
   const pki = forge.pki;
@@ -59,7 +59,7 @@ async function uploadKeyPair(bucket, key, s3) {
  * @param {string} stack - name of the stack
  * @param {string} bucket - the bucket to upload the keys to
  * @param {Object} s3 - an instance of AWS S3 class
- * @returns {Promise} undefined
+ * @returns {Promise} resolves `undefined` when complete
  */
 async function crypto(stack, bucket, s3) {
   const key = `${stack}/crypto`;
