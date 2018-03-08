@@ -104,26 +104,12 @@ async function queueWorkflowMessage(event) {
 
   const message = await getMessageFromTemplate(template);
 
-  let queueUrl = null;
+  message.meta.provider = provider;
+  message.meta.collection = collection;
 
-  if (message.resources) {
-    queueUrl = message.resources.queues.startSF;
-  }
-  else {
-    queueUrl = message.meta.queues.startSF;
-  }
-
-  message.provider = provider;
   message.payload = payload;
   message.cumulus_meta.execution_name = uuidv4();
 
-  if (collection) {
-    message.collection = {
-      id: collection.name,
-      meta: collection
-    };
-  }
-
-  return sendSQSMessage(queueUrl, message);
+  return sendSQSMessage(message.meta.queues.startSF, message);
 }
 exports.queueWorkflowMessage = queueWorkflowMessage;

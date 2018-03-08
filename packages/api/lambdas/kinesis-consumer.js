@@ -74,7 +74,8 @@ async function validateMessage(event) {
  * create rules.
  *
  * @param {*} record - input to the kinesis stream
- * @returns {Promise} promise
+ * @returns {[Promises]} Array of promises. Each promise is resolved when a
+ * message is queued for all associated kinesis rules.
  */
 async function processRecord(record) {
   const dataBlob = record.kinesis.data;
@@ -101,7 +102,7 @@ async function processRecord(record) {
 function handler(event, context, cb) {
   const records = event.Records;
 
-  return Promise.all(records.map((r) => processRecord(r)))
+  return Promise.all(records.map(processRecord))
     .then((results) => cb(null, results.filter((r) => r !== undefined)))
     .catch((err) => {
       cb(JSON.stringify(err));
