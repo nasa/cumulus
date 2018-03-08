@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- added tools to @cumulus/integration-tests for local integration testing
+
 ### Updated
 - Broke up `kes.override.js` of @cumulus/deployment to multiple modules and moved to a new location
 - Expanded @cumulus/deployment test coverage
