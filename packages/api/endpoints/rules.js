@@ -5,9 +5,8 @@ const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { handle } = require('../lib/response');
 const models = require('../models');
-const { Search } = require('../es/search');
-const { deleteRecord, indexRule } = require('../es/indexer');
 const { RecordDoesNotExist } = require('../lib/errors');
+const { Search } = require('../es/search');
 
 /**
  * List all providers.
@@ -17,9 +16,7 @@ const { RecordDoesNotExist } = require('../lib/errors');
  */
 function list(event, cb) {
   const search = new Search(event, 'rule');
-  search.query().then(response => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+  search.query().then(response => cb(null, response)).catch(cb);
 }
 
 /**
@@ -36,7 +33,8 @@ function get(event, cb) {
     .then((res) => {
       delete res.password;
       cb(null, res);
-    }).catch((e) => cb(e));
+    })
+    .catch(cb);
 }
 
 /**
@@ -56,12 +54,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return model.create(data)
-          .then((r) => {
-            data = r;
-            return Search.es();
-          }).then(esClient => indexRule(esClient, data))
-            .then(() => cb(null, { message: 'Record saved', record: data }))
-            .catch(err => cb(err));
+          .then(r => cb(null, { message: 'Record saved', record: r }))
+          .catch(cb);
       }
       return cb(e);
     });
@@ -110,9 +104,7 @@ async function put(event) {
     return;
   }
 
-  data = await model.update(originalData, data);
-  const esClient = await Search.es();
-  await indexRule(esClient, data);
+  return model.update(originalData, data);
 }
 
 async function del(event) {
@@ -121,15 +113,12 @@ async function del(event) {
 
   name = name.replace(/%20/g, ' ');
 
-  const record = await model.get({ name });
-  await model.delete(record);
-  const esClient = await Search.es();
-  await deleteRecord(esClient, name, 'rule');
+  await model.get({ name }).then(record => model.delete(record));
   return { message: 'Record deleted' };
 }
 
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  return handle(event, context, !process.env.TEST /* authCheck */, cb => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
@@ -149,12 +138,3 @@ function handler(event, context) {
 }
 
 module.exports = handler;
-
-
-justLocalRun(() => {
-  //put({ pathParameters: { name: 'discover_aster' }, body: '{"action":"rerun"}' }).then(r => console.log(r)).catch(e => console.log(e)); // eslint-disable-line max-len
-  //handler(postPayload, {
-    //succeed: r => console.log(r),
-    //failed: e => console.log(e)
-  //}, (e, r) => console.log(e, r));
-});
