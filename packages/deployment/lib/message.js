@@ -2,6 +2,7 @@
 'use strict';
 
 const omit = require('lodash.omit');
+const get = require('lodash.get');
 
 /**
  * Because both kes and message adapter use Mustache for templating,
@@ -71,7 +72,9 @@ function extractCumulusConfigFromSF(config) {
  * @returns {string} the output value
  */
 function findOutputValue(outputs, key) {
-  return outputs.find((o) => (o.OutputKey === key)).OutputValue;
+  const output = outputs.find((o) => (o.OutputKey === key))
+  if (output) return output.OutputValue;
+  return undefined;
 }
 
 
@@ -89,6 +92,7 @@ function template(name, workflow, config, outputs) {
   // get cmr password from outputs
   const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
   const cmr = Object.assign({}, config.cmr, { password: cmrPassword });
+  const bucket = get(config, 'buckets.internal');
 
   // add the sns topic arn used for monitoring workflows
   const topicArn = findOutputValue(outputs, 'sftrackerSnsArn');
@@ -108,20 +112,22 @@ function template(name, workflow, config, outputs) {
 
   // add the cumulus message config of the current workflow
   const workflowConfig = {};
-  Object.keys(workflow.States).forEach((state) => {
+  const states = get(workflow, 'States', {});
+  Object.keys(states).forEach((state) => {
     workflowConfig[state] = config.workflowConfigs[name][state];
   });
 
   // add the s3 uri to all the workflow templates for teh current stack
   const templatesUris = {};
-  Object.keys(config.stepFunctions).forEach((sf) => {
-    templatesUris[sf] = `s3://${config.buckets.internal}/${config.stack}/workflows/${sf}.json`;
+  const stepFunctions = get(config, 'stepFunctions', {});
+  Object.keys(stepFunctions).forEach((sf) => {
+    templatesUris[sf] = `s3://${bucket}/${config.stack}/workflows/${sf}.json`;
   });
 
   const t = {
     cumulus_meta: {
       message_source: 'sfn',
-      system_bucket: config.buckets.internal,
+      system_bucket: bucket,
       state_machine: stateMachineArn,
       execution_name: null,
       workflow_start_time: null
