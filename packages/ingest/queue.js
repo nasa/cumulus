@@ -43,9 +43,7 @@ async function enqueueParsePdrMessage(
   message.meta.provider = provider;
   message.meta.collection = collection;
 
-  message.payload = {
-    pdr
-  };
+  message.payload = { pdr };
 
   return sendSQSMessage(queueUrl, message);
 }
