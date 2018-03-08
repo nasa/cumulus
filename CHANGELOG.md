@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `@cumulus/deployment` deploys DynamoDB streams for the Collections, Providers and Rules tables as well as a new lambda function called `dbIndexer`. The `dbIndexer` lambda has an event source mapping which listens to each of the DynamoDB streams. The dbIndexer lambda receives events referencing operations on the DynamoDB table and updates the elasticsearch cluster accordingly.
   - The `@cumulus/api` endpoints for collections, providers and rules _only_ query DynamoDB, with the exception of LIST endpoints and the collections' GET endpoint.
 
+## [v1.1.1] - 2018-03-08
+
+### Removed
+- Unused queue lambda in api/lambdas [CUMULUS-359]
+
+### Fixed
+- Kinesis message content is passed to the triggered workflow [CUMULUS-359]
+- Kinesis message queues a workflow message and does not write to rules table [CUMULUS-359]
+
 ## [v1.1.0] - 2018-03-05
 
 ### Added
@@ -45,7 +54,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...HEAD
+[v1.1.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.1
 [v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/cumulus-nasa/cumulus/compare/pre-v1-release...v1.0.0
