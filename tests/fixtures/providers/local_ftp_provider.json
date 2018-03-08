@@ -1,0 +1,8 @@
+{
+    "id": "MODAPS",
+    "protocol": "sftp",
+    "host": "localhost",
+    "port": 2222,
+    "username": "user",
+    "password": "password"
+}
