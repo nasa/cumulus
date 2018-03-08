@@ -89,7 +89,7 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ### Update the Cumulus Version number
 
-Every Pull Request that makes a change to the cumulus code base must update the Cumulus version number using semantic versioning.
+When changes are ready to be released, the Cumulus version number must be updated using semantic versioning.
 
 Lerna handles the process of deciding which version number should be used as long as the developer decides whether the change is a patch or a minor/major change.
 
@@ -97,11 +97,11 @@ To update cumulus' version number run:
 
      $ npm run update
 
-You will be prompted to select the type of change (patch/minor/major). Until the final version 1.0.0 of cumulus is released, you MUST select `prerelease` from the list.
+You will be prompted to select the type of change (patch/minor/major). 
 
-Lerna will update the version of all packages after the selection. You then have to commit the changes that are made by Lerna.
+Lerna will update the version of all packages after the selection. You then have to commit the changes that are made by Lerna. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the a version number and the date. Commit these changes as well.
 
-This must be the final step of your PR submission. Any PR submission that does not include a version update will be rejected.
+The version number updates should be put in a PR and committed to master along with the changelog updates. After merging to master, tag the master branch with a release using the new version number.
 
 ### Publishing to NPM
 
