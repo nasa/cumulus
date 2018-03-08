@@ -123,7 +123,7 @@ test.afterEach(async (t) => {
 
 // getKinesisRule tests
 // eslint-disable-next-line max-len
-test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', (t) => {
+test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', (t) => {
   return getKinesisRules(JSON.parse(eventData))
     .then((result) => {
       t.is(result.length, 2);
@@ -131,7 +131,7 @@ test.serial('it should look up kinesis-type rules which are associated with the 
 });
 
 // handler tests
-test.serial('it should create a onetime rule for each associated workflow', async (t) => {
+test('it should enqueue a message for each associated workflow', async (t) => {
   await handler(event, {}, testCallback);
   await sqs().receiveMessage({
     QueueUrl: t.context.queueUrl,
@@ -146,7 +146,7 @@ test.serial('it should create a onetime rule for each associated workflow', asyn
   });
 });
 
-test.serial('it should throw an error if message does not include a collection', (t) => {
+test('it should throw an error if message does not include a collection', (t) => {
   const invalidMessage = JSON.stringify({});
   const kinesisEvent = {
     Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
@@ -159,7 +159,7 @@ test.serial('it should throw an error if message does not include a collection',
     });
 });
 
-test.serial('it should throw an error if message collection has wrong data type', (t) => {
+test('it should throw an error if message collection has wrong data type', (t) => {
   const invalidMessage = JSON.stringify({ collection: {} });
   const kinesisEvent = {
     Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
@@ -172,7 +172,7 @@ test.serial('it should throw an error if message collection has wrong data type'
     });
 });
 
-test.serial('it should not throw if message is valid', (t) => {
+test('it should not throw if message is valid', (t) => {
   const validMessage = JSON.stringify({ collection: 'confection-collection' });
   const kinesisEvent = {
     Records: [{ kinesis: { data: new Buffer(validMessage).toString('base64') } }]
