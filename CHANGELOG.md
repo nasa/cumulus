@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.1.1] - 2018-03-08
+
 ### Removed
 - Unused queue lambda in api/lambdas [CUMULUS-359]
 
