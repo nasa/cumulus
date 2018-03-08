@@ -37,6 +37,7 @@
     "fs-extra": "^5.0.0",
     "kes": "~2.1.2",
     "lodash.omit": "4.5.0",
+    "lodash.get": "^4.4.2",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "request": "^2.83.0"
