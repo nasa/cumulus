@@ -1,6 +1,15 @@
 default:
 
   apiDeploy: true
+  dynamo2ElasticSearch:
+    batchSize: 10
+    startingPosition: TRIM_HORIZON
+    lambda: dbIndexer
+    tables:
+      - CollectionsTable
+      - RulesTable
+      - ProvidersTable
+
   apis:
     - name: distribution
     - name: backend
