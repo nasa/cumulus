@@ -52,7 +52,7 @@ async function queueMessageForRule(kinesisRule, eventObject) {
   };
 
   return Rule.buildPayload(item)
-    .then((payload) => queueWorkflowMessage(payload));
+    .then(queueWorkflowMessage);
 }
 
 /**
@@ -71,13 +71,13 @@ async function validateMessage(event) {
 
 /**
  * Process data sent to a kinesis stream. Validate the data and
- * create rules.
+ * queue a workflow message for each rule.
  *
  * @param {*} record - input to the kinesis stream
  * @returns {[Promises]} Array of promises. Each promise is resolved when a
  * message is queued for all associated kinesis rules.
  */
-async function processRecord(record) {
+function processRecord(record) {
   const dataBlob = record.kinesis.data;
   const dataString = Buffer.from(dataBlob, 'base64').toString();
   const eventObject = JSON.parse(dataString);
@@ -91,8 +91,8 @@ async function processRecord(record) {
 
 /**
  * `handler` Looks up enabled 'kinesis'-type rules associated with the collection
- * in the event argument. It creates new onetime rules for each rule found to trigger
- * the workflow defined in the 'kinesis'-type rule.
+ * in the event argument. It enqueues a message for each kinesis-type rule to trigger
+ * the associated workflow.
  *
  * @param {*} event - lambda event
  * @param {*} context - lambda context
