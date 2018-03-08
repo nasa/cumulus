@@ -44,6 +44,10 @@ class Manager {
       ProvisionedThroughput: {
         ReadCapacityUnits: 5,
         WriteCapacityUnits: 5
+      },
+      StreamSpecification: {
+        StreamEnabled: true,
+        StreamViewType: 'NEW_IMAGE'
       }
     };
 
@@ -168,7 +172,7 @@ class Manager {
         Item: item
       };
 
-      await this.dynamodbDocClient.put(params).promise();
+      await aws.dynamodbDocClient().put(params).promise();
     };
 
     if (items instanceof Array) {
