@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `@cumulus/deployment` deploys DynamoDB streams for the Collections, Providers and Rules tables as well as a new lambda function called `dbIndexer`. The `dbIndexer` lambda has an event source mapping which listens to each of the DynamoDB streams. The dbIndexer lambda receives events referencing operations on the DynamoDB table and updates the elasticsearch cluster accordingly.
   - The `@cumulus/api` endpoints for collections, providers and rules _only_ query DynamoDB, with the exception of LIST endpoints and the collections' GET endpoint.
 
+### Updated
+- Broke up `kes.override.js` of @cumulus/deployment to multiple modules and moved to a new location
+- Expanded @cumulus/deployment test coverage
+- all tasks were updated to use cumulus-message-adapter-js 1.0.1
+
 ## [v1.1.1] - 2018-03-08
 
 ### Removed
