@@ -41,4 +41,8 @@ Improve contributing guidelines. Fixes #10
 Improve contributing docs and consolidate them in the standard location https://help.github.com/articles/setting-guidelines-for-repository-contributors/
 ```
 
+### Changelog
+
+Changes should be documented in CHANGELOG.md. Update the changelog with a description of the changes, including the JIRA issue number. The format should follow [this standard](http://keepachangelog.com/en/1.0.0/).
+
 ### For more information on Cumulus governance, see the [Cumulus Code Contribution Guidelines](https://docs.google.com/document/d/14J_DS6nyQ32BpeVjdR-YKfzHAzFB299tKghPGshXUTU/edit) and [the Cumulus Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus).
