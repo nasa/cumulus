@@ -97,7 +97,7 @@ To update cumulus' version number run:
 
      $ npm run update
 
-You will be prompted to select the type of change (patch/minor/major). Until the final version 1.0.0 of cumulus is released, you MUST select `prerelease` from the list.
+You will be prompted to select the type of change (patch/minor/major). 
 
 Lerna will update the version of all packages after the selection. You then have to commit the changes that are made by Lerna.
 
