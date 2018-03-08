@@ -7,7 +7,7 @@ const utils = require('kes').utils;
 const { Lambda } = require('kes');
 
 /**
- * A sub-class of Kes' Lambda class that changes
+ * A sub-class of the Kes Lambda class that changes
  * how kes handles Lambda function compression and
  * upload to S3.
  *
@@ -28,7 +28,7 @@ class UpdatedLambda extends Lambda {
     this.config = config;
   }
   /**
-   * Copy source code of a given lambda function, zips it, calculate
+   * Copies the source code of a given lambda function, zips it, calculates
    * the hash of the source code and updates the lambda object with
    * the hash, local and remote locations of the code
    *
