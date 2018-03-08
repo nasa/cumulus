@@ -13,7 +13,7 @@ function indexRecord(esClient, record) {
     return Promise.resolve();
   }
 
-  let stack = process.env.stackName;
+  const stack = process.env.stackName;
 
   //determine whether the record should be indexed
   const acceptedTables = ['Collection', 'Provider', 'Rule'];
