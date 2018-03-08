@@ -6,11 +6,11 @@ const request = require('request');
 const extract = require('extract-zip');
 
 /**
- * `downloadZipfile` downloads zipfile from remote location and stores on disk
+ * `downloadZipfile` downloads zip file from remote location and stores on disk
  *
  * @param {string} fileUrl - URL file location
  * @param {string} localFilename - Where to store file locally
- * @returns {Promise} undefined
+ * @returns {Promise} - resolves `undefined` when download is completed
  */
 function downloadZipfile(fileUrl, localFilename) {
   const file = fs.createWriteStream(localFilename);
@@ -44,7 +44,7 @@ function downloadZipfile(fileUrl, localFilename) {
  *
  * @param {string} filename - the zip file to extract
  * @param {string} dst - the destination to extract the file
- * @returns {Promise} the path of the extracted zip
+ * @returns {Promise.<string>} the path of the extracted zip
  */
 function extractZipFile(filename, dst) {
   // create the destination folder it doesn't exist
@@ -62,7 +62,7 @@ function extractZipFile(filename, dst) {
  * Fetches the latest release version of the cumulus message adapter
  *
  * @param {string} gitPath - path to the cumulus message adapter repo
- * @returns {Promise} Promise resolution is string of latest github release, e.g. 'v0.0.1'
+ * @returns {Promise.<string>} Promise resolution is string of latest github release, e.g. 'v0.0.1'
  */
 function fetchLatestMessageAdapterRelease(gitPath) {
   const options = {

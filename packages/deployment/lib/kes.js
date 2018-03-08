@@ -1,9 +1,9 @@
 /* eslint-disable no-console, no-param-reassign */
 /**
- * This module override the Kes Class and the Lambda class of Kes
+ * This module overrides the Kes Class and the Lambda class of Kes
  * to support specific needs of the Cumulus Deployment.
  *
- * In Specific, this module change the default Kes Deployment in the following ways:
+ * Specifically, this module changes the default Kes Deployment in the following ways:
  *
  * - Adds the ability to add Cumulus Configuration for each Step Function Task
  *    - @fixCumulusMessageSyntax
@@ -33,12 +33,12 @@ const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
 /**
  * A subclass of Kes class that overrides opsStack method.
- * The subclass is checks whether the public/private keys are generated
+ * The subclass checks whether the public/private keys are generated
  * and uploaded to the deployment bucket. If not, they are generated and
  * uploaded.
  *
  * After the successful deployment of a CloudFormation template, the subclass
- * generates and uploads payload and StepFunction templates and restart ECS
+ * generates and uploads payload and StepFunction templates and restarts ECS
  * tasks if there is an active cluster with running tasks.
  *
  * @class UpdatedKes
@@ -117,7 +117,7 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Override CF compilation to inject Sled
+   * Override CF compilation to inject cumulus message adapter
    *
    * @returns {Promise} returns the promise of an AWS response object
    */
