@@ -43,7 +43,7 @@
   "dependencies": {
     "@cumulus/cmrjs": "^1.1.0",
     "@cumulus/common": "^1.1.0",
-    "@cumulus/cumulus-message-adapter-js": "~0.0.1-beta.3",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.1",
     "@cumulus/ingest": "^1.1.1",
     "@cumulus/test-data": "^1.1.0",
     "babel-core": "^6.25.0",
