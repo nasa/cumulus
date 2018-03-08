@@ -64,7 +64,7 @@ function extractCumulusConfigFromSF(config) {
 }
 
 /**
- * Returns the OutputValue of a CloudFormation Outputs
+ * Returns the OutputValue of a CloudFormation Output
  *
  * @param {Object} outputs - list of CloudFormation Outputs
  * @param {string} key - the key to return the value of
@@ -153,7 +153,7 @@ function template(name, workflow, config, outputs) {
 }
 
 /**
- * Generate a Cumulus Message templates for the all the workflows
+ * Generate a Cumulus Message templates for all the workflows
  * in the stack and upload to s3
  *
  * @param {Object} config - Kes config object
