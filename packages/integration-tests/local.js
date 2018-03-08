@@ -47,26 +47,26 @@ function deleteCMAFromTasks(workflow, cmaFolder) {
  * @param {Object} workflow - a test workflow object
  * @param {Object} collection - the cumulus collection object
  * @param {Object} provider - the cumulus provider object
- * @param {string} bucket - the name of the s3 bucket used by system_bucket
+ * @param {Object} configOverride - a cumulus config override object
+ * @param {Array} cfOutputs - mocked outputs of a CloudFormation template
  * @returns {Object} the generated cumulus message
  */
-function messageBuilder(workflow, collection, provider, bucket) {
+function messageBuilder(workflow, collection, provider, configOverride, cfOutputs) {
   const workflowConfigs = {}
   workflow.steps.forEach((step) => {
     workflowConfigs[step.name] = step.cumulusConfig;
   });
 
   const config = {
-    buckets: {
-      internal: bucket
-    },
     stackName: 'somestack',
+    stack: 'somestack', 
     workflowConfigs: {
       [workflow.name]: workflowConfigs
     }
   };
+  Object.assign(config, configOverride);
 
-  const message = template(workflow.name, { States: workflowConfigs }, config, []);
+  const message = template(workflow.name, { States: workflowConfigs }, config, cfOutputs);
   message.meta.provider = provider;
   message.meta.collection = collection;
   message.cumulus_meta.message_source = 'local';
@@ -119,15 +119,11 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
  * one after each other
  *
  * @param {Object} workflow - a test workflow object
- * @param {Object} collection - the cumulus collection object
- * @param {Object} provider - the cumulus provider object
- * @param {string} bucket - the name of the s3 bucket used by system_bucket
+ * @param {Object} message - input message to the workflow
  * @returns {Promise.<Object>} an object that includes the workflow input/output
  *  plus the output of every step
  */
-async function runWorkflow(workflow, collection, provider, bucket) {
-  // build the input message
-  const message = messageBuilder(workflow, collection, provider, bucket);
+async function runWorkflow(workflow, message) {
   const trail = {
     input: clone(message),
     stepOutputs: {},
@@ -149,5 +145,6 @@ module.exports = {
   copyCMAToTasks,
   deleteCMAFromTasks,
   runStep,
-  runWorkflow
+  runWorkflow,
+  messageBuilder
 };
