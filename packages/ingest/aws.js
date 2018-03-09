@@ -67,7 +67,7 @@ function getExecutionUrl(executionArn) {
 }
 
 async function invoke(name, payload, type = 'Event') {
-  if (process.env.IS_LOCAL) {
+  if (process.env.IS_LOCAL || process.env.TEST) {
     log.info(`Faking Lambda invocation for ${name}`);
     return false;
   }
@@ -98,7 +98,7 @@ function sqs(local) {
 
 class Events {
   static async putEvent(name, schedule, state, description = null, role = null) {
-    const cwevents = new AWS.CloudWatchEvents();
+    const cwevents = new aws.cloudwatchevents();
 
     const params = {
       Name: name,
@@ -198,8 +198,6 @@ class S3 {
   }
 
   static async put(bucket, key, body, acl = 'private', meta = null) {
-    const s3 = new AWS.S3();
-
     const params = {
       Bucket: bucket,
       Key: key,
@@ -211,7 +209,7 @@ class S3 {
       params.Metadata = meta;
     }
 
-    return s3.putObject(params).promise();
+    return aws.s3().putObject(params).promise();
   }
 
   static async get(bucket, key) {

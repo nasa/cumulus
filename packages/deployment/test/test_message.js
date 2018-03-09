@@ -1,11 +1,15 @@
 
 const test = require('ava');
-const kes = require('../app/kes.override');
+const {
+  extractCumulusConfigFromSF,
+  fixCumulusMessageSyntax,
+  template
+} = require('../lib/message');
 const exampleConfig = require('./fixtures/config.json');
 const exampleOutputs = require('./fixtures/outputs.json');
 
 test('test cumulus message syntax fix', (t) => {
-  const fix = kes.fixCumulusMessageSyntax;
+  const fix = fixCumulusMessageSyntax;
   const testObj = {
     someKey: 'myKey{meta.stack}end',
     stack: '{$.meta.stack}',
@@ -23,7 +27,7 @@ test('test cumulus message syntax fix', (t) => {
 });
 
 test('handing CumulusConfig in workflows', (t) => {
-  const getConfig = kes.extractCumulusConfigFromSF;
+  const getConfig = extractCumulusConfigFromSF;
   const testObj = {
     stepFunctions: {
       DiscoverPdrs: {
@@ -67,7 +71,6 @@ test('handing CumulusConfig in workflows', (t) => {
 });
 
 test('generate a template', (t) => {
-  const template = kes.template;
   const tt = template(
     'DiscoverPdrs',
     exampleConfig.stepFunctions.DiscoverPdrs,
