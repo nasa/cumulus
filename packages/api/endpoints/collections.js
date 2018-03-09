@@ -8,7 +8,6 @@ const models = require('../models');
 const Collection = require('../es/collections');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 const examplePayload = require('../tests/data/collections_post.json');
-const { indexCollection, deleteRecord } = require('../es/indexer');
 
 /**
  * List all collections.
@@ -18,9 +17,7 @@ const { indexCollection, deleteRecord } = require('../es/indexer');
  */
 function list(event, cb) {
   const collection = new Collection(event);
-  collection.query().then(res => cb(null, res)).catch((e) => {
-    cb(e);
-  });
+  collection.query().then(res => cb(null, res)).catch(cb);
 }
 
 /**
@@ -37,8 +34,9 @@ function get(event, cb) {
     .then((res) => {
       const collection = new Collection(event);
       return collection.getStats([res], [res.name]);
-    }).then(res => cb(null, res[0]))
-      .catch((e) => cb(e));
+    })
+    .then(res => cb(null, res[0]))
+    .catch(cb);
 }
 
 /**
@@ -63,10 +61,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return c.create(data)
-          .then(() => Collection.es())
-          .then(esClient => indexCollection(esClient, data))
           .then(() => cb(null, { message: 'Record saved', record: data }))
-          .catch(err => cb(err));
+          .catch(cb);
       }
       return cb(e);
     });
@@ -94,11 +90,11 @@ function put(event, cb) {
   const c = new models.Collection();
 
   // get the record first
-  return c.get({ name, version }).then((originalData) => {
-    data = Object.assign({}, originalData, data);
-    return c.create(data);
-  }).then(() => Collection.es())
-    .then(esClient => indexCollection(esClient, data))
+  return c.get({ name, version })
+    .then((originalData) => {
+      data = Object.assign({}, originalData, data);
+      return c.create(data);
+    })
     .then(() => cb(null, data))
     .catch((err) => {
       if (err instanceof RecordDoesNotExist) {
@@ -111,24 +107,22 @@ function put(event, cb) {
 function del(event, cb) {
   const name = _get(event.pathParameters, 'collectionName');
   const version = _get(event.pathParameters, 'version');
-  const id = `${name}___${version}`;
   const c = new models.Collection();
 
   return c.get({ name, version })
     .then(() => c.delete({ name, version }))
-    .then(() => Collection.es())
-    .then((esClient) => deleteRecord(esClient, id, 'collection'))
     .then(() => cb(null, { message: 'Record deleted' }))
-    .catch(e => cb(e));
+    .catch(cb);
 }
 
 function handler(event, context) {
   const httpMethod = _get(event, 'httpMethod');
+
   if (!httpMethod) {
     return context.fail('HttpMethod is missing');
   }
 
-  return handle(event, context, true, (cb) => {
+  return handle(event, context, !process.env.TEST /* authCheck */, cb => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
