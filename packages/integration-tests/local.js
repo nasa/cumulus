@@ -45,30 +45,26 @@ function deleteCMAFromTasks(workflow, cmaFolder) {
  * Build a cumulus message for a given workflow
  *
  * @param {Object} workflow - a test workflow object
- * @param {Object} collection - the cumulus collection object
- * @param {Object} provider - the cumulus provider object
  * @param {Object} configOverride - a cumulus config override object
  * @param {Array} cfOutputs - mocked outputs of a CloudFormation template
  * @returns {Object} the generated cumulus message
  */
-function messageBuilder(workflow, collection, provider, configOverride, cfOutputs) {
+function messageBuilder(workflow, configOverride, cfOutputs) {
   const workflowConfigs = {}
   workflow.steps.forEach((step) => {
     workflowConfigs[step.name] = step.cumulusConfig;
   });
 
   const config = {
-    stackName: 'somestack',
     stack: 'somestack', 
     workflowConfigs: {
       [workflow.name]: workflowConfigs
     }
   };
   Object.assign(config, configOverride);
+  config.stackName = config.stack;
 
   const message = template(workflow.name, { States: workflowConfigs }, config, cfOutputs);
-  message.meta.provider = provider;
-  message.meta.collection = collection;
   message.cumulus_meta.message_source = 'local';
   return message;
 }
@@ -102,9 +98,12 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
     const moduleFunctionName = moduleFn[1];
     const task = require(`${taskFullPath}/${moduleFileName}`);
 
+    console.log(`Started execution of ${stepName}`);
+
     return new Promise((resolve, reject) => {
       task[moduleFunctionName](message, {}, (e, r) => {
         if (e) return reject(e);
+        console.log(`Completed execution of ${stepName}`);
         return resolve(r);
       });
     });
