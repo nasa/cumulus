@@ -85,7 +85,7 @@ test.serial('Discover and queue PDRs with FTP provider', async (t) => {
   await copyCMAToTasks(workflow, context.dest, cmaFolder);
 
   input.meta.collection = collections[workflow.collection];
-  input.meta.provider = providers.ftp;
+  input.meta.provider = providers.sftp;
   const msg = await runWorkflow(workflow, input);
 
   // discover-pdr must return a list of PDRs
