@@ -40,6 +40,18 @@ sf2snsEnd:
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
 
+dbIndexer:
+  handler: index.dbIndexer
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    ES_HOST:
+      function: "Fn::GetAtt"
+      array:
+        - '{{es.name}}Domain'
+        - DomainEndpoint
+
 kinesisConsumer:
   handler: index.kinesisConsumer
   timeout: 100
