@@ -5,7 +5,6 @@ const aws = require('@cumulus/common/aws');
 const { IncompleteError } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const indexer = require('@cumulus/api/es/indexer');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
@@ -79,7 +78,8 @@ function logStatus(output) {
  *     failed: [
  *       { arn: 'arn:456', reason: 'Workflow Aborted' }
  *     ],
- *     completed: []
+ *     completed: [],
+ *     pdr: {}
  *   }
  *
  * @param {Object} event - the event that came into checkPdrStatuses
@@ -131,20 +131,6 @@ function buildOutput(event, groupedExecutions) {
 }
 
 /**
- * update stats of the pdr in elasticsearch
- *
- * @param {Object} payload - the result of the pdr-status-check
- * @returns {Promise.<Object>} - elasticsearch update response
- */
-async function updatePdrStatuses(payload) {
-  const stats = {
-    processing: payload.running.length,
-    completed: payload.completed.length,
-    failed: payload.failed.length
-  };
-  await indexer.partialRecordUpdate(null, payload.pdr.name, 'pdr', { stats });
-}
-/**
  * Checks a list of Step Function Executions to see if they are all in
  * terminal states.
  *
@@ -163,9 +149,8 @@ async function checkPdrStatuses(event) {
       executions.push(execution);
     }
     catch (e) {
-      log.debug(e);
       // it's ok if a execution is still in the queue and has not be executed
-      if (e.errorType === 'ExecutionDoesNotExist') {
+      if (e.code === 'ExecutionDoesNotExist') {
         executions.push({ executionArn: executionArn, status: 'RUNNING' });
       }
       else throw e;
@@ -183,9 +168,6 @@ async function checkPdrStatuses(event) {
 
   const output = buildOutput(event, groupedExecutions);
   if (!output.isFinished) logStatus(output);
-  const response = await updatePdrStatuses(output);
-  log.debug(response);
-  //await updatePdrStatuses(output);
   return output;
 }
 exports.checkPdrStatuses = checkPdrStatuses;

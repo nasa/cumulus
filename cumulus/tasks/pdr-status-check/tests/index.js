@@ -4,12 +4,7 @@ const _ = require('lodash');
 const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
-const indexer = require('@cumulus/api/es/indexer');
 const { checkPdrStatuses } = require('../index');
-
-test.before(() => {
-  sinon.stub(indexer, 'partialRecordUpdate');
-});
 
 test('valid output when no running executions', (t) => {
   const event = {
@@ -73,9 +68,8 @@ test('returns the correct results in the nominal case', (t) => {
     'arn:7': null
   };
   const error = {
-    errorMessage: 'Execution Does Not Exist:arn',
-    errorType: 'ExecutionDoesNotExist',
-    stackTrace: []
+    message: 'Execution Does Not Exist: arn',
+    code: 'ExecutionDoesNotExist'
   };
 
   const stubSfnClient = {
