@@ -1,24 +1,24 @@
 {
-    "ftp": {
-        "id": "ftp",
-        "protocol": "ftp",
-        "host": "localhost",
-        "username": "testuser",
-        "password": "testpass"
-    },
-    "http": {
-        "id": "http",
-        "protocol": "http",
-        "host": "http://localhost:3030",
-        "username": "fake",
-        "password": "fake"
-    },
-    "sftp": {
-        "id": "MODAPS",
-        "protocol": "sftp",
-        "host": "localhost",
-        "port": 2222,
-        "username": "user",
-        "password": "password"
-    }
+  "ftp": {
+    "id": "ftp",
+    "protocol": "ftp",
+    "host": "localhost",
+    "username": "testuser",
+    "password": "testpass"
+  },
+  "http": {
+    "id": "http",
+    "protocol": "http",
+    "host": "http://localhost:3030",
+    "username": "fake",
+    "password": "fake"
+  },
+  "sftp": {
+    "id": "MODAPS",
+    "protocol": "sftp",
+    "host": "localhost",
+    "port": 2222,
+    "username": "user",
+    "password": "password"
+  }
 }
