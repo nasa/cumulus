@@ -5,6 +5,7 @@ const aws = require('@cumulus/common/aws');
 const { IncompleteError } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
+const indexer = require('@cumulus/api/es/indexer');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
@@ -130,6 +131,20 @@ function buildOutput(event, groupedExecutions) {
 }
 
 /**
+ * update stats of the pdr in elasticsearch
+ *
+ * @param {Object} payload - the result of the pdr-status-check
+ * @returns {Promise.<Object>} - elasticsearch update response
+ */
+async function updatePdrStatuses(payload) {
+  const stats = {
+    processing: payload.running.length,
+    completed: payload.completed.length,
+    failed: payload.failed.length
+  };
+  await indexer.partialRecordUpdate(null, payload.pdr.name, 'pdr', { stats });
+}
+/**
  * Checks a list of Step Function Executions to see if they are all in
  * terminal states.
  *
@@ -138,28 +153,40 @@ function buildOutput(event, groupedExecutions) {
  * @returns {Promise.<Object>} - an object describing the status of Step
  *   Function executions related to a PDR
  */
-function checkPdrStatuses(event) {
+async function checkPdrStatuses(event) {
   const runningExecutionArns = event.input.running || [];
 
-  const promisedExecutionDescriptions = runningExecutionArns.map((executionArn) =>
-    aws.sfn().describeExecution({ executionArn }).promise());
-
-  return Promise.all(promisedExecutionDescriptions)
-    .then(groupExecutionsByStatus)
-    .then((groupedExecutions) => {
-      const counter = getCounterFromEvent(event) + 1;
-      const exceededLimit = counter >= getLimitFromEvent(event);
-
-      const executionsAllDone = groupedExecutions.running.length === 0;
-
-      if (!executionsAllDone && exceededLimit) {
-        throw new IncompleteError(`PDR didn't complete after ${counter} checks`);
+  const executions = [];
+  for (const executionArn of runningExecutionArns) {
+    try {
+      const execution = await aws.sfn().describeExecution({ executionArn }).promise();
+      executions.push(execution);
+    }
+    catch (e) {
+      log.debug(e);
+      // it's ok if a execution is still in the queue and has not be executed
+      if (e.errorType === 'ExecutionDoesNotExist') {
+        executions.push({ executionArn: executionArn, status: 'RUNNING' });
       }
+      else throw e;
+    }
+  }
 
-      const output = buildOutput(event, groupedExecutions);
-      if (!output.isFinished) logStatus(output);
-      return output;
-    });
+  const groupedExecutions = groupExecutionsByStatus(executions);
+  const counter = getCounterFromEvent(event) + 1;
+  const exceededLimit = counter >= getLimitFromEvent(event);
+
+  const executionsAllDone = groupedExecutions.running.length === 0;
+  if (!executionsAllDone && exceededLimit) {
+    throw new IncompleteError(`PDR didn't complete after ${counter} checks`);
+  }
+
+  const output = buildOutput(event, groupedExecutions);
+  if (!output.isFinished) logStatus(output);
+  const response = await updatePdrStatuses(output);
+  log.debug(response);
+  //await updatePdrStatuses(output);
+  return output;
 }
 exports.checkPdrStatuses = checkPdrStatuses;
 
