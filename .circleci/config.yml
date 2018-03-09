@@ -16,12 +16,12 @@ jobs:
             - core-
 
       - run:
-          name: core installation 
+          name: core installation
           command: |
             yarn install
 
             # generate global hash
-            ./node_modules/.bin/lerna exec --concurrency 1 -- sha1sum package.json | awk '{print $1}' '' >> /home/circleci/project/global-hash 
+            ./node_modules/.bin/lerna exec --concurrency 1 -- sha1sum package.json | awk '{print $1}' '' >> /home/circleci/project/global-hash
 
       - save_cache:
           paths:
@@ -115,18 +115,18 @@ jobs:
             - ./cumulus/tasks/discover-pdr/node_modules
             - ./cumulus/tasks/generate-pdr-file-list/node_modules
             - ./cumulus/tasks/validate-pdr/node_modules
-      
+
       - save_cache:
           key: services-{{ checksum "global-hash" }}
           paths:
             - ./cumulus/services/sfn-scheduler/node_modules
             - ./cumulus/services/sfn-throttler/node_modules
 
-      # - run:
-      #     name: Running Test
-      #     environment:
-      #       LOCALSTACK_HOST: localstack
-      #     command: yarn test
+      - run:
+          name: Running Test
+          environment:
+            LOCALSTACK_HOST: localstack
+          command: yarn test
 
       - run:
           name: Running eslint-ratchet
