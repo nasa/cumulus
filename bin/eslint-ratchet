@@ -10,7 +10,7 @@ if [ "$ARG" != "" ] && [ "$ARG" != "ci" ]; then
 fi
 
 PREV=$(< .eslint-ratchet-high-water-mark)
-NOW=$(eslint --format unix . | tail -n 1 | awk '{ print $1 }')
+NOW=$(./node_modules/.bin/eslint --format unix . | tail -n 1 | awk '{ print $1 }')
 
 # If there are more errors now than there used to be, fail
 if (( NOW > PREV )); then

@@ -67,7 +67,7 @@ jobs:
 
       - run:
           name: Running eslint-ratchet
-          command: ./bin/eslint-ratchet
+          command: ./bin/eslint-ratchet ci
 
   build_and_publish:
     docker:
