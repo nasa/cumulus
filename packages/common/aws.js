@@ -501,6 +501,52 @@ exports.sendSQSMessage = (queueUrl, message) => {
 };
 
 /**
+ * Receives SQS messages from a given queue. The number of messages received
+ * can be set and the timeout is also adjustable.
+ *
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {integer} numOfMessages - number of messages to read from the queue
+ * @param {integer} timeout - number of seconds it takes for a message to timeout
+ * @returns {Promise.<Array>} an array of messages
+ */
+exports.receiveSQSMessages = async (queueUrl, numOfMessages = 1, timeout = 30) => {
+  const params = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All'],
+    VisibilityTimeout: timeout,
+    MaxNumberOfMessages: numOfMessages
+  };
+
+  const messages = await exports.sqs().receiveMessage(params).promise();
+
+  // convert body from string to js object
+  if (Object.prototype.hasOwnProperty.call(messages, 'Messages')) {
+    messages.Messages.forEach((mes) => {
+      mes.Body = JSON.parse(mes.Body); // eslint-disable-line no-param-reassign
+    });
+
+    return messages.Messages;
+  }
+  return [];
+};
+
+/**
+ * Delete a given SQS message from a given queue.
+ *
+ * @param {string} queueUrl - url of the SQS queue
+ * @param {integer} receiptHandle - the unique identifier of the sQS message
+ * @returns {Promise} an AWS SQS response
+ */
+exports.deleteSQSMessage = async (queueUrl, receiptHandle) => {
+  const params = {
+    QueueUrl: queueUrl,
+    ReceiptHandle: receiptHandle
+  };
+
+  return exports.sqs().deleteMessage(params).promise();
+};
+
+/**
  * Returns execution ARN from a statement machine Arn and executionName
  *
  * @param {string} stateMachineArn state machine ARN
