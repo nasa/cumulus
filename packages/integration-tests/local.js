@@ -7,7 +7,28 @@
 const path = require('path');
 const fs = require('fs-extra');
 const clone = require('lodash.clonedeep');
+const { randomString } = require('@cumulus/common/test-utils');
 const { template } = require('@cumulus/deployment/lib/message');
+const { fetchMessageAdapter } = require('@cumulus/deployment/lib/adapter');
+
+/**
+ * Download cumulus message adapter (CMA) and unzip it
+ *
+ * @param {string} version - cumulus message adapter version number (optional)
+ * @returns {Promise.<Object>} an object with path to the zip and extracted CMA
+ */
+async function downloadCMA(version) {
+  // download and unzip the message adapter
+  const gitPath = 'cumulus-nasa/cumulus-message-adapter';
+  const filename = 'cumulus-message-adapter.zip';
+  const src = path.join(process.cwd(), 'tests', `${randomString()}.zip`);
+  const dest = path.join(process.cwd(), 'tests', randomString());
+  await fetchMessageAdapter(version, gitPath, filename, src, dest);
+  return {
+    src,
+    dest
+  };
+}
 
 /**
  * Copy cumulus message adapter python folder to each task
@@ -50,13 +71,13 @@ function deleteCMAFromTasks(workflow, cmaFolder) {
  * @returns {Object} the generated cumulus message
  */
 function messageBuilder(workflow, configOverride, cfOutputs) {
-  const workflowConfigs = {}
+  const workflowConfigs = {};
   workflow.steps.forEach((step) => {
     workflowConfigs[step.name] = step.cumulusConfig;
   });
 
   const config = {
-    stack: 'somestack', 
+    stack: 'somestack',
     workflowConfigs: {
       [workflow.name]: workflowConfigs
     }
@@ -73,7 +94,7 @@ function messageBuilder(workflow, configOverride, cfOutputs) {
  * Runs a given workflow step (task)
  *
  * @param {string} lambdaPath - the local path to the task (e.g. path/to/task)
- * @param {string} lambdaHandler - the lambda handler (e.g. index.hanlder) 
+ * @param {string} lambdaHandler - the lambda handler (e.g. index.hanlder)
  * @param {Object} message - the cumulus message input for the task
  * @param {string} stepName - name of the step/task
  * @returns {Promise.<Object>} the cumulus message returned by the task
@@ -82,7 +103,6 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
   const taskFullPath = path.join(process.cwd(), lambdaPath);
   const src = path.join(taskFullPath, 'adapter.zip');
   const dest = path.join(taskFullPath, 'cumulus-message-adapter');
-  let resp;
 
   process.env.CUMULUS_MESSAGE_ADAPTER_DIR = dest;
 
@@ -90,13 +110,11 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
   message.cumulus_meta.task = stepName;
 
   try {
-    // add message adapter to task folder
-
     // run the task
     const moduleFn = lambdaHandler.split('.');
     const moduleFileName = moduleFn[0];
     const moduleFunctionName = moduleFn[1];
-    const task = require(`${taskFullPath}/${moduleFileName}`);
+    const task = require(`${taskFullPath}/${moduleFileName}`); // eslint-disable-line global-require
 
     console.log(`Started execution of ${stepName}`);
 
@@ -132,7 +150,7 @@ async function runWorkflow(workflow, message) {
   let stepInput = clone(message);
 
   for (const step of workflow.steps) {
-    stepInput = await runStep(step.lambda, step.handler, stepInput, step.name)
+    stepInput = await runStep(step.lambda, step.handler, stepInput, step.name);
     trail.stepOutputs[step.name] = clone(stepInput);
   }
   trail.output = clone(stepInput);
@@ -141,6 +159,7 @@ async function runWorkflow(workflow, message) {
 }
 
 module.exports = {
+  downloadCMA,
   copyCMAToTasks,
   deleteCMAFromTasks,
   runStep,

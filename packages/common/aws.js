@@ -537,7 +537,7 @@ exports.receiveSQSMessages = async (queueUrl, numOfMessages = 1, timeout = 30) =
  * @param {integer} receiptHandle - the unique identifier of the sQS message
  * @returns {Promise} an AWS SQS response
  */
-exports.deleteSQSMessage = async (queueUrl, receiptHandle) => {
+exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
   const params = {
     QueueUrl: queueUrl,
     ReceiptHandle: receiptHandle
