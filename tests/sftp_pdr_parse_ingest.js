@@ -3,9 +3,9 @@
 const path = require('path');
 const test = require('ava');
 const fs = require('fs-extra');
-const { fetchMessageAdapter } = require('../packages/deployment/lib/adapter');
 const {
   runWorkflow,
+  downloadCMA,
   copyCMAToTasks,
   deleteCMAFromTasks,
   messageBuilder
@@ -36,11 +36,9 @@ test.before(async() => {
   await s3().createBucket({ Bucket: context.internal }).promise();
 
   // download and unzip the message adapter
-  const gitPath = 'cumulus-nasa/cumulus-message-adapter';
-  const filename = 'cumulus-message-adapter.zip';
-  context.src = path.join(process.cwd(), 'tests', `${randomString()}.zip`);
-  context.dest = path.join(process.cwd(), 'tests', randomString());
-  await fetchMessageAdapter(null, gitPath, filename, context.src, context.dest);
+  const { src, dest } = await downloadCMA();
+  context.src = src;
+  context.dest = dest;
 
   // create the queue
   context.queueUrl = await createQueue();
