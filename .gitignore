@@ -13,6 +13,5 @@ packaged-*
 .vscode
 *-debug.log
 profiles.clj
-kes.js
 *.map  
 .DS_Store
