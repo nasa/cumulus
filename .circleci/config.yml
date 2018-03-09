@@ -59,11 +59,15 @@ jobs:
             - ./cumulus/packages/deployment/node_modules
           key: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
 
+      # - run:
+      #     name: Running Test
+      #     environment:
+      #       LOCALSTACK_HOST: localstack
+      #     command: yarn test
+
       - run:
-          name: Running Test
-          environment:
-            LOCALSTACK_HOST: localstack
-          command: yarn test
+          name: Running eslint-ratchet
+          command: ./bin/eslint-ratchet
 
   build_and_publish:
     docker:
@@ -98,4 +102,4 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: master 
+              only: master
