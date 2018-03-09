@@ -19,7 +19,7 @@ if (( NOW > PREV )); then
   exit 1
 elif (( NOW < PREV )); then
   if [ "$ARG" == "ci" ]; then
-    echo "ERROR: Found fewer ESLint errors than expected.  Run './bin/eslint-ratchet' and commit .eslint-ratchet-high-water-mark file" >&2
+    echo "ERROR: Expected ${PREV} errors but found ${NOW}.  Run './bin/eslint-ratchet' and commit .eslint-ratchet-high-water-mark file" >&2
     exit 2
   else
     echo "WIN: ESLint errors have decreased from ${PREV} to ${NOW}.  Ratcheting down ..."
