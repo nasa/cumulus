@@ -12,8 +12,37 @@ jobs:
 
       - restore_cache:
           keys:
-            - dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
-            - dependencies-
+            - core-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
+            - core-
+
+      - run:
+          name: core installation 
+          command: |
+            yarn install
+
+            # generate global hash
+            ./node_modules/.bin/lerna exec --concurrency 1 -- sha1sum package.json | awk '{print $1}' '' >> /home/circleci/project/global-hash 
+
+      - save_cache:
+          paths:
+            - ./node_modules
+          key: core-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
+
+      - restore_cache:
+          keys:
+            - packages-{{ checksum "global-hash" }}
+
+      - restore_cache:
+          keys:
+            - cumulus-tasks-{{ checksum "global-hash" }}
+
+      - restore_cache:
+          keys:
+            - gitc-tasks-{{ checksum "global-hash" }}
+
+      - restore_cache:
+          keys:
+            - services-{{ checksum "global-hash" }}
 
       - run:
           name: Installing Dependencies
@@ -32,32 +61,66 @@ jobs:
             sudo bash /usr/sbin/sftp.sh user:password
             sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
 
-            yarn install
             yarn bootstrap-no-build
 
       - save_cache:
+          key: packages-{{ checksum "global-hash" }}
           paths:
-            - ./node_modules
-            - ./cumulus/tasks/discover-pdr/node_modules
-            - ./cumulus/tasks/discover-pdrs/node_modules
-            - ./cumulus/tasks/discover-granules/node_modules
-            - ./cumulus/tasks/discover-s3-granules/node_modules
+            - ./packages/deployment/node_modules
+            - ./packages/pvl/node_modules
+            - ./packages/test-data/node_modules
+            - ./packages/api/node_modules
+            - ./packages/common/node_modules
+            - ./packages/cmrjs/node_modules
+            - ./packages/ingest/node_modules
+            - ./packages/integration-tests/node_modules
+            - ./packages/task-debug/node_modules
+
+      - save_cache:
+          key: cumulus-tasks-{{ checksum "global-hash" }}
+          paths:
             - ./cumulus/tasks/hello-world/node_modules
+            - ./cumulus/tasks/discover-granules/node_modules
+            - ./cumulus/tasks/discover-pdrs/node_modules
             - ./cumulus/tasks/parse-pdr/node_modules
-            - ./cumulus/tasks/pdr-status-check/node_modules
             - ./cumulus/tasks/post-to-cmr/node_modules
+            - ./cumulus/tasks/pdr-status-check/node_modules
             - ./cumulus/tasks/queue-granules/node_modules
             - ./cumulus/tasks/queue-pdrs/node_modules
-            - ./cumulus/tasks/run-gdal/node_modules
             - ./cumulus/tasks/sync-granule/node_modules
-            - ./cumulus/gibs-ops-api/node_modules
-            - ./cumulus/packages/api/node_modules
-            - ./cumulus/packages/cmrjs/node_modules
-            - ./cumulus/packages/common/node_modules
-            - ./cumulus/packages/pvl/node_modules
-            - ./cumulus/packages/ingest/node_modules
-            - ./cumulus/packages/deployment/node_modules
-          key: dependencies-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
+            - ./cumulus/tasks/discover-s3-granules/node_modules
+
+      - save_cache:
+          key: gitc-tasks-{{ checksum "global-hash" }}
+          paths:
+            - ./cumulus/tasks/copy-idx-from-s3-to-efs/node_modules
+            - ./cumulus/tasks/delete-ingest-tracking-data/node_modules
+            - ./cumulus/tasks/delete-pdr-ftp/node_modules
+            - ./cumulus/tasks/delete-pdr-s3/node_modules
+            - ./cumulus/tasks/discover-cmr-granules/node_modules
+            - ./cumulus/tasks/discover-http-tiles/node_modules
+            - ./cumulus/tasks/dowload-activity-mock/node_modules
+            - ./cumulus/tasks/filter-payload/node_modules
+            - ./cumulus/tasks/generate-mrf/node_modules
+            - ./cumulus/tasks/generate-pan/node_modules
+            - ./cumulus/tasks/generate-pdrd/node_modules
+            - ./cumulus/tasks/run-gdal/node_modules
+            - ./cumulus/tasks/sync-http-urls/node_modules
+            - ./cumulus/tasks/sync-wms/node_modules
+            - ./cumulus/tasks/tee/node_modules
+            - ./cumulus/tasks/trigger-ingest/node_modules
+            - ./cumulus/tasks/trigger-mrf-gen/node_modules
+            - ./cumulus/tasks/trigger-process-pdrs/node_modules
+            - ./cumulus/tasks/validate-archives/node_modules
+            - ./cumulus/tasks/discover-pdr/node_modules
+            - ./cumulus/tasks/generate-pdr-file-list/node_modules
+            - ./cumulus/tasks/validate-pdr/node_modules
+      
+      - save_cache:
+          key: services-{{ checksum "global-hash" }}
+          paths:
+            - ./cumulus/services/sfn-scheduler/node_modules
+            - ./cumulus/services/sfn-throttler/node_modules
 
       - run:
           name: Running Test

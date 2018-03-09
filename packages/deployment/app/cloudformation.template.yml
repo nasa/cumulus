@@ -40,6 +40,10 @@ Resources:
           Fn::GetAtt:
             - ScheduleSFLambdaFunction
             - Arn
+        dbIndexerLambdaFunction:
+          Fn::GetAtt:
+            - dbIndexerLambdaFunction
+            - Arn
         kinesisConsumerLambdaFunction:
           Fn::GetAtt:
             - kinesisConsumerLambdaFunction
@@ -55,6 +59,12 @@ Resources:
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
           Ref: {{@key}}DynamoDB
+      {{/each}}
+      {{# each ../dynamos}}
+        {{@key}}DynamoDBStreamArn:
+          Fn::GetAtt:
+            - {{@key}}DynamoDB
+            - StreamArn
       {{/each}}
       {{# if ../vpc }}
         SecurityGroupId:
