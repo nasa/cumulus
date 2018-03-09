@@ -4,7 +4,12 @@ const _ = require('lodash');
 const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
+const indexer = require('@cumulus/api/es/indexer');
 const { checkPdrStatuses } = require('../index');
+
+test.before(() => {
+  sinon.stub(indexer, 'partialRecordUpdate');
+});
 
 test('valid output when no running executions', (t) => {
   const event = {
@@ -43,7 +48,8 @@ test('error thrown when limit exceeded', (t) => {
     input: {
       running: ['arn:123'],
       counter: 2,
-      limit: 3
+      limit: 3,
+      pdr: { name: 'test.PDR', path: 'test-path' }
     }
   };
 
@@ -63,38 +69,48 @@ test('returns the correct results in the nominal case', (t) => {
     'arn:1': 'RUNNING',
     'arn:2': 'SUCCEEDED',
     'arn:3': 'FAILED',
-    'arn:4': 'ABORTED'
+    'arn:4': 'ABORTED',
+    'arn:7': null
+  };
+  const error = {
+    errorMessage: 'Execution Does Not Exist:arn',
+    errorType: 'ExecutionDoesNotExist',
+    stackTrace: []
   };
 
   const stubSfnClient = {
     describeExecution: ({ executionArn }) => ({
-      promise: () => Promise.resolve({
-        executionArn,
-        status: executionStatuses[executionArn]
-      })
+      promise: () => {
+        if (executionStatuses[executionArn] === null) return Promise.reject(error);
+        return Promise.resolve({
+          executionArn,
+          status: executionStatuses[executionArn]
+        });
+      }
     })
   };
-  const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
+  const stubsf = sinon.stub(aws, 'sfn').returns(stubSfnClient);
 
   const event = {
     input: {
-      running: ['arn:1', 'arn:2', 'arn:3', 'arn:4'],
+      running: ['arn:1', 'arn:2', 'arn:3', 'arn:4', 'arn:7'],
       completed: ['arn:5'],
       failed: [{ arn: 'arn:6', reason: 'OutOfCheese' }],
       counter: 5,
-      limit: 10
+      limit: 10,
+      pdr: { name: 'test.PDR', path: 'test-path' }
     }
   };
 
   return checkPdrStatuses(event)
     .then((output) => {
-      stub.restore();
+      stubsf.restore();
 
       t.false(output.isFinished);
       t.is(output.counter, 6);
       t.is(output.limit, 10);
 
-      t.deepEqual(output.running, ['arn:1']);
+      t.deepEqual(output.running, ['arn:1', 'arn:7']);
       t.deepEqual(output.completed.sort(), ['arn:2', 'arn:5'].sort());
 
       t.is(output.failed.length, 3);
