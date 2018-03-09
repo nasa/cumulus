@@ -1,10 +1,10 @@
 {
   "name": "@cumulus/api",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "scripts": {
-    "test": "IS_LOCAL=true TEST=true ava tests/test-*.js --serial",
+    "test": "TEST=true ava tests/test-*.js --serial",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
@@ -34,15 +34,17 @@
   "dependencies": {
     "@cumulus/cmrjs": "^1.1.0",
     "@cumulus/common": "^1.1.0",
-    "@cumulus/ingest": "^1.1.0",
+    "@cumulus/ingest": "^1.1.1",
     "@cumulus/pvl": "^1.0.0",
     "ajv": "^5.2.2",
+    "archiver": "^2.1.1",
     "aws-sdk": "^2.95.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
     "basic-auth": "^1.1.0",
+    "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^13.2.0",
     "form-data": "^2.1.2",
     "got": "^6.7.1",
@@ -60,7 +62,7 @@
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
     "uuid": "^3.2.1",
-    "webpack": "^1.12.13"
+    "webpack": "^1.15.0"
   },
   "devDependencies": {
     "ava": "^0.21.0",
