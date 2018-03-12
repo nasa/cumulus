@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Broke up `kes.override.js` of @cumulus/deployment to multiple modules and moved to a new location
 - Expanded @cumulus/deployment test coverage
 - all tasks were updated to use cumulus-message-adapter-js 1.0.1
-- added built index to integration-tests package
+- added build process to integration-tests package to babelify it before publication
 
 ## [v1.1.1] - 2018-03-08
 
