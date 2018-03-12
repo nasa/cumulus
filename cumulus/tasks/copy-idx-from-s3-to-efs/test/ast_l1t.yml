@@ -95,11 +95,20 @@ _templates:
               Key: "ingest/empty_tiles/Blank_RGBA_512.png"
             - Bucket: "{resources.buckets.config}"
               Key: "ingest/mrfconfig/ast_l1t.xml"
+            - Bucket: "{resources.buckets.config}"
+              Key: "ingest/mrfconfig/ast_l1t_1.xml"
+            - Bucket: "{resources.buckets.config}"
+              Key: "ingest/mrfconfig/ast_l1t_2.xml"
+            - Bucket: "{resources.buckets.config}"
+              Key: "ingest/mrfconfig/ast_l1t_3.xml"
 
           input_filenames:
             - input.tif
             - Blank_RGBA_512.png
             - mrfgen_configuration_file.xml
+            - mrfgen_configuration_file_1.xml
+            - mrfgen_configuration_file_2.xml
+            - mrfgen_configuration_file_3.xml
 
           alternate_commands:
             - gdal_command: gdalwarp
@@ -198,16 +207,16 @@ _templates:
             - filename: out/out.mrf
               dest:
                 Bucket: '{resources.buckets.public}'
-                Key: 'archive/geographic/aster_l1t/mrfs/AST_L1T_LL/AST_L1T_LL{meta.date.dateTimeStamp}_.mrf'
+                Key: 'epsg{meta.epsg}/{meta.collection}/{meta.date.year}/#hash-{meta.collection}-{meta.date.dateTimeStamp}.mrf'
             - filename: out/out.idx
               compress: true
               dest:
                 Bucket: '{resources.buckets.public}'
-                Key: 'archive/geographic/aster_l1t/mrfs/AST_L1T_LL/AST_L1T_LL{meta.date.dateTimeStamp}_.idx.tgz'
+                Key: 'epsg{meta.epsg}/{meta.collection}/{meta.date.year}/#hash-{meta.collection}-{meta.date.dateTimeStamp}.idx.tgz'
             - filename: out/out.ppg
               dest:
                 Bucket: '{resources.buckets.public}'
-                Key: 'archive/geographic/aster_l1t/mrfs/AST_L1T_LL/AST_L1T_LL{meta.date.dateTimeStamp}_.ppg'
+                Key: 'epsg{meta.epsg}/{meta.collection}/{meta.date.year}/#hash-{meta.collection}-{meta.date.dateTimeStamp}.ppg'
 
 _workflow_meta:
   - id: DiscoverASTER
@@ -299,6 +308,7 @@ collections:
       collection: AST_L1T_LL
       day_night_flag: 'day'
       url_pattern: '_V.tif$'
+      epsg: 4326
 
   - <<: *AST_L1T
     id: AST_L1T_NIGHT
@@ -306,3 +316,4 @@ collections:
       collection: AST_L1T_LL
       day_night_flag: 'night'
       url_pattern: '_T.tif$'
+      epsg: 4326

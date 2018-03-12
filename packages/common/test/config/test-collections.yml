@@ -1,8 +1,7 @@
 providers:
   - id: MODAPS
     config: {}
-  - id: LARC
-    config: {}
+
   - id: SIPSPROV
     config:
       gateway_config:
@@ -16,60 +15,6 @@ providers:
         num_connections: 2
 _templates:
   _collection_types:
-    - &VIIRS
-      provider_id: MODAPS
-
-      workflow: !GitcResource DiscoverVIIRS
-
-      trigger:
-        type: interval
-        period_s: 900
-
-      workflow_config_template:
-        DiscoverHttpTiles:
-          type: apache-index
-          connections: 10
-          root: 'https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/'
-          match: 'https://lance3.modaps.eosdis.nasa.gov/imagery/elements/VIIRS/{meta.collection}/{_}/{jday}/{file}.{ext}'
-          required:
-            -
-              group: file
-              prop: ext
-              values:
-                - jgw
-                - jpg
-                - txt
-          group_meta:
-            key: 'VIIRS/{meta.collection}/{match.jday}'
-            date:
-              type: date
-              value: '{match.jday}'
-          group_by: 'VIIRS/{meta.collection}/{match.jday}'
-
-        TriggerIngest:
-          workflow: !GitcResource IngestVIIRS
-
-        SyncHttpUrls:
-          connections: 5
-          output:
-            bucket: '{resources.buckets.private}'
-            key_prefix: 'sources/EPSG{meta.epsg}/{meta.key}'
-
-        MRFGen:
-          date: '{meta.date.year}{meta.date.month}{meta.date.day}'
-          epsg: '{meta.epsg}'
-          zoom: '{meta.zoom}'
-          mrfgen:
-            mrf_compression_type: JPEG
-            source_epsg: '{meta.epsg}'
-            mrf_merge: false
-            mrf_nocopy: true
-            overview_resampling: average
-            resize_resampling: average
-            parameter_name: '{meta.parameter_name}'
-          output:
-            bucket: '{resources.buckets.public}'
-            key_prefix: 'EPSG{meta.epsg}/{meta.collection}/{meta.date.year}'
 
     - &SIPSTEST
       provider_id: SIPSPROV
