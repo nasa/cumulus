@@ -113,15 +113,6 @@ _templates:
             Key: 'EPSG{meta.epsg}/{meta.collection}/{meta.date.year}'
 
 _workflow_meta:
-  - id: DiscoverVIIRS
-    name: VIIRS Discovery
-    arn: !GitcResource DiscoverVIIRS
-    type: discovery
-  - id: IngestVIIRS
-    name: VIIRS Ingest
-    arn: !GitcResource IngestVIIRS
-    type: ingest
-    parent: DiscoverVIIRS
   - id: DiscoverMOPITT
     name: MOPITT Discovery
     arn: !GitcResource DiscoverMOPITT
@@ -142,52 +133,6 @@ _workflow_meta:
     parent: DiscoverPdrsSIPSTEST
 
 workflows:
-  DiscoverVIIRS:
-    Comment: VIIRS Discovery
-    StartAt: DiscoverHttpTiles
-    States:
-      DiscoverHttpTiles:
-        Type: Task
-        Resource: !GitcResource DiscoverHttpTilesFn.Arn
-        Next: TriggerIngest
-
-      TriggerIngest:
-        Type: Task
-        Resource: !GitcResource TriggerIngestFn.Arn
-        End: true
-
-  IngestVIIRS:
-    Comment: VIIRS Ingest
-    StartAt: SyncHttpUrls
-    States:
-      SyncHttpUrls:
-        Type: Task
-        Resource: !GitcResource SyncHttpUrlsFn.Arn
-        Next: ChooseSyncContinuation
-      ChooseSyncContinuation:
-        Type: Choice
-        Choices:
-          - Variable: $.exception
-            StringEquals: NotNeededWorkflowError
-            Next: NoUpdates
-          - Variable: $.exception
-            StringEquals: IncompleteWorkflowError
-            Next: SyncHttpUrls
-          - Variable: $.exception
-            StringEquals: None
-            Next: MRFGen
-        Default: UnhandledSyncError
-      UnhandledSyncError:
-        Type: Fail
-        Cause: Unhandled Sync Error
-      MRFGen:
-        Type: Task
-        Resource: !GitcResource GenerateMrfActivity
-        End: true
-      NoUpdates:
-        Type: Pass
-        Result: No Updates Necessary
-        End: true
 
   DiscoverMOPITT:
     Comment: MOPITT Discovery
@@ -313,29 +258,6 @@ workflows:
 
 
 collections:
-  - <<: *VIIRS
-    id: VNGCR_LQD_C1
-    meta:
-      collection: VNGCR_LQD_C1
-      parameter_name: VNGCR_LQD_I1-M4-M3_NRT
-      epsg: 4326
-      zoom: 9
-
-  - <<: *VIIRS
-    id: VNGCR_SQD_C1
-    meta:
-      collection: VNGCR_SQD_C1
-      parameter_name: VNGCR_SQD_I1-M4-M3_NRT
-      epsg: 3031
-      zoom: 6
-
-  - <<: *VIIRS
-    id: VNGCR_NQD_C1
-    meta:
-      collection: VNGCR_NQD_C1
-      parameter_name: VNGCR_NQD_I1-M4-M3_NRT
-      epsg: 3413
-      zoom: 6
 
   - <<: *MOPITT
     id: MOPITT_DCOSMR_LL_D_STD
