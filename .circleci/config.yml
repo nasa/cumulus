@@ -67,6 +67,7 @@ jobs:
           name: Running AWS Integration Tests
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]]; then
+              sudo chown -R circleci:circleci /usr/local/bin
 
               # install cumulus-integration
               git clone https://github.com/cumulus-nasa/cumulus-integration-tests.git ~/integration
