@@ -135,29 +135,6 @@ jobs:
             LOCALSTACK_HOST: localstack
           command: yarn e2e
       
-  build_and_publish:
-    docker:
-      - image: circleci/node:6.10
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: Install Dependencies
-          command: |
-            yarn install
-
-            # short fix for deployment package missing dependencies during deploy
-            cd packages/deployment
-            npm install
-            cd ~/project
-
-      - run:
-          name: Publishing to NPM
-          command: |
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-            VERSION=$(cat lerna.json | jq .version --raw-output)
-            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
-
       - run:
           name: Running AWS Integration Tests
           command: |
@@ -185,6 +162,30 @@ jobs:
               # run the tests
               yarn test
             fi
+      
+  build_and_publish:
+    docker:
+      - image: circleci/node:6.10
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: |
+            yarn install
+
+            # short fix for deployment package missing dependencies during deploy
+            cd packages/deployment
+            npm install
+            cd ~/project
+
+      - run:
+          name: Publishing to NPM
+          command: |
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            VERSION=$(cat lerna.json | jq .version --raw-output)
+            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
+
 
 workflows:
   version: 2
