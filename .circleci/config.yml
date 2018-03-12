@@ -133,6 +133,31 @@ jobs:
           environment:
             LOCALSTACK_HOST: localstack
           command: yarn e2e
+      
+      - run:
+          name: Running AWS Integration Tests
+          command: |
+            if [[ "$CIRCLE_BRANCH" =~ release-.* ]]; then
+
+              # install cumulus-integration
+              git clone https://github.com/cumulus-nasa/cumulus-integration-tests.git ~/integration
+              cd ~/integration
+              yarn
+
+              # replace latest version of the tasks with existing ones in the integration rep
+              mkdir -p $path/.tmp
+              cat package.json | jq '.dependencies | to_entries[] | select(.key | startswith("@cumulus")).key' > cumulus_integration_tests_packages.txt
+              cd ~/project
+              cat ../integration/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn link
+              cd ~/integration
+              cat cumulus_integration_tests_packages.txt | xargs -I % yarn link %
+
+              # deploy latest version of the packages to the aws
+              yarn deploy
+
+              # run the tests
+              yarn test
+            fi
 
   build_and_publish:
     docker:
