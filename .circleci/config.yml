@@ -63,35 +63,6 @@ jobs:
 
             yarn bootstrap-no-build
 
-      - run:
-          name: Running AWS Integration Tests
-          command: |
-            if [[ "$CIRCLE_BRANCH" =~ release-.* ]]; then
-              sudo chown -R circleci:circleci /usr/local/bin
-
-              # install cumulus-integration
-              git clone -b fix_babel_register https://github.com/cumulus-nasa/cumulus-integration-tests.git ~/integration
-              cd ~/integration
-              yarn
-
-              # replace latest version of the tasks with existing ones in the integration rep
-              cat package.json | jq '.dependencies | to_entries[] | select(.key | startswith("@cumulus")).key' > cumulus_integration_tests_packages.txt
-              cd ~/project
-
-              cat ../integration/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn build 
-              cat ../integration/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn link
-              cd ~/integration
-              cat cumulus_integration_tests_packages.txt | xargs -I % yarn link %
-
-              # deploy latest version of the packages to the aws
-              yarn deploy
-
-              # run the tests
-              yarn test
-            fi
-
-
-
       - save_cache:
           key: packages-{{ checksum "global-hash" }}
           paths:
@@ -150,6 +121,7 @@ jobs:
           paths:
             - ./cumulus/services/sfn-scheduler/node_modules
             - ./cumulus/services/sfn-throttler/node_modules
+      
 
       - run:
           name: Running Tests
@@ -185,6 +157,34 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
             VERSION=$(cat lerna.json | jq .version --raw-output)
             ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
+
+      - run:
+          name: Running AWS Integration Tests
+          command: |
+            if [[ "$CIRCLE_BRANCH" =~ release-.* ]]; then
+              sudo chown -R circleci:circleci /usr/local/bin
+
+              # install cumulus-integration
+              branch="${INTEGRATION_TEST_BRANCH:-master}"
+              git clone -b ${brach} https://github.com/cumulus-nasa/cumulus-integration-tests.git ~/integration
+              cd ~/integration
+              yarn
+
+              # replace latest version of the tasks with existing ones in the integration rep
+              cat package.json | jq '.dependencies | to_entries[] | select(.key | startswith("@cumulus")).key' > cumulus_integration_tests_packages.txt
+              cd ~/project
+
+              cat ../integration/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn build 
+              cat ../integration/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn link
+              cd ~/integration
+              cat cumulus_integration_tests_packages.txt | xargs -I % yarn link %
+
+              # deploy latest version of the packages to the aws
+              yarn deploy
+
+              # run the tests
+              yarn test
+            fi
 
 workflows:
   version: 2
