@@ -123,10 +123,16 @@ jobs:
             - ./cumulus/services/sfn-throttler/node_modules
 
       - run:
-          name: Running Test
+          name: Running Tests
           environment:
             LOCALSTACK_HOST: localstack
           command: yarn test
+
+      - run:
+          name: Running End to End Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+          command: yarn e2e
 
   build_and_publish:
     docker:
