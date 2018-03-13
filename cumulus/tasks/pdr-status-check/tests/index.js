@@ -83,7 +83,7 @@ test('returns the correct results in the nominal case', (t) => {
       }
     })
   };
-  const stubsf = sinon.stub(aws, 'sfn').returns(stubSfnClient);
+  const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
 
   const event = {
     input: {
@@ -98,7 +98,7 @@ test('returns the correct results in the nominal case', (t) => {
 
   return checkPdrStatuses(event)
     .then((output) => {
-      stubsf.restore();
+      stub.restore();
 
       t.false(output.isFinished);
       t.is(output.counter, 6);
