@@ -13,13 +13,11 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
  * @returns {boolean} true if there was an exception, false otherwise
  */
 function eventFailed(event) {
-  if (event.exception) {
-    if (typeof event.exception === 'object') {
-      // this is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
-      if (Object.keys(event.exception).length > 0) {
-        return true;
-      }
-    }
+  // event has exception
+  // and it is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
+  if (event.exception && (typeof event.exception === 'object') &&
+    (Object.keys(event.exception).length > 0)) {
+    return true;
   }
   // Error and error keys are not part of the cumulus message
   // and if they appear in the message something is seriously wrong
@@ -31,8 +29,8 @@ function eventFailed(event) {
 
 /**
  * if the cumulus message shows that a previous step failed,
- * this function extract the error message from the cumulus message
- * and fail the function with that information. This ensures that the
+ * this function extracts the error message from the cumulus message
+ * and fails the function with that information. This ensures that the
  * Step Function workflow fails with the correct error info
  *
  * @param {Object} event - aws event object
@@ -121,7 +119,8 @@ exports.publishSnsMessage = publishSnsMessage;
  * @returns {Promise} updated event object
  */
 function handler(event, context, callback) {
-  return StepFunction.pullEvent(event).then((message) =>
-    cumulusMessageAdapter.runCumulusTask(publishSnsMessage, message, context, callback));
+  return StepFunction.pullEvent(event).then((message) => {
+    cumulusMessageAdapter.runCumulusTask(publishSnsMessage, message, context, callback);
+  });
 }
 exports.handler = handler;
