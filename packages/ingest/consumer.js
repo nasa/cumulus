@@ -1,7 +1,7 @@
 'use strict';
 
 const log = require('@cumulus/common/log');
-const aws = require('./aws');
+const { receiveSQSMessages, deleteSQSMessage } = require('@cumulus/common/aws');
 
 class Consume {
   constructor(queueUrl, messageLimit = 1, timeLimit = 90) {
@@ -15,7 +15,7 @@ class Consume {
   async processMessage(message, fn) {
     try {
       await fn(message);
-      await aws.SQS.deleteMessage(this.queueUrl, message.ReceiptHandle);
+      await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
     }
     catch (e) {
       log.error(e);
@@ -25,7 +25,7 @@ class Consume {
   async processMessages(fn, messageLimit) {
     let counter = 0;
     while (!this.endConsume) {
-      const messages = await aws.SQS.receiveMessage(this.queueUrl, messageLimit);
+      const messages = await receiveSQSMessages(this.queueUrl, messageLimit);
       counter += messages.length;
 
       if (messages.length > 0) {
