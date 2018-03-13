@@ -58,7 +58,7 @@ test('send report when sfn is running with error', (t) => {
 });
 
 
-test('send report when sfn is finished and granule succeed', async (t) => {
+test('send report when sfn is finished and granule has succeeded', async (t) => {
   const input = {
     meta: {
       topic_arn: 'test_topic_arn',
