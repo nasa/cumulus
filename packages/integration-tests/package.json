@@ -5,13 +5,15 @@
   "bin": {
     "cumulus-test": "./bin/cli.js"
   },
+  "main": "dist/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
     "build": "webpack --progress",
-    "watch": "webpack --progress -w"
+    "watch": "webpack --progress -w",
+    "postinstall": "npm run build"
   },
   "publishConfig": {
     "access": "public"
