@@ -1,0 +1,55 @@
+{
+  "DiscoverPdrs": {
+    "collection": "MOD09GQ",
+    "provider": "ftp",
+    "name": "DiscoverPdrs",
+    "steps": [
+      {
+        "name": "DiscoverPdrs",
+        "lambda": "cumulus/tasks/discover-pdrs",
+        "handler": "index.handler",
+        "cumulusConfig": {
+          "templateUri": "{{$.meta.templates.ParsePdr}}",
+          "useQueue": true,
+          "queueUrl": "{{$.meta.queues.startSF}}",
+          "stack": "{{$.meta.stack}}",
+          "provider": "{{$.meta.provider}}",
+          "bucket": "{{$.meta.buckets.internal}}",
+          "collection": "{{$.meta.collection}}"
+        }
+      },
+      {
+        "name": "QueuePdrs",
+        "lambda": "cumulus/tasks/queue-pdrs",
+        "handler": "index.handler",
+        "cumulusConfig": {
+          "provider": "{{$.meta.provider}}",
+          "collection": "{{$.meta.collection}}",
+          "queueUrl": "{{$.meta.queues.startSF}}",
+          "parsePdrMessageTemplateUri": "{{$.meta.templates.ParsePdr}}"
+        }
+      }
+    ]
+  },
+  "ParsePdr": {
+    "collection": "MOD09GQ",
+    "provider": "ftp",
+    "name": "ParsePdr",
+    "steps": [
+      {
+        "name": "ParsePdr",
+        "lambda": "cumulus/tasks/parse-pdr",
+        "handler": "index.handler",
+        "cumulusConfig": {
+          "useQueue": true,
+          "provider": "{{$.meta.provider}}",
+          "collection": "{{$.meta.collection}}",
+          "bucket": "{{$.meta.buckets.internal}}",
+          "stack": "{{$.meta.stack}}",
+          "templateUri": "{{$.meta.templates.IngestGranule}}",
+          "queueUrl": "{{$.meta.queues.startSF}}"
+        }
+      }
+    ]
+  }
+}
