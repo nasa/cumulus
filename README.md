@@ -99,7 +99,7 @@ Lerna handles the process of deciding which version number should be used as lon
 
 To update cumulus' version number run:
 
-     $ npm run update
+     $ yarn update
 
 You will be prompted to select the type of change (patch/minor/major). 
 
@@ -121,4 +121,4 @@ All packages on master branch are automatically published to NPM.
 
 ## Cleaning Up all the repos
 
-    $ npm run clean
+    $ yarn clean
