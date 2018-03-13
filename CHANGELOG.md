@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Expanded @cumulus/deployment test coverage
 - all tasks were updated to use cumulus-message-adapter-js 1.0.1
 - added build process to integration-tests package to babelify it before publication
+- Update @cumulus/integration-tests lambda.js `getLambdaOutput` to return the entire lambda output. Previously `getLambdaOutput` returned only the payload.
 
 ## [v1.1.1] - 2018-03-08
 
