@@ -64,6 +64,7 @@ exports.dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
 exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
+exports.sns = awsClient(AWS.SNS, '2010-03-31');
 
 /**
  * Describes the resources belonging to a given CloudFormation stack
@@ -529,14 +530,15 @@ exports.getGranuleS3Params = (granuleId, stack, bucket) => {
 
 /**
 * Set the status of a granule
+*
 * @name setGranuleStatus
-* @param {string} granuleId
-* @param {string} stack = the deployment stackname
+* @param {string} granuleId - granule id
+* @param {string} stack - the deployment stackname
 * @param {string} bucket - the deployment bucket name
-* @param {string} stateMachineArn
-* @param {string} executionName
-* @param {string} status
-* @return {promise} returns the response from `S3.put` as a promise
+* @param {string} stateMachineArn - statemachine arn
+* @param {string} executionName - execution name
+* @param {string} status - granule status
+* @returns {Promise} returns the response from `S3.put` as a promise
 **/
 exports.setGranuleStatus = async (
   granuleId,
@@ -548,5 +550,7 @@ exports.setGranuleStatus = async (
 ) => {
   const key = exports.getGranuleS3Params(granuleId, stack, bucket);
   const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
-  await exports.s3().putObject(bucket, key, '', null, { executionArn, status }).promise();
+  const params = { Bucket: bucket, Key: key };
+  params.Metadata = { executionArn, status };
+  await exports.s3().putObject(params).promise();
 };
