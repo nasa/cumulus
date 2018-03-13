@@ -21,7 +21,7 @@ test('send report when sfn is running', (t) => {
     });
 });
 
-test('send report when sfn is running and lamda function fails', (t) => {
+test('send report when sfn is running with exception', (t) => {
   const event = {
     input: {
       meta: { topic_arn: 'test_topic_arn' },
@@ -38,6 +38,25 @@ test('send report when sfn is running and lamda function fails', (t) => {
       t.is(e.message, event.input.exception.Cause);
     });
 });
+
+test('send report when sfn is running with error', (t) => {
+  const event = {
+    input: {
+      meta: { topic_arn: 'test_topic_arn' },
+      error: {
+        Error: 'TypeError',
+        Cause: 'bucket not found'
+      },
+      anykey: 'anyvalue'
+    }
+  };
+
+  return publishSnsMessage(cloneDeep(event))
+    .catch((e) => {
+      t.is(e.message, event.input.error.Cause);
+    });
+});
+
 
 test('send report when sfn is finished and granule succeed', async (t) => {
   const input = {
