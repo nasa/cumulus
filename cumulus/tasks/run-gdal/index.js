@@ -7,6 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const rimraf = require('rimraf');
+const md5 = require('md5');
+const currentDayNumber = require('current-day-number');
 
 /**
  *
@@ -164,11 +166,23 @@ module.exports = class RunGdalTask extends Task {
       await this.promiseSpawn('tar', ['cvpzfS', filename, output.filename]);
     }
 
+
+    const outputKey = output.dest.Key;
+    const regex = /(epsg.*?\/.*?\/\d{4})\/#hash-(.*?)-(\d{4})(\d{2})(\d{2})(\d{6})\.(.*?)$/;
+    const [_, base, collection, year, month, day, time, ext] = regex.exec(outputKey);
+
+    const dayOfYear = currentDayNumber(`${month}/${day}/${year}`).toString().padStart(3, '0');
+    const dateTime = `${year}${dayOfYear}${time}`;
+
+    const hash = md5(`${collection}-${dateTime}`).slice(0, 4);
+
+    const s3Key = `${base}/${hash}-${collection}-${dateTime}.${ext}`;
+
     return aws.uploadS3Files([{
       filename: path.join('/tmp', filename),
       bucket: output.dest.Bucket,
-      key: output.dest.Key
-    }]);
+      key: s3Key
+    }], null, null, { ACL: 'public-read' });
   }
 
   /**
@@ -228,3 +242,10 @@ module.exports = class RunGdalTask extends Task {
     return RunGdalTask.handle(...args);
   }
 };
+
+// global.__isDebug = true;
+// const local = require('@cumulus/common/local-helpers');
+// const localTaskName = 'GenerateMrfFromTiff';
+// local.setupLocalRun(module.exports.handler, local.collectionMessageInput(
+//  'AST_L1T_DAY', localTaskName, (o) => o, `${local.fileRoot()}/cumulus/tasks/copy-idx-from-s3-to-efs/test/ast_l1t.yml`));
+
