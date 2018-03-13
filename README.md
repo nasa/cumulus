@@ -75,6 +75,10 @@ Run the test commands next
 
     $ yarn test
 
+Run end to end tests by
+
+    $ yarn e2e
+
 ## Adding New Packages
 
 Create a new folder under `packages` if it is a common library or create folder under `cumulus/tasks` if it is a lambda task. `cd` to the folder and run `npm init`.
