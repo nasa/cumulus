@@ -1,4 +1,4 @@
-# @cumulus/queue-pdrs
+# @cumulus/sf-sns-report
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
