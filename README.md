@@ -107,6 +107,10 @@ Lerna will update the version of all packages after the selection. You then have
 
 The version number updates should be put in a PR and committed to master along with the changelog updates. After merging to master, tag the master branch with a release using the new version number.
 
+#### Release PR
+
+Release PRs **MUST** be named with `release-` prefix. This will kick off the AWS integration tests in the CI process and ensures that package updates are fully tested on AWS before publication to NPM.
+
 ### Publishing to NPM
 
 All packages on master branch are automatically published to NPM.
