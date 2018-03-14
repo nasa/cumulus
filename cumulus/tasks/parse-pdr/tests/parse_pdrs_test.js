@@ -32,6 +32,7 @@ test('parse PDR from FTP endpoint', async (t) => {
     username: 'testuser',
     password: 'testpass'
   };
+  newPayload.config.useList = true;
 
   await validateConfig(t, newPayload.config);
 
