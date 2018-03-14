@@ -106,6 +106,23 @@ the number of errors has *decreased* from what is stored in
 run `./bin/eslint-ratchet` and commit the new-and-improved
 `.eslint-ratchet-high-water-mark` file.
 
+To help prevent unexpected build failures in CircleCI, I suggest adding a
+local post-commit hook that will run eslint-ratchet after every commit. This
+will not cause your commits to fail if the score has increased, but it will
+let you know that there is a problem. To set up the post-commit hook, create a
+file called `.git/hooks/post-commit` which contains:
+
+```
+#!/bin/sh
+
+set -e
+
+echo "Running ./bin/eslint-ratchet"
+./bin/eslint-ratchet
+```
+
+Make sure the hook is executable with `chmod +x .git/hooks/post-commit`
+
 This idea of ratcheting down the number of errors came from Vince Broz's
 excellent [quality](https://github.com/apiology/quality) gem.
 
