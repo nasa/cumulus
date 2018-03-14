@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.1.2] - 2018-03-14
+
 ### Added
 - added tools to @cumulus/integration-tests for local integration testing
 - added end to end testing for discovering and parsing of PDRs
@@ -71,7 +73,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.2...HEAD
+[v1.1.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...v1.1.2
 [v1.1.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.1
 [v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
