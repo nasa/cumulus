@@ -106,7 +106,7 @@ You will be prompted to select the type of change (patch/minor/major).
 Lerna will update the version of all packages after the selection. You then have to:
 
 1. Commit the package version updates that are made by Lerna.
-2. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the a version number and the date.
+2. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
 3. Add a link to the github "compare" view at the bottom of the CHANGELOG, following the existing pattern.
 
 Commit all changes and open a PR.
