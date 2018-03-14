@@ -158,6 +158,8 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
   }
 }
 
-exports.testWorkflow = testWorkflow;
-exports.executeWorkflow = executeWorkflow;
-exports.getLambdaOutput = lambda.getLambdaOutputPayload;
+module.exports = {
+  testWorkflow,
+  executeWorkflow,
+  getLambdaOutput: lambda.getLambdaOutput
+};
