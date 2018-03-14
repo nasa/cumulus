@@ -67,15 +67,15 @@ test('returns the correct results in the nominal case', (t) => {
     'arn:4': 'ABORTED',
     'arn:7': null
   };
-  const error = {
-    message: 'Execution Does Not Exist: arn',
-    code: 'ExecutionDoesNotExist'
-  };
 
   const stubSfnClient = {
     describeExecution: ({ executionArn }) => ({
       promise: () => {
-        if (executionStatuses[executionArn] === null) return Promise.reject(error);
+        if (!executionStatuses[executionArn]) {
+          const error = new Error(`Execution does not exist: ${executionArn}`);
+          error.code = 'ExecutionDoesNotExist';
+          return Promise.reject(error);
+        }
         return Promise.resolve({
           executionArn,
           status: executionStatuses[executionArn]
