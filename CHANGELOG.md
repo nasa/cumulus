@@ -6,8 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.1.2] - 2018-03-14
+
+### Added
+- added tools to @cumulus/integration-tests for local integration testing
+- added end to end testing for discovering and parsing of PDRs
+- `yarn e2e` command is available for end to end testing
 ### Fixed
 
+- **CUMULUS-326: "Occasionally encounter "Too Many Requests" on deployment"** The api gateway calls will handle throttling errors
 - **CUMULUS-175: "Dashboard providers not in sync with AWS providers."** The root cause of this bug - DynamoDB operations not showing up in Elasticsearch - was shared by collections and rules. The fix was to update providers', collections' and rules; POST, PUT and DELETE endpoints to operate on DynamoDB and using DynamoDB streams to update Elasticsearch. The following packages were made:
   - `@cumulus/deployment` deploys DynamoDB streams for the Collections, Providers and Rules tables as well as a new lambda function called `dbIndexer`. The `dbIndexer` lambda has an event source mapping which listens to each of the DynamoDB streams. The dbIndexer lambda receives events referencing operations on the DynamoDB table and updates the elasticsearch cluster accordingly.
   - The `@cumulus/api` endpoints for collections, providers and rules _only_ query DynamoDB, with the exception of LIST endpoints and the collections' GET endpoint.
@@ -16,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Broke up `kes.override.js` of @cumulus/deployment to multiple modules and moved to a new location
 - Expanded @cumulus/deployment test coverage
 - all tasks were updated to use cumulus-message-adapter-js 1.0.1
+- added build process to integration-tests package to babelify it before publication
+- Update @cumulus/integration-tests lambda.js `getLambdaOutput` to return the entire lambda output. Previously `getLambdaOutput` returned only the payload.
 
 ## [v1.1.1] - 2018-03-08
 
@@ -59,7 +68,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.2...HEAD
+[v1.1.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...v1.1.2
 [v1.1.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.1
 [v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
