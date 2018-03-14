@@ -6,7 +6,7 @@
     "test": "ava --no-color",
     "build": "babel lib -d app",
     "watch": "babel lib -d app -w",
-    "prepublish": "npm run build"
+    "postinstall": "npm run build"
   },
   "keywords": [
     "CUMULUS"
@@ -40,16 +40,16 @@
     "lodash.omit": "4.5.0",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
+    "babel-cli": "^6.25.0",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
     "request": "^2.83.0"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
-    "ava": "^0.25.0",
-    "babel-cli": "^6.25.0",
-    "babel-core": "^6.25.0",
-    "babel-loader": "^6.2.4",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1"
+    "ava": "^0.25.0"
   }
 }
