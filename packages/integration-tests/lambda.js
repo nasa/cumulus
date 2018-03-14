@@ -68,7 +68,7 @@ async function getLambdaExecution(workflowExecutionArn, lambdaName) {
  * @param {string} lambdaName - name of the lambda
  * @returns {Object} object containing the payload, null if error
  */
-async function getLambdaOutputPayload(workflowExecutionArn, lambdaName) {
+async function getLambdaOutput(workflowExecutionArn, lambdaName) {
   const lambdaExecution = await getLambdaExecution(workflowExecutionArn, lambdaName);
 
   if (lambdaExecution === null) {
@@ -83,7 +83,7 @@ async function getLambdaOutputPayload(workflowExecutionArn, lambdaName) {
   }
 
   const succeededDetails = JSON.parse(lambdaExecution.completeEvent.lambdaFunctionSucceededEventDetails.output.toString());
-  return succeededDetails.payload;
+  return succeededDetails;
 }
 
-exports.getLambdaOutputPayload = getLambdaOutputPayload;
+exports.getLambdaOutput = getLambdaOutput;
