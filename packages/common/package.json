@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -31,11 +31,14 @@
   },
   "babel": {
     "presets": [
-      ["env", {
-        "targets": {
-          "node": "6.10"
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6.10"
+          }
         }
-      }]
+      ]
     ]
   },
   "author": "Cumulus Authors",
