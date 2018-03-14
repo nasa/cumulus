@@ -18,6 +18,8 @@ const logDetails = {
   type: 'apigateway'
 };
 
+const defaultIndexAlias = 'cumulus-alias';
+
 class BaseSearch {
   static async es(host) {
     let esConfig;
@@ -80,7 +82,7 @@ class BaseSearch {
 
     this.frm = (page - 1) * this.size;
     this.page = parseInt((params.skip) ? params.skip : page, 10);
-    this.index = index || 'cumulus';
+    this.index = index || defaultIndexAlias;
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';
