@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.1.2] - 2018-03-14
+
 ### Added
 - added tools to @cumulus/integration-tests for local integration testing
 - added end to end testing for discovering and parsing of PDRs
