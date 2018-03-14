@@ -23,7 +23,7 @@ elif (( NOW < PREV )); then
     exit 2
   else
     echo "WIN: ESLint errors have decreased from ${PREV} to ${NOW}.  Ratcheting down ..."
-    echo "Make sure to commit .eslint-ratchet-high-water-mark"
+    echo "     Make sure to commit .eslint-ratchet-high-water-mark"
     echo "$NOW" > .eslint-ratchet-high-water-mark
     exit 0
   fi
