@@ -32,6 +32,14 @@ const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
 
 /**
+ * Makes setTimeout return a promise
+ *
+ * @param {integer} ms - number of milliseconds
+ * @returns {Promise} the arguments passed after the timeout
+ */
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
  * A subclass of Kes class that overrides opsStack method.
  * The subclass checks whether the public/private keys are generated
  * and uploaded to the deployment bucket. If not, they are generated and
@@ -66,10 +74,24 @@ class UpdatedKes extends Kes {
    * @returns {Promise.<boolean>} returns true if successful
    */
   async redeployApiGateWay(name, restApiId, stageName) {
+    const waitTime = 20;
     if (restApiId) {
-      const apigateway = new this.AWS.APIGateway();
-      await apigateway.createDeployment({ restApiId, stageName }).promise();
-      console.log(`${name} endpoints with the id ${restApiId} redeployed.`);
+      try {
+        const apigateway = new this.AWS.APIGateway();
+        await apigateway.createDeployment({ restApiId, stageName }).promise();
+        console.log(`${name} endpoints with the id ${restApiId} redeployed.`);
+      }
+      catch (e) {
+        if (e.message && e.message.includes('Too Many Requests')) {
+          console.log(
+            `Redeploying ${restApiId} was throttled. ` +
+            `Another attempt will be made in ${waitTime} seconds`
+          );
+          await delay(waitTime * 1000);
+          return this.redeployApiGateWay(name, restApiId, stageName);
+        }
+        throw e;
+      }
     }
     return true;
   }
@@ -193,13 +215,11 @@ class UpdatedKes extends Kes {
         return generateTemplates(this.config, outputs, this.uploadToS3.bind(this));
       })
       .then(() => this.restartECSTasks(this.config))
-      .then(() => {
-        const updates = [
-          this.redeployApiGateWay('api', apis.api, apis.stageName),
-          this.redeployApiGateWay('distribution', apis.distribution, apis.stageName)
-        ];
-
-        return Promise.all(updates);
+      .then(() => this.redeployApiGateWay('api', apis.api, apis.stageName))
+      .then(() => this.redeployApiGateWay('distribution', apis.distribution, apis.stageName))
+      .catch((e) => {
+        console.log(e);
+        throw e;
       });
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-s3-granules",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Discover granules from an S3 bucket",
   "main": "index.js",
   "directories": {
@@ -35,9 +35,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.1.0",
+    "@cumulus/common": "^1.1.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.1.1",
+    "@cumulus/ingest": "^1.1.2",
     "@cumulus/test-data": "^1.1.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
