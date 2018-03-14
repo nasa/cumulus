@@ -101,9 +101,9 @@ To update cumulus' version number run:
 
      $ yarn update
 
-You will be prompted to select the type of change (patch/minor/major). 
+You will be prompted to select the type of change (patch/minor/major). Lerna will update the version of all packages after the selection.
 
-Lerna will update the version of all packages after the selection. You then have to:
+Your next steps should be:
 
 1. Commit the package version updates that are made by Lerna.
 2. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
