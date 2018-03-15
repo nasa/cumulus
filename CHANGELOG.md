@@ -10,7 +10,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - added flag `useList` to parse-pdr [CUMULUS-404]
 
 ### Fixed
+
 - Pass encrypted password to the ApiGranule Lambda function [CUMULUS-424]
+- [`@cumulus/api`] Kinesis Consumer invokes sfScheduler lambda function instead of placing a message directly on the sfStarter SQS queue. Fix for [CUMULUS-359](https://bugs.earthdata.nasa.gov/browse/CUMULUS-359).
+
+### Removed
+
+- [`@cumulus/ingest/aws`] Remove queueWorkflowMessage which is no longer being used by @cumulus/api's kinesisConsumer
+
 
 ## [v1.1.3] - 2018-03-14
 ### Fixed
