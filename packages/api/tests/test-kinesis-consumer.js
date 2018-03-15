@@ -3,6 +3,7 @@
 const get = require('lodash.get');
 const sinon = require('sinon');
 const test = require('ava');
+const originalConsoleLog = console.log;
 
 const { randomString } = require('@cumulus/common/test-utils');
 const awsIngest = require('@cumulus/ingest/aws');
@@ -73,20 +74,23 @@ function testCallback(err, object) {
   return object;
 }
 
-test.beforeEach(async(t) => {
+
+test.beforeEach(async (t) => {
+  console.log = () => {};
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
   t.context.messageTemplateKey = messageTemplateKey;
 
-  sinon.stub(Rule, 'buildPayload').callsFake((item) =>
-    Promise.resolve({
+  sinon.stub(Rule, 'buildPayload').callsFake((item) => {
+    return Promise.resolve({
       template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
       provider: item.provider,
       collection: item.collection,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
-    }));
+    })
+  });
 
   t.context.tableName = randomString();
   process.env.RulesTable = t.context.tableName;
@@ -101,15 +105,18 @@ test.beforeEach(async(t) => {
 });
 
 test.afterEach(async() => {
-  Rule.buildPayload.restore();
+  console.log = originalConsoleLog;
+  await Rule.buildPayload.restore();
 });
 
 // getKinesisRule tests
 // eslint-disable-next-line max-len
-test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', (t) => getKinesisRules(JSON.parse(eventData))
-  .then((result) => {
-    t.is(result.length, 2);
-  }));
+test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async(t) => {
+  await getKinesisRules(JSON.parse(eventData))
+    .then((result) => {
+      t.is(result.length, 2);
+    });
+});
 
 // handler tests
 test('it should enqueue a message for each associated workflow', async(t) => {
@@ -125,30 +132,26 @@ test('it should enqueue a message for each associated workflow', async(t) => {
   t.deepEqual(expectedPayload, actualPayload);
 });
 
-test('it should throw an error if message does not include a collection', (t) => {
+test('it should throw an error if message does not include a collection', async (t) => {
   const invalidMessage = JSON.stringify({});
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
-  return handler(kinesisEvent, {}, testCallback)
-    .catch((err) => {
-      const errObject = JSON.parse(err);
-      t.is(errObject.errors[0].dataPath, '');
-      t.is(errObject.errors[0].message, 'should have required property \'collection\'');
-    });
+  const errors = await handler(kinesisEvent, {}, testCallback);
+  t.is(errors[0].message, 'validation failed');
+  t.is(errors[0].errors[0].dataPath, '');
+  t.is(errors[0].errors[0].message, 'should have required property \'collection\'');
 });
 
-test('it should throw an error if message collection has wrong data type', (t) => {
+test('it should throw an error if message collection has wrong data type', async (t) => {
   const invalidMessage = JSON.stringify({ collection: {} });
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
-  return handler(kinesisEvent, {}, testCallback)
-    .catch((err) => {
-      const errObject = JSON.parse(err);
-      t.is(errObject.errors[0].dataPath, '.collection');
-      t.is(errObject.errors[0].message, 'should be string');
-    });
+  const errors = await handler(kinesisEvent, {}, testCallback);
+  t.is(errors[0].message, 'validation failed');
+  t.is(errors[0].errors[0].dataPath, '.collection');
+  t.is(errors[0].errors[0].message, 'should be string');
 });
 
 test('it should not throw if message is valid', (t) => {
