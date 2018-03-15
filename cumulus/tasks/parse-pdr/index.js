@@ -32,7 +32,8 @@ function parsePdr(event) {
     config.stack,
     config.bucket,
     config.collection,
-    provider
+    provider,
+    config.useList
   );
 
   return parse.ingest()
