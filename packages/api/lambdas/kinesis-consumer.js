@@ -68,7 +68,7 @@ async function queueMessageForRule(kinesisRule, eventObject) {
 async function validateMessage(event) {
   const ajv = new Ajv({ allErrors: true });
   const validate = ajv.compile(messageSchema);
-  await validate(event);
+  return await validate(event);
 }
 
 /**
@@ -88,7 +88,12 @@ function processRecord(record) {
     .then(getKinesisRules)
     .then((kinesisRules) => (
       Promise.all(kinesisRules.map((kinesisRule) => queueMessageForRule(kinesisRule, eventObject)))
-    ));
+    ))
+    .catch((err) => {
+      console.log('Caught error in process record:');
+      console.log(err);
+      return err;
+    });
 }
 
 /**
