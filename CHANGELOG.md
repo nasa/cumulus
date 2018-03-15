@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - added flag `useList` to parse-pdr [CUMULUS-404]
 
+### Fixed
+- Pass encrypted password to the ApiGranule Lambda function [CUMULUS-424]
+
 ## [v1.1.3] - 2018-03-14
 ### Fixed
 - Changed @cumulus/deployment package install behavior. The build process will happen after installation
