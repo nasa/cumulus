@@ -3,7 +3,7 @@
 const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { publishSnsMessage } = require('../index');
-const { cloneDeep } = require('lodash');
+const { cloneDeep, get } = require('lodash');
 const { randomString } = require('@cumulus/common/test-utils');
 
 test('send report when sfn is running', (t) => {
@@ -16,8 +16,7 @@ test('send report when sfn is running', (t) => {
 
   return publishSnsMessage(cloneDeep(event))
     .then((output) => {
-      event.input.meta.status = 'running';
-      t.deepEqual(output, event.input);
+      t.not(get(output, 'MessageId', null));
     });
 });
 
@@ -39,13 +38,13 @@ test('send report when sfn is running with exception', (t) => {
     });
 });
 
-test('send report when sfn is running with error', (t) => {
+test('send report when sfn is running with TypeError', (t) => {
   const event = {
     input: {
       meta: { topic_arn: 'test_topic_arn' },
       error: {
         Error: 'TypeError',
-        Cause: 'bucket not found'
+        Cause: 'resource not found'
       },
       anykey: 'anyvalue'
     }
@@ -57,6 +56,23 @@ test('send report when sfn is running with error', (t) => {
     });
 });
 
+test('send report when sfn is running with known error type', (t) => {
+  const event = {
+    input: {
+      meta: { topic_arn: 'test_topic_arn' },
+      error: {
+        Error: 'PDRParsingError',
+        Cause: 'format error'
+      },
+      anykey: 'anyvalue'
+    }
+  };
+
+  return publishSnsMessage(cloneDeep(event))
+    .catch((e) => {
+      t.is(e.message, event.input.error.Cause);
+    });
+});
 
 test('send report when sfn is finished and granule has succeeded', async (t) => {
   const input = {
@@ -79,8 +95,7 @@ test('send report when sfn is finished and granule has succeeded', async (t) => 
   await s3().createBucket({ Bucket: event.config.bucket }).promise();
   return publishSnsMessage(cloneDeep(event))
     .then((output) => {
-      event.input.meta.status = 'completed';
-      t.deepEqual(output, event.input);
+      t.not(get(output, 'MessageId', null));
     })
     .then(() => recursivelyDeleteS3Bucket(event.config.bucket))
     .catch(() => recursivelyDeleteS3Bucket(event.config.bucket).then(t.fail));
