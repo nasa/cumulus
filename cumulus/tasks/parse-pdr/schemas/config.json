@@ -38,6 +38,11 @@
         "name": { "type": "string" },
         "granuleIdExtraction": { "type": "string" }
       }
+    },
+    "useList": {
+      "description": "flag to tell ftp server to use 'LIST' instead of 'STAT'",
+      "default": false,
+      "type": "boolean"
     }
   }
 }
