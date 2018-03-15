@@ -75,22 +75,20 @@ function testCallback(err, object) {
 }
 
 
-test.beforeEach(async (t) => {
+test.beforeEach(async(t) => {
   console.log = () => {};
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
   t.context.messageTemplateKey = messageTemplateKey;
 
-  sinon.stub(Rule, 'buildPayload').callsFake((item) => {
-    return Promise.resolve({
-      template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
-      provider: item.provider,
-      collection: item.collection,
-      meta: get(item, 'meta', {}),
-      payload: get(item, 'payload', {})
-    })
-  });
+  sinon.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
+    template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
+    provider: item.provider,
+    collection: item.collection,
+    meta: get(item, 'meta', {}),
+    payload: get(item, 'payload', {})
+  }));
 
   t.context.tableName = randomString();
   process.env.RulesTable = t.context.tableName;
@@ -132,7 +130,7 @@ test('it should enqueue a message for each associated workflow', async(t) => {
   t.deepEqual(expectedPayload, actualPayload);
 });
 
-test('it should throw an error if message does not include a collection', async (t) => {
+test('it should throw an error if message does not include a collection', async(t) => {
   const invalidMessage = JSON.stringify({});
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
@@ -143,7 +141,7 @@ test('it should throw an error if message does not include a collection', async 
   t.is(errors[0].errors[0].message, 'should have required property \'collection\'');
 });
 
-test('it should throw an error if message collection has wrong data type', async (t) => {
+test('it should throw an error if message collection has wrong data type', async(t) => {
   const invalidMessage = JSON.stringify({ collection: {} });
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]

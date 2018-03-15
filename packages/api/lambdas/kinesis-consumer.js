@@ -68,6 +68,7 @@ async function queueMessageForRule(kinesisRule, eventObject) {
 async function validateMessage(event) {
   const ajv = new Ajv({ allErrors: true });
   const validate = ajv.compile(messageSchema);
+  // eslint-disable-next-line no-return-await
   return await validate(event);
 }
 
