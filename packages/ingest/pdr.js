@@ -106,6 +106,7 @@ class Parse {
     bucket,
     collection,
     provider,
+    useList = false,
     folder = 'pdrs') {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
@@ -117,6 +118,7 @@ class Parse {
     this.collection = collection;
     this.provider = provider;
     this.folder = folder;
+    this.useList = useList;
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
