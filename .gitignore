@@ -15,3 +15,4 @@ packaged-*
 profiles.clj
 *.map  
 .DS_Store
+packages/deployment/app/*.js
