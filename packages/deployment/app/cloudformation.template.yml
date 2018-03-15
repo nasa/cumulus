@@ -27,7 +27,9 @@ Resources:
     Properties:
       Parameters:
         CmrPassword:
-          Ref: CmrPassword
+          Fn::GetAtt:
+            - CumulusCustomResource
+            - CmrPassword 
         ElasticSearchDomain:
           Fn::GetAtt:
             - {{../es.name}}Domain
