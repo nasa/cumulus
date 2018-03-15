@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash.get');
-const { StepFunction } = require('@cumulus/ingest/aws');
 const { setGranuleStatus, sns } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -15,20 +14,35 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 function eventFailed(event) {
   // event has exception
   // and it is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
-  if (event.exception && (typeof event.exception === 'object') &&
-    (Object.keys(event.exception).length > 0)) {
-    return true;
-  }
+  if ((event.exception) && (typeof event.exception === 'object') &&
+    (Object.keys(event.exception).length > 0)) return true;
+
   // Error and error keys are not part of the cumulus message
   // and if they appear in the message something is seriously wrong
-  else if (event.Error || event.error) {
-    return true;
-  }
+  else if (event.Error || event.error) return true;
+
   return false;
 }
 
 /**
- * if the cumulus message shows that a previous step failed,
+ * Builds error object based on error type
+ *
+ * @param {string} type - error type
+ * @param {string} cause - error cause
+ * @returns {Object} the error object
+ */
+function buildError(type, cause) {
+  let ErrorClass;
+
+  if (Object.keys(errors).includes(type)) ErrorClass = errors[type];
+  else if (type === 'TypeError') ErrorClass = TypeError;
+  else ErrorClass = Error;
+
+  return new ErrorClass(cause);
+}
+
+/**
+ * If the cumulus message shows that a previous step failed,
  * this function extracts the error message from the cumulus message
  * and fails the function with that information. This ensures that the
  * Step Function workflow fails with the correct error info
@@ -37,17 +51,9 @@ function eventFailed(event) {
  * @returns {undefined} throws an error and does not return anything
  */
 function makeLambdaFunctionFail(event) {
-  const error = get(event, 'exception.Error', get(event, 'error.Error'));
-  const cause = get(event, 'exception.Cause', get(event, 'error.Cause'));
-  if (error) {
-    if (errors[error]) {
-      throw new errors[error](cause);
-    }
-    else if (error === 'TypeError') {
-      throw new TypeError(cause);
-    }
-    throw new Error(cause);
-  }
+  const error = event.exception || event.error;
+
+  if (error) throw buildError(error.Error, error.Cause);
 
   throw new Error('Step Function failed for an unknown reason.');
 }
@@ -64,17 +70,18 @@ function makeLambdaFunctionFail(event) {
  * @param {string} event.config.bucket - S3 bucket
  * @param {string} event.config.stateMachine - current state machine
  * @param {string} event.config.executionTime - execution time
- * @returns {Promise.<Object>} - AWS SNS response. see schemas/output.json for detailed output
- * schema that is passed to the next task in the workflow
+ * @returns {Promise.<Object>} - AWS SNS response or error in case of step function
+ *  failure.
  */
 async function publishSnsMessage(event) {
-  const config = get(event, 'config', []);
-  const message = get(event, 'input', []);
+  const config = get(event, 'config');
+  const message = get(event, 'input');
 
   const finished = get(config, 'sfnEnd', false);
   const topicArn = get(message, 'meta.topic_arn', null);
   const failed = eventFailed(message);
 
+  let response = {};
   if (topicArn) {
     // if this is the sns call at the end of the execution
     if (finished) {
@@ -83,10 +90,10 @@ async function publishSnsMessage(event) {
       if (granuleId) {
         await setGranuleStatus(
           granuleId,
-          get(config, 'stack', null),
-          get(config, 'bucket', null),
-          get(config, 'stateMachine', null),
-          get(config, 'executionName', null),
+          get(config, 'stack'),
+          get(config, 'bucket'),
+          get(config, 'stateMachine'),
+          get(config, 'executionName'),
           message.meta.status
         );
       }
@@ -95,7 +102,7 @@ async function publishSnsMessage(event) {
       message.meta.status = 'running';
     }
 
-    await sns().publish({
+    response = await sns().publish({
       TopicArn: topicArn,
       Message: JSON.stringify(message)
     }).promise();
@@ -105,7 +112,7 @@ async function publishSnsMessage(event) {
     makeLambdaFunctionFail(message);
   }
 
-  return message;
+  return response;
 }
 
 exports.publishSnsMessage = publishSnsMessage;
@@ -116,11 +123,9 @@ exports.publishSnsMessage = publishSnsMessage;
  * @param {Object} event - a Cumulus Message
  * @param {Object} context - an AWS Lambda context object
  * @param {Function} callback - an AWS Lambda call back
- * @returns {Promise} updated event object
+ * @returns {undefined} - does not return a value
  */
 function handler(event, context, callback) {
-  return StepFunction.pullEvent(event).then((message) => {
-    cumulusMessageAdapter.runCumulusTask(publishSnsMessage, message, context, callback);
-  });
+  cumulusMessageAdapter.runCumulusTask(publishSnsMessage, event, context, callback);
 }
 exports.handler = handler;
