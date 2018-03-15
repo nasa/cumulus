@@ -101,9 +101,15 @@ To update cumulus' version number run:
 
      $ yarn update
 
-You will be prompted to select the type of change (patch/minor/major). 
+You will be prompted to select the type of change (patch/minor/major). Lerna will update the version of all packages after the selection.
 
-Lerna will update the version of all packages after the selection. You then have to commit the changes that are made by Lerna. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the a version number and the date. Commit these changes as well.
+Your next steps should be:
+
+1. Commit the package version updates that are made by Lerna.
+2. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
+3. Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
+
+Commit all changes and open a PR.
 
 The version number updates should be put in a PR and committed to master along with the changelog updates. After merging to master, tag the master branch with a release using the new version number.
 
