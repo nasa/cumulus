@@ -1,3 +1,6 @@
+const { Kinesis } = require('aws-sdk');
+const kinesis = new Kinesis({region: 'us-east-1'});
+
 // Setup for sending and receiving a cloud notification message via kinesis
 process.env.stackName = 'aimee-deploy-cumulus';
 process.env.ProvidersTable = `${process.env.stackName}-ProvidersTable`;
@@ -6,6 +9,7 @@ process.env.RulesTable = `${process.env.stackName}-RulesTable`;
 process.env.internal = 'cumulus-devseed-internal';
 process.env.bucket = process.env.internal;
 process.env.kinesisConsumer = `${process.env.stackName}-kinesisConsumer`;
+const AWS_ACCOUNT_ID = '433612427488';
 
 const { Collection, Provider, Rule } = require('../api/models/');
 const provider = new Provider();
@@ -34,17 +38,8 @@ async function createTestCollection(opts = {
   return await collection.create(opts);
 }
 
-// provider: 'my-provider',
-// collection: {
-//   name: 'my-collection-name',
-//   version: 'my-collection-version'
-// },
-// rule: {
-//   type: 'kinesis',
-//   value: 'my-kinesis-arn'
-// },
 async function createTestRule(customOpts = {
-  provider,
+  providerId,
   collection,
   rule  
 }, defaultOpts = {
@@ -53,21 +48,63 @@ async function createTestRule(customOpts = {
   state: 'ENABLED'
 }) {
   const allOpts = Object.assign({}, customOpts, defaultOpts);
-  console.log('opts');
-  console.log(allOpts);  
   return await rule.create(allOpts);
 }
 
+const streamName = 'testStream';
+async function createStream(opts = {
+  ShardCount: 1,
+  StreamName: streamName
+}) {
+  return await kinesis.describeStream({StreamName: opts.StreamName}).promise()
+    .then(res => res)
+    .catch((err) => {
+      if (err.code === 'ResourceNotFoundException') {
+        kinesis.createStream(opts).promise();
+      }
+    });
+}
+
+async function putRecord(data, opts = {
+  StreamName: streamName,
+  PartitionKey: '1'
+}) {
+  return kinesis.putRecord(Object.assign({}, opts, {Data: data})).promise();
+}
+
+let collectionName;
+let collectionVersion;
+let providerId;
+let createdRule;
 Promise.all([createTestProvider(), createTestCollection()])
   .then((providerAndCollection) => {
-    const providerId = providerAndCollection[0].id;
-    const collection = {
-      name: providerAndCollection[1].name,
-      version: providerAndCollection[1].version
+    const provider = providerAndCollection[0];
+    const createdCollection = providerAndCollection[1];
+    const collectionData = {
+      name: createdCollection.name,
+      version: createdCollection.version
     };
-    const kinesisRule = { type: 'kinesis', value: 'arn:aws:kinesis:us-east-1:433612427488:stream/aimee-test-cnm' };
-    createTestRule({providerId, collection, rule: kinesisRule})
-      .catch(console.log);
+    collectionName = createdCollection.name;
+    collectionVersion = createdCollection.version;
+    providerId = provider.id;
+    const kinesisRule = {
+      type: 'kinesis',
+      value: `arn:aws:kinesis:us-east-1:${AWS_ACCOUNT_ID}:stream/${streamName}`
+    };
+    createTestRule({providerId, collectionData, rule: kinesisRule});
+  })
+  .then((createRuleResult) => {
+    createdRule = createRuleResult;
+    const testRecord = { collection: collectionName };
+    const stringifiedRecord = JSON.stringify(testRecord);
+    putRecord(stringifiedRecord);
   })
   .then(console.log)
-  .catch(console.log);
+  .catch(console.log)
+  // .finally(() => {
+  //   Promise.all([
+  //     collection.delete({name: collectionName, version: collectionVersion}),
+  //     provider.delete({id: providerId}),
+  //     rule.delete(createdRule);
+  //   ]);
+  // });
