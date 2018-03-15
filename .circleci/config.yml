@@ -200,4 +200,4 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: master
+              only: release 
