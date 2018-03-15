@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- added flag `useList` to parse-pdr
+
 ## [v1.1.3] - 2018-03-14
 ### Fixed
 - Changed @cumulus/deployment package install behavior. The build process will happen after installation
@@ -16,7 +19,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - added tools to @cumulus/integration-tests for local integration testing
 - added end to end testing for discovering and parsing of PDRs
 - `yarn e2e` command is available for end to end testing
-- added flag `useList` to parse-pdr
 ### Fixed
 
 - **CUMULUS-326: "Occasionally encounter "Too Many Requests" on deployment"** The api gateway calls will handle throttling errors
