@@ -2,6 +2,7 @@
 
 const _get = require('lodash.get');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const log = require('@cumulus/common/log');
 const { handle } = require('../lib/response');
 const models = require('../models');
@@ -122,7 +123,7 @@ function handler(event, context) {
     return context.fail('HttpMethod is missing');
   }
 
-  return handle(event, context, !process.env.TEST /* authCheck */, cb => {
+  return handle(event, context, !inTestMode() /* authCheck */, cb => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
