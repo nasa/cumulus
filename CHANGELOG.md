@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.1.4] - 2018-03-15
+### Added
+- added flag `useList` to parse-pdr [CUMULUS-404]
+
+### Fixed
+- Pass encrypted password to the ApiGranule Lambda function [CUMULUS-424]
+
 ## [v1.1.3] - 2018-03-14
 ### Fixed
 - Changed @cumulus/deployment package install behavior. The build process will happen after installation
@@ -72,7 +79,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...HEAD
+[v1.1.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...v1.1.2
 [v1.1.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.1
