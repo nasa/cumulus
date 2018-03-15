@@ -9,7 +9,8 @@ const { checkPdrStatuses } = require('../index');
 test('valid output when no running executions', (t) => {
   const event = {
     input: {
-      running: []
+      running: [],
+      pdr: { name: 'test.PDR', path: 'test-path' }
     }
   };
 
@@ -19,7 +20,8 @@ test('valid output when no running executions', (t) => {
         isFinished: true,
         running: [],
         failed: [],
-        completed: []
+        completed: [],
+        pdr: { name: 'test.PDR', path: 'test-path' }
       };
 
       t.deepEqual(output, expectedOutput);
@@ -41,7 +43,8 @@ test('error thrown when limit exceeded', (t) => {
     input: {
       running: ['arn:123'],
       counter: 2,
-      limit: 3
+      limit: 3,
+      pdr: { name: 'test.PDR', path: 'test-path' }
     }
   };
 
@@ -61,26 +64,35 @@ test('returns the correct results in the nominal case', (t) => {
     'arn:1': 'RUNNING',
     'arn:2': 'SUCCEEDED',
     'arn:3': 'FAILED',
-    'arn:4': 'ABORTED'
+    'arn:4': 'ABORTED',
+    'arn:7': null
   };
 
   const stubSfnClient = {
     describeExecution: ({ executionArn }) => ({
-      promise: () => Promise.resolve({
-        executionArn,
-        status: executionStatuses[executionArn]
-      })
+      promise: () => {
+        if (!executionStatuses[executionArn]) {
+          const error = new Error(`Execution does not exist: ${executionArn}`);
+          error.code = 'ExecutionDoesNotExist';
+          return Promise.reject(error);
+        }
+        return Promise.resolve({
+          executionArn,
+          status: executionStatuses[executionArn]
+        });
+      }
     })
   };
   const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
 
   const event = {
     input: {
-      running: ['arn:1', 'arn:2', 'arn:3', 'arn:4'],
+      running: ['arn:1', 'arn:2', 'arn:3', 'arn:4', 'arn:7'],
       completed: ['arn:5'],
       failed: [{ arn: 'arn:6', reason: 'OutOfCheese' }],
       counter: 5,
-      limit: 10
+      limit: 10,
+      pdr: { name: 'test.PDR', path: 'test-path' }
     }
   };
 
@@ -92,7 +104,7 @@ test('returns the correct results in the nominal case', (t) => {
       t.is(output.counter, 6);
       t.is(output.limit, 10);
 
-      t.deepEqual(output.running, ['arn:1']);
+      t.deepEqual(output.running, ['arn:1', 'arn:7']);
       t.deepEqual(output.completed.sort(), ['arn:2', 'arn:5'].sort());
 
       t.is(output.failed.length, 3);
