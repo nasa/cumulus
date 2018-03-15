@@ -1,5 +1,7 @@
 /* eslint-disable require-yield */
+
 'use strict';
+
 const Ajv = require('ajv');
 
 const Rule = require('../models/rules');
@@ -14,7 +16,7 @@ const awsIngest = require('@cumulus/ingest/aws');
  * @returns {Array} List of zero or more rules found from table scan
  */
 async function getKinesisRules(event) {
-  const collection = event.collection;
+  const { collection } = event;
   const model = new Rule();
   const kinesisRules = await model.scan({
     names: {
@@ -66,7 +68,7 @@ async function queueMessageForRule(kinesisRule, eventObject) {
 async function validateMessage(event) {
   const ajv = new Ajv({ allErrors: true });
   const validate = ajv.compile(messageSchema);
-  return await validate(event);
+  await validate(event);
 }
 
 /**

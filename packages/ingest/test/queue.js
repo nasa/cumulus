@@ -5,7 +5,7 @@ const queue = require('../queue');
 const { sqs, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { createQueue, randomString } = require('@cumulus/common/test-utils');
 
-test.beforeEach(async (t) => {
+test.beforeEach(async(t) => {
   t.context.templateBucket = randomString();
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
@@ -19,7 +19,7 @@ test.beforeEach(async (t) => {
     },
     meta: { queues: { startSF: t.context.queueUrl } }
   };
- 
+
   const messageTemplateKey = `${randomString()}/template.json`;
   t.context.messageTemplateKey = messageTemplateKey;
   await s3().putObject({
@@ -31,16 +31,16 @@ test.beforeEach(async (t) => {
   t.context.template = `s3://${t.context.templateBucket}/${messageTemplateKey}`;
 });
 
-test.afterEach(async (t) => {
+test.afterEach(async(t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
     sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
   ]);
 });
 
-test('the queue receives a correctly formatted workflow message', async (t) => {
+test('the queue receives a correctly formatted workflow message', async(t) => {
   const granule = { granuleId: '1', files: [] };
-  const queueUrl = t.context.queueUrl;
+  const { queueUrl } = t.context;
   const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
@@ -51,22 +51,22 @@ test('the queue receives a correctly formatted workflow message', async (t) => {
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1
   }).promise()
-  .then((receiveMessageResponse) => {
-    t.is(receiveMessageResponse.Messages.length, 1);
+    .then((receiveMessageResponse) => {
+      t.is(receiveMessageResponse.Messages.length, 1);
 
-    const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
-    const expectedMessage = {
-      cumulus_meta: {
-        state_machine: t.context.stateMachineArn
-      },
-      meta: {
-        queues: { startSF: t.context.queueUrl },
-        provider: provider,
-        collection: collection
-      },
-      payload: { granules: [ granule ] }
-    };
+      const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
+      const expectedMessage = {
+        cumulus_meta: {
+          state_machine: t.context.stateMachineArn
+        },
+        meta: {
+          queues: { startSF: t.context.queueUrl },
+          provider: provider,
+          collection: collection
+        },
+        payload: { granules: [granule] }
+      };
 
-    t.deepEqual(expectedMessage, actualMessage);
-  });
+      t.deepEqual(expectedMessage, actualMessage);
+    });
 });

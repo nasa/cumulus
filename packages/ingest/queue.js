@@ -5,8 +5,6 @@ const {
   sendSQSMessage,
   parseS3Uri
 } = require('@cumulus/common/aws');
-const get = require('lodash.get');
-const uuidv4 = require('uuid/v4');
 
 /**
  * Create a message from a template stored on S3
@@ -37,7 +35,8 @@ async function enqueueParsePdrMessage(
   queueUrl,
   parsePdrMessageTemplateUri,
   provider,
-  collection) {
+  collection
+) {
   const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
 
   message.meta.provider = provider;

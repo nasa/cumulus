@@ -1,9 +1,9 @@
 'use strict';
+
 const get = require('lodash.get');
 const sinon = require('sinon');
 const test = require('ava');
 
-const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const awsIngest = require('@cumulus/ingest/aws');
 const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
@@ -27,8 +27,8 @@ const eventData = JSON.stringify({
 
 const event = {
   Records: [
-    { kinesis: { data: new Buffer(eventData).toString('base64') } },
-    { kinesis: { data: new Buffer(eventData).toString('base64') } }
+    { kinesis: { data: Buffer.from(eventData).toString('base64') } },
+    { kinesis: { data: Buffer.from(eventData).toString('base64') } }
   ]
 };
 
@@ -73,7 +73,7 @@ function testCallback(err, object) {
   return object;
 }
 
-test.beforeEach(async (t) => {
+test.beforeEach(async(t) => {
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
@@ -86,8 +86,7 @@ test.beforeEach(async (t) => {
       collection: item.collection,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
-    })
-  );
+    }));
 
   t.context.tableName = randomString();
   process.env.RulesTable = t.context.tableName;
@@ -101,21 +100,19 @@ test.beforeEach(async (t) => {
     .map((rule) => model.create(rule)));
 });
 
-test.afterEach(async (t) => {
+test.afterEach(async() => {
   Rule.buildPayload.restore();
 });
 
 // getKinesisRule tests
 // eslint-disable-next-line max-len
-test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', (t) => {
-  return getKinesisRules(JSON.parse(eventData))
-    .then((result) => {
-      t.is(result.length, 2);
-    });
-});
+test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', (t) => getKinesisRules(JSON.parse(eventData))
+  .then((result) => {
+    t.is(result.length, 2);
+  }));
 
 // handler tests
-test('it should enqueue a message for each associated workflow', async (t) => {
+test('it should enqueue a message for each associated workflow', async(t) => {
   await handler(event, {}, testCallback);
   const actualPayload = sfSchedulerSpy.getCall(0).args[1];
   const expectedPayload = {
@@ -131,7 +128,7 @@ test('it should enqueue a message for each associated workflow', async (t) => {
 test('it should throw an error if message does not include a collection', (t) => {
   const invalidMessage = JSON.stringify({});
   const kinesisEvent = {
-    Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
+    Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
   return handler(kinesisEvent, {}, testCallback)
     .catch((err) => {
@@ -144,7 +141,7 @@ test('it should throw an error if message does not include a collection', (t) =>
 test('it should throw an error if message collection has wrong data type', (t) => {
   const invalidMessage = JSON.stringify({ collection: {} });
   const kinesisEvent = {
-    Records: [{ kinesis: { data: new Buffer(invalidMessage).toString('base64') } }]
+    Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
   return handler(kinesisEvent, {}, testCallback)
     .catch((err) => {
@@ -157,7 +154,7 @@ test('it should throw an error if message collection has wrong data type', (t) =
 test('it should not throw if message is valid', (t) => {
   const validMessage = JSON.stringify({ collection: 'confection-collection' });
   const kinesisEvent = {
-    Records: [{ kinesis: { data: new Buffer(validMessage).toString('base64') } }]
+    Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
   return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[]]));
 });
