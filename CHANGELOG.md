@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - pdr-status-check doesn't update pdr stats which prevent the real time pdr progress from showing up in the dashboard. To solve this, added lambda function sf-sns-report which is copied from @cumulus/api/lambdas/sf-sns-broadcast with modification, sf-sns-report can be used to report step function status anywhere inside a step function.  So add step sf-sns-report after each pdr-status-check, we will get the PDR status progress at real time.
   - It's possible an execution is still in the queue and doesn't exist in sfn yet.  Added code to handle 'ExecutionDoesNotExist' error when checking the execution status.
 
+- **CUMULUS-304: "Add AWS API throttling to pdr-status-check task"** Added concurrency limit on SFN API calls.  The default concurrency is 10 and is configurable through Lambda environment variable CONCURRENCY.
+
 ## [v1.1.3] - 2018-03-14
 ### Fixed
 - Changed @cumulus/deployment package install behavior. The build process will happen after installation
