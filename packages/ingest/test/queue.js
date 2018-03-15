@@ -2,8 +2,8 @@
 
 const test = require('ava');
 const queue = require('../queue');
-const { sqs, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const { createQueue, randomString } = require('@cumulus/common/test-utils');
+const { createQueue, sqs, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
@@ -19,7 +19,7 @@ test.beforeEach(async (t) => {
     },
     meta: { queues: { startSF: t.context.queueUrl } }
   };
- 
+
   const messageTemplateKey = `${randomString()}/template.json`;
   await s3().putObject({
     Bucket: t.context.templateBucket,

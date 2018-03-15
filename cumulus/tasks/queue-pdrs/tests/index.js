@@ -2,9 +2,8 @@
 
 const test = require('ava');
 
-const { s3, sqs, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { createQueue, s3, sqs, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const {
-  createQueue,
   randomString,
   validateConfig,
   validateInput,
