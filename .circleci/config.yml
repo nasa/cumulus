@@ -176,13 +176,7 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          command: |
-            yarn
-
-            # short fix for deployment package missing dependencies during deploy
-            cd packages/deployment
-            yarn 
-            cd ~/project
+          command: yarn
 
       - run:
           name: Publishing to NPM
