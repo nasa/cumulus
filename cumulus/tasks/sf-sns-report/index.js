@@ -69,7 +69,7 @@ function makeLambdaFunctionFail(event) {
  * @param {string} event.config.stack - the name of the deployment stack
  * @param {string} event.config.bucket - S3 bucket
  * @param {string} event.config.stateMachine - current state machine
- * @param {string} event.config.executionTime - execution time
+ * @param {string} event.config.executionName - execution name
  * @returns {Promise.<Object>} - AWS SNS response or error in case of step function
  *  failure.
  */
@@ -90,10 +90,10 @@ async function publishSnsMessage(event) {
       if (granuleId) {
         await setGranuleStatus(
           granuleId,
-          get(config, 'stack'),
-          get(config, 'bucket'),
-          get(config, 'stateMachine'),
-          get(config, 'executionName'),
+          config.stack,
+          config.bucket,
+          config.stateMachine,
+          config.executionName,
           message.meta.status
         );
       }

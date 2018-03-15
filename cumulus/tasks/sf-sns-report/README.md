@@ -34,7 +34,7 @@ To report the final status of the step function:
         stack: '{$.meta.stack}'
         bucket: '{$.meta.buckets.internal}'
         stateMachine: '{$.cumulus_meta.state_machine}'
-        executionTime: '{$.cumulus_meta.execution_name}'
+        executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
       ResultPath: null
