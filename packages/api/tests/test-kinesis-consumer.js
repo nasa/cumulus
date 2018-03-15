@@ -1,15 +1,20 @@
 'use strict';
-
-const test = require('ava');
-const sinon = require('sinon');
 const get = require('lodash.get');
-const { sqs, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const { createQueue, randomString } = require('@cumulus/common/test-utils');
+const sinon = require('sinon');
+const proxyquire =  require('proxyquire').noPreserveCache().noCallThru();
+const test = require('ava');
 
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
+const awsIngest = require('@cumulus/ingest/aws');
 const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
+
 const manager = require('../models/base');
 const Rule = require('../models/rules');
 const testCollectionName = 'test-collection';
+
+process.env.invoke = 'sfScheduler';
+const sfSchedulerSpy = sinon.spy(awsIngest, 'invoke');
 
 const ruleTableParams = {
   name: 'name',
@@ -71,24 +76,9 @@ function testCallback(err, object) {
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
-
   t.context.stateMachineArn = randomString();
-
-  t.context.queueUrl = await createQueue();
-
-  t.context.messageTemplate = {
-    cumulus_meta: {
-      state_machine: t.context.stateMachineArn
-    },
-    meta: { queues: { startSF: t.context.queueUrl } }
-  };
   const messageTemplateKey = `${randomString()}/template.json`;
-  await s3().putObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();
+  t.context.messageTemplateKey = messageTemplateKey;
 
   sinon.stub(Rule, 'buildPayload').callsFake((item) =>
     Promise.resolve({
@@ -113,11 +103,6 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach(async (t) => {
-  await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.templateBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise(),
-    manager.deleteTable(t.context.tableName)
-  ]);
   Rule.buildPayload.restore();
 });
 
@@ -133,17 +118,15 @@ test('it should look up kinesis-type rules which are associated with the collect
 // handler tests
 test('it should enqueue a message for each associated workflow', async (t) => {
   await handler(event, {}, testCallback);
-  await sqs().receiveMessage({
-    QueueUrl: t.context.queueUrl,
-    MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
-  }).promise()
-  .then((receiveMessageResponse) => {
-    t.is(receiveMessageResponse.Messages.length, 4);
-    receiveMessageResponse.Messages.map((message) => (
-      t.is(JSON.stringify(JSON.parse(message.Body).payload), JSON.stringify({ collection: 'test-collection' }))
-    ));
-  });
+  const actualPayload = sfSchedulerSpy.getCall(0).args[1];
+  const expectedPayload = {
+    template: `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`,
+    provider: commonRuleParams.provider,
+    collection: commonRuleParams.collection,
+    meta: {},
+    payload: JSON.parse(eventData)
+  };
+  t.deepEqual(expectedPayload, actualPayload);
 });
 
 test('it should throw an error if message does not include a collection', (t) => {
