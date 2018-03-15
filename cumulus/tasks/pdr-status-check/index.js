@@ -78,7 +78,8 @@ function logStatus(output) {
  *     failed: [
  *       { arn: 'arn:456', reason: 'Workflow Aborted' }
  *     ],
- *     completed: []
+ *     completed: [],
+ *     pdr: {}
  *   }
  *
  * @param {Object} event - the event that came into checkPdrStatuses
@@ -117,7 +118,8 @@ function buildOutput(event, groupedExecutions) {
     isFinished: groupedExecutions.running.length === 0,
     running,
     failed,
-    completed
+    completed,
+    pdr: event.input.pdr
   };
 
   if (!output.isFinished) {
@@ -137,28 +139,36 @@ function buildOutput(event, groupedExecutions) {
  * @returns {Promise.<Object>} - an object describing the status of Step
  *   Function executions related to a PDR
  */
-function checkPdrStatuses(event) {
+async function checkPdrStatuses(event) {
   const runningExecutionArns = event.input.running || [];
 
-  const promisedExecutionDescriptions = runningExecutionArns.map((executionArn) =>
-    aws.sfn().describeExecution({ executionArn }).promise());
-
-  return Promise.all(promisedExecutionDescriptions)
-    .then(groupExecutionsByStatus)
-    .then((groupedExecutions) => {
-      const counter = getCounterFromEvent(event) + 1;
-      const exceededLimit = counter >= getLimitFromEvent(event);
-
-      const executionsAllDone = groupedExecutions.running.length === 0;
-
-      if (!executionsAllDone && exceededLimit) {
-        throw new IncompleteError(`PDR didn't complete after ${counter} checks`);
+  const executions = [];
+  for (const executionArn of runningExecutionArns) {
+    try {
+      const execution = await aws.sfn().describeExecution({ executionArn }).promise();
+      executions.push(execution);
+    }
+    catch (e) {
+      // it's ok if a execution is still in the queue and has not be executed
+      if (e.code === 'ExecutionDoesNotExist') {
+        executions.push({ executionArn: executionArn, status: 'RUNNING' });
       }
+      else throw e;
+    }
+  }
 
-      const output = buildOutput(event, groupedExecutions);
-      if (!output.isFinished) logStatus(output);
-      return output;
-    });
+  const groupedExecutions = groupExecutionsByStatus(executions);
+  const counter = getCounterFromEvent(event) + 1;
+  const exceededLimit = counter >= getLimitFromEvent(event);
+
+  const executionsAllDone = groupedExecutions.running.length === 0;
+  if (!executionsAllDone && exceededLimit) {
+    throw new IncompleteError(`PDR didn't complete after ${counter} checks`);
+  }
+
+  const output = buildOutput(event, groupedExecutions);
+  if (!output.isFinished) logStatus(output);
+  return output;
 }
 exports.checkPdrStatuses = checkPdrStatuses;
 
