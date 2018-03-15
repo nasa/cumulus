@@ -4,7 +4,7 @@ const Ajv = require('ajv');
 
 const Rule = require('../models/rules');
 const messageSchema = require('./kinesis-consumer-event-schema.json');
-const { queueWorkflowMessage } = require('@cumulus/ingest/queue');
+const awsIngest = require('@cumulus/ingest/aws');
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
@@ -51,8 +51,8 @@ async function queueMessageForRule(kinesisRule, eventObject) {
     payload: eventObject
   };
 
-  return Rule.buildPayload(item)
-    .then(queueWorkflowMessage);
+  const payload = await Rule.buildPayload(item);
+  await awsIngest.invoke(process.env.invoke, payload);
 }
 
 /**
