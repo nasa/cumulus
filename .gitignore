@@ -1,5 +1,6 @@
 package-lock.json
 yarn.lock
+yarn-error.log
 node_modules
 build/
 dist/
@@ -13,6 +14,6 @@ packaged-*
 .vscode
 *-debug.log
 profiles.clj
-*.map  
+*.map
 .DS_Store
 packages/deployment/app/*.js
