@@ -36,28 +36,3 @@ test.afterEach(async (t) => {
     sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
   ]);
 });
-
-test('the queue receives a correctly formatted workflow message', async (t) => {
-  const event = {
-    template: t.context.template,
-    provider: 'PROV1',
-    collection: { name: 'test-collection' },
-    payload: { test: 'test payload' }
-  };
-
-  await queue.queueWorkflowMessage(event);
-  await sqs().receiveMessage({
-    QueueUrl: t.context.queueUrl,
-    MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
-  }).promise()
-  .then((receiveMessageResponse) => {
-    t.is(receiveMessageResponse.Messages.length, 1);
-
-    const message = JSON.parse(receiveMessageResponse.Messages[0].Body);
-    t.is(message.meta.provider, 'PROV1');
-    t.is(JSON.stringify(message.meta.collection), JSON.stringify({ name: 'test-collection' }));
-    t.is(JSON.stringify(message.payload), JSON.stringify({ test: 'test payload' }));
-    t.is(message.cumulus_meta.state_machine, t.context.stateMachineArn);
-  });
-});
