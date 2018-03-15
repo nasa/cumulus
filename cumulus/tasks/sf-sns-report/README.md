@@ -10,9 +10,7 @@ To report the PDR's progress as it's being processed, add the following step aft
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-          outputs:
-            - source: '{$.payload}'
-              destination: '{$.payload}'
+      ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
 
@@ -24,9 +22,7 @@ To report the start status of the step function:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-          outputs:
-            - source: '{$.payload}'
-              destination: '{$.payload}'
+      ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
 
@@ -41,6 +37,7 @@ To report the final status of the step function:
         executionTime: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
 
