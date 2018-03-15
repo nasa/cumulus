@@ -8,6 +8,8 @@ const url = require('url');
 const aws = require('./aws');
 const fs = require('fs-extra');
 
+exports.inTestMode = () => process.env.NODE_ENV === 'test';
+
 /**
  * Generate a 40-character random string
  *
