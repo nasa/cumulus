@@ -1,7 +1,6 @@
 'use strict';
 const get = require('lodash.get');
 const sinon = require('sinon');
-const proxyquire =  require('proxyquire').noPreserveCache().noCallThru();
 const test = require('ava');
 
 const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
