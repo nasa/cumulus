@@ -8,7 +8,7 @@ const path = require('path');
 const url = require('url');
 const log = require('./log');
 const string = require('./string');
-const testUtils = require('./test-utils');
+const { inTestMode, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -44,11 +44,11 @@ const awsClient = (Service, version = null) => {
   const options = {};
   if (version) options.apiVersion = version;
 
-  if (process.env.TEST) {
+  if (inTestMode()) {
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
       AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
     }
-    return memoize(() => testUtils.testAwsClient(Service, options));
+    return memoize(() => testAwsClient(Service, options));
   }
   return memoize(() => new Service(options));
 };
