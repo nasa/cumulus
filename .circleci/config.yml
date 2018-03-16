@@ -89,6 +89,7 @@ jobs:
             - ./cumulus/tasks/queue-pdrs/node_modules
             - ./cumulus/tasks/sync-granule/node_modules
             - ./cumulus/tasks/discover-s3-granules/node_modules
+            - ./cumulus/tasks/sf-sns-report/node_modules
 
       - save_cache:
           key: gitc-tasks-{{ checksum "global-hash" }}
@@ -200,4 +201,4 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: master
+              only: release 
