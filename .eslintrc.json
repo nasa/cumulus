@@ -78,8 +78,12 @@
     "guard-for-in": "off",
     "object-shorthand": "off",
     "space-before-function-paren": [
-      "warn",
-      "never"
+      "error",
+      {
+        "anonymous": "always",
+        "named": "never",
+        "asyncArrow": "always"
+      }
     ],
     "brace-style": [
       2,
