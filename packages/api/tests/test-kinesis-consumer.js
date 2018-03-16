@@ -143,6 +143,8 @@ test('it should look up kinesis-type rules which are associated with the collect
 // handler tests
 test('it should enqueue a message for each associated workflow', async(t) => {
   await handler(event, {}, testCallback);
+  const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
+  t.is(actualQueueUrl, 'stubQueueUrl');
   const actualMessage = sfSchedulerSpy.getCall(0).args[1];
   const expectedMessage = {
     cumulus_meta: {
