@@ -55,12 +55,10 @@ async function queueMessageForRule(kinesisRule, eventObject) {
 
   const payload = await Rule.buildPayload(item);
   // eslint-disable-next-line no-return-await
-  await new Promise((resolve, reject) => {
-    return sfSchedule(payload, {}, (err, result) => {
-      if (err) reject(err);
-      resolve(result);
-    });
-  });
+  await new Promise((resolve, reject) => sfSchedule(payload, {}, (err, result) => {
+    if (err) reject(err);
+    resolve(result);
+  }));
 }
 
 /**

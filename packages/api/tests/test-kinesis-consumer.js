@@ -79,7 +79,7 @@ function testCallback(err, object) {
 let sfSchedulerSpy;
 const stubQueueUrl = 'stubQueueUrl';
 
-test.beforeEach(async(t) => {
+test.beforeEach(async (t) => {
   sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
@@ -122,7 +122,7 @@ test.beforeEach(async(t) => {
     .map((rule) => model.create(rule)));
 });
 
-test.afterEach(async(t) => {
+test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
     manager.deleteTable(t.context.tableName)
@@ -135,7 +135,7 @@ test.afterEach(async(t) => {
 
 // getKinesisRule tests
 // eslint-disable-next-line max-len
-test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async(t) => {
+test('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
   await getKinesisRules(JSON.parse(eventData))
     .then((result) => {
       t.is(result.length, 2);
@@ -143,7 +143,7 @@ test('it should look up kinesis-type rules which are associated with the collect
 });
 
 // handler tests
-test('it should enqueue a message for each associated workflow', async(t) => {
+test('it should enqueue a message for each associated workflow', async (t) => {
   await handler(event, {}, testCallback);
   const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
   t.is(actualQueueUrl, stubQueueUrl);
@@ -166,7 +166,7 @@ test('it should enqueue a message for each associated workflow', async(t) => {
   t.deepEqual(actualMessage.payload, expectedMessage.payload);
 });
 
-test('it should throw an error if message does not include a collection', async(t) => {
+test('it should throw an error if message does not include a collection', async (t) => {
   const invalidMessage = JSON.stringify({});
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
@@ -177,7 +177,7 @@ test('it should throw an error if message does not include a collection', async(
   t.is(errors[0].errors[0].message, 'should have required property \'collection\'');
 });
 
-test('it should throw an error if message collection has wrong data type', async(t) => {
+test('it should throw an error if message collection has wrong data type', async (t) => {
   const invalidMessage = JSON.stringify({ collection: {} });
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
