@@ -76,10 +76,11 @@ function testCallback(err, object) {
   return object;
 }
 
-const sfSchedulerSpy sinon.stub(SQS, 'sendMessage').returns(true);
+let sfSchedulerSpy;
 const stubQueueUrl = 'stubQueueUrl';
 
 test.beforeEach(async(t) => {
+  sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
@@ -126,7 +127,7 @@ test.afterEach(async(t) => {
     recursivelyDeleteS3Bucket(t.context.templateBucket),
     manager.deleteTable(t.context.tableName)
   ]);
-  SQS.sendMessage.restore();
+  sfSchedulerSpy.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
   Collection.prototype.get.restore();
@@ -156,7 +157,9 @@ test('it should enqueue a message for each associated workflow', async(t) => {
       provider,
       collection
     },
-    payload: { collection: 'test-collection' }
+    payload: {
+      collection: 'test-collection'
+    }
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
   t.deepEqual(actualMessage.meta, expectedMessage.meta);
