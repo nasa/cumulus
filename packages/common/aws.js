@@ -202,7 +202,7 @@ exports.fileExists = async (bucket, key) => {
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
-  const scrubbedS3Objs = s3Objs.map(s3Obj => ({
+  const scrubbedS3Objs = s3Objs.map((s3Obj) => ({
     Bucket: s3Obj.Bucket,
     Key: s3Obj.Key
   }));
