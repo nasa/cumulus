@@ -57,7 +57,7 @@
     "lodash.merge": "^4.5.0",
     "lodash.omit": "^4.5.0",
     "lodash.uniqby": "^4.7.0",
-    "moment": "^2.18.1",
+    "moment": "^2.21.0",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
