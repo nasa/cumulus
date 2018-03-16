@@ -129,7 +129,9 @@ test.afterEach(async (t) => {
     recursivelyDeleteS3Bucket(t.context.templateBucket),
     manager.deleteTable(t.context.tableName)
   ]);  
-  await Rule.buildPayload.restore();
+  Rule.buildPayload.restore();
+  Provider.prototype.get.restore();
+  Collection.prototype.get.restore();
 });
 
 // getKinesisRule tests
