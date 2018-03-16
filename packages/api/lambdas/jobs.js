@@ -19,8 +19,8 @@ async function findStaleRecords(type, q, limit = 100, page = 1) {
   const response = await search.query();
 
   //if (response.results.length >= limit) {
-    //const more = await findStaleRecords(type, q, limit, page + 1);
-    //return response.results.concat(more);
+  //const more = await findStaleRecords(type, q, limit, page + 1);
+  //return response.results.concat(more);
   //}
   return response.results;
 }

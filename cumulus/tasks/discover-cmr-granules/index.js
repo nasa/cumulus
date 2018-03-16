@@ -41,7 +41,7 @@ function validateParameters(config) {
  *                 for each discovered granule
  */
 module.exports = class DiscoverCmrGranulesTask extends Task {
-    /**
+  /**
    * Main task entrypoint
    *
    * @returns {Array} -- An array of CMR granules that need ingest
@@ -136,11 +136,11 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     log.info(json);
     granules.push(...json.feed.entry);
     log.info(`scrollID:${scrollID}`,
-             `cmr-scroll-id:${response.headers._headers['cmr-scroll-id']}`,
-             `json.feed.entry.length:${json.feed.entry.length}`);
+      `cmr-scroll-id:${response.headers._headers['cmr-scroll-id']}`,
+      `json.feed.entry.length:${json.feed.entry.length}`);
     const nextScrollID = (json.feed.entry.length === 0) ?
-                         false :
-                         response.headers._headers['cmr-scroll-id'];
+      false :
+      response.headers._headers['cmr-scroll-id'];
     log.info(`nextScrollID:${nextScrollID}`);
     log.info('----TOTAL----: ', granules.length);
     return { granules: granules, scrollID: nextScrollID };

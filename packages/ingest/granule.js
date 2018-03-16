@@ -393,31 +393,31 @@ class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 function selector(type, protocol) {
   if (type === 'discover') {
     switch (protocol) {
-      case 'sftp':
-        return SftpDiscoverGranules;
-      case 'ftp':
-        return FtpDiscoverGranules;
-      case 'http':
-      case 'https':
-        return HttpDiscoverGranules;
-      case 's3':
-        return S3DiscoverGranules;
-      default:
-        throw new Error(`Protocol ${protocol} is not supported.`);
+    case 'sftp':
+      return SftpDiscoverGranules;
+    case 'ftp':
+      return FtpDiscoverGranules;
+    case 'http':
+    case 'https':
+      return HttpDiscoverGranules;
+    case 's3':
+      return S3DiscoverGranules;
+    default:
+      throw new Error(`Protocol ${protocol} is not supported.`);
     }
   }
   else if (type === 'ingest') {
     switch (protocol) {
-      case 'sftp':
-        return SftpGranule;
-      case 'ftp':
-        return FtpGranule;
-      case 'http':
-        return HttpGranule;
-      case 's3':
-        return S3Granule;
-      default:
-        throw new Error(`Protocol ${protocol} is not supported.`);
+    case 'sftp':
+      return SftpGranule;
+    case 'ftp':
+      return FtpGranule;
+    case 'http':
+      return HttpGranule;
+    case 's3':
+      return S3Granule;
+    default:
+      throw new Error(`Protocol ${protocol} is not supported.`);
     }
   }
 
