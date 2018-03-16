@@ -51,13 +51,13 @@ test('the queue receives a correctly formatted workflow message', async (t) => {
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1
   }).promise()
-  .then((receiveMessageResponse) => {
-    t.is(receiveMessageResponse.Messages.length, 1);
+    .then((receiveMessageResponse) => {
+      t.is(receiveMessageResponse.Messages.length, 1);
 
-    const message = JSON.parse(receiveMessageResponse.Messages[0].Body);
-    t.is(message.meta.provider, 'PROV1');
-    t.is(JSON.stringify(message.meta.collection), JSON.stringify({ name: 'test-collection' }));
-    t.is(JSON.stringify(message.payload), JSON.stringify({ test: 'test payload' }));
-    t.is(message.cumulus_meta.state_machine, t.context.stateMachineArn);
-  });
+      const message = JSON.parse(receiveMessageResponse.Messages[0].Body);
+      t.is(message.meta.provider, 'PROV1');
+      t.is(JSON.stringify(message.meta.collection), JSON.stringify({ name: 'test-collection' }));
+      t.is(JSON.stringify(message.payload), JSON.stringify({ test: 'test payload' }));
+      t.is(message.cumulus_meta.state_machine, t.context.stateMachineArn);
+    });
 });

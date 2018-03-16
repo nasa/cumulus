@@ -138,12 +138,12 @@ test('it should enqueue a message for each associated workflow', async (t) => {
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1
   }).promise()
-  .then((receiveMessageResponse) => {
-    t.is(receiveMessageResponse.Messages.length, 4);
-    receiveMessageResponse.Messages.map((message) => (
-      t.is(JSON.stringify(JSON.parse(message.Body).payload), JSON.stringify({ collection: 'test-collection' }))
-    ));
-  });
+    .then((receiveMessageResponse) => {
+      t.is(receiveMessageResponse.Messages.length, 4);
+      receiveMessageResponse.Messages.map((message) => (
+        t.is(JSON.stringify(JSON.parse(message.Body).payload), JSON.stringify({ collection: 'test-collection' }))
+      ));
+    });
 });
 
 test('it should throw an error if message does not include a collection', (t) => {
