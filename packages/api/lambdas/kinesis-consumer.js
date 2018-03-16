@@ -6,7 +6,7 @@ const Ajv = require('ajv');
 
 const Rule = require('../models/rules');
 const messageSchema = require('./kinesis-consumer-event-schema.json');
-const awsIngest = require('@cumulus/ingest/aws');
+const sfSchedule = require('./sf-scheduler');
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
@@ -54,7 +54,12 @@ async function queueMessageForRule(kinesisRule, eventObject) {
   };
 
   const payload = await Rule.buildPayload(item);
-  await awsIngest.invoke(process.env.invoke, payload);
+  return await new Promise((resolve, reject) => {
+    sfSchedule(payload, {}, (err, result) => {
+      if (err) reject(err);
+      resolve(result);
+    });
+  });
 }
 
 /**

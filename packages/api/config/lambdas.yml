@@ -61,9 +61,6 @@ kinesisConsumer:
     RulesTable:
       function: Ref
       value: RulesTableDynamoDB
-    invoke:
-      function: Ref
-      value: ScheduleSFLambdaFunction
     bucket: '{{buckets.internal}}'
 
 ScheduleSF:

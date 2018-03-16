@@ -6,15 +6,17 @@ const test = require('ava');
 const originalConsoleLog = console.log;
 
 const { randomString } = require('@cumulus/common/test-utils');
-const awsIngest = require('@cumulus/ingest/aws');
+const { SQS } = require('@cumulus/ingest/aws');
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
 
 const manager = require('../models/base');
+const Collection = require('../models/collections');
 const Rule = require('../models/rules');
+const Provider = require('../models/providers');
 const testCollectionName = 'test-collection';
 
-process.env.invoke = 'sfScheduler';
-const sfSchedulerSpy = sinon.spy(awsIngest, 'invoke');
+const sfSchedulerSpy = sinon.spy(SQS, 'sendMessage');
 
 const ruleTableParams = {
   name: 'name',
@@ -33,12 +35,15 @@ const event = {
   ]
 };
 
+const collection = {
+  name: testCollectionName,
+  version: '0.0.0'
+};
+const provider = { id: 'PROV1' };
+
 const commonRuleParams = {
-  collection: {
-    name: testCollectionName,
-    version: '0.0.0'
-  },
-  provider: 'PROV1',
+  collection,
+  provider: provider.id,
   rule: {
     type: 'kinesis',
     value: 'test-kinesisarn'
@@ -74,21 +79,37 @@ function testCallback(err, object) {
   return object;
 }
 
-
-test.beforeEach(async(t) => {
-  console.log = () => {};
+test.beforeEach(async (t) => {
+  //console.log = () => {};
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
   t.context.messageTemplateKey = messageTemplateKey;
+  t.context.messageTemplate = {
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn
+    },
+    meta: { queues: { startSF: t.context.queueUrl } }
+  };
 
-  sinon.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
-    template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
-    provider: item.provider,
-    collection: item.collection,
-    meta: get(item, 'meta', {}),
-    payload: get(item, 'payload', {})
-  }));
+  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+  await s3().putObject({
+    Bucket: t.context.templateBucket,
+    Key: messageTemplateKey,
+    Body: JSON.stringify(t.context.messageTemplate)
+  }).promise();  
+
+  sinon.stub(Rule, 'buildPayload').callsFake((item) => {
+    return Promise.resolve({
+      template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
+      provider: item.provider,
+      collection: item.collection,
+      meta: get(item, 'meta', {}),
+      payload: get(item, 'payload', {})
+    })
+  });
+  sinon.stub(Provider.prototype, 'get').returns(provider);
+  sinon.stub(Collection.prototype, 'get').returns(collection);
 
   t.context.tableName = randomString();
   process.env.RulesTable = t.context.tableName;
@@ -102,8 +123,12 @@ test.beforeEach(async(t) => {
     .map((rule) => model.create(rule)));
 });
 
-test.afterEach(async() => {
+test.afterEach(async (t) => {
   console.log = originalConsoleLog;
+  await Promise.all([
+    recursivelyDeleteS3Bucket(t.context.templateBucket),
+    manager.deleteTable(t.context.tableName)
+  ]);  
   await Rule.buildPayload.restore();
 });
 
@@ -117,17 +142,23 @@ test('it should look up kinesis-type rules which are associated with the collect
 });
 
 // handler tests
-test('it should enqueue a message for each associated workflow', async(t) => {
+test.only('it should enqueue a message for each associated workflow', async(t) => {
   await handler(event, {}, testCallback);
-  const actualPayload = sfSchedulerSpy.getCall(0).args[1];
-  const expectedPayload = {
-    template: `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`,
-    provider: commonRuleParams.provider,
-    collection: commonRuleParams.collection,
-    meta: {},
-    payload: JSON.parse(eventData)
+  const actualMessage = sfSchedulerSpy.getCall(0).args[1];
+  const expectedMessage = {
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn
+    },
+    meta: {
+      queues: {},
+      provider,
+      collection
+    },
+    payload: { collection: 'test-collection' }
   };
-  t.deepEqual(expectedPayload, actualPayload);
+  t.equal(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
+  t.deepEqual(actualMessage.meta, expectedMessage.meta);
+  t.deepEqual(actualMessage.payload, expectedMessage.payload);
 });
 
 test('it should throw an error if message does not include a collection', async(t) => {
