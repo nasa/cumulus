@@ -13,6 +13,8 @@ Things that should succeed before merging.
 - [ ] Unit tests
 - [ ] Adhoc testing
 - [ ] Update CHANGELOG
+- [ ] Run `./bin/eslint-ratchet` and verify that eslint errors have not increased
+  - [ ] Commit `.eslint-ratchet-high-water-mark` if the score has improved
 
 ## Release PR
 
