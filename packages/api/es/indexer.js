@@ -16,11 +16,9 @@ const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
-const { Search } = require('./search');
+const { Search, defaultIndexAlias } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
-
-const defaultIndexAlias = Search.defaultIndexAlias;
 
 /**
  * Returns the collectionId used in elasticsearch
