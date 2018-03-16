@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- fixed `aws.CloudWatchEvents typo`
+
 ## [v1.1.4] - 2018-03-15
 ### Added
 - added flag `useList` to parse-pdr [CUMULUS-404]
