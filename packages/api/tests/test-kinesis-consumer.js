@@ -80,7 +80,7 @@ function testCallback(err, object) {
 }
 
 test.beforeEach(async (t) => {
-  //console.log = () => {};
+  console.log = () => {};
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
@@ -142,7 +142,7 @@ test('it should look up kinesis-type rules which are associated with the collect
 });
 
 // handler tests
-test.only('it should enqueue a message for each associated workflow', async(t) => {
+test('it should enqueue a message for each associated workflow', async(t) => {
   await handler(event, {}, testCallback);
   const actualMessage = sfSchedulerSpy.getCall(0).args[1];
   const expectedMessage = {
@@ -156,7 +156,7 @@ test.only('it should enqueue a message for each associated workflow', async(t) =
     },
     payload: { collection: 'test-collection' }
   };
-  t.equal(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
+  t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
   t.deepEqual(actualMessage.meta, expectedMessage.meta);
   t.deepEqual(actualMessage.payload, expectedMessage.payload);
 });
