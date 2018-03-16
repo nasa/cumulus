@@ -79,6 +79,53 @@ Run end to end tests by
 
     $ yarn e2e
 
+## Code quality checking
+
+This project uses [eslint](https://eslint.org/) to check code style and quality.
+The configured eslint rules can be found in the project's
+[.eslintrc.json](https://github.com/cumulus-nasa/cumulus/blob/master/.eslintrc.json)
+file.
+
+In an effort to gradually reduce the number of eslint errors in our codebase,
+we are using a script called `eslint-ratchet`. It runs `eslint` against the
+repo and compares the number of errors to the previous number of errors. The
+previous number of errors is stored in the `.eslint-ratchet-high-water-mark`
+file, and tracked in git. If the script is run and the number of errors has
+been reduced, the new, lower score is stored in
+`.eslint-ratchet-high-water-mark` and should be committed into git. If the
+number of errors has increased, the script will fail and tell you that the
+number of errors has increased.
+
+To run the script, simply run `./bin/eslint-ratchet` from the top of the
+cumulus repository.
+
+The `eslint-ratchet` script is also part of our CircleCI build. If the number
+of eslint errors that CircleCI finds has increased, it will fail the build. If
+the number of errors has *decreased* from what is stored in
+`.eslint-ratchet-high-water-mark`, it will also fail the build. In that case,
+run `./bin/eslint-ratchet` and commit the new-and-improved
+`.eslint-ratchet-high-water-mark` file.
+
+To help prevent unexpected build failures in CircleCI, I suggest adding a
+local post-commit hook that will run eslint-ratchet after every commit. This
+will not cause your commits to fail if the score has increased, but it will
+let you know that there is a problem. To set up the post-commit hook, create a
+file called `.git/hooks/post-commit` which contains:
+
+```
+#!/bin/sh
+
+set -e
+
+echo "Running ./bin/eslint-ratchet"
+./bin/eslint-ratchet
+```
+
+Make sure the hook is executable with `chmod +x .git/hooks/post-commit`
+
+This idea of ratcheting down the number of errors came from Vince Broz's
+excellent [quality](https://github.com/apiology/quality) gem.
+
 ## Adding New Packages
 
 Create a new folder under `packages` if it is a common library or create folder under `cumulus/tasks` if it is a lambda task. `cd` to the folder and run `npm init`.
@@ -101,9 +148,15 @@ To update cumulus' version number run:
 
      $ yarn update
 
-You will be prompted to select the type of change (patch/minor/major). 
+You will be prompted to select the type of change (patch/minor/major). Lerna will update the version of all packages after the selection.
 
-Lerna will update the version of all packages after the selection. You then have to commit the changes that are made by Lerna. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the a version number and the date. Commit these changes as well.
+Your next steps should be:
+
+1. Commit the package version updates that are made by Lerna.
+2. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
+3. Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
+
+Commit all changes and open a PR.
 
 The version number updates should be put in a PR and committed to master along with the changelog updates. After merging to master, tag the master branch with a release using the new version number.
 
