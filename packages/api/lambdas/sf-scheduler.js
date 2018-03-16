@@ -14,7 +14,7 @@ const { Provider, Collection } = require('../models');
  * @param  {Object} context - lambda context
  * @param  {function} cb    - lambda callback
  */
-async function schedule(event, context, cb) {
+function schedule(event, context, cb) {
   const template = get(event, 'template');
   const provider = get(event, 'provider', null);
   const meta = get(event, 'meta', {});
@@ -23,7 +23,7 @@ async function schedule(event, context, cb) {
   let message;
 
   const parsed = S3.parseS3Uri(template);
-  await S3.get(parsed.Bucket, parsed.Key)
+  S3.get(parsed.Bucket, parsed.Key)
     .then((data) => {
       message = JSON.parse(data.Body);
       message.meta.provider = {};
