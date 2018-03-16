@@ -155,8 +155,8 @@ justLocalRun(() => {
   //const a = {};
   //handler(a, {}, (e, r) => console.log(e, r));
   //bootstrapCmrProvider('testing').then(r => {
-    //console.log(r)
-    //return DefaultProvider.decrypt(r)
+  //console.log(r)
+  //return DefaultProvider.decrypt(r)
   //}).then(r => console.log(r))
-    //.catch(e => console.log(e));
+  //.catch(e => console.log(e));
 });
