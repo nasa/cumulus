@@ -20,7 +20,7 @@ const decompress = promisify(tarGz.decompress);
  * @param {string} archiveFilePath
  * @return {string} The un-archive directory
  */
-const archiveDir = archiveFilePath => {
+const archiveDir = (archiveFilePath) => {
   // archive files must be .tgz or .tar.gz files
   const segments = archiveFilePath.match(/(.*?)(\.tar\.gz|\.tgz)/i);
   return segments[1];
@@ -33,7 +33,7 @@ const archiveDir = archiveFilePath => {
  * @param {Object} fileAttrs An object that contains attributes about the archive file
  */
 const uploadArchiveFilesToS3 = async (unarchivedFiles, archiveDirPath, fileAttrs) => {
-  const fullFilePaths = unarchivedFiles.map(fileName => path.join(archiveDirPath, fileName));
+  const fullFilePaths = unarchivedFiles.map((fileName) => path.join(archiveDirPath, fileName));
   const s3DirKey = archiveDir(fileAttrs.target.key);
   return aws.uploadS3Files(fullFilePaths, fileAttrs.target.bucket, s3DirKey);
 };
@@ -59,7 +59,7 @@ const extractArchive = async (tmpDir, archiveFilePath) => {
  * @param {string} archiveDirPath The path where the files were extracted
  */
 const deleteExpandedFiles = async (unarchivedFiles, archiveDirPath) => {
-  unarchivedFiles.forEach(fileName => {
+  unarchivedFiles.forEach((fileName) => {
     const fullPath = path.join(archiveDirPath, fileName);
     fs.unlinkSync(fullPath);
   });
@@ -88,8 +88,8 @@ module.exports = class ValidateArchives extends Task {
 
     // Only files that were successfully downloaded by the provider gateway will be processed
     const archiveFiles = files
-      .filter(file => file.success)
-      .map(file => [file.target.bucket, file.target.key]);
+      .filter((file) => file.success)
+      .map((file) => [file.target.bucket, file.target.key]);
 
     const downloadRequest = archiveFiles.map(([s3Bucket, s3Key]) => ({
       Bucket: s3Bucket,
@@ -107,7 +107,7 @@ module.exports = class ValidateArchives extends Task {
 
       // Compute the dispositions (status) for each file downloaded successfully by
       // the provider gateway
-      const dispositionPromises = files.map(async fileAttrs => {
+      const dispositionPromises = files.map(async (fileAttrs) => {
         // Only process archives that were downloaded successfully by the provider gateway
         if (fileAttrs.success) {
           const archiveFileName = path.basename(fileAttrs.target.key);
@@ -152,7 +152,7 @@ module.exports = class ValidateArchives extends Task {
             log.info('S3 FILES:');
             log.info(JSON.stringify(s3Files));
 
-            const imgFiles = s3Files.map(s3File => ({ Bucket: s3File.bucket, Key: s3File.key }));
+            const imgFiles = s3Files.map((s3File) => ({ Bucket: s3File.bucket, Key: s3File.key }));
 
             if (imgFiles.length > 0) {
               imageSources.push({ archive: archiveFileName, images: imgFiles });

@@ -3,7 +3,7 @@ const test = require('ava');
 const helpers = require('@cumulus/common/test-helpers');
 const TriggerProcessPdrs = require('../index');
 
-test('trigger process PDRs', async t => {
+test('trigger process PDRs', async (t) => {
   const payload = [
     { s3_key: '123' },
     { s3_key: 'ABC' }

@@ -50,13 +50,13 @@ async function bootstrapElasticSearch(host, index = 'cumulus') {
 
 async function bootstrapUsers(table, records) {
   if (!table) {
-    return new Promise(resolve => resolve());
+    return new Promise((resolve) => resolve());
   }
   const user = new Manager(table);
 
   // delete all user records
   const existingUsers = await user.scan();
-  await Promise.all(existingUsers.Items.map(u => user.delete({ userName: u.userName })));
+  await Promise.all(existingUsers.Items.map((u) => user.delete({ userName: u.userName })));
   // add new ones
   const additions = records.map((record) => user.create({
     userName: record.username,
@@ -69,7 +69,7 @@ async function bootstrapUsers(table, records) {
 
 async function bootstrapCmrProvider(password) {
   if (!password) {
-    return new Promise(resolve => resolve('nopassword'));
+    return new Promise((resolve) => resolve('nopassword'));
   }
   return DefaultProvider.encrypt(password);
 }
@@ -140,7 +140,7 @@ function handler(event, context, cb) {
     };
 
     return sendResponse(event, 'SUCCESS', data, cb);
-  }).catch(e => {
+  }).catch((e) => {
     log.error(e);
     return sendResponse(event, 'FAILED', null, cb);
   });
