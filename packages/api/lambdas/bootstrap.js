@@ -19,7 +19,7 @@ const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const Manager = require('../models/base');
-const { Search } = require('../es/search');
+const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
 
@@ -32,7 +32,7 @@ const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
  * @param {string} alias - alias name for the index, defaults to 'cumulus'
  * @returns {undefined} undefined
  */
-async function bootstrapElasticSearch(host, index = 'cumulus', alias = Search.defaultIndexAlias) {
+async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIndexAlias) {
   if (!host) {
     return;
   }
@@ -50,7 +50,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = Search.de
     });
 
     await esClient.indices.putAlias({
-      index,
+      index: index,
       name: alias
     });
 
@@ -58,13 +58,12 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = Search.de
   }
   else {
     const aliasExists = await esClient.indices.existsAlias({
-      index,
       name: alias
     });
 
     if (!aliasExists) {
       await esClient.indices.putAlias({
-        index,
+        index: index,
         name: alias
       });
 
