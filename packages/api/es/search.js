@@ -316,5 +316,6 @@ class Search extends BaseSearch {}
 
 module.exports = {
   BaseSearch,
-  Search
+  Search,
+  defaultIndexAlias
 };
