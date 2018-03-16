@@ -23,8 +23,6 @@ async function schedule(event, context, cb) {
   let message;
 
   const parsed = S3.parseS3Uri(template);
-  console.log('in scheduler, parsed template:');
-  console.log(parsed);
   await S3.get(parsed.Bucket, parsed.Key)
     .then((data) => {
       message = JSON.parse(data.Body);
@@ -56,9 +54,6 @@ async function schedule(event, context, cb) {
       if (c) message.meta.collection = c;
     })
     .then(() => {
-      console.log(`Sending message to ${message.meta.queues.startSF}`);
-      console.log('Message is:');
-      console.log(message);
       SQS.sendMessage(message.meta.queues.startSF, message);
     })
     .then((r) => cb(null, r))

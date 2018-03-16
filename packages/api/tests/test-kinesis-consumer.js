@@ -3,7 +3,6 @@
 const get = require('lodash.get');
 const sinon = require('sinon');
 const test = require('ava');
-const originalConsoleLog = console.log;
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
@@ -15,8 +14,6 @@ const Collection = require('../models/collections');
 const Rule = require('../models/rules');
 const Provider = require('../models/providers');
 const testCollectionName = 'test-collection';
-
-const sfSchedulerSpy = sinon.spy(SQS, 'sendMessage');
 
 const ruleTableParams = {
   name: 'name',
@@ -79,18 +76,20 @@ function testCallback(err, object) {
   return object;
 }
 
+let sfSchedulerSpy;
 test.beforeEach(async(t) => {
-  console.log = () => {};
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
   t.context.messageTemplateKey = messageTemplateKey;
+  t.context.queueUrl = 'stubQueueUrl';
   t.context.messageTemplate = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
     meta: { queues: { startSF: t.context.queueUrl } }
   };
+  sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
 
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
   await s3().putObject({
@@ -122,11 +121,11 @@ test.beforeEach(async(t) => {
 });
 
 test.afterEach(async(t) => {
-  console.log = originalConsoleLog;
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
     manager.deleteTable(t.context.tableName)
   ]);
+  SQS.sendMessage.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
   Collection.prototype.get.restore();
@@ -150,7 +149,7 @@ test('it should enqueue a message for each associated workflow', async(t) => {
       state_machine: t.context.stateMachineArn
     },
     meta: {
-      queues: {},
+      queues: { startSF: 'stubQueueUrl' },
       provider,
       collection
     },
