@@ -79,7 +79,7 @@ function testCallback(err, object) {
   return object;
 }
 
-test.beforeEach(async (t) => {
+test.beforeEach(async(t) => {
   console.log = () => {};
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
@@ -97,17 +97,15 @@ test.beforeEach(async (t) => {
     Bucket: t.context.templateBucket,
     Key: messageTemplateKey,
     Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();  
+  }).promise();
 
-  sinon.stub(Rule, 'buildPayload').callsFake((item) => {
-    return Promise.resolve({
-      template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
-      provider: item.provider,
-      collection: item.collection,
-      meta: get(item, 'meta', {}),
-      payload: get(item, 'payload', {})
-    })
-  });
+  sinon.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
+    template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
+    provider: item.provider,
+    collection: item.collection,
+    meta: get(item, 'meta', {}),
+    payload: get(item, 'payload', {})
+  }));
   sinon.stub(Provider.prototype, 'get').returns(provider);
   sinon.stub(Collection.prototype, 'get').returns(collection);
 
@@ -123,12 +121,12 @@ test.beforeEach(async (t) => {
     .map((rule) => model.create(rule)));
 });
 
-test.afterEach(async (t) => {
+test.afterEach(async(t) => {
   console.log = originalConsoleLog;
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
     manager.deleteTable(t.context.tableName)
-  ]);  
+  ]);
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
   Collection.prototype.get.restore();
