@@ -14,12 +14,13 @@
     "access": "public"
   },
   "scripts": {
-    "test": "env TEST=true ava tests/*.js",
+    "test": "ava",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
   },
   "ava": {
+    "files": "tests",
     "babel": "inherit",
     "require": [
       "babel-polyfill",
@@ -50,6 +51,6 @@
     "webpack": "~1.12.13"
   },
   "devDependencies": {
-    "ava": "^0.21.0"
+    "ava": "^0.23.0"
   }
 }
