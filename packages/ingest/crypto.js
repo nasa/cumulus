@@ -33,15 +33,15 @@ class S3KeyPairProvider {
   }
 
   /**
-   * Decrypt the given string using the given private key stored in the internal bucket
+   * Decrypt the given string using a private key stored in S3
    *
-   * @param {string} str - The string to encrypt
-   * @param {string} keyId - The name of the public key to use for encryption
-   * @param {string} bucket - the optional bucket name. if not provided will
-   *                          use env variable "internal"
-   * @param {stack} stack - the optional stack name. if not provided will
-   *                        use env variable "stackName"
-   * @returns {Promise} the encrypted string
+   * @param {string} str - The string to decrypt
+   * @param {string} keyId - The name of the public key to use for decryption
+   * @param {string} bucket - the optional bucket name. Defaults to the value of
+   *   the "internal" environment variable
+   * @param {string} stack - the optional stack name. Defaults to the value of
+   *   the "stackName" environment variable
+   * @returns {Promise.<string>} the decrypted string
    */
   static async decrypt(str, keyId = 'private.pem', bucket = null, stack = null) {
     const pki = forge.pki;
