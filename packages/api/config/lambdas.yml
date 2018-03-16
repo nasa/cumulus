@@ -61,6 +61,12 @@ kinesisConsumer:
     RulesTable:
       function: Ref
       value: RulesTableDynamoDB
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
     bucket: '{{buckets.internal}}'
 
 ScheduleSF:
