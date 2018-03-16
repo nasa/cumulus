@@ -54,8 +54,7 @@ async function queueMessageForRule(kinesisRule, eventObject) {
   };
 
   const payload = await Rule.buildPayload(item);
-  // eslint-disable-next-line no-return-await
-  await new Promise((resolve, reject) => sfSchedule(payload, {}, (err, result) => {
+  return new Promise((resolve, reject) => sfSchedule(payload, {}, (err, result) => {
     if (err) reject(err);
     resolve(result);
   }));
@@ -69,11 +68,10 @@ async function queueMessageForRule(kinesisRule, eventObject) {
  * @returns {(error|Object)} Throws an Ajv.ValidationError if event object is invalid.
  * Returns the event object if event is valid.
  */
-async function validateMessage(event) {
+function validateMessage(event) {
   const ajv = new Ajv({ allErrors: true });
   const validate = ajv.compile(messageSchema);
-  // eslint-disable-next-line no-return-await
-  return await validate(event);
+  return validate(event);
 }
 
 /**
