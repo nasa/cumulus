@@ -7,6 +7,7 @@ const AWS = require('aws-sdk');
 const moment = require('moment');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
+const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -67,7 +68,7 @@ function getExecutionUrl(executionArn) {
 }
 
 async function invoke(name, payload, type = 'Event') {
-  if (process.env.IS_LOCAL || process.env.TEST) {
+  if (process.env.IS_LOCAL || inTestMode()) {
     log.info(`Faking Lambda invocation for ${name}`);
     return false;
   }
