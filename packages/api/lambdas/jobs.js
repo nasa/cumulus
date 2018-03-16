@@ -29,14 +29,14 @@ async function updateGranulesAndPdrs(esClient, url, error) {
   // find related granule and update their status
   let searchTerm = `execution:"${url}"`;
   const granules = await findStaleRecords('granule', searchTerm, 100);
-  await Promise.all(granules.map(g => partialRecordUpdate(
+  await Promise.all(granules.map((g) => partialRecordUpdate(
     esClient, g.granuleId, 'granule', { status: 'failed', error }, g.collectionId
   )));
 
   // find related pdrs and update their status
   searchTerm = `execution:"${url}"`;
   const pdrs = await findStaleRecords('pdr', searchTerm, 100);
-  await Promise.all(pdrs.map(p => partialRecordUpdate(
+  await Promise.all(pdrs.map((p) => partialRecordUpdate(
     esClient, p.pdrName, 'pdr', { status: 'failed', error }
   )));
 }
@@ -135,7 +135,7 @@ async function cleanup() {
 
   await Promise.all(
     executions.slice(0, 400).map(
-      ex => limit(
+      (ex) => limit(
         () => checkExecution(ex.arn, ex.execution, ex.timestamp, esClient)
       )
     )
@@ -143,7 +143,7 @@ async function cleanup() {
 }
 
 function handler(event, context, cb) {
-  cleanup().then(() => cb()).catch(e => {
+  cleanup().then(() => cb()).catch((e) => {
     log.error(e);
     cb(e);
   });
