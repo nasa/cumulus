@@ -85,7 +85,11 @@
     "running": [
       "arn:aws:states:us-east-1:000000000000:execution:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h:d5b6344a-36eb-4c97-a5cf-3f6e83f0692a"
     ],
-    "limit": 30
+    "limit": 30,
+    "pdr": {
+      "name": "MOD09GQ_1granule_v2.PDR",
+      "path": "/"
+    }
   },
   "exception": "None",
   "workflow_config": {
