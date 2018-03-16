@@ -10,9 +10,9 @@ const { Provider, Collection } = require('../models');
  * Builds a cumulus-compatible message and adds it to the startSF queue
  * startSF queue will then start a stepfunction for the given message
  *
- * @param  {object} event   lambda input message
- * @param  {object} context lambda context
- * @param  {function} cb    lambda callback
+ * @param  {Object} event   - lambda input message
+ * @param  {Object} context - lambda context
+ * @param  {function} cb    - lambda callback
  */
 async function schedule(event, context, cb) {
   const template = get(event, 'template');
@@ -23,6 +23,8 @@ async function schedule(event, context, cb) {
   let message;
 
   const parsed = S3.parseS3Uri(template);
+  console.log('in scheduler, parsed template:');
+  console.log(parsed);
   await S3.get(parsed.Bucket, parsed.Key)
     .then((data) => {
       message = JSON.parse(data.Body);
@@ -53,9 +55,14 @@ async function schedule(event, context, cb) {
     .then((c) => {
       if (c) message.meta.collection = c;
     })
-    .then(() => SQS.sendMessage(message.meta.queues.startSF, message))
+    .then(() => {
+      console.log(`Sending message to ${message.meta.queues.startSF}`);
+      console.log('Message is:');
+      console.log(message);
+      SQS.sendMessage(message.meta.queues.startSF, message);
+    })
     .then((r) => cb(null, r))
-    .catch(e => cb(e));
+    .catch((e) => cb(e));
 }
 
 module.exports = schedule;
