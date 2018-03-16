@@ -76,20 +76,21 @@ function testCallback(err, object) {
   return object;
 }
 
-let sfSchedulerSpy;
+const sfSchedulerSpy sinon.stub(SQS, 'sendMessage').returns(true);
+const stubQueueUrl = 'stubQueueUrl';
+
 test.beforeEach(async(t) => {
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
+
   t.context.messageTemplateKey = messageTemplateKey;
-  t.context.queueUrl = 'stubQueueUrl';
   t.context.messageTemplate = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
-    meta: { queues: { startSF: t.context.queueUrl } }
+    meta: { queues: { startSF: stubQueueUrl } }
   };
-  sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
 
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
   await s3().putObject({
@@ -144,14 +145,14 @@ test('it should look up kinesis-type rules which are associated with the collect
 test('it should enqueue a message for each associated workflow', async(t) => {
   await handler(event, {}, testCallback);
   const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
-  t.is(actualQueueUrl, 'stubQueueUrl');
+  t.is(actualQueueUrl, stubQueueUrl);
   const actualMessage = sfSchedulerSpy.getCall(0).args[1];
   const expectedMessage = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
     meta: {
-      queues: { startSF: 'stubQueueUrl' },
+      queues: { startSF: stubQueueUrl },
       provider,
       collection
     },
