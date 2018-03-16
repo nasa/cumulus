@@ -55,7 +55,7 @@ function schedule(event, context, cb) {
     })
     .then(() => SQS.sendMessage(message.meta.queues.startSF, message))
     .then((r) => cb(null, r))
-    .catch(e => cb(e));
+    .catch((e) => cb(e));
 }
 
 module.exports = schedule;
