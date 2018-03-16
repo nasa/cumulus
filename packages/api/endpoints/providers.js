@@ -87,11 +87,11 @@ function put(event, cb) {
     originalData = d;
     return p.update({ id }, data);
   })
-  .then((data) => cb(null, data))
-  .catch((err) => {
-    if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
-    return cb(err);
-  });
+    .then((data) => cb(null, data))
+    .catch((err) => {
+      if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
+      return cb(err);
+    });
 }
 
 function del(event, cb) {

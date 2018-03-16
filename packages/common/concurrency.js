@@ -25,12 +25,12 @@ const mapTolerant = (arr, fn) => {
       .catch((err) => tolerate(item, err));
 
   return Promise.all(arr.map(tolerantCall))
-     .then((items) => { //eslint-disable-line arrow-body-style
-       return {
-         completed: _.compact(items),
-         errors: errors.length === 0 ? null : errors
-       };
-     });
+    .then((items) => { //eslint-disable-line arrow-body-style
+      return {
+        completed: _.compact(items),
+        errors: errors.length === 0 ? null : errors
+      };
+    });
 };
 
 const toPromise = (fn, ...args) =>

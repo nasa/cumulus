@@ -27,15 +27,15 @@ function downloadZipfile(fileUrl, localFilename) {
     request(options, (err) => {
       if (err) reject(err);
     })
-    .pipe(file);
+      .pipe(file);
 
     file.on('finish', () => {
       console.log(`Completed download of ${fileUrl} to ${localFilename}`);
       resolve();
     })
-    .on('error', (err) => {
-      reject(err);
-    });
+      .on('error', (err) => {
+        reject(err);
+      });
   });
 }
 
