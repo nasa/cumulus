@@ -130,17 +130,7 @@ async function cleanup() {
 
   const limit = pLimit(2);
 
-<<<<<<< HEAD
-  await Promise.all(
-    executions.slice(0, 400).map(
-      (ex) => limit(
-        () => checkExecution(ex.arn, ex.execution, ex.timestamp, esClient)
-      )
-    )
-  );
-=======
   await Promise.all(executions.slice(0, 400).map((ex) => limit(() => checkExecution(ex.arn, ex.execution, ex.timestamp, esClient))));
->>>>>>> master
 }
 
 function handler(event, context, cb) {
