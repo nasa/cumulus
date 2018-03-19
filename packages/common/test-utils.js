@@ -4,9 +4,9 @@
 const Ajv = require('ajv');
 const crypto = require('crypto');
 const path = require('path');
-const url = require('url');
-const aws = require('./aws');
 const fs = require('fs-extra');
+
+exports.inTestMode = () => process.env.NODE_ENV === 'test';
 
 /**
  * Generate a 40-character random string
@@ -40,7 +40,8 @@ const localStackPorts = {
  * Test if a given AWS service is supported by LocalStack.
  *
  * @param {Function} Service - an AWS service object constructor function
- * @returns {boolean}
+ * @returns {boolean} true or false depending on whether the service is
+ *   supported by LocalStack
  */
 function localstackSupportedService(Service) {
   const serviceIdentifier = Service.serviceIdentifier;
@@ -78,8 +79,6 @@ function localStackAwsClient(Service, options) {
 /**
  * Create an AWS service object that does not actually talk to AWS.
  *
- * @todo Update this to return a mock AWS client if not supported by localstack
- *
  * @param {Function} Service - an AWS service object constructor function
  * @param {Object} options - options to pass to the service object constructor function
  * @returns {Object} - an AWS service object
@@ -91,27 +90,6 @@ function testAwsClient(Service, options) {
   return new Service(Object.assign(options, { endpoint: 'http://you-forgot-to-stub-an-aws-call' }));
 }
 exports.testAwsClient = testAwsClient;
-
-/**
- * Create an SQS queue for testing
- *
- * @returns {string} - an SQS queue URL
- */
-async function createQueue() {
-  const createQueueResponse = await aws.sqs().createQueue({
-    QueueName: exports.randomString()
-  }).promise();
-
-  // Properly set the Queue URL.  This is needed because LocalStack always
-  // returns the QueueUrl as "localhost", even if that is not where it should
-  // actually be found.  CircleCI breaks without this.
-  const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
-  returnedQueueUrl.host = undefined;
-  returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
-
-  return url.format(returnedQueueUrl);
-}
-exports.createQueue = createQueue;
 
 /**
  * Validate an object using json-schema
@@ -183,6 +161,8 @@ exports.validateOutput = validateOutput;
 /**
  * Determine the path of the current git repo
  *
+ * @param {string} dirname - the directory that you're trying to find the git
+ *   root for
  * @returns {Promise.<string>} - the filesystem path of the current git repo
  */
 async function findGitRepoRootDirectory(dirname) {
