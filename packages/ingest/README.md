@@ -16,6 +16,16 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 npm install @cumulus/ingest
 ```
 
+## Testing
+
+Running tests locally requires [localstack](https://github.com/localstack/localstack).
+
+With localstack running, you can run tests using:
+
+```
+LOCALSTACK_HOST=localhost npm test
+```
+
 ## Modules
 
 All modules are accessible using require: `require('@cumulus/ingest/<MODULE_NAME>')` or import: `import <MODULE_NAME> from '@cumulus/ingest/<MODULE_NAME>'`.
