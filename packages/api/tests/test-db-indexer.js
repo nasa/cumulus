@@ -74,7 +74,6 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
           },
           Environment: {
             Variables: {
-              'TEST': 'true',
               'LOCALSTACK_HOST': process.env.DOCKERHOST,
               'stackName': process.env.stackName
             }
