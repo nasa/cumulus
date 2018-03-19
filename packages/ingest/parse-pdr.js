@@ -5,7 +5,7 @@
 
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const pvl = require('@cumulus/pvl/t');
 const { PDRParsingError } = require('@cumulus/common/errors');
 
@@ -83,9 +83,12 @@ function extractGranuleId(fileName, regex) {
   return fileName;
 }
 
-module.exports.parsePdr = function parsePdr(pdrFilePath, collection, pdrName) {
+module.exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
   // then read the file and and pass it to parser
-  const pdrFile = fs.readFileSync(pdrFilePath, 'utf8');
+  const pdrFile = await fs.readFile(pdrFilePath, 'utf8');
+
+  // Investigating CUMULUS-423
+  if (pdrFile.trim().length === 0) throw new Error(`PDR file had no contents: ${pdrFilePath}`);
 
   const obj = {
     granules: []
