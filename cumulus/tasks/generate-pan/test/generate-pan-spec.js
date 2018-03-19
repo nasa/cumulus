@@ -7,7 +7,7 @@ const missingFileFixture = require('./fixtures/missing-file-fixture');
 const timeStamp = (dateTime) => dateTime.toISOString().replace(/\.\d\d\dZ/, 'Z');
 
 const shortPan = (dateTime) =>
-`MESSAGE_TYPE = SHORTPAN;
+  `MESSAGE_TYPE = SHORTPAN;
 DISPOSITION = "SUCCESSFUL";
 TIME_STAMP = ${timeStamp(dateTime)};`;
 

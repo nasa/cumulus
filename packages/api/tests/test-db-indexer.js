@@ -79,18 +79,18 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
             }
           }
         })
-        .promise()
-        .then((res) => {
-          fs.unlinkSync(tmpZipFile);
-          resolve(res);
-        });
+          .promise()
+          .then((res) => {
+            fs.unlinkSync(tmpZipFile);
+            resolve(res);
+          });
       });
 
       archive.pipe(output)
       archive.directory(codeDirectory, false);
       archive.finalize()
     })
-    .catch(console.log);
+      .catch(console.log);
 
     //get the dynamo collections table stream arn and add it as an event source to the lambda
     await new Promise((resolve, reject) => {
@@ -110,7 +110,7 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
         });
       });
     })
-    .catch(console.log);
+      .catch(console.log);
   });
 
   test.skip.after.always(async () => {
