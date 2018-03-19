@@ -62,7 +62,7 @@ module.exports = class DiscoverCmrGranulesTask extends Task {
     const filtered = this.excludeFiltered(messages, this.config.filtered_granule_keys);
 
     // Write the messages to a DynamoDB table so we can track ingest failures
-    const messagePromises = filtered.map(msg => {
+    const messagePromises = filtered.map((msg) => {
       const { granuleId, version, collection } = msg.meta;
       const params = {
         TableName: this.config.ingest_tracking_table,
