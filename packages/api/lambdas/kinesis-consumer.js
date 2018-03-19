@@ -4,6 +4,7 @@
 
 const Ajv = require('ajv');
 
+const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
 const messageSchema = require('./kinesis-consumer-event-schema.json');
 const sfSchedule = require('./sf-scheduler');
