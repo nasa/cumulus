@@ -11,17 +11,17 @@ class PVLAggregate {
     this.store.push([key, value]);
     return this;
   }
-  get (key) { return this.store.find(item => item[0] === key) ? this.store.find(item => item[0] === key)[1] : null; }
-  getAll (key) { return this.store.filter(item => item[0] === key).map(item => item[1]); }
-  removeAll (key) { this.store = this.store.filter(item => item[0] !== key); }
+  get (key) { return this.store.find((item) => item[0] === key) ? this.store.find((item) => item[0] === key)[1] : null; }
+  getAll (key) { return this.store.filter((item) => item[0] === key).map((item) => item[1]); }
+  removeAll (key) { this.store = this.store.filter((item) => item[0] !== key); }
 
   // Since OBJECT and GROUP are reserved keywords, this won't collide with attribute keys
   addAggregate (aggregate) {
     this.store.push([aggregate.type, aggregate]);
     return this;
   }
-  objects (key) { return this.getAll('OBJECT').filter(o => key ? areIDsSame(o.identifier, key) : true); }
-  groups (key) { return this.getAll('GROUP').filter(g => key ? areIDsSame(g.identifier, key) : true); }
+  objects (key) { return this.getAll('OBJECT').filter((o) => key ? areIDsSame(o.identifier, key) : true); }
+  groups (key) { return this.getAll('GROUP').filter((g) => key ? areIDsSame(g.identifier, key) : true); }
   aggregates (key) { return this.objects(key).concat(this.groups(key)); }
 
   toPVL () {
