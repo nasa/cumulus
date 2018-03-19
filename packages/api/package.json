@@ -4,18 +4,19 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "scripts": {
-    "test": "TEST=true ava tests/test-*.js --serial",
+    "test": "ava",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
   },
   "ava": {
-    "files": "tests",
+    "files": "tests/test-*.js",
     "babel": "inherit",
     "require": [
       "babel-polyfill",
       "babel-register"
-    ]
+    ],
+    "serial": true
   },
   "publishConfig": {
     "access": "public"
@@ -57,7 +58,7 @@
     "lodash.merge": "^4.5.0",
     "lodash.omit": "^4.5.0",
     "lodash.uniqby": "^4.7.0",
-    "moment": "^2.18.1",
+    "moment": "^2.21.0",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
@@ -65,7 +66,7 @@
     "webpack": "^1.15.0"
   },
   "devDependencies": {
-    "ava": "^0.21.0",
+    "ava": "^0.23.0",
     "sinon": "^2.0.0-pre.5"
   }
 }
