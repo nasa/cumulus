@@ -273,30 +273,30 @@ class S3Parse extends s3Mixin(baseProtocol(Parse)) {}
 function selector(type, protocol) {
   if (type === 'discover') {
     switch (protocol) {
-      case 'http':
-        return HttpDiscover;
-      case 'ftp':
-        return FtpDiscover;
-      case 'sftp':
-        return SftpDiscover;
-      case 's3':
-        return S3Discover;
-      default:
-        throw new Error(`Protocol ${protocol} is not supported.`);
+    case 'http':
+      return HttpDiscover;
+    case 'ftp':
+      return FtpDiscover;
+    case 'sftp':
+      return SftpDiscover;
+    case 's3':
+      return S3Discover;
+    default:
+      throw new Error(`Protocol ${protocol} is not supported.`);
     }
   }
   else if (type === 'parse') {
     switch (protocol) {
-      case 'http':
-        return HttpParse;
-      case 'ftp':
-        return FtpParse;
-      case 'sftp':
-        return SftpParse;
-      case 's3':
-        return S3Parse;
-      default:
-        throw new Error(`Protocol ${protocol} is not supported.`);
+    case 'http':
+      return HttpParse;
+    case 'ftp':
+      return FtpParse;
+    case 'sftp':
+      return SftpParse;
+    case 's3':
+      return S3Parse;
+    default:
+      throw new Error(`Protocol ${protocol} is not supported.`);
     }
   }
 
