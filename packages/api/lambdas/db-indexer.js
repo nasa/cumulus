@@ -17,7 +17,7 @@ function indexRecord(esClient, record) {
 
   //determine whether the record should be indexed
   const acceptedTables = ['Collection', 'Provider', 'Rule'];
-  const tableConfig = {}
+  const tableConfig = {};
   acceptedTables.forEach((a) => {
     tableConfig[`${stack}-${a}sTable`] = indexer[`index${a}`];
   });
@@ -54,21 +54,20 @@ function indexRecord(esClient, record) {
 }
 
 async function indexRecords(records) {
-  const concurrencyLimit = process.env.CONCURRENCY || 3
+  const concurrencyLimit = process.env.CONCURRENCY || 3;
   const limit = pLimit(concurrencyLimit);
   const esClient = await Search.es();
 
-  const promises = records.map((record) => limit(
-    () => indexRecord(esClient, record)
-  ));
+  const promises = records.map((record) => limit(() => indexRecord(esClient, record)));
   return Promise.all(promises);
 }
 
 /**
  * Sync changes to dynamodb to an elasticsearch instance.
  * Sending updates to this lambda is handled by automatically AWS.
- * @param {array} Records list of records with an eventName property signifying REMOVE or INSERT.
- * @return {string} response text indicating the number of records altered in elasticsearch.
+ *
+ * @param {Array} Records - list of records with an eventName property signifying REMOVE or INSERT.
+ * @returns {string} response text indicating the number of records altered in elasticsearch.
  */
 function handler(event, context, cb) {
   const records = event.Records;
