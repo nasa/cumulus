@@ -10,6 +10,7 @@
  *  - creating API users
  *  - encrypting CMR user/pass and adding it to configuration files
  */
+
 'use strict';
 
 const https = require('https');
@@ -44,8 +45,6 @@ async function bootstrapElasticSearch(host, index = 'cumulus') {
   else {
     log.info(`index ${index} already exists`);
   }
-
-  return;
 }
 
 async function bootstrapUsers(table, records) {
