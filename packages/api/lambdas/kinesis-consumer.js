@@ -93,8 +93,8 @@ function processRecord(record) {
       Promise.all(kinesisRules.map((kinesisRule) => queueMessageForRule(kinesisRule, eventObject)))
     ))
     .catch((err) => {
-      console.log('Caught error in process record:');
-      console.log(err);
+      log.error('Caught error in process record:');
+      log.error(err);
       return err;
     });
 }
