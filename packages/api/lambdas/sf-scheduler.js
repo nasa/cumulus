@@ -10,9 +10,10 @@ const { Provider, Collection } = require('../models');
  * Builds a cumulus-compatible message and adds it to the startSF queue
  * startSF queue will then start a stepfunction for the given message
  *
- * @param  {Object} event   - lambda input message
- * @param  {Object} context - lambda context
- * @param  {function} cb    - lambda callback
+ * @param   {Object} event   - lambda input message
+ * @param   {Object} context - lambda context
+ * @param   {function} cb    - lambda callback
+ * @returns {function} Calls callback with result of SQS.sendMessage or error
  */
 function schedule(event, context, cb) {
   const template = get(event, 'template');
