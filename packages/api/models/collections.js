@@ -36,7 +36,7 @@ class Collection extends Manager {
     checkRegex(item.granuleId, match[1]);
 
     // then check all the files
-    item.files.forEach(i => checkRegex(i.regex, i.sampleFileName));
+    item.files.forEach((i) => checkRegex(i.regex, i.sampleFileName));
   }
 
   constructor() {
