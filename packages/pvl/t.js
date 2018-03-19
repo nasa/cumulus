@@ -16,8 +16,8 @@ function parseValue (value, key) {
 
   const parsed = numericValue !== null ? new PVLNumeric(numericValue)
     : dateTimeValue !== null ? new PVLDateTime(dateTimeValue)
-    : textStringValue !== null ? new PVLTextString(textStringValue)
-    : null;
+      : textStringValue !== null ? new PVLTextString(textStringValue)
+        : null;
   if (parsed) {
     return parsed;
   } else {
