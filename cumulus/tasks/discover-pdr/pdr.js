@@ -17,7 +17,7 @@ exports.getPdrList = async (client, folder, bucket, keyPrefix) => {
   const pdrs = await listSync(folder);
 
   // Check to see which files we already have in S3
-  const fileExistsPromises = pdrs.map(async pdr => {
+  const fileExistsPromises = pdrs.map(async (pdr) => {
     const fileName = pdr.name;
     return S3.fileExists(bucket, `${keyPrefix}/${fileName}`);
   });

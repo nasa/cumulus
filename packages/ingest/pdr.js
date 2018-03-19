@@ -84,10 +84,10 @@ class Discover {
    * @private
    */
   async findNewPdrs(pdrs) {
-    const checkPdrs = pdrs.map(pdr => this.pdrIsNew(pdr));
+    const checkPdrs = pdrs.map((pdr) => this.pdrIsNew(pdr));
     const _pdrs = await Promise.all(checkPdrs);
 
-    const newPdrs = _pdrs.filter(p => p);
+    const newPdrs = _pdrs.filter((p) => p);
     return newPdrs;
   }
 }
