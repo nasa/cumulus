@@ -7,7 +7,7 @@ const pdrMod = require('./pdr');
  * Validations for PDR entries
  */
 
- /**
+/**
   * File spec validations - validations for individual files
   */
 
@@ -192,7 +192,7 @@ const validateFileGroup = (fileGroup) => {
  * Top level (non file group) PDR validations
  */
 
- /**
+/**
   * Validate that the TOTAL_FILE_COUNT entry for the PDR is neither missing nor less than one
   * @param {PVLRoot} pdr The `PVLRoot` object for the PDR
   * @return An error string or null
