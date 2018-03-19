@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `@cumulus/ingest/aws`: Remove queueWorkflowMessage which is no longer being used by `@cumulus/api`'s `kinesis-consumer.js`.
 
+### Fixed
+- fixed `aws.CloudWatchEvents typo`
+
 ## [v1.1.4] - 2018-03-15
 ### Added
 - added flag `useList` to parse-pdr [CUMULUS-404]
