@@ -8,6 +8,7 @@
     "mocha": true
   },
   "rules": {
+    "indent": [ "error", 2 ],
     "require-jsdoc": ["error", {
       "require": {
         "FunctionDeclaration": true,
