@@ -5,8 +5,6 @@ const {
   sendSQSMessage,
   parseS3Uri
 } = require('@cumulus/common/aws');
-const get = require('lodash.get');
-const uuidv4 = require('uuid/v4');
 
 /**
  * Create a message from a template stored on S3
@@ -37,7 +35,8 @@ async function enqueueParsePdrMessage(
   queueUrl,
   parsePdrMessageTemplateUri,
   provider,
-  collection) {
+  collection
+) {
   const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
 
   message.meta.provider = provider;
@@ -87,27 +86,3 @@ async function enqueueGranuleIngestMessage(
   return sendSQSMessage(queueUrl, message);
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
-
-/**
- * Queue a workflow to be picked up by SF starter
- *
- * @param {Object} event - event to queue with workflow and payload info
- * @returns {Promise} - resolves when the message has been enqueued
- */
-async function queueWorkflowMessage(event) {
-  const template = get(event, 'template');
-  const provider = get(event, 'provider', {});
-  const collection = get(event, 'collection', {});
-  const payload = get(event, 'payload', {});
-
-  const message = await getMessageFromTemplate(template);
-
-  message.meta.provider = provider;
-  message.meta.collection = collection;
-
-  message.payload = payload;
-  message.cumulus_meta.execution_name = uuidv4();
-
-  return sendSQSMessage(message.meta.queues.startSF, message);
-}
-exports.queueWorkflowMessage = queueWorkflowMessage;
