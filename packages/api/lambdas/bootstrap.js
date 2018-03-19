@@ -10,6 +10,7 @@
  *  - creating API users
  *  - encrypting CMR user/pass and adding it to configuration files
  */
+
 'use strict';
 
 const https = require('https');
@@ -44,19 +45,17 @@ async function bootstrapElasticSearch(host, index = 'cumulus') {
   else {
     log.info(`index ${index} already exists`);
   }
-
-  return;
 }
 
 async function bootstrapUsers(table, records) {
   if (!table) {
-    return new Promise(resolve => resolve());
+    return new Promise((resolve) => resolve());
   }
   const user = new Manager(table);
 
   // delete all user records
   const existingUsers = await user.scan();
-  await Promise.all(existingUsers.Items.map(u => user.delete({ userName: u.userName })));
+  await Promise.all(existingUsers.Items.map((u) => user.delete({ userName: u.userName })));
   // add new ones
   const additions = records.map((record) => user.create({
     userName: record.username,
@@ -69,7 +68,7 @@ async function bootstrapUsers(table, records) {
 
 async function bootstrapCmrProvider(password) {
   if (!password) {
-    return new Promise(resolve => resolve('nopassword'));
+    return new Promise((resolve) => resolve('nopassword'));
   }
   return DefaultProvider.encrypt(password);
 }
@@ -140,7 +139,7 @@ function handler(event, context, cb) {
     };
 
     return sendResponse(event, 'SUCCESS', data, cb);
-  }).catch(e => {
+  }).catch((e) => {
     log.error(e);
     return sendResponse(event, 'FAILED', null, cb);
   });
@@ -155,8 +154,8 @@ justLocalRun(() => {
   //const a = {};
   //handler(a, {}, (e, r) => console.log(e, r));
   //bootstrapCmrProvider('testing').then(r => {
-    //console.log(r)
-    //return DefaultProvider.decrypt(r)
+  //console.log(r)
+  //return DefaultProvider.decrypt(r)
   //}).then(r => console.log(r))
-    //.catch(e => console.log(e));
+  //.catch(e => console.log(e));
 });
