@@ -11,8 +11,9 @@ const {
   deleteCMAFromTasks,
   messageBuilder
 } = require('../packages/integration-tests/local');
-const { randomString, createQueue } = require('../packages/common/test-utils');
+const { randomString } = require('../packages/common/test-utils');
 const {
+  createQueue,
   recursivelyDeleteS3Bucket,
   s3,
   sqs,

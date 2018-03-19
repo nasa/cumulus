@@ -14,18 +14,20 @@
     "access": "public"
   },
   "scripts": {
-    "test": "env TEST=true ava tests/*.js --serial",
+    "test": "ava",
     "local": "node index.js | pino",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
   },
   "ava": {
+    "files": "tests",
     "babel": "inherit",
     "require": [
       "babel-polyfill",
       "babel-register"
-    ]
+    ],
+    "serial": true
   },
   "babel": {
     "presets": [
@@ -45,12 +47,12 @@
     "babel-preset-es2017": "^6.24.1",
     "json-loader": "~0.5.7",
     "lodash.get": "^4.4.2",
-    "moment": "2.18.1",
+    "moment": "^2.21.0",
     "webpack": "~1.12.13"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
-    "ava": "^0.21.0"
+    "ava": "^0.23.0"
   }
 }
