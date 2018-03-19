@@ -10,6 +10,7 @@ const omit = require('lodash.omit');
 const aws = require('aws-sdk');
 const httpAwsEs = require('http-aws-es');
 const elasticsearch = require('elasticsearch');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
 const aggs = require('./aggregations');
 
@@ -25,7 +26,7 @@ class BaseSearch {
     let esConfig;
 
     // this is needed for getting temporary credentials from IAM role
-    if (process.env.TEST) {
+    if (inTestMode()) {
       if (!process.env.LOCALSTACK_HOST) {
         throw new Error('The LOCALSTACK_HOST environment variable is not set.');
       }
