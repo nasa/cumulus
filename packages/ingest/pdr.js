@@ -179,10 +179,10 @@ class Parse {
    * @return {Promise}
    * @public
    */
-  parse(pdrLocalPath) {
+  async parse(pdrLocalPath) {
     // catching all parse errors here to mark the pdr as failed
     // if any error occured
-    const parsed = parsePdr(pdrLocalPath, this.collection, this.pdr.name);
+    const parsed = await parsePdr(pdrLocalPath, this.collection, this.pdr.name);
 
     // each group represents a Granule record.
     // After adding all the files in the group to the Queue

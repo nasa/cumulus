@@ -3,8 +3,8 @@
 const test = require('ava');
 const sinon = require('sinon');
 const get = require('lodash.get');
-const { sqs, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const { createQueue, randomString } = require('@cumulus/common/test-utils');
+const { createQueue, sqs, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
 const manager = require('../models/base');

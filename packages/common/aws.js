@@ -8,7 +8,7 @@ const path = require('path');
 const url = require('url');
 const log = require('./log');
 const string = require('./string');
-const testUtils = require('./test-utils');
+const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -44,11 +44,11 @@ const awsClient = (Service, version = null) => {
   const options = {};
   if (version) options.apiVersion = version;
 
-  if (process.env.TEST) {
+  if (inTestMode()) {
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
       AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
     }
-    return memoize(() => testUtils.testAwsClient(Service, options));
+    return memoize(() => testAwsClient(Service, options));
   }
   return memoize(() => new Service(options));
 };
@@ -480,6 +480,34 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
      .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
      .map((s) => JSON.parse(`"${s}"`));
+
+/**
+ * Create an SQS Queue.  Properly handles localstack queue URLs
+ *
+ * @param {string} queueName - defaults to a random string
+ * @returns {Promise.<string>} the Queue URL
+ */
+async function createQueue(queueName) {
+  const actualQueueName = queueName || randomString();
+
+  const createQueueResponse = await exports.sqs().createQueue({
+    QueueName: actualQueueName
+  }).promise();
+
+  if (inTestMode()) {
+    // Properly set the Queue URL.  This is needed because LocalStack always
+    // returns the QueueUrl as "localhost", even if that is not where it should
+    // actually be found.  CircleCI breaks without this.
+    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+    returnedQueueUrl.host = undefined;
+    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+
+    return url.format(returnedQueueUrl);
+  }
+
+  return createQueueResponse.QueueUrl;
+}
+exports.createQueue = createQueue;
 
 /**
 * Send a message to AWS SQS
