@@ -15,7 +15,7 @@ NOW=$(./node_modules/.bin/eslint --format unix . | tail -n 1 | awk '{ print $1 }
 # If there are more errors now than there used to be, fail
 if (( NOW > PREV )); then
   DELTA=$(( NOW - PREV))
-  echo "eslint-ratchet error: eslint errors have increased by ${DELTA}" >&2
+  echo "eslint-ratchet error: eslint errors have increased from ${PREV} to ${NOW}" >&2
   exit 1
 elif (( NOW < PREV )); then
   if [ "$ARG" == "ci" ]; then
