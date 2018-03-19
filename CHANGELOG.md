@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.1.5] - 2018-03-19
+
 ### Fixed
 - Update vulnerable npm packages [CUMULUS-425]
 - `@cumulus/api`: `kinesis-consumer.js` uses `sf-scheduler.js#schedule` instead of placing a message directly on the `startSF` SQS queue. This is a fix for [CUMULUS-359](https://bugs.earthdata.nasa.gov/browse/CUMULUS-359) because `sf-scheduler.js#schedule` looks up the provider and collection data in DynamoDB and adds it to the `meta` object of the enqueued message payload.
@@ -16,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `@cumulus/ingest/aws`: Remove queueWorkflowMessage which is no longer being used by `@cumulus/api`'s `kinesis-consumer.js`.
 
 ## [v1.1.4] - 2018-03-15
+
 ### Added
 - added flag `useList` to parse-pdr [CUMULUS-404]
 
@@ -95,7 +98,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.5...HEAD
+[v1.1.5]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...v1.1.5
 [v1.1.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...v1.1.2
