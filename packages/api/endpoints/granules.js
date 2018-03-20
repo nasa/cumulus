@@ -37,7 +37,7 @@ async function removeGranuleFromCmr(granuleId, collectionId) {
  */
 function list(event, cb) {
   const search = new Search(event, 'granule');
-  search.query().then(response => cb(null, response)).catch((e) => {
+  search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
 }
@@ -131,10 +131,10 @@ function handler(event, context) {
       get(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event).then(r => cb(null, r)).catch(e => cb(e));
+      put(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then(r => cb(null, r)).catch(e => cb(e));
+      del(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
     else {
       list(event, cb);

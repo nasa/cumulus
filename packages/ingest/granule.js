@@ -39,7 +39,7 @@ class Discover {
 
     // create hash with file regex as key
     this.regexes = {};
-    this.collection.files.forEach(f => {
+    this.collection.files.forEach((f) => {
       this.regexes[f.regex] = {
         collection: this.collection.name,
         bucket: this.buckets[f.bucket]
@@ -109,13 +109,13 @@ class Discover {
   }
 
   async findNewGranules(files) {
-    const checkFiles = files.map(f => this.fileIsNew(f));
+    const checkFiles = files.map((f) => this.fileIsNew(f));
     const t = await Promise.all(checkFiles);
-    const newFiles = t.filter(f => f);
+    const newFiles = t.filter((f) => f);
 
     // reorganize by granule
     const granules = {};
-    newFiles.forEach(_f => {
+    newFiles.forEach((_f) => {
       const f = _f;
       const granuleId = f.granuleId;
       delete f.granuleId;
@@ -130,7 +130,7 @@ class Discover {
       }
     });
 
-    return Object.keys(granules).map(k => granules[k]);
+    return Object.keys(granules).map((k) => granules[k]);
   }
 }
 
@@ -172,9 +172,9 @@ class Granule {
     // download / verify checksum / upload
 
     const downloadFiles = granule.files
-      .map(f => this.getBucket(f))
-      .filter(f => this.filterChecksumFiles(f))
-      .map(f => this.ingestFile(f, this.collection.duplicateHandling));
+      .map((f) => this.getBucket(f))
+      .filter((f) => this.filterChecksumFiles(f))
+      .map((f) => this.ingestFile(f, this.collection.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
 
@@ -393,31 +393,31 @@ class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 function selector(type, protocol) {
   if (type === 'discover') {
     switch (protocol) {
-      case 'sftp':
-        return SftpDiscoverGranules;
-      case 'ftp':
-        return FtpDiscoverGranules;
-      case 'http':
-      case 'https':
-        return HttpDiscoverGranules;
-      case 's3':
-        return S3DiscoverGranules;
-      default:
-        throw new Error(`Protocol ${protocol} is not supported.`);
+    case 'sftp':
+      return SftpDiscoverGranules;
+    case 'ftp':
+      return FtpDiscoverGranules;
+    case 'http':
+    case 'https':
+      return HttpDiscoverGranules;
+    case 's3':
+      return S3DiscoverGranules;
+    default:
+      throw new Error(`Protocol ${protocol} is not supported.`);
     }
   }
   else if (type === 'ingest') {
     switch (protocol) {
-      case 'sftp':
-        return SftpGranule;
-      case 'ftp':
-        return FtpGranule;
-      case 'http':
-        return HttpGranule;
-      case 's3':
-        return S3Granule;
-      default:
-        throw new Error(`Protocol ${protocol} is not supported.`);
+    case 'sftp':
+      return SftpGranule;
+    case 'ftp':
+      return FtpGranule;
+    case 'http':
+      return HttpGranule;
+    case 's3':
+      return S3Granule;
+    default:
+      throw new Error(`Protocol ${protocol} is not supported.`);
     }
   }
 

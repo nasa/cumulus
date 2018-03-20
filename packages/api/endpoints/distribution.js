@@ -100,7 +100,7 @@ function handler(event, context, cb) {
           'Strict-Transport-Security': 'max-age=31536000' 
         }
       });
-    }).catch(e => cb(e));
+    }).catch((e) => cb(e));
   }
 
   // ending up here means that user was not login

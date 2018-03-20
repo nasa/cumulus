@@ -242,9 +242,9 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
     const checksumFilename = event.input.granules[0].files[1].name;
     await Promise.all([
       fs.copy(path.join(sourceDir, granuleFilename),
-              path.join(localGranulePath, granuleFilename)),
+        path.join(localGranulePath, granuleFilename)),
       fs.copy(path.join(sourceDir, checksumFilename),
-              path.join(localGranulePath, checksumFilename))
+        path.join(localGranulePath, checksumFilename))
     ]);
 
     const output = await syncGranule(event);
@@ -254,7 +254,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     t.is(output.granules[0].files[0].filename,
-        `s3://${t.context.privateBucketName}/${granuleFilename}`);
+      `s3://${t.context.privateBucketName}/${granuleFilename}`);
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
