@@ -31,8 +31,8 @@ module.exports = {
       },
       {
         include: glob.sync('{*.js,test/*.js}',
-                           { realpath: true })
-                     .map((filename) => path.resolve(__dirname, filename)),
+          { realpath: true })
+          .map((filename) => path.resolve(__dirname, filename)),
         exclude: /node_modules/,
         loader: 'prepend',
         query: {

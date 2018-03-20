@@ -216,12 +216,12 @@ module.exports = class SyncHttpUrlsTask extends Task {
 
   syncFiles(files, bucket, keypath, simulate = false) {
     const syncIfTimeLeft = _.partial(concurrency.unless,
-                                     () => this.endsWithin(TIMEOUT_TIME_MS),
-                                     syncFile,
-                                     bucket,
-                                     keypath,
-                                     simulate,
-                                     this.config.auth);
+      () => this.endsWithin(TIMEOUT_TIME_MS),
+      syncFile,
+      bucket,
+      keypath,
+      simulate,
+      this.config.auth);
     const syncLimited = concurrency.limit(this.config.connections || 5, syncIfTimeLeft);
     return concurrency.mapTolerant(files, syncLimited);
   }
