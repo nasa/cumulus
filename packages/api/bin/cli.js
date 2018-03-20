@@ -7,33 +7,9 @@
 const pckg = require('../package.json');
 const es = require('./es');
 const program = require('commander');
+const { cliUtils } = require('@cumulus/common');
 
 program.version(pckg.version);
-
-/**
- * Verify that the given param is not null. Write out an error if null.
- *
- * @param {Object} paramConfig - param name and value {name: value:}
- * @returns {boolean} true if param is not null
- */
-function verifyRequiredParameter(paramConfig) {
-  if (paramConfig.value === null) {
-    console.log(`Error: ${paramConfig.name} is a required parameter.`);
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Verify required parameters are present
- *
- * @param {list<Object>} requiredParams - params in the form {name: 'x' value: 'y'}
- * @returns {boolean} - true if all params are not null
- */
-function verifyWorkflowParameters(requiredParams) {
-  return requiredParams.map(verifyRequiredParameter).includes(false) === false;
-}
 
 program
   .usage('TYPE COMMAND [options]');
@@ -44,30 +20,63 @@ program
   .option('-a, --index-alias <alias>', 'AWS Elasticsearch index alias', 'cumulus-alias')
   .option('--host <host>', 'AWS Elasticsearch host', null)
   .option('-s, --source <sourceIndex>', 'Index to reindex', 'cumulus')
-  .option('-d, --dest-index <destIndex>', 'Name of the destination index, should not be an existing index', null)
-  .action(() => {
-    es.reindex();
-    // if (verifyWorkflowParameters([{ name: 'stack-name', value: program.stackName },
-    //                               { name: 'bucket-name', value: program.bucketName },
-    //                               { name: 'workflow', value: program.workflow },
-    //                               { name: 'input-file', value: program.inputFile }])) {
-    //   testRunner.testWorkflow(program.stackName, program.bucketName,
-    //                           program.workflow, program.inputFile);
-    // }
+  .option('-d, --dest-index <destIndex>',
+    // eslint-disable-next-line max-len
+    'Name of the destination index, should not be an existing index. Will default to an index named with today\'s date',
+    null)
+  .action(async (cmd) => {
+    if (cliUtils.verifyRequiredarameters([{ name: 'host', value: cmd.host }])) {
+      try {
+        const response = await es.reindex(
+          cmd.host,
+          cmd.sourceIndex,
+          cmd.destIndex,
+          cmd.alias
+        );
+
+        console.log(response);
+      }
+      catch (err) {
+        console.log(err.message);
+      }
+    }
   });
 
 program
   .command('status')
-  .description('get the status of the reindex task')
-  .action(() => {
-    es.getStatus();
+  .description('Get the status of the reindex tasks for the given host')
+  .option('--host <host>', 'AWS Elasticsearch host', null)
+  .action((cmd) => {
+    if (cliUtils.verifyRequiredarameters([{ name: 'host', value: cmd.host }])) {
+      es.getStatus(cmd.host);
+    }
   });
 
 program
   .command('complete-reindex')
-  .description('description')
-  .action(() => {
-    es.completeReindex();
+  .description('Switch to using the new index (destination index) instead of the source index.')
+  .option('-a, --index-alias <alias>', 'AWS Elasticsearch index alias', 'cumulus-alias')
+  .option('--host <host>', 'AWS Elasticsearch host', null)
+  .option('-s, --source <sourceIndex>', 'Index to switch from and no longer used', null)
+  .option('-d, --dest-index <destIndex>',
+    // eslint-disable-next-line max-len
+    'Index to be aliased and used as the elasticsearch index for Cumulus',
+    null)
+  .parse(process.argv)
+  .action(async (cmd) => {
+    if (cliUtils.verifyRequiredParameters([{ name: 'host', value: cmd.host }])) {
+      try {
+        await es.completeReindex(
+          cmd.host,
+          cmd.sourceIndex,
+          cmd.destIndex,
+          cmd.alias
+        );
+      }
+      catch (err) {
+        console.log(err.message);
+      }
+    }
   });
 
 program
