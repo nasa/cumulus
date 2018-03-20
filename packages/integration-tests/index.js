@@ -43,7 +43,7 @@ function getWorkflowTemplate(stackName, bucketName, workflowName) {
  */
 function getWorkflowArn(stackName, bucketName, workflowName) {
   return getWorkflowTemplate(stackName, bucketName, workflowName)
-   .then((template) => template.cumulus_meta.state_machine);
+    .then((template) => template.cumulus_meta.state_machine);
 }
 
 /**
