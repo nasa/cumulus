@@ -7,11 +7,11 @@ const missingFileFixture = require('./fixtures/missing-file-fixture');
 const timeStamp = (dateTime) => dateTime.toISOString().replace(/\.\d\d\dZ/, 'Z');
 
 const shortPan = (dateTime) =>
-`MESSAGE_TYPE = SHORTPAN;
+  `MESSAGE_TYPE = SHORTPAN;
 DISPOSITION = "SUCCESSFUL";
 TIME_STAMP = ${timeStamp(dateTime)};`;
 
-test('generates a short PAN if all files succeed', t => {
+test('generates a short PAN if all files succeed', (t) => {
   const input = allSuccessFixture.input;
   const now = new Date();
   const timeStampStr = timeStamp(now);
@@ -19,7 +19,7 @@ test('generates a short PAN if all files succeed', t => {
   t.is(result, shortPan(now));
 });
 
-test('generates a long pan with an entry for the number of files (NO_OF_FILES)', t => {
+test('generates a long pan with an entry for the number of files (NO_OF_FILES)', (t) => {
   const input = missingFileFixture.input;
   const now = new Date();
   const timeStampStr = timeStamp(now);
@@ -28,7 +28,7 @@ test('generates a long pan with an entry for the number of files (NO_OF_FILES)',
   t.is(parseInt(numFilesEntry, 10), input.length);
 });
 
-test('generates a disposition message for each file in a long PAN', t => {
+test('generates a disposition message for each file in a long PAN', (t) => {
   const input = missingFileFixture.input;
   const now = new Date();
   const timeStampStr = timeStamp(now);
@@ -37,7 +37,7 @@ test('generates a disposition message for each file in a long PAN', t => {
   t.is(dispositions.length, 2);
 });
 
-test('generates a timestamp for each file entry', t => {
+test('generates a timestamp for each file entry', (t) => {
   const input = missingFileFixture.input;
   const now = new Date();
   const timeStampStr = timeStamp(now);
@@ -48,7 +48,7 @@ test('generates a timestamp for each file entry', t => {
   t.is(timeStampCount, input.length);
 });
 
-test('generates an error message for each missing file', t => {
+test('generates an error message for each missing file', (t) => {
   const input = missingFileFixture.input;
   const now = new Date();
   const timeStampStr = timeStamp(now);
