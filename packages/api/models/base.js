@@ -131,7 +131,7 @@ class Manager {
   async batchWrite(_deletes, _puts) {
     let deletes = _deletes;
     let puts = _puts;
-    deletes = deletes ? deletes.map(d => ({ DeleteRequest: { Key: d } })) : [];
+    deletes = deletes ? deletes.map((d) => ({ DeleteRequest: { Key: d } })) : [];
     puts = puts ? puts.map((_d) => {
       const d = _d;
       d.updatedAt = Date.now();

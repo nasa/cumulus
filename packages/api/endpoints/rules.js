@@ -17,7 +17,7 @@ const { Search } = require('../es/search');
  */
 function list(event, cb) {
   const search = new Search(event, 'rule');
-  search.query().then(response => cb(null, response)).catch(cb);
+  search.query().then((response) => cb(null, response)).catch(cb);
 }
 
 /**
@@ -55,7 +55,7 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return model.create(data)
-          .then(r => cb(null, { message: 'Record saved', record: r }))
+          .then((r) => cb(null, { message: 'Record saved', record: r }))
           .catch(cb);
       }
       return cb(e);
@@ -79,9 +79,9 @@ async function put(event) {
   // if the data includes any fields other than state and rule.value
   // throw error
   if (action && action !== 'rerun') {
-    let check = Object.keys(data).filter(f => (f !== 'state' && f !== 'rule'));
+    let check = Object.keys(data).filter((f) => (f !== 'state' && f !== 'rule'));
     if (data.rule) {
-      check = check.concat(Object.keys(data.rule).filter(f => f !== 'value'));
+      check = check.concat(Object.keys(data.rule).filter((f) => f !== 'value'));
     }
     if (check.length > 0) {
       throw new Error('Only state and rule.value values can be changed');
@@ -114,12 +114,12 @@ async function del(event) {
 
   name = name.replace(/%20/g, ' ');
 
-  await model.get({ name }).then(record => model.delete(record));
+  await model.get({ name }).then((record) => model.delete(record));
   return { message: 'Record deleted' };
 }
 
 function handler(event, context) {
-  return handle(event, context, !inTestMode() /* authCheck */, cb => {
+  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
@@ -127,10 +127,10 @@ function handler(event, context) {
       post(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event).then(r => cb(null, r)).catch(e => cb(JSON.stringify(e)));
+      put(event).then((r) => cb(null, r)).catch((e) => cb(JSON.stringify(e)));
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then(r => cb(null, r)).catch(e => cb(JSON.stringify(e)));
+      del(event).then((r) => cb(null, r)).catch((e) => cb(JSON.stringify(e)));
     }
     else {
       list(event, cb);
