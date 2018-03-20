@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+# Only valid option is "ci"
+ARG="$1"
+if [ "$ARG" != "" ] && [ "$ARG" != "ci" ]; then
+  echo "ERROR: Invalid argument - ${ARG}" >&2
+  exit 1;
+fi
+
+PREV=$(< .eslint-ratchet-high-water-mark)
+NOW=$(./node_modules/.bin/eslint --format unix . | tail -n 1 | awk '{ print $1 }')
+
+# If there are more errors now than there used to be, fail
+if (( NOW > PREV )); then
+  DELTA=$(( NOW - PREV))
+  echo "eslint-ratchet error: eslint errors have increased from ${PREV} to ${NOW}" >&2
+  exit 1
+elif (( NOW < PREV )); then
+  if [ "$ARG" == "ci" ]; then
+    echo "eslint-ratchet error: Expected ${PREV} errors but found ${NOW}.  Run './bin/eslint-ratchet' and commit .eslint-ratchet-high-water-mark file" >&2
+    exit 2
+  else
+    echo "WIN: ESLint errors have decreased from ${PREV} to ${NOW}.  Ratcheting down ..."
+    echo "     Make sure to commit .eslint-ratchet-high-water-mark"
+    echo "$NOW" > .eslint-ratchet-high-water-mark
+    exit 0
+  fi
+else
+  exit 0
+fi
