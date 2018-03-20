@@ -8,6 +8,7 @@ const mappings = require('../models/mappings.json');
 const get = require('lodash.get');
 
 const esIndex = 'cumulus-1';
+const indexAlias = 'cumulus-1-alias';
 process.env.ES_INDEX = esIndex;
 let esClient;
 
@@ -23,26 +24,26 @@ async function indexData() {
     { name: 'Rule3' }
   ];
 
-  rules.map(async (rule) => {
+  await Promise.all(rules.map(async (rule) => {
     await esClient.index({
       index: esIndex,
       type: 'rule',
       id: rule.name,
       body: rule
     });
-  });
+  }));
 
   await esClient.indices.refresh();
 }
 
+async function createIndex(indexName, aliasName) {
+  await bootstrapElasticSearch('fakehost', indexName, aliasName);
+  esClient = await Search.es();
+}
 
 test.before(async () => {
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex);
-  esClient = await Search.es();
-
-  // To do: remove
-  //seawait esClient.indices.delete({ index: 'dest-index' });
+  await createIndex(esIndex, indexAlias);
 
   await indexData();
 });
@@ -65,7 +66,7 @@ test.serial('Reindex - alias does not exist', async (t) => {
   }
 });
 
-test.serial('Reindex - multiple aliases found', async(t) => {
+test.serial('Reindex - multiple aliases found', async (t) => {
   const indexName = 'cumulus-dup';
 
   await esClient.indices.create({
@@ -75,26 +76,26 @@ test.serial('Reindex - multiple aliases found', async(t) => {
 
   await esClient.indices.putAlias({
     index: indexName,
-    name: 'cumulus-alias'
+    name: indexAlias
   });
 
   try {
-    await es.reindex('fakehost');
+    await es.reindex('fakehost', null, null, indexAlias);
   }
   catch (err) {
     t.is(
       err.message,
       // eslint-disable-next-line max-len
-      'Multiple indices found for alias cumulus-alias. Specify source index as one of [cumulus-dup, cumulus-1].'
+      'Multiple indices found for alias cumulus-1-alias. Specify source index as one of [cumulus-dup, cumulus-1].'
     );
   }
 
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('Reindex - Specify source index that does not exist', async(t) => {
+test.serial('Reindex - Specify source index that does not exist', async (t) => {
   try {
-    await es.reindex('fakehost', 'source-index');
+    await es.reindex('fakehost', 'source-index', null, indexAlias);
   }
   catch (err) {
     t.is(
@@ -104,7 +105,7 @@ test.serial('Reindex - Specify source index that does not exist', async(t) => {
   }
 });
 
-test.serial('Reindex - specify a source index that is not aliased', async(t) => {
+test.serial('Reindex - specify a source index that is not aliased', async (t) => {
   const indexName = 'source-index';
 
   await esClient.indices.create({
@@ -113,46 +114,140 @@ test.serial('Reindex - specify a source index that is not aliased', async(t) => 
   });
 
   try {
-    await es.reindex('fakehost', indexName);
+    await es.reindex('fakehost', indexName, null, indexAlias);
   }
   catch (err) {
     t.is(
       err.message,
-      'Source index source-index is not aliased with alias cumulus-alias.'
+      'Source index source-index is not aliased with alias cumulus-1-alias.'
     );
   }
 
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('Reindex - destination index exists', async(t) => {
-  t.todo('Write test');
-});
+test.serial('Reindex success', async (t) => {
+  const response = await es.reindex('fakehost', esIndex, 'cumulus-dest', indexAlias);
 
-test.serial('Reindex success', async(t) => {
-  await es.reindex('fakehost', esIndex, 'dest-index');
-  //const status = await es.getStatus('fakehost');
+  // Verify the 3 records were created according to the reindex response
+  t.is(response.created, 3);
+
+  // Refresh to make sure the records are in the destination index
+  await esClient.indices.refresh();
 
   // Validate that the destination index was created
-  t.is(true, await esClient.indices.exists({ index: 'dest-index' }));
+  t.is(true, await esClient.indices.exists({ index: 'cumulus-dest' }));
 
   // Validate destination index mappings are correct
   const fieldMappings = await esClient.indices.getMapping();
 
   const sourceMapping = get(fieldMappings, esIndex);
-  const destMapping = get(fieldMappings, 'dest-index');
+  const destMapping = get(fieldMappings, 'cumulus-dest');
 
   t.deepEqual(sourceMapping.mappings, destMapping.mappings);
 
-  await esClient.indices.refresh();
-
-  const count = await esClient.count({
-    index: 'dest-index'
-  });
+  const count = await esClient.count({ index: 'cumulus-dest' });
 
   // Validate that dest-index has the indexed data from the source index
   t.is(3, count.count);
 
+  await esClient.indices.delete({ index: 'cumulus-dest' });
+});
+
+test.serial('Reindex - destination index exists', async (t) => {
+  try {
+    await es.reindex('fakehost', esIndex, esIndex, indexAlias);
+  }
+  catch (err) {
+    t.is(
+      err.message,
+      'Destination index cumulus-1 exists. Please specify an index name that does not exist.'
+    );
+  }
+});
+
+test.serial('Complete index - no source', async (t) => {
+  try {
+    await es.completeReindex('fakehost', null, 'dest-index', esIndex);
+  }
+  catch (err) {
+    t.is(
+      err.message,
+      'Please explicity specify a source and destination index.'
+    );
+  }
+});
+
+test.serial('Complete index - no destination', async (t) => {
+  try {
+    await es.completeReindex('fakehost', 'source-index', null, esIndex);
+  }
+  catch (err) {
+    t.is(
+      err.message,
+      'Please explicity specify a source and destination index.'
+    );
+  }
+});
+
+test.serial('Complete index - source index does not exist', async (t) => {
+  try {
+    await es.completeReindex('fakehost', 'source-index', 'dest-index', esIndex);
+  }
+  catch (err) {
+    t.is(
+      err.message,
+      'Source index source-index does not exist.'
+    );
+  }
+});
+
+test.serial('Complete index - no destination', async (t) => {
+  try {
+    await es.completeReindex('fakehost', 'cumulus-1', 'dest-index', esIndex);
+  }
+  catch (err) {
+    t.is(
+      err.message,
+      'Destination index dest-index does not exist.'
+    );
+  }
+});
+
+test.serial('Complete index - source index same as dest index', async (t) => {
+  try {
+    await es.completeReindex('fakehost', 'source', 'source', esIndex);
+  }
+  catch (err) {
+    t.is(
+      err.message,
+      'The source index cannot be the same as the destination index.'
+    );
+  }
+});
+
+test.serial('Complete re-index', async (t) => {
+  await createIndex('cumulus-2', 'cumulus-2-alias');
+
+  await es.reindex('fakehost', 'cumulus-2', 'dest-index', 'cumulus-2-alias');
+
+  await es.completeReindex('fakehost', 'cumulus-2', 'dest-index', 'cumulus-2-alias');
+
+  const alias = await esClient.indices.getAlias({ name: 'cumulus-2-alias' });
+
+  t.deepEqual(Object.keys(alias), ['dest-index']);
+
   await esClient.indices.delete({ index: 'dest-index' });
 });
 
+test.serial('Complete re-index and delete source index', async (t) => {
+  await createIndex('cumulus-2', 'cumulus-2-alias');
+
+  await es.reindex('fakehost', 'cumulus-2', 'dest-index', 'cumulus-2-alias');
+
+  await es.completeReindex('fakehost', 'cumulus-2', 'dest-index', 'cumulus-2-alias', true);
+
+  t.is(await esClient.indices.exists({ index: 'cumulus-2' }), false);
+
+  await esClient.indices.delete({ index: 'dest-index' });
+});
