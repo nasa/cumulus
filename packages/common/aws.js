@@ -202,7 +202,7 @@ exports.fileExists = async (bucket, key) => {
 
 exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
   // Scrub s3Ojbs to avoid errors from the AWS SDK
-  const scrubbedS3Objs = s3Objs.map(s3Obj => ({
+  const scrubbedS3Objs = s3Objs.map((s3Obj) => ({
     Bucket: s3Obj.Bucket,
     Key: s3Obj.Key
   }));
@@ -273,8 +273,8 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
       const filename = fileInfo;
       fileInfo = {
         key: (typeof keyPath === 'string') ?
-                path.join(keyPath, path.basename(filename)) :
-                keyPath(filename),
+          path.join(keyPath, path.basename(filename)) :
+          keyPath(filename),
         filename: filename
       };
     }
@@ -284,10 +284,10 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
     const body = fs.createReadStream(filename);
     const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
     return exports.promiseS3Upload(opts)
-                  .then(() => {
-                    log.info(`Progress: [${++i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
-                    return { key: key, bucket: bucket };
-                  });
+      .then(() => {
+        log.info(`Progress: [${++i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
+        return { key: key, bucket: bucket };
+      });
   };
   const limitedUpload = concurrency.limit(S3_RATE_LIMIT, promiseUpload);
   return Promise.all(files.map(limitedUpload));
@@ -460,8 +460,8 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
   }
   const regex = new RegExp(sfnUnsafeChars, 'g');
   return fields.map((s) => s.replace(regex, string.unicodeEscape).replace(/\\/g, '!'))
-               .join(delimiter)
-               .substring(0, 80);
+    .join(delimiter)
+    .substring(0, 80);
 };
 
 /**
@@ -478,8 +478,36 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  */
 exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
-     .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
-     .map((s) => JSON.parse(`"${s}"`));
+    .map((s) => s.replace(/!/g, '\\').replace('"', '\\"'))
+    .map((s) => JSON.parse(`"${s}"`));
+
+/**
+ * Create an SQS Queue.  Properly handles localstack queue URLs
+ *
+ * @param {string} queueName - defaults to a random string
+ * @returns {Promise.<string>} the Queue URL
+ */
+async function createQueue(queueName) {
+  const actualQueueName = queueName || randomString();
+
+  const createQueueResponse = await exports.sqs().createQueue({
+    QueueName: actualQueueName
+  }).promise();
+
+  if (inTestMode()) {
+    // Properly set the Queue URL.  This is needed because LocalStack always
+    // returns the QueueUrl as "localhost", even if that is not where it should
+    // actually be found.  CircleCI breaks without this.
+    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+    returnedQueueUrl.host = undefined;
+    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+
+    return url.format(returnedQueueUrl);
+  }
+
+  return createQueueResponse.QueueUrl;
+}
+exports.createQueue = createQueue;
 
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs

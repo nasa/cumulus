@@ -8,11 +8,11 @@ const PVLNumeric = require('../lib/models').PVLNumeric;
 const PVLDateTime = require('../lib/models').PVLDateTime;
 const PVLTextString = require('../lib/models').PVLTextString;
 
-test('parsing empty string returns empty object', t => {
+test('parsing empty string returns empty object', (t) => {
   t.deepEqual(pvlToJS(''), new PVLRoot());
 });
 
-test('parsing non-nested items', t => {
+test('parsing non-nested items', (t) => {
   const input =
     'THIS = THAT;\n' +
     'HERE = THERE;';
@@ -22,7 +22,7 @@ test('parsing non-nested items', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('ignore full-line comment when parsing', t => {
+test('ignore full-line comment when parsing', (t) => {
   const input =
     '/*Comment*/\n' +
     'THIS = THAT;\n' +
@@ -33,7 +33,7 @@ test('ignore full-line comment when parsing', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('ignore leading white space when parsing', t => {
+test('ignore leading white space when parsing', (t) => {
   const input =
     '      THIS = THAT;\n' +
     '  HERE = THERE;';
@@ -43,7 +43,7 @@ test('ignore leading white space when parsing', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('ignore trailing white space when parsing', t => {
+test('ignore trailing white space when parsing', (t) => {
   const input =
     'THIS = THAT;         \n' +
     'HERE = THERE;      ';
@@ -53,7 +53,7 @@ test('ignore trailing white space when parsing', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('allow duplicate keys when parsing', t => {
+test('allow duplicate keys when parsing', (t) => {
   const input =
     'THIS = THAT;\n' +
     'THIS = THERE;';
@@ -61,7 +61,7 @@ test('allow duplicate keys when parsing', t => {
   t.deepEqual(pvlToJS(input).store, expectedStore);
 });
 
-test('parsing a singly-nested item', t => {
+test('parsing a singly-nested item', (t) => {
   const input =
     'GROUP = THAT;\n' +
     '  HERE = THERE;\n' +
@@ -73,7 +73,7 @@ test('parsing a singly-nested item', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('parsing a singly-nested item with a named end-aggregate', t => {
+test('parsing a singly-nested item with a named end-aggregate', (t) => {
   const input =
     'OBJECT = THAT;\n' +
     '  HERE = THERE;\n' +
@@ -85,7 +85,7 @@ test('parsing a singly-nested item with a named end-aggregate', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('parsing a doubly-nested item', t => {
+test('parsing a doubly-nested item', (t) => {
   const input =
     'GROUP = THAT;\n' +
     '  GROUP = THOSE;\n' +
@@ -101,7 +101,7 @@ test('parsing a doubly-nested item', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('parsing Objects within a Group', t => {
+test('parsing Objects within a Group', (t) => {
   const input =
     'GROUP = THAT;\n' +
     '  OBJECT = THOSE;\n' +
@@ -123,7 +123,7 @@ test('parsing Objects within a Group', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('parsing nested item with attribute', t => {
+test('parsing nested item with attribute', (t) => {
   const input =
     'GROUP = THAT;\n' +
     '  PROP = YEAH_IT_EXISTS;\n' +
@@ -141,7 +141,7 @@ test('parsing nested item with attribute', t => {
   t.deepEqual(pvlToJS(input), expected);
 });
 
-test('parsing an aggregate name wrapped in quotes', t => {
+test('parsing an aggregate name wrapped in quotes', (t) => {
   const inputSimple =
     "OBJECT = 'THAT';\n" +
     '  FOO = BAR;\n' +
@@ -169,18 +169,18 @@ test('parsing an aggregate name wrapped in quotes', t => {
   t.deepEqual(pvlToJS(inputComplex), expectedComplex);
 });
 
-test('parsing Numeric value', t => {
+test('parsing Numeric value', (t) => {
   t.deepEqual(parseValue('12345'), new PVLNumeric('12345'));
   t.deepEqual(parseValue('12345'), new PVLNumeric(12345));
   t.is(parseValue('12345').value, 12345);
 });
 
-test('parsing DateTime value', t => {
+test('parsing DateTime value', (t) => {
   t.deepEqual(parseValue('1990-07-04T12:00'), new PVLDateTime('1990-07-04T12:00'));
   t.deepEqual(parseValue('1990-07-04T12:00').value, new Date('1990-07-04T12:00'));
 });
 
-test('parsing quoted TextString value', t => {
+test('parsing quoted TextString value', (t) => {
   t.deepEqual(parseValue('foobar'), new PVLTextString('foobar'));
   t.is(parseValue('foobar').value, 'foobar');
 
@@ -193,7 +193,7 @@ test('parsing quoted TextString value', t => {
   t.deepEqual(parseValue('"FO\'obaR\'"'), new PVLTextString("FO'obaR'"));
 });
 
-test('parsing unquoted TextString value', t => {
+test('parsing unquoted TextString value', (t) => {
   t.deepEqual(parseValue('FOOBAR'), new PVLTextString('FOOBAR'));
   t.deepEqual(parseValue('foobAR'), new PVLTextString('foobAR'));
 });
