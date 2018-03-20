@@ -16,8 +16,8 @@ function parseValue (value, key) {
 
   const parsed = numericValue !== null ? new PVLNumeric(numericValue)
     : dateTimeValue !== null ? new PVLDateTime(dateTimeValue)
-    : textStringValue !== null ? new PVLTextString(textStringValue)
-    : null;
+      : textStringValue !== null ? new PVLTextString(textStringValue)
+        : null;
   if (parsed) {
     return parsed;
   } else {
@@ -35,15 +35,15 @@ function pvlToJS (pvlString) {
   // Currently assumes single-line statements, not allowing multi-line values
   let pvlStatements = pvlString
     .split('\n')
-    .map(s => s.trim())
+    .map((s) => s.trim())
     // Strip statement-ending semicolons
-    .map(s => s.replace(/;$/, ''))
+    .map((s) => s.replace(/;$/, ''))
     // Ignore blank lines
-    .filter(s => s !== '')
+    .filter((s) => s !== '')
     // Ignore full-line comments
-    .filter(s => !(s.startsWith('/*') && s.endsWith('*/')));
+    .filter((s) => !(s.startsWith('/*') && s.endsWith('*/')));
 
-  pvlStatements.forEach(s => {
+  pvlStatements.forEach((s) => {
     if (s === 'END') {
       return result;
     }
@@ -75,7 +75,7 @@ function jsToPVL (pvlObject) {
 
   // Spec doesn't require indentation, but does highly recommended it
   let depth = 0;
-  const indented = stringified.split('\n').map(s => {
+  const indented = stringified.split('\n').map((s) => {
     if (s.match(/^END_(GROUP|OBJECT)( = .+)?$/)) { depth -= 1; }
     const thisLine = `${' '.repeat(depth * INDENTATION_WIDTH)}${s}`;
     if (s.match(/^(BEGIN_)?(GROUP|OBJECT) = .+$/)) { depth += 1; }
