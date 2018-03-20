@@ -7,17 +7,55 @@ const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 
 async function completeReindex(host, sourceIndex, destIndex, aliasName = defaultIndexAlias, deleteSource = false) {
+
   const esClient = await Search.es(host);
 
-  const idx = await esClient.indices.get({ index: aliasName });
+  if (sourceIndex === null || destIndex === null) {
+    // eslint-disable-next-line max-len
+    throw new Error('Please explicity specify a source and destination index.');
+  }
 
-  console.log(JSON.stringify(idx));
+  if (sourceIndex === destIndex) {
+    throw new Error('The source index cannot be the same as the destination index.');
+  }
+
+  const sourceExists = await esClient.indices.exists({ index: sourceIndex });
+
+  if (!sourceExists) {
+    throw new Error(`Source index ${sourceIndex} does not exist.`);
+  }
+
+  const destExists = await esClient.indices.exists({ index: destIndex });
+
+  if (!destExists) {
+    throw new Error(`Destination index ${destIndex} does not exist.`);
+  }
+
+  await esClient.indices.updateAliases({
+    body: {
+      actions: [
+        { remove: { index: sourceIndex, alias: aliasName } },
+        { add: { index: destIndex, alias: aliasName } }
+      ]
+    }
+  }).then(() => {
+    // eslint-disable-next-line max-len
+    console.log(`Removed alias ${aliasName} from index ${sourceIndex} and added alias to ${destIndex}`);
+  }, (err) => {
+    // eslint-disable-next-line max-len
+    throw new Error(`Error removing alias ${aliasName} from index ${sourceIndex} and adding alias to ${destIndex}: ${err}`);
+  });
+
+  if (deleteSource) {
+    await esClient.indices.delete({ index: sourceIndex });
+    console.log(`Deleted index ${sourceIndex}`);
+  }
 }
 
 async function getStatus(host) {
   const esClient = await Search.es(host);
 
-  const tasks = await esClient.tasks.list();
+  const tasks = await esClient.tasks.list({ actions: ['*reindex'] });
 
   console.log(JSON.stringify(tasks));
 }
@@ -69,11 +107,12 @@ async function reindex(host, sourceIndex = 'cumulus', destIndex = null, aliasNam
   const destExists = await esClient.indices.exists({ index: destIndex });
 
   if (destExists) {
-    // TO DO: throw error
+    // eslint-disable-next-line max-len
+    throw new Error(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
   }
   else {
     // create destination index
-    const indexResponse = await esClient.indices.create({
+    await esClient.indices.create({
       index: destIndex,
       body: { mappings }
     });
@@ -89,9 +128,11 @@ async function reindex(host, sourceIndex = 'cumulus', destIndex = null, aliasNam
     }
   });
 
-  console.log(JSON.stringify(reindexResponse));
+  return reindexResponse;
 }
 
-module.exports.reindex = reindex;
-module.exports.getStatus = getStatus;
-module.exports.completeReindex = completeReindex;
+module.exports = {
+  reindex,
+  getStatus,
+  completeReindex
+};
