@@ -8,7 +8,7 @@ const path = require('path');
 const url = require('url');
 const log = require('./log');
 const string = require('./string');
-const testUtils = require('./test-utils');
+const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -44,11 +44,11 @@ const awsClient = (Service, version = null) => {
   const options = {};
   if (version) options.apiVersion = version;
 
-  if (process.env.TEST) {
+  if (inTestMode()) {
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
       AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
     }
-    return memoize(() => testUtils.testAwsClient(Service, options));
+    return memoize(() => testAwsClient(Service, options));
   }
   return memoize(() => new Service(options));
 };
@@ -64,6 +64,7 @@ exports.dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
 exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
+exports.sns = awsClient(AWS.SNS, '2010-03-31');
 
 /**
  * Describes the resources belonging to a given CloudFormation stack
@@ -481,6 +482,34 @@ exports.fromSfnExecutionName = (str, delimiter = '__') =>
      .map((s) => JSON.parse(`"${s}"`));
 
 /**
+ * Create an SQS Queue.  Properly handles localstack queue URLs
+ *
+ * @param {string} queueName - defaults to a random string
+ * @returns {Promise.<string>} the Queue URL
+ */
+async function createQueue(queueName) {
+  const actualQueueName = queueName || randomString();
+
+  const createQueueResponse = await exports.sqs().createQueue({
+    QueueName: actualQueueName
+  }).promise();
+
+  if (inTestMode()) {
+    // Properly set the Queue URL.  This is needed because LocalStack always
+    // returns the QueueUrl as "localhost", even if that is not where it should
+    // actually be found.  CircleCI breaks without this.
+    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
+    returnedQueueUrl.host = undefined;
+    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
+
+    return url.format(returnedQueueUrl);
+  }
+
+  return createQueueResponse.QueueUrl;
+}
+exports.createQueue = createQueue;
+
+/**
 * Send a message to AWS SQS
 *
 * @param {string} queueUrl - url of the SQS queue
@@ -575,14 +604,15 @@ exports.getGranuleS3Params = (granuleId, stack, bucket) => {
 
 /**
 * Set the status of a granule
+*
 * @name setGranuleStatus
-* @param {string} granuleId
-* @param {string} stack = the deployment stackname
+* @param {string} granuleId - granule id
+* @param {string} stack - the deployment stackname
 * @param {string} bucket - the deployment bucket name
-* @param {string} stateMachineArn
-* @param {string} executionName
-* @param {string} status
-* @return {promise} returns the response from `S3.put` as a promise
+* @param {string} stateMachineArn - statemachine arn
+* @param {string} executionName - execution name
+* @param {string} status - granule status
+* @returns {Promise} returns the response from `S3.put` as a promise
 **/
 exports.setGranuleStatus = async (
   granuleId,
@@ -594,5 +624,7 @@ exports.setGranuleStatus = async (
 ) => {
   const key = exports.getGranuleS3Params(granuleId, stack, bucket);
   const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
-  await exports.s3().putObject(bucket, key, '', null, { executionArn, status }).promise();
+  const params = { Bucket: bucket, Key: key };
+  params.Metadata = { executionArn, status };
+  await exports.s3().putObject(params).promise();
 };
