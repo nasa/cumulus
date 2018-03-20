@@ -2,6 +2,7 @@
   "title": "PdrStatusCheckOutput",
   "description": "Describes the output produced by the pdr-status-check task",
   "type": "object",
+  "required": ["running", "completed", "failed", "isFinished", "pdr"],
   "properties": {
     "running": {
       "type": "array",
@@ -23,6 +24,18 @@
     },
     "counter": { "type": "integer" },
     "limit": { "type": "integer" },
-    "isFinished": { "type": "boolean" }
+    "isFinished": {
+      "description": "Indicates whether all the step function executions of the PDR are in terminal states",
+      "type": "boolean" 
+    },
+    "pdr": {
+      "description": "Product Delivery Record",
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    }
   }
 }

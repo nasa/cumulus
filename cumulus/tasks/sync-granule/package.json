@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -14,7 +14,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "env TEST=true ava",
+    "test": "ava",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
@@ -41,10 +41,10 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.1.3",
+    "@cumulus/common": "^1.2.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.1.4",
-    "@cumulus/test-data": "^1.1.3",
+    "@cumulus/ingest": "^1.2.0",
+    "@cumulus/test-data": "^1.2.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
@@ -55,7 +55,7 @@
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
-    "ava": "^0.21.0",
+    "ava": "^0.23.0",
     "fs-extra": "^5.0.0",
     "lodash": "^4.17.5",
     "proxyquire": "^1.8.0",
