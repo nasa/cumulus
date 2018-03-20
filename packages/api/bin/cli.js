@@ -46,7 +46,7 @@ program
   .option('-s, --source <sourceIndex>', 'Index to reindex', 'cumulus')
   .option('-d, --dest-index <destIndex>', 'Name of the destination index, should not be an existing index', null)
   .action(() => {
-    es.reindex('search-lf-test-cumulus-es5-qa7ulksffaouci6gtz5gc65dvi.us-east-1.es.amazonaws.com');
+    es.reindex();
     // if (verifyWorkflowParameters([{ name: 'stack-name', value: program.stackName },
     //                               { name: 'bucket-name', value: program.bucketName },
     //                               { name: 'workflow', value: program.workflow },
@@ -60,14 +60,14 @@ program
   .command('status')
   .description('get the status of the reindex task')
   .action(() => {
-    es.getStatus('search-lf-test-cumulus-es5-qa7ulksffaouci6gtz5gc65dvi.us-east-1.es.amazonaws.com');
+    es.getStatus();
   });
 
 program
   .command('complete-reindex')
   .description('description')
   .action(() => {
-    es.completeReindex('search-lf-test-cumulus-es5-qa7ulksffaouci6gtz5gc65dvi.us-east-1.es.amazonaws.com');
+    es.completeReindex();
   });
 
 program
