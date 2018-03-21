@@ -86,7 +86,6 @@ async function put(event, cb) {
   if (action && action !== 'rerun') {
     let check = Object.keys(data).filter((f) => (f !== 'state' && f !== 'rule'));
     if (data.rule) check = check.concat(Object.keys(data.rule).filter((f) => f !== 'value'));
-
     if (check.length > 0) return cb({ message: 'Only state and rule.value values can be changed' });
   }
 

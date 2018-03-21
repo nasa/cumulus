@@ -107,7 +107,7 @@ class Stats extends BaseSearch {
         count: hist.hits.total,
         criteria
       },
-      histogram: hist.aggregations.histogram.buckets.map(b => ({
+      histogram: hist.aggregations.histogram.buckets.map((b) => ({
         date: b.key_as_string,
         count: b.doc_count
       }))
@@ -137,7 +137,7 @@ class Stats extends BaseSearch {
         count: count.hits.total,
         field: field
       },
-      count: count.aggregations.count.buckets.map(b => ({
+      count: count.aggregations.count.buckets.map((b) => ({
         key: b.key,
         count: b.doc_count
       }))

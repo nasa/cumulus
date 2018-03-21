@@ -48,12 +48,12 @@ async function getLambdaExecution(workflowExecutionArn, lambdaName) {
 
   if (scheduleEvent.type !== 'LambdaFunctionScheduleFailed') {
     startEvent = executionHistory.events.find((event) =>
-                                              (lambdaStartedEvents.includes(event.type)) &&
+      (lambdaStartedEvents.includes(event.type)) &&
                                               (event.previousEventId === scheduleEvent.id));
 
     if (startEvent !== null && startEvent.type !== 'LambdaFunctionStartFailed') {
       completeEvent = executionHistory.events.find((event) =>
-                                                (lambdaCompletedEvents.includes(event.type)) &&
+        (lambdaCompletedEvents.includes(event.type)) &&
                                                 (event.previousEventId === startEvent.id));
     }
   }

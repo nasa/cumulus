@@ -53,7 +53,7 @@ class Collection extends BaseSearch {
     });
 
     // add aggs to res
-    records = records.map(r => {
+    records = records.map((r) => {
       r.stats = {
         running: 0,
         completed: 0,
@@ -63,7 +63,7 @@ class Collection extends BaseSearch {
       for (const b of aggs.aggregations.hashes.buckets) {
         if (b.key === r.name) {
           r.stats.total = b.stats.doc_count;
-          b.stats.count.buckets.forEach(s => {
+          b.stats.count.buckets.forEach((s) => {
             r.stats[s.key] = s.doc_count;
           });
           return r;

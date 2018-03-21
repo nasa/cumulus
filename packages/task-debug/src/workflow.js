@@ -11,7 +11,7 @@ const taskMap = {
  * @param {string} taskName The name of the task
  * @return {string} The path to the module
  */
-const requirePathForTask = taskName => {
+const requirePathForTask = (taskName) => {
   const moduleName = taskMap[taskName];
   return `../../../cumulus/tasks/${moduleName}`;
 };
@@ -22,7 +22,7 @@ const requirePathForTask = taskName => {
  * @param {Function} invocation Function that returns the message for a task
  * @return {*} The result from the execution
  */
-exports.runTask = (handler, invocation) => handler(invocation(), {}, result => result);
+exports.runTask = (handler, invocation) => handler(invocation(), {}, (result) => result);
 
 /**
  * Returns a function that provides the message for a task
@@ -37,7 +37,7 @@ exports.genMessage = (collectionId, taskName, resources = {}, payload = null, co
   local.collectionMessageInput(
     collectionId,
     taskName,
-    o =>
+    (o) =>
       Object.assign({}, o, {
         resources: resources,
         payload: payload

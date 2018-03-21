@@ -28,17 +28,17 @@ class Rule extends Manager {
 
   async delete(item) {
     switch (item.rule.type) {
-      case 'scheduled': {
-        const name = `${process.env.stackName}-custom-${item.name}`;
-        await Events.deleteTarget(this.targetId, name);
-        await Events.deleteEvent(name);
-        break;
-      }
-      case 'kinesis':
-        await this.deleteKinesisEventSource(item);
-        break;
-      default:
-        break;
+    case 'scheduled': {
+      const name = `${process.env.stackName}-custom-${item.name}`;
+      await Events.deleteTarget(this.targetId, name);
+      await Events.deleteEvent(name);
+      break;
+    }
+    case 'kinesis':
+      await this.deleteKinesisEventSource(item);
+      break;
+    default:
+      break;
     }
     return super.delete({ name: item.name });
   }
@@ -63,23 +63,23 @@ class Rule extends Manager {
     }
 
     switch (original.rule.type) {
-      case 'scheduled': {
-        const payload = await Rule.buildPayload(original);
-        await this.addRule(original, payload);
-        break;
+    case 'scheduled': {
+      const payload = await Rule.buildPayload(original);
+      await this.addRule(original, payload);
+      break;
+    }
+    case 'kinesis':
+      if (valueUpdated) {
+        await this.deleteKinesisEventSource(original);
+        await this.addKinesisEventSource(original);
+        updated.rule.arn = original.rule.arn;
       }
-      case 'kinesis':
-        if (valueUpdated) {
-          await this.deleteKinesisEventSource(original);
-          await this.addKinesisEventSource(original);
-          updated.rule.arn = original.rule.arn;
-        }
-        else {
-          await this.updateKinesisEventSource(original);
-        }
-        break;
-      default:
-        break;
+      else {
+        await this.updateKinesisEventSource(original);
+      }
+      break;
+    default:
+      break;
     }
 
     return super.update({ name: original.name }, updated);
@@ -125,19 +125,19 @@ class Rule extends Manager {
 
     const payload = await Rule.buildPayload(item);
     switch (item.rule.type) {
-      case 'onetime': {
-        await invoke(process.env.invoke, payload);
-        break;
-      }
-      case 'scheduled': {
-        await this.addRule(item, payload);
-        break;
-      }
-      case 'kinesis':
-        await this.addKinesisEventSource(item);
-        break;
-      default:
-        throw new Error('Type not supported');
+    case 'onetime': {
+      await invoke(process.env.invoke, payload);
+      break;
+    }
+    case 'scheduled': {
+      await this.addRule(item, payload);
+      break;
+    }
+    case 'kinesis':
+      await this.addKinesisEventSource(item);
+      break;
+    default:
+      throw new Error('Type not supported');
     }
 
     // save

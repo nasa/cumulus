@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const promisify = require('util.promisify');
 
- /**
+/**
  *  Upload a file to a SIPS server.
  * @param {Client} client The client connected to the SIPS server
  * @param {string} destinationDir The directory in which to put the file.

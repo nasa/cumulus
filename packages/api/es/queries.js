@@ -17,7 +17,7 @@ const regexes = {
 };
 
 const build = {
-  general: params => ({
+  general: (params) => ({
     query_string: {
       query: params.q
     }
@@ -34,7 +34,7 @@ const build = {
         'name'
       ];
 
-      terms = terms.map(f => f.name);
+      terms = terms.map((f) => f.name);
 
       // remove fields that are included in the termFields
       fields = fields.filter((field) => {
@@ -44,7 +44,7 @@ const build = {
         return false;
       });
 
-      const results = fields.map(f => ({
+      const results = fields.map((f) => ({
         prefix: {
           [`${f}`]: _prefix
         }
@@ -98,7 +98,7 @@ const build = {
 
     // because elasticsearch doesn't support multiple
     // fields in range query, make it an erray
-    const results = Object.keys(fields).map(k => ({
+    const results = Object.keys(fields).map((k) => ({
       range: { [k]: fields[k] } }
     ));
 
@@ -202,7 +202,7 @@ module.exports = function(params) {
 
   // determine which search strategy should be applied
   // options are term, terms, range, exists and not in
-  const fields = Object.keys(params).map(k => ({ name: k, value: params[k] }));
+  const fields = Object.keys(params).map((k) => ({ name: k, value: params[k] }));
 
   Object.keys(regexes).forEach((k) => {
     const f = selectParams(fields, regexes[k]);
