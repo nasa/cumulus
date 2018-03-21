@@ -7,7 +7,7 @@ const pdrMod = require('./pdr');
  * Validations for PDR entries
  */
 
- /**
+/**
   * File spec validations - validations for individual files
   */
 
@@ -16,7 +16,7 @@ const pdrMod = require('./pdr');
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const directoryIdValidation = fileSpec => {
+const directoryIdValidation = (fileSpec) => {
   const directoryId = fileSpec.get('DIRECTORY_ID');
 
   return !directoryId || directoryId.value === '' ? 'INVALID DIRECTORY' : null;
@@ -27,7 +27,7 @@ const directoryIdValidation = fileSpec => {
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const fileSizeValidation = fileSpec => {
+const fileSizeValidation = (fileSpec) => {
   const fileSize = fileSpec.get('FILE_SIZE');
 
   return !fileSize || fileSize.value < 1 ? 'INVALID FILE SIZE' : null;
@@ -38,7 +38,7 @@ const fileSizeValidation = fileSpec => {
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const fileIdValidation = fileSpec => {
+const fileIdValidation = (fileSpec) => {
   const fileId = fileSpec.get('FILE_ID');
 
   return !fileId || fileId.value === '' ? 'INVALID FILE ID' : null;
@@ -49,7 +49,7 @@ const fileIdValidation = fileSpec => {
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const fileTypeValidation = fileSpec => {
+const fileTypeValidation = (fileSpec) => {
   const fileType = fileSpec.get('FILE_TYPE');
 
   return !fileType || fileType.value === '' ? 'INVALID FILE TYPE' : null;
@@ -60,7 +60,7 @@ const fileTypeValidation = fileSpec => {
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const fileCksumTypeMissingValidation = fileSpec => {
+const fileCksumTypeMissingValidation = (fileSpec) => {
   const cksumType = fileSpec.get('FILE_CKSUM_TYPE');
 
   return !cksumType || cksumType.value === '' ? 'MISSING FILE_CKSUM_TYPE PARAMETER' : null;
@@ -71,7 +71,7 @@ const fileCksumTypeMissingValidation = fileSpec => {
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const fileCksumTypeValidation = fileSpec => {
+const fileCksumTypeValidation = (fileSpec) => {
   const cksumTypeEntry = fileSpec.get('FILE_CKSUM_TYPE');
   const cksumType = cksumTypeEntry ? cksumTypeEntry.value : null;
   return cksumType === 'MD5' || cksumType === 'SHA1' ? null : 'UNSUPPORTED CHECKSUM TYPE';
@@ -82,7 +82,7 @@ const fileCksumTypeValidation = fileSpec => {
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const fileCksumValueMissingValidation = fileSpec => {
+const fileCksumValueMissingValidation = (fileSpec) => {
   const cksum = fileSpec.get('FILE_CKSUM_VALUE');
 
   return (!cksum || cksum.value === '') ? 'MISSING FILE_CKSUM_VALUE PARAMETER' : null;
@@ -93,7 +93,7 @@ const fileCksumValueMissingValidation = fileSpec => {
  * @param {PVLObject} fileSpec
  * @return {string} An error string or null
  */
-const fileCksumValueValidation = fileSpec => {
+const fileCksumValueValidation = (fileSpec) => {
   const cksumEntry = fileSpec.get('FILE_CKSUM_VALUE');
   const cksum = cksumEntry ? cksumEntry.value : '';
   const cksumType = fileSpec.get('FILE_CKSUM_TYPE');
@@ -121,8 +121,8 @@ const fileSpecValidations = [
  * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
  * @return {Array} An (possibly empty) array of error strings.
  */
-const validateFileSpec = fileSpec =>
-  fileSpecValidations.map(validationFn => validationFn(fileSpec)).filter(err => err);
+const validateFileSpec = (fileSpec) =>
+  fileSpecValidations.map((validationFn) => validationFn(fileSpec)).filter((err) => err);
 
 /**
  * File group validations
@@ -133,7 +133,7 @@ const validateFileSpec = fileSpec =>
  * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
  * @return {string} An error string or null
  */
-const dataTypeValidation = fileGroup => {
+const dataTypeValidation = (fileGroup) => {
   const dataType = fileGroup.get('DATA_TYPE');
 
   let rval = null;
@@ -149,7 +149,7 @@ const dataTypeValidation = fileGroup => {
  * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
  * @return {string} An error string or null
  */
-const versionIdValidation = fileGroup => {
+const versionIdValidation = (fileGroup) => {
   const versionId = fileGroup.get('VERSION_ID') || fileGroup.get('DATA_VERSION');
 
   let rval = null;
@@ -168,16 +168,16 @@ const fileGroupValidations = [dataTypeValidation, versionIdValidation];
  * @param {PVLObject} fileGroup A `PVLObject` object representing a file group entry
  * @return {Array} An (possibly empty) array of error strings.
  */
-const validateFileGroup = fileGroup => {
-  const fileGroupErrors = fileGroupValidations.map(validationFn => validationFn(fileGroup))
-    .filter(err => err);
+const validateFileGroup = (fileGroup) => {
+  const fileGroupErrors = fileGroupValidations.map((validationFn) => validationFn(fileGroup))
+    .filter((err) => err);
   if (fileGroupErrors.length > 0) {
     return fileGroupErrors;
   }
   // No errors in file group parameters, so validate each FILE_SPEC in the FILE_GROUP
   const fileSpecs = fileGroup.objects('FILE_SPEC');
   const fileSpecErrors = [];
-  fileSpecs.forEach(fileSpec => {
+  fileSpecs.forEach((fileSpec) => {
     const fileErrors = validateFileSpec(fileSpec);
     if (fileErrors.length > 0) {
       // Only need one error
@@ -192,12 +192,12 @@ const validateFileGroup = fileGroup => {
  * Top level (non file group) PDR validations
  */
 
- /**
+/**
   * Validate that the TOTAL_FILE_COUNT entry for the PDR is neither missing nor less than one
   * @param {PVLRoot} pdr The `PVLRoot` object for the PDR
   * @return An error string or null
   */
-const fileCountValidation = pdr => {
+const fileCountValidation = (pdr) => {
   let rval = null;
   if (!pdr.get('TOTAL_FILE_COUNT') || pdr.get('TOTAL_FILE_COUNT').value < 1) {
     rval = 'INVALID FILE COUNT';
@@ -211,11 +211,11 @@ const pdrTopLevelValidations = [fileCountValidation];
 /**
  * Performs a series of top-level validations on a PDR
  */
-const validateTopLevelPdr = pdr =>
-  pdrTopLevelValidations.map(validationFn => validationFn(pdr)).filter(err => err);
+const validateTopLevelPdr = (pdr) =>
+  pdrTopLevelValidations.map((validationFn) => validationFn(pdr)).filter((err) => err);
 
 
-exports.validatePdr = pdr => {
+exports.validatePdr = (pdr) => {
   // Parse the PDR and do a preliminary validation
   let pdrObj;
   let topLevelErrors = [];

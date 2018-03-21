@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/discover-http-tiles",
   "private": true,
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "Crawls an HTTP endpoint to discover tiled imagery",
   "main": "index.js",
   "keywords": [
@@ -14,7 +14,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.1.3",
+    "@cumulus/common": "^1.2.0",
     "async": "^2.0.0",
     "lodash": "^4.15.0",
     "simplecrawler": "git+https://github.com/cgiffard/node-simplecrawler.git#193e506c39164ddf045c7c6c502e1a015d85a290"

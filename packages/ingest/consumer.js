@@ -29,7 +29,7 @@ class Consume {
       counter += messages.length;
 
       if (messages.length > 0) {
-        const processes = messages.map(message => this.processMessage(message, fn));
+        const processes = messages.map((message) => this.processMessage(message, fn));
         await Promise.all(processes);
       }
 

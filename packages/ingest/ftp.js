@@ -41,7 +41,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     }
   }
 
- /**
+  /**
    * Download a remote file to disk
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
@@ -107,7 +107,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
             return this._list(path, counter).then((r) => {
               log.info(`${counter} retry suceeded`);
               return resolve(r);
-            }).catch(e => reject(e));
+            }).catch((e) => reject(e));
           }
           return reject(err);
         }

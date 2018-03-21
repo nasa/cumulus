@@ -39,14 +39,14 @@ exports.validateArchiveContents = (archiveDirPath) => {
   // out here.
   const unarchivedFiles = fs
     .readdirSync(archiveDirPath)
-    .filter(fileName => !fileName.startsWith('._'));
+    .filter((fileName) => !fileName.startsWith('._'));
 
   log.debug(`UNARCHIVED FILES: ${JSON.stringify(unarchivedFiles)}`);
 
   let hasImage = false;
   let hasWorldFile = false;
   let hasMetadata = false;
-  unarchivedFiles.forEach(filePath => {
+  unarchivedFiles.forEach((filePath) => {
     log.debug(filePath);
     const ext = path.extname(filePath).toUpperCase();
     if (ext === '.JPG' || ext === '.PNG') hasImage = true;

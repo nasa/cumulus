@@ -14,7 +14,7 @@ function fetchPdr(bucket, key) {
 }
 
 function isPdrValid(topLevelErrors, fileGroupErrors) {
-  return topLevelErrors.length > 0 || fileGroupErrors.some(errors => errors.length > 0);
+  return topLevelErrors.length > 0 || fileGroupErrors.some((errors) => errors.length > 0);
 }
 
 async function handler(event, context, callback) {

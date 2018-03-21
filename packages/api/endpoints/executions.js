@@ -13,7 +13,7 @@ const Search = require('../es/search').Search;
  */
 function list(event, cb) {
   const search = new Search(event, 'execution');
-  search.query().then(response => cb(null, response)).catch((e) => {
+  search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
 }

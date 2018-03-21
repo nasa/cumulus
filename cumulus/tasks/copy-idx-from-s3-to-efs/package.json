@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/copy-idx-from-s3-to-efs",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "Task to copy idx file from S3 to EFS for OnEarth 2.0.",
   "main": "index.js",
   "private": true,
@@ -35,8 +35,8 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.1.3",
-    "@cumulus/test-data": "^1.1.3"
+    "@cumulus/common": "^1.2.0",
+    "@cumulus/test-data": "^1.2.0"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",

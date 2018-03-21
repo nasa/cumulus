@@ -37,28 +37,28 @@ function summary(event, cb) {
   params.timestamp__to = _get(params, 'timestamp__to', Date.now());
 
   const stats = new Stats({ queryStringParameters: params });
-  stats.query().then(r => cb(null, r)).catch(e => cb(e));
+  stats.query().then((r) => cb(null, r)).catch((e) => cb(e));
 }
 
 function histogram(event, cb) {
   const type = getType(event);
 
   const stats = new Stats(event, type.type, type.index);
-  stats.histogram().then(r => cb(null, r)).catch(e => cb(e));
+  stats.histogram().then((r) => cb(null, r)).catch((e) => cb(e));
 }
 
 function count(event, cb) {
   const type = getType(event);
 
   const stats = new Stats(event, type.type, type.index);
-  stats.count().then(r => cb(null, r)).catch(e => cb(e));
+  stats.count().then((r) => cb(null, r)).catch((e) => cb(e));
 }
 
 function average(event, cb) {
   const type = getType(event);
 
   const stats = new Stats(event, type.type, type.index);
-  stats.avg().then(r => cb(null, r)).catch(e => cb(e));
+  stats.avg().then((r) => cb(null, r)).catch((e) => cb(e));
 }
 
 function handler(event, context) {

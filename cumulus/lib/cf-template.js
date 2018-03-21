@@ -62,7 +62,7 @@ const parseTemplate = (templateStr, prefix, context) =>
 
 const dumpTemplate = (template) =>
   yaml.safeDump(template, { schema: buildSchema() })
-      .replace(/!<!([^>]+)>/g, '!$1');
+    .replace(/!<!([^>]+)>/g, '!$1');
 
 const mergeTemplates = (templates) => deepAssign(...templates);
 
