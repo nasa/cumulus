@@ -10,7 +10,7 @@ const path = require('path');
 const promisify = require('util.promisify');
 const Client = require('ftp');
 
- /**
+/**
  *  Upload a file to a SIPS server.
  * @param {Client} client The client connected to the SIPS server
  * @param {string} destinationDir The directory in which to put the file.

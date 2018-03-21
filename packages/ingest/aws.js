@@ -99,7 +99,7 @@ function sqs(local) {
 
 class Events {
   static async putEvent(name, schedule, state, description = null, role = null) {
-    const cwevents = new aws.cloudwatchevents();
+    const cwevents = new AWS.CloudWatchEvents();
 
     const params = {
       Name: name,
@@ -214,14 +214,12 @@ class S3 {
   }
 
   static async get(bucket, key) {
-    const s3 = new AWS.S3();
-
     const params = {
       Bucket: bucket,
       Key: key
     };
 
-    return s3.getObject(params).promise();
+    return aws.s3().getObject(params).promise();
   }
 
   static async upload(bucket, key, body, acl = 'private') {
