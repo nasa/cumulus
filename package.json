@@ -26,6 +26,13 @@
       "babel-register"
     ]
   },
+  "nyc": {
+    "exclude": [
+      "**/tests",
+      "**/test",
+      "packages/common/.tmp"
+    ]
+  },
   "keywords": [
     "GIBS",
     "CUMULUS",
@@ -60,6 +67,7 @@
     "exports-loader": "^0.6.3",
     "json-loader": "^0.5.4",
     "lerna": "^2.9.0",
+    "nyc": "^11.6.0",
     "prepend-loader": "0.0.2",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
