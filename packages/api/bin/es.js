@@ -6,8 +6,24 @@
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 
-async function completeReindex(host, sourceIndex, destIndex, aliasName = defaultIndexAlias, deleteSource = false) {
-
+/**
+ * Complete the Elasticsearch reindex by swapping the alias from source index to
+ * dest index so that dest index will now be the index used by Cumulus
+ *
+ * @param {string} host - Elasticsearch host
+ * @param {string} sourceIndex - name of the index to swap from
+ * @param {string} destIndex - name of the index to swap to
+ * @param {string} aliasName - alias name that the instance is using, defaults to cumulus-alias
+ * @param {boolean} deleteSource - true to delete the source index
+ * @returns {undefined} - none
+ */
+async function completeReindex(
+  host,
+  sourceIndex,
+  destIndex,
+  aliasName = defaultIndexAlias,
+  deleteSource = false
+) {
   const esClient = await Search.es(host);
 
   if (sourceIndex === null || destIndex === null) {
@@ -52,15 +68,37 @@ async function completeReindex(host, sourceIndex, destIndex, aliasName = default
   }
 }
 
+/**
+ * Get the Elasticsearch reindexing status by listing the tasks that are of
+ * type reindex
+ *
+ * @param {string} host - Elasticsearch host
+ * @returns {Object} - details of the tasks from Elasticsearch
+ */
 async function getStatus(host) {
   const esClient = await Search.es(host);
 
   const tasks = await esClient.tasks.list({ actions: ['*reindex'] });
 
-  console.log(JSON.stringify(tasks));
+  return tasks;
 }
 
-async function reindex(host, sourceIndex = 'cumulus', destIndex = null, aliasName = defaultIndexAlias) {
+/**
+ * Reindex the source index to the dest index
+ *
+ * @param {string} host - Elasticsearch host
+ * @param {string} sourceIndex - index to reindex
+ * @param {string} destIndex - destination index to reindex to
+ * @param {string} aliasName - name of the alias Cumulus is using
+ * @returns {Object} - reindex response from ES which includes info on how many items
+ * were updated with the reindex
+ */
+async function reindex(
+  host,
+  sourceIndex = 'cumulus',
+  destIndex = null,
+  aliasName = defaultIndexAlias
+) {
   const esClient = await Search.es(host);
 
   const aliasExists = await esClient.indices.existsAlias({

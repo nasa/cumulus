@@ -36,6 +36,13 @@ async function indexData() {
   await esClient.indices.refresh();
 }
 
+/**
+ * Create and alias index by going through ES bootstrap
+ *
+ * @param {string} indexName - index name
+ * @param {string} aliasName  - alias name
+ * @returns {undefined} - none
+ */
 async function createIndex(indexName, aliasName) {
   await bootstrapElasticSearch('fakehost', indexName, aliasName);
   esClient = await Search.es();

@@ -492,7 +492,7 @@ test.serial('reingest a granule', async (t) => {
   await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
 
   payload.payload.granules[0].granuleId = randomString();
-  const r = await indexer.granule(esClient, payload, esIndex);
+  const r = await indexer.granule(esClient, payload);
 
   sinon.stub(
     StepFunction,
