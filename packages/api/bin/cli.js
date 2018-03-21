@@ -19,7 +19,7 @@ program
   .description('Reindex elasticsearch index to a new destination index')
   .option('-a, --index-alias <alias>', 'AWS Elasticsearch index alias', 'cumulus-alias')
   .option('--host <host>', 'AWS Elasticsearch host', null)
-  .option('-s, --source <sourceIndex>', 'Index to reindex', 'cumulus')
+  .option('-s, --source <sourceIndex>', 'Index to reindex', null)
   .option('-d, --dest-index <destIndex>',
     // eslint-disable-next-line max-len
     'Name of the destination index, should not be an existing index. Will default to an index named with today\'s date',

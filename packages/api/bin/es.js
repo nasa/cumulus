@@ -95,7 +95,7 @@ async function getStatus(host) {
  */
 async function reindex(
   host,
-  sourceIndex = 'cumulus',
+  sourceIndex = null,
   destIndex = null,
   aliasName = defaultIndexAlias
 ) {
@@ -116,13 +116,14 @@ async function reindex(
 
   // alias keys = index name
   const indices = Object.keys(alias);
-  if (indices.length > 1) {
-    // We don't know which index to use as the source, throw error
-    // eslint-disable-next-line max-len
-    throw new Error(`Multiple indices found for alias ${aliasName}. Specify source index as one of [${indices.join(', ')}].`);
-  }
 
   if (sourceIndex === null) {
+    if (indices.length > 1) {
+      // We don't know which index to use as the source, throw error
+      // eslint-disable-next-line max-len
+      throw new Error(`Multiple indices found for alias ${aliasName}. Specify source index as one of [${indices.sort().join(', ')}].`);
+    }
+
     sourceIndex = indices[0];
   }
   else {
