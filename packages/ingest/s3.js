@@ -7,7 +7,7 @@ const os = require('os');
 const path = require('path');
 
 module.exports.s3Mixin = (superclass) => class extends superclass {
-   /**
+  /**
    * Download a remote file to disk
    *
    * @param {string} remotePath - the full path to the remote file to be fetched

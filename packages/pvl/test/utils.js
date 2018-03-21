@@ -2,7 +2,7 @@ const test = require('ava').test;
 const pvlToJS = require('../t').pvlToJS;
 const PVLTextString = require('../lib/models').PVLTextString;
 
-test('accessing aggregates', t => {
+test('accessing aggregates', (t) => {
   const input = pvlToJS(
     'GROUP = THAT;\n' +
     '  OBJECT = THOSE;\n' +
@@ -32,7 +32,7 @@ test('accessing aggregates', t => {
   t.is(input.objects("'thOse'").length, 0);
 });
 
-test('parsing non-nested items', t => {
+test('parsing non-nested items', (t) => {
   const input = pvlToJS(
     'THIS = THAT;\n' +
     'HERE = THERE;'

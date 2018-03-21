@@ -18,7 +18,7 @@ const examplePayload = require('../tests/data/collections_post.json');
  */
 function list(event, cb) {
   const collection = new Collection(event);
-  collection.query().then(res => cb(null, res)).catch(cb);
+  collection.query().then((res) => cb(null, res)).catch(cb);
 }
 
 /**
@@ -36,7 +36,7 @@ function get(event, cb) {
       const collection = new Collection(event);
       return collection.getStats([res], [res.name]);
     })
-    .then(res => cb(null, res[0]))
+    .then((res) => cb(null, res[0]))
     .catch(cb);
 }
 
@@ -123,7 +123,7 @@ function handler(event, context) {
     return context.fail('HttpMethod is missing');
   }
 
-  return handle(event, context, !inTestMode() /* authCheck */, cb => {
+  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
@@ -146,7 +146,7 @@ module.exports = handler;
 
 justLocalRun(() => {
   handler(examplePayload, {
-    succeed: r => log.error(r),
-    failed: e => log.error(e)
+    succeed: (r) => log.error(r),
+    failed: (e) => log.error(e)
   }, (e, r) => log.error(e, r));
 });

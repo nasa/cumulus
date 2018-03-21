@@ -96,7 +96,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     });
   }
 
- /**
+  /**
    * Download a remote file to disk
    *
    * @param {string} remotePath - the full path to the remote file to be fetched

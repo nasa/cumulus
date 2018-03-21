@@ -45,11 +45,11 @@ program
   .description('Execute a workflow and determine if the workflow completes successfully')
   .action(() => {
     if (verifyWorkflowParameters([{ name: 'stack-name', value: program.stackName },
-                                  { name: 'bucket-name', value: program.bucketName },
-                                  { name: 'workflow', value: program.workflow },
-                                  { name: 'input-file', value: program.inputFile }])) {
+      { name: 'bucket-name', value: program.bucketName },
+      { name: 'workflow', value: program.workflow },
+      { name: 'input-file', value: program.inputFile }])) {
       testRunner.testWorkflow(program.stackName, program.bucketName,
-                              program.workflow, program.inputFile);
+        program.workflow, program.inputFile);
     }
   });
 
