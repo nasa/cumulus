@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/delete-ingest-tracking-data",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "Task to delete ingest tracking data when ingest has completed.",
   "main": "index.js",
   "private": true,
@@ -36,7 +36,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.1.3"
+    "@cumulus/common": "^1.2.0"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",

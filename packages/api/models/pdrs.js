@@ -41,9 +41,9 @@ class Pdr extends Manager {
       // generate PDRD message
       const pan = pvl.jsToPVL(
         new pvl.models.PVLRoot()
-               .add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPAN'))
-               .add('DISPOSITION', new pvl.models.PVLTextString('SUCCESSFUL'))
-               .add('TIME_STAMP', new pvl.models.PVLDateTime(new Date()))
+          .add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPAN'))
+          .add('DISPOSITION', new pvl.models.PVLTextString('SUCCESSFUL'))
+          .add('TIME_STAMP', new pvl.models.PVLDateTime(new Date()))
       );
 
       obj.PAN = pan;
@@ -56,11 +56,11 @@ class Pdr extends Manager {
         //const provider = await pr.get({ name: pdr.provider });
 
         //if (provider.panFolder && provider.protocol === 'ftp') {
-          //const password = await pr.decryptPassword(provider.config.password);
+        //const password = await pr.decryptPassword(provider.config.password);
 
-          //const w = new FtpPan(provider, pdrName, provider.config.username, password);
-          //await w.write(pan, 'PAN');
-          //obj.PANSent = true;
+        //const w = new FtpPan(provider, pdrName, provider.config.username, password);
+        //await w.write(pan, 'PAN');
+        //obj.PANSent = true;
         //}
         //else {
         obj.PANSent = false;
@@ -89,9 +89,9 @@ class Pdr extends Manager {
     //if (err instanceof PDRParsingError) {
       //// generate PDRD message
       //const pdrd = pvl.jsToPVL(
-        //new pvl.models.PVLRoot()
-               //.add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPDRD'))
-               //.add('DISPOSITION', new pvl.models.PVLTextString(err.message))
+    //new pvl.models.PVLRoot()
+    //.add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPDRD'))
+    //.add('DISPOSITION', new pvl.models.PVLTextString(err.message))
       //);
 
       //values.PDRD = pdrd;

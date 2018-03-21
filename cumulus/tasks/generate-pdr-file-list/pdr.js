@@ -11,7 +11,7 @@ const fileSpecFields =
  * @return {PVLRoot} An object representing a PDR
  * @throws {Error} Throws an Error if parsing fails
  */
-exports.parsePdr = pdr => pvl.pvlToJS(pdr);
+exports.parsePdr = (pdr) => pvl.pvlToJS(pdr);
 
 /**
  * Convert a PVL FILE_SPEC entry into an object with enough information to download the

@@ -16,7 +16,7 @@ const { Search } = require('../es/search');
  */
 function list(event, cb) {
   const search = new Search(event, 'provider');
-  search.query().then(response => cb(null, response)).catch(cb);
+  search.query().then((response) => cb(null, response)).catch(cb);
 }
 
 /**
@@ -57,8 +57,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return p.create(data)
-          .then(data => cb(null, { message: 'Record saved', record: data }))
-          .catch(err => cb(err));
+          .then((data) => cb(null, { message: 'Record saved', record: data }))
+          .catch((err) => cb(err));
       }
       return cb(e);
     });
@@ -87,11 +87,11 @@ function put(event, cb) {
     originalData = d;
     return p.update({ id }, data);
   })
-  .then(data => cb(null, data))
-  .catch((err) => {
-    if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
-    return cb(err);
-  });
+    .then((data) => cb(null, data))
+    .catch((err) => {
+      if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
+      return cb(err);
+    });
 }
 
 function del(event, cb) {

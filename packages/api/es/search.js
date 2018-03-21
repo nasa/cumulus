@@ -266,7 +266,7 @@ class BaseSearch {
       }
       const result = await this.client.search(searchParams);
 
-      const response = result.hits.hits.map(s => s._source);
+      const response = result.hits.hits.map((s) => s._source);
 
       const meta = this._metaTemplate();
       meta.limit = this.size;

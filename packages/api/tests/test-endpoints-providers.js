@@ -38,7 +38,7 @@ test.before(async () => setup());
 test.after.always(async () => teardown());
 
 // TODO(aimee): Add a provider to ES. List uses ES and we don't have any providers in ES.
-test('default returns list of providers', t => {
+test('default returns list of providers', (t) => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(providerEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
@@ -46,7 +46,7 @@ test('default returns list of providers', t => {
   });
 });
 
-test('GET returns an existing provider', t => {
+test('GET returns an existing provider', (t) => {
   const getEvent = {
     httpMethod: 'GET',
     pathParameters: { id: testProvider.id }
@@ -56,7 +56,7 @@ test('GET returns an existing provider', t => {
   });
 });
 
-test('POST creates a new provider', t => {
+test('POST creates a new provider', (t) => {
   const newProviderId = 'AQUA';
   const newProvider = Object.assign({}, testProvider, { id: newProviderId });
   const postEvent = {
@@ -70,7 +70,7 @@ test('POST creates a new provider', t => {
   });
 });
 
-test('PUT updates an existing provider', t => {
+test('PUT updates an existing provider', (t) => {
   const updatedLimit = 2;
   const putEvent = {
     httpMethod: 'PUT',
@@ -83,7 +83,7 @@ test('PUT updates an existing provider', t => {
   });
 });
 
-test('DELETE deletes an existing provider', t => {
+test('DELETE deletes an existing provider', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: { id: testProvider.id }

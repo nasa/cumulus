@@ -79,24 +79,24 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
             }
           }
         })
-        .promise()
-        .then((res) => {
-          fs.unlinkSync(tmpZipFile);
-          resolve(res);
-        });
+          .promise()
+          .then((res) => {
+            fs.unlinkSync(tmpZipFile);
+            resolve(res);
+          });
       });
 
       archive.pipe(output)
       archive.directory(codeDirectory, false);
       archive.finalize()
     })
-    .catch(console.log);
+      .catch(console.log);
 
     //get the dynamo collections table stream arn and add it as an event source to the lambda
     await new Promise((resolve, reject) => {
       aws.dynamodbstreams().listStreams({TableName: process.env.CollectionsTable}, (err, data) => {
         if (err) reject(err);
-        const collectionsTableStreamArn = data.Streams.find(s => s.TableName === 'test-stack-CollectionsTable').StreamArn;
+        const collectionsTableStreamArn = data.Streams.find((s) => s.TableName === 'test-stack-CollectionsTable').StreamArn;
         const eventSourceMappingParams = {
           EventSourceArn: collectionsTableStreamArn,
           FunctionName: dbIndexerFnName,
@@ -110,7 +110,7 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
         });
       });
     })
-    .catch(console.log);
+      .catch(console.log);
   });
 
   test.skip.after.always(async () => {
@@ -119,7 +119,7 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
     await aws.recursivelyDeleteS3Bucket(process.env.internal);
   });
 
-  test.skip('creates a collection in dynamodb and es', async t => {
+  test.skip('creates a collection in dynamodb and es', async (t) => {
     const { name } = testCollection;
     await collections.create(testCollection)
       .then(() => {
@@ -134,7 +134,7 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
       .catch(console.log);
   });
 
-  test.skip('thrown error is caught', async t => {
+  test.skip('thrown error is caught', async (t) => {
     const { name } = collectionOnlyInDynamo;
     await collections.delete({ name })
       .then((result) => {
@@ -144,7 +144,7 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
       .catch(console.log);
   });
 } else {
-  test('db-indexer TODO test', t => {
+  test('db-indexer TODO test', (t) => {
     t.is(1+1, 2);
   });
 }

@@ -22,7 +22,7 @@ exports.generatePan = (files, timeStamp) => {
 
   pan += `NO_OF_FILES = ${files.length};\n`;
 
-  files.forEach(file => {
+  files.forEach((file) => {
     const fileName = file.source.url.substring(file.source.url.lastIndexOf('/') + 1);
     const filePath = file.source.url.substring(file.source.url.lastIndexOf(':') + 3);
     const fileDirectory = path.dirname(filePath);

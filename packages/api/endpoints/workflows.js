@@ -13,10 +13,10 @@ const handle = require('../lib/response').handle;
  */
 function list(event, cb) {
   const key = `${process.env.stackName}/workflows/list.json`;
-  S3.get(process.env.bucket, key).then(file => {
+  S3.get(process.env.bucket, key).then((file) => {
     const workflows = JSON.parse(file.Body.toString());
     return cb(null, workflows);
-  }).catch(e => cb(e));
+  }).catch((e) => cb(e));
 }
 
 /**
@@ -29,7 +29,7 @@ function get(event, cb) {
   const name = _get(event.pathParameters, 'name');
 
   const key = `${process.env.stackName}/workflows/list.json`;
-  S3.get(process.env.bucket, key).then(file => {
+  S3.get(process.env.bucket, key).then((file) => {
     const workflows = JSON.parse(file.Body.toString());
     for (const w of workflows) {
       if (w.name === name) {
@@ -37,7 +37,7 @@ function get(event, cb) {
       }
     }
     return cb({ message: `A record already exists for ${name}` });
-  }).catch(e => cb(e));
+  }).catch((e) => cb(e));
 }
 
 function handler(event, context) {

@@ -53,10 +53,10 @@ module.exports = class DiscoverPdr extends Task {
       // Get the list of PDRs
       const pdrList = await pdrMod.getPdrList(client, folder, bucket, keyPrefix);
 
-      const S3UploadPromises = pdrList.map(async pdrEntry => {
+      const S3UploadPromises = pdrList.map(async (pdrEntry) => {
         const fileName = pdrEntry.name;
         log.info(`FILE: ${fileName}`);
-         // Get the file contents
+        // Get the file contents
         const pdr = await pdrMod.getPdr(client, folder, fileName);
         log.debug('SUCCESSFULLY RETRIEVED PDR FROM SIPS SERVER');
         // Write the contents out to S3

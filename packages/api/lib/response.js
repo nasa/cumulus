@@ -55,7 +55,7 @@ function resp(context, err, body, status = null, headers = null) {
   const res = new proxy.Response({ cors: true, statusCode: status });
   res.set('Strict-Transport-Security', 'max-age=31536000');
   if (headers) {
-    Object.keys(headers).forEach(h => res.set(h, headers[h]));
+    Object.keys(headers).forEach((h) => res.set(h, headers[h]));
   }
   return context.succeed(res.send(body));
 }
@@ -93,7 +93,7 @@ function handle(event, context, authCheck, func) {
         return cb('Session expired');
       }
       return func(cb);
-    }).catch(e => cb('Invalid Authorization token', e));
+    }).catch((e) => cb('Invalid Authorization token', e));
   }
   return func(cb);
 }
