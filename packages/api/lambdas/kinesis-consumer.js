@@ -1,10 +1,13 @@
 /* eslint-disable require-yield */
+
 'use strict';
+
 const Ajv = require('ajv');
 
+const log = require('@cumulus/common/log');
 const Rule = require('../models/rules');
 const messageSchema = require('./kinesis-consumer-event-schema.json');
-const { queueWorkflowMessage } = require('@cumulus/ingest/queue');
+const sfSchedule = require('./sf-scheduler');
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
@@ -14,7 +17,7 @@ const { queueWorkflowMessage } = require('@cumulus/ingest/queue');
  * @returns {Array} List of zero or more rules found from table scan
  */
 async function getKinesisRules(event) {
-  const collection = event.collection;
+  const { collection } = event;
   const model = new Rule();
   const kinesisRules = await model.scan({
     names: {
@@ -51,8 +54,11 @@ async function queueMessageForRule(kinesisRule, eventObject) {
     payload: eventObject
   };
 
-  return Rule.buildPayload(item)
-    .then(queueWorkflowMessage);
+  const payload = await Rule.buildPayload(item);
+  return new Promise((resolve, reject) => sfSchedule(payload, {}, (err, result) => {
+    if (err) reject(err);
+    resolve(result);
+  }));
 }
 
 /**
@@ -63,10 +69,10 @@ async function queueMessageForRule(kinesisRule, eventObject) {
  * @returns {(error|Object)} Throws an Ajv.ValidationError if event object is invalid.
  * Returns the event object if event is valid.
  */
-async function validateMessage(event) {
+function validateMessage(event) {
   const ajv = new Ajv({ allErrors: true });
   const validate = ajv.compile(messageSchema);
-  return await validate(event);
+  return validate(event);
 }
 
 /**
@@ -86,7 +92,12 @@ function processRecord(record) {
     .then(getKinesisRules)
     .then((kinesisRules) => (
       Promise.all(kinesisRules.map((kinesisRule) => queueMessageForRule(kinesisRule, eventObject)))
-    ));
+    ))
+    .catch((err) => {
+      log.error('Caught error in process record:');
+      log.error(err);
+      return err;
+    });
 }
 
 /**
