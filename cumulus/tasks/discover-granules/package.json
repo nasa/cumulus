@@ -11,7 +11,7 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "ava",
+    "test": "nyc ava",
     "local": "node index.js | pino",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
@@ -27,6 +27,11 @@
     "require": [
       "babel-polyfill",
       "babel-register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
     ]
   },
   "babel": {
@@ -54,6 +59,7 @@
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.23.0",
     "fs-extra": "^5.0.0",
-    "lodash.clonedeep": "^4.5.0"
+    "lodash.clonedeep": "^4.5.0",
+    "nyc": "^11.4.1"
   }
 }
