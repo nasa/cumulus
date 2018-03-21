@@ -46,9 +46,10 @@ program
   .command('status')
   .description('Get the status of the reindex tasks for the given host')
   .option('--host <host>', 'AWS Elasticsearch host', null)
-  .action((cmd) => {
+  .action(async (cmd) => {
     if (cliUtils.verifyRequiredarameters([{ name: 'host', value: cmd.host }])) {
-      es.getStatus(cmd.host);
+      const tasks = await es.getStatus(cmd.host);
+      console.log(JSON.stringify(tasks));
     }
   });
 
