@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 - **CUMULUS-304: "Add AWS API throttling to pdr-status-check task"** Added concurrency limit on SFN API calls.  The default concurrency is 10 and is configurable through Lambda environment variable CONCURRENCY.
+- **CUMULUS-271: "Empty response body from rules PUT endpoint"** Added the updated rule to response body.
 
 ## [v1.2.0] - 2018-03-20
 
