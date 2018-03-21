@@ -12,7 +12,7 @@ ${topLevelErrors[0]}`;
     pdrd = 'MESSAGE_TYPE = LONGPDRD;\n';
     pdrd += `NO_FILE_GRPS = ${fileGroupErrors.length}\n`;
 
-    fileGroupErrors.forEach(errors => {
+    fileGroupErrors.forEach((errors) => {
       if (errors.length > 0) {
         pdrd += errors[0];
       }

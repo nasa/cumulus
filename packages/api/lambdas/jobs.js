@@ -1,4 +1,5 @@
 /* runs a bunch of periodic jobs to keep the database updateToDate */
+
 'use strict';
 
 const get = require('lodash.get');
@@ -19,8 +20,8 @@ async function findStaleRecords(type, q, limit = 100, page = 1) {
   const response = await search.query();
 
   //if (response.results.length >= limit) {
-    //const more = await findStaleRecords(type, q, limit, page + 1);
-    //return response.results.concat(more);
+  //const more = await findStaleRecords(type, q, limit, page + 1);
+  //return response.results.concat(more);
   //}
   return response.results;
 }
@@ -29,16 +30,12 @@ async function updateGranulesAndPdrs(esClient, url, error) {
   // find related granule and update their status
   let searchTerm = `execution:"${url}"`;
   const granules = await findStaleRecords('granule', searchTerm, 100);
-  await Promise.all(granules.map(g => partialRecordUpdate(
-    esClient, g.granuleId, 'granule', { status: 'failed', error }, g.collectionId
-  )));
+  await Promise.all(granules.map((g) => partialRecordUpdate(esClient, g.granuleId, 'granule', { status: 'failed', error }, g.collectionId)));
 
   // find related pdrs and update their status
   searchTerm = `execution:"${url}"`;
   const pdrs = await findStaleRecords('pdr', searchTerm, 100);
-  await Promise.all(pdrs.map(p => partialRecordUpdate(
-    esClient, p.pdrName, 'pdr', { status: 'failed', error }
-  )));
+  await Promise.all(pdrs.map((p) => partialRecordUpdate(esClient, p.pdrName, 'pdr', { status: 'failed', error })));
 }
 
 async function checkExecution(arn, url, timestamp, esClient) {
@@ -133,17 +130,11 @@ async function cleanup() {
 
   const limit = pLimit(2);
 
-  await Promise.all(
-    executions.slice(0, 400).map(
-      ex => limit(
-        () => checkExecution(ex.arn, ex.execution, ex.timestamp, esClient)
-      )
-    )
-  );
+  await Promise.all(executions.slice(0, 400).map((ex) => limit(() => checkExecution(ex.arn, ex.execution, ex.timestamp, esClient))));
 }
 
 function handler(event, context, cb) {
-  cleanup().then(() => cb()).catch(e => {
+  cleanup().then(() => cb()).catch((e) => {
     log.error(e);
     cb(e);
   });

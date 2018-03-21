@@ -47,7 +47,7 @@ test.after.always(async () => teardown());
 
 // TODO(aimee): Debug why this is _passing_ - we don't expect to already have a
 // collection in ES.
-test('default returns list of collections', t => {
+test('default returns list of collections', (t) => {
   const listEvent = { httpMethod: 'list' };
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
@@ -55,7 +55,7 @@ test('default returns list of collections', t => {
   });
 });
 
-test('GET returns an existing collection', t => {
+test('GET returns an existing collection', (t) => {
   const getEvent = {
     httpMethod: 'GET',
     pathParameters: {
@@ -69,7 +69,7 @@ test('GET returns an existing collection', t => {
   });
 });
 
-test('POST creates a new collection', t => {
+test('POST creates a new collection', (t) => {
   const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
   const postEvent = {
     httpMethod: 'POST',
@@ -82,7 +82,7 @@ test('POST creates a new collection', t => {
   });
 });
 
-test('PUT updates an existing collection', t => {
+test('PUT updates an existing collection', (t) => {
   const newPath = '/new_path';
   const updateEvent = {
     body: JSON.stringify({
@@ -102,7 +102,7 @@ test('PUT updates an existing collection', t => {
   });
 });
 
-test('DELETE deletes an existing collection', t => {
+test('DELETE deletes an existing collection', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {

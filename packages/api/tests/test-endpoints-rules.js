@@ -52,7 +52,7 @@ test.before(async () => setup());
 test.after.always(async () => teardown());
 
 // TODO(aimee): Add a rule to ES. List uses ES and we don't have any rules in ES.
-test('default returns list of rules', t => {
+test('default returns list of rules', (t) => {
   const listEvent = { httpMethod: 'list ' };
   return testEndpoint(rulesEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
@@ -60,7 +60,7 @@ test('default returns list of rules', t => {
   });
 });
 
-test('GET gets a rule', t => {
+test('GET gets a rule', (t) => {
   const getEvent = {
     pathParameters: {
       name: testRule.name
@@ -73,7 +73,7 @@ test('GET gets a rule', t => {
   });
 });
 
-test('POST creates a rule', t => {
+test('POST creates a rule', (t) => {
   const newRule = Object.assign({}, testRule, {name: 'make_waffles'});
   const postEvent = {
     httpMethod: 'POST',
@@ -86,7 +86,7 @@ test('POST creates a rule', t => {
   });
 });
 
-test('PUT updates a rule', t => {
+test('PUT updates a rule', (t) => {
   const updateEvent = {
     body: JSON.stringify({state: 'ENABLED'}),
     pathParameters: {
@@ -100,7 +100,7 @@ test('PUT updates a rule', t => {
   });
 });
 
-test('DELETE deletes a rule', t => {
+test('DELETE deletes a rule', (t) => {
   const deleteEvent = {
     pathParameters: {
       name: testRule.name
