@@ -55,28 +55,28 @@ function getUrl(type, cmrProvider) {
   const provider = cmrProvider;
 
   switch (type) {
-    case 'token':
-      if (env === 'OPS') {
-        url = 'https://api.echo.nasa.gov/echo-rest/tokens/';
-      }
-      else if (env === 'SIT') {
-        url = 'https://testbed.echo.nasa.gov/echo-rest/tokens/';
-      }
-      else {
-        url = 'https://api-test.echo.nasa.gov/echo-rest/tokens/';
-      }
-      break;
-    case 'search':
-      url = `https://${host}/search/`;
-      break;
-    case 'validate':
-      url = `https://${host}/ingest/providers/${provider}/validate/`;
-      break;
-    case 'ingest':
-      url = `https://${host}/ingest/providers/${provider}/`;
-      break;
-    default:
-      url = null;
+  case 'token':
+    if (env === 'OPS') {
+      url = 'https://api.echo.nasa.gov/echo-rest/tokens/';
+    }
+    else if (env === 'SIT') {
+      url = 'https://testbed.echo.nasa.gov/echo-rest/tokens/';
+    }
+    else {
+      url = 'https://api-test.echo.nasa.gov/echo-rest/tokens/';
+    }
+    break;
+  case 'search':
+    url = `https://${host}/search/`;
+    break;
+  case 'validate':
+    url = `https://${host}/ingest/providers/${provider}/validate/`;
+    break;
+  case 'ingest':
+    url = `https://${host}/ingest/providers/${provider}/`;
+    break;
+  default:
+    url = null;
   }
 
   return url;
@@ -174,9 +174,9 @@ async function tokenIsValid(token) {
 }
 
 module.exports = {
-   validate,
-   ValidationError,
-   updateToken,
-   getUrl,
-   xmlParseOptions
+  validate,
+  ValidationError,
+  updateToken,
+  getUrl,
+  xmlParseOptions
 }

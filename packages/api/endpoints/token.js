@@ -57,14 +57,14 @@ function token(event, context) {
             });
           }
           return resp(context, null, JSON.stringify({ token: accessToken }), 200);
-        }).catch(e => {
+        }).catch((e) => {
           log.error('User is not authorized', e);
           if (e.message.includes('No record found for')) {
             return resp(context, new Error('User is not authorized to access this site'));
           }
           return resp(context, e);
         });
-    }).catch(e => {
+    }).catch((e) => {
       log.error('Error caught when checking code:', e);
       resp(context, e);
     });

@@ -19,21 +19,21 @@ const testMacro = (t, fixture) => {
 };
 
 // Good PDR gets no errors
-test('validatePdr() - success', t => {
+test('validatePdr() - success', (t) => {
   testMacro(t, successFixture);
 });
 
 // Bad PVL in PDR
-test('validatePdr() - invalid PVL', t => {
+test('validatePdr() - invalid PVL', (t) => {
   testMacro(t, invalidPvlFixture);
 });
 
 // High level missing field
-test('validatePdr() - top level missing field', t => {
+test('validatePdr() - top level missing field', (t) => {
   testMacro(t, missingFieldsFixture);
 });
 
 // File group and file spec errors
-test('validatePdr() - file group / file spec errors', t => {
+test('validatePdr() - file group / file spec errors', (t) => {
   testMacro(t, fileErrorsFixture);
 });

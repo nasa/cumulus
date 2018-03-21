@@ -198,16 +198,16 @@ class UpdatedKes extends Kes {
           }
 
           switch (o.OutputKey) {
-            case 'ApiId':
-              apis.api = o.OutputValue;
-              break;
-            case 'DistributionId':
-              apis.distribution = o.OutputValue;
-              break;
-            case 'ApiStage':
-              apis.stageName = o.OutputValue;
-              break;
-            default:
+          case 'ApiId':
+            apis.api = o.OutputValue;
+            break;
+          case 'DistributionId':
+            apis.distribution = o.OutputValue;
+            break;
+          case 'ApiStage':
+            apis.stageName = o.OutputValue;
+            break;
+          default:
               //nothing
           }
         });

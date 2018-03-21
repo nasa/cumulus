@@ -180,8 +180,8 @@ class StateMachineS3MessageSource extends MessageSource {
       const promise = aws.promiseS3Upload(params).then(() => {
         const payload = { Bucket: params.Bucket, Key: params.Key };
         const messageData = Object.assign({},
-                                        this.originalMessage,
-                                        { payload: payload, exception: 'None' });
+          this.originalMessage,
+          { payload: payload, exception: 'None' });
         log.info('Complete. Config uploaded to ', params.Key);
         callback(null, messageData);
       });

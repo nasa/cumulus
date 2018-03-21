@@ -4,12 +4,12 @@ const pdr = require('../pdr');
 
 const goodFileFixture = require('./fixtures/good-pdr-fixture');
 
-test('pdrToFileList() - generates an entry for each file', t => {
+test('pdrToFileList() - generates an entry for each file', (t) => {
   const files = pdr.pdrToFileList(goodFileFixture.input, 'localhost', 21);
   t.is(files.length, 3);
 });
 
-test('fileSpecToFileEntry() - generates proper fields', t => {
+test('fileSpecToFileEntry() - generates proper fields', (t) => {
   const pdrObj = pdr.parsePdr(goodFileFixture.input);
   const fileGroups = pdrObj.objects('FILE_GROUP');
   const host = 'localhost';
