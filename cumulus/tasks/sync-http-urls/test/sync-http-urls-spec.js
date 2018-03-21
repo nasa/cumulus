@@ -72,10 +72,10 @@ describe('sync-http-urls.handler', () => {
 
   beforeEach(() => {
     sinon.stub(aws.s3(), 'upload')
-         .yieldsAsync(null, null);
+      .yieldsAsync(null, null);
     sinon.stub(https, 'get')
-         .yieldsAsync({ statusCode: 200, body: 'fake-data' })
-         .returns({ on: () => {} });
+      .yieldsAsync({ statusCode: 200, body: 'fake-data' })
+      .returns({ on: () => {} });
   });
 
   afterEach(() => {

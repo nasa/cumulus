@@ -7,7 +7,7 @@ const badFileEntryFixture = require('./fixtures/bad-file-entry-fixture');
 const invalidPvlFixture = require('./fixtures/invalid-pvl-fixture');
 const missingFieldsFixture = require('./fixtures/missing-fields-fixture');
 
-test('generatePdrd() - invalid PVL gets a short PDRD', t => {
+test('generatePdrd() - invalid PVL gets a short PDRD', (t) => {
   const pdrdStr = pdrd.generatePdrd(
     invalidPvlFixture.topLevelErrors,
     invalidPvlFixture.fileGroupErrors
@@ -20,7 +20,7 @@ test('generatePdrd() - invalid PVL gets a short PDRD', t => {
   t.is(errMsg, 'INVALID PVL STATEMENT');
 });
 
-test('generatePdrd() - missing TOTAL_FILE_COUNT gets a short PDRD', t => {
+test('generatePdrd() - missing TOTAL_FILE_COUNT gets a short PDRD', (t) => {
   const pdrdStr = pdrd.generatePdrd(
     missingFieldsFixture.invalidFileCount.input.topLevelErrors,
     missingFieldsFixture.invalidFileCount.input.fileGroupErrors
@@ -52,7 +52,7 @@ const testMacro = (t, fixture) => {
   t.is(errMsg, fixture.error);
 };
 
-test('generatePdrd() - missing file fields gets a long PDRD', t => {
-  badFileEntryFixture.fixtures.forEach(fixture => testMacro(t, fixture));
+test('generatePdrd() - missing file fields gets a long PDRD', (t) => {
+  badFileEntryFixture.fixtures.forEach((fixture) => testMacro(t, fixture));
 });
 
