@@ -14,11 +14,22 @@ const {
 } = require('@cumulus/common/test-utils');
 const { discoverGranules } = require('../index');
 
-// This test is broken and will be fixed by CUMULUS-427
-test.skip('discover granules using FTP', async (t) => {
+test('discover granules using FTP', async (t) => {
   const event = cloneDeep(mur);
+  event.config.bucket = randomString();
+  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.useList = true;
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'ftp',
+    host: 'localhost',
+    username: 'testuser',
+    password: 'testpass'
+  };
 
   await validateConfig(t, event.config);
+
+  await s3().createBucket({ Bucket: event.config.bucket }).promise();
 
   try {
     const output = await discoverGranules(event);
@@ -32,6 +43,10 @@ test.skip('discover granules using FTP', async (t) => {
       t.pass('Ignoring this test. Test server seems to be down');
     }
     else t.fail(e);
+  }
+  finally {
+    // Clean up
+    await recursivelyDeleteS3Bucket(event.config.bucket);
   }
 });
 
