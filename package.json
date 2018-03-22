@@ -4,7 +4,7 @@
   "description": "Cumulus Framework for ingesting and processing Nasa Earth data streams",
   "scripts": {
     "e2e": "ava tests/*.js --serial",
-    "test": "lerna run test",
+    "test": "nyc lerna run test",
     "bootstrap": "lerna bootstrap",
     "ybootstrap": "lerna bootstrap --npm-client=yarn",
     "bootstrap-no-build": "lerna bootstrap --npm-client=yarn --ignore-scripts",
