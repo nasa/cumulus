@@ -5,6 +5,7 @@ const aws = require('@cumulus/common/aws');
 const { IncompleteError } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
+const pLimit = require('p-limit');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
@@ -131,6 +132,21 @@ function buildOutput(event, groupedExecutions) {
 }
 
 /**
+ * check the status of a step funciton execution
+ *
+ * @param {string} executionArn - step function execution arn
+ * @returns {Promise.<Object>} - an object describing the status of the exection
+ */
+function describeExecutionStatus(executionArn) {
+  return aws.sfn().describeExecution({ executionArn }).promise()
+    .catch((e) => {
+      if (e.code === 'ExecutionDoesNotExist') {
+        return { executionArn: executionArn, status: 'RUNNING' };
+      }
+      throw e;
+    });
+}
+/**
  * Checks a list of Step Function Executions to see if they are all in
  * terminal states.
  *
@@ -141,34 +157,28 @@ function buildOutput(event, groupedExecutions) {
  */
 async function checkPdrStatuses(event) {
   const runningExecutionArns = event.input.running || [];
+  const concurrencyLimit = process.env.CONCURRENCY || 10;
+  const limit = pLimit(concurrencyLimit);
 
-  const executions = [];
-  for (const executionArn of runningExecutionArns) {
-    try {
-      const execution = await aws.sfn().describeExecution({ executionArn }).promise();
-      executions.push(execution);
-    }
-    catch (e) {
-      // it's ok if a execution is still in the queue and has not be executed
-      if (e.code === 'ExecutionDoesNotExist') {
-        executions.push({ executionArn: executionArn, status: 'RUNNING' });
+  const promisedExecutionDescriptions = runningExecutionArns.map((executionArn) =>
+    limit(() => describeExecutionStatus(executionArn)));
+
+  return Promise.all(promisedExecutionDescriptions)
+    .then(groupExecutionsByStatus)
+    .then((groupedExecutions) => {
+      const counter = getCounterFromEvent(event) + 1;
+      const exceededLimit = counter >= getLimitFromEvent(event);
+
+      const executionsAllDone = groupedExecutions.running.length === 0;
+
+      if (!executionsAllDone && exceededLimit) {
+        throw new IncompleteError(`PDR didn't complete after ${counter} checks`);
       }
-      else throw e;
-    }
-  }
 
-  const groupedExecutions = groupExecutionsByStatus(executions);
-  const counter = getCounterFromEvent(event) + 1;
-  const exceededLimit = counter >= getLimitFromEvent(event);
-
-  const executionsAllDone = groupedExecutions.running.length === 0;
-  if (!executionsAllDone && exceededLimit) {
-    throw new IncompleteError(`PDR didn't complete after ${counter} checks`);
-  }
-
-  const output = buildOutput(event, groupedExecutions);
-  if (!output.isFinished) logStatus(output);
-  return output;
+      const output = buildOutput(event, groupedExecutions);
+      if (!output.isFinished) logStatus(output);
+      return output;
+    });
 }
 exports.checkPdrStatuses = checkPdrStatuses;
 
