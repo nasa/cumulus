@@ -83,7 +83,7 @@ async function put(event, cb) {
 
   // if the data includes any fields other than state and rule.value
   // throw error
-  if (action && action !== 'rerun') {
+  if (!action || action !== 'rerun') {
     let check = Object.keys(data).filter((f) => (f !== 'state' && f !== 'rule'));
     if (data.rule) check = check.concat(Object.keys(data.rule).filter((f) => f !== 'value'));
     if (check.length > 0) return cb({ message: 'Only state and rule.value values can be changed' });
@@ -102,7 +102,7 @@ async function put(event, cb) {
   // if rule type is onetime no change is allowed unless it is a rerun
   if (action === 'rerun') {
     await models.Rule.invoke(originalData);
-    return cb(originalData);
+    return cb(null, originalData);
   }
 
   return model.update(originalData, data)
