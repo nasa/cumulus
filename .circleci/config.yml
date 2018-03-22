@@ -174,7 +174,7 @@ jobs:
           command: yarn coverage
 
       - store_artifacts:
-          path: ~/coverage
+          path: /coverage
 
       - run:
           name: Running eslint-ratchet
