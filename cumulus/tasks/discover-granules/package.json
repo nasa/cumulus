@@ -11,7 +11,8 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "nyc ava",
+    "test": "ava",
+    "test-coverage": "nyc ava",
     "local": "node index.js | pino",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",

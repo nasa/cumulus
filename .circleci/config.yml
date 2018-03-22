@@ -169,6 +169,10 @@ jobs:
               yarn test
             fi
 
+      - run: 
+          name: Checking code coverage
+          command: nyc report --reporter text-summary --reporter html 
+
       - run:
           name: Running eslint-ratchet
           command: ./bin/eslint-ratchet ci
