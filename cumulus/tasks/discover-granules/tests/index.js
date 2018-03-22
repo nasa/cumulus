@@ -44,6 +44,10 @@ test('discover granules using FTP', async (t) => {
     }
     else t.fail(e);
   }
+  finally {
+    // Clean up
+    await recursivelyDeleteS3Bucket(event.config.bucket);
+  }
 });
 
 test('discover granules using SFTP', async (t) => {
