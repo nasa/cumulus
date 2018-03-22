@@ -12,7 +12,8 @@
     "publish": "lerna publish --skip-git --repo-version $VERSION --yes",
     "clean": "lerna clean",
     "build": "lerna run --parallel --no-sort build",
-    "watch": "lerna run --parallel --no-sort watch"
+    "watch": "lerna run --parallel --no-sort watch",
+    "coverage": "nyc report --reporter text-summary --reporter html"
   },
   "repository": {
     "type": "git",
