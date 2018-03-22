@@ -206,3 +206,7 @@ workflows:
           filters:
             branches:
               only: release 
+
+general:
+  artifacts:
+    - "./coverage/"
