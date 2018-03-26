@@ -33,7 +33,7 @@ const range = { name: 'version', type: 'S' };
 const esIndex = 'cumulus-index';
 
 async function setup() {
-  await bootstrap.bootstrapElasticSearch('http://localhost:4571', esIndex);
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
   await models.Manager.createTable(process.env.CollectionsTable, hash, range);
@@ -44,7 +44,7 @@ async function teardown() {
   models.Manager.deleteTable(process.env.CollectionsTable);
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 
-  const esClient = await Search.es('http://localhost:4571');
+  const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 }
 

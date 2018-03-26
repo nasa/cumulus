@@ -28,7 +28,7 @@ const keyId = 'public.pub';
 const hash = { name: 'id', type: 'S' };
 
 async function setup() {
-  await bootstrap.bootstrapElasticSearch('http://localhost:4571', esIndex);
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   await models.Manager.createTable(process.env.ProvidersTable, hash);
   await providers.create(testProvider);
 }
@@ -36,7 +36,7 @@ async function setup() {
 async function teardown() {
   await models.Manager.deleteTable(process.env.ProvidersTable);
 
-  const esClient = await Search.es('http://localhost:4571');
+  const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 }
 

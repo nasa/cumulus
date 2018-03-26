@@ -57,7 +57,7 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
     await models.Manager.createTable(process.env.CollectionsTable, hash, range);
     // create an object only in dynamo to test error condition
     await collections.create(collectionOnlyInDynamo);
-    await bootstrap.bootstrapElasticSearch('http://localhost:4571');
+    await bootstrap.bootstrapElasticSearch('fakehost');
 
     // create the lambda function
     await new Promise((resolve) => {
