@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-271: "Empty response body from rules PUT endpoint"** Added the updated rule to response body.
 - Increased memory allotment for `CustomBootstrap` lambda function. Resolves failed deployments where `CustomBootstrap` lambda function was failing with error `Process exited before completing request`. This was causing deployments to stall, fail to update and fail to rollback. This error is thrown when the lambda function tries to use more memory than it is allotted.
 
+### Added
+- `@cumulus/integration-tests` supports testing the output of an activity-type step in addition to a lambda-type step.
+
 ## [v1.2.0] - 2018-03-20
 
 ### Fixed
