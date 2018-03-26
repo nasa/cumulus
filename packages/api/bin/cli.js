@@ -17,28 +17,21 @@ program
 program
   .command('reindex')
   .description('Reindex elasticsearch index to a new destination index')
-  .option('-a, --index-alias <alias>', 'AWS Elasticsearch index alias', 'cumulus-alias')
+  .option('-a, --index-alias <aliasName>', 'AWS Elasticsearch index alias', null)
   .option('--host <host>', 'AWS Elasticsearch host', null)
   .option('-s, --source <sourceIndex>', 'Index to reindex', null)
   .option('-d, --dest-index <destIndex>',
-    // eslint-disable-next-line max-len
-    'Name of the destination index, should not be an existing index. Will default to an index named with today\'s date',
+    'Name of the destination index, should not be an existing index. Will default to an index named with today\'s date', // eslint-disable-line max-len
     null)
-  .action(async (cmd) => {
-    if (cliUtils.verifyRequiredarameters([{ name: 'host', value: cmd.host }])) {
-      try {
-        const response = await es.reindex(
-          cmd.host,
-          cmd.sourceIndex,
-          cmd.destIndex,
-          cmd.alias
-        );
-
-        console.log(response);
-      }
-      catch (err) {
-        console.log(err.message);
-      }
+  .action((cmd) => {
+    if (cliUtils.verifyRequiredParameters([{ name: 'host', value: cmd.host }])) {
+      es.reindex(
+        cmd.host,
+        cmd.sourceIndex,
+        cmd.destIndex,
+        cmd.aliasName
+      ).then((response) => console.log(`Reindex successful: ${JSON.stringify(response)}`))
+        .catch((err) => console.err(`Error reindexing: ${err.message}`));
     }
   });
 
@@ -46,10 +39,9 @@ program
   .command('status')
   .description('Get the status of the reindex tasks for the given host')
   .option('--host <host>', 'AWS Elasticsearch host', null)
-  .action(async (cmd) => {
-    if (cliUtils.verifyRequiredarameters([{ name: 'host', value: cmd.host }])) {
-      const tasks = await es.getStatus(cmd.host);
-      console.log(JSON.stringify(tasks));
+  .action((cmd) => {
+    if (cliUtils.verifyRequiredParameters([{ name: 'host', value: cmd.host }])) {
+      es.getStatus(cmd.host).then((tasks) => console.log(JSON.stringify(tasks)));
     }
   });
 
@@ -64,19 +56,14 @@ program
     'Index to be aliased and used as the elasticsearch index for Cumulus',
     null)
   .parse(process.argv)
-  .action(async (cmd) => {
+  .action((cmd) => {
     if (cliUtils.verifyRequiredParameters([{ name: 'host', value: cmd.host }])) {
-      try {
-        await es.completeReindex(
-          cmd.host,
-          cmd.sourceIndex,
-          cmd.destIndex,
-          cmd.alias
-        );
-      }
-      catch (err) {
-        console.log(err.message);
-      }
+      es.completeReindex(
+        cmd.host,
+        cmd.sourceIndex,
+        cmd.destIndex,
+        cmd.alias
+      ).catch((err) => console.err(`Error: ${err.message}`));
     }
   });
 
