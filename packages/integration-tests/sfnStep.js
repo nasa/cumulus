@@ -2,7 +2,18 @@
 
 const { sfn } = require('@cumulus/common/aws');
 
+/**
+ * `SfnStep` provides methods for getting the output of a step within an AWS
+ * Step Function for a specific execution.
+*/
 class SfnStep {
+  /**
+   * `getStartEvent` gets the "start" event for a step, given its schedule event
+   *
+   * @param  {Object} executionHistory - AWS Step Function execution history
+   * @param  {Object} scheduleEvent    - AWS Step Function schedule-type event
+   * @returns {Object}                 - AWS Step Function start-type event
+   */
   getStartEvent(executionHistory, scheduleEvent) {
     return executionHistory.events.find((event) => {
       const isStartEvent = this.startEvents.includes(event.type);
@@ -11,12 +22,19 @@ class SfnStep {
     });
   }
 
-  getCompletedEvent(executionHistory, startEvent) {
+  /**
+   * `getCompletionEvent` gets the "completion" event for a step, given its start event
+   *
+   * @param  {Object} executionHistory - AWS Step Function execution history
+   * @param  {Object} startEvent       - AWS Step Function start-type event
+   * @returns {Object}                 - AWS Step Function completion-type event
+   */
+  getCompletionEvent(executionHistory, startEvent) {
     return executionHistory.events.find((event) => {
       const isCompletionEvent = this.completionEvents.includes(event.type);
       const previousEventIsStartEvent = event.previousEventId === startEvent.id;
       return isCompletionEvent && previousEventIsStartEvent;
-    }); 
+    });
   }
 
   /**
@@ -36,7 +54,7 @@ class SfnStep {
     // Get the event where the step was scheduled
     const scheduleEvent = executionHistory.events.find((event) => {
       const eventScheduled = this.scheduleEvents.includes(event.type);
-      const eventDetails = event[this.eventDetailsKeys.scheduled]; 
+      const eventDetails = event[this.eventDetailsKeys.scheduled];
       const isStepEvent = eventDetails && eventDetails.resource.includes(stepName);
       return eventScheduled && isStepEvent;
     });
@@ -53,7 +71,7 @@ class SfnStep {
       startEvent = this.getStartEvent(executionHistory, scheduleEvent, this);
 
       if (startEvent !== null && startEvent.type !== this.startFailedEvent) {
-        completeEvent = this.getCompletedEvent(executionHistory, startEvent, this);
+        completeEvent = this.getCompletionEvent(executionHistory, startEvent, this);
       }
     }
 
@@ -84,18 +102,16 @@ class SfnStep {
     const succeededDetails = JSON.parse(stepExecution.completeEvent[this.eventDetailsKeys.succeeded].output.toString());
     return succeededDetails;
   }
-};
+}
 
-const lambdaCompletedEvents = [
-  'LambdaFunctionFailed',
-  'LambdaFunctionSucceeded',
-  'LambdaFunctionTimedOut'
-];
-
+/**
+ * `LambdaStep` is a step inside a step function that runs an AWS Lambda function.
+ */
 class LambdaStep extends SfnStep {
+  //eslint-disable-next-line require-jsdoc
   constructor() {
     super();
-    this.scheduleFailedEvent = 'LambdaFunctionScheduleFailed';    
+    this.scheduleFailedEvent = 'LambdaFunctionScheduleFailed';
     this.scheduleEvents = [
       this.scheduleFailedEvent,
       'LambdaFunctionScheduled'
@@ -118,7 +134,11 @@ class LambdaStep extends SfnStep {
   }
 }
 
+/**
+ * `ActivityStep` is a step inside a step function that runs an AWS ECS activity.
+ */
 class ActivityStep extends SfnStep {
+  //eslint-disable-next-line require-jsdoc
   constructor() {
     super();
     this.scheduleFailedEvent = 'ActivityScheduleFailed';
@@ -126,13 +146,13 @@ class ActivityStep extends SfnStep {
       'ActivityScheduled',
       this.scheduleFailedEvent
     ];
-    this.startEvents = [ 'ActivityStarted' ];
-    this.startFailedEvent = undefined,  // there is no 'ActivityStartFailed'
+    this.startEvents = ['ActivityStarted'];
+    this.startFailedEvent = undefined; // there is no 'ActivityStartFailed'
     this.successEvent = 'ActivitySucceeded';
     this.completionEvents = [
       this.successEvent,
       'ActivityFailed',
-      'ActivityTimedOut'  
+      'ActivityTimedOut'
     ];
     this.eventDetailsKeys = {
       scheduled: 'activityScheduledEventDetails',
