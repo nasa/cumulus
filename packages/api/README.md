@@ -39,11 +39,11 @@ cumulus-api reindex --help
 
   Options:
 
-    -a, --index-alias <alias>     AWS Elasticsearch index alias (default: cumulus-alias)
-    --host <host>                 AWS Elasticsearch host (default: null)
-    -s, --source <sourceIndex>    Index to reindex (default: null)
-    -d, --dest-index <destIndex>  Name of the destination index, should not be an existing index. Will default to an index named with today's date (default: null)
-    -h, --help                    output usage information
+    -a, --index-alias <indexAlias>    AWS Elasticsearch index alias (default: cumulus-alias)
+    --host <host>                     AWS Elasticsearch host (default: null)
+    -s, --source-index <sourceIndex>  Index to reindex (default: null)
+    -d, --dest-index <destIndex>      Name of the destination index, should not be an existing index. Will default to an index named with today's date (default: null)
+    -h, --help                        output usage information
 ```
 
 #### Get Status
@@ -76,11 +76,11 @@ cumulus-api complete-reindex --help
 
   Options:
 
-    -a, --index-alias <alias>     AWS Elasticsearch index alias (default: cumulus-alias)
-    --host <host>                 AWS Elasticsearch host (default: null)
-    -s, --source <sourceIndex>    Index to switch from and no longer used (default: null)
-    -d, --dest-index <destIndex>  Index to be aliased and used as the elasticsearch index for Cumulus (default: null)
-    -h, --help                    output usage information
+    -a, --index-alias <indexAlias>    AWS Elasticsearch index alias (default: cumulus-alias)
+    --host <host>                     AWS Elasticsearch host (default: null)
+    -s, --source-index <sourceIndex>  Index to switch from and no longer used (default: null)
+    -d, --dest-index <destIndex>      Index to be aliased and used as the elasticsearch index for Cumulus (default: null)
+    -h, --help                        output usage information
 ```
 
 ## What is Cumulus?

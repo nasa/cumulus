@@ -2,29 +2,41 @@
 
 /* eslint-disable no-console */
 
-/**
- * Verify that the given param is not null. Write out an error if null.
- *
- * @param {Object} paramConfig - param name and value {name: value:}
- * @returns {boolean} true if param is not null
- */
-function verifyRequiredParameter(paramConfig) {
-  if (paramConfig.value === null) {
-    console.log(`Error: ${paramConfig.name} is a required parameter.`);
-    return false;
-  }
+const { kebabCase } = require('lodash');
 
-  return true;
+/**
+ * Find missing required parameters from cli commander command
+ *
+ * @param {Object} command - commander command
+ * @param {Array<string>} requiredOptions - option names
+ * @returns {Array<string>} - required options not present in command
+ */
+function findMissingOptions(command, requiredOptions) {
+  return requiredOptions.filter((param) => !command[param]);
 }
 
 /**
- * Verify required parameters are present
+ * Convert option name to kebab case for display
  *
- * @param {list<Object>} requiredParams - params in the form {name: 'x' value: 'y'}
- * @returns {boolean} - true if all params are not null
+ * @param {string} optionName - name of option
+ * @returns {string} - display name
  */
-function verifyRequiredParameters(requiredParams) {
-  return requiredParams.map(verifyRequiredParameter).includes(false) === false;
+function convertCamelOptionToLongOption(optionName) {
+  return `--${kebabCase(optionName)}`;
 }
 
-module.exports.verifyRequiredParameters = verifyRequiredParameters;
+/**
+ * Convert missing required fields for display and display on console
+ *
+ * @param {Array<string>} missingOptions - missing option names
+ * @returns {undefined} - none
+ */
+function displayMissingOptionsMessage(missingOptions) {
+  const fullMissingOptions = missingOptions.map(convertCamelOptionToLongOption);
+  console.error(`Missing options: ${fullMissingOptions.join(', ')}`);
+}
+
+module.exports = {
+  findMissingOptions,
+  displayMissingOptionsMessage
+};
