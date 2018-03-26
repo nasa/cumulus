@@ -20,29 +20,29 @@ class SfnStep {
   }
 
   /**
-   * Get the events for the lambda execution for the given workflow execution.
-   * This function currently assumes one execution of the given lambda per workflow.
+   * Get the events for the step execution for the given workflow execution.
+   * This function currently assumes one execution of the given step (by step name) per workflow.
    *
    * @param {string} workflowExecutionArn - Arn of the workflow execution
-   * @param {string} lambdaName - name of the lambda
+   * @param {string} stepName - name of the step
    * @returns {Object} an object containing a schedule event, start event, and complete
-   * event if exist, null if cannot find the lambda
+   * event if exist, null if cannot find the step
    */
-  async getLambdaExecution(workflowExecutionArn, lambdaName) {
+  async getStepExecution(workflowExecutionArn, stepName) {
     const executionHistory = (
       await sfn().getExecutionHistory({ executionArn: workflowExecutionArn }).promise()
     );
 
-    // Get the event where the lambda was scheduled
+    // Get the event where the step was scheduled
     const scheduleEvent = executionHistory.events.find((event) => {
       const eventScheduled = this.scheduleEvents.includes(event.type);
       const eventDetails = event[this.eventDetailsKeys.scheduled]; 
-      const isStepEvent = eventDetails && eventDetails.resource.includes(lambdaName);
+      const isStepEvent = eventDetails && eventDetails.resource.includes(stepName);
       return eventScheduled && isStepEvent;
     });
 
     if (scheduleEvent === null || scheduleEvent === undefined) {
-      console.log(`Could not find lambda ${lambdaName} in execution.`);
+      console.log(`Could not find step ${stepName} in execution.`);
       return null;
     }
 
@@ -61,27 +61,27 @@ class SfnStep {
   }
 
   /**
-   * Get the output payload from the lambda, if the lambda succeeds
+   * Get the output payload from the step, if the step succeeds
    *
    * @param {string} workflowExecutionArn - Arn of the workflow execution
-   * @param {string} lambdaName - name of the lambda
+   * @param {string} stepName - name of the step
    * @returns {Object} object containing the payload, null if error
    */
-  async getLambdaOutput(workflowExecutionArn, lambdaName) {
-    const lambdaExecution = await this.getLambdaExecution(workflowExecutionArn, lambdaName, this);
+  async getStepOutput(workflowExecutionArn, stepName) {
+    const stepExecution = await this.getStepExecution(workflowExecutionArn, stepName, this);
 
-    if (lambdaExecution === null) {
-      console.log(`Could not find lambda ${lambdaName} in execution.`);
+    if (stepExecution === null) {
+      console.log(`Could not find step ${stepName} in execution.`);
       return null;
     }
 
-    if (lambdaExecution.completeEvent === null ||
-        lambdaExecution.completeEvent.type !== this.successEvent) {
-      console.log(`Lambda ${lambdaName} was not successful.`);
+    if (stepExecution.completeEvent === null ||
+        stepExecution.completeEvent.type !== this.successEvent) {
+      console.log(`Step ${stepName} was not successful.`);
       return null;
     }
 
-    const succeededDetails = JSON.parse(lambdaExecution.completeEvent[this.eventDetailsKeys.succeeded].output.toString());
+    const succeededDetails = JSON.parse(stepExecution.completeEvent[this.eventDetailsKeys.succeeded].output.toString());
     return succeededDetails;
   }
 };

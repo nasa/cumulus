@@ -3,7 +3,7 @@
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const { s3, sfn } = require('@cumulus/common/aws');
-const lambda = require('./lambda');
+const sfnStep = require('./sfnStep');
 
 const executionStatusNumRetries = 20;
 const waitPeriodMs = 5000;
@@ -161,6 +161,6 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 module.exports = {
   testWorkflow,
   executeWorkflow,
-  ActivityStep: lambda.ActivityStep,
-  LambdaStep: lambda.LambdaStep
+  ActivityStep: sfnStep.ActivityStep,
+  LambdaStep: sfnStep.LambdaStep
 };
