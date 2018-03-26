@@ -161,5 +161,6 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 module.exports = {
   testWorkflow,
   executeWorkflow,
-  getLambdaOutput: lambda.getLambdaOutput
+  ActivityStep: lambda.ActivityStep,
+  LambdaStep: lambda.LambdaStep
 };
