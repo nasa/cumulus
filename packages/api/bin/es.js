@@ -73,14 +73,12 @@ async function completeReindex(
  * type reindex
  *
  * @param {string} host - Elasticsearch host
- * @returns {Object} - details of the tasks from Elasticsearch
+ * @returns {Promise<Object>} - details of the tasks from Elasticsearch
  */
 async function getStatus(host) {
   const esClient = await Search.es(host);
 
-  const tasks = await esClient.tasks.list({ actions: ['*reindex'] });
-
-  return tasks;
+  return esClient.tasks.list({ actions: ['*reindex'] });
 }
 
 /**
@@ -90,7 +88,7 @@ async function getStatus(host) {
  * @param {string} sourceIndex - index to reindex
  * @param {string} destIndex - destination index to reindex to
  * @param {string} aliasName - name of the alias Cumulus is using
- * @returns {Object} - reindex response from ES which includes info on how many items
+ * @returns {Promise<Object>} - reindex response from ES which includes info on how many items
  * were updated with the reindex
  */
 async function reindex(
