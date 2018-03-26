@@ -126,10 +126,8 @@ class ActivityStep extends SfnStep {
       'ActivityScheduled',
       this.scheduleFailedEvent
     ];
-    this.startEvents = [
-      'ActivityStarted' // there is no 'ActivityStartFailed'
-    ];
-    this.startFailedEvent = undefined,
+    this.startEvents = [ 'ActivityStarted' ];
+    this.startFailedEvent = undefined,  // there is no 'ActivityStartFailed'
     this.successEvent = 'ActivitySucceeded';
     this.completionEvents = [
       this.successEvent,
