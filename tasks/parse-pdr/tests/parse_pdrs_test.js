@@ -175,7 +175,7 @@ test('Parse a PDR from an S3 provider', async (t) => {
   await s3().putObject({
     Bucket: bucket,
     Key: pdrName,
-    Body: fs.createReadStream('../../../packages/test-data/pdrs/MOD09GQ.PDR')
+    Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ.PDR')
   }).promise();
 
   const event = cloneDeep(modis);
