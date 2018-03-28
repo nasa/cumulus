@@ -6,9 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Updated
+
+- Cumulus Repositories folder structure updated:
+  - removed the `cumulus` folder altogether
+  - moved `cumulus/tasks` to `tasks` folder at the root level
+  - moved the tasks that are not converted to use CMA to `tasks/.not_CMA_compliant`
+  - updated paths where necessary
 ### Fixed
+- **CUMULUS-331:** Fix aws.downloadS3File to handle non-existent key
 - Using test ftp provider for discover-granules testing [CUMULUS-427]
 - **CUMULUS-304: "Add AWS API throttling to pdr-status-check task"** Added concurrency limit on SFN API calls.  The default concurrency is 10 and is configurable through Lambda environment variable CONCURRENCY.
+- **CUMULUS-414: "Schema validation not being performed on many tasks"** revised npm build scripts of tasks that use cumulus-message-adapter to place schema directories into dist directories.
 - **CUMULUS-271: "Empty response body from rules PUT endpoint"** Added the updated rule to response body.
 - Increased memory allotment for `CustomBootstrap` lambda function. Resolves failed deployments where `CustomBootstrap` lambda function was failing with error `Process exited before completing request`. This was causing deployments to stall, fail to update and fail to rollback. This error is thrown when the lambda function tries to use more memory than it is allotted.
 
