@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Updated
+### Changed 
 
 - Cumulus repository folders structure updated:
   - removed the `cumulus` folder altogether
