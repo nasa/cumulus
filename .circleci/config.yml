@@ -80,7 +80,6 @@ jobs:
             - ./tasks/queue-granules/node_modules
             - ./tasks/queue-pdrs/node_modules
             - ./tasks/sync-granule/node_modules
-            - ./tasks/discover-s3-granules/node_modules
             - ./tasks/sf-sns-report/node_modules
 
       - run:
