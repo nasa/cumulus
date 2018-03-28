@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Updated
 
-- Cumulus Repositories folder structure updated:
+- Cumulus repository folders structure updated:
   - removed the `cumulus` folder altogether
   - moved `cumulus/tasks` to `tasks` folder at the root level
   - moved the tasks that are not converted to use CMA to `tasks/.not_CMA_compliant`
