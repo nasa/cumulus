@@ -194,7 +194,7 @@ test('download granule from S3 provider', async (t) => {
     await s3().putObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${granuleFilePath}/${granuleFileName}`,
-      Body: fs.createReadStream(`../../../packages/test-data/granules/${granuleFileName}`)
+      Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
     }).promise();
 
     const output = await syncGranule(t.context.event);
