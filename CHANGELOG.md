@@ -6,14 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Changed 
-
-- Cumulus repository folders structure updated:
-  - removed the `cumulus` folder altogether
-  - moved `cumulus/tasks` to `tasks` folder at the root level
-  - moved the tasks that are not converted to use CMA to `tasks/.not_CMA_compliant`
-  - updated paths where necessary
-
 ### Deprecated
 - discover-s3-granules is deprecated. The functionality is provided by the discover-granules task
 ### Fixed
@@ -23,6 +15,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-414: "Schema validation not being performed on many tasks"** revised npm build scripts of tasks that use cumulus-message-adapter to place schema directories into dist directories.
 - **CUMULUS-271: "Empty response body from rules PUT endpoint"** Added the updated rule to response body.
 - Increased memory allotment for `CustomBootstrap` lambda function. Resolves failed deployments where `CustomBootstrap` lambda function was failing with error `Process exited before completing request`. This was causing deployments to stall, fail to update and fail to rollback. This error is thrown when the lambda function tries to use more memory than it is allotted.
+- Cumulus repository folders structure updated:
+  - removed the `cumulus` folder altogether
+  - moved `cumulus/tasks` to `tasks` folder at the root level
+  - moved the tasks that are not converted to use CMA to `tasks/.not_CMA_compliant`
+  - updated paths where necessary
 
 ## [v1.2.0] - 2018-03-20
 
