@@ -12,7 +12,6 @@ const input = require('./fixtures/input.json');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   findTestDataDirectory,
-  findTmpTestDataDirectory,
   randomString,
   validateConfig,
   validateOutput
@@ -153,28 +152,13 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
 
 test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
   const internalBucketName = randomString();
-  const providerPath = randomString();
-
-  // Figure out the directory paths that we're working with
-  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
-  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
-
-  // Create providerPathDirectory and internal bucket
-  await Promise.all([
-    fs.ensureDir(providerPathDirectory),
-    s3().createBucket({ Bucket: internalBucketName }).promise()
-  ]);
 
   try {
-    // Copy the PDRs to the HTTP directory
+    await s3().createBucket({ Bucket: internalBucketName }).promise();
+    const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
     const pdrFilenames = await fs.readdir(testDataDirectory);
-
     const oldPdr = pdrFilenames[0];
     const newPdrs = pdrFilenames.slice(1);
-
-    await Promise.all(pdrFilenames.map((pdrFilename) => fs.copy(
-      path.join(testDataDirectory, pdrFilename),
-      path.join(providerPathDirectory, pdrFilename))));
 
     // Build the event
     const event = cloneDeep(input);
@@ -184,7 +168,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       protocol: 'http',
       host: 'http://localhost:3030'
     };
-    event.config.collection.provider_path = providerPath;
+    event.config.collection.provider_path = '/pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
@@ -215,10 +199,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
   }
   finally {
     // Clean up
-    await Promise.all([
-      recursivelyDeleteS3Bucket(internalBucketName),
-      fs.remove(providerPathDirectory)
-    ]);
+    await recursivelyDeleteS3Bucket(internalBucketName);
   }
 });
 
