@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - moved `cumulus/tasks` to `tasks` folder at the root level
   - moved the tasks that are not converted to use CMA to `tasks/.not_CMA_compliant`
   - updated paths where necessary
+
+### Deprecated
+- discover-s3-granules is deprecated. The functionality is provided by the discover-granules task
 ### Fixed
 - **CUMULUS-331:** Fix aws.downloadS3File to handle non-existent key
 - Using test ftp provider for discover-granules testing [CUMULUS-427]
