@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - moved the tasks that are not converted to use CMA to `tasks/.not_CMA_compliant`
   - updated paths where necessary
 
+### Added
+- `@cumulus/integration-tests` supports testing the output of an activity-type step in addition to a lambda-type step.
+
 ## [v1.2.0] - 2018-03-20
 
 ### Fixed
