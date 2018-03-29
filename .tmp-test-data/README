@@ -1,6 +1,0 @@
-The http and sftp containers managed by docker-compose.yml will serve out any
-files in this directory.  The intention is that any files being fetched using
-http or sftp should be copied into this directory (probably under a
-subdirectory), fetched, and then deleted.
-
-The docker containers defined in docker-compose.yml are used for testing.
