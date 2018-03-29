@@ -14,10 +14,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
-  },
   "ava": {
     "babel": "inherit",
     "require": [
@@ -29,6 +25,11 @@
     "presets": [
       "es2017"
     ]
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/deployment",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

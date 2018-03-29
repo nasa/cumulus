@@ -6,6 +6,7 @@
   "directories": {
     "test": "tests"
   },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/sf-sns-report",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
