@@ -59,7 +59,7 @@ class SfnStep {
       return eventScheduled && isStepEvent;
     });
 
-    if (scheduleEvent === null || scheduleEvent === undefined) {
+    if (!scheduleEvent) {
       console.log(`Could not find step ${stepName} in execution.`);
       return null;
     }
