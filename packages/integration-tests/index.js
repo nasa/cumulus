@@ -124,8 +124,7 @@ async function startWorkflowExecution(workflowArn, inputFile) {
  */
 async function executeWorkflow(stackName, bucketName, workflowName, inputFile) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
-  const execution = await startWorkflowExecution(workflowArn, inputFile);
-  const { executionArn } = execution;
+  const { executionArn } = await startWorkflowExecution(workflowArn, inputFile);
 
   console.log(`Executing workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
