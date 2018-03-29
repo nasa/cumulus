@@ -60,10 +60,7 @@ program
   .option('-a, --index-alias <indexAlias>', 'AWS Elasticsearch index alias', 'cumulus-alias')
   .option('--host <host>', 'AWS Elasticsearch host', null)
   .option('-s, --source-index <sourceIndex>', 'Index to switch from and no longer used', null)
-  .option('-d, --dest-index <destIndex>',
-    // eslint-disable-next-line max-len
-    'Index to be aliased and used as the elasticsearch index for Cumulus',
-    null)
+  .option('-d, --dest-index <destIndex>', 'Index to be aliased and used as the elasticsearch index for Cumulus', null) // eslint-disable-line max-len
   .parse(process.argv)
   .action((cmd) => {
     const missingOptions = cliUtils.findMissingOptions(cmd, ['host']);
@@ -73,7 +70,7 @@ program
         cmd.sourceIndex,
         cmd.destIndex,
         cmd.indexAlias
-      ).catch((err) => console.err(`Error: ${err.message}`));
+      ).catch((err) => console.error(`Error: ${err.message}`));
     }
     else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
