@@ -10,6 +10,7 @@ const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
+const pump = require('pump');
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
@@ -151,18 +152,22 @@ exports.promiseS3Upload = (params) => {
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
- * @param s3Obj The parameters to send to S3 getObject call
- * @param filename The output filename
+ *
+ * @param {Object} s3Obj - The parameters to send to S3 getObject call
+ * @param {string} filepath - The filepath of the file that is downloaded
+ * @returns {Promise<string>} - returns filename if successful
  */
-exports.downloadS3File = (s3Obj, filename) => {
+exports.downloadS3File = (s3Obj, filepath) => {
   const s3 = exports.s3();
-  const file = fs.createWriteStream(filename);
+  const fileWriteStream = fs.createWriteStream(filepath);
+
   return new Promise((resolve, reject) => {
-    s3.getObject(s3Obj)
-      .createReadStream()
-      .pipe(file)
-      .on('finish', () => resolve(filename))
-      .on('error', reject);
+    const objectReadStream = s3.getObject(s3Obj).createReadStream();
+
+    pump(objectReadStream, fileWriteStream, (err) => {
+      if (err) reject(err);
+      else resolve(filepath);
+    });
   });
 };
 
