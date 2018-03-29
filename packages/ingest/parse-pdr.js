@@ -83,16 +83,11 @@ function extractGranuleId(fileName, regex) {
   return fileName;
 }
 
-module.exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
-  // then read the file and and pass it to parser
+async function loadPdrFile(pdrFilePath) {
   const pdrFile = await fs.readFile(pdrFilePath, 'utf8');
 
   // Investigating CUMULUS-423
   if (pdrFile.trim().length === 0) throw new Error(`PDR file had no contents: ${pdrFilePath}`);
-
-  const obj = {
-    granules: []
-  };
 
   // because MODAPS PDRs do not follow the standard ODL spec
   // we have to make sure there are spaces before and after every
@@ -110,61 +105,55 @@ module.exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrNa
     throw new PDRParsingError(e.message);
   }
 
+  return parsed;
+}
+
+function granuleFromFileGroup(fileGroup, granuleIdExtraction, pdrName) {
+  if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
+  const dataType = fileGroup.get('DATA_TYPE').value;
+
+  // get all the file specs in each group
+  const specs = fileGroup.objects('FILE_SPEC');
+  // FIXME This is a very generic error
+  if (specs.length === 0) throw new Error();
+
+  const files = specs.map(parseSpec.bind(null, pdrName));
+  const granuleId = extractGranuleId(files[0].name, granuleIdExtraction);
+
+  return {
+    granuleId,
+    dataType,
+    granuleSize: files.reduce((total, file) => total + file.fileSize, 0),
+    files
+  };
+}
+
+module.exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
+  let pdrDocument = await loadPdrFile(pdrFilePath);
+
   // check if the PDR has groups
   // if so, get the objects inside the first group
   // TODO: handle cases where there are more than one group
-  const groups = parsed.groups();
-  if (groups.length > 0) {
-    parsed = groups[0];
-  }
+  const groups = pdrDocument.groups();
+  if (groups.length > 0) pdrDocument = groups[0]; // eslint-disable-line prefer-destructuring
 
   // Get all the file groups
-  const fileGroups = parsed.objects('FILE_GROUP');
+  const fileGroups = pdrDocument.objects('FILE_GROUP');
 
-  for (const group of fileGroups) {
-    // get all the file specs in each group
-    const specs = group.objects('FILE_SPEC');
-    let dataType = group.get('DATA_TYPE');
-
-    if (!dataType) throw new PDRParsingError('DATA_TYPE is missing');
-
-    dataType = dataType.value;
-
-    // FIXME This is a very generic error
-    if (specs.length === 0) {
-      throw new Error();
-    }
-
-    const files = specs.map(parseSpec.bind(null, pdrName));
-    const granuleId = extractGranuleId(files[0].name, collection.granuleIdExtraction);
-
-    obj.granules.push({
-      granuleId,
-      dataType,
-      granuleSize: files.reduce((total, file) => total + file.fileSize, 0),
-      files
-    });
-  }
+  const granules = fileGroups.map((fileGroup) =>
+    granuleFromFileGroup(fileGroup, collection.granuleIdExtraction, pdrName));
 
   // check file count
-  const fileCount = obj.granules.reduce((t, g) => t + g.files.length, 0);
-  const expectedFileCount = parsed.get('TOTAL_FILE_COUNT').value;
-  if (fileCount !== expectedFileCount) {
-    throw new PDRParsingError('FILE COUNT doesn\'t match expected file count');
+  const filesCount = granules.reduce((total, granule) => total + granule.files.length, 0);
+  const expectedFileCount = pdrDocument.get('TOTAL_FILE_COUNT').value;
+  if (filesCount !== expectedFileCount) {
+    throw new PDRParsingError("FILE COUNT doesn't match expected file count");
   }
 
-  obj.granulesCount = fileGroups.length;
-  obj.filesCount = fileCount;
-  obj.totalSize = obj.granules.reduce((t, g) => t + g.granuleSize, 0);
-
-  // Example object produced
-  // {
-  //    "path": "/TEST_B/Cumulus/DATA/ID1612101200",
-  //    "filename": "pg-PR1A0000-2016121001_000_002",
-  //    "fileSize": 5975257,
-  //    "checksumType": "CKSUM",
-  //    "checksumValue": 299257224
-  //  }
-
-  return obj;
+  return {
+    filesCount,
+    granules,
+    granulesCount: granules.length,
+    totalSize: granules.reduce((total, granule) => total + granule.granuleSize, 0)
+  };
 };
