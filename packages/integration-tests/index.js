@@ -164,5 +164,9 @@ module.exports = {
   testWorkflow,
   executeWorkflow,
   ActivityStep: sfnStep.ActivityStep,
-  LambdaStep: sfnStep.LambdaStep
+  LambdaStep: sfnStep.LambdaStep,
+  /**
+   * @deprecated Since version 1.3. To be deleted version 2.0. sfnStep.LambdaStep.getStepOutput instead.
+   */
+  getLambdaOutput: sfnStep.LambdaStep.getStepOutput
 };
