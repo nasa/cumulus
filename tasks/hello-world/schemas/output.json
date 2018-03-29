@@ -1,0 +1,12 @@
+{
+  "title": "HelloWorldOutput",
+  "description": "Describes the output produced by the hello-world task",
+  "type": "object",
+  "required": ["hello"],
+  "additionalProperties": false,
+  "properties": {
+    "hello": {
+      "type": "string"
+    }
+  }
+}
