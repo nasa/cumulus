@@ -2,7 +2,6 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { handle } = require('../lib/response');
 const models = require('../models');
@@ -10,10 +9,11 @@ const { RecordDoesNotExist } = require('../lib/errors');
 const { Search } = require('../es/search');
 
 /**
- * List all providers.
- * @param {object} event aws lambda event object.
- * @param {callback} cb aws lambda callback function
- * @return {undefined}
+ * List all rules.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {function} cb - aws lambda callback function
+ * @returns {Object} list of rules
  */
 function list(event, cb) {
   const search = new Search(event, 'rule');
@@ -22,9 +22,10 @@ function list(event, cb) {
 
 /**
  * Query a single rule.
- * @param {object} event aws lambda event object.
- * @param {string} granuleId the id of the granule.
- * @return {object} a single granule object.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {function} cb - aws lambda callback function
+ * @returns {Object} a single granule object.
  */
 function get(event, cb) {
   const name = _get(event.pathParameters, 'name');
@@ -40,8 +41,10 @@ function get(event, cb) {
 
 /**
  * Creates a new rule
- * @param {object} event aws lambda event object.
- * @return {object} returns the collection that was just saved.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {function} cb - aws lambda callback function
+ * @returns {Object} returns the collection that was just saved.
  */
 function post(event, cb) {
   let data = _get(event, 'body', '{}');
@@ -64,10 +67,12 @@ function post(event, cb) {
 
 /**
  * Updates an existing rule
- * @param {object} event aws lambda event object.
- * @return {object} a mapping of the updated properties.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {function} cb - aws lambda callback function
+ * @returns {Object} a mapping of the updated properties.
  */
-async function put(event) {
+async function put(event, cb) {
   const name = _get(event.pathParameters, 'name');
 
   let data = _get(event, 'body', '{}');
@@ -78,14 +83,10 @@ async function put(event) {
 
   // if the data includes any fields other than state and rule.value
   // throw error
-  if (action && action !== 'rerun') {
+  if (!action || action !== 'rerun') {
     let check = Object.keys(data).filter((f) => (f !== 'state' && f !== 'rule'));
-    if (data.rule) {
-      check = check.concat(Object.keys(data.rule).filter((f) => f !== 'value'));
-    }
-    if (check.length > 0) {
-      throw new Error('Only state and rule.value values can be changed');
-    }
+    if (data.rule) check = check.concat(Object.keys(data.rule).filter((f) => f !== 'value'));
+    if (check.length > 0) return cb({ message: 'Only state and rule.value values can be changed' });
   }
 
   // get the record first
@@ -94,30 +95,47 @@ async function put(event) {
     originalData = await model.get({ name });
   }
   catch (e) {
-    if (e instanceof RecordDoesNotExist) {
-      throw new Error({ message: 'Record does not exist' });
-    }
+    if (e instanceof RecordDoesNotExist) return cb({ message: 'Record does not exist' });
+    return cb(e);
   }
 
   // if rule type is onetime no change is allowed unless it is a rerun
   if (action === 'rerun') {
     await models.Rule.invoke(originalData);
-    return;
+    return cb(null, originalData);
   }
 
-  return model.update(originalData, data);
+  return model.update(originalData, data)
+    .then((d) => cb(null, d))
+    .catch((err) => cb(err));
 }
 
-async function del(event) {
+/**
+ * deletes a rule
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {function} cb - aws lambda callback function
+ * @returns {Object} returns the collection that was just saved.
+ */
+async function del(event, cb) {
   let name = _get(event.pathParameters, 'name', '');
   const model = new models.Rule();
 
   name = name.replace(/%20/g, ' ');
 
-  await model.get({ name }).then((record) => model.delete(record));
-  return { message: 'Record deleted' };
+  return model.get({ name })
+    .then((record) => model.delete(record))
+    .then(() => cb(null, { message: 'Record deleted' }))
+    .catch((err) => cb(err));
 }
 
+/**
+ * Looks up the httpMethod in the lambda event and performs rule's operations accordingly
+ *
+ * @param {Object} event - lambda event
+ * @param {Object} context - lambda context
+ * @returns {(error|string)} Success message or error
+ */
 function handler(event, context) {
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
@@ -127,10 +145,10 @@ function handler(event, context) {
       post(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event).then((r) => cb(null, r)).catch((e) => cb(JSON.stringify(e)));
+      put(event, cb);
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then((r) => cb(null, r)).catch((e) => cb(JSON.stringify(e)));
+      del(event, cb);
     }
     else {
       list(event, cb);
