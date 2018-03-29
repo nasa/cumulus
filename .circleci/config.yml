@@ -46,7 +46,7 @@ jobs:
 
             # start http service
             sudo rm -rf /var/www/html
-            sudo ln -s /home/circleci/project/.tmp-test-data /var/www/html
+            sudo ln -s /home/circleci/project/packages/test-data /var/www/html
             sudo service apache2 start
 
             # start sftp service
