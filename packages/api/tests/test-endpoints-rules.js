@@ -74,7 +74,7 @@ test('GET gets a rule', (t) => {
 });
 
 test('POST creates a rule', (t) => {
-  const newRule = Object.assign({}, testRule, {name: 'make_waffles'});
+  const newRule = Object.assign({}, testRule, { name: 'make_waffles' });
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newRule)
@@ -82,21 +82,67 @@ test('POST creates a rule', (t) => {
   return testEndpoint(rulesEndpoint, postEvent, (response) => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
-    t.is(record.name, newRule.name);
+    newRule.updatedAt = record.updatedAt;
+    t.deepEqual(record, newRule);
+  });
+});
+
+test('POST returns a record exists when one exists', (t) => {
+  const newRule = Object.assign({}, testRule);
+  const postEvent = {
+    httpMethod: 'POST',
+    body: JSON.stringify(newRule)
+  };
+  return testEndpoint(rulesEndpoint, postEvent, (response) => {
+    const { message, record } = JSON.parse(response.body);
+    t.is(message, `A record already exists for ${newRule.name}`);
+    t.falsy(record);
   });
 });
 
 test('PUT updates a rule', (t) => {
+  const newRule = Object.assign({}, testRule, { state: 'ENABLED' });
   const updateEvent = {
-    body: JSON.stringify({state: 'ENABLED'}),
+    body: JSON.stringify({ state: 'ENABLED' }),
     pathParameters: {
       name: testRule.name
     },
     httpMethod: 'PUT'
   };
   return testEndpoint(rulesEndpoint, updateEvent, (response) => {
-    const { state } = JSON.parse(response.body);
-    t.is(state, 'ENABLED');
+    const record = JSON.parse(response.body);
+    newRule.updatedAt = record.updatedAt;
+    t.deepEqual(record, newRule);
+  });
+});
+
+test('PUT returns "only state and rule.value values can be changed"', (t) => {
+  const updateEvent = {
+    body: JSON.stringify({ provider: 'new-whole-foods' }),
+    pathParameters: {
+      name: testRule.name
+    },
+    httpMethod: 'PUT'
+  };
+  return testEndpoint(rulesEndpoint, updateEvent, (response) => {
+    const { message, record } = JSON.parse(response.body);
+    t.is(message, 'Only state and rule.value values can be changed');
+    t.falsy(record);
+  });
+});
+
+test('PUT returns "record does not exist"', (t) => {
+  const updateEvent = {
+    body: JSON.stringify({ state: 'ENABLED' }),
+    pathParameters: {
+      name: 'new_make_coffee'
+    },
+    httpMethod: 'PUT'
+  };
+  return testEndpoint(rulesEndpoint, updateEvent, (response) => {
+    const { message, record } = JSON.parse(response.body);
+    t.is(message, 'Record does not exist');
+    t.falsy(record);
   });
 });
 
@@ -112,6 +158,4 @@ test('DELETE deletes a rule', (t) => {
     t.is(message, 'Record deleted');
   });
 });
-
-test.todo('POST returns a record exists when one exists');
 
