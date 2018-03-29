@@ -10,7 +10,6 @@ const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { cloneDeep } = require('lodash');
 const {
   findTestDataDirectory,
-  findTmpTestDataDirectory,
   randomString,
   validateConfig,
   validateInput,
@@ -57,23 +56,14 @@ test('parse PDR from FTP endpoint', async (t) => {
 
 test('parse PDR from HTTP endpoint', async (t) => {
   const internalBucketName = randomString();
-  const providerPath = randomString();
 
   // Figure out the directory paths that we're working with
   const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
-  const providerPathDirectory = path.join(await findTmpTestDataDirectory(), providerPath);
 
   // Create providerPathDirectory and internal bucket
-  await Promise.all([
-    fs.ensureDir(providerPathDirectory),
-    s3().createBucket({ Bucket: internalBucketName }).promise()
-  ]);
+  await s3().createBucket({ Bucket: internalBucketName }).promise();
 
   const pdrName = 'MOD09GQ.PDR';
-
-  await fs.copy(
-    path.join(testDataDirectory, pdrName),
-    path.join(providerPathDirectory, pdrName));
 
   const newPayload = cloneDeep(modis);
   newPayload.config.bucket = internalBucketName;
@@ -85,7 +75,7 @@ test('parse PDR from HTTP endpoint', async (t) => {
   newPayload.input = {
     pdr: {
       name: pdrName,
-      path: `/${providerPath}`
+      path: `/pdrs`
     }
   };
 
@@ -107,10 +97,7 @@ test('parse PDR from HTTP endpoint', async (t) => {
   }
   finally {
     // Clean up
-    await Promise.all([
-      recursivelyDeleteS3Bucket(internalBucketName),
-      fs.remove(providerPathDirectory)
-    ]);
+    await recursivelyDeleteS3Bucket(internalBucketName);
   }
 });
 
