@@ -99,7 +99,7 @@ jobs:
 CustomBootstrap:
   handler: index.bootstrap
   timeout: 100
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     internal: '{{buckets.internal}}'
