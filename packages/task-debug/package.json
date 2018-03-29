@@ -4,9 +4,10 @@
   "version": "1.2.0",
   "description": "A harness for debugging workflows.",
   "main": "index.js",
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/task-debug",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cumulus-nasa/cumulus.git"
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
