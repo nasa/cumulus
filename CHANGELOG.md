@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - updated paths where necessary
 
 ### Added
-- `@cumulus/integration-tests` supports testing the output of an activity-type step in addition to a lambda-type step.
+- `@cumulus/integration-tests` supports testing the output of an ECS activity step in addition to a Lambda step.
 
 ## [v1.2.0] - 2018-03-20
 
