@@ -5,7 +5,7 @@ services:
     command: start
     volumes:
       - "./packages/test-data:/home/vsftpd:ro"
-      - "./.tmp-test-data:/var/www/html:ro"
+      - "./packages/test-data:/var/www/html:ro"
       - "./packages/test-data:/home/user"
     ports:
       - "20:20"
@@ -24,7 +24,7 @@ services:
     volumes:
       - ".:/home/circleci/project"
       - "./packages/test-data:/home/vsftpd:ro"
-      - "./.tmp-test-data:/var/www/html:ro"
+      - "./packages/test-data:/var/html:ro"
       - "./packages/test-data:/home/user"
     ports:
       - "20:20"

@@ -6,7 +6,7 @@
     "steps": [
       {
         "name": "DiscoverPdrs",
-        "lambda": "cumulus/tasks/discover-pdrs",
+        "lambda": "tasks/discover-pdrs",
         "handler": "index.handler",
         "cumulusConfig": {
           "templateUri": "{{$.meta.templates.ParsePdr}}",
@@ -20,7 +20,7 @@
       },
       {
         "name": "QueuePdrs",
-        "lambda": "cumulus/tasks/queue-pdrs",
+        "lambda": "tasks/queue-pdrs",
         "handler": "index.handler",
         "cumulusConfig": {
           "provider": "{{$.meta.provider}}",
@@ -38,7 +38,7 @@
     "steps": [
       {
         "name": "ParsePdr",
-        "lambda": "cumulus/tasks/parse-pdr",
+        "lambda": "tasks/parse-pdr",
         "handler": "index.handler",
         "cumulusConfig": {
           "useQueue": true,
