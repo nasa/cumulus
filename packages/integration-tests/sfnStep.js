@@ -99,8 +99,7 @@ class SfnStep {
       return null;
     }
 
-    const succeededDetails = JSON.parse(stepExecution.completeEvent[this.eventDetailsKeys.succeeded].output.toString());
-    return succeededDetails;
+    return JSON.parse(stepExecution.completeEvent[this.eventDetailsKeys.succeeded].output.toString());
   }
 }
 
