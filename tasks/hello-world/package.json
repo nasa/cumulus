@@ -6,10 +6,6 @@
   "directories": {
     "test": "tests"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
-  },
   "scripts": {
     "test": "ava tests/*.js --serial --no-color",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
@@ -33,6 +29,11 @@
     "plugins": [
       "transform-async-to-generator"
     ]
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/hello-world",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

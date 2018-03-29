@@ -6,10 +6,6 @@
   "directories": {
     "test": "tests"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
-  },
   "publishConfig": {
     "access": "public"
   },
@@ -19,8 +15,6 @@
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "postinstall": "npm run build"
   },
-  "author": "Cumulus Authors",
-  "license": "Apache-2.0",
   "ava": {
     "files": "tests",
     "babel": "inherit",
@@ -38,6 +32,13 @@
       "transform-async-to-generator"
     ]
   },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/parse-pdr",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "^1.2.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
