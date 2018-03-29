@@ -1,0 +1,55 @@
+{
+  "name": "@cumulus/hello-world",
+  "version": "1.2.0",
+  "description": "Example task",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
+  "scripts": {
+    "test": "ava tests/*.js --serial --no-color",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
+    "postinstall": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "ava": {
+    "babel": "inherit",
+    "require": [
+      "babel-polyfill",
+      "babel-register"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "es2017"
+    ],
+    "plugins": [
+      "transform-async-to-generator"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/cumulus-message-adapter-js": "^1.0.1",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2017": "^6.24.1",
+    "json-loader": "^0.5.7",
+    "webpack": "^1.12.13"
+  },
+  "devDependencies": {
+    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-transform-test-files": "^3.0.0",
+    "ava": "^0.23.0",
+    "proxyquire": "^1.8.0"
+  }
+}
