@@ -1,0 +1,36 @@
+{
+  "title": "SfSnsReportConfig",
+  "description": "Describes the config used by the sf-sns-report task",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sfnEnd": {
+      "description": "indicate if it's the last step of the step function.",
+      "type": "boolean"
+    },
+    "stack": {
+      "description": "the name of the deployment stack (from meta.stack). Required when sfnEnd is true and granule status is reported.",
+      "type": "string"
+    },
+    "bucket": {
+      "description": "S3 bucket (from meta.buckets.internal). Required when sfnEnd is true and granule status is reported.",
+      "type": "string"
+    },
+    "stateMachine": {
+      "description": "current state machine (from cumulus_meta.state_machine). Required when sfnEnd is true and granule status is reported.",
+      "type": "string"
+    },
+    "executionName": {
+      "description": "execution name (from cumulus_meta.execution_name). Required when sfnEnd is true and granule status is reported.",
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "required": ["stack", "bucket", "stateMachine", "executionName"]
+    },
+    {
+      "required": []
+    }
+  ]
+}
