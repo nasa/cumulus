@@ -1,19 +1,19 @@
 'use strict';
 
 const aws = require('@cumulus/common/aws');
+const checksum = require('checksum');
+const cksum = require('cksum');
+const errors = require('@cumulus/common/errors');
 const fs = require('fs-extra');
 const get = require('lodash.get');
 const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
-const cksum = require('cksum');
-const checksum = require('checksum');
-const errors = require('@cumulus/common/errors');
-const sftpMixin = require('./sftp');
-const ftpMixin = require('./ftp').ftpMixin;
-const httpMixin = require('./http').httpMixin;
-const s3Mixin = require('./s3').s3Mixin;
 const { baseProtocol } = require('./protocol');
+const { ftpMixin } = require('./ftp');
+const { httpMixin } = require('./http');
+const { s3Mixin } = require('./s3');
+const { sftpMixin } = require('./sftp');
 
 class Discover {
   constructor(event) {

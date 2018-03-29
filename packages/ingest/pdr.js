@@ -2,15 +2,15 @@
 
 const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
-const ftpMixin = require('./ftp').ftpMixin;
 const get = require('lodash.get');
-const httpMixin = require('./http').httpMixin;
 const log = require('@cumulus/common/log');
-const parsePdr = require('./parse-pdr').parsePdr;
 const path = require('path');
-const s3Mixin = require('./s3').s3Mixin;
-const sftpMixin = require('./sftp');
 const { baseProtocol } = require('./protocol');
+const { ftpMixin } = require('./ftp');
+const { httpMixin } = require('./http');
+const { parsePdr } = require('./parse-pdr');
+const { s3Mixin } = require('./s3');
+const { sftpMixin } = require('./sftp');
 
 /**
  * This is a base class for discovering PDRs
