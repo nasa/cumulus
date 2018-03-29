@@ -6,10 +6,6 @@
   "directories": {
     "test": "tests"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
-  },
   "scripts": {
     "test": "ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
@@ -32,6 +28,11 @@
     "presets": [
       "es2017"
     ]
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/discover-pdrs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
