@@ -7,17 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Changed
-- The **queue-granules** task no longer takes a "collection" in its config.
-- The **queue-granules** task has added an "internalBucket" property to its
-  config.
-- The **queue-granules** task has added a "stackName" property to its config.
+- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
+  the config schema of the **queue-granules** task
+  - The config no longer takes a "collection" property
+  - The config now takes an "internalBucket" property
+  - The config now takes a "stackName" property
 
 ### Removed
 - Removed the `findTmpTestDataDirectory()` function from
   `@cumulus/common/test-utils`
 
 ### Fixed
-- The **queue-granules** task now enqueues a **sync-granule** task with the
+- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - The
+  **queue-granules** task now enqueues a **sync-granule** task with the
   correct collection config for that granule based on the granule's data-type.
   It had previously been using the collection config from the config of the
   **queue-granules** task, which was a problem if the granules being queued
