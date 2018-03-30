@@ -1,3 +1,4 @@
 **/node_modules/**
 **/dist/**
 packages/deployment/app/*.js
+packages/common/log.js
