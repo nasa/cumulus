@@ -123,6 +123,7 @@ async function loadPdrFile(pdrFilePath) {
   return parsed;
 }
 
+// FIXME Figure out what this function does and document it
 function granuleFromFileGroup(fileGroup, granuleIdExtraction, pdrName) {
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
