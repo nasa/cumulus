@@ -2,7 +2,12 @@
 
 const test = require('ava');
 
-const { createQueue, s3, sqs, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const {
+  createQueue,
+  s3,
+  sqs,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/common/aws');
 const {
   randomString,
   validateConfig,
@@ -13,10 +18,15 @@ const {
 const { queueGranules } = require('../index');
 
 test.beforeEach(async (t) => {
+  t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
+  t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.stateMachineArn = randomString();
-
   t.context.templateBucket = randomString();
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.templateBucket }).promise()
+  ]);
 
   t.context.messageTemplate = {
     cumulus_meta: {
@@ -33,7 +43,8 @@ test.beforeEach(async (t) => {
 
   t.context.event = {
     config: {
-      collection: { name: 'collection-name' },
+      internalBucket: t.context.internalBucket,
+      stackName: t.context.stackName,
       provider: { name: 'provider-name' },
       queueUrl: await createQueue(),
       granuleIngestMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
@@ -46,16 +57,29 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   await Promise.all([
+    recursivelyDeleteS3Bucket(t.context.internalBucket),
     recursivelyDeleteS3Bucket(t.context.templateBucket),
     sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise()
   ]);
 });
 
+function uploadCollectionConfig(testContext, dataType, collectionConfig) {
+  return s3().putObject({
+    Bucket: testContext.internalBucket,
+    Key: `${testContext.stackName}/collections/${dataType}.json`,
+    Body: JSON.stringify(collectionConfig)
+  }).promise();
+}
+
 test('The correct output is returned when granules are queued', async (t) => {
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const collectionConfig = { foo: 'bar' };
+  await uploadCollectionConfig(t.context, dataType, collectionConfig);
+
   const event = t.context.event;
   event.input.granules = [
-    { granuleId: randomString(), files: [] },
-    { granuleId: randomString(), files: [] }
+    { dataType, granuleId: randomString(), files: [] },
+    { dataType, granuleId: randomString(), files: [] }
   ];
 
   await validateConfig(t, event.config);
@@ -81,10 +105,14 @@ test('The correct output is returned when no granules are queued', async (t) => 
 });
 
 test('Granules are added to the queue', async (t) => {
+  const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const collectionConfig = { foo: 'bar' };
+  await uploadCollectionConfig(t.context, dataType, collectionConfig);
+
   const event = t.context.event;
   event.input.granules = [
-    { granuleId: randomString(), files: [] },
-    { granuleId: randomString(), files: [] }
+    { dataType, granuleId: randomString(), files: [] },
+    { dataType, granuleId: randomString(), files: [] }
   ];
 
   await validateConfig(t, event.config);
@@ -106,22 +134,28 @@ test('Granules are added to the queue', async (t) => {
 });
 
 test('The correct message is enqueued without a PDR', async (t) => {
-  const fileNameA = randomString();
-  const granuleIdA = randomString();
-  const fileNameB = randomString();
-  const granuleIdB = randomString();
-
   const event = t.context.event;
-  event.input.granules = [
-    {
-      granuleId: granuleIdA,
-      files: [{ name: fileNameA }]
-    },
-    {
-      granuleId: granuleIdB,
-      files: [{ name: fileNameB }]
-    }
-  ];
+
+  const granule1 = {
+    dataType: `data-type-${randomString().slice(0, 6)}`,
+    granuleId: `granule-${randomString().slice(0, 6)}`,
+    files: [{ name: `file-${randomString().slice(0, 6)}` }]
+  };
+  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
+
+  const granule2 = {
+    dataType: `data-type-${randomString().slice(0, 6)}`,
+    granuleId: `granule-${randomString().slice(0, 6)}`,
+    files: [{ name: `file-${randomString().slice(0, 6)}` }]
+  };
+  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
+
+  event.input.granules = [granule1, granule2];
+
+  await Promise.all([
+    uploadCollectionConfig(t.context, granule1.dataType, collectionConfig1),
+    uploadCollectionConfig(t.context, granule2.dataType, collectionConfig2)
+  ]);
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -130,37 +164,37 @@ test('The correct message is enqueued without a PDR', async (t) => {
 
   await validateOutput(t, output);
 
-  const expectedMessages = {};
-  expectedMessages[granuleIdA] = {
+  const expectedMessage1 = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
     meta: {
-      collection: { name: 'collection-name' },
+      collection: collectionConfig1,
       provider: { name: 'provider-name' }
     },
     payload: {
       granules: [
         {
-          granuleId: granuleIdA,
-          files: [{ name: fileNameA }]
+          granuleId: granule1.granuleId,
+          files: granule1.files
         }
       ]
     }
   };
-  expectedMessages[granuleIdB] = {
+
+  const expectedMessage2 = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
     meta: {
-      collection: { name: 'collection-name' },
+      collection: collectionConfig2,
       provider: { name: 'provider-name' }
     },
     payload: {
       granules: [
         {
-          granuleId: granuleIdB,
-          files: [{ name: fileNameB }]
+          granuleId: granule2.granuleId,
+          files: granule2.files
         }
       ]
     }
@@ -174,31 +208,38 @@ test('The correct message is enqueued without a PDR', async (t) => {
   }).promise();
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
-  const receivedGranuleIds = messages.map((message) => message.payload.granules[0].granuleId);
-  t.true(receivedGranuleIds.includes(granuleIdA));
-  t.true(receivedGranuleIds.includes(granuleIdB));
-
   t.is(messages.length, 2);
-  messages.forEach((message) => {
-    const granuleId = message.payload.granules[0].granuleId;
-    t.deepEqual(message, expectedMessages[granuleId]);
-  });
+
+  const message1 = messages.find((message) =>
+    message.payload.granules[0].granuleId === granule1.granuleId);
+
+  t.truthy(message1);
+  t.deepEqual(message1, expectedMessage1);
+
+  const message2 = messages.find((message) =>
+    message.payload.granules[0].granuleId === granule2.granuleId);
+  t.truthy(message2);
+  t.deepEqual(message2, expectedMessage2);
 });
 
 test('The correct message is enqueued with a PDR', async (t) => {
-  const fileName = randomString();
-  const granuleId = randomString();
-  const pdrName = randomString();
-  const pdrPath = randomString();
+  const pdrName = `pdr-name-${randomString()}`;
+  const pdrPath = `pdr-path-${randomString()}`;
 
   const event = t.context.event;
-  event.input.granules = [
-    {
-      granuleId,
-      files: [{ name: fileName }]
-    }
-  ];
+
+  const granule = {
+    dataType: `data-type-${randomString().slice(0, 6)}`,
+    granuleId: `granule-${randomString().slice(0, 6)}`,
+    files: [{ name: `file-${randomString().slice(0, 6)}` }]
+  };
+
+  const collectionConfig = { name: `collection-config-${randomString().slice(0, 6)}` };
+
+  event.input.granules = [granule];
   event.input.pdr = { name: pdrName, path: pdrPath };
+
+  await uploadCollectionConfig(t.context, granule.dataType, collectionConfig);
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -207,27 +248,19 @@ test('The correct message is enqueued with a PDR', async (t) => {
 
   await validateOutput(t, output);
 
-  // Get messages from the queue
-  const receiveMessageResponse = await sqs().receiveMessage({
-    QueueUrl: t.context.event.config.queueUrl,
-    MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 1
-  }).promise();
-  const messages = receiveMessageResponse.Messages;
-
   const expectedMessage = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
     meta: {
-      collection: { name: 'collection-name' },
+      collection: collectionConfig,
       provider: { name: 'provider-name' }
     },
     payload: {
       granules: [
         {
-          granuleId,
-          files: [{ name: fileName }]
+          granuleId: granule.granuleId,
+          files: granule.files
         }
       ],
       pdr: {
@@ -237,7 +270,17 @@ test('The correct message is enqueued with a PDR', async (t) => {
     }
   };
 
-  t.deepEqual(JSON.parse(messages[0].Body), expectedMessage);
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: t.context.event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1
+  }).promise();
+  const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
+
+  t.is(messages.length, 1);
+
+  t.deepEqual(messages[0], expectedMessage);
 });
 
 test.todo('An appropriate error is thrown if the message template could not be fetched');
