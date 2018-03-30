@@ -2,6 +2,7 @@
  * Includes helper functions for replicating Step Function Workflows
  * locally
  */
+
 'use strict';
 
 const path = require('path');
@@ -40,11 +41,7 @@ async function downloadCMA(version) {
  * @returns {Promise.<Array>} an array of undefined values
  */
 function copyCMAToTasks(workflow, src, cmaFolder) {
-  return Promise.all(
-    workflow.steps.map(
-      (step) => fs.copy(src, path.join(step.lambda, cmaFolder))
-    )
-  );
+  return Promise.all(workflow.steps.map((step) => fs.copy(src, path.join(step.lambda, cmaFolder))));
 }
 
 /**
@@ -55,11 +52,7 @@ function copyCMAToTasks(workflow, src, cmaFolder) {
  * @returns {Promise.<Array>} an array of undefined values
  */
 function deleteCMAFromTasks(workflow, cmaFolder) {
-  return Promise.all(
-    workflow.steps.map(
-      (step) => fs.remove(path.join(step.lambda, cmaFolder))
-    )
-  );
+  return Promise.all(workflow.steps.map((step) => fs.remove(path.join(step.lambda, cmaFolder))));
 }
 
 /**
