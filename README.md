@@ -73,6 +73,7 @@ If you prefer to run docker in detached mode (i.e. run containers in the backgro
 
 Run the test commands next
 
+    $ export LOCALSTACK_HOST=localhost
     $ yarn test
 
 Run end to end tests by
@@ -167,6 +168,31 @@ Release PRs **MUST** be named with `release-` prefix. This will kick off the AWS
 ### Publishing to NPM
 
 All packages on master branch are automatically published to NPM.
+
+Follow the following steps to publish to NPM:
+
+- Create a new branch from `master` and call it `release-version-<version_number>`
+- Run `yarn update`
+- Select the correct version upgrade type (e.g. major/minor/patch)
+
+![](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
+
+- Update CHANGELOG.md
+- Push to Github
+- Create a new git tag
+
+  $ git tag -a v1.x.x -m "version 1.x.x release"
+
+- Push the tag to github
+
+  $ git push origin v1.x.x
+
+- Create a PR against the `master` branch
+- After the PR is merged, update the (tag) and give a proper title and copy the release details from the CHANGELOG.md to the release
+
+![](https://static.notion-static.com/def32886-040c-4df9-9462-8b2418cbb925/Release_v1_3_0__cumulus-nasa_cumulus.png)
+
+![](https://static.notion-static.com/287c7d98-351a-446d-a7ff-45eef2b45d7c/New_release__cumulus-nasa_cumulus.png)
 
 ## Running command in all package folders
 

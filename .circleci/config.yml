@@ -36,14 +36,6 @@ jobs:
           keys:
             - cumulus-tasks-{{ checksum "global-hash" }}
 
-      - restore_cache:
-          keys:
-            - gitc-tasks-{{ checksum "global-hash" }}
-
-      - restore_cache:
-          keys:
-            - services-{{ checksum "global-hash" }}
-
       - run:
           name: Installing Dependencies
           command: |
@@ -54,7 +46,7 @@ jobs:
 
             # start http service
             sudo rm -rf /var/www/html
-            sudo ln -s /home/circleci/project/.tmp-test-data /var/www/html
+            sudo ln -s /home/circleci/project/packages/test-data /var/www/html
             sudo service apache2 start
 
             # start sftp service
@@ -79,50 +71,16 @@ jobs:
       - save_cache:
           key: cumulus-tasks-{{ checksum "global-hash" }}
           paths:
-            - ./cumulus/tasks/hello-world/node_modules
-            - ./cumulus/tasks/discover-granules/node_modules
-            - ./cumulus/tasks/discover-pdrs/node_modules
-            - ./cumulus/tasks/parse-pdr/node_modules
-            - ./cumulus/tasks/post-to-cmr/node_modules
-            - ./cumulus/tasks/pdr-status-check/node_modules
-            - ./cumulus/tasks/queue-granules/node_modules
-            - ./cumulus/tasks/queue-pdrs/node_modules
-            - ./cumulus/tasks/sync-granule/node_modules
-            - ./cumulus/tasks/discover-s3-granules/node_modules
-            - ./cumulus/tasks/sf-sns-report/node_modules
-
-      - save_cache:
-          key: gitc-tasks-{{ checksum "global-hash" }}
-          paths:
-            - ./cumulus/tasks/copy-idx-from-s3-to-efs/node_modules
-            - ./cumulus/tasks/delete-ingest-tracking-data/node_modules
-            - ./cumulus/tasks/delete-pdr-ftp/node_modules
-            - ./cumulus/tasks/delete-pdr-s3/node_modules
-            - ./cumulus/tasks/discover-cmr-granules/node_modules
-            - ./cumulus/tasks/discover-http-tiles/node_modules
-            - ./cumulus/tasks/dowload-activity-mock/node_modules
-            - ./cumulus/tasks/filter-payload/node_modules
-            - ./cumulus/tasks/generate-mrf/node_modules
-            - ./cumulus/tasks/generate-pan/node_modules
-            - ./cumulus/tasks/generate-pdrd/node_modules
-            - ./cumulus/tasks/run-gdal/node_modules
-            - ./cumulus/tasks/sync-http-urls/node_modules
-            - ./cumulus/tasks/sync-wms/node_modules
-            - ./cumulus/tasks/tee/node_modules
-            - ./cumulus/tasks/trigger-ingest/node_modules
-            - ./cumulus/tasks/trigger-mrf-gen/node_modules
-            - ./cumulus/tasks/trigger-process-pdrs/node_modules
-            - ./cumulus/tasks/validate-archives/node_modules
-            - ./cumulus/tasks/discover-pdr/node_modules
-            - ./cumulus/tasks/generate-pdr-file-list/node_modules
-            - ./cumulus/tasks/validate-pdr/node_modules
-
-      - save_cache:
-          key: services-{{ checksum "global-hash" }}
-          paths:
-            - ./cumulus/services/sfn-scheduler/node_modules
-            - ./cumulus/services/sfn-throttler/node_modules
-
+            - ./tasks/hello-world/node_modules
+            - ./tasks/discover-granules/node_modules
+            - ./tasks/discover-pdrs/node_modules
+            - ./tasks/parse-pdr/node_modules
+            - ./tasks/post-to-cmr/node_modules
+            - ./tasks/pdr-status-check/node_modules
+            - ./tasks/queue-granules/node_modules
+            - ./tasks/queue-pdrs/node_modules
+            - ./tasks/sync-granule/node_modules
+            - ./tasks/sf-sns-report/node_modules
 
       - run:
           name: Running Tests
@@ -181,7 +139,11 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          command: yarn
+          command: |
+            # checkout the latest tag
+            LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
+            git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
+            yarn
 
       - run:
           name: Publishing to NPM
@@ -201,4 +163,4 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: release 
+              only: release-version-1.3.0 
