@@ -129,8 +129,9 @@ function granuleFromFileGroup(fileGroup, granuleIdExtraction, pdrName) {
 
   // get all the file specs in each group
   const specs = fileGroup.objects('FILE_SPEC');
-  // FIXME This is a very generic error
-  if (specs.length === 0) throw new Error();
+
+  // FIXME Improve this error message
+  if (specs.length === 0) throw new Error(`No FILE_SPEC sections found.`);
 
   const files = specs.map(parseSpec.bind(null, pdrName));
   const granuleId = extractGranuleId(files[0].name, granuleIdExtraction);
@@ -156,7 +157,7 @@ exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
 
   // check if the PDR has groups
   // if so, get the objects inside the first group
-  // TODO: handle cases where there are more than one group
+  // FIXME handle cases where there are more than one group
   const groups = pdrDocument.groups();
   if (groups.length > 0) pdrDocument = groups[0]; // eslint-disable-line prefer-destructuring
 
