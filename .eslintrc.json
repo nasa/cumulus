@@ -97,6 +97,7 @@
         "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
       }
     ],
-    "arrow-parens": ["error", "always"]
+    "arrow-parens": ["error", "always"],
+    "prefer-destructuring": "off"
   }
 }
