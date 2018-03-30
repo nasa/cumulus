@@ -3,6 +3,9 @@
   "version": "1.2.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
+  "bin": {
+    "cumulus-api": "./bin/cli.js"
+  },
   "scripts": {
     "test": "ava",
     "build": "webpack --progress",
