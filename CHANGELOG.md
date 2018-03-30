@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - `@cumulus/integration-tests` supports testing the output of an activity-type step in addition to a lambda-type step.
+- **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
 
 ## [v1.2.0] - 2018-03-20
 
