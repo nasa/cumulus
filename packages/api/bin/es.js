@@ -99,8 +99,6 @@ async function reindex(
 ) {
   const esClient = await Search.es(host);
 
-  console.log(aliasName);
-
   const aliasExists = await esClient.indices.existsAlias({
     name: aliasName
   });
@@ -109,8 +107,6 @@ async function reindex(
     // eslint-disable-next-line max-len
     throw new Error(`Alias ${aliasName} does not exist. Before re-indexing, re-deploy your instance of Cumulus.`);
   }
-
-  console.log('here');
 
   const alias = await esClient.indices.getAlias({
     name: aliasName
