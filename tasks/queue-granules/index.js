@@ -2,6 +2,34 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
+const { s3 } = require('@cumulus/common/aws');
+
+/**
+ * Fetch a collection config from S3
+ *
+ * @param {string} stackName - the name of the stack
+ * @param {string} Bucket - the name of the bucket containing the collection configs
+ * @param {string} dataType - the name of the collection
+ * @returns {Array} the datatype and the collection config
+ */
+async function fetchCollectionConfig(stackName, Bucket, dataType) {
+  const Key = `${stackName}/collections/${dataType}.json`;
+  const collectionConfig = (await s3().getObject({ Bucket, Key }).promise()).Body;
+  return [dataType, JSON.parse(collectionConfig)];
+}
+
+async function fetchCollectionConfigs(stackName, Bucket, dataTypes) { // eslint-disable-line require-jsdoc, max-len
+  const fetchConfig = (dataType) => fetchCollectionConfig(stackName, Bucket, dataType);
+
+  const fetchedCollectionConfigs = await Promise.all(dataTypes.map(fetchConfig));
+
+  const collectionConfigs = {};
+  fetchedCollectionConfigs.forEach(([dataType, collectionConfig]) => {
+    collectionConfigs[dataType] = collectionConfig;
+  });
+
+  return collectionConfigs;
+}
 
 /**
 * See schemas/input.json and schemas/config.json for detailed event description
@@ -13,16 +41,22 @@ const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 async function queueGranules(event) {
   const granules = event.input.granules || [];
 
-  await Promise.all(
+  const dataTypes = granules.map((granule) => granule.dataType);
+  const collectionConfigs = await fetchCollectionConfigs(
+    event.config.stackName,
+    event.config.internalBucket,
+    dataTypes
+  );
+
+  await Promise.all( // eslint-disable-line function-paren-newline
     granules.map((granule) => enqueueGranuleIngestMessage(
       granule,
       event.config.queueUrl,
       event.config.granuleIngestMessageTemplateUri,
       event.config.provider,
-      event.config.collection,
+      collectionConfigs[granule.dataType],
       event.input.pdr
-    ))
-  );
+    )));
 
   return { granules_queued: granules.length };
 }
