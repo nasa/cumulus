@@ -73,6 +73,15 @@ function parseSpec(pdrName, spec) {
 }
 module.exports.parseSpec = parseSpec;
 
+/**
+ * Extract a granuleId from a filename
+ *
+ * @param {string} fileName - The filename to extract the granuleId from
+ * @param {RegExp|string} regex - A regular expression describing how to extract
+ *   a granuleId from a filename
+ * @returns {string} the granuleId or the name of the file if no granuleId was
+ *   found
+ */
 function extractGranuleId(fileName, regex) {
   const test = new RegExp(regex);
   const match = fileName.match(test);
@@ -83,6 +92,12 @@ function extractGranuleId(fileName, regex) {
   return fileName;
 }
 
+/**
+ * Load a PDR file from disk and parse the PVL document
+ *
+ * @param {string} pdrFilePath - the file to be loaded
+ * @returns {Object} a parsed PVL document
+ */
 async function loadPdrFile(pdrFilePath) {
   const pdrFile = await fs.readFile(pdrFilePath, 'utf8');
 
@@ -128,7 +143,15 @@ function granuleFromFileGroup(fileGroup, granuleIdExtraction, pdrName) {
   };
 }
 
-module.exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
+/**
+ * Parse a PDR file
+ *
+ * @param {string} pdrFilePath - the file to be parsed
+ * @param {Object} collection - a collection config
+ * @param {string} pdrName - the name of the PDR
+ * @returns {Object} an object representing the PDR
+ */
+exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
   let pdrDocument = await loadPdrFile(pdrFilePath);
 
   // check if the PDR has groups
