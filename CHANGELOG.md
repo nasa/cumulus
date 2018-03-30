@@ -24,10 +24,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - `@cumulus/integration-tests` supports testing the output of an activity-type step in addition to a lambda-type step.
-- **CUMULUS-352** Add reindex CLI to the API package
+- **CUMULUS-352:** Add reindex CLI to the API package
 
 ### Changed 
-- **CUMULUS-352** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
+- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
 
 ## [v1.2.0] - 2018-03-20
 
