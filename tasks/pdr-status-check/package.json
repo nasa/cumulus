@@ -15,6 +15,7 @@
   },
   "scripts": {
     "test": "ava",
+    "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "postinstall": "npm run build"
@@ -28,6 +29,11 @@
     "require": [
       "babel-polyfill",
       "babel-register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
     ]
   },
   "babel": {
@@ -62,6 +68,7 @@
     "delay": "^2.0.0",
     "lodash": "^4.17.5",
     "moment": "^2.21.0",
+    "nyc": "^11.6.0",
     "proxyquire": "^1.8.0",
     "sinon": "^2.0.0-pre.5"
   }
