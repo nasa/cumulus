@@ -18,8 +18,16 @@ async function fetchCollectionConfig(stackName, Bucket, dataType) {
   return [dataType, JSON.parse(collectionConfig)];
 }
 
-async function fetchCollectionConfigs(stackName, Bucket, dataTypes) { // eslint-disable-line require-jsdoc, max-len
-  const fetchConfig = (dataType) => fetchCollectionConfig(stackName, Bucket, dataType);
+/**
+ * For a list of data-types, fetch the corresponding collection configs from S3
+ *
+ * @param {string} stackName - the name of the stack
+ * @param {string} Bucket - the name of the bucket containing the collection configs
+ * @param {Array<string>} dataTypes - the name of the collection
+ * @returns {Promise<Object>} a map of data-type to collection config
+ */
+async function fetchCollectionConfigs(stackName, Bucket, dataTypes) {
+  const fetchConfig = (dataType) => fetchCollectionConfig(stackName, Bucket, dataType); // eslint-disable-line require-jsdoc, max-len
 
   const fetchedCollectionConfigs = await Promise.all(dataTypes.map(fetchConfig));
 

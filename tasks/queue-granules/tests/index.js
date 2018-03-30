@@ -63,6 +63,14 @@ test.afterEach(async (t) => {
   ]);
 });
 
+/**
+ * Store a collection config in S3
+ *
+ * @param {Object} testContext - the AVA test context
+ * @param {string} dataType - the datatype described by the collection config
+ * @param {Object} collectionConfig - a collection config
+ * @returns {Promise} resolves when the collection config has been stored
+ */
 function uploadCollectionConfig(testContext, dataType, collectionConfig) {
   return s3().putObject({
     Bucket: testContext.internalBucket,
