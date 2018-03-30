@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsc",
     "prepublish": "tsc",
+    "clean": "rm -f *.d.ts log.js",
     "lint": "eslint .",
     "mocha": "mocha-webpack test/**/*.js",
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
