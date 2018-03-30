@@ -4,7 +4,13 @@
   "description": "Parse and serialize Parameter Value Language, a data markup language used by NASA",
   "main": "index.js",
   "scripts": {
-    "test": "ava test/*.js --serial"
+    "test": "ava test/*.js --serial",
+    "test-coverage": "nyc ava test/*.js --serial"
+  },
+  "nyc": {
+    "exclude": [
+      "test"
+    ]
   },
   "publishConfig": {
     "access": "public"
@@ -19,5 +25,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "ava": "^0.23.0"
+  },
+  "devDependencies": {
+    "nyc": "^11.6.0"
   }
 }
