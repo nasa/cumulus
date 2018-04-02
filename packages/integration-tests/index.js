@@ -3,7 +3,7 @@
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const { s3, sfn } = require('@cumulus/common/aws');
-const lambda = require('./lambda');
+const sfnStep = require('./sfnStep');
 
 const executionStatusNumRetries = 20;
 const waitPeriodMs = 5000;
@@ -69,11 +69,13 @@ async function waitForCompletedExecution(executionArn) {
   let statusCheckCount = 0;
 
   // While execution is running, check status on a time interval
+  /* eslint-disable no-await-in-loop */
   while (executionStatus === 'RUNNING' && statusCheckCount < executionStatusNumRetries) {
     await timeout(waitPeriodMs);
     executionStatus = await getExecutionStatus(executionArn);
-    statusCheckCount++;
+    statusCheckCount += 1;
   }
+  /* eslint-enable no-await-in-loop */
 
   if (executionStatus === 'RUNNING' && statusCheckCount >= executionStatusNumRetries) {
     //eslint-disable-next-line max-len
@@ -122,8 +124,7 @@ async function startWorkflowExecution(workflowArn, inputFile) {
  */
 async function executeWorkflow(stackName, bucketName, workflowName, inputFile) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
-  const execution = await startWorkflowExecution(workflowArn, inputFile);
-  const executionArn = execution.executionArn;
+  const { executionArn } = await startWorkflowExecution(workflowArn, inputFile);
 
   console.log(`Executing workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
@@ -161,5 +162,10 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 module.exports = {
   testWorkflow,
   executeWorkflow,
-  getLambdaOutput: lambda.getLambdaOutput
+  ActivityStep: sfnStep.ActivityStep,
+  LambdaStep: sfnStep.LambdaStep,
+  /**
+   * @deprecated Since version 1.3. To be deleted version 2.0. sfnStep.LambdaStep.getStepOutput instead.
+   */
+  getLambdaOutput: new sfnStep.LambdaStep().getStepOutput
 };

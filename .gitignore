@@ -17,3 +17,5 @@ profiles.clj
 *.map
 .DS_Store
 packages/deployment/app/*.js
+.nyc_output
+coverage/
