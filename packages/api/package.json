@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "ava",
+    "test-coverage": "nyc ava",
     "build": "webpack --progress",
     "watch": "webpack --progress -w",
     "postinstall": "npm run build"
@@ -17,6 +18,11 @@
       "babel-register"
     ],
     "serial": true
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
   },
   "publishConfig": {
     "access": "public"
@@ -67,6 +73,7 @@
   },
   "devDependencies": {
     "ava": "^0.23.0",
+    "nyc": "^11.6.0",
     "sinon": "^2.0.0-pre.5"
   }
 }

@@ -15,6 +15,7 @@
   },
   "scripts": {
     "test": "ava",
+    "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "postinstall": "npm run build"
@@ -29,6 +30,11 @@
       "babel-register"
     ],
     "color": false
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
   },
   "babel": {
     "presets": [
@@ -58,6 +64,7 @@
     "ava": "^0.23.0",
     "fs-extra": "^5.0.0",
     "lodash.clonedeep": "^4.5.0",
+    "nyc": "^11.4.1",
     "proxyquire": "^1.8.0"
   }
 }
