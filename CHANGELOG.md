@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
+
 ## [v1.3.0] - 2018-03-29
 
 ### Deprecated
