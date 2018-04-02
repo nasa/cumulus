@@ -12,6 +12,7 @@
   },
   "scripts": {
     "test": "ava",
+    "test-coverage": "nyc ava",
     "local": "node index.js | pino",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
@@ -27,6 +28,11 @@
     "require": [
       "babel-polyfill",
       "babel-register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
     ]
   },
   "babel": {
@@ -54,6 +60,7 @@
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.23.0",
     "fs-extra": "^5.0.0",
-    "lodash.clonedeep": "^4.5.0"
+    "lodash.clonedeep": "^4.5.0",
+    "nyc": "^11.4.1"
   }
 }

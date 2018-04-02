@@ -15,6 +15,7 @@
   },
   "scripts": {
     "test": "ava",
+    "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "postinstall": "npm run build"
@@ -28,6 +29,11 @@
     ],
     "serial": true,
     "color": false
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
   },
   "babel": {
     "presets": [
@@ -60,6 +66,7 @@
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.23.0",
+    "nyc": "^11.6.0",
     "proxyquire": "^1.8.0",
     "sinon": "^2.0.0-pre.5"
   }
