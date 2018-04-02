@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -29,8 +29,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.2.0",
-    "@cumulus/deployment": "^1.1.4",
+    "@cumulus/common": "^1.3.0",
+    "@cumulus/deployment": "^1.3.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
