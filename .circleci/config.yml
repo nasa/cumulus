@@ -127,6 +127,13 @@ jobs:
               yarn test
             fi
 
+      - run: 
+          name: Checking code coverage
+          command: yarn coverage
+
+      - store_artifacts:
+          path: ~/project/coverage
+
       - run:
           name: Running eslint-ratchet
           command: ./bin/eslint-ratchet ci
