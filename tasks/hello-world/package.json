@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -12,6 +12,7 @@
   },
   "scripts": {
     "test": "ava tests/*.js --serial --no-color",
+    "test-coverage": "nyc ava tests/*.js --serial",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "postinstall": "npm run build"
@@ -24,6 +25,11 @@
     "require": [
       "babel-polyfill",
       "babel-register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
     ]
   },
   "babel": {
@@ -50,6 +56,7 @@
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.23.0",
+    "nyc": "^11.4.1",
     "proxyquire": "^1.8.0"
   }
 }
