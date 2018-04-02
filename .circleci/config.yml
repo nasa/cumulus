@@ -127,6 +127,13 @@ jobs:
               yarn test
             fi
 
+      - run: 
+          name: Checking code coverage
+          command: yarn coverage
+
+      - store_artifacts:
+          path: ~/project/coverage
+
       - run:
           name: Running eslint-ratchet
           command: ./bin/eslint-ratchet ci
@@ -139,7 +146,11 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          command: yarn
+          command: |
+            # checkout the latest tag
+            LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
+            git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
+            yarn
 
       - run:
           name: Publishing to NPM
@@ -159,4 +170,4 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: release 
+              only: master

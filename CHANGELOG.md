@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
+
+## [v1.3.0] - 2018-03-29
+
 ### Deprecated
 - discover-s3-granules is deprecated. The functionality is provided by the discover-granules task
 ### Fixed
@@ -23,7 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - updated paths where necessary
 
 ### Added
-- `@cumulus/integration-tests` supports testing the output of an activity-type step in addition to a lambda-type step.
+- `@cumulus/integration-tests` - Added support for testing the output of an ECS activity as well as a Lambda function.
 
 ## [v1.2.0] - 2018-03-20
 
@@ -118,7 +123,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...HEAD
+[v1.3.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...v1.2.0
 [v1.1.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.2...v1.1.3

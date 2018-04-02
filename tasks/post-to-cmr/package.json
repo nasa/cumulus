@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/post-to-cmr",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Post a given granule to CMR",
   "main": "index.js",
   "directories": {
@@ -15,6 +15,7 @@
   },
   "scripts": {
     "test": "ava",
+    "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "postinstall": "npm run build"
@@ -29,6 +30,11 @@
     "serial": true,
     "color": false
   },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
   "babel": {
     "presets": [
       "es2015",
@@ -41,11 +47,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.2.0",
-    "@cumulus/common": "^1.2.0",
+    "@cumulus/cmrjs": "^1.3.0",
+    "@cumulus/common": "^1.3.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.2.0",
-    "@cumulus/test-data": "^1.2.0",
+    "@cumulus/ingest": "^1.3.0",
+    "@cumulus/test-data": "^1.3.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
@@ -60,6 +66,7 @@
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
     "ava": "^0.23.0",
+    "nyc": "^11.6.0",
     "proxyquire": "^1.8.0",
     "sinon": "^2.0.0-pre.5"
   }
