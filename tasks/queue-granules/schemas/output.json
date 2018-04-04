@@ -12,7 +12,7 @@
       }
     },
     "pdr": {
-      "description": "Product Delivery Record.",
+      "description": "Product Delivery Record",
       "type": "object",
       "required": ["name", "path"],
       "properties": {
