@@ -35,7 +35,7 @@ class CollectionConfigStore {
       }
       catch (err) {
         if (err.code === 'NoSuchKey') {
-          throw new Error(`A collection config for data type ${dataType} was not found.`);
+          throw new Error(`A collection config for data type "${dataType}" was not found.`);
         }
 
         if (err.code === 'NoSuchBucket') {
