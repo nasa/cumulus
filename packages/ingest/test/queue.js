@@ -66,7 +66,8 @@ test('the queue receives a correctly formatted workflow message', async(t) => {
         },
         payload: { granules: [granule] }
       };
-
+      t.not(actualMessage.cumulus_meta.execution_name);
+      expectedMessage.cumulus_meta.execution_name = actualMessage.cumulus_meta.execution_name;
       t.deepEqual(expectedMessage, actualMessage);
     });
 });
