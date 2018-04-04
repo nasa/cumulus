@@ -17,7 +17,7 @@ async function queueGranules(event) {
   const collectionConfigStore =
     new CollectionConfigStore(event.config.internalBucket, event.config.stackName);
 
-  await Promise.all( // eslint-disable-line function-paren-newline
+  const executionArns = await Promise.all( // eslint-disable-line function-paren-newline
     granules.map(async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType);
 
@@ -31,8 +31,9 @@ async function queueGranules(event) {
       );
     }));
 
-
-  return { granules_queued: granules.length };
+  const result = { running: executionArns };
+  if (event.input.pdr) result.pdr = event.input.pdr;
+  return result;
 }
 exports.queueGranules = queueGranules;
 

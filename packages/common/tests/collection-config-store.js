@@ -69,7 +69,7 @@ test('get() throws an exception if the collection config could not be found', as
     t.fail('Expected an error to be thrown');
   }
   catch (err) {
-    t.is(err.message, `A collection config for data type ${invalidDataType} was not found.`);
+    t.is(err.message, `A collection config for data type "${invalidDataType}" was not found.`);
   }
 });
 
