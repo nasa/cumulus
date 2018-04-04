@@ -38,14 +38,15 @@ test.afterEach(async(t) => {
   ]);
 });
 
-test('the queue receives a correctly formatted workflow message', async(t) => {
+test('the queue receives a correctly formatted workflow message without a PDR', async(t) => {
   const granule = { granuleId: '1', files: [] };
   const { queueUrl } = t.context;
   const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
 
-  await queue.enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, collection);
+  const output = await queue
+    .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, collection);
   await sqs().receiveMessage({
     QueueUrl: t.context.queueUrl,
     MaxNumberOfMessages: 10,
@@ -66,7 +67,46 @@ test('the queue receives a correctly formatted workflow message', async(t) => {
         },
         payload: { granules: [granule] }
       };
-      t.not(actualMessage.cumulus_meta.execution_name);
+      t.truthy(actualMessage.cumulus_meta.execution_name);
+      t.true(output.endsWith(actualMessage.cumulus_meta.execution_name));
+      expectedMessage.cumulus_meta.execution_name = actualMessage.cumulus_meta.execution_name;
+      t.deepEqual(expectedMessage, actualMessage);
+    });
+});
+
+test('the queue receives a correctly formatted workflow message with a PDR', async (t) => {
+  const granule = { granuleId: '1', files: [] };
+  const { queueUrl } = t.context;
+  const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
+  const collection = { name: 'test-collection', version: '0.0.0' };
+  const provider = { id: 'test-provider' };
+  const pdr = { name: randomString(), path: randomString() };
+
+  const output = await queue
+    .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, collection, pdr);
+  await sqs().receiveMessage({
+    QueueUrl: t.context.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1
+  }).promise()
+    .then((receiveMessageResponse) => {
+      t.is(receiveMessageResponse.Messages.length, 1);
+
+      const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
+      const expectedMessage = {
+        cumulus_meta: {
+          state_machine: t.context.stateMachineArn
+        },
+        meta: {
+          queues: { startSF: t.context.queueUrl },
+          provider: provider,
+          collection: collection,
+          pdr: pdr
+        },
+        payload: { granules: [granule] }
+      };
+      t.truthy(actualMessage.cumulus_meta.execution_name);
+      t.true(output.endsWith(actualMessage.cumulus_meta.execution_name));
       expectedMessage.cumulus_meta.execution_name = actualMessage.cumulus_meta.execution_name;
       t.deepEqual(expectedMessage, actualMessage);
     });
