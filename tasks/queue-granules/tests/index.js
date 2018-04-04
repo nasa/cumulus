@@ -14,6 +14,7 @@ const {
   validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
+const { CollectionConfigStore } = require('@cumulus/common');
 
 const { queueGranules } = require('../index');
 
@@ -22,6 +23,8 @@ test.beforeEach(async (t) => {
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.stateMachineArn = randomString();
   t.context.templateBucket = randomString();
+  t.context.collectionConfigStore =
+    new CollectionConfigStore(t.context.internalBucket, t.context.stackName);
 
   await Promise.all([
     s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
@@ -63,26 +66,10 @@ test.afterEach(async (t) => {
   ]);
 });
 
-/**
- * Store a collection config in S3
- *
- * @param {Object} testContext - the AVA test context
- * @param {string} dataType - the datatype described by the collection config
- * @param {Object} collectionConfig - a collection config
- * @returns {Promise} resolves when the collection config has been stored
- */
-function uploadCollectionConfig(testContext, dataType, collectionConfig) {
-  return s3().putObject({
-    Bucket: testContext.internalBucket,
-    Key: `${testContext.stackName}/collections/${dataType}.json`,
-    Body: JSON.stringify(collectionConfig)
-  }).promise();
-}
-
 test('The correct output is returned when granules are queued', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const collectionConfig = { foo: 'bar' };
-  await uploadCollectionConfig(t.context, dataType, collectionConfig);
+  await t.context.collectionConfigStore.put(dataType, collectionConfig);
 
   const event = t.context.event;
   event.input.granules = [
@@ -115,7 +102,7 @@ test('The correct output is returned when no granules are queued', async (t) => 
 test('Granules are added to the queue', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const collectionConfig = { foo: 'bar' };
-  await uploadCollectionConfig(t.context, dataType, collectionConfig);
+  await t.context.collectionConfigStore.put(dataType, collectionConfig);
 
   const event = t.context.event;
   event.input.granules = [
@@ -161,8 +148,8 @@ test('The correct message is enqueued without a PDR', async (t) => {
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    uploadCollectionConfig(t.context, granule1.dataType, collectionConfig1),
-    uploadCollectionConfig(t.context, granule2.dataType, collectionConfig2)
+    t.context.collectionConfigStore.put(granule1.dataType, collectionConfig1),
+    t.context.collectionConfigStore.put(granule2.dataType, collectionConfig2)
   ]);
 
   await validateConfig(t, event.config);
@@ -247,7 +234,7 @@ test('The correct message is enqueued with a PDR', async (t) => {
   event.input.granules = [granule];
   event.input.pdr = { name: pdrName, path: pdrPath };
 
-  await uploadCollectionConfig(t.context, granule.dataType, collectionConfig);
+  await t.context.collectionConfigStore.put(granule.dataType, collectionConfig);
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -287,7 +274,6 @@ test('The correct message is enqueued with a PDR', async (t) => {
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
   t.is(messages.length, 1);
-
   t.deepEqual(messages[0], expectedMessage);
 });
 
