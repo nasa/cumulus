@@ -1,9 +1,12 @@
 'use strict';
 
+const uuidv4 = require('uuid/v4');
+
 const {
   getS3Object,
   sendSQSMessage,
-  parseS3Uri
+  parseS3Uri,
+  getExecutionArn
 } = require('@cumulus/common/aws');
 
 /**
@@ -78,11 +81,14 @@ async function enqueueGranuleIngestMessage(
       files: granule.files
     }]
   };
-  if (pdr) message.payload.pdr = pdr;
+  if (pdr) message.meta.pdr = pdr;
 
   message.meta.provider = provider;
   message.meta.collection = collection;
-
-  return sendSQSMessage(queueUrl, message);
+  message.cumulus_meta.execution_name = uuidv4();
+  const arn =
+    getExecutionArn(message.cumulus_meta.state_machine, message.cumulus_meta.execution_name);
+  await sendSQSMessage(queueUrl, message);
+  return arn;
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;

@@ -2,7 +2,9 @@
 
 const test = require('ava');
 
-const { createQueue, s3, sqs, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const {
+  createQueue, s3, sqs, recursivelyDeleteS3Bucket
+} = require('@cumulus/common/aws');
 const {
   randomString,
   validateConfig,
@@ -51,8 +53,8 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test('The correct output is returned when granules are queued', async (t) => {
-  const event = t.context.event;
+test('The correct output is returned when granules are queued without a PDR', async (t) => {
+  const { event } = t.context;
   event.input.granules = [
     { granuleId: randomString(), files: [] },
     { granuleId: randomString(), files: [] }
@@ -64,11 +66,30 @@ test('The correct output is returned when granules are queued', async (t) => {
   const output = await queueGranules(event);
 
   await validateOutput(t, output);
-  t.deepEqual(output, { granules_queued: 2 });
+  t.is(output.running.length, 2);
+  t.falsy(output.pdr);
+});
+
+test('The correct output is returned when granules are queued with a PDR', async (t) => {
+  const { event } = t.context;
+  event.input.granules = [
+    { granuleId: randomString(), files: [] },
+    { granuleId: randomString(), files: [] }
+  ];
+  event.input.pdr = { name: randomString(), path: randomString() };
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queueGranules(event);
+
+  await validateOutput(t, output);
+  t.is(output.running.length, 2);
+  t.deepEqual(output.pdr, event.input.pdr);
 });
 
 test('The correct output is returned when no granules are queued', async (t) => {
-  const event = t.context.event;
+  const { event } = t.context;
   event.input.granules = [];
 
   await validateConfig(t, event.config);
@@ -77,11 +98,11 @@ test('The correct output is returned when no granules are queued', async (t) => 
   const output = await queueGranules(event);
 
   await validateOutput(t, output);
-  t.deepEqual(output, { granules_queued: 0 });
+  t.is(output.running.length, 0);
 });
 
 test('Granules are added to the queue', async (t) => {
-  const event = t.context.event;
+  const { event } = t.context;
   event.input.granules = [
     { granuleId: randomString(), files: [] },
     { granuleId: randomString(), files: [] }
@@ -111,7 +132,7 @@ test('The correct message is enqueued without a PDR', async (t) => {
   const fileNameB = randomString();
   const granuleIdB = randomString();
 
-  const event = t.context.event;
+  const { event } = t.context;
   event.input.granules = [
     {
       granuleId: granuleIdA,
@@ -180,7 +201,9 @@ test('The correct message is enqueued without a PDR', async (t) => {
 
   t.is(messages.length, 2);
   messages.forEach((message) => {
-    const granuleId = message.payload.granules[0].granuleId;
+    const { granuleId } = message.payload.granules[0];
+    t.truthy(message.cumulus_meta.execution_name);
+    expectedMessages[granuleId].cumulus_meta.execution_name = message.cumulus_meta.execution_name;
     t.deepEqual(message, expectedMessages[granuleId]);
   });
 });
@@ -191,7 +214,7 @@ test('The correct message is enqueued with a PDR', async (t) => {
   const pdrName = randomString();
   const pdrPath = randomString();
 
-  const event = t.context.event;
+  const { event } = t.context;
   event.input.granules = [
     {
       granuleId,
@@ -221,7 +244,11 @@ test('The correct message is enqueued with a PDR', async (t) => {
     },
     meta: {
       collection: { name: 'collection-name' },
-      provider: { name: 'provider-name' }
+      provider: { name: 'provider-name' },
+      pdr: {
+        name: pdrName,
+        path: pdrPath
+      }
     },
     payload: {
       granules: [
@@ -229,15 +256,13 @@ test('The correct message is enqueued with a PDR', async (t) => {
           granuleId,
           files: [{ name: fileName }]
         }
-      ],
-      pdr: {
-        name: pdrName,
-        path: pdrPath
-      }
+      ]
     }
   };
-
-  t.deepEqual(JSON.parse(messages[0].Body), expectedMessage);
+  const message = JSON.parse(messages[0].Body);
+  t.truthy(message.cumulus_meta.execution_name);
+  expectedMessage.cumulus_meta.execution_name = message.cumulus_meta.execution_name;
+  t.deepEqual(message, expectedMessage);
 });
 
 test.todo('An appropriate error is thrown if the message template could not be fetched');
