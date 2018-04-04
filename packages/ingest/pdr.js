@@ -5,6 +5,7 @@ const fs = require('fs-extra');
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 const path = require('path');
+const { CollectionConfigStore } = require('@cumulus/common');
 const { baseProtocol } = require('./protocol');
 const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
@@ -20,13 +21,14 @@ const { sftpMixin } = require('./sftp');
  * @abstract
  */
 class Discover {
-  constructor(
+  // FIXME Add comments to this method
+  constructor( // eslint-disable-line require-jsdoc
     stack,
     bucket,
     collection,
     provider,
     useList = false,
-    folder = 'pdrs',
+    folder = 'pdrs'
   ) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
@@ -49,7 +51,8 @@ class Discover {
 
   /**
    * discover PDRs from an endpoint
-   * @return {Promise}
+   *
+   * @returns {Promise} - resolves to new PDRs?
    * @public
    */
   async discover() {
@@ -100,14 +103,15 @@ class Discover {
  * @abstract
  */
 class Parse {
-  constructor(
+  // FIXME Add comments to this method
+  constructor( // eslint-disable-line require-jsdoc
     pdr,
     stack,
     bucket,
-    collection,
     provider,
     useList = false,
-    folder = 'pdrs') {
+    folder = 'pdrs'
+  ) {
     if (this.constructor === Parse) {
       throw new TypeError('Can not construct abstract class.');
     }
@@ -115,7 +119,6 @@ class Parse {
     this.pdr = pdr;
     this.stack = stack;
     this.bucket = bucket;
-    this.collection = collection;
     this.provider = provider;
     this.folder = folder;
     this.useList = useList;
@@ -175,14 +178,13 @@ class Parse {
   /**
    * This method parses a PDR and returns all the granules in it
    *
-   * @param {string} pdrLocalPath PDR path on disk
-   * @return {Promise}
+   * @param {string} pdrLocalPath - PDR path on disk
+   * @returns {Promise} the parsed PDR
    * @public
    */
   async parse(pdrLocalPath) {
-    // catching all parse errors here to mark the pdr as failed
-    // if any error occured
-    const parsed = await parsePdr(pdrLocalPath, this.collection, this.pdr.name);
+    const collectionConfigStore = new CollectionConfigStore(this.bucket, this.stack);
+    const parsed = await parsePdr(pdrLocalPath, collectionConfigStore, this.pdr.name);
 
     // each group represents a Granule record.
     // After adding all the files in the group to the Queue

@@ -2,6 +2,7 @@
   "title": "ParsePdrConfig",
   "description": "Describes the config used by the parse-pdr task",
   "type": "object",
+  "required": [ "stack", "provider", "internalBucket"],
   "properties": {
     "pdrFolder": {
       "type": "string"
@@ -21,24 +22,7 @@
         }
       }
     },
-    "buckets": {
-      "type": "object",
-      "description": "aws s3 buckets used by this task",
-      "properties": {
-        "internal": { "type": "string" },
-        "private": { "type": "string" },
-        "protected": { "type": "string" },
-        "public": { "type": "string" }
-      }
-    },
-    "collection": {
-      "type": "object",
-      "required": ["name", "granuleIdExtraction"],
-      "properties": {
-        "name": { "type": "string" },
-        "granuleIdExtraction": { "type": "string" }
-      }
-    },
+    "internalBucket": { "type": "string" },
     "useList": {
       "description": "flag to tell ftp server to use 'LIST' instead of 'STAT'",
       "default": false,
