@@ -124,24 +124,23 @@ async function loadPdrFile(pdrFilePath) {
 }
 
 // FIXME Figure out what this function does and document it
-function granuleFromFileGroup(fileGroup, granuleIdExtraction, pdrName) {
+async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) { // eslint-disable-line require-jsdoc, max-len
   if (!fileGroup.get('DATA_TYPE')) throw new PDRParsingError('DATA_TYPE is missing');
   const dataType = fileGroup.get('DATA_TYPE').value;
 
   // get all the file specs in each group
   const specs = fileGroup.objects('FILE_SPEC');
-
-  // FIXME Improve this error message
-  if (specs.length === 0) throw new Error(`No FILE_SPEC sections found.`);
+  if (specs.length === 0) throw new Error('No FILE_SPEC sections found.');
 
   const files = specs.map(parseSpec.bind(null, pdrName));
-  const granuleId = extractGranuleId(files[0].name, granuleIdExtraction);
+
+  const collectionConfig = await collectionConfigStore.get(dataType);
 
   return {
-    granuleId,
     dataType,
-    granuleSize: files.reduce((total, file) => total + file.fileSize, 0),
-    files
+    files,
+    granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
+    granuleSize: files.reduce((total, file) => total + file.fileSize, 0)
   };
 }
 
@@ -149,11 +148,11 @@ function granuleFromFileGroup(fileGroup, granuleIdExtraction, pdrName) {
  * Parse a PDR file
  *
  * @param {string} pdrFilePath - the file to be parsed
- * @param {Object} collection - a collection config
+ * @param {string} collectionConfigsUrl - the S3 location of the collection configs
  * @param {string} pdrName - the name of the PDR
- * @returns {Object} an object representing the PDR
+ * @returns {Promise<Object>} an object representing the PDR
  */
-exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
+exports.parsePdr = async function parsePdr(pdrFilePath, collectionConfigStore, pdrName) {
   let pdrDocument = await loadPdrFile(pdrFilePath);
 
   // check if the PDR has groups
@@ -165,8 +164,9 @@ exports.parsePdr = async function parsePdr(pdrFilePath, collection, pdrName) {
   // Get all the file groups
   const fileGroups = pdrDocument.objects('FILE_GROUP');
 
-  const granules = fileGroups.map((fileGroup) =>
-    granuleFromFileGroup(fileGroup, collection.granuleIdExtraction, pdrName));
+  const promisedGranules = fileGroups.map((fileGroup) =>
+    granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore));
+  const granules = await Promise.all(promisedGranules);
 
   // check file count
   const filesCount = granules.reduce((total, granule) => total + granule.files.length, 0);
