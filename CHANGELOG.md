@@ -12,9 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
-update queue-granules to return the sfn-execution-arns queued and pdr if exists.
-add pdr to ingest message meta.pdr instead of payload, so the pdr information doesn't get lost in the ingest workflow, and ingested granule in elasticsearch has pdr name.
-fix sf-sns-report schema, remove the invalid part
+
 ## [v1.3.0] - 2018-03-29
 
 ### Deprecated
