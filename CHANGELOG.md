@@ -17,18 +17,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The config no longer takes a "collection" property
   - The config now takes an "internalBucket" property
   - The config now takes a "stackName" property
+- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
+  the config schema of the **parse-pdr** task
+  - The config no longer takes a "buckets" property
+  - The config no longer takes a "collection" property
+  - The config now takes an "internalBucket" property
+  - The "stack", "provider", and "internalBucket" config properties are now
+    required
 
 ### Removed
 - Removed the `findTmpTestDataDirectory()` function from
   `@cumulus/common/test-utils`
 
 ### Fixed
-- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - The
-  **queue-granules** task now enqueues a **sync-granule** task with the
-  correct collection config for that granule based on the granule's data-type.
-  It had previously been using the collection config from the config of the
-  **queue-granules** task, which was a problem if the granules being queued
-  belonged to different data-types.
+- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450)
+  - The **queue-granules** task now enqueues a **sync-granule** task with the
+    correct collection config for that granule based on the granule's
+    data-type. It had previously been using the collection config from the
+    config of the **queue-granules** task, which was a problem if the granules
+    being queued belonged to different data-types.
+  - The **parse-pdr** task now handles the case where a PDR contains granules
+    with different data types, and uses the correct granuleIdExtraction for
+    each granule.
 
 ### Added
 - **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
