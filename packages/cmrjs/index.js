@@ -18,6 +18,14 @@ const logDetails = {
   type: 'processing'
 };
 
+/**
+ * Search for a concept on CMR
+ *
+ * @param {string} type - the concept type
+ * @param {object} searchParams - cmr search params
+ * @param {array} existingResults - array of results returned in previous recursive calls
+ * @returns {Promise.<array>} an array of search results
+ */
 async function searchConcept(type, searchParams, existingResults) {
   const limit = process.env.CMR_LIMIT || 100;
   const pageSize = process.env.CMR_PAGE_SIZE || 50;
@@ -63,6 +71,17 @@ async function searchConcept(type, searchParams, existingResults) {
   return _existingResults.slice(0, limit);
 }
 
+/**
+ * Posts a records of any kind (collection, granule, etc) to
+ * CMR
+ *
+ * @param {string} type - the record type
+ * @param {string} xml - the CMR record in xml
+ * @param {string} identifierPath - the record id
+ * @param {string} provider - the CMR provider
+ * @param {string} token - the CMR token
+ * @returns {Promise.<object>} the CMR response object
+ */
 async function ingestConcept(type, xml, identifierPath, provider, token) {
   // Accept either an XML file, or an XML string itself
   let xmlString = xml;
@@ -120,6 +139,15 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
   }
 }
 
+/**
+ * Deletes a record from the CMR
+ *
+ * @param {string} type - the record type
+ * @param {string} identifier - the record id 
+ * @param {string} provider - the CMR provider
+ * @param {string} token - the CMR token
+ * @returns {Promise.<object>} the CMR response object
+ */
 async function deleteConcept(type, identifier, provider, token) {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
 
@@ -146,7 +174,19 @@ async function deleteConcept(type, identifier, provider, token) {
   return xmlObject;
 }
 
+/**
+ * The CMR class
+ */
 class CMR {
+
+  /**
+   * The constructor for the CMR class
+   *
+   * @param {string} provider - the CMR provider
+   * @param {string} clientId - the CMR clientId
+   * @param {string} username - CMR username
+   * @param {stirng} password - CMR password
+   */
   constructor(provider, clientId, username, password) {
     this.clientId = clientId;
     this.provider = provider;
@@ -154,33 +194,73 @@ class CMR {
     this.password = password;
   }
 
+  /**
+   * The method for getting the token
+   *
+   * @returns {Promise.<string>} the token
+   */
   async getToken() {
     return updateToken(this.provider, this.clientId, this.username, this.password);
   }
 
+  /**
+   * Adds a collection record to the CMR
+   *
+   * @param {string} xml - the collection xml document
+   * @returns {Promise.<object>} the CMR response
+   */
   async ingestCollection(xml) {
     const token = await this.getToken();
     return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, token);
   }
-
+  /**
+   * Adds a granule record to the CMR
+   *
+   * @param {string} xml - the granule xml document
+   * @returns {Promise.<object>} the CMR response
+   */
   async ingestGranule(xml) {
     const token = await this.getToken();
     return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, token);
   }
 
+  /**
+   * Deletes a collection record from the CMR
+   *
+   * @param {string} datasetID - the collection unique id
+   * @returns {Promise.<Object>} the CMR response
+   */
   async deleteCollection(datasetID) {
     return deleteConcept('collection', datasetID);
   }
 
+  /**
+   * Deletes a granule record from the CMR
+   *
+   * @param {string} granuleUR - the granule unique id
+   * @returns {Promise.<Object>} the CMR response
+   */
   async deleteGranule(granuleUR) {
     const token = await this.getToken();
     return deleteConcept('granules', granuleUR, this.provider, token);
   }
 
+  /**
+   * Search in collections
+   *
+   * @param {string} searchParams - the search parameters
+   * @returns {Promise.<Object>} the CMR response
+   */
   async searchCollections(searchParams) {
     return searchConcept('collection', searchParams, []);
   }
 
+  /**
+   * Search in granules 
+   *
+   * @param {string} searchParams - the search parameters
+   * @returns {Promise.<Object>} the CMR response
+   */
   async searchGranules(searchParams) {
     return searchConcept('granule', searchParams, []);
   }
