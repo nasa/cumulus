@@ -2,16 +2,16 @@
 
 const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
-const get = require('lodash.get');
-const log = require('@cumulus/common/log');
-const path = require('path');
-const { CollectionConfigStore } = require('@cumulus/common');
-const { baseProtocol } = require('./protocol');
 const { ftpMixin } = require('./ftp');
+const get = require('lodash.get');
 const { httpMixin } = require('./http');
+const log = require('@cumulus/common/log');
 const { parsePdr } = require('./parse-pdr');
+const path = require('path');
 const { s3Mixin } = require('./s3');
 const { sftpMixin } = require('./sftp');
+const { baseProtocol } = require('./protocol');
+const { CollectionConfigStore } = require('@cumulus/common');
 
 /**
  * This is a base class for discovering PDRs
@@ -21,8 +21,7 @@ const { sftpMixin } = require('./sftp');
  * @abstract
  */
 class Discover {
-  // FIXME Add comments to this method
-  constructor( // eslint-disable-line require-jsdoc
+  constructor(
     stack,
     bucket,
     collection,
@@ -103,8 +102,7 @@ class Discover {
  * @abstract
  */
 class Parse {
-  // FIXME Add comments to this method
-  constructor( // eslint-disable-line require-jsdoc
+  constructor(
     pdr,
     stack,
     bucket,
