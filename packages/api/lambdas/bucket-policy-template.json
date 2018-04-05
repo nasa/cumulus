@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Id": "Policy1522859869564",
+  "Statement": [
+      {
+          "Sid": "Stmt1522859852334",
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::cumulus-test-s3-prototype/*"
+      }
+  ]
+}
