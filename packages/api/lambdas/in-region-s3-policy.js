@@ -23,8 +23,7 @@ function getIpRanges(url) {
   return request({
     url: url,
     json: true
-  }).then((json) => json.prefixes)
-    .catch((err) => console.log(err));
+  }).then((json) => json.prefixes);
 }
 
 /**
@@ -64,7 +63,7 @@ function generatePolicyFromIpAddresses(ips) {
  *
  * @param {string} url - URL to retrieve the IP addresses
  * @param {string} region - AWS region
- * @returns {Object} - S3 bucket policy
+ * @returns {Promise<Object>} - S3 bucket policy
  */
 function generatePolicy(url, region) {
   return module.exports.getIpRanges(url)
@@ -81,7 +80,9 @@ function generatePolicy(url, region) {
  * @returns {undefined} - none
  */
 function handler(event, context, callback) {
-  callback(null, generatePolicy(ipUrl, defaultRegion));
+  generatePolicy(ipUrl, defaultRegion)
+    .then((policy) => callback(null, policy))
+    .catch((err) => callback(err));
 }
 
 module.exports = {
