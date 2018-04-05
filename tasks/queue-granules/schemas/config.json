@@ -3,10 +3,9 @@
   "description": "Describes the config used by the queue-granules task",
   "type": "object",
   "required": [
-    "granuleIngestMessageTemplateUri",
-    "internalBucket",
     "provider",
     "queueUrl",
+    "granuleIngestMessageTemplateUri",
     "stackName"
   ],
   "additionalProperties": false,
