@@ -21,10 +21,10 @@ const logDetails = {
 /**
  * Search for a concept on CMR
  *
- * @param {string} type - the concept type
- * @param {object} searchParams - cmr search params
- * @param {array} existingResults - array of results returned in previous recursive calls
- * @returns {Promise.<array>} an array of search results
+ * @param {string} type - the concept type. Choices are: collection, granule
+ * @param {Object} searchParams - cmr search params
+ * @param {Array} existingResults - array of results returned in previous recursive calls
+ * @returns {Promise.<Array>} an array of search results
  */
 async function searchConcept(type, searchParams, existingResults) {
   const limit = process.env.CMR_LIMIT || 100;
@@ -75,12 +75,12 @@ async function searchConcept(type, searchParams, existingResults) {
  * Posts a records of any kind (collection, granule, etc) to
  * CMR
  *
- * @param {string} type - the record type
+ * @param {string} type - the concept type. Choices are: collection, granule
  * @param {string} xml - the CMR record in xml
- * @param {string} identifierPath - the record id
- * @param {string} provider - the CMR provider
+ * @param {string} identifierPath - the concept's unique identifier
+ * @param {string} provider - the CMR provider id
  * @param {string} token - the CMR token
- * @returns {Promise.<object>} the CMR response object
+ * @returns {Promise.<Object>} the CMR response object
  */
 async function ingestConcept(type, xml, identifierPath, provider, token) {
   // Accept either an XML file, or an XML string itself
@@ -142,11 +142,11 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
 /**
  * Deletes a record from the CMR
  *
- * @param {string} type - the record type
- * @param {string} identifier - the record id 
- * @param {string} provider - the CMR provider
+ * @param {string} type - the concept type. Choices are: collection, granule
+ * @param {string} identifier - the record id
+ * @param {string} provider - the CMR provider id
  * @param {string} token - the CMR token
- * @returns {Promise.<object>} the CMR response object
+ * @returns {Promise.<Object>} the CMR response object
  */
 async function deleteConcept(type, identifier, provider, token) {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
@@ -182,10 +182,10 @@ class CMR {
   /**
    * The constructor for the CMR class
    *
-   * @param {string} provider - the CMR provider
+   * @param {string} provider - the CMR provider id
    * @param {string} clientId - the CMR clientId
    * @param {string} username - CMR username
-   * @param {stirng} password - CMR password
+   * @param {string} password - CMR password
    */
   constructor(provider, clientId, username, password) {
     this.clientId = clientId;
@@ -207,7 +207,7 @@ class CMR {
    * Adds a collection record to the CMR
    *
    * @param {string} xml - the collection xml document
-   * @returns {Promise.<object>} the CMR response
+   * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml) {
     const token = await this.getToken();

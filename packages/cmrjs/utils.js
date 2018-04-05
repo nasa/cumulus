@@ -32,7 +32,7 @@ const ValidationError = createErrorType('ValidationError');
 
 /**
  * Determines the appropriate CMR host endpoint based on a given
- * value for CMR_ENVIRONEMENT environment variable. Defaults
+ * value for CMR_ENVIRONMENT environment variable. Defaults
  * to the uat cmr
  *
  * @returns {string} the cmr host address
@@ -65,7 +65,7 @@ const xmlParseOptions = {
  * based on the type passed, e.g. token, search, etc.
  *
  * @param {string} type - the type of the service, e.g. token, search
- * @param {string} cmrProvider - name of the CMR provider
+ * @param {string} cmrProvider - the CMR provider id
  * @returns {string} the cmr url
  */
 function getUrl(type, cmrProvider) {
@@ -145,10 +145,10 @@ async function validate(type, xml, identifier, provider) {
 /**
  * Returns a valid a CMR token
  *
- * @param {string} cmrProvider - the CMR provider
+ * @param {string} cmrProvider - the CMR provider id
  * @param {string} clientId - the CMR clientId
  * @param {string} username - CMR username
- * @param {stirng} password - CMR password
+ * @param {string} password - CMR password
  * @returns {Promise.<string>} the token
  */
 async function updateToken(cmrProvider, clientId, username, password) {
