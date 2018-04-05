@@ -13,6 +13,7 @@ test.beforeEach(async (t) => {
   t.context.bucket = randomString();
   await s3().createBucket({ Bucket: t.context.bucket }).promise();
 
+  // Utility function to return the S3 key of a collection config
   t.context.collectionConfigKey = (dataType) =>
     `${t.context.stackName}/collections/${dataType}.json`;
 });
@@ -22,6 +23,7 @@ test.afterEach(async (t) => {
     await recursivelyDeleteS3Bucket(t.context.bucket);
   }
   catch (err) {
+    // Some tests delete the bucket before this "afterEach" hook is run
     if (err.code !== 'NoSuchBucket') throw err;
   }
 });
