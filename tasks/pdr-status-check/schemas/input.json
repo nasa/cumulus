@@ -17,9 +17,16 @@
       }
     },
     "failed": {
+      "description": "List of failed execution arns with reason",
       "type": "array",
       "items": {
-        "type": "string"
+        "description:": "failed",
+        "type": "object",
+        "required": ["arn", "reason"],
+        "properties": {
+          "arn": { "type": "string" },
+          "reason": { "type": "string" }
+        }
       }
     },
     "counter": { "type": "integer" },
