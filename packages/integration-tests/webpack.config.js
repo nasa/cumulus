@@ -11,10 +11,6 @@ module.exports = {
   devtool: 'sourcemap',
   module: {
     loaders: [{
-      test: /\.js?$/,
-      exclude: /node_modules(?!\/@cumulus\/)/,
-      loader: 'babel'
-    }, {
       test: /\.json$/,
       loader: 'json'
     }]
