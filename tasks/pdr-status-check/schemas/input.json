@@ -5,12 +5,14 @@
   "required": ["running", "pdr"],
   "properties": {
     "running": {
+      "description": "List of execution arns which are queued or running",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
     "completed": {
+      "description": "List of completed execution arns",
       "type": "array",
       "items": {
         "type": "string"
@@ -20,7 +22,6 @@
       "description": "List of failed execution arns with reason",
       "type": "array",
       "items": {
-        "description:": "failed",
         "type": "object",
         "required": ["arn", "reason"],
         "properties": {
