@@ -38,6 +38,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "ava": "^0.25.0",
+    "babel-eslint": "^8.2.2",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.9.0",
