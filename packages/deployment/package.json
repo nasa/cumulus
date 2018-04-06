@@ -4,6 +4,7 @@
   "description": "Deployment templates for cumulus",
   "scripts": {
     "test": "ava --no-color",
+    "test-coverage": "nyc ava",
     "build": "babel lib -d app",
     "watch": "babel lib -d app -w",
     "postinstall": "npm run build"
@@ -19,6 +20,11 @@
     "require": [
       "babel-polyfill",
       "babel-register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "test"
     ]
   },
   "babel": {
@@ -51,6 +57,7 @@
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
     "@ava/babel-preset-transform-test-files": "^3.0.0",
-    "ava": "^0.25.0"
+    "ava": "^0.25.0",
+    "nyc": "^11.6.0"
   }
 }
