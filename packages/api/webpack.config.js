@@ -1,5 +1,5 @@
 module.exports = {
-  entry: ['babel-polyfill', './index.js'],
+  entry: ['./index.js'],
   output: {
     libraryTarget: 'commonjs2',
     filename: 'dist/index.js'
@@ -19,10 +19,6 @@ module.exports = {
       /graceful-fs\/fs.js/
     ],
     loaders: [{
-      test: /\.js?$/,
-      exclude: /node_modules(?!\/@cumulus)/,
-      loader: 'babel'
-    }, {
       test: /\.json$/,
       loader: 'json'
     }]

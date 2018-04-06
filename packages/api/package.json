@@ -12,11 +12,6 @@
   },
   "ava": {
     "files": "tests/test-*.js",
-    "babel": "inherit",
-    "require": [
-      "babel-polyfill",
-      "babel-register"
-    ],
     "serial": true
   },
   "nyc": {
@@ -30,12 +25,6 @@
   "keywords": [
     "Cumulus"
   ],
-  "babel": {
-    "presets": [
-      "es2017",
-      "es2015"
-    ]
-  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
@@ -46,10 +35,6 @@
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",
     "aws-sdk": "^2.95.0",
-    "babel-core": "^6.25.0",
-    "babel-loader": "^6.2.4",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1",
     "basic-auth": "^1.1.0",
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^13.2.0",
