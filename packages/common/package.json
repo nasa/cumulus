@@ -18,8 +18,10 @@
   "scripts": {
     "lint": "eslint .",
     "mocha": "mocha-webpack test/**/*.js",
+    "mocha-coverage": "nyc mocha-webpack test/**/*.js",
     "mocha-junit": "npm run mocha -- --reporter mocha-junit-reporter --reporter-options mochaFile=test-results.xml",
     "test": "npm run mocha && ava",
+    "test-coverage": "npm run mocha && nyc ava",
     "test-ci": "npm run lint && npm run mocha-junit"
   },
   "ava": {
@@ -28,6 +30,12 @@
     "require": [
       "babel-polyfill",
       "babel-register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "tests",
+      "test"
     ]
   },
   "babel": {
@@ -80,6 +88,7 @@
   },
   "devDependencies": {
     "ajv": "^5.5.2",
-    "ava": "^0.25.0"
+    "ava": "^0.25.0",
+    "nyc": "^11.6.0"
   }
 }
