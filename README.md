@@ -79,6 +79,14 @@ Run the test commands next
 Run end to end tests by
 
     $ yarn e2e
+    
+### Code Coverage
+
+Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The CircleCI build tests coverage. A summary can be viewed in the build output. Detailed code coverage in html can be found by going to the Artifacts tab and navigating to `index.html` in the coverage folder. Clicking on `index.html` will take you to an html page showing code coverage for each individual file.
+
+The `yarn test` command will output code coverage data for the entire Cumulus repository. To create an html report, run `nyc report --reporter html` and open the `index.html` file in the coverage folder.
+
+To run code coverage on an individual package during development, run `npm run test-coverage`. This will output the coverage in the terminal. An html report can be created using `nyc report --reporter html` as described above.
 
 ## Code quality checking
 
