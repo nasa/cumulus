@@ -48,8 +48,10 @@ program
       { name: 'bucket-name', value: program.bucketName },
       { name: 'workflow', value: program.workflow },
       { name: 'input-file', value: program.inputFile }])) {
-      testRunner.testWorkflow(program.stackName, program.bucketName,
-        program.workflow, program.inputFile);
+      testRunner.testWorkflow(
+        program.stackName, program.bucketName,
+        program.workflow, program.inputFile
+      );
     }
   });
 

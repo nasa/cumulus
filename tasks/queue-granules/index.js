@@ -13,18 +13,18 @@ const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 async function queueGranules(event) {
   const granules = event.input.granules || [];
 
-  await Promise.all(
-    granules.map((granule) => enqueueGranuleIngestMessage(
-      granule,
-      event.config.queueUrl,
-      event.config.granuleIngestMessageTemplateUri,
-      event.config.provider,
-      event.config.collection,
-      event.input.pdr
-    ))
-  );
+  const executionArns = await Promise.all(granules.map((granule) => enqueueGranuleIngestMessage(
+    granule,
+    event.config.queueUrl,
+    event.config.granuleIngestMessageTemplateUri,
+    event.config.provider,
+    event.config.collection,
+    event.input.pdr
+  )));
 
-  return { granules_queued: granules.length };
+  const result = { running: executionArns };
+  if (event.input.pdr) result.pdr = event.input.pdr;
+  return result;
 }
 exports.queueGranules = queueGranules;
 

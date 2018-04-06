@@ -2,8 +2,23 @@
   "title": "QueueGranulesOutput",
   "description": "Describes the output produced by the queue-granules task",
   "type": "object",
-  "required": [ "granules_queued" ],
+  "required": [ "running" ],
   "properties": {
-    "granules_queued": { "type": "integer" }
+    "running": {
+      "type": "array",
+      "description": "a list of step function execution arns of granules queued",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pdr": {
+      "description": "Product Delivery Record",
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    }
   }
 }

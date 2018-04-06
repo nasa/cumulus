@@ -2,3 +2,5 @@
 **/dist/**
 packages/deployment/app/*.js
 packages/common/log.js
+**/.nyc_output/**
+**/coverage/**

@@ -4,7 +4,7 @@
   "description": "Cumulus Framework for ingesting and processing Nasa Earth data streams",
   "scripts": {
     "e2e": "ava tests/*.js --serial",
-    "test": "lerna run test",
+    "test": "nyc lerna run test",
     "bootstrap": "lerna bootstrap",
     "ybootstrap": "lerna bootstrap --npm-client=yarn",
     "bootstrap-no-build": "lerna bootstrap --npm-client=yarn --ignore-scripts",
@@ -12,7 +12,8 @@
     "publish": "lerna publish --skip-git --repo-version $VERSION --yes",
     "clean": "lerna clean",
     "build": "lerna run --parallel --no-sort build",
-    "watch": "lerna run --parallel --no-sort watch"
+    "watch": "lerna run --parallel --no-sort watch",
+    "coverage": "nyc report --reporter text-summary --reporter html"
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,13 @@
     "require": [
       "babel-polyfill",
       "babel-register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "**/tests",
+      "**/test",
+      "packages/common/.tmp"
     ]
   },
   "keywords": [
@@ -60,6 +68,7 @@
     "exports-loader": "^0.6.3",
     "json-loader": "^0.5.4",
     "lerna": "^2.9.0",
+    "nyc": "^11.6.0",
     "prepend-loader": "0.0.2",
     "source-map-support": "^0.4.2",
     "transform-loader": "^0.2.3",
