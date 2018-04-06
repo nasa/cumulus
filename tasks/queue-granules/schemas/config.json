@@ -6,7 +6,8 @@
     "provider",
     "queueUrl",
     "granuleIngestMessageTemplateUri",
-    "stackName"
+    "stackName",
+    "internalBucket"
   ],
   "additionalProperties": false,
   "properties": {
