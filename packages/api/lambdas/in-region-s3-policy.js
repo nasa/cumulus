@@ -1,6 +1,6 @@
 'use strict';
 
-const request = require('request-promise');
+const got = require('got');
 const policyTemplate = require('./bucket-policy-template.json');
 
 const defaultRegion = 'us-east-1';
@@ -20,10 +20,8 @@ const ipUrl = 'https://ip-ranges.amazonaws.com/ip-ranges.json';
     service: 'AMAZON' }
  */
 function getIpRanges(url) {
-  return request({
-    url: url,
-    json: true
-  }).then((json) => json.prefixes);
+  return got.get(url, { json: true })
+    .then((json) => json.body.prefixes);
 }
 
 /**
@@ -84,6 +82,7 @@ function handler(event, context, callback) {
     .then((policy) => callback(null, policy))
     .catch((err) => callback(err));
 }
+
 
 module.exports = {
   handler,

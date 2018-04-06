@@ -68,8 +68,6 @@
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
-    "request": "^2.85.0",
-    "request-promise": "^4.2.2",
     "uuid": "^3.2.1",
     "webpack": "^1.15.0"
   },
