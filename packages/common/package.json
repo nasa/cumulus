@@ -86,7 +86,6 @@
     "webpack-node-externals": "^1.5.4"
   },
   "devDependencies": {
-    "ajv": "^5.5.2",
     "ava": "^0.25.0",
     "nyc": "^11.6.0"
   }
