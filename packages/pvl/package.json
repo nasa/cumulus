@@ -21,6 +21,11 @@
     "parameter value language",
     "object description lanuage"
   ],
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/pvl",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
