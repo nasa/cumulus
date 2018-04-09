@@ -1,5 +1,6 @@
 **/node_modules/**
 **/dist/**
 packages/deployment/app/*.js
+**/webpack.config.js
 **/.nyc_output/**
 **/coverage/**
