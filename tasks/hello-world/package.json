@@ -29,8 +29,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "json-loader": "^0.5.7",
-    "webpack": "^1.12.13"
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
   },
   "devDependencies": {
     "ava": "^0.23.0",

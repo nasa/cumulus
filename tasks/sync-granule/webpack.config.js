@@ -1,15 +1,24 @@
+const path = require('path');
+
+let mode = 'development';
+let devtool = 'inline-source-map';
+
+if(process.env.PRODUCTION) {
+  mode = 'production',
+  devtool = false  
+}
+
 module.exports = {
-  entry: ['./index.js'],
+  mode,
+  entry: './index.js',
   output: {
-    libraryTarget: 'commonjs2',
-    filename: 'dist/index.js'
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'dist')
   },
-  target: 'node',
-  devtool: 'source-map',
-  module: {
-    rules: [{
-      test: /\.json$/,
-      loader: 'json-loader'
-    }]
-  }
+  externals: [
+    'aws-ask',
+    'electron'
+  ],
+  devtool,
+  target: 'node'
 };
