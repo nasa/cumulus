@@ -20,6 +20,7 @@ const policyTemplate = {
   ]
 };
 
+// Hard coded for now for the purposes of the prototype
 const defaultRegion = 'us-east-1';
 const ipUrl = 'https://ip-ranges.amazonaws.com/ip-ranges.json';
 
