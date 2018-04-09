@@ -11,7 +11,10 @@
     "postinstall": "npm run build"
   },
   "ava": {
-    "files": "tests/test-*.js",
+    "files": [
+      "tests/test-*.js",
+      "!tests/test-in-region-s3-policy.js"
+    ],
     "babel": "inherit",
     "require": [
       "babel-polyfill",
