@@ -1,5 +1,6 @@
 'use strict';
 
+const { CollectionConfigStore } = require('@cumulus/common');
 const { S3 } = require('@cumulus/ingest/aws');
 const Manager = require('./base');
 const collectionSchema = require('./schemas').collection;
@@ -44,9 +45,9 @@ class Collection extends Manager {
   }
 
   async create(item) {
-    // write the record to S3
-    const key = `${process.env.stackName}/collections/${item.name}.json`;
-    await S3.put(process.env.internal, key, JSON.stringify(item));
+    const collectionConfigStore =
+      new CollectionConfigStore(process.env.internal, process.env.stackName);
+    await collectionConfigStore.put(item.name, item);
 
     return super.create(item);
   }
