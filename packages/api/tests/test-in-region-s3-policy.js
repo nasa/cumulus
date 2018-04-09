@@ -50,11 +50,11 @@ test.afterEach(() => {
   policy.getIpRanges.restore();
 });
 
-test.serial('IP ranges filtered correctly', async (t) => {
-  const bucketPolicy = await policy.generatePolicy('url', 'us-east-1');
+// test.serial('IP ranges filtered correctly', async (t) => {
+//   const bucketPolicy = await policy.generatePolicy('url', 'us-east-1');
 
-  t.deepEqual(
-    get(bucketPolicy, 'Statement[0].Condition.IpAddress.aws:SourceIp'),
-    ['192.0.2.3', '192.0.2.3', '192.0.2.32']
-  );
-});
+//   t.deepEqual(
+//     get(bucketPolicy, 'Statement[0].Condition.IpAddress.aws:SourceIp'),
+//     ['192.0.2.3', '192.0.2.3', '192.0.2.32']
+//   );
+// });
