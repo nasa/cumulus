@@ -120,8 +120,11 @@ jobs:
               # run the yarn link package-name on the integration tests
               cat cumulus_integration_tests_packages.txt | xargs -I % yarn link %
 
+              # copy override config
+              cp ../project/tests/config.override.yml spec
+
               # deploy latest version of the packages to the aws
-              yarn deploy
+              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
 
               # run the tests
               yarn test
