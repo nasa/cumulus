@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v1.4.0] - 2018-04-09
+
 ### Fixed
 - **CUMULUS-392 "queue-granules not returning the sfn-execution-arns queued"**
   - updated queue-granules to return the sfn-execution-arns queued and pdr if exists.
@@ -160,7 +163,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...HEAD
+[v1.4.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...v1.4.0
 [v1.3.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...v1.2.0
 [v1.1.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...v1.1.4
