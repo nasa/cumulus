@@ -5,9 +5,9 @@
   "scripts": {
     "e2e": "ava tests/*.js --serial",
     "test": "nyc lerna run test",
-    "bootstrap": "lerna bootstrap",
-    "ybootstrap": "lerna bootstrap --npm-client=yarn",
-    "bootstrap-no-build": "lerna bootstrap --npm-client=yarn --ignore-scripts",
+    "bootstrap": "lerna bootstrap --npm-client=npm",
+    "ybootstrap": "lerna bootstrap",
+    "bootstrap-no-build": "lerna bootstrap --ignore-scripts",
     "update": "lerna publish --skip-git --skip-npm",
     "publish": "lerna publish --skip-git --repo-version $VERSION --yes",
     "clean": "lerna clean",
