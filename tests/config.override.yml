@@ -1,16 +1,16 @@
-stackName: test-source-integration
+stackName: test-src-integration
 bucket: cumulus-test-sandbox-internal
 DiscoverAndQueuePdrs: &defaults
   meta:
-    stack: test-source-integration
+    stack: test-src-integration
     buckets:
       internal: cumulus-test-sandbox-internal
       private: cumulus-test-sandbox-private
     templates:
-      ParsePdr: s3://cumulus-test-sandbox-internal/test-source-integration/workflows/ParsePdr.json
-      IngestGranule: s3://cumulus-test-sandbox-internal/test-source-integration/workflows/IngestGranule.json
+      ParsePdr: s3://cumulus-test-sandbox-internal/test-src-integration/workflows/ParsePdr.json
+      IngestGranule: s3://cumulus-test-sandbox-internal/test-src-integration/workflows/IngestGranule.json
     queues:
-      startSF: https://sqs.us-east-1.amazonaws.com/{{AWS_ACCOUNT_ID}}/test-source-integration-startSF
+      startSF: https://sqs.us-east-1.amazonaws.com/{{AWS_ACCOUNT_ID}}/test-src-integration-startSF
 ParsePdr: *defaults
 IngestGranule:
   <<: *defaults
