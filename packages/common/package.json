@@ -16,6 +16,7 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
+    "build": "true",
     "lint": "eslint .",
     "mocha": "mocha-webpack test/**/*.js",
     "mocha-coverage": "nyc mocha-webpack test/**/*.js",
@@ -58,7 +59,7 @@
     "ajv-cli": "^1.1.1",
     "async": "^2.0.0",
     "aws-sdk": "^2.4.11",
-    "babel-core": "^6.13.2",
+    "babel-core": "^6.26.0",
     "babel-eslint": "^8.2.2",
     "babel-polyfill": "^6.13.0",
     "babel-preset-env": "^1.6.1",
@@ -87,7 +88,6 @@
     "webpack-node-externals": "^1.5.4"
   },
   "devDependencies": {
-    "ajv": "^5.5.2",
     "ava": "^0.25.0",
     "nyc": "^11.6.0"
   }
