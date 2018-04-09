@@ -26,7 +26,7 @@ class Discover {
     collection,
     provider,
     useList = false,
-    folder = 'pdrs',
+    folder = 'pdrs'
   ) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
