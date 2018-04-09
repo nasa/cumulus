@@ -178,17 +178,6 @@ async function findGitRepoRootDirectory(dirname) {
 exports.findGitRepoRootDirectory = findGitRepoRootDirectory;
 
 /**
- * Determine the path of the .tmp-test-data directory
- *
- * @returns {Promise.<string>} - the filesystem path of the .tmp-test-data directory
- */
-function findTmpTestDataDirectory() {
-  return exports.findGitRepoRootDirectory(process.cwd())
-    .then((gitRepoRoot) => path.join(gitRepoRoot, '.tmp-test-data'));
-}
-exports.findTmpTestDataDirectory = findTmpTestDataDirectory;
-
-/**
  * Determine the path of the packages/test-data directory
  *
  * @returns {Promise.<string>} - the filesystem path of the packages/test-data directory

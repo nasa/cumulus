@@ -11,10 +11,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
-  },
   "babel": {
     "presets": [
       "es2015"
@@ -22,6 +18,11 @@
     "plugins": [
       "transform-async-to-generator"
     ]
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/cmrjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
