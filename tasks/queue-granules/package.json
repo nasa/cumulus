@@ -6,6 +6,7 @@
   "directories": {
     "test": "tests"
   },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/queue-granules",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"

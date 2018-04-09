@@ -19,6 +19,7 @@ const {
   sqs,
   receiveSQSMessages
 } = require('../packages/common/aws');
+const { CollectionConfigStore } = require('../packages/common');
 const workflowSet = require('./fixtures/workflows/pdr_parse_ingest.json');
 const collections = require('./fixtures/collections.json');
 const providers = require('./fixtures/providers.json');
@@ -31,11 +32,19 @@ const context = {};
 const cmaFolder = 'cumulus-message-adapter';
 
 
-test.before(async() => {
+test.before(async () => {
   context.internal = randomString();
   context.stack = randomString();
   context.templates = {};
   await s3().createBucket({ Bucket: context.internal }).promise();
+
+  const collectionConfigStore = new CollectionConfigStore(context.internal, context.stack);
+  await Promise.all([
+    collectionConfigStore.put('MOD09GQ', { name: 'MOD09GQ', granuleExtractionId: '(.*)' }),
+    collectionConfigStore.put('AST_L1A', { name: 'AST_L1A', granuleExtractionId: '(.*)' }),
+    collectionConfigStore.put('MOD87GQ', { name: 'MOD87GQ', granuleExtractionId: '(.*)' }),
+    collectionConfigStore.put('MYD13A1', { name: 'MYD13A1', granuleExtractionId: '(.*)' })
+  ]);
 
   // download and unzip the message adapter
   const { src, dest } = await downloadCMA();
@@ -91,7 +100,7 @@ test.serial('Discover and queue PDRs with FTP provider', async (t) => {
   // discover-pdr must return a list of PDRs
   const pdrs = msg.stepOutputs.DiscoverPdrs.payload.pdrs;
   t.true(Array.isArray(pdrs));
-  t.is(pdrs.length, 4);
+  t.is(pdrs.length, 5);
 
   t.is(msg.output.payload.pdrs_queued, pdrs.length);
 });
@@ -105,23 +114,24 @@ test.serial('Parse Pdrs from the previous step', async (t) => {
 
   const messages = await receiveSQSMessages(context.queueUrl, 4);
 
-  for (const input of messages) {
-    const msg = await runWorkflow(workflow, input.Body);
-    t.truthy(msg.input.payload.pdr);
-    t.is(
-      msg.output.payload.granules.length,
-      msg.output.payload.granulesCount
-    );
-  }
+  await Promise.all( // eslint-disable-line function-paren-newline
+    messages.map(async (input) => {
+      const msg = await runWorkflow(workflow, input.Body);
+      t.truthy(msg.input.payload.pdr);
+      t.is(
+        msg.output.payload.granules.length,
+        msg.output.payload.granulesCount
+      );
+    }));
 });
 
-test.afterEach.always(async(t) => {
-  await deleteCMAFromTasks(t.context.workflow, cmaFolder);
-});
+test.afterEach.always(async (t) =>
+  deleteCMAFromTasks(t.context.workflow, cmaFolder));
 
-test.after.always('final cleanup', async() => {
-  await recursivelyDeleteS3Bucket(context.internal);
-  await sqs().deleteQueue({ QueueUrl: context.queueUrl }).promise();
-  await fs.remove(context.src);
-  await fs.remove(context.dest);
-});
+test.after.always('final cleanup', () =>
+  Promise.all([
+    recursivelyDeleteS3Bucket(context.internal),
+    sqs().deleteQueue({ QueueUrl: context.queueUrl }).promise(),
+    fs.remove(context.src),
+    fs.remove(context.dest)
+  ]));

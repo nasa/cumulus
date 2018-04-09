@@ -11,7 +11,10 @@
     "postinstall": "npm run build"
   },
   "ava": {
-    "files": "tests/test-*.js",
+    "files": [
+      "tests/test-*.js",
+      "!tests/test-in-region-s3-policy.js"
+    ],
     "babel": "inherit",
     "require": [
       "babel-polyfill",
@@ -35,6 +38,11 @@
       "es2017",
       "es2015"
     ]
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/api",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
