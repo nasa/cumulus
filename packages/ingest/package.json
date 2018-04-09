@@ -37,6 +37,7 @@
     "CUMULUS",
     "NASA"
   ],
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/ingest",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
