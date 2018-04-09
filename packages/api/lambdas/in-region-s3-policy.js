@@ -1,7 +1,24 @@
 'use strict';
 
 const got = require('got');
-const policyTemplate = require('./bucket-policy-template.json');
+
+/**
+ * Bucket policy template for S3 GET access. Currently pointing to an
+ * ARN of a test bucket for the prototyping purposes.
+ */
+const policyTemplate = {
+  Version: '2012-10-17',
+  Id: 'S3PrototypePolicy',
+  Statement: [
+    {
+      Sid: 'Stmt1522859852334',
+      Effect: 'Allow',
+      Principal: '*',
+      Action: 's3:GetObject',
+      Resource: 'arn:aws:s3:::cumulus-test-s3-prototype/*'
+    }
+  ]
+};
 
 const defaultRegion = 'us-east-1';
 const ipUrl = 'https://ip-ranges.amazonaws.com/ip-ranges.json';
