@@ -3,3 +3,4 @@
 packages/deployment/app/*.js
 **/.nyc_output/**
 **/coverage/**
+example
