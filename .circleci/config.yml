@@ -95,7 +95,7 @@ jobs:
           command: yarn e2e
 
       - run:
-          name: Running AWS Integration Tests with cumulus source code
+          name: Prepare for Integration Tests
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
@@ -106,6 +106,15 @@ jobs:
               # update stackname 
               cd example 
               sed -i -- 's/npm/src/g' spec/config.yml
+
+
+            fi
+
+      - run:
+          name: Run AWS Integration Tests with cumulus source code
+          command: |
+            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
+              cd example
 
               # deploy latest version of the packages to the aws
               ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
