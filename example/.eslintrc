@@ -1,0 +1,92 @@
+{
+  "root": true,
+  "extends": "airbnb",
+  "plugins": ["eslint-plugin-jsdoc"],
+  "rules": {
+    "require-jsdoc": ["error", {
+      "require": {
+        "FunctionDeclaration": true,
+        "MethodDefinition": true,
+        "ClassDeclaration": true,
+        "ArrowFunctionExpression": true
+      }
+    }],
+    "valid-jsdoc": [ "error", {
+      "prefer": {
+        "arg": "param",
+        "return": "returns"
+      },
+      "preferType": {
+        "Boolean": "boolean",
+        "Number": "number",
+        "String": "string",
+        "object": "Object",
+        "array": "Array",
+        "date": "Date",
+        "regexp": "RegExp",
+        "Regexp": "RegExp",
+        "promise": "Promise"
+      },
+      "requireReturn": true
+    }],
+    "jsdoc/check-param-names": "error",
+    "jsdoc/check-tag-names": "error",
+    "jsdoc/check-types": "off",
+    "jsdoc/newline-after-description": "error",
+    "jsdoc/require-description-complete-sentence": "off",
+    "jsdoc/require-example": "off",
+    "jsdoc/require-hyphen-before-param-description": "error",
+    "jsdoc/require-param": "error",
+    "jsdoc/require-param-description": "error",
+    "jsdoc/require-param-name": "error",
+    "jsdoc/require-param-type": "error",
+    "jsdoc/require-returns-description": "error",
+    "jsdoc/require-returns-type": "error",
+    "generator-star-spacing": "off",
+    "import/no-extraneous-dependencies": "off",
+    "import/newline-after-import": "off",
+    "no-warning-comments": [
+      2,
+      {
+        "terms": [
+          "TODO",
+          "fixme"
+        ],
+        "location": "anywhere"
+      }
+    ],
+    "no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_" }
+    ],
+    "no-useless-escape": "off",
+    "no-console": "warn",
+    "spaced-comment": "off",
+    "require-yield": "off",
+    "prefer-template": "warn",
+    "no-underscore-dangle": "off",
+    "comma-dangle": [
+      "warn",
+      "never"
+    ],
+    "strict": "off",
+    "guard-for-in": "off",
+    "object-shorthand": "off",
+    "space-before-function-paren": [
+      "warn",
+      "never"
+    ],
+    "brace-style": [
+      2,
+      "stroustrup"
+    ],
+    "max-len": [
+      2,
+      {
+        "code": 100,
+        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+      }
+    ],
+    "arrow-parens": ["error", "always"]
+  }
+}
