@@ -24,10 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The config now takes a "stackName" property
 - [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
   the config schema of the **parse-pdr** task
-  - The config no longer takes a "buckets" property
   - The config no longer takes a "collection" property
-  - The config now takes an "internalBucket" property
-  - The "stack", "provider", and "internalBucket" config properties are now
+  - The "stack", "provider", and "bucket" config properties are now
     required
 
 ### Removed
