@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - fixed pdr-status-check schema, the failed execution contains arn and reason
 - **CUMULUS-206** make sure homepage and repository urls exist in package.json files of tasks and packages
 
+### Added
+- Example folder with a cumulus deployment example
+
 ### Changed
 - [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
   the config schema of the **queue-granules** task
