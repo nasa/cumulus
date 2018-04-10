@@ -1,19 +1,10 @@
 #  Cumulus Integration Test Project
 
-[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus-integration-tests.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus-integration-tests)
-
-## What is Cumulus?
-
-Cumulus is a cloud-based data ingest, archive, distribution and management
-prototype for NASA's future Earth science data streams.
-
-Read the [Cumulus Documentation](https://cumulus-nasa.github.io/)
-
 ## Installation
 
 ```bash
 nvm use
-npm install
+yarn
 ```
 
 ## Running tests locally
@@ -95,37 +86,3 @@ Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and 
 The workflow should be configured as it would be for a normal Cumulus deployment in `workflows.yml`. It must be deployed to the current deployment if testing locally.
 
 A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files. 
-
-# CircleCI
-This is how our integration tests on circleci install and use cumulus packages:
-- If a package exists on npm, the source code of the packages is installed from npm
-- if a package does not exists on npm yet, circleci installs it from the Cumulus repo
-- by default the packages are installed from the `master` branch of the Cumulus repo
-- You can specify the branch of the cumulus repo by:
-  - setting `CUMULUS_BRANCH` environment variable on circleci
-  - adding the `.cumulus_branch` file on the root of the integration repo and specifying the branch name
-  - `CUMULUS_BRANCH` takes precedent over `.cumulus_branch` file name
-
-## Using latest Cumulus Source code for local tests
-By default, the integration tests use latests Cumulus packages published to the NPM. To use the packages from the Cumulus repository, do the following:
-- Make sure cumulus repo is cloned relative to the integration repo. We assume the cumulus repo is cloned to `../cumulus`
-- Install all the dependencies in the cumulus repo by running `yarn` and `yarn bootstrap-no-build` in the cumulus folder
-- Run `./bin/prepare` command in this folder
-- deploy aws by running the kes command (as explained above)
-- run the tests
-
-## How to make changes to the cumulus repo that require changes to the cumulus-integration-tests repo
-- Create a branch on the `cumulus` repo
-- Make and commit your changes in the branch on the `cumulus` repo
-- Push the branch to the `cumulus` repo
-- Create a new branch from `master` in the `cumulus-integration-tests` repo
-- Update `.cumulus_branch` and point it at your branch on the `cumulus` repo
-- Update the package version in `package.json` to the version of the next release (if you don't know what the next version is going to be contact the Cumulus scrum master)
-- To test locally, run `./bin/prepare`, deploy to AWS, and follow the [Run all tests] section in this README
-- To test on CircleCI, push your changes to github and check CircleCI
-
-## Forcing CircleCI to use packages from cumulus core
-CircleCI will uses packages from NPM to run the integration tests. If you want to force the CI to use packages from the cumulus repo, do the following:
-- Update @cumulus packages version to in `package.json` to a version not released yet
-- If you need to get the source code from a branch of Cumulus other than master, set environment variable `CUMULUS_BRANCH`
-
