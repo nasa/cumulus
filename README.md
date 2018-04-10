@@ -79,6 +79,11 @@ Run the test commands next
 Run end to end tests by
 
     $ yarn e2e
+
+### Running integration tests on aws
+
+- Run `./bin/prepare`
+- Deploy your instance integrations on aws and run tests by following the steps [here](example/README.md)
     
 ### Code Coverage
 
