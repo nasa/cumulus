@@ -15,7 +15,7 @@ const log = require('@cumulus/common/log');
 * @param {string} event.config.stack - the name of the deployment stack
 * @param {string} event.config.pdrFolder - folder for the PDRs
 * @param {Object} event.config.provider - provider information
-* @param {Object} event.config.buckets - S3 buckets
+* @param {Object} event.config.bucket - the internal S3 bucket
 * @returns {Promise.<Object>} - see schemas/output.json for detailed output schema
 * that is passed to the next task in the workflow
 **/
@@ -28,7 +28,7 @@ function parsePdr(event) {
   const parse = new Parse(
     input.pdr,
     config.stack,
-    config.internalBucket,
+    config.bucket,
     provider,
     config.useList
   );
