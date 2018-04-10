@@ -2,7 +2,7 @@
   "title": "ParsePdrConfig",
   "description": "Describes the config used by the parse-pdr task",
   "type": "object",
-  "required": [ "stack", "provider", "internalBucket"],
+  "required": [ "stack", "provider", "bucket"],
   "properties": {
     "pdrFolder": {
       "type": "string"
@@ -22,7 +22,7 @@
         }
       }
     },
-    "internalBucket": { "type": "string" },
+    "bucket": { "type": "string" },
     "useList": {
       "description": "flag to tell ftp server to use 'LIST' instead of 'STAT'",
       "default": false,
