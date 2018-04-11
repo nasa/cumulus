@@ -18,7 +18,8 @@
     "test": "ava",
     "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w"
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
+    "postinstall": "npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
