@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.4.1] - 2018-04-11
+
+### Fixed
+- Sync-granule install 
+
 ## [v1.4.0] - 2018-04-09
 
 ### Fixed
@@ -161,7 +166,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...HEAD
+[v1.4.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...v1.4.0
 [v1.3.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...v1.2.0
