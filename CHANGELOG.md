@@ -5,14 +5,52 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v1.4.1] - 2018-04-11
+
+### Fixed
+- Sync-granule install 
+
+## [v1.4.0] - 2018-04-09
+
 ### Fixed
 - **CUMULUS-392 "queue-granules not returning the sfn-execution-arns queued"**
   - updated queue-granules to return the sfn-execution-arns queued and pdr if exists.
   - added pdr to ingest message meta.pdr instead of payload, so the pdr information doesn't get lost in the ingest workflow, and ingested granule in elasticsearch has pdr name.
   - fixed sf-sns-report schema, remove the invalid part
+  - fixed pdr-status-check schema, the failed execution contains arn and reason
+- **CUMULUS-206** make sure homepage and repository urls exist in package.json files of tasks and packages
+
+### Changed
+- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
+  the config schema of the **queue-granules** task
+  - The config no longer takes a "collection" property
+  - The config now takes an "internalBucket" property
+  - The config now takes a "stackName" property
+- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
+  the config schema of the **parse-pdr** task
+  - The config no longer takes a "collection" property
+  - The "stack", "provider", and "bucket" config properties are now
+    required
+
+### Removed
+- Removed the `findTmpTestDataDirectory()` function from
+  `@cumulus/common/test-utils`
+
+### Fixed
+- [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450)
+  - The **queue-granules** task now enqueues a **sync-granule** task with the
+    correct collection config for that granule based on the granule's
+    data-type. It had previously been using the collection config from the
+    config of the **queue-granules** task, which was a problem if the granules
+    being queued belonged to different data-types.
+  - The **parse-pdr** task now handles the case where a PDR contains granules
+    with different data types, and uses the correct granuleIdExtraction for
+    each granule.
 
 ### Added
 - **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
+- **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ## [v1.3.0] - 2018-03-29
 
@@ -128,7 +166,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...HEAD
+[v1.4.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...v1.4.1
+[v1.4.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...v1.4.0
 [v1.3.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...v1.2.0
 [v1.1.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...v1.1.4

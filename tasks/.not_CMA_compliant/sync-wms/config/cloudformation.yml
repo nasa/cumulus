@@ -1,5 +1,0 @@
-Resources:
-  Fn:
-    Properties:
-      Description: 'Generates WMS URLs to sync'
-      Runtime: nodejs6.10
