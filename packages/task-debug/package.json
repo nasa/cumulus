@@ -1,10 +1,10 @@
 {
   "name": "@cumulus/task-debug",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A harness for debugging workflows.",
   "main": "index.js",
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/task-debug",
+  "homepage": "https://github.com/cumulus-nasa/cumulus#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
@@ -14,12 +14,11 @@
   "bugs": {
     "url": "https://github.com/cumulus-nasa/cumulus/issues"
   },
-  "homepage": "https://github.com/cumulus-nasa/cumulus#readme",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "@cumulus/common": "^1.3.0",
+    "@cumulus/common": "^1.4.0",
     "commander": "^2.11.0"
   },
   "devDependencies": {
