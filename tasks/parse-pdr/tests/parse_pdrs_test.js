@@ -20,7 +20,7 @@ test.beforeEach(async (t) => {
   t.context.payload = {
     config: {
       stack: randomString(),
-      internalBucket: randomString(),
+      bucket: randomString(),
       provider: {}
     },
     input: {
@@ -31,7 +31,7 @@ test.beforeEach(async (t) => {
     }
   };
 
-  await s3().createBucket({ Bucket: t.context.payload.config.internalBucket }).promise();
+  await s3().createBucket({ Bucket: t.context.payload.config.bucket }).promise();
 
   const collectionConfig = {
     name: 'MOD09GQ',
@@ -39,14 +39,14 @@ test.beforeEach(async (t) => {
   };
 
   const collectionConfigStore = new CollectionConfigStore(
-    t.context.payload.config.internalBucket,
+    t.context.payload.config.bucket,
     t.context.payload.config.stack
   );
   await collectionConfigStore.put('MOD09GQ', collectionConfig);
 });
 
 test.afterEach(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.payload.config.internalBucket);
+  await recursivelyDeleteS3Bucket(t.context.payload.config.bucket);
 });
 
 test('parse PDR from FTP endpoint', async (t) => {
