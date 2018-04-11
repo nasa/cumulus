@@ -1,5 +1,0 @@
-Resources:
-  Fn:
-    Properties:
-      Description: 'Discovers CMR granules to ingest using WMS'
-      Runtime: nodejs6.10
