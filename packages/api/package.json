@@ -37,7 +37,7 @@
     "@cumulus/pvl": "^1.4.0",
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",
-    "aws-sdk": "^2.95.0",
+    "aws-sdk": "^2.224.1",
     "basic-auth": "^1.1.0",
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^13.2.0",
