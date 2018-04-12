@@ -12,6 +12,7 @@ module.exports = {
   mode,
   entry: './index.js',
   output: {
+    libraryTarget: 'commonjs2',
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist')
   },
