@@ -17,8 +17,8 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   externals: [
-    'aws-ask',
-    'electron'
+   'aws-sdk',
+   'electron' 
   ],
   devtool,
   target: 'node'
