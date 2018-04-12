@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.3.0",
+  "version": "1.4.1",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -10,11 +10,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/common",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
+    "build": "true",
     "lint": "eslint .",
     "mocha": "mocha test/**/*.js",
     "mocha-coverage": "nyc mocha-webpack test/**/*.js",
@@ -35,7 +37,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/test-data": "^1.3.0",
+    "@cumulus/test-data": "^1.4.0",
     "ajv": "^5.0.4-beta.3",
     "ajv-cli": "^1.1.1",
     "async": "^2.0.0",
@@ -59,7 +61,6 @@
     "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "ajv": "^5.5.2",
     "ava": "^0.25.0",
     "nyc": "^11.6.0"
   }
