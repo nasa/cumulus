@@ -9,10 +9,10 @@ const urljoin = require('url-join');
 const cksum = require('cksum');
 const checksum = require('checksum');
 const errors = require('@cumulus/common/errors');
-const sftpMixin = require('./sftp');
-const ftpMixin = require('./ftp').ftpMixin;
-const httpMixin = require('./http').httpMixin;
-const s3Mixin = require('./s3').s3Mixin;
+const { sftpMixin } = require('./sftp');
+const { ftpMixin } = require('./ftp');
+const { httpMixin } = require('./http');
+const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 
 class Discover {

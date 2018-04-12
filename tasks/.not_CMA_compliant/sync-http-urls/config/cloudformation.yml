@@ -1,6 +1,0 @@
-Resources:
-  Fn:
-    Properties:
-      Description: 'Synchronizes HTTP(S) files to S3'
-      Runtime: nodejs6.10
-      MemorySize: 1024
