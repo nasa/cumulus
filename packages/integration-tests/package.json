@@ -5,12 +5,10 @@
   "bin": {
     "cumulus-test": "./bin/cli.js"
   },
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "webpack --progress",
-    "watch": "webpack --progress -w",
-    "postinstall": "npm run build"
+  "engine": {
+    "node": ">=8.10.0"
   },
+  "main": "index.js",
   "publishConfig": {
     "access": "public"
   },
@@ -27,7 +25,6 @@
     "commander": "^2.9.0",
     "fs-extra": "^5.0.0",
     "lodash.clonedeep": "^4.5.0",
-    "uuid": "^3.2.1",
-    "webpack": "^1.12.13"
+    "uuid": "^3.2.1"
   }
 }
