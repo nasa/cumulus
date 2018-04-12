@@ -9,12 +9,15 @@
   "publishConfig": {
     "access": "public"
   },
+  "engine": {
+    "node": ">=8.10.0"
+  },
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "postinstall": "npm run build"
+    "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/pdr-status-check",
   "repository": {
@@ -38,11 +41,11 @@
     "@cumulus/ingest": "^1.4.1",
     "@cumulus/test-data": "^1.4.0",
     "lodash.get": "^4.4.2",
-    "p-limit": "^1.1.0",
-    "webpack": "~4.5.0",
-    "webpack-cli": "~2.0.14"
+    "p-limit": "^1.1.0"
   },
   "devDependencies": {
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14",
     "ava": "^0.23.0",
     "delay": "^2.0.0",
     "lodash": "^4.17.5",
