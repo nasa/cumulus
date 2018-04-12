@@ -1,14 +1,10 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Example task",
   "main": "index.js",
   "directories": {
     "test": "tests"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
     "test": "ava tests/*.js --serial --no-color",

@@ -36,8 +36,9 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
 
   try {
     const output = await discoverPdrs(event);
+
     await validateOutput(t, output);
-    t.is(output.pdrs.length, 4);
+    t.is(output.pdrs.length, 5);
   }
   catch (err) {
     if (err instanceof RemoteResourceError) {
@@ -137,7 +138,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
     })
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
-      t.is(output.pdrs.length, 3);
+      t.is(output.pdrs.length, 4);
       return validateOutput(t, output);
     })
     .then(() => recursivelyDeleteS3Bucket(internalBucketName))
@@ -186,7 +187,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
 
       await validateOutput(t, output);
 
-      t.is(output.pdrs.length, 3);
+      t.is(output.pdrs.length, 4);
       const names = output.pdrs.map((p) => p.name);
       newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
     }
@@ -248,7 +249,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
 
       await validateOutput(t, output);
 
-      t.is(output.pdrs.length, 3);
+      t.is(output.pdrs.length, 4);
       const names = output.pdrs.map((p) => p.name);
       newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
     }
