@@ -15,7 +15,7 @@ describe('The Hello World workflow', function() {
       awsConfig.stackName,
       awsConfig.bucket,
       'HelloWorldWorkflow',
-      './spec/helloWorld/HelloWorld.input.json'
+      './spec/helloWorld/HelloWorld.input.template.json'
     );
   });
 
@@ -44,7 +44,7 @@ describe('The Hello World workflow using ECS', function() {
       awsConfig.stackName,
       awsConfig.bucket,
       'EcsHelloWorldWorkflow',
-      './spec/helloWorld/HelloWorld.input.json'
+      './spec/helloWorld/HelloWorld.input.template.json'
     );
   });
 
