@@ -2,6 +2,9 @@
   "name": "@cumulus/ingest",
   "version": "1.4.1",
   "description": "Ingest utilities",
+  "engine": {
+    "node": ">=8.10.0"
+  },
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc ava"
