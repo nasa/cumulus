@@ -41,7 +41,6 @@
         "lambda": "tasks/parse-pdr",
         "handler": "index.handler",
         "cumulusConfig": {
-          "useQueue": true,
           "provider": "{{$.meta.provider}}",
           "collection": "{{$.meta.collection}}",
           "bucket": "{{$.meta.buckets.internal}}",
