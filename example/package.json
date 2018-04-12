@@ -25,7 +25,6 @@
     "@cumulus/common": "^1.4.0",
     "@cumulus/deployment": "^1.4.0",
     "@cumulus/discover-granules": "^1.4.0",
-    "@cumulus/sf-sns-report": "^1.4.0",
     "@cumulus/discover-pdrs": "^1.4.0",
     "@cumulus/hello-world": "^1.4.0",
     "@cumulus/integration-tests": "^1.4.0",
@@ -33,8 +32,9 @@
     "@cumulus/pdr-status-check": "^1.4.0",
     "@cumulus/queue-granules": "^1.4.0",
     "@cumulus/queue-pdrs": "^1.4.0",
+    "@cumulus/sf-sns-report": "^1.4.0",
     "@cumulus/sync-granule": "^1.4.0",
-    "aws-sdk": "^2.223.1",
+    "aws-sdk": "^2.224.1",
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.11.0",
@@ -46,7 +46,7 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
-    "eslint": "^4.18.2",
-    "eslint-plugin-jsdoc": "^3.5.0"
+    "eslint": "^4.19.1",
+    "eslint-plugin-jsdoc": "^3.6.2"
   }
 }
