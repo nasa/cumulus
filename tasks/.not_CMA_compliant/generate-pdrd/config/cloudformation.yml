@@ -1,5 +1,0 @@
-Resources:
-  Fn:
-    Properties:
-      Description: 'Generate a PDRD file for SIPS'
-      Runtime: nodejs6.10
