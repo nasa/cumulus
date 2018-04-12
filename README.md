@@ -7,7 +7,7 @@
 
 ### Prerequisites
 
-* [NVM](https://github.com/creationix/nvm) and node version 6.10.
+* [NVM](https://github.com/creationix/nvm) and node version 8.
 * [yarn](https://yarnpkg.com/en/)
 * [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 * BASH
