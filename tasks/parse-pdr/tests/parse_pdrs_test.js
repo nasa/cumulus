@@ -2,14 +2,12 @@
 
 const errors = require('@cumulus/common/errors');
 const fs = require('fs-extra');
-const modis = require('@cumulus/test-data/payloads/new-message-schema/parse.json');
-const path = require('path');
 const test = require('ava');
 
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
-const { cloneDeep } = require('lodash');
+
+const { CollectionConfigStore } = require('@cumulus/common');
 const {
-  findTestDataDirectory,
   randomString,
   validateConfig,
   validateInput,
@@ -18,76 +16,82 @@ const {
 
 const { parsePdr } = require('../index');
 
+test.beforeEach(async (t) => {
+  t.context.payload = {
+    config: {
+      stack: randomString(),
+      bucket: randomString(),
+      provider: {}
+    },
+    input: {
+      pdr: {
+        name: 'MOD09GQ.PDR',
+        path: '/pdrs'
+      }
+    }
+  };
+
+  await s3().createBucket({ Bucket: t.context.payload.config.bucket }).promise();
+
+  const collectionConfig = {
+    name: 'MOD09GQ',
+    granuleIdExtraction: '^(.*)\.hdf'
+  };
+
+  const collectionConfigStore = new CollectionConfigStore(
+    t.context.payload.config.bucket,
+    t.context.payload.config.stack
+  );
+  await collectionConfigStore.put('MOD09GQ', collectionConfig);
+});
+
+test.afterEach(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.payload.config.bucket);
+});
+
 test('parse PDR from FTP endpoint', async (t) => {
-  const internalBucketName = randomString();
-
-  const newPayload = cloneDeep(modis);
-
-  newPayload.config.bucket = internalBucketName;
-  newPayload.config.provider = {
+  t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
     host: 'localhost',
     username: 'testuser',
     password: 'testpass'
   };
-  newPayload.config.useList = true;
+  t.context.payload.config.useList = true;
 
-  await validateConfig(t, newPayload.config);
+  await validateInput(t, t.context.payload.input);
+  await validateConfig(t, t.context.payload.config);
 
-  return s3().createBucket({ Bucket: internalBucketName }).promise()
-    .then(() => parsePdr(newPayload))
-    .then((output) => {
-      t.is(output.granules.length, output.granulesCount);
-      t.is(output.pdr.name, newPayload.input.pdr.name);
-      t.is(output.filesCount, 2);
-      return output;
-    })
-    .then((output) => validateOutput(t, output))
-    .then(() => recursivelyDeleteS3Bucket(internalBucketName))
-    .catch((err) => {
-      if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
-        t.pass('ignoring this test. Test server seems to be down');
-      }
-      else t.fail(err);
-      return recursivelyDeleteS3Bucket(internalBucketName);
-    });
-});
-
-test('parse PDR from HTTP endpoint', async (t) => {
-  const internalBucketName = randomString();
-
-  // Figure out the directory paths that we're working with
-  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
-
-  // Create providerPathDirectory and internal bucket
-  await s3().createBucket({ Bucket: internalBucketName }).promise();
-
-  const pdrName = 'MOD09GQ.PDR';
-
-  const newPayload = cloneDeep(modis);
-  newPayload.config.bucket = internalBucketName;
-  newPayload.config.provider = {
-    id: 'MODAPS',
-    protocol: 'http',
-    host: 'http://localhost:3030'
-  };
-  newPayload.input = {
-    pdr: {
-      name: pdrName,
-      path: `/pdrs`
-    }
-  };
-
-  await validateInput(t, newPayload.input);
-  await validateConfig(t, newPayload.config);
-
+  let output;
   try {
-    const output = await parsePdr(newPayload);
+    output = await parsePdr(t.context.payload);
+
     await validateOutput(t, output);
-    t.is(output.granules.length, output.granulesCount);
-    t.is(output.pdr.name, pdrName);
+
+    t.deepEqual(output.pdr, t.context.payload.input.pdr);
+    t.is(output.granules.length, 1);
+    t.is(output.granulesCount, 1);
     t.is(output.filesCount, 2);
+    t.is(output.totalSize, 17909733);
+
+    const granule = output.granules[0];
+    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
+    t.is(granule.dataType, 'MOD09GQ');
+    t.is(granule.granuleSize, 17909733);
+
+    const hdfFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
+    t.truthy(hdfFile);
+    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(hdfFile.fileSize, 17865615);
+    t.is(hdfFile.checksumType, 'CKSUM');
+    t.is(hdfFile.checksumValue, 4208254019);
+
+    const metFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
+    t.truthy(metFile);
+    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(metFile.fileSize, 44118);
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
@@ -95,23 +99,59 @@ test('parse PDR from HTTP endpoint', async (t) => {
     }
     else t.fail(err);
   }
-  finally {
-    // Clean up
-    await recursivelyDeleteS3Bucket(internalBucketName);
+});
+
+test('parse PDR from HTTP endpoint', async (t) => {
+  t.context.payload.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:3030'
+  };
+
+  await validateInput(t, t.context.payload.input);
+  await validateConfig(t, t.context.payload.config);
+
+  let output;
+  try {
+    output = await parsePdr(t.context.payload);
+
+    await validateOutput(t, output);
+
+    t.deepEqual(output.pdr, t.context.payload.input.pdr);
+    t.is(output.granules.length, 1);
+    t.is(output.granulesCount, 1);
+    t.is(output.filesCount, 2);
+    t.is(output.totalSize, 17909733);
+
+    const granule = output.granules[0];
+    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
+    t.is(granule.dataType, 'MOD09GQ');
+    t.is(granule.granuleSize, 17909733);
+
+    const hdfFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
+    t.truthy(hdfFile);
+    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(hdfFile.fileSize, 17865615);
+    t.is(hdfFile.checksumType, 'CKSUM');
+    t.is(hdfFile.checksumValue, 4208254019);
+
+    const metFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
+    t.truthy(metFile);
+    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(metFile.fileSize, 44118);
+  }
+  catch (err) {
+    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else t.fail(err);
   }
 });
 
 test('parse PDR from SFTP endpoint', async (t) => {
-  const internalBucketName = randomString();
-
-  // Create providerPathDirectory and internal bucket
-  await s3().createBucket({ Bucket: internalBucketName }).promise();
-
-  const pdrName = 'MOD09GQ.PDR';
-
-  const newPayload = cloneDeep(modis);
-  newPayload.config.bucket = internalBucketName;
-  newPayload.config.provider = {
+  t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
     host: 'localhost',
@@ -119,23 +159,97 @@ test('parse PDR from SFTP endpoint', async (t) => {
     username: 'user',
     password: 'password'
   };
-  newPayload.input = {
-    pdr: {
-      name: pdrName,
-      path: 'pdrs'
-    }
-  };
 
-  await validateInput(t, newPayload.input);
-  await validateConfig(t, newPayload.config);
+  await validateInput(t, t.context.payload.input);
+  await validateConfig(t, t.context.payload.config);
 
+  let output;
   try {
-    const output = await parsePdr(newPayload);
+    output = await parsePdr(t.context.payload);
 
     await validateOutput(t, output);
-    t.is(output.granules.length, output.granulesCount);
-    t.is(output.pdr.name, pdrName);
+
+    t.deepEqual(output.pdr, t.context.payload.input.pdr);
+    t.is(output.granules.length, 1);
+    t.is(output.granulesCount, 1);
     t.is(output.filesCount, 2);
+    t.is(output.totalSize, 17909733);
+
+    const granule = output.granules[0];
+    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
+    t.is(granule.dataType, 'MOD09GQ');
+    t.is(granule.granuleSize, 17909733);
+
+    const hdfFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
+    t.truthy(hdfFile);
+    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(hdfFile.fileSize, 17865615);
+    t.is(hdfFile.checksumType, 'CKSUM');
+    t.is(hdfFile.checksumValue, 4208254019);
+
+    const metFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
+    t.truthy(metFile);
+    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(metFile.fileSize, 44118);
+  }
+  catch (err) {
+    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else t.fail(err);
+  }
+});
+
+test('Parse a PDR from an S3 provider', async (t) => {
+  t.context.payload.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString()
+  };
+  t.context.payload.input.pdr.path = '/pdrs';
+
+  await validateInput(t, t.context.payload.input);
+  await validateConfig(t, t.context.payload.config);
+
+  await s3().createBucket({ Bucket: t.context.payload.config.provider.host }).promise();
+
+  try {
+    await s3().putObject({
+      Bucket: t.context.payload.config.provider.host,
+      Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
+      Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ.PDR')
+    }).promise();
+
+    const output = await parsePdr(t.context.payload);
+
+    await validateOutput(t, output);
+
+    t.deepEqual(output.pdr, t.context.payload.input.pdr);
+    t.is(output.granules.length, 1);
+    t.is(output.granulesCount, 1);
+    t.is(output.filesCount, 2);
+    t.is(output.totalSize, 17909733);
+
+    const granule = output.granules[0];
+    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
+    t.is(granule.dataType, 'MOD09GQ');
+    t.is(granule.granuleSize, 17909733);
+
+    const hdfFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
+    t.truthy(hdfFile);
+    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(hdfFile.fileSize, 17865615);
+    t.is(hdfFile.checksumType, 'CKSUM');
+    t.is(hdfFile.checksumValue, 4208254019);
+
+    const metFile = granule.files.find((f) =>
+      f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
+    t.truthy(metFile);
+    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
+    t.is(metFile.fileSize, 44118);
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
@@ -144,53 +258,6 @@ test('parse PDR from SFTP endpoint', async (t) => {
     else t.fail(err);
   }
   finally {
-    // Clean up
-    await recursivelyDeleteS3Bucket(internalBucketName);
+    await recursivelyDeleteS3Bucket(t.context.payload.config.provider.host);
   }
-});
-
-test('Parse a PDR from an S3 provider', async (t) => {
-  const internalBucket = randomString();
-  const bucket = randomString();
-  const pdrName = 'MOD09GQ.PDR';
-
-  await Promise.all([
-    s3().createBucket({ Bucket: bucket }).promise(),
-    s3().createBucket({ Bucket: internalBucket }).promise()
-  ]);
-
-  await s3().putObject({
-    Bucket: bucket,
-    Key: pdrName,
-    Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ.PDR')
-  }).promise();
-
-  const event = cloneDeep(modis);
-  event.config.bucket = internalBucket;
-  event.config.provider = {
-    id: 'MODAPS',
-    protocol: 's3',
-    host: bucket
-  };
-
-  event.input.pdr.path = '';
-
-  await validateConfig(t, event.config);
-  await validateInput(t, event.input);
-
-  let output;
-  try {
-    output = await parsePdr(event);
-  }
-  finally {
-    await Promise.all([
-      recursivelyDeleteS3Bucket(bucket),
-      recursivelyDeleteS3Bucket(internalBucket)
-    ]);
-  }
-
-  await validateOutput(t, output);
-  t.is(output.granules.length, output.granulesCount);
-  t.is(output.pdr.name, pdrName);
-  t.is(output.filesCount, 2);
 });
