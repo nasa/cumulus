@@ -43,6 +43,7 @@
     "lodash.omit": "4.5.0",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
+    "aws-sdk": "^2.224.1",
     "request": "^2.83.0"
   },
   "devDependencies": {
