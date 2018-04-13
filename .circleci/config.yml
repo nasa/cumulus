@@ -106,12 +106,10 @@ jobs:
               # update stackname 
               cd example 
               sed -i -- 's/npm/src/g' spec/config.yml
-
-
             fi
 
       - run:
-          name: Run AWS Integration Tests with cumulus source code
+          name: Deploy cumulus source code to aws
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               cd example
@@ -120,6 +118,15 @@ jobs:
               # deploy latest version of the packages to the aws
               ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
 
+              # wait an extra 20 seconds for the services to stabalize
+              sleep 20s
+            fi
+
+      - run:
+          name: Run AWS Integration tests 
+          command: |
+            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
+              cd example
               # run the tests
               yarn test
             fi
