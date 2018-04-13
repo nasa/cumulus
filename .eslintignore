@@ -4,4 +4,7 @@ packages/deployment/app/*.js
 **/webpack.config.js
 **/.nyc_output/**
 **/coverage/**
-example
+example/node_modules/**
+example/app/**
+example/deployer/**
+example/iam/**
