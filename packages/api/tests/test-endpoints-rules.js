@@ -13,8 +13,11 @@ const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const rulesEndpoint = require('../endpoints/rules');
 const { testEndpoint } = require('./testUtils');
+const { Search } = require('../es/search');
 
 const rules = new models.Rule();
+
+const esIndex = 'cumulus-index';
 
 const testRule = {
   name: 'make_coffee',
@@ -32,7 +35,7 @@ const testRule = {
 
 const hash = { name: 'name', type: 'S' };
 async function setup() {
-  await bootstrap.bootstrapElasticSearch('http://localhost:4571');
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
   await aws.s3().putObject({
     Bucket: process.env.bucket,
@@ -46,6 +49,9 @@ async function setup() {
 async function teardown() {
   models.Manager.deleteTable(process.env.RulesTable);
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+
+  const esClient = await Search.es('fakehost');
+  await esClient.indices.delete({ index: esIndex });
 }
 
 test.before(async () => setup());
