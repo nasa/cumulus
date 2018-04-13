@@ -56,7 +56,7 @@ module.exports.collection = {
       type: 'string'
     },
     sampleFileName: {
-      title: 'Sampe Filename',
+      title: 'Sample Filename',
       description: 'Is used to validate to test granule id ' +
                    'validation and extraction regexes against',
       type: 'string'
