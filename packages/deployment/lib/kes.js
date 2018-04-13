@@ -21,6 +21,7 @@
  * - Redeploy API Gateway endpoints after Each Deployment
  *
  */
+
 'use strict';
 
 const { Kes } = require('kes');
@@ -152,7 +153,7 @@ class UpdatedKes extends Kes {
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
     if (!filename) return Promise.resolve();
-    else return fetchMessageAdapter(
+    return fetchMessageAdapter(
       this.config.message_adapter_version,
       this.messageAdapterGitPath,
       filename,
@@ -200,16 +201,16 @@ class UpdatedKes extends Kes {
           }
 
           switch (o.OutputKey) {
-            case 'ApiId':
-              apis.api = o.OutputValue;
-              break;
-            case 'DistributionId':
-              apis.distribution = o.OutputValue;
-              break;
-            case 'ApiStage':
-              apis.stageName = o.OutputValue;
-              break;
-            default:
+          case 'ApiId':
+            apis.api = o.OutputValue;
+            break;
+          case 'DistributionId':
+            apis.distribution = o.OutputValue;
+            break;
+          case 'ApiStage':
+            apis.stageName = o.OutputValue;
+            break;
+          default:
             //nothing
           }
         });
