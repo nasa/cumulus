@@ -5,7 +5,7 @@ const fs = require('fs-extra');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
 
-const executionStatusNumRetries = 40;
+const executionStatusNumRetries = 80;
 const waitPeriodMs = 5000;
 
 /**
