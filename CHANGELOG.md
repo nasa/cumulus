@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Lambda functions created by @cumulus/deployment will use node8.10 by default
 - Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
 - Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
+- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
+
+### Added
+- **CUMULUS-352:** Add reindex CLI to the API package.
+
+### Fixed 
 - Fixed a bug in the bootstrap lambda function where it stuck during update process
 
 ## [v1.4.1] - 2018-04-11
@@ -41,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The config no longer takes a "collection" property
   - The "stack", "provider", and "bucket" config properties are now
     required
+- **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ### Removed
 - Removed the `findTmpTestDataDirectory()` function from
@@ -59,7 +66,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
-- **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ## [v1.3.0] - 2018-03-29
 

@@ -20,18 +20,20 @@ const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const Manager = require('../models/base');
-const { Search } = require('../es/search');
+const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
 
 /**
- * Create elasticsearch index if missing and add field mappings
+ * Initialize elastic search. If the index does not exist, create it with an alias.
+ * If an index exists but is not aliased, alias the index.
  *
- * @param {string} host - elasticsearch http address
- * @param {string} index - elasticsearch index name
+ * @param {string} host - elastic search host
+ * @param {string} index - name of the index to create if does not exist, defaults to 'cumulus'
+ * @param {string} alias - alias name for the index, defaults to 'cumulus'
  * @returns {Promise} undefined
  */
-async function bootstrapElasticSearch(host, index = 'cumulus') {
+async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIndexAlias) {
   if (!host) {
     return;
   }
@@ -47,9 +49,28 @@ async function bootstrapElasticSearch(host, index = 'cumulus') {
       index,
       body: { mappings }
     });
-    log.info(`index ${index} created and mappings added.`);
+
+    await esClient.indices.putAlias({
+      index: index,
+      name: alias
+    });
+
+    log.info(`index ${index} created with alias ${alias} and mappings added.`);
   }
   else {
+    const aliasExists = await esClient.indices.existsAlias({
+      name: alias
+    });
+
+    if (!aliasExists) {
+      await esClient.indices.putAlias({
+        index: index,
+        name: alias
+      });
+
+      log.info(`Created alias ${alias} for index ${index}`);
+    }
+
     log.info(`index ${index} already exists`);
   }
 }
