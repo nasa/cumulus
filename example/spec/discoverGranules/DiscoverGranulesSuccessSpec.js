@@ -14,10 +14,10 @@ const templatedInputFilename = templateFile({
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
 
-describe("The Discover Granules workflow", function() {
+describe('The Discover Granules workflow', () => {
   let workflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     workflowExecution = await executeWorkflow(
       config.stackName,
       config.bucket,
@@ -26,18 +26,21 @@ describe("The Discover Granules workflow", function() {
     );
   });
 
-  it('executes successfully', function() {
+  it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe("the DiscoverGranules Lambda", function() {
+  describe('the DiscoverGranules Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "DiscoverGranules");
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'DiscoverGranules'
+      );
     });
 
-    it("has expected granules output", function() {
+    it('has expected granules output', () => {
       expect(lambdaOutput.payload.granules.length).toEqual(3);
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
       expect(lambdaOutput.payload.granules[0].files.length).toEqual(2);

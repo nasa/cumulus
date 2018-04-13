@@ -8,7 +8,8 @@ const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
 const taskName = 'DiscoverAndQueuePdrs';
-const inputTemplateFilename = './spec/discoverAndQueuePdrs/DiscoverAndQueuePdrs.input.template.json';
+const inputTemplateFilename = './spec/discoverAndQueuePdrs/' +
+                              'DiscoverAndQueuePdrs.input.template.json';
 const templatedInputFilename = templateFile({
   inputTemplateFilename,
   config: config[taskName]
@@ -18,10 +19,10 @@ const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
 
-describe("The Discover And Queue PDRs workflow", function() {
+describe('The Discover And Queue PDRs workflow', () => {
   let workflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     workflowExecution = await executeWorkflow(
       config.stackName,
       config.bucket,
@@ -37,31 +38,31 @@ describe("The Discover And Queue PDRs workflow", function() {
     }).promise();
   });
 
-  it('executes successfully', function() {
+  it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe("the DiscoverPdrs Lambda", function() {
+  describe('the DiscoverPdrs Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "DiscoverPdrs");
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'DiscoverPdrs');
     });
 
-    it("has expected path and name output", function() {
+    it('has expected path and name output', () => {
       expect(lambdaOutput.payload.pdrs[0].path).toEqual('cumulus-test-data/pdrs');
       expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
     });
   });
 
-  describe("the QueuePdrs Lambda", function() {
+  describe('the QueuePdrs Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "QueuePdrs");
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'QueuePdrs');
     });
 
-    it("output is pdrs_queued", function() {
+    it('output is pdrs_queued', () => {
       expect(lambdaOutput.payload).toEqual({ pdrs_queued: 1 });
     });
   });
