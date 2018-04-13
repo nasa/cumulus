@@ -11,12 +11,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
 - Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
 - **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
+### Fixed
+- **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
+  - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
+  - the lambda function will be redeployed when message adapter or lambda function are updated
+- Fixed a bug in the bootstrap lambda function where it stuck during update process
 
 ### Added
 - **CUMULUS-352:** Add reindex CLI to the API package.
-
-### Fixed 
-- Fixed a bug in the bootstrap lambda function where it stuck during update process
 
 ## [v1.4.1] - 2018-04-11
 
