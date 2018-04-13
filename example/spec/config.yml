@@ -21,3 +21,10 @@ IngestGranule:
           filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf
         - bucket: cumulus-test-sandbox-private
           filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met
+DiscoverGranules:
+  <<: *defaults
+  meta:
+    buckets:
+      internal: cumulus-test-sandbox-internal
+    templates:
+      DiscoverGranules: s3://cumulus-test-sandbox-internal/test-npm-integration/workflows/DiscoverGranules.json

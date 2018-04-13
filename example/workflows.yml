@@ -26,6 +26,44 @@ HelloWorldWorkflow:
       Type: Fail
       Cause: 'Workflow failed'
 
+DiscoverGranules:
+  Comment: 'Discovers new Granules from a given provider'
+  StartAt: StatusReport
+  TimeoutSeconds: 18000 # 5 hours
+  States:
+    StatusReport:
+      Type: Task
+      Resource: ${sf2snsStartLambdaFunction.Arn}
+      Next: DiscoverGranules
+    DiscoverGranules:
+      CumulusConfig:
+        useQueue: true
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        bucket: '{$.meta.buckets.internal}'
+        stack: '{$.meta.stack}'
+        templateUri: '{$.meta.templates.IngestGranule}'
+        queueUrl: '{$.meta.queues.startSF}'
+      Type: Task
+      Resource: ${DiscoverGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
+
 DiscoverAndQueuePdrs:
   Comment: 'Discovers new PDRs from a given provider'
   StartAt: StartStatus
