@@ -49,16 +49,15 @@
     "moment": "^2.21.0",
     "node-forge": "^0.7.1",
     "pino": "^4.7.1",
-    "pump": "^1.0.2",
+    "pump": "^3.0.0",
     "simplecrawler": "^1.1.4",
-    "sinon": "^4.2.2",
     "ssh2": "^0.5.5",
     "url-join": "^1.0.0",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
-    "ava": "^0.23.0",
-    "fs-extra": "^5.0.0",
+    "sinon": "^4.5.0",
+    "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0"
   }
