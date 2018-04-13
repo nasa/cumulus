@@ -5,7 +5,7 @@ const awsConfig = loadConfig();
 const lambdaStep = new LambdaStep();
 const activityStep = new ActivityStep();
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 240000;
 
 describe('The Hello World workflow', function() {
   let workflowExecution = null;
