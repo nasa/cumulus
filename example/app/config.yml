@@ -28,7 +28,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.0.2
+        image: cumuluss/cumulus-ecs-task:1.1.0
         cpu: 800
         memory: 1500
         count: 1
