@@ -16,7 +16,7 @@ const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
-const { Search } = require('./search');
+const { Search, defaultIndexAlias } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
 
@@ -59,7 +59,6 @@ function parseException(exception) {
     return {};
   }
 
-  const type = typeof exception;
   if (typeof exception !== 'object') {
     const converted = JSON.stringify(exception);
     if (converted === 'undefined') {
@@ -76,11 +75,11 @@ function parseException(exception) {
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Array} payloads  - an array of log payloads
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: granule)
  * @returns {Promise} Elasticsearch response
  */
-async function indexLog(esClient, payloads, index = 'cumulus', type = 'logs') {
+async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'logs') {
   if (!esClient) {
     esClient = await Search.es();
   }
@@ -117,10 +116,10 @@ async function indexLog(esClient, payloads, index = 'cumulus', type = 'logs') {
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @param  {Object} doc      - Partial updated document
  * @param  {strint} parent   - id of the parent (optional)
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @returns {Promise} elasticsearch update response
  */
-async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cumulus') {
+async function partialRecordUpdate(esClient, id, type, doc, parent, index = defaultIndexAlias) {
   if (!esClient) {
     esClient = await Search.es();
   }
@@ -153,11 +152,11 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = 'cum
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @returns {Promise} elasticsearch update response
  */
-function indexStepFunction(esClient, payload, index = 'cumulus', type = 'execution') {
+function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 'execution') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const arn = getExecutionArn(
     get(payload, 'cumulus_meta.state_machine'),
@@ -201,11 +200,11 @@ function indexStepFunction(esClient, payload, index = 'cumulus', type = 'executi
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: pdr)
  * @returns {Promise} Elasticsearch response
  */
-function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
+function pdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
   const pdrName = get(pdrObj, 'name');
@@ -268,11 +267,11 @@ function pdr(esClient, payload, index = 'cumulus', type = 'pdr') {
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} meta     - the collection record
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: collection)
  * @returns {Promise} Elasticsearch response
  */
-function indexCollection(esClient, meta, index = 'cumulus', type = 'collection') {
+function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
   // adding collection record to ES
   const collectionId = constructCollectionId(meta.name, meta.version);
   const params = {
@@ -294,11 +293,11 @@ function indexCollection(esClient, meta, index = 'cumulus', type = 'collection')
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - the provider record
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: provider)
  * @returns {Promise} Elasticsearch response
  */
-function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') {
+function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'provider') {
   const params = {
     index,
     type,
@@ -319,11 +318,11 @@ function indexProvider(esClient, payload, index = 'cumulus', type = 'provider') 
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - the Rule record
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: rule)
  * @returns {Promise} Elasticsearch response
  */
-function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
+function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') {
   const params = {
     index,
     type,
@@ -345,11 +344,11 @@ function indexRule(esClient, payload, index = 'cumulus', type = 'rule') {
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: granule)
  * @returns {Promise} Elasticsearch response
  */
-async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
+async function granule(esClient, payload, index = defaultIndexAlias, type = 'granule') {
   const name = get(payload, 'cumulus_meta.execution_name');
   const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
@@ -428,7 +427,7 @@ async function granule(esClient, payload, index = 'cumulus', type = 'granule') {
  * @param  {string} index    - Elasticsearch index (default: cumulus)
  * @returns {Promise} elasticsearch delete response
  */
-async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
+async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlias) {
   if (!esClient) {
     esClient = await Search.es();
   }
@@ -449,7 +448,7 @@ async function deleteRecord(esClient, id, type, parent, index = 'cumulus') {
  * start the re-ingest of a given granule object
  *
  * @param  {Object} g - the granule object
- * @param  {string} index - cumulus index name (optional)
+ * @param  {string} index - cumulus index alias name (optional)
  * @returns {Promise} an object show the start of the re-ingest
  */
 async function reingest(g, index) {
