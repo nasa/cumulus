@@ -3,6 +3,9 @@
   "version": "1.4.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
+  "bin": {
+    "cumulus-api": "./bin/cli.js"
+  },
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc ava",
@@ -59,6 +62,7 @@
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
     "basic-auth": "^1.1.0",
+    "commander": "^2.15.0",
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^13.2.0",
     "form-data": "^2.1.2",
