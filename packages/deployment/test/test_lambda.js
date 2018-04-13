@@ -114,7 +114,7 @@ test.serial(
 
 test.serial(
   `zipLambda: for lambda using message adapter, a new file is created 
-  if the lambda task is updated`,
+  if the message adapter is updated`,
   async (t) => {
     t.context.lambda.useMessageAdapter = true;
     const lambdaLocalOrigin = t.context.lambda.local;
