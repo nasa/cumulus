@@ -115,10 +115,10 @@ jobs:
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               cd example
-              # sed -i -- 's/npm/src/g' spec/config.yml
+              sed -i -- 's/npm/src/g' spec/config.yml
 
               # deploy latest version of the packages to the aws
-              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
+              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
 
               # run the tests
               yarn test
