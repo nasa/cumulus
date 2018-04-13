@@ -7,10 +7,10 @@ const activityStep = new ActivityStep();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
-describe('The Hello World workflow', function() {
+describe('The Hello World workflow', () => {
   let workflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     workflowExecution = await executeWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
@@ -19,27 +19,27 @@ describe('The Hello World workflow', function() {
     );
   });
 
-  it('executes successfully', function() {
+  it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('the HelloWorld Lambda', function() {
+  describe('the HelloWorld Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
+    beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'HelloWorld');
     });
 
-    it('output is Hello World', function() {
+    it('output is Hello World', () => {
       expect(lambdaOutput.payload).toEqual({ hello: 'Hello World' });
     });
   });
 });
 
-describe('The Hello World workflow using ECS', function() {
+describe('The Hello World workflow using ECS', () => {
   let workflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     workflowExecution = await executeWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
@@ -48,18 +48,21 @@ describe('The Hello World workflow using ECS', function() {
     );
   });
 
-  it('executes successfully', function() {
+  it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('the HelloWorld ECS', function() {
+  describe('the HelloWorld ECS', () => {
     let activityOutput = null;
 
-    beforeAll(async function() {
-      activityOutput = await activityStep.getStepOutput(workflowExecution.executionArn, 'EcsTaskHelloWorld');
+    beforeAll(async () => {
+      activityOutput = await activityStep.getStepOutput(
+        workflowExecution.executionArn,
+        'EcsTaskHelloWorld'
+      );
     });
 
-    it('output is Hello World', function() {
+    it('output is Hello World', () => {
       expect(activityOutput.payload).toEqual({ hello: 'Hello World' });
     });
   });

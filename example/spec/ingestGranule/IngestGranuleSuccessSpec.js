@@ -21,10 +21,10 @@ const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilenam
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
 
-describe("The Ingest Granules workflow", function() {
+describe('The Ingest Granules workflow', () => {
   let workflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     workflowExecution = await executeWorkflow(
       config.stackName,
       config.bucket,
@@ -33,22 +33,22 @@ describe("The Ingest Granules workflow", function() {
     );
   });
 
-  it('executes successfully', function() {
+  it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe("the SyncGranules Lambda", function() {
+  describe('the SyncGranules Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "SyncGranule");
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
     });
 
-    it("has expected payload", function() {
+    it('has expected payload', () => {
       expect(lambdaOutput.payload).toEqual(expectedPayload);
     });
 
-    it("has expected updated meta", () => {
+    it('has expected updated meta', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
     });
   });
