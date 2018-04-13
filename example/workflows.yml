@@ -213,6 +213,11 @@ EcsHelloWorldWorkflow:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${EcsTaskHelloWorldActivity}
+      TimeoutSeconds: 5
+      Retry:
+        - ErrorEquals:
+            - States.Timeout
+          MaxAttempts: 1
       Next: StopStatus
     StopStatus:
       Type: Task
