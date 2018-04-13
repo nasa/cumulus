@@ -13,7 +13,7 @@
     "test": "ava",
     "test-coverage": "nyc ava",
     "local": "node index.js | pino",
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
