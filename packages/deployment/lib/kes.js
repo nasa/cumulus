@@ -151,14 +151,16 @@ class UpdatedKes extends Kes {
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
-    // return Promise.resolve();
-    return fetchMessageAdapter(
+    if (!filename) return Promise.resolve();
+    else return fetchMessageAdapter(
       this.config.message_adapter_version,
       this.messageAdapterGitPath,
       filename,
       src,
       dest
-    ).then(() => super.compileCF());
+    ).then(() => {
+      this.Lambda.messageAdapterZipFileHash = new this.Lambda(this.config).getHash(src);
+    }).then(() => super.compileCF());
   }
 
   /**
@@ -198,17 +200,17 @@ class UpdatedKes extends Kes {
           }
 
           switch (o.OutputKey) {
-          case 'ApiId':
-            apis.api = o.OutputValue;
-            break;
-          case 'DistributionId':
-            apis.distribution = o.OutputValue;
-            break;
-          case 'ApiStage':
-            apis.stageName = o.OutputValue;
-            break;
-          default:
-              //nothing
+            case 'ApiId':
+              apis.api = o.OutputValue;
+              break;
+            case 'DistributionId':
+              apis.distribution = o.OutputValue;
+              break;
+            case 'ApiStage':
+              apis.stageName = o.OutputValue;
+              break;
+            default:
+            //nothing
           }
         });
 
