@@ -21,10 +21,10 @@ const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
 
-describe("The Parse PDR workflow", function() {
+describe('The Parse PDR workflow', () => {
   let workflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     const collectionConfigStore = new CollectionConfigStore(config.bucket, config.stackName);
     await collectionConfigStore.put('MOD09GQ', { name: 'MOD09GQ', granuleIdExtraction: '(.*)' });
 
@@ -43,18 +43,18 @@ describe("The Parse PDR workflow", function() {
     }).promise();
   });
 
-  it('executes successfully', function() {
+  it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe("the ParsePdr Lambda", function() {
+  describe('the ParsePdr Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "ParsePdr");
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'ParsePdr');
     });
 
-    it("has expected path and name output", function() {
+    it('has expected path and name output', () => {
       expect(lambdaOutput.payload).toEqual(expectedParsePdrOutput);
     });
   });
@@ -62,11 +62,14 @@ describe("The Parse PDR workflow", function() {
   describe('the QueueGranules Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "QueueGranules");
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'QueueGranules'
+      );
     });
 
-    it("has expected pdr and arns output", function() {
+    it('has expected pdr and arns output', () => {
       expect(lambdaOutput.payload.running.length).toEqual(1);
       expect(lambdaOutput.payload.pdr).toEqual(expectedParsePdrOutput.pdr);
     });
@@ -75,11 +78,14 @@ describe("The Parse PDR workflow", function() {
   describe('the PdrStatusCheck Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "PdrStatusCheck");
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'PdrStatusCheck'
+      );
     });
 
-    it("has expected output", function() {
+    it('has expected output', () => {
       const payload = lambdaOutput.payload;
       expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
       expect(lambdaOutput.payload.pdr).toEqual(expectedParsePdrOutput.pdr);
@@ -87,14 +93,14 @@ describe("The Parse PDR workflow", function() {
   });
 
   describe('the SfSnsReport Lambda', () => {
-    let lambdaOutput = null;
 
-    beforeAll(async function() {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, "SfSnsReport");
+    beforeAll(async () => {
+      await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
     });
 
-    it("has expected output", function() {
-      // TODO Somehow the lambdaOutput.payload is null and this is different from what's in AWS console.
+    it('has expected output', () => {
+      // TODO Somehow the lambdaOutput.payload is null and this is
+      // different from what's in AWS console.
       // Maybe it's caused by 'ResultPath: null', we want to keep the input as the output
     });
   });
