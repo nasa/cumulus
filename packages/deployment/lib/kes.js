@@ -152,7 +152,7 @@ class UpdatedKes extends Kes {
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
-    if (!filename) return Promise.resolve();
+    if (!filename) return super.compileCF();
     return fetchMessageAdapter(
       this.config.message_adapter_version,
       this.messageAdapterGitPath,
