@@ -3,6 +3,7 @@
     "no-console": "off"
   },
   "env": {
-    "jest": true
+    "jest": true,
+    "jasmine": true
   }
 }
