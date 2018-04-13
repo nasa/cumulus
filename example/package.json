@@ -4,7 +4,7 @@
   "description": "Cumulus Integration Test Deployment",
   "main": "index.js",
   "scripts": {
-    "test": "babel-node spec/run.js"
+    "test": "jasmine"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -34,19 +34,16 @@
     "@cumulus/queue-pdrs": "^1.4.0",
     "@cumulus/sf-sns-report": "^1.4.0",
     "@cumulus/sync-granule": "^1.4.0",
-    "aws-sdk": "^2.224.1",
+    "aws-sdk": "^2.224.1"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-plugin-jsdoc": "^3.6.2",
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.11.0",
     "kes": "^2.1.2",
     "lodash": "^4.17.5",
-    "node-forge": "^0.7.5",
-    "webpack": "^1.15.0"
-  },
-  "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
-    "eslint": "^4.19.1",
-    "eslint-plugin-jsdoc": "^3.6.2"
+    "node-forge": "^0.7.5"
   }
 }
