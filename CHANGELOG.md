@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
+  - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
+  - the lambda function will be redeployed when message adapter or lambda function are updated
 
 ## [v1.4.1] - 2018-04-11
 
