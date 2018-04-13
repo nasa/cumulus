@@ -356,7 +356,7 @@ test.serial('indexing a running pdr when pdr is missing', async (t) => {
   t.is(r, undefined);
 });
 
-test.serial('indexing a step function with missing arn', async(t) => {
+test.serial('indexing a step function with missing arn', async (t) => {
   const newPayload = clone(granuleSuccess);
   delete newPayload.cumulus_meta.state_machine;
 
@@ -492,7 +492,7 @@ test.serial('reingest a granule', async (t) => {
   await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
 
   payload.payload.granules[0].granuleId = randomString();
-  const r = await indexer.granule(esClient, payload, esIndex);
+  const r = await indexer.granule(esClient, payload);
 
   sinon.stub(
     StepFunction,
@@ -533,7 +533,7 @@ test.serial('pass a sns message to main handler', async (t) => {
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, (e) => {});
+  const resp = await indexer.handler(event, {}, () => {});
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);

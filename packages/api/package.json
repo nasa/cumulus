@@ -6,6 +6,9 @@
   "engine": {
     "node": ">=8.10.0"
   },
+  "bin": {
+    "cumulus-api": "./bin/cli.js"
+  },
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc ava",
@@ -39,6 +42,7 @@
     "archiver": "^2.1.1",
     "aws-sdk": "^2.224.1",
     "basic-auth": "^1.1.0",
+    "commander": "^2.15.0",
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^13.2.0",
     "form-data": "^2.1.2",
