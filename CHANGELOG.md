@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Changed
 - Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
-- Lambda functions created by @cumulus/deployment will use node8.10
+- Lambda functions created by @cumulus/deployment will use node8.10 by default
+- Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
+- Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
+- Fixed a bug in the bootstrap lambda function where it stuck during update process
 
 ## [v1.4.1] - 2018-04-11
 
