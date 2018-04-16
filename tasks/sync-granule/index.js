@@ -21,16 +21,15 @@ async function download(ingest, bucket, provider, granules) {
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
-    const err = new errors.ResourcesLockedError(
-      'Download lock remained in place after multiple tries'
-    );
+    const errMessage = 'Download lock remained in place after multiple tries';
+    const err = new errors.ResourcesLockedError(errMessage);
     log.error(err);
     throw err;
   }
 
   for (const g of granules) {
     try {
-      const r = await ingest.ingest(g);
+      const r = await ingest.ingest(g, bucket);
       updatedGranules.push(r);
     }
     catch (e) {
@@ -57,6 +56,7 @@ exports.syncGranule = function syncGranule(event) {
   const provider = config.provider;
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
+  const fileStagingDir = config.fileStagingDir;
 
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
@@ -69,6 +69,7 @@ exports.syncGranule = function syncGranule(event) {
     buckets,
     collection,
     provider,
+    fileStagingDir,
     forceDownload
   );
 
