@@ -35,18 +35,6 @@ test('downloaded latest version of the message adapter', async (t) => {
   t.true(await fs.pathExists(t.context.src));
 });
 
-test('should skip if filename is not provided', async (t) => {
-  // create temp directory
-  const unzipped = await fetchMessageAdapter(
-    null,
-    gitPath,
-    null,
-    t.context.src,
-    t.context.dest
-  );
-  t.is(unzipped, undefined);
-});
-
 test('should download specific version if provided', async (t) => {
   const version = 'v1.0.0';
   // create temp directory
