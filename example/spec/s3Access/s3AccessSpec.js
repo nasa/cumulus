@@ -14,16 +14,15 @@ const config = loadConfig();
 async function canAccessObject(region) {
   const lambda = new Lambda({ region });
 
-  const data = await lambda.invoke({ 
-    FunctionName: `${config.stackName}-S3AccessTest`, 
-    Payload: JSON.stringify({ Bucket: 'cumulus-test-s3-prototype', Key: 'test.txt' }) 
+  const data = await lambda.invoke({
+    FunctionName: `${config.stackName}-S3AccessTest`,
+    Payload: JSON.stringify({ Bucket: 'cumulus-test-s3-prototype', Key: 'test.txt' })
   }).promise();
 
   return data.Payload;
 }
 
 describe('The S3 bucket', () => {
-
   it('is accessible from us-east-1', async () => {
     expect(await canAccessObject('us-east-1')).toEqual('true');
   });

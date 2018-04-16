@@ -93,7 +93,6 @@ describe('The Parse PDR workflow', () => {
   });
 
   describe('the SfSnsReport Lambda', () => {
-
     beforeAll(async () => {
       await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
     });
@@ -104,5 +103,4 @@ describe('The Parse PDR workflow', () => {
       // Maybe it's caused by 'ResultPath: null', we want to keep the input as the output
     });
   });
-
 });
