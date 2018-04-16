@@ -51,6 +51,7 @@
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",
     "import/newline-after-import": "off",
+    "class-methods-use-this": "off",
     "no-warning-comments": [
       2,
       {

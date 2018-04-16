@@ -8,6 +8,10 @@
       "type": "boolean",
       "default": false
     },
+    "fileStagingDir": {
+      "description": "name of directory used for staging location",
+      "type": "string"
+    },
     "provider": {
       "type": "object",
       "required": ["host", "protocol"],
