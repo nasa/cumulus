@@ -1,4 +1,5 @@
 /* eslint-disable no-console, no-param-reassign */
+
 'use strict';
 
 const fs = require('fs-extra');
@@ -120,7 +121,6 @@ function messageAdapterUrl(version, gitPath, filename) {
  * @returns {Promise} returns the path of the extracted message adapter or an empty response
  */
 function fetchMessageAdapter(version, gitPath, filename, src, dest) {
-  if (!filename) return Promise.resolve();
   return messageAdapterUrl(version, gitPath, filename)
     .then((url) => downloadZipfile(url, src))
     .then(() => extractZipFile(src, dest));

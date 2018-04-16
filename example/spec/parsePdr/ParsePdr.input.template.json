@@ -1,0 +1,61 @@
+{
+  "cumulus_meta": {
+    "message_source": "sfn",
+    "state_machine": "",
+    "execution_name": ""
+  },
+  "meta": {
+    "workflow_name": "ParsePdr",
+    "stack": "",
+    "buckets": {
+      "internal": ""
+    },
+    "collection": {
+      "files": [],
+      "provider_path": "cumulus-test-data/pdrs",
+      "name": "test-collection",
+      "granuleIdExtraction": "(.*)",
+      "granuleId": "(.*).hdf",
+      "process": "modis"
+    },
+    "provider": {
+      "host": "cumulus-data-shared",
+      "globalConnectionLimit": 10,
+      "protocol": "s3",
+      "id": "s3_provider"
+    },
+    "templates": {},
+    "queues": {
+      "startSF": ""
+    }
+  },
+  "workflow_config": {
+    "StatusReport": {},
+    "ParsePdr": {
+      "provider": "{{$.meta.provider}}",
+      "bucket": "{{$.meta.buckets.internal}}",
+      "stack": "{{$.meta.stack}}"
+    },
+    "QueueGranules": {
+      "provider": "{{$.meta.provider}}",
+      "internalBucket": "{{$.meta.buckets.internal}}",
+      "stackName": "{{$.meta.stack}}",
+      "granuleIngestMessageTemplateUri": "{{$.meta.templates.IngestGranule}}",
+      "queueUrl": "{{$.meta.queues.startSF}}"
+    },
+    "CheckStatus": {},
+    "CheckAgainChoice": {},
+    "WaitForSomeTime": {},
+    "StopStatus": {},
+    "WorkflowFailed": {}
+  },
+  "payload": {
+    "pdr": {
+      "path": "cumulus-test-data/pdrs",
+      "time": 1520873050000,
+      "name": "MOD09GQ_1granule_v3.PDR",
+      "size": 596
+    }
+  },
+  "exception": null
+}
