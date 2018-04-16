@@ -1,14 +1,13 @@
 'use strict';
 
-const Client = require('ssh2').Client;
-const join = require('path').join;
-const log = require('@cumulus/common/log');
+const { Client } = require('ssh2');
+const { join } = require('path');
+const { log } = require('@cumulus/common');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-
 const { omit } = require('lodash');
 
-module.exports = (superclass) => class extends superclass {
+module.exports.sftpMixin = (superclass) => class extends superclass {
 
   constructor(...args) {
     super(...args);

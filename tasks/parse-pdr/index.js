@@ -5,7 +5,6 @@ const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
 const log = require('@cumulus/common/log');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
 
 /**
 * Parse a PDR
@@ -16,8 +15,7 @@ const { justLocalRun } = require('@cumulus/common/local-helpers');
 * @param {string} event.config.stack - the name of the deployment stack
 * @param {string} event.config.pdrFolder - folder for the PDRs
 * @param {Object} event.config.provider - provider information
-* @param {Object} event.config.buckets - S3 buckets
-* @param {Object} event.config.collection - information about data collection related to task
+* @param {Object} event.config.bucket - the internal S3 bucket
 * @returns {Promise.<Object>} - see schemas/output.json for detailed output schema
 * that is passed to the next task in the workflow
 **/
@@ -31,7 +29,6 @@ function parsePdr(event) {
     input.pdr,
     config.stack,
     config.bucket,
-    config.collection,
     provider,
     config.useList
   );
@@ -71,9 +68,3 @@ function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(parsePdr, event, context, callback);
 }
 exports.handler = handler;
-
-// use node index.js local to invoke this
-justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
-  handler(payload, {}, (e, r) => console.log(e, r));
-});

@@ -1,19 +1,25 @@
+const path = require('path');
+
+let mode = 'development';
+let devtool = 'inline-source-map';
+
+if(process.env.PRODUCTION) {
+  mode = 'production',
+  devtool = false  
+}
+
 module.exports = {
-  entry: ['babel-polyfill', './index.js'],
+  mode,
+  entry: './index.js',
   output: {
     libraryTarget: 'commonjs2',
-    filename: 'dist/index.js'
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'dist')
   },
-  target: 'node',
-  devtool: 'sourcemap',
-  module: {
-    loaders: [{
-      test: /\.js?$/,
-      exclude: /node_modules(?!\/@cumulus\/)/,
-      loader: 'babel'
-    }, {
-      test: /\.json$/,
-      loader: 'json'
-    }]
-  }
+  externals: [
+    'aws-sdk',
+    'electron'
+  ],
+  devtool,
+  target: 'node'
 };
