@@ -24,7 +24,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
 describe('The Discover Granules workflow with http Protocol', () => {
   let httpWorkflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     httpWorkflowExecution = await executeWorkflow(
       config.stackName,
       config.bucket,
@@ -40,7 +40,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   describe('the DiscoverGranules Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
+    beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(
         httpWorkflowExecution.executionArn,
         'DiscoverGranules');
@@ -57,7 +57,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 describe('The Discover Granules workflow with https Protocol', () => {
   let httpsWorkflowExecution = null;
 
-  beforeAll(async function() {
+  beforeAll(async () => {
     httpsWorkflowExecution = await executeWorkflow(
       config.stackName,
       config.bucket,
@@ -73,7 +73,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
   describe('the DiscoverGranules Lambda', () => {
     let lambdaOutput = null;
 
-    beforeAll(async function() {
+    beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(
         httpsWorkflowExecution.executionArn,
         'DiscoverGranules');
