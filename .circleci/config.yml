@@ -3,7 +3,7 @@ version: 2
 jobs:
   build_and_test:
     docker:
-      - image: cumuluss/circleci:node-6.10
+      - image: cumuluss/circleci:node-8.11
       - name: localstack
         image: localstack/localstack:0.8.6
     working_directory: ~/project
@@ -18,7 +18,7 @@ jobs:
       - run:
           name: core installation
           command: |
-            yarn install
+            yarn
 
             # generate global hash
             ./node_modules/.bin/lerna exec --concurrency 1 -- sha1sum package.json | awk '{print $1}' '' >> /home/circleci/project/global-hash
@@ -95,44 +95,49 @@ jobs:
           command: yarn e2e
 
       - run:
-          name: Running AWS Integration Tests
+          name: Prepare for Integration Tests
           command: |
-            if [[ "$CIRCLE_BRANCH" =~ release-.* ]]; then
+            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
 
               # install cumulus-integration
-              branch="${INTEGRATION_TEST_BRANCH:-master}"
-              git clone -b ${branch} https://github.com/cumulus-nasa/cumulus-integration-tests.git ~/integration
-              cd ~/integration
-              yarn
+              ./bin/prepare
 
-              # extract list of cumulus packages used in the integration test
-              cat package.json | jq '.dependencies | to_entries[] | select(.key | startswith("@cumulus")).key' > cumulus_integration_tests_packages.txt
-              cd ~/project
+              # update stackname 
+              cd example 
+              sed -i -- 's/npm/src/g' spec/config.yml
+            fi
 
-              # run the build command on the packages used on the integration tests
-              cat ../integration/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn build
-
-              # run the yarn link on packages used on the integration tests
-              cat ../integration/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn link
-              cd ~/integration
-
-              # run the yarn link package-name on the integration tests
-              cat cumulus_integration_tests_packages.txt | xargs -I % yarn link %
-
-              # copy override config
-              cp ../project/tests/config.override.yml spec
+      - run:
+          name: Deploy cumulus source code to aws
+          command: |
+            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
+              cd example
+              sed -i -- 's/npm/src/g' spec/config.yml
 
               # deploy latest version of the packages to the aws
               ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
 
+              # wait an extra 20 seconds for the services to stabalize
+              sleep 20s
+            fi
+
+      - run:
+          name: Run AWS Integration tests 
+          command: |
+            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
+              cd example
               # run the tests
               yarn test
             fi
 
       - run: 
           name: Checking code coverage
-          command: yarn coverage
+          environment:
+            COVERALLS_SERVICE_NAME: circleci
+          command: |
+            export COVERALLS_SERVICE_JOB_ID=$CIRCLE_BUILD_NUM
+            yarn coveralls
 
       - store_artifacts:
           path: ~/project/coverage
@@ -161,8 +166,42 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
             VERSION=$(cat lerna.json | jq .version --raw-output)
             ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
+      
+  test_from_npm:
+    docker:
+      - image: circleci/node:8.11
+    working_directory: ~/project
+    steps:
+      - checkout
+      
+      # restore cache
+      - restore_cache:
+          keys:
+            - integration-{{ .Branch }}-{{ checksum "example/package.json" }}
+   
+      - run:
+          name: install dependencies 
+          command: |
+            cd example  
+            yarn
+      
+      - save_cache:
+          key: integration-{{ .Branch }}-{{ checksum "example/package.json" }}
+          paths:
+            - ~/project/example/node_modules
+      
+      - run:
+          name: Deploy lastest changes
+          command: |
+            cd example
+            ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
 
-
+      - run:
+          name: Run Tests 
+          command: |
+            cd example
+            yarn test
+      
 workflows:
   version: 2
   build_test_deploy:
@@ -174,3 +213,4 @@ workflows:
           filters:
             branches:
               only: master
+
