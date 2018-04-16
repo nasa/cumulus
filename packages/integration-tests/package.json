@@ -5,42 +5,30 @@
   "bin": {
     "cumulus-test": "./bin/cli.js"
   },
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "webpack --progress",
-    "watch": "webpack --progress -w",
-    "postinstall": "npm run build"
+  "engine": {
+    "node": ">=8.10.0"
   },
+  "main": "index.js",
   "publishConfig": {
     "access": "public"
-  },
-  "babel": {
-    "presets": [
-      "es2017"
-    ],
-    "plugins": [
-      "transform-async-to-generator"
-    ]
   },
   "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/integration-tests",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
+  "scripts": {
+    "build": "echo 'no build'"
+  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "^1.4.1",
     "@cumulus/deployment": "^1.4.0",
-    "babel-core": "^6.25.0",
-    "babel-loader": "^6.2.4",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1",
     "commander": "^2.9.0",
     "fs-extra": "^5.0.0",
     "lodash.clonedeep": "^4.5.0",
-    "uuid": "^3.2.1",
-    "webpack": "^1.12.13"
+    "aws-sdk": "^2.224.1",
+    "uuid": "^3.2.1"
   }
 }

@@ -6,58 +6,34 @@
   "directories": {
     "test": "tests"
   },
+  "engine": {
+    "node": ">=8.10.0"
+  },
   "scripts": {
     "test": "ava tests/*.js --serial --no-color",
     "test-coverage": "nyc ava tests/*.js --serial",
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "postinstall": "npm run build"
+    "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "ava": {
-    "babel": "inherit",
-    "require": [
-      "babel-polyfill",
-      "babel-register"
-    ]
   },
   "nyc": {
     "exclude": [
       "tests"
     ]
   },
-  "babel": {
-    "presets": [
-      "es2017"
-    ],
-    "plugins": [
-      "transform-async-to-generator"
-    ]
-  },
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/hello-world",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
-  },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "babel-core": "^6.25.0",
-    "babel-loader": "^6.2.4",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1",
-    "json-loader": "^0.5.7",
-    "webpack": "^1.12.13"
+    "@cumulus/cumulus-message-adapter-js": "^1.0.1"
   },
   "devDependencies": {
-    "@ava/babel-preset-stage-4": "^1.1.0",
-    "@ava/babel-preset-transform-test-files": "^3.0.0",
-    "ava": "^0.23.0",
-    "nyc": "^11.4.1",
-    "proxyquire": "^1.8.0"
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14",
+    "ava": "^0.25.0",
+    "nyc": "^11.6.0",
+    "proxyquire": "^2.0.0"
   }
 }
