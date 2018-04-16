@@ -37,13 +37,10 @@ DiscoverGranules:
       Next: DiscoverGranules
     DiscoverGranules:
       CumulusConfig:
-        useQueue: true
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
-        bucket: '{$.meta.buckets.internal}'
+        buckets: '{$.meta.buckets}'
         stack: '{$.meta.stack}'
-        templateUri: '{$.meta.templates.IngestGranule}'
-        queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
       Catch:
@@ -74,7 +71,6 @@ DiscoverAndQueuePdrs:
       Next: DiscoverPdrs
     DiscoverPdrs:
       CumulusConfig:
-        templateUri: '{$.meta.templates.ParsePdr}'
         stack: '{$.meta.stack}'
         provider: '{$.meta.provider}'
         bucket: '{$.meta.buckets.internal}'
@@ -268,3 +264,4 @@ EcsHelloWorldWorkflow:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
+      
