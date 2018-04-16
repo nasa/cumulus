@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+# this script will link the packages specified in the npm to the ones in the cumulus repo
+cd example
+mkdir -p .tmp
+
+# install non cumulus packages
+cat package.json | jq '.dependencies, .devDependencies | to_entries[] | select(.key | startswith("@cumulus") | not) | .key + "@" + .value' | xargs npm install 
+
+cat package.json | jq '.dependencies | to_entries[] | select(.key | startswith("@cumulus")).key' > .tmp/cumulus_integration_tests_packages.txt
+cd ..
+
+# run the yarn link on packages used on the integration tests
+cat example/.tmp/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn build 
+cat example/.tmp/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn link
+cd example
+
+# run the yarn link package-name on the integration tests
+cat .tmp/cumulus_integration_tests_packages.txt | xargs -I % yarn link %
+
+rm -rf .tmp
