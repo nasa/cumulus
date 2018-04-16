@@ -3,14 +3,12 @@
 const fs = require('fs-extra');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
-const path = require('path');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 
 const { cloneDeep } = require('lodash');
 const {
-  findTestDataDirectory,
   randomString,
   validateConfig,
   validateInput,
@@ -65,6 +63,8 @@ test('download Granule from FTP endpoint', async (t) => {
     password: 'testpass'
   };
 
+  t.context.event.config.collection.url_path = 'example/';
+
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
@@ -77,8 +77,9 @@ test('download Granule from FTP endpoint', async (t) => {
     t.is(output.granules[0].files.length, 1);
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
+      `s3://${t.context.internalBucketName}/file-staging/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
     );
+    t.truthy(output.granules[0].files[0].url_path);
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
@@ -111,7 +112,7 @@ test('download Granule from HTTP endpoint', async (t) => {
     t.is(output.granules[0].files.length, 1);
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
     );
   }
   catch (e) {
@@ -123,7 +124,7 @@ test('download Granule from HTTP endpoint', async (t) => {
 });
 
 test('download Granule from SFTP endpoint', async (t) => {
-  t.context.event.config.provider = t.context.event.config.provider = {
+  t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
     host: 'localhost',
@@ -148,7 +149,7 @@ test('download Granule from SFTP endpoint', async (t) => {
     t.is(output.granules[0].files.length, 1);
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
     );
   }
   catch (e) {
@@ -192,7 +193,7 @@ test('download granule from S3 provider', async (t) => {
     t.is(output.granules[0].files.length, 1);
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/${granuleFileName}` // eslint-disable-line max-len
+      `s3://${t.context.internalBucketName}/file-staging/${granuleFileName}` // eslint-disable-line max-len
     );
   }
   finally {
@@ -213,7 +214,6 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
     host: 'http://localhost:3030'
   };
 
-  const granulePath = randomString();
   event.input.granules[0].files[0].path = '/granules';
   event.input.granules[0].files[1].path = '/granules';
 
@@ -222,9 +222,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 
   try {
     // Stage the files to be downloaded
-    const sourceDir = path.join(await findTestDataDirectory(), 'granules');
     const granuleFilename = event.input.granules[0].files[0].name;
-    const checksumFilename = event.input.granules[0].files[1].name;
 
     const output = await syncGranule(event);
 
@@ -232,8 +230,52 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
-    t.is(output.granules[0].files[0].filename,
-      `s3://${t.context.privateBucketName}/${granuleFilename}`);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
+    );
+  }
+  catch (e) {
+    if (e instanceof errors.RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else throw e;
+  }
+});
+
+test('validate file properties', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:3030'
+  };
+  t.context.event.input.granules[0].files[0].path = '/granules';
+  const [file] = t.context.event.input.granules[0].files;
+
+  t.context.event.input.granules[0].files[1] = Object.assign({}, file, {
+    name: 'MOD09GQ.A2017224.h27v08.006.2017227165029_1.jpg'
+  });
+
+  t.context.event.config.collection.files[0].url_path = 'file-example/';
+  t.context.event.config.collection.url_path = 'collection-example/';
+
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
+
+  try {
+    const granuleFilename = t.context.event.input.granules[0].files[0].name;
+    const output = await syncGranule(t.context.event);
+    console.log(output.granules[0])
+    validateOutput(t, output);
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 2);
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
+    );
+    t.truthy(output.granules[0].files[0].filename.includes('file-staging'));
+    t.is(output.granules[0].files[0].url_path, 'file-example/');
+    t.is(output.granules[0].files[1].url_path, 'collection-example/');
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
