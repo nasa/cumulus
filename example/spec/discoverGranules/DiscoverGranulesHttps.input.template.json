@@ -1,0 +1,55 @@
+{
+  "cumulus_meta": {
+    "message_source": "sfn",
+    "state_machine": "",
+    "execution_name": ""
+  },
+  "meta": {
+    "workflow_name": "DiscoverGranules",
+    "stack": "",
+    "buckets": {
+      "internal": "",
+      "private": ""
+    },
+    "provider": {
+      "id": "http_provider",
+      "host": "http://ec2-54-159-27-56.compute-1.amazonaws.com:3030",
+      "protocol": "https"
+    },
+    "collection": {
+      "provider_path": "granules/fake_granules",
+      "version": "1",
+      "granuleId": "^.*$",
+      "granuleIdExtraction": "^(.*)\\.(nc|nc\\.md5)$",
+      "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+      "name": "test-collection",
+      "files": [
+        {
+          "regex": ".*.nc$",
+          "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+          "bucket": "internal"
+        },
+        {
+          "regex": ".*.nc.md5$",
+          "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+          "bucket": "internal"
+        }
+      ]
+    },
+    "templates": {},
+    "queues": {}
+  },
+  "workflow_config": {
+    "StatusReport": {},
+    "DiscoverGranules": {
+      "stack": "{{$.meta.stack}}",
+      "provider": "{{$.meta.provider}}",
+      "buckets": "{{$.meta.buckets}}",
+      "collection": "{{$.meta.collection}}"
+    },
+    "StopStatus": {},
+    "WorkflowFailed": {}
+  },
+  "payload": {},
+  "exception": null
+}
