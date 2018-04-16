@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-data",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Includes the test data for various packages",
   "keywords": [
     "GIBS",
@@ -10,6 +10,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/test-data",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"

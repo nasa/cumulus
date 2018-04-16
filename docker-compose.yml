@@ -1,7 +1,7 @@
 version: '3'
 services:
   local:
-    image: cumuluss/circleci:node-6.10
+    image: cumuluss/circleci:node-8.11
     command: start
     volumes:
       - "./packages/test-data:/home/vsftpd:ro"
@@ -19,7 +19,7 @@ services:
       - localstack
 
   test:
-    image: cumuluss/circleci:node-6.10
+    image: cumuluss/circleci:node-8.11
     command: /bin/bash
     volumes:
       - ".:/home/circleci/project"
@@ -38,7 +38,7 @@ services:
       - localstack
 
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:0.8.6
     ports:
       - 4567-4582:4567-4582
       - 8080:8080
