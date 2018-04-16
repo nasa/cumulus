@@ -232,9 +232,8 @@ class Granule {
     const fileConfig = this.findCollectionFileConfigForFile(file);
     if (fileConfig) foundFileConfigUrlPath = fileConfig.url_path;
 
-    return Object.assign(cloneDeep(file), {
-      url_path: foundFileConfigUrlPath || this.collection.url_path || ''
-    });
+    const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
+    return Object.assign(cloneDeep(file), { url_path });
   }
 
   /**
