@@ -141,7 +141,6 @@ class Discover {
  * @class
  * @abstract
  */
-
 class Granule {
   constructor(
     buckets,
