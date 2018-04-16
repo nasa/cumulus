@@ -1,0 +1,23 @@
+stackName: test-src-integration
+bucket: cumulus-test-sandbox-internal
+DiscoverAndQueuePdrs: &defaults
+  meta:
+    stack: test-src-integration
+    buckets:
+      internal: cumulus-test-sandbox-internal
+      private: cumulus-test-sandbox-private
+    templates:
+      ParsePdr: s3://cumulus-test-sandbox-internal/test-src-integration/workflows/ParsePdr.json
+      IngestGranule: s3://cumulus-test-sandbox-internal/test-src-integration/workflows/IngestGranule.json
+    queues:
+      startSF: https://sqs.us-east-1.amazonaws.com/{{AWS_ACCOUNT_ID}}/test-src-integration-startSF
+ParsePdr: *defaults
+IngestGranule:
+  <<: *defaults
+  SyncGranuleOutput:
+    granules:
+      - files:
+        - bucket: cumulus-test-sandbox-private
+          filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf
+        - bucket: cumulus-test-sandbox-private
+          filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met
