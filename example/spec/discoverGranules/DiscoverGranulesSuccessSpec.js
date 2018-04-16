@@ -43,7 +43,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(
         httpWorkflowExecution.executionArn,
-        'DiscoverGranules');
+        'DiscoverGranules'
+      );
     });
 
     it('has expected granules output', () => {
@@ -76,7 +77,8 @@ describe('The Discover Granules workflow with https Protocol', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(
         httpsWorkflowExecution.executionArn,
-        'DiscoverGranules');
+        'DiscoverGranules'
+      );
     });
 
     it('has expected granules output', () => {
