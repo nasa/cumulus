@@ -12,10 +12,10 @@ const templatedInputFilename = templateFile({
   config: config[taskName]
 });
 
-const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'
+const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'; // eslint-disable-line max-len
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
-  config: config[taskName]['SyncGranuleOutput']
+  config: config[taskName].SyncGranuleOutput
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
