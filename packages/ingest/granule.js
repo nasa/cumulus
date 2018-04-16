@@ -10,12 +10,20 @@ const cksum = require('cksum');
 const checksum = require('checksum');
 const errors = require('@cumulus/common/errors');
 const sftpMixin = require('./sftp');
-const ftpMixin = require('./ftp').ftpMixin;
-const httpMixin = require('./http').httpMixin;
-const s3Mixin = require('./s3').s3Mixin;
+const { ftpMixin } = require('./ftp');
+const { httpMixin } = require('./http');
+const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 
+/**
+* The abstract Discover class
+**/
 class Discover {
+  /**
+  * Discover class constructor
+  *
+  * @param {Object} event - the cumulus event object
+  **/
   constructor(event) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
@@ -50,45 +58,50 @@ class Discover {
   /**
    * Receives a file object and adds granule, bucket and path information
    * extracted from the collection record
-   * @param {object} file the file object
-   * @returns {object} Updated file with granuleId, bucket and path information
+   *
+   * @param {Object} file - the file object
+   * @returns {Object} - Updated file with granuleId, bucket and path information
    */
-  setGranuleInfo(_file) {
-    let granuleId;
-    const file = _file;
+  setGranuleInfo(file) {
+    const _file = file;
     let test = new RegExp(this.collection.granuleIdExtraction);
     const match = file.name.match(test);
+
     if (match) {
-      granuleId = match[1];
-      for (const f of this.collection.files) {
+      const granuleId = match[1];
+
+      this.collection.files.forEach((f) => {
         test = new RegExp(f.regex);
+        const urlPath = f.url_path || this.collection.url_path || '';
+
         if (file.name.match(test)) {
-          file.granuleId = granuleId;
-          file.bucket = this.buckets[f.bucket];
-          if (f.url_path) {
-            file.url_path = f.url_path;
-          }
-          else {
-            file.url_path = this.collection.url_path || '';
-          }
+          _file.granuleId = granuleId;
+          _file.bucket = this.buckets[f.bucket];
+          _file.url_path = urlPath;
         }
-      }
+      });
 
       // if collection regex matched, the following will be true
-      if (file.granuleId && file.bucket) {
-        return file;
+      if (_file.granuleId && _file.bucket) {
+        return _file;
       }
     }
+
     return false;
   }
 
+  /**
+  * Discover new files that match a given path
+  *
+  * @returns {Array} an array of granule objects
+  **/
   async discover() {
     // get list of files that matches a given path
     const updatedFiles = (await this.list())
       .map((file) => this.setGranuleInfo(file))
       .filter((file) => file);
 
-    return await this.findNewGranules(updatedFiles);
+    return this.findNewGranules(updatedFiles);
   }
 
   /**
@@ -108,8 +121,16 @@ class Discover {
     }).then((exists) => (exists ? false : file));
   }
 
+  /**
+   * Find new granules and format them as array of objects
+   *
+   * @param {Array} files - An array of objects with `bucket` and `name` properties
+   * that work as AWS S3 `Bucket` and `Key`
+   * @returns {Array} an array of granule objects
+   */
   async findNewGranules(files) {
     const checkFiles = files.map((f) => this.fileIsNew(f));
+
     const t = await Promise.all(checkFiles);
     const newFiles = t.filter((f) => f);
 
@@ -117,8 +138,9 @@ class Discover {
     const granules = {};
     newFiles.forEach((_f) => {
       const f = _f;
-      const granuleId = f.granuleId;
+      const { granuleId } = f;
       delete f.granuleId;
+
       if (granules[granuleId]) {
         granules[granuleId].files.push(f);
       }
@@ -141,12 +163,21 @@ class Discover {
  * @class
  * @abstract
  */
-
 class Granule {
+  /**
+   * Constructor for abstract Granule class
+   *
+   * @param {Object} buckets - s3 buckets available from config
+   * @param {Object} collection - collection configuration object
+   * @param {Object} provider - provider configuration object
+   * @param {string} fileStagingDir - staging directory on bucket to place files
+   * @param {boolean} forceDownload - force download of a file
+   */
   constructor(
     buckets,
     collection,
     provider,
+    fileStagingDir = 'file-staging',
     forceDownload = false
   ) {
     if (this.constructor === Granule) {
@@ -165,16 +196,23 @@ class Granule {
     this.checksumFiles = {};
 
     this.forceDownload = forceDownload;
+    this.fileStagingDir = fileStagingDir;
   }
 
-  async ingest(granule) {
+  /**
+   * Ingest all files in a granule
+   *
+   * @param {Object} granule - granule object
+   * @param {string} bucket - s3 bucket to use for files
+   * @returns {Promise<Object>} return granule object
+   */
+  async ingest(granule, bucket) {
     // for each granule file
     // download / verify checksum / upload
 
     const downloadFiles = granule.files
-      .map((f) => this.getBucket(f))
       .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, this.collection.duplicateHandling));
+      .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
 
@@ -184,23 +222,40 @@ class Granule {
     };
   }
 
-  getBucket(_file) {
-    const file = _file;
+  /**
+   * set the url_path of a file based on collection config.
+   * Give a url_path set on a file definition higher priority
+   * than a url_path set on the min collection object.
+   *
+   * @param {Object} file - object representing a file of a granule
+   * @returns {Object} file object updated with url+path tenplate
+   */
+  getUrlPath(file) {
+    let urlPath = '';
+
     for (const fileDef of this.collection.files) {
       const test = new RegExp(fileDef.regex);
       const match = file.name.match(test);
-      if (match) {
-        file.bucket = this.buckets[fileDef.bucket];
-        file.url_path = fileDef.url_path || this.collection.url_path;
-        return file;
+
+      if (match && fileDef.url_path) {
+        urlPath = fileDef.url_path;
       }
     }
-    // if not found fall back to default
-    file.bucket = this.buckets.private;
-    file.url_path = this.collection.url_path || '';
-    return file;
+
+    if (!urlPath) {
+      urlPath = this.collection.url_path;
+    }
+
+    return urlPath;
   }
 
+  /**
+   * Filter out md5 checksum files and put them in `this.checksumFiles` object.
+   * To be used with `Array.prototype.filter`.
+   *
+   * @param {Object} file - file object from granule.files
+   * @returns {boolean} depending on if file was an md5 checksum or not
+   */
   filterChecksumFiles(file) {
     if (file.name.indexOf('.md5') > 0) {
       this.checksumFiles[file.name.replace('.md5', '')] = file;
@@ -235,37 +290,64 @@ class Granule {
     }
   }
 
-  async _cksum(tempFile) {
+  /**
+   * Get cksum checksum value of file
+   *
+   * @param {string} filepath - filepath of file to checksum
+   * @returns {Promise} checksum value calculated from file
+   */
+  async _cksum(filepath) {
     return new Promise((resolve, reject) =>
-      fs.createReadStream(tempFile)
+      fs.createReadStream(filepath)
         .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
-        .on('error', reject)
-    );
+        .on('error', reject));
   }
 
-  async _hash(type, tempFile) {
-    const options = { algorithm: type };
+  /**
+  * Get hash of file
+  *
+  * @param {string} algorithm - algorithm to use for hash,
+  * any algorithm accepted by node's `crypto.createHash`
+  * https://nodejs.org/api/crypto.html#crypto_crypto_createhash_algorithm_options
+  * @param {string} filepath - filepath of file to checksum
+  * @returns {Promise} checksum value calculated from file
+  **/
+  async _hash(algorithm, filepath) {
+    const options = { algorithm };
 
     return new Promise((resolve, reject) =>
-      checksum.file(tempFile, options, (err, sum) => {
+      checksum.file(filepath, options, (err, sum) => {
         if (err) return reject(err);
         return resolve(sum);
-      })
-    );
+      }));
   }
 
-  async enableDuplicateHandling(bucket) {
+  /**
+   * Enable versioning on an s3 bucket
+   *
+   * @param {string} bucket - s3 bucket name
+   * @returns {Promise} promise that resolves when bucket versioning is enabled
+   */
+  async enableBucketVersioning(bucket) {
     // check that the bucket has versioning enabled
     const versioning = await aws.s3().getBucketVersioning({ Bucket: bucket }).promise();
 
     // if not enabled, make it enabled
     if (versioning.Status !== 'Enabled') {
-      return aws.s3().putBucketVersioning({
+      aws.s3().putBucketVersioning({
         Bucket: bucket,
-        VersioningConfiguration: { Status: 'Enabled' } }).promise();
+        VersioningConfiguration: { Status: 'Enabled' }
+      }).promise();
     }
   }
 
+  /**
+   * Get a checksum from a file
+   *
+   * @param {Object} file - file object
+   * @returns {Array} returns array where first item is the checksum algorithm,
+   * and the second item is the value of the checksum
+   */
   async getChecksumFromFile(file) {
     if (file.checksumType && file.checksumValue) {
       return [file.checksumType, file.checksumValue];
@@ -281,7 +363,8 @@ class Granule {
       let checksumValue;
       try {
         await this.download(checksumRemotePath, checksumLocalPath);
-        checksumValue = (await fs.readFile(checksumLocalPath, 'utf8')).split(' ')[0];
+        const checksumFile = await fs.readFile(checksumLocalPath, 'utf8');
+        [checksumValue] = checksumFile.split(' ');
       }
       finally {
         await fs.remove(downloadDir);
@@ -297,20 +380,27 @@ class Granule {
 
   /**
    * Ingest individual files
+   *
    * @private
+   * @param {Object} file - file to download
+   * @param {string} bucket - bucket to put file in
+   * @param {string} duplicateHandling - how to handle duplicate files
+   * value can be `skip` to skip duplicates,
+   * or 'version' to create a new version of the file in s3
+   * @returns {Promise<Object>} returns promise that resolves to a file object
    */
-  async ingestFile(file, duplicateHandling) {
+  async ingestFile(file, bucket, duplicateHandling) {
     // Check if the file exists
     const exists = await aws.s3ObjectExists({
-      Bucket: file.bucket,
-      Key: path.join(file.url_path, file.name)
+      Bucket: bucket,
+      Key: path.join(this.fileStagingDir, file.name)
     });
 
     // Exit early if we can
     if (exists && duplicateHandling === 'skip') return file;
 
-    // Enable duplicate handling
-    if (duplicateHandling === 'version') this.enableDuplicateHandling(file.bucket);
+    // Enable bucket versioning
+    if (duplicateHandling === 'version') this.enableBucketVersioning(file.bucket);
 
     // Either the file does not exist yet, or it does but
     // we are replacing it with a more recent one or
@@ -321,6 +411,7 @@ class Granule {
     // and then upload
 
     const downloadDir = await this.createDownloadDirectory();
+
     try {
       const fileLocalPath = path.join(downloadDir, file.name);
       const fileRemotePath = path.join(file.path, file.name);
@@ -332,9 +423,19 @@ class Granule {
       await this.validateChecksum(file, fileLocalPath);
 
       // Upload the file
-      const filename = await this.upload(file.bucket, file.url_path, file.name, fileLocalPath);
+      const filename = await this.upload(
+        bucket,
+        this.fileStagingDir,
+        file.name,
+        fileLocalPath
+      );
 
-      return Object.assign({}, file, { filename });
+      return Object.assign(file, {
+        filename,
+        fileStagingDir: this.fileStagingDir,
+        url_path: this.getUrlPath(file),
+        bucket
+      });
     }
     finally {
       // Delete the temp directory
