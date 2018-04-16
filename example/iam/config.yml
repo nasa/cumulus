@@ -1,0 +1,27 @@
+default:
+  prefix: test-cumulus-integration
+  stackName: '{{prefix}}-iam'
+  authorizor: false
+  capabilities:
+    - CAPABILITY_NAMED_IAM
+  buckets:
+    internal: cumulus-test-sandbox-internal
+    private: cumulus-test-sandbox-private
+
+  params:
+     - name: ResourcePrefix
+       value: '{{prefix}}'
+     - name: InternalBucketName
+       value: '{{buckets.internal}}'
+     - name: PrivateBucketName
+       value: '{{buckets.private}}'
+     - name: ProtectedBucketName
+       value: '{{buckets.protected}}'
+     - name: PublicBucketName
+       value: '{{buckets.public}}'
+
+cumulus-from-npm:
+  prefix: test-npm-integration
+
+cumulus-from-source:
+  prefix: test-src-integration
