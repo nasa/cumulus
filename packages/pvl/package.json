@@ -3,6 +3,9 @@
   "version": "1.4.0",
   "description": "Parse and serialize Parameter Value Language, a data markup language used by NASA",
   "main": "index.js",
+  "engine": {
+    "node": ">=4.3"
+  },
   "scripts": {
     "test": "ava test/*.js --serial",
     "test-coverage": "nyc ava test/*.js --serial"
@@ -19,7 +22,7 @@
     "odl",
     "pvl",
     "parameter value language",
-    "object description lanuage"
+    "object description language"
   ],
   "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/pvl",
   "repository": {
@@ -28,10 +31,8 @@
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
-  "dependencies": {
-    "ava": "^0.23.0"
-  },
   "devDependencies": {
+    "ava": "^0.25.0",
     "nyc": "^11.6.0"
   }
 }
