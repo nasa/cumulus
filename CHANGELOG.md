@@ -5,16 +5,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
+- Lambda functions created by @cumulus/deployment will use node8.10 by default
+- Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
+- Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
+- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
 ### Fixed
 - **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
   - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
   - the lambda function will be redeployed when message adapter or lambda function are updated
+- Fixed a bug in the bootstrap lambda function where it stuck during update process
 
 ### Added
 - **CUMULUS-352:** Add reindex CLI to the API package.
-
-### Changed 
-- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
 
 ## [v1.4.1] - 2018-04-11
 
@@ -30,6 +34,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - fixed sf-sns-report schema, remove the invalid part
   - fixed pdr-status-check schema, the failed execution contains arn and reason
 - **CUMULUS-206** make sure homepage and repository urls exist in package.json files of tasks and packages
+
+### Added
+- Example folder with a cumulus deployment example
 
 ### Changed
 - [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
