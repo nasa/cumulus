@@ -1,9 +1,8 @@
-const { executeWorkflow, LambdaStep, ActivityStep } = require('@cumulus/integration-tests');
+const { executeWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../helpers/testUtils');
 
 const awsConfig = loadConfig();
 const lambdaStep = new LambdaStep();
-const activityStep = new ActivityStep();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
