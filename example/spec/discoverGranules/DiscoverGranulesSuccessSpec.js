@@ -6,12 +6,14 @@ const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
 const taskName = 'DiscoverGranules';
-const inputHttpTemplateFilename = './spec/discoverGranules/DiscoverGranulesHttp.input.template.json';
+const inputHttpTemplateFilename =
+  './spec/discoverGranules/DiscoverGranulesHttp.input.template.json';
 const templatedHttpInputFilename = templateFile({
   inputTemplateFilename: inputHttpTemplateFilename,
   config: config[taskName]
 });
-const inputHttpsTemplateFilename = './spec/discoverGranules/DiscoverGranulesHttps.input.template.json';
+const inputHttpsTemplateFilename =
+  './spec/discoverGranules/DiscoverGranulesHttps.input.template.json';
 const templatedHttpsInputFilename = templateFile({
   inputTemplateFilename: inputHttpsTemplateFilename,
   config: config[taskName]
