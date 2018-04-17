@@ -59,6 +59,7 @@ default:
     sethvincent: true
 
   ecs:
+    restartTasksOnDeploy: false
     amiid: ami-6944c513
     instanceType: change-me 
     volumeSize: 50
