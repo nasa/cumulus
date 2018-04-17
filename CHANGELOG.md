@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-352:** Add reindex CLI to the API package.
+- **CUMULUS-465:** Added mock http/ftp/sftp servers to the integration tests
 
 ## [v1.4.1] - 2018-04-11
 
