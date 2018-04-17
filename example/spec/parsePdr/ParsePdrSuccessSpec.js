@@ -23,7 +23,7 @@ const templatedInputFilename = templateFile({
 const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/ParsePdr.output.json'));
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 const collectionConfigStore = new CollectionConfigStore(config.bucket, config.stackName);
 
