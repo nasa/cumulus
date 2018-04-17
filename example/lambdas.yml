@@ -11,6 +11,7 @@ DiscoverGranules:
   memory: 512
   source: 'node_modules/@cumulus/discover-granules/dist/'
   useMessageAdapter: true
+  launchInVpc: true
 
 DiscoverPdrs:
   handler: index.handler
@@ -18,6 +19,7 @@ DiscoverPdrs:
   source: 'node_modules/@cumulus/discover-pdrs/dist/'
   useMessageAdapter: true
   logToElasticSearch: true
+  launchInVpc: true
 
 QueuePdrs:
   handler: index.handler
@@ -32,6 +34,7 @@ ParsePdr:
   source: 'node_modules/@cumulus/parse-pdr/dist/'
   useMessageAdapter: true
   logToElasticSearch: true
+  launchInVpc: true
 
 PdrStatusCheck:
   handler: index.handler
@@ -57,6 +60,7 @@ SyncGranule:
   logToElasticSearch: true
   source: 'node_modules/@cumulus/sync-granule/dist/'
   useMessageAdapter: true
+  launchInVpc: true
 
 S3AccessTest:
   handler: index.handler

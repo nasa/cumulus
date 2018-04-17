@@ -21,7 +21,7 @@ default:
   ecs:
     instanceType: t2.small
     desiredInstances: 1
-    availabilityZone: us-east-1a
+    availabilityZone: us-east-1b
     imageId: ami-a7a242da
     publicIp: true
     docker:
@@ -29,8 +29,8 @@ default:
     services:
       EcsTaskHelloWorld:
         image: cumuluss/cumulus-ecs-task:1.1.0
-        cpu: 800
-        memory: 1500
+        cpu: 400
+        memory: 700
         count: 1
         envs:
           AWS_DEFAULT_REGION:
@@ -44,6 +44,16 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+      MockProviderServer:
+        image: cumuluss/circleci:node-6.10
+        cpu: 300
+        memory: 500
+        count: 1
+        networkMode: host
+        envs:
+          ON_AWS: true
+        commands:
+          - start
 
   activities:
     - name: EcsTaskHelloWorld
