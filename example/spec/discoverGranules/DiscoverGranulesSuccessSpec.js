@@ -19,7 +19,7 @@ const templatedHttpsInputFilename = templateFile({
   config: config[taskName]
 });
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 describe('The Discover Granules workflow with http Protocol', () => {
   let httpWorkflowExecution = null;
