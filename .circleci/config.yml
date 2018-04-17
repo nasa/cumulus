@@ -139,9 +139,9 @@ jobs:
       - store_artifacts:
           path: ~/project/coverage
 
-      - run:
-          name: Running eslint-ratchet
-          command: ./bin/eslint-ratchet ci
+      # - run:
+      #     name: Running eslint-ratchet
+      #     command: ./bin/eslint-ratchet ci
 
   build_and_publish:
     docker:
