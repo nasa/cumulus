@@ -1,9 +1,7 @@
 'use strict';
 
-const path = require('path');
 const test = require('ava');
 const fs = require('fs-extra');
-const { fetchMessageAdapter } = require('../packages/deployment/lib/adapter');
 const {
   runWorkflow,
   downloadCMA,
