@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
 - Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
 - **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
+- **CUMULUS-519:** ECS tasks are no longer restarted after each CF deployment unless `ecs.restartTasksOnDeploy` is set to true
 ### Fixed
 - **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
   - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-352:** Add reindex CLI to the API package.
+- **CUMULUS-465:** Added mock http/ftp/sftp servers to the integration tests
 
 ## [v1.4.1] - 2018-04-11
 
