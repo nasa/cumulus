@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
   - the lambda function will be redeployed when message adapter or lambda function are updated
 - Fixed a bug in the bootstrap lambda function where it stuck during update process
+- Fixed a bug where the sf-sns-report task did not return the payload of the incoming message as the output of the task [CUMULUS-441]
 
 ### Added
 - **CUMULUS-352:** Add reindex CLI to the API package.
