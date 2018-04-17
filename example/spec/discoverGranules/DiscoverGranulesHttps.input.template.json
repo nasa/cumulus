@@ -13,7 +13,7 @@
     },
     "provider": {
       "id": "http_provider",
-      "host": "http://ec2-54-159-27-56.compute-1.amazonaws.com:3030",
+      "host": "http://172.31.4.163:3030",
       "protocol": "https"
     },
     "collection": {
