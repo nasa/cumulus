@@ -17,7 +17,7 @@ const templatedInputFilename = templateFile({
 
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 describe('The Discover And Queue PDRs workflow', () => {
   let workflowExecution = null;
