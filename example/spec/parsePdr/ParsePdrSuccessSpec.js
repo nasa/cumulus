@@ -1,48 +1,35 @@
 const fs = require('fs');
 const { S3 } = require('aws-sdk');
 const {
-  executeWorkflow,
+  buildAndExecuteWorkflow,
   waitForCompletedExecution,
   LambdaStep
 } = require('@cumulus/integration-tests');
 
-const { CollectionConfigStore } = require('@cumulus/common');
-
-const { loadConfig, templateFile } = require('../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 
 const s3 = new S3();
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
 const taskName = 'ParsePdr';
-const inputTemplateFilename = './spec/parsePdr/ParsePdr.input.template.json';
-const templatedInputFilename = templateFile({
-  inputTemplateFilename,
-  config: config[taskName]
-});
+
 const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/ParsePdr.output.json'));
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
-const collectionConfigStore = new CollectionConfigStore(config.bucket, config.stackName);
-
 describe('Parse PDR workflow', () => {
   let workflowExecution;
   let pdrStatusCheckOutput;
+  const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
+  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
+  const collection = { name: 'MOD09GQ', version: '006' };
+  const provider = { id: 's3_provider' };
 
   beforeAll(async () => {
-    await collectionConfigStore.put(
-      'MOD09GQ',
-      { name: 'MOD09GQ', granuleIdExtraction: '(.*)', files: [] }
-    );
-
-    workflowExecution = await executeWorkflow(
-      config.stackName,
-      config.bucket,
-      taskName,
-      templatedInputFilename
-    );
+    workflowExecution = await buildAndExecuteWorkflow(
+      config.stackName, config.bucket, taskName, collection, provider, inputPayload);
 
     pdrStatusCheckOutput = await lambdaStep.getStepOutput(
       workflowExecution.executionArn,
@@ -51,7 +38,6 @@ describe('Parse PDR workflow', () => {
   });
 
   afterAll(() => Promise.all([
-    collectionConfigStore.delete('MOD09GQ'),
     s3.deleteObject({
       Bucket: config.bucket,
       Key: `${config.stackName}/pdrs/${pdrFilename}`
@@ -99,17 +85,16 @@ describe('Parse PDR workflow', () => {
   });
 
   // TODO Get this working after CUMULUS-524 has been addressed
-  // describe('SfSnsReport lambda function', () => {
-  //   it('has expected output', async () => {
-  //     const lambdaOutput = await lambdaStep.getStepOutput(
-  //       workflowExecution.executionArn,
-  //       'SfSnsReport'
-  //     );
+  describe('SfSnsReport lambda function', () => {
+    let lambdaOutput;
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
+    });
 
-  //     // TODO Somehow the lambdaOutput.payload is null and this is different from what's in AWS console.
-  //     // Maybe it's caused by 'ResultPath: null', we want to keep the input as the output
-  //   });
-  // });
+    it('has expected output message', () => {
+      expect(lambdaOutput.payload.messageId).not.toBeNull();
+    });
+  });
 
   /**
    * The parse pdr workflow kicks off a granule ingest workflow, so check that the
