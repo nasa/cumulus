@@ -40,14 +40,27 @@
     "queues": {}
   },
   "workflow_config": {
-    "StatusReport": {},
+    "StatusReport": {
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "DiscoverGranules": {
       "stack": "{{$.meta.stack}}",
       "provider": "{{$.meta.provider}}",
       "buckets": "{{$.meta.buckets}}",
       "collection": "{{$.meta.collection}}"
     },
-    "StopStatus": {},
+    "StopStatus": {
+      "sfnEnd": true,
+      "stack": "{{$.meta.stack}}",
+      "bucket": "{{$.meta.buckets.internal}}",
+      "stateMachine": "{{$.cumulus_meta.state_machine}}",
+      "executionName": "{{$.cumulus_meta.execution_name}}",
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "WorkflowFailed": {}
   },
   "payload": {},
