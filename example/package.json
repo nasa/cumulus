@@ -4,7 +4,7 @@
   "description": "Cumulus Integration Test Deployment",
   "main": "index.js",
   "scripts": {
-    "test": "jasmine spec/setup/PopulateProvidersCollections.js && jasmine"
+    "test": "jasmine"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
