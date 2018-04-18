@@ -50,13 +50,9 @@ describe('Parse PDR workflow', () => {
     );
   });
 
-  afterAll(() => Promise.all([
-    collectionConfigStore.delete('MOD09GQ'),
-    s3.deleteObject({
-      Bucket: config.bucket,
-      Key: `${config.stackName}/pdrs/${pdrFilename}`
-    }).promise()
-  ]));
+  afterAll(async () => {
+    await collectionConfigStore.delete('MOD09GQ');
+  });
 
   it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
