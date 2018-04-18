@@ -77,12 +77,16 @@ Resources:
                   - dynamodb:GetRecords
                   - dynamodb:GetShardIterator
                   - dynamodb:ListStreams
-                  - dynamodb:ListTables
                   - dynamodb:PutItem
                   - dynamodb:Query
                   - dynamodb:Scan
                   - dynamodb:UpdateItem
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
+
+              - Effect: Allow
+                Action:
+                  - dynamodb:ListTables
+                Resource: '*'
 
               - Effect: Allow
                 Action:
@@ -165,7 +169,7 @@ Resources:
                   - kinesis:GetShardIterator
                   - kinesis:DescribeStream
                   - kinesis:ListStreams
-                Resource: arn:aws:kinesis:*:*:*
+                Resource: '*'
               # Allow writing to ingest buckets
               - Effect: Allow
                 Action:
@@ -186,6 +190,12 @@ Resources:
                   - !Sub "arn:aws:s3:::${PublicBucketName}/*"
                   - !Sub "arn:aws:s3:::${SharedBucketName}"
                   - !Sub "arn:aws:s3:::${SharedBucketName}/*"
+              # Used for testing bucket policies
+              - Effect: Allow
+                Action:
+                  - s3:PutBucketPolicy
+                Resource: 
+                  - !Sub "arn:aws:s3:::{{prefix}}-*"
               # Allow access to dynamoDB
               - Effect: Allow
                 Action:
@@ -235,7 +245,7 @@ Resources:
                   - events:PutRule
                   - events:DeleteRule
                   - events:DescribeRule
-                Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${ResourcePrefix}-*"
+                Resource: '*'
 
               # this is needed for running Lambda in a VPC
               # This might not be needed in the NGAP environment

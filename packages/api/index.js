@@ -21,6 +21,7 @@ exports.bootstrap = require('./lambdas/bootstrap').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
 exports.kinesisConsumer = require('./lambdas/kinesis-consumer').handler;
+exports.inRegionS3Policy = require('./lambdas/in-region-s3-policy').handler;
 
 const indexer = require('./es/indexer');
 const broadcast = require('./lambdas/sf-sns-broadcast');
