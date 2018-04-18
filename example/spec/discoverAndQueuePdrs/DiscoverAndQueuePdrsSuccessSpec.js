@@ -1,7 +1,7 @@
 const { S3 } = require('aws-sdk');
 const { executeWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile } = require('../helpers/testUtils');
+const { loadConfig, templateFile, deleteFolder } = require('../helpers/testUtils');
 
 const s3 = new S3();
 const config = loadConfig();
@@ -23,6 +23,8 @@ describe('The Discover And Queue PDRs workflow', () => {
   let workflowExecution = null;
 
   beforeAll(async () => {
+    await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
+
     workflowExecution = await executeWorkflow(
       config.stackName,
       config.bucket,
