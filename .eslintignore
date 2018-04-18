@@ -1,6 +1,12 @@
-**/node_modules/**
-**/dist/**
-packages/deployment/app/*.js
-packages/common/log.js
 **/.nyc_output/**
 **/coverage/**
+**/dist/**
+**/node_modules/**
+**/webpack.config.js
+example/app/**
+example/deployer/**
+example/iam/**
+example/node_modules/**
+packages/common/log.js
+packages/deployment/app/*.js
+tmp/
