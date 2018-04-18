@@ -1,4 +1,4 @@
-const { executeWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../helpers/testUtils');
 
 const awsConfig = loadConfig();
@@ -10,11 +10,10 @@ describe('The Hello World workflow', () => {
   let workflowExecution = null;
 
   beforeAll(async () => {
-    workflowExecution = await executeWorkflow(
+    workflowExecution = await buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
-      'HelloWorldWorkflow',
-      './spec/helloWorld/HelloWorld.input.template.json'
+      'HelloWorldWorkflow'
     );
   });
 
