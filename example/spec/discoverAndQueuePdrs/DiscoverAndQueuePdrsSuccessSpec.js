@@ -33,13 +33,6 @@ describe('The Discover And Queue PDRs workflow', () => {
     );
   });
 
-  afterAll(async () => {
-    await s3.deleteObject({
-      Bucket: config.bucket,
-      Key: `${config.stackName}/pdrs/${pdrFilename}`
-    }).promise();
-  });
-
   it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
