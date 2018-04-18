@@ -539,7 +539,7 @@ Resources:
       {{else}}
       Role: {{../iams.lambdaProcessingRoleArn}}
     {{/if}}
-      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs6.10{{/if}}
+      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
       Tags:
         - Key: Project
@@ -748,6 +748,9 @@ Resources:
           Host:
             SourcePath: {{path}} 
       {{/each}}
+    {{/if}}
+    {{# if this.networkMode}}
+      NetworkMode: {{this.networkMode}}
     {{/if}}
       ContainerDefinitions:
       - Name: {{@key}}

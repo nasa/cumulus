@@ -14,6 +14,7 @@ const collectionsEndpoint = require('../endpoints/collections');
 const collections = new models.Collection();
 const EsCollection = require('../es/collections');
 const { testEndpoint } = require('./testUtils');
+const { Search } = require('../es/search');
 
 const testCollection = {
   'name': 'collection-125',
@@ -29,8 +30,10 @@ const testCollection = {
 const hash = { name: 'name', type: 'S' };
 const range = { name: 'version', type: 'S' };
 
+const esIndex = 'cumulus-index';
+
 async function setup() {
-  await bootstrap.bootstrapElasticSearch('http://localhost:4571');
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
   await models.Manager.createTable(process.env.CollectionsTable, hash, range);
@@ -40,6 +43,9 @@ async function setup() {
 async function teardown() {
   models.Manager.deleteTable(process.env.CollectionsTable);
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
+
+  const esClient = await Search.es('fakehost');
+  await esClient.indices.delete({ index: esIndex });
 }
 
 test.before(async () => setup());

@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
+- Lambda functions created by @cumulus/deployment will use node8.10 by default
+- Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
+- Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
+- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
+- **CUMULUS-519:** ECS tasks are no longer restarted after each CF deployment unless `ecs.restartTasksOnDeploy` is set to true
+### Fixed
+- **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
+  - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
+  - the lambda function will be redeployed when message adapter or lambda function are updated
+- Fixed a bug in the bootstrap lambda function where it stuck during update process
+
+### Added
+- **CUMULUS-352:** Add reindex CLI to the API package.
+- **CUMULUS-465:** Added mock http/ftp/sftp servers to the integration tests
 
 ## [v1.4.1] - 2018-04-11
 
@@ -21,6 +37,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - fixed pdr-status-check schema, the failed execution contains arn and reason
 - **CUMULUS-206** make sure homepage and repository urls exist in package.json files of tasks and packages
 
+### Added
+- Example folder with a cumulus deployment example
+
 ### Changed
 - [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
   the config schema of the **queue-granules** task
@@ -32,6 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The config no longer takes a "collection" property
   - The "stack", "provider", and "bucket" config properties are now
     required
+- **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ### Removed
 - Removed the `findTmpTestDataDirectory()` function from
@@ -50,7 +70,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
-- **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ## [v1.3.0] - 2018-03-29
 
