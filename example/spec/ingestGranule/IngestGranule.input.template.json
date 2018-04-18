@@ -29,7 +29,11 @@
     "queues": {}
   },
   "workflow_config": {
-    "Report": {},
+    "Report": {
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "SyncGranule": {
       "buckets": "{{$.meta.buckets}}",
       "provider": "{{$.meta.provider}}",
@@ -47,7 +51,16 @@
         ]
       }
     },
-    "StopStatus": {},
+    "StopStatus": {
+      "sfnEnd": true,
+      "stack": "{{$.meta.stack}}",
+      "bucket": "{{$.meta.buckets.internal}}",
+      "stateMachine": "{{$.cumulus_meta.state_machine}}",
+      "executionName": "{{$.cumulus_meta.execution_name}}",
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "WorkflowFailed": {}
   },
   "payload": {
