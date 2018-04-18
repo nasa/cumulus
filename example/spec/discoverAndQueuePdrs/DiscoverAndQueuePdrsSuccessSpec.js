@@ -1,9 +1,7 @@
-const { S3 } = require('aws-sdk');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../helpers/testUtils');
+const { loadConfig, deleteFolder } = require('../helpers/testUtils');
 
-const s3 = new S3();
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
@@ -19,16 +17,10 @@ describe('The Discover And Queue PDRs workflow', () => {
   let workflowExecution;
 
   beforeAll(async () => {
+    await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider);
-  });
-
-  afterAll(async () => {
-    await s3.deleteObject({
-      Bucket: config.bucket,
-      Key: `${config.stackName}/pdrs/${pdrFilename}`
-    }).promise();
   });
 
   it('executes successfully', () => {
