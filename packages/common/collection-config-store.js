@@ -67,9 +67,25 @@ class CollectionConfigStore {
 
     return s3().putObject({
       Bucket: this.bucket,
-      Key: `${this.stackName}/collections/${dataType}.json`,
+      Key: this.configKey(dataType),
       Body: JSON.stringify(config)
     }).promise().then(() => null); // Don't leak implementation details to the caller
+  }
+
+  /**
+   * Delete a collection config from S3
+   *
+   * @param {string} dataType - the name of the collection config to delete
+   * @returns {Promise<null>} resolves when the collection config has been deleted
+   *   to S3
+   */
+  async delete(dataType) {
+    await s3().deleteObject({
+      Bucket: this.bucket,
+      Key: this.configKey(dataType)
+    }).promise();
+
+    delete this.cache[dataType];
   }
 
   /**
