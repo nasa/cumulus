@@ -12,13 +12,24 @@
     "queues": {}
   },
   "workflow_config": {
-    "StartStatus": {},
+    "StartStatus": {
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "HelloWorld": {
       "buckets": "{{$.meta.buckets}}",
       "provider": "{{$.meta.provider}}",
       "collection": "{{$.meta.collection}}"
     },
-    "StopStatus": {},
+    "StopStatus": {
+      "sfnEnd": true,
+      "stateMachine": "{{$.cumulus_meta.state_machine}}",
+      "executionName": "{{$.cumulus_meta.execution_name}}",
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "WorkflowFailed": {}
   },
   "payload": {},
