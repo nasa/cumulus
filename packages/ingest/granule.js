@@ -140,7 +140,7 @@ class Discover {
     const granules = {};
     newFiles.forEach((_f) => {
       const f = _f;
-      const { granuleId } = f;
+      const granuleId = f.granuleId;
       delete f.granuleId;
 
       if (granules[granuleId]) {
@@ -235,14 +235,14 @@ class Granule {
   getUrlPath(file) {
     let urlPath = '';
 
-    for (const fileDef of this.collection.files) {
+    this.collection.files.forEach((fileDef) => {
       const test = new RegExp(fileDef.regex);
       const match = file.name.match(test);
 
       if (match && fileDef.url_path) {
         urlPath = fileDef.url_path;
       }
-    }
+    });
 
     if (!urlPath) {
       urlPath = this.collection.url_path;
