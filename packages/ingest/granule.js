@@ -362,7 +362,7 @@ class Granule {
    * Get cksum checksum value of file
    *
    * @param {string} filepath - filepath of file to checksum
-   * @returns {Promise} checksum value calculated from file
+   * @returns {Promise<number>} checksum value calculated from file
    */
   async _cksum(filepath) {
     return new Promise((resolve, reject) =>
