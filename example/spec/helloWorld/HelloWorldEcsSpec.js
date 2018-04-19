@@ -6,10 +6,6 @@ const activityStep = new ActivityStep();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
-/** This test is currently ignored due to sporadic Circle CI failures
- * See CUMULUS-519
- */
-
 describe('The Hello World workflow using ECS', () => {
   let workflowExecution = null;
 
