@@ -19,7 +19,7 @@ const templatedOutputPayloadFilename = templateFile({
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 describe('The Ingest Granules workflow', () => {
   let workflowExecution = null;
