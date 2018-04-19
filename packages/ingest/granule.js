@@ -1,7 +1,9 @@
 'use strict';
 
+const deprecate = require('depd')('my-module');
 const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const os = require('os');
 const path = require('path');
@@ -250,6 +252,72 @@ class Granule {
   }
 
   /**
+   * Find the collection file config that applies to the given file
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object|undefined} a collection file config or undefined
+   * @private
+   */
+  findCollectionFileConfigForFile(file) {
+    return this.collection.files.find((fileConfig) =>
+      file.name.match(fileConfig.regex));
+  }
+
+  /**
+   * Add a bucket property to the given file
+   *
+   * Note: This returns a copy of the file parameter, it does not modify it.
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object} the file with a bucket property set
+   * @private
+   */
+  addBucketToFile(file) {
+    let bucket = this.buckets.private;
+
+    const fileConfig = this.findCollectionFileConfigForFile(file);
+    if (fileConfig) bucket = this.buckets[fileConfig.bucket];
+
+    return Object.assign(cloneDeep(file), { bucket });
+  }
+
+  /**
+   * Add a url_path property to the given file
+   *
+   * Note: This returns a copy of the file parameter, it does not modify it.
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object} the file with a url_path property set
+   * @private
+   */
+  addUrlPathToFile(file) {
+    let foundFileConfigUrlPath;
+
+    const fileConfig = this.findCollectionFileConfigForFile(file);
+    if (fileConfig) foundFileConfigUrlPath = fileConfig.url_path;
+
+    const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
+    return Object.assign(cloneDeep(file), { url_path });
+  }
+
+  /**
+   * Add bucket and url_path properties to the given file
+   *
+   * Note: This returns a copy of the file parameter, it does not modify it.
+   *
+   * This method is deprecated.  A combination of the addBucketToFile and
+   *   addUrlPathToFile methods should be used instead.
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object} the file with bucket and url_path properties set
+   * @private
+   */
+  getBucket(file) {
+    deprecate();
+    return this.addUrlPathToFile(this.addBucketToFile(file));
+  }
+
+  /**
    * Filter out md5 checksum files and put them in `this.checksumFiles` object.
    * To be used with `Array.prototype.filter`.
    *
@@ -443,6 +511,7 @@ class Granule {
     }
   }
 }
+exports.Granule = Granule; // exported to support testing
 
 /**
  * A class for discovering granules using HTTP or HTTPS.
