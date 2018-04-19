@@ -162,10 +162,12 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 module.exports = {
   testWorkflow,
   executeWorkflow,
+  waitForCompletedExecution,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
   /**
-   * @deprecated Since version 1.3. To be deleted version 2.0. sfnStep.LambdaStep.getStepOutput instead.
+   * @deprecated Since version 1.3. To be deleted version 2.0. 
+   * Use sfnStep.LambdaStep.getStepOutput instead.
    */
   getLambdaOutput: new sfnStep.LambdaStep().getStepOutput
 };
