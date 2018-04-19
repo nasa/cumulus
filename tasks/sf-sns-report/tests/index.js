@@ -6,18 +6,25 @@ const { publishSnsMessage } = require('../index');
 const { cloneDeep, get } = require('lodash');
 const { randomString } = require('@cumulus/common/test-utils');
 
-test('send report when sfn is running', (t) => {
+let bucket;
+
+test.before(async (t) => {
+  bucket = randomString();
+  await s3().createBucket({ Bucket: bucket }).promise();
+});
+
+
+test('send report when sfn is running', async (t) => {
   const event = {
     input: {
       meta: { topic_arn: 'test_topic_arn' },
-      anykey: 'anyvalue'
+      anykey: 'anyvalue',
+      payload: { someKey: 'someValue' }
     }
   };
 
-  return publishSnsMessage(cloneDeep(event))
-    .then((output) => {
-      t.not(get(output, 'MessageId', null));
-    });
+  const output = await publishSnsMessage(cloneDeep(event));
+  t.deepEqual(output, event.input.payload);
 });
 
 test('send report when sfn is running with exception', (t) => {
@@ -28,7 +35,8 @@ test('send report when sfn is running with exception', (t) => {
         Error: 'TheError',
         Cause: 'bucket not found'
       },
-      anykey: 'anyvalue'
+      anykey: 'anyvalue',
+      payload: { someKey: 'someValue' }
     }
   };
 
@@ -87,16 +95,15 @@ test('send report when sfn is finished and granule has succeeded', async (t) => 
   event.config = {};
   event.config.sfnEnd = true;
   event.config.stack = 'test_stack';
-  event.config.bucket = randomString();
+  event.config.bucket = bucket;
   event.config.stateMachine =
     'arn:aws:states:us-east-1:000000000000:stateMachine:TestCumulusParsePdrStateMach-K5Qk90fc8w4U';
   event.config.executionName = '7c543392-1da9-47f0-9c34-f43f6519412a';
 
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
-  return publishSnsMessage(cloneDeep(event))
-    .then((output) => {
-      t.not(get(output, 'MessageId', null));
-    })
-    .then(() => recursivelyDeleteS3Bucket(event.config.bucket))
-    .catch(() => recursivelyDeleteS3Bucket(event.config.bucket).then(t.fail));
+  const output = await publishSnsMessage(cloneDeep(event));
+  t.not(get(output, 'MessageId', null));
+});
+
+test.after.always(async () => {
+  await recursivelyDeleteS3Bucket(bucket);
 });
