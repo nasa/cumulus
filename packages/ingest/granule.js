@@ -1,6 +1,6 @@
 'use strict';
 
-const deprecate = require('depd')('my-module')
+const deprecate = require('depd')('my-module');
 const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
@@ -52,8 +52,9 @@ class Discover {
   /**
    * Receives a file object and adds granule, bucket and path information
    * extracted from the collection record
-   * @param {object} file the file object
-   * @returns {object} Updated file with granuleId, bucket and path information
+   *
+   * @param {Object} _file - the file object
+   * @returns {Object} Updated file with granuleId, bucket and path information
    */
   setGranuleInfo(_file) {
     let granuleId;
@@ -440,7 +441,7 @@ class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 * Select a class for discovering or ingesting granules based on protocol
 *
 * @param {string} type -`discover` or `ingest`
-* @param {string} protocol -`sftp`, `ftp`, `http` or `s3`
+* @param {string} protocol -`sftp`, `ftp`, `http`, `https` or `s3`
 * @returns {function} - a constructor to create a granule discovery object
 **/
 function selector(type, protocol) {
@@ -466,6 +467,7 @@ function selector(type, protocol) {
     case 'ftp':
       return FtpGranule;
     case 'http':
+    case 'https':
       return HttpGranule;
     case 's3':
       return S3Granule;
