@@ -16,9 +16,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
     const collection = { name: 'http_testcollection', version: '001' };
     const provider = { id: 'http_provider' };
 
-    // eslint-disable-next-line function-paren-newline
     httpWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider);
+      config.stackName,
+      config.bucket,
+      taskName,
+      collection,
+      provider
+    );
   });
 
   it('executes successfully', () => {
@@ -50,9 +54,13 @@ describe('The Discover Granules workflow with https Protocol', () => {
     const collection = { name: 'https_testcollection', version: '001' };
     const provider = { id: 'https_provider' };
 
-    // eslint-disable-next-line function-paren-newline
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider);
+      config.stackName,
+      config.bucket,
+      taskName,
+      collection,
+      provider
+    );
   });
 
   it('executes successfully', () => {
