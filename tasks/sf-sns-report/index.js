@@ -81,7 +81,6 @@ async function publishSnsMessage(event) {
   const topicArn = get(message, 'meta.topic_arn', null);
   const failed = eventFailed(message);
 
-  let response = {};
   if (topicArn) {
     // if this is the sns call at the end of the execution
     if (finished) {
@@ -102,7 +101,7 @@ async function publishSnsMessage(event) {
       message.meta.status = 'running';
     }
 
-    response = await sns().publish({
+    await sns().publish({
       TopicArn: topicArn,
       Message: JSON.stringify(message)
     }).promise();
@@ -112,7 +111,7 @@ async function publishSnsMessage(event) {
     makeLambdaFunctionFail(message);
   }
 
-  return response;
+  return get(message, 'payload', {});
 }
 
 exports.publishSnsMessage = publishSnsMessage;

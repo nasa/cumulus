@@ -41,19 +41,14 @@
     "collection": {
       "type": "object",
       "required": [
-        "process",
         "files",
-        "name",
-        "granuleIdExtraction",
-        "provider_path"
+        "name"
       ],
       "properties": {
         "name": { "type": "string" },
         "process": { "type": "string" },
-        "provider_path": { "type": "string" },
         "url_path": { "type": "string" },
         "duplicateHandling": { "type": "string" },
-        "granuleIdExtraction": { "type": "string" },
         "files": {
           "type": "array",
           "items": {
@@ -61,7 +56,8 @@
             "required": ["regex", "bucket"],
             "properties": {
               "regex": { "type": "string" },
-              "bucket": { "type": "string" }
+              "bucket": { "type": "string" },
+              "url_path": { "type": "string" }
             }
           }
         }
