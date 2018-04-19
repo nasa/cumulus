@@ -19,7 +19,9 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "build": "true",
+    "build": "tsc; true",
+    "prepublish": "npm run build",
+    "clean": "rm -f *.d.ts *.js",
     "lint": "eslint .",
     "mocha": "mocha test/**/*.js",
     "mocha-coverage": "nyc mocha-webpack test/**/*.js",
@@ -40,6 +42,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@types/node": "^9.6.1",
     "@cumulus/test-data": "^1.4.0",
     "ajv": "^5.2.2",
     "async": "^2.0.0",
@@ -59,6 +62,9 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
+    "tslint": "^5.9.1",
+    "tslint-config-airbnb": "^5.8.0",
+    "typescript": "^2.8.1",
     "nyc": "^11.6.0"
   }
 }
