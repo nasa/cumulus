@@ -192,6 +192,7 @@ async function addCollections(stackName, bucketName, dataDirectory) {
     collections.push(collection);
   });
 
+  // limit the concurrent access to database
   const concurrencyLimit = process.env.CONCURRENCY || 3;
   const limit = pLimit(concurrencyLimit);
   const promises = collections.map((collection) => limit(() => {
@@ -220,13 +221,13 @@ async function addProviders(stackName, bucketName, dataDirectory) {
     providers.push(provider);
   });
 
+  // limit the concurrent access to database
   const concurrencyLimit = process.env.CONCURRENCY || 3;
   const limit = pLimit(concurrencyLimit);
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
     console.log(`adding provider ${provider.id}`);
-    return p.delete({ id: provider.id })
-      .then(() => p.create(provider));
+    return p.delete({ id: provider.id }).then(() => p.create(provider));
   }));
   return Promise.all(promises).then((ps) => ps.length);
 }
@@ -238,7 +239,10 @@ async function addProviders(stackName, bucketName, dataDirectory) {
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {Object} collection - collection information
+ * @param {Object} collection.name - collection name
+ * @param {Object} collection.version - collection version
  * @param {Object} provider - provider information
+ * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
  * @returns {Promise.<string>} workflow message
  */
@@ -266,12 +270,21 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {Object} collection - collection information
+ * @param {Object} collection.name - collection name
+ * @param {Object} collection.version - collection version
  * @param {Object} provider - provider information
+ * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
-async function buildAndExecuteWorkflow( // eslint-disable-line function-paren-newline
-  stackName, bucketName, workflowName, collection, provider, payload) {
+async function buildAndExecuteWorkflow(
+  stackName,
+  bucketName,
+  workflowName,
+  collection,
+  provider,
+  payload
+) {
   const workflowMsg = await
   buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload);
   return executeWorkflow(stackName, bucketName, workflowName, workflowMsg);
