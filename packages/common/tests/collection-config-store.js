@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const { recursivelyDeleteS3Bucket, s3 } = require('../aws');
+const { recursivelyDeleteS3Bucket, s3, s3ObjectExists } = require('../aws');
 const { randomString } = require('../test-utils');
 const CollectionConfigStore = require('../collection-config-store');
 
@@ -18,15 +18,13 @@ test.beforeEach(async (t) => {
     `${t.context.stackName}/collections/${dataType}.json`;
 });
 
-test.afterEach(async (t) => {
-  try {
-    await recursivelyDeleteS3Bucket(t.context.bucket);
-  }
-  catch (err) {
-    // Some tests delete the bucket before this "afterEach" hook is run
-    if (err.code !== 'NoSuchBucket') throw err;
-  }
-});
+test.afterEach((t) =>
+  recursivelyDeleteS3Bucket(t.context.bucket)
+    .catch((err) => {
+      // Some tests delete the bucket before this "afterEach" hook is run,
+      // which is okay.
+      if (err.code !== 'NoSuchBucket') throw err;
+    }));
 
 test('get() fetches a collection config from S3', async (t) => {
   await s3().putObject({
@@ -112,4 +110,42 @@ test('put() updates the cache with the new collection config', async (t) => {
   const fetchedCollectionConfig = await collectionConfigStore.get(t.context.dataType);
 
   t.deepEqual(fetchedCollectionConfig, t.context.collectionConfig);
+});
+
+test('delete() removes the collection config from S3', async (t) => {
+  const bucket = t.context.bucket;
+  const collectionConfigKey = t.context.collectionConfigKey(t.context.dataType);
+
+  // Store the collection config to S3
+  await (new CollectionConfigStore(bucket, t.context.stackName))
+    .put(t.context.dataType, t.context.collectionConfig);
+
+  // Verify that the collection config is in S3.  Will throw an error
+  t.true(await s3ObjectExists({ Bucket: bucket, Key: collectionConfigKey }));
+
+  // Delete the collection config
+  await (new CollectionConfigStore(bucket, t.context.stackName))
+    .delete(t.context.dataType);
+
+  // Verify that the collection config is no longer in S3
+  t.false(await s3ObjectExists({ Bucket: bucket, Key: collectionConfigKey }));
+});
+
+test('delete() the collection conf ig from the cache', async (t) => {
+  const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
+
+  // Store the collection config to S3, which will also cache it
+  await collectionConfigStore.put(t.context.dataType, t.context.collectionConfig);
+
+  // Delete the collection config, which should clear it from the cache
+  await collectionConfigStore.delete(t.context.dataType);
+
+  // Try to get the config, which should hit S3 and fail if it isn't cached
+  try {
+    await collectionConfigStore.get(t.context.dataType);
+    t.fail('Expected an error to be thrown');
+  }
+  catch (err) {
+    t.is(err.message, `A collection config for data type "${t.context.dataType}" was not found.`);
+  }
 });
