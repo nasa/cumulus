@@ -1,7 +1,9 @@
 'use strict';
 
+const deprecate = require('depd')('my-module')
 const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const os = require('os');
 const path = require('path');
@@ -171,8 +173,9 @@ class Granule {
     // download / verify checksum / upload
 
     const downloadFiles = granule.files
-      .map((f) => this.getBucket(f))
       .filter((f) => this.filterChecksumFiles(f))
+      .map((f) => this.addBucketToFile(f))
+      .map((f) => this.addUrlPathToFile(f))
       .map((f) => this.ingestFile(f, this.collection.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
@@ -183,21 +186,70 @@ class Granule {
     };
   }
 
-  getBucket(_file) {
-    const file = _file;
-    for (const fileDef of this.collection.files) {
-      const test = new RegExp(fileDef.regex);
-      const match = file.name.match(test);
-      if (match) {
-        file.bucket = this.buckets[fileDef.bucket];
-        file.url_path = fileDef.url_path || this.collection.url_path;
-        return file;
-      }
-    }
-    // if not found fall back to default
-    file.bucket = this.buckets.private;
-    file.url_path = this.collection.url_path || '';
-    return file;
+  /**
+   * Find the collection file config that applies to the given file
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object|undefined} a collection file config or undefined
+   * @private
+   */
+  findCollectionFileConfigForFile(file) {
+    return this.collection.files.find((fileConfig) =>
+      file.name.match(fileConfig.regex));
+  }
+
+  /**
+   * Add a bucket property to the given file
+   *
+   * Note: This returns a copy of the file parameter, it does not modify it.
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object} the file with a bucket property set
+   * @private
+   */
+  addBucketToFile(file) {
+    let bucket = this.buckets.private;
+
+    const fileConfig = this.findCollectionFileConfigForFile(file);
+    if (fileConfig) bucket = this.buckets[fileConfig.bucket];
+
+    return Object.assign(cloneDeep(file), { bucket });
+  }
+
+  /**
+   * Add a url_path property to the given file
+   *
+   * Note: This returns a copy of the file parameter, it does not modify it.
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object} the file with a url_path property set
+   * @private
+   */
+  addUrlPathToFile(file) {
+    let foundFileConfigUrlPath;
+
+    const fileConfig = this.findCollectionFileConfigForFile(file);
+    if (fileConfig) foundFileConfigUrlPath = fileConfig.url_path;
+
+    const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
+    return Object.assign(cloneDeep(file), { url_path });
+  }
+
+  /**
+   * Add bucket and url_path properties to the given file
+   *
+   * Note: This returns a copy of the file parameter, it does not modify it.
+   *
+   * This method is deprecated.  A combination of the addBucketToFile and
+   *   addUrlPathToFile methods should be used instead.
+   *
+   * @param {Object} file - an object containing a "name" property
+   * @returns {Object} the file with bucket and url_path properties set
+   * @private
+   */
+  getBucket(file) {
+    deprecate();
+    return this.addUrlPathToFile(this.addBucketToFile(file));
   }
 
   filterChecksumFiles(file) {
@@ -341,6 +393,7 @@ class Granule {
     }
   }
 }
+exports.Granule = Granule; // exported to support testing
 
 /**
  * A class for discovering granules using HTTP or HTTPS.

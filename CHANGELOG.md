@@ -10,20 +10,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Lambda functions created by @cumulus/deployment will use node8.10 by default
 - Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
 - Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
-- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
+- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html).
+- **CUMULUS-519:** ECS tasks are no longer restarted after each CF deployment unless `ecs.restartTasksOnDeploy` is set to true
+- **CUMULUS-518:** Updates to the SyncGranule config schema
+  - `granuleIdExtraction` is no longer a property
+  - `process` is now an optional property
+  - `provider_path` is no longer a property
+
 ### Fixed
 - **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
   - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
   - the lambda function will be redeployed when message adapter or lambda function are updated
 - Fixed a bug in the bootstrap lambda function where it stuck during update process
+- Fixed a bug where the sf-sns-report task did not return the payload of the incoming message as the output of the task [CUMULUS-441]
 
 ### Added
 - **CUMULUS-352:** Add reindex CLI to the API package.
+- **CUMULUS-465:** Added mock http/ftp/sftp servers to the integration tests
+- Added a `delete` method to the `@common/CollectionConfigStore` class
 
 ## [v1.4.1] - 2018-04-11
 
 ### Fixed
-- Sync-granule install 
+- Sync-granule install
 
 ## [v1.4.0] - 2018-04-09
 

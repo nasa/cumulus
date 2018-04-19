@@ -1,6 +1,10 @@
 const fs = require('fs');
 const { S3 } = require('aws-sdk');
-const { executeWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const {
+  executeWorkflow,
+  waitForCompletedExecution,
+  LambdaStep
+} = require('@cumulus/integration-tests');
 
 const { CollectionConfigStore } = require('@cumulus/common');
 
@@ -19,14 +23,19 @@ const templatedInputFilename = templateFile({
 const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/ParsePdr.output.json'));
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
-describe('The Parse PDR workflow', () => {
-  let workflowExecution = null;
+const collectionConfigStore = new CollectionConfigStore(config.bucket, config.stackName);
+
+describe('Parse PDR workflow', () => {
+  let workflowExecution;
+  let pdrStatusCheckOutput;
 
   beforeAll(async () => {
-    const collectionConfigStore = new CollectionConfigStore(config.bucket, config.stackName);
-    await collectionConfigStore.put('MOD09GQ', { name: 'MOD09GQ', granuleIdExtraction: '(.*)' });
+    await collectionConfigStore.put(
+      'MOD09GQ',
+      { name: 'MOD09GQ', granuleIdExtraction: '(.*)', files: [] }
+    );
 
     workflowExecution = await executeWorkflow(
       config.stackName,
@@ -34,20 +43,22 @@ describe('The Parse PDR workflow', () => {
       taskName,
       templatedInputFilename
     );
+
+    pdrStatusCheckOutput = await lambdaStep.getStepOutput(
+      workflowExecution.executionArn,
+      'PdrStatusCheck'
+    );
   });
 
   afterAll(async () => {
-    await s3.deleteObject({
-      Bucket: config.bucket,
-      Key: `${config.stackName}/pdrs/${pdrFilename}`
-    }).promise();
+    await collectionConfigStore.delete('MOD09GQ');
   });
 
   it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('the ParsePdr Lambda', () => {
+  describe('ParsePdr lambda function', () => {
     let lambdaOutput = null;
 
     beforeAll(async () => {
@@ -59,7 +70,7 @@ describe('The Parse PDR workflow', () => {
     });
   });
 
-  describe('the QueueGranules Lambda', () => {
+  describe('QueueGranules lambda function', () => {
     let lambdaOutput = null;
 
     beforeAll(async () => {
@@ -75,32 +86,54 @@ describe('The Parse PDR workflow', () => {
     });
   });
 
-  describe('the PdrStatusCheck Lambda', () => {
-    let lambdaOutput = null;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(
-        workflowExecution.executionArn,
-        'PdrStatusCheck'
-      );
-    });
-
+  describe('PdrStatusCheck lambda function', () => {
     it('has expected output', () => {
-      const payload = lambdaOutput.payload;
+      const payload = pdrStatusCheckOutput.payload;
       expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
-      expect(lambdaOutput.payload.pdr).toEqual(expectedParsePdrOutput.pdr);
+      expect(payload.pdr).toEqual(expectedParsePdrOutput.pdr);
     });
   });
 
-  describe('the SfSnsReport Lambda', () => {
+  // TODO Get this working after CUMULUS-524 has been addressed
+  // describe('SfSnsReport lambda function', () => {
+  //   it('has expected output', async () => {
+  //     const lambdaOutput = await lambdaStep.getStepOutput(
+  //       workflowExecution.executionArn,
+  //       'SfSnsReport'
+  //     );
+
+  //     // TODO Somehow the lambdaOutput.payload is null and this is different from what's in AWS console.
+  //     // Maybe it's caused by 'ResultPath: null', we want to keep the input as the output
+  //   });
+  // });
+
+  /**
+   * The parse pdr workflow kicks off a granule ingest workflow, so check that the
+   * granule ingest workflow completes successfully. Above, we checked that there is
+   * one running task, which is the sync granule workflow. The payload has the arn of the
+   * running workflow, so use that to get the status.
+   */
+  describe('IngestGranule workflow', () => {
+    let ingestGranuleWorkflowArn;
+    let ingestGranuleExecutionStatus;
+
     beforeAll(async () => {
-      await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
+      ingestGranuleWorkflowArn = pdrStatusCheckOutput.payload.running[0];
+      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
     });
 
-    it('has expected output', () => {
-      // TODO Somehow the lambdaOutput.payload is null and this is
-      // different from what's in AWS console.
-      // Maybe it's caused by 'ResultPath: null', we want to keep the input as the output
+    it('executes successfully', () => {
+      expect(ingestGranuleExecutionStatus).toEqual('SUCCEEDED');
+    });
+
+    describe('SyncGranule lambda function', () => {
+      it('outputs 1 granule', async () => {
+        const lambdaOutput = await lambdaStep.getStepOutput(
+          ingestGranuleWorkflowArn,
+          'SyncGranule'
+        );
+        expect(lambdaOutput.payload.granules.length).toEqual(1);
+      });
     });
   });
 });
