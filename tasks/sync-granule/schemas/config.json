@@ -9,7 +9,7 @@
       "default": false
     },
     "fileStagingDir": {
-      "description": "name of directory used for staging location",
+      "description": "Directory used for staging location of files. Default is `file-staging`",
       "type": "string"
     },
     "provider": {
