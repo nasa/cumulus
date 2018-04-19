@@ -22,7 +22,7 @@ default:
     instanceType: t2.small
     desiredInstances: 1
     availabilityZone: us-east-1b
-    imageId: ami-a7a242da
+    amiid: ami-a7a242da
     publicIp: true
     docker:
       username: cumulususer
@@ -44,16 +44,6 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
-      MockProviderServer:
-        image: cumuluss/circleci:node-6.10
-        cpu: 300
-        memory: 500
-        count: 1
-        networkMode: host
-        envs:
-          ON_AWS: true
-        commands:
-          - start
 
   activities:
     - name: EcsTaskHelloWorld
