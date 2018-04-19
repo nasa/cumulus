@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
 - **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html). 
 - **CUMULUS-519:** ECS tasks are no longer restarted after each CF deployment unless `ecs.restartTasksOnDeploy` is set to true
+- **CUMULUS-298:** Updated log filterPattern to include all CloudWatch logs in ElasticSearch
 ### Fixed
 - **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
   - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
