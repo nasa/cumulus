@@ -1,5 +1,4 @@
 const fs = require('fs');
-const { S3 } = require('aws-sdk');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
@@ -27,7 +26,13 @@ describe('Parse PDR workflow', () => {
 
   beforeAll(async () => {
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload);
+      config.stackName,
+      config.bucket,
+      taskName,
+      collection,
+      provider,
+      inputPayload
+    );
 
     pdrStatusCheckOutput = await lambdaStep.getStepOutput(
       workflowExecution.executionArn,
@@ -75,15 +80,16 @@ describe('Parse PDR workflow', () => {
     });
   });
 
-  // TODO Get this working after CUMULUS-524 has been addressed
   describe('SfSnsReport lambda function', () => {
     let lambdaOutput;
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
     });
 
+    // SfSnsReport lambda is used in the workflow multiple times, appearantly, only the first output
+    // is retrieved which is the first step (StatusReport)
     it('has expected output message', () => {
-      expect(lambdaOutput.payload.messageId).not.toBeNull();
+      expect(lambdaOutput.payload).toEqual(inputPayload);
     });
   });
 
