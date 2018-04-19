@@ -18,9 +18,13 @@ describe('The Discover And Queue PDRs workflow', () => {
 
   beforeAll(async () => {
     await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
-    // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider);
+      config.stackName,
+      config.bucket,
+      taskName,
+      collection,
+      provider
+    );
   });
 
   it('executes successfully', () => {
