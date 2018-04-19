@@ -7,6 +7,7 @@ const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/in
 
 const {
   selector,
+  Granule,
   FtpGranule,
   SftpGranule,
   HttpGranule,
@@ -93,4 +94,132 @@ test('filter files using regex', (t) => {
   };
   const result = discover.setGranuleInfo(file);
   t.true(result === false);
+});
+
+class TestGranule extends Granule {}
+
+test('findCollectionFileConfigForFile returns the correct config', (t) => {
+  const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right-bucket' };
+  const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
+  const collectionConfig = {
+    files: [rightCollectionFileConfig, wrongCollectionFileConfig]
+  };
+
+  const testGranule = new TestGranule({}, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
+
+  t.deepEqual(fileCollectionConfig, rightCollectionFileConfig);
+});
+
+test('findCollectionFileConfigForFile returns undefined if no config matches', (t) => {
+  const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
+  const collectionConfig = {
+    files: [wrongCollectionFileConfig]
+  };
+
+  const testGranule = new TestGranule({}, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
+
+  t.is(fileCollectionConfig, undefined);
+});
+
+test('addBucketToFile adds the private bucket if no config matches', (t) => {
+  const buckets = { private: 'private-bucket' };
+
+  const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
+  const collectionConfig = {
+    files: [wrongCollectionFileConfig]
+  };
+
+  const testGranule = new TestGranule(buckets, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const updatedFile = testGranule.addBucketToFile(file);
+
+  t.is(updatedFile.bucket, 'private-bucket');
+});
+
+test('addBucketToFile adds the correct bucket when a config is found', (t) => {
+  const buckets = {
+    private: 'private-bucket',
+    right: 'right-bucket'
+  };
+
+  const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right' };
+  const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong' };
+  const collectionConfig = {
+    files: [rightCollectionFileConfig, wrongCollectionFileConfig]
+  };
+
+  const testGranule = new TestGranule(buckets, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const updatedFile = testGranule.addBucketToFile(file);
+
+  t.is(updatedFile.bucket, 'right-bucket');
+});
+
+test('addUrlPathToFile adds an emptry string as the url_path if no config matches and no collection url_path is configured', (t) => { // eslint-disable-line max-len
+  const collectionConfig = {
+    files: []
+  };
+
+  const testGranule = new TestGranule({}, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const updatedFile = testGranule.addUrlPathToFile(file);
+
+  t.is(updatedFile.url_path, '');
+});
+
+test("addUrlPathToFile adds the collection config's url_path as the url_path if no config matches and a collection url_path is configured", (t) => { // eslint-disable-line max-len
+  const collectionConfig = {
+    url_path: '/collection/url/path',
+    files: []
+  };
+
+  const testGranule = new TestGranule({}, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const updatedFile = testGranule.addUrlPathToFile(file);
+
+  t.is(updatedFile.url_path, collectionConfig.url_path);
+});
+
+test("addUrlPathToFile adds the matching collection file config's url_path as the url_path", (t) => { // eslint-disable-line max-len
+  const rightCollectionFileConfig = { regex: '^right-.*', url_path: '/right' };
+  const wrongCollectionFileConfig = { regex: '^wrong-.*', url_path: '/wrong' };
+  const collectionConfig = {
+    url_path: '/collection/url/path',
+    files: [rightCollectionFileConfig, wrongCollectionFileConfig]
+  };
+
+  const testGranule = new TestGranule({}, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const updatedFile = testGranule.addUrlPathToFile(file);
+
+  t.is(updatedFile.url_path, rightCollectionFileConfig.url_path);
+});
+
+test('getBucket adds the correct url_path and bucket to the file', (t) => {
+  const collectionConfig = {
+    files: []
+  };
+
+  const buckets = {
+    private: 'private-bucket'
+  };
+
+  const testGranule = new TestGranule(buckets, collectionConfig, {});
+
+  const file = { name: 'right-file' };
+  const updatedFile = testGranule.getBucket(file);
+
+  t.is(updatedFile.bucket, 'private-bucket');
+  t.is(updatedFile.url_path, '');
 });

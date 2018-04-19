@@ -30,7 +30,11 @@
     }
   },
   "workflow_config": {
-    "StatusReport": {},
+    "StatusReport": {
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "ParsePdr": {
       "provider": "{{$.meta.provider}}",
       "bucket": "{{$.meta.buckets.internal}}",
@@ -46,7 +50,16 @@
     "CheckStatus": {},
     "CheckAgainChoice": {},
     "WaitForSomeTime": {},
-    "StopStatus": {},
+    "StopStatus": {
+      "sfnEnd": true,
+      "stack": "{{$.meta.stack}}",
+      "bucket": "{{$.meta.buckets.internal}}",
+      "stateMachine": "{{$.cumulus_meta.state_machine}}",
+      "executionName": "{{$.cumulus_meta.execution_name}}",
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
     "WorkflowFailed": {}
   },
   "payload": {
