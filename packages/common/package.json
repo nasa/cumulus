@@ -19,9 +19,9 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "build": "tsc",
-    "prepublish": "tsc",
-    "clean": "rm -f *.d.ts log.js",
+    "build": "tsc; true",
+    "prepublish": "npm run build",
+    "clean": "rm -f *.d.ts *.js",
     "lint": "eslint .",
     "mocha": "mocha test/**/*.js",
     "mocha-coverage": "nyc mocha-webpack test/**/*.js",

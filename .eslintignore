@@ -7,6 +7,5 @@ example/app/
 example/deployer/
 example/iam/
 example/node_modules/
-packages/common/log.js
-packages/deployment/app/*.js
+packages/common/
 tmp/
