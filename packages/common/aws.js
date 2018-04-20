@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign */
+
 'use strict';
 
 const AWS = require('aws-sdk');
@@ -12,10 +13,9 @@ const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 const pump = require('pump');
 
-const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-if (region) {
-  AWS.config.update({ region: region });
-}
+const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+AWS.config.update({ region: region });
+exports.region = region;
 
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
