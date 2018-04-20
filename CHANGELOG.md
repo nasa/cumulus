@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-352:** Add reindex CLI to the API package.
 - **CUMULUS-465:** Added mock http/ftp/sftp servers to the integration tests
 - Added a `delete` method to the `@common/CollectionConfigStore` class
+- **CUMULUS-467 "@cumulus/integration-tests or cumulus-integration-tests should seed provider and collection in deployed DynamoDB"**
+  - `example` integration-tests populates providers and collections to database
+  - `example` workflow messages are populated from workflow templates in s3, provider and collection information in database, and input payloads.  Input templates are removed.
+  - added `https` protocol to provider schema
 
 ## [v1.4.1] - 2018-04-11
 

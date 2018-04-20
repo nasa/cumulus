@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/discover-granules",
   "version": "1.4.1",
-  "description": "Discover Granules in FTP/HTTP/SFTP endpoints",
+  "description": "Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints",
   "main": "index.js",
   "directories": {
     "test": "tests"

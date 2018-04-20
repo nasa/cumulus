@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-Discover PDRs in FTP/HTTP/SFTP/S3 endpoints
+Discover PDRs in FTP/HTTP/HTTPS/SFTP/S3 endpoints
 ## Message Configuration
 ### Config
 
