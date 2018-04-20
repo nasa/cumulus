@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign */
+
 'use strict';
 
 const get = require('lodash.get');
@@ -7,6 +8,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const { moveGranuleFile } = require('@cumulus/ingest/granule');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
@@ -121,16 +123,7 @@ async function publish(cmrFile, creds, bucket, stack) {
   };
 }
 
-/**
- * Builds the output of the post-to-cmr task
- *
- * @param {Array} results - list of results returned by publish function
- * @param {Array} input - the task input array
- * @param {Array} granules - an array of the granules
- * @param {string} regex - regex needed to extract granuleId from filenames
- * @returns {Array} an updated array of granules
- */
-function buildOutput(results, input, granules, regex) {
+function getAllGranules(input, granules, regex) {
   const granulesHash = {};
   const filesHash = {};
 
@@ -141,14 +134,6 @@ function buildOutput(results, input, granules, regex) {
     g.files.forEach((f) => {
       filesHash[f.filename] = g.granuleId;
     });
-  });
-
-  // add results to corresponding granules
-  results.forEach((r) => {
-    if (granulesHash[r.granuleId]) {
-      granulesHash[r.granuleId].cmrLink = r.link;
-      granulesHash[r.granuleId].published = true;
-    }
   });
 
   // add input files to corresponding granules
@@ -167,9 +152,51 @@ function buildOutput(results, input, granules, regex) {
     }
   });
 
-  return Object.keys(granulesHash).map((k) => granulesHash[k]);
+  return granulesHash;
 }
 
+async function moveGranuleFiles(granulesObject, sourceBucket) {
+  const moveFileRequests = [];
+  Object.keys(granulesObject).forEach((granuleKey) => {
+    const granule = granulesObject[granuleKey];
+    granule.files.forEach((file) => {
+      const source = {
+        Bucket: sourceBucket,
+        Key: `${file.fileStagingDir}/${file.name}`
+      };
+
+      const target = {
+        Bucket: file.bucket,
+        Key: file.name // TODO: url_path stuff right here
+      };
+
+      moveFileRequests.push(moveGranuleFile(source, target));
+    });
+  });
+
+  return Promise.all(moveFileRequests);
+}
+
+/**
+ * Builds the output of the post-to-cmr task
+ *
+ * @param {Array} results - list of results returned by publish function
+ * @param {Array} input - the task input array
+ * @param {Array} granules - an array of the granules
+ * @param {string} regex - regex needed to extract granuleId from filenames
+ * @returns {Array} an updated array of granules
+ */
+function buildOutput(results, granulesObject) {
+  // add results to corresponding granules
+  results.forEach((r) => {
+    if (granulesObject[r.granuleId]) {
+      granulesObject[r.granuleId].cmrLink = r.link;
+      granulesObject[r.granuleId].published = true;
+    }
+  });
+
+  return Object.keys(granulesObject).map((k) => granulesObject[k]);
+}
 
 /**
  * Post to CMR
@@ -201,16 +228,19 @@ async function postToCMR(event) {
   // determine CMR files
   const cmrFiles = getCmrFiles(input, regex);
 
+  const allGranules = getAllGranules(input, inputGranules, regex);
+  await moveGranuleFiles(allGranules, bucket);
+
   // post all meta files to CMR
   // doing this in a synchronous for loop to avoid DDoSing CMR
-  const results = [];
-  for (const c of cmrFiles) {
-    results.push(await publish(c, creds, bucket, stack));
-  }
+  const publishRquests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
+  const results = await Promise.all(publishRquests);
+
   return {
-    granules: buildOutput(results, input, inputGranules, regex)
+    granules: buildOutput(results, allGranules)
   };
 }
+
 exports.postToCMR = postToCMR;
 
 /**
@@ -224,6 +254,7 @@ exports.postToCMR = postToCMR;
 function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(postToCMR, event, context, callback);
 }
+
 exports.handler = handler;
 
 // use node index.js local to invoke this
