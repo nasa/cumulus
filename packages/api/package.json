@@ -34,6 +34,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/api": "^1.4.1",
     "@cumulus/cmrjs": "^1.4.1",
     "@cumulus/common": "^1.4.1",
     "@cumulus/ingest": "^1.4.1",
