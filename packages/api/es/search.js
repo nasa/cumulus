@@ -61,6 +61,7 @@ class BaseSearch {
 
   constructor(event, type = null, index = null) {
     let params = {};
+    const logLimit = 10;
 
     this.type = type;
     this.client = null;
@@ -76,7 +77,7 @@ class BaseSearch {
     this.params = params;
     //log.debug('Generated params:', params, logDetails);
 
-    this.size = parseInt((params.limit) ? params.limit : 10, 10);
+    this.size = parseInt((params.limit) ? params.limit : logLimit, 10);
 
     // max size is 100 for performance reasons
     this.size = this.size > 100 ? 100 : this.size;
