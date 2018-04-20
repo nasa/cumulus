@@ -8,6 +8,7 @@ const get = require('lodash.get');
 const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
+const encodeurl = require('encodeurl');
 const cksum = require('cksum');
 const checksum = require('checksum');
 const errors = require('@cumulus/common/errors');
@@ -231,6 +232,7 @@ class Granule {
     const fileConfig = this.findCollectionFileConfigForFile(file);
     if (fileConfig) foundFileConfigUrlPath = fileConfig.url_path;
 
+    // eslint-disable-next-line camelcase
     const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
     return Object.assign(cloneDeep(file), { url_path });
   }
@@ -476,6 +478,51 @@ function selector(type, protocol) {
   throw new Error(`${type} is not supported`);
 }
 
+/**
+* Copy granule file from one s3 bucket & keypath to another
+*
+* @param {Object} source - source
+* @param {string} source.Bucket - source
+* @param {string} source.Key - source
+* @param {Object} target - target
+* @param {string} target.Bucket - target
+* @param {string} target.Key - target
+* @param {Object} options - optional object with properties as defined by AWS API:
+* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property
+* @returns {Promise} returms a promise that is resolved when the file is copied
+**/
+function copyGranuleFile(source, target, options) {
+  const s3 = aws.s3();
+  const CopySource = encodeurl(`/${source.Bucket}/${source.Key}`);
+
+  const params = Object.assign({
+    CopySource,
+    Bucket: target.Bucket,
+    Key: target.Key
+  }, (options || {}));
+
+  return s3.copyObject(params).promise();
+}
+
+/**
+* Move granule file from one s3 bucket & keypath to another
+*
+* @param {Object} source - source
+* @param {string} source.Bucket - source
+* @param {string} source.Key - source
+* @param {Object} target - target
+* @param {string} target.Bucket - target
+* @param {string} target.Key - target
+* @param {Object} options - optional object with properties as defined by AWS API:
+* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
+* @returns {Promise} returms a promise that is resolved when the file is moved
+**/
+async function moveGranuleFile(source, target, options) {
+  const s3 = aws.s3();
+  await copyGranuleFile(source, target, options);
+  return s3.deleteObject(source).promise();
+}
+
 module.exports.selector = selector;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpGranule = FtpGranule;
@@ -485,3 +532,5 @@ module.exports.S3Granule = S3Granule;
 module.exports.S3DiscoverGranules = S3DiscoverGranules;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
+module.exports.copyGranuleFile = copyGranuleFile;
+module.exports.moveGranuleFile = moveGranuleFile;

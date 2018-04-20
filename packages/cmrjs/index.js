@@ -126,15 +126,14 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
     });
 
     if (xmlObject.errors) {
-      throw new Error(
-        `Failed to ingest, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`
-      );
+      const xmlObjectError = JSON.stringify(xmlObject.errors.error);
+      throw new Error(`Failed to ingest, CMR error message: ${xmlObjectError}`);
     }
 
     return xmlObject;
   }
   catch (e) {
-    //log.error(e, logDetails);
+    log.error(e, logDetails);
     throw e;
   }
 }
@@ -166,9 +165,8 @@ async function deleteConcept(type, identifier, provider, token) {
   });
 
   if (xmlObject.errors) {
-    throw new Error(
-      `Failed to delete, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`
-    );
+    const xmlObjectError = JSON.stringify(xmlObject.errors.error);
+    throw new Error(`Failed to delete, CMR error message: ${xmlObjectError}`);
   }
 
   return xmlObject;
@@ -178,7 +176,6 @@ async function deleteConcept(type, identifier, provider, token) {
  * The CMR class
  */
 class CMR {
-
   /**
    * The constructor for the CMR class
    *
@@ -217,7 +214,7 @@ class CMR {
    * Adds a granule record to the CMR
    *
    * @param {string} xml - the granule xml document
-   * @returns {Promise.<object>} the CMR response
+   * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
     const token = await this.getToken();
@@ -256,7 +253,7 @@ class CMR {
   }
 
   /**
-   * Search in granules 
+   * Search in granules
    *
    * @param {string} searchParams - the search parameters
    * @returns {Promise.<Object>} the CMR response
