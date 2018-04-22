@@ -45,7 +45,7 @@
     "basic-auth": "^1.1.0",
     "commander": "^2.15.0",
     "dynamodb-data-types": "^3.0.0",
-    "elasticsearch": "^13.2.0",
+    "elasticsearch": "^14.2.2",
     "form-data": "^2.1.2",
     "got": "^7.1.0",
     "http-aws-es": "^1.1.3",
