@@ -164,33 +164,12 @@ jobs:
             VERSION=$(cat lerna.json | jq .version --raw-output)
             ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
       
-  test_from_npm:
-    docker:
-      - image: circleci/node:8.11
-    working_directory: ~/project
-    steps:
-      - checkout
-      
-      # restore cache
-      - restore_cache:
-          keys:
-            - integration-{{ .Branch }}-{{ checksum "example/package.json" }}
-   
       - run:
-          name: install dependencies 
-          command: |
-            cd example  
-            yarn
-      
-      - save_cache:
-          key: integration-{{ .Branch }}-{{ checksum "example/package.json" }}
-          paths:
-            - ~/project/example/node_modules
-      
-      - run:
-          name: Deploy lastest changes
+          name: Deploy cumulus with the npm packages source code
           command: |
             cd example
+            yarn
+            sed -i -- 's/src/npm/g' spec/config.yml
             ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
 
       - run:
