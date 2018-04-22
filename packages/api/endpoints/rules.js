@@ -17,7 +17,7 @@ const { Search } = require('../es/search');
  */
 function list(event, cb) {
   const search = new Search(event, 'rule');
-  search.query().then((response) => cb(null, response)).catch(cb);
+  return search.query().then((response) => cb(null, response)).catch(cb);
 }
 
 /**
@@ -139,20 +139,18 @@ async function del(event, cb) {
 function handler(event, context) {
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
     else if (event.httpMethod === 'POST') {
-      post(event, cb);
+      return post(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event, cb);
+      return put(event, cb);
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event, cb);
+      return del(event, cb);
     }
-    else {
-      list(event, cb);
-    }
+    return list(event, cb);
   });
 }
 
