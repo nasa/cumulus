@@ -1,4 +1,5 @@
 const path = require('path');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 let mode = 'development';
 let devtool = 'inline-source-map';
@@ -21,5 +22,11 @@ module.exports = {
     'electron'
   ],
   devtool,
-  target: 'node'
+  target: 'node',
+  plugins: [
+    new UglifyJsPlugin({
+      // disable uglify to fix as a temp fix for https://github.com/mishoo/UglifyJS2/issues/2842
+      test: /\.html($|\?)/i
+    })
+  ]
 };
