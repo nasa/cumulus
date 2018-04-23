@@ -3,7 +3,7 @@ const { S3 } = require('aws-sdk');
 const lodash = require('lodash');
 const yaml = require('js-yaml');
 
-jasmine.getEnv().defaultTimeoutInterval = 10000000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
 /**
  * Loads and parses the configuration defined in `./spec/config.yml` or
