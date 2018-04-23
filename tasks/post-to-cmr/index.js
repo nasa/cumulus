@@ -9,6 +9,7 @@ const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { moveGranuleFile } = require('@cumulus/ingest/granule');
+const urlPathTemplate = require('@cumulus/ingest/url-path-template');
 const { CMR } = require('@cumulus/cmrjs');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
@@ -164,12 +165,19 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
         Bucket: sourceBucket,
         Key: `${file.fileStagingDir}/${file.name}`
       };
+      console.log('file', file);
+
+      const filepath = urlPathTemplate(file.url_path, {
+        file: file,
+        granule: granule
+      });
 
       const target = {
         Bucket: file.bucket,
-        Key: file.name // TODO: url_path stuff right here
+        Key: filepath
       };
 
+      console.log('target', target);
       moveFileRequests.push(moveGranuleFile(source, target));
     });
   });
@@ -181,9 +189,7 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
  * Builds the output of the post-to-cmr task
  *
  * @param {Array} results - list of results returned by publish function
- * @param {Array} input - the task input array
- * @param {Array} granules - an array of the granules
- * @param {string} regex - regex needed to extract granuleId from filenames
+ * @param {Object} granulesObject - an object of the granules where the key is the granuleId
  * @returns {Array} an updated array of granules
  */
 function buildOutput(results, granulesObject) {
@@ -211,6 +217,8 @@ function buildOutput(results, granulesObject) {
  *                                                    from filenames
  * @param {Object} event.config.cmr - the cmr object containing user/pass and provider
  * @param {Array} event.config.input_granules - an array of granules
+ * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
+ * from staging to final bucket. Mostly useful for testing.
  * @param {Array} event.input - an array of s3 uris
  * @returns {Promise} returns the promise of an updated event object
  */
@@ -224,12 +232,16 @@ async function postToCMR(event) {
   const creds = get(config, 'cmr');
   const inputGranules = get(config, 'input_granules', {});
   const input = get(event, 'input', []);
+  const moveStagedFiles = get(config, 'moveStagedFiles', true);
 
   // determine CMR files
   const cmrFiles = getCmrFiles(input, regex);
 
   const allGranules = getAllGranules(input, inputGranules, regex);
-  await moveGranuleFiles(allGranules, bucket);
+
+  if (moveStagedFiles) {
+    await moveGranuleFiles(allGranules, bucket);
+  }
 
   // post all meta files to CMR
   // doing this in a synchronous for loop to avoid DDoSing CMR
