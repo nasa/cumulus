@@ -190,5 +190,5 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: post_release_fixes 
+              only: master 
 
