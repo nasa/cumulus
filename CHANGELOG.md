@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- **CUMULUS-470** In-region S3 Policy lambda added to API to update bucket policy for in-region access. 
+
 ## [v1.5.0]
 ### Changed
 - Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
