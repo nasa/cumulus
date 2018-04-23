@@ -13,7 +13,7 @@ const templatedOutputPayloadFilename = templateFile({
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
