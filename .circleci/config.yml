@@ -154,6 +154,7 @@ jobs:
           command: |
             # checkout the latest tag
             LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
+            echo $LATEST_GIT_TAG
             git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
             yarn
             yarn ybootstrap
