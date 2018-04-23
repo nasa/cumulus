@@ -124,6 +124,15 @@ async function publish(cmrFile, creds, bucket, stack) {
   };
 }
 
+/**
+ * Builds the output of the post-to-cmr task
+ *
+ * @param {Array} input - the task input array
+ * @param {Array} granules - an array of the granules
+ * @param {string} regex - regex needed to extract granuleId from filenames
+ * @returns {Object} an object that contains all granules
+ * with the granuleId as the key of each granule
+ */
 function getAllGranules(input, granules, regex) {
   const granulesHash = {};
   const filesHash = {};
@@ -156,6 +165,13 @@ function getAllGranules(input, granules, regex) {
   return granulesHash;
 }
 
+/**
+* Move all files in a collection of granules from staging location fo final location
+*
+* @param {Object} granulesObject - an object of the granules where the key is the granuleId
+* @param {string} sourceBucket - source bucket location of files
+* @returns {Promise} promise resolves when all files have been moved
+**/
 async function moveGranuleFiles(granulesObject, sourceBucket) {
   const moveFileRequests = [];
   Object.keys(granulesObject).forEach((granuleKey) => {
@@ -165,7 +181,6 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
         Bucket: sourceBucket,
         Key: `${file.fileStagingDir}/${file.name}`
       };
-      console.log('file', file);
 
       const filepath = urlPathTemplate(file.url_path, {
         file: file,
@@ -177,7 +192,6 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
         Key: filepath
       };
 
-      console.log('target', target);
       moveFileRequests.push(moveGranuleFile(source, target));
     });
   });
