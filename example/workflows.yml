@@ -184,6 +184,9 @@ ParsePdr:
     CheckStatus:
       Type: Task
       Resource: ${PdrStatusCheckLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$.payload}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -203,7 +206,7 @@ ParsePdr:
     PdrStatusReport:
       CumulusConfig:
         cumulus_message:
-          input: '{$}'
+          input: '{$.payload}'
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
