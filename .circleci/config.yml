@@ -145,7 +145,7 @@ jobs:
 
   build_and_publish:
     docker:
-      - image: circleci/node:6.10
+      - image: circleci/node:8.11
     working_directory: ~/project
     steps:
       - checkout
@@ -154,8 +154,10 @@ jobs:
           command: |
             # checkout the latest tag
             LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
+            echo $LATEST_GIT_TAG
             git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
             yarn
+            yarn ybootstrap
 
       - run:
           name: Publishing to NPM
@@ -188,5 +190,5 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: master
+              only: master 
 
