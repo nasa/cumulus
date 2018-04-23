@@ -145,7 +145,7 @@ jobs:
 
   build_and_publish:
     docker:
-      - image: circleci/node:6.10
+      - image: circleci/node:8.11
     working_directory: ~/project
     steps:
       - checkout
