@@ -13,9 +13,6 @@ const templatedOutputPayloadFilename = templateFile({
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
-console.log(jasmine.getEnv().defaultTimeoutInterval);
-console.log(jasmine.DEFAULT_TIMEOUT_INTERVAL);
-
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
