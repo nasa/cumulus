@@ -82,6 +82,7 @@
       }
     ],
     "arrow-parens": ["error", "always"],
-    "prefer-destructuring": "off"
+    "prefer-destructuring": "off",
+    "function-paren-newline": ["error", "consistent"]
   }
 }
