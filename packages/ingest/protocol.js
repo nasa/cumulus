@@ -8,7 +8,7 @@ const path = require('path');
 
 /**
  * the base class mixin used by all the protocol sub-classes
- * such as http/ftp/sftp/s3, etc.
+ * such as http/https/ftp/sftp/s3, etc.
  *
  * The base class mixin defines the methods that has to be implemented
  * by other mixins. It also provides a unified upload method
