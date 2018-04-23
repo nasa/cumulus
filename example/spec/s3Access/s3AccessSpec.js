@@ -2,8 +2,6 @@ const { Lambda } = require('aws-sdk');
 const { loadConfig } = require('../helpers/testUtils');
 const { s3 } = require('@cumulus/common/aws');
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
-
 const config = loadConfig();
 
 const testBucket = `${config.prefix}-s3directaccess`;

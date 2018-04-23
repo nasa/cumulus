@@ -14,8 +14,6 @@ const taskName = 'ParsePdr';
 
 const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/ParsePdr.output.json'));
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000000;
-
 describe('Parse PDR workflow', () => {
   let workflowExecution;
   let pdrStatusCheckOutput;
