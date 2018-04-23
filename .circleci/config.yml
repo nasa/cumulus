@@ -156,6 +156,7 @@ jobs:
             LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
             git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
             yarn
+            yarn ybootstrap
 
       - run:
           name: Publishing to NPM
