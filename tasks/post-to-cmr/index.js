@@ -199,6 +199,17 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
   return Promise.all(moveFileRequests);
 }
 
+function updateFilenames(input, granulesObject) {
+  Object.keys(granulesObject).forEach((key) => {
+    const granule = granulesObject[key];
+    granule.files.forEach((f) => {
+      if (input.includes(f.filename)) {
+        console.log('f', f.url_path);
+      }
+    });
+  });
+}
+
 /**
  * Builds the output of the post-to-cmr task
  *
@@ -248,15 +259,15 @@ async function postToCMR(event) {
   const input = get(event, 'input', []);
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
 
-  // determine CMR files
-  const cmrFiles = getCmrFiles(input, regex);
-
   const allGranules = getAllGranules(input, inputGranules, regex);
 
   if (moveStagedFiles) {
     await moveGranuleFiles(allGranules, bucket);
   }
 
+  updateFilenames(input, allGranules);
+
+  const cmrFiles = getCmrFiles(input, regex);
   // post all meta files to CMR
   // doing this in a synchronous for loop to avoid DDoSing CMR
   const publishRquests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
