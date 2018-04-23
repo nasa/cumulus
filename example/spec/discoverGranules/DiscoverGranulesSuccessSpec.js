@@ -7,7 +7,7 @@ const lambdaStep = new LambdaStep();
 
 const taskName = 'DiscoverGranules';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000000;
 
 describe('The Discover Granules workflow with http Protocol', () => {
   let httpWorkflowExecution;
