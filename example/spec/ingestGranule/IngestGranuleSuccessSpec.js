@@ -1,16 +1,10 @@
 const fs = require('fs');
-const { executeWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
-
-const inputTemplateFilename = './spec/ingestGranule/IngestGranule.input.template.json';
-const templatedInputFilename = templateFile({
-  inputTemplateFilename,
-  config: config[taskName]
-});
 
 const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'; // eslint-disable-line max-len
 const templatedOutputPayloadFilename = templateFile({
@@ -21,16 +15,17 @@ const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilenam
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
-describe('The Ingest Granules workflow', () => {
+describe('The S3 Ingest Granules workflow', () => {
+  const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
+  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
+  const collection = { name: 'MOD09GQ', version: '006' };
+  const provider = { id: 's3_provider' };
   let workflowExecution = null;
 
   beforeAll(async () => {
-    workflowExecution = await executeWorkflow(
-      config.stackName,
-      config.bucket,
-      taskName,
-      templatedInputFilename
-    );
+    // eslint-disable-next-line function-paren-newline
+    workflowExecution = await buildAndExecuteWorkflow(
+      config.stackName, config.bucket, taskName, collection, provider, inputPayload);
   });
 
   it('executes successfully', () => {

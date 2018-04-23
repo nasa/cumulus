@@ -31,6 +31,7 @@ const selectorDiscoverTypes = [
 
 const selectorSyncTypes = [
   { cls: HttpGranule, type: 'ingest', protocol: 'http' },
+  { cls: HttpGranule, type: 'ingest', protocol: 'https' },
   { cls: FtpGranule, type: 'ingest', protocol: 'ftp' },
   { cls: SftpGranule, type: 'ingest', protocol: 'sftp' },
   { cls: S3Granule, type: 'ingest', protocol: 's3' }
