@@ -18,7 +18,7 @@ const examplePayload = require('../tests/data/collections_post.json');
  */
 function list(event, cb) {
   const collection = new Collection(event);
-  collection.query().then((res) => cb(null, res)).catch(cb);
+  return collection.query().then((res) => cb(null, res)).catch(cb);
 }
 
 /**
@@ -125,20 +125,18 @@ function handler(event, context) {
 
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
     else if (event.httpMethod === 'POST') {
-      post(event, cb);
+      return post(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event, cb);
+      return put(event, cb);
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event, cb);
+      return del(event, cb);
     }
-    else {
-      list(event, cb);
-    }
+    return list(event, cb);
   });
 }
 
