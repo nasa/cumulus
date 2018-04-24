@@ -75,9 +75,11 @@ test('download Granule from FTP endpoint', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/file-staging/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
+      `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
     );
     t.truthy(output.granules[0].files[0].url_path);
   }
@@ -110,9 +112,11 @@ test('download Granule from HTTP endpoint', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
   }
   catch (e) {
@@ -147,9 +151,11 @@ test('download Granule from SFTP endpoint', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
   }
   catch (e) {
@@ -191,9 +197,11 @@ test('download granule from S3 provider', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/file-staging/${granuleFileName}` // eslint-disable-line max-len
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}` // eslint-disable-line max-len
     );
   }
   finally {
@@ -230,9 +238,11 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
   }
   catch (e) {
@@ -265,15 +275,16 @@ test('validate file properties', async (t) => {
   try {
     const granuleFilename = t.context.event.input.granules[0].files[0].name;
     const output = await syncGranule(t.context.event);
-    console.log(output.granules[0])
+
     validateOutput(t, output);
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 2);
+    const config = t.context.event.config;
+    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/file-staging/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
-    t.truthy(output.granules[0].files[0].filename.includes('file-staging'));
     t.is(output.granules[0].files[0].url_path, 'file-example/');
     t.is(output.granules[0].files[1].url_path, 'collection-example/');
   }
