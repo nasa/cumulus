@@ -36,17 +36,6 @@ class UpdatedLambda extends Lambda {
    * @returns {Promise} returns the updated lambda object
    */
   zipLambda(lambda) {
-    // adding the hash of the message adapter zip file as part of lambda zip file
-    if (lambda.useMessageAdapter && UpdatedLambda.messageAdapterZipFileHash) {
-      lambda.local = path.join(
-        path.dirname(lambda.local),
-        `${UpdatedLambda.messageAdapterZipFileHash}-${path.basename(lambda.local)}`
-      );
-      lambda.remote = path.join(
-        path.dirname(lambda.remote),
-        `${UpdatedLambda.messageAdapterZipFileHash}-${path.basename(lambda.remote)}`
-      );
-    }
     let msg = `Zipping ${lambda.local}`;
     // skip if the file with the same hash is zipped
     if (fs.existsSync(lambda.local)) {
@@ -74,6 +63,17 @@ class UpdatedLambda extends Lambda {
    */
   buildS3Path(lambda) {
     lambda = super.buildS3Path(lambda);
+    // adding the hash of the message adapter zip file as part of lambda zip file
+    if (lambda.useMessageAdapter && UpdatedLambda.messageAdapterZipFileHash) {
+      lambda.local = path.join(
+        path.dirname(lambda.local),
+        `${UpdatedLambda.messageAdapterZipFileHash}-${path.basename(lambda.local)}`
+      );
+      lambda.remote = path.join(
+        path.dirname(lambda.remote),
+        `${UpdatedLambda.messageAdapterZipFileHash}-${path.basename(lambda.remote)}`
+      );
+    }
 
     return lambda;
   }
