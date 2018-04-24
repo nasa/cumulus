@@ -48,7 +48,19 @@ DiscoverGranules:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: DiscoverGranules
+      Next: VpcOrNot 
+    VpcOrNot:
+        Type: Choice
+        Choices:
+          - Variable: $.meta.provider.protocol
+            StringEquals: http
+            Next: DiscoverGranules
+          - Variable: $.meta.provider.protocol
+            StringEquals: https
+            Next: DiscoverGranules
+          - Variable: $.meta.provider.protocol
+            StringEquals: s3 
+            Next: DiscoverGranulesNoVpc
     DiscoverGranules:
       CumulusConfig:
         provider: '{$.meta.provider}'
@@ -57,6 +69,20 @@ DiscoverGranules:
         stack: '{$.meta.stack}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    DiscoverGranulesNoVpc:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
+        stack: '{$.meta.stack}'
+      Type: Task
+      Resource: ${DiscoverGranulesNoVpcLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -250,7 +276,19 @@ IngestGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: SyncGranule
+      Next: VpcOrNot 
+    VpcOrNot:
+        Type: Choice
+        Choices:
+          - Variable: $.meta.provider.protocol
+            StringEquals: http
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: https
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: s3 
+            Next: SyncGranuleNoVpc
     SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -264,6 +302,25 @@ IngestGranule:
               destination: '{$.payload}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    SyncGranuleNoVpc:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+      Type: Task
+      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
