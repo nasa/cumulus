@@ -27,7 +27,8 @@ class Discover {
     collection,
     provider,
     useList = false,
-    folder = 'pdrs'
+    folder = 'pdrs',
+    force = false
   ) {
     if (this.constructor === Discover) {
       throw new TypeError('Can not construct abstract class.');
@@ -39,6 +40,7 @@ class Discover {
     this.provider = provider;
     this.folder = folder;
     this.useList = useList;
+    this.force = force;
 
     // get authentication information
     this.port = get(this.provider, 'port', 21);
@@ -57,6 +59,10 @@ class Discover {
   async discover() {
     const files = await this.list();
     const pdrs = files.filter((file) => file.name.endsWith('.PDR'));
+
+    if (this.force) {
+      return pdrs;
+    }
     return this.findNewPdrs(pdrs);
   }
 
