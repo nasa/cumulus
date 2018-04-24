@@ -13,13 +13,19 @@ DiscoverGranules:
   useMessageAdapter: true
   launchInVpc: true
 
+DiscoverGranulesNoVpc:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/discover-granules/dist/'
+  useMessageAdapter: true
+
 DiscoverPdrs:
   handler: index.handler
   timeout: 300
   source: 'node_modules/@cumulus/discover-pdrs/dist/'
   useMessageAdapter: true
   logToElasticSearch: true
-  launchInVpc: true
 
 QueuePdrs:
   handler: index.handler
@@ -34,7 +40,6 @@ ParsePdr:
   source: 'node_modules/@cumulus/parse-pdr/dist/'
   useMessageAdapter: true
   logToElasticSearch: true
-  launchInVpc: true
 
 PdrStatusCheck:
   handler: index.handler
@@ -61,6 +66,13 @@ SyncGranule:
   source: 'node_modules/@cumulus/sync-granule/dist/'
   useMessageAdapter: true
   launchInVpc: true
+
+SyncGranuleNoVpc:
+  handler: index.handler
+  timeout: 300
+  logToElasticSearch: true
+  source: 'node_modules/@cumulus/sync-granule/dist/'
+  useMessageAdapter: true
 
 S3AccessTest:
   handler: index.handler
