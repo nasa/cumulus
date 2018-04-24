@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ## [v1.5.1] - 2018-04-23
-All tasks remains at 1.5.0. Only pdr-status-check and hello-world is updated to 1.5.1
 ### Fixed
 - add the missing dist folder to the hello-world task
 - disable uglifyjs on the built version of the pdr-status-check (read: https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264)
