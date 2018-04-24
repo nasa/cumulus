@@ -96,6 +96,8 @@ jobs:
 
       - run:
           name: Prepare for Integration Tests
+          environment:
+            PRODUCTION: true # this will ensure that the integration from source uses the same packaging as the integration from npm packages
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
