@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-470** In-region S3 Policy lambda added to API to update bucket policy for in-region access. 
 
-## [v1.5.0]
+## [v1.5.1] - 2018-04-23
+### Fixed
+- add the missing dist folder to the hello-world task
+- disable uglifyjs on the built version of the pdr-status-check (read: https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264)
+
+## [v1.5.0] - 2018-04-23
 ### Changed
 - Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
 - Lambda functions created by @cumulus/deployment will use node8.10 by default
@@ -202,7 +207,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...HEAD
+[v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0
 [v1.4.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...v1.4.0
