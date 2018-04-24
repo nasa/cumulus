@@ -1,4 +1,5 @@
 stackName: test-npm-integration
+prefix: test-npm-integration
 bucket: cumulus-test-sandbox-internal
 IngestGranule:
   SyncGranuleOutput:
