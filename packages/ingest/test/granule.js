@@ -1,6 +1,7 @@
 const path = require('path');
 
 const test = require('ava');
+const sinon = require('sinon');
 const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 
