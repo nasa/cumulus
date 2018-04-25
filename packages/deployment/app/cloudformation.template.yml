@@ -126,6 +126,24 @@ Resources:
   # SNS config BEGIN
   #################################################
 {{#each sns}}
+  {{#if this.arn}}
+  {{@key}}:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      Subscription:
+        {{#each this.subscriptions}}
+          {{# if this.endpoint.function}}
+          - Endpoint:
+              {{this.endpoint.function}}:
+              {{#each this.endpoint.array}}
+                - {{@this}}
+              {{/each}}
+          {{else}}
+          - Endpoint: {{this.endpoint}}
+          {{/if}}
+            Protocol: {{@key}}
+        {{/each}}
+  {{else}}
   {{@key}}Sns:
     Type: "AWS::SNS::Topic"
     Properties:
@@ -143,6 +161,7 @@ Resources:
         {{/if}}
           Protocol: {{@key}}
       {{/each}}
+  {{/if}}
 
   {{# each this.subscriptions}}
   {{@../key}}SubscriptionPermission:
@@ -160,7 +179,11 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: sns.amazonaws.com
       SourceArn:
+        {{#if ../this.arn}}
+        {{../this.arn}}
+        {{else}}
         Ref: {{@../key}}Sns
+        {{/if}}
   {{/each}}
 
 {{/each}}
@@ -897,9 +920,14 @@ Outputs:
 {{/if}}
 
 {{#each sns}}
+  {{#if this.arn}}
+  {{@key}}:
+    Value: {{this.arn}}
+  {{else}}
   {{@key}}SnsArn:
     Value:
       Ref: {{@key}}Sns
+  {{/if}}
 {{/each}}
 
   EncryptedCmrPassword:
