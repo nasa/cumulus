@@ -109,7 +109,7 @@ async function updateBucketPolicy(bucket, policy) {
 /**
  * Handler
  *
- * @param {Object} event - event passed to lambda. Format:
+ * @param {Object} event - SNS event passed to lambda. Message format:
  * { "create-time":"yyyy-mm-ddThh:mm:ss+00:00",
  *  "synctoken":"0123456789",
  *  "md5":"6a45316e8bc9463c9e926d5d37836d33",
@@ -120,8 +120,12 @@ async function updateBucketPolicy(bucket, policy) {
  * @returns {undefined} - none
  */
 function handler(event, context, callback) {
-  const bucket = event.bucket || defaultBucket;
-  generatePolicy(event.url, defaultRegion, bucket)
+  // Extract the message from the SNS event
+  const message = JSON.parse(event.Records[0].Sns.Message);
+
+  const bucket = message.bucket || defaultBucket;
+
+  generatePolicy(message.url, defaultRegion, bucket)
     .then((policy) => updateBucketPolicy(bucket, policy))
     .then((data) => callback(null, data))
     .catch((err) => callback(err));
