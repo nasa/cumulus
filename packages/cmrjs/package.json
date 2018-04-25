@@ -1,7 +1,10 @@
 {
   "name": "@cumulus/cmrjs",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "A node SDK for CMR",
+  "engine": {
+    "node": ">=8.10.0"
+  },
   "scripts": {
     "test": "echo 'no tests'"
   },
@@ -11,15 +14,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "babel": {
-    "presets": [
-      "es2015"
-    ],
-    "plugins": [
-      "transform-async-to-generator"
-    ]
-  },
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/cmrjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
@@ -27,9 +21,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.4.1",
+    "@cumulus/common": "^1.5.0",
     "got": "^7.1.0",
-    "json-loader": "^0.5.4",
     "lodash.property": "^4.4.2",
     "public-ip": "^2.3.5",
     "xml2js": "^0.4.17"
