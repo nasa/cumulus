@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
 
-Discover Granules in FTP/HTTP/SFTP endpoints
+Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints
 
 ## What is Cumulus?
 

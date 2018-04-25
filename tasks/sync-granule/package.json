@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -14,12 +14,15 @@
   "publishConfig": {
     "access": "public"
   },
+  "engine": {
+    "node": ">=8.10.0"
+  },
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc ava",
-    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "postinstall": "npm run build"
+    "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -27,46 +30,28 @@
     "files": "tests",
     "serial": true,
     "color": false,
-    "verbose": true,
-    "babel": "inherit",
-    "require": [
-      "babel-polyfill",
-      "babel-register"
-    ]
+    "verbose": true
   },
   "nyc": {
     "exclude": [
       "tests"
     ]
   },
-  "babel": {
-    "presets": [
-      "es2015"
-    ],
-    "plugins": [
-      "transform-async-to-generator"
-    ]
-  },
   "dependencies": {
-    "@cumulus/common": "^1.4.1",
+    "@cumulus/common": "^1.5.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.4.1",
+    "@cumulus/ingest": "^1.5.0",
     "@cumulus/test-data": "^1.4.0",
-    "babel-core": "^6.25.0",
-    "babel-loader": "^6.2.4",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2017": "^6.24.1",
-    "lodash.get": "^4.4.2",
-    "webpack": "^3.8.1"
+    "lodash.get": "^4.4.2"
   },
   "devDependencies": {
-    "@ava/babel-preset-stage-4": "^1.1.0",
-    "@ava/babel-preset-transform-test-files": "^3.0.0",
-    "ava": "^0.23.0",
+    "ava": "^0.25.0",
     "fs-extra": "^5.0.0",
     "lodash": "^4.17.5",
     "nyc": "^11.6.0",
-    "proxyquire": "^1.8.0",
-    "sinon": "^2.0.0-pre.5"
+    "proxyquire": "^2.0.0",
+    "sinon": "^4.5.0",
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/task-debug",
   "private": true,
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "A harness for debugging workflows.",
   "main": "index.js",
   "homepage": "https://github.com/cumulus-nasa/cumulus#readme",
@@ -18,14 +18,14 @@
     "test": "test"
   },
   "dependencies": {
-    "@cumulus/common": "^1.4.1",
+    "@cumulus/common": "^1.5.0",
     "commander": "^2.11.0"
   },
   "devDependencies": {
-    "ava": "^0.23.0",
+    "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.25.0",
     "babel-preset-env": "^1.6.0",
-    "sinon": "^2.0.0-pre.5"
+    "sinon": "^4.5.0"
   }
 }
