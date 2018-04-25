@@ -96,6 +96,8 @@ jobs:
 
       - run:
           name: Prepare for Integration Tests
+          environment:
+            PRODUCTION: true # this will ensure that the integration from source uses the same packaging as the integration from npm packages
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
@@ -115,8 +117,11 @@ jobs:
               cd example
               sed -i -- 's/npm/src/g' spec/config.yml
 
+              # deploy latest iam roles to aws
+              ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-source
+
               # deploy latest version of the packages to the aws
-              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
+              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
             fi
 
       - run:
@@ -145,7 +150,7 @@ jobs:
 
   build_and_publish:
     docker:
-      - image: circleci/node:6.10
+      - image: circleci/node:8.11
     working_directory: ~/project
     steps:
       - checkout
@@ -154,8 +159,10 @@ jobs:
           command: |
             # checkout the latest tag
             LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
+            echo $LATEST_GIT_TAG
             git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
             yarn
+            yarn ybootstrap
 
       - run:
           name: Publishing to NPM
@@ -164,33 +171,13 @@ jobs:
             VERSION=$(cat lerna.json | jq .version --raw-output)
             ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
       
-  test_from_npm:
-    docker:
-      - image: circleci/node:8.11
-    working_directory: ~/project
-    steps:
-      - checkout
-      
-      # restore cache
-      - restore_cache:
-          keys:
-            - integration-{{ .Branch }}-{{ checksum "example/package.json" }}
-   
       - run:
-          name: install dependencies 
-          command: |
-            cd example  
-            yarn
-      
-      - save_cache:
-          key: integration-{{ .Branch }}-{{ checksum "example/package.json" }}
-          paths:
-            - ~/project/example/node_modules
-      
-      - run:
-          name: Deploy lastest changes
+          name: Deploy cumulus with the npm packages source code
           command: |
             cd example
+            ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-npm
+            yarn
+            sed -i -- 's/src/npm/g' spec/config.yml
             ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
 
       - run:
@@ -209,5 +196,5 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: master
+              only: master 
 
