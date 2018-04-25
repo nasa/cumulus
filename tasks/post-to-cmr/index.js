@@ -2,17 +2,19 @@
 
 'use strict';
 
-const get = require('lodash.get');
 const path = require('path');
+const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
+const { getS3Object, parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { moveGranuleFile } = require('@cumulus/ingest/granule');
 const urlPathTemplate = require('@cumulus/ingest/url-path-template');
 const { CMR } = require('@cumulus/cmrjs');
+const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
+const xml2js = require('xml2js');
 
 /**
  * Extract the granule ID from the a given s3 uri
@@ -32,28 +34,13 @@ function getGranuleId(uri, regex) {
   return match;
 }
 
-/**
- * returns a list of CMR xml files
- *
- * @param {Array} input - an array of s3 uris
- * @param {string} granuleIdExtraction - a regex for extracting granule IDs
- * @returns {Array} an array of objects that includes CMR xmls uris and granuleIds
- */
-function getCmrFiles(input, granuleIdExtraction) {
-  const files = [];
-  const expectedFormat = /.*\.cmr\.xml$/;
-
-  input.forEach((filename) => {
-    if (filename.match(expectedFormat)) {
-      const r = {
-        filename,
-        granuleId: getGranuleId(filename, granuleIdExtraction)
-      };
-      files.push(r);
-    }
+async function parseXmlString(xml) {
+  return new Promise((resolve, reject) => {
+    xml2js.parseString(xml, xmlParseOptions, (err, data) => {
+      if (err) return reject(err);
+      return resolve(data);
+    });
   });
-
-  return files;
 }
 
 /**
@@ -63,9 +50,6 @@ function getCmrFiles(input, granuleIdExtraction) {
  * @returns {string} returns stringified xml document downloaded from S3
  */
 async function getMetadata(xmlFilePath) {
-  // Identify the location of the metadata file,
-  // conditional on the name of the collection
-
   if (!xmlFilePath) {
     throw new XmlMetaFileNotFound('XML Metadata file not provided');
   }
@@ -74,8 +58,37 @@ async function getMetadata(xmlFilePath) {
   // Currently, only supports files that are stored on S3
   const parts = xmlFilePath.match(/^s3:\/\/(.+?)\/(.+)$/);
   const obj = await getS3Object(parts[1], parts[2]);
-
   return obj.Body.toString();
+}
+
+/**
+ * returns a list of CMR xml files
+ *
+ * @param {Array} input - an array of s3 uris
+ * @param {string} granuleIdExtraction - a regex for extracting granule IDs
+ * @returns {Array} an array of objects that includes CMR xmls uris and granuleIds
+ */
+async function getCmrFiles(input, granuleIdExtraction) {
+  const files = [];
+  const expectedFormat = /.*\.cmr\.xml$/;
+
+  for (const filename of input) {
+    if (filename.match(expectedFormat)) {
+      const metadata = await getMetadata(filename);
+      const metadataObject = await parseXmlString(metadata);
+
+      const cmrFileObject = {
+        filename,
+        metadata,
+        metadataObject,
+        granuleId: getGranuleId(filename, granuleIdExtraction)
+      };
+
+      files.push(cmrFileObject);
+    }
+  }
+
+  return files;
 }
 
 /**
@@ -109,7 +122,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     password
   );
 
-  const xml = await getMetadata(cmrFile.filename);
+  const xml = cmrFile.metadata;
   const res = await cmr.ingestGranule(xml);
   const conceptId = res.result['concept-id'];
 
@@ -125,7 +138,8 @@ async function publish(cmrFile, creds, bucket, stack) {
 }
 
 /**
- * Builds the output of the post-to-cmr task
+ * Creates an object with all granule files
+ * from the input array and the input_granules config
  *
  * @param {Array} input - the task input array
  * @param {Array} granules - an array of the granules
@@ -174,6 +188,7 @@ function getAllGranules(input, granules, regex) {
 **/
 async function moveGranuleFiles(granulesObject, sourceBucket) {
   const moveFileRequests = [];
+
   Object.keys(granulesObject).forEach((granuleKey) => {
     const granule = granulesObject[granuleKey];
     granule.files.forEach((file) => {
@@ -182,14 +197,9 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
         Key: `${file.fileStagingDir}/${file.name}`
       };
 
-      const filepath = urlPathTemplate(file.url_path, {
-        file: file,
-        granule: granule
-      });
-
       const target = {
         Bucket: file.bucket,
-        Key: filepath
+        Key: file.filepath
       };
 
       moveFileRequests.push(moveGranuleFile(source, target));
@@ -199,15 +209,55 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
   return Promise.all(moveFileRequests);
 }
 
-function updateFilenames(input, granulesObject) {
-  Object.keys(granulesObject).forEach((key) => {
-    const granule = granulesObject[key];
-    granule.files.forEach((f) => {
-      if (input.includes(f.filename)) {
-        console.log('f', f.url_path);
-      }
+function updateGranuleMetadata(granulesObject, collection, cmrFiles) {
+  Object.keys(granulesObject).forEach((granuleId) => {
+    granulesObject[granuleId].files.forEach((file) => {
+      collection.files.forEach((fileConfig) => {
+        const test = new RegExp(fileConfig.regex);
+        const match = file.name.match(test);
+
+        const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
+
+        if (match) {
+          if (!file.url_path) {
+            file.url_path = collection.url_path || '';
+          }
+
+          const urlPath = urlPathTemplate(file.url_path, {
+            file: file,
+            granule: granulesObject[granuleId],
+            cmrMetadata: cmrFile.metadataObject
+          });
+
+          file.bucket = fileConfig.bucket;
+          file.filepath = path.join(urlPath, file.name);
+          file.filename = `s3://${path.join(file.bucket, file.filepath)}`;
+        }
+      });
     });
   });
+
+  return granulesObject;
+}
+
+async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
+  for (const cmrFile of cmrFiles) {
+    const onlineAccessUrls = cmrFile.metadataObject.Granule.OnlineAccessURLs;
+
+    const urls = onlineAccessUrls.OnlineAccessURL.map((urlObj) => {
+      const filename = path.basename(urlObj.URL);
+      const granule = granulesObject[cmrFile.granuleId];
+      const file = granule.files.find((f) => f.name === filename);
+      urlObj.URL = file.filename;
+      return urlObj;
+    });
+
+    cmrFile.metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL = urls;
+    const builder = new xml2js.Builder();
+    const xml = builder.buildObject(cmrFile);
+    const [, Bucket, Key] = cmrFile.filename.match(/^s3:\/\/(.+?)\/(.+)$/);
+    await promiseS3Upload({ Bucket, Key, Body: xml });
+  }
 }
 
 /**
@@ -242,6 +292,8 @@ function buildOutput(results, granulesObject) {
  *                                                    from filenames
  * @param {Object} event.config.cmr - the cmr object containing user/pass and provider
  * @param {Array} event.config.input_granules - an array of granules
+ * @param {Object} event.config.collection - configuration object defining a collection
+ * of granules and their files
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  * from staging to final bucket. Mostly useful for testing.
  * @param {Array} event.input - an array of s3 uris
@@ -256,18 +308,28 @@ async function postToCMR(event) {
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const creds = get(config, 'cmr');
   const inputGranules = get(config, 'input_granules', {});
-  const input = get(event, 'input', []);
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
+  const collection = config.collection;
+  const input = get(event, 'input', []);
 
-  const allGranules = getAllGranules(input, inputGranules, regex);
+  // get cmr files from staging location
+  const cmrFiles = await getCmrFiles(input, regex);
 
+  // create granules object for cumulus indexer
+  let allGranules = getAllGranules(input, inputGranules, regex);
+
+  // allows us to disable moving the files
   if (moveStagedFiles) {
+    // update granules object with final locations of files as `filename`
+    allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles);
+
+    // move files from staging location to final location
     await moveGranuleFiles(allGranules, bucket);
+
+    // update cmr.xml files with correct online access urls
+    updateCmrFileAccessURls(cmrFiles, allGranules, regex);
   }
 
-  updateFilenames(input, allGranules);
-
-  const cmrFiles = getCmrFiles(input, regex);
   // post all meta files to CMR
   // doing this in a synchronous for loop to avoid DDoSing CMR
   const publishRquests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
