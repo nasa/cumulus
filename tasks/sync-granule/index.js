@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
@@ -21,16 +22,15 @@ async function download(ingest, bucket, provider, granules) {
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
-    const err = new errors.ResourcesLockedError(
-      'Download lock remained in place after multiple tries'
-    );
+    const errMessage = 'Download lock remained in place after multiple tries';
+    const err = new errors.ResourcesLockedError(errMessage);
     log.error(err);
     throw err;
   }
 
   for (const g of granules) {
     try {
-      const r = await ingest.ingest(g);
+      const r = await ingest.ingest(g, bucket);
       updatedGranules.push(r);
     }
     catch (e) {
@@ -53,10 +53,18 @@ async function download(ingest, bucket, provider, granules) {
 exports.syncGranule = function syncGranule(event) {
   const config = event.config;
   const input = event.input;
+  const stack = config.stack;
   const buckets = config.buckets;
   const provider = config.provider;
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
+
+  // use stack and collection names to prefix fileStagingDir
+  const fileStagingDir = path.join(
+    (config.fileStagingDir || 'file-staging'),
+    stack,
+    collection.name
+  );
 
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
@@ -69,6 +77,7 @@ exports.syncGranule = function syncGranule(event) {
     buckets,
     collection,
     provider,
+    fileStagingDir,
     forceDownload
   );
 
