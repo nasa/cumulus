@@ -1,4 +1,4 @@
-/* eslint-disable no-console, no-param-reassign */
+/* eslint-disable no-console, no-param-reassign, no-await-in-loop, no-restricted-syntax */
 /**
  * This module overrides the Kes Class and the Lambda class of Kes
  * to support specific needs of the Cumulus Deployment.
@@ -21,6 +21,7 @@
  * - Redeploy API Gateway endpoints after Each Deployment
  *
  */
+
 'use strict';
 
 const { Kes } = require('kes');
@@ -106,35 +107,38 @@ class UpdatedKes extends Kes {
   async restartECSTasks(config) {
     const ecs = new this.AWS.ECS();
 
-    try {
-      let resources = [];
-      const params = { StackName: config.stackName };
-      while (true) { // eslint-disable-line no-constant-condition
-        const data = await this.cf.listStackResources(params).promise();
-        resources = resources.concat(data.StackResourceSummaries);
-        if (data.NextToken) params.NextToken = data.NextToken;
-        else break;
-      }
+    // only restart the tasks if the user has turned it on the config
+    if (config.ecs.restartTasksOnDeploy) {
+      try {
+        let resources = [];
+        const params = { StackName: config.stackName };
+        while (true) { // eslint-disable-line no-constant-condition
+          const data = await this.cf.listStackResources(params).promise();
+          resources = resources.concat(data.StackResourceSummaries);
+          if (data.NextToken) params.NextToken = data.NextToken;
+          else break;
+        }
 
-      const clusters = resources.filter((item) => {
-        if (item.ResourceType === 'AWS::ECS::Cluster') return true;
-        return false;
-      });
+        const clusters = resources.filter((item) => {
+          if (item.ResourceType === 'AWS::ECS::Cluster') return true;
+          return false;
+        });
 
-      for (const cluster of clusters) {
-        const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
-        for (const task of tasks.taskArns) {
-          console.log(`restarting ECS task ${task}`);
-          await ecs.stopTask({
-            task: task,
-            cluster: cluster.PhysicalResourceId
-          }).promise();
-          console.log(`ECS task ${task} restarted`);
+        for (const cluster of clusters) {
+          const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
+          for (const task of tasks.taskArns) {
+            console.log(`restarting ECS task ${task}`);
+            await ecs.stopTask({
+              task: task,
+              cluster: cluster.PhysicalResourceId
+            }).promise();
+            console.log(`ECS task ${task} restarted`);
+          }
         }
       }
-    }
-    catch (err) {
-      console.log(err);
+      catch (err) {
+        console.log(err);
+      }
     }
   }
 
@@ -151,14 +155,16 @@ class UpdatedKes extends Kes {
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
-    // return Promise.resolve();
+    if (!filename) return super.compileCF();
     return fetchMessageAdapter(
       this.config.message_adapter_version,
       this.messageAdapterGitPath,
       filename,
       src,
       dest
-    ).then(() => super.compileCF());
+    ).then(() => {
+      this.Lambda.messageAdapterZipFileHash = new this.Lambda(this.config).getHash(src);
+    }).then(() => super.compileCF());
   }
 
   /**
@@ -208,7 +214,7 @@ class UpdatedKes extends Kes {
             apis.stageName = o.OutputValue;
             break;
           default:
-              //nothing
+            //nothing
           }
         });
 

@@ -1,0 +1,79 @@
+HelloWorld:
+  handler: index.handler
+  timeout: 300
+  memory: 256
+  source: 'node_modules/@cumulus/hello-world/dist/'
+  useMessageAdapter: true
+
+DiscoverGranules:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/discover-granules/dist/'
+  useMessageAdapter: true
+  launchInVpc: true
+
+DiscoverGranulesNoVpc:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/discover-granules/dist/'
+  useMessageAdapter: true
+
+DiscoverPdrs:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/discover-pdrs/dist/'
+  useMessageAdapter: true
+  logToElasticSearch: true
+
+QueuePdrs:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/queue-pdrs/dist/'
+  useMessageAdapter: true
+  logToElasticSearch: true
+
+ParsePdr:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/parse-pdr/dist/'
+  useMessageAdapter: true
+  logToElasticSearch: true
+
+PdrStatusCheck:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/pdr-status-check/dist/'
+  useMessageAdapter: true
+
+QueueGranules:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/queue-granules/dist/'
+  useMessageAdapter: true
+
+SfSnsReport:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/sf-sns-report/dist'
+  useMessageAdapter: true 
+
+SyncGranule:
+  handler: index.handler
+  timeout: 300
+  logToElasticSearch: true
+  source: 'node_modules/@cumulus/sync-granule/dist/'
+  useMessageAdapter: true
+  launchInVpc: true
+
+SyncGranuleNoVpc:
+  handler: index.handler
+  timeout: 300
+  logToElasticSearch: true
+  source: 'node_modules/@cumulus/sync-granule/dist/'
+  useMessageAdapter: true
+
+S3AccessTest:
+  handler: index.handler
+  source: 'lambdas/s3AccessTest/'
