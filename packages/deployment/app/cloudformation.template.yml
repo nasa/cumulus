@@ -638,6 +638,7 @@ Resources:
           Value: "{{stackName}}"
       VpcId: {{vpc.vpcId}}
 
+  {{#id this.ecs.ssh }}
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -646,6 +647,7 @@ Resources:
       FromPort: '22'
       ToPort: '22'
       CidrIp: 0.0.0.0/0
+  {{/if}}
 {{/if}}
 
 {{# if iams.instanceProfile}}
@@ -686,9 +688,11 @@ Resources:
                   - Example: value
                 {{/if}}
           
+          {{# if ecs.efs.mount }}
           packages:
             yum:
               nfs-utils: [] 
+          {{/if}}
 
           files:
             "/etc/cfn/cfn-hup.conf":

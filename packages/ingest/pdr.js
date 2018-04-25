@@ -63,6 +63,7 @@ class Discover {
     if (this.force) {
       return pdrs;
     }
+
     return this.findNewPdrs(pdrs);
   }
 
@@ -87,9 +88,8 @@ class Discover {
    * and has to be parsed by comparing the list of discovered PDRs
    * against a folder on a S3 bucket
    *
-   * @param {array} pdrs list of pdr names (do not include the full path)
-   * @return {Promise}
-   * @private
+   * @param {Array} pdrs - list of pdr names (do not include the full path)
+   * @returns {Object} newPdrs
    */
   async findNewPdrs(pdrs) {
     const checkPdrs = pdrs.map((pdr) => this.pdrIsNew(pdr));
