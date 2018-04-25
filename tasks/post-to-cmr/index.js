@@ -34,6 +34,12 @@ function getGranuleId(uri, regex) {
   return match;
 }
 
+/**
+ * Parse an xml string
+ *
+ * @param {string} xml - xml to parse
+ * @returns {Promise<Object>} promise resolves to object version of the xml
+ */
 async function parseXmlString(xml) {
   return new Promise((resolve, reject) => {
     xml2js.parseString(xml, xmlParseOptions, (err, data) => {
@@ -66,7 +72,8 @@ async function getMetadata(xmlFilePath) {
  *
  * @param {Array} input - an array of s3 uris
  * @param {string} granuleIdExtraction - a regex for extracting granule IDs
- * @returns {Array} an array of objects that includes CMR xmls uris and granuleIds
+ * @returns {Promise<Array>} promise resolves to an array of objects
+ * that includes CMR xmls uris and granuleIds
  */
 async function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
@@ -209,6 +216,15 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
   return Promise.all(moveFileRequests);
 }
 
+/**
+* Update the granule metadata with the final location of files
+*
+* @param {Object} granulesObject - an object of the granules where the key is the granuleId
+* @param {Object} collection - configuration object defining a collection
+* of granules and their files
+* @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+* @returns {Promise} promise resolves when all files have been moved
+**/
 function updateGranuleMetadata(granulesObject, collection, cmrFiles) {
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
@@ -240,6 +256,13 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles) {
   return granulesObject;
 }
 
+/**
+* Update the online access url fields in CMR xml files
+*
+* @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+* @param {Object} granulesObject - an object of the granules where the key is the granuleId
+* @returns {Promise} promise resolves when all files have been updated
+**/
 async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
   for (const cmrFile of cmrFiles) {
     const onlineAccessUrls = cmrFile.metadataObject.Granule.OnlineAccessURLs;
