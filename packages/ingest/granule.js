@@ -557,7 +557,7 @@ class S3Granule extends s3Mixin(baseProtocol(Granule)) {}
 * Select a class for discovering or ingesting granules based on protocol
 *
 * @param {string} type -`discover` or `ingest`
-* @param {string} protocol -`sftp`, `ftp`, `http` or `s3`
+* @param {string} protocol -`sftp`, `ftp`, `http`, `https` or `s3`
 * @returns {function} - a constructor to create a granule discovery object
 **/
 function selector(type, protocol) {
@@ -583,6 +583,7 @@ function selector(type, protocol) {
     case 'ftp':
       return FtpGranule;
     case 'http':
+    case 'https':
       return HttpGranule;
     case 's3':
       return S3Granule;

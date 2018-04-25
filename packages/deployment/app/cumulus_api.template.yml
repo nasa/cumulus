@@ -200,7 +200,7 @@ Resources:
       {{else}}
       Role: {{../parent.iams.lambdaProcessingRoleArn}}
     {{/if}}
-      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs6.10{{/if}}
+      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
       Tags:
         - Key: Project
@@ -239,7 +239,7 @@ Resources:
       DestinationArn:
         Ref: log2elasticsearchLambdaFunction
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
-      FilterPattern: '{ $.name = "cumulus" }'
+      FilterPattern: ""
 {{/if}}
 
   {{@key}}LogGroup:
