@@ -24,11 +24,12 @@ default:
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
     publicIp: true
+    restartTasksOnDeploy: true
     docker:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.1.0
+        image: cumuluss/cumulus-ecs-task:1.1.1
         cpu: 400
         memory: 700
         count: 1
