@@ -354,7 +354,6 @@ async function postToCMR(event) {
   }
 
   // post all meta files to CMR
-  // doing this in a synchronous for loop to avoid DDoSing CMR
   const publishRquests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
   const results = await Promise.all(publishRquests);
 
