@@ -1,6 +1,9 @@
 const fs = require('fs');
+const { S3 } = require('aws-sdk');
 const lodash = require('lodash');
 const yaml = require('js-yaml');
+
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
 /**
  * Loads and parses the configuration defined in `./spec/config.yml` or
@@ -37,7 +40,31 @@ function templateFile({ inputTemplateFilename, config }) {
   return templatedInputFilename;
 }
 
+/**
+ * Delete a folder on a given bucket on S3
+ *
+ * @param {string} bucket - the bucket name
+ * @param {string} folder - the folder to delete
+ * @returns {Promise} undefined
+ */
+async function deleteFolder(bucket, folder) {
+  const s3 = new S3();
+
+  const l = await s3.listObjectsV2({
+    Bucket: bucket,
+    Prefix: folder
+  }).promise();
+
+  await Promise.all(l.Contents.map((item) => {
+    return s3.deleteObject({
+      Bucket: bucket,
+      Key: item.Key
+    }).promise();
+  }));
+}
+
 module.exports = {
   loadConfig,
-  templateFile
+  templateFile,
+  deleteFolder
 };

@@ -2,7 +2,12 @@
 
 const test = require('ava');
 
-const { createQueue, s3, sqs, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const {
+  createQueue,
+  s3,
+  sqs,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/common/aws');
 const {
   randomString,
   validateConfig,
@@ -115,7 +120,7 @@ test('The correct message is enqueued', async (t) => {
     {
       name: randomString(),
       path: randomString()
-    },
+    }
   ];
 
   await validateConfig(t, event.config);
