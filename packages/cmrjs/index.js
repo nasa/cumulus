@@ -150,25 +150,39 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
  */
 async function deleteConcept(type, identifier, provider, token) {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
+  log.info(`deleteConcept ${url}`);
 
-  const response = await got.delete(url, {
-    headers: {
-      'Echo-Token': token,
-      'Content-type': 'application/echo10+xml'
-    }
-  });
+  let result;
+  try {
+    result = await got.delete(url, {
+      headers: {
+        'Echo-Token': token,
+        'Content-type': 'application/echo10+xml'
+      }
+    });
+  }
+  catch (error) {
+    result = error.response;
+  }
 
   const xmlObject = await new Promise((resolve, reject) => {
-    parseString(response.body, xmlParseOptions, (err, res) => {
+    parseString(result.body, xmlParseOptions, (err, res) => {
       if (err) reject(err);
       resolve(res);
     });
   });
 
-  if (xmlObject.errors) {
-    throw new Error(
-      `Failed to delete, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`
-    );
+  if (xmlObject.errors) log.debug(xmlObject.errors);
+
+  if (result.statusCode !== 200 && result.statusCode !== 404) {
+    if (xmlObject.errors) {
+      throw new Error(`Failed to delete, statusCode ${result.statusCode},
+      CMR error message: ${JSON.stringify(xmlObject.errors.error)}`);
+    }
+    else {
+      throw new Error(`Failed to delete, statusCode ${result.statusCode},
+      statusMessage: ${result.statusMessage}`);
+    }
   }
 
   return xmlObject;
@@ -178,7 +192,6 @@ async function deleteConcept(type, identifier, provider, token) {
  * The CMR class
  */
 class CMR {
-
   /**
    * The constructor for the CMR class
    *
@@ -217,7 +230,7 @@ class CMR {
    * Adds a granule record to the CMR
    *
    * @param {string} xml - the granule xml document
-   * @returns {Promise.<object>} the CMR response
+   * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
     const token = await this.getToken();
@@ -256,7 +269,7 @@ class CMR {
   }
 
   /**
-   * Search in granules 
+   * Search in granules
    *
    * @param {string} searchParams - the search parameters
    * @returns {Promise.<Object>} the CMR response
