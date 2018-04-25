@@ -360,7 +360,7 @@ module.exports.provider = {
     protocol: {
       title: 'Protocol',
       type: 'string',
-      enum: ['http', 'ftp', 'sftp', 's3'],
+      enum: ['http', 'https', 'ftp', 'sftp', 's3'],
       default: 'http'
     },
     host: {
