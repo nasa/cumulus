@@ -6,9 +6,14 @@
     "bucket",
     "stack",
     "cmr",
-    "input_granules"
+    "input_granules",
+    "collection"
   ],
   "properties": {
+    "input_granules": {
+      "type": "object",
+      "description": "granules object used to construct output for cumulus indexer"
+    },
     "bucket": {
       "type": "string",
       "description": "the bucket the has the private/public key needed for decrypting cmr password"
@@ -32,8 +37,30 @@
         "password": { "type": "string" }
       }
     },
-    "input_granules": {
-
+    "collection": {
+      "type": "object",
+      "required": [
+        "files",
+        "name"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "process": { "type": "string" },
+        "url_path": { "type": "string" },
+        "duplicateHandling": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["regex", "bucket"],
+            "properties": {
+              "regex": { "type": "string" },
+              "bucket": { "type": "string" },
+              "url_path": { "type": "string" }
+            }
+          }
+        }
+      }
     }
   }
 }
