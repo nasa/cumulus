@@ -539,7 +539,7 @@ Resources:
       {{else}}
       Role: {{../iams.lambdaProcessingRoleArn}}
     {{/if}}
-      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs6.10{{/if}}
+      Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
       Tags:
         - Key: Project
@@ -583,7 +583,7 @@ Resources:
           - log2elasticsearchLambdaFunction
           - Arn
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
-      FilterPattern: '{ $.name = "cumulus" }'
+      FilterPattern: ""
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
@@ -749,6 +749,9 @@ Resources:
             SourcePath: {{path}} 
       {{/each}}
     {{/if}}
+    {{# if this.networkMode}}
+      NetworkMode: {{this.networkMode}}
+    {{/if}}
       ContainerDefinitions:
       - Name: {{@key}}
         Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}10{{/if}}
@@ -822,7 +825,7 @@ Resources:
           - log2elasticsearchLambdaFunction
           - Arn
       LogGroupName: {{../stackName}}-{{@key}}EcsLogs
-      FilterPattern: 'DEBUG'
+      FilterPattern: ""
 
   {{@key}}ECSService:
     Type: AWS::ECS::Service
