@@ -3,7 +3,8 @@ const test = require('ava');
 const {
   extractCumulusConfigFromSF,
   fixCumulusMessageSyntax,
-  template
+  template,
+  generateTemplates
 } = require('../lib/message');
 const exampleConfig = require('./fixtures/config.json');
 const exampleOutputs = require('./fixtures/outputs.json');
@@ -88,4 +89,9 @@ test('generate a template', (t) => {
   );
   t.truthy(tt.meta.queues.startSF);
   t.truthy(tt.workflow_config.DiscoverPdrs);
+});
+
+test('generate template for a step function', async (t) => {
+  const promise = generateTemplates(exampleConfig, [], () => {});
+  await t.notThrows(promise); 
 });
