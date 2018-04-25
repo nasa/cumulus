@@ -1,4 +1,5 @@
 /* eslint-disable no-console, no-param-reassign */
+
 'use strict';
 
 const fs = require('fs-extra');
@@ -15,7 +16,6 @@ const { Lambda } = require('kes');
  * lambdas defined in a Kes configuration file.
  */
 class UpdatedLambda extends Lambda {
-
   /**
    * Override the main constructor to allow
    * passing the config object to the instance
@@ -63,9 +63,22 @@ class UpdatedLambda extends Lambda {
    */
   buildS3Path(lambda) {
     lambda = super.buildS3Path(lambda);
+    // adding the hash of the message adapter zip file as part of lambda zip file
+    if (lambda.useMessageAdapter && UpdatedLambda.messageAdapterZipFileHash) {
+      lambda.local = path.join(
+        path.dirname(lambda.local),
+        `${UpdatedLambda.messageAdapterZipFileHash}-${path.basename(lambda.local)}`
+      );
+      lambda.remote = path.join(
+        path.dirname(lambda.remote),
+        `${UpdatedLambda.messageAdapterZipFileHash}-${path.basename(lambda.remote)}`
+      );
+    }
 
     return lambda;
   }
 }
 
 module.exports = UpdatedLambda;
+
+UpdatedLambda.messageAdapterZipFileHash = undefined;

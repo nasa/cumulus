@@ -9,10 +9,48 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-514 "Unable to Delete the Granules"**
   - updated cmrjs.deleteConcept to return success if the record is not found in CMR.
 
+### Added
+- **CUMULUS-470** In-region S3 Policy lambda added to API to update bucket policy for in-region access. 
+
+## [v1.5.1] - 2018-04-23
+### Fixed
+- add the missing dist folder to the hello-world task
+- disable uglifyjs on the built version of the pdr-status-check (read: https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264)
+
+## [v1.5.0] - 2018-04-23
+### Changed
+- Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
+- Lambda functions created by @cumulus/deployment will use node8.10 by default
+- Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
+- Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
+- **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html).
+- **CUMULUS-519:** ECS tasks are no longer restarted after each CF deployment unless `ecs.restartTasksOnDeploy` is set to true
+- **CUMULUS-298:** Updated log filterPattern to include all CloudWatch logs in ElasticSearch
+- **CUMULUS-518:** Updates to the SyncGranule config schema
+  - `granuleIdExtraction` is no longer a property
+  - `process` is now an optional property
+  - `provider_path` is no longer a property
+
+### Fixed
+- **CUMULUS-455 "Kes deployments using only an updated message adapter do not get automatically deployed"**
+  - prepended the hash value of cumulus-message-adapter.zip file to the zip file name of lambda which uses message adapter.
+  - the lambda function will be redeployed when message adapter or lambda function are updated
+- Fixed a bug in the bootstrap lambda function where it stuck during update process
+- Fixed a bug where the sf-sns-report task did not return the payload of the incoming message as the output of the task [CUMULUS-441]
+
+### Added
+- **CUMULUS-352:** Add reindex CLI to the API package.
+- **CUMULUS-465:** Added mock http/ftp/sftp servers to the integration tests
+- Added a `delete` method to the `@common/CollectionConfigStore` class
+- **CUMULUS-467 "@cumulus/integration-tests or cumulus-integration-tests should seed provider and collection in deployed DynamoDB"**
+  - `example` integration-tests populates providers and collections to database
+  - `example` workflow messages are populated from workflow templates in s3, provider and collection information in database, and input payloads.  Input templates are removed.
+  - added `https` protocol to provider schema
+
 ## [v1.4.1] - 2018-04-11
 
 ### Fixed
-- Sync-granule install 
+- Sync-granule install
 
 ## [v1.4.0] - 2018-04-09
 
@@ -23,6 +61,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - fixed sf-sns-report schema, remove the invalid part
   - fixed pdr-status-check schema, the failed execution contains arn and reason
 - **CUMULUS-206** make sure homepage and repository urls exist in package.json files of tasks and packages
+
+### Added
+- Example folder with a cumulus deployment example
 
 ### Changed
 - [CUMULUS-450](https://bugs.earthdata.nasa.gov/browse/CUMULUS-450) - Updated
@@ -35,6 +76,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The config no longer takes a "collection" property
   - The "stack", "provider", and "bucket" config properties are now
     required
+- **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ### Removed
 - Removed the `findTmpTestDataDirectory()` function from
@@ -53,7 +95,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-448** Add code coverage checking using [nyc](https://github.com/istanbuljs/nyc).
-- **CUMULUS-469** Added a lambda to the API package to prototype creating an S3 bucket policy for direct, in-region S3 access for the prototype bucket
 
 ## [v1.3.0] - 2018-03-29
 
@@ -169,7 +210,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...HEAD
+[v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
+[v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0
 [v1.4.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...v1.4.0
 [v1.3.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...v1.3.0

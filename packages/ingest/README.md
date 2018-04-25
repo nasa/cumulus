@@ -34,7 +34,7 @@ All modules are accessible using require: `require('@cumulus/ingest/<MODULE_NAME
 - [`crypto`](./crypto.js) - provides encryption and decryption methods with a consistent API but differing mechanisms for dealing with encryption keys
 - [`ftp`](./ftp.js) - for accessing FTP servers
 - [`granule`](./granule.js) - discovers and ingests granules
-- [`http`](./http.js) - for accessing data via HTTP
+- [`http`](./http.js) - for accessing data via HTTP and HTTPS
 - [`lock`](./lock.js) - creates locks for S3 data
 - [`log`](./log.js) - stringifies JS object logs for ElasticSearch indexing
 - [`parse-pdr`](./parse-pdr.js) - tools for validating PDRs and generating PDRD and PAN messages

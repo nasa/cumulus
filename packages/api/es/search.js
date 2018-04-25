@@ -19,6 +19,8 @@ const logDetails = {
   type: 'apigateway'
 };
 
+const defaultIndexAlias = 'cumulus-alias';
+
 class BaseSearch {
   static async es(host) {
     let esConfig;
@@ -59,6 +61,7 @@ class BaseSearch {
 
   constructor(event, type = null, index = null) {
     let params = {};
+    const logLimit = 10;
 
     this.type = type;
     this.client = null;
@@ -74,14 +77,14 @@ class BaseSearch {
     this.params = params;
     //log.debug('Generated params:', params, logDetails);
 
-    this.size = parseInt((params.limit) ? params.limit : 1, 10);
+    this.size = parseInt((params.limit) ? params.limit : logLimit, 10);
 
     // max size is 100 for performance reasons
     this.size = this.size > 100 ? 100 : this.size;
 
     this.frm = (page - 1) * this.size;
     this.page = parseInt((params.skip) ? params.skip : page, 10);
-    this.index = index || 'cumulus';
+    this.index = index || defaultIndexAlias;
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';
@@ -315,5 +318,6 @@ class Search extends BaseSearch {}
 
 module.exports = {
   BaseSearch,
-  Search
+  Search,
+  defaultIndexAlias
 };

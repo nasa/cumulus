@@ -56,7 +56,7 @@ module.exports.collection = {
       type: 'string'
     },
     sampleFileName: {
-      title: 'Sampe Filename',
+      title: 'Sample Filename',
       description: 'Is used to validate to test granule id ' +
                    'validation and extraction regexes against',
       type: 'string'
@@ -360,7 +360,7 @@ module.exports.provider = {
     protocol: {
       title: 'Protocol',
       type: 'string',
-      enum: ['http', 'ftp', 'sftp', 's3'],
+      enum: ['http', 'https', 'ftp', 'sftp', 's3'],
       default: 'http'
     },
     host: {

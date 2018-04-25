@@ -59,6 +59,7 @@ default:
     sethvincent: true
 
   ecs:
+    restartTasksOnDeploy: false
     amiid: ami-6944c513
     instanceType: change-me 
     volumeSize: 50
@@ -68,7 +69,7 @@ default:
 
   es:
     name: es5
-    elasticSearchMapping: 4
+    elasticSearchMapping: 5
     version: 5.3
     instanceCount: 1
     instanceType: t2.small.elasticsearch
