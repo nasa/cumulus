@@ -583,7 +583,7 @@ Resources:
           - log2elasticsearchLambdaFunction
           - Arn
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
-      FilterPattern: '{ $.name = "cumulus" }'
+      FilterPattern: ""
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
@@ -825,7 +825,7 @@ Resources:
           - log2elasticsearchLambdaFunction
           - Arn
       LogGroupName: {{../stackName}}-{{@key}}EcsLogs
-      FilterPattern: 'DEBUG'
+      FilterPattern: ""
 
   {{@key}}ECSService:
     Type: AWS::ECS::Service
