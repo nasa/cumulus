@@ -60,6 +60,16 @@ default:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
 
+  sns:
+    inregions3:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - InRegionS3PolicyLambdaFunction
+              - Arn
+
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
     # if not specified the value of the apigateway backend endpoint is used
