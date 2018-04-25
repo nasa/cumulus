@@ -27,6 +27,14 @@
                 },
                 "bucket": {
                   "type": "string"
+                },
+                "url_path": {
+                  "description": "url path template that determines the filepath of the file when published",
+                  "type": "string"
+                },
+                "fileStagingDir": {
+                  "description": "name of directory used for staging location",
+                  "type": "string"
                 }
               }
             }
