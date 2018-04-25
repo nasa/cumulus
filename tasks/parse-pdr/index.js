@@ -38,12 +38,14 @@ function parsePdr(event) {
       if (parse.connected) parse.end();
 
       // opportunity to filter the granules of interest based on regex in granuleIdExtraction
-      const granuleIdExtraction = config.collection.granuleIdExtraction;
-      if (granuleIdExtraction) {
-        const filteredPayload = {
-          granules: payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction))
-        };
-        return Object.assign({}, event.input, filteredPayload);
+      if (config && config.collection) {
+        const { granuleIdExtraction } = config.collection;
+        if (granuleIdExtraction) {
+          const filteredPayload = {
+            granules: payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction))
+          };
+          return Object.assign({}, event.input, filteredPayload);
+        }
       }
 
       return Object.assign({}, event.input, payload);
