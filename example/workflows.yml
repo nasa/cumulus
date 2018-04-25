@@ -4,7 +4,10 @@ HelloWorldWorkflow:
   States:
     StartStatus:
       Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Next: HelloWorld
     HelloWorld:
       CumulusConfig:
@@ -16,7 +19,15 @@ HelloWorldWorkflow:
       Next: StopStatus
     StopStatus:
       Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -33,8 +44,23 @@ DiscoverGranules:
   States:
     StatusReport:
       Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
-      Next: DiscoverGranules
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: VpcOrNot 
+    VpcOrNot:
+        Type: Choice
+        Choices:
+          - Variable: $.meta.provider.protocol
+            StringEquals: http
+            Next: DiscoverGranules
+          - Variable: $.meta.provider.protocol
+            StringEquals: https
+            Next: DiscoverGranules
+          - Variable: $.meta.provider.protocol
+            StringEquals: s3 
+            Next: DiscoverGranulesNoVpc
     DiscoverGranules:
       CumulusConfig:
         provider: '{$.meta.provider}'
@@ -49,9 +75,31 @@ DiscoverGranules:
           ResultPath: '$.exception'
           Next: StopStatus
       Next: StopStatus
+    DiscoverGranulesNoVpc:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
+        stack: '{$.meta.stack}'
+      Type: Task
+      Resource: ${DiscoverGranulesNoVpcLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
     StopStatus:
       Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -67,7 +115,10 @@ DiscoverAndQueuePdrs:
   States:
     StartStatus:
       Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Next: DiscoverPdrs
     DiscoverPdrs:
       CumulusConfig:
@@ -99,7 +150,15 @@ DiscoverAndQueuePdrs:
       Next: StopStatus
     StopStatus:
       Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -115,7 +174,10 @@ ParsePdr:
   States:
     StatusReport:
       Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Next: ParsePdr
     ParsePdr:
       CumulusConfig:
@@ -148,6 +210,9 @@ ParsePdr:
     CheckStatus:
       Type: Task
       Resource: ${PdrStatusCheckLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$.payload}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -167,7 +232,7 @@ ParsePdr:
     PdrStatusReport:
       CumulusConfig:
         cumulus_message:
-          input: '{$}'
+          input: '{$.payload}'
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
@@ -183,7 +248,15 @@ ParsePdr:
       Next: CheckStatus
     StopStatus:
       Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -199,8 +272,23 @@ IngestGranule:
   States:
     Report:
       Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
-      Next: SyncGranule
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: VpcOrNot 
+    VpcOrNot:
+        Type: Choice
+        Choices:
+          - Variable: $.meta.provider.protocol
+            StringEquals: http
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: https
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: s3 
+            Next: SyncGranuleNoVpc
     SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -220,9 +308,36 @@ IngestGranule:
           ResultPath: '$.exception'
           Next: StopStatus
       Next: StopStatus
+    SyncGranuleNoVpc:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+      Type: Task
+      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
     StopStatus:
       Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -238,7 +353,10 @@ EcsHelloWorldWorkflow:
   States:
     StartStatus:
       Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Next: EcsTaskHelloWorld
     EcsTaskHelloWorld:
       CumulusConfig:
@@ -255,7 +373,15 @@ EcsHelloWorldWorkflow:
       Next: StopStatus
     StopStatus:
       Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL

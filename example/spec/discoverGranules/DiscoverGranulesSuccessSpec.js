@@ -1,35 +1,27 @@
-const { executeWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile } = require('../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
 const taskName = 'DiscoverGranules';
-const inputHttpTemplateFilename =
-  './spec/discoverGranules/DiscoverGranulesHttp.input.template.json';
-const templatedHttpInputFilename = templateFile({
-  inputTemplateFilename: inputHttpTemplateFilename,
-  config: config[taskName]
-});
-const inputHttpsTemplateFilename =
-  './spec/discoverGranules/DiscoverGranulesHttps.input.template.json';
-const templatedHttpsInputFilename = templateFile({
-  inputTemplateFilename: inputHttpsTemplateFilename,
-  config: config[taskName]
-});
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 
 describe('The Discover Granules workflow with http Protocol', () => {
-  let httpWorkflowExecution = null;
+  let httpWorkflowExecution;
 
   beforeAll(async () => {
-    httpWorkflowExecution = await executeWorkflow(
+    const collection = { name: 'http_testcollection', version: '001' };
+    const provider = { id: 'http_provider' };
+
+    httpWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       taskName,
-      templatedHttpInputFilename
+      collection,
+      provider
     );
   });
 
@@ -59,11 +51,15 @@ describe('The Discover Granules workflow with https Protocol', () => {
   let httpsWorkflowExecution = null;
 
   beforeAll(async () => {
-    httpsWorkflowExecution = await executeWorkflow(
+    const collection = { name: 'https_testcollection', version: '001' };
+    const provider = { id: 'https_provider' };
+
+    httpsWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       taskName,
-      templatedHttpsInputFilename
+      collection,
+      provider
     );
   });
 

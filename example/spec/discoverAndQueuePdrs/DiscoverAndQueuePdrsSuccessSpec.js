@@ -1,41 +1,28 @@
-const { S3 } = require('aws-sdk');
-const { executeWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile } = require('../helpers/testUtils');
+const { loadConfig, deleteFolder } = require('../helpers/testUtils');
 
-const s3 = new S3();
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
 const taskName = 'DiscoverAndQueuePdrs';
-const inputTemplateFilename = './spec/discoverAndQueuePdrs/' +
-                              'DiscoverAndQueuePdrs.input.template.json';
-const templatedInputFilename = templateFile({
-  inputTemplateFilename,
-  config: config[taskName]
-});
 
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;
-
 describe('The Discover And Queue PDRs workflow', () => {
-  let workflowExecution = null;
+  const collection = { name: 'MOD09GQ', version: '006' };
+  const provider = { id: 's3_provider' };
+  let workflowExecution;
 
   beforeAll(async () => {
-    workflowExecution = await executeWorkflow(
+    await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
+    workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       taskName,
-      templatedInputFilename
+      collection,
+      provider
     );
-  });
-
-  afterAll(async () => {
-    await s3.deleteObject({
-      Bucket: config.bucket,
-      Key: `${config.stackName}/pdrs/${pdrFilename}`
-    }).promise();
   });
 
   it('executes successfully', () => {
