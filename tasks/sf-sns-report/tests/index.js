@@ -3,12 +3,12 @@
 const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { publishSnsMessage } = require('../index');
-const { cloneDeep, get } = require('lodash');
+const { cloneDeep } = require('lodash');
 const { randomString } = require('@cumulus/common/test-utils');
 
 let bucket;
 
-test.before(async (t) => {
+test.before(async () => {
   bucket = randomString();
   await s3().createBucket({ Bucket: bucket }).promise();
 });
@@ -101,7 +101,7 @@ test('send report when sfn is finished and granule has succeeded', async (t) => 
   event.config.executionName = '7c543392-1da9-47f0-9c34-f43f6519412a';
 
   const output = await publishSnsMessage(cloneDeep(event));
-  t.not(get(output, 'MessageId', null));
+  t.deepEqual(output, {});
 });
 
 test.after.always(async () => {
