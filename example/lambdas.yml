@@ -11,6 +11,14 @@ DiscoverGranules:
   memory: 512
   source: 'node_modules/@cumulus/discover-granules/dist/'
   useMessageAdapter: true
+  launchInVpc: true
+
+DiscoverGranulesNoVpc:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/discover-granules/dist/'
+  useMessageAdapter: true
 
 DiscoverPdrs:
   handler: index.handler
@@ -52,6 +60,14 @@ SfSnsReport:
   useMessageAdapter: true 
 
 SyncGranule:
+  handler: index.handler
+  timeout: 300
+  logToElasticSearch: true
+  source: 'node_modules/@cumulus/sync-granule/dist/'
+  useMessageAdapter: true
+  launchInVpc: true
+
+SyncGranuleNoVpc:
   handler: index.handler
   timeout: 300
   logToElasticSearch: true

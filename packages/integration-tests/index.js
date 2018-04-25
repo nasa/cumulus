@@ -1,9 +1,13 @@
+/* eslint-disable no-param-reassign */
+
 'use strict';
 
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
+const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
+const { Provider, Collection } = require('@cumulus/api/models');
 
 const executionStatusNumRetries = 100;
 const waitPeriodMs = 5000;
@@ -89,23 +93,19 @@ async function waitForCompletedExecution(executionArn) {
  * Kick off a workflow execution
  *
  * @param {string} workflowArn - ARN for the workflow
- * @param {string} inputFile - path to input JSON
+ * @param {string} workflowMsg - workflow message
  * @returns {Promise.<Object>} execution details: {executionArn, startDate}
  */
-async function startWorkflowExecution(workflowArn, inputFile) {
-  const rawInput = await fs.readFile(inputFile, 'utf8');
-
-  const parsedInput = JSON.parse(rawInput);
-
+async function startWorkflowExecution(workflowArn, workflowMsg) {
   // Give this execution a unique name
-  parsedInput.cumulus_meta.execution_name = uuidv4();
-  parsedInput.cumulus_meta.workflow_start_time = Date.now();
-  parsedInput.cumulus_meta.state_machine = workflowArn;
+  workflowMsg.cumulus_meta.execution_name = uuidv4();
+  workflowMsg.cumulus_meta.workflow_start_time = Date.now();
+  workflowMsg.cumulus_meta.state_machine = workflowArn;
 
   const workflowParams = {
     stateMachineArn: workflowArn,
-    input: JSON.stringify(parsedInput),
-    name: parsedInput.cumulus_meta.execution_name
+    input: JSON.stringify(workflowMsg),
+    name: workflowMsg.cumulus_meta.execution_name
   };
 
   return sfn().startExecution(workflowParams).promise();
@@ -119,12 +119,12 @@ async function startWorkflowExecution(workflowArn, inputFile) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @param {string} inputFile - path to input JSON file
+ * @param {string} workflowMsg - workflow message
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
-async function executeWorkflow(stackName, bucketName, workflowName, inputFile) {
+async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
-  const { executionArn } = await startWorkflowExecution(workflowArn, inputFile);
+  const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
 
   console.log(`Executing workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
@@ -145,7 +145,9 @@ async function executeWorkflow(stackName, bucketName, workflowName, inputFile) {
  */
 async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
   try {
-    const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, inputFile);
+    const rawInput = await fs.readFile(inputFile, 'utf8');
+    const parsedInput = JSON.parse(rawInput);
+    const workflowStatus = await executeWorkflow(stackName, bucketName, workflowName, parsedInput);
 
     if (workflowStatus.status === 'SUCCEEDED') {
       console.log(`Workflow ${workflowName} execution succeeded.`);
@@ -159,13 +161,147 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
   }
 }
 
+/**
+ * set process environment necessary for database transactions
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @returns {*} undefined
+ */
+function setProcessEnvironment(stackName, bucketName) {
+  process.env.internal = bucketName;
+  process.env.stackName = stackName;
+  process.env.CollectionsTable = `${stackName}-CollectionsTable`;
+  process.env.ProvidersTable = `${stackName}-ProvidersTable`;
+}
+
+/**
+ * add collections to database
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of collection json files
+ * @returns {Promise.<integer>} number of collections added
+ */
+async function addCollections(stackName, bucketName, dataDirectory) {
+  setProcessEnvironment(stackName, bucketName);
+  const filenames = await fs.readdir(dataDirectory);
+  const collections = [];
+  filenames.forEach((filename) => {
+    const collection = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
+    collections.push(collection);
+  });
+
+  // limit the concurrent access to database
+  const concurrencyLimit = process.env.CONCURRENCY || 3;
+  const limit = pLimit(concurrencyLimit);
+  const promises = collections.map((collection) => limit(() => {
+    const c = new Collection();
+    console.log(`adding collection ${collection.name}___${collection.version}`);
+    return c.delete({ name: collection.name, version: collection.version })
+      .then(() => c.create(collection));
+  }));
+  return Promise.all(promises).then((cs) => cs.length);
+}
+
+/**
+ * add providers to database
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of provider json files
+ * @returns {Promise.<integer>} number of providers added
+ */
+async function addProviders(stackName, bucketName, dataDirectory) {
+  setProcessEnvironment(stackName, bucketName);
+  const filenames = await fs.readdir(dataDirectory);
+  const providers = [];
+  filenames.forEach((filename) => {
+    const provider = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
+    providers.push(provider);
+  });
+
+  // limit the concurrent access to database
+  const concurrencyLimit = process.env.CONCURRENCY || 3;
+  const limit = pLimit(concurrencyLimit);
+  const promises = providers.map((provider) => limit(() => {
+    const p = new Provider();
+    console.log(`adding provider ${provider.id}`);
+    return p.delete({ id: provider.id }).then(() => p.create(provider));
+  }));
+  return Promise.all(promises).then((ps) => ps.length);
+}
+
+/**
+ * build workflow message
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} workflowName - workflow name
+ * @param {Object} collection - collection information
+ * @param {Object} collection.name - collection name
+ * @param {Object} collection.version - collection version
+ * @param {Object} provider - provider information
+ * @param {Object} provider.id - provider id
+ * @param {Object} payload - payload information
+ * @returns {Promise.<string>} workflow message
+ */
+async function buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload) {
+  setProcessEnvironment(stackName, bucketName);
+  const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
+  let collectionInfo = {};
+  if (collection) {
+    collectionInfo = await new Collection()
+      .get({ name: collection.name, version: collection.version });
+  }
+  let providerInfo = {};
+  if (provider) {
+    providerInfo = await new Provider().get({ id: provider.id });
+  }
+  template.meta.collection = collectionInfo;
+  template.meta.provider = providerInfo;
+  template.payload = payload || {};
+  return template;
+}
+/**
+ * build workflow message and execute the workflow
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} workflowName - workflow name
+ * @param {Object} collection - collection information
+ * @param {Object} collection.name - collection name
+ * @param {Object} collection.version - collection version
+ * @param {Object} provider - provider information
+ * @param {Object} provider.id - provider id
+ * @param {Object} payload - payload information
+ * @returns {Object} - {executionArn: <arn>, status: <status>}
+ */
+async function buildAndExecuteWorkflow(
+  stackName,
+  bucketName,
+  workflowName,
+  collection,
+  provider,
+  payload
+) {
+  const workflowMsg = await
+  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload);
+  return executeWorkflow(stackName, bucketName, workflowName, workflowMsg);
+}
+
 module.exports = {
   testWorkflow,
   executeWorkflow,
+  buildAndExecuteWorkflow,
+  waitForCompletedExecution,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
   /**
-   * @deprecated Since version 1.3. To be deleted version 2.0. sfnStep.LambdaStep.getStepOutput instead.
+   * @deprecated Since version 1.3. To be deleted version 2.0.
+   * Use sfnStep.LambdaStep.getStepOutput instead.
    */
-  getLambdaOutput: new sfnStep.LambdaStep().getStepOutput
+  getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
+  addCollections,
+  addProviders
 };

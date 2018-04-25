@@ -1,24 +1,18 @@
-const { executeWorkflow, ActivityStep } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow, ActivityStep } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../helpers/testUtils');
 
 const awsConfig = loadConfig();
 const activityStep = new ActivityStep();
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
-
-/** This test is currently ignored due to sporadic Circle CI failures
- * See CUMULUS-519
- */
 
 describe('The Hello World workflow using ECS', () => {
   let workflowExecution = null;
 
   beforeAll(async () => {
-    workflowExecution = await executeWorkflow(
+    workflowExecution = await buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
-      'EcsHelloWorldWorkflow',
-      './spec/helloWorld/HelloWorld.input.template.json'
+      'EcsHelloWorldWorkflow'
     );
   });
 
