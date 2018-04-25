@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.4.0",
+  "version": "1.5.1",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -30,10 +30,10 @@
     "@cumulus/cumulus-message-adapter-js": "^1.0.1"
   },
   "devDependencies": {
-    "webpack": "~4.5.0",
-    "webpack-cli": "~2.0.14",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
-    "proxyquire": "^2.0.0"
+    "proxyquire": "^2.0.0",
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
   }
 }
