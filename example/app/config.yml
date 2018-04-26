@@ -3,6 +3,7 @@ default:
   prefix: change-me 
   stackName: '{{prefix}}-integration'
   # stackNameNoDash: TestCumulusIntegration
+  shared_data_bucket: cumulus-data-shared
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}'
