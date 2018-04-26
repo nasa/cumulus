@@ -7,8 +7,10 @@ const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const { partialRecordUpdate, deleteRecord, reingest } = require('../es/indexer');
+const log = require('@cumulus/common/log');
 
 async function removeGranuleFromCmr(granuleId, collectionId) {
+  log.info(`granules.removeGranuleFromCmr ${granuleId}`);
   const password = await DefaultProvider.decrypt(process.env.cmr_password);
   const cmr = new CMR(
     process.env.cmr_provider,
@@ -30,10 +32,10 @@ async function removeGranuleFromCmr(granuleId, collectionId) {
 
 /**
  * List all granules for a given collection.
- * @param {object} event aws lambda event object.
- * @param {object} context aws lambda context object
- * @param {callback} cb aws lambda callback function
- * @return {undefined}
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {callback} cb - aws lambda callback function
+ * @returns {Object} list of granules
  */
 function list(event, cb) {
   const search = new Search(event, 'granule');
@@ -45,10 +47,10 @@ function list(event, cb) {
 
 /**
  * Update a single granule.
- * Supported Actions: Reprocess, Remove From CMR.
+ * Supported Actions: reingest, Remove From CMR.
  *
- * @param {object} event aws lambda event object.
- * @return {Promise}
+ * @param {Object} event - aws lambda event object.
+ * @returns {Promise} response from the actions
  */
 async function put(event) {
   const granuleId = _get(event.pathParameters, 'granuleName');
@@ -85,6 +87,7 @@ async function put(event) {
 
 async function del(event) {
   const granuleId = _get(event.pathParameters, 'granuleName');
+  log.info(`granules.del ${granuleId}`);
 
   const search = new Search({}, 'granule');
   const record = await search.get(granuleId);
@@ -110,8 +113,10 @@ async function del(event) {
 
 /**
  * Query a single granule.
- * @param {object} event aws lambda event object.
- * @return {object} a single granule object.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {callback} cb - aws lambda callback function
+ * @returns {Object} a single granule object.
  */
 function get(event, cb) {
   const granuleId = _get(event.pathParameters, 'granuleName');
