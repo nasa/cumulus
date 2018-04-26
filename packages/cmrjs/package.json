@@ -6,7 +6,17 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "echo 'no tests'"
+    "test": "ava",
+    "test-coverage": "nyc ava"
+  },
+  "ava": {
+    "files": "tests/*.js",
+    "serial": true
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
   },
   "keywords": [
     "CUMULUS"
@@ -26,5 +36,10 @@
     "lodash.property": "^4.4.2",
     "public-ip": "^2.3.5",
     "xml2js": "^0.4.17"
+  },
+  "devDependencies": {
+    "ava": "^0.25.0",
+    "nyc": "^11.6.0",
+    "sinon": "^4.5.0"
   }
 }
