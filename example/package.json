@@ -30,6 +30,7 @@
     "@cumulus/integration-tests": "^1.5.1",
     "@cumulus/parse-pdr": "^1.5.1",
     "@cumulus/pdr-status-check": "^1.5.1",
+    "@cumulus/post-to-cmr": "^1.5.1",
     "@cumulus/queue-granules": "^1.5.1",
     "@cumulus/queue-pdrs": "^1.5.1",
     "@cumulus/sf-sns-report": "^1.5.1",
