@@ -47,6 +47,12 @@ PdrStatusCheck:
   source: 'node_modules/@cumulus/pdr-status-check/dist/'
   useMessageAdapter: true
 
+PostToCmr:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/post-to-cmr/dist/'
+  seMessageAdapter: true
+
 QueueGranules:
   handler: index.handler
   timeout: 300
@@ -77,3 +83,8 @@ SyncGranuleNoVpc:
 S3AccessTest:
   handler: index.handler
   source: 'lambdas/s3AccessTest/'
+
+FakeProcessing:
+  handler: index.handler
+  source: 'lambdas/fakeProcessing/'
+  useMessageAdapter: true
