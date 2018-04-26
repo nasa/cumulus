@@ -172,17 +172,19 @@ async function deleteConcept(type, identifier, provider, token) {
     });
   });
 
-  if (xmlObject.errors) log.debug(xmlObject.errors);
+  let errorMessage;
+  if (result.statusCode !== 200) {
+    // eslint-disable-next-line max-len
+    errorMessage = `Failed to delete, statusCode: ${result.statusCode}, statusMessage: ${result.statusMessage}`;
+    if (xmlObject.errors) {
+      // eslint-disable-next-line max-len
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`;
+    }
+    log.info(errorMessage);
+  }
 
   if (result.statusCode !== 200 && result.statusCode !== 404) {
-    if (xmlObject.errors) {
-      throw new Error(`Failed to delete, statusCode ${result.statusCode},
-      CMR error message: ${JSON.stringify(xmlObject.errors.error)}`);
-    }
-    else {
-      throw new Error(`Failed to delete, statusCode ${result.statusCode},
-      statusMessage: ${result.statusMessage}`);
-    }
+    throw new Error(errorMessage);
   }
 
   return xmlObject;
@@ -281,6 +283,7 @@ class CMR {
 
 module.exports = {
   ingestConcept,
+  deleteConcept,
   getUrl,
   updateToken,
   ValidationError,
