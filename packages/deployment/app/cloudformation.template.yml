@@ -127,22 +127,23 @@ Resources:
   #################################################
 {{#each sns}}
   {{#if this.arn}}
-  {{@key}}:
-    Type: "AWS::SNS::Topic"
+  {{#each this.subscriptions}}
+  # Subscriptions only
+  {{@../key}}{{@key}}Subscription: 
+    Type: "AWS::SNS::Subscription"
     Properties:
-      Subscription:
-        {{#each this.subscriptions}}
-          {{# if this.endpoint.function}}
-          - Endpoint:
-              {{this.endpoint.function}}:
-              {{#each this.endpoint.array}}
-                - {{@this}}
-              {{/each}}
-          {{else}}
-          - Endpoint: {{this.endpoint}}
-          {{/if}}
-            Protocol: {{@key}}
+      {{# if this.endpoint.function}}
+      Endpoint:
+        {{this.endpoint.function}}:
+        {{#each this.endpoint.array}}
+          - {{@this}}
         {{/each}}
+      {{else}}
+      Endpoint: {{this.endpoint}}
+      {{/if}}
+      Protocol: {{@key}}
+      TopicArn: {{../this.arn}}
+  {{/each}}
   {{else}}
   {{@key}}Sns:
     Type: "AWS::SNS::Topic"
