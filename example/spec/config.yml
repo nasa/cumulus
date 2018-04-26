@@ -5,7 +5,7 @@ IngestGranule:
   SyncGranuleOutput:
     granules:
       - files:
-        - bucket: cumulus-test-sandbox-private
-          filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf
+        - bucket: cumulus-test-sandbox-protected
+          filename: s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf
         - bucket: cumulus-test-sandbox-private
           filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met
