@@ -16,21 +16,6 @@ Parameters:
     Default: NoValue
     NoEcho: true
 
-Mappings:
-  AWSRegionToAMI:
-    DOCS:
-      LIST: >-
-        http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-
-    us-east-1:
-      AMIID: ami-aff65ad2	
-    us-east-2:
-      AMIID: ami-64300001
-    us-west-1:
-      AMIID: ami-69677709
-    us-west-2:
-      AMIID: ami-40ddb938
-
 Resources:
 
   #################################################
@@ -637,7 +622,7 @@ Resources:
         - Key: Name
           Value: "{{stackName}}"
       VpcId: {{vpc.vpcId}}
-
+  {{#if ecs.ssh}}
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -646,12 +631,12 @@ Resources:
       FromPort: '22'
       ToPort: '22'
       CidrIp: 0.0.0.0/0
+  {{/if}}
 {{/if}}
 
 {{# if iams.instanceProfile}}
   CumulusECSCluster:
     Type: AWS::ECS::Cluster
-
 
   CumulusContainerInstanceLaunch:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -686,9 +671,11 @@ Resources:
                   - Example: value
                 {{/if}}
           
+          {{#if ecs.efs.mount}}
           packages:
             yum:
               nfs-utils: [] 
+          {{/if}}
 
           files:
             "/etc/cfn/cfn-hup.conf":
@@ -752,15 +739,7 @@ Resources:
             "{{prefix}}-EFSSecurityGroup"
         {{/if}}
 
-      {{# if ecs.amiid}}
       ImageId: {{ecs.amiid}}
-      {{else}}
-      ImageId: 
-        Fn::FindInMap:
-        - AWSRegionToAMI
-        - !Ref "AWS::Region"
-        - AMIID
-      {{/if}}
       
       InstanceType: {{ecs.instanceType}}
       IamInstanceProfile: {{iams.instanceProfile}}
@@ -781,7 +760,6 @@ Resources:
               - " - yum install -y aws-cfn-bootstrap\n"
               - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
               - Fn::Sub: " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
-
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -835,7 +813,7 @@ Resources:
         {{/each}}
       
       {{/if}}
-       {{# if this.privileged }}
+      {{# if this.privileged }}
         Privileged: true
       {{/if}}
 
@@ -964,13 +942,13 @@ Outputs:
       Ref: {{@key}}SQS
 {{/each}}
 
-# {{# if es.name}}
-#   {{es.name}}Domain:
-#     Value:
-#       Fn::GetAtt:
-#         - {{es.name}}Domain
-#         - DomainEndpoint
-# {{/if}}
+{{# if es.name}}
+  {{es.name}}Domain:
+    Value:
+      Fn::GetAtt:
+        - {{es.name}}Domain
+        - DomainEndpoint
+{{/if}}
 
 {{#each sns}}
   {{@key}}SnsArn:
