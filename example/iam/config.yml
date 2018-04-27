@@ -7,6 +7,8 @@ default:
   buckets:
     internal: cumulus-test-sandbox-internal
     private: cumulus-test-sandbox-private
+    protected: cumulus-test-sandbox-protected
+    public: cumulus-test-sandbox-public
 
   params:
      - name: ResourcePrefix
