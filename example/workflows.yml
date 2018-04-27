@@ -48,7 +48,19 @@ DiscoverGranules:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: DiscoverGranules
+      Next: VpcOrNot 
+    VpcOrNot:
+        Type: Choice
+        Choices:
+          - Variable: $.meta.provider.protocol
+            StringEquals: http
+            Next: DiscoverGranules
+          - Variable: $.meta.provider.protocol
+            StringEquals: https
+            Next: DiscoverGranules
+          - Variable: $.meta.provider.protocol
+            StringEquals: s3 
+            Next: DiscoverGranulesNoVpc
     DiscoverGranules:
       CumulusConfig:
         provider: '{$.meta.provider}'
@@ -57,6 +69,20 @@ DiscoverGranules:
         stack: '{$.meta.stack}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    DiscoverGranulesNoVpc:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
+        stack: '{$.meta.stack}'
+      Type: Task
+      Resource: ${DiscoverGranulesNoVpcLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -250,7 +276,19 @@ IngestGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: SyncGranule
+      Next: VpcOrNot 
+    VpcOrNot:
+        Type: Choice
+        Choices:
+          - Variable: $.meta.provider.protocol
+            StringEquals: http
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: https
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: s3 
+            Next: SyncGranuleNoVpc
     SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -262,8 +300,84 @@ IngestGranule:
               destination: '{$.meta.input_granules}'
             - source: '{$}'
               destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: ChooseProcess 
+    SyncGranuleNoVpc:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
+      Type: Task
+      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: ChooseProcess 
+    ChooseProcess:
+      Type: Choice
+      Choices:
+        - Variable: $.cumulus_meta.process
+          StringEquals: modis
+          Next: ModisProcess
+      Default: StopStatus
+    ModisProcess:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        distribution_endpoint: '{$.meta.distribution_endpoint}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        files_config: '{$.meta.collection.files}'
+        url_path: '{$.meta.collection.url_path}'
+        input_keys: '{$.meta.collection.process_keys}'
+        cumulus_message:
+          input: '[$.payload.granules[*].files[*].filename]'
+          outputs:
+            - source: '{$}'
+              destination: '{$.payload}'
+      Type: Task
+      Resource: ${ModisProcessingLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Retry:
+        - ErrorEquals:
+            - States.ALL
+          IntervalSeconds: 2
+          MaxAttempts: 3
+      Next: CmrStep
+    CmrStep:
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal}'
+        stack: '{$.meta.stack}'
+        cmr: '{$.meta.cmr}'
+        input_granules: '{$.meta.input_granules}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        cumulus_message:
+          input: '{$.payload}'
+          outputs:
+            - source: '{$}'
+              destination: '{$.payload}'
+      Type: Task
+      Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -333,4 +447,4 @@ EcsHelloWorldWorkflow:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
-      
+
