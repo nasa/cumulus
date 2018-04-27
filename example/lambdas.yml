@@ -47,6 +47,16 @@ PdrStatusCheck:
   source: 'node_modules/@cumulus/pdr-status-check/dist/'
   useMessageAdapter: true
 
+PostToCmr:
+  handler: index.handler
+  timeout: 300
+  memory: 256
+  logToElasticSearch: true
+  source: 'node_modules/@cumulus/post-to-cmr/dist/'
+  useMessageAdapter: true
+  envs:
+    internal: '{{buckets.internal}}'
+
 QueueGranules:
   handler: index.handler
   timeout: 300
@@ -77,3 +87,11 @@ SyncGranuleNoVpc:
 S3AccessTest:
   handler: index.handler
   source: 'lambdas/s3AccessTest/'
+
+ModisProcessing:
+  handler: lambda_handler.handler
+  timeout: 300
+  s3Source:
+    bucket: '{{shared_data_bucket}}'
+    key: deploy/cumulus-process/modis/0.5.2.zip
+  runtime: python2.7
