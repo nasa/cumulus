@@ -37,10 +37,9 @@ function parsePdr(event) {
   return parse.ingest()
     .then((payload) => {
       if (parse.connected) parse.end();
-      console.log(`Got payload ${JSON.stringify(payload)}`)
       // opportunity to filter the granules of interest based on regex in granuleIdExtraction
-      const granuleIdExtraction = config.collection.granuleIdExtraction;
-      if (granuleIdExtraction) {
+      if (config.collection && config.collection.granuleIdExtraction) {
+        const granuleIdExtraction = config.collection.granuleIdExtraction;
         const filteredPayload = {
           granules: payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction))
         };
