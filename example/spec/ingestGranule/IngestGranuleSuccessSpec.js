@@ -63,6 +63,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('files move to correct location', () => {
       const granule = lambdaOutput.payload.granules[0];
+      expect(granule.published).toEqual('true');
+
       granule.files.forEach((file) => {
         const params = {
           Bucket: file.bucket,
