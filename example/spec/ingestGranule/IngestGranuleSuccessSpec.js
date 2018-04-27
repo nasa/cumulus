@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { s3ObjectExists } = require('@cumulus/common/aws');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile } = require('../helpers/testUtils');
@@ -58,6 +59,20 @@ describe('The S3 Ingest Granules workflow', () => {
       const granule = lambdaOutput.payload.granules[0];
       expect(granule.published).toBe(true);
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
+    });
+
+    it('files move to correct location', () => {
+      const granule = lambdaOutput.payload.granules[0];
+      granule.files.forEach((file) => {
+        const params = {
+          Bucket: file.bucket,
+          Key: file.name
+        };
+
+        expect(s3ObjectExists(params).toEqual('true'));
+
+        // await s3().deleteObject({ Bucket: file.bucket, Key: file.key }).promise();
+      });
     });
   });
 });
