@@ -4,17 +4,18 @@ const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-te
 const { loadConfig, templateFile } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const taskName = 'IngestGranule';
+const taskName = 'SyncGranules';
 
-const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'; // eslint-disable-line max-len
+const outputPayloadTemplateFilename = './spec/syncGranules/SyncGranule.output.payload.template.json'; // eslint-disable-line max-len
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
-  config: config[taskName].SyncGranuleOutput
+  config: config.IngestGranule.SyncGranuleOutput
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
-describe('The S3 Ingest Granules workflow', () => {
-  const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
+
+describe('The Sync Granules workflow', () => {
+  const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
@@ -31,7 +32,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('the SyncGranules Lambda', () => {
+  describe('the SyncGranule Lambda function', () => {
     let lambdaOutput = null;
 
     beforeAll(async () => {
@@ -44,20 +45,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('has expected updated meta', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
-    });
-  });
-
-  describe('the PostToCmr Lambda', () => {
-    let lambdaOutput;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
-    });
-
-    it('has expected payload', () => {
-      const granule = lambdaOutput.payload.granules[0];
-      expect(granule.published).toBe(true);
-      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
     });
   });
 });
