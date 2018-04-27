@@ -50,8 +50,12 @@ PdrStatusCheck:
 PostToCmr:
   handler: index.handler
   timeout: 300
+  memory: 256
+  logToElasticSearch: true
   source: 'node_modules/@cumulus/post-to-cmr/dist/'
-  seMessageAdapter: true
+  useMessageAdapter: true
+  envs:
+    internal: '{{buckets.internal}}'
 
 QueueGranules:
   handler: index.handler
@@ -84,7 +88,10 @@ S3AccessTest:
   handler: index.handler
   source: 'lambdas/s3AccessTest/'
 
-FakeProcessing:
-  handler: index.handler
-  source: 'lambdas/fakeProcessing/'
-  useMessageAdapter: true
+ModisProcessing:
+  handler: lambda_handler.handler
+  timeout: 300
+  s3Source:
+    bucket: '{{shared_data_bucket}}'
+    key: deploy/cumulus-process/modis/0.5.2.zip
+  runtime: python2.7
