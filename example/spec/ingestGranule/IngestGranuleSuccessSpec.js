@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { s3ObjectExists } = require('@cumulus/common/aws');
-const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow, LambdaStep, conceptExists } =
+  require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile } = require('../helpers/testUtils');
 const config = loadConfig();
@@ -63,7 +64,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('files move to correct location', () => {
       const granule = lambdaOutput.payload.granules[0];
+      const result = conceptExists(granule.cmrLink);
+
       expect(granule.published).toEqual('true');
+      expect(result).not.toEqual(false);
 
       granule.files.forEach((file) => {
         const params = {
