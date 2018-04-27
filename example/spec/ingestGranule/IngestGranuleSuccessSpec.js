@@ -13,8 +13,6 @@ const templatedOutputPayloadFilename = templateFile({
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
-
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
@@ -45,6 +43,20 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('has expected updated meta', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
+    });
+  });
+
+  describe('the PostToCmr Lambda', () => {
+    let lambdaOutput;
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+    });
+
+    it('has expected payload', () => {
+      const granule = lambdaOutput.payload.granules[0];
+      expect(granule.published).toBe(true);
+      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
     });
   });
 });
