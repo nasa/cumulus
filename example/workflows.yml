@@ -294,6 +294,7 @@ IngestGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -315,6 +316,7 @@ IngestGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -432,6 +434,7 @@ SyncGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -453,6 +456,7 @@ SyncGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
