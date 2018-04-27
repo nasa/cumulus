@@ -3,6 +3,7 @@ default:
   prefix: change-me 
   stackName: '{{prefix}}-integration'
   # stackNameNoDash: TestCumulusIntegration
+  shared_data_bucket: cumulus-data-shared
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}'
@@ -24,11 +25,12 @@ default:
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
     publicIp: true
+    restartTasksOnDeploy: true
     docker:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.1.0
+        image: cumuluss/cumulus-ecs-task:1.1.1
         cpu: 400
         memory: 700
         count: 1
@@ -51,6 +53,14 @@ default:
   buckets:
     internal: cumulus-test-sandbox-internal
     private: cumulus-test-sandbox-private
+    protected: cumulus-test-sandbox-protected
+    public: cumulus-test-sandbox-public
+
+  cmr:
+    username: '{{CMR_USERNAME}}'
+    provider: CUMULUS
+    clientId: CUMULUS
+    password: '{{CMR_PASSWORD}}'
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'

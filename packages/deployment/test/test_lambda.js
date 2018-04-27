@@ -32,14 +32,14 @@ test.beforeEach(async (t) => {
     fullName: 'teststack-lambda-example',
     local: path.join(
       t.context.temp,
-      'build', 'cloudformation', '69483b158735a9124022127ec96e145219e2b74e-lambda-example.zip'
+      'build', 'cloudformation', 'b0174f8ae0abc4ef3f9735deeb5e0b05233dfdfc-lambda-example.zip'
     ),
     remote: path.join(
-      t.context.config.bucket,
-      'lambdas', '69483b158735a9124022127ec96e145219e2b74e-lambda-example.zip'
+      t.context.config.stack,
+      'lambdas', 'b0174f8ae0abc4ef3f9735deeb5e0b05233dfdfc-lambda-example.zip'
     ),
     source: 'test/fixtures/lambda-example',
-    hash: '69483b158735a9124022127ec96e145219e2b74e',
+    hash: 'b0174f8ae0abc4ef3f9735deeb5e0b05233dfdfc',
     bucket: 'testbucket'
   };
 
@@ -62,7 +62,8 @@ test.serial('zipLambda: works for lambda not using message adapter', async (t) =
   t.context.lambda.useMessageAdapter = false;
   const lambdaLocalOrigin = t.context.lambda.local;
   const lambdaRemoteOrigin = t.context.lambda.remote;
-  await new Lambda(t.context.config).zipLambda(t.context.lambda);
+  const l = new Lambda(t.context.config)
+  await l.zipLambda(l.buildS3Path(t.context.lambda));
   t.truthy(fs.statSync(t.context.lambda.local));
   t.is(t.context.lambda.local, lambdaLocalOrigin);
   t.is(t.context.lambda.remote, lambdaRemoteOrigin);
@@ -72,7 +73,8 @@ test.serial('zipLambda: works for lambda using message adapter', async (t) => {
   t.context.lambda.useMessageAdapter = true;
   const lambdaLocalOrigin = t.context.lambda.local;
   const lambdaRemoteOrigin = t.context.lambda.remote;
-  await new Lambda(t.context.config).zipLambda(t.context.lambda);
+  const l = new Lambda(t.context.config)
+  await l.zipLambda(l.buildS3Path(t.context.lambda));
   t.truthy(fs.statSync(t.context.lambda.local));
   t.is(
     path.basename(t.context.lambda.local),
@@ -104,7 +106,8 @@ test.serial(
     fs.writeFileSync(existingLambdaLocal, 'hello');
     t.is(fs.statSync(existingLambdaLocal).size, 5);
 
-    await new Lambda(t.context.config).zipLambda(t.context.lambda);
+    const l = new Lambda(t.context.config)
+    await l.zipLambda(l.buildS3Path(t.context.lambda));
     t.truthy(fs.statSync(t.context.lambda.local));
     t.is(fs.statSync(t.context.lambda.local).size, 5);
     t.is(t.context.lambda.local, existingLambdaLocal);
@@ -132,7 +135,9 @@ test.serial(
     // message adapter is updated, a new lambda zip file is generated
     const adapterHashOrigin = Lambda.messageAdapterZipFileHash;
     Lambda.messageAdapterZipFileHash = `${adapterHashOrigin}123`;
-    await new Lambda(t.context.config).zipLambda(t.context.lambda);
+
+    const l = new Lambda(t.context.config)
+    await l.zipLambda(l.buildS3Path(t.context.lambda));
     t.truthy(fs.statSync(t.context.lambda.local));
     t.true(fs.statSync(t.context.lambda.local).size > 5);
     t.not(t.context.lambda.local, existingLambdaLocal);
