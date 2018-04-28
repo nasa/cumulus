@@ -87,8 +87,8 @@ class Discover {
    * and has to be parsed by comparing the list of discovered PDRs
    * against a folder on a S3 bucket
    *
-   * @param {array} pdrs list of pdr names (do not include the full path)
-   * @return {Promise}
+   * @param {Array} pdrs - list of pdr names (do not include the full path)
+   * @returns {Promise} newPdrs
    * @private
    */
   async findNewPdrs(pdrs) {
