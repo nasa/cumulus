@@ -53,12 +53,12 @@ function parseSpec(pdrName, spec) {
   }
 
   // make sure FILE_CKSUM_TYPE value is CKSUM
-  if (checksumType && checksumType !== 'CKSUM') {
-    throw new PDRParsingError('UNSUPPORTED CHECKSUM TYPE');
+  if (checksumType && (checksumType !== 'CKSUM') && (checksumType !== 'MD5')) {
+    throw new PDRParsingError(`UNSUPPORTED CHECKSUM TYPE: ${checksumType}`);
   }
 
-  // make sure FILE_CKSUM_VALUE is numeric
-  if (checksumValue && typeof checksumValue !== 'number') {
+  // make sure FILE_CKSUM_VALUE is numeric for CKSUM
+  if (checksumValue && typeof checksumValue !== 'number' && checksumType !== 'MD5') {
     throw new PDRParsingError('FILE_CKSUM_VALUE', pdrName);
   }
 
@@ -148,7 +148,7 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
  * Parse a PDR file
  *
  * @param {string} pdrFilePath - the file to be parsed
- * @param {string} collectionConfigsUrl - the S3 location of the collection configs
+ * @param {string} collectionConfigStore - the S3 location of the collection configs
  * @param {string} pdrName - the name of the PDR
  * @returns {Promise<Object>} an object representing the PDR
  */
