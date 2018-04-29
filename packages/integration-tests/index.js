@@ -7,8 +7,8 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
-const cmr = require('./cmr.js')
 const { Provider, Collection } = require('@cumulus/api/models');
+const cmr = require('./cmr.js');
 
 const executionStatusNumRetries = 100;
 const waitPeriodMs = 5000;
@@ -306,5 +306,6 @@ module.exports = {
   addCollections,
   addProviders,
   conceptExists: cmr.conceptExists,
-  getOnlineResources: cmr.getOnlineResources
+  getOnlineResources: cmr.getOnlineResources,
+  generateCmrFilesForGranules: cmr.generateCmrFilesForGranules
 };
