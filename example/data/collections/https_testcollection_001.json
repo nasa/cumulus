@@ -9,12 +9,12 @@
     {
       "regex": ".*.nc$",
       "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
-      "bucket": "cumulus-test-sandbox-internal"
+      "bucket": "internal"
     },
     {
       "regex": ".*.nc.md5$",
       "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
-      "bucket": "cumulus-test-sandbox-internal"
+      "bucket": "internal"
     }
   ]
 }
