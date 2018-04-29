@@ -338,23 +338,14 @@ IngestGranule:
       Choices:
         - Variable: $.cumulus_meta.process
           StringEquals: modis
-          Next: ModisProcess
+          Next: ProcessingStep
       Default: StopStatus
-    ModisProcess:
+    ProcessingStep:
       CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        distribution_endpoint: '{$.meta.distribution_endpoint}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-        files_config: '{$.meta.collection.files}'
-        url_path: '{$.meta.collection.url_path}'
-        input_keys: '{$.meta.collection.process_keys}'
-        cumulus_message:
-          input: '[$.payload.granules[*].files[*].filename]'
-          outputs:
-            - source: '{$}'
-              destination: '{$.payload}'
+        bucket: '{$.meta.buckets.internal}'
+        collection: '{$.meta.collection}'
       Type: Task
-      Resource: ${ModisProcessingLambdaFunction.Arn}
+      Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -373,6 +364,9 @@ IngestGranule:
         cmr: '{$.meta.cmr}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
+        moveStagedFiles: false
         cumulus_message:
           input: '{$.payload}'
           outputs:
