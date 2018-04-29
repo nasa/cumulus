@@ -3,6 +3,72 @@
 /* eslint-disable no-param-reassign */
 
 const got = require('got');
+const xml2js = require('xml2js');
+const fs = require('fs');
+const { s3 } = require('@cumulus/common/aws');
+
+/**
+ * Sample granule used to update fields and save as a .cmr.xml file
+ */
+const sampleGranule = {
+  Granule: {
+    GranuleUR: 'MYD13Q1.A2017297.h19v10.006.2017313221202',
+    InsertTime: '2018-04-25T21:45:45.524043',
+    LastUpdate: '2018-04-25T21:45:45.524053',
+    Collection: {
+      ShortName: 'MYD13Q1',
+      VersionId: '006'
+    },
+    Temporal: {
+      RangeDateTime: {
+        BeginningDateTime: '2017-10-24T00:00:00Z',
+        EndingDateTime: '2017-11-08T23:59:59Z'
+      }
+    },
+    Spatial: {
+      HorizontalSpatialDomain: {
+        Geometry: {
+          GPolygon: {
+            Boundary: {
+              Point: [
+                {
+                  PointLongitude: '10.598766856250499',
+                  PointLatitude: '-20.004533998735798'
+                },
+                {
+                  PointLongitude: '10.116488181247300',
+                  PointLatitude: '-9.963464459448231'
+                },
+                {
+                  PointLongitude: '20.318223437416400',
+                  PointLatitude: '-9.958850980581371'
+                },
+                {
+                  PointLongitude: '21.290997939442398',
+                  PointLatitude: '-19.999772984245801'
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    TwoDCoordinateSystem: {
+      StartCoordinate1: '19',
+      StartCoordinate2: '10',
+      TwoDCoordinateSystemName: 'MODIS Tile SIN'
+    },
+    OnlineAccessURLs: {
+      OnlineAccessURL: {
+        URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
+        URLDescription: 'File to download'
+      }
+    },
+    Orderable: 'true',
+    Visible: 'true',
+    CloudCover: '13'
+  }
+}
 
 /**
  * Returns true if the concept exists - if the cmrLink
@@ -50,7 +116,69 @@ async function getOnlineResources(cmrLink) {
   return [].concat(...links);
 }
 
+/**
+ * Generate a granule xml and store to the given S3 bucket
+ * 
+ * @param {Object} granule - granule object
+ * @param {Object} collection - collection object
+ * @param {string} bucket - bucket to save the xml file to
+ * @returns {Array<string>} - List of granule files including the created
+ * CMR xml files
+ */
+async function generateAndStoreCmrXml(granule, collection, bucket) {
+  let xmlObject = sampleGranule;
+  xmlObject.Granule.GranuleUR = granule.granuleId;
+
+  xmlObject.Granule.Collection = {
+    ShortName: collection.name,
+    VersionId: collection.version
+  };
+
+  let granuleFiles = granule.files.map((f) => f.filename);
+
+  xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL = granuleFiles.map((f) => ({
+    URL: f,
+    URLDescription: 'File to download'
+  }));
+
+  const builder = new xml2js.Builder();
+  const xml = builder.buildObject(xmlObject);
+
+  const stagingDir = granuleFiles[0].fileStagingDir;
+
+  const filename = `${stagingDir}/${granule.granuleId}.cmr.xml`;
+
+  const params = {
+    Bucket: bucket,
+    Key: filename,
+    Body: xml
+  };
+
+  await s3().putObject(params).promise();
+
+  granuleFiles.push(`s3://${bucket}/${filename}`);
+
+  return granuleFiles;
+}
+
+/**
+ * Generate .cmr.xml files for the granules and store them in S3 to the
+ * given S3 location
+ *
+ * @param {Array<Object>} granules - list of granules in the format of the sync-granules
+ * output
+ * @param {Object} collection - collection object that includes name and version
+ * @param {string} bucket - location to save the xmls to
+ * @returns {Array<string>} list of S3 locations for CMR xml files
+ */
+async function generateCmrFilesForGranules(granules, collection, bucket) {
+  const files = await Promise.all(granules.map((g) => generateAndStoreCmrXml(g, collection, bucket)));
+
+  return [].concat(...files);
+}
+
 module.exports = {
   conceptExists,
-  getOnlineResources
-};
+  getOnlineResources,
+  generateCmrFilesForGranules
+};   
