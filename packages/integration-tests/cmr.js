@@ -144,7 +144,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(xmlObject);
 
-  const stagingDir = granuleFiles[0].fileStagingDir;
+  const stagingDir = granule.files[0].fileStagingDir;
 
   const filename = `${stagingDir}/${granule.granuleId}.cmr.xml`;
 
