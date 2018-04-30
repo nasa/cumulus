@@ -309,6 +309,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sns:publish
+                  - sns:List*
                 Resource: '*'
 
   StepRole:
