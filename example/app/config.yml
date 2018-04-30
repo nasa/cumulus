@@ -3,6 +3,7 @@ default:
   prefix: change-me 
   stackName: '{{prefix}}-integration'
   # stackNameNoDash: TestCumulusIntegration
+  shared_data_bucket: cumulus-data-shared
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}'
@@ -52,6 +53,14 @@ default:
   buckets:
     internal: cumulus-test-sandbox-internal
     private: cumulus-test-sandbox-private
+    protected: cumulus-test-sandbox-protected
+    public: cumulus-test-sandbox-public
+
+  cmr:
+    username: '{{CMR_USERNAME}}'
+    provider: CUMULUS
+    clientId: CUMULUS
+    password: '{{CMR_PASSWORD}}'
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
@@ -59,6 +68,25 @@ default:
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
+
+  sns:
+    inregions3:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - InRegionS3PolicyLambdaFunction
+              - Arn
+    AmazonIpSpaceChanged:
+      arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - InRegionS3PolicyLambdaFunction
+              - Arn
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
