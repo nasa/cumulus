@@ -149,24 +149,41 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
  */
 async function deleteConcept(type, identifier, provider, token) {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
+  log.info(`deleteConcept ${url}`);
 
-  const response = await got.delete(url, {
-    headers: {
-      'Echo-Token': token,
-      'Content-type': 'application/echo10+xml'
-    }
-  });
+  let result;
+  try {
+    result = await got.delete(url, {
+      headers: {
+        'Echo-Token': token,
+        'Content-type': 'application/echo10+xml'
+      }
+    });
+  }
+  catch (error) {
+    result = error.response;
+  }
 
   const xmlObject = await new Promise((resolve, reject) => {
-    parseString(response.body, xmlParseOptions, (err, res) => {
+    parseString(result.body, xmlParseOptions, (err, res) => {
       if (err) reject(err);
       resolve(res);
     });
   });
 
-  if (xmlObject.errors) {
-    const xmlObjectError = JSON.stringify(xmlObject.errors.error);
-    throw new Error(`Failed to delete, CMR error message: ${xmlObjectError}`);
+  let errorMessage;
+  if (result.statusCode !== 200) {
+    // eslint-disable-next-line max-len
+    errorMessage = `Failed to delete, statusCode: ${result.statusCode}, statusMessage: ${result.statusMessage}`;
+    if (xmlObject.errors) {
+      // eslint-disable-next-line max-len
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`;
+    }
+    log.info(errorMessage);
+  }
+
+  if (result.statusCode !== 200 && result.statusCode !== 404) {
+    throw new Error(errorMessage);
   }
 
   return xmlObject;
@@ -265,6 +282,7 @@ class CMR {
 
 module.exports = {
   ingestConcept,
+  deleteConcept,
   getUrl,
   updateToken,
   ValidationError,
