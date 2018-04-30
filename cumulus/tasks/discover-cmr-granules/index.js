@@ -21,6 +21,7 @@ function validateParameter(config, param) {
   throw new Error(`Undefined ${param} parameter`);
 }
 
+
 /**
  * Validate required parameters in Config
  *
@@ -33,6 +34,7 @@ function validateParameters(config) {
 
   return true;
 }
+
 
 /**
  * Task which discovers granules by querying the CMR
