@@ -5,7 +5,6 @@ import path from 'path';
 import sinon from 'sinon';
 import {
   ProviderNotFound,
-  FTPError,
   RemoteResourceError
 } from '@cumulus/common/errors';
 import modis from '@cumulus/test-data/payloads/modis/discover.json';
@@ -73,8 +72,7 @@ test.cb('test pdr discovery with FTP invalid user/pass', (t) => {
       t.end();
     }
     else {
-      t.true(e instanceof FTPError);
-      t.true(e.message.includes('Login incorrect'));
+      t.true(e.message.includes('Please login'));
       t.end();
     }
   });

@@ -58,6 +58,9 @@ const copyIdx = async (dirname, payload) => {
           }
         });
       }
+      else {
+        log.info(`${idxFilename} is not a .tgz file - no decompression needed`);
+      }
     }
   }
   return true;
@@ -89,7 +92,7 @@ module.exports = class CopyIdxFileToS3Task extends Task {
       log.info('No files to copy');
     }
     else {
-      copyIdx(dirname, payload);
+      await copyIdx(dirname, payload);
     }
     return payload;
   }
