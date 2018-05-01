@@ -8,6 +8,7 @@
  * - IngestGranules
  * - StateMachine (if a payload doesn't belong to previous ones)
  */
+
 'use strict';
 
 const path = require('path');
@@ -15,10 +16,16 @@ const get = require('lodash.get');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search, defaultIndexAlias } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
+const { s3 } = require('@cumulus/common/aws');
+const {
+  getExecutionArn, 
+  getExecutionUrl, 
+  invoke, 
+  StepFunction,  
+} = require('@cumulus/ingest/aws');
 
 /**
  * Returns the collectionId used in elasticsearch
@@ -163,9 +170,7 @@ function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 
     name
   );
   if (!arn) {
-    return Promise.reject(
-      new Error('State Machine Arn is missing. Must be included in the cumulus_meta')
-    );
+    return Promise.reject(new Error('State Machine Arn is missing. Must be included in the cumulus_meta'));
   }
 
   const execution = getExecutionUrl(arn);
@@ -339,6 +344,20 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
 }
 
 /**
+ * Calculate granule product volume, which is the sum of the file
+ * sizes in bytes
+ * 
+ * @param {Array<Object>} granuleFiles - array of granule files
+ * @returns {Integer} - sum of granule file sizes in bytes
+ */
+function getGranuleProductVolume(granuleFiles) {
+  const fileSizes = granuleFiles.map((file) => file.fileSize)
+    .filter((size) => size);
+
+  return fileSizes.reduce((a, b) => a + b);
+}
+
+/**
  * Extracts granule info from a stepFunction message and indexes it to
  * an ElasticSearch
  *
@@ -394,7 +413,8 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
         files: uniqBy(g.files, 'filename'),
         error: exception,
         createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        productVolume: getGranuleProductVolume(g.files)
       };
 
       doc.published = get(g, 'published', false);
