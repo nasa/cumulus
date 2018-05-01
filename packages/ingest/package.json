@@ -59,9 +59,12 @@
     "uuid": "^3.2.1"
   },
   "devDependencies": {
+    "@cumulus/cmrjs": "^1.5.0",
+    "@cumulus/test-data": "^1.5.0",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",
-    "sinon": "^4.5.0"
+    "sinon": "^4.5.0",
+    "xml2js": "^0.4.17"
   }
 }
