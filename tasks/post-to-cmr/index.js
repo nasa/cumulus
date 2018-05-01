@@ -233,10 +233,9 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles) {
         const match = file.name.match(test);
 
         const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-
         if (match) {
           if (!file.url_path) {
-            file.url_path = collection.url_path || '';
+            file.url_path = fileConfig.url_path || collection.url_path || '';
           }
 
           const metadataObject = { file: file, granule: granulesObject[granuleId] };

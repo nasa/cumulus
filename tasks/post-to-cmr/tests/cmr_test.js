@@ -73,7 +73,7 @@ test('should succeed with correct payload', (t) => {
     's3://cumulus-protected/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
     's3://cumulus-private/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
     's3://cumulus-private/example/2003/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    's3://cumulus-public/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
     's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
     's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'];
 
