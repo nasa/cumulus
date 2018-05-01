@@ -366,7 +366,6 @@ IngestGranule:
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
         collection: '{$.meta.collection}'
         buckets: '{$.meta.buckets}'
-        moveStagedFiles: false
         cumulus_message:
           input: '{$.payload}'
           outputs:
