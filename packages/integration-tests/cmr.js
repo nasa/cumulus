@@ -6,6 +6,7 @@ const got = require('got');
 const xml2js = require('xml2js');
 const fs = require('fs');
 const { s3 } = require('@cumulus/common/aws');
+const log = require('@cumulus/common/log');
 
 /**
  * Sample granule used to update fields and save as a .cmr.xml file
@@ -68,7 +69,7 @@ const sampleGranule = {
     Visible: 'true',
     CloudCover: '13'
   }
-}
+};
 
 /**
  * Returns true if the concept exists - if the cmrLink
@@ -118,7 +119,7 @@ async function getOnlineResources(cmrLink) {
 
 /**
  * Generate a granule xml and store to the given S3 bucket
- * 
+ *
  * @param {Object} granule - granule object
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
@@ -126,7 +127,7 @@ async function getOnlineResources(cmrLink) {
  * CMR xml files
  */
 async function generateAndStoreCmrXml(granule, collection, bucket) {
-  let xmlObject = sampleGranule;
+  const xmlObject = sampleGranule;
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
   xmlObject.Granule.Collection = {
@@ -134,7 +135,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
     VersionId: collection.version
   };
 
-  let granuleFiles = granule.files.map((f) => f.filename);
+  const granuleFiles = granule.files.map((f) => f.filename);
 
   xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL = granuleFiles.map((f) => ({
     URL: f,
@@ -157,7 +158,8 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
   await s3().putObject(params).promise();
 
   granuleFiles.push(`s3://${bucket}/${filename}`);
-
+  log.info(`s3://${bucket}/${filename}`);
+  log.info(granuleFiles);
   return granuleFiles;
 }
 
@@ -172,7 +174,8 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
  * @returns {Array<string>} list of S3 locations for CMR xml files
  */
 async function generateCmrFilesForGranules(granules, collection, bucket) {
-  const files = await Promise.all(granules.map((g) => generateAndStoreCmrXml(g, collection, bucket)));
+  const files = await Promise.all(granules.map((g) =>
+    generateAndStoreCmrXml(g, collection, bucket)));
 
   return [].concat(...files);
 }
@@ -181,4 +184,4 @@ module.exports = {
   conceptExists,
   getOnlineResources,
   generateCmrFilesForGranules
-};   
+};
