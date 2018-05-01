@@ -101,6 +101,7 @@ test.serial('indexing multiple successful granule records', async (t) => {
     t.is(record._parent, collectionId);
     t.is(record._source.cmrLink, granule.cmrLink);
     t.is(record._source.published, granule.published);
+    t.is(record._source.productVolume, 17909733);
   });
 });
 
