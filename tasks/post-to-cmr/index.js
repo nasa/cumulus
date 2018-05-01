@@ -239,11 +239,9 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles) {
             file.url_path = collection.url_path || '';
           }
 
-          const urlPath = urlPathTemplate(file.url_path, {
-            file: file,
-            granule: granulesObject[granuleId],
-            cmrMetadata: cmrFile.metadataObject
-          });
+          const metadataObject = { file: file, granule: granulesObject[granuleId] };
+          if (cmrFile) metadataObject.cmrMetadata = cmrFile.metadataObject;
+          const urlPath = urlPathTemplate(file.url_path, metadataObject);
 
           file.bucket = fileConfig.bucket;
           file.filepath = path.join(urlPath, file.name);
@@ -341,11 +339,10 @@ async function postToCMR(event) {
   // create granules object for cumulus indexer
   let allGranules = getAllGranules(input, inputGranules, regex);
 
+  // update granules object with final locations of files as `filename`
+  allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles);
   // allows us to disable moving the files
   if (moveStagedFiles) {
-    // update granules object with final locations of files as `filename`
-    allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles);
-
     // move files from staging location to final location
     await moveGranuleFiles(allGranules, bucket);
 
