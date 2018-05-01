@@ -179,6 +179,10 @@ module.exports.granule = {
     createdAt: {
       type: 'number',
       readonly: true
+    },
+    productVolume: {
+      type: 'number',
+      readonly: true
     }
   },
   required: [
@@ -186,7 +190,8 @@ module.exports.granule = {
     'collection',
     'status',
     'execution',
-    'createdAt'
+    'createdAt',
+    'productVolume'
   ]
 };
 
