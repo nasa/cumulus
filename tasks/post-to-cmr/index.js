@@ -201,14 +201,16 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
     granule.files.forEach((file) => {
       const source = {
         Bucket: sourceBucket,
-        Key: `${file.fileStagingDir}/${file.name}`
+        Key: `${file.name}`
       };
+      if (file.fileStagingDir) {
+        source.Key = `${file.fileStagingDir}/${file.name}`;
+      }
 
       const target = {
         Bucket: file.bucket,
         Key: file.filepath
       };
-
       moveFileRequests.push(moveGranuleFile(source, target));
     });
   });
@@ -217,7 +219,7 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 }
 
 /**
-* Update the granule metadata with the final location of files. 
+* Update the granule metadata with the final location of files.
 * For each granule file, find the collection regex that goes with it and use
 * that to construct the url path. Return the updated granules object.
 *
@@ -225,13 +227,13 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 * @param {Object} collection - configuration object defining a collection
 * of granules and their files
 * @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+* @param {Array} buckets - the buckets involved with the files
 * @returns {Promise} promise resolves when all files have been moved
 **/
 function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
       collection.files.forEach((fileConfig) => {
-
         const test = new RegExp(fileConfig.regex);
         const match = file.name.match(test);
 
@@ -385,5 +387,5 @@ exports.handler = handler;
 // use node index.js local to invoke this
 justLocalRun(() => {
   const payload = require('@cumulus/test-data/cumulus_messages/post-to-cmr.json'); // eslint-disable-line global-require, max-len
-  handler(payload, {}, (e, r) => console.log(e, r));
+  handler(payload, {}, (e, r) => log.info(e, r));
 });
