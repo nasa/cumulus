@@ -7,7 +7,7 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
-const { Provider, Collection } = require('@cumulus/api/models');
+const { Provider, Collection, Rule } = require('@cumulus/api/models');
 
 const executionStatusNumRetries = 100;
 const waitPeriodMs = 5000;
@@ -170,9 +170,26 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
  */
 function setProcessEnvironment(stackName, bucketName) {
   process.env.internal = bucketName;
+  process.env.bucket = bucketName;
   process.env.stackName = stackName;
+  process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
+  process.env.RulesTable = `${stackName}-RulesTable`;  
+}
+
+const concurrencyLimit = process.env.CONCURRENCY || 3;
+const limit = pLimit(concurrencyLimit);
+
+async function readSeedFiles(stackName, bucketName, dataDirectory) {
+  setProcessEnvironment(stackName, bucketName);
+  const filenames = await fs.readdir(dataDirectory);
+  const seedItems = [];
+  filenames.forEach((filename) => {
+    const item = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
+    seedItems.push(item);
+  });
+  return seedItems;
 }
 
 /**
@@ -184,18 +201,8 @@ function setProcessEnvironment(stackName, bucketName) {
  * @returns {Promise.<integer>} number of collections added
  */
 async function addCollections(stackName, bucketName, dataDirectory) {
-  setProcessEnvironment(stackName, bucketName);
-  const filenames = await fs.readdir(dataDirectory);
-  const collections = [];
-  filenames.forEach((filename) => {
-    const collection = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
-    collections.push(collection);
-  });
-
-  // limit the concurrent access to database
-  const concurrencyLimit = process.env.CONCURRENCY || 3;
-  const limit = pLimit(concurrencyLimit);
-  const promises = collections.map((collection) => limit(() => {
+  const collections = await readSeedFiles(stackName, bucketName, dataDirectory);
+  const promises = collections.map((collection) => limit(() => {  
     const c = new Collection();
     console.log(`adding collection ${collection.name}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
@@ -213,23 +220,33 @@ async function addCollections(stackName, bucketName, dataDirectory) {
  * @returns {Promise.<integer>} number of providers added
  */
 async function addProviders(stackName, bucketName, dataDirectory) {
-  setProcessEnvironment(stackName, bucketName);
-  const filenames = await fs.readdir(dataDirectory);
-  const providers = [];
-  filenames.forEach((filename) => {
-    const provider = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
-    providers.push(provider);
-  });
+  const providers = await readSeedFiles(stackName, bucketName, dataDirectory);
 
-  // limit the concurrent access to database
-  const concurrencyLimit = process.env.CONCURRENCY || 3;
-  const limit = pLimit(concurrencyLimit);
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
   }));
   return Promise.all(promises).then((ps) => ps.length);
+}
+
+/**
+ * add rules to database
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of rules json files
+ * @returns {Promise.<integer>} number of rules added
+ */
+async function addRules(stackName, bucketName, dataDirectory) {
+  const rules = await readSeedFiles(stackName, bucketName, dataDirectory);
+
+  const promises = rules.map((rule) => limit(() => {
+    const r = new Rule();
+    console.log(`adding rule ${rule.name}`);
+    return r.create(rule);
+  }));
+  return Promise.all(promises).then((rs) => rs.length);
 }
 
 /**
@@ -303,5 +320,6 @@ module.exports = {
    */
   getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
   addCollections,
-  addProviders
+  addProviders,
+  addRules
 };
