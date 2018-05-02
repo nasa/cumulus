@@ -2,14 +2,21 @@
 
 const test = require('ava');
 const fs = require('fs');
+const path = require('path');
 const { parseString } = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const urlPathTemplate = require('../url-path-template');
 
-// eslint-disable-next-line max-len
-const modisXmlFile = '../../packages/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml';
-// eslint-disable-next-line max-len
-const measuresXmlFile = '../../packages/test-data/granules/antarctica_ice_velocity_450m.nc..cmr.xml';
+const modisXmlFile = path.join(
+  __dirname,
+  '..',
+  'node_modules/@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml'
+);
+const measuresXmlFile = path.join(
+  __dirname,
+  '..',
+  'node_modules/@cumulus/test-data/granules/antarctica_ice_velocity_450m.nc..cmr.xml'
+);
 
 /**
 * read and parse cmr metadata file into json object
