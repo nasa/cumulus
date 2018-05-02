@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const { buildAndExecuteWorkflow, LambdaStep, conceptExists } =
   require('@cumulus/integration-tests');
@@ -58,9 +57,9 @@ describe('The S3 Ingest Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       files = lambdaOutput.payload.granules[0].files;
-      existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].name });
-      existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].name });
-      existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].name });
+      existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
+      existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
+      existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });
     });
 
     afterAll(async () => {
