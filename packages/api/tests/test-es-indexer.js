@@ -15,13 +15,13 @@ const granuleSuccess = require('./data/granule_success.json');
 const granuleFailure = require('./data/granule_failed.json');
 const pdrFailure = require('./data/pdr_failure.json');
 const pdrSuccess = require('./data/pdr_success.json');
+const cmrjs = require('@cumulus/cmrjs');
 
 const esIndex = randomString();
 process.env.bucket = randomString();
 process.env.stackName = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
-
 
 test.before(async () => {
   // create the elasticsearch index and add mapping
@@ -30,6 +30,14 @@ test.before(async () => {
 
   // create buckets
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+
+  sinon.stub(cmrjs, 'getMetadata').resolves({
+    time_start: '2017-10-24T00:00:00.000Z',
+    updated: '2018-04-25T21:45:45.524Z',
+    dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
+    data_center: 'CUMULUS',
+    title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
+  });
 });
 
 test.after.always(async () => {
@@ -37,6 +45,8 @@ test.after.always(async () => {
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.bucket)
   ]);
+
+  cmrjs.getMetadata.restore();
 });
 
 test.serial('indexing a successful granule record', async (t) => {
