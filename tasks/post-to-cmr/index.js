@@ -202,13 +202,10 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 
     granule.files.forEach((file) => {
       if (!(file.name.match(expectedFormat))) {
-        log.info(file);
         const source = {
           Bucket: sourceBucket,
           Key: `${file.fileStagingDir}/${file.name}`
         };
-
-        log.info(`source key: ${source.Key} and bucket ${source.Bucket}`);
 
         const target = {
           Bucket: file.bucket,
@@ -242,7 +239,6 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
         const match = file.name.match(test);
 
         const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-
         if (match) {
           if (!file.url_path) {
             file.url_path = collection.url_path || '';
@@ -253,7 +249,6 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
             granule: granulesObject[granuleId],
             cmrMetadata: cmrFile.metadataObject
           });
-
           file.bucket = buckets[fileConfig.bucket];
           file.filepath = path.join(urlPath, file.name);
           file.filename = `s3://${path.join(file.bucket, file.filepath)}`;
@@ -288,8 +283,9 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
     const builder = new xml2js.Builder();
     const xml = builder.buildObject(cmrFile);
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
-
-    await promiseS3Upload({ Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.name, Body: xml });
+    await promiseS3Upload(
+      { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
+    );
   }
 }
 
