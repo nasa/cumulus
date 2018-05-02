@@ -88,7 +88,17 @@ S3AccessTest:
   handler: index.handler
   source: 'lambdas/s3AccessTest/'
 
+
 FakeProcessing:
   handler: index.handler
   source: '../tasks/test-processing/dist/'
   useMessageAdapter: true
+
+ModisProcessing:
+  handler: lambda_handler.handler
+  timeout: 300
+  s3Source:
+    bucket: '{{shared_data_bucket}}'
+    key: deploy/cumulus-process/modis/0.5.2.zip
+  runtime: python2.7
+

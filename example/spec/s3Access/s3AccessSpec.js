@@ -25,23 +25,44 @@ async function canAccessObject(region) {
   return data.Payload;
 }
 
+/**
+ * Create a message fomatted like an sns message to send to the lambda
+ * The bucket would not normally be included in this message, but is used
+ * for this test
+ * 
+ * @returns {Object} SNS-type message 
+ */
+function createSnsMessage() {
+  const message = {
+    synctoken: "0123456789",
+    md5: "6a45316e8bc9463c9e926d5d37836d33",
+    url: "https://ip-ranges.amazonaws.com/ip-ranges.json",
+    bucket: testBucket // only needed for testing purposes  
+  }
+
+  message["create-time"] = "2018-04-24T10:00:s00+00:00";
+
+  const Records = [{
+    Sns: { Message: JSON.stringify(message) }
+  }];
+
+  return { Records };
+}
+
 describe('The S3 bucket', () => {
   beforeAll(async () => {
     await s3().createBucket({ Bucket: testBucket }).promise();
 
     await s3().putObject({ Bucket: testBucket, Key: 'test.txt', Body: 'test' }).promise();
 
+    const snsMessage = createSnsMessage();
+
     const lambda = new Lambda();
 
     // Invoke the lambda to set the bucket policy
     await lambda.invoke({
       FunctionName: `${config.stackName}-InRegionS3Policy`,
-      Payload: JSON.stringify({
-        synctoken: '0123456789',
-        md5: '6a45316e8bc9463c9e926d5d37836d33',
-        url: 'https://ip-ranges.amazonaws.com/ip-ranges.json',
-        bucket: testBucket
-      })
+      Payload: JSON.stringify(snsMessage)
     }).promise();
   });
 
