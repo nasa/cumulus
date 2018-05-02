@@ -191,6 +191,26 @@ async function deleteConcept(type, identifier, provider, token) {
 }
 
 /**
+ * Get the CMR metadata from the cmrLink
+ * 
+ * @param {string} cmrLink - link to concept in CMR
+ * @returns {Object} - metadata as a JS object, null if not 
+ * found
+ */
+async function getMetadata(cmrLink) {
+  const response = await got.get(cmrLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
+
+  const body = JSON.parse(response.body);
+
+  return body.feed.entry;
+}
+
+
+/**
  * The CMR class
  */
 class CMR {
@@ -287,5 +307,6 @@ module.exports = {
   getUrl,
   updateToken,
   ValidationError,
-  CMR
+  CMR,
+  getMetadata
 };
