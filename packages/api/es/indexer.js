@@ -19,7 +19,7 @@ const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { Search, defaultIndexAlias } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
-const { s3 } = require('@cumulus/common/aws');
+const cmrjs = require('@cumulus/cmrjs');
 const {
   getExecutionArn, 
   getExecutionUrl, 
@@ -402,6 +402,7 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
 
   const done = granules.map((g) => {
     if (g.granuleId) {
+      const metadata = cmrjs.getMetadata(g.cmrLink);
       const doc = {
         granuleId: g.granuleId,
         pdrName: get(payload, 'meta.pdr.name'),
@@ -414,7 +415,9 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
         error: exception,
         createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
         timestamp: Date.now(),
-        productVolume: getGranuleProductVolume(g.files)
+        productVolume: getGranuleProductVolume(g.files),
+        beginningDateTime: metadata.time_start,
+        endingDateTime: metadata.time_end
       };
 
       doc.published = get(g, 'published', false);
