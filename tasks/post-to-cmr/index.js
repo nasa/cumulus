@@ -140,7 +140,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     filename: cmrFile.filename,
     conceptId,
     link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
-          `?concept_id=${res.result['concept-id']}`
+      `?concept_id=${res.result['concept-id']}`
   };
 }
 
@@ -238,9 +238,11 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles) {
             file.url_path = fileConfig.url_path || collection.url_path || '';
           }
 
-          const metadataObject = { file: file, granule: granulesObject[granuleId] };
-          if (cmrFile) metadataObject.cmrMetadata = cmrFile.metadataObject;
-          const urlPath = urlPathTemplate(file.url_path, metadataObject);
+          const urlPath = urlPathTemplate(file.url_path, {
+            file: file,
+            granule: granulesObject[granuleId],
+            cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
+          });
 
           file.bucket = fileConfig.bucket;
           file.filepath = path.join(urlPath, file.name);
