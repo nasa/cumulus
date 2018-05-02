@@ -10,7 +10,7 @@
           "filename": "",
           "fileSize": 17865615,
           "path": "cumulus-test-data/pdrs",
-          "url_path": ""
+          "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
         },
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
@@ -18,7 +18,7 @@
           "filename": "",
           "fileSize": 44118,
           "path": "cumulus-test-data/pdrs",
-          "url_path": ""
+          "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
         }
       ]
     }
