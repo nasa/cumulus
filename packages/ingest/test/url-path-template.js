@@ -11,6 +11,12 @@ const modisXmlFile = '../../packages/test-data/granules/MOD09GQ.A2016358.h13v04.
 // eslint-disable-next-line max-len
 const measuresXmlFile = '../../packages/test-data/granules/antarctica_ice_velocity_450m.nc..cmr.xml';
 
+/**
+* read and parse cmr metadata file into json object
+*
+* @param {string} xmlFile - file name of the cmr echo10 xml metadata
+* @returns {Promise<Object>} metadata object
+*/
 function getMetadata(xmlFile) {
   const xmlString = fs.readFileSync(xmlFile, 'utf8');
   return new Promise((resolve, reject) => {
@@ -36,6 +42,7 @@ test('test basic usage', (t) => {
 
 test('url path has metadata fields', async (t) => {
   const metadataObject = await getMetadata(modisXmlFile);
+  // eslint-disable-next-line max-len
   const urlPath = '{cmrMetadata.Granule.Collection.ShortName}.{cmrMetadata.Granule.Collection.VersionId}';
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, 'MOD09GQ.006');
