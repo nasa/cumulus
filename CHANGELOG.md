@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Deployment support to subscribe to an SNS topic that already exists
 - **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access. 
+- You can now deploy cumulus without ElasticSearch. Just add `es: null` to your config.yml file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operates.
 
 ## [v1.5.1] - 2018-04-23
 ### Fixed
