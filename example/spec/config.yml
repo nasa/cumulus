@@ -11,3 +11,12 @@ IngestGranule:
         - bucket: cumulus-test-sandbox-internal
           filename: s3://cumulus-test-sandbox-internal/file-staging/test-npm-integration/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met
           fileStagingDir: file-staging/test-npm-integration/MOD09GQ
+SyncGranule:
+  granules:
+    - files:
+      - bucket: cumulus-test-sandbox-internal
+        filename: s3://cumulus-test-sandbox-internal/custom-staging-dir/test-npm-integration/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf
+        fileStagingDir: custom-staging-dir/test-npm-integration/MOD09GQ
+      - bucket: cumulus-test-sandbox-internal
+        filename: s3://cumulus-test-sandbox-internal/custom-staging-dir/test-npm-integration/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met
+        fileStagingDir: custom-staging-dir/test-npm-integration/MOD09GQ

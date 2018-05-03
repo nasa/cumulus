@@ -428,6 +428,7 @@ SyncGranule:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
+        fileStagingDir: 'custom-staging-dir'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -450,6 +451,7 @@ SyncGranule:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
+        fileStagingDir: 'custom-staging-dir'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
