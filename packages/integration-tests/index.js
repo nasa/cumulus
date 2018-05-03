@@ -321,5 +321,6 @@ module.exports = {
   getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
   addCollections,
   addProviders,
-  addRules
+  addRules,
+  timeout
 };
