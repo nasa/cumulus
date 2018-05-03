@@ -1,5 +1,7 @@
 const fs = require('fs');
-const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { s3, s3ObjectExists } = require('@cumulus/common/aws');
+const { buildAndExecuteWorkflow, LambdaStep, conceptExists } =
+  require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile } = require('../helpers/testUtils');
 const config = loadConfig();
@@ -23,10 +25,11 @@ describe('The S3 Ingest Granules workflow', () => {
   beforeAll(async () => {
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload);
+      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+    );
   });
 
-  it('executes successfully', () => {
+  it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
@@ -48,15 +51,39 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('the PostToCmr Lambda', () => {
     let lambdaOutput;
+    let files;
+    const existCheck = [];
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      files = lambdaOutput.payload.granules[0].files;
+      existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
+      existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
+      existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });
+    });
+
+    afterAll(async () => {
+      await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].name }).promise();
+      await s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].name }).promise();
+      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].name }).promise();
     });
 
     it('has expected payload', () => {
       const granule = lambdaOutput.payload.granules[0];
       expect(granule.published).toBe(true);
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
+    });
+
+    it('moves files to the bucket folder based on metadata', () => {
+      const granule = lambdaOutput.payload.granules[0];
+      const result = conceptExists(granule.cmrLink);
+
+      expect(granule.published).toEqual(true);
+      expect(result).not.toEqual(false);
+
+      existCheck.forEach((check) => {
+        expect(check).toEqual(true);
+      });
     });
   });
 });
