@@ -113,7 +113,9 @@
         ]
       }
     ],
-    "workflow_name": "IngestGranule"
+    "workflow_name": "IngestGranule",
+    "sync_granule_duration": 120, 
+    "post_to_cmr_end": 1525357393007
   },
   "workflow_config": {
     "StopStatus": {},

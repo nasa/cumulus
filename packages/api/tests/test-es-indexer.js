@@ -31,13 +31,16 @@ test.before(async () => {
   // create buckets
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
 
-  sinon.stub(cmrjs, 'getMetadata').resolves({
+  const fakeMetadata = {
     time_start: '2017-10-24T00:00:00.000Z',
+    time_end: '2018-10-24T00:00:00.000Z',
     updated: '2018-04-25T21:45:45.524Z',
     dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
     data_center: 'CUMULUS',
     title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
-  });
+  };
+
+  sinon.stub(cmrjs, 'getMetadata').callsFake(() => fakeMetadata);
 });
 
 test.after.always(async () => {
@@ -68,12 +71,19 @@ test.serial('indexing a successful granule record', async (t) => {
     parent: collectionId
   });
 
+  console.log(`\n\n${JSON.stringify(record)}\n\n`);
+
   t.deepEqual(record._source.files, granule.files);
   t.is(record._source.status, 'completed');
   t.is(record._parent, collectionId);
   t.is(record._id, granule.granuleId);
   t.is(record._source.cmrLink, granule.cmrLink);
   t.is(record._source.published, granule.published);
+  t.is(record._source.productVolume, 17909733);
+  t.is(record._source.beginningDateTime, '2017-10-24T00:00:00.000Z');
+  t.is(record._source.endingDateTime, '2018-10-24T00:00:00.000Z');
+  t.is(record._source.timeToArchive, 120);
+  t.is(record._source.productionDateTime, 1525357393007);
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record._parent);
   t.is(deconstructed, collection.name);
@@ -111,7 +121,6 @@ test.serial('indexing multiple successful granule records', async (t) => {
     t.is(record._parent, collectionId);
     t.is(record._source.cmrLink, granule.cmrLink);
     t.is(record._source.published, granule.published);
-    t.is(record._source.productVolume, 17909733);
   });
 });
 

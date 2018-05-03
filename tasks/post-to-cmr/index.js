@@ -222,7 +222,15 @@ exports.postToCMR = postToCMR;
  * @returns {undefined} - does not return a value
  */
 function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(postToCMR, event, context, callback);
+  cumulusMessageAdapter.runCumulusTask(postToCMR, event, context, (err, data) => {
+    if (err) {
+      callback(err);
+    }
+    else {
+      const meta = Object.assign({}, data.meta, { post_to_cmr_end: Date.now() });
+      callback(null, Object.assign({}, data, { meta }));
+    }
+  });
 }
 exports.handler = handler;
 
