@@ -123,9 +123,9 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 /**
  * Delete an object from S3
  *
- * @param {string} bucket
- * @param {string} key
- * @returns {Promise}
+ * @param {string} bucket - bucket where the object exists
+ * @param {string} key - key of the object to be deleted
+ * @returns {Promise} - promise of the object being deleted
  */
 exports.deleteS3Object = (bucket, key) =>
   exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
