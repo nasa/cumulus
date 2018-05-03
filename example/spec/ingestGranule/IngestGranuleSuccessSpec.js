@@ -29,7 +29,7 @@ describe('The S3 Ingest Granules workflow', () => {
     );
   });
 
-  it('executes successfully', () => {
+  it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
@@ -74,7 +74,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
     });
 
-    it('files move to correct location', () => {
+    it('moves files to the bucket folder based on metadata', () => {
       const granule = lambdaOutput.payload.granules[0];
       const result = conceptExists(granule.cmrLink);
 

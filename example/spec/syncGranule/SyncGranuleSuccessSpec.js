@@ -30,7 +30,7 @@ describe('The Sync Granules workflow', () => {
     );
   });
 
-  it('executes successfully', () => {
+  it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
