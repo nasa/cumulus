@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Deployment support to subscribe to an SNS topic that already exists
 - **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access. 
+- **CUMULUS-533** Added fields to granule indexer to support EMS ingest and archive record creation
 
 ## [v1.5.1] - 2018-04-23
 ### Fixed
