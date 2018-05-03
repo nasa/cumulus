@@ -1,7 +1,7 @@
 {
     "granules": [
       {
-        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
         "files": [
           {
             "path": "cumulus-test-data/pdrs",
@@ -12,7 +12,8 @@
           {
             "path": "cumulus-test-data/pdrs",
             "fileSize": 44118,
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
           }
         ]
       }
