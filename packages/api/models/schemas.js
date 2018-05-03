@@ -183,6 +183,22 @@ module.exports.granule = {
     productVolume: {
       type: 'number',
       readonly: true
+    },
+    beginningDateTime: {
+      type: 'string',
+      readonly: true
+    },
+    endingDateTime: {
+      type: 'string',
+      readonly: true
+    },
+    timeToArchive: {
+      type: 'number',
+      readonly: true
+    },
+    productionDateTime: {
+      type: 'number',
+      readonly: true
     }
   },
   required: [

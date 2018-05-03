@@ -105,5 +105,15 @@ exports.syncGranule = function syncGranule(event) {
  * @returns {undefined} - does not return a value
  */
 exports.handler = function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, callback);
+  const startTime = Date.now();
+
+  cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, (err, data) => {
+    if (err) {
+      callback(err);
+    }
+    else {
+      const meta = Object.assign({}, data.meta, { sync_granule_duration: Date.now() - startTime });
+      callback(null, Object.assign({}, data, { meta }));
+    }
+  });
 };
