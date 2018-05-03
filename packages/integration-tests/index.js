@@ -8,6 +8,7 @@ const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
 const { Provider, Collection } = require('@cumulus/api/models');
+const cmr = require('./cmr.js');
 
 const executionStatusNumRetries = 100;
 const waitPeriodMs = 5000;
@@ -303,5 +304,8 @@ module.exports = {
    */
   getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
   addCollections,
-  addProviders
+  addProviders,
+  conceptExists: cmr.conceptExists,
+  getOnlineResources: cmr.getOnlineResources,
+  generateCmrFilesForGranules: cmr.generateCmrFilesForGranules
 };
