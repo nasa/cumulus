@@ -76,7 +76,7 @@ test('download Granule from FTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
@@ -113,7 +113,7 @@ test('download Granule from HTTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -152,7 +152,7 @@ test('download Granule from SFTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -198,7 +198,7 @@ test('download granule from S3 provider', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}` // eslint-disable-line max-len
@@ -239,7 +239,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -280,7 +280,7 @@ test('validate file properties', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 2);
     const config = t.context.event.config;
-    const keypath = `${config.stack}/${config.collection.name}/file-staging`;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`

@@ -27,6 +27,7 @@
     "@cumulus/discover-granules": "^1.5.1",
     "@cumulus/discover-pdrs": "^1.5.1",
     "@cumulus/hello-world": "^1.5.1",
+    "@cumulus/ingest": "^1.5.1",
     "@cumulus/integration-tests": "^1.5.1",
     "@cumulus/parse-pdr": "^1.5.1",
     "@cumulus/pdr-status-check": "^1.5.1",
@@ -35,7 +36,7 @@
     "@cumulus/queue-pdrs": "^1.5.1",
     "@cumulus/sf-sns-report": "^1.5.1",
     "@cumulus/sync-granule": "^1.5.1",
-    "aws-sdk": "^2.227.1"
+    "aws-sdk": "^2.229.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
@@ -44,7 +45,7 @@
     "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.11.0",
     "kes": "^2.1.2",
-    "lodash": "^4.17.5",
+    "lodash": "^4.17.10",
     "node-forge": "^0.7.5"
   }
 }
