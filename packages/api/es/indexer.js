@@ -21,10 +21,10 @@ const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
 const cmrjs = require('@cumulus/cmrjs');
 const {
-  getExecutionArn, 
-  getExecutionUrl, 
-  invoke, 
-  StepFunction,  
+  getExecutionArn,
+  getExecutionUrl,
+  invoke,
+  StepFunction
 } = require('@cumulus/ingest/aws');
 
 /**
@@ -346,7 +346,7 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
 /**
  * Calculate granule product volume, which is the sum of the file
  * sizes in bytes
- * 
+ *
  * @param {Array<Object>} granuleFiles - array of granule files
  * @returns {Integer} - sum of granule file sizes in bytes
  */
@@ -400,9 +400,8 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
     await indexCollection(esClient, collection);
   }
 
-  const done = granules.map((g) => {
+  const done = granules.map(async (g) => {
     if (g.granuleId) {
-      const metadata = cmrjs.getMetadata(g.cmrLink);
       const doc = {
         granuleId: g.granuleId,
         pdrName: get(payload, 'meta.pdr.name'),
@@ -416,12 +415,18 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
         createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
         timestamp: Date.now(),
         productVolume: getGranuleProductVolume(g.files),
-        beginningDateTime: metadata.time_start,
-        endingDateTime: metadata.time_end
+        timeToArchive: get(payload, 'meta.sync_granule_duration'),
+        productionDateTime: get(payload, 'meta.post_to_cmr_end')
       };
 
       doc.published = get(g, 'published', false);
       doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+      if (g.cmrLink) {
+        const metadata = await cmrjs.getMetadata(g.cmrLink);
+        doc.beginningDateTime = metadata.time_start;
+        doc.endingDateTime = metadata.time_end;
+      }
 
       return esClient.update({
         index,
