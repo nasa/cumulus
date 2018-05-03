@@ -71,8 +71,6 @@ test.serial('indexing a successful granule record', async (t) => {
     parent: collectionId
   });
 
-  console.log(`\n\n${JSON.stringify(record)}\n\n`);
-
   t.deepEqual(record._source.files, granule.files);
   t.is(record._source.status, 'completed');
   t.is(record._parent, collectionId);

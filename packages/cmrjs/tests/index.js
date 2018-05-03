@@ -40,22 +40,20 @@ const stubclient = {
     error.response = gotResponses[statusCode];
     return Promise.reject(error);
   },
-  getCmrData: () => {
-    return {
-      statusCode, 
-      body: JSON.stringify({ 
-        feed: {
-          entry: {
-            time_start: '2017-10-24T00:00:00.000Z',
-            updated: '2018-04-25T21:45:45.524Z',
-            dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
-            data_center: 'CUMULUS',
-            title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
-          }
-        }
-      })
-    };
-  }
+  getCmrData: () => ({
+    statusCode,
+    body: JSON.stringify({
+      feed: {
+        entry: [{
+          time_start: '2017-10-24T00:00:00.000Z',
+          updated: '2018-04-25T21:45:45.524Z',
+          dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
+          data_center: 'CUMULUS',
+          title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
+        }]
+      }
+    })
+  })
 };
 
 test('deleteConcept returns expected result when granule is in CMR', async (t) => {
