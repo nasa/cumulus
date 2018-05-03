@@ -102,7 +102,7 @@ test('get CMR metadata, success', async (t) => {
       t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
     });
 
-    stub.restore();
+  stub.restore();
 });
 
 test('get CMR metadata, fail', async (t) => {
@@ -112,7 +112,7 @@ test('get CMR metadata, fail', async (t) => {
   await getMetadata('fakeLink')
     .then((response) => {
       t.is(response, null);
-    })
+    });
 
   stub.restore();
 });
