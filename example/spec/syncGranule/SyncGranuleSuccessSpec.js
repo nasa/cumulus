@@ -55,21 +55,22 @@ describe('The Sync Granules workflow', () => {
       await s3().deleteObject({ Bucket: files[1].bucket, Key: key2 }).promise();
     });
 
-    it('has expected payload', () => {
+    it('receives payload with file objects updated to include file staging location', () => {
       expect(lambdaOutput.payload).toEqual(expectedPayload);
     });
 
-    it('has expected updated meta', () => {
+    // eslint-disable-next-line max-len
+    it('receives meta.input_granules with files objects updated to include file staging location', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
     });
 
-    it('files receive custom staging directory', () => {
+    it('receives files with custom staging directory', () => {
       files.forEach((file) => {
         expect(file.fileStagingDir).toMatch('custom-staging-dir\/.*');
       });
     });
 
-    it('files exist in staging location', () => {
+    it('adds files to staging location', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
       });
