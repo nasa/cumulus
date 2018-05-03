@@ -7,7 +7,8 @@
   },
   "scripts": {
     "test": "ava",
-    "test-coverage": "nyc ava"
+    "test-coverage": "nyc ava",
+    "build": "echo 'do nothing'"
   },
   "publishConfig": {
     "access": "public"
@@ -40,6 +41,7 @@
     "checksum": "^0.1.1",
     "cksum": "^1.3.0",
     "depd": "^1.1.2",
+    "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
     "got": "^7.1.0",
     "jsftp": "^2.0.0",
