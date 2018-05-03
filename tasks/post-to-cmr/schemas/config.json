@@ -7,16 +7,30 @@
     "stack",
     "cmr",
     "input_granules",
-    "collection"
+    "collection",
+    "buckets"
   ],
   "properties": {
     "input_granules": {
-      "type": "object",
-      "description": "granules object used to construct output for cumulus indexer"
+      "type": "array",
+      "description": "granules object used to construct output for cumulus indexer",
+      "items": {
+        "type": "object"
+      }
     },
     "bucket": {
       "type": "string",
       "description": "the bucket the has the private/public key needed for decrypting cmr password"
+    },
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "properties": {
+        "internal": { "type": "string" },
+        "private": { "type": "string" },
+        "protected": { "type": "string" },
+        "public": { "type": "string" }
+      }
     },
     "stack": {
       "type": "string",

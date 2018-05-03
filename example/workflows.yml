@@ -294,6 +294,7 @@ IngestGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -315,6 +316,7 @@ IngestGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -336,23 +338,14 @@ IngestGranule:
       Choices:
         - Variable: $.cumulus_meta.process
           StringEquals: modis
-          Next: ModisProcess
+          Next: ProcessingStep
       Default: StopStatus
-    ModisProcess:
+    ProcessingStep:
       CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        distribution_endpoint: '{$.meta.distribution_endpoint}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-        files_config: '{$.meta.collection.files}'
-        url_path: '{$.meta.collection.url_path}'
-        input_keys: '{$.meta.collection.process_keys}'
-        cumulus_message:
-          input: '[$.payload.granules[*].files[*].filename]'
-          outputs:
-            - source: '{$}'
-              destination: '{$.payload}'
+        bucket: '{$.meta.buckets.internal}'
+        collection: '{$.meta.collection}'
       Type: Task
-      Resource: ${ModisProcessingLambdaFunction.Arn}
+      Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -371,6 +364,8 @@ IngestGranule:
         cmr: '{$.meta.cmr}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
         cumulus_message:
           input: '{$.payload}'
           outputs:
@@ -403,6 +398,93 @@ IngestGranule:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
+
+SyncGranule:
+  Comment: 'Sync Granule'
+  StartAt: Report
+  States:
+    Report:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: VpcOrNot 
+    VpcOrNot:
+        Type: Choice
+        Choices:
+          - Variable: $.meta.provider.protocol
+            StringEquals: http
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: https
+            Next: SyncGranule
+          - Variable: $.meta.provider.protocol
+            StringEquals: s3 
+            Next: SyncGranuleNoVpc
+    SyncGranule:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus 
+    SyncGranuleNoVpc:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
+      Type: Task
+      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed' 
 
 EcsHelloWorldWorkflow:
   Comment: 'Returns Hello World'
@@ -447,4 +529,3 @@ EcsHelloWorldWorkflow:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
-
