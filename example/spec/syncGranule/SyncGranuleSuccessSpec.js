@@ -11,7 +11,7 @@ const taskName = 'SyncGranule';
 const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json'; // eslint-disable-line max-len
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
-  config: config.IngestGranule.SyncGranuleOutput
+  config: config.SyncGranule
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
@@ -61,6 +61,13 @@ describe('The Sync Granules workflow', () => {
 
     it('has expected updated meta', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
+    });
+
+    it('files receive custom staging directory', () => {
+      files.forEach((file) => {
+        expect(file.fileStagingDir).to.include('custom-staging-dir');
+        expect(file.fileStagingDir).to.not.include('file-staging');
+      });
     });
 
     it('files exist in staging location', () => {
