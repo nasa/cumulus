@@ -65,8 +65,7 @@ describe('The Sync Granules workflow', () => {
 
     it('files receive custom staging directory', () => {
       files.forEach((file) => {
-        expect(file.fileStagingDir).to.include('custom-staging-dir');
-        expect(file.fileStagingDir).to.not.include('file-staging');
+        expect(file.fileStagingDir).toMatch('custom-staging-dir\/.*');
       });
     });
 
