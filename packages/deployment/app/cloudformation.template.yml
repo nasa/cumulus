@@ -30,7 +30,7 @@ Resources:
           Fn::GetAtt:
             - CumulusCustomResource
             - CmrPassword 
-      {{#if es.name}}
+      {{#if ../es.name}}
         ElasticSearchDomain:
           Fn::GetAtt:
             - {{../es.name}}Domain
