@@ -2,6 +2,7 @@
 
 'use strict';
 
+const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
@@ -181,7 +182,8 @@ function setProcessEnvironment(stackName, bucketName) {
 const concurrencyLimit = process.env.CONCURRENCY || 3;
 const limit = pLimit(concurrencyLimit);
 
-async function readSeedFiles(stackName, bucketName, dataDirectory) {
+async function readSeedFiles(config, dataDirectory) {
+  const { stackName, bucketName } = config;
   setProcessEnvironment(stackName, bucketName);
   const filenames = await fs.readdir(dataDirectory);
   const seedItems = [];
@@ -200,8 +202,8 @@ async function readSeedFiles(stackName, bucketName, dataDirectory) {
  * @param {string} dataDirectory - the directory of collection json files
  * @returns {Promise.<integer>} number of collections added
  */
-async function addCollections(stackName, bucketName, dataDirectory) {
-  const collections = await readSeedFiles(stackName, bucketName, dataDirectory);
+async function addCollections(config, dataDirectory) {
+  const collections = await readSeedFiles(config, dataDirectory);
   const promises = collections.map((collection) => limit(() => {  
     const c = new Collection();
     console.log(`adding collection ${collection.name}___${collection.version}`);
@@ -219,8 +221,8 @@ async function addCollections(stackName, bucketName, dataDirectory) {
  * @param {string} dataDirectory - the directory of provider json files
  * @returns {Promise.<integer>} number of providers added
  */
-async function addProviders(stackName, bucketName, dataDirectory) {
-  const providers = await readSeedFiles(stackName, bucketName, dataDirectory);
+async function addProviders(config, dataDirectory) {
+  const providers = await readSeedFiles(config, dataDirectory);
 
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
@@ -238,13 +240,15 @@ async function addProviders(stackName, bucketName, dataDirectory) {
  * @param {string} dataDirectory - the directory of rules json files
  * @returns {Promise.<integer>} number of rules added
  */
-async function addRules(stackName, bucketName, dataDirectory) {
-  const rules = await readSeedFiles(stackName, bucketName, dataDirectory);
+async function addRules(config, dataDirectory) {
+  const rules = await readSeedFiles(config, dataDirectory);
 
   const promises = rules.map((rule) => limit(() => {
+    const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
+    const templatedRule = JSON.parse(ruleTemplate(config));
     const r = new Rule();
-    console.log(`adding rule ${rule.name}`);
-    return r.create(rule);
+    console.log(`adding rule ${templatedRule.name}`);
+    return r.create(templatedRule);
   }));
   return Promise.all(promises).then((rs) => rs.length);
 }
