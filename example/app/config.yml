@@ -1,8 +1,8 @@
 
 default:
-  prefix: jl-test 
+  prefix: change-me 
   stackName: '{{prefix}}-integration'
-  stackNameNoDash: JlTestIntegration 
+  # stackNameNoDash: TestCumulusIntegration
   shared_data_bucket: cumulus-data-shared
   params:
     - name: CmrPassword
@@ -107,3 +107,4 @@ cumulus-from-npm:
 cumulus-from-source:
   prefix: test-src # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
+
