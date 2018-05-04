@@ -415,8 +415,7 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
         createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
         timestamp: Date.now(),
         productVolume: getGranuleProductVolume(g.files),
-        timeToArchive: get(payload, 'meta.sync_granule_duration'),
-        productionDateTime: get(payload, 'meta.post_to_cmr_end')
+        timeToArchive: get(payload, 'meta.sync_granule_duration')
       };
 
       doc.published = get(g, 'published', false);
@@ -426,6 +425,11 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
         const metadata = await cmrjs.getMetadata(g.cmrLink);
         doc.beginningDateTime = metadata.time_start;
         doc.endingDateTime = metadata.time_end;
+
+        const fullMetadata = await cmrjs.getFullMetadata(g.cmrLink);
+        if (fullMetadata && fullMetadata.DataGranule) {
+          doc.productionDateTime = fullMetadata.DataGranule.ProductionDateTime;
+        }
       }
 
       return esClient.update({
