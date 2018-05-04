@@ -182,8 +182,7 @@ function setProcessEnvironment(stackName, bucketName) {
 const concurrencyLimit = process.env.CONCURRENCY || 3;
 const limit = pLimit(concurrencyLimit);
 
-async function readSeedFiles(config, dataDirectory) {
-  const { stackName, bucketName } = config;
+async function readSeedFiles(stackName, bucketName, dataDirectory) {
   setProcessEnvironment(stackName, bucketName);
   const filenames = await fs.readdir(dataDirectory);
   const seedItems = [];
@@ -202,8 +201,8 @@ async function readSeedFiles(config, dataDirectory) {
  * @param {string} dataDirectory - the directory of collection json files
  * @returns {Promise.<integer>} number of collections added
  */
-async function addCollections(config, dataDirectory) {
-  const collections = await readSeedFiles(config, dataDirectory);
+async function addCollections(stackName, bucketName, dataDirectory) {
+  const collections = await readSeedFiles(stackName, bucketName, dataDirectory);
   const promises = collections.map((collection) => limit(() => {  
     const c = new Collection();
     console.log(`adding collection ${collection.name}___${collection.version}`);
@@ -221,8 +220,8 @@ async function addCollections(config, dataDirectory) {
  * @param {string} dataDirectory - the directory of provider json files
  * @returns {Promise.<integer>} number of providers added
  */
-async function addProviders(config, dataDirectory) {
-  const providers = await readSeedFiles(config, dataDirectory);
+async function addProviders(stackName, bucketName, dataDirectory) {
+  const providers = await readSeedFiles(stackName, bucketName, dataDirectory);
 
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
@@ -241,7 +240,8 @@ async function addProviders(config, dataDirectory) {
  * @returns {Promise.<integer>} number of rules added
  */
 async function addRules(config, dataDirectory) {
-  const rules = await readSeedFiles(config, dataDirectory);
+  const { stackName, bucketName } = config;
+  const rules = await readSeedFiles(stackName, bucketName, dataDirectory);
 
   const promises = rules.map((rule) => limit(() => {
     const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
