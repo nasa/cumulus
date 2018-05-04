@@ -182,6 +182,14 @@ function setProcessEnvironment(stackName, bucketName) {
 const concurrencyLimit = process.env.CONCURRENCY || 3;
 const limit = pLimit(concurrencyLimit);
 
+/**
+ * Set environment variables and read in seed files from dataDirectory
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of collection json files
+ * @return {Array} List of objects to seed in the database
+ */
 async function setupSeedData(stackName, bucketName, dataDirectory) {
   setProcessEnvironment(stackName, bucketName);
   const filenames = await fs.readdir(dataDirectory);
