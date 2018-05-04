@@ -176,7 +176,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
-  process.env.RulesTable = `${stackName}-RulesTable`;  
+  process.env.RulesTable = `${stackName}-RulesTable`;
 }
 
 const concurrencyLimit = process.env.CONCURRENCY || 3;
@@ -203,7 +203,7 @@ async function setupSeedData(stackName, bucketName, dataDirectory) {
  */
 async function addCollections(stackName, bucketName, dataDirectory) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
-  const promises = collections.map((collection) => limit(() => {  
+  const promises = collections.map((collection) => limit(() => {
     const c = new Collection();
     console.log(`adding collection ${collection.name}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
