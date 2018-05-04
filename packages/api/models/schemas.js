@@ -197,7 +197,7 @@ module.exports.granule = {
       readonly: true
     },
     productionDateTime: {
-      type: 'number',
+      type: 'string',
       readonly: true
     }
   },
