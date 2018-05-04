@@ -41,6 +41,15 @@ test.before(async () => {
   };
 
   sinon.stub(cmrjs, 'getMetadata').callsFake(() => fakeMetadata);
+
+  const fakeXmlMetadata = {
+    GranuleUR: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+    DataGranule: {
+      ProductionDateTime: '2018-04-25T21:45:45.524Z'
+    }
+  };
+
+  sinon.stub(cmrjs, 'getFullMetadata').callsFake(() => fakeXmlMetadata);
 });
 
 test.after.always(async () => {
@@ -50,6 +59,7 @@ test.after.always(async () => {
   ]);
 
   cmrjs.getMetadata.restore();
+  cmrjs.getFullMetadata.restore();
 });
 
 test.serial('indexing a successful granule record', async (t) => {
@@ -81,7 +91,7 @@ test.serial('indexing a successful granule record', async (t) => {
   t.is(record._source.beginningDateTime, '2017-10-24T00:00:00.000Z');
   t.is(record._source.endingDateTime, '2018-10-24T00:00:00.000Z');
   t.is(record._source.timeToArchive, 120);
-  t.is(record._source.productionDateTime, 1525357393007);
+  t.is(record._source.productionDateTime, '2018-04-25T21:45:45.524Z');
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record._parent);
   t.is(deconstructed, collection.name);
