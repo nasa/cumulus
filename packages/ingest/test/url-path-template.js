@@ -15,7 +15,7 @@ const modisXmlFile = path.join(
 const measuresXmlFile = path.join(
   __dirname,
   '..',
-  'node_modules/@cumulus/test-data/granules/antarctica_ice_velocity_450m.nc..cmr.xml'
+  'node_modules/@cumulus/test-data/granules/antarctica_ice_velocity_450m.nc.cmr.xml'
 );
 
 /**
