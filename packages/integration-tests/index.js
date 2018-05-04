@@ -326,5 +326,6 @@ module.exports = {
   addCollections,
   addProviders,
   addRules,
-  timeout
+  timeout,
+  getWorkflowArn
 };
