@@ -281,7 +281,8 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
 
     cmrFile.metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL = urls;
     const builder = new xml2js.Builder();
-    const xml = builder.buildObject(cmrFile);
+    const xml = builder.buildObject(cmrFile.metadataObject);
+    cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
     await promiseS3Upload(
       { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
