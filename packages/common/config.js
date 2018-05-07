@@ -5,8 +5,9 @@ const log = require('./log');
 
 /**
  * Builds a YAML schema for resolving GitcResource directives
+ *
  * @param {function} resourceResolver - A function to use to resolve GitcResource directives
- * @return - The schema
+ * @returns - The schema
  */
 const buildSchema = (resourceResolver) => {
   const resourceType = new yaml.Type('!GitcResource', {
@@ -20,6 +21,7 @@ const buildSchema = (resourceResolver) => {
  * Given a resource object as returned by CloudFormation::DescribeStackResources, returns
  * the resource's ARN. Often this is the PhysicalResourceId property, but for Lambdas,
  * need to glean information and attempt to construct an ARN.
+ *
  * @param {StackResource} resource - The resource as returned by cloudformation
  * @returns {string} The ARN of the resource
  */
@@ -49,7 +51,8 @@ const resourceToArn = (resource) => {
  * and prefix to resolve that logical resource id as an AWS resource.  Lookups support one
  * property, '.Arn', e.g. MyLambdaFunction.Arn. If specified, the resolver will attempt
  * to return the ARN of the specified resource, otherwise it will return the PhysicalResourceId
- * @param {object} cfResourcesById - A mapping of logical ids to CloudFormation resources as
+ *
+ * @param {Object} cfResourcesById - A mapping of logical ids to CloudFormation resources as
  *                                   returned by CloudFormation::DescribeStackResources
  * @param {string} prefix - A prefix to prepend to the given name if no resource matches the name.
  *                 This is a hack to allow us to prefix state machines with the stack name for IAM
@@ -69,10 +72,11 @@ exports.resolveResource = (cfResourcesById, prefix) =>
 
 /**
  * Parses the given YAML collection string with the given resource resolver
+ *
  * @param {string} collectionsStr - The YAML string to parse
  * @param {function} resourceResolver - A function of string -> string used to resolve
  *                                      logical resources into stack-specific URI/ARNs
- * @return - The object created by parsing the yaml
+ * @returns {Object} - The object created by parsing the yaml
  */
 exports.parseConfig = (collectionsStr, resourceResolver) =>
   yaml.safeLoad(collectionsStr, { schema: buildSchema(resourceResolver) });
