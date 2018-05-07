@@ -50,6 +50,8 @@ default:
   activities:
     - name: EcsTaskHelloWorld
 
+  systemBucket: cumulus-test-sandbox-internal
+
   buckets:
     internal: cumulus-test-sandbox-internal
     private: cumulus-test-sandbox-private
@@ -107,3 +109,17 @@ cumulus-from-npm:
 cumulus-from-source:
   prefix: test-src # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
+
+lf:
+  stackName: lf-cumulus
+  stackNameNoDash: lfCumulus
+
+  es: 
+    elasticSearchMapping: 7
+
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
