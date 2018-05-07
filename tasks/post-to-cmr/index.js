@@ -140,7 +140,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     filename: cmrFile.filename,
     conceptId,
     link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
-          `?concept_id=${res.result['concept-id']}`
+      `?concept_id=${res.result['concept-id']}`
   };
 }
 
@@ -241,13 +241,13 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
         const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
         if (match) {
           if (!file.url_path) {
-            file.url_path = collection.url_path || '';
+            file.url_path = fileConfig.url_path || collection.url_path || '';
           }
 
           const urlPath = urlPathTemplate(file.url_path, {
             file: file,
             granule: granulesObject[granuleId],
-            cmrMetadata: cmrFile.metadataObject
+            cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
           });
           file.bucket = buckets[fileConfig.bucket];
           file.filepath = path.join(urlPath, file.name);
@@ -281,7 +281,8 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
 
     cmrFile.metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL = urls;
     const builder = new xml2js.Builder();
-    const xml = builder.buildObject(cmrFile);
+    const xml = builder.buildObject(cmrFile.metadataObject);
+    cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
     await promiseS3Upload(
       { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
@@ -348,11 +349,10 @@ async function postToCMR(event) {
   // create granules object for cumulus indexer
   let allGranules = getAllGranules(input, inputGranules, regex);
 
+  // update granules object with final locations of files as `filename`
+  allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
   // allows us to disable moving the files
   if (moveStagedFiles) {
-    // update granules object with final locations of files as `filename`
-    allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
-
     // move files from staging location to final location
     await moveGranuleFiles(allGranules, bucket);
 
