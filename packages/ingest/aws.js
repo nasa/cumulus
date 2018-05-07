@@ -592,7 +592,6 @@ class StepFunction {
    * The event must have the following properties:
    * - resources.stack
    * - ingest_meta.execution_name
-   * - resources.buckets.internal
    *
    * @param {Object} event - an event to be pushed to S3
    * @returns {Promise.<Object>} - a Promise that resoles to an Object with an
@@ -606,7 +605,7 @@ class StepFunction {
     const stack = event.meta.stack;
     const name = event.cumulus_meta.execution_name;
     const key = `${stack}/payloads/${name}.json`;
-    const bucket = event.meta.buckets.internal;
+    const bucket = event.cumulus_meta.system_bucket;
 
     return aws.s3().putObject({
       Bucket: bucket,
