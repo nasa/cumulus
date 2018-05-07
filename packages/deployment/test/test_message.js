@@ -93,5 +93,5 @@ test('generate a template', (t) => {
 
 test('generate template for a step function', async (t) => {
   const promise = generateTemplates(exampleConfig, [], () => {});
-  await t.notThrows(promise); 
+  await t.notThrows(promise);
 });
