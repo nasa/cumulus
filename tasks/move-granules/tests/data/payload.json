@@ -1,0 +1,95 @@
+{
+  "config": {
+    "bucket": "cumulus-internal",
+    "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
+    "input_granules": [
+      {
+        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+        "files": [
+          {
+            "checksumType": "CKSUM",
+            "bucket": "cumulus-protected",
+            "checksumValue": 1690464450,
+            "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "fileSize": 6703247,
+            "path": "/TEST_B/Cumulus/MODIS/DATA",
+            "fileStagingDir": "file-staging",
+            "url_path": "",
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+          },
+          {
+            "checksumType": "CKSUM",
+            "bucket": "cumulus-private",
+            "checksumValue": 2689375276,
+            "filename": "s3://cumulus-private/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
+            "fileSize": 20659,
+            "path": "/TEST_B/Cumulus/MODIS/DATA",
+            "fileStagingDir": "file-staging",
+            "url_path": "",
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met"
+          },
+          {
+            "checksumType": "CKSUM",
+            "bucket": "cumulus-private",
+            "checksumValue": 4026661056,
+            "filename": "s3://cumulus-private/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "fileSize": 59849,
+            "path": "/TEST_B/Cumulus/MODIS/DATA",
+            "fileStagingDir": "file-staging",
+            "url_path": "",
+            "name": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+          }
+        ]
+      }
+    ],
+    "collection": {
+      "files": [
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": "cumulus-protected"
+        },
+        {
+          "regex": "^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": "cumulus-private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
+          "bucket": "cumulus-private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.meta\\.xml$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.meta.xml",
+          "bucket": "cumulus-protected"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "bucket": "cumulus-public"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "bucket": "cumulus-public",
+          "url_path": "jpg/example/"
+        }
+      ],
+      "url_path": "example/",
+      "name": "MOD11A1",
+      "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "dataType": "MOD11A1",
+      "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
+      "process": "modis",
+      "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
+      "version": "006",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      "id": "MOD11A1"
+    }
+  },
+  "input": [
+    "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+    "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
+  ]
+}
