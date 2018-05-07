@@ -40,8 +40,10 @@ function parsePdr(event) {
       // opportunity to filter the granules of interest based on regex in granuleIdExtraction
       if (config.collection && config.collection.granuleIdExtraction) {
         const granuleIdExtraction = config.collection.granuleIdExtraction;
+        const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction));
         const filteredPayload = {
-          granules: payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction))
+          granules: granules,
+          granulesCount: granules.length
         };
         return Object.assign({}, event.input, filteredPayload);
       }
