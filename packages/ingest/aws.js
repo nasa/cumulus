@@ -43,8 +43,8 @@ function getEndpoint(local = false, port = 8000) {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} stateMachineArn state machine ARN
- * @param {string} executionName state machine's execution name
+ * @param {string} stateMachineArn -  state machine ARN
+ * @param {string} executionName - state machine's execution name
  * @returns {string} Step Function Execution Arn
  */
 function getExecutionArn(stateMachineArn, executionName) {
@@ -58,7 +58,7 @@ function getExecutionArn(stateMachineArn, executionName) {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} executionArn execution ARN
+ * @param {string} executionArn - execution ARN
  * @returns {string} return aws console url for the execution
  */
 function getExecutionUrl(executionArn) {
@@ -384,12 +384,10 @@ class ECS {
     };
     return this.ecs.describeContainerInstances(params).promise();
   }
-
 }
 
 
 class CloudWatch {
-
   static cw() {
     return new AWS.CloudWatch();
   }
@@ -406,8 +404,9 @@ class CloudWatch {
    *    bucket: 'cumulus-internal'
    * }
    * ```
-   * @param {string} bucketName Name of the bucket to get the size
-   * @returns {object} Retuns total storage for a given bucket
+   *
+   * @param {string} bucketName - Name of the bucket to get the size
+   * @returns {Object} Retuns total storage for a given bucket
    */
   static async bucketSize(bucketName) {
     AWS.config.update({ region: process.env.AWS_DEFAULT_REGION });
@@ -447,7 +446,6 @@ class CloudWatch {
     sorted[0].bucket = bucketName;
     return sorted[0];
   }
-
 }
 
 const KMSDecryptionFailed = errors.createErrorType('KMSDecryptionFailed');
@@ -492,6 +490,8 @@ class StepFunction {
 
     const granuleKey = `${stack}/granules_ingested/${granuleId}`;
 
+    // BUCKET/KEY TODO: figure out where this gets called and have config
+    // pass in a system bucket
     return {
       bucket: buckets.internal,
       key: granuleKey
