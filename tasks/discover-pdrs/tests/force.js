@@ -71,8 +71,6 @@ test('test pdr discovery with force=false', async (t) => {
     else t.fail(err);
   }
   finally {
-    execSync(`rm -Rf ${tmpDir}`);
-
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
 });
@@ -128,8 +126,6 @@ test('test pdr discovery with force=true', async (t) => {
     else t.fail(err);
   }
   finally {
-    execSync(`rm -Rf ${tmpDir}`);
-
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
 });
