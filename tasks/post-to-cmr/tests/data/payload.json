@@ -6,6 +6,7 @@
       "username": "xxxxxx",
       "password": "xxxxx"
     },
+    "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\..*)",
     "bucket": "cumulus-internal",
     "stack": "myStack"
   },
@@ -46,10 +47,21 @@
             "fileStagingDir": "file-staging",
             "url_path": "",
             "name": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf"
+          },
+          {
+            "checksumType": "CKSUM",
+            "bucket": "cumulus-public",
+            "checksumValue": 4026661056,
+            "filename": "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }
         ]
       }
     },
-    "cmrFiles": []
+    "inputFiles": [
+      "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+      "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+      "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
+    ]
   }
 }
