@@ -646,6 +646,7 @@ Resources:
         - Key: Name
           Value: "{{stackName}}"
       VpcId: {{vpc.vpcId}}
+
   {{#if ecs.ssh}}
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
@@ -695,7 +696,7 @@ Resources:
                   - Example: value
                 {{/if}}
           
-          {{#if ecs.efs.mount}}
+          {{# if ecs.efs.mount }}
           packages:
             yum:
               nfs-utils: [] 
