@@ -19,21 +19,6 @@ Parameters:
   AlphaNumPrefix:
     Type: String
     Default: "TemplateCumulus"
-  InternalBucketName:
-    Type: String
-    Default: "cumulus-internal"
-  PrivateBucketName:
-    Type: String
-    Default: "cumulus-private"
-  ProtectedBucketName:
-    Type: String
-    Default: "cumulus-protected"
-  PublicBucketName:
-    Type: String
-    Default: "cumulus-public"
-  SharedBucketName:
-    Type: String
-    Default: "cumulus-data-shared"
 Resources:
   LambdaApiGatewayRole:
     Type: AWS::IAM::Role
@@ -104,8 +89,9 @@ Resources:
                   - s3:PutBucket*
                   - s3:ListBucket*
                 Resource:
-                  - !Sub "arn:aws:s3:::${InternalBucketName}"
-                  - !Sub "arn:aws:s3:::${ProtectedBucketName}"
+                  {{#each buckets2}}
+                    - arn:aws:s3:::{{name}}
+                  {{/each}}
 
               - Effect: Allow
                 Action:
@@ -115,8 +101,9 @@ Resources:
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
                 Resource: 
-                  - !Sub "arn:aws:s3:::${InternalBucketName}/*"
-                  - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
+                  {{#each buckets2}}
+                    - arn:aws:s3:::{{name}}/*
+                  {{/each}}
 
               - Effect: Allow
                 Action:
@@ -201,11 +188,9 @@ Resources:
                   - s3:PutBucket*
                   - s3:ListBucket*
                 Resource:
-                  - !Sub "arn:aws:s3:::${InternalBucketName}"
-                  - !Sub "arn:aws:s3:::${PrivateBucketName}"
-                  - !Sub "arn:aws:s3:::${ProtectedBucketName}"
-                  - !Sub "arn:aws:s3:::${PublicBucketName}"
-                  - !Sub "arn:aws:s3:::${SharedBucketName}"
+                  {{#each buckets2}}
+                    - arn:aws:s3:::{{name}}
+                  {{/each}}
 
               - Effect: Allow
                 Action:
@@ -216,11 +201,9 @@ Resources:
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
                 Resource: 
-                  - !Sub "arn:aws:s3:::${InternalBucketName}/*"
-                  - !Sub "arn:aws:s3:::${PrivateBucketName}/*"
-                  - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
-                  - !Sub "arn:aws:s3:::${PublicBucketName}/*"
-                  - !Sub "arn:aws:s3:::${SharedBucketName}/*"
+                  {{#each buckets2}}
+                    - arn:aws:s3:::{{name}}/*
+                  {{/each}}
 
               - Effect: Allow
                 Action:
@@ -404,11 +387,9 @@ Resources:
                   - s3:PutBucket*
                   - s3:ListBucket*
                 Resource:
-                  - !Sub "arn:aws:s3:::${InternalBucketName}"
-                  - !Sub "arn:aws:s3:::${PrivateBucketName}"
-                  - !Sub "arn:aws:s3:::${ProtectedBucketName}"
-                  - !Sub "arn:aws:s3:::${PublicBucketName}"
-                  - !Sub "arn:aws:s3:::${SharedBucketName}"
+                  {{#each buckets2}}
+                    - arn:aws:s3:::{{name}}
+                  {{/each}}
 
               - Effect: Allow
                 Action:
@@ -419,11 +400,9 @@ Resources:
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
                 Resource: 
-                  - !Sub "arn:aws:s3:::${InternalBucketName}/*"
-                  - !Sub "arn:aws:s3:::${PrivateBucketName}/*"
-                  - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
-                  - !Sub "arn:aws:s3:::${PublicBucketName}/*"
-                  - !Sub "arn:aws:s3:::${SharedBucketName}/*"
+                  {{#each buckets2}}
+                    - arn:aws:s3:::{{name}}/*
+                  {{/each}}
 
               - Effect: Allow
                 Action:
