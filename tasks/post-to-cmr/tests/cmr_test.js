@@ -4,7 +4,6 @@ const fs = require('fs');
 const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
-const testUtils = require('@cumulus/common/test-utils');
 
 const cmrjs = require('@cumulus/cmrjs');
 const payload = require('./data/payload.json');
@@ -24,7 +23,7 @@ async function deleteBucket(bucket) {
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = testUtils.randomString(); // eslint-disable-line no-param-reassign
+  t.context.bucket = 'cumulus-public'; // eslint-disable-line no-param-reassign
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
@@ -36,8 +35,7 @@ test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
   const newPayload = JSON.parse(JSON.stringify(payload));
-  const granuleId = newPayload.config.input_granules[0].granuleId;
-  newPayload.config.moveStagedFiles = false;
+  const granuleId = Object.keys(newPayload.input.allGranules)[0];
   const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
@@ -45,8 +43,6 @@ test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
     Key: key,
     Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
   }).then(() => {
-    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
-
     return postToCMR(newPayload)
       .then(() => {
         cmrjs.CMR.prototype.getToken.restore();
@@ -64,8 +60,7 @@ test('should succeed with correct payload', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
-  const granuleId = newPayload.config.input_granules[0].granuleId;
-  newPayload.config.moveStagedFiles = false;
+  const granuleId = Object.keys(newPayload.input.allGranules)[0];
   const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
@@ -73,7 +68,6 @@ test('should succeed with correct payload', (t) => {
     Key: key,
     Body: fs.createReadStream('tests/data/meta.xml')
   }).then(() => {
-    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
     return postToCMR(newPayload)
       .then((output) => {
         cmrjs.CMR.prototype.ingestGranule.restore();
@@ -92,13 +86,13 @@ test('should succeed with correct payload', (t) => {
 
 test('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.config.moveStagedFiles = false;
-  newPayload.input.granules = [{
+  newPayload.input.allGranules = [{
     granuleId: 'some granule',
     files: [{
       filename: `s3://${t.context.bucket}/to/file.xml`
     }]
   }];
+  newPayload.input.inputFiles = [];
 
   return postToCMR(newPayload)
     .then((output) => {
