@@ -30,10 +30,12 @@ Resources:
           Fn::GetAtt:
             - CumulusCustomResource
             - CmrPassword 
+      {{#if ../es.name}}
         ElasticSearchDomain:
           Fn::GetAtt:
             - {{../es.name}}Domain
             - DomainEndpoint
+      {{/if}}
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
@@ -410,20 +412,6 @@ Resources:
   # APIGateway config BEGIN
   #################################################
 {{# if apiMethods}}
-# {{# each apiDependencies}}
-#   ApiGatewayDeployment{{../apiStage}}{{name}}:
-# {{# if methods }}
-#     DependsOn:
-#   {{#each methods}}
-#     - {{name}}
-#   {{/each}}
-# {{/if}}
-#     Type: AWS::ApiGateway::Deployment
-#     Properties:
-#       RestApiId:
-#         Ref: {{name}}RestApi
-#       StageName: {{../apiStage}}
-# {{/each}}
 
 {{#each apiMethods}}
   {{name}}:
@@ -525,6 +513,12 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
+        {{#if this.useElasticSearch }}
+          ES_HOST:
+            Fn::GetAtt:
+              - {{../es.name}}Domain
+              - DomainEndpoint
+        {{/if}}
     {{#each this.envs}}
       {{# if this.function}}
         {{#if this.array}}
