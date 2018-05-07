@@ -1,14 +1,22 @@
 {
   "title": "PostToCmrInput",
   "description": "Describes the input expected by the post-to-cmr task",
-  "type": "array",
-  "items": {
-    "granules": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "description": "list of s3 uris"
+  "type": "object",
+  "required": [
+    "allGranules",
+    "cmrFiles"
+  ],
+  "properties": {
+    "allGranules": {
+      "type": "object",
+      "description": "Object of all granules where granuleID is the key",
+      "properties": {
+        "granuleId": { "type": "string" }
       }
+    },
+    "cmrFiles": {
+      "type": "array",
+      "description": "list of CMR files from input"
     }
   }
 }
