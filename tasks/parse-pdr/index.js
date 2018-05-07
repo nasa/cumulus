@@ -38,7 +38,7 @@ function parsePdr(event) {
     .then((payload) => {
       if (parse.connected) parse.end();
       // opportunity to filter the granules of interest based on regex in granuleIdExtraction
-      if (config.collection && config.collection.granuleIdExtraction) {
+      if (config && config.collection && config.collection.granuleIdExtraction) {
         const granuleIdExtraction = config.collection.granuleIdExtraction;
         const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction));
         const filteredPayload = {
@@ -82,11 +82,11 @@ function handler(event, context, callback) {
 exports.handler = handler;
 
 // use node index.js local to invoke this
-// justLocalRun(() => {
-//   //const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
-//   const payload = require('/Users/pcappela/Development/gitc-deploy/ingest-sips/messages/parse-pdr.json');
-//   handler(payload, {}, (e, r) => {
-//     //console.log(e);
-//     console.log(JSON.stringify(r, null, '\t'));
-//   })
-// });
+justLocalRun(() => {
+  //const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
+  const payload = require('/Users/pcappela/Development/gitc-deploy/ingest-sips/messages/parse-pdr.json');
+  handler(payload, {}, (e, r) => {
+    //console.log(e);
+    console.log(JSON.stringify(r, null, '\t'));
+  })
+});
