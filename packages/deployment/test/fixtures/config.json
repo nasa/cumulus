@@ -20,6 +20,7 @@
         "protected": "cumulus-devseed-protected",
         "public": "cumulus-devseed-public"
     },
+    "systemBucket": "cumulus-devseed-internal",
     "cmr": {
         "username": "devseed",
         "provider": "CUMULUS",
