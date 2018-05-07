@@ -274,6 +274,7 @@ class Granule {
    * @private
    */
   addBucketToFile(file) {
+    // BUCKET/KEY TO DO
     let bucket = this.buckets.private;
 
     const fileConfig = this.findCollectionFileConfigForFile(file);
