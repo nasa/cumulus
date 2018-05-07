@@ -184,6 +184,7 @@ class Granule {
 
     return {
       granuleId: granule.granuleId,
+      dataType: granule.dataType,
       files
     };
   }
