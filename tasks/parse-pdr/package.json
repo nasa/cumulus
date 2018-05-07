@@ -33,7 +33,7 @@
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
     "@cumulus/ingest": "^1.5.0",
     "@cumulus/test-data": "^1.4.0",
-    "lodash.get": "^4.4.2",
+    "lodash.get": "^4.4.2"
   },
   "devDependencies": {
     "ava": "^0.25.0",

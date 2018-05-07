@@ -133,9 +133,7 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
   if (specs.length === 0) throw new Error('No FILE_SPEC sections found.');
 
   const files = specs.map(parseSpec.bind(null, pdrName));
-
   const collectionConfig = await collectionConfigStore.get(dataType);
-
   return {
     dataType,
     files,
