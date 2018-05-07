@@ -14,9 +14,9 @@
         "granuleId": { "type": "string" }
       }
     },
-    "cmrFiles": {
+    "inputFiles": {
       "type": "array",
-      "description": "list of CMR files from input"
+      "description": "list of filenames from input"
     }
   }
 }
