@@ -484,43 +484,6 @@ class KMS {
 }
 
 class StepFunction {
-  static granuleExecutionStatus(granuleId, event) {
-    const buckets = _get(event, 'config.buckets');
-    const stack = _get(event, 'config.stack');
-
-    const granuleKey = `${stack}/granules_ingested/${granuleId}`;
-
-    // BUCKET/KEY TODO: figure out where this gets called and have config
-    // pass in a system bucket
-    return {
-      bucket: buckets.internal,
-      key: granuleKey
-    };
-  }
-
-  static async setGranuleStatus(granuleId, event) {
-    const d = this.granuleExecutionStatus(granuleId, event);
-    const sm = event.cumulus_meta.state_machine;
-    const en = event.cumulus_meta.execution_name;
-    const arn = getExecutionArn(sm, en);
-    const status = event.meta.status;
-    return S3.put(d.bucket, d.key, '', null, { arn, status });
-  }
-
-  static async getGranuleStatus(granuleId, event) {
-    const d = this.granuleExecutionStatus(granuleId, event);
-    const exists = await S3.fileExists(d.bucket, d.key);
-    if (exists) {
-      const oarn = exists.Metadata.arn;
-      const status = exists.Metadata.status;
-      if (status === 'failed') {
-        return ['failed', oarn];
-      }
-      return ['completed', oarn];
-    }
-    return false;
-  }
-
   static async getExecution(arn, ignoreMissingExecutions = false) {
     const stepfunctions = new AWS.StepFunctions();
 
