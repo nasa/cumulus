@@ -11,7 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Deployment support to subscribe to an SNS topic that already exists
-- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access. 
+- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access.
+- **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
+- You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
+- `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
 
 ## [v1.5.1] - 2018-04-23
 ### Fixed
