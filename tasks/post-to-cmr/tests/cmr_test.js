@@ -62,13 +62,6 @@ test('should succeed with correct payload', (t) => {
   }));
   const granuleId = Object.keys(newPayload.input.allGranules)[0];
   const key = `${granuleId}.cmr.xml`;
-  const expectedFilenames = [
-    's3://cumulus-protected/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    's3://cumulus-private/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
-    's3://cumulus-private/example/2003/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    's3://cumulus-public/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'];
 
   return aws.promiseS3Upload({
     Bucket: t.context.bucket,
@@ -82,8 +75,6 @@ test('should succeed with correct payload', (t) => {
           output.granules[0].cmrLink,
           `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
         );
-        const outputFilenames = output.granules[0].files.map((f) => f.filename);
-        t.deepEqual(expectedFilenames, outputFilenames);
       })
       .catch((e) => {
         console.log(e);
