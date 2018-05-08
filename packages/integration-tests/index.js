@@ -2,12 +2,13 @@
 
 'use strict';
 
+const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
-const { Provider, Collection } = require('@cumulus/api/models');
+const { Provider, Collection, Rule } = require('@cumulus/api/models');
 
 const executionStatusNumRetries = 100;
 const waitPeriodMs = 5000;
@@ -170,9 +171,34 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
  */
 function setProcessEnvironment(stackName, bucketName) {
   process.env.internal = bucketName;
+  process.env.bucket = bucketName;
   process.env.stackName = stackName;
+  process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
+  process.env.RulesTable = `${stackName}-RulesTable`;
+}
+
+const concurrencyLimit = process.env.CONCURRENCY || 3;
+const limit = pLimit(concurrencyLimit);
+
+/**
+ * Set environment variables and read in seed files from dataDirectory
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of collection json files
+ * @return {Array} List of objects to seed in the database
+ */
+async function setupSeedData(stackName, bucketName, dataDirectory) {
+  setProcessEnvironment(stackName, bucketName);
+  const filenames = await fs.readdir(dataDirectory);
+  const seedItems = [];
+  filenames.forEach((filename) => {
+    const item = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
+    seedItems.push(item);
+  });
+  return seedItems;
 }
 
 /**
@@ -184,17 +210,7 @@ function setProcessEnvironment(stackName, bucketName) {
  * @returns {Promise.<integer>} number of collections added
  */
 async function addCollections(stackName, bucketName, dataDirectory) {
-  setProcessEnvironment(stackName, bucketName);
-  const filenames = await fs.readdir(dataDirectory);
-  const collections = [];
-  filenames.forEach((filename) => {
-    const collection = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
-    collections.push(collection);
-  });
-
-  // limit the concurrent access to database
-  const concurrencyLimit = process.env.CONCURRENCY || 3;
-  const limit = pLimit(concurrencyLimit);
+  const collections = await setupSeedData(stackName, bucketName, dataDirectory);
   const promises = collections.map((collection) => limit(() => {
     const c = new Collection();
     console.log(`adding collection ${collection.name}___${collection.version}`);
@@ -213,23 +229,35 @@ async function addCollections(stackName, bucketName, dataDirectory) {
  * @returns {Promise.<integer>} number of providers added
  */
 async function addProviders(stackName, bucketName, dataDirectory) {
-  setProcessEnvironment(stackName, bucketName);
-  const filenames = await fs.readdir(dataDirectory);
-  const providers = [];
-  filenames.forEach((filename) => {
-    const provider = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
-    providers.push(provider);
-  });
+  const providers = await setupSeedData(stackName, bucketName, dataDirectory);
 
-  // limit the concurrent access to database
-  const concurrencyLimit = process.env.CONCURRENCY || 3;
-  const limit = pLimit(concurrencyLimit);
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
   }));
   return Promise.all(promises).then((ps) => ps.length);
+}
+
+/**
+ * add rules to database
+ *
+ * @param {string} config - Test config used to set environmenet variables and template rules data
+ * @param {string} dataDirectory - the directory of rules json files
+ * @returns {Promise.<integer>} number of rules added
+ */
+async function addRules(config, dataDirectory) {
+  const { stackName, bucketName } = config;
+  const rules = await setupSeedData(stackName, bucketName, dataDirectory);
+
+  const promises = rules.map((rule) => limit(() => {
+    const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
+    const templatedRule = JSON.parse(ruleTemplate(config));
+    const r = new Rule();
+    console.log(`adding rule ${templatedRule.name}`);
+    return r.create(templatedRule);
+  }));
+  return Promise.all(promises).then((rs) => rs.length);
 }
 
 /**
@@ -303,5 +331,8 @@ module.exports = {
    */
   getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
   addCollections,
-  addProviders
+  addProviders,
+  addRules,
+  timeout,
+  getWorkflowArn
 };
