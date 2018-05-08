@@ -9,6 +9,7 @@ Parameters:
     Type: String
     Description: 'ElasticSearch Url'
     NoEcho: true
+    Default: 'noValue'
   SecurityGroupId:
     Type: String
     Description: 'Security Group ID'
