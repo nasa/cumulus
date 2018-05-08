@@ -2,13 +2,9 @@
 
 const fs = require('fs');
 const test = require('ava');
-const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
-const testUtils = require('@cumulus/common/test-utils');
-
-const cmrjs = require('@cumulus/cmrjs');
 const payload = require('./data/payload.json');
-const { postToCMR } = require('../index');
+const { moveGranules } = require('../index');
 
 // eslint-disable-next-line require-jsdoc
 async function deleteBucket(bucket) {
@@ -20,11 +16,99 @@ async function deleteBucket(bucket) {
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = testUtils.randomString(); // eslint-disable-line no-param-reassign
-  return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
+  t.context.stagingBucket = 'cumulus-internal';
+  return aws.s3().createBucket({
+    Bucket: 'cumulus-public'
+  }).promise().then(aws.s3().createBucket({
+    Bucket: 'cumulus-internal'
+  }).promise());
 });
 
 test.afterEach.always(async (t) => {
-  deleteBucket(t.context.bucket);
+  deleteBucket('cumulus-public');
+  deleteBucket(t.context.stagingBucket);
 });
 
+test('should move files to final location', (t) => {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+
+  return aws.promiseS3Upload({
+    Bucket: 'cumulus-internal',
+    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    Body: 'Something'
+  }).then(aws.promiseS3Upload({
+    Bucket: 'cumulus-internal',
+    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    Body: 'Something'
+  })).then(() => {
+    return moveGranules(newPayload)
+      .then(() => {
+        return aws.s3ObjectExists({
+          Bucket: 'cumulus-public',
+          Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+        }).then((check) => {
+          t.true(check);
+        });
+      });
+  });
+});
+
+test('should update filenames with specific url_path', (t) => {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  const newFilename1 =
+    's3://cumulus-public/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg';
+  const newFilename2 =
+    's3://cumulus-public/example/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg';
+
+  return aws.promiseS3Upload({
+    Bucket: 'cumulus-internal',
+    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    Body: 'Something'
+  }).then(aws.promiseS3Upload({
+    Bucket: 'cumulus-internal',
+    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    Body: 'Something'
+  })).then(() => {
+    return moveGranules(newPayload)
+      .then((output) => {
+        const files = output.allGranules['MOD11A1.A2017200.h19v04.006.2017201090724'].files;
+        t.is(files[0].filename, newFilename1);
+        t.is(files[1].filename, newFilename2);
+      });
+  });
+});
+
+test('should update filenames with metadata fields', (t) => {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  newPayload.config.collection.url_path =
+    'example/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/';
+  newPayload.input.push(
+    's3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'
+  );
+  const expectedFilenames = [
+    's3://cumulus-public/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'];
+
+  return aws.promiseS3Upload({
+    Bucket: 'cumulus-internal',
+    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    Body: 'Something'
+  }).then(aws.promiseS3Upload({
+    Bucket: 'cumulus-internal',
+    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    Body: 'Something'
+  })).then(aws.promiseS3Upload({
+    Bucket: 'cumulus-internal',
+    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    Body: fs.createReadStream('tests/data/meta.xml')
+  })).then(() => {
+    return moveGranules(newPayload)
+      .then((output) => {
+        const outputFilenames =
+          output.allGranules['MOD11A1.A2017200.h19v04.006.2017201090724'].files.map((f) =>
+            f.filename);
+        t.deepEqual(expectedFilenames, outputFilenames);
+      });
+  });
+});

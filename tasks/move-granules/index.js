@@ -4,12 +4,11 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
-const log = require('@cumulus/common/log');
-const { moveGranuleFile } = require('@cumulus/ingest/granule');
+const { moveGranuleFile } = require('../../packages/ingest/granule');
 const path = require('path');
 const { getS3Object, parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
-const urlPathTemplate = require('@cumulus/ingest/url-path-template');
+const { urlPathTemplate } = require('../../packages/ingest/url-path-template');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
 
@@ -159,14 +158,14 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
 
         if (match) {
           if (!file.url_path) {
-            file.url_path = collection.url_path || '';
+            file.url_path = fileConfig.url_path || collection.url_path || '';
           }
           const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
 
           const urlPath = urlPathTemplate(file.url_path, {
             file: file,
             granule: granulesObject[granuleId],
-            cmrMetadata: cmrFile.metadataObject
+            cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
           });
           file.bucket = buckets[fileConfig.bucket];
           file.filepath = path.join(urlPath, file.name);
@@ -234,31 +233,13 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
 
     cmrFile.metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL = urls;
     const builder = new xml2js.Builder();
-    const xml = builder.buildObject(cmrFile);
+    const xml = builder.buildObject(cmrFile.metadataObject);
+    cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
     await promiseS3Upload(
       { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
     );
   }
-}
-
-/**
- * Builds the output of the move-granules task
- *
- * @param {Array} results - list of results returned by publish function
- * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @returns {Array} an updated array of granules
- */
-function buildOutput(results, granulesObject) {
-  // add results to corresponding granules
-  results.forEach((r) => {
-    if (granulesObject[r.granuleId]) {
-      granulesObject[r.granuleId].cmrLink = r.link;
-      granulesObject[r.granuleId].published = true;
-    }
-  });
-
-  return Object.keys(granulesObject).map((k) => granulesObject[k]);
 }
 
 /**
@@ -297,11 +278,11 @@ async function moveGranules(event) {
   // create granules object for cumulus indexer
   let allGranules = getAllGranules(input, inputGranules, regex);
 
+  // update granules object with final locations of files as `filename`
+  allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+
   // allows us to disable moving the files
   if (moveStagedFiles) {
-    // update granules object with final locations of files as `filename`
-    allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
-
     // move files from staging location to final location
     await moveGranuleFiles(allGranules, bucket);
 
