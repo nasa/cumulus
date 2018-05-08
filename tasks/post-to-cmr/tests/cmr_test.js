@@ -35,7 +35,7 @@ test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
   const newPayload = JSON.parse(JSON.stringify(payload));
-  const granuleId = Object.keys(newPayload.input.allGranules)[0];
+  const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
@@ -60,7 +60,7 @@ test('should succeed with correct payload', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
-  const granuleId = Object.keys(newPayload.input.allGranules)[0];
+  const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
