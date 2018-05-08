@@ -94,8 +94,8 @@ test.serial('indexing a successful granule record', async (t) => {
   t.is(record._source.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
   t.is(record._source.timeToArchive, 100);
   t.is(record._source.timeToPreprocess, 120);
-  t.is(record._source.processingStartTime, 'Thu May 03 2018 10:23:12 GMT-0400 (EDT)');
-  t.is(record._source.processingEndTime, 'Thu May 03 2018 13:11:33 GMT-0400 (EDT)');
+  t.is(record._source.processingStartTime, '2018-05-03T14:23:12.010Z');
+  t.is(record._source.processingEndTime, '2018-05-03T17:11:33.007Z');
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record._parent);
   t.is(deconstructed, collection.name);

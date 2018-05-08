@@ -370,7 +370,7 @@ function extractDate(payload, dateField) {
 
   if (dateMs) {
     const date = new Date(dateMs);
-    return date.toString();
+    return date.toISOString();
   }
 
   return null;

@@ -184,11 +184,27 @@ module.exports.granule = {
       type: 'number',
       readonly: true
     },
+    timeToPreprocess: {
+      type: 'number',
+      readonly: true
+    },
     beginningDateTime: {
       type: 'string',
       readonly: true
     },
     endingDateTime: {
+      type: 'string',
+      readonly: true
+    },
+    processingStartTime: {
+      type: 'string',
+      readonly: true
+    },
+    processingEndTime: {
+      type: 'string',
+      readonly: true
+    },
+    lastUpdateDateTime: {
       type: 'string',
       readonly: true
     },
