@@ -16,13 +16,13 @@ const granuleSuccess = require('./data/granule_success.json');
 const granuleFailure = require('./data/granule_failed.json');
 const pdrFailure = require('./data/pdr_failure.json');
 const pdrSuccess = require('./data/pdr_success.json');
+const cmrjs = require('@cumulus/cmrjs');
 
 const esIndex = randomString();
 process.env.bucket = randomString();
 process.env.stackName = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
-
 
 test.before(async () => {
   // create the elasticsearch index and add mapping
@@ -31,6 +31,26 @@ test.before(async () => {
 
   // create buckets
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+
+  const fakeMetadata = {
+    time_start: '2017-10-24T00:00:00.000Z',
+    time_end: '2018-10-24T00:00:00.000Z',
+    updated: '2018-04-20T21:45:45.524Z',
+    dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
+    data_center: 'CUMULUS',
+    title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
+  };
+
+  sinon.stub(cmrjs, 'getMetadata').callsFake(() => fakeMetadata);
+
+  const fakeXmlMetadata = {
+    GranuleUR: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+    DataGranule: {
+      ProductionDateTime: '2018-04-25T21:45:45.524Z'
+    }
+  };
+
+  sinon.stub(cmrjs, 'getFullMetadata').callsFake(() => fakeXmlMetadata);
 });
 
 test.after.always(async () => {
@@ -38,6 +58,9 @@ test.after.always(async () => {
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.bucket)
   ]);
+
+  cmrjs.getMetadata.restore();
+  cmrjs.getFullMetadata.restore();
 });
 
 test.serial('indexing a successful granule record', async (t) => {
@@ -65,6 +88,15 @@ test.serial('indexing a successful granule record', async (t) => {
   t.is(record._id, granule.granuleId);
   t.is(record._source.cmrLink, granule.cmrLink);
   t.is(record._source.published, granule.published);
+  t.is(record._source.productVolume, 17909733);
+  t.is(record._source.beginningDateTime, '2017-10-24T00:00:00.000Z');
+  t.is(record._source.endingDateTime, '2018-10-24T00:00:00.000Z');
+  t.is(record._source.productionDateTime, '2018-04-25T21:45:45.524Z');
+  t.is(record._source.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
+  t.is(record._source.timeToArchive, 100);
+  t.is(record._source.timeToPreprocess, 120);
+  t.is(record._source.processingStartTime, '2018-05-03T14:23:12.010Z');
+  t.is(record._source.processingEndTime, '2018-05-03T17:11:33.007Z');
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record._parent);
   t.is(deconstructed, collection.name);

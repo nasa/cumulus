@@ -1,7 +1,6 @@
 'use strict';
 
 const { CollectionConfigStore } = require('@cumulus/common');
-const { S3 } = require('@cumulus/ingest/aws');
 const Manager = require('./base');
 const collectionSchema = require('./schemas').collection;
 
