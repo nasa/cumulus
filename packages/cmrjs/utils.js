@@ -6,7 +6,7 @@ const xml2js = require('xml2js');
  * Overrides the Error class
  *
  * @param {string} message - the error message
- * @returns {Error} the error class 
+ * @returns {Error} the error class
  */
 function E(message) {
   Error.captureStackTrace(this, this.constructor);
@@ -154,37 +154,29 @@ async function validate(type, xml, identifier, provider) {
 async function updateToken(cmrProvider, clientId, username, password) {
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
-  const ip = await publicIp.v4();
-
-  const tokenData = {
-    token: {
-      username: username,
-      password: password,
-      client_id: clientId,
-      user_ip_address: ip,
-      provider: cmrProvider
-    }
-  };
-
-  const builder = new xml2js.Builder();
-  const xml = builder.buildObject(tokenData);
-
-  let resp = await got.post(getUrl('token'), {
-    body: xml,
-    headers: { 'Content-Type': 'application/xml' }
-  });
-
-  resp = await new Promise((resolve, reject) => {
-    xml2js.parseString(resp.body, xmlParseOptions, (err, response) => {
-      if (err) reject(err);
-      resolve(response);
+  let response;
+  try {
+    response = await got.post(getUrl('token'), {
+      json: true,
+      body: {
+        token: {
+          username: username,
+          password: password,
+          client_id: clientId,
+          user_ip_address: await publicIp.v4(),
+          provider: cmrProvider
+        }
+      }
     });
-  });
-
-  if (!resp.token) {
-    throw new Error('Authentication with CMR failed');
   }
-  return resp.token.id;
+  catch (err) {
+    if (err.response.body.errors) throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
+    throw err;
+  }
+
+  if (!response.body.token) throw new Error('Authentication with CMR failed');
+
+  return response.body.token.id;
 }
 
 /**

@@ -107,6 +107,11 @@ jobs:
               yarn build
               cd ../..
 
+              # Build move-granules task
+              cd tasks/move-granules
+              yarn build
+              cd ../..
+
               # install cumulus-integration
               ./bin/prepare
 

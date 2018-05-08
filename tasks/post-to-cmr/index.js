@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 'use strict';
 
 const get = require('lodash.get');
@@ -13,6 +11,21 @@ const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
 const log = require('@cumulus/common/log');
+
+/**
+ * Extract the granule ID from the a given s3 uri
+ *
+ * @param {string} uri - the s3 uri of the file
+ * @param {string} regex - the regex for extracting the ID
+ * @returns {string} the granule
+ */
+function getGranuleId(uri, regex) {
+  const filename = path.basename(uri);
+  const match = filename.match(regex);
+
+  if (match) return match[1];
+  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
+}
 
 /**
  * Parse an xml string
@@ -45,24 +58,6 @@ async function getMetadata(xmlFilePath) {
   const parts = xmlFilePath.match(/^s3:\/\/(.+?)\/(.+)$/);
   const obj = await getS3Object(parts[1], parts[2]);
   return obj.Body.toString();
-}
-
-/**
- * Extract the granule ID from the a given s3 uri
- *
- * @param {string} uri - the s3 uri of the file
- * @param {string} regex - the regex for extracting the ID
- * @returns {string} the granule
- */
-function getGranuleId(uri, regex) {
-  const filename = path.basename(uri);
-  const test = new RegExp(regex);
-  const match = filename.match(test);
-
-  if (match) {
-    return match[1];
-  }
-  return match;
 }
 
 /**
