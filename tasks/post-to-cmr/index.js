@@ -138,7 +138,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     filename: cmrFile.filename,
     conceptId,
     link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
-          `?concept_id=${res.result['concept-id']}`
+      `?concept_id=${res.result['concept-id']}`
   };
 }
 
