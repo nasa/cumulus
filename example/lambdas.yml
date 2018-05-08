@@ -27,6 +27,12 @@ DiscoverPdrs:
   useMessageAdapter: true
   logToElasticSearch: true
 
+MoveGranules:
+  handler: index.handler
+  timeout: 300
+  source: 'node_modules/@cumulus/move-granules/dist'
+  useMessageAdapter: true
+
 QueuePdrs:
   handler: index.handler
   timeout: 300
