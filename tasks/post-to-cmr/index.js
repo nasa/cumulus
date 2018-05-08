@@ -103,16 +103,7 @@ async function publish(cmrFile, creds, bucket, stack) {
   );
 
   const xml = await getMetadata(cmrFile.filename);
-  let res;
-  try {
-    res = await cmr.ingestGranule(xml);
-  }
-  catch (err) {
-    if (err.response.body.includes('Invalid username or password')) {
-      throw new Error('Invalid CMR username or password.');
-    }
-    throw err;
-  }
+  const res = await cmr.ingestGranule(xml);
   const conceptId = res.result['concept-id'];
 
   log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
