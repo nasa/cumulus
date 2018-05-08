@@ -55,6 +55,7 @@ test.before(async () => {
     buckets: {
       internal: context.internal
     },
+    systemBucket: context.internal,
     stack: context.stack,
     stepFunctions: {},
     sqs: {}
