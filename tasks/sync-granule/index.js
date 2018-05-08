@@ -112,7 +112,12 @@ exports.handler = function handler(event, context, callback) {
       callback(err);
     }
     else {
-      const meta = Object.assign({}, data.meta, { sync_granule_duration: Date.now() - startTime });
+      const endTime = Date.now();
+      const additionalMetaFields = {
+        sync_granule_duration: endTime - startTime,
+        sync_granule_end_time: endTime
+      };
+      const meta = Object.assign({}, data.meta, additionalMetaFields);
       callback(null, Object.assign({}, data, { meta }));
     }
   });
