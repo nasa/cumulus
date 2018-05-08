@@ -222,7 +222,21 @@ exports.postToCMR = postToCMR;
  * @returns {undefined} - does not return a value
  */
 function handler(event, context, callback) {
-  cumulusMessageAdapter.runCumulusTask(postToCMR, event, context, callback);
+  const startTime = Date.now();
+
+  cumulusMessageAdapter.runCumulusTask(postToCMR, event, context, (err, data) => {
+    if (err) {
+      callback(err);
+    }
+    else {
+      const additionalMetaFields = {
+        post_to_cmr_duration: Date.now() - startTime,
+        post_to_cmr_start_time: startTime
+      };
+      const meta = Object.assign({}, data.meta, additionalMetaFields);
+      callback(null, Object.assign({}, data, { meta }));
+    }
+  });
 }
 exports.handler = handler;
 
