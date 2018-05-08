@@ -178,9 +178,14 @@ async function postToCMR(event) {
   const stack = get(config, 'stack'); // the name of the deployment stack
   const input = get(event, 'input', []);
   const regex = get(config, 'granuleIdExtraction', '(.*)');
-  const allGranules = get(input, 'granules'); // Object of all Granules
+  const granules = get(input, 'granules'); // Object of all Granules
   const inputFiles = get(input, 'inputFiles'); // list of files from input
   const creds = get(config, 'cmr');
+  const allGranules = {};
+
+  granules.forEach((granule) => {
+    allGranules[granule.granuleId] = granule;
+  });
 
   // get cmr files
   const cmrFiles = await getCmrFiles(inputFiles, regex);
