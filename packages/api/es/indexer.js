@@ -8,6 +8,7 @@
  * - IngestGranules
  * - StateMachine (if a payload doesn't belong to previous ones)
  */
+
 'use strict';
 
 const path = require('path');
@@ -400,16 +401,24 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
       doc.published = get(g, 'published', false);
       doc.duration = (doc.timestamp - doc.createdAt) / 1000;
 
-      return esClient.update({
+      const delGranParams = {
         index,
-        type,
+        type: 'deletedgranule',
         id: doc.granuleId,
         parent: collectionId,
-        body: {
-          doc,
-          doc_as_upsert: true
-        }
-      });
+        ignore: [404]
+      };
+      return esClient.delete(delGranParams)
+        .then(() => esClient.update({
+          index,
+          type,
+          id: doc.granuleId,
+          parent: collectionId,
+          body: {
+            doc,
+            doc_as_upsert: true
+          }
+        }));
     }
     return Promise.resolve();
   });
@@ -440,8 +449,26 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
   if (parent) {
     params.parent = parent;
   }
-
-  return esClient.delete(params);
+  const result = await esClient.get(params);
+  return esClient.delete(params)
+    .then(async (response) => {
+      if (type === 'granule' && result.found) {
+        const doc = result._source;
+        doc.timestamp = Date.now();
+        doc.deletedAt = Date.now();
+        await esClient.update({
+          index,
+          type: 'deletedgranule',
+          id: doc.granuleId,
+          parent: parent,
+          body: {
+            doc,
+            doc_as_upsert: true
+          }
+        });
+      }
+      return response;
+    });
 }
 
 /**
