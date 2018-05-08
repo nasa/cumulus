@@ -7,12 +7,7 @@ sqs2sf:
 sns2elasticsearch:
   handler: index.indexer
   timeout: 100
-  envs:
-    ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+  useElasticSearch: '{{es.name}}'
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
 
@@ -20,12 +15,7 @@ log2elasticsearch:
   handler: index.logHandler
   timeout: 100
   memory: 256
-  envs:
-    ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+  useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
 
 sf2snsStart:
@@ -45,12 +35,7 @@ dbIndexer:
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
-  envs:
-    ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+  useElasticSearch: '{{es.name}}'
 
 kinesisConsumer:
   handler: index.kinesisConsumer
@@ -87,12 +72,7 @@ jobs:
   handler: index.jobs
   timeout: 300
   memory: 512
-  envs:
-    ES_HOST:
-      function: "Fn::GetAtt"
-      array:
-        - '{{es.name}}Domain'
-        - DomainEndpoint
+  useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
 
 # used as custom resource for cloudformation manipulation
