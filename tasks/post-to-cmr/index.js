@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
 const get = require('lodash.get');
@@ -20,13 +19,10 @@ const log = require('@cumulus/common/log');
  */
 function getGranuleId(uri, regex) {
   const filename = path.basename(uri);
-  const test = new RegExp(regex);
-  const match = filename.match(test);
+  const match = filename.match(regex);
 
-  if (match) {
-    return match[1];
-  }
-  return match;
+  if (match) return match[1];
+  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
 }
 
 /**
