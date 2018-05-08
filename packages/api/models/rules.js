@@ -117,10 +117,7 @@ class Rule extends Manager {
     // make sure the name only has word characters
     const re = /[^\w]/;
     if (re.test(item.name)) {
-      const err = {
-        message: 'Only word characters such as alphabets, numbers and underscore is allowed in name'
-      };
-      throw err;
+      throw new Error('Names may only contain letters, numbers, and underscores.');
     }
 
     const payload = await Rule.buildPayload(item);
