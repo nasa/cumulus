@@ -71,7 +71,7 @@ test('should update filenames with specific url_path', (t) => {
   })).then(() => {
     return moveGranules(newPayload)
       .then((output) => {
-        const files = output.allGranules['MOD11A1.A2017200.h19v04.006.2017201090724'].files;
+        const files = output.granules[0].files;
         t.is(files[0].filename, newFilename1);
         t.is(files[1].filename, newFilename2);
       });
@@ -106,7 +106,7 @@ test('should update filenames with metadata fields', (t) => {
     return moveGranules(newPayload)
       .then((output) => {
         const outputFilenames =
-          output.allGranules['MOD11A1.A2017200.h19v04.006.2017201090724'].files.map((f) =>
+          output.granules[0].files.map((f) =>
             f.filename);
         t.deepEqual(expectedFilenames, outputFilenames);
       });
