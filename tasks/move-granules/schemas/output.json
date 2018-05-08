@@ -6,43 +6,32 @@
     "allGranules": {
       "type": "object",
       "description": "Object of all granules where granuleID is the key",
+      "required": ["granuleId", "files"],
       "properties": {
-        "granuleId": { "type": "string" }
-      }
-    },
-    "cmrFiles": {
-      "type": "array",
-      "description": "list of CMR files from input"
-    },
-    "granules": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["granuleId", "files"],
-        "properties": {
-          "granuleId": {
-            "type": "string"
-          },
-          "files": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": ["name"],
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "filename": {
-                  "type": "string"
-                },
-                "bucket": {
-                  "type": "string"
-                }
+        "granuleId": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "filename": {
+                "type": "string"
+              },
+              "bucket": {
+                "type": "string"
               }
             }
           }
         }
       }
+    },
+    "inputFiles": {
+      "type": "array",
+      "description": "list of filenames from input"
     }
   }
 }
