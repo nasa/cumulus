@@ -310,7 +310,7 @@ async function moveGranules(event) {
   }
 
   return {
-    cmrFiles,
+    inputFiles: input,
     allGranules
   };
 }
