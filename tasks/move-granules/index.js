@@ -292,7 +292,7 @@ async function moveGranules(event) {
 
   return {
     inputFiles: input,
-    allGranules
+    granules: Object.keys(allGranules).map((k) => allGranules[k])
   };
 }
 
