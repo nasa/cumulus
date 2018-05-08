@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 'use strict';
 
 const path = require('path');
@@ -25,13 +23,10 @@ const xml2js = require('xml2js');
  */
 function getGranuleId(uri, regex) {
   const filename = path.basename(uri);
-  const test = new RegExp(regex);
-  const match = filename.match(test);
+  const match = filename.match(regex);
 
-  if (match) {
-    return match[1];
-  }
-  return match;
+  if (match) return match[1];
+  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
 }
 
 /**
