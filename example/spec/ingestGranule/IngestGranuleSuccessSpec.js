@@ -8,6 +8,13 @@ const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
 
+const syncGranuleOutputFilename = './spec/ingestGranule/SyncGranule.output.payload.template.json';
+const templatedSyncGranuleFilename = templateFile({
+  inputTemplateFilename: syncGranuleOutputFilename,
+  config: config[taskName].SyncGranuleOutput
+});
+const expectedSyncGranulePayload = JSON.parse(fs.readFileSync(templatedSyncGranuleFilename));
+
 const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'; // eslint-disable-line max-len
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
@@ -41,21 +48,21 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('has expected payload', () => {
-      expect(lambdaOutput.payload).toEqual(expectedPayload);
+      expect(lambdaOutput.payload).toEqual(expectedSyncGranulePayload);
     });
 
     it('has expected updated meta', () => {
-      expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
+      expect(lambdaOutput.meta.input_granules).toEqual(expectedSyncGranulePayload.granules);
     });
   });
 
-  describe('the PostToCmr Lambda', () => {
+  describe('the MoveGranules Lambda', () => {
     let lambdaOutput;
     let files;
     const existCheck = [];
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
@@ -63,27 +70,43 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     afterAll(async () => {
-      await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].name }).promise();
-      await s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].name }).promise();
-      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].name }).promise();
+      await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise();
+      await s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise();
+      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
+    });
+
+    // it('has a payload with updated file locations', () => {
+
+    // });
+
+    it('moves files to the bucket folder based on metadata', () => {
+      existCheck.forEach((check) => {
+        expect(check).toEqual(true);
+      });
+    });
+  });
+
+  describe('the PostToCmr Lambda', () => {
+    let lambdaOutput;
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
     });
 
     it('has expected payload', () => {
       const granule = lambdaOutput.payload.granules[0];
       expect(granule.published).toBe(true);
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
+
+      expect(lambdaOutput.payload).toEqual(expectedPayload);
     });
 
-    it('moves files to the bucket folder based on metadata', () => {
+    it('granule is published to CMR', () => {
       const granule = lambdaOutput.payload.granules[0];
       const result = conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
-
-      existCheck.forEach((check) => {
-        expect(check).toEqual(true);
-      });
     });
   });
 });
