@@ -641,17 +641,33 @@ Resources:
           Value: "{{stackName}}"
       VpcId: {{vpc.vpcId}}
 
+  {{#if ecs.ssh}}
+  SecurityGroupSSHinbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref 'SecurityGroup'
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
+  {{/if}}
 {{/if}}
 
 {{# if iams.instanceProfile}}
   CumulusECSCluster:
     Type: AWS::ECS::Cluster
 
-
   CumulusContainerInstanceLaunch:
     Type: AWS::AutoScaling::LaunchConfiguration
     Metadata:
       AWS::CloudFormation::Init:
+        configSets:
+          MountConfig:
+          - config
+          {{# if ecs.efs.mount }}
+          - mount
+          {{/if}}
+
         config:
           commands:
             01_add_instance_to_cluster:
@@ -673,7 +689,13 @@ Resources:
                 {{else}}
                   - Example: value
                 {{/if}}
-                  
+          
+          {{# if ecs.efs.mount }}
+          packages:
+            yum:
+              nfs-utils: [] 
+          {{/if}}
+
           files:
             "/etc/cfn/cfn-hup.conf":
               content:
@@ -700,6 +722,29 @@ Resources:
                 files:
                 - "/etc/cfn/cfn-hup.conf"
                 - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+
+        {{# if ecs.efs.mount}}
+        mount:
+          commands:
+            01_mount:
+              command: !Sub
+              - |
+                #!/bin/bash -xe
+                
+                mkdir -p {{ecs.efs.mount}}
+                mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
+                chmod 777 {{ecs.efs.mount}}
+                
+                echo '${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
+                mount -a
+                service docker restart
+                start ecs
+
+              - EFSFileSystemId:  
+                  Fn::ImportValue: 
+                    !Sub "{{prefix}}-EFSFileSystemId"
+        {{/if}} 
+
     Properties:
     {{# if vpc.subnets }}
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
@@ -708,7 +753,13 @@ Resources:
         - Fn::GetAtt:
           - SecurityGroup
           - GroupId
+       {{# if ecs.efs.mount}}
+        - Fn::ImportValue: 
+            "{{prefix}}-EFSSecurityGroup"
+        {{/if}}
+
       ImageId: {{ecs.amiid}}
+      
       InstanceType: {{ecs.instanceType}}
       IamInstanceProfile: {{iams.instanceProfile}}
       BlockDeviceMappings:
@@ -726,9 +777,8 @@ Resources:
             - - "#cloud-config\n"
               - "\nruncmd:\n"
               - " - yum install -y aws-cfn-bootstrap\n"
-              - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}\n"
+              - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
               - Fn::Sub: " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
-
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -780,7 +830,12 @@ Resources:
           - SourceVolume: {{name}}
             ContainerPath: {{dst}}
         {{/each}}
+      
       {{/if}}
+      {{# if this.privileged }}
+        Privileged: true
+      {{/if}}
+
         Environment:
     {{#each this.envs}}
       {{# if this.function}}
@@ -930,3 +985,11 @@ Outputs:
       Fn::GetAtt:
         - CumulusCustomResource
         - CmrPassword
+
+{{#if vpc}}
+  EcsSecurityGroup:
+    Description: ECS security group
+    Value: !Ref SecurityGroup
+    Export:
+      Name: !Sub "{{stackName}}-EcsSecurityGroup"
+{{/if}}
