@@ -4,11 +4,11 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
-const { moveGranuleFile } = require('../../packages/ingest/granule');
+const { moveGranuleFile } = require('@cumulus/ingest/granule');
 const path = require('path');
 const { getS3Object, parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
-const { urlPathTemplate } = require('../../packages/ingest/url-path-template');
+const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
 
