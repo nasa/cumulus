@@ -16,21 +16,6 @@ Parameters:
     Default: NoValue
     NoEcho: true
 
-Mappings:
-  AWSRegionToAMI:
-    DOCS:
-      LIST: >-
-        http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-
-    us-east-1:
-      AMIID: ami-aff65ad2	
-    us-east-2:
-      AMIID: ami-64300001
-    us-west-1:
-      AMIID: ami-69677709
-    us-west-2:
-      AMIID: ami-40ddb938
-
 Resources:
 
   #################################################
@@ -45,10 +30,12 @@ Resources:
           Fn::GetAtt:
             - CumulusCustomResource
             - CmrPassword 
+      {{#if ../es.name}}
         ElasticSearchDomain:
           Fn::GetAtt:
             - {{../es.name}}Domain
             - DomainEndpoint
+      {{/if}}
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
@@ -141,6 +128,25 @@ Resources:
   # SNS config BEGIN
   #################################################
 {{#each sns}}
+  {{#if this.arn}}
+  {{#each this.subscriptions}}
+  # Subscriptions only
+  {{@../key}}{{@key}}Subscription: 
+    Type: "AWS::SNS::Subscription"
+    Properties:
+      {{# if this.endpoint.function}}
+      Endpoint:
+        {{this.endpoint.function}}:
+        {{#each this.endpoint.array}}
+          - {{@this}}
+        {{/each}}
+      {{else}}
+      Endpoint: {{this.endpoint}}
+      {{/if}}
+      Protocol: {{@key}}
+      TopicArn: {{../this.arn}}
+  {{/each}}
+  {{else}}
   {{@key}}Sns:
     Type: "AWS::SNS::Topic"
     Properties:
@@ -158,6 +164,7 @@ Resources:
         {{/if}}
           Protocol: {{@key}}
       {{/each}}
+  {{/if}}
 
   {{# each this.subscriptions}}
   {{@../key}}SubscriptionPermission:
@@ -175,7 +182,11 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: sns.amazonaws.com
       SourceArn:
+        {{#if ../this.arn}}
+        {{../this.arn}}
+        {{else}}
         Ref: {{@../key}}Sns
+        {{/if}}
   {{/each}}
 
 {{/each}}
@@ -401,20 +412,6 @@ Resources:
   # APIGateway config BEGIN
   #################################################
 {{# if apiMethods}}
-# {{# each apiDependencies}}
-#   ApiGatewayDeployment{{../apiStage}}{{name}}:
-# {{# if methods }}
-#     DependsOn:
-#   {{#each methods}}
-#     - {{name}}
-#   {{/each}}
-# {{/if}}
-#     Type: AWS::ApiGateway::Deployment
-#     Properties:
-#       RestApiId:
-#         Ref: {{name}}RestApi
-#       StageName: {{../apiStage}}
-# {{/each}}
 
 {{#each apiMethods}}
   {{name}}:
@@ -516,6 +513,12 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
+        {{#if this.useElasticSearch }}
+          ES_HOST:
+            Fn::GetAtt:
+              - {{../es.name}}Domain
+              - DomainEndpoint
+        {{/if}}
     {{#each this.envs}}
       {{# if this.function}}
         {{#if this.array}}
@@ -638,7 +641,7 @@ Resources:
           Value: "{{stackName}}"
       VpcId: {{vpc.vpcId}}
 
-  {{#id this.ecs.ssh }}
+  {{#if ecs.ssh}}
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -653,7 +656,6 @@ Resources:
 {{# if iams.instanceProfile}}
   CumulusECSCluster:
     Type: AWS::ECS::Cluster
-
 
   CumulusContainerInstanceLaunch:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -756,15 +758,7 @@ Resources:
             "{{prefix}}-EFSSecurityGroup"
         {{/if}}
 
-      {{# if ecs.amiid}}
       ImageId: {{ecs.amiid}}
-      {{else}}
-      ImageId: 
-        Fn::FindInMap:
-        - AWSRegionToAMI
-        - !Ref "AWS::Region"
-        - AMIID
-      {{/if}}
       
       InstanceType: {{ecs.instanceType}}
       IamInstanceProfile: {{iams.instanceProfile}}
@@ -785,7 +779,6 @@ Resources:
               - " - yum install -y aws-cfn-bootstrap\n"
               - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
               - Fn::Sub: " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
-
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -839,7 +832,7 @@ Resources:
         {{/each}}
       
       {{/if}}
-       {{# if this.privileged }}
+      {{# if this.privileged }}
         Privileged: true
       {{/if}}
 
@@ -968,18 +961,23 @@ Outputs:
       Ref: {{@key}}SQS
 {{/each}}
 
-# {{# if es.name}}
-#   {{es.name}}Domain:
-#     Value:
-#       Fn::GetAtt:
-#         - {{es.name}}Domain
-#         - DomainEndpoint
-# {{/if}}
+{{# if es.name}}
+  {{es.name}}Domain:
+    Value:
+      Fn::GetAtt:
+        - {{es.name}}Domain
+        - DomainEndpoint
+{{/if}}
 
 {{#each sns}}
+  {{#if this.arn}}
+  {{@key}}:
+    Value: {{this.arn}}
+  {{else}}
   {{@key}}SnsArn:
     Value:
       Ref: {{@key}}Sns
+  {{/if}}
 {{/each}}
 
   EncryptedCmrPassword:
@@ -987,3 +985,11 @@ Outputs:
       Fn::GetAtt:
         - CumulusCustomResource
         - CmrPassword
+
+{{#if vpc}}
+  EcsSecurityGroup:
+    Description: ECS security group
+    Value: !Ref SecurityGroup
+    Export:
+      Name: !Sub "{{stackName}}-EcsSecurityGroup"
+{{/if}}

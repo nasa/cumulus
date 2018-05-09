@@ -13,13 +13,19 @@ DiscoverGranules:
   useMessageAdapter: true
   launchInVpc: true
 
+DiscoverGranulesNoVpc:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/discover-granules/dist/'
+  useMessageAdapter: true
+
 DiscoverPdrs:
   handler: index.handler
   timeout: 300
   source: 'node_modules/@cumulus/discover-pdrs/dist/'
   useMessageAdapter: true
   logToElasticSearch: true
-  launchInVpc: true
 
 QueuePdrs:
   handler: index.handler
@@ -34,13 +40,22 @@ ParsePdr:
   source: 'node_modules/@cumulus/parse-pdr/dist/'
   useMessageAdapter: true
   logToElasticSearch: true
-  launchInVpc: true
 
 PdrStatusCheck:
   handler: index.handler
   timeout: 300
   source: 'node_modules/@cumulus/pdr-status-check/dist/'
   useMessageAdapter: true
+
+PostToCmr:
+  handler: index.handler
+  timeout: 300
+  memory: 256
+  logToElasticSearch: true
+  source: 'node_modules/@cumulus/post-to-cmr/dist/'
+  useMessageAdapter: true
+  envs:
+    internal: '{{buckets.internal}}'
 
 QueueGranules:
   handler: index.handler
@@ -62,6 +77,21 @@ SyncGranule:
   useMessageAdapter: true
   launchInVpc: true
 
+SyncGranuleNoVpc:
+  handler: index.handler
+  timeout: 300
+  logToElasticSearch: true
+  source: 'node_modules/@cumulus/sync-granule/dist/'
+  useMessageAdapter: true
+
 S3AccessTest:
   handler: index.handler
   source: 'lambdas/s3AccessTest/'
+
+ModisProcessing:
+  handler: lambda_handler.handler
+  timeout: 300
+  s3Source:
+    bucket: '{{shared_data_bucket}}'
+    key: deploy/cumulus-process/modis/0.5.2.zip
+  runtime: python2.7
