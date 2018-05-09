@@ -1,6 +1,7 @@
 'use strict';
 
 const got = require('got');
+const { s3 } = require('@cumulus/common/aws');
 
 /**
  * Bucket policy template for S3 GET access. Currently pointing to an
@@ -14,15 +15,15 @@ const policyTemplate = {
       Sid: 'Stmt1522859852334',
       Effect: 'Allow',
       Principal: '*',
-      Action: 's3:GetObject',
-      Resource: 'arn:aws:s3:::cumulus-test-s3-prototype/*'
+      Action: ['s3:GetObject'],
+      Resource: [''] // gets set by generatePolicyFromIpAddresses 
     }
   ]
 };
 
 // Hard coded for now for the purposes of the prototype
 const defaultRegion = 'us-east-1';
-const ipUrl = 'https://ip-ranges.amazonaws.com/ip-ranges.json';
+const defaultBucket = 'cumulus-test-s3-prototype';
 
 /**
  * NOTE: The ticket for fully implenting this is CUMULUS-470
@@ -61,11 +62,13 @@ function getIpsForRegion(ipRanges, region) {
  * the IP addresses to restrict access to those IP ranges
  *
  * @param {Array<string>} ips - IP ranges
+ * @param {string} bucket - S3 bucket
  * @returns {Object} - S3 bucket policy
  */
-function generatePolicyFromIpAddresses(ips) {
+function generatePolicyFromIpAddresses(ips, bucket) {
   const policy = policyTemplate;
 
+  policy.Statement[0].Resource[0] = `arn:aws:s3:::${bucket}/*`;
   policy.Statement[0].Condition = {
     IpAddress: { 'aws:SourceIp': ips }
   };
@@ -79,28 +82,54 @@ function generatePolicyFromIpAddresses(ips) {
  *
  * @param {string} url - URL to retrieve the IP addresses
  * @param {string} region - AWS region
+  * @param {string} bucket - S3 bucket
  * @returns {Promise<Object>} - S3 bucket policy
  */
-function generatePolicy(url, region) {
+function generatePolicy(url, region, bucket) {
   return module.exports.getIpRanges(url)
     .then((ranges) => getIpsForRegion(ranges, region))
-    .then((ips) => generatePolicyFromIpAddresses(ips));
+    .then((ips) => generatePolicyFromIpAddresses(ips, bucket));
+}
+
+/**
+ * Update the policy on the given bucket
+ *
+ * @param {string} bucket - bucket name
+ * @param {Object} policy - policy object
+ * @returns {Promise<Object>} - return of putBucketPolicy
+ */
+async function updateBucketPolicy(bucket, policy) {
+  // convert policy JSON into string and assign into params
+  const bucketPolicyParams = { Bucket: bucket, Policy: JSON.stringify(policy) };
+
+  // set the new policy on the selected bucket
+  return s3().putBucketPolicy(bucketPolicyParams).promise();
 }
 
 /**
  * Handler
  *
- * @param {Object} event - event passed to lambda
+ * @param {Object} event - SNS event passed to lambda. Message format:
+ * { "create-time":"yyyy-mm-ddThh:mm:ss+00:00",
+ *  "synctoken":"0123456789",
+ *  "md5":"6a45316e8bc9463c9e926d5d37836d33",
+ *  "url":"https://ip-ranges.amazonaws.com/ip-ranges.json"  }
+ *  A bucket param can be specified for testing
  * @param {Object} context - AWS Lambda context
  * @param {*} callback - callback function
  * @returns {undefined} - none
  */
 function handler(event, context, callback) {
-  generatePolicy(ipUrl, defaultRegion)
-    .then((policy) => callback(null, policy))
+  // Extract the message from the SNS event
+  const message = JSON.parse(event.Records[0].Sns.Message);
+
+  const bucket = message.bucket || defaultBucket;
+
+  generatePolicy(message.url, defaultRegion, bucket)
+    .then((policy) => updateBucketPolicy(bucket, policy))
+    .then((data) => callback(null, data))
     .catch((err) => callback(err));
 }
-
 
 module.exports = {
   handler,
