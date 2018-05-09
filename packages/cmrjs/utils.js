@@ -158,7 +158,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
   const ip = await publicIp.v4()
     .catch((err) => {
       if (err.message === 'Query timed out') {
-        process.env.USER_IP_ADDRESS || null;
+        process.env.USER_IP_ADDRESS || '10.0.0.0';
       } else {
         throw err;
       }
