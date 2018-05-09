@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { parseString } = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
-const urlPathTemplate = require('../url-path-template');
+const { urlPathTemplate } = require('../url-path-template');
 
 const modisXmlFile = path.join(
   __dirname,
