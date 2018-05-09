@@ -203,6 +203,7 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
           Bucket: file.bucket,
           Key: file.filepath
         };
+        delete file.fileStagingDir;
         moveFileRequests.push(moveGranuleFile(source, target));
       }
     });
