@@ -295,6 +295,7 @@ IngestGranule:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -317,6 +318,7 @@ IngestGranule:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -429,6 +431,7 @@ SyncGranule:
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
         fileStagingDir: 'custom-staging-dir'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -452,6 +455,7 @@ SyncGranule:
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
         fileStagingDir: 'custom-staging-dir'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
