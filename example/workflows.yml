@@ -382,6 +382,7 @@ IngestGranule:
         bucket: '{$.meta.buckets.internal}'
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
+        process: '{$.cumulus_meta.process}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
         cumulus_message:

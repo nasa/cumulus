@@ -16,11 +16,7 @@ const templatedSyncGranuleFilename = templateFile({
 const expectedSyncGranulePayload = JSON.parse(fs.readFileSync(templatedSyncGranuleFilename));
 
 const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'; // eslint-disable-line max-len
-const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: outputPayloadTemplateFilename,
-  config: config[taskName].SyncGranuleOutput
-});
-const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
+const expectedPayload = JSON.parse(fs.readFileSync(outputPayloadTemplateFilename));
 
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
