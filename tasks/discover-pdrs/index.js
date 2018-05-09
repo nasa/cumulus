@@ -30,7 +30,9 @@ function discoverPdrs(event) {
       bucket,
       collection,
       provider,
-      config.useList
+      config.useList,
+      'pdrs',
+      config.force || false
     );
 
     log.debug('Starting PDR discovery');
