@@ -456,6 +456,8 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
         }
       }
 
+      // If the granule exists in 'deletedgranule', delete it first before inserting the granule
+      // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
       const delGranParams = {
         index,
         type: 'deletedgranule',
@@ -511,6 +513,9 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
         const doc = result._source;
         doc.timestamp = Date.now();
         doc.deletedAt = Date.now();
+
+        // When a 'granule' record is deleted, the record is added to 'deletedgranule'
+        // type for EMS report purpose.
         await esClient.update({
           index,
           type: 'deletedgranule',
