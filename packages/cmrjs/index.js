@@ -150,13 +150,81 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
  */
 async function deleteConcept(type, identifier, provider, token) {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
+  log.info(`deleteConcept ${url}`);
 
-  const response = await got.delete(url, {
-    headers: {
-      'Echo-Token': token,
-      'Content-type': 'application/echo10+xml'
-    }
+  let result;
+  try {
+    result = await got.delete(url, {
+      headers: {
+        'Echo-Token': token,
+        'Content-type': 'application/echo10+xml'
+      }
+    });
+  }
+  catch (error) {
+    result = error.response;
+  }
+
+  const xmlObject = await new Promise((resolve, reject) => {
+    parseString(result.body, xmlParseOptions, (err, res) => {
+      if (err) reject(err);
+      resolve(res);
+    });
   });
+
+  let errorMessage;
+  if (result.statusCode !== 200) {
+    // eslint-disable-next-line max-len
+    errorMessage = `Failed to delete, statusCode: ${result.statusCode}, statusMessage: ${result.statusMessage}`;
+    if (xmlObject.errors) {
+      // eslint-disable-next-line max-len
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`;
+    }
+    log.info(errorMessage);
+  }
+
+  if (result.statusCode !== 200 && result.statusCode !== 404) {
+    throw new Error(errorMessage);
+  }
+
+  return xmlObject;
+}
+
+/**
+ * Get the CMR JSON metadata from the cmrLink
+ *
+ * @param {string} cmrLink - link to concept in CMR
+ * @returns {Object} - metadata as a JS object, null if not
+ * found
+ */
+async function getMetadata(cmrLink) {
+  const response = await got.get(cmrLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
+
+  const body = JSON.parse(response.body);
+
+  return body.feed.entry[0];
+}
+
+/**
+ * Get the full metadata from CMR as a JS object by getting
+ * the echo10 metadata
+ *
+ * @param {string} cmrLink - link to concept in CMR. This link is a json
+ * link that comes from task output.
+ * @returns {Object} - Full metadata as a JS object
+ */
+async function getFullMetadata(cmrLink) {
+  const xmlLink = cmrLink.replace('json', 'echo10');
+
+  const response = await got.get(xmlLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
 
   const xmlObject = await new Promise((resolve, reject) => {
     parseString(response.body, xmlParseOptions, (err, res) => {
@@ -165,20 +233,13 @@ async function deleteConcept(type, identifier, provider, token) {
     });
   });
 
-  if (xmlObject.errors) {
-    throw new Error(
-      `Failed to delete, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`
-    );
-  }
-
-  return xmlObject;
+  return xmlObject.Granule;
 }
 
 /**
  * The CMR class
  */
 class CMR {
-
   /**
    * The constructor for the CMR class
    *
@@ -217,7 +278,7 @@ class CMR {
    * Adds a granule record to the CMR
    *
    * @param {string} xml - the granule xml document
-   * @returns {Promise.<object>} the CMR response
+   * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
     const token = await this.getToken();
@@ -256,7 +317,7 @@ class CMR {
   }
 
   /**
-   * Search in granules 
+   * Search in granules
    *
    * @param {string} searchParams - the search parameters
    * @returns {Promise.<Object>} the CMR response
@@ -268,8 +329,11 @@ class CMR {
 
 module.exports = {
   ingestConcept,
+  deleteConcept,
   getUrl,
   updateToken,
   ValidationError,
-  CMR
+  CMR,
+  getMetadata,
+  getFullMetadata
 };
