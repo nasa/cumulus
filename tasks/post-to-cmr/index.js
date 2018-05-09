@@ -177,6 +177,7 @@ async function postToCMR(event) {
   const bucket = get(config, 'bucket'); // the name of the bucket with private/public keys
   const stack = get(config, 'stack'); // the name of the deployment stack
   const input = get(event, 'input', []);
+  const process = get(config, 'process');
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const granules = get(input, 'granules'); // Object of all Granules
   const inputFiles = get(input, 'inputFiles'); // list of files from input
@@ -195,6 +196,7 @@ async function postToCMR(event) {
   const results = await Promise.all(publishRquests);
 
   return {
+    process: process,
     granules: buildOutput(results, allGranules)
   };
 }
