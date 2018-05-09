@@ -9,8 +9,6 @@ const taskName = 'DiscoverAndQueuePdrs';
 
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
-
 describe('The Discover And Queue PDRs workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
