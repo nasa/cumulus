@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
 - **CUMULUS-534** Track deleted granules
   - added `deletedgranule` type to `cumulus` index.
+- Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
+- Added support to force discovery of PDRs that have already been processed and filtering of selected data types
 
 ## [v1.5.1] - 2018-04-23
 ### Fixed
