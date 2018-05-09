@@ -4,7 +4,6 @@ const { loadConfig } = require('../helpers/testUtils');
 const awsConfig = loadConfig();
 const activityStep = new ActivityStep();
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 describe('The Hello World workflow using ECS', () => {
   let workflowExecution = null;

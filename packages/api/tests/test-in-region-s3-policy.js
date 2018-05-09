@@ -51,7 +51,7 @@ test.afterEach(() => {
 });
 
 test.serial('IP ranges filtered correctly', async (t) => {
-  const bucketPolicy = await policy.generatePolicy('url', 'us-east-1');
+  const bucketPolicy = await policy.generatePolicy('url', 'us-east-1', 'test-bucket');
 
   t.deepEqual(
     get(bucketPolicy, 'Statement[0].Condition.IpAddress.aws:SourceIp'),
