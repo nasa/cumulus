@@ -37,16 +37,15 @@ function parsePdr(event) {
   return parse.ingest()
     .then((payload) => {
       if (parse.connected) parse.end();
-      //console.log(`Got payload ${JSON.stringify(payload)}`)
       // opportunity to filter the granules of interest based on regex in granuleIdExtraction
-      if (config && config.collection) {
-        const { granuleIdExtraction } = config.collection;
-        if (granuleIdExtraction) {
-          const filteredPayload = {
-            granules: payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction))
-          };
-          return Object.assign({}, event.input, filteredPayload);
-        }
+      if (config && config.collection && config.collection.granuleIdExtraction) {
+        const granuleIdExtraction = config.collection.granuleIdExtraction;
+        const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction));
+        const filteredPayload = {
+          granules: granules,
+          granulesCount: granules.length
+        };
+        return Object.assign({}, event.input, filteredPayload);
       }
 
       return Object.assign({}, event.input, payload);
