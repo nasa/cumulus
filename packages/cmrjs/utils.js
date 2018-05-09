@@ -155,6 +155,15 @@ async function updateToken(cmrProvider, clientId, username, password) {
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
   let response;
+  const ip = await publicIp.v4()
+    .catch((err) => {
+      if (err.message === 'Query timed out') {
+        process.env.USER_IP_ADDRESS || null;
+      } else {
+        throw err;
+      }
+    });
+
   try {
     response = await got.post(getUrl('token'), {
       json: true,
@@ -163,7 +172,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
           username: username,
           password: password,
           client_id: clientId,
-          user_ip_address: await publicIp.v4(),
+          user_ip_address: ip,
           provider: cmrProvider
         }
       }
