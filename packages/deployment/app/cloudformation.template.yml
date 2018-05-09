@@ -985,3 +985,11 @@ Outputs:
       Fn::GetAtt:
         - CumulusCustomResource
         - CmrPassword
+
+{{#if vpc}}
+  EcsSecurityGroup:
+    Description: ECS security group
+    Value: !Ref SecurityGroup
+    Export:
+      Name: !Sub "{{stackName}}-EcsSecurityGroup"
+{{/if}}
