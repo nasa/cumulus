@@ -12,9 +12,6 @@ const os = require('os');
  * @returns {string} - The absolute path to the created dir
  */
 exports.mkdtempSync = (name) => {
-  // if (fs.mkdtempSync) {
-  //   return fs.mkdtempSync(`gitc_${name}`);
-  // }
   const dirname = ['gitc', name, +new Date()].join('_');
   const abspath = path.join(os.tmpdir(), dirname);
   fs.mkdirSync(abspath, 0o700);
