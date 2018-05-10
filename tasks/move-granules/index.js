@@ -290,17 +290,9 @@ async function moveGranules(event) {
     // update cmr.xml files with correct online access urls
     updateCmrFileAccessURls(cmrFiles, allGranules, regex);
   }
-  const outputGranules = Object.keys(allGranules).map((k) => allGranules[k]);
-  const outputFiles = [];
-  outputGranules.forEach((g) => {
-    g.files.forEach((file) => {
-      outputFiles.push(file.filename);
-    });
-  });
 
   return {
-    inputFiles: outputFiles,
-    granules: outputGranules
+    granules: Object.keys(allGranules).map((k) => allGranules[k])
   };
 }
 
