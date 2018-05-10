@@ -28,7 +28,7 @@ function token(event, context) {
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
     const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam()}`;
-    
+
     // Verify token
     return got.post(EARTHDATA_CHECK_CODE_URL + params, {
       json: true,

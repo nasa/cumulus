@@ -6,6 +6,7 @@ const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
+const _ = require('lodash');
 
 /**
 * Parse a PDR
@@ -39,16 +40,16 @@ function parsePdr(event) {
       if (parse.connected) parse.end();
       // opportunity to filter the granules of interest based on regex in granuleIdExtraction
       if (config && config.collection && config.collection.granuleIdExtraction) {
-        const granuleIdExtraction = config.collection.granuleIdExtraction;
-        const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdExtraction));
+        const granuleIdFilter = config.collection.granuleIdFilter;
+        const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdFilter));
         const filteredPayload = {
           granules: granules,
           granulesCount: granules.length
         };
-        return Object.assign({}, event.input, filteredPayload);
+        return Object.assign({}, _.cloneDeep(event.input), filteredPayload);
       }
 
-      return Object.assign({}, event.input, payload);
+      return Object.assign({}, _.cloneDeep(event.input), payload);
     })
     .catch((e) => {
       if (e.toString().includes('ECONNREFUSED')) {
@@ -83,10 +84,9 @@ exports.handler = handler;
 
 // use node index.js local to invoke this
 justLocalRun(() => {
-  //const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
-  const payload = require('/Users/pcappela/Development/gitc-deploy/ingest-sips/messages/parse-pdr.json');
+  const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
   handler(payload, {}, (e, r) => {
     //console.log(e);
-    console.log(JSON.stringify(r, null, '\t'));
-  })
+    console.log(JSON.stringify(r, null, '\t')); // eslint-disable-line no-console
+  });
 });
