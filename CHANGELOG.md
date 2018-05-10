@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
 - `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
 
+### Changed
+- **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
+  - Change IAM deployment configuration
+  - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
+
 ## [v1.5.1] - 2018-04-23
 ### Fixed
 - add the missing dist folder to the hello-world task
