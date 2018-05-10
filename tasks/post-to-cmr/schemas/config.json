@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "bucket",
+    "process",
     "stack",
     "cmr"
   ],
@@ -11,6 +12,10 @@
     "bucket": {
       "type": "string",
       "description": "the bucket the has the private/public key needed for decrypting cmr password"
+    },
+    "process": {
+      "type": "string",
+      "description": "The process the granules went through"
     },
     "stack": {
       "type": "string",
