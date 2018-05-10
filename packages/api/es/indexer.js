@@ -8,6 +8,7 @@
  * - IngestGranules
  * - StateMachine (if a payload doesn't belong to previous ones)
  */
+
 'use strict';
 
 const path = require('path');
@@ -15,10 +16,16 @@ const get = require('lodash.get');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getExecutionArn, getExecutionUrl, invoke, StepFunction } = require('@cumulus/ingest/aws');
 const { Search, defaultIndexAlias } = require('./search');
 const Rule = require('../models/rules');
 const uniqBy = require('lodash.uniqby');
+const cmrjs = require('@cumulus/cmrjs');
+const {
+  getExecutionArn,
+  getExecutionUrl,
+  invoke,
+  StepFunction
+} = require('@cumulus/ingest/aws');
 
 /**
  * Returns the collectionId used in elasticsearch
@@ -163,9 +170,7 @@ function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 
     name
   );
   if (!arn) {
-    return Promise.reject(
-      new Error('State Machine Arn is missing. Must be included in the cumulus_meta')
-    );
+    return Promise.reject(new Error('State Machine Arn is missing. Must be included in the cumulus_meta'));
   }
 
   const execution = getExecutionUrl(arn);
@@ -339,6 +344,39 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
 }
 
 /**
+ * Calculate granule product volume, which is the sum of the file
+ * sizes in bytes
+ *
+ * @param {Array<Object>} granuleFiles - array of granule files
+ * @returns {Integer} - sum of granule file sizes in bytes
+ */
+function getGranuleProductVolume(granuleFiles) {
+  const fileSizes = granuleFiles.map((file) => file.fileSize)
+    .filter((size) => size);
+
+  return fileSizes.reduce((a, b) => a + b);
+}
+
+/**
+ * Extract a date from the payload and return it in string format
+ *
+ * @param {Object} payload - payload object
+ * @param {string} dateField - date field to extract
+ * @returns {string} - date field in string format, null if the
+ * field does not exist in the payload
+ */
+function extractDate(payload, dateField) {
+  const dateMs = get(payload, dateField);
+
+  if (dateMs) {
+    const date = new Date(dateMs);
+    return date.toISOString();
+  }
+
+  return null;
+}
+
+/**
  * Extracts granule info from a stepFunction message and indexes it to
  * an ElasticSearch
  *
@@ -381,7 +419,7 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
     await indexCollection(esClient, collection);
   }
 
-  const done = granules.map((g) => {
+  const done = granules.map(async (g) => {
     if (g.granuleId) {
       const doc = {
         granuleId: g.granuleId,
@@ -394,11 +432,29 @@ async function granule(esClient, payload, index = defaultIndexAlias, type = 'gra
         files: uniqBy(g.files, 'filename'),
         error: exception,
         createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        productVolume: getGranuleProductVolume(g.files),
+        timeToPreprocess: get(payload, 'meta.sync_granule_duration'),
+        timeToArchive: get(payload, 'meta.post_to_cmr_duration'),
+        processingStartTime: extractDate(payload, 'meta.sync_granule_end_time'),
+        processingEndTime: extractDate(payload, 'meta.post_to_cmr_start_time')
       };
 
       doc.published = get(g, 'published', false);
+      // Duration is also used as timeToXfer for the EMS report
       doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+      if (g.cmrLink) {
+        const metadata = await cmrjs.getMetadata(g.cmrLink);
+        doc.beginningDateTime = metadata.time_start;
+        doc.endingDateTime = metadata.time_end;
+        doc.lastUpdateDateTime = metadata.updated;
+
+        const fullMetadata = await cmrjs.getFullMetadata(g.cmrLink);
+        if (fullMetadata && fullMetadata.DataGranule) {
+          doc.productionDateTime = fullMetadata.DataGranule.ProductionDateTime;
+        }
+      }
 
       return esClient.update({
         index,
