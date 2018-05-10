@@ -36,7 +36,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('the SyncGranules Lambda', () => {
+  describe('the SyncGranules task', () => {
     let lambdaOutput = null;
 
     beforeAll(async () => {
@@ -52,7 +52,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the MoveGranules Lambda', () => {
+  describe('the MoveGranules task', () => {
     let lambdaOutput;
     let files;
     const existCheck = [];
@@ -73,7 +73,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('has a payload with updated filename', () => {
       let i;
-      for (i = 0; i < 3; i++) {
+      for (i = 0; i < 3; i += 1) {
         expect(files[i].filename).toEqual(expectedPayload.granules[0].files[i].filename);
       }
     });
@@ -85,7 +85,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the PostToCmr Lambda', () => {
+  describe('the PostToCmr task', () => {
     let lambdaOutput;
     let cmrResource;
     let cmrLink;
@@ -104,7 +104,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(lambdaOutput.payload).toEqual(expectedPayload);
     });
 
-    it('granule is published to CMR', () => {
+    it('publishes the granule metadata to CMR', () => {
       const granule = lambdaOutput.payload.granules[0];
       const result = conceptExists(granule.cmrLink);
 
@@ -112,7 +112,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(result).not.toEqual(false);
     });
 
-    it('CMR metadata online resources contain final metadata location', () => {
+    it('updates the CMR metadata online resources with the final metadata location', () => {
       const granule = lambdaOutput.payload.granules[0];
 
       expect(cmrResource[0].href).toEqual(granule.files[0].filename);
