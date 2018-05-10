@@ -179,6 +179,42 @@ module.exports.granule = {
     createdAt: {
       type: 'number',
       readonly: true
+    },
+    productVolume: {
+      type: 'number',
+      readonly: true
+    },
+    timeToPreprocess: {
+      type: 'number',
+      readonly: true
+    },
+    beginningDateTime: {
+      type: 'string',
+      readonly: true
+    },
+    endingDateTime: {
+      type: 'string',
+      readonly: true
+    },
+    processingStartTime: {
+      type: 'string',
+      readonly: true
+    },
+    processingEndTime: {
+      type: 'string',
+      readonly: true
+    },
+    lastUpdateDateTime: {
+      type: 'string',
+      readonly: true
+    },
+    timeToArchive: {
+      type: 'number',
+      readonly: true
+    },
+    productionDateTime: {
+      type: 'string',
+      readonly: true
     }
   },
   required: [
@@ -186,7 +222,8 @@ module.exports.granule = {
     'collection',
     'status',
     'execution',
-    'createdAt'
+    'createdAt',
+    'productVolume'
   ]
 };
 

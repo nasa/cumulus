@@ -4,7 +4,6 @@ const fs = require('fs');
 const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
-const testUtils = require('@cumulus/common/test-utils');
 
 const cmrjs = require('@cumulus/cmrjs');
 const payload = require('./data/payload.json');
@@ -24,7 +23,7 @@ async function deleteBucket(bucket) {
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = testUtils.randomString(); // eslint-disable-line no-param-reassign
+  t.context.bucket = 'cumulus-public'; // eslint-disable-line no-param-reassign
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
@@ -36,10 +35,7 @@ test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
   const newPayload = JSON.parse(JSON.stringify(payload));
-  const granuleId = newPayload.config.input_granules[0].granuleId;
-  // avoid failure with invalid template path
-  newPayload.config.collection.url_path = 'example/';
-  newPayload.config.moveStagedFiles = false;
+  const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
@@ -47,8 +43,6 @@ test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
     Key: key,
     Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
   }).then(() => {
-    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
-
     return postToCMR(newPayload)
       .then(() => {
         cmrjs.CMR.prototype.getToken.restore();
@@ -66,23 +60,14 @@ test('should succeed with correct payload', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
-  const granuleId = newPayload.config.input_granules[0].granuleId;
-  newPayload.config.moveStagedFiles = false;
+  const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
-  const expectedFilenames = [
-    's3://cumulus-protected/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    's3://cumulus-private/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met',
-    's3://cumulus-private/example/2003/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    's3://cumulus-public/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'];
 
   return aws.promiseS3Upload({
     Bucket: t.context.bucket,
     Key: key,
     Body: fs.createReadStream('tests/data/meta.xml')
   }).then(() => {
-    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
     return postToCMR(newPayload)
       .then((output) => {
         cmrjs.CMR.prototype.ingestGranule.restore();
@@ -90,8 +75,6 @@ test('should succeed with correct payload', (t) => {
           output.granules[0].cmrLink,
           `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
         );
-        const outputFilenames = output.granules[0].files.map((f) => f.filename);
-        t.deepEqual(expectedFilenames, outputFilenames);
       })
       .catch((e) => {
         console.log(e);
@@ -103,9 +86,6 @@ test('should succeed with correct payload', (t) => {
 
 test('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
-  // avoid failure with invalid template path
-  newPayload.config.collection.url_path = 'example/';
-  newPayload.config.moveStagedFiles = false;
   newPayload.input.granules = [{
     granuleId: 'some granule',
     files: [{
