@@ -143,6 +143,27 @@ async function validate(type, xml, identifier, provider) {
 }
 
 /**
+ * Returns IP address.
+ *
+ * For Lambdas which are launched into a private subnet, no public IP is available
+ * and the function falls back to an environment variable, if defined, and  a
+ * static string if not defined. The value returned should be a valid IP address or
+ * else the request for a valid CMR token will fail.
+ *
+ * @return {String} IP address
+ */
+async function getIp() {
+  return await publicIp.v4()
+    .catch((err) => {
+      if (err.message === 'Query timed out') {
+        return process.env.USER_IP_ADDRESS || '10.0.0.0';
+      } else {
+        throw err;
+      }
+    });
+};
+
+/**
  * Returns a valid a CMR token
  *
  * @param {string} cmrProvider - the CMR provider id
@@ -155,14 +176,6 @@ async function updateToken(cmrProvider, clientId, username, password) {
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
   let response;
-  const ip = await publicIp.v4()
-    .catch((err) => {
-      if (err.message === 'Query timed out') {
-        return process.env.USER_IP_ADDRESS || '10.0.0.0';
-      } else {
-        throw err;
-      }
-    });
 
   try {
     response = await got.post(getUrl('token'), {
@@ -172,7 +185,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
           username: username,
           password: password,
           client_id: clientId,
-          user_ip_address: ip,
+          user_ip_address: await getIp(),
           provider: cmrProvider
         }
       }
@@ -222,5 +235,6 @@ module.exports = {
   ValidationError,
   updateToken,
   getUrl,
-  xmlParseOptions
+  xmlParseOptions,
+  getIp
 }
