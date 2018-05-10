@@ -356,16 +356,35 @@ IngestGranule:
             - States.ALL
           IntervalSeconds: 2
           MaxAttempts: 3
+      Next: MoveGranuleStep
+    MoveGranuleStep:
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal}'
+        buckets: '{$.meta.buckets}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        input_granules: '{$.meta.input_granules}'
+        collection: '{$.meta.collection}'
+        cumulus_message:
+          input: '{$.payload}'
+          outputs:
+            - source: '{$}'
+              destination: '{$.payload}'
+      Type: Task
+      Resource: ${MoveGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
       Next: CmrStep
     CmrStep:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal}'
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
+        process: '{$.cumulus_meta.process}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-        collection: '{$.meta.collection}'
-        buckets: '{$.meta.buckets}'
         cumulus_message:
           input: '{$.payload}'
           outputs:

@@ -4,33 +4,18 @@
   "type": "object",
   "required": [
     "bucket",
+    "process",
     "stack",
-    "cmr",
-    "input_granules",
-    "collection",
-    "buckets"
+    "cmr"
   ],
   "properties": {
-    "input_granules": {
-      "type": "array",
-      "description": "granules object used to construct output for cumulus indexer",
-      "items": {
-        "type": "object"
-      }
-    },
     "bucket": {
       "type": "string",
       "description": "the bucket the has the private/public key needed for decrypting cmr password"
     },
-    "buckets": {
-      "type": "object",
-      "description": "aws s3 buckets used by this task",
-      "properties": {
-        "internal": { "type": "string" },
-        "private": { "type": "string" },
-        "protected": { "type": "string" },
-        "public": { "type": "string" }
-      }
+    "process": {
+      "type": "string",
+      "description": "The process the granules went through"
     },
     "stack": {
       "type": "string",
@@ -49,31 +34,6 @@
         "clientId": { "type": "string" },
         "username": { "type": "string" },
         "password": { "type": "string" }
-      }
-    },
-    "collection": {
-      "type": "object",
-      "required": [
-        "files",
-        "name"
-      ],
-      "properties": {
-        "name": { "type": "string" },
-        "process": { "type": "string" },
-        "url_path": { "type": "string" },
-        "duplicateHandling": { "type": "string" },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["regex", "bucket"],
-            "properties": {
-              "regex": { "type": "string" },
-              "bucket": { "type": "string" },
-              "url_path": { "type": "string" }
-            }
-          }
-        }
       }
     }
   }
