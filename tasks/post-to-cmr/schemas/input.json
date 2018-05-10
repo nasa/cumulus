@@ -3,8 +3,7 @@
   "description": "Describes the input expected by the post-to-cmr task",
   "type": "object",
   "required": [
-    "granules",
-    "inputFiles"
+    "granules"
   ],
   "properties": {
     "granules": {
@@ -37,10 +36,6 @@
           }
         }
       }
-    },
-    "inputFiles": {
-      "type": "array",
-      "description": "list of filenames from input"
     }
   }
 }
