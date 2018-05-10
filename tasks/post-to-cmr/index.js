@@ -165,8 +165,7 @@ function buildOutput(results, granulesObject) {
  * @param {string} event.config.bucket - the bucket name where public/private keys
  *                                       are stored
  * @param {string} event.config.stack - the deployment stack name
- * @param {Object} event.config.granules - Object of all granules where granuleID is the key
- * @param {Array} event.config.cmrFiles - list of CMR files from input
+ * @param {Object} event.input.granules - Object of all granules where granuleID is the key
  * @param {Object} event.config.cmr - the cmr object containing user/pass and provider
  * @returns {Promise} returns the promise of an updated event object
  */
@@ -180,16 +179,18 @@ async function postToCMR(event) {
   const process = get(config, 'process');
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const granules = get(input, 'granules'); // Object of all Granules
-  const inputFiles = get(input, 'inputFiles'); // list of files from input
   const creds = get(config, 'cmr');
   const allGranules = {};
-
+  const allFiles = [];
   granules.forEach((granule) => {
     allGranules[granule.granuleId] = granule;
+    granule.files.forEach((file) => {
+      allFiles.push(file.filename);
+    });
   });
 
   // get cmr files
-  const cmrFiles = await getCmrFiles(inputFiles, regex);
+  const cmrFiles = await getCmrFiles(allFiles, regex);
 
   // post all meta files to CMR
   const publishRquests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));

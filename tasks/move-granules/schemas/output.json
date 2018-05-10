@@ -33,10 +33,6 @@
           }
         }
       }
-    },
-    "inputFiles": {
-      "type": "array",
-      "description": "list of filenames from input"
     }
   }
 }

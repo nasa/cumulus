@@ -86,13 +86,12 @@ test('should succeed with correct payload', (t) => {
 
 test('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.input.allGranules = [{
+  newPayload.input.granules = [{
     granuleId: 'some granule',
     files: [{
       filename: `s3://${t.context.bucket}/to/file.xml`
     }]
   }];
-  newPayload.input.inputFiles = [];
 
   return postToCMR(newPayload)
     .then((output) => {
