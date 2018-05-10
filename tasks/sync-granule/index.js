@@ -82,7 +82,6 @@ exports.syncGranule = function syncGranule(event) {
     forceDownload
   );
 
-  // BUCKET/KEY TODO: update to take in a system bucket, update tests
   return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {
       if (ingest.end) ingest.end();
