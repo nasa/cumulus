@@ -148,7 +148,7 @@ async function validate(type, xml, identifier, provider) {
  * For Lambdas which are launched into a private subnet, no public IP is available
  * and the function falls back to an environment variable, if defined, and  a
  * static string if not defined. The value returned should be a valid IP address or
- * else the request for a valid CMR token will fail.
+ * else the request for a CMR token will fail.
  *
  * @return {String} IP address
  */
