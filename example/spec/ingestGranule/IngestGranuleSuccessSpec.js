@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
-const { buildAndExecuteWorkflow, LambdaStep, conceptExists } =
+const { buildAndExecuteWorkflow, LambdaStep, conceptExists, getOnlineResources } =
   require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile } = require('../helpers/testUtils');
@@ -71,9 +71,12 @@ describe('The S3 Ingest Granules workflow', () => {
       await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
     });
 
-    // it('has a payload with updated file locations', () => {
-
-    // });
+    it('has a payload with updated filename', () => {
+      let i;
+      for (i = 0; i < 3; i++) {
+        expect(files[i].filename).toEqual(expectedPayload.granules[0].files[i].filename);
+      }
+    });
 
     it('moves files to the bucket folder based on metadata', () => {
       existCheck.forEach((check) => {
@@ -84,9 +87,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('the PostToCmr Lambda', () => {
     let lambdaOutput;
+    let cmrResource;
+    let cmrLink;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      cmrLink = lambdaOutput.payload.granules[0].cmrLink;
+      cmrResource = await getOnlineResources(cmrLink);
     });
 
     it('has expected payload', () => {
@@ -103,6 +110,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
+    });
+
+    it('CMR resource has correct metadata', () => {
+      const granule = lambdaOutput.payload.granules[0];
+
+      expect(cmrResource[0].href).toEqual(granule.files[0].filename);
+      expect(cmrResource[1].href).toEqual(granule.files[1].filename);
     });
   });
 });
