@@ -65,7 +65,7 @@ function templateReplacer(context, submatch) {
 * @param {Object} context - the metadata used in the template
 * @returns {string} - the url path for the file
 **/
-module.exports = function urlPathTemplate(pathTemplate, context) {
+function urlPathTemplate(pathTemplate, context) {
   const templateRegex = /{([^}]+)}/g;
   try {
     // match: The matched substring, submatch: The parenthesized submatch string
@@ -77,4 +77,6 @@ module.exports = function urlPathTemplate(pathTemplate, context) {
       `Could not resolve path template "${pathTemplate}" with error "${e.toString()}"`
     );
   }
-};
+}
+
+module.exports.urlPathTemplate = urlPathTemplate;
