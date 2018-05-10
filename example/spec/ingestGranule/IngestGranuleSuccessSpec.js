@@ -112,7 +112,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(result).not.toEqual(false);
     });
 
-    it('CMR resource has correct metadata', () => {
+    it('CMR metadata online resources contain final metadata location', () => {
       const granule = lambdaOutput.payload.granules[0];
 
       expect(cmrResource[0].href).toEqual(granule.files[0].filename);
