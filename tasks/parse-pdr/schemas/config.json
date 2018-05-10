@@ -11,6 +11,15 @@
       "description": "The name of the Task's CloudFormation Task, useful as a prefix",
       "type": "string"
     },
+    "collection": {
+      "type": "object",
+      "properties": {
+        "granuleIdFilter": {
+          "description": "optional attribute to filter granules by id",
+          "type": "string"
+        }
+      }
+    },
     "provider": {
       "type": "object",
       "properties": {
