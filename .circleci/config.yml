@@ -102,12 +102,12 @@ jobs:
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
 
-              # Build test processing task
+              # Build test processing task, CHANGE WHEN PUBLISHED TO NPM
               cd tasks/test-processing
               yarn build
               cd ../..
 
-              # Build move-granules task
+              # Build move-granules task, CHANGE WHEN PUBLISHED TO NPM
               cd tasks/move-granules
               yarn build
               cd ../..

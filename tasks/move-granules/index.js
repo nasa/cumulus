@@ -13,7 +13,7 @@ const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
 
 /**
- * getMetadata
+ * Gets metadata for a cmr xml file from s3
  *
  * @param {string} xmlFilePath - S3 URI to the xml metadata document
  * @returns {string} returns stringified xml document downloaded from S3
