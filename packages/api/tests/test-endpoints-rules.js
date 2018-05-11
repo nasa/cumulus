@@ -14,10 +14,11 @@ const models = require('../models');
 const rulesEndpoint = require('../endpoints/rules');
 const { testEndpoint } = require('./testUtils');
 const { Search } = require('../es/search');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const rules = new models.Rule();
 
-const esIndex = 'cumulus-index';
+const esIndex = randomString();
 
 const testRule = {
   name: 'make_coffee',

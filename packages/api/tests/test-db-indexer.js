@@ -29,15 +29,16 @@ const testCollection = {
 
 const collectionOnlyInDynamo = Object.assign({}, testCollection, { name: `collection-${randomString()}` });
 
-const codeDirectory = 'dist/'
+const codeDirectory = 'dist/';
 const tmpZipFile = path.join('/tmp/test.zip');
-const output = fs.createWriteStream(tmpZipFile)
+const output = fs.createWriteStream(tmpZipFile);
 const archive = archiver('zip', {
   zlib: { level: 9 }
 });
 const dbIndexerFnName = 'test-dbIndexer';
 const hash = { name: 'name', type: 'S' };
 const range = { name: 'version', type: 'S' };
+const esIndex = randomString();
 
 /**
  * TODO(aimee): This test works when running tests just for @cumulus/api, but not on all tests or CI.
@@ -57,12 +58,12 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
     await models.Manager.createTable(process.env.CollectionsTable, hash, range);
     // create an object only in dynamo to test error condition
     await collections.create(collectionOnlyInDynamo);
-    await bootstrap.bootstrapElasticSearch('fakehost');
+    await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
     // create the lambda function
     await new Promise((resolve) => {
       output.on('close', () => {
-        const contents = fs.readFileSync(tmpZipFile)
+        const contents = fs.readFileSync(tmpZipFile);
 
         aws.lambda().createFunction({
           FunctionName: dbIndexerFnName,
@@ -86,15 +87,15 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
           });
       });
 
-      archive.pipe(output)
+      archive.pipe(output);
       archive.directory(codeDirectory, false);
-      archive.finalize()
+      archive.finalize();
     })
       .catch(console.log);
 
     //get the dynamo collections table stream arn and add it as an event source to the lambda
     await new Promise((resolve, reject) => {
-      aws.dynamodbstreams().listStreams({TableName: process.env.CollectionsTable}, (err, data) => {
+      aws.dynamodbstreams().listStreams({ TableName: process.env.CollectionsTable }, (err, data) => {
         if (err) reject(err);
         const collectionsTableStreamArn = data.Streams.find((s) => s.TableName === 'test-stack-CollectionsTable').StreamArn;
         const eventSourceMappingParams = {
@@ -115,7 +116,7 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
 
   test.skip.after.always(async () => {
     await models.Manager.deleteTable(process.env.CollectionsTable);
-    await aws.lambda().deleteFunction({FunctionName: dbIndexerFnName}).promise();
+    await aws.lambda().deleteFunction({ FunctionName: dbIndexerFnName }).promise();
     await aws.recursivelyDeleteS3Bucket(process.env.internal);
   });
 
@@ -145,6 +146,6 @@ if (process.env.LOCALSTACK_HOST === 'localhost') {
   });
 } else {
   test('db-indexer TODO test', (t) => {
-    t.is(1+1, 2);
+    t.is(1 + 1, 2);
   });
 }

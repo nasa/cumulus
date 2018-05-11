@@ -1,6 +1,5 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
 const test = require('ava');
 
 process.env.ProvidersTable = 'Test_ProviderTable';
@@ -13,8 +12,9 @@ const providerEndpoint = require('../endpoints/providers');
 const { testEndpoint } = require('./testUtils');
 const providers = new models.Provider();
 const { Search } = require('../es/search');
+const { randomString } = require('@cumulus/common/test-utils');
 
-const esIndex = 'cumulus-index';
+const esIndex = randomString();
 
 const testProvider = {
   id: 'orbiting-carbon-observatory-2',
@@ -23,7 +23,6 @@ const testProvider = {
   host: 'https://oco.jpl.nasa.gov/',
   port: 80
 };
-const keyId = 'public.pub';
 
 const hash = { name: 'id', type: 'S' };
 
