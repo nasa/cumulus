@@ -10,67 +10,67 @@ const mappingsSubset = require('./data/testEsMappingsSubset.json');
 
 let esClient;
 
-test.serial('bootstrap creates index with alias', async (t) => {
-  const indexName = randomString();
-  const testAlias = randomString();
+// test.serial('bootstrap creates index with alias', async (t) => {
+//   const indexName = randomString();
+//   const testAlias = randomString();
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
+//   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+//   esClient = await Search.es();
 
-  t.is(await esClient.indices.exists({ index: indexName }), true);
+//   t.is(await esClient.indices.exists({ index: indexName }), true);
 
-  const alias = await esClient.indices.getAlias({ name: testAlias });
+//   const alias = await esClient.indices.getAlias({ name: testAlias });
 
-  t.deepEqual(Object.keys(alias), [indexName]);
+//   t.deepEqual(Object.keys(alias), [indexName]);
 
-  await esClient.indices.delete({ index: indexName });
-});
+//   await esClient.indices.delete({ index: indexName });
+// });
 
-test.serial('bootstrap adds alias to existing index', async (t) => {
-  const indexName = randomString();
-  const testAlias = randomString();
+// test.serial('bootstrap adds alias to existing index', async (t) => {
+//   const indexName = randomString();
+//   const testAlias = randomString();
 
-  esClient = await Search.es();
+//   esClient = await Search.es();
 
-  await esClient.indices.create({
-    index: indexName,
-    body: { mappings }
-  });
+//   await esClient.indices.create({
+//     index: indexName,
+//     body: { mappings }
+//   });
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
+//   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+//   esClient = await Search.es();
 
-  const alias = await esClient.indices.getAlias({ name: testAlias });
+//   const alias = await esClient.indices.getAlias({ name: testAlias });
 
-  t.deepEqual(Object.keys(alias), [indexName]);
+//   t.deepEqual(Object.keys(alias), [indexName]);
 
-  await esClient.indices.delete({ index: indexName });
-});
+//   await esClient.indices.delete({ index: indexName });
+// });
 
-test.serial('Missing types added to index', async (t) => {
-  const indexName = randomString();
-  const testAlias = randomString();
+// test.serial('Missing types added to index', async (t) => {
+//   const indexName = randomString();
+//   const testAlias = randomString();
 
-  esClient = await Search.es();
+//   esClient = await Search.es();
 
-  await esClient.indices.create({
-    index: indexName,
-    body: { mappings: mappingsSubset }
-  });
+//   await esClient.indices.create({
+//     index: indexName,
+//     body: { mappings: mappingsSubset }
+//   });
 
-  t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, Object.keys(testMappings)),
-    ['logs', 'deletedgranule']
-  );
+//   t.deepEqual(
+//     await bootstrap.findMissingMappings(esClient, indexName, Object.keys(testMappings)),
+//     ['logs', 'deletedgranule']
+//   );
 
-  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
-  esClient = await Search.es();
+//   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+//   esClient = await Search.es();
 
-  t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, Object.keys(testMappings)),
-    []
-  );
+//   t.deepEqual(
+//     await bootstrap.findMissingMappings(esClient, indexName, Object.keys(testMappings)),
+//     []
+//   );
 
-  await esClient.indices.delete({ index: indexName });
-});
+//   await esClient.indices.delete({ index: indexName });
+// });
 
