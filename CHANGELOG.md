@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed and filtering of selected data types
 
+### Changed
+- **CUMULUS-550** Custom bootstrap automatically adds new types to index on deployment
+
 ## [v1.5.1] - 2018-04-23
 ### Fixed
 - add the missing dist folder to the hello-world task
