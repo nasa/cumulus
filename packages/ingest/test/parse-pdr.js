@@ -123,6 +123,42 @@ test('parse-pdr properly parses PDR with granules of different data-types', asyn
   t.is(mod87MetFile.fileSize, 44118);
 });
 
+test('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => { // eslint-disable-line max-len
+  const testDataDirectory = await findTestDataDirectory();
+  const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-without-FILE_CKSUM_VALUE.PDR');
+
+  const pdrName = `${randomString()}.PDR`;
+
+  const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
+  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+
+  try {
+    await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
+    t.fail('Expcected parsePdr to throw an error');
+  }
+  catch (err) {
+    t.is(err.message, 'MISSING FILE_CKSUM_VALUE PARAMETER');
+  }
+});
+
+test('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CKSUM_TYPE is not', async (t) => { // eslint-disable-line max-len
+  const testDataDirectory = await findTestDataDirectory();
+  const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-without-FILE_CKSUM_TYPE.PDR');
+
+  const pdrName = `${randomString()}.PDR`;
+
+  const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
+  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+
+  try {
+    await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
+    t.fail('Expcected parsePdr to throw an error');
+  }
+  catch (err) {
+    t.is(err.message, 'MISSING FILE_CKSUM_TYPE PARAMETER');
+  }
+});
+
 test('parsePdr accepts an MD5 checksum', async (t) => {
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-with-MD5-checksum.PDR');
