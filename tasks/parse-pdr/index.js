@@ -1,12 +1,12 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const _ = require('lodash');
 
 /**
 * Parse a PDR
@@ -38,18 +38,23 @@ function parsePdr(event) {
   return parse.ingest()
     .then((payload) => {
       if (parse.connected) parse.end();
-      // opportunity to filter the granules of interest based on regex in granuleIdExtraction
-      if (config && config.collection && config.collection.granuleIdExtraction) {
-        const granuleIdFilter = config.collection.granuleIdFilter;
-        const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdFilter));
-        const filteredPayload = {
-          granules: granules,
-          granulesCount: granules.length
-        };
-        return Object.assign({}, _.cloneDeep(event.input), filteredPayload);
-      }
 
-      return Object.assign({}, _.cloneDeep(event.input), payload);
+      // Filter based on the granuleIdFilter, default to match all granules
+      const granuleIdFilter = config.granuleIdFilter || '.';
+      const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdFilter));
+      const granulesCount = granules.length;
+      const filesCount = granules.reduce((total, granule) => total + granule.files.length, 0);
+      const totalSize = granules.reduce((total, granule) => total + granule.granuleSize, 0);
+
+      return Object.assign(
+        cloneDeep(event.input),
+        {
+          granules,
+          granulesCount,
+          filesCount,
+          totalSize
+        }
+      );
     })
     .catch((e) => {
       if (e.toString().includes('ECONNREFUSED')) {
