@@ -31,7 +31,7 @@
                 "name": { "type": "string" },
                 "fileSize": { "type": "number" },
                 "checksumType": { "type": "string" },
-                "checksumValue": { "type": "number" }
+                "checksumValue": { "type": ["string", "number"] }
               }
             }
           }

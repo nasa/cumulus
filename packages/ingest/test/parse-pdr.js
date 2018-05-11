@@ -122,3 +122,35 @@ test('parse-pdr properly parses PDR with granules of different data-types', asyn
   t.is(mod87MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod87MetFile.fileSize, 44118);
 });
+
+test('parsePdr accepts an MD5 checksum', async (t) => {
+  const testDataDirectory = await findTestDataDirectory();
+  const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-with-MD5-checksum.PDR');
+
+  const pdrName = `${randomString()}.PDR`;
+
+  const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
+  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+
+  const parsedPdr = await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
+  const fileWithChecksum = parsedPdr.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf'); // eslint-disable-line max-len
+  t.is(fileWithChecksum.checksumType, 'MD5');
+});
+
+test('parsePdr throws an exception if the value of an MD5 checksum is not a string', async (t) => {
+  const testDataDirectory = await findTestDataDirectory();
+  const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-with-invalid-MD5-checksum.PDR');
+
+  const pdrName = `${randomString()}.PDR`;
+
+  const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
+  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+
+  try {
+    await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
+    t.fail('Expcected parsePdr to throw an error');
+  }
+  catch (err) {
+    t.true(err.message.startsWith('Expected MD5 value to be a string'));
+  }
+});
