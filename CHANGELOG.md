@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - updated cmrjs.deleteConcept to return success if the record is not found in CMR.
 
 ### Added
+- **CUMULUS-527 - "parse-pdr queues up all granules and ignores regex"**
+  - Add an optional config property to the ParsePdr task called
+    "granuleIdFilter". This property is a regular expression that is applied
+    against the filename of the first file of each granule contained in the
+    PDR. If the regular expression matches, then the granule is included in
+    the output. Defaults to '.', which will match all granules in the PDR.
 - File checksums in PDRs now support MD5
 - Deployment support to subscribe to an SNS topic that already exists
 - **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access.
