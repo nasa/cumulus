@@ -11,14 +11,9 @@
       "description": "The name of the Task's CloudFormation Task, useful as a prefix",
       "type": "string"
     },
-    "collection": {
-      "type": "object",
-      "properties": {
-        "granuleIdFilter": {
-          "description": "optional attribute to filter granules by id",
-          "type": "string"
-        }
-      }
+    "granuleIdFilter": {
+      "description": "A regular expression that is applied against the granuleId of each granule contained in the PDR.  If the regular expression matches, then the granule is included in the output.  Defaults to '.', which will match all granules in the PDR.",
+      "type": "string"
     },
     "provider": {
       "type": "object",
