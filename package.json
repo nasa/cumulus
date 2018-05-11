@@ -48,9 +48,7 @@
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
     "lerna": "^2.9.0",
-    "nyc": "^11.6.0",
-    "proxyquire": "^2.0.1",
-    "sinon": "^5.0.7"
+    "nyc": "^11.6.0"
   },
   "dependencies": {
     "aws-sdk": "^2.224.1",
