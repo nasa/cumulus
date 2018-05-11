@@ -91,7 +91,6 @@ exports.handler = handler;
 justLocalRun(() => {
   const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
   handler(payload, {}, (e, r) => {
-    //console.log(e);
     console.log(JSON.stringify(r, null, '\t')); // eslint-disable-line no-console
   });
 });
