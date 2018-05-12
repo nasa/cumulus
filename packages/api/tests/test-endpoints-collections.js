@@ -77,7 +77,7 @@ test('GET returns an existing collection', (t) => {
 });
 
 test('POST creates a new collection', (t) => {
-  const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
+  const newCollection = Object.assign({}, testCollection, { name: 'collection-post' });
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newCollection)

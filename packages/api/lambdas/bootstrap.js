@@ -94,20 +94,20 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
       log.info(`Created alias ${alias} for index ${index}`);
     }
 
-    const missingTypes = await findMissingMappings(esClient, index, Object.keys(mappings));
+    // const missingTypes = await findMissingMappings(esClient, index, Object.keys(mappings));
 
-    if (missingTypes.length > 0) {
-      const addMissingTypesPromises = missingTypes.map((type) =>
-        esClient.indices.putMapping({
-          index,
-          type,
-          body: get(mappings, type)
-        }));
+    // if (missingTypes.length > 0) {
+    //   const addMissingTypesPromises = missingTypes.map((type) =>
+    //     esClient.indices.putMapping({
+    //       index,
+    //       type,
+    //       body: get(mappings, type)
+    //     }));
 
-      await Promise.all(addMissingTypesPromises);
+    //   await Promise.all(addMissingTypesPromises);
 
-      log.info(`Added missing types to index: ${missingTypes}`);
-    }
+    //   log.info(`Added missing types to index: ${missingTypes}`);
+    // }
   }
 }
 
