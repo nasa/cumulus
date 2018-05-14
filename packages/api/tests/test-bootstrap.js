@@ -7,10 +7,9 @@ const models = require('../models');
 
 const tableName = randomString();
 
-test.before(async () => {
+test.skip.before(async () => {
   // create collections table
-  const r = await models.Manager.createTable(tableName, { name: 'someIndex', type: 'S' });
-  console.log(r)
+  await models.Manager.createTable(tableName, { name: 'someIndex', type: 'S' });
 });
 
 // Skipping this test for because LocalStack version 0.8.6 does not support pointInTime
@@ -23,6 +22,6 @@ test.skip.serial('bootstrap dynamoDb activates pointInTime on a given table', as
   );
 });
 
-test.after.always(async () => {
+test.skip.after.always(async () => {
   await models.Manager.deleteTable(tableName);
 });
