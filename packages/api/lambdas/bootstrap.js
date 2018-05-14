@@ -109,6 +109,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
       log.info(`Added missing types to index: ${missingTypes}`);
     }
+  }
 }
 
 /**
