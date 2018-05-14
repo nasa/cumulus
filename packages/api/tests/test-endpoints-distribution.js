@@ -7,7 +7,7 @@ const { FakeEarthdataLoginServer, randomString } = require('@cumulus/common').te
 const distributionEndpoint = require('../endpoints/distribution');
 
 test.beforeEach((t) => {
-  process.env.protected = 'protected-bucket';
+  process.env.protected = randomString();
 
   t.context.fakeEarthdataLoginServer = new FakeEarthdataLoginServer();
 });
@@ -16,7 +16,7 @@ test.afterEach.always((t) => {
   t.context.fakeEarthdataLoginServer.close();
 });
 
-test.serial.cb("The S3 redirect includes the user's URS username", (t) => {
+test.serial.cb("The S3 redirect includes the user's Earthdata Login username", (t) => {
   // Start the EarthdataLogin server and run the test
   t.context.fakeEarthdataLoginServer.listen(() => {
     process.env.EARTHDATA_BASE_URL = t.context.fakeEarthdataLoginServer.endpoint;
@@ -26,11 +26,11 @@ test.serial.cb("The S3 redirect includes the user's URS username", (t) => {
 
     const event = {
       pathParameters: {
-        granuleId: 'my-granule-id'
+        granuleId: randomString()
       },
       queryStringParameters: {
         code,
-        state: 'granule-key'
+        state: randomString()
       }
     };
 
