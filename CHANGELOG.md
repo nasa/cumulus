@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - updated cmrjs.deleteConcept to return success if the record is not found in CMR.
 
 ### Added
+- File checksums in PDRs now support MD5
 - Deployment support to subscribe to an SNS topic that already exists
-- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access. 
+- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access.
 - **CUMULUS-533** Added fields to granule indexer to support EMS ingest and archive record creation
 - You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
 - `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - **Important Note: please use `cumulus-api` reindex tool included in @cumulus/api to update the index and verify the new `deletedgranule` type is added, then re-deploy the application.**
 - Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed and filtering of selected data types
+- `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
 
 ### Changed
 - CUMULUS-550 Custom bootstrap automatically adds new types to index on deployment
