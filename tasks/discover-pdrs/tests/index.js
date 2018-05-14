@@ -20,7 +20,7 @@ const {
 test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
-  event.config.collection.provider_path = '/pdrs';
+  event.config.collection.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
@@ -114,7 +114,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   const newPayload = cloneDeep(input);
   newPayload.config.useList = true;
   newPayload.config.provider = provider;
-  newPayload.config.collection.provider_path = '/pdrs';
+  newPayload.config.collection.provider_path = '/pdrs/discover-pdrs';
   newPayload.input = {};
 
   const internalBucketName = randomString();
@@ -126,7 +126,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
     .then(() => {
       const Key = [
         newPayload.config.stack,
-        newPayload.config.collection.provider_path.replace(/^\//, ''),
+        'pdrs',
         'PDN.ID1611071307.PDR'
       ].join('/');
 
@@ -156,7 +156,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
 
   try {
     await s3().createBucket({ Bucket: internalBucketName }).promise();
-    const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+    const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs', 'discover-pdrs');
     const pdrFilenames = await fs.readdir(testDataDirectory);
     const oldPdr = pdrFilenames[0];
     const newPdrs = pdrFilenames.slice(1);
@@ -169,7 +169,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       protocol: 'http',
       host: 'http://localhost:3030'
     };
-    event.config.collection.provider_path = '/pdrs';
+    event.config.collection.provider_path = '/pdrs/discover-pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
@@ -208,7 +208,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
   const internalBucketName = randomString();
 
   // Figure out the directory paths that we're working with
-  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs');
+  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs', 'discover-pdrs');
 
   // Create providerPathDirectory and internal bucket
   await s3().createBucket({ Bucket: internalBucketName }).promise();
@@ -231,7 +231,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       username: 'user',
       password: 'password'
     };
-    event.config.collection.provider_path =  'pdrs';
+    event.config.collection.provider_path = 'pdrs/discover-pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
