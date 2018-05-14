@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const got = require('got');
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteConcept } = require('../index');
+const { deleteConcept, getMetadata } = require('../index');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
 // eslint-disable-next-line max-len
@@ -39,7 +39,21 @@ const stubclient = {
     const error = new Error();
     error.response = gotResponses[statusCode];
     return Promise.reject(error);
-  }
+  },
+  getCmrData: () => ({
+    statusCode,
+    body: JSON.stringify({
+      feed: {
+        entry: [{
+          time_start: '2017-10-24T00:00:00.000Z',
+          updated: '2018-04-25T21:45:45.524Z',
+          dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
+          data_center: 'CUMULUS',
+          title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
+        }]
+      }
+    })
+  })
 };
 
 test('deleteConcept returns expected result when granule is in CMR', async (t) => {
@@ -77,4 +91,28 @@ test('deleteConcept throws error when request is bad', (t) => {
       stub.restore();
       t.true(err.toString().includes('CMR error message: "Bad request"'));
     });
+});
+
+test('get CMR metadata, success', async (t) => {
+  statusCode = 200;
+  const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
+
+  await getMetadata('fakeLink')
+    .then((response) => {
+      t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
+    });
+
+  stub.restore();
+});
+
+test('get CMR metadata, fail', async (t) => {
+  statusCode = 404;
+  const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
+
+  await getMetadata('fakeLink')
+    .then((response) => {
+      t.is(response, null);
+    });
+
+  stub.restore();
 });
