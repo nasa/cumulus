@@ -243,6 +243,7 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                   - dynamodb:UpdateItem
+                  - dynamodb:UpdateContinuousBackups
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
 
               - Effect: Allow
