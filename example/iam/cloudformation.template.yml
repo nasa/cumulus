@@ -89,9 +89,9 @@ Resources:
                   - s3:PutBucket*
                   - s3:ListBucket*
                 Resource:
-                  {{#each buckets}}
-                    - arn:aws:s3:::{{name}}
-                  {{/each}}
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}
+                {{/each}}
 
               - Effect: Allow
                 Action:
@@ -101,9 +101,9 @@ Resources:
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
                 Resource: 
-                  {{#each buckets}}
-                    - arn:aws:s3:::{{name}}/*
-                  {{/each}}
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}/*
+                {{/each}}
 
               - Effect: Allow
                 Action:
@@ -188,9 +188,9 @@ Resources:
                   - s3:PutBucket*
                   - s3:ListBucket*
                 Resource:
-                  {{#each buckets}}
-                    - arn:aws:s3:::{{name}}
-                  {{/each}}
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}
+                {{/each}}
 
               - Effect: Allow
                 Action:
@@ -201,9 +201,9 @@ Resources:
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
                 Resource: 
-                  {{#each buckets}}
-                    - arn:aws:s3:::{{name}}/*
-                  {{/each}}
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}/*
+                {{/each}}
 
               - Effect: Allow
                 Action:
@@ -387,9 +387,9 @@ Resources:
                   - s3:PutBucket*
                   - s3:ListBucket*
                 Resource:
-                  {{#each buckets}}
-                    - arn:aws:s3:::{{name}}
-                  {{/each}}
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}
+                {{/each}}
 
               - Effect: Allow
                 Action:
@@ -400,9 +400,9 @@ Resources:
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
                 Resource: 
-                  {{#each buckets}}
-                    - arn:aws:s3:::{{name}}/*
-                  {{/each}}
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}/*
+                {{/each}}
 
               - Effect: Allow
                 Action:
