@@ -8,22 +8,22 @@ default:
   system_bucket: cumulus-test-sandbox-internal
 
   buckets:
-    - key: internal 
-      name: cumulus-test-sandbox-internal
-      type: internal
-    - key: private
+    # internal: 
+    #   name: cumulus-test-sandbox-internal
+    #   type: internal
+    private:
       name: cumulus-test-sandbox-private
       type: private
-    - key: protected
+    protected:
       name: cumulus-test-sandbox-protected
       type: protected
-    - key: public
+    public:
       name: cumulus-test-sandbox-public
       type: public
-    - key: public-2
+    public-2:
       name: cumulus-test-sandbox-public-2
       type: public
-    - key: shared
+    shared:
       name: cumulus-data-shared
       type: shared
 
