@@ -19,6 +19,7 @@ const pdrSuccess = require('./data/pdr_success.json');
 const cmrjs = require('@cumulus/cmrjs');
 
 const esIndex = randomString();
+const alias = randomString();
 process.env.bucket = randomString();
 process.env.stackName = randomString();
 process.env.ES_INDEX = esIndex;
@@ -26,7 +27,7 @@ let esClient;
 
 test.before(async () => {
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex);
+  await bootstrapElasticSearch('fakehost', esIndex, alias);
   esClient = await Search.es();
 
   // create buckets
@@ -628,7 +629,7 @@ test.serial('reingest a granule', async (t) => {
   await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
 
   payload.payload.granules[0].granuleId = randomString();
-  const r = await indexer.granule(esClient, payload);
+  const r = await indexer.granule(esClient, payload, esIndex);
 
   sinon.stub(
     StepFunction,

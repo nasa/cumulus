@@ -9,6 +9,7 @@ process.env.internal = 'test-bucket';
 
 const models = require('../models');
 const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const collectionsEndpoint = require('../endpoints/collections');
 const collections = new models.Collection();
@@ -30,7 +31,7 @@ const testCollection = {
 const hash = { name: 'name', type: 'S' };
 const range = { name: 'version', type: 'S' };
 
-const esIndex = 'cumulus-index';
+const esIndex = randomString();
 
 async function setup() {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
@@ -76,7 +77,7 @@ test('GET returns an existing collection', (t) => {
 });
 
 test('POST creates a new collection', (t) => {
-  const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
+  const newCollection = Object.assign({}, testCollection, { name: 'collection-post' });
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newCollection)
