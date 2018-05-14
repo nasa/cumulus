@@ -175,7 +175,6 @@ async function sendResponse(event, status, data = {}) {
  * @returns {Promise} undefined
  */
 function handler(event, context, cb) {
-  console.log(JSON.stringify(event));
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');

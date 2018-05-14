@@ -25,8 +25,8 @@ const S3_RATE_LIMIT = 20;
 
 const memoize = (fn) => {
   let memo = null;
-  return () => {
-    if (!memo) memo = fn();
+  return (options) => {
+    if (!memo) memo = fn(options);
     return memo;
   };
 };
@@ -49,9 +49,9 @@ const awsClient = (Service, version = null) => {
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
       AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
     }
-    return memoize(() => testAwsClient(Service, options));
+    return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
   }
-  return memoize(() => new Service(options));
+  return memoize((o) => new Service(Object.assign(options, o)));
 };
 
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
