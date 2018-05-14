@@ -147,7 +147,7 @@ class Parse {
   /**
    * Copy the PDR to S3 and parse it
    *
-   * @returns {Promise} - the list of granules in the PDR
+   * @returns {Promise<Object>} - the parsed PDR
    * @public
    */
   async ingest() {
@@ -157,10 +157,10 @@ class Parse {
     const pdrRemotePath = path.join(this.pdr.path, this.pdr.name);
     await this.download(pdrRemotePath, pdrLocalPath);
 
-    let granules;
+    let parsedPdr;
     try {
       // parse the PDR
-      granules = await this.parse(pdrLocalPath);
+      parsedPdr = await this.parse(pdrLocalPath);
 
       // upload only if the parse was successful
       await this.upload(
@@ -175,8 +175,7 @@ class Parse {
       await fs.remove(downloadDir);
     }
 
-    // return list of all granules found in the PDR
-    return granules;
+    return parsedPdr;
   }
 
   /**
