@@ -14,7 +14,6 @@
 'use strict';
 
 const got = require('got');
-const url = require('url');
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
@@ -23,6 +22,28 @@ const Manager = require('../models/base');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
+
+/**
+ * Check the index to see if mappings have been added since the index
+ * was last updated. Return any missing types from the mapping.
+ *
+ * @param {Object} esClient - elasticsearch client instance
+ * @param {string} index - index name or alias
+ * @param {Array<string>} types - list of types to check against
+ * @returns {Array<string>} - list of missing indices
+ */
+async function findMissingMappings(esClient, index, types) {
+  const typesResponse = await esClient.indices.getMapping({
+    index,
+    type: types
+  });
+
+  const indexMappings = get(typesResponse, index);
+
+  const indexTypes = Object.keys(indexMappings.mappings);
+
+  return types.filter((x) => !indexTypes.includes(x));
+}
 
 /**
  * Initialize elastic search. If the index does not exist, create it with an alias.
@@ -58,6 +79,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     log.info(`index ${index} created with alias ${alias} and mappings added.`);
   }
   else {
+    log.info(`index ${index} already exists`);
+
     const aliasExists = await esClient.indices.existsAlias({
       name: alias
     });
@@ -70,9 +93,22 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
       log.info(`Created alias ${alias} for index ${index}`);
     }
-
+     
     log.info(`index ${index} already exists`);
-  }
+    const missingTypes = await findMissingMappings(esClient, index, Object.keys(mappings));
+
+    if (missingTypes.length > 0) {
+      const addMissingTypesPromises = missingTypes.map((type) =>
+        esClient.indices.putMapping({
+          index,
+          type,
+          body: get(mappings, type)
+        }));
+
+      await Promise.all(addMissingTypesPromises);
+
+      log.info(`Added missing types to index: ${missingTypes}`);
+    }
 }
 
 /**
@@ -187,7 +223,9 @@ function handler(event, context, cb) {
 
 module.exports = {
   handler,
-  bootstrapElasticSearch
+  bootstrapElasticSearch,
+  // for testing
+  findMissingMappings 
 };
 
 justLocalRun(() => {
