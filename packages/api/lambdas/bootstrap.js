@@ -14,9 +14,10 @@
 'use strict';
 
 const got = require('got');
-const url = require('url');
 const get = require('lodash.get');
+const boolean = require('boolean');
 const log = require('@cumulus/common/log');
+const { dynamodb } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const Manager = require('../models/base');
@@ -115,6 +116,26 @@ async function bootstrapCmrProvider(password) {
 }
 
 /**
+ * Enable/Disable the point-in-time backup feature of given
+ * DynamoDB tables
+ *
+ * @param {Array.<Object>} tables - a list of DynamoDB table names and their pointInTime status
+ * @returns {Promise.<Array>} array of dynamoDB aws responses
+ */
+function bootstrapDynamoDbTables(tables) {
+  // const dynamodb = new AWS.DynamoDB();
+  return Promise.all(tables.map((table) => {
+    const params = {
+      PointInTimeRecoverySpecification: {
+        PointInTimeRecoveryEnabled: boolean(table.pointInTime)
+      },
+      TableName: table.name
+    };
+    return dynamodb().updateContinuousBackups(params).promise();
+  }));
+}
+
+/**
  * Sends response back to CloudFormation
  *
  * @param {Object} event - AWS lambda event object
@@ -154,9 +175,11 @@ async function sendResponse(event, status, data = {}) {
  * @returns {Promise} undefined
  */
 function handler(event, context, cb) {
+  console.log(JSON.stringify(event));
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');
+  const dynamos = get(event, 'ResourceProperties.DynamoDBTables');
   const requestType = get(event, 'RequestType');
 
   if (requestType === 'Delete') {
@@ -166,7 +189,8 @@ function handler(event, context, cb) {
   const actions = [
     bootstrapElasticSearch(get(es, 'host')),
     bootstrapUsers(get(users, 'table'), get(users, 'records')),
-    bootstrapCmrProvider(get(cmr, 'Password'))
+    bootstrapCmrProvider(get(cmr, 'Password')),
+    bootstrapDynamoDbTables(dynamos)
   ];
 
   return Promise.all(actions)
@@ -187,7 +211,8 @@ function handler(event, context, cb) {
 
 module.exports = {
   handler,
-  bootstrapElasticSearch
+  bootstrapElasticSearch,
+  bootstrapDynamoDbTables
 };
 
 justLocalRun(() => {
