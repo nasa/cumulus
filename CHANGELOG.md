@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - updated cmrjs.deleteConcept to return success if the record is not found in CMR.
 
 ### Added
+- **CUMULUS-547** - The distribution API now includes an
+  "earthdataLoginUsername" query parameter when it returns a signed S3 URL
 - **CUMULUS-527 - "parse-pdr queues up all granules and ignores regex"**
   - Add an optional config property to the ParsePdr task called
     "granuleIdFilter". This property is a regular expression that is applied
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-534** Track deleted granules
   - added `deletedgranule` type to `cumulus` index.
   - **Important Note:** Force custom bootstrap to re-run by adding this to app/config.yml
-  `es: 
+  `es:
       elasticSearchMapping: 7`
 - Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed and filtering of selected data types
