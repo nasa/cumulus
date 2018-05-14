@@ -205,7 +205,7 @@ function jlog(object) {
 }
 exports.jlog = jlog;
 
-// This class runs a simulted Earthdata Login server
+// This class runs a simulated Earthdata Login server
 class FakeEarthdataLoginServer extends http.Server {
   constructor() {
     super();
