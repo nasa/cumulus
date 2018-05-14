@@ -8,9 +8,9 @@ default:
   system_bucket: cumulus-test-sandbox-internal
 
   buckets:
-    # internal: 
-    #   name: cumulus-test-sandbox-internal
-    #   type: internal
+    internal: 
+      name: cumulus-test-sandbox-internal
+      type: internal
     private:
       name: cumulus-test-sandbox-private
       type: private
