@@ -6,7 +6,7 @@ const { S3 } = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
-const { partialRecordUpdate, deleteRecord, reingest } = require('../es/indexer');
+const models = require('../models');
 const log = require('@cumulus/common/log');
 
 async function removeGranuleFromCmr(granuleId, collectionId) {
@@ -20,14 +20,8 @@ async function removeGranuleFromCmr(granuleId, collectionId) {
   );
 
   await cmr.deleteGranule(granuleId, collectionId);
-
-  await partialRecordUpdate(
-    null,
-    granuleId,
-    'granule',
-    { published: false, cmrLink: null },
-    collectionId
-  );
+  const g = new models.Granule();
+  await g.update({ granuleId }, { published: false, cmrLink: null })
 }
 
 /**
@@ -60,10 +54,10 @@ async function put(event) {
   const action = _get(body, 'action');
 
   if (action) {
-    const search = new Search({}, 'granule');
-    const response = await search.get(granuleId);
+    const g = new models.Granule();
+    const response = g.get({ granuleId });
     if (action === 'reingest') {
-      await reingest(response);
+      await g.reingest(response);
       return {
         granuleId: response.granuleId,
         action,
@@ -89,24 +83,23 @@ async function del(event) {
   const granuleId = _get(event.pathParameters, 'granuleName');
   log.info(`granules.del ${granuleId}`);
 
-  const search = new Search({}, 'granule');
-  const record = await search.get(granuleId);
+  const g = new models.Granule();
+  const record = await g.get({ granuleId });
 
   if (record.detail) {
     throw record;
   }
 
   if (record.published) {
-    throw new Error(
-      'You cannot delete a granule that is published to CMR. Remove it from CMR first'
-    );
+    const errMsg = 'You cannot delete a granule that is published to CMR. Remove it from CMR first';
+    throw new Error(errMsg);
   }
 
   // remove file from s3
   const key = `${process.env.stackName}/granules_ingested/${granuleId}`;
   await S3.delete(process.env.internal, key);
 
-  await deleteRecord(null, granuleId, 'granule', record.collectionId);
+  await g.delete({ granuleId });
 
   return { detail: 'Record deleted' };
 }
@@ -121,12 +114,10 @@ async function del(event) {
 function get(event, cb) {
   const granuleId = _get(event.pathParameters, 'granuleName');
 
-  const search = new Search({}, 'granule');
-  search.get(granuleId).then((response) => {
+  const g = new models.Granule();
+  g.get({ granuleId }).then((response) => {
     cb(null, response);
-  }).catch((e) => {
-    cb(e);
-  });
+  }).catch(cb);
 }
 
 
