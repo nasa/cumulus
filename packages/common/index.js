@@ -5,3 +5,4 @@ exports.aws = require('./aws');
 exports.task = require('./task');
 exports.cliUtils = require('./cli-utils');
 exports.CollectionConfigStore = require('./collection-config-store');
+exports.testUtils = require('./test-utils');
