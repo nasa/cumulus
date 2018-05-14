@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed and filtering of selected data types
 - `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
+- Added support for postInTime backup/recovery on dynamoDB tables (require dynamodb:UpdateContinuousBackups) permission
 
 ## [v1.5.1] - 2018-04-23
 ### Fixed
