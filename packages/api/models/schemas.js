@@ -133,7 +133,7 @@ module.exports.granule = {
       type: 'string',
       readonly: true
     },
-    collection: {
+    collectionId: {
       title: 'Collection associated with the granule',
       type: 'string',
       readonly: true
@@ -173,7 +173,7 @@ module.exports.granule = {
       }
     },
     error: {
-      type: 'string',
+      type: 'object',
       readonly: true
     },
     createdAt: {
@@ -219,7 +219,7 @@ module.exports.granule = {
   },
   required: [
     'granuleId',
-    'collection',
+    'collectionId',
     'status',
     'execution',
     'createdAt',
