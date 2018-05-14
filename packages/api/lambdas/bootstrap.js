@@ -28,14 +28,13 @@ const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
  * was last updated. Return any missing types from the mapping.
  *
  * @param {Object} esClient - elasticsearch client instance
- * @param {string} index - index name or alias
+ * @param {string} index - index name (cannot be alias)
  * @param {Array<string>} types - list of types to check against
  * @returns {Array<string>} - list of missing indices
  */
 async function findMissingMappings(esClient, index, types) {
   const typesResponse = await esClient.indices.getMapping({
-    index,
-    type: types
+    index
   });
 
   const indexMappings = get(typesResponse, index);
@@ -81,6 +80,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
   else {
     log.info(`index ${index} already exists`);
 
+    let aliasedIndex = index;
+
     const aliasExists = await esClient.indices.existsAlias({
       name: alias
     });
@@ -93,21 +94,29 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
       log.info(`Created alias ${alias} for index ${index}`);
     }
-     
-    log.info(`index ${index} already exists`);
-    const missingTypes = await findMissingMappings(esClient, index, Object.keys(mappings));
+    else {
+      const indices = await esClient.indices.getAlias({ name: alias });
+
+      aliasedIndex = Object.keys(indices)[0];
+
+      if (indices.length > 1) {
+        log.info(`Multiple indices found for alias ${alias}, using index ${index}.`);
+      }
+    }
+
+    const missingTypes = await findMissingMappings(esClient, aliasedIndex, Object.keys(mappings));
 
     if (missingTypes.length > 0) {
       const addMissingTypesPromises = missingTypes.map((type) =>
         esClient.indices.putMapping({
-          index,
+          index: aliasedIndex,
           type,
           body: get(mappings, type)
         }));
 
       await Promise.all(addMissingTypesPromises);
 
-      log.info(`Added missing types to index: ${missingTypes}`);
+      log.info(`Added missing types to index ${aliasedIndex}: ${missingTypes}`);
     }
   }
 }
