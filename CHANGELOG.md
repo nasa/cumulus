@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
 - **CUMULUS-534** Track deleted granules
   - added `deletedgranule` type to `cumulus` index.
-    - **Important Note: please use `cumulus-api` reindex tool included in @cumulus/api to update the index and verify the new `deletedgranule` type is added, then re-deploy the application.**
 - Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed and filtering of selected data types
 - `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
