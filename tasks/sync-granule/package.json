@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -38,10 +38,10 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.5.0",
+    "@cumulus/common": "^1.5.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.5.0",
-    "@cumulus/test-data": "^1.4.0",
+    "@cumulus/ingest": "^1.5.2",
+    "@cumulus/test-data": "^1.5.2",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
