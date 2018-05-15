@@ -84,7 +84,7 @@ function handler(event, context, cb) {
       // Add earthdataLoginUsername to signed url
       const parsedSignedUrl = new URL(signedUrl);
       const signedUrlParams = parsedSignedUrl.searchParams;
-      signedUrlParams.set('earthdataLoginUsername', user);
+      signedUrlParams.set('x-EarthdataLoginUsername', user);
       parsedSignedUrl.search = signedUrlParams.toString();
 
       // now that we have the URL we have to save user's info
