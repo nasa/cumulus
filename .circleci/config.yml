@@ -175,9 +175,9 @@ jobs:
           name: Deploy cumulus with the npm packages source code
           command: |
             cd example
-            ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-npm
             yarn
             sed -i -- 's/src/npm/g' spec/config.yml
+            ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-npm
             ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
 
       - run:
