@@ -10,16 +10,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - updated cmrjs.deleteConcept to return success if the record is not found in CMR.
 
 ### Added
+- **CUMULUS-527 - "parse-pdr queues up all granules and ignores regex"**
+  - Add an optional config property to the ParsePdr task called
+    "granuleIdFilter". This property is a regular expression that is applied
+    against the filename of the first file of each granule contained in the
+    PDR. If the regular expression matches, then the granule is included in
+    the output. Defaults to '.', which will match all granules in the PDR.
 - File checksums in PDRs now support MD5
 - Deployment support to subscribe to an SNS topic that already exists
 - **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access.
-<<<<<<< HEAD
-- **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
-=======
->>>>>>> master
+- **CUMULUS-461** Support use of metadata date and other components in `url_path` property
 - **CUMULUS-533** Added fields to granule indexer to support EMS ingest and archive record creation
 - You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
 - `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
+- **CUMULUS-534** Track deleted granules
+  - added `deletedgranule` type to `cumulus` index.
+  - **Important Note:** Force custom bootstrap to re-run by adding this to app/config.yml
+  `es: 
+      elasticSearchMapping: 7`
 - Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed and filtering of selected data types
 - `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
@@ -28,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
   - Change IAM deployment configuration
   - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
+- CUMULUS-550 Custom bootstrap automatically adds new types to index on deployment
 
 ## [v1.5.1] - 2018-04-23
 ### Fixed

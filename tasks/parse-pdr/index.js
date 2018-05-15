@@ -1,10 +1,12 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
 const log = require('@cumulus/common/log');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
 
 /**
 * Parse a PDR
@@ -36,7 +38,23 @@ function parsePdr(event) {
   return parse.ingest()
     .then((payload) => {
       if (parse.connected) parse.end();
-      return Object.assign({}, event.input, payload);
+
+      // Filter based on the granuleIdFilter, default to match all granules
+      const granuleIdFilter = config.granuleIdFilter || '.';
+      const granules = payload.granules.filter((g) => g.files[0].name.match(granuleIdFilter));
+      const granulesCount = granules.length;
+      const filesCount = granules.reduce((total, granule) => total + granule.files.length, 0);
+      const totalSize = granules.reduce((total, granule) => total + granule.granuleSize, 0);
+
+      return Object.assign(
+        cloneDeep(event.input),
+        {
+          granules,
+          granulesCount,
+          filesCount,
+          totalSize
+        }
+      );
     })
     .catch((e) => {
       if (e.toString().includes('ECONNREFUSED')) {
@@ -68,3 +86,11 @@ function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(parsePdr, event, context, callback);
 }
 exports.handler = handler;
+
+// use node index.js local to invoke this
+justLocalRun(() => {
+  const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
+  handler(payload, {}, (e, r) => {
+    console.log(JSON.stringify(r, null, '\t')); // eslint-disable-line no-console
+  });
+});
