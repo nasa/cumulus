@@ -146,6 +146,12 @@ default:
       state: ENABLED
       targets:
         - lambda: jobs
+    cronJobs:
+      # run at 1:00am (UTC) everyday
+      schedule: cron(0 1 * * ? *)
+      state: ENABLED
+      targets:
+        - lambda: EmsReport
 
   stepFunctions: !!files ['workflows.yml']
 
