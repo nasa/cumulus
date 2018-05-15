@@ -2,8 +2,10 @@
 
 const test = require('ava');
 const { URL } = require('url');
-const { FakeEarthdataLoginServer, randomString } = require('@cumulus/common').testUtils;
-
+const {
+  testUtils: { randomString },
+  FakeEarthdataLoginServer
+} = require('@cumulus/common');
 const distributionEndpoint = require('../endpoints/distribution');
 
 test.beforeEach((t) => {
