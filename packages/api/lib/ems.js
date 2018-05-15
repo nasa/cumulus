@@ -224,7 +224,7 @@ function buildReportFileName(reportType) {
  * @param {string} reportType - report type (ingest, archive, delete)
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
- * @returns {Object} - key: reportType, value: file name of the generated report
+ * @returns {Object} - report type and its file path {reportType, file}
  */
 async function generateReport(reportType, startTime, endTime) {
   log.debug(`ems.generateReport ${reportType} startTime: ${startTime} endTime: ${endTime}`);
@@ -260,7 +260,7 @@ async function generateReport(reportType, startTime, endTime) {
 
   // upload to s3
   const s3Uri = await uploadReportToS3(filename);
-  return { reportType: s3Uri };
+  return { reportType, file: s3Uri };
 }
 
 /**
@@ -268,10 +268,10 @@ async function generateReport(reportType, startTime, endTime) {
  *
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
- * @returns {Array<Object>} - list of report type and report file name pair
+ * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
-async function generateReports(startTime, endTime) {
-  const jobs = Object.keys(emsMappings).map(async (k) => generateReport(k, startTime, endTime));
+function generateReports(startTime, endTime) {
+  const jobs = Object.keys(emsMappings).map((k) => generateReport(k, startTime, endTime));
   return Promise.all(jobs);
 }
 
