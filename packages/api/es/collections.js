@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign */
+
 'use strict';
 
 const { BaseSearch } = require('./search');
