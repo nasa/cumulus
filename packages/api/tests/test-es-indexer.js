@@ -54,7 +54,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  Promise.all([
+  await Promise.all([
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.bucket)
   ]);

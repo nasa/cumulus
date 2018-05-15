@@ -18,6 +18,7 @@ const granule = {
   provider: 's3provider',
   processingStartDateTime: '2018-05-25T21:45:00.000001',
   processingEndDateTime: '2018-05-25T21:45:45.524053',
+  published: 'true',
   timeToArchive: 6,
   timeToPreprocess: 7,
   duration: 8,
@@ -43,14 +44,18 @@ let esClient;
 test.before(async () => {
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
-  esClient = await Search.es('fakehost');
+  esClient = await Search.es();
 
-  // add 30 granules to es, 10 from 1 day ago, 10 from 2 day ago, 10 from today
+  // add 30 granules to es, 10 from 1 day ago, 10 from 2 day ago, 10 from today.
+  // one granule from each day is 'running', and should not be included in report.
+  // one granule from each day is 'failed' and should be included in report.
   const granules = [];
   for (let i = 0; i < 30; i += 1) {
     const newgran = clone(granule);
     newgran.granuleId = randomString();
     newgran.createdAt = moment().subtract(Math.floor(i / 10), 'days').toDate().getTime();
+    if (i % 10 === 2) newgran.status = 'failed';
+    if (i % 10 === 3) newgran.status = 'running';
     granules.push(newgran);
   }
 
@@ -71,6 +76,7 @@ test.before(async () => {
     const newgran = clone(deletedgranule);
     newgran.granuleId = randomString();
     newgran.deletedAt = moment().subtract(Math.floor(i / 5), 'days').toDate().getTime();
+    if (i % 5 === 2) newgran.status = 'failed';
     deletedgrans.push(newgran);
   }
   const deletedgranjobs = deletedgrans.map((g) => esClient.update({
@@ -112,7 +118,7 @@ test.serial('generate reports for the previous day', async (t) => {
 
     // check the number of records for each report
     const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
-    const expectedNumRecords = (report.reportType === 'delete') ? 5 : 10;
+    const expectedNumRecords = (report.reportType === 'delete') ? 5 : 9;
     t.is(records.split('\n').length, expectedNumRecords);
   });
   await Promise.all(requests);
@@ -139,7 +145,7 @@ test.serial('generate reports for the past two days, and run multiple times', as
 
     // check the number of records for each report
     const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
-    const expectedNumRecords = (report.reportType === 'delete') ? 10 : 20;
+    const expectedNumRecords = (report.reportType === 'delete') ? 10 : 18;
     t.is(records.split('\n').length, expectedNumRecords);
   });
   await Promise.all(requests);
