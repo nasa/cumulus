@@ -2,10 +2,12 @@
 
 const path = require('path');
 const get = require('lodash.get');
-const cloneDeep = require('lodash.clonedeep');
 const uniqBy = require('lodash.uniqby');
 const cmrjs = require('@cumulus/cmrjs');
+const { CMR } = require('@cumulus/cmrjs');
+const log = require('@cumulus/common/log');
 const aws = require('@cumulus/ingest/aws');
+const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const Manager = require('./base');
 const {
   parseException,
@@ -22,6 +24,27 @@ class Granule extends Manager {
     // initiate the manager class with the name of the
     // granules table
     super(process.env.GranulesTable, granuleSchema);
+  }
+
+  /**
+   * Removes a give granule from CMR
+   *
+   * @param {string} granuleId - the granule ID
+   * @param {string} collectionId - the collection ID
+   * @returns {Promise<undefined>} undefined
+   */
+  async removeGranuleFromCmr(granuleId, collectionId) {
+    log.info(`granules.removeGranuleFromCmr ${granuleId}`);
+    const password = await DefaultProvider.decrypt(process.env.cmr_password);
+    const cmr = new CMR(
+      process.env.cmr_provider,
+      process.env.cmr_client_id,
+      process.env.cmr_username,
+      password
+    );
+
+    await cmr.deleteGranule(granuleId, collectionId);
+    await this.update({ granuleId }, { published: false, cmrLink: null });
   }
 
   /**

@@ -145,6 +145,7 @@ async function partialRecordUpdate(
     index,
     type,
     id,
+    refresh: true,
     body: {
       doc
     }
