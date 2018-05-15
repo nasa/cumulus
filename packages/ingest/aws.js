@@ -43,8 +43,8 @@ function getEndpoint(local = false, port = 8000) {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} stateMachineArn state machine ARN
- * @param {string} executionName state machine's execution name
+ * @param {string} stateMachineArn -  state machine ARN
+ * @param {string} executionName - state machine's execution name
  * @returns {string} Step Function Execution Arn
  */
 function getExecutionArn(stateMachineArn, executionName) {
@@ -58,7 +58,7 @@ function getExecutionArn(stateMachineArn, executionName) {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} executionArn execution ARN
+ * @param {string} executionArn - execution ARN
  * @returns {string} return aws console url for the execution
  */
 function getExecutionUrl(executionArn) {
@@ -384,12 +384,10 @@ class ECS {
     };
     return this.ecs.describeContainerInstances(params).promise();
   }
-
 }
 
 
 class CloudWatch {
-
   static cw() {
     return new AWS.CloudWatch();
   }
@@ -406,8 +404,9 @@ class CloudWatch {
    *    bucket: 'cumulus-internal'
    * }
    * ```
-   * @param {string} bucketName Name of the bucket to get the size
-   * @returns {object} Retuns total storage for a given bucket
+   *
+   * @param {string} bucketName - Name of the bucket to get the size
+   * @returns {Object} Retuns total storage for a given bucket
    */
   static async bucketSize(bucketName) {
     AWS.config.update({ region: process.env.AWS_DEFAULT_REGION });
@@ -447,7 +446,6 @@ class CloudWatch {
     sorted[0].bucket = bucketName;
     return sorted[0];
   }
-
 }
 
 const KMSDecryptionFailed = errors.createErrorType('KMSDecryptionFailed');
@@ -486,41 +484,6 @@ class KMS {
 }
 
 class StepFunction {
-  static granuleExecutionStatus(granuleId, event) {
-    const buckets = _get(event, 'config.buckets');
-    const stack = _get(event, 'config.stack');
-
-    const granuleKey = `${stack}/granules_ingested/${granuleId}`;
-
-    return {
-      bucket: buckets.internal,
-      key: granuleKey
-    };
-  }
-
-  static async setGranuleStatus(granuleId, event) {
-    const d = this.granuleExecutionStatus(granuleId, event);
-    const sm = event.cumulus_meta.state_machine;
-    const en = event.cumulus_meta.execution_name;
-    const arn = getExecutionArn(sm, en);
-    const status = event.meta.status;
-    return S3.put(d.bucket, d.key, '', null, { arn, status });
-  }
-
-  static async getGranuleStatus(granuleId, event) {
-    const d = this.granuleExecutionStatus(granuleId, event);
-    const exists = await S3.fileExists(d.bucket, d.key);
-    if (exists) {
-      const oarn = exists.Metadata.arn;
-      const status = exists.Metadata.status;
-      if (status === 'failed') {
-        return ['failed', oarn];
-      }
-      return ['completed', oarn];
-    }
-    return false;
-  }
-
   static async getExecution(arn, ignoreMissingExecutions = false) {
     const stepfunctions = new AWS.StepFunctions();
 
@@ -592,7 +555,6 @@ class StepFunction {
    * The event must have the following properties:
    * - resources.stack
    * - ingest_meta.execution_name
-   * - resources.buckets.internal
    *
    * @param {Object} event - an event to be pushed to S3
    * @returns {Promise.<Object>} - a Promise that resoles to an Object with an
@@ -606,7 +568,7 @@ class StepFunction {
     const stack = event.meta.stack;
     const name = event.cumulus_meta.execution_name;
     const key = `${stack}/payloads/${name}.json`;
-    const bucket = event.meta.buckets.internal;
+    const bucket = event.cumulus_meta.system_bucket;
 
     return aws.s3().putObject({
       Bucket: bucket,
