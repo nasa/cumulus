@@ -61,7 +61,7 @@ PostToCmr:
   source: 'node_modules/@cumulus/post-to-cmr/dist/'
   useMessageAdapter: true
   envs:
-    internal: '{{buckets.internal}}'
+    internal: '{{buckets.internal.name}}'
 
 QueueGranules:
   handler: index.handler
