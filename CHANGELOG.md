@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support to force discovery of PDRs that have already been processed and filtering of selected data types
 - `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
 
+### Changed
+- **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
+  - Change IAM deployment configuration
+  - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
+
 ## [v1.5.1] - 2018-04-23
 ### Fixed
 - add the missing dist folder to the hello-world task

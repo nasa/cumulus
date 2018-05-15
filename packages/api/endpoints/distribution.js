@@ -97,7 +97,7 @@ function handler(event, context, cb) {
         body: 'redirecting',
         headers: {
           Location: url,
-          'Strict-Transport-Security': 'max-age=31536000' 
+          'Strict-Transport-Security': 'max-age=31536000'
         }
       });
     }).catch((e) => cb(e));

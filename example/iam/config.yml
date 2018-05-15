@@ -4,26 +4,39 @@ default:
   authorizor: false
   capabilities:
     - CAPABILITY_NAMED_IAM
+
+  system_bucket: cumulus-test-sandbox-internal
+
   buckets:
-    internal: cumulus-test-sandbox-internal
-    private: cumulus-test-sandbox-private
-    protected: cumulus-test-sandbox-protected
-    public: cumulus-test-sandbox-public
+    internal: 
+      name: cumulus-test-sandbox-internal
+      type: internal
+    private:
+      name: cumulus-test-sandbox-private
+      type: private
+    protected:
+      name: cumulus-test-sandbox-protected
+      type: protected
+    public:
+      name: cumulus-test-sandbox-public
+      type: public
+    public-2:
+      name: cumulus-test-sandbox-public-2
+      type: public
+    shared:
+      name: cumulus-data-shared
+      type: shared
 
   params:
      - name: ResourcePrefix
        value: '{{prefix}}'
-     - name: InternalBucketName
-       value: '{{buckets.internal}}'
-     - name: PrivateBucketName
-       value: '{{buckets.private}}'
-     - name: ProtectedBucketName
-       value: '{{buckets.protected}}'
-     - name: PublicBucketName
-       value: '{{buckets.public}}'
 
 cumulus-from-npm:
   prefix: test-npm-integration
 
 cumulus-from-source:
   prefix: test-src-integration
+
+lf: 
+  prefix: lf-cumulus
+  stackName: lf-cumulus-iam
