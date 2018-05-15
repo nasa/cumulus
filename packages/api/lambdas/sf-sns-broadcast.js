@@ -81,7 +81,7 @@ async function publish(message, finished = false) {
         await setGranuleStatus(
           granuleId,
           event.meta.stack,
-          event.meta.buckets.internal,
+          event.cumulus_meta.system_bucket,
           event.cumulus_meta.state_machine,
           event.cumulus_meta.execution_name,
           event.meta.status
