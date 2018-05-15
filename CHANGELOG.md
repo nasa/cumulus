@@ -5,9 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v1.5.2] - 2018-05-15
+
 ### Fixed
-- **CUMULUS-514 "Unable to Delete the Granules"**
-  - updated cmrjs.deleteConcept to return success if the record is not found in CMR.
+- **CUMULUS-514 - "Unable to Delete the Granules"**
+  - updated cmrjs.deleteConcept to return success if the record is not found
+    in CMR.
 
 ### Added
 - **CUMULUS-547** - The distribution API now includes an
@@ -20,21 +24,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     the output. Defaults to '.', which will match all granules in the PDR.
 - File checksums in PDRs now support MD5
 - Deployment support to subscribe to an SNS topic that already exists
-- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access.
-- **CUMULUS-533** Added fields to granule indexer to support EMS ingest and archive record creation
-- You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
-- `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
+- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to
+  update bucket policy for in-region access.
+- **CUMULUS-533** Added fields to granule indexer to support EMS ingest and
+  archive record creation
+- You can now deploy cumulus without ElasticSearch. Just add `es: null` to
+  your `app/config.yml` file. This is only useful for debugging purposes.
+  Cumulus still requires ElasticSearch to properly operate.
+- `@cumulus/integration-tests` includes and exports the `addRules` function,
+  which seeds rules into the DynamoDB table.
 - **CUMULUS-534** Track deleted granules
   - added `deletedgranule` type to `cumulus` index.
-  - **Important Note:** Force custom bootstrap to re-run by adding this to app/config.yml
-  `es:
-      elasticSearchMapping: 7`
-- Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
-- Added support to force discovery of PDRs that have already been processed and filtering of selected data types
-- `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
+  - **Important Note:** Force custom bootstrap to re-run by adding this to
+    app/config.yml `es: elasticSearchMapping: 7`
+- Added capability to support EFS in cloud formation template. Also added
+  optional capability to ssh to your instance and privileged lambda functions.
+- Added support to force discovery of PDRs that have already been processed
+  and filtering of selected data types
+- `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback
+  IP address of `10.0.0.0` when a public IP address is not available. This
+  supports lambda functions deployed into a VPC's private subnet, where no
+  public IP address is available.
 
 ### Changed
-- CUMULUS-550 Custom bootstrap automatically adds new types to index on deployment
+- **CUMULUS-550** Custom bootstrap automatically adds new types to index on
+  deployment
 
 ## [v1.5.1] - 2018-04-23
 ### Fixed
@@ -234,7 +248,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...HEAD
+[v1.5.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...v1.5.2
 [v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0
 [v1.4.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...v1.4.1
