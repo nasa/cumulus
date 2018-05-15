@@ -12,12 +12,12 @@ function get(event, cb) {
 
   StepFunction.getExecutionStatus(arn)
     .then((status) => cb(null, status))
-    .catch(cb)
+    .catch(cb);
 }
 
 function handler(event, context) {
   handle(event, context, true, (cb) => {
-    get(event, cb)
+    get(event, cb);
   });
 }
 
