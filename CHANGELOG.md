@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     in CMR.
 
 ### Added
+- **CUMULUS-547** - The distribution API now includes an
+  "earthdataLoginUsername" query parameter when it returns a signed S3 URL
 - **CUMULUS-527 - "parse-pdr queues up all granules and ignores regex"**
   - Add an optional config property to the ParsePdr task called
     "granuleIdFilter". This property is a regular expression that is applied
