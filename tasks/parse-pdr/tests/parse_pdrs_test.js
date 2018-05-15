@@ -38,11 +38,11 @@ test.beforeEach(async (t) => {
     granuleIdExtraction: '^(.*)\.hdf'
   };
 
-  const collectionConfigStore = new CollectionConfigStore(
+  t.context.collectionConfigStore = new CollectionConfigStore(
     t.context.payload.config.bucket,
     t.context.payload.config.stack
   );
-  await collectionConfigStore.put('MOD09GQ', collectionConfig);
+  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
 });
 
 test.afterEach(async (t) => {
@@ -259,5 +259,104 @@ test('Parse a PDR from an S3 provider', async (t) => {
   }
   finally {
     await recursivelyDeleteS3Bucket(t.context.payload.config.provider.host);
+  }
+});
+
+test('Parse a PDR without a granuleIdFilter in the config', async (t) => {
+  // Create the collections contained in this PDR
+  await Promise.all([
+    t.context.collectionConfigStore.put(
+      'MYG29_S1D_SIR',
+      { name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
+    ),
+    t.context.collectionConfigStore.put(
+      'MYG29_N1D_SIR',
+      { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
+    )
+  ]);
+
+  // Set up the task config
+  t.context.payload.config.provider = {
+    id: 'MODAPS',
+    protocol: 'ftp',
+    host: 'localhost',
+    username: 'testuser',
+    password: 'testpass'
+  };
+  t.context.payload.config.useList = true;
+
+  // Set up the task input
+  t.context.payload.input.pdr.name = 'MODAPSops7.1234567.PDR';
+
+  await validateInput(t, t.context.payload.input);
+  await validateConfig(t, t.context.payload.config);
+
+  let output;
+  try {
+    output = await parsePdr(t.context.payload);
+
+    await validateOutput(t, output);
+
+    t.deepEqual(output.pdr, t.context.payload.input.pdr);
+    t.is(output.granules.length, 2);
+    t.is(output.granulesCount, 2);
+    t.is(output.filesCount, 2);
+    t.is(output.totalSize, 3952643);
+  }
+  catch (err) {
+    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else t.fail(err);
+  }
+});
+
+test('Parse a PDR with a granuleIdFilter in the config', async (t) => {
+  // Create the collections contained in this PDR
+  await Promise.all([
+    t.context.collectionConfigStore.put(
+      'MYG29_S1D_SIR',
+      { name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
+    ),
+    t.context.collectionConfigStore.put(
+      'MYG29_N1D_SIR',
+      { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
+    )
+  ]);
+
+  // Set up the task config
+  t.context.payload.config.provider = {
+    id: 'MODAPS',
+    protocol: 'ftp',
+    host: 'localhost',
+    username: 'testuser',
+    password: 'testpass'
+  };
+  t.context.payload.config.useList = true;
+  t.context.payload.config.granuleIdFilter = '^MYG29_S1D_SIR.A2012254.tiled.006.2018082201326\..*';
+
+  // Set up the task input
+  t.context.payload.input.pdr.name = 'MODAPSops7.1234567.PDR';
+
+  await validateInput(t, t.context.payload.input);
+  await validateConfig(t, t.context.payload.config);
+
+  let output;
+  try {
+    output = await parsePdr(t.context.payload);
+
+    await validateOutput(t, output);
+
+    t.deepEqual(output.pdr, t.context.payload.input.pdr);
+    t.is(output.granules.length, 1);
+    t.is(output.granulesCount, 1);
+    t.is(output.filesCount, 1);
+    t.is(output.totalSize, 1503297);
+  }
+  catch (err) {
+    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else t.fail(err);
   }
 });
