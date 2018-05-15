@@ -1,28 +1,12 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { CMR } = require('@cumulus/cmrjs');
-const { S3 } = require('@cumulus/ingest/aws');
-const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const aws = require('@cumulus/common/aws');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const log = require('@cumulus/common/log');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const models = require('../models');
-const log = require('@cumulus/common/log');
-
-async function removeGranuleFromCmr(granuleId, collectionId) {
-  log.info(`granules.removeGranuleFromCmr ${granuleId}`);
-  const password = await DefaultProvider.decrypt(process.env.cmr_password);
-  const cmr = new CMR(
-    process.env.cmr_provider,
-    process.env.cmr_client_id,
-    process.env.cmr_username,
-    password
-  );
-
-  await cmr.deleteGranule(granuleId, collectionId);
-  const g = new models.Granule();
-  await g.update({ granuleId }, { published: false, cmrLink: null })
-}
 
 /**
  * List all granules for a given collection.
@@ -52,10 +36,10 @@ async function put(event) {
   body = JSON.parse(body);
 
   const action = _get(body, 'action');
+  const g = new models.Granule();
 
   if (action) {
-    const g = new models.Granule();
-    const response = g.get({ granuleId });
+    const response = await g.get({ granuleId });
     if (action === 'reingest') {
       await g.reingest(response);
       return {
@@ -65,7 +49,7 @@ async function put(event) {
       };
     }
     else if (action === 'removeFromCmr') {
-      await removeGranuleFromCmr(response.granuleId, response.collectionId);
+      await g.removeGranuleFromCmr(response.granuleId, response.collectionId);
       return {
         granuleId: response.granuleId,
         action,
@@ -97,7 +81,7 @@ async function del(event) {
 
   // remove file from s3
   const key = `${process.env.stackName}/granules_ingested/${granuleId}`;
-  await S3.delete(process.env.internal, key);
+  await aws.deleteS3Object(process.env.internal, key);
 
   await g.delete({ granuleId });
 
@@ -122,7 +106,7 @@ function get(event, cb) {
 
 
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       get(event, cb);
     }
