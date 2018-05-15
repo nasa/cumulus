@@ -274,10 +274,12 @@ class Granule {
    * @private
    */
   addBucketToFile(file) {
-    let bucket = this.buckets.private;
-
     const fileConfig = this.findCollectionFileConfigForFile(file);
-    if (fileConfig) bucket = this.buckets[fileConfig.bucket];
+    if (!fileConfig) {
+      throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
+    }
+   
+    const bucket = this.buckets[fileConfig.bucket];
 
     return Object.assign(cloneDeep(file), { bucket });
   }
