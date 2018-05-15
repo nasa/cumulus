@@ -191,8 +191,7 @@ async function uploadReportToS3(filename) {
     Body: fs.createReadStream(filename)
   }).promise();
 
-  //TODO uncomment
-  //fs.unlinkSync(filename);
+  fs.unlinkSync(filename);
   const s3Uri = `s3://${bucket}/${key}`;
   log.info(`uploaded ${s3Uri}`);
   return s3Uri;
