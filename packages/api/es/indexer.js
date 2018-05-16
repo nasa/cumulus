@@ -371,8 +371,29 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
   if (parent) {
     params.parent = parent;
   }
+  const result = await esClient.get(params);
+  return esClient.delete(params)
+    .then(async (response) => {
+      if (type === 'granule' && result.found) {
+        const doc = result._source;
+        doc.timestamp = Date.now();
+        doc.deletedAt = Date.now();
 
-  return esClient.delete(params);
+        // When a 'granule' record is deleted, the record is added to 'deletedgranule'
+        // type for EMS report purpose.
+        await esClient.update({
+          index,
+          type: 'deletedgranule',
+          id: doc.granuleId,
+          parent: parent,
+          body: {
+            doc,
+            doc_as_upsert: true
+          }
+        });
+      }
+      return response;
+    });
 }
 
 /**
