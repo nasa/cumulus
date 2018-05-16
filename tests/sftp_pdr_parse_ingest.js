@@ -53,7 +53,10 @@ test.before(async () => {
 
   const config = {
     buckets: {
-      internal: context.internal
+      internal: {
+        name: context.internal,
+        type: 'internal'
+      }
     },
     system_bucket: context.internal,
     stack: context.stack,
