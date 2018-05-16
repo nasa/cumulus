@@ -23,11 +23,21 @@
     "buckets": {
       "type": "object",
       "description": "aws s3 buckets used by this task",
-      "properties": {
-        "internal": { "type": "string" },
-        "private": { "type": "string" },
-        "protected": { "type": "string" },
-        "public": { "type": "string" }
+      "patternProperties": {
+        "\\S*": {
+          "description": "bucket configuration for the key'd bucket",
+          "type": "object", 
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "name of the S3 bucket"
+            },
+            "type": {
+              "type": "string",
+              "description": "the type of bucket - i.e. internal, public, private, protected"
+            }
+          }
+        }
       }
     },
     "granuleIdExtraction": {

@@ -29,7 +29,6 @@
     "@cumulus/hello-world": "^1.5.1",
     "@cumulus/ingest": "^1.5.1",
     "@cumulus/integration-tests": "^1.5.1",
-    "@cumulus/move-granules": "^1.5.1",
     "@cumulus/parse-pdr": "^1.5.1",
     "@cumulus/pdr-status-check": "^1.5.1",
     "@cumulus/post-to-cmr": "^1.5.1",
@@ -37,7 +36,7 @@
     "@cumulus/queue-pdrs": "^1.5.1",
     "@cumulus/sf-sns-report": "^1.5.1",
     "@cumulus/sync-granule": "^1.5.1",
-    "aws-sdk": "^2.238.1"
+    "aws-sdk": "^2.239.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",

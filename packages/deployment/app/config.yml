@@ -29,10 +29,18 @@ default:
   shared_data_bucket: 'cumulus-data-shared'
 
   buckets:
-    internal: change-me
-    private: change-me
-    protected: change-me
-    public: change-me
+    internal: 
+      name: change-me
+      type: internal
+    private: 
+      name: change-me
+      type: private
+    protected: 
+      name: change-me
+      type: protected
+    public: 
+      name: change-me
+      type: public
 
   cmr:
     username: devseed
