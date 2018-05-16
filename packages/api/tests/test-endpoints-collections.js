@@ -8,7 +8,7 @@ const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const collectionsEndpoint = require('../endpoints/collections');
 const EsCollection = require('../es/collections');
-const { testEndpoint } = require('./testUtils');
+const { testEndpoint } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
 process.env.CollectionsTable = randomString();
