@@ -5,6 +5,9 @@ const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const groupBy = require('lodash.groupby');
+const identity = require('lodash.identity');
+const omit = require('lodash.omit');
 const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
@@ -50,90 +53,62 @@ class Discover {
   }
 
   /**
-   * Receives a file object and adds granule, bucket and path information
-   * extracted from the collection record
+   * Receives a file object and adds granule-specific properties to it
    *
-   * @param {Object} _file - the file object
-   * @returns {Object} Updated file with granuleId, bucket and path information
+   * @param {Object} file - the file object
+   * @returns {Object} Updated file with granuleId, bucket, and url_path information
    */
-  setGranuleInfo(_file) {
-    let granuleId;
-    const file = _file;
-    let test = new RegExp(this.collection.granuleIdExtraction);
-    const match = file.name.match(test);
-    if (match) {
-      granuleId = match[1];
-      for (const f of this.collection.files) {
-        test = new RegExp(f.regex);
-        if (file.name.match(test)) {
-          file.granuleId = granuleId;
-          file.bucket = this.buckets[f.bucket];
-          if (f.url_path) {
-            file.url_path = f.url_path;
-          }
-          else {
-            file.url_path = this.collection.url_path || '';
-          }
-        }
-      }
+  setGranuleInfo(file) {
+    const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
+    const fileTypeConfig = this.fileTypeConfigForFile(file);
 
-      // if collection regex matched, the following will be true
-      if (file.granuleId && file.bucket) {
-        return file;
+    // Return the file with granuleId, bucket, and url_path added
+    return Object.assign(
+      cloneDeep(file),
+      {
+        granuleId: granuleIdMatch[1],
+        bucket: this.buckets[fileTypeConfig.bucket],
+        url_path: fileTypeConfig.url_path || this.collection.url_path || ''
       }
-    }
-    return false;
+    );
+  }
+
+  fileTypeConfigForFile(file) {
+    return this.collection.files.find((fileTypeConfig) => file.name.match(fileTypeConfig.regex));
   }
 
   async discover() {
-    // get list of files that matches a given path
-    const updatedFiles = (await this.list())
-      .map((file) => this.setGranuleInfo(file))
-      .filter((file) => file);
+    const discoveredFiles = (await this.list())
+      // Make sure the file matches the granuleIdExtraction
+      .filter((file) => file.name.match(this.collection.granuleIdExtraction))
+      // Make sure there is a config for this type of file
+      .filter((file) => this.fileTypeConfigForFile(file))
+      // Add additional granule-related properties to the file
+      .map((file) => this.setGranuleInfo(file));
 
-    return await this.findNewGranules(updatedFiles);
-  }
+    // This is a little confusing, but I haven't figured out a better way to
+    // write it.  What we're doing here is checking each discovered file to see
+    // if it already exists in S3.  If it does then it isn't a new file and we
+    // are going to ignore it.
+    const newFiles = (await Promise.all( // eslint-disable-line function-paren-newline
+      discoveredFiles.map(async (file) => {
+        if (await aws.s3ObjectExists({ Bucket: file.bucket, Key: file.name })) return null;
+        return file;
+      })
+    )).filter(identity); // eslint-disable-line function-paren-newline
 
-  /**
-   * Determine if a file does not yet exist in S3.
-   *
-   * @param {Object} file - the file that's being looked for
-   * @param {string} file.bucket - the bucket to look in
-   * @param {string} file.name - the name of the file (in S3)
-   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
-   *   when the object exists in S3, or the passed-in file object if it does
-   *   not already exist in S3.
-   */
-  fileIsNew(file) {
-    return aws.s3ObjectExists({
-      Bucket: file.bucket,
-      Key: file.name
-    }).then((exists) => (exists ? false : file));
-  }
+    // Group the files by granuleId
+    const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
 
-  async findNewGranules(files) {
-    const checkFiles = files.map((f) => this.fileIsNew(f));
-    const t = await Promise.all(checkFiles);
-    const newFiles = t.filter((f) => f);
-
-    // reorganize by granule
-    const granules = {};
-    newFiles.forEach((_f) => {
-      const f = _f;
-      const granuleId = f.granuleId;
-      delete f.granuleId;
-      if (granules[granuleId]) {
-        granules[granuleId].files.push(f);
-      }
-      else {
-        granules[granuleId] = {
-          granuleId,
-          files: [f]
-        };
-      }
-    });
-
-    return Object.keys(granules).map((k) => granules[k]);
+    // Build and return the granules
+    const granuleIds = Object.keys(filesByGranuleId);
+    return granuleIds
+      .map((granuleId) => ({
+        granuleId,
+        dataType: this.collection.name,
+        // Remove the granuleId property from each file
+        files: filesByGranuleId[granuleId].map((file) => omit(file, 'granuleId'))
+      }));
   }
 }
 
