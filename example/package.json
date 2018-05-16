@@ -21,20 +21,20 @@
     ]
   },
   "dependencies": {
-    "@cumulus/api": "^1.5.1",
-    "@cumulus/common": "^1.5.1",
-    "@cumulus/deployment": "^1.5.1",
-    "@cumulus/discover-granules": "^1.5.1",
-    "@cumulus/discover-pdrs": "^1.5.1",
-    "@cumulus/hello-world": "^1.5.1",
-    "@cumulus/integration-tests": "^1.5.1",
-    "@cumulus/parse-pdr": "^1.5.1",
-    "@cumulus/pdr-status-check": "^1.5.1",
-    "@cumulus/post-to-cmr": "^1.5.1",
-    "@cumulus/queue-granules": "^1.5.1",
-    "@cumulus/queue-pdrs": "^1.5.1",
-    "@cumulus/sf-sns-report": "^1.5.1",
-    "@cumulus/sync-granule": "^1.5.1",
+    "@cumulus/api": "^1.5.2",
+    "@cumulus/common": "^1.5.2",
+    "@cumulus/deployment": "^1.5.2",
+    "@cumulus/discover-granules": "^1.5.2",
+    "@cumulus/discover-pdrs": "^1.5.2",
+    "@cumulus/hello-world": "^1.5.2",
+    "@cumulus/integration-tests": "^1.5.2",
+    "@cumulus/parse-pdr": "^1.5.2",
+    "@cumulus/pdr-status-check": "^1.5.2",
+    "@cumulus/post-to-cmr": "^1.5.2",
+    "@cumulus/queue-granules": "^1.5.2",
+    "@cumulus/queue-pdrs": "^1.5.2",
+    "@cumulus/sf-sns-report": "^1.5.2",
+    "@cumulus/sync-granule": "^1.5.2",
     "aws-sdk": "^2.227.1"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.11.0",
-    "kes": "^2.1.2",
+    "kes": "^2.2.1",
     "lodash": "^4.17.5",
     "node-forge": "^0.7.5"
   }
