@@ -85,7 +85,7 @@ class Granule extends Manager {
    * Create new granule records from incoming sns messages
    *
    * @param {Object} payload - sns message containing the output of a Cumulus Step Function
-   * @returns {Promise} granule records
+   * @returns {Promise<Array>} granule records
    */
   createGranulesFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
