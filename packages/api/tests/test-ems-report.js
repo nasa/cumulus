@@ -53,7 +53,7 @@ test.before(async () => {
   for (let i = 0; i < 30; i += 1) {
     const newgran = clone(granule);
     newgran.granuleId = randomString();
-    newgran.createdAt = moment().subtract(Math.floor(i / 10), 'days').toDate().getTime();
+    newgran.createdAt = moment.utc().subtract(Math.floor(i / 10), 'days').toDate().getTime();
     if (i % 10 === 2) newgran.status = 'failed';
     if (i % 10 === 3) newgran.status = 'running';
     granules.push(newgran);
@@ -75,7 +75,7 @@ test.before(async () => {
   for (let i = 0; i < 15; i += 1) {
     const newgran = clone(deletedgranule);
     newgran.granuleId = randomString();
-    newgran.deletedAt = moment().subtract(Math.floor(i / 5), 'days').toDate().getTime();
+    newgran.deletedAt = moment.utc().subtract(Math.floor(i / 5), 'days').toDate().getTime();
     if (i % 5 === 2) newgran.status = 'failed';
     deletedgrans.push(newgran);
   }
@@ -106,9 +106,10 @@ test.afterEach.always(async () => {
 });
 
 test.serial('generate reports for the previous day', async (t) => {
-  // 24-hour period ending past midnight
-  const endTime = moment().format('YYYY-MM-DD');
-  const startTime = moment().subtract(1, 'days').format('YYYY-MM-DD');
+  // 24-hour period ending past midnight utc
+  const endTime = moment.utc().startOf('day').toDate().toUTCString();
+  const startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
+    .toUTCString();
   const reports = await generateReports(startTime, endTime);
   const requests = reports.map(async (report) => {
     const parsed = aws.parseS3Uri(report.file);
@@ -125,12 +126,13 @@ test.serial('generate reports for the previous day', async (t) => {
 });
 
 test.serial('generate reports for the past two days, and run multiple times', async (t) => {
-  // 24-hour period ending past midnight
-  const endTime = moment().format('YYYY-MM-DD');
-  const startTime = moment().subtract(2, 'days').format('YYYY-MM-DD');
+  // 2-day period ending past midnight utc
+  const endTime = moment.utc().startOf('day').toDate().toUTCString();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').toDate()
+    .toUTCString();
   let reports;
   for (let i = 0; i < 5; i += 1) {
-    reports = await generateReports(startTime, endTime);
+    reports = await generateReports(startTime, endTime); // eslint-disable-line no-await-in-loop
   }
 
   const requests = reports.map(async (report) => {
