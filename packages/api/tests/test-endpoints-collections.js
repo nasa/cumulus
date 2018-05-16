@@ -2,19 +2,21 @@
 
 const sinon = require('sinon');
 const test = require('ava');
-
-process.env.CollectionsTable = 'Test_CollectionsTable';
-process.env.stackName = 'test-stack';
-process.env.internal = 'test-bucket';
-
-const models = require('../models');
 const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
+const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const collectionsEndpoint = require('../endpoints/collections');
-const collections = new models.Collection();
 const EsCollection = require('../es/collections');
 const { testEndpoint } = require('./testUtils');
 const { Search } = require('../es/search');
+
+process.env.CollectionsTable = randomString();
+process.env.stackName = randomString();
+process.env.internal = randomString();
+
+
+const collections = new models.Collection();
 
 const testCollection = {
   'name': 'collection-125',
@@ -30,7 +32,7 @@ const testCollection = {
 const hash = { name: 'name', type: 'S' };
 const range = { name: 'version', type: 'S' };
 
-const esIndex = 'cumulus-index';
+const esIndex = randomString();
 
 async function setup() {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
