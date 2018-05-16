@@ -7,7 +7,7 @@ const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const pdrEndpoint = require('../endpoints/pdrs');
 const indexer = require('../es/indexer');
-const { testEndpoint } = require('./testUtils');
+const { testEndpoint } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
 // create all the variables needed across this test

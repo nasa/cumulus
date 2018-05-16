@@ -6,7 +6,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const rulesEndpoint = require('../endpoints/rules');
-const { testEndpoint } = require('./testUtils');
+const { testEndpoint } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
 const esIndex = randomString();
