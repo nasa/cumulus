@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
+  - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
+  - ems.provider property added to @cumulus/deployment/app/config.yml
 
 ## [v1.5.2] - 2018-05-15
 
