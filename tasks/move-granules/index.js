@@ -218,9 +218,10 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 *
 * @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {string} distEndpoint - the api distribution endpoint
 * @returns {Promise} promise resolves when all files have been updated
 **/
-async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
+async function updateCmrFileAccessURls(cmrFiles, granulesObject, distEndpoint) {
   for (const cmrFile of cmrFiles) {
     const onlineAccessUrls = cmrFile.metadataObject.Granule.OnlineAccessURLs;
     const granule = granulesObject[cmrFile.granuleId];
@@ -228,7 +229,9 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
     const urls = onlineAccessUrls.OnlineAccessURL.map((urlObj) => {
       const filename = path.basename(urlObj.URL);
       const file = granule.files.find((f) => f.name === filename);
-      urlObj.URL = file.filename;
+      const extension = path.join(file.bucket, file.filepath);
+      urlObj.URL = path.join(distEndpoint, extension);
+
       return urlObj;
     });
 
@@ -254,6 +257,7 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
  * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
  *                                                    from filenames
  * @param {Array} event.config.input_granules - an array of granules
+ * @param {string} event.config.distribution_endpoint - distribution enpoint for the api
  * @param {Object} event.config.collection - configuration object defining a collection
  * of granules and their files
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
@@ -269,6 +273,7 @@ async function moveGranules(event) {
   const buckets = get(config, 'buckets');
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const inputGranules = get(config, 'input_granules', {});
+  const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
   const input = get(event, 'input', []);
@@ -288,7 +293,7 @@ async function moveGranules(event) {
     await moveGranuleFiles(allGranules, bucket);
 
     // update cmr.xml files with correct online access urls
-    updateCmrFileAccessURls(cmrFiles, allGranules, regex);
+    updateCmrFileAccessURls(cmrFiles, allGranules, distEndpoint);
   }
 
   return {
