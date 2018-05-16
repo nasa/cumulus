@@ -24,6 +24,7 @@ process.env.stackName = randomString();
 const collectionTable = randomString();
 const granuleTable = randomString();
 const pdrTable = randomString();
+const executionTable = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
 
@@ -32,8 +33,10 @@ test.before(async () => {
   process.env.GranulesTable = granuleTable;
   process.env.CollectionsTable = collectionTable;
   process.env.PdrsTable = pdrTable;
+  process.env.ExecutionsTable = executionTable;
   await models.Manager.createTable(granuleTable, { name: 'granuleId', type: 'S' });
   await models.Manager.createTable(pdrTable, { name: 'pdrName', type: 'S' });
+  await models.Manager.createTable(executionTable, { name: 'arn', type: 'S' });
   await models.Manager.createTable(
     collectionTable,
     { name: 'name', type: 'S' },
@@ -73,6 +76,7 @@ test.after.always(async () => {
     models.Manager.deleteTable(granuleTable),
     models.Manager.deleteTable(collectionTable),
     models.Manager.deleteTable(pdrTable),
+    models.Manager.deleteTable(executionTable),
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.bucket)
   ]);
@@ -417,53 +421,34 @@ test.serial('indexing a running pdr when pdr is missing', async (t) => {
   t.is(r, undefined);
 });
 
-test.serial('indexing a step function with missing arn', async (t) => {
+test.serial('creating a step function with missing arn', async (t) => {
   const newPayload = clone(granuleSuccess);
   delete newPayload.cumulus_meta.state_machine;
 
-  const promise = indexer.indexStepFunction(esClient, newPayload, esIndex);
+  const e = new models.Execution();
+  const promise = e.createExecutionFromSns(newPayload);
   const error = await t.throws(promise);
   t.is(error.message, 'State Machine Arn is missing. Must be included in the cumulus_meta');
 });
 
-test.serial('indexing a successful step function', async (t) => {
+test.serial('creating a successful step function', async (t) => {
   const newPayload = clone(pdrSuccess);
   newPayload.cumulus_meta.execution_name = randomString();
 
-  const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type: 'execution',
-    id: r._id
-  });
-  const record = response._source;
+  const e = new models.Execution();
+  const record = await e.createExecutionFromSns(newPayload);
 
   t.is(record.status, 'completed');
   t.is(record.type, newPayload.meta.workflow_name);
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
-test.serial('indexing a failed step function', async (t) => {
+test.serial('creaging a failed step function', async (t) => {
   const newPayload = clone(pdrFailure);
   newPayload.cumulus_meta.execution_name = randomString();
 
-  const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type: 'execution',
-    id: r._id
-  });
-  const record = response._source;
+  const e = new models.Execution();
+  const record = await e.createExecutionFromSns(newPayload);
 
   t.is(record.status, 'failed');
   t.is(record.type, newPayload.meta.workflow_name);

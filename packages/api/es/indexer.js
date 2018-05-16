@@ -16,12 +16,7 @@ const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { Search, defaultIndexAlias } = require('./search');
-const Granule = require('../models/granules');
-const Pdr = require('../models/pdrs');
-const {
-  getExecutionArn,
-  getExecutionUrl
-} = require('@cumulus/ingest/aws');
+const { Granule, Pdr, Execution } = require('../models');
 
 /**
  * Returns the collectionId used in elasticsearch
@@ -190,32 +185,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  * @returns {Promise} elasticsearch update response
  */
 function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 'execution') {
-  const name = get(payload, 'cumulus_meta.execution_name');
-  const arn = getExecutionArn(
-    get(payload, 'cumulus_meta.state_machine'),
-    name
-  );
-  if (!arn) {
-    const error = new Error('State Machine Arn is missing. Must be included in the cumulus_meta');
-    return Promise.reject(error);
-  }
-
-  const execution = getExecutionUrl(arn);
-
-  const doc = {
-    name,
-    arn,
-    execution,
-    error: parseException(payload.exception),
-    type: get(payload, 'meta.workflow_name'),
-    collectionId: get(payload, 'meta.collection.name'),
-    status: get(payload, 'meta.status', 'UNKNOWN'),
-    createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-    timestamp: Date.now()
-  };
-
-  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-  return genericRecordUpdate(esClient, doc.arn, doc, index, type);
+  return genericRecordUpdate(esClient, payload.arn, payload, index, type);
 }
 
 /**
@@ -398,14 +368,10 @@ async function handlePayload(event) {
     payload = event;
   }
 
-  const esClient = await Search.es();
-
-  // allowing to set index name via env variable
-  // to support testing
-  const esIndex = process.env.ES_INDEX;
+  const e = new Execution();
 
   return {
-    sf: await indexStepFunction(esClient, payload, esIndex),
+    sf: await e.createExecutionFromSns(payload),
     pdr: await pdr(payload),
     granule: await granule(payload)
   };

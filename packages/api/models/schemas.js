@@ -436,3 +436,50 @@ module.exports.provider = {
   ]
 };
 
+// Execution Schema => the model keeps information about each step function execution
+module.exports.execution = {
+  title: 'Execution Object',
+  description: 'Keep the information about each step function execution',
+  type: 'object',
+  properties: {
+    arn: {
+      title: 'Execution arn (this field is unique)',
+      type: 'string'
+    },
+    name: {
+      title: 'Execution name',
+      type: 'string'
+    },
+    execution: {
+      title: 'The execution page url on AWS console',
+      type: 'string'
+    },
+    error: {
+      title: 'The error details in case of a failed execution',
+      type: 'object'
+    },
+    type: {
+      title: 'The workflow name, e.g. IngestGranule',
+      type: 'string'
+    },
+    status: {
+      title: 'the execution status',
+      enum: ['running', 'completed', 'failed', 'unknown'],
+      type: 'string'
+    },
+    createdAt: {
+      type: 'number',
+      readonly: true
+    },
+    timestamp: {
+      type: 'number',
+      readonly: true
+    }
+  },
+  required: [
+    'arn',
+    'name',
+    'status',
+    'createdAt'
+  ]
+};

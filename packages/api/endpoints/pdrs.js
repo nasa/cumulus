@@ -22,7 +22,7 @@ function list(event, cb) {
 }
 
 /**
- * get a single PDR 
+ * get a single PDR
  *
  * @param {Object} event - aws lambda event object.
  * @param {Function} cb - aws lambda callback function
@@ -39,7 +39,7 @@ function get(event, cb) {
 }
 
 /**
- * delete a given PDR 
+ * delete a given PDR
  *
  * @param {Object} event - aws lambda event object.
  * @returns {Promise<Object>} the response object
