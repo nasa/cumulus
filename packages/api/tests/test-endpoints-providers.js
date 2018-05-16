@@ -3,18 +3,19 @@
 const aws = require('@cumulus/common/aws');
 const test = require('ava');
 
-process.env.ProvidersTable = 'Test_ProviderTable';
-process.env.stackName = 'test-stack';
-process.env.internal = 'test-bucket';
-
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
+const { randomString } = require('@cumulus/common/test-utils');
 const providerEndpoint = require('../endpoints/providers');
 const { testEndpoint } = require('./testUtils');
-const providers = new models.Provider();
 const { Search } = require('../es/search');
 
-const esIndex = 'cumulus-index';
+
+process.env.ProvidersTable = randomString();
+process.env.stackName = randomString();
+process.env.internal = randomString();
+const providers = new models.Provider();
+const esIndex = randomString();
 
 const testProvider = {
   id: 'orbiting-carbon-observatory-2',
