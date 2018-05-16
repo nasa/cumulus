@@ -7,7 +7,7 @@ const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const { randomString } = require('@cumulus/common/test-utils');
 const providerEndpoint = require('../endpoints/providers');
-const { testEndpoint } = require('./testUtils');
+const { testEndpoint } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
 
