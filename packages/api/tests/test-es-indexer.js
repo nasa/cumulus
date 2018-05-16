@@ -5,7 +5,6 @@ const sinon = require('sinon');
 const fs = require('fs');
 const clone = require('lodash.clonedeep');
 const path = require('path');
-const delay = require('delay');
 const aws = require('@cumulus/common/aws');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -23,7 +22,8 @@ const esIndex = randomString();
 process.env.bucket = randomString();
 process.env.stackName = randomString();
 const collectionTable = randomString();
-const granuleTable = randomString()
+const granuleTable = randomString();
+const pdrTable = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
 
@@ -31,7 +31,9 @@ test.before(async () => {
   // create the tables
   process.env.GranulesTable = granuleTable;
   process.env.CollectionsTable = collectionTable;
+  process.env.PdrsTable = pdrTable;
   await models.Manager.createTable(granuleTable, { name: 'granuleId', type: 'S' });
+  await models.Manager.createTable(pdrTable, { name: 'pdrName', type: 'S' });
   await models.Manager.createTable(
     collectionTable,
     { name: 'name', type: 'S' },
@@ -70,6 +72,7 @@ test.after.always(async () => {
   Promise.all([
     models.Manager.deleteTable(granuleTable),
     models.Manager.deleteTable(collectionTable),
+    models.Manager.deleteTable(pdrTable),
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.bucket)
   ]);
@@ -345,29 +348,16 @@ test.serial('indexing a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test.serial('indexing a failed pdr record', async (t) => {
-  const type = 'pdr';
+test.serial('creating a failed pdr record', async (t) => {
   const payload = pdrFailure.payload;
   payload.pdr.name = randomString();
   const collection = pdrFailure.meta.collection;
-  const r = await indexer.pdr(esClient, pdrFailure, esIndex, type);
-
-  // make sure record is created
-  t.is(r.result, 'created');
+  const record = await indexer.pdr(pdrFailure);
 
   const collectionId = indexer.constructCollectionId(collection.name, collection.version);
 
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type,
-    id: payload.pdr.name
-  });
-  const record = response._source;
-
   t.is(record.status, 'failed');
   t.is(record.collectionId, collectionId);
-  t.is(response._id, payload.pdr.name);
   t.is(record.pdrName, payload.pdr.name);
 
   // check stats
@@ -379,29 +369,16 @@ test.serial('indexing a failed pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test.serial('indexing a successful pdr record', async (t) => {
-  const type = 'pdr';
+test.serial('creating a successful pdr record', async (t) => {
   pdrSuccess.meta.pdr.name = randomString();
   const pdr = pdrSuccess.meta.pdr;
   const collection = pdrSuccess.meta.collection;
-  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
-
-  // make sure record is created
-  t.is(r.result, 'created');
+  const record = await indexer.pdr(pdrSuccess);
 
   const collectionId = indexer.constructCollectionId(collection.name, collection.version);
 
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type,
-    id: pdr.name
-  });
-  const record = response._source;
-
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
-  t.is(response._id, pdr.name);
   t.is(record.pdrName, pdr.name);
 
   // check stats
@@ -413,25 +390,13 @@ test.serial('indexing a successful pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test.serial('indexing a running pdr record', async (t) => {
-  const type = 'pdr';
+test.serial('creating a running pdr record', async (t) => {
   const newPayload = clone(pdrSuccess);
   newPayload.meta.pdr.name = randomString();
   newPayload.meta.status = 'running';
   newPayload.payload.running.push('arn');
   const pdr = newPayload.meta.pdr;
-  const r = await indexer.pdr(esClient, newPayload, esIndex, type);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type,
-    id: pdr.name
-  });
-  const record = response._source;
+  const record = await indexer.pdr(newPayload);
 
   t.is(record.status, 'running');
 
@@ -445,9 +410,8 @@ test.serial('indexing a running pdr record', async (t) => {
 });
 
 test.serial('indexing a running pdr when pdr is missing', async (t) => {
-  const type = 'pdr';
   delete pdrSuccess.meta.pdr;
-  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
+  const r = await indexer.pdr(pdrSuccess);
 
   // make sure record is created
   t.is(r, undefined);
@@ -653,6 +617,9 @@ test.serial('pass a sns message to main handler with parse info', async (t) => {
   t.truthy(resp[0].sf);
   t.falsy(resp[0].granule);
   t.truthy(resp[0].pdr);
+
+  // fake pdr index to elasticsearch (this is done in a lambda function)
+  await indexer.indexPdr(esClient, resp[0].pdr);
 
   const msg = JSON.parse(event.Records[0].Sns.Message);
   const pdr = msg.payload.pdr;
