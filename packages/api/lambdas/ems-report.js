@@ -13,8 +13,9 @@ const { generateReports } = require('../lib/ems');
  */
 function handler(event, context, callback) {
   // 24-hour period ending past midnight
-  const endTime = moment().format('YYYY-MM-DD');
-  const startTime = moment().subtract(1, 'days').format('YYYY-MM-DD');
+  const endTime = moment.utc().startOf('day').toDate().toUTCString();
+  const startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
+    .toUTCString();
   return generateReports(startTime, endTime).then((r) => callback(null, r)).catch(callback);
 }
 
