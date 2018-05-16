@@ -308,7 +308,7 @@ module.exports.pdr = {
       type: 'string',
       readonly: true
     },
-    collection: {
+    collectionId: {
       title: 'Collection Name',
       type: 'string',
       readonly: true
@@ -373,7 +373,7 @@ module.exports.pdr = {
   required: [
     'pdrName',
     'provider',
-    'collection',
+    'collectionId',
     'status',
     'createdAt'
   ]

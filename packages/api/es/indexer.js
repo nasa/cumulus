@@ -17,6 +17,7 @@ const log = require('@cumulus/common/log');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { Search, defaultIndexAlias } = require('./search');
 const Granule = require('../models/granules');
+const Pdr = require('../models/pdrs');
 const {
   getExecutionArn,
   getExecutionUrl
@@ -218,62 +219,14 @@ function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 
 }
 
 /**
- * Extracts PDR info from a StepFunction message and indexes it to ElasticSearch
+ * Extracts PDR info from a StepFunction message and save it to DynamoDB 
  *
- * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: pdr)
- * @returns {Promise} Elasticsearch response
+ * @returns {Promise<Object>} Elasticsearch response
  */
-function pdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
-  const name = get(payload, 'cumulus_meta.execution_name');
-  const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
-  const pdrName = get(pdrObj, 'name');
-
-  if (!pdrName) return Promise.resolve();
-
-  const arn = getExecutionArn(
-    get(payload, 'cumulus_meta.state_machine'),
-    name
-  );
-  const execution = getExecutionUrl(arn);
-
-  const collection = get(payload, 'meta.collection');
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  const stats = {
-    processing: get(payload, 'payload.running', []).length,
-    completed: get(payload, 'payload.completed', []).length,
-    failed: get(payload, 'payload.failed', []).length
-  };
-
-  stats.total = stats.processing + stats.completed + stats.failed;
-  let progress = 0;
-  if (stats.processing > 0 && stats.total > 0) {
-    progress = ((stats.total - stats.processing) / stats.total) * 100;
-  }
-  else if (stats.processing === 0 && stats.total > 0) {
-    progress = 100;
-  }
-
-  const doc = {
-    pdrName,
-    collectionId,
-    status: get(payload, 'meta.status'),
-    provider: get(payload, 'meta.provider.id'),
-    progress,
-    execution,
-    PANSent: get(pdrObj, 'PANSent', false),
-    PANmessage: get(pdrObj, 'PANmessage', 'N/A'),
-    stats,
-    createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-    timestamp: Date.now()
-  };
-
-  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-  return genericRecordUpdate(esClient, pdrName, doc, index, type);
+function pdr(payload) {
+  const p = new Pdr();
+  return p.createPdrFromSns(payload);
 }
 
 /**
@@ -334,6 +287,25 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
     index,
     type,
     payload.collectionId
+  );
+}
+
+/**
+ * Indexes the pdr type on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type     - Elasticsearch type (default: pdr)
+ * @returns {Promise} Elasticsearch response
+ */
+async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
+  return genericRecordUpdate(
+    esClient,
+    payload.pdrName,
+    payload,
+    index,
+    type,
   );
 }
 
@@ -434,7 +406,7 @@ async function handlePayload(event) {
 
   return {
     sf: await indexStepFunction(esClient, payload, esIndex),
-    pdr: await pdr(esClient, payload, esIndex),
+    pdr: await pdr(payload),
     granule: await granule(payload)
   };
 }
@@ -505,6 +477,7 @@ module.exports = {
   indexProvider,
   indexRule,
   indexGranule,
+  indexPdr,
   indexStepFunction,
   handlePayload,
   partialRecordUpdate,
