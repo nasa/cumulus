@@ -11,6 +11,43 @@ const {
 } = require('@cumulus/common/test-utils');
 const { discoverGranules } = require('../index');
 
+test('discover granules sets the correct dataType for granules', async (t) => {
+  const event = cloneDeep(mur);
+  event.config.bucket = randomString();
+  event.config.collection.provider_path = '/granules/fake_granules';
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:3030'
+  };
+
+  await validateConfig(t, event.config);
+  await s3().createBucket({ Bucket: event.config.bucket }).promise();
+
+  try {
+    const output = await discoverGranules(event);
+    await validateOutput(t, output);
+
+    // Make sure that there really were granules returned
+    t.truthy(output.granules.length > 0);
+
+    // Make sure that the granules use the collection name as the dataType
+    output.granules.forEach((granule) => {
+      t.is(granule.dataType, event.config.collection.name);
+    });
+  }
+  catch (err) {
+    if (err.message === 'Connection Refused') {
+      t.pass('Ignoring this test. Remote host seems to be down.');
+    }
+    else throw err;
+  }
+  finally {
+    // Clean up
+    await recursivelyDeleteS3Bucket(event.config.bucket);
+  }
+});
+
 // This test is broken and will be fixed by CUMULUS-427
 test.skip('discover granules using FTP', async (t) => {
   const event = cloneDeep(mur);
