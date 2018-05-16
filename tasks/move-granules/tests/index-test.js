@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable no-param-reassign */
+
 const fs = require('fs');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
@@ -26,6 +28,7 @@ test.beforeEach((t) => {
 
 test.afterEach.always(async (t) => {
   deleteBucket('cumulus-public');
+  deleteBucket('cumulus-internal');
   deleteBucket(t.context.stagingBucket);
 });
 

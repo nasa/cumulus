@@ -167,7 +167,10 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
             granule: granulesObject[granuleId],
             cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
           });
-          file.bucket = buckets[fileConfig.bucket];
+          console.log(JSON.stringify(buckets));
+          console.log(buckets[fileConfig.bucket].name);
+
+          file.bucket = buckets[fileConfig.bucket].name;
           file.filepath = path.join(urlPath, file.name);
           file.filename = `s3://${path.join(file.bucket, file.filepath)}`;
         }
