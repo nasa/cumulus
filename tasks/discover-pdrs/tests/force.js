@@ -4,17 +4,14 @@ const test = require('ava');
 const path = require('path');
 const os = require('os');
 const fs = require('fs-extra');
-const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
+const { RemoteResourceError } = require('@cumulus/common/errors');
 const { cloneDeep } = require('lodash');
 
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');
 
-const { execSync } = require('child_process');
-
 const { recursivelyDeleteS3Bucket, s3, uploadS3Files } = require('@cumulus/common/aws');
 const {
-  findTestDataDirectory,
   randomString,
   validateConfig,
   validateOutput
@@ -24,7 +21,7 @@ test('test pdr discovery with force=false', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
   event.config.stack = randomString();
-  event.config.collection.provider_path = '/pdrs';
+  event.config.collection.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.force = false;
 
@@ -54,7 +51,7 @@ test('test pdr discovery with force=false', async (t) => {
       fs.writeFileSync(pdrFileName, 'PDR DATA');
       return pdrFileName;
     });
-    
+
     await uploadS3Files(files, event.config.bucket, path.join(event.config.stack, 'pdrs'));
 
     // do it again and we should not find a pdr
@@ -79,7 +76,7 @@ test('test pdr discovery with force=true', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
   event.config.stack = randomString();
-  event.config.collection.provider_path = '/pdrs';
+  event.config.collection.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.force = true;
 
@@ -94,7 +91,7 @@ test('test pdr discovery with force=true', async (t) => {
   await validateConfig(t, event.config);
 
   const tmpDir = os.tmpdir();
-  
+
   await s3().createBucket({ Bucket: event.config.bucket }).promise();
 
   try {
@@ -109,7 +106,7 @@ test('test pdr discovery with force=true', async (t) => {
       fs.writeFileSync(pdrFileName, 'PDR DATA');
       return pdrFileName;
     });
-    
+
     await uploadS3Files(files, event.config.bucket, path.join(event.config.stack, 'pdrs'));
 
     // do it again and we should find all pdrs
