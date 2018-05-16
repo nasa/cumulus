@@ -60,23 +60,38 @@ class Discover {
    */
   setGranuleInfo(file) {
     const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
+    const granuleId = granuleIdMatch[1];
+
     const fileTypeConfig = this.fileTypeConfigForFile(file);
 
     // Return the file with granuleId, bucket, and url_path added
     return Object.assign(
       cloneDeep(file),
       {
-        granuleId: granuleIdMatch[1],
+        granuleId,
         bucket: this.buckets[fileTypeConfig.bucket],
         url_path: fileTypeConfig.url_path || this.collection.url_path || ''
       }
     );
   }
 
+  /**
+   * Search for a file type config in the collection config
+   *
+   * @param {Object} file - a file object
+   * @returns {Object|undefined} a file type config object or undefined if none
+   *   was found
+   * @private
+   */
   fileTypeConfigForFile(file) {
     return this.collection.files.find((fileTypeConfig) => file.name.match(fileTypeConfig.regex));
   }
 
+  /**
+   * Discover new granules
+   *
+   * @returns {Array<Object>} a list of discovered granules
+   */
   async discover() {
     const discoveredFiles = (await this.list())
       // Make sure the file matches the granuleIdExtraction
@@ -86,16 +101,14 @@ class Discover {
       // Add additional granule-related properties to the file
       .map((file) => this.setGranuleInfo(file));
 
-    // This is a little confusing, but I haven't figured out a better way to
-    // write it.  What we're doing here is checking each discovered file to see
-    // if it already exists in S3.  If it does then it isn't a new file and we
-    // are going to ignore it.
-    const newFiles = (await Promise.all( // eslint-disable-line function-paren-newline
-      discoveredFiles.map(async (file) => {
-        if (await aws.s3ObjectExists({ Bucket: file.bucket, Key: file.name })) return null;
-        return file;
-      })
-    )).filter(identity); // eslint-disable-line function-paren-newline
+    // This is confusing, but I haven't figured out a better way to write it.
+    // What we're doing here is checking each discovered file to see if it
+    // already exists in S3.  If it does then it isn't a new file and we are
+    // going to ignore it.
+    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
+      aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
+        .then((exists) => (exists ? null : discoveredFile)))))
+      .filter(identity);
 
     // Group the files by granuleId
     const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
