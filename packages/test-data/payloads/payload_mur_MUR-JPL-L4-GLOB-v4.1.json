@@ -19,7 +19,7 @@
     "globalconnectionlimit": 10,
     "protocol": "ftp",
     "host": "podaac-ftp.jpl.nasa.gov",
-    "path": "/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/"
+    "path": "/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/",
     "port": 21,
     "recursive": true,
   },

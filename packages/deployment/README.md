@@ -36,10 +36,8 @@ For example:
 | api_backend_url | apigateway backend url | the API backend url
 | api_distribution_url | apigateway dist url | the API url used for file distribution
 | shared_data_bucket | cumulus-data-shared | the bucket has the shared data artifacts
-| buckets.internal | (required) | the bucket used for storing deployment artifacts
-| buckets.private | (required) | the bucket used for storing private ingest data
-| buckets.protected | (required) | the bucket used for storing protected ingest data
-| buckets.public | (required) | the bucket used for storing public ingest data
+| system_bucket | (required) | the bucket used for storing deployment artifacts
+| buckets | N/A | Configuration of buckets with key, bucket name, and type (i.e. internal, public private)
 | cmr.username | devseed | the username used for posting metadata to CMR
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR

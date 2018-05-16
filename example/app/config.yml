@@ -128,7 +128,8 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
-  es: null
+  es: 
+    elasticSearchMapping: 6
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-ecs'

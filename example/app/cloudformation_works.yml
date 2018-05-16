@@ -1,0 +1,1548 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'stack: lf-cumulus | deployed by Kes'
+Parameters:
+  CmrPassword:
+    Type: String
+    Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
+    NoEcho: true
+  DockerPassword:
+    Type: String
+    Description: 'Password used to access a private docker repository (not required)'
+    Default: NoValue
+    NoEcho: true
+  DockerEmail:
+    Type: String
+    Description: 'Email used to login to a private docker repository (not required)'
+    Default: NoValue
+    NoEcho: true
+
+Resources:
+
+  #################################################
+  #  BEGIN
+  #################################################
+  CumulusApiDefaultNestedStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+        CmrPassword:
+          Fn::GetAtt:
+            - CumulusCustomResource
+            - CmrPassword 
+        log2elasticsearchLambdaFunction:
+          Fn::GetAtt:
+            - log2elasticsearchLambdaFunction
+            - Arn
+        ScheduleSFLambdaFunction:
+          Fn::GetAtt:
+            - ScheduleSFLambdaFunction
+            - Arn
+        dbIndexerLambdaFunction:
+          Fn::GetAtt:
+            - dbIndexerLambdaFunction
+            - Arn
+        kinesisConsumerLambdaFunction:
+          Fn::GetAtt:
+            - kinesisConsumerLambdaFunction
+            - Arn
+        distributionRestApi:
+          Ref: distributionRestApi
+        distributionRestApiRootId:
+          Fn::GetAtt:
+            - distributionRestApi
+            - RootResourceId
+        backendRestApi:
+          Ref: backendRestApi
+        backendRestApiRootId:
+          Fn::GetAtt:
+            - backendRestApi
+            - RootResourceId
+        CollectionsTableDynamoDB:
+          Ref: CollectionsTableDynamoDB
+        ProvidersTableDynamoDB:
+          Ref: ProvidersTableDynamoDB
+        RulesTableDynamoDB:
+          Ref: RulesTableDynamoDB
+        UsersTableDynamoDB:
+          Ref: UsersTableDynamoDB
+        CollectionsTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - CollectionsTableDynamoDB
+            - StreamArn
+        ProvidersTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - ProvidersTableDynamoDB
+            - StreamArn
+        RulesTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - RulesTableDynamoDB
+            - StreamArn
+        UsersTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - UsersTableDynamoDB
+            - StreamArn
+        SecurityGroupId:
+          Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+      TemplateURL: http://cumulus-test-sandbox-internal.s3.amazonaws.com/lf-cumulus/CumulusApiDefault.yml 
+
+  CumulusApiV1NestedStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+        CmrPassword:
+          Fn::GetAtt:
+            - CumulusCustomResource
+            - CmrPassword 
+        log2elasticsearchLambdaFunction:
+          Fn::GetAtt:
+            - log2elasticsearchLambdaFunction
+            - Arn
+        ScheduleSFLambdaFunction:
+          Fn::GetAtt:
+            - ScheduleSFLambdaFunction
+            - Arn
+        dbIndexerLambdaFunction:
+          Fn::GetAtt:
+            - dbIndexerLambdaFunction
+            - Arn
+        kinesisConsumerLambdaFunction:
+          Fn::GetAtt:
+            - kinesisConsumerLambdaFunction
+            - Arn
+        distributionRestApi:
+          Ref: distributionRestApi
+        distributionRestApiRootId:
+          Fn::GetAtt:
+            - distributionRestApi
+            - RootResourceId
+        backendRestApi:
+          Ref: backendRestApi
+        backendRestApiRootId:
+          Fn::GetAtt:
+            - backendRestApi
+            - RootResourceId
+        CollectionsTableDynamoDB:
+          Ref: CollectionsTableDynamoDB
+        ProvidersTableDynamoDB:
+          Ref: ProvidersTableDynamoDB
+        RulesTableDynamoDB:
+          Ref: RulesTableDynamoDB
+        UsersTableDynamoDB:
+          Ref: UsersTableDynamoDB
+        CollectionsTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - CollectionsTableDynamoDB
+            - StreamArn
+        ProvidersTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - ProvidersTableDynamoDB
+            - StreamArn
+        RulesTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - RulesTableDynamoDB
+            - StreamArn
+        UsersTableDynamoDBStreamArn:
+          Fn::GetAtt:
+            - UsersTableDynamoDB
+            - StreamArn
+        SecurityGroupId:
+          Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+      TemplateURL: http://cumulus-test-sandbox-internal.s3.amazonaws.com/lf-cumulus/CumulusApiV1.yml 
+
+ 
+  #################################################
+  # Nested CloudFormation Templates config BEGIN
+  #################################################
+
+  #################################################
+  # Cumulus Custom Resource BEGIN
+  #################################################
+  CumulusCustomResource:
+    Type: Custom::Cumulus
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomBootstrapLambdaFunction
+          - Arn
+      Cmr:
+        Password:
+          Ref: CmrPassword
+      Users:
+        table:
+          Ref: UsersTableDynamoDB
+        records:
+          - username: aimeeb
+            password: OAuth
+          - username: jennyhliu
+            password: OAuth
+          - username: jnorton1
+            password: OAuth
+          - username: kbaynes
+            password: OAuth
+          - username: kkelly
+            password: OAuth
+          - username: lfrederick
+            password: OAuth
+          - username: mhuffnagle2
+            password: OAuth
+          - username: pquinn1
+            password: OAuth
+          - username: scisco
+            password: OAuth
+          - username: sethvincent
+            password: OAuth
+          - username: testuser
+            password: OAuth
+
+  #################################################
+  # Cumulus Custom Resource END
+  #################################################
+
+  #################################################
+  # SNS config BEGIN
+  #################################################
+  sftrackerSns:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      DisplayName: lf-cumulus-sftracker
+      Subscription:
+        - Endpoint:
+            Fn::GetAtt:
+              - sns2elasticsearchLambdaFunction
+              - Arn
+          Protocol: lambda
+
+  sftrackerSubscriptionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+          - sns2elasticsearchLambdaFunction
+          - Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn:
+        Ref: sftrackerSns
+
+  inregions3Sns:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      DisplayName: lf-cumulus-inregions3
+      Subscription:
+        - Endpoint:
+            Fn::GetAtt:
+              - InRegionS3PolicyLambdaFunction
+              - Arn
+          Protocol: lambda
+
+  inregions3SubscriptionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+          - InRegionS3PolicyLambdaFunction
+          - Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn:
+        Ref: inregions3Sns
+
+  # Subscriptions only
+  AmazonIpSpaceChangedlambdaSubscription: 
+    Type: "AWS::SNS::Subscription"
+    Properties:
+      Endpoint:
+        Fn::GetAtt:
+          - InRegionS3PolicyLambdaFunction
+          - Arn
+      Protocol: lambda
+      TopicArn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
+
+  AmazonIpSpaceChangedSubscriptionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+          - InRegionS3PolicyLambdaFunction
+          - Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn:
+        arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
+
+  #################################################
+  # SNS config END
+  #################################################
+
+  #################################################
+  # Step Functions config BEGIN
+  #################################################
+  EcsTaskHelloWorldActivity:
+    Type: AWS::StepFunctions::Activity
+    Properties:
+      Name: lf-cumulus-EcsTaskHelloWorld-Activity
+
+  lfCumulusHelloWorldWorkflowStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: |
+          {"Comment":"Returns Hello World","StartAt":"StartStatus","States":{"StartStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Next":"HelloWorld"},"HelloWorld":{"Type":"Task","Resource":"${HelloWorldLambdaFunction.Arn}","Next":"StopStatus"},"StopStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"Next":"WorkflowFailed"}],"End":true},"WorkflowFailed":{"Type":"Fail","Cause":"Workflow failed"}}}
+
+      RoleArn: arn:aws:iam::000000000000:role/lf-cumulus-steprole
+
+  lfCumulusDiscoverGranulesStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: |
+          {"Comment":"Discovers new Granules from a given provider","StartAt":"StatusReport","TimeoutSeconds":18000,"States":{"StatusReport":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Next":"VpcOrNot"},"VpcOrNot":{"Type":"Choice","Choices":[{"Variable":"$.meta.provider.protocol","StringEquals":"http","Next":"DiscoverGranules"},{"Variable":"$.meta.provider.protocol","StringEquals":"https","Next":"DiscoverGranules"},{"Variable":"$.meta.provider.protocol","StringEquals":"s3","Next":"DiscoverGranulesNoVpc"}]},"DiscoverGranules":{"Type":"Task","Resource":"${DiscoverGranulesLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"StopStatus"},"DiscoverGranulesNoVpc":{"Type":"Task","Resource":"${DiscoverGranulesNoVpcLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"StopStatus"},"StopStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"Next":"WorkflowFailed"}],"End":true},"WorkflowFailed":{"Type":"Fail","Cause":"Workflow failed"}}}
+
+      RoleArn: arn:aws:iam::000000000000:role/lf-cumulus-steprole
+
+  lfCumulusDiscoverAndQueuePdrsStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: |
+          {"Comment":"Discovers new PDRs from a given provider","StartAt":"StartStatus","States":{"StartStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Next":"DiscoverPdrs"},"DiscoverPdrs":{"Type":"Task","Resource":"${DiscoverPdrsLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"QueuePdrs"},"QueuePdrs":{"Type":"Task","Resource":"${QueuePdrsLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"StopStatus"},"StopStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"Next":"WorkflowFailed"}],"End":true},"WorkflowFailed":{"Type":"Fail","Cause":"Workflow failed"}}}
+
+      RoleArn: arn:aws:iam::000000000000:role/lf-cumulus-steprole
+
+  lfCumulusParsePdrStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: |
+          {"Comment":"Parse a given PDR","StartAt":"StatusReport","States":{"StatusReport":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Next":"ParsePdr"},"ParsePdr":{"Type":"Task","Resource":"${ParsePdrLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"QueueGranules"},"QueueGranules":{"Type":"Task","Resource":"${QueueGranulesLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"CheckStatus"},"CheckStatus":{"Type":"Task","Resource":"${PdrStatusCheckLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"CheckAgainChoice"},"CheckAgainChoice":{"Type":"Choice","Choices":[{"Variable":"$.payload.isFinished","BooleanEquals":false,"Next":"PdrStatusReport"},{"Variable":"$.payload.isFinished","BooleanEquals":true,"Next":"StopStatus"}],"Default":"StopStatus"},"PdrStatusReport":{"ResultPath":null,"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"WaitForSomeTime"},"WaitForSomeTime":{"Type":"Wait","Seconds":10,"Next":"CheckStatus"},"StopStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"Next":"WorkflowFailed"}],"End":true},"WorkflowFailed":{"Type":"Fail","Cause":"Workflow failed"}}}
+
+      RoleArn: arn:aws:iam::000000000000:role/lf-cumulus-steprole
+
+  lfCumulusIngestGranuleStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: |
+          {"Comment":"Ingest Granule","StartAt":"Report","States":{"Report":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Next":"VpcOrNot"},"VpcOrNot":{"Type":"Choice","Choices":[{"Variable":"$.meta.provider.protocol","StringEquals":"http","Next":"SyncGranule"},{"Variable":"$.meta.provider.protocol","StringEquals":"https","Next":"SyncGranule"},{"Variable":"$.meta.provider.protocol","StringEquals":"s3","Next":"SyncGranuleNoVpc"}]},"SyncGranule":{"Type":"Task","Resource":"${SyncGranuleLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"ChooseProcess"},"SyncGranuleNoVpc":{"Type":"Task","Resource":"${SyncGranuleNoVpcLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"ChooseProcess"},"ChooseProcess":{"Type":"Choice","Choices":[{"Variable":"$.cumulus_meta.process","StringEquals":"modis","Next":"ProcessingStep"}],"Default":"StopStatus"},"ProcessingStep":{"Type":"Task","Resource":"${FakeProcessingLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Retry":[{"ErrorEquals":["States.ALL"],"IntervalSeconds":2,"MaxAttempts":3}],"Next":"MoveGranuleStep"},"MoveGranuleStep":{"Type":"Task","Resource":"${MoveGranulesLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"CmrStep"},"CmrStep":{"Type":"Task","Resource":"${PostToCmrLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"StopStatus"},"StopStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"Next":"WorkflowFailed"}],"End":true},"WorkflowFailed":{"Type":"Fail","Cause":"Workflow failed"}}}
+
+      RoleArn: arn:aws:iam::000000000000:role/lf-cumulus-steprole
+
+  lfCumulusSyncGranuleStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: |
+          {"Comment":"Sync Granule","StartAt":"Report","States":{"Report":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Next":"VpcOrNot"},"VpcOrNot":{"Type":"Choice","Choices":[{"Variable":"$.meta.provider.protocol","StringEquals":"http","Next":"SyncGranule"},{"Variable":"$.meta.provider.protocol","StringEquals":"https","Next":"SyncGranule"},{"Variable":"$.meta.provider.protocol","StringEquals":"s3","Next":"SyncGranuleNoVpc"}]},"SyncGranule":{"Type":"Task","Resource":"${SyncGranuleLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"StopStatus"},"SyncGranuleNoVpc":{"Type":"Task","Resource":"${SyncGranuleNoVpcLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.exception","Next":"StopStatus"}],"Next":"StopStatus"},"StopStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"Next":"WorkflowFailed"}],"End":true},"WorkflowFailed":{"Type":"Fail","Cause":"Workflow failed"}}}
+
+      RoleArn: arn:aws:iam::000000000000:role/lf-cumulus-steprole
+
+  lfCumulusEcsHelloWorldWorkflowStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        Fn::Sub: |
+          {"Comment":"Returns Hello World","StartAt":"StartStatus","States":{"StartStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Next":"EcsTaskHelloWorld"},"EcsTaskHelloWorld":{"Type":"Task","Resource":"${EcsTaskHelloWorldActivity}","TimeoutSeconds":5,"Retry":[{"ErrorEquals":["States.Timeout"],"MaxAttempts":1}],"Next":"StopStatus"},"StopStatus":{"Type":"Task","Resource":"${SfSnsReportLambdaFunction.Arn}","Catch":[{"ErrorEquals":["States.ALL"],"Next":"WorkflowFailed"}],"End":true},"WorkflowFailed":{"Type":"Fail","Cause":"Workflow failed"}}}
+
+      RoleArn: arn:aws:iam::000000000000:role/lf-cumulus-steprole
+
+  #################################################
+  # Step Functions config END
+  #################################################
+
+
+  #################################################
+  # SQS config BEGIN
+  #################################################
+  startSFSQS:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: lf-cumulus-startSF
+      ReceiveMessageWaitTimeSeconds: 20
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt: 
+            - startSFFailedSQS
+            - Arn
+        maxReceiveCount: 30
+      VisibilityTimeout: 20
+
+  startSFFailedSQS:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: lf-cumulus-startSF-failed
+
+
+  startSFWatcherRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: rate(1 minute)
+      State: ENABLED
+      Targets:
+        - Id: startSFWatcherScheduler
+          Input:
+            Fn::Sub: '{"queueUrl": "${ startSFSQS}", "messageLimit": 10 }'
+          Arn:
+            Fn::GetAtt:
+            - sqs2sfLambdaFunction
+            - Arn
+
+  startSFInvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - sqs2sfLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - startSFWatcherRule
+          - Arn
+
+  #################################################
+  # SQS config END
+  #################################################
+
+  #################################################
+  # CloudWatch RULE config BEGIN
+  #################################################
+
+  backgroundJobsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: rate(10 minutes)
+      State: ENABLED
+      Targets:
+        - Id: backgroundJobsWatcherScheduler
+          Arn:
+            Fn::GetAtt:
+            - jobsLambdaFunction
+            - Arn
+
+  backgroundJobsRuleLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - jobsLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - backgroundJobsRule
+          - Arn
+
+## Generic lambda permission for custom rules
+## created in the dashboard
+  GenericLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - ScheduleSFLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+
+  #################################################
+  # CloudWatch RULE config BEGIN
+  #################################################
+
+  #################################################
+  # DynamoDB config BEGIN
+  #################################################
+  CollectionsTableDynamoDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: name
+        AttributeType: S
+      - AttributeName: version
+        AttributeType: S
+      KeySchema:
+      - AttributeName: name
+        KeyType: HASH
+      - AttributeName: version
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 1
+      TableName: lf-cumulus-CollectionsTable
+      StreamSpecification:
+        StreamViewType: "NEW_IMAGE"
+
+  ProvidersTableDynamoDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 1
+      TableName: lf-cumulus-ProvidersTable
+      StreamSpecification:
+        StreamViewType: "NEW_IMAGE"
+
+  RulesTableDynamoDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: name
+        AttributeType: S
+      KeySchema:
+      - AttributeName: name
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 1
+      TableName: lf-cumulus-RulesTable
+      StreamSpecification:
+        StreamViewType: "NEW_IMAGE"
+
+  UsersTableDynamoDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: userName
+        AttributeType: S
+      KeySchema:
+      - AttributeName: userName
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 1
+      TableName: lf-cumulus-UsersTable
+      StreamSpecification:
+        StreamViewType: "NEW_IMAGE"
+
+
+  #################################################
+  # DyanmoDB config END
+  #################################################
+
+  #################################################
+  # APIGateway config BEGIN
+  #################################################
+
+  distributionRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: lf-cumulus-distribution
+  backendRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: lf-cumulus-backend
+
+  #################################################
+  # APIGateway config END
+  #################################################
+
+  #################################################
+  # Lambda config BEGIN
+  #################################################
+  HelloWorldLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-5bf18366ed876924ab4f49f4b0b2dc2263fd7fdd-HelloWorld.zip
+      FunctionName: lf-cumulus-HelloWorld
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  DiscoverGranulesLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-310f17337cca83d2daddf19187ce7e508e8b51c8-DiscoverGranules.zip
+      FunctionName: lf-cumulus-DiscoverGranules
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 512
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+        SubnetIds:
+          - subnet-7e79691b
+
+
+
+  DiscoverGranulesNoVpcLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-310f17337cca83d2daddf19187ce7e508e8b51c8-DiscoverGranules.zip
+      FunctionName: lf-cumulus-DiscoverGranulesNoVpc
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 512
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  DiscoverPdrsLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-89ceb6012f1cff68494d61a10beedacf260287cf-DiscoverPdrs.zip
+      FunctionName: lf-cumulus-DiscoverPdrs
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+  DiscoverPdrsLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - DiscoverPdrsLogGroup
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: '/aws/lambda/lf-cumulus-DiscoverPdrs'
+      FilterPattern: ""
+
+  DiscoverPdrsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/lf-cumulus-DiscoverPdrs'
+      RetentionInDays: 30
+
+  MoveGranulesLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-51cf8a054a4d239e2d8986e67f95ea7595361584-MoveGranules.zip
+      FunctionName: lf-cumulus-MoveGranules
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  QueuePdrsLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-293426e9db163d9022ddce6d70084697f00c66d5-QueuePdrs.zip
+      FunctionName: lf-cumulus-QueuePdrs
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+  QueuePdrsLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - QueuePdrsLogGroup
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: '/aws/lambda/lf-cumulus-QueuePdrs'
+      FilterPattern: ""
+
+  QueuePdrsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/lf-cumulus-QueuePdrs'
+      RetentionInDays: 30
+
+  ParsePdrLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-c4752611138fecb95a7084de1204cd3023734423-ParsePdr.zip
+      FunctionName: lf-cumulus-ParsePdr
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+  ParsePdrLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - ParsePdrLogGroup
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: '/aws/lambda/lf-cumulus-ParsePdr'
+      FilterPattern: ""
+
+  ParsePdrLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/lf-cumulus-ParsePdr'
+      RetentionInDays: 30
+
+  PdrStatusCheckLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-742aca5996a07769c329d4e6a052c7be814b46bc-PdrStatusCheck.zip
+      FunctionName: lf-cumulus-PdrStatusCheck
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  PostToCmrLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-c3e82792e74ab31874ad8fec932a64053a1f067c-PostToCmr.zip
+      FunctionName: lf-cumulus-PostToCmr
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+          internal: cumulus-test-sandbox-internal
+      Handler: index.handler
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+  PostToCmrLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - PostToCmrLogGroup
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: '/aws/lambda/lf-cumulus-PostToCmr'
+      FilterPattern: ""
+
+  PostToCmrLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/lf-cumulus-PostToCmr'
+      RetentionInDays: 30
+
+  QueueGranulesLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-d82a8ca65aef681167c1845165dd51fc0fb615fd-QueueGranules.zip
+      FunctionName: lf-cumulus-QueueGranules
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  SfSnsReportLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-e14f98d42e016a11bf9a8fc4b6ea8bee81dcf734-SfSnsReport.zip
+      FunctionName: lf-cumulus-SfSnsReport
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  SyncGranuleLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-3a87a51c3580d2d1c52ddfeb7e7720aa73e6c52d-SyncGranule.zip
+      FunctionName: lf-cumulus-SyncGranule
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+        SubnetIds:
+          - subnet-7e79691b
+
+
+  SyncGranuleLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - SyncGranuleLogGroup
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: '/aws/lambda/lf-cumulus-SyncGranule'
+      FilterPattern: ""
+
+  SyncGranuleLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/lf-cumulus-SyncGranule'
+      RetentionInDays: 30
+
+  SyncGranuleNoVpcLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-3a87a51c3580d2d1c52ddfeb7e7720aa73e6c52d-SyncGranule.zip
+      FunctionName: lf-cumulus-SyncGranuleNoVpc
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+  SyncGranuleNoVpcLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - SyncGranuleNoVpcLogGroup
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: '/aws/lambda/lf-cumulus-SyncGranuleNoVpc'
+      FilterPattern: ""
+
+  SyncGranuleNoVpcLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/lf-cumulus-SyncGranuleNoVpc'
+      RetentionInDays: 30
+
+  S3AccessTestLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/1b47a405f80c52003305cb5aba4e2fd0373624cb-S3AccessTest.zip
+      FunctionName: lf-cumulus-S3AccessTest
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  FakeProcessingLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/d936e02816427110c8baffe747b1a3b38b3baa92-5374bfc39901aa347ec7054437986787fa5bad5c-FakeProcessing.zip
+      FunctionName: lf-cumulus-FakeProcessing
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  ModisProcessingLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-data-shared
+        S3Key: deploy/cumulus-process/modis/0.5.2.zip
+      FunctionName: lf-cumulus-ModisProcessing
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: lambda_handler.handler
+      MemorySize: 1024
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: python2.7
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  InRegionS3PolicyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-InRegionS3Policy
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.inRegionS3Policy
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  sqs2sfLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-sqs2sf
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.starter
+      MemorySize: 384
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 200
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  sns2elasticsearchLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-sns2elasticsearch
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.indexer
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 100
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  log2elasticsearchLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-log2elasticsearch
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.logHandler
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 100
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  sf2snsStartLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-sf2snsStart
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.sfStart
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 100
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  sf2snsEndLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-sf2snsEnd
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.sfEnd
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 100
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  dbIndexerLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-dbIndexer
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.dbIndexer
+      MemorySize: 512
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  kinesisConsumerLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-kinesisConsumer
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+          RulesTable:
+            Ref: RulesTableDynamoDB
+          CollectionsTable:
+            Ref: CollectionsTableDynamoDB
+          ProvidersTable:
+            Ref: ProvidersTableDynamoDB
+          bucket: cumulus-test-sandbox-internal
+      Handler: index.kinesisConsumer
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 100
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  ScheduleSFLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-ScheduleSF
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+          CollectionsTable:
+            Ref: CollectionsTableDynamoDB
+          ProvidersTable:
+            Ref: ProvidersTableDynamoDB
+      Handler: index.scheduler
+      MemorySize: 256
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 100
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  jobsLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-jobs
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+      Handler: index.jobs
+      MemorySize: 512
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 300
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+  CustomBootstrapLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cumulus-test-sandbox-internal
+        S3Key: lf-cumulus/lambdas/5f01adab3e621604e3176beb9c0106861a5dd055-InRegionS3Policy.zip
+      FunctionName: lf-cumulus-CustomBootstrap
+      Environment:
+        Variables:
+          stackName: lf-cumulus
+          internal: cumulus-test-sandbox-internal
+      Handler: index.bootstrap
+      MemorySize: 512
+      Role: arn:aws:iam::000000000000:role/lf-cumulus-lambda-processing
+      Runtime: nodejs8.10
+      Timeout: 100
+      Tags:
+        - Key: Project
+          Value: lf-cumulus
+      
+
+
+
+
+  log2elasticsearchLambdaPermissionLog:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - log2elasticsearchLambdaFunction
+        - Arn
+      Principal:
+        Fn::Sub: 'logs.${AWS::Region}.amazonaws.com'
+
+  #################################################
+  # Lambda config END
+  #################################################
+
+  #################################################
+  # ECS config BEGIN
+  #################################################
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: lf-cumulus-ecs-securitygroup
+      GroupDescription: Security Group for ECS containter instances of lf-cumulus
+      Tags:
+        - Key: Name
+          Value: "lf-cumulus"
+      VpcId: vpc-5bb23422
+
+
+  CumulusECSCluster:
+    Type: AWS::ECS::Cluster
+
+  CumulusContainerInstanceLaunch:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          MountConfig:
+          - config
+
+        config:
+          commands:
+            01_add_instance_to_cluster:
+              command:
+                Fn::Sub:
+                  - |
+                    #!/bin/bash
+                    echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
+                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
+
+                    echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
+                    echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"cumulususer","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
+
+                  - Password:
+                      Ref: DockerPassword
+                    Email:
+                      Ref: DockerEmail
+          
+
+          files:
+            "/etc/cfn/cfn-hup.conf":
+              content:
+                Fn::Sub: |
+                  [main]
+                  stack=${AWS::StackId}
+                  region=${AWS::Region}
+              mode: '000400'
+              owner: root
+              group: root
+            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              content:
+                Fn::Sub: |
+                  [cfn-auto-reloader-hook]
+                  triggers=post.update
+                  path=Resources.CumulusContainerInstanceLaunch.Metadata.AWS::CloudFormation::Init
+                  action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}
+                  runas=root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                - "/etc/cfn/cfn-hup.conf"
+                - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+
+
+    Properties:
+      AssociatePublicIpAddress: true
+      SecurityGroups:
+        - Fn::GetAtt:
+          - SecurityGroup
+          - GroupId
+
+      ImageId: ami-a7a242da
+      
+      InstanceType: t2.small
+      IamInstanceProfile: arn:aws:iam::000000000000:instance-profile/lf-cumulus-ecs
+      BlockDeviceMappings:
+      - DeviceName: "/dev/xvda"
+        Ebs:
+          DeleteOnTermination: true
+          VolumeSize: 50
+      UserData:
+        "Fn::Base64":
+          Fn::Join:
+            - ""
+            - - "#cloud-config\n"
+              - "\nruncmd:\n"
+              - " - yum install -y aws-cfn-bootstrap\n"
+              - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
+              - Fn::Sub: " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
+
+  CumulusECSAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 0
+    Properties:
+      AvailabilityZones:
+        - us-east-1b
+      VPCZoneIdentifier:
+        - subnet-7e79691b
+      LaunchConfigurationName:
+        Ref: CumulusContainerInstanceLaunch
+      MinSize: '0'
+      MaxSize: 1
+      DesiredCapacity: 1
+      Tags:
+      - Key: Name
+        Value: "lf-cumulus-cumulus-ecs"
+        PropagateAtLaunch: true
+
+  # adding TaskDefinition for Lambda/ECS services
+  EcsTaskHelloWorldTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+      - Name: EcsTaskHelloWorld
+        Cpu: 400
+        Essential: true
+
+        Environment:
+          - Name: AWS_DEFAULT_REGION
+            Value:
+              Fn::Sub: ${AWS::Region}
+        Image: cumuluss/cumulus-ecs-task:1.1.1
+        MemoryReservation: 700
+        Command:
+          - cumulus-ecs-task
+          - --activityArn
+          - Ref: EcsTaskHelloWorldActivity
+          - --lambdaArn
+          - Ref: HelloWorldLambdaFunction
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group:
+              Ref: EcsTaskHelloWorldEcsLogs
+            awslogs-region:
+              Fn::Sub: ${AWS::Region}
+
+  EcsTaskHelloWorldEcsLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: lf-cumulus-EcsTaskHelloWorldEcsLogs
+
+  EcsTaskHelloWorldEcsLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - EcsTaskHelloWorldEcsLogs
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: lf-cumulus-EcsTaskHelloWorldEcsLogs
+      FilterPattern: ""
+
+  EcsTaskHelloWorldECSService:
+    Type: AWS::ECS::Service
+    DependsOn:
+    - CumulusECSAutoScalingGroup
+    Properties:
+      Cluster:
+        Ref: CumulusECSCluster
+      DesiredCount: 1
+      TaskDefinition:
+        Ref: EcsTaskHelloWorldTaskDefinition
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+
+  #################################################
+  # ECS config END
+  #################################################
+
+Outputs:
+
+  Api:
+    Value:
+      Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/dev/"]]
+
+  Distribution:
+    Value:
+      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/dev/"]]
+
+  ApiId:
+    Value:
+      Ref: backendRestApi
+  
+  DistributionId:
+    Value:
+      Ref: distributionRestApi
+  
+  ApiStage:
+    Value: dev
+  
+  HelloWorldWorkflowStateMachine:
+    Value:
+      Ref: lfCumulusHelloWorldWorkflowStateMachine
+  DiscoverGranulesStateMachine:
+    Value:
+      Ref: lfCumulusDiscoverGranulesStateMachine
+  DiscoverAndQueuePdrsStateMachine:
+    Value:
+      Ref: lfCumulusDiscoverAndQueuePdrsStateMachine
+  ParsePdrStateMachine:
+    Value:
+      Ref: lfCumulusParsePdrStateMachine
+  IngestGranuleStateMachine:
+    Value:
+      Ref: lfCumulusIngestGranuleStateMachine
+  SyncGranuleStateMachine:
+    Value:
+      Ref: lfCumulusSyncGranuleStateMachine
+  EcsHelloWorldWorkflowStateMachine:
+    Value:
+      Ref: lfCumulusEcsHelloWorldWorkflowStateMachine
+
+  startSFSQSOutput:
+    Value:
+      Ref: startSFSQS
+
+
+  sftrackerSnsArn:
+    Value:
+      Ref: sftrackerSns
+  inregions3SnsArn:
+    Value:
+      Ref: inregions3Sns
+  AmazonIpSpaceChanged:
+    Value: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
+
+  EncryptedCmrPassword:
+    Value:
+      Fn::GetAtt:
+        - CumulusCustomResource
+        - CmrPassword
+
+  EcsSecurityGroup:
+    Description: ECS security group
+    Value: !Ref SecurityGroup
+    Export:
+      Name: !Sub "lf-cumulus-EcsSecurityGroup"
