@@ -85,8 +85,8 @@ function buildSearchQuery(esIndex, type, startTime, endTime) {
             {
               range: {
                 [`${timeFieldName}`]: {
-                  gte: Date.parse(startTime),
-                  lt: Date.parse(endTime)
+                  gte: moment.utc(startTime).toDate().getTime(),
+                  lt: moment.utc(endTime).toDate().getTime()
                 }
               }
             },
@@ -135,7 +135,7 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
   case 'deleteEffectiveDate':
   case 'insertTime':
     // milliseconds to string
-    result = (metadata) ? moment(new Date(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
+    result = (metadata) ? moment.utc(new Date(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
     break;
   case 'lastUpdate':
   case 'processingStartDateTime':
@@ -144,7 +144,7 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
   case 'endingDateTime':
   case 'productionDateTime':
     // string to different format string
-    result = (metadata) ? moment(Date.parse(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
+    result = (metadata) ? moment.utc(Date.parse(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
     break;
   default:
     break;
@@ -181,7 +181,7 @@ async function uploadReportToS3(filename) {
   let i = 1;
   while (exists) {
     key = `${originalKey}.rev${i}`;
-    exists = await aws.fileExists(bucket, key);
+    exists = await aws.fileExists(bucket, key); // eslint-disable-line no-await-in-loop
     i += 1;
   }
 
@@ -210,7 +210,7 @@ function buildReportFileName(reportType) {
   // use stackname as DataSource for now
   const provider = process.env.ems_provider || 'cumulus';
   const dataSource = process.env.stackName;
-  const datestring = moment().format('YYYYMMDD');
+  const datestring = moment.utc().format('YYYYMMDD');
   let fileType = 'Ing';
   if (reportType === 'archive') fileType = 'Arch';
   else if (reportType === 'delete') fileType = 'ArchDel';
@@ -245,7 +245,7 @@ async function generateReport(reportType, startTime, endTime) {
   stream.write(buildEMSRecords(get(emsMappings, reportType), granules).join('\n'));
 
   while (response.hits.total !== numRetrieved) {
-    response = await esClient.scroll({
+    response = await esClient.scroll({ // eslint-disable-line no-await-in-loop
       scrollId: response._scroll_id,
       scroll: '30s'
     });
