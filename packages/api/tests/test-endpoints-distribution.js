@@ -43,7 +43,7 @@ test.serial.cb("The S3 redirect includes the user's Earthdata Login username", (
       t.is(handlerResponse.statusCode, '302');
 
       const redirectLocation = new URL(handlerResponse.headers.Location);
-      t.is(redirectLocation.searchParams.get('earthdataLoginUsername'), myUsername);
+      t.is(redirectLocation.searchParams.get('x-EarthdataLoginUsername'), myUsername);
 
       t.end();
     });
