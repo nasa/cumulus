@@ -13,7 +13,7 @@
       "type": "string"
     },
     "bucket": {
-      "description": "S3 bucket (from meta.buckets.internal). Required when sfnEnd is true and granule status is reported.",
+      "description": "S3 bucket (from meta.buckets.internal.name). Required when sfnEnd is true and granule status is reported.",
       "type": "string"
     },
     "stateMachine": {
