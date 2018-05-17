@@ -17,9 +17,7 @@ const models = require('../models');
  */
 function list(event, cb) {
   const search = new Search(event, 'granule');
-  search.query().then((response) => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+  return search.query().then((res) => cb(null, res)).catch(cb);
 }
 
 
@@ -99,7 +97,7 @@ function get(event, cb) {
   const granuleId = _get(event.pathParameters, 'granuleName');
 
   const g = new models.Granule();
-  g.get({ granuleId }).then((response) => {
+  return g.get({ granuleId }).then((response) => {
     cb(null, response);
   }).catch(cb);
 }
@@ -114,17 +112,16 @@ function get(event, cb) {
 function handler(event, context) {
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event).then((r) => cb(null, r)).catch((e) => cb(e));
+      return put(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then((r) => cb(null, r)).catch((e) => cb(e));
+      return del(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
-    else {
-      list(event, cb);
-    }
+
+    return list(event, cb);
   });
 }
 
