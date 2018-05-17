@@ -43,11 +43,11 @@ describe('The S3 Ingest Granules workflow', () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
     });
 
-    it('has expected payload', () => {
+    it('outputs 1 granule and 2 files in the payload', () => {
       expect(lambdaOutput.payload).toEqual(expectedSyncGranulePayload);
     });
 
-    it('has expected updated meta', () => {
+    it('updates the meta object with input_granules', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedSyncGranulePayload.granules);
     });
   });
@@ -82,6 +82,12 @@ describe('The S3 Ingest Granules workflow', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
       });
+    });
+
+    it('moves files to 2 separate protected buckets based on configuration', () => {
+      // Above we checked that the files exist, now show that they are in separate protected buckets
+      expect(files[1].bucket).toEqual('protected');
+      expect(files[2].bucket).toEqual('protected-2');
     });
   });
 
