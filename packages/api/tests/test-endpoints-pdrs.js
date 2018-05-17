@@ -7,7 +7,7 @@ const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const pdrEndpoint = require('../endpoints/pdrs');
 const indexer = require('../es/indexer');
-const { testEndpoint } = require('../lib/testUtils');
+const { testEndpoint, fakePdrFactory } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
 // create all the variables needed across this test
@@ -19,22 +19,6 @@ process.env.PdrsTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 const p = new models.Pdr();
-
-/**
- * creates fake pdr records
- *
- * @param {string} status - pdr status (default to completed)
- * @returns {Object} fake pdr object
- */
-function fakePdrFactory(status = 'completed') {
-  return {
-    pdrName: randomString(),
-    collectionId: 'fakeCollection___v1',
-    provider: 'fakeProvider',
-    status,
-    createdAt: Date.now()
-  };
-}
 
 test.before(async () => {
   // create esClient
