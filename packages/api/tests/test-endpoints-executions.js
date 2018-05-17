@@ -36,7 +36,7 @@ test.before(async () => {
   // create fake granule records
   fakeExecutions = ['completed', 'failed'].map(fakeExecutionFactory);
   await Promise.all(fakeExecutions.map((i) => ex.create(i)
-    .then((record) => indexer.indexStepFunction(esClient, record, esIndex))
+    .then((record) => indexer.indexExecution(esClient, record, esIndex))
   ));
 });
 
