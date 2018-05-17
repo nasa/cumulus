@@ -11,7 +11,7 @@ const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const granuleEndpoint = require('../endpoints/granules');
 const indexer = require('../es/indexer');
-const { testEndpoint } = require('../lib/testUtils');
+const { testEndpoint, fakeGranuleFactory } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
 // create all the variables needed across this test
@@ -23,25 +23,6 @@ process.env.GranulesTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 const g = new models.Granule();
-
-/**
- * creates fake granule records
- *
- * @param {string} status - granule status (default to completed)
- * @returns {Object} fake granule object
- */
-function fakeGranuleFactory(status = 'completed') {
-  return {
-    granuleId: randomString(),
-    collectionId: 'fakeCollection___v1',
-    status,
-    execution: randomString(),
-    createdAt: Date.now(),
-    published: true,
-    cmrLink: 'example.com',
-    productVolume: 100
-  };
-}
 
 test.before(async () => {
   // create esClient

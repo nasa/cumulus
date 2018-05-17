@@ -20,21 +20,6 @@ process.env.stackName = randomString();
 process.env.internal = randomString();
 const ex = new models.Execution();
 
-/**
- * creates fake execution records
- *
- * @param {string} status - pdr status (default to completed)
- * @returns {Object} fake execution object
- */
-function fakeExecutionFactory(status = 'completed') {
-  return {
-    arn: randomString(),
-    name: randomString(),
-    status,
-    createdAt: Date.now()
-  };
-}
-
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
