@@ -8,7 +8,7 @@ const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const collectionsEndpoint = require('../endpoints/collections');
 const EsCollection = require('../es/collections');
-const { testEndpoint } = require('../lib/testUtils');
+const { testEndpoint, fakeCollectionFactory } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
 process.env.CollectionsTable = randomString();
@@ -18,16 +18,7 @@ process.env.internal = randomString();
 
 const collections = new models.Collection();
 
-const testCollection = {
-  'name': 'collection-125',
-  'version': '0.0.0',
-  'provider_path': '/',
-  'duplicateHandling': 'replace',
-  'granuleId': '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-  'granuleIdExtraction': '(MOD09GQ\\.(.*))\\.hdf',
-  'sampleFileName': 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
-  'files': []
-};
+const testCollection = fakeCollectionFactory();
 
 const hash = { name: 'name', type: 'S' };
 const range = { name: 'version', type: 'S' };
@@ -78,7 +69,7 @@ test('GET returns an existing collection', (t) => {
 });
 
 test('POST creates a new collection', (t) => {
-  const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
+  const newCollection = fakeCollectionFactory(); 
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newCollection)
