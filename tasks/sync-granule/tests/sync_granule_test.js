@@ -30,6 +30,7 @@ test.beforeEach(async (t) => {
 
   t.context.event = cloneDeep(payload);
 
+  t.context.event.config.downloadBucket = t.context.internalBucketName;
   t.context.event.config.buckets.internal = t.context.internalBucketName;
   t.context.event.config.buckets.private = t.context.privateBucketName;
   t.context.event.config.buckets.protected = t.context.protectedBucketName;
@@ -213,6 +214,7 @@ test('download granule from S3 provider', async (t) => {
 test('download granule with checksum in file from an HTTP endpoint', async (t) => {
   const event = cloneDeep(payloadChecksumFile);
 
+  event.config.downloadBucket = t.context.internalBucketName;
   event.config.buckets.internal = t.context.internalBucketName;
   event.config.buckets.private = t.context.privateBucketName;
   event.config.buckets.protected = t.context.protectedBucketName;
