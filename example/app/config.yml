@@ -65,9 +65,9 @@ default:
     public:
       name: cumulus-test-sandbox-public
       type: public
-    public-2:
-      name: cumulus-test-sandbox-public-2
-      type: public
+    protected-2:
+      name: cumulus-test-sandbox-protected-2
+      type: protected
     shared:
       name: cumulus-data-shared
       type: shared
