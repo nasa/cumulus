@@ -9,7 +9,11 @@ const { Search } = require('../es/search');
 const bootstrap = require('../lambdas/bootstrap');
 const dbIndexer = require('../lambdas/db-indexer');
 const { constructCollectionId } = require('../lib/utils');
-const { fakeCollectionFactory, fakeGranuleFactory } = require('../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  fakeGranuleFactory,
+  fakeExecutionFactory
+} = require('../lib/testUtils');
 
 let esClient;
 const seq = new Set(); // to keep track of processed records in the stream
@@ -18,6 +22,7 @@ process.env.stackName = randomString();
 process.env.internal = randomString();
 process.env.CollectionsTable = `${process.env.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${process.env.stackName}-GranulesTable`;
+process.env.ExecutionsTable = `${process.env.stackName}-ExecutionsTable`;
 
 
 function addSourceArn(tableName, records) {
@@ -33,7 +38,7 @@ function addSourceArn(tableName, records) {
 
 function updateSequenceNumber(records, sequence) {
   records.Records.forEach((r) => {
-    sequence.add(r.dynamodb.SequenceNumber)
+    sequence.add(r.dynamodb.SequenceNumber);
   });
 }
 
@@ -52,9 +57,9 @@ function removeProcessedRecords(records, sequence) {
 }
 
 async function getDyanmoDBStreamRecords(table) {
-  const streams = await aws.dynamodbstreams().listStreams(
-    { TableName: table }
-  ).promise();
+  const streams = await aws.dynamodbstreams()
+    .listStreams({ TableName: table })
+    .promise();
 
   const activeStream = streams.Streams
     .filter((s) => (s.TableName === table))[0];
@@ -92,6 +97,7 @@ test.before(async () => {
   const range = { name: 'version', type: 'S' };
   await models.Manager.createTable(process.env.CollectionsTable, hash, range);
   await models.Manager.createTable(process.env.GranulesTable, { name: 'granuleId', type: 'S' });
+  await models.Manager.createTable(process.env.ExecutionsTable, { name: 'arn', type: 'S' });
 
   // bootstrap the esIndex
   esClient = await Search.es();
@@ -101,6 +107,7 @@ test.before(async () => {
 test.after.always(async () => {
   await models.Manager.deleteTable(process.env.CollectionsTable);
   await models.Manager.deleteTable(process.env.GranulesTable);
+  await models.Manager.deleteTable(process.env.ExecutionsTable);
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
   await esClient.indices.delete({ index: esIndex });
 });
@@ -148,14 +155,9 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
 });
 
 test.serial('create, update and delete a granule in dynamodb and es', async (t) => {
-  // add the collection first
-  // const c = new models.Collection();
-  // const collection = await c.create(fakeCollectionFactory());
-  
   const fakeGranule = fakeGranuleFactory();
-  // fakeGranule.collectionId = constructCollectionId(collection.name, collection.version);
   const model = new models.Granule();
-  const a = await model.create(fakeGranule);
+  await model.create(fakeGranule);
 
   // get records from the stream
   let records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
@@ -191,5 +193,47 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   await dbIndexer(records, {}, () => {});
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
+  t.is(indexedRecord.detail, 'Record not found');
+});
+
+test.serial('create, update and delete an execution in dynamodb and es', async (t) => {
+  const fakeRecord = fakeExecutionFactory();
+  const model = new models.Execution();
+  await model.create(fakeRecord);
+
+  // get records from the stream
+  let records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  const recordIndex = new Search({}, 'execution');
+  let indexedRecord = await recordIndex.get(fakeRecord.arn);
+
+  t.is(indexedRecord.arn, fakeRecord.arn);
+
+  // change the record
+  fakeRecord.status = 'failed';
+  await model.create(fakeRecord);
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  indexedRecord = await recordIndex.get(fakeRecord.arn);
+  t.is(indexedRecord.status, 'failed');
+
+  // delete the record
+  await model.delete({ arn: fakeRecord.arn });
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  indexedRecord = await recordIndex.get(fakeRecord.arn);
   t.is(indexedRecord.detail, 'Record not found');
 });
