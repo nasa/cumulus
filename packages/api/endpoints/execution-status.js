@@ -10,14 +10,14 @@ const { StepFunction } = require('@cumulus/ingest/aws');
 function get(event, cb) {
   const arn = _get(event.pathParameters, 'arn');
 
-  StepFunction.getExecutionStatus(arn)
+  return StepFunction.getExecutionStatus(arn)
     .then((status) => cb(null, status))
     .catch(cb)
 }
 
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
-    get(event, cb)
+  return handle(event, context, true, (cb) => {
+    return get(event, cb);
   });
 }
 

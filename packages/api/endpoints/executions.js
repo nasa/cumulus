@@ -15,7 +15,7 @@ const models = require('../models');
  */
 function list(event, cb) {
   const search = new Search(event, 'execution');
-  search.query().then((response) => cb(null, response)).catch((e) => {
+  return search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
 }
@@ -32,7 +32,7 @@ function get(event, cb) {
 
   const e = new models.Execution();
 
-  e.get({ arn }).then((response) => {
+  return e.get({ arn }).then((response) => {
     cb(null, response);
   }).catch(cb);
 }
@@ -47,11 +47,10 @@ function get(event, cb) {
 function handler(event, context) {
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
-    else {
-      list(event, cb);
-    }
+
+    return list(event, cb);
   });
 }
 
