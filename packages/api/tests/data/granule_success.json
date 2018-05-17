@@ -137,7 +137,7 @@
     "CmrStep": {
       "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
       "input_granules": "{{$.meta.input_granules}}",
-      "bucket": "{{$.meta.buckets.internal}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
       "stack": "{{$.meta.stack}}",
       "cmr": "{{$.meta.cmr}}"
     },

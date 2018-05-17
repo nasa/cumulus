@@ -154,7 +154,7 @@
     "WorkflowFailed": {},
     "CmrStep": {
       "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
-      "bucket": "{{$.meta.buckets.internal}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
       "input_granules": "{{$.meta.input_granules}}",
       "stack": "{{$.meta.stack}}",
       "cmr": "{{$.meta.cmr}}"
