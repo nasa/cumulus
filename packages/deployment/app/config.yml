@@ -150,7 +150,7 @@ default:
       targets:
         - lambda: jobs
     cronJobs:
-      # run at 5:00am GMT / 1:00am EDT everyday
+      # run at 5:00am GMT daily
       schedule: cron(0 5 * * ? *)
       state: ENABLED
       targets:
