@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - ems.provider property added to @cumulus/deployment/app/config.yml
 
 ### Fixed
+- **CUMULUS-557 - "Add dataType to DiscoverGranules output"**
+  - Granules discovered by the DiscoverGranules task now include dataType
+  - dataType is now a required property for granules used as input to the
+    QueueGranules task
 - **CUMULUS-550** Update deployment app/config.yml to force elasticsearch updates for deleted granules
 
 ## [v1.5.2] - 2018-05-15
