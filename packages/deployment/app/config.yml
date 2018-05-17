@@ -69,7 +69,7 @@ default:
 
   es:
     name: es5
-    elasticSearchMapping: 5
+    elasticSearchMapping: 6
     version: 5.3
     instanceCount: 1
     instanceType: t2.small.elasticsearch
