@@ -222,8 +222,7 @@ module.exports.granule = {
     'collectionId',
     'status',
     'execution',
-    'createdAt',
-    'productVolume'
+    'createdAt'
   ]
 };
 
