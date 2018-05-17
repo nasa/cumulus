@@ -86,8 +86,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('moves files to 2 separate protected buckets based on configuration', () => {
       // Above we checked that the files exist, now show that they are in separate protected buckets
-      expect(files[1].bucket).toEqual('protected');
-      expect(files[2].bucket).toEqual('protected-2');
+      expect(files[0].bucket).toEqual('cumulus-test-sandbox-protected');
+      expect(files[2].bucket).toEqual('cumulus-test-sandbox-protected-2');
     });
   });
 
