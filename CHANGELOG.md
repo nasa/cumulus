@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
   - ems.provider property added to @cumulus/deployment/app/config.yml
 
+### Fixed
+- **CUMULUS-550** Update deployment app/config.yml to force elasticsearch updates for deleted granules
+
 ## [v1.5.2] - 2018-05-15
 
 ### Fixed
