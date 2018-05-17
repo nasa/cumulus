@@ -54,6 +54,9 @@ ApiGranulesDefault:
     ProvidersTable:
       function: Ref
       value: ProvidersTableDynamoDB
+    GranulesTable:
+      function: Ref
+      value: GranulesTableDynamoDB
     invoke:
       function: "Ref"
       value: ScheduleSFLambdaFunction
@@ -100,6 +103,9 @@ ApiExecutionsDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    ExecutionsTable:
+      function: Ref
+      value: ExecutionsTableDynamoDB
   apiGateway:
     #default paths
     - path: executions
@@ -261,6 +267,9 @@ ApiPdrsDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    PdrsTable:
+      function: Ref
+      value: PdrsTableDynamoDB
   apiGateway:
     #default paths
     - path: pdrs
