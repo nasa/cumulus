@@ -6,10 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
 - **CUMULUS-480** Use DynamoDB to store granules, pdrs and execution records
 - Activate PointInTime feature on DynamoDB tables
 - Increase test coverage on api package
 - Add ability to restore metadata records from json files to DynamoDB
+
+### Fixed
+- **CUMULUS-550** Update deployment app/config.yml to force elasticsearch updates for deleted granules
 
 ## [v1.5.2] - 2018-05-15
 
