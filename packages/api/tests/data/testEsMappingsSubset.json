@@ -1,32 +1,4 @@
 {
-  "logs": {
-    "properties": {
-      "type": {
-        "type": "keyword"
-      },
-      "level": {
-        "type": "integer"
-      },
-      "provider": {
-        "type": "keyword"
-      },
-      "granuleId": {
-        "type": "keyword"
-      },
-      "collectionId": {
-        "type": "keyword"
-      },
-      "pdrName": {
-        "type": "keyword"
-      },
-      "timestamp": {
-        "type": "date"
-      },
-      "file": {
-        "type": "keyword"
-      }
-    }
-  },
   "collection": {
     "dynamic_templates": [
       {
@@ -162,57 +134,6 @@
         "type": "float"
       },
       "timestamp": {
-        "type": "date"
-      }
-    }
-  },
-  "deletedgranule": {
-    "dynamic_templates": [
-      {
-        "all_date_fileds": {
-          "match": "*At",
-          "match_mapping_type": "long",
-          "mapping": {
-            "type": "date"
-          }
-        }
-      }
-    ],
-    "_parent": {
-      "type": "collection"
-    },
-    "properties": {
-      "execution": {
-        "type": "keyword"
-      },
-      "granuleId": {
-        "type": "keyword"
-      },
-      "pdrName": {
-        "type": "keyword"
-      },
-      "collectionId": {
-        "type": "keyword"
-      },
-      "status": {
-        "type": "keyword"
-      },
-      "provider": {
-        "type": "keyword"
-      },
-      "cmrLink": {
-        "type": "keyword"
-      },
-      "published": {
-        "type": "boolean"
-      },
-      "duration": {
-        "type": "float"
-      },
-      "timestamp": {
-        "type": "date"
-      },
-      "deletedAt": {
         "type": "date"
       }
     }
