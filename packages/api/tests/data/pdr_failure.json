@@ -106,7 +106,7 @@
   },
   "workflow_config": {
     "ParsePdr": {
-      "bucket": "{{$.meta.buckets.internal}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
       "collection": "{{$.meta.collection}}",
       "provider": "{{$.meta.provider}}",
       "stack": "{{$.meta.stack}}"
