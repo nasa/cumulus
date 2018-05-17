@@ -468,6 +468,8 @@ function selector(type, protocol) {
 }
 
 module.exports.selector = selector;
+module.exports.Discover = Discover;
+module.exports.Granule = Granule;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpGranule = FtpGranule;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
