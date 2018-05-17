@@ -16,7 +16,7 @@ const models = require('../models');
  */
 function list(event, cb) {
   const search = new Search(event, 'pdr');
-  search.query().then((response) => cb(null, response)).catch((e) => {
+  return search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
 }
@@ -33,7 +33,7 @@ function get(event, cb) {
 
   const p = new models.Pdr();
 
-  p.get({ pdrName }).then((response) => {
+  return p.get({ pdrName }).then((response) => {
     cb(null, response);
   }).catch(cb);
 }
@@ -71,14 +71,13 @@ async function del(event) {
 function handler(event, context) {
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then((r) => cb(null, r)).catch((e) => cb(e));
+      return del(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
-    else {
-      list(event, cb);
-    }
+
+    return list(event, cb);
   });
 }
 
