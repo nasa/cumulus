@@ -8,7 +8,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const { Search } = require('../es/search');
-const { generateReports } = require('../lib/ems');
+const { emsMappings, generateReports } = require('../lib/ems');
 
 const granule = {
   granuleId: randomString(),
@@ -118,9 +118,14 @@ test.serial('generate reports for the previous day', async (t) => {
     t.truthy(exists);
 
     // check the number of records for each report
-    const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+    const content = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+    const records = content.split('\n');
     const expectedNumRecords = (report.reportType === 'delete') ? 5 : 9;
-    t.is(records.split('\n').length, expectedNumRecords);
+    t.is(records.length, expectedNumRecords);
+
+    // check the number of fields for each record
+    const expectedNumFields = Object.keys(emsMappings[report.reportType]).length;
+    records.forEach((record) => t.is(record.split('|&|').length, expectedNumFields));
   });
   await Promise.all(requests);
 });
