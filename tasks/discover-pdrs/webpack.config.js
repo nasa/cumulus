@@ -18,7 +18,8 @@ module.exports = {
   },
   externals: [
    'aws-sdk',
-   'electron' 
+   'electron',
+   {'formidable': 'url'}
   ],
   devtool,
   target: 'node'
