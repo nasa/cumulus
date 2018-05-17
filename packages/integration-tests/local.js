@@ -80,6 +80,7 @@ function messageBuilder(workflow, configOverride, cfOutputs) {
 
   const message = template(workflow.name, { States: workflowConfigs }, config, cfOutputs);
   message.cumulus_meta.message_source = 'local';
+  message.cumulus_meta.system_bucket = config.system_bucket;
   return message;
 }
 
