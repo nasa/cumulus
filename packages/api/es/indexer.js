@@ -307,7 +307,8 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
   const params = {
     index,
     type,
-    id
+    id,
+    refresh: true
   };
 
   if (parent) {

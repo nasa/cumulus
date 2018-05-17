@@ -10,7 +10,7 @@
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
-    "test": "ava",
+    "test": "ava --serial",
     "test-coverage": "nyc ava",
     "build": "webpack",
     "watch": "webpack --progress -w",
