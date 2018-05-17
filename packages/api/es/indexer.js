@@ -184,7 +184,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @returns {Promise} elasticsearch update response
  */
-function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 'execution') {
+function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'execution') {
   return genericRecordUpdate(esClient, payload.arn, payload, index, type);
 }
 
@@ -445,7 +445,7 @@ module.exports = {
   indexRule,
   indexGranule,
   indexPdr,
-  indexStepFunction,
+  indexExecution,
   handlePayload,
   partialRecordUpdate,
   deleteRecord,
