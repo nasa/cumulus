@@ -1,6 +1,5 @@
 'use strict';
 
-const { get } = require('lodash');
 const fs = require('fs');
 const moment = require('moment');
 const os = require('os');
@@ -14,12 +13,14 @@ const { Search, defaultIndexAlias } = require('../es/search');
 /**
  * This module provides functionalities to generate EMS reports.
  * The following environment variables are used:
- * process.env.ES_SCROLL_SIZE: default to 1000
- * process.env.ES_INDEX: set for testing purpose, default to fTOdefaultIndexAlias
+ * process.env.ES_SCROLL_SIZE: default to defaultESScrollSize
+ * process.env.ES_INDEX: set for testing purpose, default to defaultIndexAlias
  * process.env.ems_provider: default to 'cumulus'
- * process.env.stackName
- * process.env.bucket
+ * process.env.stackName: it's used as part of the report filename
+ * process.env.bucket: the bucket to store the generated reports
  */
+
+const defaultESScrollSize = 1000;
 
 /**
  * For each EMS report type (ingest, archive, delete),
@@ -51,6 +52,8 @@ const emsMappings = {
     productionDateTime: 'productionDateTime',
     localGranuleID: 'granuleId',
     versionID: 'collectionId',
+    // since we have separate 'delete' report,
+    // deleteFromArchive shall have value 'N', deleteEffectiveDate shall be left blank
     deleteFromArchive: 'deleteFromArchive', // N
     deleteEffectiveDate: 'deleteEffectiveDate', // null
     lastUpdate: 'lastUpdateDateTime'
@@ -72,12 +75,13 @@ const emsMappings = {
  * @returns {Object} query parameters
  */
 function buildSearchQuery(esIndex, type, startTime, endTime) {
+  // types are 'granule' or 'deletedgranule'
   const timeFieldName = (type === 'granule') ? 'createdAt' : 'deletedAt';
   const params = {
     index: esIndex,
     type: type,
     scroll: '30s',
-    size: process.env.ES_SCROLL_SIZE || 1000,
+    size: process.env.ES_SCROLL_SIZE || defaultESScrollSize,
     body: {
       query: {
         bool: {
@@ -113,7 +117,7 @@ function buildSearchQuery(esIndex, type, startTime, endTime) {
  * @returns {string} granule metadata for EMS
  */
 function getEmsFieldFromGranField(granule, emsField, granField) {
-  const metadata = get(granule, granField, null);
+  const metadata = granule[granField];
   let result = metadata;
   switch (emsField) {
   case 'product':
@@ -160,8 +164,9 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
  * @returns {Array<string>} EMS records
  */
 function buildEMSRecords(mapping, granules) {
-  const records = granules.map((g) => {
-    const record = Object.keys(mapping).map((k) => getEmsFieldFromGranField(g, k, mapping[k]));
+  const records = granules.map((granule) => {
+    const record = Object.keys(mapping)
+      .map((emsField) => getEmsFieldFromGranField(granule, emsField, mapping[emsField]));
     return record.join('|&|');
   });
   return records;
@@ -228,6 +233,10 @@ function buildReportFileName(reportType) {
 async function generateReport(reportType, startTime, endTime) {
   log.debug(`ems.generateReport ${reportType} startTime: ${startTime} endTime: ${endTime}`);
 
+  if (!Object.keys(emsMappings).includes(reportType)) {
+    throw new Error(`ems.generateReport report type not supported: ${reportType}`);
+  }
+
   // create a temporary file for the report
   const name = buildReportFileName(reportType);
   const filename = path.join(os.tmpdir(), name);
@@ -242,7 +251,7 @@ async function generateReport(reportType, startTime, endTime) {
   let response = await esClient.search(searchQuery);
   let granules = response.hits.hits.map((s) => s._source);
   let numRetrieved = granules.length;
-  stream.write(buildEMSRecords(get(emsMappings, reportType), granules).join('\n'));
+  stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
 
   while (response.hits.total !== numRetrieved) {
     response = await esClient.scroll({ // eslint-disable-line no-await-in-loop
@@ -251,7 +260,7 @@ async function generateReport(reportType, startTime, endTime) {
     });
     granules = response.hits.hits.map((s) => s._source);
     stream.write('\n');
-    stream.write(buildEMSRecords(get(emsMappings, reportType), granules).join('\n'));
+    stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
     numRetrieved += granules.length;
   }
   stream.end();
@@ -270,11 +279,13 @@ async function generateReport(reportType, startTime, endTime) {
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 function generateReports(startTime, endTime) {
-  const jobs = Object.keys(emsMappings).map((k) => generateReport(k, startTime, endTime));
+  const jobs = Object.keys(emsMappings)
+    .map((reportType) => generateReport(reportType, startTime, endTime));
   return Promise.all(jobs);
 }
 
 module.exports = {
+  emsMappings,
   generateReport,
   generateReports
 };
