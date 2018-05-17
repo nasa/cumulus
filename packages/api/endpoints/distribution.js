@@ -1,11 +1,11 @@
 'use strict';
 
 const get = require('lodash.get');
-const AWS = require('aws-sdk');
 const got = require('got');
-const FormData = require('form-data');
 const querystring = require('querystring');
 const log = require('@cumulus/common/log');
+const { aws } = require('@cumulus/common');
+const { URL } = require('url');
 
 /**
  * An AWS API Gateway function that either requests authentication,
@@ -36,8 +36,6 @@ function handler(event, context, cb) {
   const EARTHDATA_GET_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/authorize`;
   const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
 
-  const s3 = new AWS.S3();
-
   let granuleKey = null;
   let query = {};
 
@@ -53,15 +51,15 @@ function handler(event, context, cb) {
   // code means that this is a redirect back from
   // earthData login
   if (query.code) {
-    const form = new FormData();
-    form.append('grant_type', 'authorization_code');
-    form.append('code', query.code);
-    form.append('redirect_uri', DEPLOYMENT_ENDPOINT);
-
     // we send the code to another endpoint to verify
     return got.post(EARTHDATA_CHECK_CODE_URL, {
-      body: form,
       json: true,
+      form: true,
+      body: {
+        grant_type: 'authorization_code',
+        code: query.code,
+        redirect_url: DEPLOYMENT_ENDPOINT
+      },
       auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
     }).then((r) => {
       const tokenInfo = r.body;
@@ -78,10 +76,16 @@ function handler(event, context, cb) {
       const user = tokenInfo.endpoint.replace('/api/users/', '');
 
       // otherwise we get the temp url and provide it to the user
-      const url = s3.getSignedUrl('getObject', {
+      const signedUrl = aws.s3().getSignedUrl('getObject', {
         Bucket: process.env.protected,
         Key: granuleKey
       });
+
+      // Add earthdataLoginUsername to signed url
+      const parsedSignedUrl = new URL(signedUrl);
+      const signedUrlParams = parsedSignedUrl.searchParams;
+      signedUrlParams.set('x-EarthdataLoginUsername', user);
+      parsedSignedUrl.search = signedUrlParams.toString();
 
       // now that we have the URL we have to save user's info
       log.info({
@@ -96,8 +100,8 @@ function handler(event, context, cb) {
         statusCode: '302',
         body: 'redirecting',
         headers: {
-          Location: url,
-          'Strict-Transport-Security': 'max-age=31536000' 
+          Location: parsedSignedUrl.toString(),
+          'Strict-Transport-Security': 'max-age=31536000'
         }
       });
     }).catch((e) => cb(e));
