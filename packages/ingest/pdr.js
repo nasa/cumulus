@@ -309,6 +309,8 @@ function selector(type, protocol) {
 }
 
 module.exports.selector = selector;
+module.exports.Discover = Discover;
+module.exports.Parse = Parse;
 module.exports.FtpDiscover = FtpDiscover;
 module.exports.FtpParse = FtpParse;
 module.exports.HttpDiscover = HttpDiscover;
