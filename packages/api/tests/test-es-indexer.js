@@ -5,6 +5,7 @@ const sinon = require('sinon');
 const fs = require('fs');
 const clone = require('lodash.clonedeep');
 const path = require('path');
+const delay = require('delay');
 const aws = require('@cumulus/common/aws');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -211,6 +212,109 @@ test.serial('indexing a granule record in meta section', async (t) => {
   t.is(record._parent, collectionId);
   t.is(record._id, granule.granuleId);
   t.is(record._source.published, false);
+});
+
+test.serial('indexing a deletedgranule record', async (t) => {
+  const granuletype = 'granule';
+  const granule = granuleSuccess.payload.granules[0];
+  granule.granuleId = randomString();
+  const collection = granuleSuccess.meta.collection;
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+
+  // create granule record
+  let r = await indexer.granule(esClient, granuleSuccess, esIndex, granuletype);
+  t.is(r[0].result, 'created');
+  // delete granule record
+  r = await indexer.deleteRecord(esClient, granule.granuleId, granuletype, collectionId, esIndex);
+  t.is(r.result, 'deleted');
+
+  // the deletedgranule record is added
+  const deletedGranParams = {
+    index: esIndex,
+    type: 'deletedgranule',
+    id: granule.granuleId,
+    parent: collectionId
+  };
+
+  let record = await esClient.get(deletedGranParams);
+  t.true(record.found);
+  t.deepEqual(record._source.files, granule.files);
+  t.is(record._parent, collectionId);
+  t.is(record._id, granule.granuleId);
+  t.truthy(record._source.deletedAt);
+
+  // the deletedgranule record is removed if the granule is ingested again
+  r = await indexer.granule(esClient, granuleSuccess, esIndex, granuletype);
+  t.is(r[0].result, 'created');
+  record = await esClient.get(Object.assign(deletedGranParams, { ignore: [404] }));
+  t.false(record.found);
+});
+
+test.serial('indexing multiple deletedgranule records and retrieving them', async (t) => {
+  const granuleIds = [];
+  const newPayload = clone(granuleSuccess);
+  const granuletype = 'granule';
+  const granule = newPayload.payload.granules[0];
+  granule.granuleId = randomString();
+  granuleIds.push(granule.granuleId);
+  for (let i = 0; i < 10; i += 1) {
+    const newgran = clone(granule);
+    newgran.granuleId = randomString();
+    newPayload.payload.granules.push(newgran);
+    granuleIds.push(newgran.granuleId);
+  }
+
+  const collection = newPayload.meta.collection;
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+
+  let response = await indexer.granule(esClient, newPayload, esIndex, granuletype);
+
+  t.is(response.length, 11);
+  const promises = response.map((r) => {
+    t.is(r.result, 'created');
+    // delete granules
+    return indexer.deleteRecord(esClient, r._id, granuletype, collectionId, esIndex);
+  });
+
+  response = await Promise.all(promises);
+  t.is(response.length, 11);
+  response.forEach((r) => t.is(r.result, 'deleted'));
+
+  // retrieve deletedgranule records which are deleted within certain range
+  // and are from a given collection
+  const deletedGranParams = {
+    index: esIndex,
+    type: 'deletedgranule',
+    body: {
+      query: {
+        bool: {
+          must: [
+            {
+              range: {
+                deletedAt: {
+                  gte: 'now-1d',
+                  lt: 'now'
+                }
+              }
+            },
+            {
+              parent_id: {
+                type: 'deletedgranule',
+                id: collectionId
+              }
+            }]
+        }
+      }
+    }
+  };
+
+  await delay(1000);
+  response = await esClient.search(deletedGranParams);
+  t.is(response.hits.total, 11);
+  response.hits.hits.forEach((r) => {
+    t.is(r._parent, collectionId);
+    t.true(granuleIds.includes(r._source.granuleId));
+  });
 });
 
 test.serial('indexing a rule record', async (t) => {
