@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - ems.provider property added to `@cumulus/deployment/app/config.yml`. 
     To change the provider name, please add `ems: provider` property to `app/config.yml`.
 
+## [v1.5.3] - 2018-05-18
+
 ### Fixed
 - **CUMULUS-557 - "Add dataType to DiscoverGranules output"**
   - Granules discovered by the DiscoverGranules task now include dataType
@@ -258,7 +260,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.3...HEAD
+[v1.5.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...v1.5.3
 [v1.5.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...v1.5.2
 [v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0
