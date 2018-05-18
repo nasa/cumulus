@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const clone = require('lodash.clonedeep');
-const delay = require('delay');
 const moment = require('moment');
 const { randomString } = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
@@ -31,6 +30,47 @@ const granule = {
 };
 
 const deletedgranule = Object.assign(clone(granule), { deletedAt: Date.now() });
+
+// report type and its regex for each field
+const datetimeRegx = '^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2})(A|P)M$';
+const decimalIntRegx = '^-?\\d+\\.?\\d*$';
+const granuleIdRegx = '^[a-zA-Z0-9\\.-_]+$';
+const formatMappings = {
+  ingest: [
+    granuleIdRegx, // dbID
+    '^[a-zA-Z0-9-_]+$', // product
+    '^\\d+$', // versionID
+    '^\\d+$', // productVolume
+    '^(Successful|Failed)$', // productState
+    '^[a-zA-Z0-9\\.-_]+$', // externalDataProvider
+    datetimeRegx, // processingStartDateTime
+    datetimeRegx, // processingEndDateTime
+    decimalIntRegx, // timeToArchive
+    decimalIntRegx, // timeToPreprocess
+    decimalIntRegx //timeToXfer
+  ],
+
+  archive: [
+    granuleIdRegx, // dbID
+    '^[a-zA-Z0-9-_]+$', // product
+    '^\\d+$', // productVolume
+    '^\\d+$', // totalFiles
+    datetimeRegx, // insertTime
+    datetimeRegx, // beginningDateTime
+    datetimeRegx, // endingDateTime
+    datetimeRegx, // productionDateTime
+    granuleIdRegx, // localGranuleID
+    '^\\d+$', // versionID
+    '^N$', // deleteFromArchive 'N'
+    '^$', // deleteEffectiveDate null
+    datetimeRegx // lastUpdate
+  ],
+
+  delete: [
+    granuleIdRegx, // dbID
+    datetimeRegx // deleteEffectiveDate
+  ]
+};
 
 process.env.ES_SCROLL_SIZE = 3;
 const esIndex = randomString();
@@ -90,7 +130,7 @@ test.before(async () => {
     }
   }));
   await Promise.all(granjobs, deletedgranjobs);
-  await delay(1000);
+  await esClient.indices.refresh();
 });
 
 test.after.always(async () => {
@@ -125,7 +165,14 @@ test.serial('generate reports for the previous day', async (t) => {
 
     // check the number of fields for each record
     const expectedNumFields = Object.keys(emsMappings[report.reportType]).length;
-    records.forEach((record) => t.is(record.split('|&|').length, expectedNumFields));
+    records.forEach((record) => {
+      const fields = record.split('|&|');
+      t.is(fields.length, expectedNumFields);
+      // check each field has the correct format
+      for (let i = 0; i < fields.length; i += 1) {
+        t.truthy(fields[i].match(formatMappings[report.reportType][i]));
+      }
+    });
   });
   await Promise.all(requests);
 });
