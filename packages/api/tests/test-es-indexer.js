@@ -5,7 +5,6 @@ const sinon = require('sinon');
 const fs = require('fs');
 const clone = require('lodash.clonedeep');
 const path = require('path');
-const delay = require('delay');
 const aws = require('@cumulus/common/aws');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -308,7 +307,7 @@ test.serial('indexing multiple deletedgranule records and retrieving them', asyn
     }
   };
 
-  await delay(1000);
+  await esClient.indices.refresh();
   response = await esClient.search(deletedGranParams);
   t.is(response.hits.total, 11);
   response.hits.hits.forEach((r) => {
