@@ -644,6 +644,23 @@ async function moveGranuleFile(source, target, options) {
   return s3.deleteObject(source).promise();
 }
 
+async function moveGranuleFiles(sourceFiles, destination, options) {
+  sourceFiles.forEach((file) => {
+      const source = {
+        Bucket: file.bucket,
+        Key: file.filename
+      };
+
+      const target = {
+        Bucket: destination.bucket,
+        Key: `${destination.filepath}/${file.name}`
+      };
+      moveFileRequests.push(moveGranuleFile(source, target));
+  });
+
+  return Promise.all(moveFileRequests);
+}
+
 module.exports.selector = selector;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpGranule = FtpGranule;
@@ -655,3 +672,4 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.moveGranuleFile = moveGranuleFile;
+module.exports.moveGranuleFiles = moveGranuleFiles;
