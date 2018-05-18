@@ -21,7 +21,7 @@ function list(event, cb) {
 }
 
 /**
- * get a single PDR
+ * get a single execution
  *
  * @param {Object} event - aws lambda event object.
  * @param {Function} cb - aws lambda callback function
