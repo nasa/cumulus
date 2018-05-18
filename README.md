@@ -170,6 +170,7 @@ Your next steps should be:
 1. Commit the package version updates that are made by Lerna.
 2. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
 3. Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
+4. Update the Cumulus package versions in the example/package.json
 
 Commit all changes and open a PR.
 
