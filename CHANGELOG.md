@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
   - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
-  - ems.provider property added to @cumulus/deployment/app/config.yml
+  - ems.provider property added to `@cumulus/deployment/app/config.yml`. 
+    To change the provider name, please add `ems: provider` property to `app/config.yml`.
 
 ### Fixed
 - **CUMULUS-557 - "Add dataType to DiscoverGranules output"**
@@ -46,8 +47,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   which seeds rules into the DynamoDB table.
 - **CUMULUS-534** Track deleted granules
   - added `deletedgranule` type to `cumulus` index.
-  - **Important Note:** Force custom bootstrap to re-run by adding this to
-    app/config.yml `es: elasticSearchMapping: 7`
 - Added capability to support EFS in cloud formation template. Also added
   optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed
