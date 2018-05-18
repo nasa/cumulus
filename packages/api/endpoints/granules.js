@@ -8,6 +8,7 @@ const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const { partialRecordUpdate, deleteRecord, reingest } = require('../es/indexer');
 const log = require('@cumulus/common/log');
+const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 
 async function removeGranuleFromCmr(granuleId, collectionId) {
   log.info(`granules.removeGranuleFromCmr ${granuleId}`);
@@ -28,6 +29,12 @@ async function removeGranuleFromCmr(granuleId, collectionId) {
     { published: false, cmrLink: null },
     collectionId
   );
+}
+
+async function moveGranule(granuleId, destination) {
+  const search = new Search({}, 'granule');
+  const response = await search.get(granuleId)
+  await moveGranuleFiles(response.files, destination)
 }
 
 /**
@@ -78,8 +85,18 @@ async function put(event) {
         status: 'SUCCESS'
       };
     }
+    else if (action === 'move') {
+     const destination = body.destination;
 
-    throw new Error('Action is not supported. Choices are: \'reingest\' and \'removeFromCmr\'');
+     await moveGranule(granuleId, destination)
+
+     return {
+       granuleId: response.granuleId,
+       action,
+       status: 'SUCCESS'
+     }
+
+    throw new Error('Action is not supported. Choices are: \'move\', \'reingest\', and \'removeFromCmr\'');
   }
 
   throw new Error('Action is missing');
