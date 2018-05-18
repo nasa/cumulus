@@ -11,7 +11,7 @@ const emsProvider = config.ems_provider;
 const stackName = config.stackName;
 
 describe('The EMS report', () => {
-  describe('The EmsReport lambda is invoked daily', () => {
+  describe('When run automatically', () => {
     let expectReports = false;
     beforeAll(async () => {
       const lambda = new Lambda();
@@ -27,7 +27,7 @@ describe('The EMS report', () => {
       }
     });
 
-    it('reports are generated', async () => {
+    it('generates an EMS report every 24 hours', async () => {
       if (expectReports) {
         const datestring = moment.utc().format('YYYYMMDD');
         const types = ['Ing', 'Arch', 'ArchDel'];
@@ -42,7 +42,7 @@ describe('The EMS report', () => {
     });
   });
 
-  describe('The EmsReport lambda can be run at any time', () => {
+  describe('After execution', () => {
     let lambdaOutput;
     beforeAll(async () => {
       const lambda = new Lambda();
@@ -58,7 +58,7 @@ describe('The EMS report', () => {
       await Promise.all(jobs);
     });
 
-    it('reports are generated', async () => {
+    it('generates an EMS report', async () => {
       const jobs = lambdaOutput.map(async (report) => {
         const parsed = aws.parseS3Uri(report.file);
         return aws.fileExists(parsed.Bucket, parsed.Key);
