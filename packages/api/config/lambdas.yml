@@ -99,5 +99,4 @@ EmsReport:
   envs:
     bucket: '{{buckets.internal}}'
     ems_provider: '{{ems.provider}}'
-    stackName: '{{stackName}}'
 
