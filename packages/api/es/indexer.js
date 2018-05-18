@@ -14,6 +14,7 @@
 const get = require('lodash.get');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { Search, defaultIndexAlias } = require('./search');
 const { Granule, Pdr, Execution } = require('../models');
@@ -141,7 +142,7 @@ async function partialRecordUpdate(
     index,
     type,
     id,
-    refresh: true,
+    refresh: inTestMode(),
     body: {
       doc
     }
@@ -250,6 +251,16 @@ function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') 
  * @returns {Promise} Elasticsearch response
  */
 async function indexGranule(esClient, payload, index = defaultIndexAlias, type = 'granule') {
+  // If the granule exists in 'deletedgranule', delete it first before inserting the granule
+  // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
+  const delGranParams = {
+    index,
+    type: 'deletedgranule',
+    id: payload.granuleId,
+    parent: payload.collectionId,
+    ignore: [404]
+  };
+  await esClient.delete(delGranParams);
   return genericRecordUpdate(
     esClient,
     payload.granuleId,
@@ -308,7 +319,7 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
     index,
     type,
     id,
-    refresh: true
+    refresh: inTestMode()
   };
 
   if (parent) {
@@ -329,6 +340,7 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
           type: 'deletedgranule',
           id: doc.granuleId,
           parent: parent,
+          refresh: inTestMode(),
           body: {
             doc,
             doc_as_upsert: true
