@@ -43,7 +43,7 @@ const emsMappings = {
 
   archive: {
     dbID: 'granuleId',
-    product: 'collectionId',
+    product: 'collectionId', // shortName part
     productVolume: 'productVolume',
     totalFiles: 'files', // total # files
     insertTime: 'createdAt',
@@ -51,7 +51,7 @@ const emsMappings = {
     endingDateTime: 'endingDateTime',
     productionDateTime: 'productionDateTime',
     localGranuleID: 'granuleId',
-    versionID: 'collectionId',
+    versionID: 'collectionId', // versionID part
     // since we have separate 'delete' report,
     // deleteFromArchive shall have value 'N', deleteEffectiveDate shall be left blank
     deleteFromArchive: 'deleteFromArchive', // N
