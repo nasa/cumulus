@@ -6,17 +6,19 @@ const fs = require('fs');
 const clone = require('lodash.clonedeep');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
+const cmrjs = require('@cumulus/cmrjs');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const models = require('../models');
+const { fakeGranuleFactory } = require('../lib/testUtils');
+const { constructCollectionId, sleep } = require('../lib/utils');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const granuleSuccess = require('./data/granule_success.json');
 const granuleFailure = require('./data/granule_failed.json');
 const pdrFailure = require('./data/pdr_failure.json');
 const pdrSuccess = require('./data/pdr_success.json');
-const cmrjs = require('@cumulus/cmrjs');
 
 const esIndex = randomString();
 process.env.bucket = randomString();
@@ -90,7 +92,7 @@ test.serial('creating a successful granule record', async (t) => {
   const collection = granuleSuccess.meta.collection;
   const records = await indexer.granule(granuleSuccess);
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   // check the record exists
   const record = records[0];
@@ -125,7 +127,7 @@ test.serial('creating multiple successful granule records', async (t) => {
   const collection = newPayload.meta.collection;
   const records = await indexer.granule(newPayload);
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   t.is(records.length, 2);
 
@@ -176,7 +178,7 @@ test.serial('creating a granule record in meta section', async (t) => {
   granule.granuleId = randomString();
 
   const records = await indexer.granule(newPayload);
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   const record = records[0];
   t.deepEqual(record.files, granule.files);
@@ -191,7 +193,7 @@ test.skip.serial('indexing a deletedgranule record', async (t) => {
   const granule = granuleSuccess.payload.granules[0];
   granule.granuleId = randomString();
   const collection = granuleSuccess.meta.collection;
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   // create granule record
   let r = await indexer.granule(esClient, granuleSuccess, esIndex, granuletype);
@@ -224,65 +226,62 @@ test.skip.serial('indexing a deletedgranule record', async (t) => {
 
 test.serial('creating multiple deletedgranule records and retrieving them', async (t) => {
   const granuleIds = [];
-  const newPayload = clone(granuleSuccess);
-  const granule = newPayload.payload.granules[0];
-  granule.granuleId = randomString();
-  granuleIds.push(granule.granuleId);
-  for (let i = 0; i < 10; i += 1) {
-    const newgran = clone(granule);
-    newgran.granuleId = randomString();
-    newPayload.payload.granules.push(newgran);
+  const granules = [];
+
+  for (let i = 0; i < 11; i += 1) {
+    const newgran = fakeGranuleFactory();
+    granules.push(newgran);
     granuleIds.push(newgran.granuleId);
   }
 
-  let response = await indexer.granule(newPayload);
+  const collectionId = granules[0].collectionId; 
+
+  // add the records
+  let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
+  t.is(response.length, 11);
+
+  // now delete the records
+  response = await Promise.all(granules
+    .map((g) => indexer
+      .deleteRecord(esClient, g.granuleId, 'granule', g.collectionId, esIndex)));
 
   t.is(response.length, 11);
-  // const promises = response.map((r) => {
-  //   t.is(r.result, 'created');
-  //   // delete granules
-  //   return indexer.deleteRecord(esClient, r._id, granuletype, collectionId, esIndex);
-  // });
+  response.forEach((r) => t.is(r.result, 'deleted'));
 
-  // response = await Promise.all(promises);
-  // t.is(response.length, 11);
-  // response.forEach((r) => t.is(r.result, 'deleted'));
+  // retrieve deletedgranule records which are deleted within certain range
+  // and are from a given collection
+  const deletedGranParams = {
+    index: esIndex,
+    type: 'deletedgranule',
+    body: {
+      query: {
+        bool: {
+          must: [
+            {
+              range: {
+                deletedAt: {
+                  gte: 'now-1d',
+                  lt: 'now'
+                }
+              }
+            },
+            {
+              parent_id: {
+                type: 'deletedgranule',
+                id: collectionId
+              }
+            }]
+        }
+      }
+    }
+  };
 
-  // // retrieve deletedgranule records which are deleted within certain range
-  // // and are from a given collection
-  // const deletedGranParams = {
-  //   index: esIndex,
-  //   type: 'deletedgranule',
-  //   body: {
-  //     query: {
-  //       bool: {
-  //         must: [
-  //           {
-  //             range: {
-  //               deletedAt: {
-  //                 gte: 'now-1d',
-  //                 lt: 'now'
-  //               }
-  //             }
-  //           },
-  //           {
-  //             parent_id: {
-  //               type: 'deletedgranule',
-  //               id: collectionId
-  //             }
-  //           }]
-  //       }
-  //     }
-  //   }
-  // };
-
-  // await delay(1000);
-  // response = await esClient.search(deletedGranParams);
-  // t.is(response.hits.total, 11);
-  // response.hits.hits.forEach((r) => {
-  //   t.is(r._parent, collectionId);
-  //   t.true(granuleIds.includes(r._source.granuleId));
-  // });
+  response = await esClient.search(deletedGranParams);
+  t.is(response.hits.total, 11);
+  response.hits.hits.forEach((r) => {
+    t.is(r._parent, collectionId);
+    t.true(granuleIds.includes(r._source.granuleId));
+  });
 });
 
 test.serial('indexing a rule record', async (t) => {
@@ -333,7 +332,7 @@ test.serial('indexing a collection record', async (t) => {
     version: '001'
   };
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
   const r = await indexer.indexCollection(esClient, collection, esIndex);
 
   // make sure record is created
@@ -358,7 +357,7 @@ test.serial('creating a failed pdr record', async (t) => {
   const collection = pdrFailure.meta.collection;
   const record = await indexer.pdr(pdrFailure);
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   t.is(record.status, 'failed');
   t.is(record.collectionId, collectionId);
@@ -379,7 +378,7 @@ test.serial('creating a successful pdr record', async (t) => {
   const collection = pdrSuccess.meta.collection;
   const record = await indexer.pdr(pdrSuccess);
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
@@ -578,7 +577,7 @@ test.serial('pass a sns message to main handler', async (t) => {
   const msg = JSON.parse(event.Records[0].Sns.Message);
   const granule = msg.payload.granules[0];
   const collection = msg.meta.collection;
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
   // test granule record is added
   const record = await esClient.get({
     index: esIndex,
