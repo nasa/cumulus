@@ -80,6 +80,9 @@ default:
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 
+  # set to true to activate pointInTime on all tables
+  enablePointInTime: false
+
   sns:
     # this topic receives all the updates from
     # step functions
