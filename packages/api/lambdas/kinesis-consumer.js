@@ -86,7 +86,15 @@ function validateMessage(event) {
 function processRecord(record) {
   const dataBlob = record.kinesis.data;
   const dataString = Buffer.from(dataBlob, 'base64').toString();
-  const eventObject = JSON.parse(dataString);
+  let eventObject;
+  try {
+    JSON.parse(dataString);
+  }
+  catch(err) {
+    log.error('Caught error parsing JSON:');
+    log.error(err);
+    return err;
+  };
 
   return validateMessage(eventObject)
     .then(getKinesisRules)
