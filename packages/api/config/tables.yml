@@ -1,7 +1,7 @@
 CollectionsTable:
   read: 5
   write: 1
-  pointInTime: true 
+  pointInTime: '{{enablePointInTime}}' 
   attributes:
     - name: name
       type: S
@@ -13,7 +13,7 @@ CollectionsTable:
 ProvidersTable:
   read: 5
   write: 1
-  pointInTime: true
+  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: id
       type: S
@@ -22,7 +22,7 @@ ProvidersTable:
 RulesTable:
   read: 5
   write: 1
-  pointInTime: true
+  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: name
       type: S
@@ -31,7 +31,7 @@ RulesTable:
 UsersTable:
   read: 5
   write: 1
-  pointInTime: true
+  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: userName
       type: S
@@ -40,7 +40,7 @@ UsersTable:
 GranulesTable:
   read: 5
   write: 10
-  pointInTime: true
+  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: granuleId 
       type: S
@@ -49,7 +49,7 @@ GranulesTable:
 PdrsTable:
   read: 5
   write: 2
-  pointInTime: true
+  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: pdrName 
       type: S
@@ -59,7 +59,7 @@ PdrsTable:
 ExecutionsTable:
   read: 5
   write: 10
-  pointInTime: true
+  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: arn 
       type: S

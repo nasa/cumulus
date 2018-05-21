@@ -14,7 +14,6 @@
 'use strict';
 
 const got = require('got');
-const pLimit = require('p-limit');
 const get = require('lodash.get');
 const boolean = require('boolean');
 const log = require('@cumulus/common/log');
@@ -164,6 +163,20 @@ async function bootstrapCmrProvider(password) {
 }
 
 /**
+ * converts dynamoDB backup status to boolean
+ *
+ * @param {string} status - backup status of the table
+ * @returns {boolean} the status in boolean
+ */
+function backupStatus(status) {
+  if (status === 'ENABLED') {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Enable/Disable the point-in-time backup feature of given
  * DynamoDB tables
  *
@@ -171,16 +184,25 @@ async function bootstrapCmrProvider(password) {
  * @returns {Promise.<Array>} array of dynamoDB aws responses
  */
 function bootstrapDynamoDbTables(tables) {
-  const limit = pLimit(1);
-  return Promise.all(tables.map((table) => limit(() => {
-    const params = {
-      PointInTimeRecoverySpecification: {
-        PointInTimeRecoveryEnabled: boolean(table.pointInTime)
-      },
-      TableName: table.name
-    };
-    return dynamodb().updateContinuousBackups(params).promise();
-  })));
+  return Promise.all(tables.map((table) => {
+    // check the status of continous backup
+    return dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
+      .then((r) => {
+        const status = backupStatus(r.ContinuousBackupsDescription.ContinuousBackupsStatus);
+
+        // if the status has not changed, skip
+        if (status === boolean(table.pointInTime)) {
+          return Promise.resolve();
+        }
+        const params = {
+          PointInTimeRecoverySpecification: {
+            PointInTimeRecoveryEnabled: boolean(table.pointInTime)
+          },
+          TableName: table.name
+        };
+        return dynamodb().updateContinuousBackups(params).promise();
+      });
+  }));
 }
 
 /**
@@ -261,7 +283,7 @@ module.exports = {
   bootstrapElasticSearch,
   bootstrapDynamoDbTables,
   // for testing
-  findMissingMappings 
+  findMissingMappings
 };
 
 justLocalRun(() => {
