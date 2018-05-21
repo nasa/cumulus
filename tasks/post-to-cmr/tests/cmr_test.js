@@ -4,7 +4,6 @@ const fs = require('fs');
 const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
-const testUtils = require('@cumulus/common/test-utils');
 
 const cmrjs = require('@cumulus/cmrjs');
 const payload = require('./data/payload.json');
@@ -18,13 +17,13 @@ const result = {
 async function deleteBucket(bucket) {
   const response = await aws.s3().listObjects({ Bucket: bucket }).promise();
   const keys = response.Contents.map((o) => o.Key);
-  await Promise.all(keys.map((key) =>
-    aws.s3().deleteObject({ Bucket: bucket, Key: key }).promise()
+  await Promise.all(keys.map(
+    (key) => aws.s3().deleteObject({ Bucket: bucket, Key: key }).promise()
   ));
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = testUtils.randomString(); // eslint-disable-line no-param-reassign
+  t.context.bucket = 'cumulus-public'; // eslint-disable-line no-param-reassign
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
@@ -36,7 +35,7 @@ test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
   const newPayload = JSON.parse(JSON.stringify(payload));
-  const granuleId = newPayload.config.input_granules[0].granuleId;
+  const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
@@ -44,8 +43,6 @@ test('should succeed if cmr correctly identifies the xml as invalid', (t) => {
     Key: key,
     Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
   }).then(() => {
-    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
-
     return postToCMR(newPayload)
       .then(() => {
         cmrjs.CMR.prototype.getToken.restore();
@@ -63,15 +60,14 @@ test('should succeed with correct payload', (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
-  const granuleId = newPayload.config.input_granules[0].granuleId;
+  const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
   return aws.promiseS3Upload({
     Bucket: t.context.bucket,
     Key: key,
-    Body: fs.createReadStream(`tests/data/meta.xml`)
+    Body: fs.createReadStream('tests/data/meta.xml')
   }).then(() => {
-    newPayload.input.push(`s3://${t.context.bucket}/${key}`);
     return postToCMR(newPayload)
       .then((output) => {
         cmrjs.CMR.prototype.ingestGranule.restore();
@@ -81,6 +77,7 @@ test('should succeed with correct payload', (t) => {
         );
       })
       .catch((e) => {
+        console.log(e);
         cmrjs.CMR.prototype.ingestGranule.restore();
         t.fail();
       });

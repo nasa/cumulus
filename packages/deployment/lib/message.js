@@ -1,4 +1,5 @@
 /* eslint-disable no-console, no-param-reassign */
+
 'use strict';
 
 const omit = require('lodash.omit');
@@ -72,7 +73,7 @@ function extractCumulusConfigFromSF(config) {
  * @returns {string} the output value
  */
 function findOutputValue(outputs, key) {
-  const output = outputs.find((o) => (o.OutputKey === key))
+  const output = outputs.find((o) => (o.OutputKey === key));
   if (output) return output.OutputValue;
   return undefined;
 }
@@ -92,7 +93,7 @@ function template(name, workflow, config, outputs) {
   // get cmr password from outputs
   const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
   const cmr = Object.assign({}, config.cmr, { password: cmrPassword });
-  const bucket = get(config, 'buckets.internal');
+  const bucket = get(config, 'system_bucket');
 
   // add the sns topic arn used for monitoring workflows
   const topicArn = findOutputValue(outputs, 'sftrackerSnsArn');
@@ -165,7 +166,7 @@ function template(name, workflow, config, outputs) {
 async function generateTemplates(config, outputs, uploader) {
   // this function only works if there are step functions defined in the deployment
   if (config.stepFunctions) {
-    const bucket = config.buckets.internal;
+    const bucket = config.system_bucket;
     const stack = config.stackName;
     const templates = Object.keys(config.stepFunctions)
       .map((name) => template(name, config.stepFunctions[name], config, outputs));
