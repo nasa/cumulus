@@ -129,8 +129,8 @@ test.before(async () => {
       doc_as_upsert: true
     }
   }));
-  await Promise.all(granjobs, deletedgranjobs);
-  await esClient.indices.refresh();
+  await Promise.all(granjobs.concat(deletedgranjobs));
+  return esClient.indices.refresh();
 });
 
 test.after.always(async () => {
