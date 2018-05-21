@@ -677,8 +677,6 @@ Resources:
                     #!/bin/bash
                     echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
                     echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
-                    #cloud-boothook
-                    cloud-init-per once docker_options echo 'OPTIONS="${OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker"
 
                 {{#if ecs.docker}}
                     echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
@@ -691,7 +689,6 @@ Resources:
                 {{else}}
                   - Example: value
                 {{/if}}
-                    OPTIONS: ${OPTIONS}
           
           {{# if ecs.efs.mount }}
           packages:
@@ -777,11 +774,12 @@ Resources:
         "Fn::Base64":
           Fn::Join:
             - ""
-            - - "#cloud-config\n"
-              - "\nruncmd:\n"
-              - " - yum install -y aws-cfn-bootstrap\n"
-              - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
-              - Fn::Sub: " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
+            - - "#cloud-boothook\n"
+              - "cloud-init-per once docker_options echo 'OPTIONS=\"${OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G\"' >> /etc/sysconfig/docker\n"
+              - "\n"
+              - "yum install -y aws-cfn-bootstrap\n"
+              - Fn::Sub: "/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
+              - Fn::Sub: "/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
