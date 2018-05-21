@@ -14,6 +14,7 @@
 'use strict';
 
 const got = require('got');
+const pLimit = require('p-limit');
 const get = require('lodash.get');
 const boolean = require('boolean');
 const log = require('@cumulus/common/log');
@@ -170,8 +171,8 @@ async function bootstrapCmrProvider(password) {
  * @returns {Promise.<Array>} array of dynamoDB aws responses
  */
 function bootstrapDynamoDbTables(tables) {
-  // const dynamodb = new AWS.DynamoDB();
-  return Promise.all(tables.map((table) => {
+  const limit = pLimit(1);
+  return Promise.all(tables.map((table) => limit(() => {
     const params = {
       PointInTimeRecoverySpecification: {
         PointInTimeRecoveryEnabled: boolean(table.pointInTime)
@@ -179,7 +180,7 @@ function bootstrapDynamoDbTables(tables) {
       TableName: table.name
     };
     return dynamodb().updateContinuousBackups(params).promise();
-  }));
+  })));
 }
 
 /**
