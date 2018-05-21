@@ -122,10 +122,10 @@ class Granule extends Manager {
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),
           productVolume: getGranuleProductVolume(g.files),
-          timeToPreprocess: get(payload, 'meta.sync_granule_duration'),
-          timeToArchive: get(payload, 'meta.post_to_cmr_duration'),
-          processingStartTime: extractDate(payload, 'meta.sync_granule_end_time', 'ding'),
-          processingEndTime: extractDate(payload, 'meta.post_to_cmr_start_time')
+          timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
+          timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
+          processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
+          processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time')
         };
 
         doc.published = get(g, 'published', false);

@@ -196,11 +196,11 @@ module.exports.granule = {
       type: 'string',
       readonly: true
     },
-    processingStartTime: {
+    processingStartDateTime: {
       type: 'string',
       readonly: true
     },
-    processingEndTime: {
+    processingEndDateTime: {
       type: 'string',
       readonly: true
     },

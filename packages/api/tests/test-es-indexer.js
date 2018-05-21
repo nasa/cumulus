@@ -74,7 +74,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  Promise.all([
+  await Promise.all([
     models.Manager.deleteTable(granuleTable),
     models.Manager.deleteTable(collectionTable),
     models.Manager.deleteTable(pdrTable),
@@ -108,10 +108,10 @@ test.serial('creating a successful granule record', async (t) => {
   t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
   t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
   t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
-  t.is(record.timeToArchive, 100);
-  t.is(record.timeToPreprocess, 120);
-  t.is(record.processingStartTime, '2018-05-03T14:23:12.010Z');
-  t.is(record.processingEndTime, '2018-05-03T17:11:33.007Z')
+  t.is(record.timeToArchive, 100 / 1000);
+  t.is(record.timeToPreprocess, 120 /1000);
+  t.is(record.processingStartDateTime, '2018-05-03T14:23:12.010Z');
+  t.is(record.processingEndDateTime, '2018-05-03T17:11:33.007Z')
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
   t.is(deconstructed, collection.name);
@@ -276,6 +276,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
     }
   };
 
+  await esClient.indices.refresh();
   response = await esClient.search(deletedGranParams);
   t.is(response.hits.total, 11);
   response.hits.hits.forEach((r) => {
