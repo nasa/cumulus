@@ -27,6 +27,12 @@ DiscoverPdrs:
   useMessageAdapter: true
   logToElasticSearch: true
 
+MoveGranules:
+  handler: index.handler
+  timeout: 300
+  source: '../tasks/move-granules/dist'
+  useMessageAdapter: true
+
 QueuePdrs:
   handler: index.handler
   timeout: 300
@@ -88,6 +94,11 @@ S3AccessTest:
   handler: index.handler
   source: 'lambdas/s3AccessTest/'
 
+FakeProcessing:
+  handler: index.handler
+  source: '../tasks/test-processing/dist/'
+  useMessageAdapter: true
+
 ModisProcessing:
   handler: lambda_handler.handler
   timeout: 300
@@ -95,3 +106,10 @@ ModisProcessing:
     bucket: '{{shared_data_bucket}}'
     key: deploy/cumulus-process/modis/0.5.2.zip
   runtime: python2.7
+
+InRegionS3Policy: 
+   handler: index.inRegionS3Policy
+   memory: 256
+   timeout: 300
+   source: 'node_modules/@cumulus/api/dist/'
+

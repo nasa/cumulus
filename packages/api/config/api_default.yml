@@ -11,7 +11,7 @@ ApiCollectionsDefault:
     CollectionsTable:
       function: Ref
       value: CollectionsTableDynamoDB
-    internal: '{{parent.buckets.internal}}'
+    internal: '{{parent.system_bucket}}'
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
@@ -60,8 +60,8 @@ ApiGranulesDefault:
     invoke:
       function: "Ref"
       value: ScheduleSFLambdaFunction
-    bucket: '{{parent.buckets.internal}}'
-    internal: '{{parent.buckets.internal}}'
+    bucket: '{{parent.system_bucket}}'
+    internal: '{{parent.system_bucket}}'
     cmr_provider: '{{parent.cmr.provider}}'
     cmr_client_id: '{{parent.cmr.clientId}}'
     cmr_username: '{{parent.cmr.username}}'
@@ -144,7 +144,7 @@ ApiWorkflowsDefault:
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
-    bucket: '{{parent.buckets.internal}}'
+    bucket: '{{parent.system_bucket}}'
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
@@ -165,7 +165,7 @@ ApiRulesDefault:
   memory: 256
   apiRole: true
   envs:
-    bucket: '{{parent.buckets.internal}}'
+    bucket: '{{parent.system_bucket}}'
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
@@ -226,7 +226,7 @@ ApiProvidersDefault:
     ProvidersTable:
       function: Ref
       value: ProvidersTableDynamoDB
-    internal: '{{parent.buckets.internal}}'
+    internal: '{{parent.system_bucket}}'
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
@@ -263,7 +263,7 @@ ApiPdrsDefault:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
-    internal: '{{parent.buckets.internal}}'
+    internal: '{{parent.system_bucket}}'
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain

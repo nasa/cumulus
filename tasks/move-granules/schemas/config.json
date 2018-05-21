@@ -1,0 +1,63 @@
+{
+  "title": "MoveGranulesConfig",
+  "description": "Describes the config used by the move-granules task",
+  "type": "object",
+  "required": [
+    "bucket",
+    "input_granules",
+    "collection",
+    "buckets"
+  ],
+  "properties": {
+    "input_granules": {
+      "type": "array",
+      "description": "granules object used to construct output for cumulus indexer",
+      "items": {
+        "type": "object"
+      }
+    },
+    "bucket": {
+      "type": "string",
+      "description": "the bucket the has the private/public key needed for decrypting cmr password"
+    },
+    "buckets": {
+      "type": "object",
+      "description": "aws s3 buckets used by this task",
+      "properties": {
+        "internal": { "type": "string" },
+        "private": { "type": "string" },
+        "protected": { "type": "string" },
+        "public": { "type": "string" }
+      }
+    },
+    "granuleIdExtraction": {
+      "type": "string",
+      "description": "The regex needed for extracting granuleId from filenames"
+    },
+    "collection": {
+      "type": "object",
+      "required": [
+        "files",
+        "name"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "process": { "type": "string" },
+        "url_path": { "type": "string" },
+        "duplicateHandling": { "type": "string" },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["regex", "bucket"],
+            "properties": {
+              "regex": { "type": "string" },
+              "bucket": { "type": "string" },
+              "url_path": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

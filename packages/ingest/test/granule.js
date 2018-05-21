@@ -1,6 +1,7 @@
 const path = require('path');
 
 const test = require('ava');
+const sinon = require('sinon');
 const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 
@@ -116,7 +117,7 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
   t.is(fileCollectionConfig, undefined);
 });
 
-test('addBucketToFile adds the private bucket if no config matches', (t) => {
+test('addBucketToFile throws an exception if no config matches', (t) => {
   const buckets = { private: 'private-bucket' };
 
   const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
@@ -127,9 +128,13 @@ test('addBucketToFile adds the private bucket if no config matches', (t) => {
   const testGranule = new TestGranule(buckets, collectionConfig, {});
 
   const file = { name: 'right-file' };
-  const updatedFile = testGranule.addBucketToFile(file);
 
-  t.is(updatedFile.bucket, 'private-bucket');
+  try {
+    testGranule.addBucketToFile(file);
+  }
+  catch (e) {
+    t.is(e.message, 'Unable to update file. Cannot find file config for file right-file');
+  }
 });
 
 test('addBucketToFile adds the correct bucket when a config is found', (t) => {
@@ -196,12 +201,15 @@ test("addUrlPathToFile adds the matching collection file config's url_path as th
 });
 
 test('getBucket adds the correct url_path and bucket to the file', (t) => {
-  const collectionConfig = {
-    files: []
+  const buckets = {
+    private: 'private-bucket',
+    right: 'right-bucket'
   };
 
-  const buckets = {
-    private: 'private-bucket'
+  const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right' };
+
+  const collectionConfig = {
+    files: [rightCollectionFileConfig]
   };
 
   const testGranule = new TestGranule(buckets, collectionConfig, {});
@@ -209,6 +217,6 @@ test('getBucket adds the correct url_path and bucket to the file', (t) => {
   const file = { name: 'right-file' };
   const updatedFile = testGranule.getBucket(file);
 
-  t.is(updatedFile.bucket, 'private-bucket');
+  t.is(updatedFile.bucket, 'right-bucket');
   t.is(updatedFile.url_path, '');
 });
