@@ -30,3 +30,6 @@ cumulus-from-source:
 
 aj:
   prefix: aj-integration
+
+lf:
+  prefix: lf-cumulus
