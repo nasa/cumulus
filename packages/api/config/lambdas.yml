@@ -90,7 +90,7 @@ jobs:
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
   handler: index.bootstrap
-  timeout: 100
+  timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
