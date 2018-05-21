@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/deployment",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "Deployment templates for cumulus",
   "scripts": {
     "test": "ava --no-color",
