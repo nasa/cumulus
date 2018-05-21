@@ -88,7 +88,7 @@ function processRecord(record) {
   const dataString = Buffer.from(dataBlob, 'base64').toString();
   let eventObject;
   try {
-    JSON.parse(dataString);
+    eventObject = JSON.parse(dataString);
   }
   catch(err) {
     log.error('Caught error parsing JSON:');
