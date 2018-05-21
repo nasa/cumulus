@@ -27,3 +27,9 @@ cumulus-from-npm:
 
 cumulus-from-source:
   prefix: test-src-integration
+
+aj:
+  prefix: aj-integration
+
+lf:
+  prefix: lf-cumulus
