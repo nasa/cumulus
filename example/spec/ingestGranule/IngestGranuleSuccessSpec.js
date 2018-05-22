@@ -1,5 +1,5 @@
 const fs = require('fs');
-const path = require('path');
+const urljoin = require('url-join');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const { buildAndExecuteWorkflow, LambdaStep, conceptExists, getOnlineResources } =
   require('@cumulus/integration-tests');
@@ -116,11 +116,11 @@ describe('The S3 Ingest Granules workflow', () => {
     it('updates the CMR metadata online resources with the final metadata location', () => {
       const files = lambdaOutput.payload.granules[0].files;
       const distEndpoint = config.distributionEndpoint;
-      const extension1 = path.join(files[0].bucket, files[0].filepath);
-      const extension2 = path.join(files[1].bucket, files[1].filepath);
+      const extension1 = urljoin(files[0].bucket, files[0].filepath);
+      const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
 
-      expect(cmrResource[0].href).toEqual(path.join(distEndpoint, extension1));
-      expect(cmrResource[1].href).toEqual(path.join(distEndpoint, extension2));
+      expect(cmrResource[0].href).toEqual(urljoin(distEndpoint, extension1));
+      expect(cmrResource[1].href).toEqual(filename);
     });
   });
 });
