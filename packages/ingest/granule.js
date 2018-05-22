@@ -619,7 +619,16 @@ async function moveGranuleFile(source, target, options) {
   return s3.deleteObject(source).promise();
 }
 
-async function moveGranuleFiles(sourceFiles, destination, options) {
+/**
+ * move granule files from one s3 location to another
+ *
+ * @param {Array} sourceFiles - array of file objects
+ * @param {Object} destination - bucket and key defining the destination of the granule
+ * @param {string} destination.bucket - aws bucket
+ * @param {string} destination.key - filepath on the bucket for the destination
+ * @returns {Promise<undefined>} returns `undefined` when all the files are moved
+ */
+async function moveGranuleFiles(sourceFiles, destination) {
   sourceFiles.forEach((file) => {
       const source = {
         Bucket: file.bucket,
