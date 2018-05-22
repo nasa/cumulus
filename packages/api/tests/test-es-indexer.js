@@ -5,7 +5,6 @@ const sinon = require('sinon');
 const fs = require('fs');
 const clone = require('lodash.clonedeep');
 const path = require('path');
-const delay = require('delay');
 const aws = require('@cumulus/common/aws');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -54,7 +53,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  Promise.all([
+  await Promise.all([
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.bucket)
   ]);
@@ -93,10 +92,10 @@ test.serial('indexing a successful granule record', async (t) => {
   t.is(record._source.endingDateTime, '2018-10-24T00:00:00.000Z');
   t.is(record._source.productionDateTime, '2018-04-25T21:45:45.524Z');
   t.is(record._source.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
-  t.is(record._source.timeToArchive, 100);
-  t.is(record._source.timeToPreprocess, 120);
-  t.is(record._source.processingStartTime, '2018-05-03T14:23:12.010Z');
-  t.is(record._source.processingEndTime, '2018-05-03T17:11:33.007Z');
+  t.is(record._source.timeToArchive, 100 / 1000);
+  t.is(record._source.timeToPreprocess, 120 / 1000);
+  t.is(record._source.processingStartDateTime, '2018-05-03T14:23:12.010Z');
+  t.is(record._source.processingEndDateTime, '2018-05-03T17:11:33.007Z');
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record._parent);
   t.is(deconstructed, collection.name);
@@ -308,7 +307,7 @@ test.serial('indexing multiple deletedgranule records and retrieving them', asyn
     }
   };
 
-  await delay(1000);
+  await esClient.indices.refresh();
   response = await esClient.search(deletedGranParams);
   t.is(response.hits.total, 11);
   response.hits.hits.forEach((r) => {
