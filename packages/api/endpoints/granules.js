@@ -20,7 +20,6 @@ function list(event, cb) {
   return search.query().then((res) => cb(null, res)).catch(cb);
 }
 
-
 /**
  * Update a single granule.
  * Supported Actions: reingest, Remove From CMR.
@@ -55,17 +54,18 @@ async function put(event) {
       };
     }
     else if (action === 'move') {
-     const destination = body.destination;
+      const destination = body.destination;
 
-     await g.moveGranule(granuleId, destination)
+      await g.moveGranule(granuleId, destination);
 
-     return {
-       granuleId: response.granuleId,
-       action,
-       status: 'SUCCESS'
-     }
+      return {
+        granuleId: response.granuleId,
+        action,
+        status: 'SUCCESS'
+      };
+    }
 
-    throw new Error('Action is not supported. Choices are: \'move\', \'reingest\', and \'removeFromCmr\'');
+    throw new Error('Action is not supported. Choices are: "move", "reingest", & "removeFromCmr"');
   }
 
   throw new Error('Action is missing');
