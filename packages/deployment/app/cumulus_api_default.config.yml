@@ -9,6 +9,9 @@ default:
       - CollectionsTable
       - RulesTable
       - ProvidersTable
+      - GranulesTable
+      - PdrsTable
+      - ExecutionsTable
 
   apis:
     - name: distribution

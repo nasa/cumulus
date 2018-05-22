@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -43,7 +43,7 @@
     "@cumulus/test-data": "^1.5.2",
     "ajv": "^5.2.2",
     "async": "^2.0.0",
-    "aws-sdk": "^2.224.1",
+    "aws-sdk": "^2.238.1",
     "cwait": "^1.0.0",
     "expect.js": "^0.3.1",
     "follow-redirects": "^1.2.4",

@@ -16,9 +16,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": [ "files", "granuleId" ],
+        "required": [ "files", "granuleId", "dataType" ],
         "properties": {
           "granuleId": { "type": "string" },
+          "dataType": { "type": "string" },
           "files": { "type": "array" }
         }
       }
