@@ -5,6 +5,7 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const { moveGranuleFile } = require('@cumulus/ingest/granule');
+const urljoin = require('url-join');
 const path = require('path');
 const { getS3Object, parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
@@ -204,7 +205,8 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
           Key: file.filepath
         };
         delete file.fileStagingDir;
-        moveFileRequests.push(moveGranuleFile(source, target));
+        const options = (file.bucket.match("public")) ? {ACL: "public-read"} : null;
+        moveFileRequests.push(moveGranuleFile(source, target, options));
       }
     });
   });
@@ -221,18 +223,25 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
  * @param {string} distEndpoint - the api distribution endpoint
 * @returns {Promise} promise resolves when all files have been updated
 **/
-async function updateCmrFileAccessURls(cmrFiles, granulesObject, distEndpoint) {
+async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint) {
   for (const cmrFile of cmrFiles) {
     const onlineAccessUrls = cmrFile.metadataObject.Granule.OnlineAccessURLs;
     const granule = granulesObject[cmrFile.granuleId];
-
-    const urls = onlineAccessUrls.OnlineAccessURL.map((urlObj) => {
+    const urls = [];
+    onlineAccessUrls.OnlineAccessURL.forEach((urlObj) => {
       const filename = path.basename(urlObj.URL);
       const file = granule.files.find((f) => f.name === filename);
-      const extension = path.join(file.bucket, file.filepath);
-      urlObj.URL = path.join(distEndpoint, extension);
+      if (file.bucket.match("protected")) {
+        const extension = urljoin(file.bucket, file.filepath);
+        urlObj.URL = urljoin(distEndpoint, extension);
 
-      return urlObj;
+        urls.push(urlObj);
+      }
+      else if (file.bucket.match("public")) {
+        const url = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+        urlObj.URL = url;
+        urls.push(urlObj);
+      }
     });
 
     cmrFile.metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL = urls;
@@ -240,9 +249,16 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject, distEndpoint) {
     const xml = builder.buildObject(cmrFile.metadataObject);
     cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
-    await promiseS3Upload(
-      { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
-    );
+    if (updatedCmrFile.bucket.match("public")){
+      await promiseS3Upload(
+        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml, ACL: "public-read" }
+      );
+    }
+    else {
+      await promiseS3Upload(
+        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
+      );
+    }
   }
 }
 
@@ -293,7 +309,7 @@ async function moveGranules(event) {
     await moveGranuleFiles(allGranules, bucket);
 
     // update cmr.xml files with correct online access urls
-    updateCmrFileAccessURls(cmrFiles, allGranules, distEndpoint);
+    updateCmrFileAccessURLs(cmrFiles, allGranules, distEndpoint);
   }
 
   return {
