@@ -90,3 +90,13 @@ InRegionS3Policy:
   timeout: 300
   source: 'node_modules/@cumulus/api/dist/'
 
+EmsReport:
+  handler: index.emsReport
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  useElasticSearch: '{{es.name}}'
+  envs:
+    bucket: '{{buckets.internal}}'
+    ems_provider: '{{ems.provider}}'
+
