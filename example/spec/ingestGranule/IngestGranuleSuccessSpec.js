@@ -1,5 +1,6 @@
 const fs = require('fs');
 const urljoin = require('url-join');
+const got = require('got');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const { buildAndExecuteWorkflow, LambdaStep, conceptExists, getOnlineResources } =
   require('@cumulus/integration-tests');
@@ -121,6 +122,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
       expect(cmrResource[0].href).toEqual(urljoin(distEndpoint, extension1));
       expect(cmrResource[1].href).toEqual(filename);
+
+      // got.get(cmrResource[1].href, { json: true })
+      //   .then((json) => {
+      //     console.log(json);
+      //   });
     });
   });
 });
