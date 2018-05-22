@@ -58,6 +58,13 @@
           }
         }
       }
+    },
+    "pdr": {
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
     }
   }
 }
