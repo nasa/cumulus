@@ -1,7 +1,7 @@
 stackName: test-npm-integration
 prefix: test-npm-integration
 bucket: cumulus-test-sandbox-internal
-distributionEndpoint: https://zrgw97m1rb.execute-api.us-east-1.amazonaws.com/dev/
+distributionEndpoint: https:/3tu0izwxuc.execute-api.us-east-1.amazonaws.com/dev/
 ems_provider: CUMULUS
 IngestGranule:
   SyncGranuleOutput:
