@@ -34,6 +34,10 @@ Parameters:
   SharedBucketName:
     Type: String
     Default: "cumulus-data-shared"
+  EmsDistributionLogsBucket:
+    Type: String
+  EmsDistributionReportsBucket:
+    Type: String
 Resources:
   LambdaApiGatewayRole:
     Type: AWS::IAM::Role
@@ -63,10 +67,10 @@ Resources:
                   - lambda:GetFunction
                   - lambda:invokeFunction
                   - lambda:CreateEventSourceMapping
-                  - lambda:UpdateEventSourceMapping 
-                  - lambda:DeleteEventSourceMapping 
-                  - lambda:GetEventSourceMapping 
-                  - lambda:ListEventSourceMappings 
+                  - lambda:UpdateEventSourceMapping
+                  - lambda:DeleteEventSourceMapping
+                  - lambda:GetEventSourceMapping
+                  - lambda:ListEventSourceMappings
                 Resource: "*"
 
               - Effect: Allow
@@ -114,7 +118,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                   - !Sub "arn:aws:s3:::${InternalBucketName}/*"
                   - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
 
@@ -179,7 +183,7 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
 
-              # Allow access to kinesis 
+              # Allow access to kinesis
               - Effect: Allow
                 Action:
                   - kinesis:GetRecords
@@ -207,6 +211,18 @@ Resources:
                   - !Sub "arn:aws:s3:::${PublicBucketName}"
                   - !Sub "arn:aws:s3:::${SharedBucketName}"
 
+              # Allow access for EMS Distribution Reporting
+              - Effect: Allow
+                Action:
+                  - s3:List*
+                  - s3:Get*
+                Resource:
+                  - !Sub "arn:aws:s3:::${EmsDistributionLogsBucket}"
+                  - !Sub "arn:aws:s3:::${EmsDistributionLogsBucket}/*"
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${EmsDistributionReportsBucket}/*"
+
               - Effect: Allow
                 Action:
                   - s3:AbortMultipartUpload
@@ -215,7 +231,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                   - !Sub "arn:aws:s3:::${InternalBucketName}/*"
                   - !Sub "arn:aws:s3:::${PrivateBucketName}/*"
                   - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
@@ -231,7 +247,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:PutBucketPolicy
-                Resource: 
+                Resource:
                   - !Sub "arn:aws:s3:::{{prefix}}-*"
 
               # Allow access to dynamoDB
@@ -252,12 +268,12 @@ Resources:
                   - dynamodb:DescribeStream
                   - dynamodb:ListStreams
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*/stream/*"
-              
+
               - Effect: Allow
                 Action:
                   - dynamodb:ListTables
                 Resource: '*'
-                 
+
               # Allow access to SQS
               - Effect: Allow
                 Action:
@@ -418,7 +434,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                   - !Sub "arn:aws:s3:::${InternalBucketName}/*"
                   - !Sub "arn:aws:s3:::${PrivateBucketName}/*"
                   - !Sub "arn:aws:s3:::${ProtectedBucketName}/*"
