@@ -35,17 +35,19 @@
     "@cumulus/queue-pdrs": "^1.5.3",
     "@cumulus/sf-sns-report": "^1.5.3",
     "@cumulus/sync-granule": "^1.5.3",
-    "aws-sdk": "^2.227.1"
+    "aws-sdk": "^2.244.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-plugin-jsdoc": "^3.7.0",
+    "got": "^7.1.0",
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.11.0",
     "kes": "^2.2.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.1",
-    "node-forge": "^0.7.5"
+    "node-forge": "^0.7.5",
+    "url-join": "^1.1.0"
   }
 }
