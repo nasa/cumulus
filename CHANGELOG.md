@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-548** - Create a Lambda task that generates EMS distribution reports
+  - Updates required by this change:
+    1. Create an S3 bucket to store S3 Server Access logs.
+    2. Create an S3 bucket to store EMS Distribution reports.
+    3. Enable S3 Server Access Logging on any S3 buckets used for distribution.  See [How Do I Enable Server Access Logging for an S3 Bucket?](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/server-access-logging.html)  The "Target bucket" setting should point at the bucket you created in the first step.
+    4. Add an "ems.distrubution.serverAccessLogsBucket" property in your app's `config.yml` with the name of the bucket created in the first step.
+    5. Add an "ems.distrubution.reportsBucket" property in your app's `config.yml` with the name of the bucket created in the second step.
+    6. Make sure that the IAM Role used for processing has `s3:List*` and `s3:Get*` access to the S3 Server Access logs bucket.
+    7. Make sure that the IAM Role used for processing has `s3:putObject` access to the EMS Distribution reports bucket.
+
 ### Fixed
 - **CUMULUS-546 - Kinesis Consumer should catch and log invalid JSON**
   - Kinesis Consumer lambda catches and logs errors so that consumer doesn't get stuck in a loop re-processing bad json records.
@@ -15,7 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
   - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
-  - ems.provider property added to `@cumulus/deployment/app/config.yml`. 
+  - ems.provider property added to `@cumulus/deployment/app/config.yml`.
     To change the provider name, please add `ems: provider` property to `app/config.yml`.
 
 ## [v1.5.3] - 2018-05-18
