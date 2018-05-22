@@ -5,6 +5,9 @@ const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const groupBy = require('lodash.groupby');
+const identity = require('lodash.identity');
+const omit = require('lodash.omit');
 const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
@@ -59,103 +62,75 @@ class Discover {
   }
 
   /**
-   * Receives a file object and adds granule, bucket and path information
-   * extracted from the collection record
+   * Receives a file object and adds granule-specific properties to it
    *
    * @param {Object} file - the file object
-   * @returns {Object} - Updated file with granuleId, bucket and path information
+   * @returns {Object} Updated file with granuleId, bucket, and url_path information
    */
   setGranuleInfo(file) {
-    const _file = file;
-    let test = new RegExp(this.collection.granuleIdExtraction);
-    const match = file.name.match(test);
+    const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
+    const granuleId = granuleIdMatch[1];
 
-    if (match) {
-      const granuleId = match[1];
+    const fileTypeConfig = this.fileTypeConfigForFile(file);
 
-      this.collection.files.forEach((f) => {
-        test = new RegExp(f.regex);
-        const urlPath = f.url_path || this.collection.url_path || '';
-
-        if (file.name.match(test)) {
-          _file.granuleId = granuleId;
-          _file.bucket = this.buckets[f.bucket];
-          _file.url_path = urlPath;
-        }
-      });
-
-      // if collection regex matched, the following will be true
-      if (_file.granuleId && _file.bucket) {
-        return _file;
+    // Return the file with granuleId, bucket, and url_path added
+    return Object.assign(
+      cloneDeep(file),
+      {
+        granuleId,
+        bucket: this.buckets[fileTypeConfig.bucket],
+        url_path: fileTypeConfig.url_path || this.collection.url_path || ''
       }
-    }
-
-    return false;
+    );
   }
 
   /**
-  * Discover new files that match a given path
-  *
-  * @returns {Array} an array of granule objects
-  **/
+   * Search for a file type config in the collection config
+   *
+   * @param {Object} file - a file object
+   * @returns {Object|undefined} a file type config object or undefined if none
+   *   was found
+   * @private
+   */
+  fileTypeConfigForFile(file) {
+    return this.collection.files.find((fileTypeConfig) => file.name.match(fileTypeConfig.regex));
+  }
+
+  /**
+   * Discover new granules
+   *
+   * @returns {Array<Object>} a list of discovered granules
+   */
   async discover() {
-    // get list of files that matches a given path
-    const updatedFiles = (await this.list())
-      .map((file) => this.setGranuleInfo(file))
-      .filter((file) => file);
+    const discoveredFiles = (await this.list())
+      // Make sure the file matches the granuleIdExtraction
+      .filter((file) => file.name.match(this.collection.granuleIdExtraction))
+      // Make sure there is a config for this type of file
+      .filter((file) => this.fileTypeConfigForFile(file))
+      // Add additional granule-related properties to the file
+      .map((file) => this.setGranuleInfo(file));
 
-    return this.findNewGranules(updatedFiles);
-  }
+    // This is confusing, but I haven't figured out a better way to write it.
+    // What we're doing here is checking each discovered file to see if it
+    // already exists in S3.  If it does then it isn't a new file and we are
+    // going to ignore it.
+    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
+      aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
+        .then((exists) => (exists ? null : discoveredFile)))))
+      .filter(identity);
 
-  /**
-   * Determine if a file does not yet exist in S3.
-   *
-   * @param {Object} file - the file that's being looked for
-   * @param {string} file.bucket - the bucket to look in
-   * @param {string} file.name - the name of the file (in S3)
-   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
-   *   when the object exists in S3, or the passed-in file object if it does
-   *   not already exist in S3.
-   */
-  fileIsNew(file) {
-    return aws.s3ObjectExists({
-      Bucket: file.bucket,
-      Key: file.name
-    }).then((exists) => (exists ? false : file));
-  }
+    // Group the files by granuleId
+    const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
 
-  /**
-   * Find new granules and format them as array of objects
-   *
-   * @param {Array} files - An array of objects with `bucket` and `name` properties
-   * that work as AWS S3 `Bucket` and `Key`
-   * @returns {Array} an array of granule objects
-   */
-  async findNewGranules(files) {
-    const checkFiles = files.map((f) => this.fileIsNew(f));
-
-    const t = await Promise.all(checkFiles);
-    const newFiles = t.filter((f) => f);
-
-    // reorganize by granule
-    const granules = {};
-    newFiles.forEach((_f) => {
-      const f = _f;
-      const granuleId = f.granuleId;
-      delete f.granuleId;
-
-      if (granules[granuleId]) {
-        granules[granuleId].files.push(f);
-      }
-      else {
-        granules[granuleId] = {
-          granuleId,
-          files: [f]
-        };
-      }
-    });
-
-    return Object.keys(granules).map((k) => granules[k]);
+    // Build and return the granules
+    const granuleIds = Object.keys(filesByGranuleId);
+    return granuleIds
+      .map((granuleId) => ({
+        granuleId,
+        dataType: this.collection.name,
+        // Remove the granuleId property from each file
+        files: filesByGranuleId[granuleId].map((file) => omit(file, 'granuleId'))
+      }));
   }
 }
 
@@ -662,6 +637,8 @@ async function moveGranuleFiles(sourceFiles, destination, options) {
 }
 
 module.exports.selector = selector;
+module.exports.Discover = Discover;
+module.exports.Granule = Granule;
 module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpGranule = FtpGranule;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
