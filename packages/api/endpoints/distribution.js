@@ -81,7 +81,7 @@ function handler(event, context, cb) {
         Key: granuleKey
       });
 
-      // Add earthdataLoginUsername to signed url
+      // Add x-EarthdataLoginUsername to signed url
       const parsedSignedUrl = new URL(signedUrl);
       const signedUrlParams = parsedSignedUrl.searchParams;
       signedUrlParams.set('x-EarthdataLoginUsername', user);

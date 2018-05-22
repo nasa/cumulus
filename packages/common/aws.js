@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
 const AWS = require('aws-sdk');
@@ -353,19 +352,29 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
  *
  * @param {Object} params - params for the s3.listObjectsV2 call
- * @returns {Promise.<Array>} - resolves to an array of objects corresponding to
+ * @returns {Promise<Array>} - resolves to an array of objects corresponding to
  *   the Contents property of the listObjectsV2 response
  */
 async function listS3ObjectsV2(params) {
-  const data = await exports.s3().listObjectsV2(params).promise();
+  // Fetch the first list of objects from S3
+  let listObjectsResponse = await exports.s3().listObjectsV2(params).promise();
+  let discoveredObjects = listObjectsResponse.Contents;
 
-  if (data.IsTruncated) {
-    const newParams = Object.assign({}, params);
-    newParams.ContinuationToken = data.NextContinuationToken;
-    return data.Contents.concat(await exports.listS3ObjectsV2(newParams));
+  // Keep listing more objects from S3 until we have all of them
+  while (listObjectsResponse.IsTruncated) {
+    // ContinuationToken = listObjectsResponse.NextContinuationToken;
+    listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, function-paren-newline, max-len
+      // Update the params with a Continuation Token
+      Object.assign(
+        {},
+        params,
+        { ContinuationToken: listObjectsResponse.NextContinuationToken }
+      )
+    ).promise(); //eslint-disable-line function-paren-newline
+    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
   }
 
-  return data.Contents;
+  return discoveredObjects;
 }
 exports.listS3ObjectsV2 = listS3ObjectsV2;
 
