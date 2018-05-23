@@ -34,9 +34,9 @@
           "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
         },
         {
-          "filename": "s3://cumulus-test-sandbox-public/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "filename": "s3://cumulus-test-sandbox-private/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
-          "bucket": "cumulus-test-sandbox-public",
+          "bucket": "cumulus-test-sandbox-private",
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
         }
