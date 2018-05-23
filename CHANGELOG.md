@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - **CUMULUS-530** - PDR tracking through Queue-granules
-  - Add optional `pdr` property to the syn-granule task's input config and output payload.
+  - Add optional `pdr` property to the sync-granule task's input config and output payload.
 
 ## [v1.5.4] - 2018-05-21
 
