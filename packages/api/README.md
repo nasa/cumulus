@@ -95,15 +95,14 @@ See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.
 
 ## Running Tests
 
-Running tests for kinesis-consumer depends on localstack. Once you have installed localstack, you can start it for dynamoDB only:
+Running tests for kinesis-consumer depends on localstack. Once you have installed localstack, start it:
 
 ```
-LAMBDA_EXECUTOR=docker localstack start
+localstack start
 ```
 
 Then you can run tests locally via:
 
 ```bash
-export DOCKERHOST=$(ifconfig | grep -E "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d: | head -n1)
-LOCALSTACK_HOST=localhost DOCKERHOST=${DOCKERHOST} IS_LOCAL=true npm run test
+LOCALSTACK_HOST=localhost IS_LOCAL=true npm run test
 ```
