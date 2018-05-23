@@ -35,7 +35,7 @@
     "@cumulus/queue-pdrs": "^1.5.3",
     "@cumulus/sf-sns-report": "^1.5.3",
     "@cumulus/sync-granule": "^1.5.3",
-    "aws-sdk": "^2.244.1"
+    "aws-sdk": "^2.245.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
