@@ -42,6 +42,7 @@ For example:
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
 | cmr.password | (required) | the password used to authenticate with the CMR
+| ems.provider | CUMULUS | the provider used for sending reports to EMS
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
 | defaults_users | cumulus core | list of default users included in all deployments
