@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-530** - PDR tracking through Queue-granules
   - Add optional `pdr` property to the sync-granule task's input config and output payload.
 
+### Fixed
+- **CUMULUS-546 - Kinesis Consumer should catch and log invalid JSON**
+  - Kinesis Consumer lambda catches and logs errors so that consumer doesn't get stuck in a loop re-processing bad json records.
+
 ## [v1.5.4] - 2018-05-21
 
 ### Added
