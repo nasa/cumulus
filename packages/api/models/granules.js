@@ -58,9 +58,9 @@ class Granule extends Manager {
    * @returns {Promise<undefined>} undefined
    */
   async moveGranule(granuleId, destination) {
-    const search = new Search({}, 'granule');
-    const response = await search.get(granuleId)
-    await moveGranuleFiles(response.files, destination)
+    const response = await this.get(granuleId);
+    console.log('did get got', response)
+    await moveGranuleFiles(response.files, destination);
   }
 
   /**
