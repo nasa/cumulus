@@ -5,8 +5,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
+  - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
+  - ems.provider property added to `@cumulus/deployment/app/config.yml`. 
+    To change the provider name, please add `ems: provider` property to `app/config.yml`.
+
+## [v1.5.3] - 2018-05-18
 
 ### Fixed
+- **CUMULUS-557 - "Add dataType to DiscoverGranules output"**
+  - Granules discovered by the DiscoverGranules task now include dataType
+  - dataType is now a required property for granules used as input to the
+    QueueGranules task
 - **CUMULUS-550** Update deployment app/config.yml to force elasticsearch updates for deleted granules
 
 ### Added
@@ -48,10 +59,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     app/config.yml `es: elasticSearchMapping: 7`
 - You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
 - `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
-- Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
-- Added support to force discovery of PDRs that have already been processed and filtering of selected data types
-- `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
-
+- Added capability to support EFS in cloud formation template. Also added
+  optional capability to ssh to your instance and privileged lambda functions.
+- Added support to force discovery of PDRs that have already been processed
+  and filtering of selected data types
+- `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback
+  IP address of `10.0.0.0` when a public IP address is not available. This
+  supports lambda functions deployed into a VPC's private subnet, where no
+  public IP address is available.
 
 ### Changed
 - **CUMULUS-550** Custom bootstrap automatically adds new types to index on
@@ -255,7 +270,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.3...HEAD
+[v1.5.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...v1.5.3
 [v1.5.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...v1.5.2
 [v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0

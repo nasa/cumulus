@@ -47,6 +47,9 @@ default:
     provider: CUMULUS
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
+  
+  ems:
+    provider: CUMULUS
 
   # this whole section has to be updated in each deployment section
   vpc:
@@ -154,6 +157,12 @@ default:
       state: ENABLED
       targets:
         - lambda: jobs
+    cronJobs:
+      # run at 5:00am GMT daily
+      schedule: cron(0 5 * * ? *)
+      state: ENABLED
+      targets:
+        - lambda: EmsReport
 
   stepFunctions: !!files ['workflows.yml']
 
