@@ -37,7 +37,7 @@ test.serial.cb("The S3 redirect includes the user's Earthdata Login username", (
     };
 
     // Call the distribution endpoint handler
-    distributionEndpoint(event, {}, (err, handlerResponse) => {
+    distributionEndpoint.handler(event, {}, (err, handlerResponse) => {
       if (err) throw t.end(err);
 
       t.is(handlerResponse.statusCode, '302');
@@ -48,4 +48,32 @@ test.serial.cb("The S3 redirect includes the user's Earthdata Login username", (
       t.end();
     });
   });
+});
+
+test('bucket and key are extracted correctly', (t) => {
+  const objectParams = distributionEndpoint.getBucketAndKeyFromPathParams(
+    'bucket-name/folder/key.txt'
+  );
+
+  t.deepEqual(
+    objectParams,
+    { Bucket: 'bucket-name', Key: 'folder/key.txt' }
+  );
+});
+
+test('parsed signed URL generates', (t) => {
+  const tokenInfo = {
+    endpoint: '/api/users/cumulus-user'
+  };
+
+  const signedUrl = distributionEndpoint.generateParsedSignedUrl(
+    tokenInfo,
+    'bucket-name/folder/key.txt',
+    ''
+  );
+
+  t.regex(
+    signedUrl.href,
+    /http:\/\/localhost:4572\/bucket-name\/folder\/key\.txt\?AWSAccessKeyId=my-access-key-id&Expires=.*\&Signature=.*\&x-EarthdataLoginUsername=cumulus-user/
+  );
 });
