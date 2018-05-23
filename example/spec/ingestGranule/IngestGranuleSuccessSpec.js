@@ -70,12 +70,12 @@ describe('The S3 Ingest Granules workflow', () => {
     afterAll(async () => {
       await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise();
       await s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise();
-      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
+      await s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise();
     });
 
     it('has a payload with updated filename', () => {
       let i;
-      for (i = 0; i < 3; i += 1) {
+      for (i = 0; i < 4; i += 1) {
         expect(files[i].filename).toEqual(expectedPayload.granules[0].files[i].filename);
       }
     });
@@ -91,12 +91,22 @@ describe('The S3 Ingest Granules workflow', () => {
     let lambdaOutput;
     let cmrResource;
     let cmrLink;
+    let response;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
+      response = got.get(cmrResource[1].href, { json: true });
+        // .then((json) => {
+        //   response = json;
+        //   console.log(json);
+        // });
     });
+
+    // afterAll(async () => {
+    //   await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
+    // });
 
     it('has expected payload', () => {
       const granule = lambdaOutput.payload.granules[0];
@@ -120,13 +130,12 @@ describe('The S3 Ingest Granules workflow', () => {
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
 
+      console.log(cmrResource[1]);
+
       expect(cmrResource[0].href).toEqual(urljoin(distEndpoint, extension1));
       expect(cmrResource[1].href).toEqual(filename);
 
-      // got.get(cmrResource[1].href, { json: true })
-      //   .then((json) => {
-      //     console.log(json);
-      //   });
+      console.log(response);
     });
   });
 });
