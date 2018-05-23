@@ -97,6 +97,6 @@ EmsReport:
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
   envs:
-    bucket: '{{buckets.internal.name}}'
+    bucket: '{{buckets.system_bucket}}'
     ems_provider: '{{ems.provider}}'
 
