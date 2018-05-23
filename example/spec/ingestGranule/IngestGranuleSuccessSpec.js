@@ -92,21 +92,22 @@ describe('The S3 Ingest Granules workflow', () => {
     let cmrResource;
     let cmrLink;
     let response;
+    let files;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      files = lambdaOutput.payload.granules[0].files;
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
-      response = got.get(cmrResource[1].href, { json: true });
-        // .then((json) => {
-        //   response = json;
-        //   console.log(json);
-        // });
+      response = await got(cmrResource[1].href)
+        .then(response => {
+          return response;
+        });
     });
 
-    // afterAll(async () => {
-    //   await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
-    // });
+    afterAll(async () => {
+      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
+    });
 
     it('has expected payload', () => {
       const granule = lambdaOutput.payload.granules[0];
@@ -125,17 +126,14 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const files = lambdaOutput.payload.granules[0].files;
       const distEndpoint = config.distributionEndpoint;
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
 
-      console.log(cmrResource[1]);
-
       expect(cmrResource[0].href).toEqual(urljoin(distEndpoint, extension1));
       expect(cmrResource[1].href).toEqual(filename);
 
-      console.log(response);
+      expect(response.statusCode).toEqual(200);
     });
   });
 });
