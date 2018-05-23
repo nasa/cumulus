@@ -205,7 +205,7 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
           Key: file.filepath
         };
         delete file.fileStagingDir;
-        const options = (file.bucket.match("public")) ? {ACL: "public-read"} : null;
+        const options = (file.bucket.match('public')) ? {ACL: 'public-read'} : null;
         moveFileRequests.push(moveGranuleFile(source, target, options));
       }
     });
@@ -231,13 +231,13 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint) {
     onlineAccessUrls.OnlineAccessURL.forEach((urlObj) => {
       const filename = path.basename(urlObj.URL);
       const file = granule.files.find((f) => f.name === filename);
-      if (file.bucket.match("protected")) {
+      if (file.bucket.match('protected')) {
         const extension = urljoin(file.bucket, file.filepath);
         urlObj.URL = urljoin(distEndpoint, extension);
 
         urls.push(urlObj);
       }
-      else if (file.bucket.match("public")) {
+      else if (file.bucket.match('public')) {
         const url = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
         urlObj.URL = url;
         urls.push(urlObj);
@@ -249,9 +249,9 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint) {
     const xml = builder.buildObject(cmrFile.metadataObject);
     cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
-    if (updatedCmrFile.bucket.match("public")){
+    if (updatedCmrFile.bucket.match('public')){
       await promiseS3Upload(
-        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml, ACL: "public-read" }
+        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml, ACL: 'public-read' }
       );
     }
     else {
