@@ -40,8 +40,7 @@ test.before(async () => {
   // create fake granule records
   fakeGranules = ['completed', 'failed'].map(fakeGranuleFactory);
   await Promise.all(fakeGranules.map((granule) => g.create(granule)
-    .then((record) => indexer.indexGranule(esClient, record, esIndex))
-  ));
+    .then((record) => indexer.indexGranule(esClient, record, esIndex))));
 });
 
 test.after.always(async () => {
@@ -99,7 +98,7 @@ test('PUT fails if action is not supported', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     },
     body: '{"action":"reprocess"}'
   };
@@ -114,7 +113,7 @@ test('PUT fails if action is not provided', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     }
   };
 
@@ -139,7 +138,7 @@ test('reingest a granule', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     },
     body: '{"action":"reingest"}'
   };
@@ -173,7 +172,7 @@ test('remove a granule from CMR', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     },
     body: '{"action":"removeFromCmr"}'
   };
@@ -242,4 +241,33 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
     detail,
     'Record deleted'
   );
+});
+
+test('move a granule', async (t) => {
+  const newGranule = fakeGranuleFactory();
+  await g.create(newGranule);
+
+  const moveEvent = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: fakeGranules[0].granuleId
+    },
+    body: JSON.stringify({
+      action: 'move',
+      destination: {
+        bucket: process.env.bucket,
+        key: `${process.env.stackName}/granules_moved/${newGranule.granuleId}`
+      }
+    })
+  };
+
+  const key = `${process.env.stackName}/granules_ingested/${newGranule.granuleId}`;
+  await aws.s3().putObject({ Bucket: process.env.internal, Key: key, Body: 'test data' }).promise();
+
+  await testEndpoint(granuleEndpoint, moveEvent, (response) => {
+    const body = JSON.parse(response.body);
+    t.is(body.status, 'SUCCESS');
+    t.is(body.action, 'move');
+    return response;
+  });
 });
