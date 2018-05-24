@@ -244,27 +244,32 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
 });
 
 test('move a granule', async (t) => {
+  const bucket = process.env.internal;
   const newGranule = fakeGranuleFactory();
+  const file = {
+    bucket,
+    name: `${newGranule.granuleId}.txt`,
+    filename: `/${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
+  };
+  newGranule.files = [file];
   await g.create(newGranule);
-  console.log(await esClient.indices.refresh());
-  console.log(await g.get(newGranule.granuleId));
 
   const moveEvent = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId
+      granuleName: newGranule.granuleId
     },
     body: JSON.stringify({
       action: 'move',
       destination: {
-        bucket: process.env.bucket,
-        key: `${process.env.stackName}/granules_moved/${newGranule.granuleId}`
+        bucket,
+        filepath: `${process.env.stackName}/granules_moved`
       }
     })
   };
 
-  const key = `${process.env.stackName}/granules_ingested/${newGranule.granuleId}`;
-  await aws.s3().putObject({ Bucket: process.env.internal, Key: key, Body: 'test data' }).promise();
+  const key = `${process.env.stackName}/granules_moved/${file.name}`;
+  await aws.s3().putObject({ Bucket: bucket, Key: key, Body: 'test data' }).promise();
 
   await testEndpoint(granuleEndpoint, moveEvent, (response) => {
     const body = JSON.parse(response.body);

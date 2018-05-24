@@ -253,7 +253,7 @@ class Granule {
     if (!fileConfig) {
       throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
     }
-   
+
     const bucket = this.buckets[fileConfig.bucket];
 
     return Object.assign(cloneDeep(file), { bucket });
@@ -587,9 +587,10 @@ function selector(type, protocol) {
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
-function copyGranuleFile(source, target, options) {
+async function copyGranuleFile(source, target, options) {
   const s3 = aws.s3();
-  const CopySource = encodeurl(`/${source.Bucket}/${source.Key}`);
+  // const CopySource = `/${source.Bucket}${source.Key}`;
+  const CopySource = encodeurl(`/${source.Bucket}${source.Key}`);
 
   const params = Object.assign({
     CopySource,
@@ -597,7 +598,15 @@ function copyGranuleFile(source, target, options) {
     Key: target.Key
   }, (options || {}));
 
-  return s3.copyObject(params).promise();
+  let result;
+  try {
+    result = await s3.copyObject(params).promise();
+  }
+  catch (e) {
+    console.log('n\n\n\n\n\n\n\n\n\n\n\n', e, '\n\n\n\n\n\n\n\n');
+    throw e;
+  }
+  return result;
 }
 
 /**
@@ -629,17 +638,18 @@ async function moveGranuleFile(source, target, options) {
  * @returns {Promise<undefined>} returns `undefined` when all the files are moved
  */
 async function moveGranuleFiles(sourceFiles, destination) {
-  sourceFiles.forEach((file) => {
-      const source = {
-        Bucket: file.bucket,
-        Key: file.filename
-      };
+  const moveFileRequests = sourceFiles.map((file) => {
+    const source = {
+      Bucket: file.bucket,
+      Key: file.filename
+    };
 
-      const target = {
-        Bucket: destination.bucket,
-        Key: `${destination.filepath}/${file.name}`
-      };
-      moveFileRequests.push(moveGranuleFile(source, target));
+    const target = {
+      Bucket: destination.bucket,
+      Key: `${destination.filepath}/${file.name}`
+    };
+
+    return moveGranuleFile(source, target);
   });
 
   return Promise.all(moveFileRequests);

@@ -7,7 +7,6 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const aws = require('@cumulus/ingest/aws');
-const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const Manager = require('./base');
 const {
@@ -46,21 +45,6 @@ class Granule extends Manager {
 
     await cmr.deleteGranule(granuleId, collectionId);
     await this.update({ granuleId }, { published: false, cmrLink: null });
-  }
-
-  /**
-   * Move a granule's files from one s3 location to another
-   *
-   * @param {string} granuleId - the granule ID
-   * @param {Object} destination - bucket and key defining the destination of the granule
-   * @param {string} destination.bucket - aws bucket
-   * @param {string} destination.key - filepath on the bucket for the destination
-   * @returns {Promise<undefined>} undefined
-   */
-  async moveGranule(granuleId, destination) {
-    const response = await this.get(granuleId);
-    console.log('did get got', response)
-    await moveGranuleFiles(response.files, destination);
   }
 
   /**
