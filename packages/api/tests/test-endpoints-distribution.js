@@ -74,6 +74,6 @@ test('parsed signed URL generates', (t) => {
 
   t.regex(
     signedUrl.href,
-    /http:\/\/localhost:4572\/bucket-name\/folder\/key\.txt\?AWSAccessKeyId=my-access-key-id&Expires=.*\&Signature=.*\&x-EarthdataLoginUsername=cumulus-user/
+    /http:\/\/.*\/bucket-name\/folder\/key\.txt\?AWSAccessKeyId=my-access-key-id&Expires=.*\&Signature=.*\&x-EarthdataLoginUsername=cumulus-user/
   );
 });
