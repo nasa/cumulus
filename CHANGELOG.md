@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+- **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
+  - Change the structure of the buckets to allow for  more than one bucket of each type. The bucket structure is now: 
+    bucket-key: 
+      name: <bucket-name>
+      type: <type> i.e. internal, public, etc.
+  - Change IAM and app deployment configuration to support new bucket structure
+  - Update tasks and workflows to support new bucket structure
+  - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
+  - Move IAM template to the deployment package. NOTE: You now have to specify '--template node_modules/@cumulus/deployment/iam' in your IAM deployment
+  - Add IAM cloudformation template support to filter buckets by type
+
 ### Added
 - **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
   - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
@@ -22,16 +35,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
-
-### Changed
-- **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
-  - Change the structure of the buckets to allow for  more than one bucket of each type. The bucket structure is now: 
-    bucket-key: 
-      name: <bucket-name>
-      type: <type> i.e. internal, public, etc.
-  - Change IAM and app deployment configuration to support new bucket structure
-  - Update tasks and workflows to support new bucket structure
-  - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
 
 ## [v1.5.2] - 2018-05-15
 
