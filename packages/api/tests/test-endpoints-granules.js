@@ -249,7 +249,7 @@ test('move a granule', async (t) => {
   const file = {
     bucket,
     name: `${newGranule.granuleId}.txt`,
-    filename: `/${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
+    filename: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
   };
   newGranule.files = [file];
   await g.create(newGranule);
@@ -268,13 +268,28 @@ test('move a granule', async (t) => {
     })
   };
 
-  const key = `${process.env.stackName}/granules_moved/${file.name}`;
+  const key = `${process.env.stackName}/granules_ingested/${file.name}`;
   await aws.s3().putObject({ Bucket: bucket, Key: key, Body: 'test data' }).promise();
 
-  await testEndpoint(granuleEndpoint, moveEvent, (response) => {
+  await testEndpoint(granuleEndpoint, moveEvent, async (response) => {
     const body = JSON.parse(response.body);
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'move');
-    return response;
+
+    try {
+      // original location empty
+      await aws.s3().getObject({
+        Bucket: bucket,
+        Key: key
+      }).promise();
+    }
+    catch (e) {
+      t.is(e.message, 'The specified key does not exist.');
+    }
+
+    return aws.s3().getObject({
+      Bucket: bucket,
+      Key: `${process.env.stackName}/granules_moved/${file.name}`
+    }).promise();
   });
 });
