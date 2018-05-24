@@ -231,48 +231,23 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 **/
 async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distEndpoint) {
   for (const cmrFile of cmrFiles) {
-    const onlineAccessUrls = get(cmrFile, 'metadataObject.Granule.OnlineAccessURLs');
     const metadataGranule = get(cmrFile, 'metadataObject.Granule');
     const granule = granulesObject[cmrFile.granuleId];
     const urls = [];
-    const urlHash = {};
-    if (onlineAccessUrls) {
-      onlineAccessUrls.OnlineAccessURL.forEach((urlObj) => {
-        const filename = path.basename(urlObj.URL);
-        const file = granule.files.find((f) => f.name === filename);
-        if (file.bucket.match('protected')) {
-          const extension = urljoin(file.bucket, file.filepath);
-          urlObj.URL = urljoin(distEndpoint, extension);
-
-          urls.push(urlObj);
-          urlHash[file.name] = urlObj;
-        }
-        else if (file.bucket.match('public')) {
-          const url = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
-          urlObj.URL = url;
-          urls.push(urlObj);
-          urlHash[file.name] = urlObj;
-        }
-      });
-    }
-
-    // Populates onlineAcessUrls with any missing files
+    // Populates onlineAcessUrls with all public and protected files
     allFiles.forEach((file) => {
-      if (!urlHash.hasOwnProperty(file.name)) {
         const urlObj = {};
-        urlObj.URLDescription = 'File to download';
         if (file.bucket.match('protected')) {
           const extension = urljoin(file.bucket, file.filepath);
           urlObj.URL = urljoin(distEndpoint, extension);
+          urlObj.URLDescription = 'File to download';
           urls.push(urlObj);
-          urlHash[file.name] = urlObj;
         }
         else if (file.bucket.match('public')) {
           urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+          urlObj.URLDescription = 'File to download';
           urls.push(urlObj);
-          urlHash[file.name] = urlObj;
         }
-      }
     });
 
     const updatedGranule = {};
