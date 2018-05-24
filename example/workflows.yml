@@ -210,9 +210,6 @@ ParsePdr:
     CheckStatus:
       Type: Task
       Resource: ${PdrStatusCheckLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$.payload}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -232,7 +229,7 @@ ParsePdr:
     PdrStatusReport:
       CumulusConfig:
         cumulus_message:
-          input: '{$.payload}'
+          input: '{$}'
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
@@ -294,6 +291,7 @@ IngestGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -315,6 +313,7 @@ IngestGranule:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -348,9 +347,6 @@ IngestGranule:
         input_keys: '{$.meta.collection.process_keys}'
         cumulus_message:
           input: '[$.payload.granules[*].files[*].filename]'
-          outputs:
-            - source: '{$}'
-              destination: '{$.payload}'
       Type: Task
       Resource: ${ModisProcessingLambdaFunction.Arn}
       Catch:
@@ -371,11 +367,6 @@ IngestGranule:
         cmr: '{$.meta.cmr}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-        cumulus_message:
-          input: '{$.payload}'
-          outputs:
-            - source: '{$}'
-              destination: '{$.payload}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
