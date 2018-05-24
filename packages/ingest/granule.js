@@ -590,7 +590,7 @@ function selector(type, protocol) {
 async function copyGranuleFile(source, target, options) {
   const s3 = aws.s3();
   // const CopySource = `/${source.Bucket}${source.Key}`;
-  const CopySource = encodeurl(`/${source.Bucket}${source.Key}`);
+  const CopySource = encodeurl(urljoin(source.Bucket, source.Key));
 
   const params = Object.assign({
     CopySource,
@@ -599,6 +599,7 @@ async function copyGranuleFile(source, target, options) {
   }, (options || {}));
 
   let result;
+  console.log(params)
   try {
     result = await s3.copyObject(params).promise();
   }
