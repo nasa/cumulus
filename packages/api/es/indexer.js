@@ -190,7 +190,7 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
 }
 
 /**
- * Extracts PDR info from a StepFunction message and save it to DynamoDB 
+ * Extracts PDR info from a StepFunction message and save it to DynamoDB
  *
  * @param  {Object} payload  - Cumulus Step Function message
  * @returns {Promise<Object>} Elasticsearch response
@@ -286,7 +286,7 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
     payload.pdrName,
     payload,
     index,
-    type,
+    type
   );
 }
 
