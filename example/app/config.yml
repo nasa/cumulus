@@ -84,6 +84,7 @@ default:
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-lambda'
 
   sns:
     inregions3:
@@ -125,6 +126,7 @@ cumulus-from-source:
   stackNameNoDash: TestSourceIntegration
 
 lf:
+  prefix: lf-cumulus
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 

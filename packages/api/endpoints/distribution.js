@@ -113,7 +113,7 @@ function handler(event, context, cb) {
       body: {
         grant_type: 'authorization_code',
         code: query.code,
-        redirect_url: DEPLOYMENT_ENDPOINT
+        redirect_uri: DEPLOYMENT_ENDPOINT
       },
       auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
     }).then((r) => {
