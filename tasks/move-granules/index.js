@@ -232,6 +232,7 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distEndpoint) {
   for (const cmrFile of cmrFiles) {
     const onlineAccessUrls = get(cmrFile, 'metadataObject.Granule.OnlineAccessURLs');
+    const metadataGranule = get(cmrFile, 'metadataObject.Granule');
     const granule = granulesObject[cmrFile.granuleId];
     const urls = [];
     const urlHash = {};
@@ -273,7 +274,17 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
         }
       }
     });
-    cmrFile.metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL = urls;
+
+    const updatedGranule = {};
+    Object.keys(metadataGranule).forEach((key) => {
+      if (key === 'OnlineResources' || key === 'Orderable') {
+        updatedGranule.OnlineAccessURLs = {};
+      }
+      updatedGranule[key] = metadataGranule[key];
+    });
+    updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
+    cmrFile.metadataObject.Granule = updatedGranule;
+
     const builder = new xml2js.Builder();
     const xml = builder.buildObject(cmrFile.metadataObject);
     cmrFile.metadata = xml;
