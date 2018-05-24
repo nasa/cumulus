@@ -246,6 +246,8 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
 test('move a granule', async (t) => {
   const newGranule = fakeGranuleFactory();
   await g.create(newGranule);
+  console.log(await esClient.indices.refresh());
+  console.log(await g.get(newGranule.granuleId));
 
   const moveEvent = {
     httpMethod: 'PUT',
