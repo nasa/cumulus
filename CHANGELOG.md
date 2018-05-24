@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-530** - PDR tracking through Queue-granules
+  - Add optional `pdr` property to the sync-granule task's input config and output payload.
+
+### Fixed
+- **CUMULUS-546 - Kinesis Consumer should catch and log invalid JSON**
+  - Kinesis Consumer lambda catches and logs errors so that consumer doesn't get stuck in a loop re-processing bad json records.
 
 ### Added
 - `@cumulus/deployment`'s default cloudformation template now configures storage for Docker to match the configured ECS Volume. The template defines Docker's devicemapper basesize (`dm.basesize`) using `ecs.volumeSize`. This is addresses ECS default of limiting Docker containers to 10GB of storage ([Read more](https://aws.amazon.com/premiumsupport/knowledge-center/increase-default-ecs-docker-limit/)).
@@ -14,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
   - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
-  - ems.provider property added to `@cumulus/deployment/app/config.yml`. 
+  - ems.provider property added to `@cumulus/deployment/app/config.yml`.
     To change the provider name, please add `ems: provider` property to `app/config.yml`.
 
 ## [v1.5.3] - 2018-05-18
