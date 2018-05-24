@@ -48,7 +48,7 @@
         {
           "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$",
           "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
-          "bucket": "private"
+          "bucket": "public"
         },
         {
           "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
