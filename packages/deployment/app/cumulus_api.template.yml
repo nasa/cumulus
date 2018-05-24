@@ -196,11 +196,13 @@ Resources:
       {{/if}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-    {{# if this.apiRole }}
+{{# if this.apiRole }}
       Role: {{../parent.iams.lambdaApiGatewayRoleArn}}
-      {{else}}
+{{else if this.distributionRole}}
+      Role: {{../parent.iams.distributionRoleArn}}
+{{else}}
       Role: {{../parent.iams.lambdaProcessingRoleArn}}
-    {{/if}}
+{{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
       Tags:
