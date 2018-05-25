@@ -81,41 +81,10 @@ default:
   # defining the APIs. Each item will include a separate endpoint
   apiStage: dev
 
-  dynamos:
-    CollectionsTable:
-      read: 5
-      write: 1
-      attributes:
-        - name: name
-          type: S
-          schema: HASH
-        - name: version
-          type: S
-          schema: RANGE
+  dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 
-    ProvidersTable:
-      read: 5
-      write: 1
-      attributes:
-        - name: id
-          type: S
-          schema: HASH
-
-    RulesTable:
-      read: 5
-      write: 1
-      attributes:
-        - name: name
-          type: S
-          schema: HASH
-
-    UsersTable:
-      read: 5
-      write: 1
-      attributes:
-        - name: userName
-          type: S
-          schema: HASH
+  # set to true to activate pointInTime on all tables
+  enablePointInTime: false
 
   sns:
     # this topic receives all the updates from

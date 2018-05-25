@@ -10,6 +10,16 @@ sns2elasticsearch:
   useElasticSearch: '{{es.name}}'
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    GranulesTable:
+      function: Ref
+      value: GranulesTableDynamoDB
+    ExecutionsTable:
+      function: Ref
+      value: ExecutionsTableDynamoDB
+    PdrsTable:
+      function: Ref
+      value: PdrsTableDynamoDB
 
 log2elasticsearch:
   handler: index.logHandler
@@ -36,6 +46,8 @@ dbIndexer:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
+  envs:
+    bucket: '{{buckets.internal}}'
 
 kinesisConsumer:
   handler: index.kinesisConsumer
@@ -78,7 +90,7 @@ jobs:
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
   handler: index.bootstrap
-  timeout: 100
+  timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:

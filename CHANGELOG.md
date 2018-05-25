@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - ems.provider property added to `@cumulus/deployment/app/config.yml`. 
     To change the provider name, please add `ems: provider` property to `app/config.yml`.
 
+### Added
+- **CUMULUS-480** Use DynamoDB to store granules, pdrs and execution records
+- Activate PointInTime feature on DynamoDB tables
+- Increase test coverage on api package
+- Add ability to restore metadata records from json files to DynamoDB
+
 ## [v1.5.3] - 2018-05-18
 
 ### Fixed
