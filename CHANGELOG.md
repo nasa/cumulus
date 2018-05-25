@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-530** - PDR tracking through Queue-granules
+  - Add optional `pdr` property to the sync-granule task's input config and output payload.
 
 ### Added
 - **CUMULUS-548** - Create a Lambda task that generates EMS distribution reports

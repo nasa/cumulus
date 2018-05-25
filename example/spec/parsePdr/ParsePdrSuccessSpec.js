@@ -111,12 +111,13 @@ describe('Parse PDR workflow', () => {
     });
 
     describe('SyncGranule lambda function', () => {
-      it('outputs 1 granule', async () => {
+      it('outputs 1 granule and pdr', async () => {
         const lambdaOutput = await lambdaStep.getStepOutput(
           ingestGranuleWorkflowArn,
           'SyncGranule'
         );
         expect(lambdaOutput.payload.granules.length).toEqual(1);
+        expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
       });
     });
   });
