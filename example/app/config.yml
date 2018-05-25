@@ -56,11 +56,6 @@ default:
     protected: cumulus-test-sandbox-protected
     public: cumulus-test-sandbox-public
 
-  ems:
-    distribution:
-      serverAccessLogsBucket: '{{prefix}}-internal-logs'
-      reportsBucket: '{{prefix}}-internal'
-
   cmr:
     username: '{{CMR_USERNAME}}'
     provider: CUMULUS
@@ -127,7 +122,3 @@ mth-cum-test:
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
-  ems:
-    distribution:
-      serverAccessLogsBucket: '{{prefix}}-internal-logs'
-      reportsBucket: '{{prefix}}-internal'

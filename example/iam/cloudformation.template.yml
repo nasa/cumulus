@@ -1,4 +1,3 @@
-
 ---
 Parameters:
   CreateDeploymentRole:
@@ -34,10 +33,6 @@ Parameters:
   SharedBucketName:
     Type: String
     Default: "cumulus-data-shared"
-  EmsDistributionLogsBucket:
-    Type: String
-  EmsDistributionReportsBucket:
-    Type: String
 Resources:
   LambdaApiGatewayRole:
     Type: AWS::IAM::Role
@@ -210,18 +205,6 @@ Resources:
                   - !Sub "arn:aws:s3:::${ProtectedBucketName}"
                   - !Sub "arn:aws:s3:::${PublicBucketName}"
                   - !Sub "arn:aws:s3:::${SharedBucketName}"
-
-              # Allow access for EMS Distribution Reporting
-              - Effect: Allow
-                Action:
-                  - s3:List*
-                  - s3:Get*
-                Resource:
-                  - !Sub "arn:aws:s3:::${EmsDistributionLogsBucket}"
-                  - !Sub "arn:aws:s3:::${EmsDistributionLogsBucket}/*"
-              - Effect: Allow
-                Action: s3:PutObject
-                Resource: !Sub "arn:aws:s3:::${EmsDistributionReportsBucket}/*"
 
               - Effect: Allow
                 Action:
