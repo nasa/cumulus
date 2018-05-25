@@ -1,20 +1,41 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
 const moment = require('moment');
 const { aws } = require('@cumulus/common');
 const { TaskQueue } = require('cwait');
 const { URL } = require('url');
+const { aws: { s3Join } } = require('@cumulus/common');
 
 /**
  * This class takes an S3 Server Log line and parses it for EMS Distribution Logs
+ *
+ * The format of S3 Server Log lines is documented here:
+ *
+ * https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html
+ *
+ * Example S3 Server Log line:
+ *
+ * fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e my-dist-bucket [01/June/1981:01:02:13 +0000] 192.0.2.3 arn:aws:iam::123456789012:user/joe 1CB21F5399FF76C5 REST.GET.OBJECT my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR "GET /my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR?AWSAccessKeyId=AKIAIOSFODNN7EXAMPLE&Expires=1525892130&Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&x-EarthdataLoginUsername=amalkin HTTP/1.1" 200 - 807 100 22 22 "-" "curl/7.59.0" -
+ *
  */
 class DistributionEvent {
+  /**
+   * Test if a given S3 Server Access Log line contains a distribution event
+   *
+   * @param {string} s3ServerLogLine - An S3 Server Access Log line
+   * @returns {boolean} `true` if the line contains a distribution event,
+   *   `false` otherwise
+   */
   static isDistributionEvent(s3ServerLogLine) {
     return s3ServerLogLine.includes('REST.GET.OBJECT')
       && s3ServerLogLine.includes('x-EarthdataLoginUsername');
   }
 
+  /**
+   * Constructor for DistributionEvent objects
+   *
+   * @param {string} s3ServerLogLine - an S3 Server Log line
+   */
   constructor(s3ServerLogLine) {
     if (!DistributionEvent.isDistributionEvent(s3ServerLogLine)) {
       throw new Error(`Invalid distribution event: ${s3ServerLogLine}`);
@@ -23,37 +44,77 @@ class DistributionEvent {
     this.rawLine = s3ServerLogLine;
   }
 
+  /**
+   * Get the bucket that the object was fetched from
+   *
+   * @returns {string} a bucket name
+   */
   get bucket() {
     return this.rawLine.split(' ')[1];
   }
 
+  /**
+   * Get the number of bytes sent to the client
+   *
+   * @returns {number} bytes sent
+   */
   get bytesSent() {
-    return this.rawLine.split('"')[2].trim().split(' ')[2];
+    return parseInt(this.rawLine.split('"')[2].trim().split(' ')[2], 10);
   }
 
+  /**
+   * Get the key of the object that was fetched
+   *
+   * @returns {string} an S3 key
+   */
   get key() {
     return this.rawLine.split('REST.GET.OBJECT')[1].trim().split(' ')[0];
   }
 
+  /**
+   * Get the client's IP address
+   *
+   * @returns {string} an IP address
+   */
   get remoteIP() {
     return this.rawLine.split(']')[1].trim().split(' ')[0];
   }
 
+  /**
+   * Get the size of the object
+   *
+   * @returns {number} size in bytes
+   */
   get objectSize() {
-    return this.rawLine.split('"')[2].trim().split(' ')[3];
+    return parseInt(this.rawLine.split('"')[2].trim().split(' ')[3], 10);
   }
 
+  /**
+   * Get the time of the event
+   *
+   * @returns {Moment} the time of the event
+   */
   get time() {
     return moment(
       this.rawLine.split('[')[1].split(']')[0],
-      'DD/MMM/YYYY:HH:mm:ss ZZ'
-    );
+      'DD/MMM/YYYY:hh:mm:ss ZZ'
+    ).utc();
   }
 
+  /**
+   * Get the success or failure status of the event
+   *
+   * @returns {string} "S" or "F"
+   */
   get transferStatus() {
     return this.bytesSent === this.objectSize ? 'S' : 'F';
   }
 
+  /**
+   * Get the Earthdata Login username that fetched the S3 object
+   *
+   * @returns {string} a username
+   */
   get username() {
     const requestUri = this.rawLine.split('"')[1].split(' ')[1];
     const parsedUri = (new URL(requestUri, 'http://localhost'));
@@ -66,8 +127,10 @@ class DistributionEvent {
    * @returns {string} an EMS distribution log entry
    */
   toString() {
+    const upperCasedMonth = this.time.format('MMM').toUpperCase();
+
     return [
-      this.time.toISOString(),
+      this.time.format(`DD-[${upperCasedMonth}]-YY hh.mm.ss.SSSSSS A`),
       this.username,
       this.remoteIP,
       `s3://${this.bucket}/${this.key}`,
@@ -77,102 +140,175 @@ class DistributionEvent {
   }
 }
 
-async function fetchEventsFromObject(getObjectParams) {
-  log.info(`Fetching events from s3://${getObjectParams.Bucket}/${getObjectParams.Key}`);
+/**
+ * Fetch an S3 object containing S3 Server Access logs and return any
+ * distribution events contained in that log.
+ *
+ * @param {Object} params - params
+ * @param {string} params.Bucket - an S3 bucket name
+ * @param {string} params.Key - an S3 key
+ * @returns {Array<DistributionEvent>} the DistributionEvents contained in the
+ *   S3 object
+ */
+async function getDistributionEventsFromS3Object(params) {
+  const {
+    Bucket,
+    Key
+  } = params;
 
-  // Fetch the S3 Server Log object from S3
-  const getObjectResponse = await aws.s3().getObject(getObjectParams).promise();
+  const logLines = await aws.s3().getObject({ Bucket, Key }).promise()
+    .then((response) => response.Body.toString().split('\n'));
 
-  return getObjectResponse.Body
-    // Get the contents of the S3 object
-    .toString()
-    // Break the file into separate lines
-    .split('\n')
-    // Remove lines that aren't for distribution events
+  return logLines
     .filter(DistributionEvent.isDistributionEvent)
-    // Convert the remaining lines into DistributionEvent objects
     .map((logLine) => new DistributionEvent(logLine));
 }
 
-async function fetchEvents(sourceBucket, startTime, endTime) {
-  log.info(`Fetching distribution logs from ${startTime.toISOString()} to ${endTime.toISOString()}`); // eslint-disable-line max-len
-
-  // Fetch all of the log objects in the S3 bucket
-  const s3Objects = await aws.listS3ObjectsV2({ Bucket: sourceBucket });
-  // We only want the Bucket and Key properties
-  const simpleS3Objects = s3Objects.map((s3Object) =>
-    ({ Bucket: sourceBucket, Key: s3Object.Key }));
+/**
+ * Build an EMS Distribution Report
+ *
+ * @param {Object} params - params
+ * @param {string} params.logsBucket - the bucket containing S3 Server Access logs
+ * @param {string} params.logsPrefix - the S3 prefix where the logs are located
+ * @param {Moment} params.reportStartTime - the earliest time to return events from (inclusive)
+ * @param {Moment} params.reportEndTime - the latest time to return events from (exclusive)
+ * @returns {string} an EMS distribution report
+ */
+async function generateDistributionReport(params) {
+  const {
+    reportStartTime,
+    reportEndTime,
+    logsBucket,
+    logsPrefix
+  } = params;
 
   // Throttle how many log objects we fetch and parse in parallel
   const queue = new TaskQueue(Promise, 5);
-  const throttledFetchEventsFromObject = queue.wrap(fetchEventsFromObject);
+  const throttledGetDistributionEventsFromS3Object = queue.wrap(getDistributionEventsFromS3Object);
 
   // A few utility functions that we'll be using below
   const flatten = (accumulator, currentValue) => accumulator.concat(currentValue);
-  const timeFilter = (event) => event.time >= startTime && event.time < endTime;
+  const timeFilter = (event) => event.time >= reportStartTime && event.time < reportEndTime;
   const sortByTime = (eventA, eventB) => (eventA.time < eventB.time ? -1 : 1);
 
+  // Get the list of S3 objects containing Server Access logs
+  const s3Objects = (await aws.listS3ObjectsV2({ Bucket: logsBucket, Prefix: logsPrefix }))
+    .map((s3Object) => ({ Bucket: logsBucket, Key: s3Object.Key }));
+
   // Fetch all distribution events from S3
-  return (await Promise.all(simpleS3Objects.map(throttledFetchEventsFromObject)))
-    // Flatten the result arrays into a single array
+  return (await Promise.all(s3Objects.map(throttledGetDistributionEventsFromS3Object)))
     .reduce(flatten, [])
-    // Remove results outside of the specified timerange
     .filter(timeFilter)
-    // Sort the results
-    .sort(sortByTime);
+    .sort(sortByTime)
+    .join('\n');
 }
 
-function storeDistributionReport(params) {
+/**
+ * Determine the S3 key where the report should be stored
+ *
+ * @param {Object} params - params
+ * @param {string} params.reportsBucket - the bucket containing the EMS reports
+ * @param {string} params.reportsPrefix - the S3 prefix where the reports are located
+ * @param {Moment} params.reportGenerationTime - the timestamp of the report
+ * @param {string} params.provider - the report provider
+ * @param {string} params.stackName - the Cumulus stack name
+ * @returns {string} the S3 key where the report should be stored
+ */
+async function determineReportKey(params) {
   const {
-    destinationBucket,
-    distributionReport,
-    startTime,
-    endTime
+    reportsBucket,
+    reportsPrefix,
+    reportGenerationTime,
+    provider,
+    stackName
   } = params;
 
-  const destinationKey = `${startTime.toISOString()}_to_${endTime.toISOString()}.log`;
+  let reportName = `${reportGenerationTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`; // eslint-disable-line max-len
 
-  log.info(`Writing EMS distribution logs to s3://${destinationBucket}/${destinationKey}`);
+  const revisionNumber = (await aws.listS3ObjectsV2({
+    Bucket: reportsBucket,
+    Prefix: s3Join([reportsPrefix, reportName])
+  })).length;
 
-  return aws.s3().putObject({
-    Bucket: destinationBucket,
-    Key: destinationKey,
-    Body: distributionReport
-  }).promise();
+  if (revisionNumber > 0) reportName = `${reportName}.rev${revisionNumber}`;
+
+  return s3Join([reportsPrefix, reportName]);
 }
 
+/**
+ * Generate and store an EMS Distribution Report
+ *
+ * @param {Object} params - params
+ * @param {Moment} params.reportGenerationTime - the timestamp of the report.
+ *   Defaults to the current time.
+ * @param {Moment} params.reportStartTime - the earliest time to return events from (inclusive)
+ * @param {Moment} params.reportEndTime - the latest time to return events from (exclusive)
+ * @param {string} params.logsBucket - the bucket containing S3 Server Access logs
+ * @param {string} params.logsPrefix - the S3 prefix where the logs are located
+ * @param {string} params.reportsBucket - the bucket containing the EMS reports
+ * @param {string} params.reportsPrefix - the S3 prefix where the reports are located
+ * @param {string} params.stackName - the Cumulus stack name
+ * @param {string} params.provider - the report provider. Defaults to "cumulus"
+ * @returns {Promise} resolves when the report has been generated
+ */
 async function generateAndStoreDistributionReport(params) {
   const {
-    sourceBucket,
-    destinationBucket,
-    startTime,
-    endTime
+    reportGenerationTime = moment.utc(),
+    reportStartTime,
+    reportEndTime,
+    logsBucket,
+    logsPrefix,
+    reportsBucket,
+    reportsPrefix,
+    stackName,
+    provider = 'cumulus'
   } = params;
 
-  const distributionEvents = await fetchEvents(sourceBucket, startTime, endTime);
-  const distributionReport = distributionEvents.join('\n');
-
-  return storeDistributionReport({
-    destinationBucket,
-    distributionReport,
-    startTime,
-    endTime
+  const distributionReport = await generateDistributionReport({
+    reportStartTime,
+    reportEndTime,
+    logsBucket,
+    logsPrefix
   });
-}
 
-function handler(event, _context, cb) {
-  const startTime = event.startTime
-    ? moment(event.startTime) // Used during testing
-    : moment.utc().subtract(1, 'day').startOf('day'); // Default to midnight yesterday
-  const endTime = event.endTime
-    ? moment(event.endTime) // Used during testing
-    : moment(startTime).add(1, 'day'); // Default to one day after the startTime
+  const reportKey = await determineReportKey({
+    reportsBucket,
+    reportsPrefix,
+    reportGenerationTime,
+    provider,
+    stackName
+  });
+
+  return aws.s3().putObject({
+    Bucket: reportsBucket,
+    Key: reportKey,
+    Body: distributionReport
+  }).promise()
+    .then(() => null);
+}
+// Export to support testing
+exports.generateAndStoreDistributionReport = generateAndStoreDistributionReport;
+
+/**
+ * A lambda task for generating and EMS Distribution Report
+ *
+ * @param {Object} _event - an AWS Lambda event
+ * @param {Object} _context - an AWS Lambda execution context (not used)
+ * @param {function} cb - an AWS Lambda callback function
+ * @returns {Promise} resolves when the report has been generated and stored
+ */
+function handler(_event, _context, cb) {
+  const now = moment.utc();
 
   return generateAndStoreDistributionReport({
-    startTime,
-    endTime,
-    sourceBucket: process.env.SOURCE_BUCKET,
-    destinationBucket: process.env.DESTINATION_BUCKET
+    startTime: moment(now).startOf('day').subtract(1, 'day'),
+    endTime: moment(now).startOf('day'),
+    logsBucket: process.env.LOGS_BUCKET,
+    logsPrefix: `${process.env.STACK_NAME}/ems-distribution/s3-server-access-logs/`,
+    reportsBucket: process.env.REPORTS_BUCKET,
+    reportsPrefix: `${process.env.STACK_NAME}/ems-distribution/reports/`,
+    provider: 'cumulus',
+    stackName: process.env.STACK_NAME
   })
     .catch(cb);
 }
