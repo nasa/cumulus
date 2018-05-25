@@ -11,6 +11,28 @@ const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 const pump = require('pump');
 
+/**
+ * Join strings into an S3 key without a leading slash or double slashes
+ *
+ * @param {Array<string>} tokens - the strings to join
+ * @returns {string} the full S3 key
+ */
+function s3Join(tokens) {
+  const removeLeadingSlash = (token) => token.replace(/^\//, '');
+  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
+  const isNotEmptyString = (token) => token.length > 0;
+
+  const key = tokens
+    .map(removeLeadingSlash)
+    .map(removeTrailingSlash)
+    .filter(isNotEmptyString)
+    .join('/');
+
+  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
+  return key;
+}
+exports.s3Join = s3Join;
+
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
   AWS.config.update({ region: region });
@@ -362,7 +384,6 @@ async function listS3ObjectsV2(params) {
 
   // Keep listing more objects from S3 until we have all of them
   while (listObjectsResponse.IsTruncated) {
-    // ContinuationToken = listObjectsResponse.NextContinuationToken;
     listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, function-paren-newline, max-len
       // Update the params with a Continuation Token
       Object.assign(

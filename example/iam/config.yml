@@ -21,10 +21,6 @@ default:
        value: '{{buckets.protected}}'
      - name: PublicBucketName
        value: '{{buckets.public}}'
-     - name: EmsDistributionLogsBucket
-       value: '{{ems.distribution.serverAccessLogsBucket}}'
-     - name: EmsDistributionReportsBucket
-       value: '{{ems.distribution.reportsBucket}}'
 
 cumulus-from-npm:
   prefix: test-npm-integration
@@ -37,7 +33,3 @@ mth-cum-test:
   buckets:
     internal: '{{prefix}}-internal'
     private: '{{prefix}}-private'
-  ems:
-    distribution:
-      serverAccessLogsBucket: '{{prefix}}-internal-logs'
-      reportsBucket: '{{prefix}}-internal'
