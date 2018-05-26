@@ -15,5 +15,5 @@ ApiDistribution:
       path: 'redirect'
       method: get
     - api: distribution
-      path: '{proxy+}'
+      path: 'download/{proxy+}'
       method: any
