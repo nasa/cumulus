@@ -4,7 +4,7 @@ ApiDistribution:
   timeout: 20
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
-  apiRole: true
+  distributionRole: true
   urs: true
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}' 
