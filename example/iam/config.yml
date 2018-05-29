@@ -32,4 +32,5 @@ mth-cum-test:
   prefix: mth-cum-test
   buckets:
     internal: '{{prefix}}-internal'
+    protected: '{{prefix}}-protected'
     private: '{{prefix}}-private'

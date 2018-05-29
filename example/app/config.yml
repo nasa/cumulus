@@ -113,6 +113,7 @@ mth-cum-test:
   stackNameNoDash: MthCumTestIntegration
   buckets:
     internal: '{{prefix}}-internal'
+    protected: '{{prefix}}-protected'
     private: '{{prefix}}-private'
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
