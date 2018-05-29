@@ -209,7 +209,7 @@ async function generateDistributionReport(params) {
  * @param {Object} params - params
  * @param {string} params.reportsBucket - the bucket containing the EMS reports
  * @param {string} params.reportsPrefix - the S3 prefix where the reports are located
- * @param {Moment} params.reportGenerationTime - the timestamp of the report
+ * @param {Moment} params.reportStartTime - the timestamp of the report
  * @param {string} params.provider - the report provider
  * @param {string} params.stackName - the Cumulus stack name
  * @returns {string} the S3 key where the report should be stored
@@ -218,12 +218,12 @@ async function determineReportKey(params) {
   const {
     reportsBucket,
     reportsPrefix,
-    reportGenerationTime,
+    reportStartTime,
     provider,
     stackName
   } = params;
 
-  let reportName = `${reportGenerationTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`; // eslint-disable-line max-len
+  let reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`; // eslint-disable-line max-len
 
   const revisionNumber = (await aws.listS3ObjectsV2({
     Bucket: reportsBucket,
@@ -239,8 +239,6 @@ async function determineReportKey(params) {
  * Generate and store an EMS Distribution Report
  *
  * @param {Object} params - params
- * @param {Moment} params.reportGenerationTime - the timestamp of the report.
- *   Defaults to the current time.
  * @param {Moment} params.reportStartTime - the earliest time to return events from (inclusive)
  * @param {Moment} params.reportEndTime - the latest time to return events from (exclusive)
  * @param {string} params.logsBucket - the bucket containing S3 Server Access logs
@@ -253,7 +251,6 @@ async function determineReportKey(params) {
  */
 async function generateAndStoreDistributionReport(params) {
   const {
-    reportGenerationTime = moment.utc(),
     reportStartTime,
     reportEndTime,
     logsBucket,
@@ -274,7 +271,7 @@ async function generateAndStoreDistributionReport(params) {
   const reportKey = await determineReportKey({
     reportsBucket,
     reportsPrefix,
-    reportGenerationTime,
+    reportStartTime,
     provider,
     stackName
   });
@@ -301,8 +298,8 @@ function handler(_event, _context, cb) {
   const now = moment.utc();
 
   return generateAndStoreDistributionReport({
-    startTime: moment(now).startOf('day').subtract(1, 'day'),
-    endTime: moment(now).startOf('day'),
+    reportStartTime: moment(now).startOf('day').subtract(1, 'day'),
+    reportEndTime: moment(now).startOf('day'),
     logsBucket: process.env.LOGS_BUCKET,
     logsPrefix: `${process.env.STACK_NAME}/ems-distribution/s3-server-access-logs/`,
     reportsBucket: process.env.REPORTS_BUCKET,

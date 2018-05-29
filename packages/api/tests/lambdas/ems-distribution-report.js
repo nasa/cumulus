@@ -41,13 +41,11 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   const provider = randomString();
   const stackName = randomString();
 
-  const reportGenerationTime = moment.utc();
   const reportStartTime = moment('1981-06-01T01:00:00Z');
   const reportEndTime = moment('1981-06-01T15:00:00Z');
 
   // Generate the distribution report
   await generateAndStoreDistributionReport({
-    reportGenerationTime,
     reportStartTime,
     reportEndTime,
     logsBucket,
@@ -58,7 +56,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
     provider
   });
 
-  const reportName = `${reportGenerationTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
+  const reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
 
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
@@ -88,11 +86,10 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   const provider = randomString();
   const stackName = randomString();
 
-  const reportGenerationTime = moment.utc();
   const reportStartTime = moment('1981-06-01T01:00:00Z');
   const reportEndTime = moment('1981-06-01T15:00:00Z');
 
-  const reportName = `${reportGenerationTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
+  const reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
 
   await aws.s3().putObject({
     Bucket: reportsBucket,
@@ -102,7 +99,6 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
 
   // Generate the distribution report
   await generateAndStoreDistributionReport({
-    reportGenerationTime,
     reportStartTime,
     reportEndTime,
     logsBucket,
@@ -141,11 +137,10 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   const provider = randomString();
   const stackName = randomString();
 
-  const reportGenerationTime = moment.utc();
   const reportStartTime = moment('1981-06-01T01:00:00Z');
   const reportEndTime = moment('1981-06-01T15:00:00Z');
 
-  const reportName = `${reportGenerationTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
+  const reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
 
   await Promise.all([
     aws.s3().putObject({
@@ -162,7 +157,6 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
 
   // Generate the distribution report
   await generateAndStoreDistributionReport({
-    reportGenerationTime,
     reportStartTime,
     reportEndTime,
     logsBucket,
