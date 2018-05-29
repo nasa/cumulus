@@ -84,7 +84,7 @@ default:
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
 
   sns:
     inregions3:
@@ -143,3 +143,4 @@ lf:
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-distribution-api-lambda'
