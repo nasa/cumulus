@@ -412,7 +412,7 @@ Resources:
   DistributionApiRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ResourcePrefix}-distribution-lambda"
+      RoleName: !Sub "${ResourcePrefix}-distribution-api-lambda"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
