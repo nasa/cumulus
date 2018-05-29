@@ -50,7 +50,7 @@ default:
   activities:
     - name: EcsTaskHelloWorld
 
-  system_bucket: cumulus-test-sandbox-internal
+  system_bucket: '{{buckets.internal.name}}'
 
   buckets:
     internal: 
