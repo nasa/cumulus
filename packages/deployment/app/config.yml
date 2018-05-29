@@ -28,6 +28,8 @@ default:
 
   shared_data_bucket: 'cumulus-data-shared'
 
+  system_bucket: '{{buckets.internal.name}}'
+
   buckets:
     internal: 
       name: change-me
