@@ -156,7 +156,7 @@ default:
       targets:
         - lambda: EmsReport
     dailyEmsDistributionReport:
-      schedule: cron(0 5 * * ? *)
+      schedule: cron(0 8 * * ? *)
       state: ENABLED
       targets:
         - lambda: EmsDistributionReport
