@@ -364,6 +364,7 @@ IngestGranule:
         bucket: '{$.meta.buckets.internal}'
         buckets: '{$.meta.buckets}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        distribution_endpoint: '{$.meta.distribution_endpoint}'
         input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
         cumulus_message:

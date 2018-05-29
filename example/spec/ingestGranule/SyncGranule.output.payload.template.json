@@ -19,6 +19,14 @@
           "fileSize": 44118,
           "path": "cumulus-test-data/pdrs",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"
+        },
+        {
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "bucket": "",
+          "filename": "",
+          "fileSize": 44118,
+          "path": "cumulus-test-data/pdrs",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"
         }
       ]
     }
