@@ -11,9 +11,9 @@ ApiDistribution:
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
   apiGateway:
-    - api: distribution
+    - api: download 
       path: 'redirect'
       method: get
-    - api: distribution
-      path: 'download/{proxy+}'
+    - api: download
+      path: '{proxy+}'
       method: any
