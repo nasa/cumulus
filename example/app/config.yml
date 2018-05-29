@@ -125,6 +125,10 @@ cumulus-from-source:
   prefix: test-src # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
 
+aj:
+  prefix: aj
+  stackNameNoDash: TestSourceIntegration
+
 lf:
   prefix: lf-cumulus
   stackName: lf-cumulus
