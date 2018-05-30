@@ -4,6 +4,7 @@ default:
   stackName: '{{prefix}}-integration'
   # stackNameNoDash: TestCumulusIntegration
   shared_data_bucket: cumulus-data-shared
+  api_distribution_url: https://example.com/
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}'
