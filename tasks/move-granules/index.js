@@ -147,7 +147,7 @@ async function getCmrFiles(input, granuleIdExtraction) {
 * @param {Object} collection - configuration object defining a collection
 * of granules and their files
 * @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
-* @param {Array} buckets - the buckets involved with the files
+* @param {Object} buckets - the buckets involved with the files
 * @returns {Promise} promise resolves when all files have been moved
 **/
 function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
@@ -169,12 +169,11 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
             granule: granulesObject[granuleId],
             cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
           });
-          console.log(JSON.stringify(buckets));
-          console.log(buckets[fileConfig.bucket].name);
 
-          file.bucket = buckets[fileConfig.bucket].name;
+          file.bucket = buckets[fileConfig.bucket];
           file.filepath = path.join(urlPath, file.name);
-          file.filename = `s3://${path.join(file.bucket, file.filepath)}`;
+          file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
+
           allFiles.push(file);
         }
       });
@@ -209,11 +208,11 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
         };
 
         const target = {
-          Bucket: file.bucket,
+          Bucket: file.bucket.name,
           Key: file.filepath
         };
         delete file.fileStagingDir;
-        const options = (file.bucket.match('public')) ? {ACL: 'public-read'} : null;
+        const options = (file.bucket.type.match('public')) ? { ACL: 'public-read' } : null;
         moveFileRequests.push(moveGranuleFile(source, target, options));
       }
     });
@@ -240,14 +239,16 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     // Populates onlineAcessUrls with all public and protected files
     allFiles.forEach((file) => {
         const urlObj = {};
-        if (file.bucket.match('protected')) {
-          const extension = urljoin(file.bucket, file.filepath);
+        if (file.bucket.type.match('protected')) {
+          console.log(`protected file: ${JSON.stringify(file)}`);
+          const extension = urljoin(file.bucket.name, file.filepath);
           urlObj.URL = urljoin(distEndpoint, extension);
           urlObj.URLDescription = 'File to download';
           urls.push(urlObj);
+          console.log(`url: ${JSON.stringify(urlObj)}`);
         }
-        else if (file.bucket.match('public')) {
-          urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+        else if (file.bucket.type.match('public')) {
+          urlObj.URL = `https://${file.bucket.name}.s3.amazonaws.com/${file.filepath}`;
           urlObj.URLDescription = 'File to download';
           urls.push(urlObj);
         }
@@ -267,14 +268,14 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     const xml = builder.buildObject(cmrFile.metadataObject);
     cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
-    if (updatedCmrFile.bucket.match('public')){
+    if (updatedCmrFile.bucket.type.match('public')){
       await promiseS3Upload(
-        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml, ACL: 'public-read' }
+        { Bucket: updatedCmrFile.bucket.name, Key: updatedCmrFile.filepath, Body: xml, ACL: 'public-read' }
       );
     }
     else {
       await promiseS3Upload(
-        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
+        { Bucket: updatedCmrFile.bucket.name, Key: updatedCmrFile.filepath, Body: xml }
       );
     }
   }
@@ -333,7 +334,17 @@ async function moveGranules(event) {
   }
 
   return {
-    granules: Object.keys(allGranules).map((k) => allGranules[k])
+    granules: Object.keys(allGranules).map((k) => {
+      const granule = allGranules[k];
+
+      // Just return the bucket name with the granules
+      granule.files.map((f) => {
+        f.bucket = f.bucket.name;
+        return f;
+      });
+
+      return granule;
+    })
   };
 }
 
