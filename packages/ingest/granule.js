@@ -642,7 +642,7 @@ async function moveGranuleFiles(sourceFiles, destination) {
   const moveFileRequests = sourceFiles.map((file) => {
     const source = {
       Bucket: file.bucket,
-      Key: file.filename
+      Key: file.filepath
     };
 
     const target = {
