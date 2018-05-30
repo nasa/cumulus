@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
 const AWS = require('aws-sdk');
@@ -11,6 +10,28 @@ const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 const pump = require('pump');
+
+/**
+ * Join strings into an S3 key without a leading slash or double slashes
+ *
+ * @param {Array<string>} tokens - the strings to join
+ * @returns {string} the full S3 key
+ */
+function s3Join(tokens) {
+  const removeLeadingSlash = (token) => token.replace(/^\//, '');
+  const removeTrailingSlash = (token) => token.replace(/\/$/, '');
+  const isNotEmptyString = (token) => token.length > 0;
+
+  const key = tokens
+    .map(removeLeadingSlash)
+    .map(removeTrailingSlash)
+    .filter(isNotEmptyString)
+    .join('/');
+
+  if (tokens[tokens.length - 1].endsWith('/')) return `${key}/`;
+  return key;
+}
+exports.s3Join = s3Join;
 
 const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 if (region) {
@@ -353,19 +374,28 @@ exports.listS3Objects = (bucket, prefix = null, skipFolders = true) => {
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
  *
  * @param {Object} params - params for the s3.listObjectsV2 call
- * @returns {Promise.<Array>} - resolves to an array of objects corresponding to
+ * @returns {Promise<Array>} - resolves to an array of objects corresponding to
  *   the Contents property of the listObjectsV2 response
  */
 async function listS3ObjectsV2(params) {
-  const data = await exports.s3().listObjectsV2(params).promise();
+  // Fetch the first list of objects from S3
+  let listObjectsResponse = await exports.s3().listObjectsV2(params).promise();
+  let discoveredObjects = listObjectsResponse.Contents;
 
-  if (data.IsTruncated) {
-    const newParams = Object.assign({}, params);
-    newParams.ContinuationToken = data.NextContinuationToken;
-    return data.Contents.concat(await exports.listS3ObjectsV2(newParams));
+  // Keep listing more objects from S3 until we have all of them
+  while (listObjectsResponse.IsTruncated) {
+    listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, function-paren-newline, max-len
+      // Update the params with a Continuation Token
+      Object.assign(
+        {},
+        params,
+        { ContinuationToken: listObjectsResponse.NextContinuationToken }
+      )
+    ).promise(); //eslint-disable-line function-paren-newline
+    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
   }
 
-  return data.Contents;
+  return discoveredObjects;
 }
 exports.listS3ObjectsV2 = listS3ObjectsV2;
 
