@@ -6,6 +6,11 @@
   "directories": {
     "test": "tests"
   },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/parse-pdr",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
   "publishConfig": {
     "access": "public"
   },
