@@ -66,7 +66,7 @@ default:
     amiid: ami-6944c513
     instanceType: change-me
     volumeSize: 50
-    availabilityZone: 'us-east-1a'
+    availabilityZone: 'us-east-1b'
     maxInstances: 1
     desiredInstances: 0
 
