@@ -27,3 +27,10 @@ cumulus-from-npm:
 
 cumulus-from-source:
   prefix: test-src-integration
+
+mth-cum-test:
+  prefix: mth-cum-test
+  buckets:
+    internal: '{{prefix}}-internal'
+    protected: '{{prefix}}-protected'
+    private: '{{prefix}}-private'

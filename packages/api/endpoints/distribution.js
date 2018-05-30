@@ -58,7 +58,7 @@ function handler(event, context, cb) {
       body: {
         grant_type: 'authorization_code',
         code: query.code,
-        redirect_url: DEPLOYMENT_ENDPOINT
+        redirect_uri: DEPLOYMENT_ENDPOINT
       },
       auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
     }).then((r) => {
@@ -81,7 +81,7 @@ function handler(event, context, cb) {
         Key: granuleKey
       });
 
-      // Add earthdataLoginUsername to signed url
+      // Add x-EarthdataLoginUsername to signed url
       const parsedSignedUrl = new URL(signedUrl);
       const signedUrlParams = parsedSignedUrl.searchParams;
       signedUrlParams.set('x-EarthdataLoginUsername', user);
@@ -104,7 +104,7 @@ function handler(event, context, cb) {
           'Strict-Transport-Security': 'max-age=31536000'
         }
       });
-    }).catch((e) => cb(e));
+    }).catch(cb);
   }
 
   // ending up here means that user was not login
