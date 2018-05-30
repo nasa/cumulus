@@ -29,7 +29,6 @@ test.beforeEach((t) => {
 
 test.afterEach.always(async (t) => {
   deleteBucket('cumulus-public');
-  deleteBucket('cumulus-internal');
   deleteBucket(t.context.stagingBucket);
 });
 
