@@ -4,7 +4,12 @@ const moment = require('moment');
 const { aws } = require('@cumulus/common');
 const { TaskQueue } = require('cwait');
 const { URL } = require('url');
-const { aws: { s3Join } } = require('@cumulus/common');
+const {
+  aws: {
+    s3Join
+  },
+  log
+} = require('@cumulus/common');
 
 /**
  * This class takes an S3 Server Log line and parses it for EMS Distribution Logs
@@ -159,9 +164,13 @@ async function getDistributionEventsFromS3Object(params) {
   const logLines = await aws.s3().getObject({ Bucket, Key }).promise()
     .then((response) => response.Body.toString().split('\n'));
 
-  return logLines
+  const distributionEvents = logLines
     .filter(DistributionEvent.isDistributionEvent)
     .map((logLine) => new DistributionEvent(logLine));
+
+  log.info(`Found ${distributionEvents.length} distribution events in s3://${Bucket}/${Key}`);
+
+  return distributionEvents;
 }
 
 /**
@@ -195,12 +204,19 @@ async function generateDistributionReport(params) {
   const s3Objects = (await aws.listS3ObjectsV2({ Bucket: logsBucket, Prefix: logsPrefix }))
     .map((s3Object) => ({ Bucket: logsBucket, Key: s3Object.Key }));
 
+  log.info(`Found ${s3Objects} log files in S3`);
+
   // Fetch all distribution events from S3
-  return (await Promise.all(s3Objects.map(throttledGetDistributionEventsFromS3Object)))
-    .reduce(flatten, [])
-    .filter(timeFilter)
-    .sort(sortByTime)
-    .join('\n');
+  const allDistributionEvents = (await Promise.all(s3Objects.map(throttledGetDistributionEventsFromS3Object)))
+    .reduce(flatten, []);
+
+  log.info(`Found a total of ${allDistributionEvents.length} distribution events`);
+
+  const distributionEventsInReportPeriod = allDistributionEvents.filter(timeFilter);
+
+  log.info(`Found ${allDistributionEvents.length} distribution events between ${reportStartTime.toString()} and ${reportEndTime.toString()}`);
+
+  return distributionEventsInReportPeriod.sort(sortByTime).join('\n');
 }
 
 /**
@@ -275,6 +291,8 @@ async function generateAndStoreDistributionReport(params) {
     provider,
     stackName
   });
+
+  log.info(`Uploading report to s3://${reportsBucket}/${reportKey}`);
 
   return aws.s3().putObject({
     Bucket: reportsBucket,
