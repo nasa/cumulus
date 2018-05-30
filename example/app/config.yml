@@ -1,6 +1,6 @@
 
 default:
-  prefix: change-me 
+  prefix: change-me
   stackName: '{{prefix}}-integration'
   # stackNameNoDash: TestCumulusIntegration
   shared_data_bucket: cumulus-data-shared
@@ -15,14 +15,14 @@ default:
   apiStage: dev
 
   vpc:
-    vpcId: '{{VPC_ID}}' 
+    vpcId: '{{VPC_ID}}'
     subnets:
       - '{{AWS_SUBNET}}'
 
   ecs:
     instanceType: t2.small
     desiredInstances: 1
-    availabilityZone: us-east-1b
+    availabilityZone: us-east-1a
     amiid: ami-a7a242da
     publicIp: true
     restartTasksOnDeploy: true
@@ -107,3 +107,19 @@ cumulus-from-npm:
 cumulus-from-source:
   prefix: test-src # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
+
+mth-cum-test:
+  prefix: mth-cum-test
+  stackNameNoDash: MthCumTestIntegration
+  buckets:
+    internal: '{{prefix}}-internal'
+    protected: '{{prefix}}-protected'
+    private: '{{prefix}}-private'
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
+  users:
+    - username: '{{EARTHDATA_LOGIN_USERNAME}}'

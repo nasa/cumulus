@@ -8,10 +8,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-530** - PDR tracking through Queue-granules
   - Add optional `pdr` property to the sync-granule task's input config and output payload.
+- **CUMULUS-548** - Create a Lambda task that generates EMS distribution reports
+  - In order to supply EMS Distribution Reports, you must enable S3 Server
+    Access Logging on any S3 buckets used for distribution. See [How Do I Enable Server Access Logging for an S3 Bucket?](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/server-access-logging.html)
+    The "Target bucket" setting should point at the Cumulus internal bucket.
+    The "Target prefix" should be
+    "<STACK_NAME>/ems-distribution/s3-server-access-logs/", where "STACK_NAME"
+    is replaced with the name of your Cumulus stack.
 
 ### Fixed
 - **CUMULUS-546 - Kinesis Consumer should catch and log invalid JSON**
   - Kinesis Consumer lambda catches and logs errors so that consumer doesn't get stuck in a loop re-processing bad json records.
+- EMS report filenames are now based on their start time instead of the time
+  instead of the time that the report was generated
 
 ### Added
 - `@cumulus/deployment`'s default cloudformation template now configures storage for Docker to match the configured ECS Volume. The template defines Docker's devicemapper basesize (`dm.basesize`) using `ecs.volumeSize`. This is addresses ECS default of limiting Docker containers to 10GB of storage ([Read more](https://aws.amazon.com/premiumsupport/knowledge-center/increase-default-ecs-docker-limit/)).
