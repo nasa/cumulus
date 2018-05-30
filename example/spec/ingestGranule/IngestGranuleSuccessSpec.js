@@ -1,4 +1,6 @@
 const fs = require('fs');
+const urljoin = require('url-join');
+const got = require('got');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const { buildAndExecuteWorkflow, LambdaStep, conceptExists, getOnlineResources } =
   require('@cumulus/integration-tests');
@@ -68,12 +70,12 @@ describe('The S3 Ingest Granules workflow', () => {
     afterAll(async () => {
       await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise();
       await s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise();
-      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
+      await s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise();
     });
 
     it('has a payload with updated filename', () => {
       let i;
-      for (i = 0; i < 3; i += 1) {
+      for (i = 0; i < 4; i += 1) {
         expect(files[i].filename).toEqual(expectedPayload.granules[0].files[i].filename);
       }
     });
@@ -95,11 +97,22 @@ describe('The S3 Ingest Granules workflow', () => {
     let lambdaOutput;
     let cmrResource;
     let cmrLink;
+    let response;
+    let files;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      files = lambdaOutput.payload.granules[0].files;
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
+      response = await got(cmrResource[1].href)
+        .then(response => {
+          return response;
+        });
+    });
+
+    afterAll(async () => {
+      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
     });
 
     it('has expected payload', () => {
@@ -119,10 +132,14 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const granule = lambdaOutput.payload.granules[0];
+      const distEndpoint = config.distributionEndpoint;
+      const extension1 = urljoin(files[0].bucket, files[0].filepath);
+      const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
 
-      expect(cmrResource[0].href).toEqual(granule.files[0].filename);
-      expect(cmrResource[1].href).toEqual(granule.files[1].filename);
+      expect(cmrResource[0].href).toEqual(urljoin(distEndpoint, extension1));
+      expect(cmrResource[1].href).toEqual(filename);
+
+      expect(response.statusCode).toEqual(200);
     });
   });
 });
