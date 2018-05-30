@@ -25,6 +25,15 @@
           "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
         },
         {
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "bucket": "cumulus-test-sandbox-public",
+          "filename": "s3://cumulus-test-sandbox-public/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "fileSize": 44118,
+          "path": "cumulus-test-data/pdrs",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
+          "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
+        },
+        {
           "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
           "bucket": "cumulus-test-sandbox-protected-2",
