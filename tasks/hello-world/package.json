@@ -6,6 +6,11 @@
   "directories": {
     "test": "tests"
   },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/hello-world",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
+  },
   "engine": {
     "node": ">=8.10.0"
   },
