@@ -383,6 +383,43 @@ test.serial('indexing a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
+test.serial('indexing collection records with different versions', async (t) => {
+  const name = randomString();
+  for (let i = 1; i < 11; i += 1) {
+    const version = `00${i}`;
+    const key = `key${i}`;
+    const value = `value${i}`;
+    const collection = {
+      name: name,
+      version: version,
+      [`${key}`]: value
+    };
+
+    const r = await indexer.indexCollection(esClient, collection, esIndex); // eslint-disable-line no-await-in-loop
+    // make sure record is created
+    t.is(r.result, 'created');
+  }
+
+  // check each record exists and is not affected by other collections
+  for (let i = 1; i < 11; i += 1) {
+    const version = `00${i}`;
+    const key = `key${i}`;
+    const value = `value${i}`;
+    const collectionId = indexer.constructCollectionId(name, version);
+    const record = await esClient.get({ // eslint-disable-line no-await-in-loop
+      index: esIndex,
+      type: 'collection',
+      id: collectionId
+    });
+
+    t.is(record._id, collectionId);
+    t.is(record._source.name, name);
+    t.is(record._source.version, version);
+    t.is(record._source[key], value);
+    t.is(typeof record._source.timestamp, 'number');
+  }
+});
+
 test.serial('updating a collection record', async (t) => {
   const collection = {
     name: randomString(),
