@@ -400,6 +400,7 @@ test.serial('indexing collection records with different versions', async (t) => 
     t.is(r.result, 'created');
   }
 
+  await esClient.indices.refresh();
   // check each record exists and is not affected by other collections
   for (let i = 1; i < 11; i += 1) {
     const version = `00${i}`;
