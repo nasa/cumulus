@@ -383,6 +383,52 @@ test.serial('indexing a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
+test.serial('updating a collection record', async (t) => {
+  const collection = {
+    name: randomString(),
+    version: '001',
+    anyObject: {
+      key: 'value',
+      key1: 'value1',
+      key2: 'value2'
+    },
+    anyKey: 'anyValue'
+  };
+
+  // updatedCollection has some parameters removed
+  const updatedCollection = {
+    name: collection.name,
+    version: '001',
+    anyparams: {
+      key1: 'value1'
+    }
+  };
+
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  let r = await indexer.indexCollection(esClient, collection, esIndex);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  // update the collection record
+  r = await indexer.indexCollection(esClient, updatedCollection, esIndex);
+  t.is(r.result, 'updated');
+
+  // check the record exists
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'collection',
+    id: collectionId
+  });
+
+  t.is(record._id, collectionId);
+  t.is(record._source.name, updatedCollection.name);
+  t.is(record._source.version, updatedCollection.version);
+  t.deepEqual(record._source.anyparams, updatedCollection.anyparams);
+  t.is(record._source.anyKey, undefined);
+  t.is(typeof record._source.timestamp, 'number');
+});
+
 test.serial('indexing a failed pdr record', async (t) => {
   const type = 'pdr';
   const payload = pdrFailure.payload;
