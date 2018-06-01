@@ -6,7 +6,43 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.5.5] - 2018-05-30
+
+### Added
+- **CUMULUS-530** - PDR tracking through Queue-granules
+  - Add optional `pdr` property to the sync-granule task's input config and output payload.
+- **CUMULUS-548** - Create a Lambda task that generates EMS distribution reports
+  - In order to supply EMS Distribution Reports, you must enable S3 Server
+    Access Logging on any S3 buckets used for distribution. See [How Do I Enable Server Access Logging for an S3 Bucket?](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/server-access-logging.html)
+    The "Target bucket" setting should point at the Cumulus internal bucket.
+    The "Target prefix" should be
+    "<STACK_NAME>/ems-distribution/s3-server-access-logs/", where "STACK_NAME"
+    is replaced with the name of your Cumulus stack.
+
 ### Fixed
+- **CUMULUS-546 - Kinesis Consumer should catch and log invalid JSON**
+  - Kinesis Consumer lambda catches and logs errors so that consumer doesn't get stuck in a loop re-processing bad json records.
+- EMS report filenames are now based on their start time instead of the time
+  instead of the time that the report was generated
+
+### Added
+- `@cumulus/deployment`'s default cloudformation template now configures storage for Docker to match the configured ECS Volume. The template defines Docker's devicemapper basesize (`dm.basesize`) using `ecs.volumeSize`. This is addresses ECS default of limiting Docker containers to 10GB of storage ([Read more](https://aws.amazon.com/premiumsupport/knowledge-center/increase-default-ecs-docker-limit/)).
+
+## [v1.5.4] - 2018-05-21
+
+### Added
+- **CUMULUS-535** - EMS Ingest, Archive, Archive Delete reports
+  - Add lambda EmsReport to create daily EMS Ingest, Archive, Archive Delete reports
+  - ems.provider property added to `@cumulus/deployment/app/config.yml`.
+    To change the provider name, please add `ems: provider` property to `app/config.yml`.
+
+## [v1.5.3] - 2018-05-18
+
+### Fixed
+- **CUMULUS-557 - "Add dataType to DiscoverGranules output"**
+  - Granules discovered by the DiscoverGranules task now include dataType
+  - dataType is now a required property for granules used as input to the
+    QueueGranules task
 - **CUMULUS-550** Update deployment app/config.yml to force elasticsearch updates for deleted granules
 
 ### Added
@@ -43,10 +79,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     app/config.yml `es: elasticSearchMapping: 7`
 - You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
 - `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
-- Added capability to support EFS in cloud formation template. Also added optional capability to ssh to your instance and privileged lambda functions.
-- Added support to force discovery of PDRs that have already been processed and filtering of selected data types
-- `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback IP address of `10.0.0.0` when a public IP address is not available. This supports lambda functions deployed into a VPC's private subnet, where no public IP address is available.
-
+- Added capability to support EFS in cloud formation template. Also added
+  optional capability to ssh to your instance and privileged lambda functions.
+- Added support to force discovery of PDRs that have already been processed
+  and filtering of selected data types
+- `@cumulus/cmrjs` uses an environment variable `USER_IP_ADDRESS` or fallback
+  IP address of `10.0.0.0` when a public IP address is not available. This
+  supports lambda functions deployed into a VPC's private subnet, where no
+  public IP address is available.
 
 ### Changed
 - **CUMULUS-550** Custom bootstrap automatically adds new types to index on
@@ -250,7 +290,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.5...HEAD
+[v1.5.5]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.4...v1.5.5
+[v1.5.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.3...v1.5.4
+[v1.5.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...v1.5.3
 [v1.5.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...v1.5.2
 [v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0

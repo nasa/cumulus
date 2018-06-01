@@ -1,10 +1,15 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.5.1",
+  "version": "1.5.3",
   "description": "Example task",
   "main": "index.js",
   "directories": {
     "test": "tests"
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/hello-world",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "engine": {
     "node": ">=8.10.0"
