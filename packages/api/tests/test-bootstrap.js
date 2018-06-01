@@ -10,6 +10,7 @@ const mappingsSubset = require('./data/testEsMappingsSubset.json');
 const { s3 } = require('@cumulus/common/aws');
 
 let esClient;
+let scriptValue = '';
 
 test.serial('bootstrap creates index with alias', async (t) => {
   const indexName = randomString();
@@ -75,8 +76,8 @@ test.serial('Missing types added to index', async (t) => {
   await esClient.indices.delete({ index: indexName });
 });
 
-async function migrationScript(x) {
-  console.log('params: ' + x);
+async function migrationScript(params) {
+  scriptValue = params.value;
 }
 
 test.serial('Migration scripts run - history file does not exist', async (t) => {
@@ -86,13 +87,14 @@ test.serial('Migration scripts run - history file does not exist', async (t) => 
 
   await s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  await bootstrap.runMigrations({ testMigration: { script: migrationScript, params: 'script' } });
+  await bootstrap.runMigrations({ testMigration: { script: migrationScript, params: { value: 'complete' } } });
 
   const historyFile = await s3().getObject({ Bucket: process.env.internal, Key }).promise();
 
   const scriptsRun = JSON.parse(historyFile.Body).map((s) => s.script);
 
   t.deepEqual(scriptsRun, ['testMigration']);
+  t.is(scriptValue, 'complete');
 
   await s3().deleteObject({ Bucket: process.env.internal, Key }).promise();
   await s3().deleteBucket({ Bucket: process.env.internal }).promise();
@@ -116,13 +118,14 @@ test.serial('Migration scripts run - history file exists', async (t) => {
     Body: JSON.stringify(scripts)
   }).promise();
 
-  await bootstrap.runMigrations({ testMigration: { script: migrationScript, params: 'script' } });
+  await bootstrap.runMigrations({ testMigration: { script: migrationScript, params: { value: 'finished' } } });
 
   const historyFile = await s3().getObject({ Bucket: process.env.internal, Key }).promise();
 
   const scriptsRun = JSON.parse(historyFile.Body).map((s) => s.script);
 
   t.deepEqual(scriptsRun, ['script1', 'script2', 'testMigration']);
+  t.is(scriptValue, 'finished');
 
   await s3().deleteObject({ Bucket: process.env.internal, Key }).promise();
   await s3().deleteBucket({ Bucket: process.env.internal }).promise();
