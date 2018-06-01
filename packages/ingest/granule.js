@@ -598,16 +598,7 @@ async function copyGranuleFile(source, target, options) {
     Key: target.Key
   }, (options || {}));
 
-  let result;
-  console.log(params)
-  try {
-    result = await s3.copyObject(params).promise();
-  }
-  catch (e) {
-    console.log('n\n\n\n\n\n\n\n\n\n\n\n', e, '\n\n\n\n\n\n\n\n');
-    throw e;
-  }
-  return result;
+  return s3.copyObject(params).promise();
 }
 
 /**
