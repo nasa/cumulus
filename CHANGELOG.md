@@ -60,12 +60,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     QueueGranules task
 - **CUMULUS-550** Update deployment app/config.yml to force elasticsearch updates for deleted granules
 
-<<<<<<< HEAD
-### Added
-- **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
-
-=======
->>>>>>> granule-storage
 ## [v1.5.2] - 2018-05-15
 
 ### Fixed
