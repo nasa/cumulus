@@ -149,7 +149,7 @@ jobs:
             COVERALLS_SERVICE_NAME: circleci
           command: |
             export COVERALLS_SERVICE_JOB_ID=$CIRCLE_BUILD_NUM
-            yarn coveralls
+            yarn coveralls || true
 
       - store_artifacts:
           path: ~/project/coverage
