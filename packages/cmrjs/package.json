@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmrjs",
-  "version": "1.5.2",
+  "version": "1.5.5",
   "description": "A node SDK for CMR",
   "engine": {
     "node": ">=8.10.0"
@@ -31,7 +31,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.5.2",
+    "@cumulus/common": "^1.5.5",
     "got": "^7.1.0",
     "lodash.property": "^4.4.2",
     "public-ip": "^2.3.5",
