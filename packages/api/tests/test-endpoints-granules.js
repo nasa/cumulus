@@ -249,7 +249,7 @@ test('move a granule', async (t) => {
   const file = {
     bucket,
     name: `${newGranule.granuleId}.txt`,
-    filename: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
+    filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
   };
   newGranule.files = [file];
   await g.create(newGranule);

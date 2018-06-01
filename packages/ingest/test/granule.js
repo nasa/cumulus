@@ -1,9 +1,10 @@
 const path = require('path');
 
 const test = require('ava');
-const sinon = require('sinon');
 const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
+const { randomString } = require('@cumulus/common/test-utils');
+const { s3 } = require('@cumulus/common/aws');
 
 const {
   selector,
@@ -15,7 +16,8 @@ const {
   FtpDiscoverGranules,
   HttpDiscoverGranules,
   SftpDiscoverGranules,
-  S3DiscoverGranules
+  S3DiscoverGranules,
+  moveGranuleFiles
 } = require('../granule');
 
 /**
@@ -219,4 +221,36 @@ test('getBucket adds the correct url_path and bucket to the file', (t) => {
 
   t.is(updatedFile.bucket, 'right-bucket');
   t.is(updatedFile.url_path, '');
+});
+
+test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
+  const bucket = randomString();
+  await s3().createBucket({ Bucket: bucket }).promise();
+
+  const filenames = [
+    'test-one',
+    'test-two',
+    'test-three'
+  ];
+
+  const sourceFilePromises = filenames.map(async (name) => {
+    const params = { Bucket: bucket, Key: `origin/${name}`, Body: name };
+    await s3().putObject(params).promise();
+    return { name, bucket, filepath: `origin/${name}` };
+  });
+
+  const destination = {
+    bucket,
+    filepath: 'destination'
+  };
+
+  const sourceFiles = await Promise.all(sourceFilePromises);
+  await moveGranuleFiles(sourceFiles, destination);
+  return s3().listObjects({ Bucket: bucket }).promise().then((list) => {
+    t.is(list.Contents.length, 3);
+
+    list.Contents.forEach((item) => {
+      t.is(item.Key.indexOf(destination.filepath), 0);
+    });
+  });
 });
