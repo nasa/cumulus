@@ -15,3 +15,9 @@ default:
     - name: InternalBucketName
       value: '{{buckets.internal}}'
 
+mth-cum-test:
+  prefix: mth-cum-test
+  stackName: '{{prefix}}-deployer'
+  stackNameNoDash: mthCumTestDeployer
+  buckets:
+    internal: '{{prefix}}-internal'
