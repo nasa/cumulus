@@ -26,7 +26,15 @@ const { s3 } = require('@cumulus/common/aws');
 
 const MIGRATION_FILE = 'migrations.txt';
 
-
+/**
+ * Run one-time migration scripts for the stack that have not already been run.
+ * Log the script history to an S3 file
+ *
+ * @param {List<Object>} migrations - migrations to run in the form:
+ * { script: <function to run>
+ *   params: <function params> }
+ * @returns {undefined} none
+ */
 async function runMigrations(migrations) {
   let migrationHistory;
 
@@ -64,7 +72,11 @@ async function runMigrations(migrations) {
     log.info('No migration scripts to be run');
   }
 
-  console.log(migrationHistory);
+  await s3().putObject({
+    Bucket: process.env.internal,
+    Key: s3Key,
+    Body: JSON.stringify(migrationHistory)
+  }).promise();
 }
 
 /**
