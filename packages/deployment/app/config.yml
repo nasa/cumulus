@@ -39,7 +39,7 @@ default:
     provider: CUMULUS
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
-  
+
   ems:
     provider: CUMULUS
 
@@ -64,9 +64,9 @@ default:
   ecs:
     restartTasksOnDeploy: false
     amiid: ami-6944c513
-    instanceType: change-me 
+    instanceType: change-me
     volumeSize: 50
-    availabilityZone: 'us-east-1a'
+    availabilityZone: 'us-east-1b'
     maxInstances: 1
     desiredInstances: 0
 
@@ -149,12 +149,17 @@ default:
       state: ENABLED
       targets:
         - lambda: jobs
-    cronJobs:
+    dailyEmsIngestReport:
       # run at 5:00am GMT daily
       schedule: cron(0 5 * * ? *)
       state: ENABLED
       targets:
         - lambda: EmsReport
+    dailyEmsDistributionReport:
+      schedule: cron(0 8 * * ? *)
+      state: ENABLED
+      targets:
+        - lambda: EmsDistributionReport
 
   stepFunctions: !!files ['workflows.yml']
 

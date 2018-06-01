@@ -208,14 +208,16 @@ async function uploadReportToS3(filename) {
  * <YYYYMMDD> _<Provider>_<FileType>_<DataSource>.flt.rev<1-n>
  *
  * @param {string} reportType - report type (ingest, archive, delete)
+ * @param {string} startTime - start time of the report in a format that moment
+ *   can parse
  * @returns {string} - report file name
  */
-function buildReportFileName(reportType) {
+function buildReportFileName(reportType, startTime) {
   // DataSource: designates the database table name or data source file/table name
   // use stackname as DataSource for now
   const provider = process.env.ems_provider || 'cumulus';
   const dataSource = process.env.stackName;
-  const datestring = moment.utc().format('YYYYMMDD');
+  const datestring = moment.utc(startTime).format('YYYYMMDD');
   let fileType = 'Ing';
   if (reportType === 'archive') fileType = 'Arch';
   else if (reportType === 'delete') fileType = 'ArchDel';
@@ -238,7 +240,7 @@ async function generateReport(reportType, startTime, endTime) {
   }
 
   // create a temporary file for the report
-  const name = buildReportFileName(reportType);
+  const name = buildReportFileName(reportType, startTime);
   const filename = path.join(os.tmpdir(), name);
   const stream = fs.createWriteStream(filename);
 
