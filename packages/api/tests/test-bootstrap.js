@@ -79,8 +79,26 @@ async function migrationScript(x) {
   console.log('params: ' + x);
 }
 
+test.serial('Migration scripts run - history file does not exist', async (t) => {
+  process.env.internal = randomString();
+  process.env.stackName = 'test-stack';
+  const Key = `${process.env.stackName}/migrations.txt`;
 
-test.serial('', async (t) => {
+  await s3().createBucket({ Bucket: process.env.internal }).promise();
+
+  await bootstrap.runMigrations({ testMigration: { script: migrationScript, params: 'script' } });
+
+  const historyFile = await s3().getObject({ Bucket: process.env.internal, Key }).promise();
+
+  const scriptsRun = JSON.parse(historyFile.Body).map((s) => s.script);
+
+  t.deepEqual(scriptsRun, ['testMigration']);
+
+  await s3().deleteObject({ Bucket: process.env.internal, Key }).promise();
+  await s3().deleteBucket({ Bucket: process.env.internal }).promise();
+});
+
+test.serial('Migration scripts run - history file exists', async (t) => {
   process.env.internal = randomString();
   process.env.stackName = 'test-stack';
   const Key = `${process.env.stackName}/migrations.txt`;
@@ -99,6 +117,12 @@ test.serial('', async (t) => {
   }).promise();
 
   await bootstrap.runMigrations({ testMigration: { script: migrationScript, params: 'script' } });
+
+  const historyFile = await s3().getObject({ Bucket: process.env.internal, Key }).promise();
+
+  const scriptsRun = JSON.parse(historyFile.Body).map((s) => s.script);
+
+  t.deepEqual(scriptsRun, ['script1', 'script2', 'testMigration']);
 
   await s3().deleteObject({ Bucket: process.env.internal, Key }).promise();
   await s3().deleteBucket({ Bucket: process.env.internal }).promise();
