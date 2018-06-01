@@ -1,10 +1,16 @@
 {
   "name": "@cumulus/parse-pdr",
-  "version": "1.5.2",
+  "version": "1.5.5",
   "description": "Download and Parse a given PDR",
+  "license": "Apache-2.0",
   "main": "index.js",
   "directories": {
     "test": "tests"
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/parse-pdr",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "publishConfig": {
     "access": "public"
@@ -29,17 +35,16 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.5.2",
+    "@cumulus/common": "^1.5.5",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.5.2",
+    "@cumulus/ingest": "^1.5.5",
     "@cumulus/test-data": "^1.5.2",
-    "lodash.clonedeep": "^4.4.2",
+    "lodash.clonedeep": "^4.5.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
     "ava": "^0.25.0",
     "fs-extra": "^5.0.0",
-    "lodash.clonedeep": "^4.5.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",
     "webpack": "~4.5.0",
