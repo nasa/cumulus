@@ -765,7 +765,7 @@ Resources:
       InstanceType: {{ecs.instanceType}}
       IamInstanceProfile: {{iams.instanceProfile}}
       BlockDeviceMappings:
-      - DeviceName: "/dev/xvda"
+      - DeviceName: "/dev/xvdcz"
         Ebs:
           DeleteOnTermination: true
           VolumeSize: {{ecs.volumeSize}}
@@ -776,11 +776,12 @@ Resources:
         "Fn::Base64":
           Fn::Join:
             - ""
-            - - "#cloud-config\n"
-              - "\nruncmd:\n"
-              - " - yum install -y aws-cfn-bootstrap\n"
-              - Fn::Sub: " - /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
-              - Fn::Sub: " - /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
+            - - "#cloud-boothook\n"
+              - "cloud-init-per once docker_options echo 'OPTIONS=\"${OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G\"' >> /etc/sysconfig/docker\n"
+              - "\n"
+              - "yum install -y aws-cfn-bootstrap\n"
+              - Fn::Sub: "/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
+              - Fn::Sub: "/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -991,7 +992,9 @@ Outputs:
 {{#if vpc}}
   EcsSecurityGroup:
     Description: ECS security group
-    Value: !Ref SecurityGroup
+    Value:
+      Ref: SecurityGroup
     Export:
-      Name: !Sub "{{stackName}}-EcsSecurityGroup"
+      Name:
+        Fn::Sub: "{{stackName}}-EcsSecurityGroup"
 {{/if}}
