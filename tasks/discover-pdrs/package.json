@@ -1,10 +1,15 @@
 {
   "name": "@cumulus/discover-pdrs",
-  "version": "1.5.2",
+  "version": "1.5.5",
   "description": "Discover PDRs in FTP and HTTP endpoints",
   "main": "index.js",
   "directories": {
     "test": "tests"
+  },
+  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/discover-pdrs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "engine": {
     "node": ">=8.10.0"
@@ -31,9 +36,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.5.2",
+    "@cumulus/common": "^1.5.5",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.5.2",
+    "@cumulus/ingest": "^1.5.5",
     "@cumulus/test-data": "^1.5.2",
     "lodash.get": "^4.4.2"
   },
