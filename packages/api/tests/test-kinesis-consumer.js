@@ -188,6 +188,15 @@ test('it should throw an error if message collection has wrong data type', async
   t.is(errors[0].errors[0].message, 'should be string');
 });
 
+test('it should throw an error if message is invalid json', async(t) => {
+  const invalidMessage = '{';
+  const kinesisEvent = {
+    Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
+  };
+  const errors = await handler(kinesisEvent, {}, testCallback);
+  t.is(errors[0].message, 'Unexpected end of JSON input');
+});
+
 test('it should not throw if message is valid', (t) => {
   const validMessage = JSON.stringify({ collection: 'confection-collection' });
   const kinesisEvent = {
