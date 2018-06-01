@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
+
+### Changed
+- **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
+  - Change IAM deployment configuration
+  - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
+
 ## [v1.5.5] - 2018-05-30
 
 ### Added
@@ -44,14 +52,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - dataType is now a required property for granules used as input to the
     QueueGranules task
 - **CUMULUS-550** Update deployment app/config.yml to force elasticsearch updates for deleted granules
-
-### Added
-- **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
-
-### Changed
-- **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
-  - Change IAM deployment configuration
-  - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
 
 ## [v1.5.2] - 2018-05-15
 
