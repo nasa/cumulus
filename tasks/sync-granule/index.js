@@ -22,8 +22,8 @@ async function download(ingest, bucket, provider, granules) {
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
-    const errMessage = 'Download lock remained in place after multiple tries';
-    const err = new errors.ResourcesLockedError(errMessage);
+    const err =
+      new errors.ResourcesLockedError('Download lock remained in place after multiple tries');
     log.error(err);
     throw err;
   }
@@ -88,6 +88,7 @@ exports.syncGranule = function syncGranule(event) {
 
       const output = { granules };
       if (collection.process) output.process = collection.process;
+      if (config.pdr) output.pdr = config.pdr;
 
       return output;
     }).catch((e) => {
