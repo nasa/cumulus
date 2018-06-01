@@ -366,8 +366,6 @@ IngestGranule:
         distribution_endpoint: '{$.meta.distribution_endpoint}'
         input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
-        cumulus_message:
-          input: '[$.payload.granules[*].files[*].filename]'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:
