@@ -246,7 +246,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
 test('move a granule', async (t) => {
   const bucket = process.env.internal;
   const secondBucket = randomString();
-  await s3().createBucket({ Bucket: secondBucket }).promise();
+  await aws.s3().createBucket({ Bucket: secondBucket }).promise();
   const newGranule = fakeGranuleFactory();
 
   newGranule.files = [
@@ -270,8 +270,7 @@ test('move a granule', async (t) => {
   await g.create(newGranule);
 
   await Promise.all(newGranule.files.map(async (file) => {
-    const key = `${process.env.stackName}/granules_ingested/${file.name}`;
-    return aws.s3().putObject({ Bucket: bucket, Key: key, Body: 'test data' }).promise();
+    aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise();
   }));
 
   const destinationFilepath = `${process.env.stackName}/granules_moved`;
@@ -309,7 +308,7 @@ test('move a granule', async (t) => {
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'move');
 
-    await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
+    await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
       t.is(list.Contents.length, 2);
 
       list.Contents.forEach((item) => {
@@ -317,7 +316,7 @@ test('move a granule', async (t) => {
       });
     });
 
-    return s3().listObjects({ Bucket: secondBucket }).promise().then((list) => {
+    return aws.s3().listObjects({ Bucket: secondBucket, Prefix: destinationFilepath }).promise().then((list) => {
       t.is(list.Contents.length, 1);
 
       list.Contents.forEach((item) => {
