@@ -17,7 +17,8 @@ const {
   HttpDiscoverGranules,
   SftpDiscoverGranules,
   S3DiscoverGranules,
-  moveGranuleFiles
+  moveGranuleFiles,
+  moveGranuleFile
 } = require('../granule');
 
 /**
@@ -221,6 +222,27 @@ test('getBucket adds the correct url_path and bucket to the file', (t) => {
 
   t.is(updatedFile.bucket, 'right-bucket');
   t.is(updatedFile.url_path, '');
+});
+
+test('moveGranuleFile moves a single file between s3 locations', async (t) => {
+  const Bucket = randomString();
+  await s3().createBucket({ Bucket }).promise();
+
+  const name = 'test.txt';
+  const Key = `origin/${name}`;
+  const params = { Bucket, Key, Body: 'test' };
+  await s3().putObject(params).promise();
+
+  const source = { Bucket, Key };
+  const target = { Bucket, Key: `moved/${name}` };
+
+  await moveGranuleFile(source, target);
+  return s3().listObjects({ Bucket }).promise().then((list) => {
+    t.is(list.Contents.length, 1);
+
+    const item = list.Contents[0];
+    t.is(item.Key, `moved/${name}`);
+  });
 });
 
 test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
