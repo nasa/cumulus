@@ -1,4 +1,3 @@
-
 ---
 Parameters:
   CreateDeploymentRole:
@@ -48,10 +47,10 @@ Resources:
                   - lambda:GetFunction
                   - lambda:invokeFunction
                   - lambda:CreateEventSourceMapping
-                  - lambda:UpdateEventSourceMapping 
-                  - lambda:DeleteEventSourceMapping 
-                  - lambda:GetEventSourceMapping 
-                  - lambda:ListEventSourceMappings 
+                  - lambda:UpdateEventSourceMapping
+                  - lambda:DeleteEventSourceMapping
+                  - lambda:GetEventSourceMapping
+                  - lambda:ListEventSourceMappings
                 Resource: "*"
 
               - Effect: Allow
@@ -166,7 +165,7 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
 
-              # Allow access to kinesis 
+              # Allow access to kinesis
               - Effect: Allow
                 Action:
                   - kinesis:GetRecords
@@ -214,7 +213,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:PutBucketPolicy
-                Resource: 
+                Resource:
                   - !Sub "arn:aws:s3:::{{prefix}}-*"
 
               # Allow access to dynamoDB
@@ -237,12 +236,12 @@ Resources:
                   - dynamodb:DescribeStream
                   - dynamodb:ListStreams
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*/stream/*"
-              
+
               - Effect: Allow
                 Action:
                   - dynamodb:ListTables
                 Resource: '*'
-                 
+
               # Allow access to SQS
               - Effect: Allow
                 Action:
