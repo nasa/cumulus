@@ -127,3 +127,17 @@ lf:
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
+
+kk-uat-deployment:
+  stackName: kk-test-uat
+  stackNameNoDash: KkTestUat
+
+  iams:
+    ecsRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-steprole'
+    instanceProfile: 'arn:aws:iam::000000000000:instance-profile/kk-test-uat-ecs'
+
+  es:
+    elasticSearchMapping: 7
