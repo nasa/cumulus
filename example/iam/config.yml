@@ -43,3 +43,7 @@ aj:
 lf: 
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
+
+kk-deploy-uat:
+  prefix: kk-test-uat
+  stackName: kk-test-uat-iam
