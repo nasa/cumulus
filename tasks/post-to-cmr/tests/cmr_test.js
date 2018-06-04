@@ -23,7 +23,7 @@ async function deleteBucket(bucket) {
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = 'cumulus-public'; // eslint-disable-line no-param-reassign
+  t.context.bucket = 'cumulus-post-public'; // eslint-disable-line no-param-reassign
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
@@ -42,17 +42,15 @@ test.serial('should succeed if cmr correctly identifies the xml as invalid', (t)
     Bucket: t.context.bucket,
     Key: key,
     Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
-  }).then(() => {
-    return postToCMR(newPayload)
-      .then(() => {
-        cmrjs.CMR.prototype.getToken.restore();
-        t.fail();
-      })
-      .catch((e) => {
-        cmrjs.CMR.prototype.getToken.restore();
-        t.true(e instanceof cmrjs.ValidationError);
-      });
-  });
+  }).then(() => postToCMR(newPayload)
+    .then(() => {
+      cmrjs.CMR.prototype.getToken.restore();
+      t.fail();
+    })
+    .catch((e) => {
+      cmrjs.CMR.prototype.getToken.restore();
+      t.true(e instanceof cmrjs.ValidationError);
+    }));
 });
 
 test.serial('should succeed with correct payload', (t) => {
