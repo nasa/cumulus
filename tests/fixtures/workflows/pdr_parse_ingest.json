@@ -14,7 +14,7 @@
           "queueUrl": "{{$.meta.queues.startSF}}",
           "stack": "{{$.meta.stack}}",
           "provider": "{{$.meta.provider}}",
-          "bucket": "{{$.meta.buckets.internal}}",
+          "bucket": "{{$.meta.buckets.internal.name}}",
           "collection": "{{$.meta.collection}}"
         }
       },
@@ -43,7 +43,7 @@
         "cumulusConfig": {
           "provider": "{{$.meta.provider}}",
           "collection": "{{$.meta.collection}}",
-          "bucket": "{{$.meta.buckets.internal}}",
+          "bucket": "{{$.meta.buckets.internal.name}}",
           "stack": "{{$.meta.stack}}",
           "templateUri": "{{$.meta.templates.IngestGranule}}",
           "queueUrl": "{{$.meta.queues.startSF}}"
