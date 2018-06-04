@@ -15,10 +15,22 @@
     "message_adapter_filename": "cumulus-message-adapter.zip",
     "shared_data_bucket": "cumulus-data-shared",
     "buckets": {
-        "internal": "cumulus-devseed-internal",
-        "private": "cumulus-devseed-private",
-        "protected": "cumulus-devseed-protected",
-        "public": "cumulus-devseed-public"
+        "internal": {
+            "name": "cumulus-test-sandbox-internal",
+            "type": "internal"
+        },
+        "private": {
+            "name": "cumulus-test-sandbox-private",
+            "type": "private"
+        },
+        "protected": {
+            "name": "cumulus-test-sandbox-protected",
+            "type": "protected"
+        },
+        "public": {
+            "name": "cumulus-test-sandbox-public",
+            "type": "public"
+        }
     },
     "system_bucket": "cumulus-devseed-internal",
     "cmr": {

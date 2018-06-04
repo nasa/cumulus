@@ -31,9 +31,18 @@ test.beforeEach(async (t) => {
   t.context.event = cloneDeep(payload);
 
   t.context.event.config.downloadBucket = t.context.internalBucketName;
-  t.context.event.config.buckets.internal = t.context.internalBucketName;
-  t.context.event.config.buckets.private = t.context.privateBucketName;
-  t.context.event.config.buckets.protected = t.context.protectedBucketName;
+  t.context.event.config.buckets.internal = {
+    name: t.context.internalBucketName,
+    type: 'internal'
+  };
+  t.context.event.config.buckets.private = {
+    name: t.context.privateBucketName,
+    type: 'private'
+  };
+  t.context.event.config.buckets.protected = {
+    name: t.context.protectedBucketName,
+    type: 'protected'
+  };
 });
 
 // Clean up
@@ -215,9 +224,18 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
   const event = cloneDeep(payloadChecksumFile);
 
   event.config.downloadBucket = t.context.internalBucketName;
-  event.config.buckets.internal = t.context.internalBucketName;
-  event.config.buckets.private = t.context.privateBucketName;
-  event.config.buckets.protected = t.context.protectedBucketName;
+  event.config.buckets.internal = {
+    name: t.context.internalBucketName,
+    type: 'internal'
+  };
+  event.config.buckets.private = {
+    name: t.context.privateBucketName,
+    type: 'private'
+  };
+  event.config.buckets.protected = {
+    name: t.context.protectedBucketName,
+    type: 'protected'
+  };
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',

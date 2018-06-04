@@ -51,13 +51,27 @@ default:
   activities:
     - name: EcsTaskHelloWorld
 
-  system_bucket: cumulus-test-sandbox-internal
+  system_bucket: '{{buckets.internal.name}}'
 
   buckets:
-    internal: cumulus-test-sandbox-internal
-    private: cumulus-test-sandbox-private
-    protected: cumulus-test-sandbox-protected
-    public: cumulus-test-sandbox-public
+    internal: 
+      name: cumulus-test-sandbox-internal
+      type: internal
+    private:
+      name: cumulus-test-sandbox-private
+      type: private
+    protected:
+      name: cumulus-test-sandbox-protected
+      type: protected
+    public:
+      name: cumulus-test-sandbox-public
+      type: public
+    protected-2:
+      name: cumulus-test-sandbox-protected-2
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
 
   cmr:
     username: '{{CMR_USERNAME}}'
@@ -71,6 +85,7 @@ default:
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
 
   sns:
     inregions3:
@@ -111,12 +126,17 @@ cumulus-from-source:
   prefix: test-src # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
 
+aj:
+  prefix: aj
+  stackNameNoDash: TestSourceIntegration
+
 lf:
+  prefix: lf-cumulus
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
   es: 
-    elasticSearchMapping: 7
+    elasticSearchMapping: 6
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-ecs'
@@ -124,6 +144,7 @@ lf:
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-distribution-api-lambda'
     
 mth-cum-test:
   prefix: mth-cum-test

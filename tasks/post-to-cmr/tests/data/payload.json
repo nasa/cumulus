@@ -50,9 +50,9 @@
           },
           {
             "checksumType": "CKSUM",
-            "bucket": "cumulus-public",
+            "bucket": "cumulus-post-public",
             "checksumValue": 4026661056,
-            "filename": "s3://cumulus-public/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "filename": "s3://cumulus-post-public/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
             "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }
         ]
