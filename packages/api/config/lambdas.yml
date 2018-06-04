@@ -106,6 +106,6 @@ EmsDistributionReport:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
-    LOGS_BUCKET: '{{buckets.internal}}'
-    REPORTS_BUCKET: '{{buckets.internal}}'
+    LOGS_BUCKET: '{{system_bucket}}'
+    REPORTS_BUCKET: '{{system_bucket}}'
     STACK_NAME: '{{stackName}}'
