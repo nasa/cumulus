@@ -408,6 +408,75 @@ Resources:
                   - s3:ListAllMyBuckets
                 Resource: '*'
 
+  DistributionApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ResourcePrefix}-distribution-api-lambda"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: DistributionApiGateway
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:DescribeLogStreams
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - lambda:GetFunction
+                  - lambda:invokeFunction
+                  - lambda:CreateEventSourceMapping
+                  - lambda:UpdateEventSourceMapping 
+                  - lambda:DeleteEventSourceMapping 
+                  - lambda:GetEventSourceMapping 
+                  - lambda:ListEventSourceMappings 
+                Resource: "*"
+
+              - Effect: Allow
+                Action:
+                  - s3:GetAccelerateConfiguration
+                  - s3:GetLifecycleConfiguration
+                  - s3:GetReplicationConfiguration
+                  - s3:GetBucket*
+                  - s3:PutAccelerateConfiguration
+                  - s3:PutLifecycleConfiguration
+                  - s3:PutReplicationConfiguration
+                  - s3:PutBucket*
+                  - s3:ListBucket*
+                Resource:
+                {{#each buckets}}
+                {{#BucketIsType this "protected"}}
+                  - arn:aws:s3:::{{this.name}}
+                {{/BucketIsType}}
+                {{/each}}
+
+              - Effect: Allow
+                Action:
+                  - s3:GetObject*
+                  - s3:PutObject*
+                  - s3:ListMultipartUploadParts
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource: 
+                {{#each buckets}}
+                {{#BucketIsType this "protected"}}
+                  - arn:aws:s3:::{{this.name}}/*
+                {{/BucketIsType}}
+                {{/each}}
+
+              - Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                Resource: '*'
 
   CumulusInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -426,5 +495,7 @@ Outputs:
     Value: !GetAtt LambdaApiGatewayRole.Arn
   LambdaProcessingRoleArn:
     Value: !GetAtt LambdaProcessingRole.Arn
+  DistributionRoleArn:
+    Value: !GetAtt DistributionApiRole.Arn
   StepRoleArn:
     Value: !GetAtt StepRole.Arn
