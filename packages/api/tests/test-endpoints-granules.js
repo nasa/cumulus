@@ -245,14 +245,53 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
 
 test('move a granule', async (t) => {
   const bucket = process.env.internal;
+  const secondBucket = randomString();
+  await s3().createBucket({ Bucket: secondBucket }).promise();
   const newGranule = fakeGranuleFactory();
-  const file = {
-    bucket,
-    name: `${newGranule.granuleId}.txt`,
-    filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
-  };
-  newGranule.files = [file];
+
+  newGranule.files = [
+    {
+      bucket,
+      name: `${newGranule.granuleId}.txt`,
+      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
+    },
+    {
+      bucket,
+      name: `${newGranule.granuleId}.md`,
+      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.md`
+    },
+    {
+      bucket: secondBucket,
+      name: `${newGranule.granuleId}.jpg`,
+      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.jpg`
+    }
+  ];
+
   await g.create(newGranule);
+
+  await Promise.all(newGranule.files.map(async (file) => {
+    const key = `${process.env.stackName}/granules_ingested/${file.name}`;
+    return aws.s3().putObject({ Bucket: bucket, Key: key, Body: 'test data' }).promise();
+  }));
+
+  const destinationFilepath = `${process.env.stackName}/granules_moved`;
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket,
+      filepath: destinationFilepath
+    },
+    {
+      regex: '.*.md$',
+      bucket,
+      filepath: destinationFilepath
+    },
+    {
+      regex: '.*.jpg$',
+      bucket: secondBucket,
+      filepath: destinationFilepath
+    }
+  ];
 
   const moveEvent = {
     httpMethod: 'PUT',
@@ -261,35 +300,29 @@ test('move a granule', async (t) => {
     },
     body: JSON.stringify({
       action: 'move',
-      destination: {
-        bucket,
-        filepath: `${process.env.stackName}/granules_moved`
-      }
+      destinations
     })
   };
-
-  const key = `${process.env.stackName}/granules_ingested/${file.name}`;
-  await aws.s3().putObject({ Bucket: bucket, Key: key, Body: 'test data' }).promise();
 
   await testEndpoint(granuleEndpoint, moveEvent, async (response) => {
     const body = JSON.parse(response.body);
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'move');
 
-    try {
-      // original location empty
-      await aws.s3().getObject({
-        Bucket: bucket,
-        Key: key
-      }).promise();
-    }
-    catch (e) {
-      t.is(e.message, 'The specified key does not exist.');
-    }
+    await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
+      t.is(list.Contents.length, 2);
 
-    return aws.s3().getObject({
-      Bucket: bucket,
-      Key: `${process.env.stackName}/granules_moved/${file.name}`
-    }).promise();
+      list.Contents.forEach((item) => {
+        t.is(item.Key.indexOf(destinationFilepath), 0);
+      });
+    });
+
+    return s3().listObjects({ Bucket: secondBucket }).promise().then((list) => {
+      t.is(list.Contents.length, 1);
+
+      list.Contents.forEach((item) => {
+        t.is(item.Key.indexOf(destinationFilepath), 0);
+      });
+    });
   });
 });
