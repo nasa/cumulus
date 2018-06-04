@@ -118,7 +118,12 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
 });
 
 test('addBucketToFile throws an exception if no config matches', (t) => {
-  const buckets = { private: 'private-bucket' };
+  const buckets = {
+    private: {
+      name: 'private-bucket',
+      type: 'private'
+    }
+  };
 
   const wrongCollectionFileConfig = { regex: '^wrong-.*', bucket: 'wrong-bucket' };
   const collectionConfig = {
@@ -139,8 +144,14 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
 
 test('addBucketToFile adds the correct bucket when a config is found', (t) => {
   const buckets = {
-    private: 'private-bucket',
-    right: 'right-bucket'
+    private: {
+      name: 'private-bucket',
+      type: 'private'
+    },
+    right: {
+      name: 'right-bucket',
+      type: 'private'
+    }
   };
 
   const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right' };
@@ -202,8 +213,14 @@ test("addUrlPathToFile adds the matching collection file config's url_path as th
 
 test('getBucket adds the correct url_path and bucket to the file', (t) => {
   const buckets = {
-    private: 'private-bucket',
-    right: 'right-bucket'
+    private: {
+      name: 'private-bucket',
+      type: 'private'
+    },
+    right: {
+      name: 'right-bucket',
+      type: 'private'
+    }
   };
 
   const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right' };
