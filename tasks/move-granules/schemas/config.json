@@ -5,6 +5,7 @@
   "required": [
     "bucket",
     "input_granules",
+    "distribution_endpoint",
     "collection",
     "buckets"
   ],
@@ -29,6 +30,10 @@
         "protected": { "type": "string" },
         "public": { "type": "string" }
       }
+    },
+    "distribution_endpoint": {
+      "type": "string",
+      "description": "The api distribution endpoint"
     },
     "granuleIdExtraction": {
       "type": "string",
