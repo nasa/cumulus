@@ -56,7 +56,7 @@ class Discover {
     this.collection.files.forEach((f) => {
       this.regexes[f.regex] = {
         collection: this.collection.name,
-        bucket: this.buckets[f.bucket]
+        bucket: this.buckets[f.bucket].name
       };
     });
   }
@@ -78,7 +78,7 @@ class Discover {
       cloneDeep(file),
       {
         granuleId,
-        bucket: this.buckets[fileTypeConfig.bucket],
+        bucket: this.buckets[fileTypeConfig.bucket].name,
         url_path: fileTypeConfig.url_path || this.collection.url_path || ''
       }
     );
@@ -253,8 +253,8 @@ class Granule {
     if (!fileConfig) {
       throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
     }
-   
-    const bucket = this.buckets[fileConfig.bucket];
+ 
+    const bucket = this.buckets[fileConfig.bucket].name;
 
     return Object.assign(cloneDeep(file), { bucket });
   }
