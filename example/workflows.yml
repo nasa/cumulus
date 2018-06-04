@@ -23,7 +23,7 @@ HelloWorldWorkflow:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
@@ -95,7 +95,7 @@ DiscoverGranules:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
@@ -124,7 +124,7 @@ DiscoverAndQueuePdrs:
       CumulusConfig:
         stack: '{$.meta.stack}'
         provider: '{$.meta.provider}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${DiscoverPdrsLambdaFunction.Arn}
@@ -154,7 +154,7 @@ DiscoverAndQueuePdrs:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
@@ -182,7 +182,7 @@ ParsePdr:
     ParsePdr:
       CumulusConfig:
         provider: '{$.meta.provider}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stack: '{$.meta.stack}'
       Type: Task
       Resource: ${ParsePdrLambdaFunction.Arn}
@@ -195,7 +195,7 @@ ParsePdr:
     QueueGranules:
       CumulusConfig:
         provider: '{$.meta.provider}'
-        internalBucket: '{$.meta.buckets.internal}'
+        internalBucket: '{$.meta.buckets.internal.name}'
         stackName: '{$.meta.stack}'
         granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
         queueUrl: '{$.meta.queues.startSF}'
@@ -249,7 +249,7 @@ ParsePdr:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
@@ -343,7 +343,7 @@ IngestGranule:
       Default: StopStatus
     ProcessingStep:
       CumulusConfig:
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
@@ -360,7 +360,7 @@ IngestGranule:
       Next: MoveGranuleStep
     MoveGranuleStep:
       CumulusConfig:
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
         distribution_endpoint: '{$.meta.distribution_endpoint}'
@@ -376,7 +376,7 @@ IngestGranule:
       Next: CmrStep
     CmrStep:
       CumulusConfig:
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
         process: '{$.cumulus_meta.process}'
@@ -396,7 +396,7 @@ IngestGranule:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
@@ -487,7 +487,7 @@ SyncGranule:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
@@ -531,7 +531,7 @@ EcsHelloWorldWorkflow:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:

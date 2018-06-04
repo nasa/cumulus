@@ -73,10 +73,22 @@
       "createdAt": 1517326673419
     },
     "buckets": {
-      "protected": "cumulus-devseed-protected",
-      "internal": "cumulus-devseed-internal",
-      "private": "cumulus-devseed-private",
-      "public": "cumulus-devseed-public"
+      "internal": {
+        "name": "cumulus-test-sandbox-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-test-sandbox-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-test-sandbox-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-test-sandbox-public",
+        "type": "public"
+      }
     },
     "stack": "lpdaac-cumulus",
     "distribution_endpoint": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/",
@@ -142,7 +154,7 @@
       "provider": "{{$.meta.provider}}"
     },
     "CmrStep": {
-      "bucket": "{{$.meta.buckets.internal}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
       "stack": "{{$.meta.stack}}",
       "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
       "cmr": "{{$.meta.cmr}}",
