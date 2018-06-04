@@ -4,17 +4,16 @@ ApiDistribution:
   timeout: 20
   memory: 256
   source: 'node_modules/@cumulus/api/dist/'
-  apiRole: true
+  distributionRole: true
   urs: true
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}' 
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
-    protected: '{{parent.buckets.protected}}'
   apiGateway:
-    - api: distribution
+    - api: download 
       path: 'redirect'
       method: get
-    - api: distribution
-      path: '{granuleId}'
-      method: get
+    - api: download
+      path: '{proxy+}'
+      method: any

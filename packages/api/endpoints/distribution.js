@@ -8,6 +8,56 @@ const { aws } = require('@cumulus/common');
 const { URL } = require('url');
 
 /**
+ * Extract the S3 bucket name and key from the URL path
+ * parameters
+ *
+ * @param {string} pathParams - path parameters from the URL
+ * @returns {Object} - bucket/key in the form of
+ * { Bucket: x, Key: y }
+ */
+function getBucketAndKeyFromPathParams(pathParams) {
+  const bucketEndIndex = pathParams.indexOf('/');
+  return {
+    Bucket: pathParams.substring(0, bucketEndIndex),
+    Key: pathParams.substring(bucketEndIndex + 1)
+  };
+}
+
+/**
+ * Generate the parsed signed URL
+ *
+ * @param {Object} tokenInfo - response from Earthdata
+ * @param {string} pathParams - path parameters from the URL
+ * @param {string} sourceIp - source IP form event
+ * @returns {string} - parsed, signed URL
+ */
+function generateParsedSignedUrl(tokenInfo, pathParams, sourceIp) {
+  const user = tokenInfo.endpoint.replace('/api/users/', '');
+
+  const objectParams = getBucketAndKeyFromPathParams(pathParams);
+
+  // otherwise we get the temp url and provide it to the user
+  const signedUrl = aws.s3().getSignedUrl('getObject', objectParams);
+
+  // Add earthdataLoginUsername to signed url
+  const parsedSignedUrl = new URL(signedUrl);
+  const signedUrlParams = parsedSignedUrl.searchParams;
+  signedUrlParams.set('x-EarthdataLoginUsername', user);
+  parsedSignedUrl.search = signedUrlParams.toString();
+
+  // now that we have the URL we have to save user's info
+  log.info({
+    userName: user,
+    accessDate: Date.now(),
+    file: objectParams.Key,
+    bucket: objectParams.Bucket,
+    sourceIp
+  });
+
+  return parsedSignedUrl;
+}
+
+/**
  * An AWS API Gateway function that either requests authentication,
  * or if authentication is found then redirects to an S3 file for download
  *
@@ -26,21 +76,26 @@ const { URL } = require('url');
  *
  * 3. If the user has a username and auth token in their cookies,
  * then authorize them to access the requested file from the S3 bucket
+ *
+ * @param {Object} event - the AWS lambda event
+ * @param {Object} context - thw AWS context
+ * @param {function} cb - callback function
+ * @returns {?} - return value of the callback function
  */
 function handler(event, context, cb) {
   const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
   const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
   const DEPLOYMENT_ENDPOINT = process.env.DEPLOYMENT_ENDPOINT;
 
-  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov';
-  const EARTHDATA_GET_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/authorize`;
-  const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
+  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/';
+  const EARTHDATA_GET_CODE_URL = `${EARTHDATA_BASE_URL}oauth/authorize`;
+  const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}oauth/token`;
 
   let granuleKey = null;
   let query = {};
 
   if (event.pathParameters) {
-    granuleKey = event.pathParameters.granuleId;
+    granuleKey = event.pathParameters.proxy;
   }
 
   if (event.queryStringParameters) {
@@ -73,28 +128,11 @@ function handler(event, context, cb) {
         });
       }
 
-      const user = tokenInfo.endpoint.replace('/api/users/', '');
-
-      // otherwise we get the temp url and provide it to the user
-      const signedUrl = aws.s3().getSignedUrl('getObject', {
-        Bucket: process.env.protected,
-        Key: granuleKey
-      });
-
-      // Add x-EarthdataLoginUsername to signed url
-      const parsedSignedUrl = new URL(signedUrl);
-      const signedUrlParams = parsedSignedUrl.searchParams;
-      signedUrlParams.set('x-EarthdataLoginUsername', user);
-      parsedSignedUrl.search = signedUrlParams.toString();
-
-      // now that we have the URL we have to save user's info
-      log.info({
-        userName: user,
-        accessDate: Date.now(),
-        file: granuleKey,
-        bucket: process.env.protected,
-        sourceIp: get(event, 'requestContext.identity.sourceIp', '0.0.0.0')
-      });
+      const parsedSignedUrl = generateParsedSignedUrl(
+        tokenInfo,
+        granuleKey,
+        get(event, 'requestContext.identity.sourceIp', '0.0.0.0')
+      );
 
       return cb(null, {
         statusCode: '302',
@@ -128,4 +166,10 @@ function handler(event, context, cb) {
   return cb(null, response);
 }
 
-module.exports = handler;
+module.exports = {
+  handler,
+
+  // for testing
+  getBucketAndKeyFromPathParams,
+  generateParsedSignedUrl
+};
