@@ -622,25 +622,34 @@ async function moveGranuleFile(source, target, options) {
 /**
  * move granule files from one s3 location to another
  *
- * @param {Array} sourceFiles - array of file objects
- * @param {Object} destination - bucket and key defining the destination of the granule
- * @param {string} destination.bucket - aws bucket
- * @param {string} destination.key - filepath on the bucket for the destination
+ * @param {Object[]} sourceFiles - array of file objects
+ * @param {string} sourceFiles[].name
+ * @param {string} sourceFiles[].bucket
+ * @param {string} sourceFiles[].filepath
+ * @param {Object[]} destinations - array of objects defining the destination of granule files
+ * @param {string} destinations[].regex - regex for matching filepath of file to new destination
+ * @param {string} destinations[].bucket - aws bucket
+ * @param {string} destinations[].key - filepath on the bucket for the destination
  * @returns {Promise<undefined>} returns `undefined` when all the files are moved
  */
-async function moveGranuleFiles(sourceFiles, destination) {
+async function moveGranuleFiles(sourceFiles, destinations) {
   const moveFileRequests = sourceFiles.map((file) => {
-    const source = {
-      Bucket: file.bucket,
-      Key: file.filepath
-    };
+    const destination = destinations.find((dest) => file.name.match(dest.regex));
 
-    const target = {
-      Bucket: destination.bucket,
-      Key: `${destination.filepath}/${file.name}`
-    };
+    // if there's no match, we skip the file
+    if (destination) {
+      const source = {
+        Bucket: file.bucket,
+        Key: file.filepath
+      };
 
-    return moveGranuleFile(source, target);
+      const target = {
+        Bucket: destination.bucket,
+        Key: `${destination.filepath}/${file.name}`
+      };
+
+      return moveGranuleFile(source, target);
+    }
   });
 
   return Promise.all(moveFileRequests);

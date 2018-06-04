@@ -55,9 +55,9 @@ async function put(event) {
       };
     }
     else if (action === 'move') {
-      const destination = body.destination;
+      const destinations = body.destinations;
 
-      await moveGranuleFiles(response.files, destination);
+      await moveGranuleFiles(response.files, destinations);
 
       return {
         granuleId: response.granuleId,
