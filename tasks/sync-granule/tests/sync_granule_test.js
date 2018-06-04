@@ -316,6 +316,39 @@ test('validate file properties', async (t) => {
   }
 });
 
+test('attempt to download file from non-existent path - throw error', async (t) => {
+  const granuleFilePath = randomString();
+  const granuleFileName = payload.input.granules[0].files[0].name;
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString()
+  };
+
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
+
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
+
+  // Create the s3 bucket. If the bucket doesn't exist, we just get a
+  // 'bucket doesn't exist' error
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+
+  try {
+    await t.throws(syncGranule(t.context.event), 'The specified key does not exist.');
+
+    // validateOutput will throw because it doesn't believe in error messages
+    t.throws(() => {
+        validateOutput(t, output);
+    }, 'output is not defined');
+  }
+  finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
 // TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
 // test.cb('replace duplicate Granule', (t) => {
 //   const provider = {
