@@ -97,10 +97,22 @@
       }
     ],
     "buckets": {
-      "protected": "cumulus-devseed-protected",
-      "internal": "cumulus-devseed-internal",
-      "private": "cumulus-devseed-private",
-      "public": "cumulus-devseed-public"
+      "internal": {
+        "name": "cumulus-test-sandbox-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-test-sandbox-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-test-sandbox-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-test-sandbox-public",
+        "type": "public"
+      }
     }
   },
   "payload": {
@@ -142,7 +154,7 @@
     "WorkflowFailed": {},
     "CmrStep": {
       "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
-      "bucket": "{{$.meta.buckets.internal}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
       "input_granules": "{{$.meta.input_granules}}",
       "stack": "{{$.meta.stack}}",
       "cmr": "{{$.meta.cmr}}"
