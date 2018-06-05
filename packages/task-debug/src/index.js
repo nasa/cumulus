@@ -25,7 +25,10 @@ const doDebug = async () => {
   const wf = workflows[workflowName];
   const resources = {
     buckets: {
-      private: bucket
+      private: {
+        name: bucket,
+        type: 'private'
+      }
     }
   };
 

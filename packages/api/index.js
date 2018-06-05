@@ -13,7 +13,7 @@ exports.executionStatus = require('./endpoints/execution-status');
 exports.schemas = require('./endpoints/schemas');
 exports.stats = require('./endpoints/stats');
 exports.version = require('./endpoints/version');
-exports.distribution = require('./endpoints/distribution');
+exports.distribution = require('./endpoints/distribution').handler;
 exports.dbIndexer = require('./lambdas/db-indexer');
 
 exports.jobs = require('./lambdas/jobs');
