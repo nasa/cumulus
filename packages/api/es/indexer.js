@@ -77,7 +77,7 @@ function parseException(exception) {
 }
 
 /**
- * Extracts granule info from a stepFunction message and indexes it to
+ * Extracts info from a stepFunction message and indexes it to
  * an ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
@@ -96,13 +96,28 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
     body.push({ index: { _index: index, _type: type, _id: p.id } });
     let record;
     try {
-      record = JSON.parse(p.message);
-      record.timestamp = record.time;
-      delete record.time;
+      // cumulus log message has extra aws messages before the json message,
+      // only the json message should be logged to elasticsearch.
+      // example message:
+      // 2018-06-01T17:45:27.108Z a714a0ef-f141-4e52-9661-58ca2233959a
+      // {"level": "info", "timestamp": "2018-06-01T17:45:27.108Z",
+      // "message": "uploaded s3://bucket/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"}
+      const entryParts = p.message.trim().split('\t');
+      // cumulus log message
+      if (entryParts.length >= 3 && entryParts[2].startsWith('{') &&
+      entryParts[entryParts.length - 1].endsWith('}')) {
+        record = JSON.parse(entryParts.slice(2).join('\t'));
+        record.RequestId = entryParts[1];
+        // level is number in elasticsearch
+        if (typeof record.level === 'string') record.level = log.convertLogLevel(record.level);
+      }
+      else { // other logs
+        record = JSON.parse(p.message);
+      }
     }
     catch (e) {
       record = {
-        msg: p.message,
+        message: p.message.trim(),
         timestamp: p.timestamp,
         level: 30,
         pid: 1,
@@ -658,6 +673,7 @@ module.exports = {
   handler,
   logHandler,
   indexCollection,
+  indexLog,
   indexProvider,
   indexRule,
   indexStepFunction,
