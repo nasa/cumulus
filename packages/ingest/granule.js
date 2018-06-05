@@ -626,9 +626,13 @@ async function moveGranuleFile(source, target, options) {
  * @param {Object} destination - bucket and key defining the destination of the granule
  * @param {string} destination.bucket - aws bucket
  * @param {string} destination.key - filepath on the bucket for the destination
+ * @param {string} bucketsJSON - buckets configuration
+ * @param {string} distEndpoint - distribution enpoint from config
  * @returns {Promise<undefined>} returns `undefined` when all the files are moved
  */
-async function moveGranuleFiles(sourceFiles, destination) {
+async function moveGranuleFiles(sourceFiles, destination, bucketsJSON, distEndpoint) {
+  const buckets = JSON.parse(bucketsJSON);
+  console.log(buckets);
   const moveFileRequests = sourceFiles.map((file) => {
     const source = {
       Bucket: file.bucket,
@@ -639,7 +643,26 @@ async function moveGranuleFiles(sourceFiles, destination) {
       Bucket: destination.bucket,
       Key: `${destination.filepath}/${file.name}`
     };
+    // Add option for ACL public destination bucket
 
+    if (file.name.match(/.*\.cmr\.xml$/)) {
+      // Updating metadata
+      const urls = [];
+      sourceFiles.forEach((sourceFile) => {
+        const urlObj = {};
+        if (destination.bucket.type.match('protected')) { // problem, bucket is a string. No type
+          const extension = urljoin(destination.bucket, `${destination.filepath}/${sourceFile.name}`);
+          urlObj.URL = urljoin(distEndpoint, extension);
+          urlObj.URLDescription = 'File to download';
+          urls.push(urlObj);
+        }
+        else if (destination.bucket.type.match('public')) { // problem, bucket is a string. No type
+          urlObj.URL = `https://${destination.bucket}.s3.amazonaws.com/${destination.filepath}/${sourceFile.name}`;
+          urlObj.URLDescription = 'File to download';
+          urls.push(urlObj);
+        }
+      });
+    }
     return moveGranuleFile(source, target);
   });
 
