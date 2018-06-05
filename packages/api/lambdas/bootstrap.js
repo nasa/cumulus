@@ -22,62 +22,6 @@ const Manager = require('../models/base');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
-const { s3 } = require('@cumulus/common/aws');
-
-const MIGRATION_FILE = 'migrations.txt';
-
-/**
- * Run one-time migration scripts for the stack that have not already been run.
- * Log the script history to an S3 file
- *
- * @param {List<Object>} migrations - migrations to run in the form:
- * { script: <function to run>
- *   params: <function params> }
- * @returns {undefined} none
- */
-async function runMigrations(migrations) {
-  let migrationHistory;
-
-  const s3Key = `${process.env.stackName}/${MIGRATION_FILE}`;
-
-  try {
-    const migrationFile = await s3().getObject({
-      Bucket: process.env.internal,
-      Key: s3Key
-    }).promise();
-
-    migrationHistory = JSON.parse(migrationFile.Body.toString());
-  }
-  catch (e) {
-    migrationHistory = [];
-  }
-
-  const scriptsRun = migrationHistory.map((h) => h.script);
-  const scripts = Object.keys(migrations).filter((m) => !scriptsRun.includes(m));
-
-  if (scripts.length > 0) {
-    const runningScripts = scripts.map((s) => {
-      log.info(`Running migration script ${s}`);
-
-      const script = migrations[s];
-
-      migrationHistory.push({ script: s, timestamp: (new Date()).toString() });
-
-      return script.script(script.params);
-    });
-
-    await Promise.all(runningScripts);
-  }
-  else {
-    log.info('No migration scripts to be run');
-  }
-
-  await s3().putObject({
-    Bucket: process.env.internal,
-    Key: s3Key,
-    Body: JSON.stringify(migrationHistory)
-  }).promise();
-}
 
 /**
  * Check the index to see if mappings have been added since the index
@@ -291,8 +235,7 @@ module.exports = {
   handler,
   bootstrapElasticSearch,
   // for testing
-  findMissingMappings,
-  runMigrations
+  findMissingMappings
 };
 
 justLocalRun(() => {
