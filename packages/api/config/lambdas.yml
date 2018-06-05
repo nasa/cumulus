@@ -47,7 +47,7 @@ dbIndexer:
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
   envs:
-    bucket: '{{buckets.internal}}'
+    bucket: '{{system_bucket}}'
 
 kinesisConsumer:
   handler: index.kinesisConsumer
