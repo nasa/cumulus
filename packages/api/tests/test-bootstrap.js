@@ -7,10 +7,8 @@ const { Search } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const testMappings = require('./data/testEsMappings.json');
 const mappingsSubset = require('./data/testEsMappingsSubset.json');
-const { s3 } = require('@cumulus/common/aws');
 
 let esClient;
-let scriptValue = '';
 
 test.serial('bootstrap creates index with alias', async (t) => {
   const indexName = randomString();
