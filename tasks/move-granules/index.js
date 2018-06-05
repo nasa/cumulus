@@ -5,6 +5,7 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
 const { moveGranuleFile } = require('@cumulus/ingest/granule');
+const urljoin = require('url-join');
 const path = require('path');
 const { getS3Object, parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
@@ -150,6 +151,7 @@ async function getCmrFiles(input, granuleIdExtraction) {
 * @returns {Promise} promise resolves when all files have been moved
 **/
 function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
+  const allFiles = [];
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
       collection.files.forEach((fileConfig) => {
@@ -170,12 +172,16 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
           file.bucket = buckets[fileConfig.bucket];
           file.filepath = path.join(urlPath, file.name);
           file.filename = `s3://${path.join(file.bucket, file.filepath)}`;
+          allFiles.push(file);
         }
       });
     });
   });
 
-  return granulesObject;
+  return {
+    granulesObject,
+    allFiles
+  };
 }
 
 /**
@@ -204,7 +210,8 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
           Key: file.filepath
         };
         delete file.fileStagingDir;
-        moveFileRequests.push(moveGranuleFile(source, target));
+        const options = (file.bucket.match('public')) ? { ACL: 'public-read' } : null;
+        moveFileRequests.push(moveGranuleFile(source, target, options));
       }
     });
   });
@@ -218,29 +225,56 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 *
 * @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+* @param {Array} allFiles - array of all files in all granules
+* @param {string} distEndpoint - the api distribution endpoint
 * @returns {Promise} promise resolves when all files have been updated
 **/
-async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
-  for (const cmrFile of cmrFiles) {
-    const onlineAccessUrls = cmrFile.metadataObject.Granule.OnlineAccessURLs;
+async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distEndpoint) {
+  cmrFiles.forEach((cmrFile) => {
+    const metadataGranule = get(cmrFile, 'metadataObject.Granule');
     const granule = granulesObject[cmrFile.granuleId];
-
-    const urls = onlineAccessUrls.OnlineAccessURL.map((urlObj) => {
-      const filename = path.basename(urlObj.URL);
-      const file = granule.files.find((f) => f.name === filename);
-      urlObj.URL = file.filename;
-      return urlObj;
+    const urls = [];
+    // Populates onlineAcessUrls with all public and protected files
+    allFiles.forEach((file) => {
+        const urlObj = {};
+        if (file.bucket.match('protected')) {
+          const extension = urljoin(file.bucket, file.filepath);
+          urlObj.URL = urljoin(distEndpoint, extension);
+          urlObj.URLDescription = 'File to download';
+          urls.push(urlObj);
+        }
+        else if (file.bucket.match('public')) {
+          urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+          urlObj.URLDescription = 'File to download';
+          urls.push(urlObj);
+        }
     });
 
-    cmrFile.metadataObject.Granule.OnlineAccessURLs.OnlineAccessURL = urls;
+    const updatedGranule = {};
+    Object.keys(metadataGranule).forEach((key) => {
+      if (key === 'OnlineResources' || key === 'Orderable') {
+        updatedGranule.OnlineAccessURLs = {};
+      }
+      updatedGranule[key] = metadataGranule[key];
+    });
+    updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
+    cmrFile.metadataObject.Granule = updatedGranule;
+
     const builder = new xml2js.Builder();
     const xml = builder.buildObject(cmrFile.metadataObject);
     cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
-    await promiseS3Upload(
-      { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
-    );
-  }
+    if (updatedCmrFile.bucket.match('public')){
+      await promiseS3Upload(
+        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml, ACL: 'public-read' }
+      );
+    }
+    else {
+      await promiseS3Upload(
+        { Bucket: updatedCmrFile.bucket, Key: updatedCmrFile.filepath, Body: xml }
+      );
+    }
+  });
 }
 
 /**
@@ -254,6 +288,7 @@ async function updateCmrFileAccessURls(cmrFiles, granulesObject) {
  * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
  *                                                    from filenames
  * @param {Array} event.config.input_granules - an array of granules
+ * @param {string} event.config.distribution_endpoint - distribution enpoint for the api
  * @param {Object} event.config.collection - configuration object defining a collection
  * of granules and their files
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
@@ -269,6 +304,7 @@ async function moveGranules(event) {
   const buckets = get(config, 'buckets');
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const inputGranules = get(config, 'input_granules', {});
+  const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
   const input = get(event, 'input', []);
@@ -280,7 +316,9 @@ async function moveGranules(event) {
   let allGranules = getAllGranules(input, inputGranules, regex);
 
   // update granules object with final locations of files as `filename`
-  allGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+  const updatedResult = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+  allGranules = updatedResult.granulesObject;
+  const allFiles = updatedResult.allFiles;
 
   // allows us to disable moving the files
   if (moveStagedFiles) {
@@ -288,7 +326,7 @@ async function moveGranules(event) {
     await moveGranuleFiles(allGranules, bucket);
 
     // update cmr.xml files with correct online access urls
-    updateCmrFileAccessURls(cmrFiles, allGranules, regex);
+    updateCmrFileAccessURLs(cmrFiles, allGranules, allFiles, distEndpoint);
   }
 
   return {
