@@ -70,10 +70,22 @@
     "stack": "lpdaac-cumulus",
     "distribution_endpoint": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/",
     "buckets": {
-      "protected": "cumulus-devseed-protected",
-      "internal": "cumulus-devseed-internal",
-      "private": "cumulus-devseed-private",
-      "public": "cumulus-devseed-public"
+      "internal": {
+        "name": "cumulus-test-sandbox-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-test-sandbox-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-test-sandbox-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-test-sandbox-public",
+        "type": "public"
+      }
     }
   },
   "payload": {
@@ -94,7 +106,7 @@
   },
   "workflow_config": {
     "ParsePdr": {
-      "bucket": "{{$.meta.buckets.internal}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
       "collection": "{{$.meta.collection}}",
       "provider": "{{$.meta.provider}}",
       "stack": "{{$.meta.stack}}"
