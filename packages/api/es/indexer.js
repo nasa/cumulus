@@ -277,20 +277,17 @@ function pdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
  * @returns {Promise} Elasticsearch response
  */
 function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
-  // adding collection record to ES
   const collectionId = constructCollectionId(meta.name, meta.version);
+  const record = Object.assign({}, meta, { timestamp: Date.now() });
   const params = {
     index,
     type,
     id: collectionId,
-    body: {
-      doc: meta,
-      doc_as_upsert: true
-    }
+    body: record
   };
 
-  params.body.doc.timestamp = Date.now();
-  return esClient.update(params);
+  // adding or replacing collection record to ES
+  return esClient.index(params);
 }
 
 /**
@@ -303,19 +300,16 @@ function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'coll
  * @returns {Promise} Elasticsearch response
  */
 function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'provider') {
+  const record = Object.assign({}, payload, { timestamp: Date.now() });
   const params = {
     index,
     type,
     id: payload.id,
-    body: {
-      doc: payload,
-      doc_as_upsert: true
-    }
+    body: record
   };
-  params.body.doc.timestamp = Date.now();
 
-  // adding collection record to ES
-  return esClient.update(params);
+  // adding or replacing provider record to ES
+  return esClient.index(params);
 }
 
 /**
@@ -328,19 +322,16 @@ function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'pro
  * @returns {Promise} Elasticsearch response
  */
 function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') {
+  const record = Object.assign({}, payload, { timestamp: Date.now() });
   const params = {
     index,
     type,
     id: payload.name,
-    body: {
-      doc: payload,
-      doc_as_upsert: true
-    }
+    body: record
   };
-  params.body.doc.timestamp = Date.now();
 
-  // adding collection record to ES
-  return esClient.update(params);
+  // adding or replacing rule record to ES
+  return esClient.index(params);
 }
 
 /**
