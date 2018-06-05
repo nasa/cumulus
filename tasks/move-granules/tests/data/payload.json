@@ -2,10 +2,22 @@
   "config": {
     "bucket": "cumulus-internal",
     "buckets": {
-      "internal": "cumulus-internal",
-      "private": "cumulus-private",
-      "protected": "cumulus-protected",
-      "public": "cumulus-public"
+      "internal": {
+        "name": "cumulus-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-public",
+        "type": "public"
+      }
     },
     "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
     "input_granules": [

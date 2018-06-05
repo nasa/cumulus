@@ -44,7 +44,7 @@
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.11.0",
-    "kes": "^2.2.1",
+    "kes": "^2.2.2",
     "lodash": "^4.17.10",
     "moment": "^2.22.1",
     "node-forge": "^0.7.5",

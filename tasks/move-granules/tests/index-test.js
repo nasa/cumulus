@@ -1,11 +1,13 @@
 'use strict';
 
+/* eslint-disable no-param-reassign */
+
 const fs = require('fs');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const payload = require('./data/payload.json');
 const { moveGranules } = require('../index');
-const { randomString } = require('@cumulus/common/test-utils')
+const { randomString, validateOutput } = require('@cumulus/common/test-utils');
 
 // eslint-disable-next-line require-jsdoc
 async function deleteBucket(bucket) {
@@ -33,7 +35,10 @@ test.afterEach.always(async (t) => {
 test('should move files to final location', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = t.context.stagingBucket;
+  newPayload.config.buckets.internal = {
+    name: t.context.stagingBucket,
+    type: 'internal'
+  };
   newPayload.input = [
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
@@ -51,17 +56,13 @@ test('should move files to final location', (t) => {
     Bucket: t.context.stagingBucket,
     Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
     Body: 'Something'
-  })).then(() => {
-    return moveGranules(newPayload)
-      .then(() => {
-        return aws.s3ObjectExists({
-          Bucket: 'cumulus-public',
-          Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
-        }).then((check) => {
-          t.true(check);
-        });
-      });
-  })
+  })).then(() => moveGranules(newPayload))
+    .then((output) => validateOutput(t, output))
+    .then(() => aws.s3ObjectExists({
+      Bucket: 'cumulus-public',
+      Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+    }))
+    .then((check) => t.true(check));
 });
 
 test('should update filenames with specific url_path', (t) => {
@@ -71,7 +72,10 @@ test('should update filenames with specific url_path', (t) => {
   const newFilename2 =
     's3://cumulus-public/example/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg';
   newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = t.context.stagingBucket;
+  newPayload.config.buckets.internal = {
+    name: t.context.stagingBucket,
+    type: 'internal'
+  };
   newPayload.input = [
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
@@ -89,14 +93,12 @@ test('should update filenames with specific url_path', (t) => {
     Bucket: t.context.stagingBucket,
     Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
     Body: 'Something'
-  })).then(() => {
-    return moveGranules(newPayload)
-      .then((output) => {
-        const files = output.granules[0].files;
-        t.is(files[0].filename, newFilename1);
-        t.is(files[1].filename, newFilename2);
-      });
-  });
+  })).then(() => moveGranules(newPayload))
+    .then((output) => {
+      const files = output.granules[0].files;
+      t.is(files[0].filename, newFilename1);
+      t.is(files[1].filename, newFilename2);
+    });
 });
 
 test('should update filenames with metadata fields', (t) => {
@@ -109,7 +111,10 @@ test('should update filenames with metadata fields', (t) => {
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
   ];
   newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = t.context.stagingBucket;
+  newPayload.config.buckets.internal = {
+    name: t.context.stagingBucket,
+    type: 'internal'
+  };
   newPayload.config.input_granules[0].files[0].filename =
   `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
   newPayload.config.input_granules[0].files[1].filename =
@@ -131,13 +136,11 @@ test('should update filenames with metadata fields', (t) => {
     Bucket: t.context.stagingBucket,
     Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
     Body: fs.createReadStream('tests/data/meta.xml')
-  })).then(() => {
-    return moveGranules(newPayload)
-      .then((output) => {
-        const outputFilenames =
-          output.granules[0].files.map((f) =>
-            f.filename);
-        t.deepEqual(expectedFilenames, outputFilenames);
-      });
-  });
+  })).then(() => moveGranules(newPayload))
+    .then((output) => {
+      const outputFilenames =
+        output.granules[0].files.map((f) =>
+          f.filename);
+      t.deepEqual(expectedFilenames, outputFilenames);
+    });
 });
