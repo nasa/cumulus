@@ -185,7 +185,7 @@ function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 
     name
   );
   if (!arn) {
-    return Promise.reject(new Error('State Machine Arn is missing. Must be included in the cumulus_meta'));
+    return Promise.reject(new Error('State Machine Arn is missing. Must be included in the cumulus_meta')); //eslint-disable-line max-len
   }
 
   const execution = getExecutionUrl(arn);
