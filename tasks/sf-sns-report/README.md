@@ -34,7 +34,7 @@ To report the final status of the step function:
       CumulusConfig:
         sfnEnd: true
         stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal}'
+        bucket: '{$.meta.buckets.internal.name}'
         stateMachine: '{$.cumulus_meta.state_machine}'
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:

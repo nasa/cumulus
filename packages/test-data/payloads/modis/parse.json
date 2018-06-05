@@ -5,10 +5,22 @@
     "stage": "dev",
     "kms": "xxxxxx",
     "buckets": {
-      "internal": "cumulus-internal",
-      "private": "cumulus-private",
-      "protected": "cumulus-protected",
-      "public": "cumulus-public"
+      "internal": {
+        "name": "cumulus-test-sandbox-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-test-sandbox-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-test-sandbox-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-test-sandbox-public",
+        "type": "public"
+      }
     },
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxx/lpdaac-cumulus-phaseIII-dev-startSF"
