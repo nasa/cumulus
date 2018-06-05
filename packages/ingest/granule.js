@@ -253,7 +253,7 @@ class Granule {
     if (!fileConfig) {
       throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
     }
- 
+
     const bucket = this.buckets[fileConfig.bucket].name;
 
     return Object.assign(cloneDeep(file), { bucket });
@@ -622,27 +622,24 @@ async function moveGranuleFile(source, target, options) {
 /**
  * move granule files from one s3 location to another
  *
- * @param {Array} sourceFiles - array of file objects
- * @param {Object} destination - bucket and key defining the destination of the granule
- * @param {string} destination.bucket - aws bucket
- * @param {string} destination.key - filepath on the bucket for the destination
+ * @param {Object[]} sourceFiles - array of file objects
+ * @param {string} sourceFiles[].name - file name
+ * @param {string} sourceFiles[].bucket - current bucket of file
+ * @param {string} sourceFiles[].filepath - current bucket location of file
+ * @param {Object[]} destinations - array of objects defining the destination of granule files
+ * @param {string} destinations[].regex - regex for matching filepath of file to new destination
+ * @param {string} destinations[].bucket - aws bucket
+ * @param {string} destinations[].key - filepath on the bucket for the destination
  * @param {string} bucketsJSON - buckets configuration
  * @param {string} distEndpoint - distribution enpoint from config
  * @returns {Promise<undefined>} returns `undefined` when all the files are moved
  */
-async function moveGranuleFiles(sourceFiles, destination, bucketsJSON, distEndpoint) {
+async function moveGranuleFiles(sourceFiles, destinations, bucketsJSON, distEndpoint) {
   const buckets = JSON.parse(bucketsJSON);
   console.log(buckets);
   const moveFileRequests = sourceFiles.map((file) => {
-    const source = {
-      Bucket: file.bucket,
-      Key: file.filepath
-    };
+    const destination = destinations.find((dest) => file.name.match(dest.regex));
 
-    const target = {
-      Bucket: destination.bucket,
-      Key: `${destination.filepath}/${file.name}`
-    };
     // Add option for ACL public destination bucket
 
     if (file.name.match(/.*\.cmr\.xml$/)) {
@@ -663,7 +660,21 @@ async function moveGranuleFiles(sourceFiles, destination, bucketsJSON, distEndpo
         }
       });
     }
-    return moveGranuleFile(source, target);
+
+    // if there's no match, we skip the file
+    if (destination) {
+      const source = {
+        Bucket: file.bucket,
+        Key: file.filepath
+      };
+
+      const target = {
+        Bucket: destination.bucket,
+        Key: `${destination.filepath}/${file.name}`
+      };
+
+      return moveGranuleFile(source, target);
+    }
   });
 
   return Promise.all(moveFileRequests);
