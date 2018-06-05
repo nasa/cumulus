@@ -77,7 +77,7 @@ function parseException(exception) {
 }
 
 /**
- * Extracts granule info from a stepFunction message and indexes it to
+ * Extracts info from a stepFunction message and indexes it to
  * an ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
@@ -96,13 +96,28 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
     body.push({ index: { _index: index, _type: type, _id: p.id } });
     let record;
     try {
-      record = JSON.parse(p.message);
-      record.timestamp = record.time;
-      delete record.time;
+      // cumulus log message has extra aws messages before the json message,
+      // only the json message should be logged to elasticsearch.
+      // example message:
+      // 2018-06-01T17:45:27.108Z a714a0ef-f141-4e52-9661-58ca2233959a
+      // {"level": "info", "timestamp": "2018-06-01T17:45:27.108Z",
+      // "message": "uploaded s3://bucket/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"}
+      const entryParts = p.message.trim().split('\t');
+      // cumulus log message
+      if (entryParts.length >= 3 && entryParts[2].startsWith('{') &&
+      entryParts[entryParts.length - 1].endsWith('}')) {
+        record = JSON.parse(entryParts.slice(2).join('\t'));
+        record.RequestId = entryParts[1];
+        // level is number in elasticsearch
+        if (typeof record.level === 'string') record.level = log.convertLogLevel(record.level);
+      }
+      else { // other logs
+        record = JSON.parse(p.message);
+      }
     }
     catch (e) {
       record = {
-        msg: p.message,
+        message: p.message.trim(),
         timestamp: p.timestamp,
         level: 30,
         pid: 1,
@@ -170,7 +185,7 @@ function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 
     name
   );
   if (!arn) {
-    return Promise.reject(new Error('State Machine Arn is missing. Must be included in the cumulus_meta'));
+    return Promise.reject(new Error('State Machine Arn is missing. Must be included in the cumulus_meta')); //eslint-disable-line max-len
   }
 
   const execution = getExecutionUrl(arn);
@@ -277,20 +292,17 @@ function pdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
  * @returns {Promise} Elasticsearch response
  */
 function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
-  // adding collection record to ES
   const collectionId = constructCollectionId(meta.name, meta.version);
+  const record = Object.assign({}, meta, { timestamp: Date.now() });
   const params = {
     index,
     type,
     id: collectionId,
-    body: {
-      doc: meta,
-      doc_as_upsert: true
-    }
+    body: record
   };
 
-  params.body.doc.timestamp = Date.now();
-  return esClient.update(params);
+  // adding or replacing collection record to ES
+  return esClient.index(params);
 }
 
 /**
@@ -303,19 +315,16 @@ function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'coll
  * @returns {Promise} Elasticsearch response
  */
 function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'provider') {
+  const record = Object.assign({}, payload, { timestamp: Date.now() });
   const params = {
     index,
     type,
     id: payload.id,
-    body: {
-      doc: payload,
-      doc_as_upsert: true
-    }
+    body: record
   };
-  params.body.doc.timestamp = Date.now();
 
-  // adding collection record to ES
-  return esClient.update(params);
+  // adding or replacing provider record to ES
+  return esClient.index(params);
 }
 
 /**
@@ -328,19 +337,16 @@ function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'pro
  * @returns {Promise} Elasticsearch response
  */
 function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') {
+  const record = Object.assign({}, payload, { timestamp: Date.now() });
   const params = {
     index,
     type,
     id: payload.name,
-    body: {
-      doc: payload,
-      doc_as_upsert: true
-    }
+    body: record
   };
-  params.body.doc.timestamp = Date.now();
 
-  // adding collection record to ES
-  return esClient.update(params);
+  // adding or replacing rule record to ES
+  return esClient.index(params);
 }
 
 /**
@@ -667,6 +673,7 @@ module.exports = {
   handler,
   logHandler,
   indexCollection,
+  indexLog,
   indexProvider,
   indexRule,
   indexStepFunction,
