@@ -108,12 +108,12 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
       entryParts[entryParts.length - 1].endsWith('}')) {
         record = JSON.parse(entryParts.slice(2).join('\t'));
         record.RequestId = entryParts[1];
-        // level is number in elasticsearch
-        if (typeof record.level === 'string') record.level = log.convertLogLevel(record.level);
       }
-      else { // other logs
+      else { // other logs e.g. cumulus-ecs-task
         record = JSON.parse(p.message);
       }
+      // level is number in elasticsearch
+      if (typeof record.level === 'string') record.level = log.convertLogLevel(record.level);
     }
     catch (e) {
       record = {
