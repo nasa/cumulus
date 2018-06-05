@@ -14,7 +14,7 @@ default:
       - ExecutionsTable
 
   apis:
-    - name: distribution
+    - name: download 
     - name: backend
 
   lambdas: !!files [
