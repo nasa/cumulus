@@ -27,6 +27,7 @@
         ]
       }
     ],
+    "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
     "collection": {
       "files": [
         {
