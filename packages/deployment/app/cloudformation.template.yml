@@ -555,16 +555,18 @@ Resources:
           DEPLOYMENT_ENDPOINT: {{../api_distribution_url}}redirect
         {{else}}
           DEPLOYMENT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
+            Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-    {{# if this.apiRole }}
+{{# if this.apiRole }}
       Role: {{../iams.lambdaApiGatewayRoleArn}}
-      {{else}}
+{{else if this.distributionRole}}
+      Role: {{../iams.distributionRoleArn}}
+{{else}}
       Role: {{../iams.lambdaProcessingRoleArn}}
-    {{/if}}
+{{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
       Tags:
@@ -944,7 +946,7 @@ Outputs:
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
   ApiId:
@@ -953,7 +955,7 @@ Outputs:
   
   DistributionId:
     Value:
-      Ref: distributionRestApi
+      Ref: downloadRestApi
   
   ApiStage:
     Value: {{apiStage}}

@@ -59,7 +59,7 @@ class FakeEarthdataLoginServer extends http.Server {
    */
   get endpoint() {
     const { address, port } = this.address();
-    return `http://${address}:${port}`;
+    return `http://${address}:${port}/`;
   }
 
   // @private
