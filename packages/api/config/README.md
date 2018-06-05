@@ -8,7 +8,7 @@ The lambda functions and the api endpoints used by AWS ApiGateway service are st
 
 ## Api Distribution App
 
-The lambda function and the api endpoints used by AWS ApiGateway service are stored in `distribution.yml` for the distribution app. The distribution app is used for putting objects on S3 behind a [EarthLogin](https://urs.earthdata.nasa.gov/documentation) authentication.
+The lambda function and the api endpoints used by AWS ApiGateway service are stored in `distribution.yml` for the distribution app. The distribution app is used for putting objects on S3 behind a [Earthdata Login](https://urs.earthdata.nasa.gov/documentation) authentication.
 
 ## Api Lambdas
 
