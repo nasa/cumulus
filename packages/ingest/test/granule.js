@@ -17,7 +17,8 @@ const {
   HttpDiscoverGranules,
   SftpDiscoverGranules,
   S3DiscoverGranules,
-  moveGranuleFiles
+  moveGranuleFiles,
+  moveGranuleFile
 } = require('../granule');
 
 /**
@@ -240,14 +241,37 @@ test('getBucket adds the correct url_path and bucket to the file', (t) => {
   t.is(updatedFile.url_path, '');
 });
 
+test('moveGranuleFile moves a single file between s3 locations', async (t) => {
+  const Bucket = randomString();
+  await s3().createBucket({ Bucket }).promise();
+
+  const name = 'test.txt';
+  const Key = `origin/${name}`;
+  const params = { Bucket, Key, Body: 'test' };
+  await s3().putObject(params).promise();
+
+  const source = { Bucket, Key };
+  const target = { Bucket, Key: `moved/${name}` };
+
+  await moveGranuleFile(source, target);
+  return s3().listObjects({ Bucket }).promise().then((list) => {
+    t.is(list.Contents.length, 1);
+
+    const item = list.Contents[0];
+    t.is(item.Key, `moved/${name}`);
+  });
+});
+
 test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   const bucket = randomString();
+  const secondBucket = randomString();
   await s3().createBucket({ Bucket: bucket }).promise();
+  await s3().createBucket({ Bucket: secondBucket }).promise();
 
   const filenames = [
-    'test-one',
-    'test-two',
-    'test-three'
+    'test-one.txt',
+    'test-two.md',
+    'test-three.jpg'
   ];
 
   const sourceFilePromises = filenames.map(async (name) => {
@@ -256,18 +280,42 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
     return { name, bucket, filepath: `origin/${name}` };
   });
 
-  const destination = {
-    bucket,
-    filepath: 'destination'
-  };
+  const destinationFilepath = 'destination';
+
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket,
+      filepath: destinationFilepath
+    },
+    {
+      regex: '.*.md$',
+      bucket,
+      filepath: destinationFilepath
+    },
+    {
+      regex: '.*.jpg$',
+      bucket: secondBucket,
+      filepath: destinationFilepath
+    }
+  ];
 
   const sourceFiles = await Promise.all(sourceFilePromises);
-  await moveGranuleFiles(sourceFiles, destination);
-  return s3().listObjects({ Bucket: bucket }).promise().then((list) => {
-    t.is(list.Contents.length, 3);
+  await moveGranuleFiles(sourceFiles, destinations);
+
+  await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
+    t.is(list.Contents.length, 2);
 
     list.Contents.forEach((item) => {
-      t.is(item.Key.indexOf(destination.filepath), 0);
+      t.is(item.Key.indexOf(destinationFilepath), 0);
+    });
+  });
+
+  return s3().listObjects({ Bucket: secondBucket }).promise().then((list) => {
+    t.is(list.Contents.length, 1);
+
+    list.Contents.forEach((item) => {
+      t.is(item.Key.indexOf(destinationFilepath), 0);
     });
   });
 });
