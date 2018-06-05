@@ -4,10 +4,22 @@
     "stack": "ghrc-cumulus",
     "stage": "dev",
     "buckets": {
-      "internal": "ghrc-r-deploy",
-      "private": "ghrc-r-private",
-      "protected": "ghrc-r-protected",
-      "public": "ghrc-r-public"
+      "internal": {
+        "name": "cumulus-test-sandbox-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-test-sandbox-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-test-sandbox-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-test-sandbox-public",
+        "type": "public"
+      }
     },
     "queues": {
       "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxx/ghrc-cumulus-dev-startSF"
