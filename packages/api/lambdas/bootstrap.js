@@ -235,7 +235,7 @@ module.exports = {
   handler,
   bootstrapElasticSearch,
   // for testing
-  findMissingMappings 
+  findMissingMappings
 };
 
 justLocalRun(() => {
