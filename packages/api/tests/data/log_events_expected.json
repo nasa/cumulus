@@ -35,7 +35,7 @@
             "_version": 1,
             "found": true,
             "_source": {
-                "msg": "END RequestId: 65c88fe6-e299-4603-b822-e097bccc5075\n",
+                "message": "END RequestId: 65c88fe6-e299-4603-b822-e097bccc5075",
                 "timestamp": 1528125606002,
                 "level": 30,
                 "pid": 1,
@@ -49,7 +49,7 @@
             "_version": 1,
             "found": true,
             "_source": {
-                "msg": "REPORT RequestId: 65c88fe6-e299-4603-b822-e097bccc5075\tDuration: 2931.32 ms\tBilled Duration: 3000 ms \tMemory Size: 1024 MB\tMax Memory Used: 157 MB\t\n",
+                "message": "REPORT RequestId: 65c88fe6-e299-4603-b822-e097bccc5075\tDuration: 2931.32 ms\tBilled Duration: 3000 ms \tMemory Size: 1024 MB\tMax Memory Used: 157 MB",
                 "timestamp": 1528125606002,
                 "level": 30,
                 "pid": 1,
