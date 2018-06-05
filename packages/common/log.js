@@ -1,4 +1,5 @@
 'use strict';
+
 const util = require('util');
 
 /**
@@ -96,10 +97,31 @@ function trace(...args) {
   log('trace', args);
 }
 
+/**
+ * convert log level from string to number or number to string
+ *
+ * @param {string/number} level - log level in string or number
+ * @returns {number/string} - level in number or string
+ */
+function convertLogLevel(level) {
+  const mapping = {
+    fatal: 60,
+    error: 50,
+    warn: 40,
+    info: 30,
+    debug: 20,
+    trace: 10
+  };
+  if (typeof level === 'string') return mapping[level];
+  if (typeof level === 'number') return Object.keys(mapping).find((key) => mapping[key] === level);
+  return undefined;
+}
+
 module.exports.info = info;
 module.exports.error = error;
 module.exports.debug = debug;
 module.exports.warn = warn;
 module.exports.fatal = fatal;
 module.exports.trace = trace;
+module.exports.convertLogLevel = convertLogLevel;
 module.exports.logAdditionalKeys = logAdditionalKeys;
