@@ -11,6 +11,15 @@ const migrations = [
   './migration_0.js'
 ];
 
+/**
+ * This function compares a list of all migrations against the list of
+ * migrations stored on AWS S3 and return the ones that are not executed
+ * yet.
+ *
+ * @param {Array<string>} allMigrations - list of all migrations
+ * @param {string} migrationFolder - the folder where migrations are stored on S3
+ * @returns {Promise<Array>} an array of migration scripts that are not executed yet
+ */
 async function findNewMigrations(allMigrations, migrationFolder) {
   // list executed migrations
   const listed = await listS3ObjectsV2({
@@ -22,7 +31,12 @@ async function findNewMigrations(allMigrations, migrationFolder) {
   return allMigrations.filter((m) => !executedMigrations.includes(path.basename(m)));
 }
 
-
+/**
+ * Execute migrations that are specified in this module in sequence.
+ * Only migrations that are not executed on a deployment are executed
+ *
+ * @returns {Promise<Array>} returns a list of migration outputs
+ */
 async function runMigrations() {
   const migrationFolder = `${process.env.stackName}/migrations`;
 
@@ -36,7 +50,7 @@ async function runMigrations() {
 
   // we run the migrations in a for loop to make sure
   // they run in sequence
-  for (const m of newMigrations) { 
+  for (const m of newMigrations) {
     const fileName = path.basename(m);
     log.info(`Running migration script ${fileName}`);
     const func = require(m);

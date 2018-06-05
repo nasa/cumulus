@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- **CUMULUS-556** - add mechanism for creating migration scripts
+- **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
 
 ## [v1.5.5] - 2018-05-30
 
