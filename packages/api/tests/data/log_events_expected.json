@@ -1,0 +1,60 @@
+{
+    "docs": [
+        {
+            "_index": "bc60c98df49fd65cb18def212a5bcbc5de6af4c6",
+            "_type": "logs",
+            "_id": "34078339752670294443555948406170259921775755291552448512",
+            "_version": 1,
+            "found": true,
+            "_source": {
+                "level": 30,
+                "timestamp": "2018-06-04T15:20:05.189Z",
+                "sender": "undefined",
+                "message": "{ pdrName: 'MOD09GQ_1granule_v3.PDR' } 'There are 2 files in MOD09GQ_1granule_v3.PDR'",
+                "RequestId": "65c88fe6-e299-4603-b822-e097bccc5075"
+            }
+        },
+        {
+            "_index": "bc60c98df49fd65cb18def212a5bcbc5de6af4c6",
+            "_type": "logs",
+            "_id": "34078339753606925741894234578114760089226986474803625985",
+            "_version": 1,
+            "found": true,
+            "_source": {
+                "level": 20,
+                "timestamp": "2018-06-04T15:20:05.231Z",
+                "sender": "undefined",
+                "message": "uploaded s3://cumulus-test-sandbox-internal/jl-test-integration/pdrs/MOD09GQ_1granule_v3.PDR",
+                "RequestId": "65c88fe6-e299-4603-b822-e097bccc5075"
+            }
+        },
+        {
+            "_index": "bc60c98df49fd65cb18def212a5bcbc5de6af4c6",
+            "_type": "logs",
+            "_id": "34078339770800800289961345020238798877438873195914526722",
+            "_version": 1,
+            "found": true,
+            "_source": {
+                "message": "END RequestId: 65c88fe6-e299-4603-b822-e097bccc5075",
+                "timestamp": 1528125606002,
+                "level": 30,
+                "pid": 1,
+                "name": "cumulus"
+            }
+        },
+        {
+            "_index": "bc60c98df49fd65cb18def212a5bcbc5de6af4c6",
+            "_type": "logs",
+            "_id": "34078339770800800289961345020238798877438873195914526723",
+            "_version": 1,
+            "found": true,
+            "_source": {
+                "message": "REPORT RequestId: 65c88fe6-e299-4603-b822-e097bccc5075\tDuration: 2931.32 ms\tBilled Duration: 3000 ms \tMemory Size: 1024 MB\tMax Memory Used: 157 MB",
+                "timestamp": 1528125606002,
+                "level": 30,
+                "pid": 1,
+                "name": "cumulus"
+            }
+        }
+    ]
+}
