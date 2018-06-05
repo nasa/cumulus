@@ -16,10 +16,18 @@
     availabilityZone: <subnet-id-zone>
 
   buckets:
-    internal: <prefix>-internal
-    private: <prefix>-private
-    protected: <prefix>-protected
-    public: <prefix>-public
+    internal: 
+      name: <prefix>-internal
+      type: internal
+    private: 
+      name: <prefix>-private
+      type: private
+    protected: 
+      name: <prefix>-protected
+      type: protected
+    public: 
+      name: <prefix>-public
+      type: public
 
   iams:
     ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-ecs

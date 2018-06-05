@@ -11,8 +11,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
-  - Change IAM deployment configuration
+  - Change the structure of the buckets to allow for  more than one bucket of each type. The bucket structure is now: 
+    bucket-key: 
+      name: <bucket-name>
+      type: <type> i.e. internal, public, etc.
+  - Change IAM and app deployment configuration to support new bucket structure
+  - Update tasks and workflows to support new bucket structure
   - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
+  - Move IAM template to the deployment package. NOTE: You now have to specify '--template node_modules/@cumulus/deployment/iam' in your IAM deployment
+  - Add IAM cloudformation template support to filter buckets by type
 
 ## [v1.5.5] - 2018-05-30
 

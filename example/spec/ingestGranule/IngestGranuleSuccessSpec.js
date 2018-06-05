@@ -2,8 +2,12 @@ const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
-const { buildAndExecuteWorkflow, LambdaStep, conceptExists, getOnlineResources } =
-  require('@cumulus/integration-tests');
+const {
+  buildAndExecuteWorkflow,
+  LambdaStep,
+  conceptExists,
+  getOnlineResources
+} = require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile } = require('../helpers/testUtils');
 const config = loadConfig();
@@ -45,11 +49,11 @@ describe('The S3 Ingest Granules workflow', () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
     });
 
-    it('has expected payload', () => {
+    it('output includes the ingested granule with file staging location paths', () => {
       expect(lambdaOutput.payload).toEqual(expectedSyncGranulePayload);
     });
 
-    it('has expected updated meta', () => {
+    it('updates the meta object with input_granules', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedSyncGranulePayload.granules);
     });
   });
@@ -85,6 +89,12 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(check).toEqual(true);
       });
     });
+
+    it('moves files to separate protected buckets based on configuration', () => {
+      // Above we checked that the files exist, now show that they are in separate protected buckets
+      expect(files[0].bucket).toEqual('cumulus-test-sandbox-protected');
+      expect(files[3].bucket).toEqual('cumulus-test-sandbox-protected-2');
+    });
   });
 
   describe('the PostToCmr task', () => {
@@ -99,10 +109,7 @@ describe('The S3 Ingest Granules workflow', () => {
       files = lambdaOutput.payload.granules[0].files;
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
-      response = await got(cmrResource[1].href)
-        .then(response => {
-          return response;
-        });
+      response = await got(cmrResource[1].href);
     });
 
     afterAll(async () => {
