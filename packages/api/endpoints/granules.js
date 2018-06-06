@@ -55,17 +55,11 @@ async function put(event) {
       };
     }
     else if (action === 'move') {
-<<<<<<< HEAD
-      const destination = body.destination;
+      const destinations = body.destinations;
       const bucketsJSON = process.env.buckets;
       const distEndpoint = process.env.distEndpoint;
 
-      await moveGranuleFiles(response.files, destination, bucketsJSON, distEndpoint);
-=======
-      const destinations = body.destinations;
-
-      await moveGranuleFiles(response.files, destinations);
->>>>>>> cumulus-459-move-granules-via-api
+      await moveGranuleFiles(response.files, destinations, bucketsJSON, distEndpoint);
 
       return {
         granuleId: response.granuleId,

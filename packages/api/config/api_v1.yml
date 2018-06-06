@@ -60,7 +60,7 @@ ApiGranulesV1:
     invoke:
       function: "Ref"
       value: ScheduleSFLambdaFunction
-    distEndpoint: '{{parent.distributionEndpoint}}'
+    distEndpoint: '{{parent.api_distribution_url}}'
     buckets: '{{{JSON.stringify(parent.buckets)}}}'
     bucket: '{{parent.system_bucket}}'
     internal: '{{parent.system_bucket}}'
