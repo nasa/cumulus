@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
-
-### Added
 - **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
 
 ### Changed
