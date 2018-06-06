@@ -40,8 +40,7 @@ test.before(async () => {
   // create fake granule records
   fakeGranules = ['completed', 'failed'].map(fakeGranuleFactory);
   await Promise.all(fakeGranules.map((granule) => g.create(granule)
-    .then((record) => indexer.indexGranule(esClient, record, esIndex))
-  ));
+    .then((record) => indexer.indexGranule(esClient, record, esIndex))));
 });
 
 test.after.always(async () => {
@@ -99,7 +98,7 @@ test('PUT fails if action is not supported', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     },
     body: '{"action":"reprocess"}'
   };
@@ -114,7 +113,7 @@ test('PUT fails if action is not provided', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     }
   };
 
@@ -139,7 +138,7 @@ test('reingest a granule', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     },
     body: '{"action":"reingest"}'
   };
@@ -173,7 +172,7 @@ test('remove a granule from CMR', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId,
+      granuleName: fakeGranules[0].granuleId
     },
     body: '{"action":"removeFromCmr"}'
   };
@@ -242,4 +241,87 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
     detail,
     'Record deleted'
   );
+});
+
+test('move a granule', async (t) => {
+  const bucket = process.env.internal;
+  const secondBucket = randomString();
+  await aws.s3().createBucket({ Bucket: secondBucket }).promise();
+  const newGranule = fakeGranuleFactory();
+
+  newGranule.files = [
+    {
+      bucket,
+      name: `${newGranule.granuleId}.txt`,
+      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
+    },
+    {
+      bucket,
+      name: `${newGranule.granuleId}.md`,
+      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.md`
+    },
+    {
+      bucket: secondBucket,
+      name: `${newGranule.granuleId}.jpg`,
+      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.jpg`
+    }
+  ];
+
+  await g.create(newGranule);
+
+  await Promise.all(newGranule.files.map(async (file) => {
+    aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise();
+  }));
+
+  const destinationFilepath = `${process.env.stackName}/granules_moved`;
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket,
+      filepath: destinationFilepath
+    },
+    {
+      regex: '.*.md$',
+      bucket,
+      filepath: destinationFilepath
+    },
+    {
+      regex: '.*.jpg$',
+      bucket: secondBucket,
+      filepath: destinationFilepath
+    }
+  ];
+
+  const moveEvent = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: newGranule.granuleId
+    },
+    body: JSON.stringify({
+      action: 'move',
+      destinations
+    })
+  };
+
+  await testEndpoint(granuleEndpoint, moveEvent, async (response) => {
+    const body = JSON.parse(response.body);
+    t.is(body.status, 'SUCCESS');
+    t.is(body.action, 'move');
+
+    await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
+      t.is(list.Contents.length, 2);
+
+      list.Contents.forEach((item) => {
+        t.is(item.Key.indexOf(destinationFilepath), 0);
+      });
+    });
+
+    return aws.s3().listObjects({ Bucket: secondBucket, Prefix: destinationFilepath }).promise().then((list) => {
+      t.is(list.Contents.length, 1);
+
+      list.Contents.forEach((item) => {
+        t.is(item.Key.indexOf(destinationFilepath), 0);
+      });
+    });
+  });
 });

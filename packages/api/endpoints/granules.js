@@ -7,6 +7,7 @@ const log = require('@cumulus/common/log');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const models = require('../models');
+const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 
 /**
  * List all granules for a given collection.
@@ -19,7 +20,6 @@ function list(event, cb) {
   const search = new Search(event, 'granule');
   return search.query().then((res) => cb(null, res)).catch(cb);
 }
-
 
 /**
  * Update a single granule.
@@ -54,8 +54,19 @@ async function put(event) {
         status: 'SUCCESS'
       };
     }
+    else if (action === 'move') {
+      const destinations = body.destinations;
 
-    throw new Error('Action is not supported. Choices are: \'reingest\' and \'removeFromCmr\'');
+      await moveGranuleFiles(response.files, destinations);
+
+      return {
+        granuleId: response.granuleId,
+        action,
+        status: 'SUCCESS'
+      };
+    }
+
+    throw new Error('Action is not supported. Choices are: "move", "reingest", & "removeFromCmr"');
   }
 
   throw new Error('Action is missing');
