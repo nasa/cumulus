@@ -4,32 +4,13 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const get = require('lodash.get');
-const { moveGranuleFile } = require('@cumulus/ingest/granule');
+const { moveGranuleFile, getMetadata } = require('@cumulus/ingest/granule');
 const urljoin = require('url-join');
 const path = require('path');
-const { getS3Object, parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
-const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
+const { parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
-
-/**
- * Gets metadata for a cmr xml file from s3
- *
- * @param {string} xmlFilePath - S3 URI to the xml metadata document
- * @returns {string} returns stringified xml document downloaded from S3
- */
-async function getMetadata(xmlFilePath) {
-  if (!xmlFilePath) {
-    throw new XmlMetaFileNotFound('XML Metadata file not provided');
-  }
-
-  // GET the metadata text
-  // Currently, only supports files that are stored on S3
-  const parts = xmlFilePath.match(/^s3:\/\/(.+?)\/(.+)$/);
-  const obj = await getS3Object(parts[1], parts[2]);
-  return obj.Body.toString();
-}
 
 
 /**
