@@ -4,14 +4,18 @@
   "type": "object",
   "required": [
     "bucket",
+    "process",
     "stack",
-    "cmr",
-    "input_granules"
+    "cmr"
   ],
   "properties": {
     "bucket": {
       "type": "string",
       "description": "the bucket the has the private/public key needed for decrypting cmr password"
+    },
+    "process": {
+      "type": "string",
+      "description": "The process the granules went through"
     },
     "stack": {
       "type": "string",
@@ -31,9 +35,6 @@
         "username": { "type": "string" },
         "password": { "type": "string" }
       }
-    },
-    "input_granules": {
-
     }
   }
 }
