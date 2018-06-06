@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
+- **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
+
+### Changed
+- **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
+  - Change the structure of the buckets to allow for  more than one bucket of each type. The bucket structure is now: 
+    bucket-key: 
+      name: <bucket-name>
+      type: <type> i.e. internal, public, etc.
+  - Change IAM and app deployment configuration to support new bucket structure
+  - Update tasks and workflows to support new bucket structure
+  - Replace instances where buckets.internal is relied upon to either use the system bucket or a configured bucket
+  - Move IAM template to the deployment package. NOTE: You now have to specify '--template node_modules/@cumulus/deployment/iam' in your IAM deployment
+  - Add IAM cloudformation template support to filter buckets by type
 
 ## [v1.5.5] - 2018-05-30
 
@@ -71,17 +84,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     the output. Defaults to '.', which will match all granules in the PDR.
 - File checksums in PDRs now support MD5
 - Deployment support to subscribe to an SNS topic that already exists
-- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to
-  update bucket policy for in-region access.
-- **CUMULUS-533** Added fields to granule indexer to support EMS ingest and
-  archive record creation
-- You can now deploy cumulus without ElasticSearch. Just add `es: null` to
-  your `app/config.yml` file. This is only useful for debugging purposes.
-  Cumulus still requires ElasticSearch to properly operate.
-- `@cumulus/integration-tests` includes and exports the `addRules` function,
-  which seeds rules into the DynamoDB table.
+- **CUMULUS-470, CUMULUS-471** In-region S3 Policy lambda added to API to update bucket policy for in-region access.
+- **CUMULUS-533** Added fields to granule indexer to support EMS ingest and archive record creation
 - **CUMULUS-534** Track deleted granules
   - added `deletedgranule` type to `cumulus` index.
+  - **Important Note:** Force custom bootstrap to re-run by adding this to
+    app/config.yml `es: elasticSearchMapping: 7`
+- You can now deploy cumulus without ElasticSearch. Just add `es: null` to your `app/config.yml` file. This is only useful for debugging purposes. Cumulus still requires ElasticSearch to properly operate.
+- `@cumulus/integration-tests` includes and exports the `addRules` function, which seeds rules into the DynamoDB table.
 - Added capability to support EFS in cloud formation template. Also added
   optional capability to ssh to your instance and privileged lambda functions.
 - Added support to force discovery of PDRs that have already been processed
@@ -311,3 +321,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/cumulus-nasa/cumulus/compare/pre-v1-release...v1.0.0
+

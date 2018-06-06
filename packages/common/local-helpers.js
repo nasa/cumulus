@@ -52,8 +52,9 @@ const findById = (arr, id) => {
 
 /**
  * Returns the workflows defined in a yml configuration file
- * @param {string} id The collection id to read from collections.yml
- * @param {string} configFile The path to the yml file containing the configuration
+ *
+ * @param {string} id - The collection id to read from collections.yml
+ * @param {string} configFile - The path to the yml file containing the configuration
  * @returns {Object} A map containing descriptions of each workflow
  */
 exports.parseWorkflows = (id, configFile = null) => {
@@ -68,11 +69,12 @@ exports.parseWorkflows = (id, configFile = null) => {
 /**
  * Returns a dummy message for a collection of the given id, used for local testing,
  * with information obtained by reading collections.yml
+ *
  * @param {string} id - The collection id to read from collections.yml
  * @param {string} taskName - The config key to lookup to find task config
  * @param {function} payload - A function which takes the message and can override its fields
  * @param {string} configFile - Path to the yml file containing the configuration
- * @return - The config object
+ * @returns {Object} - The config object
  */
 exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile = null) => () => {
   if (!isLocal && !isMocha && !isJupyter && !isAva) return null;
@@ -100,9 +102,18 @@ exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile =
       stack: 'some-stack',
       state_machine_prefix: 'some-prefix',
       buckets: {
-        config: 'some-stack-config',
-        private: 'some-stack-private',
-        public: 'some-stack-public'
+        config: {
+          name: 'some-stack-config',
+          type: 'public'
+        },
+        private: {
+          name: 'some-stack-private',
+          type: 'private'
+        },
+        public: {
+          name: 'some-stack-public',
+          type: 'public'
+        }
       },
       tables: {
         connections: 'some-stack-connects',
@@ -122,8 +133,10 @@ exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile =
 
 /**
  * Sets up a local execution of the given handler.
+ *
  * @param {function} handler - The Lambda message handler
  * @param {function} invocation - A function which returns the Lambda input
+ * @returns {undefined} none
  */
 exports.setupLocalRun = (handler, invocation) => {
   if (isLocal) {
@@ -137,6 +150,7 @@ exports.setupLocalRun = (handler, invocation) => {
  * calls the passed function if it is a local run
  *
  * @param {function} fn - A function to call
+ * @returns {undefined} none
  */
 exports.justLocalRun = (fn) => {
   if (isLocal) {
