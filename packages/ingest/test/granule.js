@@ -319,3 +319,44 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
     });
   });
 });
+
+test('moveGranuleFiles only moves granule files specified with regex', async (t) => {
+  const bucket = randomString();
+  const secondBucket = randomString();
+  await s3().createBucket({ Bucket: bucket }).promise();
+  await s3().createBucket({ Bucket: secondBucket }).promise();
+
+  const filenames = [
+    'included-in-move.txt',
+    'excluded-from-move'
+  ];
+
+  const sourceFilePromises = filenames.map(async (name) => {
+    const params = { Bucket: bucket, Key: `origin/${name}`, Body: name };
+    await s3().putObject(params).promise();
+    return { name, bucket, filepath: `origin/${name}` };
+  });
+
+  const destinationFilepath = 'destination';
+
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket: secondBucket,
+      filepath: destinationFilepath
+    }
+  ];
+
+  const sourceFiles = await Promise.all(sourceFilePromises);
+  await moveGranuleFiles(sourceFiles, destinations);
+
+  await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
+    t.is(list.Contents.length, 1);
+    t.is(list.Contents[0].Key, 'origin/excluded-from-move');
+  });
+
+  return s3().listObjects({ Bucket: secondBucket }).promise().then((list) => {
+    t.is(list.Contents.length, 1);
+    t.is(list.Contents[0].Key, 'destination/included-in-move.txt');
+  });
+});
