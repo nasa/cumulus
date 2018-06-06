@@ -6,15 +6,10 @@ const get = require('lodash.get');
  * A synchronous sleep/wait function
  *
  * @param {number} milliseconds - number of milliseconds to sleep
- * @returns {undefined} undefined
+ * @returns {Promise<undefined>} undefined
  */
-function sleep(milliseconds) {
-  const start = new Date().getTime();
-  for (let i = 0; i < 1e7; i += 1) {
-    if ((new Date().getTime() - start) > milliseconds) {
-      break;
-    }
-  }
+async function sleep(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 
