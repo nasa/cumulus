@@ -3,6 +3,10 @@
   "description": "Describes the output produced by the post-to-cmr task",
   "type": "object",
   "properties": {
+    "process": {
+      "type": "string",
+      "description": "The process the granules went through"
+    },
     "granules": {
       "type": "array",
       "items": {
