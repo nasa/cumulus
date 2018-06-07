@@ -24,6 +24,8 @@ const { baseProtocol } = require('./protocol');
 const xml2js = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
+let buckets;
+
 /**
 * The abstract Discover class
 **/
@@ -626,17 +628,23 @@ async function postS3Object(destination, options) {
  * @param {Object} cmrFile - cmrFile to be updated
  * @param {Object[]} sourceFiles - array of file objects
  * @param {Object[]} destinations - array of objects defining the destination of granule files
- * @param {string} bucketsString - buckets configuration
  * @param {string} distEndpoint - distribution enpoint from config
  * @returns {Promise<undefined>} returns `undefined` when all the files are moved
  */
-async function updateMetadata(cmrFile, sourceFiles, destinations, bucketsString, distEndpoint) {
+async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) {
   const urls = [];
   const file = cmrFile.file;
   const destination = cmrFile.destination;
-  const buckets = JSON.parse(bucketsString);
-  const bucketKeys = Object.keys(buckets);
 
+
+  if (!buckets) {
+
+    const bucketsJSON = await aws.s3().getObject({ Bucket: process.env.bucket, Key: `${process.env.stackName}/workflows/buckets.json` }).promise();
+    // console.log(bucketsJSON.Body);
+    buckets = JSON.parse(bucketsJSON.Body);
+  }
+
+  const bucketKeys = Object.keys(buckets);
   sourceFiles.forEach((sourceFile) => {
     const urlObj = {};
     const currDestination = destinations.find((dest) => sourceFile.name.match(dest.regex));
@@ -752,18 +760,16 @@ async function moveGranuleFile(source, target, options) {
  * @param {string} destinations[].regex - regex for matching filepath of file to new destination
  * @param {string} destinations[].bucket - aws bucket
  * @param {string} destinations[].key - filepath on the bucket for the destination
- * @param {string} bucketsString - buckets configuration
  * @param {string} distEndpoint - distribution enpoint from config
  * @returns {Promise<undefined>} returns `undefined` when all the files are moved
  */
-async function moveGranuleFiles(sourceFiles, destinations, bucketsString, distEndpoint) {
-
+async function moveGranuleFiles(sourceFiles, destinations, distEndpoint) {
   const moveFileRequests = sourceFiles.map((file) => {
     const destination = destinations.find((dest) => file.name.match(dest.regex));
 
     if (file.name.match(/.*\.cmr\.xml$/)) {
       return updateMetadata(
-        { file, destination }, sourceFiles, destinations, bucketsString, distEndpoint
+        { file, destination }, sourceFiles, destinations, distEndpoint
       );
     }
     // if there's no match, we skip the file
