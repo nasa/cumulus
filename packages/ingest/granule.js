@@ -691,7 +691,7 @@ async function updateMetadata(cmrFile, sourceFiles, destinations, bucketsString,
     action = postS3Object(target, options);
   }
   else {
-    action = postS3Object({ bucket: file.bucket, key: `${file.filepath}/${file.name}`, body: xml });
+    action = postS3Object({ bucket: file.bucket, key: file.filepath, body: xml });
   }
   return action;
 }
