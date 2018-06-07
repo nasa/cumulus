@@ -5,8 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- **CUMULUS-602** - Format all logs sent to Elastic Search.
+  - Extract cumulus log message and index it to Elastic Search.
 
 ### Added
+- **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
 - **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
 
 ### Changed
@@ -39,6 +43,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Kinesis Consumer lambda catches and logs errors so that consumer doesn't get stuck in a loop re-processing bad json records.
 - EMS report filenames are now based on their start time instead of the time
   instead of the time that the report was generated
+- **CUMULUS-552 - Cumulus API returns different results for the same collection depending on query**
+  - The collection, provider and rule records in elasticsearch are now replaced with records from dynamo db when the dynamo db records are updated.
 
 ### Added
 - `@cumulus/deployment`'s default cloudformation template now configures storage for Docker to match the configured ECS Volume. The template defines Docker's devicemapper basesize (`dm.basesize`) using `ecs.volumeSize`. This is addresses ECS default of limiting Docker containers to 10GB of storage ([Read more](https://aws.amazon.com/premiumsupport/knowledge-center/increase-default-ecs-docker-limit/)).
@@ -320,3 +326,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/cumulus-nasa/cumulus/compare/pre-v1-release...v1.0.0
+

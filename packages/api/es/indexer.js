@@ -69,7 +69,7 @@ function parseException(exception) {
 }
 
 /**
- * Extracts granule info from a stepFunction message and indexes it to
+ * Extracts info from a stepFunction message and indexes it to
  * an ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
@@ -88,13 +88,28 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
     body.push({ index: { _index: index, _type: type, _id: p.id } });
     let record;
     try {
-      record = JSON.parse(p.message);
-      record.timestamp = record.time;
-      delete record.time;
+      // cumulus log message has extra aws messages before the json message,
+      // only the json message should be logged to elasticsearch.
+      // example message:
+      // 2018-06-01T17:45:27.108Z a714a0ef-f141-4e52-9661-58ca2233959a
+      // {"level": "info", "timestamp": "2018-06-01T17:45:27.108Z",
+      // "message": "uploaded s3://bucket/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"}
+      const entryParts = p.message.trim().split('\t');
+      // cumulus log message
+      if (entryParts.length >= 3 && entryParts[2].startsWith('{') &&
+      entryParts[entryParts.length - 1].endsWith('}')) {
+        record = JSON.parse(entryParts.slice(2).join('\t'));
+        record.RequestId = entryParts[1];
+      }
+      else { // other logs e.g. cumulus-ecs-task
+        record = JSON.parse(p.message);
+      }
+      // level is number in elasticsearch
+      if (typeof record.level === 'string') record.level = log.convertLogLevel(record.level);
     }
     catch (e) {
       record = {
-        msg: p.message,
+        message: p.message.trim(),
         timestamp: p.timestamp,
         level: 30,
         pid: 1,
@@ -172,7 +187,30 @@ async function partialRecordUpdate(
  * @returns {Promise} Elasticsearch response
  */
 async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
-  return partialRecordUpdate(esClient, id, type, doc, parent, index, true);
+  if (!esClient) {
+    esClient = await Search.es();
+  }
+
+  if (!doc) {
+    throw new Error('Nothing to update. Make sure doc argument has a value');
+  }
+
+  doc.timestamp = Date.now();
+
+  const params = {
+    index,
+    type,
+    id,
+    refresh: inTestMode(),
+    body: doc
+  };
+
+  if (parent) {
+    params.parent = parent;
+  }
+
+  // adding or replacing record to ES
+  return esClient.index(params);
 }
 
 /**
@@ -210,7 +248,6 @@ function pdr(payload) {
  * @returns {Promise} Elasticsearch response
  */
 function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
-  // adding collection record to ES
   const collectionId = constructCollectionId(meta.name, meta.version);
   return genericRecordUpdate(esClient, collectionId, meta, index, type);
 }
@@ -258,9 +295,11 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
     type: 'deletedgranule',
     id: payload.granuleId,
     parent: payload.collectionId,
+    refresh: inTestMode(),
     ignore: [404]
   };
   await esClient.delete(delGranParams);
+
   return genericRecordUpdate(
     esClient,
     payload.granuleId,
@@ -335,17 +374,7 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
 
         // When a 'granule' record is deleted, the record is added to 'deletedgranule'
         // type for EMS report purpose.
-        await esClient.update({
-          index,
-          type: 'deletedgranule',
-          id: doc.granuleId,
-          parent: parent,
-          refresh: inTestMode(),
-          body: {
-            doc,
-            doc_as_upsert: true
-          }
-        });
+        await genericRecordUpdate(esClient, doc.granuleId, doc, index, 'deletedgranule', parent);
       }
       return response;
     });
@@ -453,6 +482,7 @@ module.exports = {
   handler,
   logHandler,
   indexCollection,
+  indexLog,
   indexProvider,
   indexRule,
   indexGranule,

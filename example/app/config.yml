@@ -31,7 +31,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.1.1
+        image: cumuluss/cumulus-ecs-task:1.1.2
         cpu: 400
         memory: 700
         count: 1
@@ -175,3 +175,7 @@ mth-cum-test:
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
+
+jl:
+  prefix: jl-test
+  stackNameNoDash: JlTestIntegration
