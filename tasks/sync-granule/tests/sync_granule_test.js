@@ -287,21 +287,12 @@ test('download granule with bad checksum in file from HTTP endpoint throws', asy
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
-  try {
-    // Stage the files to be downloaded
-    const granuleFilename = t.context.event.input.granules[0].files[0].name;
-    const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
-    const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;
-    console.log(errorMessage);
+  // Stage the files to be downloaded
+  const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
+  const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;
 
-    await t.throws(syncGranule(t.context.event), errorMessage);
-  }
-  catch (e) {
-    if (e instanceof errors.RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
-  }
+  await t.throws(syncGranule(t.context.event), errorMessage);
 });
 
 test('validate file properties', async (t) => {
