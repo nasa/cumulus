@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://wiki.earthdata.nasa.gov/display/CUMULUS/Upgrading+to+Cumulus+1.6)
+### Please note: [Upgrade Instructions](https://github.com/cumulus-nasa/cumulus/wiki/Upgrading-to-Cumulus-1.6)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
