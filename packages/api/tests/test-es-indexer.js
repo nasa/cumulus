@@ -12,8 +12,8 @@ const { randomString } = require('@cumulus/common/test-utils');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const models = require('../models');
-const { fakeGranuleFactory } = require('../lib/testUtils');
-const { constructCollectionId, sleep } = require('../lib/utils');
+const { fakeGranuleFactory, fakeCollectionFactory } = require('../lib/testUtils');
+const { constructCollectionId } = require('../lib/utils');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const granuleSuccess = require('./data/granule_success.json');
 const granuleFailure = require('./data/granule_failed.json');
@@ -188,17 +188,17 @@ test.serial('creating a granule record in meta section', async (t) => {
   t.is(record.published, false);
 });
 
-test.skip.serial('indexing a deletedgranule record', async (t) => {
+test.serial('indexing a deletedgranule record', async (t) => {
   const granuletype = 'granule';
-  const granule = granuleSuccess.payload.granules[0];
-  granule.granuleId = randomString();
-  const collection = granuleSuccess.meta.collection;
+  const granule = fakeGranuleFactory();
+  const collection = fakeCollectionFactory();
   const collectionId = constructCollectionId(collection.name, collection.version);
+  granule.collectionId = collectionId;
 
   // create granule record
-  let r = await indexer.granule(esClient, granuleSuccess, esIndex, granuletype);
-  t.is(r[0].result, 'created');
-  // delete granule record
+  let r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
+  t.is(r.result, 'created');
+
   r = await indexer.deleteRecord(esClient, granule.granuleId, granuletype, collectionId, esIndex);
   t.is(r.result, 'deleted');
 
@@ -218,8 +218,8 @@ test.skip.serial('indexing a deletedgranule record', async (t) => {
   t.truthy(record._source.deletedAt);
 
   // the deletedgranule record is removed if the granule is ingested again
-  r = await indexer.granule(esClient, granuleSuccess, esIndex, granuletype);
-  t.is(r[0].result, 'created');
+  r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
+  t.is(r.result, 'created');
   record = await esClient.get(Object.assign(deletedGranParams, { ignore: [404] }));
   t.false(record.found);
 });
@@ -352,6 +352,90 @@ test.serial('indexing a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
+test.serial('indexing collection records with different versions', async (t) => {
+  const name = randomString();
+  for (let i = 1; i < 11; i += 1) {
+    const version = `00${i}`;
+    const key = `key${i}`;
+    const value = `value${i}`;
+    const collection = {
+      name: name,
+      version: version,
+      [`${key}`]: value
+    };
+
+    const r = await indexer.indexCollection(esClient, collection, esIndex); // eslint-disable-line no-await-in-loop
+    // make sure record is created
+    t.is(r.result, 'created');
+  }
+
+  await esClient.indices.refresh();
+  // check each record exists and is not affected by other collections
+  for (let i = 1; i < 11; i += 1) {
+    const version = `00${i}`;
+    const key = `key${i}`;
+    const value = `value${i}`;
+    const collectionId = indexer.constructCollectionId(name, version);
+    const record = await esClient.get({ // eslint-disable-line no-await-in-loop
+      index: esIndex,
+      type: 'collection',
+      id: collectionId
+    });
+
+    t.is(record._id, collectionId);
+    t.is(record._source.name, name);
+    t.is(record._source.version, version);
+    t.is(record._source[key], value);
+    t.is(typeof record._source.timestamp, 'number');
+  }
+});
+
+test.serial('updating a collection record', async (t) => {
+  const collection = {
+    name: randomString(),
+    version: '001',
+    anyObject: {
+      key: 'value',
+      key1: 'value1',
+      key2: 'value2'
+    },
+    anyKey: 'anyValue'
+  };
+
+  // updatedCollection has some parameters removed
+  const updatedCollection = {
+    name: collection.name,
+    version: '001',
+    anyparams: {
+      key1: 'value1'
+    }
+  };
+
+  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  let r = await indexer.indexCollection(esClient, collection, esIndex);
+
+  // make sure record is created
+  t.is(r.result, 'created');
+
+  // update the collection record
+  r = await indexer.indexCollection(esClient, updatedCollection, esIndex);
+  t.is(r.result, 'updated');
+
+  // check the record exists
+  const record = await esClient.get({
+    index: esIndex,
+    type: 'collection',
+    id: collectionId
+  });
+
+  t.is(record._id, collectionId);
+  t.is(record._source.name, updatedCollection.name);
+  t.is(record._source.version, updatedCollection.version);
+  t.deepEqual(record._source.anyparams, updatedCollection.anyparams);
+  t.is(record._source.anyKey, undefined);
+  t.is(typeof record._source.timestamp, 'number');
+});
+
 test.serial('creating a failed pdr record', async (t) => {
   const payload = pdrFailure.payload;
   payload.pdr.name = randomString();
@@ -399,7 +483,6 @@ test.serial('creating a running pdr record', async (t) => {
   newPayload.meta.pdr.name = randomString();
   newPayload.meta.status = 'running';
   newPayload.payload.running.push('arn');
-  const pdr = newPayload.meta.pdr;
   const record = await indexer.pdr(newPayload);
 
   t.is(record.status, 'running');
