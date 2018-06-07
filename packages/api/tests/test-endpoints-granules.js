@@ -332,6 +332,7 @@ test('move a granule', async (t) => {
 
 test('move a file and update metadata', async (t) => {
   const bucket = process.env.internal;
+  process.env.bucket = bucket;
   const buckets = {
     protected: {
       name: process.env.internal,
@@ -342,8 +343,9 @@ test('move a file and update metadata', async (t) => {
       type: 'public'
     }
   };
-  process.env.buckets = JSON.stringify(buckets);
+
   process.env.distEndpoint = 'http://example.com/';
+  await aws.s3().putObject({ Bucket: bucket, Key: `${process.env.stackName}/workflows/buckets.json`, Body: JSON.stringify(buckets) }).promise();
 
   await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
   const newGranule = fakeGranuleFactory();
