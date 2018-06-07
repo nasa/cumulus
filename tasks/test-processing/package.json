@@ -8,9 +8,6 @@
     "type": "git",
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
-  "publishConfig": {
-    "access": "private"
-  },
   "engine": {
     "node": ">=8.10.0"
   },
