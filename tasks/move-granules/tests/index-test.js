@@ -18,13 +18,15 @@ async function deleteBucket(bucket) {
   ));
 }
 
-test.beforeEach((t) => {
+test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
-  return aws.s3().createBucket({
+  await aws.s3().createBucket({
     Bucket: 'cumulus-public'
-  }).promise().then(aws.s3().createBucket({
+  }).promise()
+
+  await aws.s3().createBucket({
     Bucket: t.context.stagingBucket
-  }).promise());
+  }).promise();
 });
 
 test.afterEach.always(async (t) => {
