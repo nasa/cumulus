@@ -68,7 +68,6 @@ class StateMachineS3MessageSource extends MessageSource {
     this.originalMessage = message;
 
     if (message.resources) {
-      // BUCKET/KEY TO DO - what bucket should this be?
       this.bucket = message.resources.buckets.private;
     }
     if (message.meta) {
