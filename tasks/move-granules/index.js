@@ -213,26 +213,26 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 * @returns {Promise} promise resolves when all files have been updated
 **/
 async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distEndpoint) {
-  cmrFiles.forEach((cmrFile) => {
+  cmrFiles.forEach(async (cmrFile) => {
     const metadataGranule = get(cmrFile, 'metadataObject.Granule');
     const granule = granulesObject[cmrFile.granuleId];
     const urls = [];
     // Populates onlineAcessUrls with all public and protected files
     allFiles.forEach((file) => {
-        const urlObj = {};
-        if (file.bucket.type.match('protected')) {
-          console.log(`protected file: ${JSON.stringify(file)}`);
-          const extension = urljoin(file.bucket.name, file.filepath);
-          urlObj.URL = urljoin(distEndpoint, extension);
-          urlObj.URLDescription = 'File to download';
-          urls.push(urlObj);
-          console.log(`url: ${JSON.stringify(urlObj)}`);
-        }
-        else if (file.bucket.type.match('public')) {
-          urlObj.URL = `https://${file.bucket.name}.s3.amazonaws.com/${file.filepath}`;
-          urlObj.URLDescription = 'File to download';
-          urls.push(urlObj);
-        }
+      const urlObj = {};
+      if (file.bucket.type.match('protected')) {
+        console.log(`protected file: ${JSON.stringify(file)}`);
+        const extension = urljoin(file.bucket.name, file.filepath);
+        urlObj.URL = urljoin(distEndpoint, extension);
+        urlObj.URLDescription = 'File to download';
+        urls.push(urlObj);
+        console.log(`url: ${JSON.stringify(urlObj)}`);
+      }
+      else if (file.bucket.type.match('public')) {
+        urlObj.URL = `https://${file.bucket.name}.s3.amazonaws.com/${file.filepath}`;
+        urlObj.URLDescription = 'File to download';
+        urls.push(urlObj);
+      }
     });
 
     const updatedGranule = {};
@@ -249,7 +249,7 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     const xml = builder.buildObject(cmrFile.metadataObject);
     cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
-    if (updatedCmrFile.bucket.type.match('public')){
+    if (updatedCmrFile.bucket.type.match('public')) {
       await promiseS3Upload(
         { Bucket: updatedCmrFile.bucket.name, Key: updatedCmrFile.filepath, Body: xml, ACL: 'public-read' }
       );
