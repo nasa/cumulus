@@ -777,6 +777,7 @@ Resources:
           Fn::Join:
             - ""
             - - "#cloud-boothook\n"
+              - "mkdir -p /etc/docker && echo '{\n  \"storage-driver\": \"devicemapper\"\n}' >> /etc/docker/daemon.json\n"
               - "cloud-init-per once docker_options echo 'OPTIONS=\"${OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G\"' >> /etc/sysconfig/docker\n"
               - "\n"
               - "yum install -y aws-cfn-bootstrap\n"
@@ -790,7 +791,13 @@ Resources:
         MinInstancesInService: 0
     Properties:
       AvailabilityZones:
+      {{# if ecs.availabilityZones }}
+      {{#each ecs.availabilityZones}}
+        - {{this}}
+      {{/each}}
+      {{else if ecs.availabilityZone}}
         - {{ecs.availabilityZone}}
+      {{/if}}
     {{# if vpc.subnets }}
       VPCZoneIdentifier:
       {{#each vpc.subnets}}
