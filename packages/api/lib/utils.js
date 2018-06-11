@@ -3,7 +3,7 @@
 const get = require('lodash.get');
 
 /**
- * A synchronous sleep/wait function
+ * An asynchronous sleep/wait function
  *
  * @param {number} milliseconds - number of milliseconds to sleep
  * @returns {Promise<undefined>} undefined
