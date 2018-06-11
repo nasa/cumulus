@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
 - **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
+- **CUMULUS-480** Add suport for backup and recovery:
+  - Add DynamoDB tables for granules, executions and pdrs
+  - Add ability to write all records to S3
+  - Add ability to download all DynamoDB records in form json files
+  - Add ability to upload records to DynamoDB
+  - Add migration scripts for copying granule, pdr and execution records from ElasticSearch to DynamoDB
+  - Add IAM support for batchWrite on dynamoDB
 
 ### Changed
 - **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
