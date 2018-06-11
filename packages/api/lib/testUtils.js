@@ -2,6 +2,16 @@
 
 const { randomString } = require('@cumulus/common/test-utils');
 
+/**
+ * mocks the context object of the lambda function with
+ * succeed and fail functions to facilitate testing of
+ * lambda functions used as backend in ApiGateway
+ *
+ * @param {Function} endpoint - the lambda function used as ApiGateway backend
+ * @param {Object} event - aws lambda event object
+ * @param {Function} testCallback - aws lambda callback function
+ * @returns {Promise<object>} the promise returned by the lambda function
+ */
 function testEndpoint(endpoint, event, testCallback) {
   return new Promise((resolve, reject) => {
     endpoint(event, {
