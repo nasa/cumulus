@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { Execution } = require('@cumulus/api/models');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
@@ -22,6 +23,9 @@ describe('The Sync Granules workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
+
+  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  const executionModel = new Execution();
 
   beforeAll(async () => {
     // eslint-disable-next-line function-paren-newline
@@ -74,6 +78,13 @@ describe('The Sync Granules workflow', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
       });
+    });
+  });
+
+  describe('the sf-sns-report task has published a sns message and', () => {
+    it('the execution record is added to DynamoDB', async () => {
+      const record = await executionModel.get({ arn: workflowExecution.executionArn });
+      expect(record.status).toEqual('completed');
     });
   });
 });

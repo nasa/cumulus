@@ -1,3 +1,4 @@
+const { Execution } = require('@cumulus/api/models');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../helpers/testUtils');
@@ -8,6 +9,8 @@ const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
+process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+const executionModel = new Execution();
 
 describe('The Discover Granules workflow with http Protocol', () => {
   let httpWorkflowExecution;
@@ -43,6 +46,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
       expect(lambdaOutput.payload.granules.length).toEqual(3);
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
       expect(lambdaOutput.payload.granules[0].files.length).toEqual(2);
+    });
+  });
+
+  describe('the sf-sns-report task has published a sns message and', () => {
+    it('the execution record is added to DynamoDB', async () => {
+      const record = await executionModel.get({ arn: httpWorkflowExecution.executionArn });
+      expect(record.status).toEqual('completed');
     });
   });
 });
@@ -81,6 +91,13 @@ describe('The Discover Granules workflow with https Protocol', () => {
       expect(lambdaOutput.payload.granules.length).toEqual(3);
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
       expect(lambdaOutput.payload.granules[0].files.length).toEqual(2);
+    });
+  });
+
+  describe('the sf-sns-report task has published a sns message and', () => {
+    it('the execution record is added to DynamoDB', async () => {
+      const record = await executionModel.get({ arn: httpsWorkflowExecution.executionArn });
+      expect(record.status).toEqual('completed');
     });
   });
 });
