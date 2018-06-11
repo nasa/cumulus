@@ -80,7 +80,7 @@ program
 
 program
   .command('migrate')
-  .option('--stack <stack>', 'AWS CloudFormatio stack name')
+  .option('--stack <stack>', 'AWS CloudFormation stack name')
   .description('Invokes the migration lambda function')
   .parse(process.argv)
   .action((cmd) => {
