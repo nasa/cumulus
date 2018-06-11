@@ -151,14 +151,14 @@ kk-uat-deployment:
   stackNameNoDash: KkTestUat
 
   iams:
-    ecsRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::000000000000:role/kk-test-uat-steprole'
-    instanceProfile: 'arn:aws:iam::000000000000:instance-profile/kk-test-uat-ecs'
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/kk-test-uat-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-distribution-api-lambda'
 
-  es:
-    elasticSearchMapping: 7
+  es: null
    
 mth-cum-test:
   prefix: mth-cum-test
