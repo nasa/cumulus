@@ -20,15 +20,16 @@ async function deleteBucket(bucket) {
 
 test.beforeEach((t) => {
   t.context.stagingBucket = randomString();
+  t.context.endBucket = randomString();
   return aws.s3().createBucket({
-    Bucket: 'cumulus-public'
+    Bucket: t.context.endBucket
   }).promise().then(aws.s3().createBucket({
     Bucket: t.context.stagingBucket
   }).promise());
 });
 
 test.afterEach.always(async (t) => {
-  deleteBucket('cumulus-public');
+  deleteBucket(t.context.endBucket);
   deleteBucket(t.context.stagingBucket);
 });
 
@@ -39,6 +40,7 @@ test('should move files to final location', (t) => {
     name: t.context.stagingBucket,
     type: 'internal'
   };
+  newPayload.config.buckets.public.name = t.context.endBucket;
   newPayload.input = [
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
@@ -59,7 +61,7 @@ test('should move files to final location', (t) => {
   })).then(() => moveGranules(newPayload))
     .then((output) => validateOutput(t, output))
     .then(() => aws.s3ObjectExists({
-      Bucket: 'cumulus-public',
+      Bucket: t.context.endBucket,
       Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
     }))
     .then((check) => t.true(check));
@@ -68,14 +70,15 @@ test('should move files to final location', (t) => {
 test('should update filenames with specific url_path', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   const newFilename1 =
-    's3://cumulus-public/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg';
+    `s3://${t.context.endBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
   const newFilename2 =
-    's3://cumulus-public/example/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg';
+    `s3://${t.context.endBucket}/example/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`;
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal = {
     name: t.context.stagingBucket,
     type: 'internal'
   };
+  newPayload.config.buckets.public.name = t.context.endBucket;
   newPayload.input = [
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
@@ -115,14 +118,15 @@ test('should update filenames with metadata fields', (t) => {
     name: t.context.stagingBucket,
     type: 'internal'
   };
+  newPayload.config.buckets.public.name = t.context.endBucket;
   newPayload.config.input_granules[0].files[0].filename =
   `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
   newPayload.config.input_granules[0].files[1].filename =
   `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`;
   const expectedFilenames = [
-    's3://cumulus-public/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-    's3://cumulus-public/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml'];
+    `s3://${t.context.endBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
+    `s3://${t.context.endBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
+    `s3://${t.context.endBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`];
 
   return aws.promiseS3Upload({
     Bucket: t.context.stagingBucket,
