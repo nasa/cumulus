@@ -1,3 +1,4 @@
+const { Execution } = require('@cumulus/api/models');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
 const { loadConfig, deleteFolder } = require('../helpers/testUtils');
@@ -13,6 +14,8 @@ describe('The Discover And Queue PDRs workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution;
+  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  const executionModel = new Execution();
 
   beforeAll(async () => {
     await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
@@ -51,6 +54,13 @@ describe('The Discover And Queue PDRs workflow', () => {
 
     it('output is pdrs_queued', () => {
       expect(lambdaOutput.payload).toEqual({ pdrs_queued: 1 });
+    });
+  });
+
+  describe('the sf-sns-report task has published a sns message and', () => {
+    it('the execution record is added to DynamoDB', async () => {
+      const record = await executionModel.get({ arn: workflowExecution.executionArn });
+      expect(record.status).toEqual('completed');
     });
   });
 });
