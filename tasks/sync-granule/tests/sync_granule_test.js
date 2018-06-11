@@ -5,7 +5,12 @@ const test = require('ava');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const {
+  recursivelyDeleteS3Bucket,
+  listS3Objects,
+  S3ObjectExists,
+  s3
+} = require('@cumulus/common/aws');
 
 const { cloneDeep } = require('lodash');
 const {
@@ -167,6 +172,13 @@ test('download Granule from SFTP endpoint', async (t) => {
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
+    t.is(
+      true,
+      await s3ObjectExists({
+        Bucket: t.context.internalBucketName,
+        Key: `${keypath}/${granuleFilename}`
+      })
+    )
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
@@ -213,6 +225,13 @@ test('download granule from S3 provider', async (t) => {
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}` // eslint-disable-line max-len
     );
+    t.is(
+      true,
+      await s3ObjectExists({
+        Bucket: t.context.internalBucketName,
+        Key: `${keypath}/${granuleFileName}`
+      })
+    )
   }
   finally {
     // Clean up
@@ -264,6 +283,13 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
+    t.is(
+      true,
+      await s3ObjectExists({
+        Bucket: t.context.internalBucketName,
+        Key: `${keypath}/${granuleFilename}`
+      })
+    )
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
