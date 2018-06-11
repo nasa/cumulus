@@ -17,56 +17,8 @@ const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { Search, defaultIndexAlias } = require('./search');
+const { constructCollectionId, deconstructCollectionId } = require('../lib/utils');
 const { Granule, Pdr, Execution } = require('../models');
-
-/**
- * Returns the collectionId used in elasticsearch
- * which is a combination of collection name and version
- *
- * @param {string} name - collection name
- * @param {string} version - collection version
- * @returns {string} collectionId
- */
-function constructCollectionId(name, version) {
-  return `${name}___${version}`;
-}
-
-/**
- * Returns the name and version of a collection based on
- * the collectionId used in elasticsearch indexing
- *
- * @param {string} collectionId - collectionId used in elasticsearch index
- * @returns {Object} name and version as object
- */
-function deconstructCollectionId(collectionId) {
-  const [name, version] = collectionId.split('___');
-  return {
-    name,
-    version
-  };
-}
-
-/**
- * Ensures that the exception is returned as an object
- *
- * @param {*} exception - the exception
- * @returns {string} an stringified exception
- */
-function parseException(exception) {
-  // null is considered object
-  if (exception === null) {
-    return {};
-  }
-
-  if (typeof exception !== 'object') {
-    const converted = JSON.stringify(exception);
-    if (converted === 'undefined') {
-      return {};
-    }
-    exception = { Error: 'Unknown Error', Cause: converted };
-  }
-  return exception;
-}
 
 /**
  * Extracts info from a stepFunction message and indexes it to
