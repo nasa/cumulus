@@ -202,11 +202,6 @@ function bootstrapDynamoDbTables(tables) {
         };
         return dynamodb().updateContinuousBackups(params).promise();
       })
-      .catch((e) => {
-        if (e.message.includes('ContinuousBackupsUnavailableException')) {
-          console.log(e.message);
-        }
-      });
   }));
 }
 
