@@ -25,7 +25,7 @@ test.beforeEach(async (t) => {
     Bucket: t.context.endBucket
   }).promise().then(aws.s3().createBucket({
     Bucket: t.context.stagingBucket
-  }).promise();
+  }).promise());
 });
 
 test.afterEach.always(async (t) => {
