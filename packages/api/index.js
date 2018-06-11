@@ -15,6 +15,7 @@ exports.stats = require('./endpoints/stats');
 exports.version = require('./endpoints/version');
 exports.distribution = require('./endpoints/distribution').handler;
 exports.dbIndexer = require('./lambdas/db-indexer');
+exports.reconciliationReports = require('./endpoints/reconciliation-reports');
 
 exports.jobs = require('./lambdas/jobs');
 exports.bootstrap = require('./lambdas/bootstrap').handler;
