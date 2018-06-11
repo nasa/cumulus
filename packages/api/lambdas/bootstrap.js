@@ -185,7 +185,7 @@ function backupStatus(status) {
  */
 function bootstrapDynamoDbTables(tables) {
   return Promise.all(tables.map((table) => {
-    // check the status of continous backup
+    // check the status of continuous backup
     return dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
       .then((r) => {
         const status = backupStatus(r.ContinuousBackupsDescription.ContinuousBackupsStatus);
@@ -201,6 +201,11 @@ function bootstrapDynamoDbTables(tables) {
           TableName: table.name
         };
         return dynamodb().updateContinuousBackups(params).promise();
+      })
+      .catch((e) => {
+        if (e.message.includes('ContinuousBackupsUnavailableException')) {
+          console.log(e.message);
+        }
       });
   }));
 }
