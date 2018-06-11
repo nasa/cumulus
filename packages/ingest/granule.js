@@ -258,7 +258,6 @@ class Granule {
     if (!fileConfig) {
       throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
     }
-
     const bucket = this.buckets[fileConfig.bucket].name;
 
     return Object.assign(cloneDeep(file), { bucket });
@@ -636,12 +635,12 @@ async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) 
   const file = cmrFile.file;
   const destination = cmrFile.destination;
 
-
   if (!buckets) {
-
-    const bucketsJSON = await aws.s3().getObject({ Bucket: process.env.bucket, Key: `${process.env.stackName}/workflows/buckets.json` }).promise();
-    // console.log(bucketsJSON.Body);
-    buckets = JSON.parse(bucketsJSON.Body);
+    const bucketsString = await aws.s3().getObject({
+      Bucket: process.env.bucket,
+      Key: `${process.env.stackName}/workflows/buckets.json`
+    }).promise();
+    buckets = JSON.parse(bucketsString.Body);
   }
 
   const bucketKeys = Object.keys(buckets);
