@@ -18,14 +18,14 @@ async function deleteBucket(bucket) {
   ));
 }
 
-test.beforeEach((t) => {
+test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
   t.context.endBucket = randomString();
   return aws.s3().createBucket({
     Bucket: t.context.endBucket
   }).promise().then(aws.s3().createBucket({
     Bucket: t.context.stagingBucket
-  }).promise());
+  }).promise();
 });
 
 test.afterEach.always(async (t) => {
