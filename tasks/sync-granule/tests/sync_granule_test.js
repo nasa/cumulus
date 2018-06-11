@@ -8,7 +8,7 @@ const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-sch
 const {
   recursivelyDeleteS3Bucket,
   listS3Objects,
-  S3ObjectExists,
+  s3ObjectExists,
   s3
 } = require('@cumulus/common/aws');
 
