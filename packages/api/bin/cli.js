@@ -8,6 +8,7 @@ const pckg = require('../package.json');
 const es = require('./es');
 const program = require('commander');
 const { cliUtils } = require('@cumulus/common');
+const { lambda } = require('@cumulus/common/aws');
 const { defaultIndexAlias } = require('../es/search');
 
 program.version(pckg.version);
@@ -75,6 +76,22 @@ program
     else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
     }
+  });
+
+program
+  .command('migrate')
+  .option('--stack <stack>', 'AWS CloudFormatio stack name')
+  .description('Invokes the migration lambda function')
+  .parse(process.argv)
+  .action((cmd) => {
+    if (!cmd.stack) {
+      throw new Error('stack name is missing');
+    }
+
+    const l = lambda();
+    l.invoke({
+      FunctionName: `${cmd.stack}-executeMigrations`
+    }).promise().then(console.log).catch(console.error);
   });
 
 program
