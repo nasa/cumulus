@@ -37,22 +37,9 @@ async function copyEsToDynamoDB(Cls, index = 'cumulus', type, concurrency = 1, p
   const records = Object.keys(hash).map((key) => hash[key]);
   const chunkedRecords = chunk(records, 25); // divide results into chunks of 25
 
-  // delete records from ES
-  const esClient = await Search.es();
-  const esDelete = res.hits.hits.map((r) => ({
-    delete: {
-      _index: r._index,
-      _type: r._type,
-      _id: r._id,
-      _parent: r._parent
-    }
-  }));
-  await esClient.bulk({
-    body: esDelete
-  });
-
   // add them to dynamoDB
   await Promise.all(chunkedRecords.map((c) => conc(() => record.batchWrite(null, c))));
+
 
   if (records.length === limit) {
     await copyEsToDynamoDB(Cls, index, type, concurrency, page + 1);
