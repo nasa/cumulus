@@ -179,7 +179,7 @@ jobs:
           command: |
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
             VERSION=$(cat lerna.json | jq .version --raw-output)
-            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
+            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm
       
       - run:
           name: Deploy cumulus with the npm packages source code
