@@ -383,4 +383,39 @@ ApiVersionDefault:
       method: get
       cors: true
 
-
+ApiReconciliationReportDefault:
+  handler: index.reconciliationReports
+  timeout: 20
+  memory: 256
+  apiRole: true
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    system_bucket: '{{parent.system_bucket}}'
+    #buckets: '{{parent.buckets}}'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    FilesTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+    invoke:
+      function: Ref
+      value: ScheduleSFLambdaFunction
+  apiGateway:
+    #default paths
+    - path: reconciliationReports
+      method: get
+      cors: true
+      api: backend
+    - path: reconciliationReports/{name}
+      method: get
+      cors: true
+      api: backend
+    - path: reconciliationReports
+      method: post
+      cors: true
+      api: backend
+    - path: reconciliationReports/{name}
+      method: delete
+      cors: true
+      api: backend
