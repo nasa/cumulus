@@ -1,4 +1,4 @@
-#  Cumulus Deployment Example 
+#  Cumulus Deployment Example
 
 We use this deployment example for running the Cumulus integration tests. This example is tested with the latest release of the Cumulus project.
 
@@ -35,7 +35,7 @@ An S3 Access lambda is needed in the us-west-1 region to run the tests. To initi
 aws lambda create-function --region us-west-1  --function-name <STACK>-S3AccessTest --zip-file fileb://app/build/cloudformation/<ZIP>-S3AccessTest.zip  --role arn:aws:iam::<AWS_ACCOUNT_ID>:role/<STACK>-lambda-processing  --handler index.handler --runtime nodejs6.10 --profile ngap-sandbox
 ```
 
-Replace <AWS_ACCOUNT_ID> with your accound Id, <STACK> with your stack name, and the zip file <ZIP> can be found in app/build/cloudformation/ following a deployment. The zip file does not matter, but you need something there. 
+Replace <AWS_ACCOUNT_ID> with your accound Id, <STACK> with your stack name, and the zip file <ZIP> can be found in app/build/cloudformation/ following a deployment. The zip file does not matter, but you need something there.
 
 After the initial creation of this lambda, you can update it by running:
 
@@ -63,13 +63,13 @@ To run an individual test file, include a path to the spec file, i.e. `DEPLOYMEN
 
 ### Adding tests for an existing workflow
 
-Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and supporting JSON files can go in there. 
+Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and supporting JSON files can go in there.
 
 ### Adding a new test workflow
 
 The workflow should be configured as it would be for a normal Cumulus deployment in `workflows.yml`. It must be deployed to the current deployment if testing locally.
 
-A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files. 
+A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
 
 ## Using your AWS CF stack in CircleCI
 
