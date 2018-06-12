@@ -32,10 +32,10 @@ NOTE: For this to work you need your default credentials to be credentials for t
 An S3 Access lambda is needed in the us-west-1 region to run the tests. To initially create the lambda, run:
 
 ```
-aws lambda create-function --region us-west-1  --function-name <STACK>-S3AccessTest --zip-file fileb://app/build/cloudformation/<ZIP>-S3AccessTest.zip  --role arn:aws:iam::<AWS_ACCOUNT_ID>:role/<STACK>-lambda-processing  --handler index.handler --runtime nodejs6.10 --profile ngap-sandbox
+aws lambda create-function --region us-west-1  --function-name <STACK>-S3AccessTest --zip-file fileb://app/build/cloudformation/<ZIP>-S3AccessTest.zip  --role arn:aws:iam::<AWS_ACCOUNT_ID>:role/<PREFIX>-lambda-processing  --handler index.handler --runtime nodejs6.10 --profile ngap-sandbox
 ```
 
-Replace <AWS_ACCOUNT_ID> with your accound Id, <STACK> with your stack name, and the zip file <ZIP> can be found in app/build/cloudformation/ following a deployment. The zip file does not matter, but you need something there.
+Replace `<AWS_ACCOUNT_ID>` with your account Id, `<STACK>` with your stack name, `<PREFIX>` with your iam prefix name, and the zip file `<ZIP>` can be found in `app/build/cloudformation/` following a deployment. The zip file does not matter, but you need something there.
 
 After the initial creation of this lambda, you can update it by running:
 
