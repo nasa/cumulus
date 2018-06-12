@@ -12,9 +12,10 @@ const examplePayload = require('../tests/data/collections_post.json');
 
 /**
  * List all collections.
- * @param {object} event aws lambda event object.
- * @param {callback} cb aws lambda callback function
- * @return {undefined}
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} the API list response
  */
 function list(event, cb) {
   const collection = new Collection(event);
@@ -23,8 +24,10 @@ function list(event, cb) {
 
 /**
  * Query a single collection.
- * @param {object} event aws lambda event object.
- * @return {object} a single granule object.
+ * 
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} a collection record
  */
 function get(event, cb) {
   const name = _get(event.pathParameters, 'collectionName');
@@ -42,8 +45,10 @@ function get(event, cb) {
 
 /**
  * Creates a new collection
- * @param {object} event aws lambda event object.
- * @return {object} returns the collection that was just saved.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} a the posted collection record
  */
 function post(event, cb) {
   let data = _get(event, 'body', '{}');
@@ -71,8 +76,10 @@ function post(event, cb) {
 
 /**
  * Updates an existing collection
- * @param {object} body a set of properties to update on an existing collection.
- * @return {object} a mapping of the updated properties.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} a the updated collection record
  */
 function put(event, cb) {
   const pname = _get(event.pathParameters, 'collectionName');
@@ -105,6 +112,13 @@ function put(event, cb) {
     });
 }
 
+/**
+ * Delete a collection record
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} a message showing the record is deleted
+ */
 function del(event, cb) {
   const name = _get(event.pathParameters, 'collectionName');
   const version = _get(event.pathParameters, 'version');
