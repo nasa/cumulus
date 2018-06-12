@@ -299,6 +299,28 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
   }
 });
 
+test('download granule with bad checksum in file from HTTP endpoint throws', async(t) => {
+  const granuleChecksumValue = 8675309;
+
+  // Give it a bogus checksumValue to prompt a failure in validateChecksumFile
+  t.context.event.input.granules[0].files[0].checksumValue = granuleChecksumValue;
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:3030'
+  };
+
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
+
+  // Stage the files to be downloaded
+  const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
+  const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;
+
+  await t.throws(syncGranule(t.context.event), errorMessage);
+});
+
 test('validate file properties', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
