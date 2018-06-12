@@ -67,7 +67,6 @@ function del(event, cb) {
  * @returns {Object} returns the report generated
  */
 function post(event, cb) {
-  log.debug(process.env.invoke);
   const params = {
     filesTableName: process.env.FilesTable
   };
