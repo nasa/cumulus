@@ -11,8 +11,8 @@ function get(event, cb) {
 }
 
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
-    get(event, cb);
+  return handle(event, context, true, (cb) => {
+    return get(event, cb);
   });
 }
 

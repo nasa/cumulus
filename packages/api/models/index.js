@@ -6,6 +6,7 @@ const Granule = require('./granules');
 const Pdr = require('./pdrs');
 const Provider = require('./providers');
 const Rule = require('./rules');
+const Execution = require('./executions');
 
 class User extends Manager {
   constructor() {
@@ -20,5 +21,6 @@ module.exports = {
   Pdr,
   Provider,
   Rule,
-  Manager
+  Manager,
+  Execution
 };

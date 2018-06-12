@@ -1,71 +1,83 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { S3 } = require('@cumulus/ingest/aws');
-const { deleteRecord } = require('../es/indexer');
+const aws = require('@cumulus/common/aws');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
+const models = require('../models');
 
 /**
- * List all granules for a given collection.
- * @param {object} event aws lambda event object.
- * @param {object} context aws lambda context object
- * @param {callback} cb aws lambda callback function
- * @return {undefined}
+ * List and search pdrs
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {undefined} undefined
  */
 function list(event, cb) {
   const search = new Search(event, 'pdr');
-  search.query().then((response) => cb(null, response)).catch((e) => {
+  return search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
 }
 
 /**
- * Query a single granule.
- * @param {object} event aws lambda event object.
- * @return {object} a single granule object.
+ * get a single PDR
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {undefined} undefined
  */
 function get(event, cb) {
   const pdrName = _get(event.pathParameters, 'pdrName');
 
-  const search = new Search({}, 'pdr');
-  search.get(pdrName).then((response) => {
+  const p = new models.Pdr();
+
+  return p.get({ pdrName }).then((response) => {
     cb(null, response);
-  }).catch((e) => {
-    cb(e);
-  });
+  }).catch(cb);
 }
 
+/**
+ * delete a given PDR
+ *
+ * @param {Object} event - aws lambda event object.
+ * @returns {Promise<Object>} the response object
+ */
 async function del(event) {
   const pdrName = _get(event.pathParameters, 'pdrName');
 
-  const search = new Search({}, 'pdr');
-  const record = await search.get(pdrName);
+  const p = new models.Pdr();
 
-  if (record.detail) {
-    throw record;
-  }
+  // get the record first to make sure it exists
+  await p.get({ pdrName });
 
   // remove file from s3
   const key = `${process.env.stackName}/pdrs/${pdrName}`;
-  await S3.delete(process.env.internal, key);
+  await aws.deleteS3Object(process.env.internal, key);
 
-  await deleteRecord(null, pdrName, 'pdr');
+  await p.delete({ pdrName });
 
   return { detail: 'Record deleted' };
 }
 
+/**
+ * The main handler for the lambda function
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @returns {undefined} undefined
+ */
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then((r) => cb(null, r)).catch((e) => cb(e));
+      return del(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
-    else {
-      list(event, cb);
-    }
+
+    return list(event, cb);
   });
 }
 

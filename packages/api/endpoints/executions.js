@@ -1,48 +1,56 @@
 'use strict';
 
 const _get = require('lodash.get');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
+const models = require('../models');
 
 /**
- * List all granules for a given collection.
- * @param {object} event aws lambda event object.
- * @param {object} context aws lambda context object
- * @param {callback} cb aws lambda callback function
- * @return {undefined}
+ * List and search executions
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {undefined} undefined
  */
 function list(event, cb) {
   const search = new Search(event, 'execution');
-  search.query().then((response) => cb(null, response)).catch((e) => {
+  return search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
 }
 
 /**
- * Query a single granule.
- * @param {object} event aws lambda event object.
- * @return {object} a single granule object.
+ * get a single execution
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {undefined} undefined
  */
 function get(event, cb) {
   const arn = _get(event.pathParameters, 'arn');
 
-  const search = new Search({}, 'execution');
-  search.get(arn).then((response) => {
+  const e = new models.Execution();
+
+  return e.get({ arn }).then((response) => {
     cb(null, response);
-  }).catch((e) => {
-    cb(e);
-  });
+  }).catch(cb);
 }
 
-
+/**
+ * The main handler for the lambda function
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @returns {undefined} undefined
+ */
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
-    else {
-      list(event, cb);
-    }
+
+    return list(event, cb);
   });
 }
 
