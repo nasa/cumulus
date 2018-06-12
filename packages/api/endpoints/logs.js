@@ -9,20 +9,19 @@ function count(event, cb) {
 
 function list(event, cb) {
   const search = new Search(event, 'logs');
-  search.query().then((response) => cb(null, response)).catch((e) => {
+  return search.query().then((response) => cb(null, response)).catch((e) => {
     cb(e);
   });
 }
 
 
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  return handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.resource === '/stats/logs') {
-      count(event, cb);
+      return count(event, cb);
     }
-    else {
-      list(event, cb);
-    }
+    
+    return list(event, cb);
   });
 }
 
