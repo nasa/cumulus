@@ -213,7 +213,7 @@ async function moveGranuleFiles(granulesObject, sourceBucket) {
 * @returns {Promise} promise resolves when all files have been updated
 **/
 async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distEndpoint) {
-  cmrFiles.forEach(async (cmrFile) => {
+  await Promise.all(cmrFiles.map(async (cmrFile) => {
     const metadataGranule = get(cmrFile, 'metadataObject.Granule');
     const granule = granulesObject[cmrFile.granuleId];
     const urls = [];
@@ -250,16 +250,19 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     cmrFile.metadata = xml;
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
     if (updatedCmrFile.bucket.type.match('public')) {
-      await promiseS3Upload(
-        { Bucket: updatedCmrFile.bucket.name, Key: updatedCmrFile.filepath, Body: xml, ACL: 'public-read' }
-      );
+      await promiseS3Upload({
+        Bucket: updatedCmrFile.bucket.name,
+        Key: updatedCmrFile.filepath,
+        Body: xml,
+        ACL: 'public-read'
+      });
     }
     else {
       await promiseS3Upload(
         { Bucket: updatedCmrFile.bucket.name, Key: updatedCmrFile.filepath, Body: xml }
       );
     }
-  });
+  }));
 }
 
 /**
