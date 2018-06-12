@@ -11,70 +11,14 @@
 
 'use strict';
 
-const path = require('path');
 const get = require('lodash.get');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { Search, defaultIndexAlias } = require('./search');
-const Rule = require('../models/rules');
-const uniqBy = require('lodash.uniqby');
-const cmrjs = require('@cumulus/cmrjs');
-const {
-  getExecutionArn,
-  getExecutionUrl,
-  invoke,
-  StepFunction
-} = require('@cumulus/ingest/aws');
-
-/**
- * Returns the collectionId used in elasticsearch
- * which is a combination of collection name and version
- *
- * @param {string} name - collection name
- * @param {string} version - collection version
- * @returns {string} collectionId
- */
-function constructCollectionId(name, version) {
-  return `${name}___${version}`;
-}
-
-/**
- * Returns the name and version of a collection based on
- * the collectionId used in elasticsearch indexing
- *
- * @param {string} collectionId - collectionId used in elasticsearch index
- * @returns {Object} name and version as object
- */
-function deconstructCollectionId(collectionId) {
-  const [name, version] = collectionId.split('___');
-  return {
-    name,
-    version
-  };
-}
-
-/**
- * Ensures that the exception is returned as an object
- *
- * @param {*} exception - the exception
- * @returns {string} an stringified exception
- */
-function parseException(exception) {
-  // null is considered object
-  if (exception === null) {
-    return {};
-  }
-
-  if (typeof exception !== 'object') {
-    const converted = JSON.stringify(exception);
-    if (converted === 'undefined') {
-      return {};
-    }
-    exception = { Error: 'Unknown Error', Cause: converted };
-  }
-  return exception;
-}
+const { constructCollectionId, deconstructCollectionId } = require('../lib/utils');
+const { Granule, Pdr, Execution } = require('../models');
 
 /**
  * Extracts info from a stepFunction message and indexes it to
@@ -137,11 +81,20 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
  * @param  {string} id       - id of the Elasticsearch record
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @param  {Object} doc      - Partial updated document
- * @param  {strint} parent   - id of the parent (optional)
+ * @param  {string} parent   - id of the parent (optional)
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
+ * @param  {boolean} upsert  - whether to upsert the document
  * @returns {Promise} elasticsearch update response
  */
-async function partialRecordUpdate(esClient, id, type, doc, parent, index = defaultIndexAlias) {
+async function partialRecordUpdate(
+  esClient,
+  id,
+  type,
+  doc,
+  parent,
+  index = defaultIndexAlias,
+  upsert = false
+) {
   if (!esClient) {
     esClient = await Search.es();
   }
@@ -156,6 +109,7 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = defa
     index,
     type,
     id,
+    refresh: inTestMode(),
     body: {
       doc
     }
@@ -165,7 +119,50 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = defa
     params.parent = parent;
   }
 
+  if (upsert) {
+    params.body.doc_as_upsert = upsert;
+  }
+
+  params.body.doc.timestamp = Date.now();
   return esClient.update(params);
+}
+
+/**
+ * Indexes a given record to the specified ElasticSearch index and type
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {string} id       - the record id
+ * @param  {Object} doc      - the record
+ * @param  {string} index    - Elasticsearch index alias
+ * @param  {string} type     - Elasticsearch type
+ * @param  {string} parent   - the optional parent id
+ * @returns {Promise} Elasticsearch response
+ */
+async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
+  if (!esClient) {
+    esClient = await Search.es();
+  }
+
+  if (!doc) {
+    throw new Error('Nothing to update. Make sure doc argument has a value');
+  }
+
+  doc.timestamp = Date.now();
+
+  const params = {
+    index,
+    type,
+    id,
+    refresh: inTestMode(),
+    body: doc
+  };
+
+  if (parent) {
+    params.parent = parent;
+  }
+
+  // adding or replacing record to ES
+  return esClient.index(params);
 }
 
 /**
@@ -178,108 +175,19 @@ async function partialRecordUpdate(esClient, id, type, doc, parent, index = defa
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @returns {Promise} elasticsearch update response
  */
-function indexStepFunction(esClient, payload, index = defaultIndexAlias, type = 'execution') {
-  const name = get(payload, 'cumulus_meta.execution_name');
-  const arn = getExecutionArn(
-    get(payload, 'cumulus_meta.state_machine'),
-    name
-  );
-  if (!arn) {
-    return Promise.reject(new Error('State Machine Arn is missing. Must be included in the cumulus_meta')); //eslint-disable-line max-len
-  }
-
-  const execution = getExecutionUrl(arn);
-
-  const doc = {
-    name,
-    arn,
-    execution,
-    error: parseException(payload.exception),
-    type: get(payload, 'meta.workflow_name'),
-    collectionId: get(payload, 'meta.collection.name'),
-    status: get(payload, 'meta.status', 'UNKNOWN'),
-    createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-    timestamp: Date.now()
-  };
-
-  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-  return esClient.update({
-    index,
-    type,
-    id: doc.arn,
-    body: {
-      doc,
-      doc_as_upsert: true
-    }
-  });
+function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'execution') {
+  return genericRecordUpdate(esClient, payload.arn, payload, index, type);
 }
 
 /**
- * Extracts PDR info from a StepFunction message and indexes it to ElasticSearch
+ * Extracts PDR info from a StepFunction message and save it to DynamoDB
  *
- * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {string} type     - Elasticsearch type (default: pdr)
- * @returns {Promise} Elasticsearch response
+ * @returns {Promise<Object>} Elasticsearch response
  */
-function pdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
-  const name = get(payload, 'cumulus_meta.execution_name');
-  const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
-  const pdrName = get(pdrObj, 'name');
-
-  if (!pdrName) return Promise.resolve();
-
-  const arn = getExecutionArn(
-    get(payload, 'cumulus_meta.state_machine'),
-    name
-  );
-  const execution = getExecutionUrl(arn);
-
-  const collection = get(payload, 'meta.collection');
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  const stats = {
-    processing: get(payload, 'payload.running', []).length,
-    completed: get(payload, 'payload.completed', []).length,
-    failed: get(payload, 'payload.failed', []).length
-  };
-
-  stats.total = stats.processing + stats.completed + stats.failed;
-  let progress = 0;
-  if (stats.processing > 0 && stats.total > 0) {
-    progress = ((stats.total - stats.processing) / stats.total) * 100;
-  }
-  else if (stats.processing === 0 && stats.total > 0) {
-    progress = 100;
-  }
-
-  const doc = {
-    pdrName,
-    collectionId,
-    status: get(payload, 'meta.status'),
-    provider: get(payload, 'meta.provider.id'),
-    progress,
-    execution,
-    PANSent: get(pdrObj, 'PANSent', false),
-    PANmessage: get(pdrObj, 'PANmessage', 'N/A'),
-    stats,
-    createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-    timestamp: Date.now()
-  };
-
-  doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-  return esClient.update({
-    index,
-    type,
-    id: pdrName,
-    body: {
-      doc,
-      doc_as_upsert: true
-    }
-  });
+function pdr(payload) {
+  const p = new Pdr();
+  return p.createPdrFromSns(payload);
 }
 
 /**
@@ -293,16 +201,7 @@ function pdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
  */
 function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
   const collectionId = constructCollectionId(meta.name, meta.version);
-  const record = Object.assign({}, meta, { timestamp: Date.now() });
-  const params = {
-    index,
-    type,
-    id: collectionId,
-    body: record
-  };
-
-  // adding or replacing collection record to ES
-  return esClient.index(params);
+  return genericRecordUpdate(esClient, collectionId, meta, index, type);
 }
 
 /**
@@ -315,16 +214,7 @@ function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'coll
  * @returns {Promise} Elasticsearch response
  */
 function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'provider') {
-  const record = Object.assign({}, payload, { timestamp: Date.now() });
-  const params = {
-    index,
-    type,
-    id: payload.id,
-    body: record
-  };
-
-  // adding or replacing provider record to ES
-  return esClient.index(params);
+  return genericRecordUpdate(esClient, payload.id, payload, index, type);
 }
 
 /**
@@ -337,54 +227,11 @@ function indexProvider(esClient, payload, index = defaultIndexAlias, type = 'pro
  * @returns {Promise} Elasticsearch response
  */
 function indexRule(esClient, payload, index = defaultIndexAlias, type = 'rule') {
-  const record = Object.assign({}, payload, { timestamp: Date.now() });
-  const params = {
-    index,
-    type,
-    id: payload.name,
-    body: record
-  };
-
-  // adding or replacing rule record to ES
-  return esClient.index(params);
+  return genericRecordUpdate(esClient, payload.name, payload, index, type);
 }
 
 /**
- * Calculate granule product volume, which is the sum of the file
- * sizes in bytes
- *
- * @param {Array<Object>} granuleFiles - array of granule files
- * @returns {Integer} - sum of granule file sizes in bytes
- */
-function getGranuleProductVolume(granuleFiles) {
-  const fileSizes = granuleFiles.map((file) => file.fileSize)
-    .filter((size) => size);
-
-  return fileSizes.reduce((a, b) => a + b);
-}
-
-/**
- * Extract a date from the payload and return it in string format
- *
- * @param {Object} payload - payload object
- * @param {string} dateField - date field to extract
- * @returns {string} - date field in string format, null if the
- * field does not exist in the payload
- */
-function extractDate(payload, dateField) {
-  const dateMs = get(payload, dateField);
-
-  if (dateMs) {
-    const date = new Date(dateMs);
-    return date.toISOString();
-  }
-
-  return null;
-}
-
-/**
- * Extracts granule info from a stepFunction message and indexes it to
- * an ElasticSearch
+ * Indexes the granule type on ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Object} payload  - Cumulus Step Function message
@@ -392,101 +239,57 @@ function extractDate(payload, dateField) {
  * @param  {string} type     - Elasticsearch type (default: granule)
  * @returns {Promise} Elasticsearch response
  */
-async function granule(esClient, payload, index = defaultIndexAlias, type = 'granule') {
-  const name = get(payload, 'cumulus_meta.execution_name');
-  const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
+async function indexGranule(esClient, payload, index = defaultIndexAlias, type = 'granule') {
+  // If the granule exists in 'deletedgranule', delete it first before inserting the granule
+  // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
+  const delGranParams = {
+    index,
+    type: 'deletedgranule',
+    id: payload.granuleId,
+    parent: payload.collectionId,
+    refresh: inTestMode(),
+    ignore: [404]
+  };
+  await esClient.delete(delGranParams);
 
-  if (!granules) return Promise.resolve();
-
-  const arn = getExecutionArn(
-    get(payload, 'cumulus_meta.state_machine'),
-    name
+  return genericRecordUpdate(
+    esClient,
+    payload.granuleId,
+    payload,
+    index,
+    type,
+    payload.collectionId
   );
+}
 
-  if (!arn) return Promise.resolve();
+/**
+ * Indexes the pdr type on ElasticSearch
+ *
+ * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
+ * @param  {string} type     - Elasticsearch type (default: pdr)
+ * @returns {Promise} Elasticsearch response
+ */
+async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pdr') {
+  return genericRecordUpdate(
+    esClient,
+    payload.pdrName,
+    payload,
+    index,
+    type
+  );
+}
 
-  const execution = getExecutionUrl(arn);
-
-  const collection = get(payload, 'meta.collection');
-  const exception = parseException(payload.exception);
-
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  // make sure collection is added
-  try {
-    await esClient.get({
-      index,
-      type: 'collection',
-      id: collectionId
-    });
-  }
-  catch (e) {
-    // adding collection record to ES
-    await indexCollection(esClient, collection);
-  }
-
-  const done = granules.map(async (g) => {
-    if (g.granuleId) {
-      const doc = {
-        granuleId: g.granuleId,
-        pdrName: get(payload, 'meta.pdr.name'),
-        collectionId,
-        status: get(payload, 'meta.status'),
-        provider: get(payload, 'meta.provider.id'),
-        execution,
-        cmrLink: get(g, 'cmrLink'),
-        files: uniqBy(g.files, 'filename'),
-        error: exception,
-        createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-        timestamp: Date.now(),
-        productVolume: getGranuleProductVolume(g.files),
-        timeToPreprocess: get(payload, 'meta.sync_granule_duration') / 1000,
-        timeToArchive: get(payload, 'meta.post_to_cmr_duration') / 1000,
-        processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
-        processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time')
-      };
-
-      doc.published = get(g, 'published', false);
-      // Duration is also used as timeToXfer for the EMS report
-      doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-      if (g.cmrLink) {
-        const metadata = await cmrjs.getMetadata(g.cmrLink);
-        doc.beginningDateTime = metadata.time_start;
-        doc.endingDateTime = metadata.time_end;
-        doc.lastUpdateDateTime = metadata.updated;
-
-        const fullMetadata = await cmrjs.getFullMetadata(g.cmrLink);
-        if (fullMetadata && fullMetadata.DataGranule) {
-          doc.productionDateTime = fullMetadata.DataGranule.ProductionDateTime;
-        }
-      }
-
-      // If the granule exists in 'deletedgranule', delete it first before inserting the granule
-      // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
-      const delGranParams = {
-        index,
-        type: 'deletedgranule',
-        id: doc.granuleId,
-        parent: collectionId,
-        ignore: [404]
-      };
-      return esClient.delete(delGranParams)
-        .then(() => esClient.update({
-          index,
-          type,
-          id: doc.granuleId,
-          parent: collectionId,
-          body: {
-            doc,
-            doc_as_upsert: true
-          }
-        }));
-    }
-    return Promise.resolve();
-  });
-
-  return Promise.all(done);
+/**
+ * Extracts granule info from a stepFunction message and save it to DynamoDB
+ *
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @returns {Promise<Array>} list of created records
+ */
+function granule(payload) {
+  const g = new Granule();
+  return g.createGranulesFromSns(payload);
 }
 
 /**
@@ -506,7 +309,8 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
   const params = {
     index,
     type,
-    id
+    id,
+    refresh: inTestMode()
   };
 
   if (parent) {
@@ -522,16 +326,7 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
 
         // When a 'granule' record is deleted, the record is added to 'deletedgranule'
         // type for EMS report purpose.
-        await esClient.update({
-          index,
-          type: 'deletedgranule',
-          id: doc.granuleId,
-          parent: parent,
-          body: {
-            doc,
-            doc_as_upsert: true
-          }
-        });
+        await genericRecordUpdate(esClient, doc.granuleId, doc, index, 'deletedgranule', parent);
       }
       return response;
     });
@@ -541,41 +336,11 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
  * start the re-ingest of a given granule object
  *
  * @param  {Object} g - the granule object
- * @param  {string} index - cumulus index alias name (optional)
- * @returns {Promise} an object show the start of the re-ingest
+ * @returns {Promise} an object showing the start of the re-ingest
  */
-async function reingest(g, index) {
-  const { name, version } = deconstructCollectionId(g.collectionId);
-
-  // get the payload of the original execution
-  const status = await StepFunction.getExecutionStatus(path.basename(g.execution));
-  const originalMessage = JSON.parse(status.execution.input);
-
-  const payload = await Rule.buildPayload({
-    workflow: 'IngestGranule',
-    provider: g.provider,
-    collection: {
-      name,
-      version
-    },
-    meta: originalMessage.meta,
-    payload: originalMessage.payload
-  });
-
-  await partialRecordUpdate(
-    null,
-    g.granuleId,
-    'granule',
-    { status: 'running' },
-    g.collectionId,
-    index
-  );
-  await invoke(process.env.invoke, payload);
-  return {
-    granuleId: g.granuleId,
-    action: 'reingest',
-    status: 'SUCCESS'
-  };
+async function reingest(g) {
+  const gObj = new Granule();
+  return gObj.reingest(g);
 }
 
 /**
@@ -597,16 +362,12 @@ async function handlePayload(event) {
     payload = event;
   }
 
-  const esClient = await Search.es();
-
-  // allowing to set index name via env variable
-  // to support testing
-  const esIndex = process.env.ES_INDEX;
+  const e = new Execution();
 
   return {
-    sf: await indexStepFunction(esClient, payload, esIndex),
-    pdr: await pdr(esClient, payload, esIndex),
-    granule: await granule(esClient, payload, esIndex)
+    sf: await e.createExecutionFromSns(payload),
+    pdr: await pdr(payload),
+    granule: await granule(payload)
   };
 }
 
@@ -676,7 +437,9 @@ module.exports = {
   indexLog,
   indexProvider,
   indexRule,
-  indexStepFunction,
+  indexGranule,
+  indexPdr,
+  indexExecution,
   handlePayload,
   partialRecordUpdate,
   deleteRecord,
