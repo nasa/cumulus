@@ -63,8 +63,21 @@ async function deleteFolder(bucket, folder) {
   }));
 }
 
+/**
+ * Returns execution ARN from a statement machine Arn and executionName
+ *
+ * @param {string} executionArn - execution ARN
+ * @returns {string} return aws console url for the execution
+ */
+function getExecutionUrl(executionArn) {
+  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+  return `https://console.aws.amazon.com/states/home?region=${region}` +
+         `#/executions/details/${executionArn}`;
+}
+
 module.exports = {
   loadConfig,
   templateFile,
-  deleteFolder
+  deleteFolder,
+  getExecutionUrl
 };

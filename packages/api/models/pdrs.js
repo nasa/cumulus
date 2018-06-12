@@ -1,104 +1,100 @@
 'use strict';
 
 const pvl = require('@cumulus/pvl');
-const { errorify } = require('../lib/utils');
+const get = require('lodash.get');
+const aws = require('@cumulus/ingest/aws');
 const Manager = require('./base');
-//const Provider = require('./providers');
+const { constructCollectionId } = require('../lib/utils');
 const pdrSchema = require('./schemas').pdr;
 
 
 class Pdr extends Manager {
   constructor() {
-    super(process.env.PDRsTable, pdrSchema);
-  }
-
-  static buildRecord(pdrName, provider, originalUrl) {
-    return {
-      pdrName: pdrName,
-      provider: provider,
-      originalUrl: originalUrl,
-      status: 'discovered',
-      isActive: true,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      discoveredAt: Date.now()
-    };
+    super(process.env.PdrsTable, pdrSchema);
   }
 
   /**
-   * Depending on the type of Error, this method might
-   * generate a PDRD message for the providers
+   * Generate PAN message
    *
+   * @returns {string} the PAN message
    */
-  async hasCompleted(pdrName, _obj) {
-    const obj = _obj;
-    obj.status = 'completed';
-    obj.isActive = false;
+  static generatePAN() {
+    return pvl.jsToPVL(
+      new pvl.models.PVLRoot()
+        .add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPAN'))
+        .add('DISPOSITION', new pvl.models.PVLTextString('SUCCESSFUL'))
+        .add('TIME_STAMP', new pvl.models.PVLDateTime(new Date()))
+    );
+  }
 
-    // shortPan
-    // It is a success shortPan if all granules in the PDR are completed
-    if (obj.granules === obj.granulesStatus.completed) {
-      // generate PDRD message
-      const pan = pvl.jsToPVL(
-        new pvl.models.PVLRoot()
-          .add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPAN'))
-          .add('DISPOSITION', new pvl.models.PVLTextString('SUCCESSFUL'))
-          .add('TIME_STAMP', new pvl.models.PVLDateTime(new Date()))
-      );
+  /**
+   * Generate a PDRD message with a given err
+   *
+   * @param {Object} err - the error object
+   * @returns {string} the PDRD message
+   */
+  static generatePDRD(err) {
+    return pvl.jsToPVL(
+      new pvl.models.PVLRoot()
+        .add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPDRD'))
+        .add('DISPOSITION', new pvl.models.PVLTextString(err.message))
+    );
+  }
 
-      obj.PAN = pan;
+  /**
+   * Create a new pdr record from incoming sns messages
+   *
+   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
+   * @returns {Promise<Object>} a pdr record
+   */
+  createPdrFromSns(payload) {
+    const name = get(payload, 'cumulus_meta.execution_name');
+    const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
+    const pdrName = get(pdrObj, 'name');
 
-      // write the PAN message
-      //const pr = new Provider();
-      try {
-        const pdr = await this.get({ pdrName });
-        console.log(pdr.provider);
-        //const provider = await pr.get({ name: pdr.provider });
+    if (!pdrName) return Promise.resolve();
 
-        //if (provider.panFolder && provider.protocol === 'ftp') {
-        //const password = await pr.decryptPassword(provider.config.password);
+    const arn = aws.getExecutionArn(
+      get(payload, 'cumulus_meta.state_machine'),
+      name
+    );
+    const execution = aws.getExecutionUrl(arn);
 
-        //const w = new FtpPan(provider, pdrName, provider.config.username, password);
-        //await w.write(pan, 'PAN');
-        //obj.PANSent = true;
-        //}
-        //else {
-        obj.PANSent = false;
-        //}
-      }
-      catch (e) {
-        obj.PANSent = false;
-      }
+    const collection = get(payload, 'meta.collection');
+    const collectionId = constructCollectionId(collection.name, collection.version);
+
+    const stats = {
+      processing: get(payload, 'payload.running', []).length,
+      completed: get(payload, 'payload.completed', []).length,
+      failed: get(payload, 'payload.failed', []).length
+    };
+
+    stats.total = stats.processing + stats.completed + stats.failed;
+    let progress = 0;
+    if (stats.processing > 0 && stats.total > 0) {
+      progress = ((stats.total - stats.processing) / stats.total) * 100;
+    }
+    else if (stats.processing === 0 && stats.total > 0) {
+      progress = 100;
     }
 
-    return this.update({ pdrName }, obj);
-  }
-
-  /**
-   * Depending on the type of Error, this method might
-   * generate a PDRD message for the providers
-   *
-   */
-  async hasFailed(key, err) {
-    const values = {
-      status: 'failed',
-      error: errorify(err),
-      isActive: false
+    const doc = {
+      pdrName,
+      collectionId,
+      status: get(payload, 'meta.status'),
+      provider: get(payload, 'meta.provider.id'),
+      progress,
+      execution,
+      PANSent: get(pdrObj, 'PANSent', false),
+      PANmessage: get(pdrObj, 'PANmessage', 'N/A'),
+      stats,
+      createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
+      timestamp: Date.now()
     };
 
-    //if (err instanceof PDRParsingError) {
-      //// generate PDRD message
-      //const pdrd = pvl.jsToPVL(
-    //new pvl.models.PVLRoot()
-    //.add('MESSAGE_TYPE', new pvl.models.PVLTextString('SHORTPDRD'))
-    //.add('DISPOSITION', new pvl.models.PVLTextString(err.message))
-      //);
+    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
 
-      //values.PDRD = pdrd;
-      //values.PDRDSent = false;
-    //}
-
-    return this.update(key, values);
+    return this.create(doc);
   }
 }
 
