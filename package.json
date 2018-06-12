@@ -9,7 +9,7 @@
     "ybootstrap": "lerna bootstrap",
     "bootstrap-no-build": "lerna bootstrap --ignore-scripts",
     "update": "lerna publish --skip-git --skip-npm",
-    "publish": "lerna publish --skip-git --repo-version $VERSION --yes",
+    "publish": "lerna publish --skip-git --repo-version $VERSION --yes --npm-client=npm",
     "clean": "lerna clean",
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch",
