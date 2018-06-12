@@ -1,6 +1,7 @@
 const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
+const { Granule, Execution } = require('@cumulus/api/models');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const {
   buildAndExecuteWorkflow,
@@ -9,7 +10,7 @@ const {
   getOnlineResources
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile } = require('../helpers/testUtils');
+const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
@@ -31,7 +32,15 @@ describe('The S3 Ingest Granules workflow', () => {
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
 
+  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  const granuleModel = new Granule();
+  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  const executionModel = new Execution();
+
   beforeAll(async () => {
+    // delete the granule record from DynamoDB if exists
+    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
@@ -141,6 +150,18 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(cmrResource[1].href).toEqual(filename);
 
       expect(response.statusCode).toEqual(200);
+    });
+  });
+
+  describe('the sf-sns-report task has published a sns message and', () => {
+    it('the granule record is added to DynamoDB', async () => {
+      const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId }); 
+      expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
+    });
+
+    it('the execution record is added to DynamoDB', async () => {
+      const record = await executionModel.get({ arn: workflowExecution.executionArn });
+      expect(record.status).toEqual('completed');
     });
   });
 });
