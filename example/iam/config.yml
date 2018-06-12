@@ -50,3 +50,6 @@ mth-cum-test:
     internal: '{{prefix}}-internal'
     protected: '{{prefix}}-protected'
     private: '{{prefix}}-private'
+
+jl:
+  prefix: jl-test-integration
