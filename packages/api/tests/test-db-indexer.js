@@ -1,150 +1,239 @@
 'use strict';
 
-const archiver = require('archiver');
-const aws = require('@cumulus/common/aws');
-const fs = require('fs');
-const path = require('path');
-const { randomString } = require('@cumulus/common/test-utils');
 const test = require('ava');
+const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 
-process.env.stackName = 'test-stack';
-process.env.internal = 'test-bucket';
-process.env.CollectionsTable = `${process.env.stackName}-CollectionsTable`;
-
-const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
-const collections = new models.Collection();
-const EsCollection = require('../es/collections');
+const { Search } = require('../es/search');
+const bootstrap = require('../lambdas/bootstrap');
+const dbIndexer = require('../lambdas/db-indexer');
+const { constructCollectionId } = require('../lib/utils');
+const {
+  fakeCollectionFactory,
+  fakeGranuleFactory,
+  fakeExecutionFactory
+} = require('../lib/testUtils');
 
-const testCollection = {
-  'name': `collection-${randomString()}`,
-  'version': '0.0.0',
-  'provider_path': '/',
-  'duplicateHandling': 'replace',
-  'granuleId': '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-  'granuleIdExtraction': '(MOD09GQ\\.(.*))\\.hdf',
-  'sampleFileName': 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
-  'files': []
-};
+let esClient;
+const seq = new Set(); // to keep track of processed records in the stream
+const esIndex = randomString();
+process.env.stackName = randomString();
+process.env.internal = randomString();
+process.env.CollectionsTable = `${process.env.stackName}-CollectionsTable`;
+process.env.GranulesTable = `${process.env.stackName}-GranulesTable`;
+process.env.ExecutionsTable = `${process.env.stackName}-ExecutionsTable`;
 
-const collectionOnlyInDynamo = Object.assign({}, testCollection, { name: `collection-${randomString()}` });
 
-const codeDirectory = 'dist/'
-const tmpZipFile = path.join('/tmp/test.zip');
-const output = fs.createWriteStream(tmpZipFile)
-const archive = archiver('zip', {
-  zlib: { level: 9 }
-});
-const dbIndexerFnName = 'test-dbIndexer';
-const hash = { name: 'name', type: 'S' };
-const range = { name: 'version', type: 'S' };
+function addSourceArn(tableName, records) {
+  const sourceArn = 'arn:aws:dynamodb:us-east-1:000:table/' +
+    `${tableName}/stream/2018-05-03T16:24:17.527`;
 
-/**
- * TODO(aimee): This test works when running tests just for @cumulus/api, but not on all tests or CI.
- * Running localstack on CI for this test requires:
- * - built packages/api/dist/index.js (packages are not built for circle ci). This is fixable.
- * - A docker executor for lambdas, which is done in part by LAMBDA_EXECUTOR: docker as an env variable to the localstack/localstack docker image for ci
- *   But it still appears docker isn't running: `Cannot connect to the Docker daemon at unix:///var/run/docker.sock`
-**/
-if (process.env.LOCALSTACK_HOST === 'localhost') {
-  // Test that if our dynamos are hooked up to the db-indexer lambda function,
-  // records show up in elasticsearch 'hooked-up': the dynamo has a stream and the
-  // lambda has an event source mapping to that dynamo stream.
-  test.skip.before(async () => {
-    await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
-
-    // create collections table
-    await models.Manager.createTable(process.env.CollectionsTable, hash, range);
-    // create an object only in dynamo to test error condition
-    await collections.create(collectionOnlyInDynamo);
-    await bootstrap.bootstrapElasticSearch('fakehost');
-
-    // create the lambda function
-    await new Promise((resolve) => {
-      output.on('close', () => {
-        const contents = fs.readFileSync(tmpZipFile)
-
-        aws.lambda().createFunction({
-          FunctionName: dbIndexerFnName,
-          Runtime: 'nodejs6.10',
-          Handler: 'index.dbIndexer', // point to the db indexer
-          Role: 'testRole',
-          Code: {
-            ZipFile: contents
-          },
-          Environment: {
-            Variables: {
-              'LOCALSTACK_HOST': process.env.DOCKERHOST,
-              'stackName': process.env.stackName
-            }
-          }
-        })
-          .promise()
-          .then((res) => {
-            fs.unlinkSync(tmpZipFile);
-            resolve(res);
-          });
-      });
-
-      archive.pipe(output)
-      archive.directory(codeDirectory, false);
-      archive.finalize()
-    })
-      .catch(console.log);
-
-    //get the dynamo collections table stream arn and add it as an event source to the lambda
-    await new Promise((resolve, reject) => {
-      aws.dynamodbstreams().listStreams({TableName: process.env.CollectionsTable}, (err, data) => {
-        if (err) reject(err);
-        const collectionsTableStreamArn = data.Streams.find((s) => s.TableName === 'test-stack-CollectionsTable').StreamArn;
-        const eventSourceMappingParams = {
-          EventSourceArn: collectionsTableStreamArn,
-          FunctionName: dbIndexerFnName,
-          StartingPosition: 'TRIM_HORIZON',
-          BatchSize: 10
-        };
-
-        aws.lambda().createEventSourceMapping(eventSourceMappingParams, (err, data) => {
-          if (err) reject(err);
-          resolve(data);
-        });
-      });
-    })
-      .catch(console.log);
+  // add eventSourceArn
+  records.Records.forEach((record) => {
+    record.eventSourceARN = sourceArn;
   });
+  return records;
+}
 
-  test.skip.after.always(async () => {
-    await models.Manager.deleteTable(process.env.CollectionsTable);
-    await aws.lambda().deleteFunction({FunctionName: dbIndexerFnName}).promise();
-    await aws.recursivelyDeleteS3Bucket(process.env.internal);
-  });
-
-  test.skip('creates a collection in dynamodb and es', async (t) => {
-    const { name } = testCollection;
-    await collections.create(testCollection)
-      .then(() => {
-        const esCollection = new EsCollection({});
-        return esCollection.query();
-      })
-      .then((result) => {
-        t.is(result.results[0].name, testCollection.name);
-        t.is(result.results[0].version, testCollection.version);
-      })
-      .then(() => collections.delete({ name }))
-      .catch(console.log);
-  });
-
-  test.skip('thrown error is caught', async (t) => {
-    const { name } = collectionOnlyInDynamo;
-    await collections.delete({ name })
-      .then((result) => {
-        t.is(result.results[0].name, testCollection.name);
-        t.is(result.results[0].version, testCollection.version);
-      })
-      .catch(console.log);
-  });
-} else {
-  test('db-indexer TODO test', (t) => {
-    t.is(1+1, 2);
+function updateSequenceNumber(records, sequence) {
+  records.Records.forEach((r) => {
+    sequence.add(r.dynamodb.SequenceNumber);
   });
 }
+
+function removeProcessedRecords(records, sequence) {
+  const allRecords = records.Records;
+  const lastSequence = parseInt(Array.from(sequence).pop());
+  if (lastSequence) {
+    records.Records = [];
+
+    allRecords.forEach((r) => {
+      if (parseInt(r.dynamodb.SequenceNumber) > lastSequence) {
+        records.Records.push(r);
+      }
+    });
+  }
+}
+
+async function getDyanmoDBStreamRecords(table) {
+  const streams = await aws.dynamodbstreams()
+    .listStreams({ TableName: table })
+    .promise();
+
+  const activeStream = streams.Streams
+    .filter((s) => (s.TableName === table))[0];
+
+  const streamDetails = await aws.dynamodbstreams().describeStream({
+    StreamArn: activeStream.StreamArn
+  }).promise();
+  const shard = streamDetails.StreamDescription.Shards[0];
+  const params = {
+    ShardId: shard.ShardId,
+    ShardIteratorType: 'TRIM_HORIZON',
+    StreamArn: activeStream.StreamArn
+  };
+
+  const iterator = await aws.dynamodbstreams().getShardIterator(params).promise();
+  const records = await aws.dynamodbstreams().getRecords({
+    ShardIterator: iterator.ShardIterator
+  }).promise();
+
+  // remove records that are processed
+  removeProcessedRecords(records, seq);
+
+  // get the latest sequence number
+  updateSequenceNumber(records, seq);
+
+  addSourceArn(table, records);
+  return records;
+}
+
+test.before(async () => {
+  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+
+  // create collections table
+  const hash = { name: 'name', type: 'S' };
+  const range = { name: 'version', type: 'S' };
+  await models.Manager.createTable(process.env.CollectionsTable, hash, range);
+  await models.Manager.createTable(process.env.GranulesTable, { name: 'granuleId', type: 'S' });
+  await models.Manager.createTable(process.env.ExecutionsTable, { name: 'arn', type: 'S' });
+
+  // bootstrap the esIndex
+  esClient = await Search.es();
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+});
+
+test.after.always(async () => {
+  await models.Manager.deleteTable(process.env.CollectionsTable);
+  await models.Manager.deleteTable(process.env.GranulesTable);
+  await models.Manager.deleteTable(process.env.ExecutionsTable);
+  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  await esClient.indices.delete({ index: esIndex });
+});
+
+test.serial('create, update and delete a collection in dynamodb and es', async (t) => {
+  const c = fakeCollectionFactory();
+  const collections = new models.Collection();
+  await collections.create(c);
+
+  // get records from the stream
+  let records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  const collectionIndex = new Search({}, 'collection');
+  let indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
+
+  t.is(indexedRecord.name, c.name);
+
+  // change the record
+  c.dataType = 'testing';
+  await collections.create(c);
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
+  t.is(indexedRecord.dataType, 'testing');
+
+  // delete the record
+  await collections.delete({ name: c.name, version: c.version });
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  const response = await collectionIndex.get(constructCollectionId(c.name, c.version));
+  t.is(response.detail, 'Record not found');
+});
+
+test.serial('create, update and delete a granule in dynamodb and es', async (t) => {
+  const fakeGranule = fakeGranuleFactory();
+  const model = new models.Granule();
+  await model.create(fakeGranule);
+
+  // get records from the stream
+  let records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  const granuleIndex = new Search({}, 'granule');
+  let indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
+
+  t.is(indexedRecord.granuleId, fakeGranule.granuleId);
+
+  // change the record
+  fakeGranule.status = 'failed';
+  await model.create(fakeGranule);
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
+  t.is(indexedRecord.status, 'failed');
+
+  // delete the record
+  await model.delete({ granuleId: fakeGranule.granuleId });
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
+  t.is(indexedRecord.detail, 'Record not found');
+});
+
+test.serial('create, update and delete an execution in dynamodb and es', async (t) => {
+  const fakeRecord = fakeExecutionFactory();
+  const model = new models.Execution();
+  await model.create(fakeRecord);
+
+  // get records from the stream
+  let records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  const recordIndex = new Search({}, 'execution');
+  let indexedRecord = await recordIndex.get(fakeRecord.arn);
+
+  t.is(indexedRecord.arn, fakeRecord.arn);
+
+  // change the record
+  fakeRecord.status = 'failed';
+  await model.create(fakeRecord);
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  indexedRecord = await recordIndex.get(fakeRecord.arn);
+  t.is(indexedRecord.status, 'failed');
+
+  // delete the record
+  await model.delete({ arn: fakeRecord.arn });
+
+  // get records from the stream
+  records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
+
+  // fake the lambda trigger
+  await dbIndexer(records, {}, () => {});
+
+  indexedRecord = await recordIndex.get(fakeRecord.arn);
+  t.is(indexedRecord.detail, 'Record not found');
+});

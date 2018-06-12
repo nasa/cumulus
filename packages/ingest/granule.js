@@ -587,9 +587,9 @@ function selector(type, protocol) {
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
-function copyGranuleFile(source, target, options) {
+async function copyGranuleFile(source, target, options) {
   const s3 = aws.s3();
-  const CopySource = encodeurl(`/${source.Bucket}/${source.Key}`);
+  const CopySource = encodeurl(urljoin(source.Bucket, source.Key));
 
   const params = Object.assign({
     CopySource,
@@ -619,6 +619,42 @@ async function moveGranuleFile(source, target, options) {
   return s3.deleteObject(source).promise();
 }
 
+/**
+ * move granule files from one s3 location to another
+ *
+ * @param {Object[]} sourceFiles - array of file objects
+ * @param {string} sourceFiles[].name
+ * @param {string} sourceFiles[].bucket
+ * @param {string} sourceFiles[].filepath
+ * @param {Object[]} destinations - array of objects defining the destination of granule files
+ * @param {string} destinations[].regex - regex for matching filepath of file to new destination
+ * @param {string} destinations[].bucket - aws bucket
+ * @param {string} destinations[].key - filepath on the bucket for the destination
+ * @returns {Promise<undefined>} returns `undefined` when all the files are moved
+ */
+async function moveGranuleFiles(sourceFiles, destinations) {
+  const moveFileRequests = sourceFiles.map((file) => {
+    const destination = destinations.find((dest) => file.name.match(dest.regex));
+
+    // if there's no match, we skip the file
+    if (destination) {
+      const source = {
+        Bucket: file.bucket,
+        Key: file.filepath
+      };
+
+      const target = {
+        Bucket: destination.bucket,
+        Key: `${destination.filepath}/${file.name}`
+      };
+
+      return moveGranuleFile(source, target);
+    }
+  });
+
+  return Promise.all(moveFileRequests);
+}
+
 module.exports.selector = selector;
 module.exports.Discover = Discover;
 module.exports.Granule = Granule;
@@ -632,3 +668,4 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.moveGranuleFile = moveGranuleFile;
+module.exports.moveGranuleFiles = moveGranuleFiles;
