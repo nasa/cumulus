@@ -27,6 +27,7 @@ default:
     amiid: ami-a7a242da
     publicIp: true
     restartTasksOnDeploy: true
+    keyPairName: abarciauskas-bgse
     docker:
       username: cumulususer
     services:
