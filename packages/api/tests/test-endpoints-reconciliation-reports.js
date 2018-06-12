@@ -10,16 +10,6 @@ process.env.invoke = 'granule-reconciliation-reports';
 process.env.FilesTable = 'Test_FilesTable';
 process.env.stackName = 'test-stack';
 process.env.system_bucket = 'test_system_bucket';
-process.env.buckets = {
-  protected: {
-    name: 'test-protected',
-    type: 'protected'
-  },
-  public: {
-    name: 'test-public',
-    type: 'protected'
-  }
-};
 
 const reportNames = [randomString(), randomString()];
 const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
@@ -79,6 +69,6 @@ test('create a report', (t) => {
   const event = { httpMethod: 'POST' };
   return testEndpoint(reconciliationReportEndpoint, event, (response) => {
     const content = JSON.parse(response.body);
-    t.is(content.message, 'Report generated');
+    t.is(content.message, 'Report is being generated');
   });
 });

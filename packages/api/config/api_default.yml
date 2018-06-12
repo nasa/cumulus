@@ -391,7 +391,6 @@ ApiReconciliationReportDefault:
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     system_bucket: '{{parent.system_bucket}}'
-    #buckets: '{{parent.buckets}}'
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
