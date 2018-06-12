@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const sinon = require('sinon');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
@@ -13,6 +14,8 @@ const granuleEndpoint = require('../endpoints/granules');
 const indexer = require('../es/indexer');
 const { testEndpoint, fakeGranuleFactory } = require('../lib/testUtils');
 const { Search } = require('../es/search');
+const xml2js = require('xml2js');
+const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 // create all the variables needed across this test
 let esClient;
@@ -246,6 +249,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
 test('move a granule', async (t) => {
   const bucket = process.env.internal;
   const secondBucket = randomString();
+
   await aws.s3().createBucket({ Bucket: secondBucket }).promise();
   const newGranule = fakeGranuleFactory();
 
@@ -323,5 +327,105 @@ test('move a granule', async (t) => {
         t.is(item.Key.indexOf(destinationFilepath), 0);
       });
     });
+  });
+});
+
+test('move a file and update metadata', async (t) => {
+  const bucket = process.env.internal;
+  const buckets = {
+    protected: {
+      name: process.env.internal,
+      type: 'protected'
+    },
+    public: {
+      name: randomString(),
+      type: 'public'
+    }
+  };
+  process.env.buckets = JSON.stringify(buckets);
+  process.env.distEndpoint = 'http://example.com/';
+
+  await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
+  const newGranule = fakeGranuleFactory();
+  const metadata = fs.createReadStream('tests/data/meta.xml');
+
+  newGranule.files = [
+    {
+      bucket,
+      name: `${newGranule.granuleId}.txt`,
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+    },
+    {
+      bucket: buckets.public.name,
+      name: `${newGranule.granuleId}.cmr.xml`,
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`,
+      filename: `s3://${buckets.public.name}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`
+    }
+  ];
+
+  await g.create(newGranule);
+
+  await Promise.all(newGranule.files.map(async (file) => {
+    if (file.name === `${newGranule.granuleId}.txt`) {
+      aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise();
+    }
+    else {
+      aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata }).promise();
+    }
+  }));
+
+  const destinationFilepath = `${process.env.stackName}/moved_granules`;
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket,
+      filepath: destinationFilepath
+    }
+  ];
+
+  const moveEvent = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: newGranule.granuleId
+    },
+    body: JSON.stringify({
+      action: 'move',
+      destinations
+    })
+  };
+
+  await testEndpoint(granuleEndpoint, moveEvent, async (response) => {
+    const body = JSON.parse(response.body);
+    t.is(body.status, 'SUCCESS');
+    t.is(body.action, 'move');
+
+    await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
+      t.is(list.Contents.length, 1);
+
+      list.Contents.forEach((item) => {
+        t.is(item.Key.indexOf(destinationFilepath), 0);
+      });
+    });
+
+    await aws.s3().listObjects({ Bucket: buckets.public.name, Prefix: `${process.env.stackName}/original_filepath` })
+      .promise().then((list) => {
+        t.is(list.Contents.length, 1);
+        t.is(newGranule.files[1].filepath, list.Contents[0].Key);
+      });
+
+    await aws.s3().getObject({ Bucket: buckets.public.name, Key: newGranule.files[1].filepath })
+      .promise().then(async (file) => {
+        return new Promise((resolve, reject) => {
+          xml2js.parseString(file.Body, xmlParseOptions, (err, data) => {
+            if (err) return reject(err);
+            return resolve(data);
+          });
+        });
+      })
+      .then((xml) => {
+        const newUrl = xml.Granule.OnlineAccessURLs.OnlineAccessURL[0].URL;
+        const newDestination = `${process.env.distEndpoint}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
+        t.is(newUrl, newDestination);
+      });
   });
 });
