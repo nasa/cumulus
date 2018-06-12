@@ -52,16 +52,23 @@ class SfnStep {
     );
 
     // Get the event where the step was scheduled
-    const scheduleEvent = executionHistory.events.find((event) => {
+    const scheduleEvents = executionHistory.events.filter((event) => {
       const eventScheduled = this.scheduleEvents.includes(event.type);
       const eventDetails = event[this.eventDetailsKeys.scheduled];
       const isStepEvent = eventDetails && eventDetails.resource.includes(stepName);
       return eventScheduled && isStepEvent;
     });
 
-    if (!scheduleEvent) {
+    if (scheduleEvents.length === 0) {
       console.log(`Could not find step ${stepName} in execution.`);
       return null;
+    }
+
+    // use last event and discard the failed ones
+    // if it is activity get the last item otherwise the first
+    let scheduleEvent = scheduleEvents[0];
+    if (this.classType === 'activity') {
+      scheduleEvent = scheduleEvents[scheduleEvents.length - 1];
     }
 
     let startEvent = null;
@@ -130,6 +137,7 @@ class LambdaStep extends SfnStep {
       scheduled: 'lambdaFunctionScheduledEventDetails',
       succeeded: 'lambdaFunctionSucceededEventDetails'
     };
+    this.classType = 'lambda';
   }
 }
 
@@ -157,6 +165,7 @@ class ActivityStep extends SfnStep {
       scheduled: 'activityScheduledEventDetails',
       succeeded: 'activitySucceededEventDetails'
     };
+    this.classType = 'activity';
   }
 }
 
