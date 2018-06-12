@@ -75,13 +75,14 @@ class Manager {
   /**
    * constructor of Manager class
    *
-   * @param {string} tableName the name of the table
-   * @returns {object} an instance of Manager class
+   * @param {string} tableName - the name of the table
+   * @param {Object} schema - the json schema to validate the records against
+   * @returns {Object} an instance of Manager class
    */
   constructor(tableName, schema = {}) {
     this.tableName = tableName;
     this.schema = schema; // variable for the record's json schema
-    this.dynamodbDocClient = aws.dynamodbDocClient();
+    this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
   }
 
@@ -89,7 +90,7 @@ class Manager {
    * Gets the item if found. If the record does not exist
    * the function throws RecordDoesNotExist error
    *
-   * @param {object} item the item to search for
+   * @param {Object} item - the item to search for
    * @returns {Promise} The record found
    */
   async get(item) {
@@ -156,7 +157,8 @@ class Manager {
   /**
    * creates record(s)
    *
-   * @param {object|array} items the Item/Items to be added to the database
+   * @param {Object<Array>} items - the Item/Items to be added to the database
+   * @returns {Promise<Array>} an array of created records
    */
   async create(items) {
     const single = async (_item) => {
@@ -172,7 +174,7 @@ class Manager {
         Item: item
       };
 
-      await aws.dynamodbDocClient().put(params).promise();
+      await this.dynamodbDocClient.put(params).promise();
     };
 
     if (items instanceof Array) {
