@@ -1,34 +1,13 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { CMR } = require('@cumulus/cmrjs');
-const { S3 } = require('@cumulus/ingest/aws');
-const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const aws = require('@cumulus/common/aws');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const log = require('@cumulus/common/log');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
-const { partialRecordUpdate, deleteRecord, reingest } = require('../es/indexer');
-const log = require('@cumulus/common/log');
-
-async function removeGranuleFromCmr(granuleId, collectionId) {
-  log.info(`granules.removeGranuleFromCmr ${granuleId}`);
-  const password = await DefaultProvider.decrypt(process.env.cmr_password);
-  const cmr = new CMR(
-    process.env.cmr_provider,
-    process.env.cmr_client_id,
-    process.env.cmr_username,
-    password
-  );
-
-  await cmr.deleteGranule(granuleId, collectionId);
-
-  await partialRecordUpdate(
-    null,
-    granuleId,
-    'granule',
-    { published: false, cmrLink: null },
-    collectionId
-  );
-}
+const models = require('../models');
+const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 
 /**
  * List all granules for a given collection.
@@ -39,11 +18,8 @@ async function removeGranuleFromCmr(granuleId, collectionId) {
  */
 function list(event, cb) {
   const search = new Search(event, 'granule');
-  search.query().then((response) => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+  return search.query().then((res) => cb(null, res)).catch(cb);
 }
-
 
 /**
  * Update a single granule.
@@ -58,12 +34,12 @@ async function put(event) {
   body = JSON.parse(body);
 
   const action = _get(body, 'action');
+  const g = new models.Granule();
 
   if (action) {
-    const search = new Search({}, 'granule');
-    const response = await search.get(granuleId);
+    const response = await g.get({ granuleId });
     if (action === 'reingest') {
-      await reingest(response);
+      await g.reingest(response);
       return {
         granuleId: response.granuleId,
         action,
@@ -71,7 +47,18 @@ async function put(event) {
       };
     }
     else if (action === 'removeFromCmr') {
-      await removeGranuleFromCmr(response.granuleId, response.collectionId);
+      await g.removeGranuleFromCmr(response.granuleId, response.collectionId);
+      return {
+        granuleId: response.granuleId,
+        action,
+        status: 'SUCCESS'
+      };
+    }
+    else if (action === 'move') {
+      const destinations = body.destinations;
+
+      await moveGranuleFiles(response.files, destinations);
+
       return {
         granuleId: response.granuleId,
         action,
@@ -79,7 +66,7 @@ async function put(event) {
       };
     }
 
-    throw new Error('Action is not supported. Choices are: \'reingest\' and \'removeFromCmr\'');
+    throw new Error('Action is not supported. Choices are: "move", "reingest", & "removeFromCmr"');
   }
 
   throw new Error('Action is missing');
@@ -89,24 +76,23 @@ async function del(event) {
   const granuleId = _get(event.pathParameters, 'granuleName');
   log.info(`granules.del ${granuleId}`);
 
-  const search = new Search({}, 'granule');
-  const record = await search.get(granuleId);
+  const g = new models.Granule();
+  const record = await g.get({ granuleId });
 
   if (record.detail) {
     throw record;
   }
 
   if (record.published) {
-    throw new Error(
-      'You cannot delete a granule that is published to CMR. Remove it from CMR first'
-    );
+    const errMsg = 'You cannot delete a granule that is published to CMR. Remove it from CMR first';
+    throw new Error(errMsg);
   }
 
   // remove file from s3
   const key = `${process.env.stackName}/granules_ingested/${granuleId}`;
-  await S3.delete(process.env.internal, key);
+  await aws.deleteS3Object(process.env.internal, key);
 
-  await deleteRecord(null, granuleId, 'granule', record.collectionId);
+  await g.delete({ granuleId });
 
   return { detail: 'Record deleted' };
 }
@@ -121,29 +107,32 @@ async function del(event) {
 function get(event, cb) {
   const granuleId = _get(event.pathParameters, 'granuleName');
 
-  const search = new Search({}, 'granule');
-  search.get(granuleId).then((response) => {
+  const g = new models.Granule();
+  return g.get({ granuleId }).then((response) => {
     cb(null, response);
-  }).catch((e) => {
-    cb(e);
-  });
+  }).catch(cb);
 }
 
-
+/**
+ * The main handler for the lambda function
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @returns {undefined} undefined
+ */
 function handler(event, context) {
-  handle(event, context, true, (cb) => {
+  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
     else if (event.httpMethod === 'PUT' && event.pathParameters) {
-      put(event).then((r) => cb(null, r)).catch((e) => cb(e));
+      return put(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event).then((r) => cb(null, r)).catch((e) => cb(e));
+      return del(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
-    else {
-      list(event, cb);
-    }
+
+    return list(event, cb);
   });
 }
 

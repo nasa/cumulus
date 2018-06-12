@@ -18,6 +18,7 @@ exports.dbIndexer = require('./lambdas/db-indexer');
 exports.reconciliationReports = require('./endpoints/reconciliation-reports');
 
 exports.jobs = require('./lambdas/jobs');
+exports.executeMigrations = require('./lambdas/executeMigrations').handler;
 exports.bootstrap = require('./lambdas/bootstrap').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');

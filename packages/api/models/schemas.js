@@ -133,7 +133,7 @@ module.exports.granule = {
       type: 'string',
       readonly: true
     },
-    collection: {
+    collectionId: {
       title: 'Collection associated with the granule',
       type: 'string',
       readonly: true
@@ -173,7 +173,7 @@ module.exports.granule = {
       }
     },
     error: {
-      type: 'string',
+      type: 'object',
       readonly: true
     },
     createdAt: {
@@ -219,11 +219,10 @@ module.exports.granule = {
   },
   required: [
     'granuleId',
-    'collection',
+    'collectionId',
     'status',
     'execution',
-    'createdAt',
-    'productVolume'
+    'createdAt'
   ]
 };
 
@@ -308,7 +307,7 @@ module.exports.pdr = {
       type: 'string',
       readonly: true
     },
-    collection: {
+    collectionId: {
       title: 'Collection Name',
       type: 'string',
       readonly: true
@@ -373,7 +372,7 @@ module.exports.pdr = {
   required: [
     'pdrName',
     'provider',
-    'collection',
+    'collectionId',
     'status',
     'createdAt'
   ]
@@ -436,3 +435,50 @@ module.exports.provider = {
   ]
 };
 
+// Execution Schema => the model keeps information about each step function execution
+module.exports.execution = {
+  title: 'Execution Object',
+  description: 'Keep the information about each step function execution',
+  type: 'object',
+  properties: {
+    arn: {
+      title: 'Execution arn (this field is unique)',
+      type: 'string'
+    },
+    name: {
+      title: 'Execution name',
+      type: 'string'
+    },
+    execution: {
+      title: 'The execution page url on AWS console',
+      type: 'string'
+    },
+    error: {
+      title: 'The error details in case of a failed execution',
+      type: 'object'
+    },
+    type: {
+      title: 'The workflow name, e.g. IngestGranule',
+      type: 'string'
+    },
+    status: {
+      title: 'the execution status',
+      enum: ['running', 'completed', 'failed', 'unknown'],
+      type: 'string'
+    },
+    createdAt: {
+      type: 'number',
+      readonly: true
+    },
+    timestamp: {
+      type: 'number',
+      readonly: true
+    }
+  },
+  required: [
+    'arn',
+    'name',
+    'status',
+    'createdAt'
+  ]
+};
