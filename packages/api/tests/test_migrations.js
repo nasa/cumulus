@@ -100,12 +100,11 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
   });
 
   // check records exists in dynamoDB
-  // they shouldn't because they are deleted from dynamoDB
   granuleCount = await granuleIndex.count();
-  t.is(granuleCount.meta.found, 0);
+  t.is(granuleCount.meta.found, 15);
 
   executionCount = await executionIndex.count();
-  t.is(executionCount.meta.found, 0);
+  t.is(executionCount.meta.found, 15);
 
   const granuleModel = new models.Granule();
   await Promise.all(granules.map((g) => granuleModel.get({ granuleId: g.granuleId })));

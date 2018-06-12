@@ -617,7 +617,7 @@ async function postS3Object(destination, options) {
   );
   if (options) {
     const s3 = aws.s3();
-    s3.deleteObject(options).promise();
+    await s3.deleteObject(options).promise();
   }
 }
 
@@ -628,7 +628,7 @@ async function postS3Object(destination, options) {
  * @param {Object[]} sourceFiles - array of file objects
  * @param {Object[]} destinations - array of objects defining the destination of granule files
  * @param {string} distEndpoint - distribution enpoint from config
- * @returns {Promise<undefined>} returns `undefined` when all the files are moved
+ * @returns {Promise} returns promise to upload updated cmr file
  */
 async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) {
   const urls = [];
@@ -695,10 +695,10 @@ async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) 
       key: `${destination.filepath}/${file.name}`,
       body: xml
     };
-    action = postS3Object(target, options);
+    action = await postS3Object(target, options);
   }
   else {
-    action = postS3Object({ bucket: file.bucket, key: file.filepath, body: xml });
+    action = await postS3Object({ bucket: file.bucket, key: file.filepath, body: xml });
   }
   return action;
 }

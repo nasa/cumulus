@@ -18,7 +18,7 @@ async function deleteBucket(bucket) {
   ));
 }
 
-test.beforeEach((t) => {
+test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
   t.context.endBucket = randomString();
   return aws.s3().createBucket({
