@@ -20,12 +20,11 @@ function list(event, cb) {
   const systemBucket = process.env.system_bucket;
   const key = `${process.env.stackName}/reconciliation-reports/`;
   return aws.listS3ObjectsV2({ Bucket: systemBucket, Prefix: key })
-    .then((fileList) => fileList.map((s3Object) => path.basename(s3Object.Key)))
+    .then((fileList) =>
+      fileList.filter((s3Object) => !s3Object.Key.endsWith(key))
+        .map((s3Object) => path.basename(s3Object.Key)))
     .then((s3Objects) => cb(null, s3Objects))
-    .catch((err) => {
-      log.error(`reconciliation-reports.list caught error ${err.stack}`);
-      return cb(err);
-    });
+    .catch((err) => cb(err));
 }
 
 /**
@@ -68,12 +67,12 @@ function del(event, cb) {
  * @returns {Object} returns the report generated
  */
 function post(event, cb) {
+  log.debug(process.env.invoke);
   const params = {
-    buckets: Object.keys(process.env.buckets).map((bucket) => process.env.buckets[bucket].name),
     filesTableName: process.env.FilesTable
   };
   return invoke(process.env.invoke, params)
-    .then((data) => cb(null, { message: 'Report generated', report: data }))
+    .then((data) => cb(null, { message: 'Report is being generated', status: data.StatusCode }))
     .catch((err) => cb(err));
 }
 
@@ -85,19 +84,18 @@ function post(event, cb) {
  * @returns {Promise} - list of report type and its file path {reportType, file}
  */
 function handler(event, context) {
+  log.debug(event.httpMethod);
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
-      get(event, cb);
+      return get(event, cb);
     }
     else if (event.httpMethod === 'POST') {
-      post(event, cb);
+      return post(event, cb);
     }
     else if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      del(event, cb);
+      return del(event, cb);
     }
-    else {
-      list(event, cb);
-    }
+    return list(event, cb);
   });
 }
 
