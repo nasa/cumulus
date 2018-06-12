@@ -791,13 +791,13 @@ Resources:
         MinInstancesInService: 0
     Properties:
       AvailabilityZones:
-      {{# if ecs.availabilityZones }}
-      {{#each ecs.availabilityZones}}
+{{# if ecs.availabilityZones }}
+  {{#each ecs.availabilityZones}}
         - {{this}}
-      {{/each}}
-      {{else if ecs.availabilityZone}}
+  {{/each}}
+{{else if ecs.availabilityZone }}
         - {{ecs.availabilityZone}}
-      {{/if}}
+{{/if}}
     {{# if vpc.subnets }}
       VPCZoneIdentifier:
       {{#each vpc.subnets}}
