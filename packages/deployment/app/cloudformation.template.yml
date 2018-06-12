@@ -105,6 +105,14 @@ Resources:
             - DomainEndpoint
         version: {{es.elasticSearchMapping}}
     {{/if}}
+    {{# if dynamos}}
+      DynamoDBTables:
+      {{#each dynamos}}
+        - name:
+            Ref: {{@key}}DynamoDB 
+          pointInTime: {{this.pointInTime}}
+      {{/each}}
+    {{/if}}
       Users:
         table:
           Ref: UsersTableDynamoDB

@@ -1,23 +1,22 @@
 'use strict';
 
 const test = require('ava');
-
-process.env.RulesTable = 'Test_RulesTable';
-process.env.stackName = 'test-stack';
-process.env.bucket = 'test-bucket';
-const workflowName = 'morning-routine';
-const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
-
 const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const rulesEndpoint = require('../endpoints/rules');
-const { testEndpoint } = require('./testUtils');
+const { testEndpoint } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
-const rules = new models.Rule();
+const esIndex = randomString();
 
-const esIndex = 'cumulus-index';
+process.env.RulesTable = randomString();
+process.env.stackName = randomString();
+process.env.bucket = randomString();
+const workflowName = randomString();
+const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
+const rules = new models.Rule();
 
 const testRule = {
   name: 'make_coffee',
