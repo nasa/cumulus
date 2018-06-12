@@ -393,34 +393,35 @@ test('move a file and update metadata', async (t) => {
     })
   };
 
-  await testEndpoint(granuleEndpoint, moveEvent, async (response) => {
-    const body = JSON.parse(response.body);
-    t.is(body.status, 'SUCCESS');
-    t.is(body.action, 'move');
+  sinon.stub(
+    CMR.prototype,
+    'ingestGranule'
+  ).returns({ result: { 'concept-id': 'id204842' } });
 
-    const list = await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise();
-    t.is(list.Contents.length, 1);
-    list.Contents.forEach((item) => {
-      t.is(item.Key.indexOf(destinationFilepath), 0);
+  const response = await testEndpoint(granuleEndpoint, moveEvent, (r) => r);
+  const body = JSON.parse(response.body);
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'move');
+
+  const list = await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise();
+  t.is(list.Contents.length, 1);
+  list.Contents.forEach((item) => {
+    t.is(item.Key.indexOf(destinationFilepath), 0);
+  });
+
+  const list2 = await aws.s3().listObjects({ Bucket: buckets.public.name, Prefix: `${process.env.stackName}/original_filepath` }).promise();
+  t.is(list2.Contents.length, 1);
+  t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
+
+  const file = await aws.s3().getObject({ Bucket: buckets.public.name, Key: newGranule.files[1].filepath }).promise();
+  return new Promise((resolve, reject) => {
+    xml2js.parseString(file.Body, xmlParseOptions, (err, data) => {
+      if (err) return reject(err);
+      return resolve(data);
     });
-
-    const list2 = await aws.s3().listObjects({ Bucket: buckets.public.name, Prefix: `${process.env.stackName}/original_filepath` }).promise();
-    t.is(list2.Contents.length, 1);
-    t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
-
-    await aws.s3().getObject({ Bucket: buckets.public.name, Key: newGranule.files[1].filepath })
-      .promise().then(async (file) => {
-        return new Promise((resolve, reject) => {
-          xml2js.parseString(file.Body, xmlParseOptions, (err, data) => {
-            if (err) return reject(err);
-            return resolve(data);
-          });
-        });
-      })
-      .then((xml) => {
-        const newUrl = xml.Granule.OnlineAccessURLs.OnlineAccessURL[0].URL;
-        const newDestination = `${process.env.distEndpoint}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
-        t.is(newUrl, newDestination);
-      });
+  }).then((xml) => {
+    const newUrl = xml.Granule.OnlineAccessURLs.OnlineAccessURL[0].URL;
+    const newDestination = `${process.env.distEndpoint}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
+    t.is(newUrl, newDestination);
   });
 });
