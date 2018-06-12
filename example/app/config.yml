@@ -15,11 +15,6 @@ default:
 
   apiStage: dev
 
-  vpc:
-    vpcId: '{{VPC_ID}}'
-    subnets:
-      - '{{AWS_SUBNET}}'
-
   ecs:
     instanceType: t2.small
     desiredInstances: 1
