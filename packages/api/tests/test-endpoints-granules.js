@@ -367,13 +367,10 @@ test('move a file and update metadata', async (t) => {
 
   await g.create(newGranule);
 
-  await Promise.all(newGranule.files.map(async (file) => {
-    if (file.name === `${newGranule.granuleId}.txt`) {
-      aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise();
-    }
-    else {
+  await Promise.all(newGranule.files.map((file) => {
+    return (file.name === `${newGranule.granuleId}.txt`) ?
+      aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise() :
       aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata }).promise();
-    }
   }));
 
   const destinationFilepath = `${process.env.stackName}/moved_granules`;
@@ -401,19 +398,15 @@ test('move a file and update metadata', async (t) => {
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'move');
 
-    await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
-      t.is(list.Contents.length, 1);
-
-      list.Contents.forEach((item) => {
-        t.is(item.Key.indexOf(destinationFilepath), 0);
-      });
+    const list = await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise();
+    t.is(list.Contents.length, 1);
+    list.Contents.forEach((item) => {
+      t.is(item.Key.indexOf(destinationFilepath), 0);
     });
 
-    await aws.s3().listObjects({ Bucket: buckets.public.name, Prefix: `${process.env.stackName}/original_filepath` })
-      .promise().then((list) => {
-        t.is(list.Contents.length, 1);
-        t.is(newGranule.files[1].filepath, list.Contents[0].Key);
-      });
+    const list2 = await aws.s3().listObjects({ Bucket: buckets.public.name, Prefix: `${process.env.stackName}/original_filepath` }).promise();
+    t.is(list2.Contents.length, 1);
+    t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
     await aws.s3().getObject({ Bucket: buckets.public.name, Key: newGranule.files[1].filepath })
       .promise().then(async (file) => {
