@@ -23,8 +23,9 @@ const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const xml2js = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
+const { publish } = require('./cmr');
 
-let buckets;
+let bucketsObject;
 
 /**
 * The abstract Discover class
@@ -635,15 +636,15 @@ async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) 
   const file = cmrFile.file;
   const destination = cmrFile.destination;
 
-  if (!buckets) {
+  if (!bucketsObject) {
     const bucketsString = await aws.s3().getObject({
       Bucket: process.env.bucket,
       Key: `${process.env.stackName}/workflows/buckets.json`
     }).promise();
-    buckets = JSON.parse(bucketsString.Body);
+    bucketsObject = JSON.parse(bucketsString.Body);
   }
 
-  const bucketKeys = Object.keys(buckets);
+  const bucketKeys = Object.keys(bucketsObject);
   sourceFiles.forEach((sourceFile) => {
     const urlObj = {};
     const currDestination = destinations.find((dest) => sourceFile.name.match(dest.regex));
@@ -651,21 +652,21 @@ async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) 
     let filepath;
     if (currDestination) {
       key =
-        bucketKeys.find((bucketKey) => currDestination.bucket.match(buckets[bucketKey].name));
+        bucketKeys.find((bucketKey) => currDestination.bucket.match(bucketsObject[bucketKey].name));
       filepath = currDestination.filepath;
     }
     else {
-      key = bucketKeys.find((bucketKey) => sourceFile.bucket.match(buckets[bucketKey].name));
+      key = bucketKeys.find((bucketKey) => sourceFile.bucket.match(bucketsObject[bucketKey].name));
       filepath = sourceFile.filepath;
     }
-    if (buckets[key].type.match('protected')) {
-      const extension = urljoin(buckets[key].name, `${filepath}/${sourceFile.name}`);
+    if (bucketsObject[key].type.match('protected')) {
+      const extension = urljoin(bucketsObject[key].name, `${filepath}/${sourceFile.name}`);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
-    else if (buckets[key].type.match('public')) {
-      urlObj.URL = `https://${buckets[key].name}.s3.amazonaws.com/${filepath}/${sourceFile.name}`;
+    else if (bucketsObject[key].type.match('public')) {
+      urlObj.URL = `https://${bucketsObject[key].name}.s3.amazonaws.com/${filepath}/${sourceFile.name}`;
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
@@ -684,23 +685,35 @@ async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) 
   metadataObject.Granule = updatedGranule;
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
-  let action;
-  if (destination) {
-    const options = {
-      Bucket: file.bucket,
-      Key: file.filepath
-    };
-    const target = {
-      bucket: destination.bucket,
-      key: `${destination.filepath}/${file.name}`,
-      body: xml
-    };
-    action = await postS3Object(target, options);
+
+  // post meta file to CMR
+  const creds = {
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id,
+    username: process.env.cmr_username,
+    password: process.env.cmr_password
+  };
+
+  const response = await publish(file, creds, process.env.bucket, process.env.stackName);
+  if (response) {
+    let action;
+    if (destination) {
+      const options = {
+        Bucket: file.bucket,
+        Key: file.filepath
+      };
+      const target = {
+        bucket: destination.bucket,
+        key: `${destination.filepath}/${file.name}`,
+        body: xml
+      };
+      action = await postS3Object(target, options);
+    }
+    else {
+      action = await postS3Object({ bucket: file.bucket, key: file.filepath, body: xml });
+    }
+    return action;
   }
-  else {
-    action = await postS3Object({ bucket: file.bucket, key: file.filepath, body: xml });
-  }
-  return action;
 }
 
 /**
