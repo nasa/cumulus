@@ -15,7 +15,7 @@ const urljoin = require('url-join');
 const encodeurl = require('encodeurl');
 const cksum = require('cksum');
 const checksum = require('checksum');
-const { XmlMetaFileNotFound, errors } = require('@cumulus/common/errors');
+const errors = require('@cumulus/common/errors');
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
@@ -587,7 +587,7 @@ function selector(type, protocol) {
  */
 async function getMetadata(xmlFilePath) {
   if (!xmlFilePath) {
-    throw new XmlMetaFileNotFound('XML Metadata file not provided');
+    throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
 
   // GET the metadata text
