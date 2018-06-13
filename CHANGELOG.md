@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
+  - Changed to use getUrl. PostToCmr now requires CMR_ENVIRONMENT env to be specified if SIT or OPS are desired. Default is UAT.
+
 ## [v1.6.0] - 2018-06-06
 
 ### Please note: [Upgrade Instructions](https://github.com/cumulus-nasa/cumulus/wiki/Upgrading-to-Cumulus-1.6)
