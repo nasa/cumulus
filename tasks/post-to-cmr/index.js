@@ -5,7 +5,7 @@ const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
-const { CMR } = require('@cumulus/cmrjs');
+const { CMR, getUrl } = require('@cumulus/cmrjs');
 const { getS3Object } = require('@cumulus/common/aws');
 const { XmlMetaFileNotFound } = require('@cumulus/common/errors');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
@@ -132,8 +132,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
     conceptId,
-    link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
-      `?concept_id=${res.result['concept-id']}`
+    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
   };
 }
 

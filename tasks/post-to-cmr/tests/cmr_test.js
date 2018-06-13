@@ -80,6 +80,36 @@ test.serial('should succeed with correct payload', (t) => {
     }));
 });
 
+test.serial('should succeed with correct payload and return SIT url', (t) => {
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  return aws.promiseS3Upload({
+    Bucket: t.context.bucket,
+    Key: key,
+    Body: fs.createReadStream('tests/data/meta.xml')
+  }).then(() => postToCMR(newPayload)
+    .then((output) => {
+      cmrjs.CMR.prototype.ingestGranule.restore();
+      delete process.env.CMR_ENVIRONMENT;
+      t.is(
+        output.granules[0].cmrLink,
+        `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+      );
+    })
+    .catch((e) => {
+      delete process.env.CMR_ENVIRONMENT;
+      console.log(e);
+      cmrjs.CMR.prototype.ingestGranule.restore();
+      t.fail();
+    }));
+});
+
 test.serial('Should skip cmr step if the metadata file uri is missing', (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.input.granules = [{
