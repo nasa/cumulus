@@ -96,12 +96,14 @@ test.serial('should succeed with correct payload and return SIT url', (t) => {
   }).then(() => postToCMR(newPayload)
     .then((output) => {
       cmrjs.CMR.prototype.ingestGranule.restore();
+      delete process.env.CMR_ENVIRONMENT;
       t.is(
         output.granules[0].cmrLink,
         `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
       );
     })
     .catch((e) => {
+      delete process.env.CMR_ENVIRONMENT;
       console.log(e);
       cmrjs.CMR.prototype.ingestGranule.restore();
       t.fail();
