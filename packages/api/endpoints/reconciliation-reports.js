@@ -17,13 +17,22 @@ const handle = require('../lib/response').handle;
  * @returns {Array} - list of reports
  */
 function list(event, cb) {
+  const constructResultFunc = (fileNames) =>
+    ({
+      meta: {
+        name: 'cumulus-api',
+        stack: process.env.stackName
+      },
+      results: fileNames
+    });
+
   const systemBucket = process.env.system_bucket;
   const key = `${process.env.stackName}/reconciliation-reports/`;
   return aws.listS3ObjectsV2({ Bucket: systemBucket, Prefix: key })
     .then((fileList) =>
       fileList.filter((s3Object) => !s3Object.Key.endsWith(key))
         .map((s3Object) => path.basename(s3Object.Key)))
-    .then((s3Objects) => cb(null, s3Objects))
+    .then((fileNames) => cb(null, constructResultFunc(fileNames)))
     .catch((err) => cb(err));
 }
 
