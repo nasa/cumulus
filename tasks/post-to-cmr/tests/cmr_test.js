@@ -39,29 +39,29 @@ test.afterEach.always(async (t) => {
   deleteBucket(t.context.bucket);
 });
 
-test.serial('should succeed if cmr correctly identifies the xml as invalid', (t) => {
+test.serial('postToCMR throws error if CMR correctly identifies the xml as invalid', async (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
   const newPayload = JSON.parse(JSON.stringify(payload));
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
-  return aws.promiseS3Upload({
-    Bucket: t.context.bucket,
-    Key: key,
-    Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
-  }).then(() => postToCMR(newPayload)
-    .then(() => {
-      cmrjs.CMR.prototype.getToken.restore();
-      t.fail();
-    })
-    .catch((e) => {
-      cmrjs.CMR.prototype.getToken.restore();
-      t.true(e instanceof cmrjs.ValidationError);
-    }));
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
+    });
+    await postToCMR(newPayload);
+    t.fail();
+  } catch(e) {
+    t.true(e instanceof cmrjs.ValidationError);
+  } finally {
+    cmrjs.CMR.prototype.getToken.restore();
+  }
 });
 
-test.serial('should succeed with correct payload', (t) => {
+test.serial('postToCMR succeeds with correct payload', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
@@ -69,26 +69,51 @@ test.serial('should succeed with correct payload', (t) => {
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
-  return aws.promiseS3Upload({
-    Bucket: t.context.bucket,
-    Key: key,
-    Body: fs.createReadStream('tests/data/meta.xml')
-  }).then(() => postToCMR(newPayload)
-    .then((output) => {
-      cmrjs.CMR.prototype.ingestGranule.restore();
-      t.is(
-        output.granules[0].cmrLink,
-        `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
-      );
-    })
-    .catch((e) => {
-      console.log(e);
-      cmrjs.CMR.prototype.ingestGranule.restore();
-      t.fail();
-    }));
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream('tests/data/meta.xml')
+    });
+    const output = await postToCMR(newPayload);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+  }
+  finally {
+    cmrjs.CMR.prototype.ingestGranule.restore();
+  }
 });
 
-test.serial('Should skip cmr step if the metadata file uri is missing', (t) => {
+test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) => {
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+  
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream('tests/data/meta.xml')
+    });
+    const output = await postToCMR(newPayload);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+  }
+  finally {
+    cmrjs.CMR.prototype.ingestGranule.restore();
+    delete process.env.CMR_ENVIRONMENT;
+  }
+});
+
+test.serial('postToCMR skips CMR step if the metadata file uri is missing', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.input.granules = [{
     granuleId: 'some granule',
@@ -97,9 +122,6 @@ test.serial('Should skip cmr step if the metadata file uri is missing', (t) => {
     }]
   }];
 
-  return postToCMR(newPayload)
-    .then((output) => {
-      t.is(output.granules[0].cmr, undefined);
-    })
-    .catch(t.fail);
+  const output = await postToCMR(newPayload);
+  t.is(output.granules[0].cmr, undefined);
 });
