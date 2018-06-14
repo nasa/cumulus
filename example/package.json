@@ -24,6 +24,8 @@
     "@cumulus/api": "^1.6.0",
     "@cumulus/common": "^1.6.0",
     "@cumulus/deployment": "^1.6.0",
+    "@cumulus/move-granules": "^1.6.0",
+    "@cumulus/test-processing": "^1.6.0",
     "@cumulus/discover-granules": "^1.6.0",
     "@cumulus/discover-pdrs": "^1.6.0",
     "@cumulus/hello-world": "^1.6.0",
