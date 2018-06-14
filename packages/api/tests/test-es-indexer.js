@@ -6,24 +6,45 @@ const fs = require('fs');
 const clone = require('lodash.clonedeep');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
+const cmrjs = require('@cumulus/cmrjs');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
+const models = require('../models');
+const { fakeGranuleFactory, fakeCollectionFactory } = require('../lib/testUtils');
+const { constructCollectionId } = require('../lib/utils');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const granuleSuccess = require('./data/granule_success.json');
 const granuleFailure = require('./data/granule_failed.json');
 const pdrFailure = require('./data/pdr_failure.json');
 const pdrSuccess = require('./data/pdr_success.json');
-const cmrjs = require('@cumulus/cmrjs');
 
 const esIndex = randomString();
 process.env.bucket = randomString();
 process.env.stackName = randomString();
+const collectionTable = randomString();
+const granuleTable = randomString();
+const pdrTable = randomString();
+const executionTable = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
 
 test.before(async () => {
+  // create the tables
+  process.env.GranulesTable = granuleTable;
+  process.env.CollectionsTable = collectionTable;
+  process.env.PdrsTable = pdrTable;
+  process.env.ExecutionsTable = executionTable;
+  await models.Manager.createTable(granuleTable, { name: 'granuleId', type: 'S' });
+  await models.Manager.createTable(pdrTable, { name: 'pdrName', type: 'S' });
+  await models.Manager.createTable(executionTable, { name: 'arn', type: 'S' });
+  await models.Manager.createTable(
+    collectionTable,
+    { name: 'name', type: 'S' },
+    { name: 'version', type: 'S' }
+  )
+
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
   esClient = await Search.es();
@@ -54,6 +75,10 @@ test.before(async () => {
 
 test.after.always(async () => {
   await Promise.all([
+    models.Manager.deleteTable(granuleTable),
+    models.Manager.deleteTable(collectionTable),
+    models.Manager.deleteTable(pdrTable),
+    models.Manager.deleteTable(executionTable),
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.bucket)
   ]);
@@ -62,168 +87,118 @@ test.after.always(async () => {
   cmrjs.getFullMetadata.restore();
 });
 
-test.serial('indexing a successful granule record', async (t) => {
-  const type = 'granule';
+test.serial('creating a successful granule record', async (t) => {
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
-  const r = await indexer.granule(esClient, granuleSuccess, esIndex, type);
+  const records = await indexer.granule(granuleSuccess);
 
-  // make sure record is created
-  t.is(r[0].result, 'created');
-
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   // check the record exists
-  const record = await esClient.get({
-    index: esIndex,
-    type,
-    id: granule.granuleId,
-    parent: collectionId
-  });
+  const record = records[0];
 
-  t.deepEqual(record._source.files, granule.files);
-  t.is(record._source.status, 'completed');
-  t.is(record._parent, collectionId);
-  t.is(record._id, granule.granuleId);
-  t.is(record._source.cmrLink, granule.cmrLink);
-  t.is(record._source.published, granule.published);
-  t.is(record._source.productVolume, 17909733);
-  t.is(record._source.beginningDateTime, '2017-10-24T00:00:00.000Z');
-  t.is(record._source.endingDateTime, '2018-10-24T00:00:00.000Z');
-  t.is(record._source.productionDateTime, '2018-04-25T21:45:45.524Z');
-  t.is(record._source.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
-  t.is(record._source.timeToArchive, 100 / 1000);
-  t.is(record._source.timeToPreprocess, 120 / 1000);
-  t.is(record._source.processingStartDateTime, '2018-05-03T14:23:12.010Z');
-  t.is(record._source.processingEndDateTime, '2018-05-03T17:11:33.007Z');
+  t.deepEqual(record.files, granule.files);
+  t.is(record.status, 'completed');
+  t.is(record.collectionId, collectionId);
+  t.is(record.granuleId, granule.granuleId);
+  t.is(record.cmrLink, granule.cmrLink);
+  t.is(record.published, granule.published);
+  t.is(record.productVolume, 17909733);
+  t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
+  t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
+  t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
+  t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
+  t.is(record.timeToArchive, 100 / 1000);
+  t.is(record.timeToPreprocess, 120 /1000);
+  t.is(record.processingStartDateTime, '2018-05-03T14:23:12.010Z');
+  t.is(record.processingEndDateTime, '2018-05-03T17:11:33.007Z')
 
-  const { name: deconstructed } = indexer.deconstructCollectionId(record._parent);
+  const { name: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
   t.is(deconstructed, collection.name);
 });
 
-test.serial('indexing multiple successful granule records', async (t) => {
+test.serial('creating multiple successful granule records', async (t) => {
   const newPayload = clone(granuleSuccess);
-  const type = 'granule';
   const granule = newPayload.payload.granules[0];
   granule.granuleId = randomString();
   const granule2 = clone(granule);
   granule2.granuleId = randomString();
   newPayload.payload.granules.push(granule2);
   const collection = newPayload.meta.collection;
-  const response = await indexer.granule(esClient, newPayload, esIndex, type);
+  const records = await indexer.granule(newPayload);
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
-  t.is(response.length, 2);
-  const promises = response.map((r) => {
-    t.is(r.result, 'created');
+  t.is(records.length, 2);
 
-    // check the record exists
-    return esClient.get({
-      index: esIndex,
-      type,
-      id: r._id,
-      parent: collectionId
-    });
-  });
-
-  const records = await Promise.all(promises);
   records.forEach((record) => {
-    t.is(record._source.status, 'completed');
-    t.is(record._parent, collectionId);
-    t.is(record._source.cmrLink, granule.cmrLink);
-    t.is(record._source.published, granule.published);
+    t.is(record.status, 'completed');
+    t.is(record.collectionId, collectionId);
+    t.is(record.cmrLink, granule.cmrLink);
+    t.is(record.published, granule.published);
   });
 });
 
-test.serial('indexing a failed granule record', async (t) => {
-  const type = 'granule';
+test.serial('creating a failed granule record', async (t) => {
   const granule = granuleFailure.payload.granules[0];
-  const collection = granuleFailure.meta.collection;
-  const r = await indexer.granule(esClient, granuleFailure, esIndex, type);
+  const records = await indexer.granule(granuleFailure);
 
-  // make sure record is created
-  t.is(r[0].result, 'created');
-
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
-
-  // check the record exists
-  const record = await esClient.get({
-    index: esIndex,
-    type,
-    id: granule.granuleId,
-    parent: collectionId
-  });
-
-  t.deepEqual(record._source.files, granule.files);
-  t.is(record._source.status, 'failed');
-  t.is(record._id, granule.granuleId);
-  t.is(record._source.published, false);
-  t.is(record._source.error.Error, granuleFailure.exception.Error);
-  t.is(record._source.error.Cause, granuleFailure.exception.Cause);
+  const record = records[0];
+  t.deepEqual(record.files, granule.files);
+  t.is(record.status, 'failed');
+  t.is(record.granuleId, granule.granuleId);
+  t.is(record.published, false);
+  t.is(record.error.Error, granuleFailure.exception.Error);
+  t.is(record.error.Cause, granuleFailure.exception.Cause);
 });
 
-test.serial('indexing a granule record without state_machine info', async (t) => {
+test.serial('creating a granule record without state_machine info', async (t) => {
   const newPayload = clone(granuleSuccess);
-  const type = 'granule';
   delete newPayload.cumulus_meta.state_machine;
 
-  const r = await indexer.granule(esClient, newPayload, esIndex, type);
+  const r = await indexer.granule(newPayload);
   t.is(r, undefined);
 });
 
-test.serial('indexing a granule record without a granule', async (t) => {
+test.serial('creating a granule record without a granule', async (t) => {
   const newPayload = clone(granuleSuccess);
-  const type = 'granule';
   delete newPayload.payload;
   delete newPayload.meta;
 
-  const r = await indexer.granule(esClient, newPayload, esIndex, type);
+  const r = await indexer.granule(newPayload);
   t.is(r, undefined);
 });
 
-test.serial('indexing a granule record in meta section', async (t) => {
+test.serial('creating a granule record in meta section', async (t) => {
   const newPayload = clone(granuleSuccess);
-  const type = 'granule';
   delete newPayload.payload;
   newPayload.meta.status = 'running';
   const collection = newPayload.meta.collection;
   const granule = newPayload.meta.input_granules[0];
   granule.granuleId = randomString();
 
-  const r = await indexer.granule(esClient, newPayload, esIndex, type);
+  const records = await indexer.granule(newPayload);
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
-  // make sure record is created
-  t.is(r[0].result, 'created');
-
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
-
-  // check the record exists
-  const record = await esClient.get({
-    index: esIndex,
-    type,
-    id: granule.granuleId,
-    parent: collectionId
-  });
-
-  t.deepEqual(record._source.files, granule.files);
-  t.is(record._source.status, 'running');
-  t.is(record._parent, collectionId);
-  t.is(record._id, granule.granuleId);
-  t.is(record._source.published, false);
+  const record = records[0];
+  t.deepEqual(record.files, granule.files);
+  t.is(record.status, 'running');
+  t.is(record.collectionId, collectionId);
+  t.is(record.granuleId, granule.granuleId);
+  t.is(record.published, false);
 });
 
 test.serial('indexing a deletedgranule record', async (t) => {
   const granuletype = 'granule';
-  const granule = granuleSuccess.payload.granules[0];
-  granule.granuleId = randomString();
-  const collection = granuleSuccess.meta.collection;
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const granule = fakeGranuleFactory();
+  const collection = fakeCollectionFactory();
+  const collectionId = constructCollectionId(collection.name, collection.version);
+  granule.collectionId = collectionId;
 
   // create granule record
-  let r = await indexer.granule(esClient, granuleSuccess, esIndex, granuletype);
-  t.is(r[0].result, 'created');
-  // delete granule record
+  let r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
+  t.is(r.result, 'created');
+
   r = await indexer.deleteRecord(esClient, granule.granuleId, granuletype, collectionId, esIndex);
   t.is(r.result, 'deleted');
 
@@ -243,39 +218,33 @@ test.serial('indexing a deletedgranule record', async (t) => {
   t.truthy(record._source.deletedAt);
 
   // the deletedgranule record is removed if the granule is ingested again
-  r = await indexer.granule(esClient, granuleSuccess, esIndex, granuletype);
-  t.is(r[0].result, 'created');
+  r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
+  t.is(r.result, 'created');
   record = await esClient.get(Object.assign(deletedGranParams, { ignore: [404] }));
   t.false(record.found);
 });
 
-test.serial('indexing multiple deletedgranule records and retrieving them', async (t) => {
+test.serial('creating multiple deletedgranule records and retrieving them', async (t) => {
   const granuleIds = [];
-  const newPayload = clone(granuleSuccess);
-  const granuletype = 'granule';
-  const granule = newPayload.payload.granules[0];
-  granule.granuleId = randomString();
-  granuleIds.push(granule.granuleId);
-  for (let i = 0; i < 10; i += 1) {
-    const newgran = clone(granule);
-    newgran.granuleId = randomString();
-    newPayload.payload.granules.push(newgran);
+  const granules = [];
+
+  for (let i = 0; i < 11; i += 1) {
+    const newgran = fakeGranuleFactory();
+    granules.push(newgran);
     granuleIds.push(newgran.granuleId);
   }
 
-  const collection = newPayload.meta.collection;
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = granules[0].collectionId; 
 
-  let response = await indexer.granule(esClient, newPayload, esIndex, granuletype);
-
+  // add the records
+  let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
   t.is(response.length, 11);
-  const promises = response.map((r) => {
-    t.is(r.result, 'created');
-    // delete granules
-    return indexer.deleteRecord(esClient, r._id, granuletype, collectionId, esIndex);
-  });
 
-  response = await Promise.all(promises);
+  // now delete the records
+  response = await Promise.all(granules
+    .map((g) => indexer
+      .deleteRecord(esClient, g.granuleId, 'granule', g.collectionId, esIndex)));
+
   t.is(response.length, 11);
   response.forEach((r) => t.is(r.result, 'deleted'));
 
@@ -364,7 +333,7 @@ test.serial('indexing a collection record', async (t) => {
     version: '001'
   };
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
   const r = await indexer.indexCollection(esClient, collection, esIndex);
 
   // make sure record is created
@@ -467,29 +436,16 @@ test.serial('updating a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test.serial('indexing a failed pdr record', async (t) => {
-  const type = 'pdr';
+test.serial('creating a failed pdr record', async (t) => {
   const payload = pdrFailure.payload;
   payload.pdr.name = randomString();
   const collection = pdrFailure.meta.collection;
-  const r = await indexer.pdr(esClient, pdrFailure, esIndex, type);
+  const record = await indexer.pdr(pdrFailure);
 
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type,
-    id: payload.pdr.name
-  });
-  const record = response._source;
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   t.is(record.status, 'failed');
   t.is(record.collectionId, collectionId);
-  t.is(response._id, payload.pdr.name);
   t.is(record.pdrName, payload.pdr.name);
 
   // check stats
@@ -501,29 +457,16 @@ test.serial('indexing a failed pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test.serial('indexing a successful pdr record', async (t) => {
-  const type = 'pdr';
+test.serial('creating a successful pdr record', async (t) => {
   pdrSuccess.meta.pdr.name = randomString();
   const pdr = pdrSuccess.meta.pdr;
   const collection = pdrSuccess.meta.collection;
-  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
+  const record = await indexer.pdr(pdrSuccess);
 
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type,
-    id: pdr.name
-  });
-  const record = response._source;
+  const collectionId = constructCollectionId(collection.name, collection.version);
 
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
-  t.is(response._id, pdr.name);
   t.is(record.pdrName, pdr.name);
 
   // check stats
@@ -535,25 +478,12 @@ test.serial('indexing a successful pdr record', async (t) => {
   t.is(record.progress, 100);
 });
 
-test.serial('indexing a running pdr record', async (t) => {
-  const type = 'pdr';
+test.serial('creating a running pdr record', async (t) => {
   const newPayload = clone(pdrSuccess);
   newPayload.meta.pdr.name = randomString();
   newPayload.meta.status = 'running';
   newPayload.payload.running.push('arn');
-  const pdr = newPayload.meta.pdr;
-  const r = await indexer.pdr(esClient, newPayload, esIndex, type);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type,
-    id: pdr.name
-  });
-  const record = response._source;
+  const record = await indexer.pdr(newPayload);
 
   t.is(record.status, 'running');
 
@@ -567,61 +497,41 @@ test.serial('indexing a running pdr record', async (t) => {
 });
 
 test.serial('indexing a running pdr when pdr is missing', async (t) => {
-  const type = 'pdr';
   delete pdrSuccess.meta.pdr;
-  const r = await indexer.pdr(esClient, pdrSuccess, esIndex, type);
+  const r = await indexer.pdr(pdrSuccess);
 
   // make sure record is created
   t.is(r, undefined);
 });
 
-test.serial('indexing a step function with missing arn', async (t) => {
+test.serial('creating a step function with missing arn', async (t) => {
   const newPayload = clone(granuleSuccess);
   delete newPayload.cumulus_meta.state_machine;
 
-  const promise = indexer.indexStepFunction(esClient, newPayload, esIndex);
+  const e = new models.Execution();
+  const promise = e.createExecutionFromSns(newPayload);
   const error = await t.throws(promise);
   t.is(error.message, 'State Machine Arn is missing. Must be included in the cumulus_meta');
 });
 
-test.serial('indexing a successful step function', async (t) => {
+test.serial('creating a successful step function', async (t) => {
   const newPayload = clone(pdrSuccess);
   newPayload.cumulus_meta.execution_name = randomString();
 
-  const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type: 'execution',
-    id: r._id
-  });
-  const record = response._source;
+  const e = new models.Execution();
+  const record = await e.createExecutionFromSns(newPayload);
 
   t.is(record.status, 'completed');
   t.is(record.type, newPayload.meta.workflow_name);
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
-test.serial('indexing a failed step function', async (t) => {
+test.serial('creaging a failed step function', async (t) => {
   const newPayload = clone(pdrFailure);
   newPayload.cumulus_meta.execution_name = randomString();
 
-  const r = await indexer.indexStepFunction(esClient, newPayload, esIndex);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-
-  // check the record exists
-  const response = await esClient.get({
-    index: esIndex,
-    type: 'execution',
-    id: r._id
-  });
-  const record = response._source;
+  const e = new models.Execution();
+  const record = await e.createExecutionFromSns(newPayload);
 
   t.is(record.status, 'failed');
   t.is(record.type, newPayload.meta.workflow_name);
@@ -711,44 +621,30 @@ test.serial('reingest a granule', async (t) => {
   await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
 
   payload.payload.granules[0].granuleId = randomString();
-  const r = await indexer.granule(esClient, payload);
+  const records = await indexer.granule(payload);
+  const record = records[0];
 
   sinon.stub(
     StepFunction,
     'getExecutionStatus'
   ).callsFake(() => Promise.resolve(fakeSFResponse));
 
-  const collectionId = indexer.constructCollectionId(
-    granuleSuccess.meta.collection.name,
-    granuleSuccess.meta.collection.version
-  );
+  t.is(record.status, 'completed');
 
-  // check the record exists
-  let record = await esClient.get({
-    index: esIndex,
-    type: 'granule',
-    id: r[0]._id,
-    parent: collectionId
-  });
-
-  t.is(record._source.status, 'completed');
-
-  const response = await indexer.reingest(record._source, esIndex);
+  const response = await indexer.reingest(record);
   t.is(response.action, 'reingest');
   t.is(response.status, 'SUCCESS');
 
-  record = await esClient.get({
-    index: esIndex,
-    type: 'granule',
-    id: r[0]._id,
-    parent: collectionId
-  });
-  t.is(record._source.status, 'running');
+  const g = new models.Granule();
+  const newRecord = await g.get({ granuleId: record.granuleId });
+
+  t.is(newRecord.status, 'running');
 });
 
 test.serial('pass a sns message to main handler', async (t) => {
   const txt = fs.readFileSync(path.join(
-    __dirname, '/data/sns_message_granule.txt'
+    __dirname,
+    '/data/sns_message_granule.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
@@ -759,10 +655,13 @@ test.serial('pass a sns message to main handler', async (t) => {
   t.truthy(resp[0].granule);
   t.falsy(resp[0].pdr);
 
+  // fake granule index to elasticsearch (this is done in a lambda function)
+  await indexer.indexGranule(esClient, resp[0].granule[0]);
+
   const msg = JSON.parse(event.Records[0].Sns.Message);
   const granule = msg.payload.granules[0];
   const collection = msg.meta.collection;
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.name, collection.version);
   // test granule record is added
   const record = await esClient.get({
     index: esIndex,
@@ -775,7 +674,8 @@ test.serial('pass a sns message to main handler', async (t) => {
 
 test.serial('pass a sns message to main handler with parse info', async (t) => {
   const txt = fs.readFileSync(path.join(
-    __dirname, '/data/sns_message_parse_pdr.txt'
+    __dirname,
+    '/data/sns_message_parse_pdr.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
@@ -785,6 +685,9 @@ test.serial('pass a sns message to main handler with parse info', async (t) => {
   t.truthy(resp[0].sf);
   t.falsy(resp[0].granule);
   t.truthy(resp[0].pdr);
+
+  // fake pdr index to elasticsearch (this is done in a lambda function)
+  await indexer.indexPdr(esClient, resp[0].pdr);
 
   const msg = JSON.parse(event.Records[0].Sns.Message);
   const pdr = msg.payload.pdr;

@@ -102,6 +102,16 @@ jobs:
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
 
+              # Build test processing task, CHANGE WHEN PUBLISHED TO NPM
+              cd tasks/test-processing
+              yarn build
+              cd ../..
+
+              # Build move-granules task, CHANGE WHEN PUBLISHED TO NPM
+              cd tasks/move-granules
+              yarn build
+              cd ../..
+
               # install cumulus-integration
               ./bin/prepare
 
@@ -118,7 +128,7 @@ jobs:
               sed -i -- 's/npm/src/g' spec/config.yml
 
               # deploy latest iam roles to aws
-              ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-source
+              ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/iam
 
               # deploy latest version of the packages to the aws
               ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
@@ -169,7 +179,7 @@ jobs:
           command: |
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
             VERSION=$(cat lerna.json | jq .version --raw-output)
-            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
+            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm
       
       - run:
           name: Deploy cumulus with the npm packages source code
@@ -177,7 +187,7 @@ jobs:
             cd example
             yarn
             sed -i -- 's/src/npm/g' spec/config.yml
-            ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-npm
+            ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/iam
             ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
 
       - run:

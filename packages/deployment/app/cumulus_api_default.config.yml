@@ -9,9 +9,12 @@ default:
       - CollectionsTable
       - RulesTable
       - ProvidersTable
+      - GranulesTable
+      - PdrsTable
+      - ExecutionsTable
 
   apis:
-    - name: distribution
+    - name: download 
     - name: backend
 
   lambdas: !!files [

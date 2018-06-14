@@ -13,10 +13,11 @@ exports.executionStatus = require('./endpoints/execution-status');
 exports.schemas = require('./endpoints/schemas');
 exports.stats = require('./endpoints/stats');
 exports.version = require('./endpoints/version');
-exports.distribution = require('./endpoints/distribution');
+exports.distribution = require('./endpoints/distribution').handler;
 exports.dbIndexer = require('./lambdas/db-indexer');
 
 exports.jobs = require('./lambdas/jobs');
+exports.executeMigrations = require('./lambdas/executeMigrations').handler;
 exports.bootstrap = require('./lambdas/bootstrap').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
