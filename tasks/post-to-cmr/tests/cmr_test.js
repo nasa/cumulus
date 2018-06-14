@@ -31,7 +31,7 @@ test.afterEach.always(async (t) => {
   deleteBucket(t.context.bucket);
 });
 
-test.serial('should succeed if cmr correctly identifies the xml as invalid', async (t) => {
+test.serial('postToCMR throws error if CMR correctly identifies the xml as invalid', async (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
   const newPayload = JSON.parse(JSON.stringify(payload));
@@ -44,7 +44,7 @@ test.serial('should succeed if cmr correctly identifies the xml as invalid', asy
       Key: key,
       Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>'
     });
-    const output = await postToCMR(newPayload);
+    await postToCMR(newPayload);
     t.fail();
   } catch(e) {
     t.true(e instanceof cmrjs.ValidationError);
@@ -53,7 +53,7 @@ test.serial('should succeed if cmr correctly identifies the xml as invalid', asy
   }
 });
 
-test.serial('should succeed with correct payload', async (t) => {
+test.serial('postToCMR succeeds with correct payload', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
@@ -78,7 +78,7 @@ test.serial('should succeed with correct payload', async (t) => {
   }
 });
 
-test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT==\'SIT\'', async (t) => {
+test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
   const newPayload = JSON.parse(JSON.stringify(payload));
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
@@ -105,7 +105,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT==\'SIT\'', async (t)
   }
 });
 
-test.serial('Should skip cmr step if the metadata file uri is missing', async (t) => {
+test.serial('postToCMR skips CMR step if the metadata file uri is missing', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.input.granules = [{
     granuleId: 'some granule',
