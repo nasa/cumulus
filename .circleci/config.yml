@@ -117,7 +117,6 @@ jobs:
 
               # update stackname 
               cd example 
-              sed -i -- 's/npm/src/g' spec/config.yml
             fi
 
       - run:
@@ -125,7 +124,6 @@ jobs:
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               cd example
-              sed -i -- 's/npm/src/g' spec/config.yml
 
               # deploy latest iam roles to aws
               ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/iam
