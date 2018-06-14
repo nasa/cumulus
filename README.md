@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg&circle-token=4a16cbbdacb6396c709309ef5ac87479c9dc8bd1)](https://circleci.com/gh/cumulus-nasa/cumulus)
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
-[![Coverage Status](https://coveralls.io/repos/github/cumulus-nasa/cumulus/badge.svg?branch=node_8)](https://coveralls.io/github/cumulus-nasa/cumulus?branch=node_8)
+[![Coverage Status](https://coveralls.io/repos/github/cumulus-nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/cumulus-nasa/cumulus?branch=master)
 
 ## Installing and deploying
 
