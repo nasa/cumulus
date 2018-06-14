@@ -45,8 +45,8 @@ const S3_RATE_LIMIT = 20;
 
 const memoize = (fn) => {
   let memo = null;
-  return () => {
-    if (!memo) memo = fn();
+  return (options) => {
+    if (!memo) memo = fn(options);
     return memo;
   };
 };
@@ -69,9 +69,9 @@ const awsClient = (Service, version = null) => {
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
       AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
     }
-    return memoize(() => testAwsClient(Service, options));
+    return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
   }
-  return memoize(() => new Service(options));
+  return memoize((o) => new Service(Object.assign(options, o)));
 };
 
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
@@ -92,8 +92,8 @@ exports.sns = awsClient(AWS.SNS, '2010-03-31');
  *
  * See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudFormation.html#describeStackResources-property
  *
- * @param {string} stackName The name of the CloudFormation stack to query
- * @return {Array<Object>} The resources belonging to the stack
+ * @param {string} stackName -  The name of the CloudFormation stack to query
+ * @returns {Array<Object>} The resources belonging to the stack
  */
 exports.describeCfStackResources = (stackName) =>
   exports.cf().describeStackResources({ StackName: stackName })
@@ -143,9 +143,9 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 /**
  * Delete an object from S3
  *
- * @param {string} bucket
- * @param {string} key
- * @returns {Promise}
+ * @param {string} bucket - bucket where the object exists
+ * @param {string} key - key of the object to be deleted
+ * @returns {Promise} - promise of the object being deleted
  */
 exports.deleteS3Object = (bucket, key) =>
   exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
@@ -203,10 +203,11 @@ exports.getS3Object = (bucket, key) =>
 
 /**
 * Check if a file exists in an S3 object
+*
 * @name fileExists
-* @param {string} bucket name of the S3 bucket
-* @param {string} key key of the file in the S3 bucket
-* @returns {promise} returns the response from `S3.headObject` as a promise
+* @param {string} bucket - name of the S3 bucket
+* @param {string} key - key of the file in the S3 bucket
+* @returns {Promise} returns the response from `S3.headObject` as a promise
 **/
 exports.fileExists = async (bucket, key) => {
   const s3 = exports.s3();
@@ -256,9 +257,10 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
 
 /**
  * Delete files from S3
- * @param {Array} s3Objs An array of objects containing keys 'Bucket' and 'Key'
- * @param {Object} s3Opts An optional object containing options that influence the behavior of S3
- * @return A promise that resolves to an Array of the data returned from the deletion operations
+ * 
+ * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
+ * @param {Object} s3Opts - An optional object containing options that influence the behavior of S3
+ * @returns {Promise} A promise that resolves to an Array of the data returned from the deletion operations
  */
 exports.deleteS3Files = (s3Objs) => {
   log.info(`Starting deletion of ${s3Objs.length} object(s)`);
@@ -320,11 +322,12 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
 
 /**
  * Upload the file associated with the given stream to an S3 bucket
- * @param {ReadableStream} fileStream The stream for the file's contents
- * @param {string} bucket The S3 bucket to which the file is to be uploaded
- * @param {string} key The key to the file in the bucket
- * @param s3opts {Object} Options to pass to the AWS sdk call (defaults to `{}`)
- * @return A promise
+ *
+ * @param {ReadableStream} fileStream - The stream for the file's contents
+ * @param {string} bucket - The S3 bucket to which the file is to be uploaded
+ * @param {string} key - The key to the file in the bucket
+ * @param {Object} s3opts - Options to pass to the AWS sdk call (defaults to `{}`)
+ * @returns {Promise} A promise
  */
 exports.uploadS3FileStream = (fileStream, bucket, key, s3opts = {}) => {
   const opts = Object.assign({ Bucket: bucket, Key: key, Body: fileStream }, s3opts);
@@ -471,8 +474,9 @@ exports.getQueueUrl = (sourceArn, queueName) => {
 
 /**
 * parse an s3 uri to get the bucket and key
-* @param {string} uri must be a uri with the `s3://` protocol
-* @return {object} Returns an object with `Bucket` and `Key` properties
+*
+* @param {string} uri - must be a uri with the `s3://` protocol
+* @returns {Object} Returns an object with `Bucket` and `Key` properties
 **/
 exports.parseS3Uri = (uri) => {
   const parsedUri = url.parse(uri);
@@ -545,8 +549,8 @@ exports.getCurrentSfnTask = (stateMachineArn, executionName) =>
  * Important: This transformation isn't entirely two-way. Names longer than 80 characters
  *            will be truncated.
  *
- * @param{string} fields - The fields to be injected into an execution name
- * @param{string} delimiter - An optional delimiter string to replace, pass null to make
+ * @param {string} fields - The fields to be injected into an execution name
+ * @param {string} delimiter - An optional delimiter string to replace, pass null to make
  *   no replacements
  * @return - A string that's safe to use as a StepFunctions execution name
  */
@@ -567,10 +571,10 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  * Important: This value may be truncated from the original because of the 80-char limit on
  *            execution names
  *
- * @param{string} str - The string to make stepfunction safe
- * @param{string} delimiter - An optional delimiter string to replace, pass null to make
+ * @param {string} str - The string to make stepfunction safe
+ * @param {string} delimiter - An optional delimiter string to replace, pass null to make
  *   no replacements
- * @param{string} sfnDelimiter - The string to replace delimiter with
+ * @param {string} sfnDelimiter - The string to replace delimiter with
  * @return - An array of the original fields
  */
 exports.fromSfnExecutionName = (str, delimiter = '__') =>
@@ -675,9 +679,9 @@ exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
 /**
  * Returns execution ARN from a statement machine Arn and executionName
  *
- * @param {string} stateMachineArn state machine ARN
- * @param {string} executionName state machine's execution name
- * @returns {string} Step Function Execution Arn
+ * @param {string} stateMachineArn - state machine ARN
+ * @param {string} executionName - state machine's execution name
+ * @returns {string} - Step Function Execution Arn
  */
 exports.getExecutionArn = (stateMachineArn, executionName) => {
   if (stateMachineArn && executionName) {
@@ -691,7 +695,7 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
 * Parse event metadata to get location of granule on S3
 *
 * @param {string} granuleId - the granule id
-* @param {string} stack = the deployment stackname
+* @param {string} stack - the deployment stackname
 * @param {string} bucket - the deployment bucket name
 * @returns {string} - s3 path
 **/

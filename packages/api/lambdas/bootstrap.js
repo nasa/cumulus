@@ -15,7 +15,9 @@
 
 const got = require('got');
 const get = require('lodash.get');
+const boolean = require('boolean');
 const log = require('@cumulus/common/log');
+const { dynamodb } = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const Manager = require('../models/base');
@@ -161,6 +163,49 @@ async function bootstrapCmrProvider(password) {
 }
 
 /**
+ * converts dynamoDB backup status to boolean
+ *
+ * @param {string} status - backup status of the table
+ * @returns {boolean} the status in boolean
+ */
+function backupStatus(status) {
+  if (status === 'ENABLED') {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Enable/Disable the point-in-time backup feature of given
+ * DynamoDB tables
+ *
+ * @param {Array.<Object>} tables - a list of DynamoDB table names and their pointInTime status
+ * @returns {Promise.<Array>} array of dynamoDB aws responses
+ */
+function bootstrapDynamoDbTables(tables) {
+  return Promise.all(tables.map((table) => {
+    // check the status of continuous backup
+    return dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
+      .then((r) => {
+        const status = backupStatus(r.ContinuousBackupsDescription.ContinuousBackupsStatus);
+
+        // if the status has not changed, skip
+        if (status === boolean(table.pointInTime)) {
+          return Promise.resolve();
+        }
+        const params = {
+          PointInTimeRecoverySpecification: {
+            PointInTimeRecoveryEnabled: boolean(table.pointInTime)
+          },
+          TableName: table.name
+        };
+        return dynamodb().updateContinuousBackups(params).promise();
+      })
+  }));
+}
+
+/**
  * Sends response back to CloudFormation
  *
  * @param {Object} event - AWS lambda event object
@@ -203,6 +248,7 @@ function handler(event, context, cb) {
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');
+  const dynamos = get(event, 'ResourceProperties.DynamoDBTables');
   const requestType = get(event, 'RequestType');
 
   if (requestType === 'Delete') {
@@ -212,7 +258,8 @@ function handler(event, context, cb) {
   const actions = [
     bootstrapElasticSearch(get(es, 'host')),
     bootstrapUsers(get(users, 'table'), get(users, 'records')),
-    bootstrapCmrProvider(get(cmr, 'Password'))
+    bootstrapCmrProvider(get(cmr, 'Password')),
+    bootstrapDynamoDbTables(dynamos)
   ];
 
   return Promise.all(actions)
@@ -234,6 +281,7 @@ function handler(event, context, cb) {
 module.exports = {
   handler,
   bootstrapElasticSearch,
+  bootstrapDynamoDbTables,
   // for testing
   findMissingMappings
 };
