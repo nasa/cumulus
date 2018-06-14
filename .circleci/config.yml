@@ -102,22 +102,11 @@ jobs:
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
 
-              # Build test processing task, CHANGE WHEN PUBLISHED TO NPM
-              cd tasks/test-processing
-              yarn build
-              cd ../..
-
-              # Build move-granules task, CHANGE WHEN PUBLISHED TO NPM
-              cd tasks/move-granules
-              yarn build
-              cd ../..
-
               # install cumulus-integration
               ./bin/prepare
 
               # update stackname 
               cd example 
-              sed -i -- 's/npm/src/g' spec/config.yml
             fi
 
       - run:
@@ -125,7 +114,6 @@ jobs:
           command: |
             if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
               cd example
-              sed -i -- 's/npm/src/g' spec/config.yml
 
               # deploy latest iam roles to aws
               ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/iam
