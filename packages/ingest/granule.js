@@ -2,6 +2,7 @@
 
 const deprecate = require('depd')('my-module');
 const aws = require('@cumulus/common/aws');
+const { getS3Object, promiseS3Upload } = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
@@ -20,6 +21,11 @@ const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
+const xml2js = require('xml2js');
+const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
+const { publish } = require('./cmr');
+
+let bucketsObject;
 
 /**
 * The abstract Discover class
@@ -253,7 +259,6 @@ class Granule {
     if (!fileConfig) {
       throw new Error(`Unable to update file. Cannot find file config for file ${file.name}`);
     }
- 
     const bucket = this.buckets[fileConfig.bucket].name;
 
     return Object.assign(cloneDeep(file), { bucket });
@@ -575,6 +580,143 @@ function selector(type, protocol) {
 }
 
 /**
+ * Gets metadata for a cmr xml file from s3
+ *
+ * @param {string} xmlFilePath - S3 URI to the xml metadata document
+ * @returns {string} returns stringified xml document downloaded from S3
+ */
+async function getMetadata(xmlFilePath) {
+  if (!xmlFilePath) {
+    throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
+  }
+
+  // GET the metadata text
+  // Currently, only supports files that are stored on S3
+  const parts = xmlFilePath.match(/^s3:\/\/(.+?)\/(.+)$/);
+  const obj = await getS3Object(parts[1], parts[2]);
+  return obj.Body.toString();
+}
+
+/**
+ * Parse an xml string
+ *
+ * @param {string} xml - xml to parse
+ * @returns {Promise<Object>} promise resolves to object version of the xml
+ */
+async function parseXmlString(xml) {
+  return new Promise((resolve, reject) => {
+    xml2js.parseString(xml, xmlParseOptions, (err, data) => {
+      if (err) return reject(err);
+      return resolve(data);
+    });
+  });
+}
+
+async function postS3Object(destination, options) {
+  await promiseS3Upload(
+    { Bucket: destination.bucket, Key: destination.key, Body: destination.body }
+  );
+  if (options) {
+    const s3 = aws.s3();
+    await s3.deleteObject(options).promise();
+  }
+}
+
+/**
+ * updates cmrFile metadata for any files being moved
+ *
+ * @param {Object} cmrFile - cmrFile to be updated
+ * @param {Object[]} sourceFiles - array of file objects
+ * @param {Object[]} destinations - array of objects defining the destination of granule files
+ * @param {string} distEndpoint - distribution enpoint from config
+ * @returns {Promise} returns promise to upload updated cmr file
+ */
+async function updateMetadata(cmrFile, sourceFiles, destinations, distEndpoint) {
+  const urls = [];
+  const file = cmrFile.file;
+  const destination = cmrFile.destination;
+
+  if (!bucketsObject) {
+    const bucketsString = await aws.s3().getObject({
+      Bucket: process.env.bucket,
+      Key: `${process.env.stackName}/workflows/buckets.json`
+    }).promise();
+    bucketsObject = JSON.parse(bucketsString.Body);
+  }
+
+  const bucketKeys = Object.keys(bucketsObject);
+  sourceFiles.forEach((sourceFile) => {
+    const urlObj = {};
+    const currDestination = destinations.find((dest) => sourceFile.name.match(dest.regex));
+    let key;
+    let filepath;
+    if (currDestination) {
+      key =
+        bucketKeys.find((bucketKey) => currDestination.bucket.match(bucketsObject[bucketKey].name));
+      filepath = currDestination.filepath;
+    }
+    else {
+      key = bucketKeys.find((bucketKey) => sourceFile.bucket.match(bucketsObject[bucketKey].name));
+      filepath = sourceFile.filepath;
+    }
+    if (bucketsObject[key].type.match('protected')) {
+      const extension = urljoin(bucketsObject[key].name, `${filepath}/${sourceFile.name}`);
+      urlObj.URL = urljoin(distEndpoint, extension);
+      urlObj.URLDescription = 'File to download';
+      urls.push(urlObj);
+    }
+    else if (bucketsObject[key].type.match('public')) {
+      urlObj.URL = `https://${bucketsObject[key].name}.s3.amazonaws.com/${filepath}/${sourceFile.name}`;
+      urlObj.URLDescription = 'File to download';
+      urls.push(urlObj);
+    }
+  });
+  const metadata = await getMetadata(file.filename);
+  const metadataObject = await parseXmlString(metadata);
+  const metadataGranule = get(metadataObject, 'Granule');
+  const updatedGranule = {};
+  Object.keys(metadataGranule).forEach((key) => {
+    if (key === 'OnlineResources' || key === 'Orderable') {
+      updatedGranule.OnlineAccessURLs = {};
+    }
+    updatedGranule[key] = metadataGranule[key];
+  });
+  updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
+  metadataObject.Granule = updatedGranule;
+  const builder = new xml2js.Builder();
+  const xml = builder.buildObject(metadataObject);
+
+  // post meta file to CMR
+  const creds = {
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id,
+    username: process.env.cmr_username,
+    password: process.env.cmr_password
+  };
+
+  const response = await publish(file, creds, process.env.bucket, process.env.stackName);
+  if (response) {
+    let action;
+    if (destination) {
+      const options = {
+        Bucket: file.bucket,
+        Key: file.filepath
+      };
+      const target = {
+        bucket: destination.bucket,
+        key: `${destination.filepath}/${file.name}`,
+        body: xml
+      };
+      action = await postS3Object(target, options);
+    }
+    else {
+      action = await postS3Object({ bucket: file.bucket, key: file.filepath, body: xml });
+    }
+    return action;
+  }
+}
+
+/**
 * Copy granule file from one s3 bucket & keypath to another
 *
 * @param {Object} source - source
@@ -623,21 +765,27 @@ async function moveGranuleFile(source, target, options) {
  * move granule files from one s3 location to another
  *
  * @param {Object[]} sourceFiles - array of file objects
- * @param {string} sourceFiles[].name
- * @param {string} sourceFiles[].bucket
- * @param {string} sourceFiles[].filepath
+ * @param {string} sourceFiles[].name - file name
+ * @param {string} sourceFiles[].bucket - current bucket of file
+ * @param {string} sourceFiles[].filepath - current bucket location of file
  * @param {Object[]} destinations - array of objects defining the destination of granule files
  * @param {string} destinations[].regex - regex for matching filepath of file to new destination
  * @param {string} destinations[].bucket - aws bucket
  * @param {string} destinations[].key - filepath on the bucket for the destination
+ * @param {string} distEndpoint - distribution enpoint from config
  * @returns {Promise<undefined>} returns `undefined` when all the files are moved
  */
-async function moveGranuleFiles(sourceFiles, destinations) {
+async function moveGranuleFiles(sourceFiles, destinations, distEndpoint) {
   const moveFileRequests = sourceFiles.map((file) => {
     const destination = destinations.find((dest) => file.name.match(dest.regex));
 
+    if (file.name.match(/.*\.cmr\.xml$/)) {
+      return updateMetadata(
+        { file, destination }, sourceFiles, destinations, distEndpoint
+      );
+    }
     // if there's no match, we skip the file
-    if (destination) {
+    else if (destination) {
       const source = {
         Bucket: file.bucket,
         Key: file.filepath
@@ -666,6 +814,7 @@ module.exports.S3Granule = S3Granule;
 module.exports.S3DiscoverGranules = S3DiscoverGranules;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
+module.exports.getMetadata = getMetadata;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
