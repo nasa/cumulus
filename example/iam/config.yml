@@ -37,12 +37,16 @@ cumulus-from-npm:
 cumulus-from-source:
   prefix: test-src-integration
 
-aj: 
+aj:
   prefix: aj-integration
 
 lf: 
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
+
+kk-deploy-uat:
+  prefix: kk-test-uat
+  stackName: kk-test-uat-iam
   
 mth-cum-test:
   prefix: mth-cum-test
