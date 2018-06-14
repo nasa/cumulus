@@ -60,6 +60,7 @@ ApiGranulesV1:
     invoke:
       function: "Ref"
       value: ScheduleSFLambdaFunction
+    distEndpoint: '{{parent.api_distribution_url}}'
     bucket: '{{parent.system_bucket}}'
     internal: '{{parent.system_bucket}}'
     cmr_provider: '{{parent.cmr.provider}}'

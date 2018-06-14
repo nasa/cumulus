@@ -189,15 +189,17 @@ const limit = pLimit(concurrencyLimit);
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of collection json files
- * @return {Array} List of objects to seed in the database
+ * @returns {Array} List of objects to seed in the database
  */
 async function setupSeedData(stackName, bucketName, dataDirectory) {
   setProcessEnvironment(stackName, bucketName);
   const filenames = await fs.readdir(dataDirectory);
   const seedItems = [];
   filenames.forEach((filename) => {
-    const item = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
-    seedItems.push(item);
+    if (filename.match(/.*\.json/)) {
+      const item = JSON.parse(fs.readFileSync(`${dataDirectory}/${filename}`, 'utf8'));
+      seedItems.push(item);
+    }
   });
   return seedItems;
 }
