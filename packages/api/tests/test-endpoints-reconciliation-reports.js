@@ -30,8 +30,8 @@ test('default returns list of reports', (t) => {
   const event = { httpMethod: 'GET' };
   return testEndpoint(reconciliationReportEndpoint, event, (response) => {
     const results = JSON.parse(response.body);
-    t.is(results.length, 2);
-    results.forEach((reportName) => t.true(reportNames.includes(reportName)));
+    t.is(results.results.length, 2);
+    results.results.forEach((reportName) => t.true(reportNames.includes(reportName)));
   });
 });
 
