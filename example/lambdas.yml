@@ -30,7 +30,7 @@ DiscoverPdrs:
 MoveGranules:
   handler: index.handler
   timeout: 300
-  source: '../tasks/move-granules/dist'
+  source: 'node_modules/@cumulus/move-granules/dist/'
   useMessageAdapter: true
 
 QueuePdrs:
@@ -96,7 +96,7 @@ S3AccessTest:
 
 FakeProcessing:
   handler: index.handler
-  source: '../tasks/test-processing/dist/'
+  source: 'node_modules/@cumulus/test-processing/dist/'
   useMessageAdapter: true
 
 ModisProcessing:
