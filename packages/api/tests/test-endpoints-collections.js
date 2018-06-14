@@ -2,35 +2,28 @@
 
 const sinon = require('sinon');
 const test = require('ava');
-
-process.env.CollectionsTable = 'Test_CollectionsTable';
-process.env.stackName = 'test-stack';
-process.env.internal = 'test-bucket';
-
-const models = require('../models');
 const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
+const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const collectionsEndpoint = require('../endpoints/collections');
-const collections = new models.Collection();
 const EsCollection = require('../es/collections');
-const { testEndpoint } = require('./testUtils');
+const { testEndpoint, fakeCollectionFactory } = require('../lib/testUtils');
 const { Search } = require('../es/search');
 
-const testCollection = {
-  'name': 'collection-125',
-  'version': '0.0.0',
-  'provider_path': '/',
-  'duplicateHandling': 'replace',
-  'granuleId': '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-  'granuleIdExtraction': '(MOD09GQ\\.(.*))\\.hdf',
-  'sampleFileName': 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
-  'files': []
-};
+process.env.CollectionsTable = randomString();
+process.env.stackName = randomString();
+process.env.internal = randomString();
+
+
+const collections = new models.Collection();
+
+const testCollection = fakeCollectionFactory();
 
 const hash = { name: 'name', type: 'S' };
 const range = { name: 'version', type: 'S' };
 
-const esIndex = 'cumulus-index';
+const esIndex = randomString();
 
 async function setup() {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
@@ -76,7 +69,7 @@ test('GET returns an existing collection', (t) => {
 });
 
 test('POST creates a new collection', (t) => {
-  const newCollection = Object.assign({}, testCollection, {name: 'collection-post'});
+  const newCollection = fakeCollectionFactory(); 
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newCollection)

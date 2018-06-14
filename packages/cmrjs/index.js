@@ -126,15 +126,14 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
     });
 
     if (xmlObject.errors) {
-      throw new Error(
-        `Failed to ingest, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`
-      );
+      const xmlObjectError = JSON.stringify(xmlObject.errors.error);
+      throw new Error(`Failed to ingest, CMR error message: ${xmlObjectError}`);
     }
 
     return xmlObject;
   }
   catch (e) {
-    //log.error(e, logDetails);
+    log.error(e, logDetails);
     throw e;
   }
 }

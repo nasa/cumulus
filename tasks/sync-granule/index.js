@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
@@ -29,7 +30,7 @@ async function download(ingest, bucket, provider, granules) {
 
   for (const g of granules) {
     try {
-      const r = await ingest.ingest(g);
+      const r = await ingest.ingest(g, bucket);
       updatedGranules.push(r);
     }
     catch (e) {
@@ -52,10 +53,19 @@ async function download(ingest, bucket, provider, granules) {
 exports.syncGranule = function syncGranule(event) {
   const config = event.config;
   const input = event.input;
+  const stack = config.stack;
   const buckets = config.buckets;
   const provider = config.provider;
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
+  const downloadBucket = config.downloadBucket;
+
+  // use stack and collection names to prefix fileStagingDir
+  const fileStagingDir = path.join(
+    (config.fileStagingDir || 'file-staging'),
+    stack,
+    collection.name
+  );
 
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
@@ -68,10 +78,11 @@ exports.syncGranule = function syncGranule(event) {
     buckets,
     collection,
     provider,
+    fileStagingDir,
     forceDownload
   );
 
-  return download(ingest, buckets.internal, provider, input.granules)
+  return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {
       if (ingest.end) ingest.end();
 

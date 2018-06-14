@@ -1,11 +1,12 @@
 const fs = require('fs');
+const { Pdr, Execution } = require('@cumulus/api/models');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
   LambdaStep
 } = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../helpers/testUtils');
+const { loadConfig, getExecutionUrl } = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -22,7 +23,15 @@ describe('Parse PDR workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
 
+  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  const pdrModel = new Pdr();
+  const executionModel = new Execution();
+
   beforeAll(async () => {
+    // delete the pdr record from DynamoDB if exists
+    await pdrModel.delete({ pdrName: inputPayload.pdr.name });
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -119,6 +128,19 @@ describe('Parse PDR workflow', () => {
         expect(lambdaOutput.payload.granules.length).toEqual(1);
         expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
       });
+    });
+  });
+
+  describe('the sf-sns-report task has published a sns message and', () => {
+    it('the pdr record is added to DynamoDB', async () => {
+      const record = await pdrModel.get({ pdrName: inputPayload.pdr.name });
+      expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
+      expect(record.status).toEqual('completed');
+    });
+
+    it('the execution record is added to DynamoDB', async () => {
+      const record = await executionModel.get({ arn: workflowExecution.executionArn });
+      expect(record.status).toEqual('completed');
     });
   });
 });
