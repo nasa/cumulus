@@ -30,7 +30,7 @@ test.serial('indexing log messages', async (t) => {
   const event = JSON.parse(JSON.parse(inputtxt.toString()));
   const response = await indexer.indexLog(esClient, event.logEvents);
   t.false(response.errors);
-  t.is(response.items.length, 4);
+  t.is(response.items.length, 5);
 
   await esClient.indices.refresh();
 
@@ -46,7 +46,7 @@ test.serial('indexing log messages', async (t) => {
     }
   });
 
-  t.is(records.docs.length, 4);
+  t.is(records.docs.length, 5);
 
   // check message of each record
   records.docs.forEach((record) => {

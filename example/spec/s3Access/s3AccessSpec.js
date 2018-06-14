@@ -26,21 +26,21 @@ async function canAccessObject(region) {
 }
 
 /**
- * Create a message fomatted like an sns message to send to the lambda
+ * Create a message formatted like an sns message to send to the lambda
  * The bucket would not normally be included in this message, but is used
  * for this test
- * 
- * @returns {Object} SNS-type message 
+ *
+ * @returns {Object} SNS-type message
  */
 function createSnsMessage() {
   const message = {
-    synctoken: "0123456789",
-    md5: "6a45316e8bc9463c9e926d5d37836d33",
-    url: "https://ip-ranges.amazonaws.com/ip-ranges.json",
-    bucket: testBucket // only needed for testing purposes  
+    synctoken: '0123456789',
+    md5: '6a45316e8bc9463c9e926d5d37836d33',
+    url: 'https://ip-ranges.amazonaws.com/ip-ranges.json',
+    bucket: testBucket // only needed for testing purposes
   }
 
-  message["create-time"] = "2018-04-24T10:00:s00+00:00";
+  message['create-time'] = '2018-04-24T10:00:s00+00:00';
 
   const Records = [{
     Sns: { Message: JSON.stringify(message) }
