@@ -3,14 +3,17 @@
 const fs = require('fs-extra');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
-const path = require('path');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const {
+  recursivelyDeleteS3Bucket,
+  listS3Objects,
+  s3ObjectExists,
+  s3
+} = require('@cumulus/common/aws');
 
 const { cloneDeep } = require('lodash');
 const {
-  findTestDataDirectory,
   randomString,
   validateConfig,
   validateInput,
@@ -32,9 +35,19 @@ test.beforeEach(async (t) => {
 
   t.context.event = cloneDeep(payload);
 
-  t.context.event.config.buckets.internal = t.context.internalBucketName;
-  t.context.event.config.buckets.private = t.context.privateBucketName;
-  t.context.event.config.buckets.protected = t.context.protectedBucketName;
+  t.context.event.config.downloadBucket = t.context.internalBucketName;
+  t.context.event.config.buckets.internal = {
+    name: t.context.internalBucketName,
+    type: 'internal'
+  };
+  t.context.event.config.buckets.private = {
+    name: t.context.privateBucketName,
+    type: 'private'
+  };
+  t.context.event.config.buckets.protected = {
+    name: t.context.protectedBucketName,
+    type: 'protected'
+  };
 });
 
 // Clean up
@@ -65,6 +78,8 @@ test('download Granule from FTP endpoint', async (t) => {
     password: 'testpass'
   };
 
+  t.context.event.config.collection.url_path = 'example/';
+
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
@@ -75,10 +90,13 @@ test('download Granule from FTP endpoint', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
+      `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
     );
+    t.truthy(output.granules[0].files[0].url_path);
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
@@ -109,9 +127,11 @@ test('download Granule from HTTP endpoint', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
   }
   catch (e) {
@@ -123,7 +143,7 @@ test('download Granule from HTTP endpoint', async (t) => {
 });
 
 test('download Granule from SFTP endpoint', async (t) => {
-  t.context.event.config.provider = t.context.event.config.provider = {
+  t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
     host: 'localhost',
@@ -146,10 +166,19 @@ test('download Granule from SFTP endpoint', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/${granuleFilename}`
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
+    t.is(
+      true,
+      await s3ObjectExists({
+        Bucket: t.context.internalBucketName,
+        Key: `${keypath}/${granuleFilename}`
+      })
+    )
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
@@ -190,10 +219,19 @@ test('download granule from S3 provider', async (t) => {
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
+    const config = t.context.event.config;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.protectedBucketName}/${granuleFileName}` // eslint-disable-line max-len
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}` // eslint-disable-line max-len
     );
+    t.is(
+      true,
+      await s3ObjectExists({
+        Bucket: t.context.internalBucketName,
+        Key: `${keypath}/${granuleFileName}`
+      })
+    )
   }
   finally {
     // Clean up
@@ -204,16 +242,25 @@ test('download granule from S3 provider', async (t) => {
 test('download granule with checksum in file from an HTTP endpoint', async (t) => {
   const event = cloneDeep(payloadChecksumFile);
 
-  event.config.buckets.internal = t.context.internalBucketName;
-  event.config.buckets.private = t.context.privateBucketName;
-  event.config.buckets.protected = t.context.protectedBucketName;
+  event.config.downloadBucket = t.context.internalBucketName;
+  event.config.buckets.internal = {
+    name: t.context.internalBucketName,
+    type: 'internal'
+  };
+  event.config.buckets.private = {
+    name: t.context.privateBucketName,
+    type: 'private'
+  };
+  event.config.buckets.protected = {
+    name: t.context.protectedBucketName,
+    type: 'protected'
+  };
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
     host: 'http://localhost:3030'
   };
 
-  const granulePath = randomString();
   event.input.granules[0].files[0].path = '/granules';
   event.input.granules[0].files[1].path = '/granules';
 
@@ -222,9 +269,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 
   try {
     // Stage the files to be downloaded
-    const sourceDir = path.join(await findTestDataDirectory(), 'granules');
     const granuleFilename = event.input.granules[0].files[0].name;
-    const checksumFilename = event.input.granules[0].files[1].name;
 
     const output = await syncGranule(event);
 
@@ -232,8 +277,84 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
-    t.is(output.granules[0].files[0].filename,
-      `s3://${t.context.privateBucketName}/${granuleFilename}`);
+    const config = t.context.event.config;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+    );
+    t.is(
+      true,
+      await s3ObjectExists({
+        Bucket: t.context.internalBucketName,
+        Key: `${keypath}/${granuleFilename}`
+      })
+    )
+  }
+  catch (e) {
+    if (e instanceof errors.RemoteResourceError) {
+      t.pass('ignoring this test. Test server seems to be down');
+    }
+    else throw e;
+  }
+});
+
+test('download granule with bad checksum in file from HTTP endpoint throws', async(t) => {
+  const granuleChecksumValue = 8675309;
+
+  // Give it a bogus checksumValue to prompt a failure in validateChecksumFile
+  t.context.event.input.granules[0].files[0].checksumValue = granuleChecksumValue;
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:3030'
+  };
+
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
+
+  // Stage the files to be downloaded
+  const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
+  const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;
+
+  await t.throws(syncGranule(t.context.event), errorMessage);
+});
+
+test('validate file properties', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:3030'
+  };
+  t.context.event.input.granules[0].files[0].path = '/granules';
+  const [file] = t.context.event.input.granules[0].files;
+
+  t.context.event.input.granules[0].files[1] = Object.assign({}, file, {
+    name: 'MOD09GQ.A2017224.h27v08.006.2017227165029_1.jpg'
+  });
+
+  t.context.event.config.collection.files[0].url_path = 'file-example/';
+  t.context.event.config.collection.url_path = 'collection-example/';
+
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
+
+  try {
+    const granuleFilename = t.context.event.input.granules[0].files[0].name;
+    const output = await syncGranule(t.context.event);
+
+    validateOutput(t, output);
+    t.is(output.granules.length, 1);
+    t.is(output.granules[0].files.length, 2);
+    const config = t.context.event.config;
+    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    t.is(
+      output.granules[0].files[0].filename,
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+    );
+    t.is(output.granules[0].files[0].url_path, 'file-example/');
+    t.is(output.granules[0].files[1].url_path, 'collection-example/');
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
