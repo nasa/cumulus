@@ -7,6 +7,7 @@ const path = require('path');
 const url = require('url');
 const log = require('./log');
 const string = require('./string');
+const { promisify } = require('util');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 const pump = require('pump');
@@ -33,10 +34,8 @@ function s3Join(tokens) {
 }
 exports.s3Join = s3Join;
 
-const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-if (region) {
-  AWS.config.update({ region: region });
-}
+exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+AWS.config.update({ region: exports.region });
 
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
@@ -399,6 +398,67 @@ async function listS3ObjectsV2(params) {
 }
 exports.listS3ObjectsV2 = listS3ObjectsV2;
 
+class S3ListObjectsV2Queue {
+  constructor(params) {
+    this.items = [];
+    this.params = params;
+    this.s3 = exports.s3();
+  }
+
+  async peek() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items[0];
+  }
+
+  async shift() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items.shift();
+  }
+
+  async fetchItems() {
+    const response = await this.s3.listObjectsV2(this.params).promise();
+
+    this.items = response.Contents;
+
+    if (response.IsTruncated) {
+      this.params.ContinuationToken = response.NextContinuationToken;
+    }
+    else this.items.push(null);
+  }
+}
+exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
+
+class DynamoDbScanQueue {
+  constructor(params) {
+    this.items = [];
+    this.params = params;
+    this.dynamodb = exports.dynamodb();
+  }
+
+  async peek() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items[0];
+  }
+
+  async shift() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items.shift();
+  }
+
+  async fetchItems() {
+    let response;
+    do {
+      response = await this.dynamodb.scan(this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
+      if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
+    } while (response.Items.length === 0 && response.LastEvaluatedKey);
+
+    this.items = response.Items;
+
+    if (!response.LastEvaluatedKey) this.items.push(null);
+  }
+}
+exports.DynamoDbScanQueue = DynamoDbScanQueue;
+
 exports.syncUrl = async (uri, bucket, destKey) => {
   const response = await concurrency.promiseUrl(uri);
   await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
@@ -426,6 +486,8 @@ exports.parseS3Uri = (uri) => {
     Key: parsedUri.path.substring(1)
   };
 };
+
+exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
 exports.getPossiblyRemote = async (obj) => {
   if (obj && obj.Key && obj.Bucket) {
