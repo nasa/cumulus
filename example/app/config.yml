@@ -27,7 +27,6 @@ default:
     amiid: ami-a7a242da
     publicIp: true
     restartTasksOnDeploy: true
-    keyPairName: abarciauskas-ecs
     docker:
       username: cumulususer
     services:
@@ -55,7 +54,7 @@ default:
   system_bucket: '{{buckets.internal.name}}'
 
   buckets:
-    internal:
+    internal: 
       name: cumulus-test-sandbox-internal
       type: internal
     private:
@@ -67,6 +66,9 @@ default:
     public:
       name: cumulus-test-sandbox-public
       type: public
+    protected-2:
+      name: cumulus-test-sandbox-protected-2
+      type: protected
     shared:
       name: cumulus-data-shared
       type: shared
@@ -78,12 +80,12 @@ default:
     password: '{{CMR_PASSWORD}}'
 
   iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
 
   sns:
     inregions3:
@@ -126,34 +128,28 @@ cumulus-from-source:
 
 aj:
   prefix: aj
-  stackNameNoDash: AjIntegration
+  stackNameNoDash: TestSourceIntegration
+
+aimee-test:
+  prefix: aimee-test
+  stackNameNoDash: aimeeTest
 
 lf:
   prefix: lf-cumulus
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
-aimee-test:
-  prefix: aimee-test
-  stackNameNoDash: aimeeTest
+  es: 
+    elasticSearchMapping: 6
 
-  buckets:
-    internal: 
-      name: cumulus-devseed-internal
-      type: internal
-    private:
-      name: cumulus-devseed-private
-      type: private
-    protected:
-      name: cumulus-devseed-protected
-      type: protected
-    public:
-      name: cumulus-devseed-public
-      type: public
-    shared:
-      name: cumulus-data-shared
-      type: shared
-
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-distribution-api-lambda'
+    
 mth-cum-test:
   prefix: mth-cum-test
   stackNameNoDash: MthCumTestIntegration
