@@ -19,15 +19,11 @@ default:
     vpcId: '{{VPC_ID}}'
     subnets:
       - '{{AWS_SUBNET}}'
-      - subnet-d02faafc
 
   ecs:
     instanceType: t2.small
-    desiredInstances: 2
-    maxInstances: 2
-    availabilityZones:
-      - us-east-1b
-      - us-east-1c
+    desiredInstances: 1
+    availabilityZone: us-east-1b
     amiid: ami-a7a242da
     publicIp: true
     restartTasksOnDeploy: true
