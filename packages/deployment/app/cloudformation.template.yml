@@ -785,7 +785,6 @@ Resources:
           Fn::Join:
             - ""
             - - "#cloud-boothook\n"
-              - "mkdir -p /etc/docker && echo '{\n  \"storage-driver\": \"devicemapper\"\n}' >> /etc/docker/daemon.json\n"
               - "cloud-init-per once docker_options echo 'OPTIONS=\"${OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G\"' >> /etc/sysconfig/docker\n"
               - "\n"
               - "yum install -y aws-cfn-bootstrap\n"
