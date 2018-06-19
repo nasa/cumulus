@@ -24,6 +24,7 @@ default:
   ecs:
     instanceType: t2.small
     desiredInstances: 2
+    maxInstances: 2
     availabilityZones:
       - us-east-1b
       - us-east-1c
