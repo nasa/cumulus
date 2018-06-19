@@ -10,7 +10,6 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
 
 [Cumulus Documentation](https://cumulus-nasa.github.io/)
 
-
 ## Usage
 
 1. Copy `app.example` to a new deployment project.
