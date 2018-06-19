@@ -43,30 +43,7 @@ aj:
 lf: 
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
-
-aimee-test:
-  prefix: aimee-test
-  stackName: aimee-test-iam
-
-  system_bucket: cumulus-devseed-internal
-
-  buckets:
-    internal: 
-      name: cumulus-devseed-internal
-      type: internal
-    private:
-      name: cumulus-devseed-private
-      type: private
-    protected:
-      name: cumulus-devseed-protected
-      type: protected
-    public:
-      name: cumulus-devseed-public
-      type: public
-    shared:
-      name: cumulus-data-shared
-      type: shared
-
+  
 mth-cum-test:
   prefix: mth-cum-test
   buckets:
