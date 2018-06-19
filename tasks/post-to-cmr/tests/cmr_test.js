@@ -4,6 +4,7 @@ const fs = require('fs');
 const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const cmrjs = require('@cumulus/cmrjs');
 const payload = require('./data/payload.json');
@@ -23,7 +24,14 @@ async function deleteBucket(bucket) {
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = 'cumulus-post-public'; // eslint-disable-line no-param-reassign
+  t.context.bucket = randomString(); // eslint-disable-line no-param-reassign
+
+  //update cmr file path
+  const match = /^s3\:\/\/(.*)\/(.*)$/;
+  const cmrFile = payload.input.granules[0].files[3].filename;
+  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
+  payload.input.granules[0].files[3].bucket = t.context.bucket;
+
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
