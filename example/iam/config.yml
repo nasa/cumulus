@@ -40,6 +40,10 @@ cumulus-from-source:
 aj:
   prefix: aj-integration
 
+aimee-test:
+  prefix: aimee-test
+  stackName: aimee-test-iam
+
 lf: 
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
