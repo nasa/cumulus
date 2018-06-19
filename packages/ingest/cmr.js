@@ -1,6 +1,6 @@
 'use strict';
 
-const { CMR } = require('@cumulus/cmrjs');
+const { CMR, getUrl } = require('@cumulus/cmrjs');
 const { DefaultProvider } = require('./crypto');
 const log = require('@cumulus/common/log');
 
@@ -45,8 +45,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
     conceptId,
-    link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json' +
-    `?concept_id=${res.result['concept-id']}`
+    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
   };
 }
 

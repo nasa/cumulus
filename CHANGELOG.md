@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
   - Extract cumulus log message and index it to Elastic Search.
+- **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
+  - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
 
 ### Added
 - **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
