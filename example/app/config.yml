@@ -128,7 +128,7 @@ cumulus-from-source:
 
 aj:
   prefix: aj
-  stackNameNoDash: TestSourceIntegration
+  stackNameNoDash: AjIntegration
 
 aimee-test:
   prefix: aimee-test
