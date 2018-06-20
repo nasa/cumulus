@@ -73,9 +73,17 @@ async function createReconciliationReport(params) {
   const {
     systemBucket,
     stackName,
-    dataBuckets,
     filesTableName
   } = params;
+
+  // Fetch the bucket names to reconcile
+  const bucketsConfigJson = await s3().getObject({
+    Bucket: systemBucket,
+    Key: `${stackName}/workflow/buckets.json`
+  }).promise()
+    .then((response) => response.Body.toString());
+  const bucketsConfig = JSON.parse(bucketsConfigJson);
+  const dataBuckets = Object.values(bucketsConfig).map((config) => config.name);
 
   const report = {
     reportStartTime: moment.utc().toISOString(),
@@ -120,7 +128,13 @@ async function createReconciliationReport(params) {
 }
 
 function handler(event, _context, cb) {
-  return createReconciliationReport(event)
+  // The event is used for tests
+  // Environment variables are used when run in AWS
+  return createReconciliationReport({
+    systemBucket: event.systemBucket || process.env.systemBucket,
+    stackName: event.stackName || process.env.stackName,
+    filesTableName: event.filesTableName || process.env.filesTableName
+  })
     .then(() => cb(null))
     .catch(cb);
 }

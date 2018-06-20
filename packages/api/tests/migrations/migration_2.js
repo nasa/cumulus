@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const { promisify } = require('util');
 const {
   aws: {
     dynamodb
@@ -10,14 +9,14 @@ const {
     randomString
   }
 } = require('@cumulus/common');
-const { handler } = require('../../lambdas/build-files-table');
+const { run } = require('../../migrations/migration_2');
 
 function createAndWaitForTable(params) {
   return dynamodb().createTable(params).promise()
     .then(() => dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise());
 }
 
-test('build-files-table handler properly populates the files table', async (t) => {
+test.only('build-files-table handler properly populates the files table', async (t) => {
   // Create the two tables
   t.context.granulesTableName = randomString();
   t.context.filesTableName = randomString();
@@ -123,11 +122,10 @@ test('build-files-table handler properly populates the files table', async (t) =
   await dynamodb().batchWriteItem(batchWriteItemParams).promise();
 
   // Run the task
-  const event = {
-    granulesTableName: t.context.granulesTableName,
-    filesTableName: t.context.filesTableName
-  };
-  await (promisify(handler))(event, {});
+  await run({
+    granulesTable: t.context.granulesTableName,
+    filesTable: t.context.filesTableName
+  });
 
   // Verify that the files table is properly populated
   const defaultQueryParams = {
@@ -183,7 +181,7 @@ test('build-files-table handler properly populates the files table', async (t) =
   })).promise()).Count, 1);
 });
 
-// test.afterEach.always((t) => Promise.all([
-//   dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise(),
-//   dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise()
-// ]));
+test.afterEach.always((t) => Promise.all([
+  dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise(),
+  dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise()
+]));

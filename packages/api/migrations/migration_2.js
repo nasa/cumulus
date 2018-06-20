@@ -1,11 +1,6 @@
 'use strict';
 
-const { TaskQueue } = require('cwait');
-const {
-  chunk,
-  drop,
-  flatten
-} = require('lodash');
+const { drop } = require('lodash');
 const {
   aws: {
     dynamodb,
@@ -26,9 +21,9 @@ function filePutRequestsFromGranule(granule) {
   }));
 }
 
-async function buildFilesTable(granulesTableName, filesTableName) {
+async function run({ granulesTable, filesTable }) {
   const granuleTableScanQueue = new DynamoDbScanQueue({
-    TableName: granulesTableName,
+    TableName: granulesTable,
     ProjectionExpression: 'granuleId, files'
   });
 
@@ -41,7 +36,7 @@ async function buildFilesTable(granulesTableName, filesTableName) {
     while (filePutRequestBuffer.length > 25) {
       const batchWriteItemParams = {
         RequestItems: {
-          [filesTableName]: filePutRequestBuffer.slice(0, 25)
+          [filesTable]: filePutRequestBuffer.slice(0, 25)
         }
       };
 
@@ -56,7 +51,7 @@ async function buildFilesTable(granulesTableName, filesTableName) {
   while (filePutRequestBuffer.length > 0) {
     const batchWriteItemParams = {
       RequestItems: {
-        [filesTableName]: filePutRequestBuffer.slice(0, 25)
+        [filesTable]: filePutRequestBuffer.slice(0, 25)
       }
     };
 
@@ -66,9 +61,5 @@ async function buildFilesTable(granulesTableName, filesTableName) {
   }
 }
 
-function handler(event, _context, cb) {
-  buildFilesTable(event.granulesTableName, event.filesTableName)
-    .then(() => cb(null))
-    .catch(cb);
-}
-exports.handler = handler;
+module.exports.name = 'migration_2';
+module.exports.run = run;

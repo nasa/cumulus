@@ -23,6 +23,21 @@ const promisifiedBatchWriteItem = (params) => aws.dynamodb().batchWriteItem(para
 const promisifiedHandler = promisify(handler);
 const promisifiedSetTimeout = promisify(setTimeout);
 
+function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
+  const bucketsConfig = {};
+  buckets.forEach((bucket) => {
+    bucketsConfig[bucket] = {
+      name: bucket,
+      type: 'protected'
+    };
+  });
+  return aws.s3().putObject({
+    Bucket: systemBucket,
+    Key: `${stackName}/workflow/buckets.json`,
+    Body: JSON.stringify(bucketsConfig)
+  }).promise();
+}
+
 // Expect files to have bucket and key properties
 function storeFilesToS3(files) {
   const putObjectQueue = new TaskQueue(Promise, 10);
@@ -120,10 +135,16 @@ test.afterEach.always((t) =>
   ])));
 
 test('A valid reconciliation report is generated for no buckets', async (t) => {
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    [],
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
   const event = {
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
-    dataBuckets: [],
     filesTableName: t.context.filesTableName
   };
   await promisifiedHandler(event, {});
@@ -147,6 +168,13 @@ test('A valid reconciliation report is generated when everything in in sync', as
     createBucket(bucket)
       .then(() => t.context.bucketsToCleanup.push(bucket))));
 
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
   // Create random files
   const files = range(10).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
@@ -161,7 +189,6 @@ test('A valid reconciliation report is generated when everything in in sync', as
   ]);
 
   const event = {
-    dataBuckets,
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
     filesTableName: t.context.filesTableName
@@ -186,6 +213,13 @@ test('A valid reconciliation report is generated when there are extra S3 objects
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
       .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
 
   // Create files that are in sync
   const matchingFiles = range(10).map(() => ({
@@ -233,6 +267,13 @@ test('A valid reconciliation report is generated when there are extra DynamoDB o
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
       .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
 
   // Create files that are in sync
   const matchingFiles = range(10).map(() => ({
@@ -283,6 +324,13 @@ test('A valid reconciliation report is generated when there are both extra Dynam
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
       .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
 
   // Create files that are in sync
   const matchingFiles = range(10).map(() => ({
