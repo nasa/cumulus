@@ -16,7 +16,7 @@ function createAndWaitForTable(params) {
     .then(() => dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise());
 }
 
-test.only('build-files-table handler properly populates the files table', async (t) => {
+test('build-files-table handler properly populates the files table', async (t) => {
   // Create the two tables
   t.context.granulesTableName = randomString();
   t.context.filesTableName = randomString();
