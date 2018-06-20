@@ -7,8 +7,12 @@
     "node": ">=4.3"
   },
   "scripts": {
-    "test": "ava test/*.js --serial",
-    "test-coverage": "nyc ava test/*.js --serial"
+    "test": "ava",
+    "test-coverage": "nyc ava"
+  },
+  "ava": {
+    "files": "tests/*.js",
+    "serial": true
   },
   "nyc": {
     "exclude": [
