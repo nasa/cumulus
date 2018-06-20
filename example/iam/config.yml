@@ -64,7 +64,3 @@ mth-2:
     public:
       name: '{{prefix}}-public'
       type: public
-
-jl:
-  prefix: jl-test
-  stackNameNoDash: JlTestIntegration
