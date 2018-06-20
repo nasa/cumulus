@@ -424,6 +424,14 @@ module.exports.provider = {
     updatedAt: {
       type: 'number',
       readonly: true
+    },
+    privateKey: {
+      type: 'string',
+      description: 'filename assumed to be in s3://bucketInternal/stackName/crypto'
+    },
+    cmKeyId: {
+      type: 'string',
+      description: 'AWS KMS Customer Master Key arn or alias'
     }
   },
   required: [
