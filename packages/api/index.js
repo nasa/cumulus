@@ -27,7 +27,6 @@ exports.inRegionS3Policy = require('./lambdas/in-region-s3-policy').handler;
 exports.emsReport = require('./lambdas/ems-report').handler;
 exports.emsDistributionReport = require('./lambdas/ems-distribution-report').handler;
 
-exports.buildFilesTable = require('./lambdas/build-files-table').handler;
 exports.createReconciliationReport = require('./lambdas/create-reconciliation-report').handler;
 
 const indexer = require('./es/indexer');
