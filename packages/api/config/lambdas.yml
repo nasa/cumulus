@@ -8,12 +8,15 @@ executeMigrations:
   handler: index.executeMigrations
   timeout: 300
   useElasticSearch: '{{es.name}}'
-  memory: 1024 
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     GranulesTable:
       function: Ref
       value: GranulesTableDynamoDB
+    FilesTable:
+      function: Ref
+      value: FilesTableDynamoDB
     ExecutionsTable:
       function: Ref
       value: ExecutionsTableDynamoDB
@@ -26,7 +29,7 @@ sns2elasticsearch:
   handler: index.indexer
   timeout: 100
   useElasticSearch: '{{es.name}}'
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     GranulesTable:
@@ -42,20 +45,20 @@ sns2elasticsearch:
 log2elasticsearch:
   handler: index.logHandler
   timeout: 100
-  memory: 256
+  memory: 512
   useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
 
 sf2snsStart:
   handler: index.sfStart
   timeout: 100
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
 
 sf2snsEnd:
   handler: index.sfEnd
   timeout: 100
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
 
 dbIndexer:
@@ -70,7 +73,7 @@ dbIndexer:
 kinesisConsumer:
   handler: index.kinesisConsumer
   timeout: 100
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     RulesTable:
@@ -88,7 +91,7 @@ ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
   handler: index.scheduler
   timeout: 100
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     CollectionsTable:
@@ -117,7 +120,7 @@ CustomBootstrap:
 
 InRegionS3Policy:
   handler: index.inRegionS3Policy
-  memory: 256
+  memory: 512
   timeout: 300
   source: 'node_modules/@cumulus/api/dist/'
 
@@ -148,3 +151,9 @@ BuildFilesTable:
 CreateReconciliationReport:
   handler: index.createReconciliationReport
   source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    systemBucket: '{{system_bucket}}'
+    stackName: '{{stackName}}'
+    filesTableName:
+      function: Ref
+      value: FilesTableDynamoDB
