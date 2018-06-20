@@ -5,6 +5,7 @@
 
 const migrations = require('../migrations');
 const migration1 = require('../migrations/migration_1');
+const migration2 = require('../migrations/migration_2');
 
 /**
  * Lambda function handler for running migrations
@@ -15,13 +16,17 @@ const migration1 = require('../migrations/migration_1');
  * @returns {Promise<undefined>} undefined
  */
 function handler(event, context, cb) {
-  return migrations([migration1], {
+  return migrations([migration1, migration2], {
+    // Used by migration1
     tables: [
       process.env.GranulesTable,
       process.env.ExecutionsTable,
       process.env.PdrsTable
     ],
-    elasticsearch_host: process.env.ES_HOST
+    elasticsearch_host: process.env.ES_HOST,
+    // Used by migration2
+    granulesTable: process.env.GranulesTable,
+    filesTable: process.env.FilesTable
   })
     .then((r) => cb(null, r))
     .catch(cb);
