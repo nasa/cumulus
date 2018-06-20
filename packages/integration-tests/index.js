@@ -216,7 +216,7 @@ async function addCollections(stackName, bucketName, dataDirectory) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
   const promises = collections.map((collection) => limit(() => {
     const c = new Collection();
-    console.log(`adding collection ${collection.name}___${collection.version}`);
+    console.log(`adding collection ${collection.dataType}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
       .then(() => c.create(collection));
   }));
