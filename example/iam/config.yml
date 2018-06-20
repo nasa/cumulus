@@ -8,7 +8,7 @@ default:
   system_bucket: cumulus-test-sandbox-internal
 
   buckets:
-    internal: 
+    internal:
       name: cumulus-test-sandbox-internal
       type: internal
     private:
@@ -40,20 +40,31 @@ cumulus-from-source:
 aj:
   prefix: aj-integration
 
-lf: 
+lf:
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
 
 kk-deploy-uat:
   prefix: kk-test-uat
   stackName: kk-test-uat-iam
-  
-mth-cum-test:
-  prefix: mth-cum-test
+
+mth-2:
+  prefix: mth-2
+  system_bucket: '{{prefix}}-internal'
   buckets:
-    internal: '{{prefix}}-internal'
-    protected: '{{prefix}}-protected'
-    private: '{{prefix}}-private'
+    internal:
+      name: '{{prefix}}-internal'
+      type: internal
+    private:
+      name: '{{prefix}}-private'
+      type: private
+    protected:
+      name: '{{prefix}}-protected'
+      type: protected
+    public:
+      name: '{{prefix}}-public'
+      type: public
 
 jl:
-  prefix: jl-test-integration
+  prefix: jl-test
+  stackNameNoDash: JlTestIntegration

@@ -54,7 +54,7 @@ default:
   system_bucket: '{{buckets.internal.name}}'
 
   buckets:
-    internal: 
+    internal:
       name: cumulus-test-sandbox-internal
       type: internal
     private:
@@ -135,7 +135,7 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
-  es: 
+  es:
     elasticSearchMapping: 6
 
   iams:
@@ -157,22 +157,35 @@ kk-uat-deployment:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/kk-test-uat-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-distribution-api-lambda'
-   
-mth-cum-test:
-  prefix: mth-cum-test
-  stackNameNoDash: MthCumTestIntegration
+
+mth-2:
+  prefix: mth-2
+  stackName: '{{prefix}}'
+  stackNameNoDash: Mth2
   buckets:
-    internal: '{{prefix}}-internal'
-    protected: '{{prefix}}-protected'
-    private: '{{prefix}}-private'
+    internal:
+      name: '{{prefix}}-internal'
+      type: internal
+    private:
+      name: '{{prefix}}-private'
+      type: private
+    protected:
+      name: '{{prefix}}-protected'
+      type: protected
+    public:
+      name: '{{prefix}}-public'
+      type: public
   iams:
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
+  api_distribution_url: 'https://lth2dfkoog.execute-api.us-east-1.amazonaws.com/dev/'
+  # api_distribution_url: null
 
 jl:
   prefix: jl-test
