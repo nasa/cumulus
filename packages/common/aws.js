@@ -7,7 +7,6 @@ const path = require('path');
 const url = require('url');
 const log = require('./log');
 const string = require('./string');
-const { promisify } = require('util');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const promiseRetry = require('promise-retry');
 const pump = require('pump');
@@ -257,7 +256,7 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
 
 /**
  * Delete files from S3
- * 
+ *
  * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
  * @param {Object} s3Opts - An optional object containing options that influence the behavior of S3
  * @returns {Promise} A promise that resolves to an Array of the data returned from the deletion operations
@@ -401,6 +400,8 @@ async function listS3ObjectsV2(params) {
 }
 exports.listS3ObjectsV2 = listS3ObjectsV2;
 
+// Class to efficiently list all of the objects in an S3 bucket, without loading
+// them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
 class S3ListObjectsV2Queue {
   constructor(params) {
     this.items = [];
@@ -408,16 +409,37 @@ class S3ListObjectsV2Queue {
     this.s3 = exports.s3();
   }
 
+  /**
+   * View the next item in the queue
+   *
+   * This does not remove the object from the queue.  When there are no more
+   * items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an S3 object description
+   */
   async peek() {
     if (this.items.length === 0) await this.fetchItems();
     return this.items[0];
   }
 
+  /**
+   * Remove the next item from the queue
+   *
+   * When there are no more items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an S3 object description
+   */
   async shift() {
     if (this.items.length === 0) await this.fetchItems();
     return this.items.shift();
   }
 
+  /**
+   * Query the S3 API to get the next 1,000 items
+   *
+   * @returns {Promise<undefined>} - resolves when the queue has been updated
+   * @private
+   */
   async fetchItems() {
     const response = await this.s3.listObjectsV2(this.params).promise();
 
@@ -431,6 +453,8 @@ class S3ListObjectsV2Queue {
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
+// Class to efficiently scane all of the items in a DynamoDB table, without
+// loading them all into memory at once.  Handles paging.
 class DynamoDbScanQueue {
   constructor(params) {
     this.items = [];
@@ -438,16 +462,37 @@ class DynamoDbScanQueue {
     this.dynamodb = exports.dynamodb();
   }
 
+  /**
+   * View the next item in the queue
+   *
+   * This does not remove the object from the queue.  When there are no more
+   * items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an item from the DynamoDB table
+   */
   async peek() {
     if (this.items.length === 0) await this.fetchItems();
     return this.items[0];
   }
 
+  /**
+   * Remove the next item from the queue
+   *
+   * When there are no more items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an item from the DynamoDB table
+   */
   async shift() {
     if (this.items.length === 0) await this.fetchItems();
     return this.items.shift();
   }
 
+  /**
+   * Query the DynamoDB API to get the next batch of items
+   *
+   * @returns {Promise<undefined>} - resolves when the queue has been updated
+   * @private
+   */
   async fetchItems() {
     let response;
     do {
@@ -491,6 +536,13 @@ exports.parseS3Uri = (uri) => {
   };
 };
 
+/**
+ * Given a bucket and key, return an S3 URI
+ *
+ * @param {string} bucket - an S3 bucket name
+ * @param {string} key - an S3 key
+ * @returns {string} - an S3 URI
+ */
 exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
 exports.getPossiblyRemote = async (obj) => {
