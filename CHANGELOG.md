@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **GITC-776**
   - Added support for SFTP using public/private keys that can optionally be encrypted/decrypted using KMS
   There is an assumption that private key is located in s3://bucketInternal/stackName/crypto. KMS can be used to encrypt/decrypt the keys. Provider schema has been extended to support optional fields (privateKey, cmKeyId)
-   
+  
+  - Added support for versioned collections.  Collection-config-store get/put/delete now take an additional version parameter.
+
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
 

@@ -46,7 +46,7 @@ class Collection extends Manager {
   async create(item) {
     const collectionConfigStore =
       new CollectionConfigStore(process.env.internal, process.env.stackName);
-    await collectionConfigStore.put(item.name, item);
+    await collectionConfigStore.put(item.name, item.version, item);
 
     return super.create(item);
   }
