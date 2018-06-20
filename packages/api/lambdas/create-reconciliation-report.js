@@ -10,6 +10,14 @@ const {
   }
 } = require('@cumulus/common');
 
+/**
+ * Verify that all objects in an S3 bucket contain corresponding entries in
+ * DynamoDB, and that there are no extras in either S3 or DynamoDB
+ *
+ * @param {string} Bucket - the bucket containing files to be reconciled
+ * @param {string} filesTableName - the name of the files table in DynamoDB
+ * @returns {Promise<Object>} a report
+ */
 async function createReconciliationReportForBucket(Bucket, filesTableName) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
   const dynamoDbFilesLister = new DynamoDbScanQueue({
@@ -27,11 +35,14 @@ async function createReconciliationReportForBucket(Bucket, filesTableName) {
   while (nextS3Object && nextDynamoDbItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
     const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key.S);
+
     if (nextS3Uri < nextDynamoDbUri) {
+      // Found an item that is only in S3 and not in DynamoDB
       onlyInS3.push(nextS3Uri);
       s3ObjectsQueue.shift();
     }
     else if (nextS3Uri > nextDynamoDbUri) {
+      // Found an item that is only in DynamoDB and not in S3
       const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDynamoDb.push({
         uri: buildS3Uri(Bucket, dynamoDbItem.key.S),
@@ -39,6 +50,7 @@ async function createReconciliationReportForBucket(Bucket, filesTableName) {
       });
     }
     else {
+      // Found an item that is in both S3 and DynamoDB
       okFileCount += 1;
       s3ObjectsQueue.shift();
       dynamoDbFilesLister.shift();
@@ -69,6 +81,17 @@ async function createReconciliationReportForBucket(Bucket, filesTableName) {
   };
 }
 
+/**
+ * Create a Reconciliation report and save it to S3
+ *
+ * @param {Object} params - params
+ * @param {string} params.systemBucket - the name of the CUMULUS system bucket
+ * @param {string} params.stackName - the name of the CUMULUS stack
+ * @param {string} params.filesTableName - the name of the files table in
+ *   DynamoDB
+ * @returns {Promise<null>} a Promise that resolves when the report has been
+ *   uploaded to S3
+ */
 async function createReconciliationReport(params) {
   const {
     systemBucket,
@@ -82,9 +105,11 @@ async function createReconciliationReport(params) {
     Key: `${stackName}/workflow/buckets.json`
   }).promise()
     .then((response) => response.Body.toString());
-  const bucketsConfig = JSON.parse(bucketsConfigJson);
-  const dataBuckets = Object.values(bucketsConfig).map((config) => config.name);
+  const dataBuckets = Object.values(JSON.parse(bucketsConfigJson))
+    .filter((config) => config.type !== 'internal')
+    .map((config) => config.name);
 
+  // Write an initial report to S3
   const report = {
     reportStartTime: moment.utc().toISOString(),
     reportEndTime: null,
@@ -97,20 +122,18 @@ async function createReconciliationReport(params) {
 
   const reportKey = `${stackName}/reconciliation-reports/report-${report.reportStartTime}.json`;
 
-  // Upload initial report
   await s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report)
   }).promise();
 
-  // Run the reports
+  // Create a report for each bucket
   const promisedBucketReports = dataBuckets.map((bucket) =>
     createReconciliationReportForBucket(bucket, filesTableName));
   const bucketReports = await Promise.all(promisedBucketReports);
 
-  // Store the report to S3
-
+  // Create the full report
   report.reportEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
 
@@ -120,11 +143,13 @@ async function createReconciliationReport(params) {
     report.onlyInDynamoDb = report.onlyInDynamoDb.concat(bucketReport.onlyInDynamoDb);
   });
 
+  // Write the full report to S3
   return s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report)
-  }).promise();
+  }).promise()
+    .then(() => null);
 }
 
 function handler(event, _context, cb) {
