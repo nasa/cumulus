@@ -3,11 +3,14 @@
   "version": "1.6.0",
   "description": "Deployment templates for cumulus",
   "scripts": {
-    "test": "ava --no-color",
+    "test": "ava",
     "test-coverage": "nyc ava",
     "build": "babel lib -d app",
     "watch": "babel lib -d app -w",
     "prepublishOnly": "npm run build"
+  },
+  "ava": {
+    "color": false
   },
   "engine": {
     "node": ">=8.10.0"

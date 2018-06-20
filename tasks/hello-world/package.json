@@ -15,11 +15,16 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava tests/*.js --serial --no-color",
-    "test-coverage": "nyc ava tests/*.js --serial",
+    "test": "ava",
+    "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
+  },
+  "ava": {
+    "files": "tests/*.js",
+    "serial": true,
+    "color": false
   },
   "publishConfig": {
     "access": "public"
