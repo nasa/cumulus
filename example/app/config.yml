@@ -197,8 +197,6 @@ mth-2:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
-  api_distribution_url: 'https://lth2dfkoog.execute-api.us-east-1.amazonaws.com/dev/'
-  # api_distribution_url: null
 
 jl:
   prefix: jl-test
