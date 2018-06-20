@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
 
 ### Added
+- **GITC-776-2** - Add support for versioned collectons
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
