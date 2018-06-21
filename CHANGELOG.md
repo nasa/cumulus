@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   - Modified schemas to simplify collections and add meta and tags attributes.  Some of the previously used attributes should be moved to rule contexts. Added context and tags to rules.
 
+  - Modified sf-scheduler to accept a rule (rather than a collection) as part of queuing message
+  
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
 

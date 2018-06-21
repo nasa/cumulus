@@ -21,6 +21,7 @@ function schedule(event, context, cb) {
   const meta = get(event, 'meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
+  const rule = get(event, 'rule', {});
   let message;
 
   const parsed = S3.parseS3Uri(template);
@@ -29,6 +30,7 @@ function schedule(event, context, cb) {
       message = JSON.parse(data.Body);
       message.meta.provider = {};
       message.meta.collection = {};
+      message.meta.rule = rule;
       message.meta = merge(message.meta, meta);
       message.payload = payload;
       message.cumulus_meta.execution_name = uuidv4();
@@ -55,6 +57,10 @@ function schedule(event, context, cb) {
       if (c) message.meta.collection = c;
     })
     .then(() => {
+      // remove empy hash collection if any
+      if (!message.meta.collection ||
+          (Object.keys(message.meta.collection).length === 0)) delete message.meta.collection;
+
       SQS.sendMessage(message.meta.queues.startSF, message);
     })
     .then((r) => cb(null, r))
