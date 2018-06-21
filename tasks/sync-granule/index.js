@@ -18,6 +18,7 @@ const log = require('@cumulus/common/log');
  */
 async function download(ingest, bucket, provider, granules) {
   const updatedGranules = [];
+  const missingGranules = [];
 
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
@@ -29,19 +30,19 @@ async function download(ingest, bucket, provider, granules) {
   }
 
   for (const g of granules) {
-    try {
+    //try {
       const r = await ingest.ingest(g, bucket);
       updatedGranules.push(r);
-    }
-    catch (e) {
-      await lock.removeLock(bucket, provider.id, g.granuleId);
-      log.error(e);
-      throw e;
-    }
+    //}
+    //catch (e) {
+    //  log.error(`Error: ${JSON.stringify(e)}`);
+    //  log.error(`Error Downloading File: ${JSON.stringify(g.files)}`);
+    //  missingGranules.push(g)
+    //}
   }
 
   await lock.removeLock(bucket, provider.id, granules[0].granuleId);
-  return updatedGranules;
+  return { updatedGranules, missingGranules };
 }
 
 /**
@@ -56,16 +57,15 @@ exports.syncGranule = function syncGranule(event) {
   const stack = config.stack;
   const buckets = config.buckets;
   const provider = config.provider;
-  const collection = config.collection;
+  const context = config.context;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
-    (config.fileStagingDir || 'file-staging'),
-    stack,
-    collection.name
+    (config.fileStagingDir || 'file-staging'), stack
   );
+  // we will append the full collection name during actual ingest
 
   if (!provider) {
     const err = new errors.ProviderNotFound('Provider info not provided');
@@ -76,18 +76,18 @@ exports.syncGranule = function syncGranule(event) {
   const IngestClass = granule.selector('ingest', provider.protocol);
   const ingest = new IngestClass(
     buckets,
-    collection,
+    context,
     provider,
     fileStagingDir,
     forceDownload
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
-    .then((granules) => {
+    .then(({ updatedGranules, missingGranules }) => {
       if (ingest.end) ingest.end();
 
-      const output = { granules };
-      if (collection.process) output.process = collection.process;
+      const output = { granules: updatedGranules, missingGranules: missingGranules };
+      if (context.process) output.process = context.process;
       if (config.pdr) output.pdr = config.pdr;
 
       return output;

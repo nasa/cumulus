@@ -78,6 +78,8 @@
     "granules": [
       {
         "granuleId": "MOD09GQ.A2017224.h27v08.006.2017227165029",
+        "dataType": "MOD09GQ",
+        "version": "6",
         "files": [
           {
             "path": "/granules",

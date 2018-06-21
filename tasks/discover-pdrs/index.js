@@ -18,7 +18,8 @@ function discoverPdrs(event) {
     const config = get(event, 'config', {});
     const stack = config.stack;
     const bucket = config.bucket;
-    const collection = config.collection;
+    const providerPath = config.provider_path;  
+    const filterPdrs = config.filterPdrs || null;
     const provider = config.provider;
     // FIXME Can config.folder not be used?
 
@@ -28,8 +29,8 @@ function discoverPdrs(event) {
     const discover = new Discover(
       stack,
       bucket,
-      collection,
       provider,
+      providerPath,
       config.useList,
       'pdrs',
       config.force || false
@@ -40,6 +41,14 @@ function discoverPdrs(event) {
     return discover.discover()
       .then((pdrs) => {
         if (discover.connected) discover.end();
+
+        // filter pdrs using filterPDrs
+        if (filterPdrs && pdrs.length) {
+          log.info(`Filtering ${pdrs.length} with ${filterPdrs}`);
+          const fpdrs = pdrs.filter((p) => p.name.match(filterPdrs));
+          return { pdrs: fpdrs };
+        }
+        
         return { pdrs };
       })
       .catch((e) => {

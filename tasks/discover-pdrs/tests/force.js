@@ -21,7 +21,7 @@ test('test pdr discovery with force=false', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
   event.config.stack = randomString();
-  event.config.collection.provider_path = '/pdrs/discover-pdrs';
+  event.config.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.force = false;
 
@@ -76,7 +76,7 @@ test('test pdr discovery with force=true', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
   event.config.stack = randomString();
-  event.config.collection.provider_path = '/pdrs/discover-pdrs';
+  event.config.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.force = true;
 

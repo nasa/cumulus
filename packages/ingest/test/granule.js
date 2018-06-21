@@ -99,6 +99,7 @@ test('findCollectionFileConfigForFile returns the correct config', (t) => {
   };
 
   const testGranule = new TestGranule({}, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -113,6 +114,7 @@ test('findCollectionFileConfigForFile returns undefined if no config matches', (
   };
 
   const testGranule = new TestGranule({}, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
   const fileCollectionConfig = testGranule.findCollectionFileConfigForFile(file);
@@ -134,6 +136,7 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
   };
 
   const testGranule = new TestGranule(buckets, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
 
@@ -164,6 +167,7 @@ test('addBucketToFile adds the correct bucket when a config is found', (t) => {
   };
 
   const testGranule = new TestGranule(buckets, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addBucketToFile(file);
@@ -177,6 +181,7 @@ test('addUrlPathToFile adds an emptry string as the url_path if no config matche
   };
 
   const testGranule = new TestGranule({}, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addUrlPathToFile(file);
@@ -191,6 +196,7 @@ test("addUrlPathToFile adds the collection config's url_path as the url_path if 
   };
 
   const testGranule = new TestGranule({}, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addUrlPathToFile(file);
@@ -207,6 +213,7 @@ test("addUrlPathToFile adds the matching collection file config's url_path as th
   };
 
   const testGranule = new TestGranule({}, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.addUrlPathToFile(file);
@@ -233,6 +240,7 @@ test('getBucket adds the correct url_path and bucket to the file', (t) => {
   };
 
   const testGranule = new TestGranule(buckets, collectionConfig, {});
+  testGranule.collection = collectionConfig;
 
   const file = { name: 'right-file' };
   const updatedFile = testGranule.getBucket(file);

@@ -95,7 +95,14 @@ test.serial('Discover and queue PDRs with FTP provider', async (t) => {
   // copy cumulus-message-adapter
   await copyCMAToTasks(workflow, context.dest, cmaFolder);
 
-  input.meta.collection = collections[workflow.collection];
+  // input.meta.collection = collections[workflow.collection];
+  input.meta.rule = {
+    context: {
+      provider_path: '/pdrs/discover-pdrs',
+      url_path: '/MODAPS/TGZ',
+      duplicateHandling: 'replace'
+    }
+  };
   input.meta.provider = providers.ftp;
   const msg = await runWorkflow(workflow, input);
 

@@ -9,7 +9,8 @@ const {
   recursivelyDeleteS3Bucket,
   listS3Objects,
   s3ObjectExists,
-  s3
+  s3,
+  promiseS3Upload
 } = require('@cumulus/common/aws');
 
 const { cloneDeep } = require('lodash');
@@ -26,12 +27,25 @@ test.beforeEach(async (t) => {
   t.context.internalBucketName = randomString();
   t.context.protectedBucketName = randomString();
   t.context.privateBucketName = randomString();
+  process.env.stackName = 'myStack';
 
   await Promise.all([
     s3().createBucket({ Bucket: t.context.internalBucketName }).promise(),
     s3().createBucket({ Bucket: t.context.privateBucketName }).promise(),
     s3().createBucket({ Bucket: t.context.protectedBucketName }).promise()
   ]);
+
+  const collection = payload.config.collection;
+  // save collection in internal/stackName/collections/collectionId
+  const key = `${process.env.stackName}/collections/${collection.dataType}___${parseInt(collection.version)}.json`;
+  await promiseS3Upload({
+    Bucket: t.context.internalBucketName,
+    Key: key,
+    Body: JSON.stringify(collection),
+    ACL: 'public-read'
+  });
+
+  console.log("uploaded collection to ", key);
 
   t.context.event = cloneDeep(payload);
 
@@ -78,7 +92,10 @@ test('download Granule from FTP endpoint', async (t) => {
     password: 'testpass'
   };
 
-  t.context.event.config.collection.url_path = 'example/';
+  t.context.event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
 
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
@@ -91,7 +108,7 @@ test('download Granule from FTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
@@ -113,7 +130,10 @@ test('download Granule from HTTP endpoint', async (t) => {
     host: 'http://localhost:3030'
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
-
+  t.context.event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
@@ -128,7 +148,7 @@ test('download Granule from HTTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -153,6 +173,10 @@ test('download Granule from SFTP endpoint', async (t) => {
   };
 
   t.context.event.input.granules[0].files[0].path = '/granules';
+  t.context.event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
 
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
@@ -167,7 +191,7 @@ test('download Granule from SFTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -199,7 +223,10 @@ test('download granule from S3 provider', async (t) => {
   };
 
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
-
+  t.context.event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
@@ -220,7 +247,7 @@ test('download granule from S3 provider', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}` // eslint-disable-line max-len
@@ -263,7 +290,10 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
 
   event.input.granules[0].files[0].path = '/granules';
   event.input.granules[0].files[1].path = '/granules';
-
+  event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
   validateConfig(t, event.config);
   validateInput(t, event.input);
 
@@ -278,7 +308,7 @@ test('download granule with checksum in file from an HTTP endpoint', async (t) =
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -309,7 +339,10 @@ test('download granule with bad checksum in file from HTTP endpoint throws', asy
     protocol: 'http',
     host: 'http://localhost:3030'
   };
-
+  t.context.event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
 
@@ -327,6 +360,11 @@ test('validate file properties', async (t) => {
     protocol: 'http',
     host: 'http://localhost:3030'
   };
+  t.context.event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
+
   t.context.event.input.granules[0].files[0].path = '/granules';
   const [file] = t.context.event.input.granules[0].files;
 
@@ -334,8 +372,8 @@ test('validate file properties', async (t) => {
     name: 'MOD09GQ.A2017224.h27v08.006.2017227165029_1.jpg'
   });
 
-  t.context.event.config.collection.files[0].url_path = 'file-example/';
-  t.context.event.config.collection.url_path = 'collection-example/';
+  //t.context.event.config.collection.files[0].url_path = 'file-example/';
+  //t.context.event.config.collection.url_path = 'collection-example/';
 
   validateConfig(t, t.context.event.config);
   validateInput(t, t.context.event.input);
@@ -348,13 +386,13 @@ test('validate file properties', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 2);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
-    t.is(output.granules[0].files[0].url_path, 'file-example/');
-    t.is(output.granules[0].files[1].url_path, 'collection-example/');
+    t.is(output.granules[0].files[0].url_path, 'example/');
+    t.is(output.granules[0].files[1].url_path, 'example/');
   }
   catch (e) {
     if (e instanceof errors.RemoteResourceError) {
@@ -373,7 +411,10 @@ test('attempt to download file from non-existent path - throw error', async (t) 
     protocol: 's3',
     host: randomString()
   };
-
+  t.context.event.config.context = {
+    url_path: 'example/',
+    duplicateHandling: 'replace'
+  };
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
 
   validateConfig(t, t.context.event.config);

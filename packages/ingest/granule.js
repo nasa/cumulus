@@ -24,6 +24,9 @@ const { baseProtocol } = require('./protocol');
 const xml2js = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { publish } = require('./cmr');
+const { CollectionConfigStore } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
+const { constructCollectionId } = require('../api/lib/utils');
 
 let bucketsObject;
 
@@ -152,14 +155,14 @@ class Granule {
    * Constructor for abstract Granule class
    *
    * @param {Object} buckets - s3 buckets available from config
-   * @param {Object} collection - collection configuration object
+   * @param {Object} context - rule context configuration object
    * @param {Object} provider - provider configuration object
    * @param {string} fileStagingDir - staging directory on bucket to place files
    * @param {boolean} forceDownload - force download of a file
    */
   constructor(
     buckets,
-    collection,
+    context,
     provider,
     fileStagingDir = 'file-staging',
     forceDownload = false
@@ -169,10 +172,11 @@ class Granule {
     }
 
     this.buckets = buckets;
-    this.collection = collection;
+    this.context = context;
     this.provider = provider;
 
-    this.collection.url_path = this.collection.url_path || '';
+    //this.collection.url_path = this.collection.url_path || '';
+    
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
     this.username = get(this.provider, 'username', null);
@@ -181,6 +185,7 @@ class Granule {
 
     this.forceDownload = forceDownload;
     this.fileStagingDir = fileStagingDir;
+    this.collectionId = ''; // will be filled in during ingest
   }
 
   /**
@@ -194,14 +199,26 @@ class Granule {
     // for each granule file
     // download / verify checksum / upload
 
+    //const bucket = process.env.internal;
+    const stackName = process.env.stackName;
+    log.info("*** Ingest granule", bucket, stackName)
+
+    // we need to retrieve the right collection
+    const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
+    this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+
+    this.collectionId = constructCollectionId(granule.dataType, granule.version);
+
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
+      .map((f) => this.ingestFile(f, bucket, this.context.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
 
     return {
       granuleId: granule.granuleId,
+      dataType: granule.dataType,
+      version: granule.version,
       files
     };
   }
@@ -227,7 +244,7 @@ class Granule {
     });
 
     if (!urlPath) {
-      urlPath = this.collection.url_path;
+      urlPath = this.context.url_path;
     }
 
     return urlPath;
@@ -445,7 +462,7 @@ class Granule {
     // Check if the file exists
     const exists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, file.name)
+      Key: path.join(this.fileStagingDir, this.collectionId, file.name)
     });
 
     // Exit early if we can
@@ -477,17 +494,21 @@ class Granule {
       // Upload the file
       const filename = await this.upload(
         bucket,
-        this.fileStagingDir,
+        path.join(this.fileStagingDir, this.collectionId),
         file.name,
         fileLocalPath
       );
 
       return Object.assign(file, {
         filename,
-        fileStagingDir: this.fileStagingDir,
+        fileStagingDir: path.join(this.fileStagingDir, this.collectionId),
         url_path: this.getUrlPath(file),
         bucket
       });
+    }
+    catch (e) {
+      log.error(`ingestFile Error ${JSON.stringify(e)}`);
+      throw e;
     }
     finally {
       // Delete the temp directory

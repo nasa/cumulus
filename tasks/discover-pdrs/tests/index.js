@@ -20,7 +20,7 @@ const {
 test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   const event = cloneDeep(input);
   event.config.bucket = randomString();
-  event.config.collection.provider_path = '/pdrs/discover-pdrs';
+  event.config.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.provider = {
     id: 'MODAPS',
@@ -62,6 +62,7 @@ test('test pdr discovery with FTP invalid user/pass', async (t) => {
 
   const newPayload = cloneDeep(input);
   newPayload.config.provider = provider;
+  newPayload.config.provider_path = '/pdrs/discover-pdrs';
   newPayload.input = {};
 
   await validateConfig(t, newPayload.config);
@@ -91,6 +92,8 @@ test('test pdr discovery with FTP connection refused', async (t) => {
 
   const newPayload = cloneDeep(input);
   newPayload.config.provider = provider;
+  newPayload.config.provider_path = '/pdrs/discover-pdrs';
+
   newPayload.input = {};
 
   await validateConfig(t, newPayload.config);
@@ -114,7 +117,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   const newPayload = cloneDeep(input);
   newPayload.config.useList = true;
   newPayload.config.provider = provider;
-  newPayload.config.collection.provider_path = '/pdrs/discover-pdrs';
+  newPayload.config.provider_path = '/pdrs/discover-pdrs';
   newPayload.input = {};
 
   const internalBucketName = randomString();
@@ -169,7 +172,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       protocol: 'http',
       host: 'http://localhost:3030'
     };
-    event.config.collection.provider_path = '/pdrs/discover-pdrs';
+    event.config.provider_path = '/pdrs/discover-pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
@@ -231,7 +234,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       username: 'user',
       password: 'password'
     };
-    event.config.collection.provider_path = 'pdrs/discover-pdrs';
+    event.config.provider_path = '/pdrs/discover-pdrs';
     event.input = {};
 
     // Mark one of the PDRs as not new
