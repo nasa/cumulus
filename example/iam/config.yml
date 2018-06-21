@@ -49,8 +49,7 @@ lf:
   stackName: lf-cumulus-iam
 
 jl:
-  prefix: jl-test
-  stackName: jl-test-iam
+  prefix: jl-test-integration
 
 kk-deploy-uat:
   prefix: kk-test-uat
