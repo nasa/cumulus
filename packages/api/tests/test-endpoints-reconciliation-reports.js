@@ -7,7 +7,6 @@ const reconciliationReportEndpoint = require('../endpoints/reconciliation-report
 const { testEndpoint } = require('../lib/testUtils');
 
 process.env.invoke = 'granule-reconciliation-reports';
-process.env.FilesTable = 'Test_FilesTable';
 process.env.stackName = 'test-stack';
 process.env.system_bucket = 'test_system_bucket';
 

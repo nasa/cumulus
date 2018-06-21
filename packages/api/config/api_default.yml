@@ -395,7 +395,7 @@ ApiVersionDefault:
 ApiReconciliationReportDefault:
   handler: index.reconciliationReports
   timeout: 20
-  memory: 256
+  memory: 512
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -403,12 +403,9 @@ ApiReconciliationReportDefault:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
-    FilesTable:
-      function: Ref
-      value: ProvidersTableDynamoDB
     invoke:
       function: Ref
-      value: ScheduleSFLambdaFunction
+      value: CreateReconciliationReportLambdaFunction
   apiGateway:
     #default paths
     - path: reconciliationReports
