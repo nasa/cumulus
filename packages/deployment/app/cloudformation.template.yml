@@ -52,6 +52,10 @@ Resources:
           Fn::GetAtt:
             - kinesisConsumerLambdaFunction
             - Arn
+        CreateReconciliationReportLambdaFunction:
+          Fn::GetAtt:
+            - CreateReconciliationReportLambdaFunction
+            - Arn
       {{#each ../apis}}
         {{name}}RestApi:
           Ref: {{name}}RestApi
