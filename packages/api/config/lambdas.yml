@@ -144,10 +144,6 @@ EmsDistributionReport:
     REPORTS_BUCKET: '{{system_bucket}}'
     STACK_NAME: '{{stackName}}'
 
-BuildFilesTable:
-  handler: index.buildFilesTable
-  source: 'node_modules/@cumulus/api/dist/'
-
 CreateReconciliationReport:
   handler: index.createReconciliationReport
   source: 'node_modules/@cumulus/api/dist/'
