@@ -21,23 +21,6 @@ module.exports.collection = {
       description: 'This is used to identify a granule in a PDR',
       type: 'string'
     },
-    process: {
-      title: 'Process',
-      description: 'Name of the docker process to be used, e.g. modis, aster',
-      type: 'string'
-    },
-    provider_path: {
-      title: 'Provider Path',
-      description: 'The path to look for the collection Granules or ' +
-                   'PDRs. Use regex for recursive search',
-      type: 'string',
-      default: '/'
-    },
-    url_path: {
-      title: 'Url Path',
-      description: 'The folder (url) used to save granules on S3 buckets',
-      type: 'string'
-    },
     duplicateHandling: {
       title: 'Duplicate Granule Handling',
       description: 'How to handle duplicate granules',
@@ -104,6 +87,17 @@ module.exports.collection = {
     updatedAt: {
       type: 'number',
       readonly: true
+    },
+    meta: {
+      title: 'Optional MetaData for the Collection',
+      type: 'object'
+    },
+    tags: {
+      title: 'Optional tags for search',
+      type: 'array',
+      items: {
+        type: 'string'
+      }
     }
   },
   required: [
@@ -243,21 +237,6 @@ module.exports.rule = {
       title: 'Provider ID',
       type: 'string'
     },
-    collection: {
-      title: 'Collection Name and Version',
-      type: 'object',
-      properties: {
-        name: {
-          title: 'Collection Name',
-          type: 'string'
-        },
-        version: {
-          title: 'Collection Version',
-          type: 'string'
-        }
-      },
-      required: ['name', 'version']
-    },
     meta: {
       title: 'Optional MetaData for the Rule',
       type: 'object'
@@ -292,9 +271,21 @@ module.exports.rule = {
     updatedAt: {
       type: 'number',
       readonly: true
+    },
+    tags: {
+      title: 'Optional tags for search',
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    },
+    context: {
+      title: 'Rule Initial Context',
+      type: 'object',
+      description: 'Custom parameters for workflows',
     }
   },
-  require: ['name', 'workflow', 'collection', 'rule', 'state']
+  require: ['name', 'workflow', 'rule', 'state']
 };
 
 // PDR Record Schema

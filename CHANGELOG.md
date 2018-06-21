@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   
   - Added support for versioned collections.  Collection-config-store get/put/delete now take an additional version parameter.
 
+  - Modified schemas to simplify collections and add meta and tags attributes.  Some of the previously used attributes should be moved to rule contexts. Added context and tags to rules.
+
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
 
