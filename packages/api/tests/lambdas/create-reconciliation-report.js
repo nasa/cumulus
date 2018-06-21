@@ -162,7 +162,7 @@ test('A valid reconciliation report is generated for no buckets', async (t) => {
   t.true(reportStartTime <= reportEndTime);
 });
 
-test('A valid reconciliation report is generated when everything in in sync', async (t) => {
+test('A valid reconciliation report is generated when everything is in sync', async (t) => {
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
