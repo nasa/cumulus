@@ -29,8 +29,7 @@ async function getMessageFromTemplate(templateUri) {
  * @param {string} parsePdrMessageTemplateUri - the S3 URI of template for
  * a granule ingest message
  * @param {Object} provider - the provider config to be attached to the message
- * @param {Object} collection - the collection config to be attached to the
- *   message
+ * @param {Object} rule - the rule to be attached to the message
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueParsePdrMessage(
@@ -38,12 +37,12 @@ async function enqueueParsePdrMessage(
   queueUrl,
   parsePdrMessageTemplateUri,
   provider,
-  collection
+  rule
 ) {
   const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
 
   message.meta.provider = provider;
-  message.meta.collection = collection;
+  message.meta.rule = rule;
 
   message.payload = { pdr };
 
@@ -59,8 +58,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  * @param {string} granuleIngestMessageTemplateUri - the S3 URI of template for
  * a granule ingest message
  * @param {Object} provider - the provider config to be attached to the message
- * @param {Object} collection - the collection config to be attached to the
- *   message
+ * @param {Object} rule - the rule to be attached to the message
  * @param {Object} pdr - an optional PDR to be configured in the message payload
  * @returns {Promise} - resolves when the message has been enqueued
  */
@@ -69,7 +67,7 @@ async function enqueueGranuleIngestMessage(
   queueUrl,
   granuleIngestMessageTemplateUri,
   provider,
-  collection,
+  rule,
   pdr
 ) {
   // Build the message from a template
@@ -84,7 +82,7 @@ async function enqueueGranuleIngestMessage(
   if (pdr) message.meta.pdr = pdr;
 
   message.meta.provider = provider;
-  message.meta.collection = collection;
+  message.meta.rule = rule;
   message.cumulus_meta.execution_name = uuidv4();
   const arn =
     getExecutionArn(message.cumulus_meta.state_machine, message.cumulus_meta.execution_name);

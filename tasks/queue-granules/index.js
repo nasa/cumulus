@@ -2,7 +2,6 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
-const { CollectionConfigStore } = require('@cumulus/common');
 
 /**
 * See schemas/input.json and schemas/config.json for detailed event description
@@ -14,22 +13,18 @@ const { CollectionConfigStore } = require('@cumulus/common');
 async function queueGranules(event) {
   const granules = event.input.granules || [];
 
-  const collectionConfigStore =
-    new CollectionConfigStore(event.config.internalBucket, event.config.stackName);
-
   const executionArns = await Promise.all( // eslint-disable-line function-paren-newline
     granules.map(async (granule) => {
-      const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
-
       return enqueueGranuleIngestMessage(
         granule,
         event.config.queueUrl,
         event.config.granuleIngestMessageTemplateUri,
         event.config.provider,
-        collectionConfig,
+        event.config.rule,
         event.input.pdr
       );
-    }));
+    })
+  );
 
   const result = { running: executionArns };
   if (event.input.pdr) result.pdr = event.input.pdr;

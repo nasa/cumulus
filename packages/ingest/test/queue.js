@@ -42,11 +42,12 @@ test('the queue receives a correctly formatted workflow message without a PDR', 
   const granule = { granuleId: '1', files: [] };
   const { queueUrl } = t.context;
   const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
-  const collection = { name: 'test-collection', version: '0.0.0' };
+  // const collection = { name: 'test-collection', version: '0.0.0' };
+  const rule = { name: 'rule-name', context: {} };
   const provider = { id: 'test-provider' };
 
   const output = await queue
-    .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, collection);
+    .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, rule);
   await sqs().receiveMessage({
     QueueUrl: t.context.queueUrl,
     MaxNumberOfMessages: 10,
@@ -63,7 +64,7 @@ test('the queue receives a correctly formatted workflow message without a PDR', 
         meta: {
           queues: { startSF: t.context.queueUrl },
           provider: provider,
-          collection: collection
+          rule: rule
         },
         payload: { granules: [granule] }
       };
@@ -78,12 +79,13 @@ test('the queue receives a correctly formatted workflow message with a PDR', asy
   const granule = { granuleId: '1', files: [] };
   const { queueUrl } = t.context;
   const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
-  const collection = { name: 'test-collection', version: '0.0.0' };
+  //const collection = { name: 'test-collection', version: '0.0.0' };
+  const rule = { name: 'rule-name', context: {} };
   const provider = { id: 'test-provider' };
   const pdr = { name: randomString(), path: randomString() };
 
   const output = await queue
-    .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, collection, pdr);
+    .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, rule, pdr);
   await sqs().receiveMessage({
     QueueUrl: t.context.queueUrl,
     MaxNumberOfMessages: 10,
@@ -100,7 +102,7 @@ test('the queue receives a correctly formatted workflow message with a PDR', asy
         meta: {
           queues: { startSF: t.context.queueUrl },
           provider: provider,
-          collection: collection,
+          rule: rule,
           pdr: pdr
         },
         payload: { granules: [granule] }

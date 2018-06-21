@@ -49,6 +49,7 @@ test.beforeEach(async (t) => {
       internalBucket: t.context.internalBucket,
       stackName: t.context.stackName,
       provider: { name: 'provider-name' },
+      rule: { name: 'rule-name' },
       queueUrl: await createQueue(),
       granuleIngestMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
     },
@@ -215,7 +216,7 @@ test('The correct message is enqueued without a PDR', async (t) => {
         state_machine: t.context.stateMachineArn
       },
       meta: {
-        collection: collectionConfig1,
+        rule: { name: 'rule-name' },
         provider: { name: 'provider-name' }
       },
       payload: {
@@ -241,7 +242,7 @@ test('The correct message is enqueued without a PDR', async (t) => {
         state_machine: t.context.stateMachineArn
       },
       meta: {
-        collection: collectionConfig2,
+        rule: { name: 'rule-name' },
         provider: { name: 'provider-name' }
       },
       payload: {
@@ -317,7 +318,7 @@ test('The correct message is enqueued with a PDR', async (t) => {
       },
       meta: {
         pdr: event.input.pdr,
-        collection: collectionConfig1,
+        rule: { name: 'rule-name' },
         provider: { name: 'provider-name' }
       },
       payload: {
@@ -344,7 +345,7 @@ test('The correct message is enqueued with a PDR', async (t) => {
       },
       meta: {
         pdr: event.input.pdr,
-        collection: collectionConfig2,
+        rule: { name: 'rule-name' },
         provider: { name: 'provider-name' }
       },
       payload: {

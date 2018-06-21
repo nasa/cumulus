@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "provider",
+    "rule",
     "queueUrl",
     "granuleIngestMessageTemplateUri",
     "stackName",
@@ -14,6 +15,7 @@
     "granuleIngestMessageTemplateUri": { "type": "string" },
     "internalBucket": { "type": "string" },
     "provider": { "type": "object" },
+    "rule": { "type": "object" },
     "queueUrl": { "type": "string" },
     "stackName": { "type": "string" }
   }

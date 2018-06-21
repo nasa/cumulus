@@ -3,14 +3,14 @@
   "description": "Describes the config used by the queue-pdrs task",
   "type": "object",
   "required": [
-    "collection",
+    "rule",
     "provider",
     "queueUrl",
     "parsePdrMessageTemplateUri"
   ],
   "additionalProperties": false,
   "properties": {
-    "collection": { "type": "object" },
+    "rule": { "type": "object" },
     "provider": { "type": "object" },
     "queueUrl": { "type": "string" },
     "parsePdrMessageTemplateUri": { "type": "string" }
