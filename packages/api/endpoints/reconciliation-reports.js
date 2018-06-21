@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 'use strict';
 
 const _get = require('lodash.get');
@@ -76,10 +74,7 @@ function del(event, cb) {
  * @returns {Object} returns the report generated
  */
 function post(event, cb) {
-  const params = {
-    filesTableName: process.env.FilesTable
-  };
-  return invoke(process.env.invoke, params)
+  return invoke(process.env.invoke, {})
     .then((data) => cb(null, { message: 'Report is being generated', status: data.StatusCode }))
     .catch((err) => cb(err));
 }
