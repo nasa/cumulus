@@ -155,7 +155,8 @@ test('it should enqueue a message for each associated workflow', async (t) => {
     meta: {
       queues: { startSF: stubQueueUrl },
       provider,
-      collection
+      collection,
+      rule: {}
     },
     payload: {
       collection: 'test-collection'
