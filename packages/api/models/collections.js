@@ -43,6 +43,17 @@ class Collection extends Manager {
     super(process.env.CollectionsTable, collectionSchema);
   }
 
+  /**
+   * Create the dynamoDB for this class
+   *
+   * @returns {Promise} aws dynamodb createTable response
+   */
+  async createTable() {
+    const hash = { name: 'name', type: 'S' };
+    const range = { name: 'version', type: 'S' };
+    return Manager.createTable(this.tableName, hash, range);
+  }
+
   async create(item) {
     const collectionConfigStore =
       new CollectionConfigStore(process.env.internal, process.env.stackName);

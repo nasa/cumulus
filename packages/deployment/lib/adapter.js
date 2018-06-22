@@ -25,8 +25,9 @@ function downloadZipfile(fileUrl, localFilename) {
   };
 
   return new Promise((resolve, reject) => {
-    request(options, (err) => {
+    request(options, (err, response) => {
       if (err) reject(err);
+      if (response.statusCode !== 200) reject(new Error(`${response.statusMessage}: ${fileUrl}`));
     })
       .pipe(file);
 
@@ -34,9 +35,7 @@ function downloadZipfile(fileUrl, localFilename) {
       console.log(`Completed download of ${fileUrl} to ${localFilename}`);
       resolve();
     })
-      .on('error', (err) => {
-        reject(err);
-      });
+      .on('error', reject);
   });
 }
 
