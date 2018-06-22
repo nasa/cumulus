@@ -26,6 +26,9 @@ Parameters:
   kinesisConsumerLambdaFunction:
     Type: String
     Description: 'kinesisConsumer lambda function arn'
+  CreateReconciliationReportLambdaFunction:
+    Type: String
+    Description: 'CreateReconciliationReport lambda function arn'
 {{#each parent.apis}}
   {{name}}RestApi:
     Type: String
