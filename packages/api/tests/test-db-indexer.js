@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const drop = require('lodash.drop');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -12,7 +13,8 @@ const { constructCollectionId } = require('../lib/utils');
 const {
   fakeCollectionFactory,
   fakeGranuleFactory,
-  fakeExecutionFactory
+  fakeExecutionFactory,
+  fakeFilesFactory
 } = require('../lib/testUtils');
 
 let esClient;
@@ -22,6 +24,7 @@ process.env.stackName = randomString();
 process.env.internal = randomString();
 process.env.CollectionsTable = `${process.env.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${process.env.stackName}-GranulesTable`;
+process.env.FilesTable = `${process.env.stackName}-FilesTable`;
 process.env.ExecutionsTable = `${process.env.stackName}-ExecutionsTable`;
 
 
@@ -92,12 +95,16 @@ async function getDyanmoDBStreamRecords(table) {
 test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  // create collections table
-  const hash = { name: 'name', type: 'S' };
-  const range = { name: 'version', type: 'S' };
-  await models.Manager.createTable(process.env.CollectionsTable, hash, range);
-  await models.Manager.createTable(process.env.GranulesTable, { name: 'granuleId', type: 'S' });
-  await models.Manager.createTable(process.env.ExecutionsTable, { name: 'arn', type: 'S' });
+  // create tables
+  const c = new models.Collection();
+  const g = new models.Granule();
+  const f = new models.FileClass();
+  const e = new models.Execution();
+
+  await c.createTable();
+  await g.createTable();
+  await f.createTable();
+  await e.createTable();
 
   // bootstrap the esIndex
   esClient = await Search.es();
@@ -108,6 +115,7 @@ test.after.always(async () => {
   await models.Manager.deleteTable(process.env.CollectionsTable);
   await models.Manager.deleteTable(process.env.GranulesTable);
   await models.Manager.deleteTable(process.env.ExecutionsTable);
+  await models.Manager.deleteTable(process.env.FilesTable);
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
   await esClient.indices.delete({ index: esIndex });
 });
@@ -156,7 +164,14 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
 
 test.serial('create, update and delete a granule in dynamodb and es', async (t) => {
   const fakeGranule = fakeGranuleFactory();
+  fakeGranule.files = [];
+  const bucket = randomString();
+  for (let i = 0; i < 4; i += 1) {
+    fakeGranule.files.push(fakeFilesFactory(bucket));
+  }
+
   const model = new models.Granule();
+  const fileModel = new models.FileClass();
   await model.create(fakeGranule);
 
   // get records from the stream
@@ -170,8 +185,18 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
 
   t.is(indexedRecord.granuleId, fakeGranule.granuleId);
 
+  // make sure all the file records are added
+  await Promise.all(fakeGranule.files.map(async (file) => {
+    const record = await fileModel.get({ bucket, key: file.filepath });
+    t.is(record.bucket, file.bucket);
+    t.is(record.key, file.filepath);
+    t.is(record.granuleId, fakeGranule.granuleId);
+  }));
+
   // change the record
   fakeGranule.status = 'failed';
+  const droppedFile = fakeGranule.files[0];
+  fakeGranule.files = drop(fakeGranule.files);
   await model.create(fakeGranule);
 
   // get records from the stream
@@ -182,6 +207,11 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
   t.is(indexedRecord.status, 'failed');
+
+  // make sure the dropped file is deleted
+  const promise = fileModel.get({ bucket, key: droppedFile.filepath });
+  const err = await t.throws(promise);
+  t.true(err.message.includes('No record'));
 
   // delete the record
   await model.delete({ granuleId: fakeGranule.granuleId });
@@ -194,6 +224,13 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
   t.is(indexedRecord.detail, 'Record not found');
+
+  // make sure the file records are deleted
+  await Promise.all(fakeGranule.files.map(async (file) => {
+    const p = fileModel.get({ bucket, key: file.filepath });
+    const e = await t.throws(p);
+    t.true(e.message.includes('No record'));
+  }));
 });
 
 test.serial('create, update and delete an execution in dynamodb and es', async (t) => {
