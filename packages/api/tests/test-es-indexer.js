@@ -43,7 +43,7 @@ test.before(async () => {
     collectionTable,
     { name: 'name', type: 'S' },
     { name: 'version', type: 'S' }
-  )
+  );
 
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
@@ -109,9 +109,9 @@ test.serial('creating a successful granule record', async (t) => {
   t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
   t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
   t.is(record.timeToArchive, 100 / 1000);
-  t.is(record.timeToPreprocess, 120 /1000);
+  t.is(record.timeToPreprocess, 120 / 1000);
   t.is(record.processingStartDateTime, '2018-05-03T14:23:12.010Z');
-  t.is(record.processingEndDateTime, '2018-05-03T17:11:33.007Z')
+  t.is(record.processingEndDateTime, '2018-05-03T17:11:33.007Z');
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
   t.is(deconstructed, collection.name);
@@ -234,7 +234,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
     granuleIds.push(newgran.granuleId);
   }
 
-  const collectionId = granules[0].collectionId; 
+  const collectionId = granules[0].collectionId;
 
   // add the records
   let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
