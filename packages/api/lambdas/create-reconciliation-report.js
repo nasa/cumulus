@@ -106,7 +106,7 @@ async function createReconciliationReport(params) {
   }).promise()
     .then((response) => response.Body.toString());
   const dataBuckets = Object.values(JSON.parse(bucketsConfigJson))
-    .filter((config) => config.type !== 'internal')
+    .filter((config) => config.name !== systemBucket)
     .map((config) => config.name);
 
   // Write an initial report to S3
