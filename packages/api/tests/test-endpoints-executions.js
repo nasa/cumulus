@@ -12,7 +12,7 @@ const { Search } = require('../es/search');
 
 // create all the variables needed across this test
 let esClient;
-let fakeExecutions = [];
+const fakeExecutions = [];
 const hash = { name: 'arn', type: 'S' };
 const esIndex = randomString();
 process.env.ExecutionsTable = randomString();
@@ -34,7 +34,8 @@ test.before(async () => {
   await models.Manager.createTable(process.env.ExecutionsTable, hash);
 
   // create fake granule records
-  fakeExecutions = ['completed', 'failed'].map(fakeExecutionFactory);
+  fakeExecutions.push(fakeExecutionFactory('completed'));
+  fakeExecutions.push(fakeExecutionFactory('failed', 'workflow2'));
   await Promise.all(fakeExecutions.map((i) => ex.create(i)
     .then((record) => indexer.indexExecution(esClient, record, esIndex))));
 });
@@ -60,6 +61,21 @@ test('default returns list of executions', (t) => {
     results.forEach((r) => {
       t.true(arns.includes(r.arn));
     });
+  });
+});
+
+test('executions can be filtered by workflow', (t) => {
+  const listEvent = {
+    httpMethod: 'list',
+    queryStringParameters: { type: 'workflow2' }
+  };
+  return testEndpoint(executionEndpoint, listEvent, (response) => {
+    const { meta, results } = JSON.parse(response.body);
+    t.is(results.length, 1);
+    t.is(meta.stack, process.env.stackName);
+    t.is(meta.table, 'execution');
+    t.is(meta.count, 1);
+    t.is(fakeExecutions[1].arn, results[0].arn);
   });
 });
 
