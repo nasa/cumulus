@@ -3,11 +3,51 @@
 const get = require('lodash.get');
 const pLimit = require('p-limit');
 const { AttributeValue } = require('dynamodb-data-types');
+const { FileClass } = require('../models');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const unwrap = AttributeValue.unwrap;
 
 const acceptedTables = ['Collection', 'Provider', 'Rule', 'Granule', 'Pdr', 'Execution'];
+
+/**
+ * Delete files associated with a given granule if the record belongs
+ * to the granules table
+ *
+ * @param {string} table - dynamoDB table name
+ * @param {Object} record - the dynamoDB record
+ * @returns {Promise<undefined>} undefined
+ */
+async function performFilesDelete(table, record) {
+  const granuleTable = `${process.env.stackName}-GranulesTable`;
+  //make sure this is the granules table
+  if (table === granuleTable) {
+    const model = new FileClass();
+    await model.deleteFilesOfGranule(record);
+  }
+}
+
+/**
+ * Add files of a given granule if the record is coming from
+ * a granule table
+ *
+ * @param {string} table - dynamoDB table name
+ * @param {Object} data - the new dynamoDB record
+ * @param {Object} oldData - the old dynamoDB record
+ * @returns {Promise<undefined>} undefined
+ */
+async function performFilesAddition(table, data, oldData) {
+  const granuleTable = `${process.env.stackName}-GranulesTable`;
+  if (table === granuleTable) {
+    const model = new FileClass();
+
+    // create files
+    await model.createFilesFromGranule(data);
+
+    // remove files that are no longer in the granule
+    await model.deleteFilesAfterCompare(data, oldData);
+  }
+}
 
 /**
  * return an object with the supported DynamoDB table names as key
@@ -100,10 +140,10 @@ function performDelete(esClient, tableIndex, fields, body) {
  * @param {Object} record - the record to be indexed
  * @returns {Promise<Object>} the record indexed
  */
-function indexRecord(esClient, record) {
+async function indexRecord(esClient, record) {
   // only process if the source is dynamoDB
   if (record.eventSource !== 'aws:dynamodb') {
-    return Promise.resolve();
+    return {};
   }
 
   // get list of indexers
@@ -111,7 +151,7 @@ function indexRecord(esClient, record) {
   const table = getTablename(record.eventSourceARN, indexers);
 
   if (!table) {
-    return Promise.resolve();
+    return {};
   }
 
   // get the hash and range (if any) and use them as id key for ES
@@ -119,10 +159,18 @@ function indexRecord(esClient, record) {
   const body = unwrap(get(record, 'dynamodb.NewImage'));
   const data = Object.assign({}, fields, body);
 
+  const oldBody = unwrap(get(record, 'dynamodb.OldImage')); 
+  const oldData = Object.assign({}, fields, oldBody);
+
   if (record.eventName === 'REMOVE') {
-    const oldBody = unwrap(get(record, 'dynamodb.OldImage'));
+    // delete from files associated with a granule
+    await performFilesDelete(table, oldBody);
+
     return performDelete(esClient, Object.keys(indexers).indexOf(table), fields, oldBody);
   }
+
+  // add files associated with a granule
+  await performFilesAddition(table, data, oldData);
 
   return performIndex(indexers, table, esClient, data);
 }
