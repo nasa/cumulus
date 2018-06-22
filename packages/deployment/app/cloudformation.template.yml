@@ -408,7 +408,7 @@ Resources:
         WriteCapacityUnits: {{this.write}}
       TableName: {{../stackName}}-{{@key}}
       StreamSpecification:
-        StreamViewType: "NEW_IMAGE"
+        StreamViewType: "NEW_AND_OLD_IMAGES"
 
 {{/each}}
 
