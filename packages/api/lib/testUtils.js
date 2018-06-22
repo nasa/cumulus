@@ -10,7 +10,7 @@ const { randomString } = require('@cumulus/common/test-utils');
  * @param {Function} endpoint - the lambda function used as ApiGateway backend
  * @param {Object} event - aws lambda event object
  * @param {Function} testCallback - aws lambda callback function
- * @returns {Promise<object>} the promise returned by the lambda function
+ * @returns {Promise<Object>} the promise returned by the lambda function
  */
 function testEndpoint(endpoint, event, testCallback) {
   return new Promise((resolve, reject) => {
@@ -82,14 +82,16 @@ function fakePdrFactory(status = 'completed') {
  * creates fake execution records
  *
  * @param {string} status - pdr status (default to completed)
+ * @param {string} type - workflow type (default to fakeWorkflow)
  * @returns {Object} fake execution object
  */
-function fakeExecutionFactory(status = 'completed') {
+function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
   return {
     arn: randomString(),
     name: randomString(),
     status,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    type
   };
 }
 

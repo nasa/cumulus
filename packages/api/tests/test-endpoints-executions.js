@@ -12,7 +12,7 @@ const { Search } = require('../es/search');
 
 // create all the variables needed across this test
 let esClient;
-let fakeExecutions;
+let fakeExecutions = [];
 const hash = { name: 'arn', type: 'S' };
 const esIndex = randomString();
 process.env.ExecutionsTable = randomString();
@@ -36,8 +36,7 @@ test.before(async () => {
   // create fake granule records
   fakeExecutions = ['completed', 'failed'].map(fakeExecutionFactory);
   await Promise.all(fakeExecutions.map((i) => ex.create(i)
-    .then((record) => indexer.indexExecution(esClient, record, esIndex))
-  ));
+    .then((record) => indexer.indexExecution(esClient, record, esIndex))));
 });
 
 test.after.always(async () => {
