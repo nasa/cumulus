@@ -29,7 +29,8 @@ test.beforeEach((t) => {
   //update cmr file path
   const match = /^s3\:\/\/(.*)\/(.*)$/;
   const cmrFile = payload.input.granules[0].files[3].filename;
-  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
+  payload.input.granules[0].files[3].filename =
+    `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
 
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
@@ -54,9 +55,11 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
     });
     await postToCMR(newPayload);
     t.fail();
-  } catch(e) {
+  }
+  catch (e) {
     t.true(e instanceof cmrjs.ValidationError);
-  } finally {
+  }
+  finally {
     cmrjs.CMR.prototype.getToken.restore();
   }
 });
@@ -94,7 +97,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
   }));
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
-  
+
   try {
     await aws.promiseS3Upload({
       Bucket: t.context.bucket,
