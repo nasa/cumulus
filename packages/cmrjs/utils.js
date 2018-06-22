@@ -150,10 +150,10 @@ async function validate(type, xml, identifier, provider) {
  * static string if not defined. The value returned should be a valid IP address or
  * else the request for a CMR token will fail.
  *
- * @return {String} IP address
+ * @returns {string} IP address
  */
 async function getIp() {
-  return await publicIp.v4()
+  return publicIp.v4()
     .catch((err) => {
       if (err.message === 'Query timed out') {
         return process.env.USER_IP_ADDRESS || '10.0.0.0';
