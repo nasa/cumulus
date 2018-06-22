@@ -1,7 +1,7 @@
 CollectionsTable:
   read: 5
   write: 1
-  pointInTime: '{{enablePointInTime}}' 
+  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: name
       type: S
@@ -42,7 +42,7 @@ GranulesTable:
   write: 10
   pointInTime: '{{enablePointInTime}}'
   attributes:
-    - name: granuleId 
+    - name: granuleId
       type: S
       schema: HASH
 
@@ -51,7 +51,7 @@ PdrsTable:
   write: 2
   pointInTime: '{{enablePointInTime}}'
   attributes:
-    - name: pdrName 
+    - name: pdrName
       type: S
       schema: HASH
 
@@ -61,6 +61,18 @@ ExecutionsTable:
   write: 10
   pointInTime: '{{enablePointInTime}}'
   attributes:
-    - name: arn 
+    - name: arn
       type: S
       schema: HASH
+
+FilesTable:
+  read: 5
+  write: 10
+  pointInTime: '{{enablePointInTime}}'
+  attributes:
+    - name: bucket
+      type: S
+      schema: HASH
+    - name: key
+      type: S
+      schema: RANGE
