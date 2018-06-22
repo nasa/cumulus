@@ -136,8 +136,7 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
       collection.files.forEach((fileConfig) => {
-        const test = new RegExp(fileConfig.regex);
-        const match = file.name.match(test);
+        const match = file.name.match(fileConfig.regex);
 
         if (match) {
           if (!file.url_path) {
@@ -151,6 +150,9 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
             cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
           });
 
+          if (!buckets[fileConfig.bucket]) {
+            throw new Error(`Collection config specifies a bucket key of ${fileConfig.bucket}, but the configured bucket keys are: ${Object.keys(buckets).join(', ')}`);
+          }
           file.bucket = buckets[fileConfig.bucket];
           file.filepath = path.join(urlPath, file.name);
           file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
