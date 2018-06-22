@@ -15,6 +15,7 @@ exports.stats = require('./endpoints/stats');
 exports.version = require('./endpoints/version');
 exports.distribution = require('./endpoints/distribution').handler;
 exports.dbIndexer = require('./lambdas/db-indexer');
+exports.reconciliationReports = require('./endpoints/reconciliation-reports');
 
 exports.jobs = require('./lambdas/jobs');
 exports.executeMigrations = require('./lambdas/executeMigrations').handler;
@@ -23,8 +24,11 @@ exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
 exports.kinesisConsumer = require('./lambdas/kinesis-consumer').handler;
 exports.inRegionS3Policy = require('./lambdas/in-region-s3-policy').handler;
+
 exports.emsReport = require('./lambdas/ems-report').handler;
 exports.emsDistributionReport = require('./lambdas/ems-distribution-report').handler;
+
+exports.createReconciliationReport = require('./lambdas/create-reconciliation-report').handler;
 
 const indexer = require('./es/indexer');
 const broadcast = require('./lambdas/sf-sns-broadcast');
