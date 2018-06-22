@@ -33,10 +33,8 @@ function s3Join(tokens) {
 }
 exports.s3Join = s3Join;
 
-const region = exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-if (region) {
-  AWS.config.update({ region: region });
-}
+exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+AWS.config.update({ region: exports.region });
 
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
@@ -258,7 +256,7 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
 
 /**
  * Delete files from S3
- * 
+ *
  * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
  * @param {Object} s3Opts - An optional object containing options that influence the behavior of S3
  * @returns {Promise} A promise that resolves to an Array of the data returned from the deletion operations
@@ -402,6 +400,113 @@ async function listS3ObjectsV2(params) {
 }
 exports.listS3ObjectsV2 = listS3ObjectsV2;
 
+// Class to efficiently list all of the objects in an S3 bucket, without loading
+// them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
+class S3ListObjectsV2Queue {
+  constructor(params) {
+    this.items = [];
+    this.params = params;
+    this.s3 = exports.s3();
+  }
+
+  /**
+   * View the next item in the queue
+   *
+   * This does not remove the object from the queue.  When there are no more
+   * items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an S3 object description
+   */
+  async peek() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items[0];
+  }
+
+  /**
+   * Remove the next item from the queue
+   *
+   * When there are no more items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an S3 object description
+   */
+  async shift() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items.shift();
+  }
+
+  /**
+   * Query the S3 API to get the next 1,000 items
+   *
+   * @returns {Promise<undefined>} - resolves when the queue has been updated
+   * @private
+   */
+  async fetchItems() {
+    const response = await this.s3.listObjectsV2(this.params).promise();
+
+    this.items = response.Contents;
+
+    if (response.IsTruncated) {
+      this.params.ContinuationToken = response.NextContinuationToken;
+    }
+    else this.items.push(null);
+  }
+}
+exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
+
+// Class to efficiently scane all of the items in a DynamoDB table, without
+// loading them all into memory at once.  Handles paging.
+class DynamoDbScanQueue {
+  constructor(params) {
+    this.items = [];
+    this.params = params;
+    this.dynamodb = exports.dynamodb();
+  }
+
+  /**
+   * View the next item in the queue
+   *
+   * This does not remove the object from the queue.  When there are no more
+   * items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an item from the DynamoDB table
+   */
+  async peek() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items[0];
+  }
+
+  /**
+   * Remove the next item from the queue
+   *
+   * When there are no more items in the queue, returns 'null'.
+   *
+   * @returns {Promise<Object>} - an item from the DynamoDB table
+   */
+  async shift() {
+    if (this.items.length === 0) await this.fetchItems();
+    return this.items.shift();
+  }
+
+  /**
+   * Query the DynamoDB API to get the next batch of items
+   *
+   * @returns {Promise<undefined>} - resolves when the queue has been updated
+   * @private
+   */
+  async fetchItems() {
+    let response;
+    do {
+      response = await this.dynamodb.scan(this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
+      if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
+    } while (response.Items.length === 0 && response.LastEvaluatedKey);
+
+    this.items = response.Items;
+
+    if (!response.LastEvaluatedKey) this.items.push(null);
+  }
+}
+exports.DynamoDbScanQueue = DynamoDbScanQueue;
+
 exports.syncUrl = async (uri, bucket, destKey) => {
   const response = await concurrency.promiseUrl(uri);
   await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
@@ -430,6 +535,15 @@ exports.parseS3Uri = (uri) => {
     Key: parsedUri.path.substring(1)
   };
 };
+
+/**
+ * Given a bucket and key, return an S3 URI
+ *
+ * @param {string} bucket - an S3 bucket name
+ * @param {string} key - an S3 key
+ * @returns {string} - an S3 URI
+ */
+exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
 exports.getPossiblyRemote = async (obj) => {
   if (obj && obj.Key && obj.Bucket) {
