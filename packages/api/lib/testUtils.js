@@ -22,6 +22,25 @@ function testEndpoint(endpoint, event, testCallback) {
 }
 
 /**
+ * Generates fake files for a granule
+ *
+ * @param {string} bucket - a bucket name
+ * @returns {Object} a file record
+ */
+function fakeFilesFactory(bucket) {
+  const key = randomString();
+  const name = randomString();
+  const filepath = `${key}/${name}`;
+  const filename = `s3://${bucket}/${filepath}`;
+  return {
+    bucket,
+    name,
+    filepath,
+    filename
+  };
+}
+
+/**
  * creates fake granule records
  *
  * @param {string} status - granule status (default to completed)
@@ -119,5 +138,6 @@ module.exports = {
   fakePdrFactory,
   fakeCollectionFactory,
   fakeExecutionFactory,
-  fakeRuleFactory
+  fakeRuleFactory,
+  fakeFilesFactory
 };
