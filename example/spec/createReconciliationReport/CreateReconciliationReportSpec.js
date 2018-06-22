@@ -96,12 +96,12 @@ describe('When there are granule differences and granule reconciliation is run',
       .then((response) => JSON.parse(response.Body.toString()));
   });
 
-  it('a report is generated showing files that are in S3 but not in the DynamoDB Files table', () => {
+  it('generates a report showing files that are in S3 but not in the DynamoDB Files table', () => {
     const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
     expect(report.onlyInS3).toContain(extraS3ObjectUri);
   });
 
-  it('a report is generated showing files that are in the DynamoDB Files table but not in S3', () => {
+  it('generates a report showing files that are in the DynamoDB Files table but not in S3', () => {
     const extraFileUri = buildS3Uri(extraDynamoDbItem.bucket.S, extraDynamoDbItem.key.S);
     const extraDbUris = report.onlyInDynamoDb.map((i) => i.uri);
     expect(extraDbUris).toContain(extraFileUri);
