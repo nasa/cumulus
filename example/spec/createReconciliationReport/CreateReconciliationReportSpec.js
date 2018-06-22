@@ -72,7 +72,7 @@ describe('The CreateReconciliationReport lambda function', () => {
     extraS3Object = { Bucket: protectedBucket, Key: randomString() };
     await s3().putObject(Object.assign({ Body: 'delete-me' }, extraS3Object)).promise();
 
-    // Write an extra granule (with a single file) to the DynamoDB Files table
+    // Write an extra file to the DynamoDB Files table
     extraDynamoDbItem = {
       bucket: { S: protectedBucket },
       key: { S: randomString() },
