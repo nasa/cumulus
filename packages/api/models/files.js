@@ -1,7 +1,27 @@
 'use strict';
 
+const url = require('url');
 const Manager = require('./base');
 const chunk = require('lodash.chunk');
+
+/**
+ * extract bucket and and s3 path from a give file object
+ *
+ * @param {Object} file - file object of a granule
+ * @returns {Object} the bucket and key
+ */
+function extractFileInfo(file) {
+  const parsed = url.parse(file.filename);
+  let key = parsed.pathname;
+
+  if (key.charAt(0) === '/') {
+    key = key.substr(1);
+  }
+  return {
+    bucket: parsed.hostname,
+    key
+  };
+}
 
 class FileClass extends Manager {
   constructor() {
@@ -30,11 +50,14 @@ class FileClass extends Manager {
     const fileRecords = [];
     if (granule.files) {
       granule.files.forEach((file) => {
-        fileRecords.push({
-          granuleId: granule.granuleId,
-          bucket: file.bucket,
-          key: file.filepath
-        });
+        if (file.filename) {
+          const extracted = extractFileInfo(file);
+          fileRecords.push({
+            granuleId: granule.granuleId,
+            bucket: extracted.bucket,
+            key: extracted.key
+          });
+        }
       });
     }
 
@@ -53,10 +76,13 @@ class FileClass extends Manager {
     const fileRecords = [];
     if (granule.files) {
       granule.files.forEach((file) => {
-        fileRecords.push({
-          bucket: file.bucket,
-          key: file.filepath
-        });
+        if (file.filename) {
+          const extracted = extractFileInfo(file);
+          fileRecords.push({
+            bucket: extracted.bucket,
+            key: extracted.key
+          });
+        }
       });
     }
 
@@ -86,10 +112,13 @@ class FileClass extends Manager {
       const filesToDelete = [];
       oldGranule.files.forEach((file) => {
         if (!currentFiles[file.filename]) {
-          filesToDelete.push({
-            bucket: file.bucket,
-            key: file.filepath
-          });
+          if (file.filename) {
+            const extracted = extractFileInfo(file);
+            filesToDelete.push({
+              bucket: extracted.bucket,
+              key: extracted.key
+            });
+          }
         }
       });
 
