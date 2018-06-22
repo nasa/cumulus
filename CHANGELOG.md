@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-491** - Add granule reconciliation API endpoints.
 
 ### Added
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
@@ -22,7 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
-- **CUMULUS-461** Support use of metadata date and other components in `url_path` property 
+- **CUMULUS-461** Support use of metadata date and other components in `url_path` property
 - **CUMULUS-480** Add suport for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
   - Add ability to write all records to S3
@@ -33,8 +35,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
-  - Change the structure of the buckets to allow for  more than one bucket of each type. The bucket structure is now: 
-    bucket-key: 
+  - Change the structure of the buckets to allow for  more than one bucket of each type. The bucket structure is now:
+    bucket-key:
       name: <bucket-name>
       type: <type> i.e. internal, public, etc.
   - Change IAM and app deployment configuration to support new bucket structure
@@ -79,7 +81,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Increase test coverage on api package
   - Add ability to restore metadata records from json files to DynamoDB
 - **CUMULUS-459** provide API endpoint for moving granules from one location on s3 to another
-  
+
 ## [v1.5.3] - 2018-05-18
 
 ### Fixed
