@@ -128,8 +128,8 @@ async function postToCMR(event) {
   const cmrFiles = await getCmrFiles(allFiles, regex);
 
   // post all meta files to CMR
-  const publishRquests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
-  const results = await Promise.all(publishRquests);
+  const publishRequests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
+  const results = await Promise.all(publishRequests);
 
   return {
     process: process,
