@@ -13,6 +13,16 @@ class Execution extends Manager {
   }
 
   /**
+   * Create the dynamoDB for this class
+   *
+   * @returns {Promise} aws dynamodb createTable response
+   */
+  async createTable() {
+    const hash = { name: 'arn', type: 'S' };
+    return Manager.createTable(this.tableName, hash);
+  }
+
+  /**
    * Create a new execution record from incoming sns messages
    *
    * @param {Object} payload - sns message containing the output of a Cumulus Step Function
