@@ -52,7 +52,7 @@ async function deleteReconciliationReports(systemBucket, stackName) {
   return deleteS3Files(objectsToDelete);
 }
 
-describe('The CreateReconciliationReport lambda function', () => {
+describe('When there are granule differences and granule reconciliation is run', () => {
   let config;
   let report;
   let extraS3Object;
@@ -96,12 +96,12 @@ describe('The CreateReconciliationReport lambda function', () => {
       .then((response) => JSON.parse(response.Body.toString()));
   });
 
-  it('detects a file that is in S3 but not in the DynamoDB Files table', () => {
+  it('a report is generated showing files that are in S3 but not in the DynamoDB Files table', () => {
     const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
     expect(report.onlyInS3).toContain(extraS3ObjectUri);
   });
 
-  it('detects a file that is in the DynamoDB Files table but not in S3', () => {
+  it('a report is generated showing files that are in the DynamoDB Files table but not in S3', () => {
     const extraFileUri = buildS3Uri(extraDynamoDbItem.bucket.S, extraDynamoDbItem.key.S);
     const extraDbUris = report.onlyInDynamoDb.map((i) => i.uri);
     expect(extraDbUris).toContain(extraFileUri);
