@@ -89,9 +89,14 @@ async function del(event) {
     throw new Error(errMsg);
   }
 
-  // remove file from s3
-  const key = `${process.env.stackName}/granules_ingested/${granuleId}`;
-  await aws.deleteS3Object(process.env.internal, key);
+  // remove files from s3
+  await Promise.all(record.files.map((file) => {
+    const parsed = aws.parseS3Uri(file.filename);
+    if (aws.fileExists(parsed.Bucket, parsed.Key)) {
+      return aws.deleteS3Object(parsed.Bucket, parsed.Key);
+    }
+    return {};
+  }));
 
   await g.delete({ granuleId });
 
