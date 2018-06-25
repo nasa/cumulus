@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
 
 ### Fixed
-- **CCUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
+- **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
+- **CUMULUS-398** - Fix not able to filter executions bu workflow
 
 ## [v1.6.0] - 2018-06-06
 
