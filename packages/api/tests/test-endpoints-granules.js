@@ -222,8 +222,43 @@ test('DELETE deleting an existing granule that is published will fail', async (t
 });
 
 test('DELETE deleting an existing unpublished granule', async (t) => {
+  const buckets = {
+    protected: {
+      name: randomString(),
+      type: 'protected'
+    },
+    public: {
+      name: randomString(),
+      type: 'public'
+    }
+  };
   const newGranule = fakeGranuleFactory('failed');
   newGranule.published = false;
+  newGranule.files = [
+    {
+      bucket: buckets.protected.name,
+      name: `${newGranule.granuleId}.hdf`,
+      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.hdf`
+    },
+    {
+      bucket: buckets.protected.name,
+      name: `${newGranule.granuleId}.cmr.xml`,
+      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.cmr.xml`
+    },
+    {
+      bucket: buckets.public.name,
+      name: `${newGranule.granuleId}.jpg`,
+      filename: `s3://${buckets.public.name}/${randomString()}/${newGranule.granuleId}.jpg`
+    }
+  ];
+
+  await aws.s3().createBucket({ Bucket: buckets.protected.name }).promise();
+  await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
+
+  await Promise.all(newGranule.files.map(async (file) => {
+    const parsed = aws.parseS3Uri(file.filename);
+    await aws.s3().putObject({ Bucket: parsed.Bucket, Key: parsed.Key, Body: `test data ${randomString()}` }).promise();
+  }));
   // create a new unpublished granule
   await g.create(newGranule);
 
@@ -234,16 +269,19 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
     }
   };
 
-  const key = `${process.env.stackName}/granules_ingested/${newGranule.granuleId}`;
-  await aws.s3().putObject({ Bucket: process.env.internal, Key: key, Body: 'test data' }).promise();
-
   const response = await testEndpoint(granuleEndpoint, deleteEvent, (r) => r);
   t.is(response.statusCode, 200);
   const { detail } = JSON.parse(response.body);
-  t.is(
-    detail,
-    'Record deleted'
-  );
+  t.is(detail, 'Record deleted');
+
+  // verify the files are deleted
+  await Promise.all(newGranule.files.map(async (file) => {
+    const parsed = aws.parseS3Uri(file.filename);
+    t.false(await aws.fileExists(parsed.Bucket, parsed.Key));
+  }));
+
+  await aws.recursivelyDeleteS3Bucket(buckets.protected.name);
+  await aws.recursivelyDeleteS3Bucket(buckets.public.name);
 });
 
 test('move a granule', async (t) => {
