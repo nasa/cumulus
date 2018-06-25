@@ -2,8 +2,27 @@
 
 const moment = require('moment');
 const { BaseSearch } = require('./search');
+const omit = require('lodash.omit');
 
 class Stats extends BaseSearch {
+  /**
+   * Remove stats-specific fields, then create search
+   *
+   * @returns {Object} - search params
+   */
+  _buildSearch() {
+    this.params = omit(
+      this.params,
+      [
+        'type',
+        'interval',
+        'format',
+        'field'
+      ]
+    );
+
+    return super._buildSearch();
+  }
 
   async query() {
     if (!this.client) {
