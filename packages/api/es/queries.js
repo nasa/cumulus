@@ -182,10 +182,6 @@ module.exports = function(params) {
       'sort_by',
       'order',
       'prefix',
-      'type',
-      'interval',
-      'format',
-      'field',
       'fields'
     ]
   );
