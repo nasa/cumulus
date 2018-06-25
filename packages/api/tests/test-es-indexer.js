@@ -239,6 +239,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   // add the records
   let response = await Promise.all(granules.map((g) => indexer.indexGranule(esClient, g, esIndex)));
   t.is(response.length, 11);
+  await esClient.indices.refresh();
 
   // now delete the records
   response = await Promise.all(granules
@@ -247,6 +248,8 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
 
   t.is(response.length, 11);
   response.forEach((r) => t.is(r.result, 'deleted'));
+
+  await esClient.indices.refresh();
 
   // retrieve deletedgranule records which are deleted within certain range
   // and are from a given collection
@@ -261,7 +264,7 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
               range: {
                 deletedAt: {
                   gte: 'now-1d',
-                  lt: 'now'
+                  lte: 'now+1s'
                 }
               }
             },
@@ -276,7 +279,6 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
     }
   };
 
-  await esClient.indices.refresh();
   response = await esClient.search(deletedGranParams);
   t.is(response.hits.total, 11);
   response.hits.hits.forEach((r) => {
