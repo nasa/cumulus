@@ -64,16 +64,13 @@ function average(event, cb) {
 function handler(event, context) {
   log.debug(event);
   handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.resource === '/stats') {
-      summary(event, cb);
-    }
-    else if (event.httpMethod === 'GET' && event.resource === '/stats/histogram') {
+    if (event.httpMethod === 'GET' && event.resource.includes('/stats/histogram')) {
       histogram(event, cb);
     }
-    else if (event.httpMethod === 'GET' && event.resource === '/stats/aggregate') {
+    else if (event.httpMethod === 'GET' && event.resource.includes('/stats/aggregate')) {
       count(event, cb);
     }
-    else if (event.httpMethod === 'GET' && event.resource === '/stats/average') {
+    else if (event.httpMethod === 'GET' && event.resource.includes('/stats/average')) {
       average(event, cb);
     }
     else {

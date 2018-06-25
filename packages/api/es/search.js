@@ -52,7 +52,7 @@ class BaseSearch {
         },
 
         // Note that this doesn't abort the query.
-        requestTimeout: 50000  // milliseconds
+        requestTimeout: 50000 // milliseconds
       };
     }
 
@@ -311,7 +311,6 @@ class BaseSearch {
       return e;
     }
   }
-
 }
 
 class Search extends BaseSearch {}
