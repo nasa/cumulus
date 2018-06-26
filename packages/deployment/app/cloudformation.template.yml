@@ -156,8 +156,8 @@ Resources:
         Ref: {{@key}}WriteCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
         TargetValue: 70
-        ScaleInCooldown: 60
-        ScaleOutCooldown: 60
+        ScaleInCooldown: 5
+        ScaleOutCooldown: 5
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBWriteCapacityUtilization
   {{/if}}
