@@ -63,15 +63,15 @@ class Granule extends Manager {
    * @param {Object} g - the granule object
    * @returns {Promise} an object showing the start of the re-ingest
    */
-  async reingest(g) {
+  async reingest(g, workflow = 'IngestGranule', messageSource = 'input') {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     // get the payload of the original execution
     const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
-    const originalMessage = JSON.parse(status.execution.input);
+    const originalMessage = JSON.parse(status.execution[messageSource]);
 
     const payload = await Rule.buildPayload({
-      workflow: 'IngestGranule',
+      workflow,
       provider: g.provider,
       collection: {
         name,
