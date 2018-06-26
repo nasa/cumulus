@@ -1,7 +1,13 @@
 CollectionsTable:
   read: 5
   write: 1
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
+  enableAutoScaling: '{{tables.collections.enableAutoScaling}}'
+  autoScaling:
+    roleArn: '{{iams.scalingRoleArn}}'
+    writeCapacityUnits:
+      min: '{{tables.collections.autoScaling.writeCapacityUnits.min}}'
+      max: '{{tables.collections.autoScaling.writeCapacityUnits.max}}'
   attributes:
     - name: name
       type: S
@@ -13,7 +19,7 @@ CollectionsTable:
 ProvidersTable:
   read: 5
   write: 1
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
   attributes:
     - name: id
       type: S
@@ -22,7 +28,7 @@ ProvidersTable:
 RulesTable:
   read: 5
   write: 1
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
   attributes:
     - name: name
       type: S
@@ -31,7 +37,7 @@ RulesTable:
 UsersTable:
   read: 5
   write: 1
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
   attributes:
     - name: userName
       type: S
@@ -40,7 +46,7 @@ UsersTable:
 GranulesTable:
   read: 5
   write: 10
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
   attributes:
     - name: granuleId
       type: S
@@ -49,7 +55,7 @@ GranulesTable:
 PdrsTable:
   read: 5
   write: 2
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
   attributes:
     - name: pdrName
       type: S
@@ -59,7 +65,7 @@ PdrsTable:
 ExecutionsTable:
   read: 5
   write: 10
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
   attributes:
     - name: arn
       type: S
@@ -68,7 +74,7 @@ ExecutionsTable:
 FilesTable:
   read: 5
   write: 10
-  pointInTime: '{{enablePointInTime}}'
+  pointInTime: '{{tables.enablePointInTime}}'
   attributes:
     - name: bucket
       type: S
