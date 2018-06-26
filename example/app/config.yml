@@ -142,6 +142,15 @@ aimee-test:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
+
+  tables:
+    collections:
+      enableAutoScaling: true
+      autoScaling:
+        writeCapacityUnits:
+          min: 1
+          max: 2
 
 lf:
   prefix: lf-cumulus
