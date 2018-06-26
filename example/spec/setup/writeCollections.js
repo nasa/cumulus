@@ -1,0 +1,26 @@
+const { addProviders, addCollections } = require('@cumulus/integration-tests');
+const { loadConfig } = require('../helpers/testUtils');
+const config = loadConfig();
+
+const collectionsDirectory = './data/collections';
+
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+try {
+  const repeatTimes = 10;
+  const nCollections = 10;
+  const waitTime = 1000;
+  console.log(`Creating ${nCollections} providers every ${waitTime/1000} seconds for ${repeatTimes} iterations`);
+  Array.from(Array(repeatTimes)).forEach(async () => {
+    Array.from(Array(nCollections)).forEach(async () => {
+      await addCollections(config.stackName, config.bucket, collectionsDirectory);
+    });
+    await timeout(waitTime);
+  });
+}
+catch (e) {
+  console.log(e);
+  throw e;
+}
