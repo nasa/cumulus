@@ -145,19 +145,9 @@ aimee-test:
     scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
 
   tables:
-    collections:
-      enableAutoScaling: true
-    providers:
-      enableAutoScaling: true
-    rules:
-      enableAutoScaling: true
-    users:
-      enableAutoScaling: true
     granules:
       enableAutoScaling: true
     pdrs:
-      enableAutoScaling: true
-    executions:
       enableAutoScaling: true
     files:
       enableAutoScaling: true
