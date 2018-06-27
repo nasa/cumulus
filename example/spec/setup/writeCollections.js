@@ -12,13 +12,20 @@ try {
   const repeatTimes = 10;
   const nCollections = 10;
   const waitTime = 1000;
+  const startTime = Date.now()
   console.log(`Creating ${nCollections} providers every ${waitTime/1000} seconds for ${repeatTimes} iterations`);
-  Array.from(Array(repeatTimes)).forEach(async () => {
-    Array.from(Array(nCollections)).forEach(async () => {
-      await addCollections(config.stackName, config.bucket, collectionsDirectory);
+
+  const runTest = async () => {
+    await Array.from(Array(repeatTimes)).forEach(async () => {
+      Array.from(Array(nCollections)).forEach(async () => {
+        await addCollections(config.stackName, config.bucket, collectionsDirectory);
+      });
+      await timeout(waitTime);
     });
-    await timeout(waitTime);
-  });
+  }
+  runTest();
+  const endTime = Date.now()
+  console.log(`Test time: ${endTime - startTime} ms`);
 }
 catch (e) {
   console.log(e);
