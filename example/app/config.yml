@@ -128,6 +128,8 @@ cumulus-from-source:
   stackNameNoDash: TestSourceIntegration
 
   tables:
+    collections:
+      enableAutoScaling: true
     granules:
       enableAutoScaling: true
     pdrs:
@@ -143,6 +145,16 @@ aimee-test:
   prefix: aimee-test
   stackName: aimee-test
   stackNameNoDash: aimeeTest
+
+  tables:
+    collections:
+      enableAutoScaling: true
+    granules:
+      enableAutoScaling: true
+    pdrs:
+      enableAutoScaling: true
+    files:
+      enableAutoScaling: true
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
