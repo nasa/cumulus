@@ -147,10 +147,6 @@ aimee-test:
   tables:
     collections:
       enableAutoScaling: true
-      autoScaling:
-        writeCapacityUnits:
-          min: 1
-          max: 2
 
 lf:
   prefix: lf-cumulus
