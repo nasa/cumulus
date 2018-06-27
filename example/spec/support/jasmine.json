@@ -1,7 +1,8 @@
 {
   "spec_dir": "spec",
   "spec_files": [
-    "setup/writeCollections.js"
+    "setup/PopulateProvidersCollections.js",
+    "**/*[sS]pec.js"
   ],
   "helpers": [
     "helpers/**/*.js"

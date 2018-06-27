@@ -1,5 +1,4 @@
 const fs = require('fs');
-const jasmine = require('jasmine');
 const { S3 } = require('aws-sdk');
 const lodash = require('lodash');
 const yaml = require('js-yaml');
