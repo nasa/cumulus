@@ -136,8 +136,12 @@ Resources:
   # Cumulus Custom Resource END
   #################################################
 
+  #################################################
+  # Cumulus DynamoDB Auto Scaling START
+  #################################################
 {{# each dynamos}}
   {{#if this.enableAutoScaling}}
+  ### Write scaling
   {{@key}}WriteCapacityScalableTarget:
     Type: "AWS::ApplicationAutoScaling::ScalableTarget"
     Properties:
@@ -155,13 +159,39 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}WriteCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{this.autoScaling.policyConfiguration.targetValue}}
-        ScaleInCooldown: {{this.autoScaling.policyConfiguration.scaleInCooldown}}
-        ScaleOutCooldown: {{this.autoScaling.policyConfiguration.scaleOutCooldown}}
+        TargetValue: {{this.autoScalingPolicyConfiguration.targetValue}}
+        ScaleInCooldown: {{this.autoScalingPolicyConfiguration.scaleInCooldown}}
+        ScaleOutCooldown: {{this.autoScalingPolicyConfiguration.scaleOutCooldown}}
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBWriteCapacityUtilization
+  ### Read scaling
+  {{@key}}ReadCapacityScalableTarget:
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Properties:
+      MaxCapacity: {{this.autoScaling.readCapacityUnits.max}}
+      MinCapacity: {{this.autoScaling.readCapacityUnits.min}}
+      ResourceId: !Sub table/{{../stackName}}-{{@key}}
+      RoleARN: {{this.autoScaling.roleArn}}
+      ScalableDimension: "dynamodb:table:ReadCapacityUnits"
+      ServiceNamespace: dynamodb
+  {{@key}}TableReadScalingPolicy:
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId:
+        Ref: {{@key}}ReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: {{this.autoScalingPolicyConfiguration.targetValue}}
+        ScaleInCooldown: {{this.autoScalingPolicyConfiguration.scaleInCooldown}}
+        ScaleOutCooldown: {{this.autoScalingPolicyConfiguration.scaleOutCooldown}}
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
   {{/if}}
 {{/each}}
+  #################################################
+  # Cumulus DynamoDB Auto Scaling END
+  #################################################
 
   #################################################
   # SNS config BEGIN

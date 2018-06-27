@@ -31,16 +31,16 @@ default:
   system_bucket: '{{buckets.internal.name}}'
 
   buckets:
-    internal: 
+    internal
       name: change-me
       type: internal
-    private: 
+    private
       name: change-me
       type: private
-    protected: 
+    protected
       name: change-me
       type: protected
-    public: 
+    public
       name: change-me
       type: public
 
@@ -93,18 +93,72 @@ default:
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 
+  # set to true to activate pointInTime on all tables
+  enablePointInTime: false
   tables:
-    # set to true to activate pointInTime on all tables
-    enablePointInTime: false
+    # REVIEW: Autoscaling policy configuration is the same for all tables, to
+    # reduce verbosity of this configuration, but it could easily be set per-
+    # table.
+    autoScalingPolicyConfiguration:
+      targetValue: 30
+      scaleInCooldown: 0
+      scaleOutCooldown: 0
     collections:
-      autoScaling:
-        writeCapacityUnits:
-          min: 1
-          max: 2
-        policyConfiguration:
-          targetValue: 30
-          scaleInCooldown: 0
-          scaleOutCooldown: 0
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
+    providers:
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
+    rules:
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
+    users:
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
+    granules:
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
+    pdrs:
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
+    pdrs:
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
+    files:
+      writeCapacityUnits:
+        min: 1
+        max: 2
+      readCapacityUnits:
+        min: 1
+        max: 5
 
   sns:
     # this topic receives all the updates from
@@ -119,7 +173,7 @@ default:
               - Arn
 
   apis:
-    - name: download 
+    - name: download
     - name: backend
 
   sqs:
