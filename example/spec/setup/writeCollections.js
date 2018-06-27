@@ -12,8 +12,7 @@ try {
   const repeatTimes = 10;
   const nCollections = 10;
   const waitTime = 1000;
-  const startTime = Date.now()
-  console.log(`Creating ${nCollections} providers every ${waitTime/1000} seconds for ${repeatTimes} iterations`);
+  console.log(`Writing ${nCollections} collections every ${waitTime/1000} seconds for ${repeatTimes} iterations`);
 
   const runTest = async () => {
     await Array.from(Array(repeatTimes)).forEach(async () => {
@@ -24,8 +23,6 @@ try {
     });
   }
   runTest();
-  const endTime = Date.now()
-  console.log(`Test time: ${endTime - startTime} ms`);
 }
 catch (e) {
   console.log(e);
