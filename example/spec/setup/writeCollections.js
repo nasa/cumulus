@@ -10,9 +10,10 @@ function timeout(ms) {
 
 try {
   const repeatTimes = 10;
-  const nCollections = 10*3;
+  const nCollections = 10;
   const waitTime = 1000;
-  console.log(`Writing ${nCollections} collections every ${waitTime/1000} seconds for ${repeatTimes} iterations`);
+  // 3 is the number of collections in data/
+  console.log(`Writing ${nCollections*3} collections every ${waitTime/1000} seconds for ${repeatTimes} iterations`);
 
   const runTest = async () => {
     await Array.from(Array(repeatTimes)).forEach(async () => {
