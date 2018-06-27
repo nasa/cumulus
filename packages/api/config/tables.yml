@@ -27,7 +27,7 @@ ProvidersTable:
   read: 5
   write: 1
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.collections.enableAutoScaling}}'
+  enableAutoScaling: '{{tables.providers.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
     writeCapacityUnits:
