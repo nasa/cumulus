@@ -5,12 +5,12 @@ CollectionsTable:
   enableAutoScaling: '{{tables.collections.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.collections.writeCapacityUnits.min}}'
-      max: '{{tables.collections.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.collections.readCapacityUnits.min}}'
       max: '{{tables.collections.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.collections.writeCapacityUnits.min}}'
+      max: '{{tables.collections.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
@@ -30,12 +30,12 @@ ProvidersTable:
   enableAutoScaling: '{{tables.providers.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.providers.writeCapacityUnits.min}}'
-      max: '{{tables.providers.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.providers.readCapacityUnits.min}}'
       max: '{{tables.providers.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.providers.writeCapacityUnits.min}}'
+      max: '{{tables.providers.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
@@ -52,12 +52,12 @@ RulesTable:
   enableAutoScaling: '{{tables.rules.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.rules.writeCapacityUnits.min}}'
-      max: '{{tables.rules.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.rules.readCapacityUnits.min}}'
       max: '{{tables.rules.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.rules.writeCapacityUnits.min}}'
+      max: '{{tables.rules.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
@@ -74,12 +74,12 @@ UsersTable:
   enableAutoScaling: '{{tables.users.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.users.writeCapacityUnits.min}}'
-      max: '{{tables.users.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.users.readCapacityUnits.min}}'
       max: '{{tables.users.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.users.writeCapacityUnits.min}}'
+      max: '{{tables.users.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
@@ -96,12 +96,12 @@ GranulesTable:
   enableAutoScaling: '{{tables.granules.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.granules.writeCapacityUnits.min}}'
-      max: '{{tables.granules.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.granules.readCapacityUnits.min}}'
       max: '{{tables.granules.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.granules.writeCapacityUnits.min}}'
+      max: '{{tables.granules.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
@@ -118,12 +118,12 @@ PdrsTable:
   enableAutoScaling: '{{tables.pdrs.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.pdrs.writeCapacityUnits.min}}'
-      max: '{{tables.pdrs.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.pdrs.readCapacityUnits.min}}'
       max: '{{tables.pdrs.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.pdrs.writeCapacityUnits.min}}'
+      max: '{{tables.pdrs.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
@@ -141,12 +141,12 @@ ExecutionsTable:
   enableAutoScaling: '{{tables.executions.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.executions.writeCapacityUnits.min}}'
-      max: '{{tables.executions.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.executions.readCapacityUnits.min}}'
       max: '{{tables.executions.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.executions.writeCapacityUnits.min}}'
+      max: '{{tables.executions.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
@@ -163,12 +163,12 @@ FilesTable:
   enableAutoScaling: '{{tables.files.enableAutoScaling}}'
   autoScaling:
     roleArn: '{{iams.scalingRoleArn}}'
-    writeCapacityUnits:
-      min: '{{tables.files.writeCapacityUnits.min}}'
-      max: '{{tables.files.writeCapacityUnits.max}}'
     readCapacityUnits:
       min: '{{tables.files.readCapacityUnits.min}}'
       max: '{{tables.files.readCapacityUnits.max}}'
+    writeCapacityUnits:
+      min: '{{tables.files.writeCapacityUnits.min}}'
+      max: '{{tables.files.writeCapacityUnits.max}}'
     policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'

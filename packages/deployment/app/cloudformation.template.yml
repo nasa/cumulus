@@ -141,30 +141,7 @@ Resources:
   #################################################
 {{# each dynamos}}
   {{#if this.enableAutoScaling}}
-  ### Write scaling
-  {{@key}}WriteCapacityScalableTarget:
-    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
-    Properties:
-      MaxCapacity: {{this.autoScaling.writeCapacityUnits.max}}
-      MinCapacity: {{this.autoScaling.writeCapacityUnits.min}}
-      ResourceId: !Sub table/{{../stackName}}-{{@key}}
-      RoleARN: {{this.autoScaling.roleArn}}
-      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
-      ServiceNamespace: dynamodb
-  {{@key}}TableWriteScalingPolicy:
-    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
-    Properties:
-      PolicyName: WriteAutoScalingPolicy
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId:
-        Ref: {{@key}}WriteCapacityScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{this.autoScaling.policyConfiguration.targetValue}}
-        ScaleInCooldown: {{this.autoScaling.policyConfiguration.scaleInCooldown}}
-        ScaleOutCooldown: {{this.autoScaling.policyConfiguration.scaleOutCooldown}}
-        PredefinedMetricSpecification:
-          PredefinedMetricType: DynamoDBWriteCapacityUtilization
-  ### Read scaling
+  ### Read scaling policy
   {{@key}}ReadCapacityScalableTarget:
     Type: "AWS::ApplicationAutoScaling::ScalableTarget"
     Properties:
@@ -187,6 +164,30 @@ Resources:
         ScaleOutCooldown: {{this.autoScaling.policyConfiguration.scaleOutCooldown}}
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
+
+  ### Write scaling policy
+  {{@key}}WriteCapacityScalableTarget:
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Properties:
+      MaxCapacity: {{this.autoScaling.writeCapacityUnits.max}}
+      MinCapacity: {{this.autoScaling.writeCapacityUnits.min}}
+      ResourceId: !Sub table/{{../stackName}}-{{@key}}
+      RoleARN: {{this.autoScaling.roleArn}}
+      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
+      ServiceNamespace: dynamodb
+  {{@key}}TableWriteScalingPolicy:
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId:
+        Ref: {{@key}}WriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: {{this.autoScaling.policyConfiguration.targetValue}}
+        ScaleInCooldown: {{this.autoScaling.policyConfiguration.scaleInCooldown}}
+        ScaleOutCooldown: {{this.autoScaling.policyConfiguration.scaleOutCooldown}}
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
   {{/if}}
 {{/each}}
   #################################################

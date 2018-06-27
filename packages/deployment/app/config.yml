@@ -104,61 +104,61 @@ default:
       scaleInCooldown: 0
       scaleOutCooldown: 0
     collections:
+      readCapacityUnits:
+        min: 5
+        max: 10      
       writeCapacityUnits:
         min: 1
         max: 2
-      readCapacityUnits:
-        min: 1
-        max: 5
     providers:
+      readCapacityUnits:
+        min: 5
+        max: 10      
       writeCapacityUnits:
         min: 1
         max: 2
-      readCapacityUnits:
-        min: 1
-        max: 5
     rules:
+      readCapacityUnits:
+        min: 5
+        max: 10      
       writeCapacityUnits:
         min: 1
         max: 2
-      readCapacityUnits:
-        min: 1
-        max: 5
     users:
+      readCapacityUnits:
+        min: 5
+        max: 10      
       writeCapacityUnits:
         min: 1
         max: 2
-      readCapacityUnits:
-        min: 1
-        max: 5
     granules:
-      writeCapacityUnits:
-        min: 1
-        max: 2
       readCapacityUnits:
-        min: 1
-        max: 5
+        min: 5
+        max: 10      
+      writeCapacityUnits:
+        min: 10
+        max: 20
     pdrs:
-      writeCapacityUnits:
-        min: 1
-        max: 2
       readCapacityUnits:
-        min: 1
-        max: 5
+        min: 5
+        max: 10      
+      writeCapacityUnits:
+        min: 2
+        max: 4
     executions:
-      writeCapacityUnits:
-        min: 1
-        max: 2
       readCapacityUnits:
-        min: 1
-        max: 5
+        min: 5
+        max: 10      
+      writeCapacityUnits:
+        min: 10
+        max: 20
     files:
-      writeCapacityUnits:
-        min: 1
-        max: 2
       readCapacityUnits:
-        min: 1
-        max: 5
+        min: 5
+        max: 10      
+      writeCapacityUnits:
+        min: 10
+        max: 20
 
   sns:
     # this topic receives all the updates from
