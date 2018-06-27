@@ -139,6 +139,7 @@ Resources:
   #################################################
   # Cumulus DynamoDB Auto Scaling START
   #################################################
+
 {{# each dynamos}}
   {{#if this.enableAutoScaling}}
   ### Read scaling policy
