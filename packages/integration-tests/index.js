@@ -7,6 +7,7 @@ const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 const sfnStep = require('./sfnStep');
 const { Provider, Collection, Rule } = require('@cumulus/api/models');
 const cmr = require('./cmr.js');
@@ -216,6 +217,7 @@ async function addCollections(stackName, bucketName, dataDirectory) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
   const promises = collections.map((collection) => limit(() => {
     const c = new Collection();
+    collection.version = randomString();
     console.log(`adding collection ${collection.name}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
       .then(() => c.create(collection));
