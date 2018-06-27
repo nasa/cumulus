@@ -11,7 +11,7 @@ CollectionsTable:
     readCapacityUnits:
       min: '{{tables.collections.readCapacityUnits.min}}'
       max: '{{tables.collections.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
@@ -36,7 +36,7 @@ ProvidersTable:
     readCapacityUnits:
       min: '{{tables.providers.readCapacityUnits.min}}'
       max: '{{tables.providers.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
@@ -58,7 +58,7 @@ RulesTable:
     readCapacityUnits:
       min: '{{tables.rules.readCapacityUnits.min}}'
       max: '{{tables.rules.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
@@ -80,7 +80,7 @@ UsersTable:
     readCapacityUnits:
       min: '{{tables.users.readCapacityUnits.min}}'
       max: '{{tables.users.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
@@ -102,7 +102,7 @@ GranulesTable:
     readCapacityUnits:
       min: '{{tables.granules.readCapacityUnits.min}}'
       max: '{{tables.granules.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
@@ -124,7 +124,7 @@ PdrsTable:
     readCapacityUnits:
       min: '{{tables.pdrs.readCapacityUnits.min}}'
       max: '{{tables.pdrs.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
@@ -147,7 +147,7 @@ ExecutionsTable:
     readCapacityUnits:
       min: '{{tables.executions.readCapacityUnits.min}}'
       max: '{{tables.executions.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
@@ -169,7 +169,7 @@ FilesTable:
     readCapacityUnits:
       min: '{{tables.files.readCapacityUnits.min}}'
       max: '{{tables.files.readCapacityUnits.max}}'
-    autoScalingPolicyConfiguration:
+    policyConfiguration:
       targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
       scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
       scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'

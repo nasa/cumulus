@@ -31,16 +31,16 @@ default:
   system_bucket: '{{buckets.internal.name}}'
 
   buckets:
-    internal
+    internal:
       name: change-me
       type: internal
-    private
+    private:
       name: change-me
       type: private
-    protected
+    protected:
       name: change-me
       type: protected
-    public
+    public:
       name: change-me
       type: public
 
@@ -145,7 +145,7 @@ default:
       readCapacityUnits:
         min: 1
         max: 5
-    pdrs:
+    executions:
       writeCapacityUnits:
         min: 1
         max: 2
