@@ -8,6 +8,10 @@ CollectionsTable:
     writeCapacityUnits:
       min: '{{tables.collections.autoScaling.writeCapacityUnits.min}}'
       max: '{{tables.collections.autoScaling.writeCapacityUnits.max}}'
+    policyConfiguration:
+      targetValue: '{{tables.collections.autoScaling.policyConfiguration.targetValue}}'
+      scaleInCooldown: '{{tables.collections.autoScaling.policyConfiguration.scaleInCooldown}}'
+      scaleOutCooldown: '{{tables.collections.autoScaling.policyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: name
       type: S

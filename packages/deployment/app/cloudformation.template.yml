@@ -155,9 +155,9 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}WriteCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
-        TargetValue: 70
-        ScaleInCooldown: 5
-        ScaleOutCooldown: 5
+        TargetValue: {{this.autoScaling.policyConfiguration.targetValue}}
+        ScaleInCooldown: {{this.autoScaling.policyConfiguration.scaleInCooldown}}
+        ScaleOutCooldown: {{this.autoScaling.policyConfiguration.scaleOutCooldown}}
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBWriteCapacityUtilization
   {{/if}}

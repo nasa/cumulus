@@ -96,6 +96,15 @@ default:
   tables:
     # set to true to activate pointInTime on all tables
     enablePointInTime: false
+    collections:
+      autoScaling:
+        writeCapacityUnits:
+          min: 1
+          max: 2
+        policyConfiguration:
+          targetValue: 30
+          scaleInCooldown: 0
+          scaleOutCooldown: 0
 
   sns:
     # this topic receives all the updates from
