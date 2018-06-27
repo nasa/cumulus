@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
-- **CUMULUS-491** - Add granule reconciliation API endpoints.
 
 ### Added
+- **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+- **CUMULUS-755** - Add DynamoDB autoscaling support
+  - Application owners should configure autoscaling via the application deployment's `app/config.yml` (in "tables" section)
+  - Values defined in `app/config.yml` are used to replace values `@cumulus/api`'s `tables.yml`.
+  - Values in `@cumulus/api`'s `tables.yml` are used to template (via handlebars) the final application's `app/cloudformation.yml` via `@cumulus/deployment`'s `cloudformation.template.yml`
+
 
 ### Fixed
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
