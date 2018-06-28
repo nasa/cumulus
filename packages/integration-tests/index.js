@@ -325,6 +325,7 @@ module.exports = {
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
+  getWorkflowTemplate,
   waitForCompletedExecution,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
