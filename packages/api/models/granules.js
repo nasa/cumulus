@@ -2,12 +2,14 @@
 
 const path = require('path');
 const get = require('lodash.get');
+const clonedeep = require('lodash.clonedeep');
 const uniqBy = require('lodash.uniqby');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const aws = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 const Manager = require('./base');
 const {
   parseException,
@@ -89,6 +91,25 @@ class Granule extends Manager {
       action: 'reingest',
       status: 'SUCCESS'
     };
+  }
+
+  /**
+   * Move a granule's files to destination locations specified
+   *
+   * @param {Object} g - the granule object
+   * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
+   * - list of destinations specified
+   *    regex - regex for matching filepath of file to new destination
+   *    bucket - aws bucket of the destination
+   *    filepath - file path/directory on the bucket for the destination
+   * @param {string} distEndpoint - the collection ID
+   * @returns {Promise<undefined>} undefined
+   */
+  async move(g, destinations, distEndpoint) {
+    log.info(`granules.move ${g.granuleId}`);
+    const files = clonedeep(g.files);
+    await moveGranuleFiles(g.granuleId, files, destinations, distEndpoint, g.published);
+    await this.update({ granuleId: g.granuleId }, { files: files });
   }
 
   /**

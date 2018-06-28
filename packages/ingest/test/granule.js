@@ -4,7 +4,7 @@ const test = require('ava');
 const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString } = require('@cumulus/common/test-utils');
-const { s3 } = require('@cumulus/common/aws');
+const { buildS3Uri, s3 } = require('@cumulus/common/aws');
 
 const {
   selector,
@@ -275,9 +275,12 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   ];
 
   const sourceFilePromises = filenames.map(async (name) => {
-    const params = { Bucket: bucket, Key: `origin/${name}`, Body: name };
+    const sourcefilePath = `origin/${name}`;
+    const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
     await s3().putObject(params).promise();
-    return { name, bucket, filepath: `origin/${name}` };
+    return {
+      name, bucket, filepath: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+    };
   });
 
   const destinationFilepath = 'destination';
@@ -332,9 +335,12 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   ];
 
   const sourceFilePromises = filenames.map(async (name) => {
-    const params = { Bucket: bucket, Key: `origin/${name}`, Body: name };
+    const sourcefilePath = `origin/${name}`;
+    const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
     await s3().putObject(params).promise();
-    return { name, bucket, filepath: `origin/${name}` };
+    return {
+      name, bucket, filepath: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+    };
   });
 
   const destinationFilepath = 'destination';
