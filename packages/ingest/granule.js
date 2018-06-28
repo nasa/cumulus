@@ -643,19 +643,20 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
     bucketsObject = JSON.parse(bucketsString.Body);
   }
 
+  // URLs are added/updated only for public and protected files
   const bucketKeys = Object.keys(bucketsObject);
   files.forEach((file) => {
     const urlObj = {};
     const bucketkey = bucketKeys.find((bucketKey) =>
-      file.bucket.match(bucketsObject[bucketKey].name));
+      file.bucket === bucketsObject[bucketKey].name);
 
-    if (bucketsObject[bucketkey].type.match('protected')) {
+    if (bucketsObject[bucketkey].type === 'protected') {
       const extension = urljoin(bucketsObject[bucketkey].name, `${file.filepath}`);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
-    else if (bucketsObject[bucketkey].type.match('public')) {
+    else if (bucketsObject[bucketkey].type === 'public') {
       urlObj.URL = `https://${bucketsObject[bucketkey].name}.s3.amazonaws.com/${file.filepath}`;
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
@@ -742,7 +743,8 @@ async function moveGranuleFile(source, target, options) {
  * move granule files from one s3 location to another
  *
  * @param {string} granuleId - granuleiId
- * @param {Array<Object>} sourceFiles - array of file objects
+ * @param {Array<Object>} sourceFiles - array of file objects, they are updated with destination
+ * location after the files are moved
  * @param {string} sourceFiles.name - file name
  * @param {string} sourceFiles.bucket - current bucket of file
  * @param {string} sourceFiles.filepath - current s3 key of file
