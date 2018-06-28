@@ -47,7 +47,7 @@ class Manager {
       },
       StreamSpecification: {
         StreamEnabled: true,
-        StreamViewType: 'NEW_IMAGE'
+        StreamViewType: 'NEW_AND_OLD_IMAGES'
       }
     };
 
