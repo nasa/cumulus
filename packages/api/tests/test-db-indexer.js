@@ -234,6 +234,10 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
     const e = await t.throws(p);
     t.true(e.message.includes('No record'));
   }));
+
+  const deletedGranIndex = new Search({}, 'deletedgranule');
+  const deletedGranRecord = await deletedGranIndex.get(fakeGranule.granuleId);
+  t.is(deletedGranRecord.granuleId, fakeGranule.granuleId);
 });
 
 test.serial('create, update and delete an execution in dynamodb and es', async (t) => {
