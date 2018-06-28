@@ -161,6 +161,7 @@ lf:
 
 kk-uat-deployment:
   stackName: kk-test-uat
+  prefix: kk-test-uat
   stackNameNoDash: KkTestUat
 
   iams:
