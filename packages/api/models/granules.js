@@ -63,7 +63,19 @@ class Granule extends Manager {
    * @param {Object} g - the granule object
    * @returns {Promise} an object showing the start of the re-ingest
    */
-  async reingest(g, workflow = 'IngestGranule', messageSource = 'input') {
+  async reingest(g) {
+    return await applyWorkflow(g, 'IngestGranule', 'input');
+  }
+
+  /**
+   * apply a workflow to a given granule object
+   *
+   * @param {Object} g - the granule object
+   * @param {string} workflow - the workflow name
+   * @param {string} messageSource
+   * @returns {Promise} an object showing the start of the workflow execution
+   */
+  async applyWorkflow(g, workflow, messageSource) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     // get the payload of the original execution
