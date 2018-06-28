@@ -1,15 +1,22 @@
+// const AWS = require('aws-sdk');
 const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
 const { Granule, Execution } = require('@cumulus/api/models');
-const { s3, s3ObjectExists } = require('@cumulus/common/aws');
+const {
+  s3,
+  s3ObjectExists,
+  region,
+  sns
+} = require('@cumulus/common/aws');
 const {
   buildAndExecuteWorkflow,
+  getWorkflowTemplate,
   LambdaStep,
   conceptExists,
   getOnlineResources
 } = require('@cumulus/integration-tests');
-
+// const sns = new AWS.SNS();
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -36,8 +43,21 @@ describe('The S3 Ingest Granules workflow', () => {
   const granuleModel = new Granule();
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
+  let subscriptionArn;
 
   beforeAll(async () => {
+    const template = await getWorkflowTemplate(config.stackName, config.bucket, taskName);
+    const topicArn = template.topic_arn;
+
+    const params = {
+      TopicArn: topicArn,
+      Protocol: 'lambda',
+      Endpoint: `arn:aws:lambda:${region}:${process.env.AWS_ACCOUNT_ID}:function:${config.stackName}-SnsS3Test`
+    };
+
+    const response = await sns().subscribe(params);
+    subscriptionArn = response.SubscriptionArn;
+
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
@@ -45,6 +65,10 @@ describe('The S3 Ingest Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
     );
+  });
+
+  afterAll(async () => {
+    await sns().unsubscribe({ SubscriptionArn: subscriptionArn });
   });
 
   it('completes execution with success status', () => {
@@ -155,7 +179,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the granule record is added to DynamoDB', async () => {
-      const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId }); 
+      const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId });
       expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
     });
 
