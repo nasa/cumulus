@@ -102,7 +102,7 @@ async function createReconciliationReport(params) {
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await s3().getObject({
     Bucket: systemBucket,
-    Key: `${stackName}/workflow/buckets.json`
+    Key: `${stackName}/workflows/buckets.json`
   }).promise()
     .then((response) => response.Body.toString());
   const dataBuckets = Object.values(JSON.parse(bucketsConfigJson))
