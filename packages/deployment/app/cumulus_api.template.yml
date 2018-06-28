@@ -197,7 +197,13 @@ Resources:
             Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
+  {{# if (lookup ../parent.communityConfiguration @key)}}
+    {{#with (lookup ../parent.communityConfiguration @key)}}
       Handler: {{this.handler}}
+    {{/with}}
+  {{else}}
+      Handler: {{this.handler}}
+  {{/if}}
       MemorySize: {{this.memory}}
 {{# if this.apiRole }}
       Role: {{../parent.iams.lambdaApiGatewayRoleArn}}
