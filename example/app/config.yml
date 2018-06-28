@@ -143,13 +143,6 @@ aimee-test:
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
 
-  communityConfiguration:
-    ApiTokenDefault:
-      handler: index.googleToken
-
-  users:
-    - username: aimee@developmentseed.org
-
 lf:
   prefix: lf-cumulus
   stackName: lf-cumulus
