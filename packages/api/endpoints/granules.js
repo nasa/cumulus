@@ -46,6 +46,16 @@ async function put(event) {
         status: 'SUCCESS'
       };
     }
+    if (action === 'applyWorkflow') {
+      const workflow = _get(body, 'workflow');
+      const messageSource = _get(body, 'messageSource');
+      await g.reingest(response, workflow, messageSource);
+      return {
+        granuleId: response.granuleId,
+        action,
+        status: 'SUCCESS'
+      };
+    }
     else if (action === 'removeFromCmr') {
       await g.removeGranuleFromCmr(response.granuleId, response.collectionId);
       return {
