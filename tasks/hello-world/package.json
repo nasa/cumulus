@@ -40,6 +40,7 @@
     "@cumulus/cumulus-message-adapter-js": "^1.0.1"
   },
   "devDependencies": {
+    "@cumulus/common": "^1.6.0",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",
