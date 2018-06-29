@@ -757,9 +757,7 @@ async function moveGranuleFile(source, target, options) {
  */
 async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
   const moveFileRequests = sourceFiles.map((file) => {
-    console.log('file', file);
     const destination = destinations.find((dest) => file.name.match(dest.regex));
-    console.log('destination', destination);
     const parsed = aws.parseS3Uri(file.filename);
     // if there's no match, we skip the file
     if (destination) {
