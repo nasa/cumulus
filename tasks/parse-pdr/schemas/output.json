@@ -18,6 +18,7 @@
         "properties": {
           "granuleId": { "type": "string" },
           "dataType": { "type": "string" },
+          "version": { "type": "string" },
           "granuleSize": { "type": "number" },
           "granuleCount": { "type": "number" },
           "filesCount": { "type": "number" },

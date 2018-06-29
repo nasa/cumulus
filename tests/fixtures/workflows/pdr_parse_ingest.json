@@ -15,7 +15,7 @@
           "stack": "{{$.meta.stack}}",
           "provider": "{{$.meta.provider}}",
           "bucket": "{{$.meta.buckets.internal.name}}",
-          "collection": "{{$.meta.collection}}"
+          "provider_path": "{{$.meta.rule.context.provider_path}}"
         }
       },
       {

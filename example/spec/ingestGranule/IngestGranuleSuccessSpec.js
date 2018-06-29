@@ -10,7 +10,8 @@ const {
   getOnlineResources
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
+
+const { loadConfig, templateFile, getExecutionUrl, mustacheRender } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
@@ -23,12 +24,16 @@ const templatedSyncGranuleFilename = templateFile({
 const expectedSyncGranulePayload = JSON.parse(fs.readFileSync(templatedSyncGranuleFilename));
 
 const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'; // eslint-disable-line max-len
-const expectedPayload = JSON.parse(fs.readFileSync(outputPayloadTemplateFilename));
+let expectedPayload = JSON.parse(fs.readFileSync(outputPayloadTemplateFilename));
+
+expectedPayload = mustacheRender(expectedPayload, config);
 
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
-  const collection = { name: 'MOD09GQ', version: '006' };
+  //const collection = { name: 'MOD09GQ', version: '006' };
+  const collection = null;
+  const rule = { name: 'RULE_S3_MOD09GQ_006_IngestGranule' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
 
@@ -43,7 +48,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      config.stackName, config.bucket, taskName, rule, collection, provider, inputPayload
     );
   });
 
@@ -101,8 +106,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('moves files to separate protected buckets based on configuration', () => {
       // Above we checked that the files exist, now show that they are in separate protected buckets
-      expect(files[0].bucket).toEqual('cumulus-test-sandbox-protected');
-      expect(files[3].bucket).toEqual('cumulus-test-sandbox-protected-2');
+      expect(files[0].bucket).toEqual( `${config.prefix}-protected`);
+      expect(files[3].bucket).toEqual( `${config.prefix}-protected-2`);
     });
   });
 

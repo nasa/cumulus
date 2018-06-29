@@ -1,7 +1,7 @@
 {
-  "name": "https_testcollection",
+  "name": "GHRSST-SST___001",
+  "dataType": "GHRSST-SST",
   "version": "001",
-  "provider_path": "granules/fake_granules",
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)\\.(nc|nc\\.md5)$",
   "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",

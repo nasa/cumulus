@@ -2,33 +2,21 @@
   "title": "MoveGranulesOutput",
   "description": "Describes the output produced by the move-granules task",
   "type": "object",
+  "required": ["granules"],
   "properties": {
     "granules": {
       "type": "array",
-      "description": "Array of all granules",
       "items": {
         "type": "object",
-        "required": ["granuleId", "files"],
+        "required": ["granuleId", "dataType", "version", "files"],
         "properties": {
-          "granuleId": {
-            "type": "string"
-          },
+          "dataType": { "type": "string"},
+          "version": { "type": "string"},
+          "granuleId": { "type": "string"},
           "files": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": ["name"],
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "filename": {
-                  "type": "string"
-                },
-                "bucket": {
-                  "type": "string"
-                }
-              }
+              "type": "object"
             }
           }
         }

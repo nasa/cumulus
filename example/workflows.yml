@@ -64,6 +64,8 @@ DiscoverGranules:
     DiscoverGranules:
       CumulusConfig:
         provider: '{$.meta.provider}'
+        provider_path: '{meta.rule.context.provider_path}'
+        rule: '{$.meta.rule}'
         collection: '{$.meta.collection}'
         buckets: '{$.meta.buckets}'
         stack: '{$.meta.stack}'
@@ -78,7 +80,8 @@ DiscoverGranules:
     DiscoverGranulesNoVpc:
       CumulusConfig:
         provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+        provider_path: '{meta.rule.context.provider_path}'
+        rule: '{$.meta.rule}'
         buckets: '{$.meta.buckets}'
         stack: '{$.meta.stack}'
       Type: Task
@@ -125,7 +128,7 @@ DiscoverAndQueuePdrs:
         stack: '{$.meta.stack}'
         provider: '{$.meta.provider}'
         bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
+        provider_path: '{$.meta.rule.context.provider_path}'
       Type: Task
       Resource: ${DiscoverPdrsLambdaFunction.Arn}
       Catch:
@@ -139,7 +142,7 @@ DiscoverAndQueuePdrs:
         queueUrl: '{$.meta.queues.startSF}'
         parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
         provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+        rule: '{$.meta.rule}'
       Type: Task
       Resource: ${QueuePdrsLambdaFunction.Arn}
       Catch:
@@ -195,6 +198,7 @@ ParsePdr:
     QueueGranules:
       CumulusConfig:
         provider: '{$.meta.provider}'
+        rule: '{$.meta.rule}'
         internalBucket: '{$.meta.buckets.internal.name}'
         stackName: '{$.meta.stack}'
         granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
@@ -290,7 +294,7 @@ IngestGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+        context: '{$.meta.rule.context}'
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         pdr: '{$.meta.pdr}'
@@ -314,7 +318,7 @@ IngestGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+        context: '{$.meta.rule.context}'
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         pdr: '{$.meta.pdr}'
@@ -344,7 +348,6 @@ IngestGranule:
     ProcessingStep:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
@@ -362,10 +365,9 @@ IngestGranule:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        granuleIdExtraction: '{$.meta.rule.context.granuleIdExtraction}'
         distribution_endpoint: '{$.meta.distribution_endpoint}'
         input_granules: '{$.meta.input_granules}'
-        collection: '{$.meta.collection}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:
@@ -381,7 +383,7 @@ IngestGranule:
         cmr: '{$.meta.cmr}'
         process: '{$.cumulus_meta.process}'
         input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        granuleIdExtraction: '{$.meta.rule.context.granuleIdExtraction}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
@@ -437,7 +439,7 @@ SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+        context: '{$.meta.rule.context}'
         stack: '{$.meta.stack}'
         fileStagingDir: 'custom-staging-dir'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
@@ -461,7 +463,7 @@ SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+        context: '{$.meta.rule.context}'
         stack: '{$.meta.stack}'
         fileStagingDir: 'custom-staging-dir'
         downloadBucket: '{$.cumulus_meta.system_bucket}'

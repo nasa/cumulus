@@ -98,6 +98,8 @@ FakeProcessing:
   handler: index.handler
   source: 'node_modules/@cumulus/test-processing/dist/'
   useMessageAdapter: true
+  envs:
+    internal: '{{buckets.internal.name}}'
 
 ModisProcessing:
   handler: lambda_handler.handler

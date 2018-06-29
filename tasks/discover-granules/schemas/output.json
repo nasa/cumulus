@@ -9,10 +9,11 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": [ "granuleId", "dataType", "files" ],
+        "required": [ "granuleId", "dataType", "version", "files" ],
         "properties": {
           "granuleId": { "type": "string" },
           "dataType": { "type": "string" },
+          "version": { "type": "string"},
           "files": {
             "type": "array",
             "items": {

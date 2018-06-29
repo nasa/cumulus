@@ -50,7 +50,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
    */
   async download(remotePath, localPath) {
     const remoteUrl = `ftp://${this.host}${remotePath}`;
-    log.info(`Downloading ${remoteUrl} to ${localPath}`);
+    log.info(`FTP Downloading ${remoteUrl} to ${localPath}`);
 
     if (!this.decrypted) await this.decrypt();
 

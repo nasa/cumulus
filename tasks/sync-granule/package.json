@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@cumulus/common": "^1.6.0",
+    "@cumulus/api": "^1.6.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
     "@cumulus/ingest": "^1.6.0",
     "@cumulus/test-data": "^1.6.0",

@@ -22,11 +22,20 @@ async function discoverGranules(event) {
   try {
     granules = await discover.discover();
   }
+  catch (e) {
+    log.error(`Discover granule exception: ${JSON.stringify(e)}`);
+    throw e;
+  }
   finally {
     if (discover.connected) discover.end();
   }
 
-  log.info(`Discovered ${granules.length} granules.`);
+  if (granules) {
+    log.info(`Discovered ${granules.length} granules.`);
+  }
+  else {
+    log.info('Discovered no granules.');
+  }
 
   return { granules };
 }

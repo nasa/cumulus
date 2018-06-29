@@ -19,7 +19,7 @@ async function queuePdrs(event) {
       event.config.queueUrl,
       event.config.parsePdrMessageTemplateUri,
       event.config.provider,
-      event.config.collection
+      event.config.rule
     ))
   );
 

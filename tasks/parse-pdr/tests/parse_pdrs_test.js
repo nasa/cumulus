@@ -42,7 +42,7 @@ test.beforeEach(async (t) => {
     t.context.payload.config.bucket,
     t.context.payload.config.stack
   );
-  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+  await t.context.collectionConfigStore.put('MOD09GQ', '6', collectionConfig);
 });
 
 test.afterEach(async (t) => {
@@ -266,11 +266,11 @@ test('Parse a PDR without a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR
   await Promise.all([
     t.context.collectionConfigStore.put(
-      'MYG29_S1D_SIR',
+      'MYG29_S1D_SIR', '6',
       { name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
     ),
     t.context.collectionConfigStore.put(
-      'MYG29_N1D_SIR',
+      'MYG29_N1D_SIR', '6',
       { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
     )
   ]);
@@ -377,11 +377,11 @@ test('Parse a PDR with a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR
   await Promise.all([
     t.context.collectionConfigStore.put(
-      'MYG29_S1D_SIR',
+      'MYG29_S1D_SIR', '6',
       { name: 'MYG29_S1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
     ),
     t.context.collectionConfigStore.put(
-      'MYG29_N1D_SIR',
+      'MYG29_N1D_SIR', '6',
       { name: 'MYG29_N1D_SIR', granuleIdExtraction: '^(.*)\.tar.gz' }
     )
   ]);

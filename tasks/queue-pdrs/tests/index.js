@@ -38,7 +38,7 @@ test.beforeEach(async (t) => {
 
   t.context.event = {
     config: {
-      collection: { name: 'collection-name' },
+      rule: { name: 'rule-name', context: {} },
       provider: { name: 'provider-name' },
       queueUrl: await createQueue(),
       parsePdrMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
@@ -152,7 +152,7 @@ test('The correct message is enqueued', async (t) => {
         state_machine: t.context.stateMachineArn
       },
       meta: {
-        collection: { name: 'collection-name' },
+        rule: { name: 'rule-name', context: {} },
         provider: { name: 'provider-name' }
       },
       payload: {

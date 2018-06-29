@@ -80,12 +80,12 @@ default:
     password: '{{CMR_PASSWORD}}'
 
   iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
 
   sns:
     inregions3:
@@ -96,15 +96,15 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
-    AmazonIpSpaceChanged:
-      arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - InRegionS3PolicyLambdaFunction
-              - Arn
+    # AmazonIpSpaceChanged:
+    #   arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
+    #   subscriptions:
+    #     lambda:
+    #       endpoint:
+    #         function: Fn::GetAtt
+    #         array:
+    #           - InRegionS3PolicyLambdaFunction
+    #           - Arn
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -170,24 +170,31 @@ kk-uat-deployment:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/kk-test-uat-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-distribution-api-lambda'
+   
+cum-test:
+  prefix: '{{PREFIX}}'
+  stackNameNoDash: '{{PREFIX_NO_DASH}}Integration'
 
-mth-2:
-  prefix: mth-2
-  stackName: '{{prefix}}'
-  stackNameNoDash: Mth2
   buckets:
-    internal:
+    internal: 
       name: '{{prefix}}-internal'
       type: internal
-    private:
-      name: '{{prefix}}-private'
-      type: private
-    protected:
+    protected: 
       name: '{{prefix}}-protected'
       type: protected
-    public:
+    private: 
+      name: '{{prefix}}-private'
+      type: private
+    public: 
       name: '{{prefix}}-public'
       type: public
+    shared:
+      name: '{{shared_data_bucket}}'
+      type: shared
+    protected-2:
+      name: '{{PROTECTED-2}}'
+      type: protected
+
   iams:
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
@@ -195,6 +202,8 @@ mth-2:
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
+  
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
 

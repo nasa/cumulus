@@ -2,7 +2,7 @@
   "title": "SyncGranuleConfig",
   "description": "Describes the config used by the sync-granule task",
   "type": "object",
-  "required": ["buckets", "collection", "provider", "downloadBucket"],
+  "required": ["buckets", "context", "provider", "downloadBucket"],
   "properties": {
     "forceDownload": {
       "type": "boolean",
@@ -56,29 +56,15 @@
       "type": "string",
       "description": "AWS S3 bucket to use when downloading files"
     },
-    "collection": {
+    "context": {
       "type": "object",
       "required": [
-        "files",
-        "name"
+        "url_path",
+        "duplicateHandling"
       ],
       "properties": {
-        "name": { "type": "string" },
-        "process": { "type": "string" },
         "url_path": { "type": "string" },
-        "duplicateHandling": { "type": "string" },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["regex", "bucket"],
-            "properties": {
-              "regex": { "type": "string" },
-              "bucket": { "type": "string" },
-              "url_path": { "type": "string" }
-            }
-          }
-        }
+        "duplicateHandling": { "type": "string" }
       }
     },
     "pdr": {

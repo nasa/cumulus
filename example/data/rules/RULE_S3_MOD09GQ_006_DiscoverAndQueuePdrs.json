@@ -1,0 +1,16 @@
+{
+	"name": "RULE_S3_MOD09GQ_006_DiscoverAndQueuePdrs",
+	"state": "ENABLED",
+	"rule": {
+		"type": "onetime"
+	},
+	"tags": ["S3"],
+	"workflow": "DiscoverAndQueuePdrs",
+	"provider": "s3_provider",
+	"context": {
+		"provider_path": "cumulus-test-data/pdrs",
+		"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
+		"duplicateHandling": "replace",
+		"process": "modis"
+	}
+}
