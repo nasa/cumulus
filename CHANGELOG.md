@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - delete granule files in s3
 - **CUMULUS-398** - Fix not able to filter executions bu workflow
 
+### Changed
+- **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
+
 ## [v1.6.0] - 2018-06-06
 
 ### Please note: [Upgrade Instructions](https://github.com/cumulus-nasa/cumulus/wiki/Upgrading-to-Cumulus-1.6)
