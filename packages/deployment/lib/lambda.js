@@ -7,6 +7,8 @@ const path = require('path');
 const utils = require('kes').utils;
 const { Lambda } = require('kes');
 
+const yauzl = require('yauzl');
+
 /**
  * A sub-class of the Kes Lambda class that changes
  * how kes handles Lambda function compression and
@@ -27,6 +29,28 @@ class UpdatedLambda extends Lambda {
     super(config);
     this.config = config;
   }
+
+  /**
+   * Makes use of yauzl.open's verification
+   * to validate the file referenced in lambda.local
+   * is a valid zip archive
+   *
+   * @param {Object} lambda - the lambda object
+   *
+   * @returns {Promise} promise resolution indicates success, will reject if
+   *                    zipfile cannot be opened
+   **/
+  validateZipFile(lambda) {
+    return new Promise((resolve, reject) => {
+      yauzl.open(lambda.local, (err, _zipfile) => {
+        if (err) {
+          reject(err);
+        }
+        resolve();
+      });
+    });
+  }
+
   /**
    * Copies the source code of a given lambda function, zips it, calculates
    * the hash of the source code and updates the lambda object with
@@ -35,14 +59,20 @@ class UpdatedLambda extends Lambda {
    * @param {Object} lambda - the lambda object
    * @returns {Promise} returns the updated lambda object
    */
-  zipLambda(lambda) {
+  async zipLambda(lambda) {
     let msg = `Zipping ${lambda.local}`;
     // skip if the file with the same hash is zipped
+    // and is a valid zip file
     if (fs.existsSync(lambda.local)) {
-      return Promise.resolve(lambda);
+      try {
+        await this.validateZipFile(lambda);
+        return Promise.resolve(lambda);
+      }
+      catch (e) {
+        console.log(`${lambda.local} appears to be an invalid zip file, and will be re-built`);
+      }
     }
     const fileList = [lambda.source];
-
     if (lambda.useMessageAdapter) {
       const kesFolder = path.join(this.config.kesFolder, 'build', 'adapter');
       fileList.push(kesFolder);
@@ -50,8 +80,7 @@ class UpdatedLambda extends Lambda {
     }
 
     console.log(`${msg} for ${lambda.name}`);
-
-    return utils.zip(lambda.local, fileList).then(() => lambda);
+    return utils.zip(lambda.local, fileList).then(() => lambda).catch((e) => console.log(`Error zipping ${e}`));
   }
 
   /**
