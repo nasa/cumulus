@@ -106,8 +106,13 @@ class SfnStep {
       return null;
     }
 
-    // Use the last execution in case of a fail/retry situation
-    const stepExecution = stepExecutions[stepExecutions.length - 1];
+    // Use the first passed execution, or last execution if none passed
+    let stepExecution = stepExecutions[stepExecutions.length - 1];
+    const passedExecutions = stepExecutions.filter((e) =>
+      e.completeEvent !== null && e.completeEvent.type === this.successEvent);
+    if (passedExecutions) {
+      stepExecution = passedExecutions[0];
+    }
 
     if (stepExecution.completeEvent === null ||
         stepExecution.completeEvent.type !== this.successEvent) {
