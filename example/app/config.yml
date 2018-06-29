@@ -54,7 +54,7 @@ default:
   system_bucket: '{{buckets.internal.name}}'
 
   buckets:
-    internal: 
+    internal:
       name: cumulus-test-sandbox-internal
       type: internal
     private:
@@ -148,7 +148,7 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
-  es: 
+  es:
     elasticSearchMapping: 6
 
   iams:
@@ -196,7 +196,9 @@ cum-test:
       type: protected
 
   iams:
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'

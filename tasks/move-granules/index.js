@@ -12,8 +12,6 @@ const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
 const { CollectionConfigStore } = require('@cumulus/common');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
-
 
 /**
  * Parse an xml string
@@ -141,30 +139,28 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   Object.keys(granulesObject).forEach(async (granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
       collection.files.forEach((fileConfig) => {
-        const test = new RegExp(fileConfig.regex);
-        const match = file.name.match(test);
-        try {
-          if (match) {
-            if (!file.url_path) {
-              file.url_path = fileConfig.url_path || collection.url_path || '';
-            }
-            const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
+        const match = file.name.match(fileConfig.regex);
 
-            const urlPath = urlPathTemplate(file.url_path, {
-              file: file,
-              granule: granulesObject[granuleId],
-              cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
-            });
-
-            file.bucket = buckets[fileConfig.bucket];
-            file.filepath = path.join(urlPath, file.name);
-            file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
-
-            allFiles.push(file);
+        if (match) {
+          if (!file.url_path) {
+            file.url_path = fileConfig.url_path || collection.url_path || '';
           }
-        }
-        catch (e) {
-          console.log('exception', e);
+          const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
+
+          const urlPath = urlPathTemplate(file.url_path, {
+            file: file,
+            granule: granulesObject[granuleId],
+            cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
+          });
+
+          if (!buckets[fileConfig.bucket]) {
+            throw new Error(`Collection config specifies a bucket key of ${fileConfig.bucket}, but the configured bucket keys are: ${Object.keys(buckets).join(', ')}`);
+          }
+          file.bucket = buckets[fileConfig.bucket];
+          file.filepath = path.join(urlPath, file.name);
+          file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
+
+          allFiles.push(file);
         }
       });
     });

@@ -190,7 +190,7 @@ test('should update filenames with metadata fields', async (t) => {
     Bucket: t.context.stagingBucket,
     Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
     Body: fs.createReadStream('tests/data/meta.xml')
-  })
+  });
 
   await validateInput(t, newPayload.input);
   const output = await moveGranules(newPayload);

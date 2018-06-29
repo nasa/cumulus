@@ -8,7 +8,7 @@ default:
   system_bucket: cumulus-test-sandbox-internal
 
   buckets:
-    internal: 
+    internal:
       name: cumulus-test-sandbox-internal
       type: internal
     private:
@@ -44,9 +44,12 @@ aimee-test:
   prefix: aimee-test
   stackName: aimee-test-iam
 
-lf: 
+lf:
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
+
+jl:
+  prefix: jl-test-integration
 
 kk-deploy-uat:
   prefix: kk-test-uat
