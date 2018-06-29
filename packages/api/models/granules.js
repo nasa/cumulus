@@ -64,7 +64,7 @@ class Granule extends Manager {
    * @returns {Promise} an object showing the start of the re-ingest
    */
   async reingest(g) {
-    await applyWorkflow(g, 'IngestGranule', 'input');
+    await this.applyWorkflow(g, 'IngestGranule', 'input');
     return {
       granuleId: g.granuleId,
       action: 'reingest',
