@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
 - **CUMULUS-398** - Fix not able to filter executions bu workflow
-- **CUMULUS-748** - Fix invalid lambda .zip files being validaed/uploaded to AWS
+- **CUMULUS-748** - Fix invalid lambda .zip files being validated/uploaded to AWS
 
 ## [v1.6.0] - 2018-06-06
 
