@@ -304,7 +304,7 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   ];
 
   const sourceFiles = await Promise.all(sourceFilePromises);
-  await moveGranuleFiles(sourceFiles, destinations);
+  await moveGranuleFiles(randomString(), sourceFiles, destinations);
 
   await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
     t.is(list.Contents.length, 2);
@@ -354,7 +354,7 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   ];
 
   const sourceFiles = await Promise.all(sourceFilePromises);
-  await moveGranuleFiles(sourceFiles, destinations);
+  await moveGranuleFiles(randomString(), sourceFiles, destinations);
 
   await s3().listObjects({ Bucket: bucket }).promise().then((list) => {
     t.is(list.Contents.length, 1);
