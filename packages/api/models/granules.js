@@ -102,7 +102,7 @@ class Granule extends Manager {
    *    regex - regex for matching filepath of file to new destination
    *    bucket - aws bucket of the destination
    *    filepath - file path/directory on the bucket for the destination
-   * @param {string} distEndpoint - the collection ID
+   * @param {string} distEndpoint - distribution endpoint
    * @returns {Promise<undefined>} undefined
    */
   async move(g, destinations, distEndpoint) {

@@ -14,8 +14,7 @@ const encodeurl = require('encodeurl');
 const cksum = require('cksum');
 const checksum = require('checksum');
 const xml2js = require('xml2js');
-const aws = require('@cumulus/common/aws');
-const log = require('@cumulus/common/log');
+const { aws, log } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { sftpMixin } = require('./sftp');
@@ -754,15 +753,16 @@ async function moveGranuleFile(source, target, options) {
  * @param {string} destinations.filepath - file path/directory on the bucket for the destination
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {boolean} published - indicate if publish is needed
- * @returns {Promise<undefined>} returns `undefined` when all the files are moved
+ * @returns {Promise<Object>} returns promise from publishing cmr file or {}
  */
 async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
   const moveFileRequests = sourceFiles.map((file) => {
+    console.log('file', file);
     const destination = destinations.find((dest) => file.name.match(dest.regex));
-
+    console.log('destination', destination);
+    const parsed = aws.parseS3Uri(file.filename);
     // if there's no match, we skip the file
     if (destination) {
-      const parsed = aws.parseS3Uri(file.filename);
       const source = {
         Bucket: parsed.Bucket,
         Key: parsed.Key
@@ -781,6 +781,8 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
         file.filename = aws.buildS3Uri(file.bucket, file.filepath);
       });
     }
+    // else set filepath as well so it won't be null
+    file.filepath = parsed.Key;
     return Promise.resolve();
   });
 
