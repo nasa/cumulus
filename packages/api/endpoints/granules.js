@@ -49,7 +49,9 @@ async function put(event) {
     if (action === 'applyWorkflow') {
       const workflow = _get(body, 'workflow');
       const messageSource = _get(body, 'messageSource');
-      await g.reingest(response, workflow, messageSource);
+      const metaOverride = _get(body, 'metaOverride');
+      const payloadOverride = _get(body, 'payloadOverride');
+      await g.reingest(response, workflow, messageSource, metaOverride, payloadOverride);
       return {
         granuleId: response.granuleId,
         action,

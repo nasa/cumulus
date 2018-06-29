@@ -72,10 +72,12 @@ class Granule extends Manager {
    *
    * @param {Object} g - the granule object
    * @param {string} workflow - the workflow name
-   * @param {string} messageSource
+   * @param {string} messageSource - 'input' or 'output' from previous execution
+   * @param {Object} metaOverride - overrides the meta of the new execution
+   * @param {Object} payloadOverride - overrides the payload of the new execution
    * @returns {Promise} an object showing the start of the workflow execution
    */
-  async applyWorkflow(g, workflow, messageSource) {
+  async applyWorkflow(g, workflow, messageSource, metaOverride, payloadOverride) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     // get the payload of the original execution
@@ -89,8 +91,8 @@ class Granule extends Manager {
         name,
         version
       },
-      meta: originalMessage.meta,
-      payload: originalMessage.payload
+      meta: metaOverride || originalMessage.meta,
+      payload: payloadOverride || originalMessage.payload
     });
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
