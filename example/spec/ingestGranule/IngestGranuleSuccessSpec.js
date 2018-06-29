@@ -44,10 +44,11 @@ describe('The S3 Ingest Granules workflow', () => {
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
   let subscriptionArn;
+  let executionName;
 
   beforeAll(async () => {
     const template = await getWorkflowTemplate(config.stackName, config.bucket, taskName);
-    const topicArn = template.topic_arn;
+    const topicArn = template.meta.topic_arn;
 
     const params = {
       TopicArn: topicArn,
@@ -55,7 +56,7 @@ describe('The S3 Ingest Granules workflow', () => {
       Endpoint: `arn:aws:lambda:${region}:${process.env.AWS_ACCOUNT_ID}:function:${config.stackName}-SnsS3Test`
     };
 
-    const response = await sns().subscribe(params);
+    const response = await sns().subscribe(params).promise();
     subscriptionArn = response.SubscriptionArn;
 
     // delete the granule record from DynamoDB if exists
@@ -69,6 +70,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     await sns().unsubscribe({ SubscriptionArn: subscriptionArn });
+    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
   });
 
   it('completes execution with success status', () => {
@@ -177,13 +179,26 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the sf-sns-report task has published a sns message and', () => {
-    it('the granule record is added to DynamoDB', async () => {
+  describe('the sf-sns-report task has published a sns message', () => {
+    let lambdaOutput;
+    let existCheck;
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      executionName = lambdaOutput.cumulus_meta.execution_name;
+      existCheck = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` });
+    });
+
+    it('on workflow completion', async () => {
+      expect(existCheck).toEqual(true);
+    });
+
+    it('and the granule record is added to DynamoDB', async () => {
       const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId });
       expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
     });
 
-    it('the execution record is added to DynamoDB', async () => {
+    it('and the execution record is added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
     });
