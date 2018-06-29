@@ -20,7 +20,8 @@ describe('Parse PDR workflow', () => {
   let pdrStatusCheckOutput;
   const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
-  const collection = { name: 'MOD09GQ', version: '006' };
+  const rule = { name: 'RULE_S3_MOD09GQ_006_ParsePdr' };
+  const collection = null;
   const provider = { id: 's3_provider' };
 
   process.env.PdrsTable = `${config.stackName}-PdrsTable`;
@@ -36,6 +37,7 @@ describe('Parse PDR workflow', () => {
       config.stackName,
       config.bucket,
       taskName,
+      rule,
       collection,
       provider,
       inputPayload

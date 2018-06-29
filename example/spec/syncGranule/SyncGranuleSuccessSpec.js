@@ -20,7 +20,8 @@ const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilenam
 describe('The Sync Granules workflow', () => {
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
-  const collection = { name: 'MOD09GQ', version: '006' };
+  const collection = null;
+  const rule = { name: 'RULE_S3_MOD09GQ_006_SyncGranule', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
 
@@ -30,7 +31,7 @@ describe('The Sync Granules workflow', () => {
   beforeAll(async () => {
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      config.stackName, config.bucket, taskName, rule, collection, provider, inputPayload
     );
   });
 

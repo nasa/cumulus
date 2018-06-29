@@ -12,7 +12,6 @@ const { generateCmrFilesForGranules } = require('@cumulus/integration-tests');
 async function fakeProcessing(event) {
   return generateCmrFilesForGranules(
     event.input.granules,
-    event.config.collection,
     event.config.bucket
   );
 }

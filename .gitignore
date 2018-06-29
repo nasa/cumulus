@@ -20,3 +20,4 @@ packages/deployment/app/*.js
 .nyc_output
 coverage/
 tasks/*/cumulus-message-adapter/
+.env

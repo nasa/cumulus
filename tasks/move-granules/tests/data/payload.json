@@ -1,21 +1,21 @@
 {
   "config": {
-    "bucket": "cumulus-internal",
+    "bucket": "pgc-cum-test-internal",
     "buckets": {
       "internal": {
-        "name": "cumulus-internal",
+        "name": "pgc-cum-test-internal",
         "type": "internal"
       },
       "private": {
-        "name": "cumulus-private",
+        "name": "pgc-cum-test-private",
         "type": "private"
       },
       "protected": {
-        "name": "cumulus-protected",
+        "name": "pgc-cum-test-protected",
         "type": "protected"
       },
       "public": {
-        "name": "cumulus-public",
+        "name": "pgc-cum-test-public",
         "type": "public"
       }
     },
@@ -81,13 +81,18 @@
       "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
       "process": "modis",
       "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
-      "version": "006",
+      "version": "6",
       "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
       "id": "MOD11A1"
     }
   },
-  "input": [
-    "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-    "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
-  ]
+  "input": {
+    "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724_1",
+    "dataType": "MOD11A1",
+    "version": "6",
+    "files": [
+      "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+      "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
+    ]
+  }
 }

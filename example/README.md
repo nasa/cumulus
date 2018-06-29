@@ -19,6 +19,20 @@ Your default AWS credentials should be the same credentials used for the deploym
 
 To use a different stack name, update `app/config.yml`, `iam/config.yml` and `deployer/config.yml`.
 
+NOTE:
+Rather than change three config files, create .env in example directory and use cum-test profile
+Assuming that kes has been installed globally...
+AND you have credentials read access to s3 cumulus buckets (like s3:///cumulus-data-shared)
+
+```
+kes cf deploy --kes-folder deployer --deployment cum-test --region us-east-1 --env-file .env
+
+kes cf deploy --kes-folder iam --deployment cum-test --region us-east-1 --env-file .env --template node_modules/@cumulus/deployment/iam
+
+kes cf deploy --kes-folder app --deployment cum-test --region us-east-1 --env-file .env --template node_modules/@cumulus/deployment/app
+
+```
+
 When tests run, by default tests will use the configuration defined in `spec/config.yml` to try and execute a workflow. These variables are required for tests to run on CircleCI.
 
 Configuration can be overriden in your own `spec/config.override.yml`. If you are getting setup for the first time:

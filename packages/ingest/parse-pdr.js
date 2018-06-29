@@ -128,7 +128,7 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
   const dataType = fileGroup.get('DATA_TYPE').value;
   let version = 'NA';
   if (fileGroup.get('DATA_VERSION')) {
-    version = fileGroup.get('DATA_VERSION').value;
+    version = fileGroup.get('DATA_VERSION').value.toString();
   }
 
   // get all the file specs in each group
@@ -141,6 +141,7 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
 
   return {
     dataType,
+    version,
     files,
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
     granuleSize: files.reduce((total, file) => total + file.fileSize, 0)

@@ -6,7 +6,6 @@
     "bucket",
     "input_granules",
     "distribution_endpoint",
-    "collection",
     "buckets"
   ],
   "properties": {
@@ -48,31 +47,6 @@
     "granuleIdExtraction": {
       "type": "string",
       "description": "The regex needed for extracting granuleId from filenames"
-    },
-    "collection": {
-      "type": "object",
-      "required": [
-        "files",
-        "name"
-      ],
-      "properties": {
-        "name": { "type": "string" },
-        "process": { "type": "string" },
-        "url_path": { "type": "string" },
-        "duplicateHandling": { "type": "string" },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["regex", "bucket"],
-            "properties": {
-              "regex": { "type": "string" },
-              "bucket": { "type": "string" },
-              "url_path": { "type": "string" }
-            }
-          }
-        }
-      }
     }
   }
 }

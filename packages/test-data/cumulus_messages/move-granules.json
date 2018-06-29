@@ -1,0 +1,223 @@
+{
+  "cumulus_meta": {
+    "message_source": "local",
+    "task": "MoveGranuleStep",
+    "execution_name": "e1.20",
+    "state_machine": "arn:aws:states:us-east-1:765745980244:stateMachine:PgcCumTestIntegrationIngestGranuleStateMachine-7pYkCzeG4owf",
+    "workflow_start_time": 1530049433489,
+    "system_bucket": "pgc-cum-test-internal"
+  },
+  "meta": {
+    "templates": {
+      "ParsePdr": "s3://pgc-cum-test-internal/pgc-cum-test-integration/workflows/ParsePdr.json",
+      "IngestGranule": "s3://pgc-cum-test-internal/pgc-cum-test-integration/workflows/IngestGranule.json",
+      "HelloWorldWorkflow": "s3://pgc-cum-test-internal/pgc-cum-test-integration/workflows/HelloWorldWorkflow.json",
+      "DiscoverGranules": "s3://pgc-cum-test-internal/pgc-cum-test-integration/workflows/DiscoverGranules.json",
+      "EcsHelloWorldWorkflow": "s3://pgc-cum-test-internal/pgc-cum-test-integration/workflows/EcsHelloWorldWorkflow.json",
+      "DiscoverAndQueuePdrs": "s3://pgc-cum-test-internal/pgc-cum-test-integration/workflows/DiscoverAndQueuePdrs.json",
+      "SyncGranule": "s3://pgc-cum-test-internal/pgc-cum-test-integration/workflows/SyncGranule.json"
+    },
+    "cmr": {
+      "username": "cmrusername",
+      "password": "kioFrpEVrE/s1CChFSZHHJBqaxuknxcznTE0f08mwGS9Jr8gJsXLgqi39X/qTEhDGeGGqzifyHtJ99tpzgLXIh4U3naM4m4LcuodsIaFFRaNppFbPnkHKLDBmXP7pg7acChoOy+zXkSn9YPka4a9GsJ7aXdoJCefjg+CVDalHReYyn5IiIw0s/V0dJS0Lu9UZjoBFYI7gq+AVr5W9nU9Q84MJPoNYIQHN0lnBOp+rkHfls7o6AdAUNiL393Xojn5c/rn6FdH5OHI/M965XzTbw5MgykLWkaDaQ//JPvTvl7VlyaOUQQimJbPtwyEgfvG4Ew6GNtpFQjBbW/rteCBzw==",
+      "clientId": "CUMULUS",
+      "provider": "CUMULUS"
+    },
+    "sync_granule_end_time": 1530128516341,
+    "queues": {
+      "startSF": "https://sqs.us-east-1.amazonaws.com/765745980244/pgc-cum-test-integration-startSF"
+    },
+    "sync_granule_duration": 9168,
+    "pdr": {
+      "path": "cumulus-test-data/pdrs",
+      "time": 1520873050000,
+      "name": "MOD09GQ_1granule_v3.PDR",
+      "size": 596
+    },
+    "collection": {},
+    "stack": "pgc-cum-test-integration",
+    "topic_arn": "arn:aws:sns:us-east-1:765745980244:pgc-cum-test-integration-sftrackerSns-JB3VRL29BO0G",
+    "rule": {
+      "name": "RULE_S3_MOD09GQ_006_ParsePdr",
+      "tags": [
+        "S3"
+      ],
+      "workflow": "ParsePdr",
+      "rule": {
+        "type": "onetime"
+      },
+      "state": "ENABLED",
+      "context": {
+        "process": "modis",
+        "duplicateHandling": "replace",
+        "provider_path": "cumulus-test-data/pdrs",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
+        "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)"
+      },
+      "provider": "s3_provider",
+      "updatedAt": 1530042083911,
+      "createdAt": 1530042083911
+    },
+    "provider": {
+      "protocol": "s3",
+      "globalConnectionLimit": 10,
+      "host": "cumulus-data-shared",
+      "updatedAt": 1530042082798,
+      "id": "s3_provider",
+      "createdAt": 1530042082798
+    },
+    "buckets": {
+      "private": {
+        "type": "private",
+        "name": "pgc-cum-test-private"
+      },
+      "public": {
+        "type": "public",
+        "name": "pgc-cum-test-public"
+      },
+      "protected-2": {
+        "type": "protected",
+        "name": "pgc-cum-test-protected-2"
+      },
+      "protected": {
+        "type": "protected",
+        "name": "pgc-cum-test-protected"
+      },
+      "shared": {
+        "type": "shared",
+        "name": "cumulus-data-shared"
+      },
+      "internal": {
+        "type": "internal",
+        "name": "pgc-cum-test-internal"
+      }
+    },
+    "distribution_endpoint": "https://example.com/",
+    "input_granules": [
+      {
+        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+        "dataType": "MOD09GQ",
+        "version": "6",
+        "files": [
+          {
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "bucket": "pgc-cum-test-internal",
+            "filename": "s3://pgc-cum-test-internal/file-staging/pgc-cum-test-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "fileStagingDir": "file-staging/pgc-cum-test-integration/MOD09GQ___6",
+            "fileSize": 17865615,
+            "path": "cumulus-test-data/pdrs",
+            "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+          },
+          {
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "bucket": "pgc-cum-test-internal",
+            "filename": "s3://pgc-cum-test-internal/file-staging/pgc-cum-test-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "fileStagingDir": "file-staging/pgc-cum-test-integration/MOD09GQ___6",
+            "fileSize": 44118,
+            "path": "cumulus-test-data/pdrs",
+            "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"
+          }
+        ]
+      }
+    ],
+    "workflow_name": "IngestGranule"
+  },
+  "payload": {
+    "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+    "dataType": "MOD09GQ",
+    "version": "6",
+    "files": [
+      "s3://pgc-cum-test-internal/file-staging/pgc-cum-test-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+      "s3://pgc-cum-test-internal/file-staging/pgc-cum-test-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+      "s3://pgc-cum-test-internal/file-staging/pgc-cum-test-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
+    ]
+  },
+  "exception": "None",
+  "workflow_config": {
+    "StopStatus": {
+      "stateMachine": "{{$.cumulus_meta.state_machine}}",
+      "sfnEnd": true,
+      "executionName": "{{$.cumulus_meta.execution_name}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "cumulus_message": {
+        "input": "{{$}}"
+      },
+      "stack": "{{$.meta.stack}}"
+    },
+    "ProcessingStep": {
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "collection": "{{$.meta.collection}}"
+    },
+    "WorkflowFailed": {},
+    "SyncGranuleNoVpc": {
+      "buckets": "{{$.meta.buckets}}",
+      "pdr": "{{$.meta.pdr}}",
+      "cumulus_message": {
+        "outputs": [
+          {
+            "source": "{{$.granules}}",
+            "destination": "{{$.meta.input_granules}}"
+          },
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          },
+          {
+            "source": "{{$.process}}",
+            "destination": "{{$.cumulus_meta.process}}"
+          }
+        ]
+      },
+      "downloadBucket": "{{$.cumulus_meta.system_bucket}}",
+      "context": "{{$.meta.rule.context}}",
+      "provider": "{{$.meta.provider}}",
+      "stack": "{{$.meta.stack}}"
+    },
+    "ChooseProcess": {},
+    "MoveGranuleStep": {
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "buckets": "{{$.meta.buckets}}",
+      "granuleIdExtraction": "{{$.meta.rule.context.granuleIdExtraction}}",
+      "distribution_endpoint": "{{$.meta.distribution_endpoint}}",
+      "input_granules": "{{$.meta.input_granules}}"
+    },
+    "Report": {
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
+    "VpcOrNot": {},
+    "SyncGranule": {
+      "buckets": "{{$.meta.buckets}}",
+      "pdr": "{{$.meta.pdr}}",
+      "cumulus_message": {
+        "outputs": [
+          {
+            "source": "{{$.granules}}",
+            "destination": "{{$.meta.input_granules}}"
+          },
+          {
+            "source": "{{$}}",
+            "destination": "{{$.payload}}"
+          },
+          {
+            "source": "{{$.process}}",
+            "destination": "{{$.cumulus_meta.process}}"
+          }
+        ]
+      },
+      "downloadBucket": "{{$.cumulus_meta.system_bucket}}",
+      "context": "{{$.meta.rule.context}}",
+      "provider": "{{$.meta.provider}}",
+      "stack": "{{$.meta.stack}}"
+    },
+    "CmrStep": {
+      "process": "{{$.cumulus_meta.process}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "stack": "{{$.meta.stack}}",
+      "granuleIdExtraction": "{{$.meta.rule.context.granuleIdExtraction}}",
+      "input_granules": "{{$.meta.input_granules}}",
+      "cmr": "{{$.meta.cmr}}"
+    }
+  }
+}

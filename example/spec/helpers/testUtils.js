@@ -2,9 +2,32 @@ const fs = require('fs');
 const { S3 } = require('aws-sdk');
 const lodash = require('lodash');
 const yaml = require('js-yaml');
+const dotenv = require('dotenv');
+const merge = require('lodash.merge');
+const Mustache = require('mustache');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
+function loadLocalEnvs(envFile) {
+  let _dotenv;
+  try {
+    _dotenv = dotenv.parse(fs.readFileSync(envFile));
+  }
+  catch (e) {
+    if (!e.message.includes('ENOENT')) {
+      throw e;
+    }
+  }
+  // load all env variables to an object
+  return Object.assign(process.env, _dotenv);
+}
+
+function mustacheRender(obj, values) {
+  const tmp = JSON.stringify(obj);
+  const rendered = Mustache.render(tmp, values);
+  return JSON.parse(rendered);
+}
+  
 /**
  * Loads and parses the configuration defined in `./spec/config.yml` or
  * `./spec/config.override.yml` if it exists.
@@ -12,13 +35,32 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
  * @returns {Object} - Configuration object
 */
 function loadConfig() {
-  let configFileName = './spec/config.yml';
-  const overrideConfigFilename = './spec/config.override.yml';
+  const appConfigFileName = './app/config.yml';
 
-  if (fs.existsSync(overrideConfigFilename) && !process.env.USE_DEFAULT_CONFIG) {
-    configFileName = overrideConfigFilename;
+  let specConfigFileName = './spec/config.yml';
+  const overrideSpecConfigFilename = './spec/config.override.yml';
+  const envFile = '.env';
+  const profile = 'cum-test';
+
+  loadLocalEnvs(envFile);
+
+  if (fs.existsSync(overrideSpecConfigFilename) && !process.env.USE_DEFAULT_CONFIG) {
+    specConfigFileName = overrideSpecConfigFilename;
   }
-  return yaml.safeLoad(fs.readFileSync(configFileName), 'utf8');
+
+  let config = yaml.safeLoad(fs.readFileSync(appConfigFileName), 'utf8');
+  config = merge({}, config.default, config[profile]);
+  //console.log(JSON.stringify(config, null, '\t'));
+
+  config = mustacheRender(config, merge({}, config, process.env));
+  config = mustacheRender(config, merge({}, config, process.env));
+  //console.log(JSON.stringify(config, null, '\t'));
+
+  const configSpec = yaml.safeLoad(fs.readFileSync(specConfigFileName), 'utf8');
+  const specJson = mustacheRender(configSpec, config);
+
+  //console.log(JSON.stringify(specJson, null, '\t'));
+  return specJson;
 }
 
 /**
@@ -79,5 +121,6 @@ module.exports = {
   loadConfig,
   templateFile,
   deleteFolder,
-  getExecutionUrl
+  getExecutionUrl,
+  mustacheRender
 };

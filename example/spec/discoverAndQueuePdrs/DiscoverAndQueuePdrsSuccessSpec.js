@@ -11,7 +11,10 @@ const taskName = 'DiscoverAndQueuePdrs';
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 describe('The Discover And Queue PDRs workflow', () => {
-  const collection = { name: 'MOD09GQ', version: '006' };
+  //const collection = { name: 'MOD09GQ', version: '006' };
+  const collection = null;
+  const rule = { name: 'RULE_S3_MOD09GQ_006_DiscoverAndQueuePdrs' };
+
   const provider = { id: 's3_provider' };
   let workflowExecution;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -23,6 +26,7 @@ describe('The Discover And Queue PDRs workflow', () => {
       config.stackName,
       config.bucket,
       taskName,
+      rule,
       collection,
       provider
     );

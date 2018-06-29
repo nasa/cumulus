@@ -93,19 +93,22 @@ class Rule extends Manager {
 
     if (!exists) {
       const err = {
-        message: 'Workflow doesn\'t exist'
+        message: `Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`
       };
       throw err;
     }
 
     const template = `s3://${bucket}/${key}`;
-    return {
+    const payload = {
       template,
       provider: item.provider,
-      collection: item.collection,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
     };
+
+    if (item.collection) payload.collection = item.collection;
+    if (item.rule) payload.rule = item;
+    return payload;
   }
 
   static async invoke(item) {
@@ -123,7 +126,8 @@ class Rule extends Manager {
     const payload = await Rule.buildPayload(item);
     switch (item.rule.type) {
     case 'onetime': {
-      await invoke(process.env.invoke, payload);
+      // PGC we do not want to automatically invoke a rule on creation but on-demand
+      //await invoke(process.env.invoke, payload);
       break;
     }
     case 'scheduled': {

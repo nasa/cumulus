@@ -16,13 +16,15 @@ describe('The Discover Granules workflow with http Protocol', () => {
   let httpWorkflowExecution;
 
   beforeAll(async () => {
-    const collection = { name: 'http_testcollection', version: '001' };
+    const collection = { name: 'GHRSST-SST___001', version: '001' };
+    const rule = { name: 'HTTP_TESTCOLLECTION_DiscoverGranules' };
     const provider = { id: 'http_provider' };
 
     httpWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       taskName,
+      rule,
       collection,
       provider
     );
@@ -61,13 +63,15 @@ describe('The Discover Granules workflow with https Protocol', () => {
   let httpsWorkflowExecution = null;
 
   beforeAll(async () => {
-    const collection = { name: 'https_testcollection', version: '001' };
+    const rule = { name: 'HTTPS_TESTCOLLECTION_DiscoverGranules' };
+    const collection = { name: 'GHRSST-SST___001', version: '001' };
     const provider = { id: 'https_provider' };
 
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       taskName,
+      rule,
       collection,
       provider
     );

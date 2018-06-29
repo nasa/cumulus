@@ -20,12 +20,12 @@ default:
     public:
       name: cumulus-test-sandbox-public
       type: public
-    protected-2:
-      name: cumulus-test-sandbox-protected-2
-      type: protected
-    shared:
-      name: cumulus-data-shared
-      type: shared
+    # protected-2:
+    #   name: cumulus-test-sandbox-protected-2
+    #   type: protected
+    # shared:
+    #   name: cumulus-data-shared
+    #   type: shared
 
   params:
      - name: ResourcePrefix
@@ -52,9 +52,27 @@ kk-deploy-uat:
   prefix: kk-test-uat
   stackName: kk-test-uat-iam
   
-mth-cum-test:
-  prefix: mth-cum-test
+cum-test:
+  prefix: '{{PREFIX}}'
+  stackName: '{{PREFIX}}-iam'
   buckets:
-    internal: '{{prefix}}-internal'
-    protected: '{{prefix}}-protected'
-    private: '{{prefix}}-private'
+    internal:
+      name: '{{PREFIX}}-internal'
+      type: internal
+    protected:
+      name: '{{PREFIX}}-protected'
+      type: protected
+    private:
+      name: '{{PREFIX}}-private'
+      type: private
+    public:
+      name: '{{PREFIX}}-public'
+      type: public
+    shared:
+      name: cumulus-data-shared
+      type: shared
+    protected-2:
+      name: '{{PROTECTED-2}}'
+      type: protected
+  
+  system_bucket: '{{PREFIX}}-internal'

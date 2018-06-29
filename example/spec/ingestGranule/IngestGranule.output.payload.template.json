@@ -3,13 +3,15 @@
   "granules": [
     {
       "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+      "dataType": "MOD09GQ",
+      "version": "6",
       "published": true,
       "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1222231611-CUMULUS",
       "files": [
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-          "bucket": "cumulus-test-sandbox-protected",
-          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "bucket": "{{prefix}}-protected",
+          "filename": "s3://{{prefix}}-protected/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
           "fileSize": 17865615,
           "path": "cumulus-test-data/pdrs",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
@@ -17,8 +19,8 @@
         },
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-          "bucket": "cumulus-test-sandbox-private",
-          "filename": "s3://cumulus-test-sandbox-private/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "bucket": "{{prefix}}-private",
+          "filename": "s3://{{prefix}}-private/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
           "fileSize": 44118,
           "path": "cumulus-test-data/pdrs",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
@@ -26,17 +28,17 @@
         },
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
-          "bucket": "cumulus-test-sandbox-public",
-          "filename": "s3://cumulus-test-sandbox-public/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "bucket": "{{prefix}}-public",
+          "filename": "s3://{{prefix}}-public/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
           "fileSize": 44118,
           "path": "cumulus-test-data/pdrs",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
         },
         {
-          "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "filename": "s3://{{prefix}}-protected-2/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
-          "bucket": "cumulus-test-sandbox-protected-2",
+          "bucket": "{{prefix}}-protected-2",
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
         }

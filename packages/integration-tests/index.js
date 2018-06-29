@@ -217,7 +217,7 @@ async function addCollections(stackName, bucketName, dataDirectory) {
   const promises = collections.map((collection) => limit(() => {
     const c = new Collection();
     console.log(`adding collection ${collection.dataType}___${collection.version}`);
-    return c.delete({ name: collection.name, version: collection.version })
+    return c.delete({ name: collection.dataType, version: collection.version })
       .then(() => c.create(collection));
   }));
   return Promise.all(promises).then((cs) => cs.length);
@@ -254,13 +254,25 @@ async function addRules(config, dataDirectory) {
   const rules = await setupSeedData(stackName, bucketName, dataDirectory);
 
   const promises = rules.map((rule) => limit(() => {
-    const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
-    const templatedRule = JSON.parse(ruleTemplate(config));
-    const r = new Rule();
-    console.log(`adding rule ${templatedRule.name}`);
-    return r.create(templatedRule);
+    try {
+      const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
+      const templatedRule = JSON.parse(ruleTemplate(config));
+      const r = new Rule();
+      console.log(`adding rule ${templatedRule.name}`);
+      return r.create(templatedRule);
+    }
+    catch (e) { 
+      console.log(`rule create exception: ${e}`);
+    }
   }));
-  return Promise.all(promises).then((rs) => rs.length);
+  return Promise.all(promises)
+    .then((rs) => {
+      console.log('retrieved:', JSON.stringify(rs));
+      return rs.length;
+    })
+    .catch((err) => {
+      console.log(`promise err ${JSON.stringify(err)}`);
+    });
 }
 
 /**
@@ -269,29 +281,40 @@ async function addRules(config, dataDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @param {Object} collection - collection information
- * @param {Object} collection.name - collection name
- * @param {Object} collection.version - collection version
+ * @param {string} rule - rule name
+ * @param {string} collection - colleciton name
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
  * @returns {Promise.<string>} workflow message
  */
-async function buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload) {
+async function buildWorkflow(stackName, bucketName, workflowName, rule,
+  collection, provider, payload) {
   setProcessEnvironment(stackName, bucketName);
   const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
+
   let collectionInfo = {};
   if (collection) {
     collectionInfo = await new Collection()
       .get({ name: collection.name, version: collection.version });
   }
+  
+  let ruleInfo = {};
+  if (rule) {
+    ruleInfo = await new Rule()
+      .get({ name: rule.name });
+  }
+
   let providerInfo = {};
   if (provider) {
     providerInfo = await new Provider().get({ id: provider.id });
   }
+
+  template.meta.rule = ruleInfo;
   template.meta.collection = collectionInfo;
   template.meta.provider = providerInfo;
   template.payload = payload || {};
+  
   return template;
 }
 /**
@@ -300,6 +323,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
+ * @param {Object} rule - rule object
  * @param {Object} collection - collection information
  * @param {Object} collection.name - collection name
  * @param {Object} collection.version - collection version
@@ -312,12 +336,13 @@ async function buildAndExecuteWorkflow(
   stackName,
   bucketName,
   workflowName,
+  rule,
   collection,
   provider,
   payload
 ) {
   const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload);
+  buildWorkflow(stackName, bucketName, workflowName, rule, collection, provider, payload);
   return executeWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 

@@ -1,0 +1,14 @@
+{
+	"name": "HTTP_TESTCOLLECTION_DiscoverGranules",
+	"state": "ENABLED",
+	"rule": {
+		"type": "onetime"
+	},
+	"tags": ["HTTP"],
+	"workflow": "DiscoverGranules",
+	"provider": "http_provider",
+	"context": {
+    "provider_path": "granules/fake_granules/",
+		"url_path": "/GHRSST-SST"
+	}
+}

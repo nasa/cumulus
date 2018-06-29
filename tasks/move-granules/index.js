@@ -11,6 +11,8 @@ const { parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
+const { CollectionConfigStore } = require('@cumulus/common');
+const { justLocalRun } = require('@cumulus/common/local-helpers');
 
 
 /**
@@ -73,7 +75,8 @@ function getAllGranules(input, granules, regex) {
   // the process involve getting granuleId of each file
   // match it against the granuleObj and adding the new files to the
   // file list
-  input.forEach((f) => {
+  const inputFiles = input.files;
+  inputFiles.forEach((f) => {
     if (f && !filesHash[f]) {
       const granuleId = getGranuleId(f, regex);
       const uriParsed = parseS3Uri(f);
@@ -99,8 +102,10 @@ function getAllGranules(input, granules, regex) {
 async function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
   const expectedFormat = /.*\.cmr\.xml$/;
+  
+  const inputFiles = input.files;
 
-  for (const filename of input) {
+  for (const filename of inputFiles) {
     if (filename && filename.match(expectedFormat)) {
       const metadata = await getMetadata(filename);
       const metadataObject = await parseXmlString(metadata);
@@ -125,37 +130,41 @@ async function getCmrFiles(input, granuleIdExtraction) {
 * that to construct the url path. Return the updated granules object.
 *
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
-* @param {Object} collection - configuration object defining a collection
 * of granules and their files
+* @param {Object} collection - collection
 * @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
 * @param {Object} buckets - the buckets involved with the files
 * @returns {Promise} promise resolves when all files have been moved
 **/
 function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   const allFiles = [];
-  Object.keys(granulesObject).forEach((granuleId) => {
+  Object.keys(granulesObject).forEach(async (granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
       collection.files.forEach((fileConfig) => {
         const test = new RegExp(fileConfig.regex);
         const match = file.name.match(test);
+        try {
+          if (match) {
+            if (!file.url_path) {
+              file.url_path = fileConfig.url_path || collection.url_path || '';
+            }
+            const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
 
-        if (match) {
-          if (!file.url_path) {
-            file.url_path = fileConfig.url_path || collection.url_path || '';
+            const urlPath = urlPathTemplate(file.url_path, {
+              file: file,
+              granule: granulesObject[granuleId],
+              cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
+            });
+
+            file.bucket = buckets[fileConfig.bucket];
+            file.filepath = path.join(urlPath, file.name);
+            file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
+
+            allFiles.push(file);
           }
-          const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-
-          const urlPath = urlPathTemplate(file.url_path, {
-            file: file,
-            granule: granulesObject[granuleId],
-            cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
-          });
-
-          file.bucket = buckets[fileConfig.bucket];
-          file.filepath = path.join(urlPath, file.name);
-          file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
-
-          allFiles.push(file);
+        }
+        catch (e) {
+          console.log('exception', e);
         }
       });
     });
@@ -294,8 +303,15 @@ async function moveGranules(event) {
   const inputGranules = get(config, 'input_granules', {});
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
-  const collection = config.collection;
+  //const collection = config.collection;
   const input = get(event, 'input', []);
+
+  const dataType = input.dataType;
+  const version = input.version;
+
+  const collectionConfigStore =
+    new CollectionConfigStore(process.env.internal, process.env.stackName);
+  const collection = await collectionConfigStore.get(dataType, version);
 
   // get cmr files from staging location
   const cmrFiles = await getCmrFiles(input, regex);
@@ -322,6 +338,8 @@ async function moveGranules(event) {
       const granule = allGranules[k];
 
       // Just return the bucket name with the granules
+      granule.dataType = dataType;
+      granule.version = version;
       granule.files.map((f) => {
         f.bucket = f.bucket.name;
         return f;

@@ -54,7 +54,7 @@ class Discover {
 
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
-    this.path = get(this.collection, 'provider_path') || '/';
+    this.path = config.provider_path || get(this.collection, 'provider_path') || '/';
 
     this.endpoint = urljoin(this.host, this.path);
     this.username = get(this.provider, 'username', null);
@@ -62,12 +62,14 @@ class Discover {
 
     // create hash with file regex as key
     this.regexes = {};
-    this.collection.files.forEach((f) => {
-      this.regexes[f.regex] = {
-        collection: this.collection.name,
-        bucket: this.buckets[f.bucket].name
-      };
-    });
+    if (this.collection) {
+      this.collection.files.forEach((f) => {
+        this.regexes[f.regex] = {
+          collection: this.collection.name,
+          bucket: this.buckets[f.bucket].name
+        };
+      });
+    }
   }
 
   /**
@@ -79,9 +81,9 @@ class Discover {
   setGranuleInfo(file) {
     const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
     const granuleId = granuleIdMatch[1];
-
+      
     const fileTypeConfig = this.fileTypeConfigForFile(file);
-
+   
     // Return the file with granuleId, bucket, and url_path added
     return Object.assign(
       cloneDeep(file),
@@ -136,7 +138,8 @@ class Discover {
     return granuleIds
       .map((granuleId) => ({
         granuleId,
-        dataType: this.collection.name,
+        dataType: this.collection.dataType,
+        version: this.collection.version,
         // Remove the granuleId property from each file
         files: filesByGranuleId[granuleId].map((file) => omit(file, 'granuleId'))
       }));
@@ -201,8 +204,6 @@ class Granule {
 
     //const bucket = process.env.internal;
     const stackName = process.env.stackName;
-    log.info("*** Ingest granule", bucket, stackName)
-
     // we need to retrieve the right collection
     const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
     this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
