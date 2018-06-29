@@ -32,6 +32,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.internal);
   await models.Manager.deleteTable(granulesTable);
   await models.Manager.deleteTable(executionsTable);
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('Run migrations the first time, it should run', async (t) => {
