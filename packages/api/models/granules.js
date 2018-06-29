@@ -64,7 +64,12 @@ class Granule extends Manager {
    * @returns {Promise} an object showing the start of the re-ingest
    */
   async reingest(g) {
-    return await applyWorkflow(g, 'IngestGranule', 'input');
+    await applyWorkflow(g, 'IngestGranule', 'input');
+    return {
+      granuleId: g.granuleId,
+      action: 'reingest',
+      status: 'SUCCESS'
+    };
   }
 
   /**
@@ -100,7 +105,7 @@ class Granule extends Manager {
     await aws.invoke(process.env.invoke, payload);
     return {
       granuleId: g.granuleId,
-      action: 'reingest',
+      action: `applyWorkflow ${workflow}`,
       status: 'SUCCESS'
     };
   }
