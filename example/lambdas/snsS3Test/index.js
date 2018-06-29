@@ -1,11 +1,14 @@
 'use strict';
 
-const { s3 } = require('@cumulus/common/aws');
+const { S3 } = require('aws-sdk');
 
 async function handler(event) {
-  return s3().putObject({
-    Bucket: event.cumulus_meta.system_bucket,
-    Key: `${event.cumulus_meta.stack}/test-output/${event.cumulus_meta.execution_name}.output`
+  const s3 = new S3();
+  const messageString = event.Records[0].Sns.Message;
+  const message = JSON.parse(messageString);
+  return s3.putObject({
+    Bucket: message.cumulus_meta.system_bucket,
+    Key: `${message.meta.stack}/test-output/${message.cumulus_meta.execution_name}.output`
   }).promise();
 }
 exports.handler = handler;
