@@ -5,12 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
-- **CUMULUS-491** - Add granule reconciliation API endpoints.
 
 ### Added
+- **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+- Support for configurably using Google Oauth in place of Earthdata login.
+
 
 ### Fixed
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
