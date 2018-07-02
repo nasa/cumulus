@@ -10,6 +10,7 @@ const log = require('@cumulus/common/log');
  * @param {Object} cmrFile - an object representing the cmr file
  * @param {string} cmrFile.granuleId - the granuleId of the cmr xml File
  * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
+ * @param {string} cmrFile.metadata - granule xml document
  * @param {Object} creds - credentials needed to post to the CMR
  * @param {string} creds.provider - the name of the Provider used on the CMR side
  * @param {string} creds.clientId - the clientId used to generate CMR token
