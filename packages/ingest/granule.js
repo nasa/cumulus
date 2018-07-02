@@ -1,6 +1,7 @@
 'use strict';
 
 const deprecate = require('depd')('my-module');
+const { log } = require('@cumulus/common');
 const aws = require('@cumulus/common/aws');
 const { getS3Object, promiseS3Upload } = require('@cumulus/common/aws');
 const fs = require('fs-extra');
@@ -739,7 +740,11 @@ async function copyGranuleFile(source, target, options) {
     Key: target.Key
   }, (options || {}));
 
-  return s3.copyObject(params).promise();
+  return s3.copyObject(params).promise()
+    .catch((err) => {
+      log.error(`Failed to copy s3://${source.Bucket}/${source.Key} to s3://${target.Bucket}/${target.Key}`); // eslint-disable-line max-len
+      throw err;
+    });
 }
 
 /**
