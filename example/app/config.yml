@@ -109,13 +109,7 @@ default:
     # step functions
     sftracker:
       subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - sns2elasticsearchLambdaFunction
-              - Arn
-        lambda:
+        2ndlambda:
           endpoint:
             function: Fn::GetAtt
             array:
