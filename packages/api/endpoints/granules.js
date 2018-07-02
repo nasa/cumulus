@@ -23,7 +23,7 @@ function list(event, cb) {
 
 /**
  * Update a single granule.
- * Supported Actions: reingest, Remove From CMR.
+ * Supported Actions: reingest, applyWorkflow, RemoveFromCMR.
  *
  * @param {Object} event - aws lambda event object.
  * @returns {Promise} response from the actions
