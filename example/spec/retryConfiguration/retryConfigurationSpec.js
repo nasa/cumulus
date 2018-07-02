@@ -12,10 +12,9 @@ const lambdaStep = new LambdaStep();
  * @returns {List<Integer>} - list of seconds between retries
  */
 function getRetryIntervals(executions) {
-  let i;
   const retryIntervals = [];
 
-  for (i = 1; i < executions.length; i += 1) {
+  for (let i = 1; i < executions.length; i += 1) {
     const intervalSeconds = (
       executions[i].scheduleEvent.timestamp - executions[i - 1].completeEvent.timestamp
     ) / 1000;
