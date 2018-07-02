@@ -64,7 +64,9 @@
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
     "querystring": "^0.2.0",
-    "uuid": "^3.2.1"
+    "uuid": "^3.2.1",
+    "split2": "^2.2.0",
+    "@mapbox/dyno": "^1.4.1"
   },
   "devDependencies": {
     "ava": "^0.25.0",
