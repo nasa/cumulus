@@ -82,6 +82,7 @@ test.serial('restore records to DynamoDB', async (t) => {
   f.close();
 
   await new Promise((resolve, reject) => {
+    f.end();
     f.on('finish', resolve);
     f.on('error', reject);
   });

@@ -37,6 +37,7 @@ describe('Backup and Restore', () => {
     f.close();
 
     await new Promise((resolve, reject) => {
+      f.end();
       f.on('finish', resolve);
       f.on('error', reject);
     });
