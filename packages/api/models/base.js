@@ -161,26 +161,33 @@ class Manager {
    * @returns {Promise<Array>} an array of created records
    */
   async create(items) {
-    const single = async (_item) => {
-      const item = _item;
-      // add createdAt and updatedAt
-      item.createdAt = item.createdAt || Date.now();
-      item.updatedAt = Date.now();
+    const single = async (item) => {
+      const fullItem = Object.assign(
+        {},
+        item,
+        {
+          createdAt: item.createdAt || Date.now(),
+          updatedAt: Date.now()
+        }
+      );
 
-      this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+      this.constructor.recordIsValid(fullItem, this.schema, this.removeAdditional);
 
       const params = {
         TableName: this.tableName,
-        Item: item
+        Item: fullItem
       };
 
       await this.dynamodbDocClient.put(params).promise();
     };
 
     if (items instanceof Array) {
-      for (const item of items) {
-        await single(item);
+      // Suggested method of handling a loop containing an await, according to
+      // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
+      for (let i = 0; i < items.length; i += 1) {
+        await single(items[i]); // eslint-disable-line no-await-in-loop
       }
+
       return items;
     }
     await single(items);
