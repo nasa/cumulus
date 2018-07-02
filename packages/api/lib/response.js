@@ -10,7 +10,6 @@
 
 'use strict';
 
-const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 const proxy = require('lambda-proxy-utils');
 const { User } = require('../models');
