@@ -35,7 +35,7 @@ function getToken(req) {
 }
 
 
-function resp(context, err, body, status = null, headers = null) {
+function resp(context, err, body, status = null, headers = {}) {
   if (typeof context.succeed !== 'function') {
     throw new Error('context object with succeed method not provided');
   }
@@ -43,20 +43,17 @@ function resp(context, err, body, status = null, headers = null) {
   if (err) {
     log.error(err);
     status = status || 400;
-    const message = get(err, 'message', errorify(err));
-    const detail = get(err, 'detail');
-
     body = {
-      message,
-      detail
+      message: err.message || errorify(err),
+      detail: err.detail
     };
   }
 
   const res = new proxy.Response({ cors: true, statusCode: status });
+
+  Object.keys(headers).forEach((h) => res.set(h, headers[h]));
   res.set('Strict-Transport-Security', 'max-age=31536000');
-  if (headers) {
-    Object.keys(headers).forEach((h) => res.set(h, headers[h]));
-  }
+
   return context.succeed(res.send(body));
 }
 
@@ -71,9 +68,7 @@ function handle(event, context, authCheck, func) {
 
     const token = getToken(req);
 
-    if (!token) {
-      return cb('Invalid Authorization token');
-    }
+    if (!token) return cb('Invalid Authorization token');
 
     // get the user
     const u = new User();
@@ -86,12 +81,8 @@ function handle(event, context, authCheck, func) {
       }
       const obj = results.Items[0];
 
-      if (!obj.expires) {
-        return cb('Invalid Authorization token');
-      }
-      else if (obj.expires < Date.now()) {
-        return cb('Session expired');
-      }
+      if (!obj.expires) return cb('Invalid Authorization token');
+      else if (obj.expires < Date.now()) return cb('Session expired');
       return func(cb);
     }).catch((e) => cb('Invalid Authorization token', e));
   }
