@@ -188,7 +188,7 @@ class Manager {
     return items;
   }
 
-  async scan(query, fields) {
+  async scan(query, fields, limit, select, startKey) {
     const params = {
       TableName: this.tableName
     };
@@ -208,7 +208,30 @@ class Manager {
       params.ProjectionExpression = fields;
     }
 
-    return this.dynamodbDocClient.scan(params).promise();
+    if (limit) {
+      params.Limit = limit;
+    }
+
+    if (select) {
+      params.Select = select;
+    }
+
+    if (startKey) {
+      params.ExclusiveStartKey = startKey;
+    }
+
+    const resp = await this.dynamodbDocClient.scan(params).promise();
+
+    // recursively go through all the records
+    if (resp.LastEvaluatedKey) {
+      const more = await this.scan(query, fields, limit, select, resp.LastEvaluatedKey);
+      if (more.Items) {
+        resp.Items = more.Items.concat(more.Items);
+      }
+      resp.Count += more.Count;
+    }
+
+    return resp;
   }
 
   async delete(item) {
