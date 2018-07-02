@@ -4,6 +4,7 @@ const test = require('ava');
 const fs = require('fs');
 const path = require('path');
 const { randomString } = require('@cumulus/common/test-utils');
+const { deleteAliases } = require('../lib/testUtils');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
@@ -13,7 +14,7 @@ process.env.ES_INDEX = esIndex;
 let esClient;
 
 test.before(async () => {
-  // create the elasticsearch index and add mapping
+  await deleteAliases();
   await bootstrapElasticSearch('fakehost', esIndex);
   esClient = await Search.es();
 });
@@ -25,6 +26,7 @@ test.after.always(async () => {
 });
 
 test.serial('indexing log messages', async (t) => {
+
   // input log events
   const inputtxt = fs.readFileSync(path.join(__dirname, '/data/log_events_input.txt'), 'utf8');
   const event = JSON.parse(JSON.parse(inputtxt.toString()));
