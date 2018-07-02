@@ -3,15 +3,9 @@ const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
 const { Granule, Execution } = require('@cumulus/api/models');
-const {
-  s3,
-  s3ObjectExists,
-  region,
-  sns
-} = require('@cumulus/common/aws');
+const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const {
   buildAndExecuteWorkflow,
-  getWorkflowTemplate,
   LambdaStep,
   conceptExists,
   getOnlineResources
@@ -43,22 +37,9 @@ describe('The S3 Ingest Granules workflow', () => {
   const granuleModel = new Granule();
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
-  let subscriptionArn;
   let executionName;
 
   beforeAll(async () => {
-    const template = await getWorkflowTemplate(config.stackName, config.bucket, taskName);
-    const topicArn = template.meta.topic_arn;
-
-    const params = {
-      TopicArn: topicArn,
-      Protocol: 'lambda',
-      Endpoint: `arn:aws:lambda:${region}:${process.env.AWS_ACCOUNT_ID}:function:${config.stackName}-SnsS3Test`
-    };
-
-    const response = await sns().subscribe(params).promise();
-    subscriptionArn = response.SubscriptionArn;
-
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
@@ -69,7 +50,6 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
-    await sns().unsubscribe({ SubscriptionArn: subscriptionArn });
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
   });
 
