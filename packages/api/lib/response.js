@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 /**
  * This module helps with returning approporiate
  * response via API Gateway Lambda Proxies
@@ -10,7 +9,6 @@
 
 'use strict';
 
-const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 const proxy = require('lambda-proxy-utils');
 const { User } = require('../models');
@@ -35,10 +33,13 @@ function getToken(req) {
 }
 
 
-function resp(context, err, body, status = null, headers = {}) {
+function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   if (typeof context.succeed !== 'function') {
     throw new Error('context object with succeed method not provided');
   }
+
+  let body = bodyArg;
+  let status = statusArg;
 
   if (err) {
     log.error(err);
