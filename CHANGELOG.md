@@ -10,7 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
-## [1.7.0] - 2018-06-29
+## [v1.7.0] - 2018-07-02
+
+### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
+
 ### Added
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
@@ -36,7 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://github.com/cumulus-nasa/cumulus/wiki/Upgrading-to-Cumulus-1.6)
+### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.6.0.html)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
