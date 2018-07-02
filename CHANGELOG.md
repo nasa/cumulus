@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
-
-### Added
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
 
@@ -16,7 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
-- **CUMULUS-398** - Fix not able to filter executions bu workflow
+- **CUMULUS-398** - Fix not able to filter executions by workflow
+- **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
 ### Changed
 - **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists

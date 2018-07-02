@@ -191,7 +191,7 @@ async function generateTemplates(config, outputs, uploader) {
     await uploader(bucket, `${stack}/workflows/list.json`, JSON.stringify(workflows));
 
     // upload the buckets config
-    await uploader(bucket, `${stack}/workflow/buckets.json`, JSON.stringify(config.buckets));
+    await uploader(bucket, `${stack}/workflows/buckets.json`, JSON.stringify(config.buckets));
   }
 }
 
