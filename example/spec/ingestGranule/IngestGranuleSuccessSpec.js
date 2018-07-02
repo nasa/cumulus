@@ -7,6 +7,7 @@ const { Granule, Execution } = require('@cumulus/api/models');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const {
   buildAndExecuteWorkflow,
+  buildAndExecuteFailingWorkflow,
   LambdaStep,
   conceptExists,
   getOnlineResources
@@ -34,6 +35,9 @@ describe('The S3 Ingest Granules workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
+  let failingWorkflowExecution = null;
+  let failedExecutionArn;
+  let failedExecutionName;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -49,6 +53,12 @@ describe('The S3 Ingest Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
     );
+
+    failingWorkflowExecution = await buildAndExecuteWorkflow(
+      config.stackName, config.bucket, taskName, collection, provider, {}
+    );
+    failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
+    failedExecutionName = failedExecutionArn.pop();
   });
 
   afterAll(async () => {
@@ -156,18 +166,23 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('An SNS success message', () => {
+  describe('an SNS message', () => {
     let lambdaOutput;
-    let existCheck;
+    const existCheck = [];
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       executionName = lambdaOutput.cumulus_meta.execution_name;
-      existCheck = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` });
+      existCheck[0] = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` });
+      existCheck[1] = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` });
     });
 
-    it('is published on workflow completion', async () => {
-      expect(existCheck).toEqual(true);
+    it('is published on a successful workflow completion', () => {
+      expect(existCheck[0]).toEqual(true);
+    });
+
+    it('is published on workflow failure', () => {
+      expect(existCheck[1]).toEqual(true);
     });
 
     it('triggers the granule record being added to DynamoDB', async () => {
