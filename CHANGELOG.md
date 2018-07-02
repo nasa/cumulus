@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
-## [v1.7.0] - 2018-06-29
+## [v1.7.0] - 2018-07-02
 
 ### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
 
