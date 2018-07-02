@@ -8,8 +8,8 @@
       "files": [
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-          "bucket": "cumulus-test-sandbox-protected",
-          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "bucket": "this-should-be-replaced-with-protected-bucket-name-in-the-test",
+          "filename": "s3://this-should-be-replaced-with-protected-bucket-name-in-the-test/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
           "fileSize": 17865615,
           "path": "cumulus-test-data/pdrs",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
@@ -17,8 +17,8 @@
         },
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-          "bucket": "cumulus-test-sandbox-private",
-          "filename": "s3://cumulus-test-sandbox-private/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "bucket": "this-should-be-replaced-with-private-bucket-name-in-the-test",
+          "filename": "s3://this-should-be-replaced-with-private-bucket-name-in-the-test/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
           "fileSize": 44118,
           "path": "cumulus-test-data/pdrs",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
@@ -26,17 +26,17 @@
         },
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
-          "bucket": "cumulus-test-sandbox-public",
-          "filename": "s3://cumulus-test-sandbox-public/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "bucket": "this-should-be-replaced-with-public-bucket-name-in-the-test",
+          "filename": "s3://this-should-be-replaced-with-public-bucket-name-in-the-test/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
           "fileSize": 44118,
           "path": "cumulus-test-data/pdrs",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
         },
         {
-          "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "filename": "s3://this-should-be-replaced-with-protected-2-bucket-name-in-the-test/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
-          "bucket": "cumulus-test-sandbox-protected-2",
+          "bucket": "this-should-be-replaced-with-protected-2-bucket-name-in-the-test",
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "filepath": "MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
         }
