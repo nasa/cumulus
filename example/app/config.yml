@@ -105,6 +105,22 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+    # this topic receives all the updates from
+    # step functions
+    sftracker:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - sns2elasticsearchLambdaFunction
+              - Arn
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - SnsS3TestLambdaFunction
+              - Arn
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
