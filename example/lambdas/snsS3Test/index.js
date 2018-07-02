@@ -2,6 +2,12 @@
 
 const { S3 } = require('aws-sdk');
 
+/**
+ * Receives event trigger from SNS and forwards event message to S3 bucket
+ *
+ * @param {*} event - from SNS
+ * @returns {Promise} confirmation of added message
+ */
 async function handler(event) {
   const s3 = new S3();
   const messageString = event.Records[0].Sns.Message;

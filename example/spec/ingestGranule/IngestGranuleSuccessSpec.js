@@ -157,7 +157,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the sf-sns-report task has published a sns message', () => {
+  describe('An SNS success message', () => {
     let lambdaOutput;
     let existCheck;
 
@@ -167,16 +167,16 @@ describe('The S3 Ingest Granules workflow', () => {
       existCheck = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` });
     });
 
-    it('on workflow completion', async () => {
+    it('is published on workflow completion', async () => {
       expect(existCheck).toEqual(true);
     });
 
-    it('and the granule record is added to DynamoDB', async () => {
+    it('triggers the granule record being added to DynamoDB', async () => {
       const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId });
       expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
     });
 
-    it('and the execution record is added to DynamoDB', async () => {
+    it('triggers the execution record being added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
     });
