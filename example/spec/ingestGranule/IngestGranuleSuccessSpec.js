@@ -1,4 +1,3 @@
-// const AWS = require('aws-sdk');
 const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
@@ -10,7 +9,6 @@ const {
   conceptExists,
   getOnlineResources
 } = require('@cumulus/integration-tests');
-// const sns = new AWS.SNS();
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
