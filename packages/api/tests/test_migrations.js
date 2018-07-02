@@ -10,7 +10,7 @@ const models = require('../models');
 const migrations = require('../migrations');
 const migration0 = require('../migrations/migration_0');
 const migration1 = require('../migrations/migration_1');
-const { fakeGranuleFactory, fakeExecutionFactory } = require('../lib/testUtils');
+const { fakeGranuleFactory, fakeExecutionFactory, deleteAliases } = require('../lib/testUtils');
 
 let esClient;
 const esIndex = randomString();
@@ -20,6 +20,7 @@ const granulesTable = `${process.env.stackName}-GranulesTable`;
 const executionsTable = `${process.env.stackName}-ExecutionsTable`;
 
 test.before(async () => {
+  await deleteAliases();
   await s3().createBucket({ Bucket: process.env.internal }).promise();
 
   await models.Manager.createTable(granulesTable, { name: 'granuleId', type: 'S' });
