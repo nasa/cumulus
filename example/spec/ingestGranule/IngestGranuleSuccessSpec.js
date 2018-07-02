@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
@@ -15,15 +17,17 @@ const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
 
-const syncGranuleOutputFilename = './spec/ingestGranule/SyncGranule.output.payload.template.json';
 const templatedSyncGranuleFilename = templateFile({
-  inputTemplateFilename: syncGranuleOutputFilename,
+  inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
   config: config[taskName].SyncGranuleOutput
 });
 const expectedSyncGranulePayload = JSON.parse(fs.readFileSync(templatedSyncGranuleFilename));
 
-const outputPayloadTemplateFilename = './spec/ingestGranule/IngestGranule.output.payload.template.json'; // eslint-disable-line max-len
-const expectedPayload = JSON.parse(fs.readFileSync(outputPayloadTemplateFilename));
+const templatedOutputPayloadFilename = templateFile({
+  inputTemplateFilename: './spec/ingestGranule/IngestGranule.output.payload.template.json',
+  config: config[taskName].IngestGranuleOutput
+});
+const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
@@ -86,23 +90,18 @@ describe('The S3 Ingest Granules workflow', () => {
       await s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise();
     });
 
-    it('has a payload with updated filename', () => {
-      let i;
-      for (i = 0; i < 4; i += 1) {
-        expect(files[i].filename).toEqual(expectedPayload.granules[0].files[i].filename);
-      }
+    it('has a payload with correct buckets and filenames', () => {
+      files.forEach((file) => {
+        const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
+        expect(file.filename).toEqual(expectedFile.filename);
+        expect(file.bucket).toEqual(expectedFile.bucket);
+      });
     });
 
     it('moves files to the bucket folder based on metadata', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
       });
-    });
-
-    it('moves files to separate protected buckets based on configuration', () => {
-      // Above we checked that the files exist, now show that they are in separate protected buckets
-      expect(files[0].bucket).toEqual('cumulus-test-sandbox-protected');
-      expect(files[3].bucket).toEqual('cumulus-test-sandbox-protected-2');
     });
   });
 
@@ -155,7 +154,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the granule record is added to DynamoDB', async () => {
-      const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId }); 
+      const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId });
       expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
     });
 
