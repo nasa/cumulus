@@ -185,6 +185,9 @@ mth-2:
     protected:
       name: '{{prefix}}-protected'
       type: protected
+    protected-2:
+      name: '{{prefix}}-protected'
+      type: protected
     public:
       name: '{{prefix}}-public'
       type: public
@@ -201,3 +204,19 @@ mth-2:
 jl:
   prefix: jl-test
   stackNameNoDash: JlTestIntegration
+  buckets:
+    private:
+      name: jl-test-integration-private
+      type: private
+    protected:
+      name: jl-test-integration-protected
+      type: protected
+    public:
+      name: jl-test-integration-public
+      type: public
+    protected-2:
+      name: jl-test-integration-protected-2
+      type: protected
+    shared-2:
+      name: rvl-internal
+      type: shared
