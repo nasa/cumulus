@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
-
-### Added
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+- **CUMULUS-681** - Add ingest-in-place action to granules endpoint
+    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
+        - workflow - the workflow name
+        - messageSource - 'input' or 'output' from previous execution
+        - metaOverride - overrides the meta of the new execution
+        - payloadOverride - overrides the payload of the new execution
 
 ### Fixed
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
