@@ -37,3 +37,6 @@ exports.sfStart = broadcast.start;
 exports.sfEnd = broadcast.end;
 exports.indexer = indexer.handler;
 exports.logHandler = indexer.logHandler;
+
+exports.models = require('./models');
+exports.testUtils = require('./lib/testUtils');
