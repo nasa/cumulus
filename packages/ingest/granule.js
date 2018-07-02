@@ -24,8 +24,6 @@ const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
 
-let bucketsObject;
-
 /**
 * The abstract Discover class
 **/
@@ -622,27 +620,23 @@ async function postS3Object(destination, options) {
 }
 
 /**
- * updates cmr xml file with updated file urls
+ * construct a list of online access urls
  *
- * @param {string} granuleId - granuleId
- * @param {Object} cmrFile - cmr xml file to be updated
- * @param {Object[]} files - array of file objects
+ * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
- * @param {boolean} published - indicate if publish is needed
- * @returns {Promise} returns promise to upload updated cmr file
+ * @returns {Array<{URL: string, URLDescription: string}>}
+ *   returns the list of online access url objects
  */
-async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published) {
-  log.debug(`granules.updateMetadata granuleId ${granuleId}, xml file ${cmrFile.filename}`);
+async function contructOnlineAccessUrls(files, distEndpoint) {
   const urls = [];
-  if (!bucketsObject) {
-    const bucketsString = await aws.s3().getObject({
-      Bucket: process.env.bucket,
-      Key: `${process.env.stackName}/workflows/buckets.json`
-    }).promise();
-    bucketsObject = JSON.parse(bucketsString.Body);
-  }
 
-  // URLs are added/updated only for public and protected files
+  const bucketsString = await aws.s3().getObject({
+    Bucket: process.env.bucket,
+    Key: `${process.env.stackName}/workflows/buckets.json`
+  }).promise();
+  const bucketsObject = JSON.parse(bucketsString.Body);
+
+  // URLs are for public and protected files
   const bucketKeys = Object.keys(bucketsObject);
   files.forEach((file) => {
     const urlObj = {};
@@ -661,6 +655,25 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
       urls.push(urlObj);
     }
   });
+  return urls;
+}
+
+/**
+ * updates cmr xml file with updated file urls
+ *
+ * @param {string} granuleId - granuleId
+ * @param {Object} cmrFile - cmr xml file to be updated
+ * @param {Object[]} files - array of file objects
+ * @param {string} distEndpoint - distribution enpoint from config
+ * @param {boolean} published - indicate if publish is needed
+ * @returns {Promise} returns promise to upload updated cmr file
+ */
+async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published) {
+  log.debug(`granules.updateMetadata granuleId ${granuleId}, xml file ${cmrFile.filename}`);
+
+  const urls = await contructOnlineAccessUrls(files, distEndpoint);
+
+  // add/replace the OnlineAccessUrls
   const metadata = await getMetadata(cmrFile.filename);
   const metadataObject = await parseXmlString(metadata);
   const metadataGranule = get(metadataObject, 'Granule');
@@ -753,7 +766,7 @@ async function moveGranuleFile(source, target, options) {
  * @param {string} destinations.filepath - file path/directory on the bucket for the destination
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {boolean} published - indicate if publish is needed
- * @returns {Promise<Object>} returns promise from publishing cmr file or {}
+ * @returns {Promise<Object>} returns promise from publishing cmr file
  */
 async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
   const moveFileRequests = sourceFiles.map((file) => {
@@ -791,7 +804,7 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
   if (xmlFile.length === 1) {
     return updateMetadata(granuleId, xmlFile[0], sourceFiles, distEndpoint, published);
   }
-  return {};
+  return Promise.resolve();
 }
 
 module.exports.selector = selector;
