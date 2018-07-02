@@ -800,9 +800,12 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
   await Promise.all(moveFileRequests);
 
   // update cmr metadata with new file urls
-  const xmlFile = sourceFiles.filter((file) => file.name.endsWith('cmr.xml'));
+  const xmlFile = sourceFiles.filter((file) => file.name.endsWith('.cmr.xml'));
   if (xmlFile.length === 1) {
     return updateMetadata(granuleId, xmlFile[0], sourceFiles, distEndpoint, published);
+  }
+  else if (xmlFile.length > 1) {
+    log.error('more than one .cmr.xml found');
   }
   return Promise.resolve();
 }
