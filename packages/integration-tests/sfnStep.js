@@ -38,7 +38,7 @@ class SfnStep {
   }
 
   /**
-   * Get the information for an instance of a step execution. Get the schedule, start, 
+   * Get the information for an instance of a step execution. Get the schedule, start,
    * and complete event.
    *
    * @param {Object} executionHistory - AWS Step Function execution history
@@ -63,7 +63,8 @@ class SfnStep {
 
   /**
    * Get the events for the step execution for the given workflow execution.
-   * This function currently assumes one execution of the given step (by step name) per workflow.
+   * If there are multiple executions of a step, we currently assume a retry and return
+   * either the first passed execution or the last execution if no passing executions exist
    *
    * @param {string} workflowExecutionArn - Arn of the workflow execution
    * @param {string} stepName - name of the step
