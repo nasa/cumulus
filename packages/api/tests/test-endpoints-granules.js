@@ -204,7 +204,7 @@ test('apply an in-place workflow to an existing granule', async (t) => {
   sinon.stub(
     StepFunction,
     'getExecutionStatus'
-  ).callsFake({
+  ).callsFake(() => Promise.resolve({
     execution: {
       output: JSON.stringify({
         meta: {
@@ -213,7 +213,7 @@ test('apply an in-place workflow to an existing granule', async (t) => {
         payload: {}
       })
     }
-  });
+  }));
 
   await testEndpoint(granuleEndpoint, event, (response) => {
     const body = JSON.parse(response.body);
