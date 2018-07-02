@@ -73,19 +73,13 @@ test.serial('restore records to DynamoDB', async (t) => {
   const tempRestoreFile = path.join(tempFolder, `${t.context.tableName}.json`);
 
   // create a backup file with 200 records
-  const f = fs.createWriteStream(tempRestoreFile);
+  let fileContent = '';
   for (let i = 0; i < limit; i += 1) {
     const granule = fakeGranuleFactory();
-    f.write(`${JSON.stringify(granule)}\n`);
+    fileContent += `${JSON.stringify(granule)}\n`;
     granuleIds.push(granule.granuleId);
   }
-  f.close();
-
-  await new Promise((resolve, reject) => {
-    f.end();
-    f.on('finish', resolve);
-    f.on('error', reject);
-  });
+  fs.writeFileSync(tempRestoreFile, fileContent);
 
   await restore(tempRestoreFile, t.context.tableName, 2);
 

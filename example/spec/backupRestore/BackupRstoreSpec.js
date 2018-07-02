@@ -28,19 +28,14 @@ describe('Backup and Restore', () => {
 
     // create fake granule records
     restoreFile = path.join(tempFolder, 'recordsToRestore.json');
-    const f = fs.createWriteStream(restoreFile);
+
+    let fileContent = '';
     for (let i = 0; i < limit; i += 1) {
       const granule = fakeGranuleFactory();
-      f.write(`${JSON.stringify(granule)}\n`);
+      fileContent += `${JSON.stringify(granule)}\n`;
       granuleIds.push({ granuleId: granule.granuleId });
     }
-    f.close();
-
-    await new Promise((resolve, reject) => {
-      f.end();
-      f.on('finish', resolve);
-      f.on('error', reject);
-    });
+    fs.writeFileSync(restoreFile, fileContent);
 
     // count records in the table
     const t = await model.scan(null, null, 0, 'COUNT');
