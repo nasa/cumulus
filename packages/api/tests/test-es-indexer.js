@@ -12,7 +12,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
 const models = require('../models');
-const { fakeGranuleFactory, fakeCollectionFactory } = require('../lib/testUtils');
+const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../lib/testUtils');
 const { constructCollectionId } = require('../lib/utils');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const granuleSuccess = require('./data/granule_success.json');
@@ -31,6 +31,8 @@ process.env.ES_INDEX = esIndex;
 let esClient;
 
 test.before(async () => {
+  await deleteAliases();
+
   // create the tables
   process.env.GranulesTable = granuleTable;
   process.env.CollectionsTable = collectionTable;
