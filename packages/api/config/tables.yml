@@ -2,19 +2,6 @@ CollectionsTable:
   read: 5
   write: 1
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.collections.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.collections.readCapacityUnits.min}}'
-      max: '{{tables.collections.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.collections.writeCapacityUnits.min}}'
-      max: '{{tables.collections.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: name
       type: S
@@ -27,19 +14,6 @@ ProvidersTable:
   read: 5
   write: 1
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.providers.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.providers.readCapacityUnits.min}}'
-      max: '{{tables.providers.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.providers.writeCapacityUnits.min}}'
-      max: '{{tables.providers.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: id
       type: S
@@ -49,19 +23,6 @@ RulesTable:
   read: 5
   write: 1
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.rules.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.rules.readCapacityUnits.min}}'
-      max: '{{tables.rules.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.rules.writeCapacityUnits.min}}'
-      max: '{{tables.rules.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: name
       type: S
@@ -71,19 +32,6 @@ UsersTable:
   read: 5
   write: 1
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.users.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.users.readCapacityUnits.min}}'
-      max: '{{tables.users.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.users.writeCapacityUnits.min}}'
-      max: '{{tables.users.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: userName
       type: S
@@ -93,19 +41,6 @@ GranulesTable:
   read: 5
   write: 10
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.granules.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.granules.readCapacityUnits.min}}'
-      max: '{{tables.granules.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.granules.writeCapacityUnits.min}}'
-      max: '{{tables.granules.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: granuleId
       type: S
@@ -115,19 +50,6 @@ PdrsTable:
   read: 5
   write: 2
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.pdrs.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.pdrs.readCapacityUnits.min}}'
-      max: '{{tables.pdrs.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.pdrs.writeCapacityUnits.min}}'
-      max: '{{tables.pdrs.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: pdrName
       type: S
@@ -138,19 +60,6 @@ ExecutionsTable:
   read: 5
   write: 10
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.executions.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.executions.readCapacityUnits.min}}'
-      max: '{{tables.executions.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.executions.writeCapacityUnits.min}}'
-      max: '{{tables.executions.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: arn
       type: S
@@ -160,19 +69,6 @@ FilesTable:
   read: 5
   write: 10
   pointInTime: '{{enablePointInTime}}'
-  enableAutoScaling: '{{tables.files.enableAutoScaling}}'
-  autoScaling:
-    roleArn: '{{iams.scalingRoleArn}}'
-    readCapacityUnits:
-      min: '{{tables.files.readCapacityUnits.min}}'
-      max: '{{tables.files.readCapacityUnits.max}}'
-    writeCapacityUnits:
-      min: '{{tables.files.writeCapacityUnits.min}}'
-      max: '{{tables.files.writeCapacityUnits.max}}'
-    policyConfiguration:
-      targetValue: '{{tables.autoScalingPolicyConfiguration.targetValue}}'
-      scaleInCooldown: '{{tables.autoScalingPolicyConfiguration.scaleInCooldown}}'
-      scaleOutCooldown: '{{tables.autoScalingPolicyConfiguration.scaleOutCooldown}}'
   attributes:
     - name: bucket
       type: S
