@@ -3,6 +3,7 @@
 const path = require('path');
 const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
+const merge = require('lodash.merge');
 const uniqBy = require('lodash.uniqby');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
@@ -80,8 +81,8 @@ class Granule extends Manager {
    * @param {Object} g - the granule object
    * @param {string} workflow - the workflow name
    * @param {string} messageSource - 'input' or 'output' from previous execution
-   * @param {Object} metaOverride - overrides the meta of the new execution
-   * @param {Object} payloadOverride - overrides the payload of the new execution
+   * @param {Object} metaOverride - overrides the meta of the new execution, accepts partial override
+   * @param {Object} payloadOverride - overrides the payload of the new execution, accepts partial override
    * @returns {Promise<Object>} an object showing the start of the workflow execution
    */
   async applyWorkflow(g, workflow, messageSource, metaOverride, payloadOverride) {
@@ -99,8 +100,8 @@ class Granule extends Manager {
           name,
           version
         },
-        meta: metaOverride || originalMessage.meta,
-        payload: payloadOverride || originalMessage.payload
+        meta: metaOverride ? merge(originalMessage.meta, metaOverride) : originalMessage.meta,
+        payload: payloadOverride ? merge(originalMessage.payload, payloadOverride) : originalMessage.payload
       });
 
       await this.updateStatus({ granuleId: g.granuleId }, 'running');
