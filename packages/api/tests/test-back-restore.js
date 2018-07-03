@@ -17,7 +17,7 @@ const tableName = randomString();
 /**
  * small helper for populating DynamoDB with fake records
  *
- * @param {string} table - DynamoDB table anme
+ * @param {string} table - DynamoDB table name
  * @param {integer} limit - number of granule records to generate
  * @returns {Promise<Array>} an array of objects with granuleIds
  */
