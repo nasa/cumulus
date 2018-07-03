@@ -7,7 +7,6 @@ const log = require('@cumulus/common/log');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const models = require('../models');
-const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 
 /**
  * List all granules for a given collection.
@@ -59,9 +58,7 @@ async function put(event) {
     else if (action === 'move') {
       const destinations = body.destinations;
       const distEndpoint = process.env.distEndpoint;
-
-      await moveGranuleFiles(response.files, destinations, distEndpoint);
-
+      await g.move(response, destinations, distEndpoint);
       return {
         granuleId: response.granuleId,
         action,
