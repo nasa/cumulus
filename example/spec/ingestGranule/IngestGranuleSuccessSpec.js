@@ -63,6 +63,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   afterAll(async () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
+    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
   });
 
   it('completes execution with success status', () => {
