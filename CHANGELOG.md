@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-681** - Add ingest-in-place action to granules endpoint
+    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
+        - workflow - the workflow name
+        - messageSource - 'input' or 'output' from previous execution
+        - metaOverride - overrides the meta of the new execution, accepts partial override
+        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 ### Fixed
 
