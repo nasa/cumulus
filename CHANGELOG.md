@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support. 
+    - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
 
 ### Fixed
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
