@@ -7,11 +7,11 @@ const { Granule, Execution } = require('@cumulus/api/models');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const {
   buildAndExecuteWorkflow,
+  buildAndExecuteFailingWorkflow,
   LambdaStep,
   conceptExists,
   getOnlineResources
 } = require('@cumulus/integration-tests');
-
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -35,11 +35,15 @@ describe('The S3 Ingest Granules workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
+  let failingWorkflowExecution = null;
+  let failedExecutionArn;
+  let failedExecutionName;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
+  let executionName;
 
   beforeAll(async () => {
     // delete the granule record from DynamoDB if exists
@@ -49,6 +53,17 @@ describe('The S3 Ingest Granules workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
     );
+
+    failingWorkflowExecution = await buildAndExecuteWorkflow(
+      config.stackName, config.bucket, taskName, collection, provider, {}
+    );
+    failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
+    failedExecutionName = failedExecutionArn.pop();
+  });
+
+  afterAll(async () => {
+    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
+    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
   });
 
   it('completes execution with success status', () => {
@@ -152,13 +167,31 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the sf-sns-report task has published a sns message and', () => {
-    it('the granule record is added to DynamoDB', async () => {
+  describe('an SNS message', () => {
+    let lambdaOutput;
+    const existCheck = [];
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      executionName = lambdaOutput.cumulus_meta.execution_name;
+      existCheck[0] = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` });
+      existCheck[1] = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` });
+    });
+
+    it('is published on a successful workflow completion', () => {
+      expect(existCheck[0]).toEqual(true);
+    });
+
+    it('is published on workflow failure', () => {
+      expect(existCheck[1]).toEqual(true);
+    });
+
+    it('triggers the granule record being added to DynamoDB', async () => {
       const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId });
       expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
     });
 
-    it('the execution record is added to DynamoDB', async () => {
+    it('triggers the execution record being added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
     });

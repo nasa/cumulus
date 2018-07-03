@@ -96,6 +96,7 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+          protocol: lambda
     AmazonIpSpaceChanged:
       arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
       subscriptions:
@@ -105,6 +106,16 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+          protocol: lambda
+    sftracker:
+      subscriptions:
+        2ndlambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - SnsS3TestLambdaFunction
+              - Arn
+          protocol: lambda
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -161,6 +172,7 @@ lf:
 
 kk-uat-deployment:
   stackName: kk-test-uat
+  prefix: kk-test-uat
   stackNameNoDash: KkTestUat
 
   iams:
