@@ -38,15 +38,40 @@ class SfnStep {
   }
 
   /**
+   * Get the information for an instance of a step execution. Get the schedule, start,
+   * and complete event.
+   *
+   * @param {Object} executionHistory - AWS Step Function execution history
+   * @param {Object} scheduleEvent    - AWS Step Function schedule-type event
+   * @returns {Object} object containing a schedule event, start event, and complete
+   * event if exists for each execution of the step, null if cannot find the step
+   */
+  getStepExecutionInstance(executionHistory, scheduleEvent) {
+    let startEvent = null;
+    let completeEvent = null;
+
+    if (scheduleEvent.type !== this.startFailedEvent) {
+      startEvent = this.getStartEvent(executionHistory, scheduleEvent, this);
+
+      if (startEvent !== null && startEvent.type !== this.startFailedEvent) {
+        completeEvent = this.getCompletionEvent(executionHistory, startEvent, this);
+      }
+    }
+
+    return { scheduleEvent, startEvent, completeEvent };
+  }
+
+  /**
    * Get the events for the step execution for the given workflow execution.
-   * This function currently assumes one execution of the given step (by step name) per workflow.
+   * If there are multiple executions of a step, we currently assume a retry and return
+   * either the first passed execution or the last execution if no passing executions exist
    *
    * @param {string} workflowExecutionArn - Arn of the workflow execution
    * @param {string} stepName - name of the step
-   * @returns {Object} an object containing a schedule event, start event, and complete
-   * event if exist, null if cannot find the step
+   * @returns {List<Object>} objects containing a schedule event, start event, and complete
+   * event if exists for each execution of the step, null if cannot find the step
    */
-  async getStepExecution(workflowExecutionArn, stepName) {
+  async getStepExecutions(workflowExecutionArn, stepName) {
     const executionHistory = (
       await sfn().getExecutionHistory({ executionArn: workflowExecutionArn }).promise()
     );
@@ -64,25 +89,7 @@ class SfnStep {
       return null;
     }
 
-    // use last event and discard the failed ones
-    // if it is activity get the last item otherwise the first
-    let scheduleEvent = scheduleEvents[0];
-    if (this.classType === 'activity') {
-      scheduleEvent = scheduleEvents[scheduleEvents.length - 1];
-    }
-
-    let startEvent = null;
-    let completeEvent = null;
-
-    if (scheduleEvent.type !== this.startFailedEvent) {
-      startEvent = this.getStartEvent(executionHistory, scheduleEvent, this);
-
-      if (startEvent !== null && startEvent.type !== this.startFailedEvent) {
-        completeEvent = this.getCompletionEvent(executionHistory, startEvent, this);
-      }
-    }
-
-    return { scheduleEvent, startEvent, completeEvent };
+    return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e));
   }
 
   /**
@@ -93,11 +100,19 @@ class SfnStep {
    * @returns {Object} object containing the payload, null if error
    */
   async getStepOutput(workflowExecutionArn, stepName) {
-    const stepExecution = await this.getStepExecution(workflowExecutionArn, stepName, this);
+    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
 
-    if (stepExecution === null) {
+    if (stepExecutions === null) {
       console.log(`Could not find step ${stepName} in execution.`);
       return null;
+    }
+
+    // Use the first passed execution, or last execution if none passed
+    let stepExecution = stepExecutions[stepExecutions.length - 1];
+    const passedExecutions = stepExecutions.filter((e) =>
+      e.completeEvent !== null && e.completeEvent.type === this.successEvent);
+    if (passedExecutions) {
+      stepExecution = passedExecutions[0];
     }
 
     if (stepExecution.completeEvent === null ||

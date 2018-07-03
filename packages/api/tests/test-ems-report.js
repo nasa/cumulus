@@ -7,6 +7,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
 const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
 const { Search } = require('../es/search');
+const { deleteAliases } = require('../lib/testUtils');
 const { emsMappings, generateReports } = require('../lib/ems');
 
 const granule = {
@@ -82,6 +83,8 @@ process.env.ems_provider = 'testEmsProvider';
 let esClient;
 
 test.before(async () => {
+  await deleteAliases();
+
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
   esClient = await Search.es();
