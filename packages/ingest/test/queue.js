@@ -38,7 +38,7 @@ test.afterEach(async(t) => {
   ]);
 });
 
-test('the queue receives a correctly formatted workflow message without a PDR', async(t) => {
+test.serial('the queue receives a correctly formatted workflow message without a PDR', async(t) => {
   const granule = { granuleId: '1', files: [] };
   const { queueUrl } = t.context;
   const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
@@ -74,7 +74,7 @@ test('the queue receives a correctly formatted workflow message without a PDR', 
     });
 });
 
-test('the queue receives a correctly formatted workflow message with a PDR', async (t) => {
+test.serial('the queue receives a correctly formatted workflow message with a PDR', async (t) => {
   const granule = { granuleId: '1', files: [] };
   const { queueUrl } = t.context;
   const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
