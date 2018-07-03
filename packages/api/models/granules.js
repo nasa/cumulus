@@ -61,7 +61,7 @@ class Granule extends Manager {
    * start the re-ingest of a given granule object
    *
    * @param {Object} g - the granule object
-   * @returns {Promise} an object showing the start of the re-ingest
+   * @returns {Promise<Object>} an object showing the start of the re-ingest
    */
   async reingest(g) {
     await this.applyWorkflow(g, 'IngestGranule', 'input');
@@ -80,15 +80,25 @@ class Granule extends Manager {
    * @param {string} messageSource - 'input' or 'output' from previous execution
    * @param {Object} metaOverride - overrides the meta of the new execution
    * @param {Object} payloadOverride - overrides the payload of the new execution
-   * @returns {Promise} an object showing the start of the workflow execution
+   * @returns {Promise<Object>} an object showing the start of the workflow execution
    */
   async applyWorkflow(g, workflow, messageSource, metaOverride, payloadOverride) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
-    // get the payload of the original execution
-    const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
-    const originalMessage = JSON.parse(status.execution[messageSource]);
-
+    try {
+      // get the payload of the original execution
+      const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
+      const originalMessage = JSON.parse(status.execution[messageSource]);
+    }
+    catch (e) {
+      log.error(g.granuleId, e);
+      return {
+        granuleId: g.granuleId,
+        action: `applyWorkflow ${workflow}`,
+        status: 'FAILED',
+        error: e.message
+      }
+    }
     const payload = await Rule.buildPayload({
       workflow,
       provider: g.provider,
