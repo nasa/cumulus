@@ -5,7 +5,7 @@ const { S3 } = require('aws-sdk');
 /**
  * Receives event trigger from SNS and forwards event message to S3 bucket
  *
- * @param {*} event - from SNS
+ * @param {Object} event - from SNS
  * @returns {Promise} confirmation of added message
  */
 async function handler(event) {
