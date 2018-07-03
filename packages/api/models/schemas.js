@@ -237,8 +237,23 @@ module.exports.rule = {
       title: 'Provider ID',
       type: 'string'
     },
+    collection: {
+      title: 'Collection Name and Version',
+      type: 'object',
+      properties: {
+        name: {
+          title: 'Collection Name',
+          type: 'string'
+        },
+        version: {
+          title: 'Collection Version',
+          type: 'string'
+        }
+      },
+      required: ['name', 'version']
+    },
     meta: {
-      title: 'Optional MetaData for the Rule',
+      title: 'Optional MetaData about the Rule',
       type: 'object'
     },
     rule: {

@@ -106,7 +106,7 @@ default:
     #           - InRegionS3PolicyLambdaFunction
     #           - Arn
 
-  urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
+  urs_url: https://urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
     # if not specified the value of the apigateway backend endpoint is used
     # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
@@ -202,7 +202,6 @@ cum-test:
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
   
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'

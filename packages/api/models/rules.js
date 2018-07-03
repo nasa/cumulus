@@ -108,11 +108,14 @@ class Rule extends Manager {
 
     if (item.collection) payload.collection = item.collection;
     if (item.rule) payload.rule = item;
+
+    console.log(`**buildPayload: ${JSON.stringify(payload)}`);
     return payload;
   }
 
   static async invoke(item) {
     const payload = await Rule.buildPayload(item);
+    console.log(`**invoke ${JSON.stringify(payload)}`);
     await invoke(process.env.invoke, payload);
   }
 

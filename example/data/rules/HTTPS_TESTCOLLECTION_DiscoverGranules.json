@@ -7,6 +7,10 @@
 	"tags": ["HTTPS"],
 	"workflow": "DiscoverGranules",
 	"provider": "https_provider",
+	"collection": {
+		"name": "GHRSST-SST___001",
+		"version": "001"
+	},
 	"context": {
     "provider_path": "granules/fake_granules/",
 		"url_path": "/GHRSST-SST"
