@@ -28,7 +28,7 @@ test.afterEach.always(async (t) => {
   await deleteBucket(t.context.bucket);
 });
 
-test('empty bucket results in empty granules array', async (t) => {
+test.serial('empty bucket results in empty granules array', async (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.bucket = t.context.bucket;
 
@@ -38,7 +38,7 @@ test('empty bucket results in empty granules array', async (t) => {
   t.true(output.granules.length === 0);
 });
 
-test('filter using file_type', async (t) => {
+test.serial('filter using file_type', async (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.bucket = t.context.bucket;
   newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
@@ -58,7 +58,7 @@ test('filter using file_type', async (t) => {
   t.true(output.granules.length === 1);
 });
 
-test('use file_prefix', async (t) => {
+test.serial('use file_prefix', async (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.bucket = t.context.bucket;
   newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
@@ -80,7 +80,7 @@ test('use file_prefix', async (t) => {
   t.true(output.granules.length === 1);
 });
 
-test('file_type and file_prefix', async (t) => {
+test.serial('file_type and file_prefix', async (t) => {
   const newPayload = Object.assign({}, input);
   newPayload.config.bucket = t.context.bucket;
   newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
