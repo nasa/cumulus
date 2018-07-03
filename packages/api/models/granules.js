@@ -89,6 +89,26 @@ class Granule extends Manager {
       // get the payload of the original execution
       const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
       const originalMessage = JSON.parse(status.execution[messageSource]);
+    
+      const payload = await Rule.buildPayload({
+        workflow,
+        provider: g.provider,
+        collection: {
+          name,
+          version
+        },
+        meta: metaOverride || originalMessage.meta,
+        payload: payloadOverride || originalMessage.payload
+      });
+
+      await this.updateStatus({ granuleId: g.granuleId }, 'running');
+
+      await aws.invoke(process.env.invoke, payload);
+      return {
+        granuleId: g.granuleId,
+        action: `applyWorkflow ${workflow}`,
+        status: 'SUCCESS'
+      };
     }
     catch (e) {
       log.error(g.granuleId, e);
@@ -99,25 +119,6 @@ class Granule extends Manager {
         error: e.message
       }
     }
-    const payload = await Rule.buildPayload({
-      workflow,
-      provider: g.provider,
-      collection: {
-        name,
-        version
-      },
-      meta: metaOverride || originalMessage.meta,
-      payload: payloadOverride || originalMessage.payload
-    });
-
-    await this.updateStatus({ granuleId: g.granuleId }, 'running');
-
-    await aws.invoke(process.env.invoke, payload);
-    return {
-      granuleId: g.granuleId,
-      action: `applyWorkflow ${workflow}`,
-      status: 'SUCCESS'
-    };
   }
 
   /**
