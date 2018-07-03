@@ -284,35 +284,39 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   await aws.recursivelyDeleteS3Bucket(buckets.public.name);
 });
 
-test('move a granule', async (t) => {
+test('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.internal;
-  const secondBucket = randomString();
-
+  const [secondBucket, thirdBucket] = [randomString(), randomString()];
   await aws.s3().createBucket({ Bucket: secondBucket }).promise();
+  await aws.s3().createBucket({ Bucket: thirdBucket }).promise();
+
   const newGranule = fakeGranuleFactory();
 
   newGranule.files = [
     {
       bucket,
       name: `${newGranule.granuleId}.txt`,
-      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.txt`
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
+      filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
     },
     {
       bucket,
       name: `${newGranule.granuleId}.md`,
-      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.md`
+      filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.md`
     },
     {
       bucket: secondBucket,
       name: `${newGranule.granuleId}.jpg`,
-      filepath: `${process.env.stackName}/granules_ingested/${newGranule.granuleId}.jpg`
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`,
+      filename: `s3://${secondBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`
     }
   ];
 
   await g.create(newGranule);
 
   await Promise.all(newGranule.files.map(async (file) => {
-    aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise();
+    const filepath = file.filepath || aws.parseS3Uri(file.filename).Key;
+    aws.s3().putObject({ Bucket: file.bucket, Key: filepath, Body: 'test data' }).promise();
   }));
 
   const destinationFilepath = `${process.env.stackName}/granules_moved`;
@@ -324,12 +328,12 @@ test('move a granule', async (t) => {
     },
     {
       regex: '.*.md$',
-      bucket,
+      bucket: thirdBucket,
       filepath: destinationFilepath
     },
     {
       regex: '.*.jpg$',
-      bucket: secondBucket,
+      bucket,
       filepath: destinationFilepath
     }
   ];
@@ -349,23 +353,33 @@ test('move a granule', async (t) => {
     const body = JSON.parse(response.body);
     t.is(body.status, 'SUCCESS');
     t.is(body.action, 'move');
+  });
 
-    await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
-      t.is(list.Contents.length, 2);
-
-      list.Contents.forEach((item) => {
-        t.is(item.Key.indexOf(destinationFilepath), 0);
-      });
-    });
-
-    return aws.s3().listObjects({ Bucket: secondBucket, Prefix: destinationFilepath }).promise().then((list) => {
-      t.is(list.Contents.length, 1);
-
-      list.Contents.forEach((item) => {
-        t.is(item.Key.indexOf(destinationFilepath), 0);
-      });
+  await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
+    t.is(list.Contents.length, 2);
+    list.Contents.forEach((item) => {
+      t.is(item.Key.indexOf(destinationFilepath), 0);
     });
   });
+
+  await aws.s3().listObjects({ Bucket: thirdBucket, Prefix: destinationFilepath }).promise().then((list) => {
+    t.is(list.Contents.length, 1);
+    list.Contents.forEach((item) => {
+      t.is(item.Key.indexOf(destinationFilepath), 0);
+    });
+  });
+
+  // check the granule in table is updated
+  const updatedGranule = await g.get({ granuleId: newGranule.granuleId });
+  updatedGranule.files.forEach((file) => {
+    t.true(file.filepath.startsWith(destinationFilepath));
+    const destination = destinations.find((dest) => file.name.match(dest.regex));
+    t.is(destination.bucket, file.bucket);
+    t.true(file.filename.startsWith(aws.buildS3Uri(destination.bucket, destinationFilepath)));
+  });
+
+  await aws.recursivelyDeleteS3Bucket(secondBucket);
+  await aws.recursivelyDeleteS3Bucket(thirdBucket);
 });
 
 test('move a file and update metadata', async (t) => {
@@ -393,7 +407,8 @@ test('move a file and update metadata', async (t) => {
     {
       bucket,
       name: `${newGranule.granuleId}.txt`,
-      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
+      filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
     },
     {
       bucket: buckets.public.name,
@@ -406,9 +421,10 @@ test('move a file and update metadata', async (t) => {
   await g.create(newGranule);
 
   await Promise.all(newGranule.files.map((file) => {
-    return (file.name === `${newGranule.granuleId}.txt`) ?
-      aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise() :
-      aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata }).promise();
+    if (file.name === `${newGranule.granuleId}.txt`) {
+      return aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise();
+    }
+    return aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata }).promise();
   }));
 
   const destinationFilepath = `${process.env.stackName}/moved_granules`;
@@ -452,6 +468,7 @@ test('move a file and update metadata', async (t) => {
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
   const file = await aws.s3().getObject({ Bucket: buckets.public.name, Key: newGranule.files[1].filepath }).promise();
+  await aws.recursivelyDeleteS3Bucket(buckets.public.name);
   return new Promise((resolve, reject) => {
     xml2js.parseString(file.Body, xmlParseOptions, (err, data) => {
       if (err) return reject(err);

@@ -97,6 +97,7 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+          protocol: lambda
     AmazonIpSpaceChanged:
       arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
       subscriptions:
@@ -106,6 +107,16 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+          protocol: lambda
+    sftracker:
+      subscriptions:
+        2ndlambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - SnsS3TestLambdaFunction
+              - Arn
+          protocol: lambda
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -163,6 +174,7 @@ lf:
 
 kk-uat-deployment:
   stackName: kk-test-uat
+  prefix: kk-test-uat
   stackNameNoDash: KkTestUat
 
   iams:
@@ -187,6 +199,9 @@ mth-2:
     protected:
       name: '{{prefix}}-protected'
       type: protected
+    protected-2:
+      name: '{{prefix}}-protected'
+      type: protected
     public:
       name: '{{prefix}}-public'
       type: public
@@ -203,3 +218,19 @@ mth-2:
 jl:
   prefix: jl-test
   stackNameNoDash: JlTestIntegration
+  buckets:
+    private:
+      name: jl-test-integration-private
+      type: private
+    protected:
+      name: jl-test-integration-protected
+      type: protected
+    public:
+      name: jl-test-integration-public
+      type: public
+    protected-2:
+      name: jl-test-integration-protected-2
+      type: protected
+    shared-2:
+      name: rvl-internal
+      type: shared

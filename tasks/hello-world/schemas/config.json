@@ -1,0 +1,15 @@
+{
+  "title": "HelloWorldConfig",
+  "description": "Describes the configuration the hello-world task",
+  "type": "object",
+  "properties": {
+    "fail": {
+      "type": "boolean",
+      "description": "true to throw an error for the task, failing the task"
+    },
+    "passOnRetry": {
+      "type": "boolean", 
+      "description": "If configured to fail, true to pass (not throw an error) when retried"
+    }
+  }
+}

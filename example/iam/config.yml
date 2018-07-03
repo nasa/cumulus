@@ -50,6 +50,22 @@ lf:
 
 jl:
   prefix: jl-test-integration
+  buckets:
+    private:
+      name: jl-test-integration-private
+      type: private
+    protected:
+      name: jl-test-integration-protected
+      type: protected
+    public:
+      name: jl-test-integration-public
+      type: public
+    protected-2:
+      name: jl-test-integration-protected-2
+      type: protected
+    shared-2:
+      name: rvl-internal
+      type: shared
 
 kk-deploy-uat:
   prefix: kk-test-uat
