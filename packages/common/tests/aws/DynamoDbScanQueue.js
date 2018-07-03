@@ -32,7 +32,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always((t) => dynamodb().deleteTable({ TableName: t.context.tableName }).promise());
 
-test('DynamoDbScanQueue.peek() returns the next item but does not remove it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('DynamoDbScanQueue.peek() returns the next item but does not remove it from the queue', async (t) => { // eslint-disable-line max-len
   const bucket = randomString();
   const key = randomString();
 
@@ -50,7 +50,7 @@ test('DynamoDbScanQueue.peek() returns the next item but does not remove it from
   t.is((await queue.peek()).bucket.S, bucket);
 });
 
-test('DynamoDbScanQueue.shift() returns the next object and removes it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('DynamoDbScanQueue.shift() returns the next object and removes it from the queue', async (t) => { // eslint-disable-line max-len
   const bucket = randomString();
   const key = randomString();
 
@@ -69,7 +69,7 @@ test('DynamoDbScanQueue.shift() returns the next object and removes it from the 
   t.is(await queue.peek(), null);
 });
 
-test('DynamoDbScanQueue can handle paging', async (t) => {
+test.serial('DynamoDbScanQueue can handle paging', async (t) => {
   await Promise.all(range(11).map(() =>
     dynamodb().putItem({
       TableName: t.context.tableName,
