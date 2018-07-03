@@ -134,7 +134,7 @@ test.afterEach.always((t) =>
       aws.dynamodb().deleteTable({ TableName }).promise())
   ])));
 
-test('A valid reconciliation report is generated for no buckets', async (t) => {
+test.serial('A valid reconciliation report is generated for no buckets', async (t) => {
   // Write the buckets config to S3
   await storeBucketsConfigToS3(
     [],
@@ -162,7 +162,7 @@ test('A valid reconciliation report is generated for no buckets', async (t) => {
   t.true(reportStartTime <= reportEndTime);
 });
 
-test('A valid reconciliation report is generated when everything is in sync', async (t) => {
+test.serial('A valid reconciliation report is generated when everything is in sync', async (t) => {
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -208,7 +208,7 @@ test('A valid reconciliation report is generated when everything is in sync', as
   t.true(reportStartTime <= reportEndTime);
 });
 
-test('A valid reconciliation report is generated when there are extra S3 objects', async (t) => {
+test.serial('A valid reconciliation report is generated when there are extra S3 objects', async (t) => {
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -262,7 +262,7 @@ test('A valid reconciliation report is generated when there are extra S3 objects
   t.true(reportStartTime <= reportEndTime);
 });
 
-test('A valid reconciliation report is generated when there are extra DynamoDB objects', async (t) => {
+test.serial('A valid reconciliation report is generated when there are extra DynamoDB objects', async (t) => {
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -319,7 +319,7 @@ test('A valid reconciliation report is generated when there are extra DynamoDB o
   t.true(reportStartTime <= reportEndTime);
 });
 
-test('A valid reconciliation report is generated when there are both extra DynamoDB and extra S3 files', async (t) => {
+test.serial('A valid reconciliation report is generated when there are both extra DynamoDB and extra S3 files', async (t) => {
   const dataBuckets = range(2).map(() => randomString());
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
