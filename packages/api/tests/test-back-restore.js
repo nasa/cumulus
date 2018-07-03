@@ -12,65 +12,66 @@ const restore = require('../bin/restore');
 const backup = require('../bin/backup');
 
 let tempFolder;
+const tableName = randomString();
 
 /**
  * small helper for populating DynamoDB with fake records
  *
- * @param {string} tableName - DynamoDB table anme
+ * @param {string} table - DynamoDB table anme
  * @param {integer} limit - number of granule records to generate
- * @returns {Promise<Object>} an array of DynamoDB responses
+ * @returns {Promise<Array>} an array of objects with granuleIds
  */
-function populateDynamoDB(tableName, limit) {
+async function populateDynamoDB(table, limit) {
   const granules = [];
+  const granuleIds = [];
   const model = new models.Granule();
-  model.tableName = tableName;
+  model.tableName = table;
 
   for (let i = 0; i < limit; i += 1) {
-    granules.push(fakeGranuleFactory());
+    const g = fakeGranuleFactory();
+    granules.push(g);
+    granuleIds.push({ granuleId: g.granuleId });
   }
 
   const chunked = chunk(granules, 25);
-  return Promise.all(chunked.map((c) => model.batchWrite(null, c)));
+  await Promise.all(chunked.map((c) => model.batchWrite(null, c)));
+  return granuleIds;
 }
 
 test.before(async () => {
   tempFolder = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
+  await models.Manager.createTable(tableName, { name: 'granuleId', type: 'S' });
 });
 
 test.after.always(async () => {
   await fs.remove(tempFolder);
-});
-
-test.beforeEach(async (t) => {
-  t.context.tableName = randomString();
-  await models.Manager.createTable(t.context.tableName, { name: 'granuleId', type: 'S' });
-});
-
-test.afterEach.always(async (t) => {
-  await models.Manager.deleteTable(t.context.tableName);
+  await models.Manager.deleteTable(tableName);
 });
 
 test.serial('backup records from DynamoDB', async (t) => {
   const limit = 12;
-  const tempBackupFile = path.join(tempFolder, `${t.context.tableName}.json`);
+  const tempBackupFile = path.join(tempFolder, `${tableName}.json`);
 
-  await populateDynamoDB(t.context.tableName, limit);
+  const granuleIds = await populateDynamoDB(tableName, limit);
 
-  process.env.GranulesTable = t.context.tableName;
+  process.env.GranulesTable = tableName;
   const gModel = new models.Granule();
   const resp = await gModel.scan(null, null, 0, 'COUNT');
   t.is(resp.Count, limit);
 
-  await backup(t.context.tableName, 'us-east-1', tempFolder);
+  await backup(tableName, 'us-east-1', tempFolder);
 
   const stats = fs.statSync(tempBackupFile);
   t.truthy(stats);
+
+  // delete records
+  await gModel.batchWrite(granuleIds);
 });
 
 test.serial('restore records to DynamoDB', async (t) => {
   const limit = 55;
   const granuleIds = [];
-  const tempRestoreFile = path.join(tempFolder, `${t.context.tableName}.json`);
+  const tempRestoreFile = path.join(tempFolder, `restore_${tableName}.json`);
 
   // create a backup file with 200 records
   let fileContent = '';
@@ -81,11 +82,11 @@ test.serial('restore records to DynamoDB', async (t) => {
   }
   fs.writeFileSync(tempRestoreFile, fileContent);
 
-  await restore(tempRestoreFile, t.context.tableName, 2);
+  await restore(tempRestoreFile, tableName, 2);
 
   // count the records
   const gModel = new models.Manager();
-  gModel.tableName = t.context.tableName;
+  gModel.tableName = tableName;
   const resp = await gModel.scan(null, null, 0, 'COUNT');
   t.is(resp.Count, limit);
 });

@@ -35,7 +35,7 @@ test.afterEach.always(async (t) => {
   await deleteBucket(t.context.stagingBucket);
 });
 
-test('should move files to final location', async (t) => {
+test.serial('should move files to final location', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal = {
@@ -75,7 +75,7 @@ test('should move files to final location', async (t) => {
   t.true(check);
 });
 
-test('should update filenames with specific url_path', async (t) => {
+test.serial('should update filenames with specific url_path', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   const newFilename1 =
     `s3://${t.context.endBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
@@ -114,7 +114,7 @@ test('should update filenames with specific url_path', async (t) => {
   t.is(files[1].filename, newFilename2);
 });
 
-test('should update filenames with metadata fields', async (t) => {
+test.serial('should update filenames with metadata fields', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.config.collection.url_path =
     'example/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/';
