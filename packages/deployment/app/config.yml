@@ -31,16 +31,16 @@ default:
   system_bucket: '{{buckets.internal.name}}'
 
   buckets:
-    internal: 
+    internal:
       name: change-me
       type: internal
-    private: 
+    private:
       name: change-me
       type: private
-    protected: 
+    protected:
       name: change-me
       type: protected
-    public: 
+    public:
       name: change-me
       type: public
 
@@ -96,6 +96,19 @@ default:
   # set to true to activate pointInTime on all tables
   enablePointInTime: false
 
+  AutoScalingPolicyConfiguration:
+    targetValue: 30
+    scaleInCooldown: 0
+    scaleOutCooldown: 0
+  GranulesTable:
+    enableAutoScaling: true
+  FilesTable:
+    enableAutoScaling: true
+    ReadMinCapacity: 10
+    ReadMaxCapacity: 20
+    WriteMinCapacity: 10
+    WriteMaxCapacity: 20
+
   sns:
     # this topic receives all the updates from
     # step functions
@@ -107,9 +120,10 @@ default:
             array:
               - sns2elasticsearchLambdaFunction
               - Arn
+          protocol: lambda
 
   apis:
-    - name: download 
+    - name: download
     - name: backend
 
   sqs:
