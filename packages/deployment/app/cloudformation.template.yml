@@ -158,7 +158,7 @@ Resources:
       MaxCapacity: 10
     {{/if}}
       ResourceId: !Sub table/{{../../stackName}}-{{@key}}
-      RoleARN: {{this.autoScaling.roleArn}}
+      RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
   {{@key}}TableReadScalingPolicy:
@@ -190,7 +190,7 @@ Resources:
       MaxCapacity: 2
     {{/if}}
       ResourceId: !Sub table/{{../../stackName}}-{{@key}}
-      RoleARN: {{this.autoScaling.roleArn}}
+      RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:WriteCapacityUnits"
       ServiceNamespace: dynamodb
   {{@key}}TableWriteScalingPolicy:
