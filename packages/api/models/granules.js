@@ -121,6 +121,7 @@ class Granule extends Manager {
         error: e.message
       }
     }
+  }
 
   /**   
    * Move a granule's files to destination locations specified
