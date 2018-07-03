@@ -95,70 +95,19 @@ default:
 
   # set to true to activate pointInTime on all tables
   enablePointInTime: false
-  tables:
-    # REVIEW: Autoscaling policy configuration is the same for all tables, to
-    # reduce verbosity of this configuration, but it could easily be set per-
-    # table.
-    autoScalingPolicyConfiguration:
-      targetValue: 30
-      scaleInCooldown: 0
-      scaleOutCooldown: 0
-    collections:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 1
-        max: 2
-    providers:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 1
-        max: 2
-    rules:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 1
-        max: 2
-    users:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 1
-        max: 2
-    granules:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 10
-        max: 20
-    pdrs:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 2
-        max: 4
-    executions:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 10
-        max: 20
-    files:
-      readCapacityUnits:
-        min: 5
-        max: 10      
-      writeCapacityUnits:
-        min: 10
-        max: 20
+
+  AutoScalingPolicyConfiguration:
+    targetValue: 30
+    scaleInCooldown: 0
+    scaleOutCooldown: 0
+  GranulesTable:
+    enableAutoScaling: true
+  FilesTable:
+    enableAutoScaling: true
+    ReadMinCapacity: 10
+    ReadMaxCapacity: 20
+    WriteMinCapacity: 10
+    WriteMaxCapacity: 20
 
   sns:
     # this topic receives all the updates from

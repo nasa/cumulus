@@ -141,14 +141,23 @@ Resources:
   #################################################
 
 {{# each dynamos}}
+  {{#with (lookup ../this @key)}}
   {{#if this.enableAutoScaling}}
   ### Read scaling policy
   {{@key}}ReadCapacityScalableTarget:
     Type: "AWS::ApplicationAutoScaling::ScalableTarget"
     Properties:
-      MaxCapacity: {{this.autoScaling.readCapacityUnits.max}}
-      MinCapacity: {{this.autoScaling.readCapacityUnits.min}}
-      ResourceId: !Sub table/{{../stackName}}-{{@key}}
+    {{#if this.ReadMinCapacity}}
+      MinCapacity: {{ this.ReadMinCapacity }}
+    {{else}}
+      MinCapacity: 5
+    {{/if}}
+    {{#if this.ReadMaxCapacity}}
+      MaxCapacity: {{ this.ReadMaxCapacity }}
+    {{else}}
+      MaxCapacity: 10
+    {{/if}}
+      ResourceId: !Sub table/{{../../stackName}}-{{@key}}
       RoleARN: {{this.autoScaling.roleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
@@ -160,9 +169,9 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}ReadCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{this.autoScaling.policyConfiguration.targetValue}}
-        ScaleInCooldown: {{this.autoScaling.policyConfiguration.scaleInCooldown}}
-        ScaleOutCooldown: {{this.autoScaling.policyConfiguration.scaleOutCooldown}}
+        TargetValue: {{ ../../this.AutoScalingPolicyConfiguration.targetValue }}
+        ScaleInCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleInCooldown }}
+        ScaleOutCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleOutCooldown }}
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
 
@@ -170,9 +179,17 @@ Resources:
   {{@key}}WriteCapacityScalableTarget:
     Type: "AWS::ApplicationAutoScaling::ScalableTarget"
     Properties:
-      MaxCapacity: {{this.autoScaling.writeCapacityUnits.max}}
-      MinCapacity: {{this.autoScaling.writeCapacityUnits.min}}
-      ResourceId: !Sub table/{{../stackName}}-{{@key}}
+    {{#if this.WriteMinCapacity}}
+      MinCapacity: {{ this.WriteMinCapacity }}
+    {{else}}
+      MinCapacity: 1
+    {{/if}}
+    {{#if this.WriteMaxCapacity}}
+      MaxCapacity: {{ this.WriteMaxCapacity }}
+    {{else}}
+      MaxCapacity: 2
+    {{/if}}
+      ResourceId: !Sub table/{{../../stackName}}-{{@key}}
       RoleARN: {{this.autoScaling.roleArn}}
       ScalableDimension: "dynamodb:table:WriteCapacityUnits"
       ServiceNamespace: dynamodb
@@ -184,13 +201,15 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}WriteCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{this.autoScaling.policyConfiguration.targetValue}}
-        ScaleInCooldown: {{this.autoScaling.policyConfiguration.scaleInCooldown}}
-        ScaleOutCooldown: {{this.autoScaling.policyConfiguration.scaleOutCooldown}}
+        TargetValue: {{ ../../this.AutoScalingPolicyConfiguration.targetValue }}
+        ScaleInCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleInCooldown }}
+        ScaleOutCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleOutCooldown }}
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBWriteCapacityUtilization
   {{/if}}
+  {{/with}}
 {{/each}}
+
   #################################################
   # Cumulus DynamoDB Auto Scaling END
   #################################################
