@@ -107,6 +107,7 @@ default:
             array:
               - sns2elasticsearchLambdaFunction
               - Arn
+          protocol: lambda
 
   apis:
     - name: download 
