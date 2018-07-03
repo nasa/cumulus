@@ -26,7 +26,7 @@ test.afterEach((t) =>
       if (err.code !== 'NoSuchBucket') throw err;
     }));
 
-test('get() fetches a collection config from S3', async (t) => {
+test.serial('get() fetches a collection config from S3', async (t) => {
   await s3().putObject({
     Bucket: t.context.bucket,
     Key: t.context.collectionConfigKey(t.context.dataType),
@@ -39,7 +39,7 @@ test('get() fetches a collection config from S3', async (t) => {
   t.deepEqual(fetchedCollectionConfig, t.context.collectionConfig);
 });
 
-test('get() does not hit S3 for a cached collection config', async (t) => {
+test.serial('get() does not hit S3 for a cached collection config', async (t) => {
   await s3().putObject({
     Bucket: t.context.bucket,
     Key: t.context.collectionConfigKey(t.context.dataType),
@@ -60,7 +60,7 @@ test('get() does not hit S3 for a cached collection config', async (t) => {
   t.deepEqual(fetchedCollectionConfig, t.context.collectionConfig);
 });
 
-test('get() throws an exception if the collection config could not be found', async (t) => {
+test.serial('get() throws an exception if the collection config could not be found', async (t) => {
   const invalidDataType = randomString();
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
 
@@ -73,7 +73,7 @@ test('get() throws an exception if the collection config could not be found', as
   }
 });
 
-test('get() throws an exception if the bucket does not exist', async (t) => {
+test.serial('get() throws an exception if the bucket does not exist', async (t) => {
   const invalidBucket = randomString();
   const collectionConfigStore = new CollectionConfigStore(invalidBucket, t.context.stackName);
 
@@ -86,7 +86,7 @@ test('get() throws an exception if the bucket does not exist', async (t) => {
   }
 });
 
-test('put() stores a collection config to S3', async (t) => {
+test.serial('put() stores a collection config to S3', async (t) => {
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
   await collectionConfigStore.put(t.context.dataType, t.context.collectionConfig);
 
@@ -99,7 +99,7 @@ test('put() stores a collection config to S3', async (t) => {
   t.deepEqual(storedCollectionConfig, t.context.collectionConfig);
 });
 
-test('put() updates the cache with the new collection config', async (t) => {
+test.serial('put() updates the cache with the new collection config', async (t) => {
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
   await collectionConfigStore.put(t.context.dataType, t.context.collectionConfig);
 
@@ -112,7 +112,7 @@ test('put() updates the cache with the new collection config', async (t) => {
   t.deepEqual(fetchedCollectionConfig, t.context.collectionConfig);
 });
 
-test('delete() removes the collection config from S3', async (t) => {
+test.serial('delete() removes the collection config from S3', async (t) => {
   const bucket = t.context.bucket;
   const collectionConfigKey = t.context.collectionConfigKey(t.context.dataType);
 
@@ -131,7 +131,7 @@ test('delete() removes the collection config from S3', async (t) => {
   t.false(await s3ObjectExists({ Bucket: bucket, Key: collectionConfigKey }));
 });
 
-test('delete() the collection conf ig from the cache', async (t) => {
+test.serial('delete() the collection conf ig from the cache', async (t) => {
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
 
   // Store the collection config to S3, which will also cache it

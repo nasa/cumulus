@@ -56,7 +56,7 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test('The correct output is returned when PDRs are queued', async (t) => {
+test.serial('The correct output is returned when PDRs are queued', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [
     { name: randomString(), path: randomString() },
@@ -72,7 +72,7 @@ test('The correct output is returned when PDRs are queued', async (t) => {
   t.deepEqual(output, { pdrs_queued: 2 });
 });
 
-test('The correct output is returned when no PDRs are queued', async (t) => {
+test.serial('The correct output is returned when no PDRs are queued', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [];
 
@@ -85,7 +85,7 @@ test('The correct output is returned when no PDRs are queued', async (t) => {
   t.deepEqual(output, { pdrs_queued: 0 });
 });
 
-test('PDRs are added to the queue', async (t) => {
+test.serial('PDRs are added to the queue', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [
     { name: randomString(), path: randomString() },
@@ -110,7 +110,7 @@ test('PDRs are added to the queue', async (t) => {
   t.is(messages.length, 2);
 });
 
-test('The correct message is enqueued', async (t) => {
+test.serial('The correct message is enqueued', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [
     {
