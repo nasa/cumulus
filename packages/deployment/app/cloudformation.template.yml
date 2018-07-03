@@ -233,7 +233,7 @@ Resources:
       {{else}}
       Endpoint: {{this.endpoint}}
       {{/if}}
-      Protocol: {{@key}}
+      Protocol: {{this.protocol}}
       TopicArn: {{../this.arn}}
   {{/each}}
   {{else}}
@@ -252,12 +252,12 @@ Resources:
         {{else}}
         - Endpoint: {{this.endpoint}}
         {{/if}}
-          Protocol: {{@key}}
+          Protocol: {{this.protocol}}
       {{/each}}
   {{/if}}
 
   {{# each this.subscriptions}}
-  {{@../key}}SubscriptionPermission:
+  {{@../key}}{{@key}}SubscriptionPermission:
     Type: AWS::Lambda::Permission
     Properties:
     {{# if this.endpoint.function}}

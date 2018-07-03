@@ -14,7 +14,8 @@ const {
   fakeCollectionFactory,
   fakeGranuleFactory,
   fakeExecutionFactory,
-  fakeFilesFactory
+  fakeFilesFactory,
+  deleteAliases
 } = require('../lib/testUtils');
 
 let esClient;
@@ -93,6 +94,7 @@ async function getDyanmoDBStreamRecords(table) {
 }
 
 test.before(async () => {
+  await deleteAliases();
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   // create tables
