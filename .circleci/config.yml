@@ -87,7 +87,8 @@ jobs:
           environment:
             LOCALSTACK_HOST: localstack
           command: |
-            cat lerna.json| jq '.packages = ["packages/*"]' > lerna.json
+            cp lerna.json lerna.json.backup
+            cat lerna.json.backup | jq '.packages = ["packages/*"]' > lerna.json
             yarn test
 
       - run:
@@ -95,11 +96,11 @@ jobs:
           environment:
             LOCALSTACK_HOST: localstack
           command: |
-            cat lerna.json| jq '.packages = ["tasks/*"]' > lerna.json
+            cat lerna.json.backup | jq '.packages = ["tasks/*"]' > lerna.json
             yarn test
 
             # undo all changes to lerna.json
-            git reset --hard
+            git checkout -- lerna.json
 
       - run:
           name: Running End to End Tests
