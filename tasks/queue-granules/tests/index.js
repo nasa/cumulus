@@ -66,7 +66,7 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test('The correct output is returned when granules are queued without a PDR', async (t) => {
+test.serial('The correct output is returned when granules are queued without a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const collectionConfig = { foo: 'bar' };
   await t.context.collectionConfigStore.put(dataType, collectionConfig);
@@ -87,7 +87,7 @@ test('The correct output is returned when granules are queued without a PDR', as
   t.falsy(output.pdr);
 });
 
-test('The correct output is returned when granules are queued with a PDR', async (t) => {
+test.serial('The correct output is returned when granules are queued with a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const collectionConfig = { foo: 'bar' };
   await t.context.collectionConfigStore.put(dataType, collectionConfig);
@@ -109,7 +109,7 @@ test('The correct output is returned when granules are queued with a PDR', async
   t.deepEqual(output.pdr, event.input.pdr);
 });
 
-test('The correct output is returned when no granules are queued', async (t) => {
+test.serial('The correct output is returned when no granules are queued', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const collectionConfig = { foo: 'bar' };
   await t.context.collectionConfigStore.put(dataType, collectionConfig);
@@ -126,7 +126,7 @@ test('The correct output is returned when no granules are queued', async (t) => 
   t.is(output.running.length, 0);
 });
 
-test('Granules are added to the queue', async (t) => {
+test.serial('Granules are added to the queue', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const collectionConfig = { foo: 'bar' };
   await t.context.collectionConfigStore.put(dataType, collectionConfig);
@@ -155,7 +155,7 @@ test('Granules are added to the queue', async (t) => {
   t.is(messages.length, 2);
 });
 
-test('The correct message is enqueued without a PDR', async (t) => {
+test.serial('The correct message is enqueued without a PDR', async (t) => {
   const event = t.context.event;
 
   const granule1 = {
@@ -250,7 +250,7 @@ test('The correct message is enqueued without a PDR', async (t) => {
   );
 });
 
-test('The correct message is enqueued with a PDR', async (t) => {
+test.serial('The correct message is enqueued with a PDR', async (t) => {
   const event = t.context.event;
 
   const pdrName = `pdr-name-${randomString()}`;
