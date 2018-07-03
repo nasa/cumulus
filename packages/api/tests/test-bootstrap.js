@@ -5,6 +5,7 @@ const bootstrap = require('../lambdas/bootstrap');
 const { randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { bootstrapDynamoDbTables } = require('../lambdas/bootstrap');
+const { deleteAliases } = require('../lib/testUtils');
 const models = require('../models');
 const mappings = require('../models/mappings.json');
 const testMappings = require('./data/testEsMappings.json');
@@ -13,9 +14,10 @@ const mappingsSubset = require('./data/testEsMappingsSubset.json');
 let esClient;
 const tableName = randomString();
 
-test.skip.before(async () => {
+test.before(async () => {
+  await deleteAliases();
   // create collections table
-  await models.Manager.createTable(tableName, { name: 'someIndex', type: 'S' });
+  // await models.Manager.createTable(tableName, { name: 'someIndex', type: 'S' });
 });
 
 // Skipping this test for because LocalStack version 0.8.6 does not support pointInTime

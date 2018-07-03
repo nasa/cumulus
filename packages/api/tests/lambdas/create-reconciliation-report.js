@@ -33,7 +33,7 @@ function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
   });
   return aws.s3().putObject({
     Bucket: systemBucket,
-    Key: `${stackName}/workflow/buckets.json`,
+    Key: `${stackName}/workflows/buckets.json`,
     Body: JSON.stringify(bucketsConfig)
   }).promise();
 }
