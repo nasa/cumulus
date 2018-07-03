@@ -155,7 +155,7 @@ Resources:
       {{else}}
       Endpoint: {{this.endpoint}}
       {{/if}}
-      Protocol: lambda
+      Protocol: {{this.protocol}}
       TopicArn: {{../this.arn}}
   {{/each}}
   {{else}}
@@ -174,7 +174,7 @@ Resources:
         {{else}}
         - Endpoint: {{this.endpoint}}
         {{/if}}
-          Protocol: lambda
+          Protocol: {{this.protocol}}
       {{/each}}
   {{/if}}
 
