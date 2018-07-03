@@ -21,7 +21,7 @@ const filesTableName = (stackName) => `${stackName}-FilesTable`;
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketConfigs = await s3().getObject({
     Bucket: systemBucket,
-    Key: `${stackName}/workflow/buckets.json`
+    Key: `${stackName}/workflows/buckets.json`
   }).promise()
     .then((response) => response.Body.toString())
     .then((bucketsConfigString) => JSON.parse(bucketsConfigString))

@@ -83,10 +83,24 @@ jobs:
             - ./tasks/sf-sns-report/node_modules
 
       - run:
-          name: Running Tests
+          name: Running Packages Tests
           environment:
             LOCALSTACK_HOST: localstack
-          command: yarn test
+          command: |
+            cp lerna.json lerna.json.backup
+            cat lerna.json.backup | jq '.packages = ["packages/*"]' > lerna.json
+            yarn test
+
+      - run:
+          name: Running Tasks Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+          command: |
+            cat lerna.json.backup | jq '.packages = ["tasks/*"]' > lerna.json
+            yarn test
+
+            # undo all changes to lerna.json
+            git checkout -- lerna.json
 
       - run:
           name: Running End to End Tests

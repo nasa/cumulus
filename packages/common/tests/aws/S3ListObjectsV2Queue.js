@@ -16,7 +16,7 @@ test.beforeEach((t) => {
 
 test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucketName));
 
-test('S3ListObjectsV2Queue.peek() returns the next object but does not remove it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not remove it from the queue', async (t) => { // eslint-disable-line max-len
   const key = randomString();
   await s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
 
@@ -26,7 +26,7 @@ test('S3ListObjectsV2Queue.peek() returns the next object but does not remove it
   t.is((await queue.peek()).Key, key);
 });
 
-test('S3ListObjectsV2Queue.shift() returns the next object and removes it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('S3ListObjectsV2Queue.shift() returns the next object and removes it from the queue', async (t) => { // eslint-disable-line max-len
   const key = randomString();
   await s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
 
@@ -37,7 +37,7 @@ test('S3ListObjectsV2Queue.shift() returns the next object and removes it from t
   t.is(await queue.peek(), null);
 });
 
-test('S3ListObjectsV2Queue can handle paging', async (t) => {
+test.serial('S3ListObjectsV2Queue can handle paging', async (t) => {
   await Promise.all(range(11).map(() =>
     s3().putObject({
       Bucket: t.context.bucketName,
