@@ -4,8 +4,7 @@ const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
 const {
-  models: { Granule, Execution },
-  testUtils: apiTestUtils
+  models: { Execution, Granule }
 } = require('@cumulus/api');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const {
@@ -14,8 +13,10 @@ const {
   conceptExists,
   getOnlineResources
 } = require('@cumulus/integration-tests');
+const apiTestUtils = require('../helpers/apiTestUtils');
 
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
+
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
