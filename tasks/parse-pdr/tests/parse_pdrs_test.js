@@ -49,7 +49,7 @@ test.afterEach(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.payload.config.bucket);
 });
 
-test('parse PDR from FTP endpoint', async (t) => {
+test.serial('parse PDR from FTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -101,7 +101,7 @@ test('parse PDR from FTP endpoint', async (t) => {
   }
 });
 
-test('parse PDR from HTTP endpoint', async (t) => {
+test.serial('parse PDR from HTTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
@@ -150,7 +150,7 @@ test('parse PDR from HTTP endpoint', async (t) => {
   }
 });
 
-test('parse PDR from SFTP endpoint', async (t) => {
+test.serial('parse PDR from SFTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
@@ -202,7 +202,7 @@ test('parse PDR from SFTP endpoint', async (t) => {
   }
 });
 
-test('Parse a PDR from an S3 provider', async (t) => {
+test.serial('Parse a PDR from an S3 provider', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
@@ -262,7 +262,7 @@ test('Parse a PDR from an S3 provider', async (t) => {
   }
 });
 
-test('Parse a PDR without a granuleIdFilter in the config', async (t) => {
+test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR
   await Promise.all([
     t.context.collectionConfigStore.put(
@@ -311,7 +311,7 @@ test('Parse a PDR without a granuleIdFilter in the config', async (t) => {
   }
 });
 
-test('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => {
+test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
@@ -342,7 +342,7 @@ test('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => {
   }
 })
 
-test('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
+test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 's3',
@@ -373,7 +373,7 @@ test('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
   }
 })
 
-test('Parse a PDR with a granuleIdFilter in the config', async (t) => {
+test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR
   await Promise.all([
     t.context.collectionConfigStore.put(
