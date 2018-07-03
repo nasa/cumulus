@@ -6,9 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- **CUMULUS-491** - Add granule reconciliation API endpoints.
-- **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
-    - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
 - **CUMULUS-681** - Add ingest-in-place action to granules endpoint
     - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
         - workflow - the workflow name
@@ -17,24 +14,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         - payloadOverride - overrides the payload of the new execution
 
 ### Fixed
-- **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
-    - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
-    - delete granule files in s3
-- **CUMULUS-398** - Fix not able to filter executions bu workflow
 
-## [v1.6.0] - 2018-06-06
+- **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
-### Please note: [Upgrade Instructions](https://github.com/cumulus-nasa/cumulus/wiki/Upgrading-to-Cumulus-1.6)
+## [v1.7.0] - 2018-07-02
 
-### Fixed
-- **CUMULUS-602** - Format all logs sent to Elastic Search.
-  - Extract cumulus log message and index it to Elastic Search.
-- **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
-  - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
+### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
 
 ### Added
-- **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
-- **CUMULUS-461** Support use of metadata date and other components in `url_path` property
+- **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
   - Add ability to write all records to S3
@@ -42,6 +30,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Add ability to upload records to DynamoDB
   - Add migration scripts for copying granule, pdr and execution records from ElasticSearch to DynamoDB
   - Add IAM support for batchWrite on dynamoDB
+- **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
+    - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support. 
+    - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
+
+### Fixed
+- **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
+    - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
+    - delete granule files in s3
+- **CUMULUS-398** - Fix not able to filter executions bu workflow
+- **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
+  - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
+
+### Changed
+- **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
+
+## [v1.6.0] - 2018-06-06
+
+### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.6.0.html)
+
+### Fixed
+- **CUMULUS-602** - Format all logs sent to Elastic Search.
+  - Extract cumulus log message and index it to Elastic Search.
+
+### Added
+- **CUMULUS-556** - add a mechanism for creating and running migration scripts on deployment.
+- **CUMULUS-461** Support use of metadata date and other components in `url_path` property
 
 ### Changed
 - **CUMULUS-477** Update bucket configuration to support multiple buckets of the same type:
@@ -338,7 +353,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.7.0...HEAD
+[v1.7.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.6.0...v1.7.0
 [v1.6.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.5...v1.6.0
 [v1.5.5]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.4...v1.5.5
 [v1.5.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.3...v1.5.4
