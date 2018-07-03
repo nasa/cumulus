@@ -96,6 +96,7 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+          protocol: lambda
     AmazonIpSpaceChanged:
       arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
       subscriptions:
@@ -105,8 +106,7 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
-    # this topic receives all the updates from
-    # step functions
+          protocol: lambda
     sftracker:
       subscriptions:
         2ndlambda:
@@ -115,6 +115,7 @@ default:
             array:
               - SnsS3TestLambdaFunction
               - Arn
+          protocol: lambda
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
