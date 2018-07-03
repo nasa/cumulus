@@ -102,7 +102,7 @@ test.serial(
       `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.local)}`
     );
 
-    fs.writeFileSync(existingLambdaLocal, 'hello');
+    await fs.writeFile(existingLambdaLocal, 'hello');
     t.is(fs.statSync(existingLambdaLocal).size, 5);
 
     const testLambda = new Lambda(t.context.config);
