@@ -4,10 +4,12 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const util = require('util');
 const utils = require('kes').utils;
+const yauzl = require('yauzl');
+
 const { Lambda } = require('kes');
 
-const yauzl = require('yauzl');
 
 /**
  * A sub-class of the Kes Lambda class that changes
@@ -31,41 +33,21 @@ class UpdatedLambda extends Lambda {
   }
 
   /**
-   * Makes use of yauzl.open's verification
-   * to validate the file referenced in lambda.local
-   * is a valid zip archive
-   *
-   * @param {Object} lambda - the lambda object
-   *
-   * @returns {Promise} promise resolution indicates success, will reject if
-   *                    zipfile cannot be opened
-   **/
-  validateZipFile(lambda) {
-    return new Promise((resolve, reject) => {
-      yauzl.open(lambda.local, (err, _zipfile) => {
-        if (err) {
-          reject(err);
-        }
-        resolve();
-      });
-    });
-  }
-
-  /**
    * Copies the source code of a given lambda function, zips it, calculates
    * the hash of the source code and updates the lambda object with
-   * the hash, local and remote locations of the code
+   * the hash, local and remote locations of the code.
    *
    * @param {Object} lambda - the lambda object
    * @returns {Promise} returns the updated lambda object
    */
+
   async zipLambda(lambda) {
     let msg = `Zipping ${lambda.local}`;
     // skip if the file with the same hash is zipped
     // and is a valid zip file
     if (fs.existsSync(lambda.local)) {
       try {
-        await this.validateZipFile(lambda);
+        await (util.promisify(yauzl.open))(lambda.local); // Verify yauzl can open the .zip file
         return Promise.resolve(lambda);
       }
       catch (e) {
@@ -80,7 +62,12 @@ class UpdatedLambda extends Lambda {
     }
 
     console.log(`${msg} for ${lambda.name}`);
-    return utils.zip(lambda.local, fileList).then(() => lambda).catch((e) => console.log(`Error zipping ${e}`));
+    return utils.zip(lambda.local, fileList)
+      .then(() => lambda)
+      .catch((e) => {
+        console.log(`Error zipping ${e}`);
+        throw (e);
+      });
   }
 
   /**
