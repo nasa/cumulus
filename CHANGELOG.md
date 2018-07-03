@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
         - workflow - the workflow name
         - messageSource - 'input' or 'output' from previous execution
-        - metaOverride - overrides the meta of the new execution
-        - payloadOverride - overrides the payload of the new execution
+        - metaOverride - overrides the meta of the new execution, accepts partial override
+        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 ### Fixed
 
