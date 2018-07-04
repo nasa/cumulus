@@ -49,7 +49,7 @@ class Collection extends Manager {
    * @returns {Promise} aws dynamodb createTable response
    */
   async createTable() {
-    const hash = { name: 'name', type: 'S' };
+    const hash = { name: 'dataType', type: 'S' };
     const range = { name: 'version', type: 'S' };
     return Manager.createTable(this.tableName, hash, range);
   }
@@ -57,8 +57,8 @@ class Collection extends Manager {
   async create(item) {
     const collectionConfigStore =
       new CollectionConfigStore(process.env.internal, process.env.stackName);
-    await collectionConfigStore.put(item.name, item.version, item);
-
+    await collectionConfigStore.put(item.dataType, item.version, item);
+    
     return super.create(item);
   }
 }

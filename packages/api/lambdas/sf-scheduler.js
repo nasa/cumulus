@@ -47,7 +47,7 @@ function schedule(event, context, cb) {
 
       if (collection) {
         const c = new Collection();
-        return c.get({ name: collection.name, version: collection.version });
+        return c.get({ dataType: collection.dataType, version: collection.version });
       }
       return null;
     })

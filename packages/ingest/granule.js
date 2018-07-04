@@ -23,6 +23,8 @@ const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
+const { CollectionConfigStore } = require('@cumulus/common');
+const { constructCollectionId } = require('../api/lib/utils');
 
 /**
 * The abstract Discover class
@@ -121,7 +123,7 @@ class Discover {
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
         .then((exists) => (exists ? null : discoveredFile)))))
       .filter(identity);
-
+    
     // Group the files by granuleId
     const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
 
@@ -130,7 +132,8 @@ class Discover {
     return granuleIds
       .map((granuleId) => ({
         granuleId,
-        dataType: this.collection.name,
+        dataType: this.collection.dataType,
+        version: this.collection.version,
         // Remove the granuleId property from each file
         files: filesByGranuleId[granuleId].map((file) => omit(file, 'granuleId'))
       }));
@@ -191,14 +194,23 @@ class Granule {
     // for each granule file
     // download / verify checksum / upload
 
+    const stackName = process.env.stackName;
+    // we need to retrieve the right collection
+    const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
+    this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+
+    this.collectionId = constructCollectionId(granule.dataType, granule.version);
+     
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
       .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
-
+ 
     return {
       granuleId: granule.granuleId,
+      dataType: granule.dataType,
+      version: granule.version,
       files
     };
   }
@@ -442,7 +454,7 @@ class Granule {
     // Check if the file exists
     const exists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, file.name)
+      Key: path.join(this.fileStagingDir, this.collectionId, file.name)
     });
 
     // Exit early if we can
@@ -474,14 +486,14 @@ class Granule {
       // Upload the file
       const filename = await this.upload(
         bucket,
-        this.fileStagingDir,
+        path.join(this.fileStagingDir, this.collectionId),
         file.name,
         fileLocalPath
       );
 
       return Object.assign(file, {
         filename,
-        fileStagingDir: this.fileStagingDir,
+        fileStagingDir: path.join(this.fileStagingDir, this.collectionId),
         url_path: this.getUrlPath(file),
         bucket
       });

@@ -136,7 +136,7 @@ class Granule extends Manager {
     const collection = get(payload, 'meta.collection');
     const exception = parseException(payload.exception);
 
-    const collectionId = constructCollectionId(collection.name, collection.version);
+    const collectionId = constructCollectionId(collection.dataType, collection.version);
 
     const done = granules.map(async (g) => {
       if (g.granuleId) {

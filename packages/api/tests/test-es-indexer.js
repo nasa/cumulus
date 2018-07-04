@@ -43,7 +43,7 @@ test.before(async () => {
   await models.Manager.createTable(executionTable, { name: 'arn', type: 'S' });
   await models.Manager.createTable(
     collectionTable,
-    { name: 'name', type: 'S' },
+    { name: 'dataType', type: 'S' },
     { name: 'version', type: 'S' }
   );
 
@@ -94,7 +94,7 @@ test.serial('creating a successful granule record', async (t) => {
   const collection = granuleSuccess.meta.collection;
   const records = await indexer.granule(granuleSuccess);
 
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
 
   // check the record exists
   const record = records[0];
@@ -115,8 +115,8 @@ test.serial('creating a successful granule record', async (t) => {
   t.is(record.processingStartDateTime, '2018-05-03T14:23:12.010Z');
   t.is(record.processingEndDateTime, '2018-05-03T17:11:33.007Z');
 
-  const { name: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
-  t.is(deconstructed, collection.name);
+  const { dataType: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
+  t.is(deconstructed, collection.dataType);
 });
 
 test.serial('creating multiple successful granule records', async (t) => {
@@ -129,7 +129,7 @@ test.serial('creating multiple successful granule records', async (t) => {
   const collection = newPayload.meta.collection;
   const records = await indexer.granule(newPayload);
 
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
 
   t.is(records.length, 2);
 
@@ -180,7 +180,7 @@ test.serial('creating a granule record in meta section', async (t) => {
   granule.granuleId = randomString();
 
   const records = await indexer.granule(newPayload);
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
 
   const record = records[0];
   t.deepEqual(record.files, granule.files);
@@ -194,7 +194,7 @@ test.serial('indexing a deletedgranule record', async (t) => {
   const granuletype = 'granule';
   const granule = fakeGranuleFactory();
   const collection = fakeCollectionFactory();
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
   granule.collectionId = collectionId;
 
   // create granule record
@@ -334,10 +334,12 @@ test.serial('indexing a provider record', async (t) => {
 test.serial('indexing a collection record', async (t) => {
   const collection = {
     name: randomString(),
+    dataType: randomString(),
     version: '001'
   };
 
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
+
   const r = await indexer.indexCollection(esClient, collection, esIndex);
 
   // make sure record is created
@@ -351,19 +353,21 @@ test.serial('indexing a collection record', async (t) => {
   });
 
   t.is(record._id, collectionId);
-  t.is(record._source.name, collection.name);
+  t.is(record._source.dataType, collection.dataType);
   t.is(record._source.version, collection.version);
   t.is(typeof record._source.timestamp, 'number');
 });
 
 test.serial('indexing collection records with different versions', async (t) => {
   const name = randomString();
+  const dataType = randomString();
   for (let i = 1; i < 11; i += 1) {
     const version = `00${i}`;
     const key = `key${i}`;
     const value = `value${i}`;
     const collection = {
       name: name,
+      dataType: dataType,
       version: version,
       [`${key}`]: value
     };
@@ -379,7 +383,7 @@ test.serial('indexing collection records with different versions', async (t) => 
     const version = `00${i}`;
     const key = `key${i}`;
     const value = `value${i}`;
-    const collectionId = indexer.constructCollectionId(name, version);
+    const collectionId = indexer.constructCollectionId(dataType, version);
     const record = await esClient.get({ // eslint-disable-line no-await-in-loop
       index: esIndex,
       type: 'collection',
@@ -388,6 +392,7 @@ test.serial('indexing collection records with different versions', async (t) => 
 
     t.is(record._id, collectionId);
     t.is(record._source.name, name);
+    t.is(record._source.dataType, dataType);
     t.is(record._source.version, version);
     t.is(record._source[key], value);
     t.is(typeof record._source.timestamp, 'number');
@@ -397,6 +402,7 @@ test.serial('indexing collection records with different versions', async (t) => 
 test.serial('updating a collection record', async (t) => {
   const collection = {
     name: randomString(),
+    dataType: randomString(),
     version: '001',
     anyObject: {
       key: 'value',
@@ -409,13 +415,14 @@ test.serial('updating a collection record', async (t) => {
   // updatedCollection has some parameters removed
   const updatedCollection = {
     name: collection.name,
+    dataType: collection.dataType,
     version: '001',
     anyparams: {
       key1: 'value1'
     }
   };
 
-  const collectionId = indexer.constructCollectionId(collection.name, collection.version);
+  const collectionId = indexer.constructCollectionId(collection.dataType, collection.version);
   let r = await indexer.indexCollection(esClient, collection, esIndex);
 
   // make sure record is created
@@ -434,6 +441,7 @@ test.serial('updating a collection record', async (t) => {
 
   t.is(record._id, collectionId);
   t.is(record._source.name, updatedCollection.name);
+  t.is(record._source.dataType, updatedCollection.dataType);
   t.is(record._source.version, updatedCollection.version);
   t.deepEqual(record._source.anyparams, updatedCollection.anyparams);
   t.is(record._source.anyKey, undefined);
@@ -446,7 +454,7 @@ test.serial('creating a failed pdr record', async (t) => {
   const collection = pdrFailure.meta.collection;
   const record = await indexer.pdr(pdrFailure);
 
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
 
   t.is(record.status, 'failed');
   t.is(record.collectionId, collectionId);
@@ -467,7 +475,7 @@ test.serial('creating a successful pdr record', async (t) => {
   const collection = pdrSuccess.meta.collection;
   const record = await indexer.pdr(pdrSuccess);
 
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
 
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
@@ -665,7 +673,7 @@ test.serial('pass a sns message to main handler', async (t) => {
   const msg = JSON.parse(event.Records[0].Sns.Message);
   const granule = msg.payload.granules[0];
   const collection = msg.meta.collection;
-  const collectionId = constructCollectionId(collection.name, collection.version);
+  const collectionId = constructCollectionId(collection.dataType, collection.version);
   // test granule record is added
   const record = await esClient.get({
     index: esIndex,
