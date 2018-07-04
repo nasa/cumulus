@@ -7,9 +7,9 @@ const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.j
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
 const {
   recursivelyDeleteS3Bucket,
-  listS3Objects,
   s3ObjectExists,
-  s3
+  s3,
+  promiseS3Upload
 } = require('@cumulus/common/aws');
 
 const { cloneDeep } = require('lodash');
@@ -32,6 +32,16 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.privateBucketName }).promise(),
     s3().createBucket({ Bucket: t.context.protectedBucketName }).promise()
   ]);
+
+  const collection = payload.config.collection;
+  // save collection in internal/stackName/collections/collectionId
+  const key = `${process.env.stackName}/collections/${collection.dataType}___${parseInt(collection.version)}.json`;
+  await promiseS3Upload({
+    Bucket: t.context.internalBucketName,
+    Key: key,
+    Body: JSON.stringify(collection),
+    ACL: 'public-read'
+  });
 
   t.context.event = cloneDeep(payload);
 
@@ -91,7 +101,7 @@ test.serial('download Granule from FTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
@@ -128,7 +138,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -167,7 +177,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -220,7 +230,7 @@ test.serial('download granule from S3 provider', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}` // eslint-disable-line max-len
@@ -278,7 +288,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -348,7 +358,7 @@ test.serial('validate file properties', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 2);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}`;
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
