@@ -20,16 +20,18 @@ const collections = new models.Collection();
 
 const testCollection = fakeCollectionFactory();
 
-const hash = { name: 'name', type: 'S' };
-const range = { name: 'version', type: 'S' };
-
 const esIndex = randomString();
 
 async function setup() {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
-  await models.Manager.createTable(process.env.CollectionsTable, hash, range);
+  await models.Manager.createTable(
+    process.env.CollectionsTable,
+    { name: 'dataType', type: 'S' },
+    { name: 'version', type: 'S' }
+  );
+
   await collections.create(testCollection);
 }
 
@@ -58,13 +60,14 @@ test('GET returns an existing collection', (t) => {
   const getEvent = {
     httpMethod: 'GET',
     pathParameters: {
-      collectionName: testCollection.name,
+      dataType: testCollection.dataType,
       version: testCollection.version
     }
   };
   return testEndpoint(collectionsEndpoint, getEvent, (response) => {
-    const { name } = JSON.parse(response.body);
-    t.is(name, testCollection.name);
+    const { dataType, version } = JSON.parse(response.body);
+    t.is(dataType, testCollection.dataType);
+    t.is(version, testCollection.version);
   });
 });
 
@@ -77,7 +80,8 @@ test('POST creates a new collection', (t) => {
   return testEndpoint(collectionsEndpoint, postEvent, (response) => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
-    t.is(record.name, newCollection.name);
+    t.is(record.dataType, newCollection.dataType);
+    t.is(record.version, newCollection.version);
   });
 });
 
@@ -86,12 +90,13 @@ test('PUT updates an existing collection', (t) => {
   const updateEvent = {
     body: JSON.stringify({
       name: testCollection.name,
+      dataType: testCollection.dataType,
       version: testCollection.version,
       provider_path: newPath
     }),
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version,
+      dataType: testCollection.dataType,
+      version: testCollection.version
     },
     httpMethod: 'PUT'
   };
@@ -105,8 +110,8 @@ test('DELETE deletes an existing collection', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version,
+      dataType: testCollection.dataType,
+      version: testCollection.version
     }
   };
   return testEndpoint(collectionsEndpoint, deleteEvent, (response) => {

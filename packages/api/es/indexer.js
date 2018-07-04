@@ -200,7 +200,7 @@ function pdr(payload) {
  * @returns {Promise} Elasticsearch response
  */
 function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
-  const collectionId = constructCollectionId(meta.name, meta.version);
+  const collectionId = constructCollectionId(meta.dataType, meta.version);
   return genericRecordUpdate(esClient, collectionId, meta, index, type);
 }
 

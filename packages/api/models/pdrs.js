@@ -61,7 +61,7 @@ class Pdr extends Manager {
     const execution = aws.getExecutionUrl(arn);
 
     const collection = get(payload, 'meta.collection');
-    const collectionId = constructCollectionId(collection.name, collection.version);
+    const collectionId = constructCollectionId(collection.dataType, collection.version);
 
     const stats = {
       processing: get(payload, 'payload.running', []).length,

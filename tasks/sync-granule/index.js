@@ -63,8 +63,7 @@ exports.syncGranule = function syncGranule(event) {
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
     (config.fileStagingDir || 'file-staging'),
-    stack,
-    collection.name
+    stack
   );
 
   if (!provider) {

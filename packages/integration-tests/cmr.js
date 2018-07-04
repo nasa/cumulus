@@ -130,7 +130,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
   xmlObject.Granule.Collection = {
-    ShortName: collection.name,
+    ShortName: collection.dataType,
     VersionId: collection.version
   };
 
