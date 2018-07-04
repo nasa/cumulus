@@ -43,12 +43,12 @@ function parseException(exception) {
  * Returns the collectionId used in elasticsearch
  * which is a combination of collection name and version
  *
- * @param {string} name - collection name
+ * @param {string} dataType - collection name
  * @param {string} version - collection version
  * @returns {string} collectionId
  */
-function constructCollectionId(name, version) {
-  return `${name}___${version}`;
+function constructCollectionId(dataType, version) {
+  return `${dataType}___${version}`;
 }
 
 /**
@@ -59,9 +59,9 @@ function constructCollectionId(name, version) {
  * @returns {Object} name and version as object
  */
 function deconstructCollectionId(collectionId) {
-  const [name, version] = collectionId.split('___');
+  const [dataType, version] = collectionId.split('___');
   return {
-    name,
+    dataType,
     version
   };
 }
