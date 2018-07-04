@@ -1,8 +1,30 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const { log } = require('@cumulus/common');
 
 /* eslint-disable no-unused-vars */
+
+let passOnRetry = false;
+
+/**
+ * Throw an error if hello world is configured to throw an error for
+ * testing/example purposes. Set the pass on retry value to simulate
+ * a task passing on a retry.
+ *
+ * @param {Object} event - input from the message adapter
+ * @returns {undefined} none
+ */
+function throwErrorIfConfigured(event) {
+  if (passOnRetry) {
+    log.debug('Detected retry');
+    passOnRetry = false;
+  }
+  else if (event.config.fail) {
+    passOnRetry = event.config.passOnRetry;
+    throw new Error('Step configured to force fail');
+  }
+}
 
 /**
 * Return sample 'hello world' JSON
@@ -11,6 +33,8 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 * @returns {Object} sample JSON object
 */
 function helloWorld(event) {
+  throwErrorIfConfigured(event);
+
   return { hello: 'Hello World' };
 }
 /**
