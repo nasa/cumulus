@@ -108,6 +108,7 @@ module.exports.collection = {
   },
   required: [
     'name',
+    'dataType',
     'version',
     'granuleId',
     'granuleIdExtraction',
