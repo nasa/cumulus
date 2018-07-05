@@ -1,6 +1,7 @@
 'use strict';
 
 const { randomString } = require('@cumulus/common/test-utils');
+const { Search } = require('../es/search');
 
 /**
  * Add a user that can be authenticated against
@@ -44,6 +45,23 @@ function testEndpoint(endpoint, event, testCallback) {
       fail: (e) => reject(e)
     });
   });
+}
+
+/**
+ * searches for all the existings aliases in ElasticSearch and delete
+ * all of them
+ * 
+ * @returns {Promise<Array>} a list of elasticsearch responses
+ */
+async function deleteAliases() {
+  const client = await Search.es();
+  const aliases = await client.cat.aliases({ format: 'json' });
+
+  // delete all aliases
+  return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
+    index: alias.index,
+    name: '_all'
+  })));
 }
 
 /**
@@ -165,5 +183,6 @@ module.exports = {
   fakeCollectionFactory,
   fakeExecutionFactory,
   fakeRuleFactory,
-  fakeFilesFactory
+  fakeFilesFactory,
+  deleteAliases
 };
