@@ -104,6 +104,17 @@ module.exports.collection = {
     updatedAt: {
       type: 'number',
       readonly: true
+    },
+    meta: {
+      title: 'Optional MetaData for the Collection',
+      type: 'object'
+    },
+    tags: {
+      title: 'Optional tags for search',
+      type: 'array',
+      items: {
+        type: 'string'
+      }
     }
   },
   required: [
@@ -292,6 +303,18 @@ module.exports.rule = {
     updatedAt: {
       type: 'number',
       readonly: true
+    },
+    tags: {
+      title: 'Optional tags for search',
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    },
+    context: {
+      title: 'Rule Initial Context',
+      type: 'object',
+      description: 'Custom parameters for workflows',
     }
   },
   require: ['name', 'workflow', 'collection', 'rule', 'state']
@@ -424,6 +447,14 @@ module.exports.provider = {
     updatedAt: {
       type: 'number',
       readonly: true
+    },
+    privateKey: {
+      type: 'string',
+      description: 'filename assumed to be in s3://bucketInternal/stackName/crypto'
+    },
+    cmKeyId: {
+      type: 'string',
+      description: 'AWS KMS Customer Master Key arn or alias'
     }
   },
   required: [
