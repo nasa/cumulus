@@ -94,7 +94,7 @@ exports.sns = awsClient(AWS.SNS, '2010-03-31');
  * @returns {Promise<Object>} - the output of the createTable call
  */
 async function createAndWaitForDynamoDbTable(params) {
-  const createTableResult = await exports.dynamodb.createTable(params).promise();
+  const createTableResult = await exports.dynamodb().createTable(params).promise();
   await exports.dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise();
 
   return createTableResult;
