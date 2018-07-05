@@ -12,15 +12,17 @@ const models = require('../models');
 const bootstrap = require('../lambdas/bootstrap');
 const granuleEndpoint = require('../endpoints/granules');
 const indexer = require('../es/indexer');
-const { testEndpoint, fakeGranuleFactory } = require('../lib/testUtils');
+const {
+  createFakeUser,
+  fakeGranuleFactory
+} = require('../lib/testUtils');
 const { Search } = require('../es/search');
 const xml2js = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 // create all the variables needed across this test
 let esClient;
-let fakeGranules;
-const hash = { name: 'granuleId', type: 'S' };
+let UsersTableEnvBefore;
 const esIndex = randomString();
 process.env.GranulesTable = randomString();
 process.env.stackName = randomString();
@@ -37,50 +39,82 @@ test.before(async () => {
   // create a fake bucket
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  // create fake granule table
-  await models.Manager.createTable(process.env.GranulesTable, hash);
+  // create fake Granules table
+  await models.Manager.createTable(process.env.GranulesTable, { name: 'granuleId', type: 'S' });
+
+  // create fake Users table
+  UsersTableEnvBefore = process.env.UsersTable;
+  process.env.UsersTable = randomString();
+  await models.Manager.createTable(process.env.UsersTable, { name: 'userName', type: 'S' });
+});
+
+test.beforeEach(async (t) => {
+  t.context.userDbClient = new models.User(process.env.UsersTable);
+
+  const { userName, password } = await createFakeUser({
+    userDbClient: t.context.userDbClient
+  });
+  t.context.usersToDelete = [userName];
+
+  t.context.authHeaders = {
+    Authorization: `Bearer ${password}`
+  };
 
   // create fake granule records
-  fakeGranules = ['completed', 'failed'].map(fakeGranuleFactory);
-  await Promise.all(fakeGranules.map((granule) => g.create(granule)
+  t.context.fakeGranules = ['completed', 'failed'].map(fakeGranuleFactory);
+  await Promise.all(t.context.fakeGranules.map((granule) => g.create(granule)
     .then((record) => indexer.indexGranule(esClient, record, esIndex))));
+});
+
+test.afterEach(async (t) => {
+  await Promise.all(t.context.usersToDelete.map((userName) => t.context.userDbClient.delete({ userName })));
 });
 
 test.after.always(async () => {
   await Promise.all([
     models.Manager.deleteTable(process.env.GranulesTable),
+    models.Manager.deleteTable(process.env.UsersTable),
     esClient.indices.delete({ index: esIndex }),
     aws.recursivelyDeleteS3Bucket(process.env.internal)
   ]);
+
+  // Reset environment variables that we changed
+  process.env.UsersTable = UsersTableEnvBefore;
 });
 
 
-test('default returns list of granules', (t) => {
-  const listEvent = { httpMethod: 'list' };
-  return testEndpoint(granuleEndpoint, listEvent, (response) => {
-    const { meta, results } = JSON.parse(response.body);
-    t.is(results.length, 2);
-    t.is(meta.stack, process.env.stackName);
-    t.is(meta.table, 'granule');
-    t.is(meta.count, 2);
-    const granuleIds = fakeGranules.map((i) => i.granuleId);
-    results.forEach((r) => {
-      t.true(granuleIds.includes(r.granuleId));
-    });
+test('default returns list of granules', async (t) => {
+  const event = {
+    httpMethod: 'GET',
+    headers: t.context.authHeaders
+  };
+
+  const response = await granuleEndpoint(event);
+
+  const { meta, results } = JSON.parse(response.body);
+  t.is(results.length, 2);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'granule');
+  t.is(meta.count, 2);
+  const granuleIds = t.context.fakeGranules.map((i) => i.granuleId);
+  results.forEach((r) => {
+    t.true(granuleIds.includes(r.granuleId));
   });
 });
 
-test('GET returns an existing granule', (t) => {
-  const getEvent = {
+test('GET returns an existing granule', async (t) => {
+  const event = {
     httpMethod: 'GET',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId
-    }
+      granuleName: t.context.fakeGranules[0].granuleId
+    },
+    headers: t.context.authHeaders
   };
-  return testEndpoint(granuleEndpoint, getEvent, (response) => {
-    const { granuleId } = JSON.parse(response.body);
-    t.is(granuleId, fakeGranules[0].granuleId);
-  });
+
+  const response = await granuleEndpoint(event);
+
+  const { granuleId } = JSON.parse(response.body);
+  t.is(granuleId, t.context.fakeGranules[0].granuleId);
 });
 
 test('GET fails if granule is not found', async (t) => {
@@ -88,25 +122,29 @@ test('GET fails if granule is not found', async (t) => {
     httpMethod: 'GET',
     pathParameters: {
       granuleName: 'unknownGranule'
-    }
+    },
+    headers: t.context.authHeaders
   };
 
-  const response = await testEndpoint(granuleEndpoint, event, (r) => r);
-  t.is(response.statusCode, 400);
+  const response = await granuleEndpoint(event);
+
+  t.is(response.statusCode, 404);
   const { message } = JSON.parse(response.body);
-  t.true(message.includes('No record found for'));
+  t.is(message, 'Granule not found');
 });
 
 test('PUT fails if action is not supported', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId
+      granuleName: t.context.fakeGranules[0].granuleId
     },
-    body: '{"action":"reprocess"}'
+    headers: t.context.authHeaders,
+    body: JSON.stringify({ action: 'reprocess' })
   };
 
-  const response = await testEndpoint(granuleEndpoint, event, (r) => r);
+  const response = await granuleEndpoint(event);
+
   t.is(response.statusCode, 400);
   const { message } = JSON.parse(response.body);
   t.true(message.includes('Action is not supported'));
@@ -116,11 +154,13 @@ test('PUT fails if action is not provided', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId
-    }
+      granuleName: t.context.fakeGranules[0].granuleId
+    },
+    headers: t.context.authHeaders
   };
 
-  const response = await testEndpoint(granuleEndpoint, event, (r) => r);
+  const response = await granuleEndpoint(event);
+
   t.is(response.statusCode, 400);
   const { message } = JSON.parse(response.body);
   t.is(message, 'Action is missing');
@@ -141,9 +181,10 @@ test('reingest a granule', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId
+      granuleName: t.context.fakeGranules[0].granuleId
     },
-    body: '{"action":"reingest"}'
+    headers: t.context.authHeaders,
+    body: JSON.stringify({ action: 'reingest' })
   };
 
   // fake workflow
@@ -157,27 +198,26 @@ test('reingest a granule', async (t) => {
     'getExecutionStatus'
   ).callsFake(() => Promise.resolve(fakeSFResponse));
 
-  await testEndpoint(granuleEndpoint, event, (response) => {
-    const body = JSON.parse(response.body);
-    t.is(body.status, 'SUCCESS');
-    t.is(body.action, 'reingest');
-    return response;
-  });
+  const response = await granuleEndpoint(event);
 
-  const updatedGranule = await g.get({ granuleId: fakeGranules[0].granuleId });
+  const body = JSON.parse(response.body);
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'reingest');
+
+  const updatedGranule = await g.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
 
   StepFunction.getExecutionStatus.restore();
 });
 
-
 test('remove a granule from CMR', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
-      granuleName: fakeGranules[0].granuleId
+      granuleName: t.context.fakeGranules[0].granuleId
     },
-    body: '{"action":"removeFromCmr"}'
+    headers: t.context.authHeaders,
+    body: JSON.stringify({ action: 'removeFromCmr' })
   };
 
   sinon.stub(
@@ -190,14 +230,13 @@ test('remove a granule from CMR', async (t) => {
     'deleteGranule'
   ).callsFake(() => Promise.resolve());
 
-  await testEndpoint(granuleEndpoint, event, (response) => {
-    const body = JSON.parse(response.body);
-    t.is(body.status, 'SUCCESS');
-    t.is(body.action, 'removeFromCmr');
-    return response;
-  });
+  const response = await granuleEndpoint(event);
 
-  const updatedGranule = await g.get({ granuleId: fakeGranules[0].granuleId });
+  const body = JSON.parse(response.body);
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'removeFromCmr');
+
+  const updatedGranule = await g.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.published, false);
   t.is(updatedGranule.cmrLink, null);
 
@@ -206,13 +245,16 @@ test('remove a granule from CMR', async (t) => {
 });
 
 test('DELETE deleting an existing granule that is published will fail', async (t) => {
-  const deleteEvent = {
+  const event = {
     httpMethod: 'DELETE',
     pathParameters: {
-      granuleName: fakeGranules[1].granuleId
-    }
+      granuleName: t.context.fakeGranules[0].granuleId
+    },
+    headers: t.context.authHeaders
   };
-  const response = await testEndpoint(granuleEndpoint, deleteEvent, (r) => r);
+
+  const response = await granuleEndpoint(event);
+
   t.is(response.statusCode, 400);
   const { message } = JSON.parse(response.body);
   t.is(
@@ -262,14 +304,16 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   // create a new unpublished granule
   await g.create(newGranule);
 
-  const deleteEvent = {
+  const event = {
     httpMethod: 'DELETE',
     pathParameters: {
       granuleName: newGranule.granuleId
-    }
+    },
+    headers: t.context.authHeaders
   };
 
-  const response = await testEndpoint(granuleEndpoint, deleteEvent, (r) => r);
+  const response = await granuleEndpoint(event);
+
   t.is(response.statusCode, 200);
   const { detail } = JSON.parse(response.body);
   t.is(detail, 'Record deleted');
@@ -338,22 +382,23 @@ test('move a granule with no .cmr.xml file', async (t) => {
     }
   ];
 
-  const moveEvent = {
+  const event = {
     httpMethod: 'PUT',
     pathParameters: {
       granuleName: newGranule.granuleId
     },
+    headers: t.context.authHeaders,
     body: JSON.stringify({
       action: 'move',
       destinations
     })
   };
 
-  await testEndpoint(granuleEndpoint, moveEvent, async (response) => {
-    const body = JSON.parse(response.body);
-    t.is(body.status, 'SUCCESS');
-    t.is(body.action, 'move');
-  });
+  const response = await granuleEndpoint(event);
+
+  const body = JSON.parse(response.body);
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'move');
 
   await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
     t.is(list.Contents.length, 2);
@@ -436,11 +481,12 @@ test('move a file and update metadata', async (t) => {
     }
   ];
 
-  const moveEvent = {
+  const event = {
     httpMethod: 'PUT',
     pathParameters: {
       granuleName: newGranule.granuleId
     },
+    headers: t.context.authHeaders,
     body: JSON.stringify({
       action: 'move',
       destinations
@@ -452,7 +498,8 @@ test('move a file and update metadata', async (t) => {
     'ingestGranule'
   ).returns({ result: { 'concept-id': 'id204842' } });
 
-  const response = await testEndpoint(granuleEndpoint, moveEvent, (r) => r);
+  const response = await granuleEndpoint(event);
+
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'move');
