@@ -17,22 +17,12 @@ These tests run against AWS, so a Cumulus deployment is needed. Set up the deplo
 
 Your default AWS credentials should be the same credentials used for the deployment.
 
-To use a different stack name, update `app/config.yml`, `iam/config.yml` and `deployer/config.yml`.
+You should deploy your own stack on AWS and use that for testing. To configure and deploy your stack, add a new deployment to `app/config.yml` and `iam/config.yml` files and deploy them.
 
-When tests run, by default tests will use the configuration defined in `spec/config.yml` to try and execute a workflow. These variables are required for tests to run on CircleCI.
-
-Configuration can be overriden in your own `spec/config.override.yml`. If you are getting setup for the first time:
+Use the name of your deployment to run the tests by setting the `DEPLOYMENT` environment variable. For example:
 
 ```
-cp spec/config.yml spec/config.override.yml
-```
-
-And then edit `spec/config.override.yml`.
-
-Using an override file is required if using a stack other than the `test-cumulus` stack in the `cumulus-sndbx` AWS account. If you want to switch back to the default `spec/config.yml` file, you can specify `USE_DEFAULT_CONFIG=true` when running tests. E.g.:
-
-```
-USE_DEFAULT_CONFIG=true AWS_ACCOUNT_ID=<cumulus-sndbx-account-id> jasmine spec/ingestGranule/IngestGranuleSuccessSpec.js
+AWS_ACCOUNT_ID=<cumulus-sndbx-account-id> DEPLOYMENT=cumulus-from-source jasmine spec/ingestGranule/IngestGranuleSuccessSpec.js
 ```
 
 NOTE: For this to work you need your default credentials to be credentials for the `cumulus-sndbx` AWS account.
@@ -63,19 +53,19 @@ To access test data in `s3://cumulus-data-shared`, which is required by all spec
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
-To run all of the tests, run `npm test` in the top level of the repository.
+To run all of the tests, run `DEPLOYMENT=<name-of-your-deployment> npm test` in the top level of the repository.
 
 When running tests locally, include the `AWS_ACCOUNT_ID` of your deployment.
 
 Your AWS Account ID is a 12-digit number that is a part of any ARN (Amazon Resource Name) for your AWS account. It can also be discovered on your AWS [My Account](https://console.aws.amazon.com/billing/home?#/account) page.
 
 ```bash
-AWS_ACCOUNT_ID=000000000000 npm test
+AWS_ACCOUNT_ID=000000000000 DEPLOYMENT=<name-of-your-deployment> npm test
 ```
 
 ### Run tests for an individual test file
 
-To run an individual test file, include a path to the spec file, i.e. `npm test spec/helloWorld/HelloWorldSuccessSpec.js`.
+To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> npm test spec/helloWorld/HelloWorldSuccessSpec.js`.
 
 ## Adding tests
 
