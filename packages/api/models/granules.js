@@ -2,12 +2,15 @@
 
 const path = require('path');
 const get = require('lodash.get');
+const clonedeep = require('lodash.clonedeep');
+const merge = require('lodash.merge');
 const uniqBy = require('lodash.uniqby');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const aws = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 const Manager = require('./base');
 const {
   parseException,
@@ -61,34 +64,83 @@ class Granule extends Manager {
    * start the re-ingest of a given granule object
    *
    * @param {Object} g - the granule object
-   * @returns {Promise} an object showing the start of the re-ingest
+   * @returns {Promise<Object>} an object showing the start of the re-ingest
    */
   async reingest(g) {
-    const { name, version } = deconstructCollectionId(g.collectionId);
-
-    // get the payload of the original execution
-    const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
-    const originalMessage = JSON.parse(status.execution.input);
-
-    const payload = await Rule.buildPayload({
-      workflow: 'IngestGranule',
-      provider: g.provider,
-      collection: {
-        name,
-        version
-      },
-      meta: originalMessage.meta,
-      payload: originalMessage.payload
-    });
-
-    await this.updateStatus({ granuleId: g.granuleId }, 'running');
-
-    await aws.invoke(process.env.invoke, payload);
+    await this.applyWorkflow(g, 'IngestGranule', 'input');
     return {
       granuleId: g.granuleId,
       action: 'reingest',
       status: 'SUCCESS'
     };
+  }
+
+  /**
+   * apply a workflow to a given granule object
+   *
+   * @param {Object} g - the granule object
+   * @param {string} workflow - the workflow name
+   * @param {string} messageSource - 'input' or 'output' from previous execution
+   * @param {Object} metaOverride - overrides the meta of the new execution, accepts partial override
+   * @param {Object} payloadOverride - overrides the payload of the new execution, accepts partial override
+   * @returns {Promise<Object>} an object showing the start of the workflow execution
+   */
+  async applyWorkflow(g, workflow, messageSource, metaOverride, payloadOverride) {
+    const { name, version } = deconstructCollectionId(g.collectionId);
+
+    try {
+      // get the payload of the original execution
+      const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
+      const originalMessage = JSON.parse(status.execution[messageSource]);
+    
+      const payload = await Rule.buildPayload({
+        workflow,
+        provider: g.provider,
+        collection: {
+          name,
+          version
+        },
+        meta: metaOverride ? merge(originalMessage.meta, metaOverride) : originalMessage.meta,
+        payload: payloadOverride ? merge(originalMessage.payload, payloadOverride) : originalMessage.payload
+      });
+
+      await this.updateStatus({ granuleId: g.granuleId }, 'running');
+
+      await aws.invoke(process.env.invoke, payload);
+      return {
+        granuleId: g.granuleId,
+        action: `applyWorkflow ${workflow}`,
+        status: 'SUCCESS'
+      };
+    }
+    catch (e) {
+      log.error(g.granuleId, e);
+      return {
+        granuleId: g.granuleId,
+        action: `applyWorkflow ${workflow}`,
+        status: 'FAILED',
+        error: e.message
+      }
+    }
+  }
+
+  /**   
+   * Move a granule's files to destination locations specified
+   *
+   * @param {Object} g - the granule object
+   * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
+   * - list of destinations specified
+   *    regex - regex for matching filepath of file to new destination
+   *    bucket - aws bucket of the destination
+   *    filepath - file path/directory on the bucket for the destination
+   * @param {string} distEndpoint - distribution endpoint
+   * @returns {Promise<undefined>} undefined
+   */
+  async move(g, destinations, distEndpoint) {
+    log.info(`granules.move ${g.granuleId}`);
+    const files = clonedeep(g.files);
+    await moveGranuleFiles(g.granuleId, files, destinations, distEndpoint, g.published);
+    await this.update({ granuleId: g.granuleId }, { files: files });
   }
 
   /**
