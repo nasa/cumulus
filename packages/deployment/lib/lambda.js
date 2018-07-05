@@ -10,7 +10,6 @@ const yauzl = require('yauzl');
 
 const { Lambda } = require('kes');
 
-
 /**
  * A sub-class of the Kes Lambda class that changes
  * how kes handles Lambda function compression and
@@ -42,18 +41,19 @@ class UpdatedLambda extends Lambda {
    */
 
   async zipLambda(lambda) {
-    let msg = `Zipping ${lambda.local}`;
     // skip if the file with the same hash is zipped
     // and is a valid zip file
-    if (fs.existsSync(lambda.local)) {
+    if (await fs.pathExists(lambda.local)) {
       try {
         await (util.promisify(yauzl.open))(lambda.local); // Verify yauzl can open the .zip file
         return Promise.resolve(lambda);
       }
       catch (e) {
-        console.log(`${lambda.local} appears to be an invalid zip file, and will be re-built`);
+        console.log(`${lambda.local} is valid and will be rebuilt`);
       }
     }
+
+    let msg = `Zipping ${lambda.local}`;
     const fileList = [lambda.source];
     if (lambda.useMessageAdapter) {
       const kesFolder = path.join(this.config.kesFolder, 'build', 'adapter');
@@ -62,12 +62,16 @@ class UpdatedLambda extends Lambda {
     }
 
     console.log(`${msg} for ${lambda.name}`);
-    return utils.zip(lambda.local, fileList)
-      .then(() => lambda)
-      .catch((e) => {
-        console.log(`Error zipping ${e}`);
-        throw (e);
-      });
+
+    try {
+      await utils.zip(lambda.local, fileList);
+    }
+    catch (e) {
+      console.log(`Error zipping ${e}`);
+      throw e;
+    }
+
+    return lambda;
   }
 
   /**
