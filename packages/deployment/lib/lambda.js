@@ -49,7 +49,7 @@ class UpdatedLambda extends Lambda {
         return Promise.resolve(lambda);
       }
       catch (e) {
-        console.log(`${lambda.local} is valid and will be rebuilt`);
+        console.log(`${lambda.local} is invalid and will be rebuilt`);
       }
     }
 
