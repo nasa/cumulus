@@ -148,8 +148,8 @@ test('reingest a granule', async (t) => {
 
   // fake workflow
   process.env.bucket = process.env.internal;
-  const payload = JSON.parse(fakeSFResponse.execution.input);
-  const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
+  const message = JSON.parse(fakeSFResponse.execution.input);
+  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
 
   sinon.stub(
@@ -170,6 +170,63 @@ test('reingest a granule', async (t) => {
   StepFunction.getExecutionStatus.restore();
 });
 
+test('apply an in-place workflow to an existing granule', async (t) => {
+  const fakeSFResponse = {
+    execution: {
+      input: JSON.stringify({
+        meta: {
+          workflow_name: 'inPlaceWorkflow'
+        },
+        payload: {}
+      })
+    }
+  };
+
+  const event = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: fakeGranules[0].granuleId
+    },
+    body: JSON.stringify({
+      action:'applyWorkflow',
+      workflow: 'inPlaceWorkflow',
+      messageSource: 'output'
+    })
+  };
+
+  //fake in-place workflow
+  process.env.bucket = process.env.internal;
+  const message = JSON.parse(fakeSFResponse.execution.input);
+  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'fake in-place workflow' }).promise();
+
+  // return fake previous execution
+  sinon.stub(
+    StepFunction,
+    'getExecutionStatus'
+  ).callsFake(() => Promise.resolve({
+    execution: {
+      output: JSON.stringify({
+        meta: {
+          workflow_name: 'IngestGranule'
+        },
+        payload: {}
+      })
+    }
+  }));
+
+  await testEndpoint(granuleEndpoint, event, (response) => {
+    const body = JSON.parse(response.body);
+    t.is(body.status, 'SUCCESS');
+    t.is(body.action, 'applyWorkflow inPlaceWorkflow');
+    return response;
+  });
+
+  const updatedGranule = await g.get({ granuleId: fakeGranules[0].granuleId });
+  t.is(updatedGranule.status, 'running');
+
+  StepFunction.getExecutionStatus.restore();
+});
 
 test('remove a granule from CMR', async (t) => {
   const event = {
