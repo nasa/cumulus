@@ -9,6 +9,8 @@ const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
 const { Provider, Collection, Rule } = require('@cumulus/api/models');
+
+const api = require('./api');
 const cmr = require('./cmr.js');
 
 const executionStatusNumRetries = 100;
@@ -322,9 +324,11 @@ async function buildAndExecuteWorkflow(
 }
 
 module.exports = {
+  api,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
+  getWorkflowTemplate,
   waitForCompletedExecution,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,

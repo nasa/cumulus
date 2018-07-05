@@ -86,6 +86,7 @@ default:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-scaling-role'
 
   sns:
     inregions3:
@@ -96,6 +97,7 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+          protocol: lambda
     AmazonIpSpaceChanged:
       arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
       subscriptions:
@@ -105,6 +107,16 @@ default:
             array:
               - InRegionS3PolicyLambdaFunction
               - Arn
+          protocol: lambda
+    sftracker:
+      subscriptions:
+        2ndlambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - SnsS3TestLambdaFunction
+              - Arn
+          protocol: lambda
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -142,6 +154,7 @@ aimee-test:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
 
 lf:
   prefix: lf-cumulus
@@ -161,6 +174,7 @@ lf:
 
 kk-uat-deployment:
   stackName: kk-test-uat
+  prefix: kk-test-uat
   stackNameNoDash: KkTestUat
 
   iams:
