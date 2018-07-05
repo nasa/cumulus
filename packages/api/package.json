@@ -10,7 +10,7 @@
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
-    "test": "ava --serial",
+    "test": "ava --serial tests/test-endpoints-google-token.js",
     "test-coverage": "nyc ava",
     "build": "webpack",
     "watch": "webpack --progress -w",
@@ -65,6 +65,7 @@
     "moment": "^2.22.1",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
+    "proxyquire": "^2.0.1",
     "querystring": "^0.2.0",
     "split2": "^2.2.0",
     "uuid": "^3.2.1"

@@ -19,13 +19,13 @@ const oauth2Client = new OAuth2(
  * AWS API Gateway function that handles callbacks from URS authentication, transforming
  * codes into tokens
  */
-function token(event, context) {
+const token = function(event, context) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
-    oauth2Client.getToken(code, (error, tokens) => {
+    return oauth2Client.getToken(code, (error, tokens) => {
       if (error) {
         return resp(context, new Error(error));
       }
@@ -42,8 +42,11 @@ function token(event, context) {
         userId: 'me',
         auth: oauth2Client
       }, (err, response) => {
+        console.log(`error ${err}`);
         if (err) log.error(err);
+        console.log(`response ${response}`);
         const userData = response.data;
+        console.log(`userData ${userData}`);
         // not sure if it's possible to have multiple emails but they are returned as a list.
         // If users have multiple emails we will have to scan the users table to see if any are matches.
         const userEmail = userData.emails[0].value;
@@ -78,7 +81,7 @@ function token(event, context) {
  * AWS API Gateway function that redirects to the correct URS endpoint with the correct client
  * ID to be used with the API
  */
-function login(event, context, cb) {
+const login = function(event, context, cb) {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.email'
@@ -88,7 +91,7 @@ function login(event, context, cb) {
   const state = get(event, 'queryStringParameters.state');
 
   if (code) {
-    return token(event, context);
+    return this.token(event, context);
   }
 
   const url = oauth2Client.generateAuthUrl({
@@ -102,7 +105,7 @@ function login(event, context, cb) {
 
   return cb(null, {
     statusCode: '301',
-    body: 'Redirecting to Earthdata Login',
+    body: 'Redirecting to Google Login',
     headers: {
       Location: url
     }
@@ -113,10 +116,10 @@ function login(event, context, cb) {
  * Main handler for the token endpoint
  *
  * @function handler
- * @param  {type} event   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {description}
- * @param  {type} context {description}
- * @param  {type} cb      {description}
- * @return {type} {description}
+ * @param  {Object}   event   Lambda event payload
+ * @param  {Object}   context Lambda context - provided by AWS
+ * @param  {Function} cb      Callback used to terminate lambda execution
+ * @return {Function} function
  */
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
@@ -125,4 +128,8 @@ function handler(event, context, cb) {
   return resp(context, new Error('Not found'), 404);
 }
 
-module.exports = handler;
+module.exports = {
+  handler,
+  login,
+  token
+};
