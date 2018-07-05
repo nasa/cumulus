@@ -40,6 +40,7 @@
     "aws-sdk": "^2.227.1"
   },
   "devDependencies": {
+    "@cumulus/test-data": "^1.7.0",
     "eslint": "^4.19.1",
     "eslint-plugin-jsdoc": "^3.7.1",
     "got": "^7.1.0",
