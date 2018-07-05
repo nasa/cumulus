@@ -26,7 +26,7 @@ async function list(event) {
 
 /**
  * Update a single granule.
- * Supported Actions: reingest, Remove From CMR.
+ * Supported Actions: reingest, applyWorkflow, RemoveFromCMR.
  *
  * @param {Object} event - aws lambda event object.
  * @returns {Promise<Object>} a Lambda Proxy response object
@@ -59,7 +59,23 @@ async function put(event) {
       }
     });
   }
-  else if (action === 'removeFromCmr') {
+
+  if (action === 'applyWorkflow') {
+    const applyWorkflowResult = await granuleModelClient.applyWorkflow(
+      granule,
+      body.workflow,
+      body.messageSource,
+      body.metaOverride,
+      body.payloadOverride
+    );
+
+    return buildLambdaProxyResponse({
+      json: true,
+      body: applyWorkflowResult
+    });
+  }
+
+  if (action === 'removeFromCmr') {
     await granuleModelClient.removeGranuleFromCmr(granule.granuleId, granule.collectionId);
 
     return buildLambdaProxyResponse({
@@ -71,7 +87,8 @@ async function put(event) {
       }
     });
   }
-  else if (action === 'move') {
+
+  if (action === 'move') {
     await granuleModelClient.move(granule, body.destinations, process.env.distEndpoint);
 
     return buildLambdaProxyResponse({
