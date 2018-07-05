@@ -22,7 +22,7 @@ function list(event, cb) {
 
 /**
  * Update a single granule.
- * Supported Actions: reingest, Remove From CMR.
+ * Supported Actions: reingest, applyWorkflow, RemoveFromCMR.
  *
  * @param {Object} event - aws lambda event object.
  * @returns {Promise} response from the actions
@@ -38,12 +38,14 @@ async function put(event) {
   if (action) {
     const response = await g.get({ granuleId });
     if (action === 'reingest') {
-      await g.reingest(response);
-      return {
-        granuleId: response.granuleId,
-        action,
-        status: 'SUCCESS'
-      };
+      return await g.reingest(response);
+    }
+    if (action === 'applyWorkflow') {
+      const workflow = _get(body, 'workflow');
+      const messageSource = _get(body, 'messageSource');
+      const metaOverride = _get(body, 'metaOverride');
+      const payloadOverride = _get(body, 'payloadOverride');
+      return await g.applyWorkflow(response, workflow, messageSource, metaOverride, payloadOverride);
     }
     else if (action === 'removeFromCmr') {
       await g.removeGranuleFromCmr(response.granuleId, response.collectionId);
