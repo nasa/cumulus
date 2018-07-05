@@ -88,104 +88,92 @@ test.serial('zipLambda: works for lambda using message adapter', async (t) => {
   );
 });
 
-test.serial(
-  `zipLambda: given an invalid zip file generated from a previous run,
-  a new valid lambda file is generated`,
-  async (t) => {
-    t.context.lambda.useMessageAdapter = true;
-    const lambdaLocalOrigin = t.context.lambda.local;
-    const lambdaRemoteOrigin = t.context.lambda.remote;
+test.serial('zipLambda: given an invalid zip file generated from a previous run, a new valid lambda file is generated', async (t) => { // eslint-disable-line max-len
+  t.context.lambda.useMessageAdapter = true;
+  const lambdaLocalOrigin = t.context.lambda.local;
+  const lambdaRemoteOrigin = t.context.lambda.remote;
 
-    // put an empty lambda zip file there as the result of the previous run
-    const existingLambdaLocal = path.join(
-      path.dirname(t.context.lambda.local),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.local)}`
-    );
+  // put an empty lambda zip file there as the result of the previous run
+  const existingLambdaLocal = path.join(
+    path.dirname(t.context.lambda.local),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.local)}`
+  );
 
-    await fs.writeFile(existingLambdaLocal, 'hello');
-    t.is(fs.statSync(existingLambdaLocal).size, 5);
+  await fs.writeFile(existingLambdaLocal, 'hello');
+  t.is(fs.statSync(existingLambdaLocal).size, 5);
 
-    const testLambda = new Lambda(t.context.config);
-    await testLambda.zipLambda(testLambda.buildS3Path(t.context.lambda));
-    t.truthy(fs.statSync(t.context.lambda.local));
-    t.true(fs.statSync(t.context.lambda.local).size > 5);
-    t.is(t.context.lambda.local, existingLambdaLocal);
+  const testLambda = new Lambda(t.context.config);
+  await testLambda.zipLambda(testLambda.buildS3Path(t.context.lambda));
+  t.truthy(fs.statSync(t.context.lambda.local));
+  t.true(fs.statSync(t.context.lambda.local).size > 5);
+  t.is(t.context.lambda.local, existingLambdaLocal);
 
-    t.is(
-      path.basename(t.context.lambda.local),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaLocalOrigin)}`
-    );
-    t.is(
-      path.basename(t.context.lambda.remote),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaRemoteOrigin)}`
-    );
-  }
-);
+  t.is(
+    path.basename(t.context.lambda.local),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaLocalOrigin)}`
+  );
+  t.is(
+    path.basename(t.context.lambda.remote),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaRemoteOrigin)}`
+  );
+});
 
 
-test.serial(
-  `zipLambda: for lambda using message adapter, no new file is generated
-  if the task and message adapter are not updated`,
-  async (t) => {
-    t.context.lambda.useMessageAdapter = true;
+test.serial('zipLambda: for lambda using message adapter, no new file is generated if the task and message adapter are not updated', async (t) => { // eslint-disable-line max-len
+  t.context.lambda.useMessageAdapter = true;
 
-    // put a lambda zip file there as the result of the previous run
-    const existingLambdaLocal = path.join(
-      path.dirname(t.context.lambda.local),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.local)}`
-    );
+  // put a lambda zip file there as the result of the previous run
+  const existingLambdaLocal = path.join(
+    path.dirname(t.context.lambda.local),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.local)}`
+  );
 
-    const existingLambdaRemote = path.join(
-      path.dirname(t.context.lambda.remote),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.remote)}`
-    );
+  const existingLambdaRemote = path.join(
+    path.dirname(t.context.lambda.remote),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.remote)}`
+  );
 
-    await fs.copy(zipFixturePath, existingLambdaLocal);
-    t.is(fs.statSync(existingLambdaLocal).size, zipFixtureSize);
+  await fs.copy(zipFixturePath, existingLambdaLocal);
+  t.is(fs.statSync(existingLambdaLocal).size, zipFixtureSize);
 
-    const testLambda = new Lambda(t.context.config);
-    await testLambda.zipLambda(testLambda.buildS3Path(t.context.lambda));
-    t.truthy(fs.statSync(t.context.lambda.local));
-    t.is(fs.statSync(t.context.lambda.local).size, zipFixtureSize);
-    t.is(t.context.lambda.local, existingLambdaLocal);
-    t.is(t.context.lambda.remote, existingLambdaRemote);
-  }
-);
+  const testLambda = new Lambda(t.context.config);
+  await testLambda.zipLambda(testLambda.buildS3Path(t.context.lambda));
+  t.truthy(fs.statSync(t.context.lambda.local));
+  t.is(fs.statSync(t.context.lambda.local).size, zipFixtureSize);
+  t.is(t.context.lambda.local, existingLambdaLocal);
+  t.is(t.context.lambda.remote, existingLambdaRemote);
+});
 
-test.serial(
-  `zipLambda: for lambda using message adapter, a new file is created
-  if the message adapter is updated`,
-  async (t) => {
-    t.context.lambda.useMessageAdapter = true;
-    const lambdaLocalOrigin = t.context.lambda.local;
-    const lambdaRemoteOrigin = t.context.lambda.remote;
+test.serial('zipLambda: for lambda using message adapter, a new file is created if the message adapter is updated', async (t) => { // eslint-disable-line max-len
+  t.context.lambda.useMessageAdapter = true;
+  const lambdaLocalOrigin = t.context.lambda.local;
+  const lambdaRemoteOrigin = t.context.lambda.remote;
 
-    // put an empty lambda zip file there as the result of the previous run
-    const existingLambdaLocal = path.join(
-      path.dirname(t.context.lambda.local),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.local)}`
-    );
+  // put an empty lambda zip file there as the result of the previous run
+  const existingLambdaLocal = path.join(
+    path.dirname(t.context.lambda.local),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(t.context.lambda.local)}`
+  );
 
-    await fs.writeFile(existingLambdaLocal, 'hello');
-    t.is(fs.statSync(existingLambdaLocal).size, 5);
+  await fs.writeFile(existingLambdaLocal, 'hello');
+  t.is(fs.statSync(existingLambdaLocal).size, 5);
 
-    // message adapter is updated, a new lambda zip file is generated
-    const adapterHashOrigin = Lambda.messageAdapterZipFileHash;
-    Lambda.messageAdapterZipFileHash = `${adapterHashOrigin}123`;
+  // message adapter is updated, a new lambda zip file is generated
+  const adapterHashOrigin = Lambda.messageAdapterZipFileHash;
+  Lambda.messageAdapterZipFileHash = `${adapterHashOrigin}123`;
 
-    const testLambda = new Lambda(t.context.config);
-    await testLambda.zipLambda(testLambda.buildS3Path(t.context.lambda));
-    t.truthy(fs.statSync(t.context.lambda.local));
-    t.true(fs.statSync(t.context.lambda.local).size > 5);
-    t.not(t.context.lambda.local, existingLambdaLocal);
+  const testLambda = new Lambda(t.context.config);
+  await testLambda.zipLambda(testLambda.buildS3Path(t.context.lambda));
+  t.truthy(fs.statSync(t.context.lambda.local));
+  t.true(fs.statSync(t.context.lambda.local).size > 5);
+  t.not(t.context.lambda.local, existingLambdaLocal);
 
-    t.is(
-      path.basename(t.context.lambda.local),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaLocalOrigin)}`
-    );
-    t.is(
-      path.basename(t.context.lambda.remote),
-      `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaRemoteOrigin)}`
-    );
-  }
-);
+  t.is(
+    path.basename(t.context.lambda.local),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaLocalOrigin)}`
+  );
+  t.is(
+    path.basename(t.context.lambda.remote),
+    `${Lambda.messageAdapterZipFileHash}-${path.basename(lambdaRemoteOrigin)}`
+  );
+});
