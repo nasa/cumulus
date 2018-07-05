@@ -4,7 +4,10 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const util = require('util');
 const utils = require('kes').utils;
+const yauzl = require('yauzl');
+
 const { Lambda } = require('kes');
 
 /**
@@ -27,22 +30,31 @@ class UpdatedLambda extends Lambda {
     super(config);
     this.config = config;
   }
+
   /**
    * Copies the source code of a given lambda function, zips it, calculates
    * the hash of the source code and updates the lambda object with
-   * the hash, local and remote locations of the code
+   * the hash, local and remote locations of the code.
    *
    * @param {Object} lambda - the lambda object
    * @returns {Promise} returns the updated lambda object
    */
-  zipLambda(lambda) {
-    let msg = `Zipping ${lambda.local}`;
-    // skip if the file with the same hash is zipped
-    if (fs.existsSync(lambda.local)) {
-      return Promise.resolve(lambda);
-    }
-    const fileList = [lambda.source];
 
+  async zipLambda(lambda) {
+    // skip if the file with the same hash is zipped
+    // and is a valid zip file
+    if (await fs.pathExists(lambda.local)) {
+      try {
+        await (util.promisify(yauzl.open))(lambda.local); // Verify yauzl can open the .zip file
+        return Promise.resolve(lambda);
+      }
+      catch (e) {
+        console.log(`${lambda.local} is invalid and will be rebuilt`);
+      }
+    }
+
+    let msg = `Zipping ${lambda.local}`;
+    const fileList = [lambda.source];
     if (lambda.useMessageAdapter) {
       const kesFolder = path.join(this.config.kesFolder, 'build', 'adapter');
       fileList.push(kesFolder);
@@ -51,7 +63,15 @@ class UpdatedLambda extends Lambda {
 
     console.log(`${msg} for ${lambda.name}`);
 
-    return utils.zip(lambda.local, fileList).then(() => lambda);
+    try {
+      await utils.zip(lambda.local, fileList);
+    }
+    catch (e) {
+      console.log(`Error zipping ${e}`);
+      throw e;
+    }
+
+    return lambda;
   }
 
   /**

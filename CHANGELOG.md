@@ -5,12 +5,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-681** - Add ingest-in-place action to granules endpoint
+    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
+        - workflow - the workflow name
+        - messageSource - 'input' or 'output' from previous execution
+        - metaOverride - overrides the meta of the new execution, accepts partial override
+        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 ### Fixed
 
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
-## [1.7.0] - 2018-06-29
+## [v1.7.0] - 2018-07-02
+
+### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
+
 ### Added
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
@@ -22,18 +32,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Add IAM support for batchWrite on dynamoDB
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support. 
+    - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
 
 ### Fixed
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
 - **CUMULUS-398** - Fix not able to filter executions bu workflow
+- **CUMULUS-748** - Fix invalid lambda .zip files being validated/uploaded to AWS
 - **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
 
+### Changed
+- **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
+
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://github.com/cumulus-nasa/cumulus/wiki/Upgrading-to-Cumulus-1.6)
+### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.6.0.html)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
@@ -358,4 +374,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/cumulus-nasa/cumulus/compare/pre-v1-release...v1.0.0
-
