@@ -210,7 +210,7 @@ async function setupSeedData(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of collection json files
- * @returns {Promise.<integer>} number of collections added
+ * @returns {Promise.<Array<Object>>} number of collections added
  */
 async function addCollections(stackName, bucketName, dataDirectory) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
@@ -220,7 +220,7 @@ async function addCollections(stackName, bucketName, dataDirectory) {
     return c.delete({ name: collection.name, version: collection.version })
       .then(() => c.create(collection));
   }));
-  return Promise.all(promises).then((cs) => cs.length);
+  return Promise.all(promises);
 }
 
 /**
@@ -229,7 +229,7 @@ async function addCollections(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of provider json files
- * @returns {Promise.<integer>} number of providers added
+ * @returns {Promise.<Array<Object>>} number of providers added
  */
 async function addProviders(stackName, bucketName, dataDirectory) {
   const providers = await setupSeedData(stackName, bucketName, dataDirectory);
@@ -239,7 +239,7 @@ async function addProviders(stackName, bucketName, dataDirectory) {
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
   }));
-  return Promise.all(promises).then((ps) => ps.length);
+  return Promise.all(promises);
 }
 
 /**
