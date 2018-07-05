@@ -4,7 +4,7 @@ const { s3 } = require('@cumulus/common/aws');
 
 const config = loadConfig();
 
-const testBucket = `${config.prefix}-s3directaccess`;
+const testBucket = `${config.stackName}-s3directaccess`;
 
 /**
  * Calls the s3AccessTest lambda in the given region, which returns
