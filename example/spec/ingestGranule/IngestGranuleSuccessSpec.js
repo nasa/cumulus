@@ -13,7 +13,7 @@ const {
   conceptExists,
   getOnlineResources
 } = require('@cumulus/integration-tests');
-const apiTestUtils = require('../helpers/apiTestUtils');
+const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 
