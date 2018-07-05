@@ -113,3 +113,7 @@ InRegionS3Policy:
    timeout: 300
    source: 'node_modules/@cumulus/api/dist/'
 
+SnsS3Test:
+  handler: index.handler
+  source: 'lambdas/snsS3Test/'
+
