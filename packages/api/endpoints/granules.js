@@ -104,7 +104,7 @@ async function put(event) {
   return buildLambdaProxyResponse({
     json: true,
     statusCode: 400,
-    body: { message: 'Action is not supported. Choices are "move", "reingest", or "removeFromCmr"' }
+    body: { message: 'Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"' } // eslint-disable-line max-len
   });
 }
 
