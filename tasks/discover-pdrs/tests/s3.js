@@ -36,7 +36,7 @@ test.afterEach.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(t.context.event.config.provider.host)
 ]));
 
-test('test pdr discovery with S3 when there are no PDRs', async (t) => {
+test.serial('test pdr discovery with S3 when there are no PDRs', async (t) => {
   t.context.event.config.collection = {
     granuleIdExtraction: '^(.*)$',
     name: randomString()
@@ -50,7 +50,7 @@ test('test pdr discovery with S3 when there are no PDRs', async (t) => {
   t.is(output.pdrs.length, 0);
 });
 
-test('test pdr discovery with S3 when no PDRs are new', async (t) => {
+test.serial('test pdr discovery with S3 when no PDRs are new', async (t) => {
   // Upload a PDR to the source
   const pdrName = `${randomString()}.PDR`;
 
@@ -81,7 +81,7 @@ test('test pdr discovery with S3 when no PDRs are new', async (t) => {
   t.is(output.pdrs.length, 0);
 });
 
-test('test pdr discovery with S3 when some PDRs are new', async (t) => {
+test.serial('test pdr discovery with S3 when some PDRs are new', async (t) => {
   // Upload PDRs to the source
   const oldPdrName = `${randomString()}-is-not-new.PDR`;
   const newPdrName = `${randomString()}-is-new.PDR`;
@@ -120,7 +120,7 @@ test('test pdr discovery with S3 when some PDRs are new', async (t) => {
   t.is(output.pdrs.length, 1);
 });
 
-test('test pdr discovery with S3 when all PDRs are new', async (t) => {
+test.serial('test pdr discovery with S3 when all PDRs are new', async (t) => {
   // Upload a PDR to the source
   const pdrName = `${randomString()}.PDR`;
 
