@@ -1,6 +1,7 @@
 'use strict';
 
 const Ajv = require('ajv');
+const cloneDeep = require('lodash.clonedeep');
 const omit = require('lodash.omit');
 const aws = require('@cumulus/common/aws');
 const { errorify } = require('../lib/utils');
@@ -157,35 +158,44 @@ class Manager {
   /**
    * creates record(s)
    *
-   * @param {Object<Array>} items - the Item/Items to be added to the database
-   * @returns {Promise<Array>} an array of created records
+   * @param {Object<Array|Object>} items - the Item/Items to be added to the database
+   * @returns {Promise<Array|Object>} an array of created records or a single
+   *   created record
    */
   async create(items) {
-    const single = async (_item) => {
-      const item = _item;
-      // add createdAt and updatedAt
-      item.createdAt = item.createdAt || Date.now();
-      item.updatedAt = Date.now();
+    // This is confusing because the argument named "items" could either be
+    // an Array of items  or a single item.  To make this function a little
+    // easier to understand, converting the single item case here to an array
+    // containing one item.
+    const itemsArray = Array.isArray(items) ? items : [items];
 
+    // For each item, set the updatedAt property.  If it does not have a
+    // createdAt property, set that as well.  Instead of modifying the original
+    // item, this returns an updated copy of the item.
+    const itemsWithTimestamps = itemsArray.map((item) => {
+      const clonedItem = cloneDeep(item);
+      clonedItem.updatedAt = Date.now();
+      if (!clonedItem.createdAt) clonedItem.createdAt = clonedItem.updatedAt;
+      return clonedItem;
+    });
+
+    // Make sure that all of the items are valid
+    itemsWithTimestamps.forEach((item) => {
       this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+    });
 
-      const params = {
+    // Suggested method of handling a loop containing an await, according to
+    // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
+    for (let i = 0; i < itemsWithTimestamps.length; i += 1) {
+      await this.dynamodbDocClient.put({ // eslint-disable-line no-await-in-loop
         TableName: this.tableName,
-        Item: item
-      };
-
-      await this.dynamodbDocClient.put(params).promise();
-    };
-
-    if (items instanceof Array) {
-      for (const item of items) {
-        await single(item);
-      }
-      return items;
+        Item: itemsWithTimestamps[i]
+      }).promise();
     }
-    await single(items);
 
-    return items;
+    // If the original item was an Array, return an Array.  If the original item
+    // was an Object, return an Object.
+    return Array.isArray(items) ? itemsWithTimestamps : itemsWithTimestamps[0];
   }
 
   async scan(query, fields, limit, select, startKey) {
