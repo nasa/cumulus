@@ -3,6 +3,7 @@
 const test = require('ava');
 const {
   aws: {
+    createAndWaitForDynamoDbTable,
     dynamodb
   },
   testUtils: {
@@ -10,11 +11,6 @@ const {
   }
 } = require('@cumulus/common');
 const { run } = require('../../migrations/migration_2');
-
-function createAndWaitForTable(params) {
-  return dynamodb().createTable(params).promise()
-    .then(() => dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise());
-}
 
 test('build-files-table handler properly populates the files table', async (t) => {
   // Create the two tables
@@ -52,8 +48,8 @@ test('build-files-table handler properly populates the files table', async (t) =
   };
 
   await Promise.all([
-    createAndWaitForTable(granulesTableParams),
-    createAndWaitForTable(filesTableParams)
+    createAndWaitForDynamoDbTable(granulesTableParams),
+    createAndWaitForDynamoDbTable(filesTableParams)
   ]);
 
   // Write data to the granules table
