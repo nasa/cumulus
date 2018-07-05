@@ -78,7 +78,7 @@ function resp(context, err, bodyArg, statusArg = null, headers = {}) {
 
 /**
  * Build a valid API Gateway response for an endpoint using Lambda Proxy
- *   integration.
+ * integration.
  *
  * See: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format
  *
@@ -102,10 +102,7 @@ function resp(context, err, bodyArg, statusArg = null, headers = {}) {
  * @returns {Object} - a Lambda Proxy response object
  */
 function buildLambdaProxyResponse(params = {}) {
-  // Parse params
-  //
-  // If this syntax looks unfamiliar, take a look at this documentation:
-  //
+  // Parse params.  If this syntax looks unfamiliar, see:
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
   const {
     body: bodyArg,
@@ -114,6 +111,8 @@ function buildLambdaProxyResponse(params = {}) {
     statusCode = 200
   } = params;
 
+  // By default, the body is whatever was passed in.  If json=true then the body
+  // will be replaced.
   let body = bodyArg;
 
   // Set required response headers
@@ -202,6 +201,7 @@ async function getAuthorizationFailureResponse(params) {
     });
   }
 
+  // Parse the Authorization header
   const [scheme, token] = request.headers[authorizationKey].trim().split(/\s+/);
 
   // Verify that the Authorization type was "Bearer"
