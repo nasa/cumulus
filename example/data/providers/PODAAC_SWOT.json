@@ -1,0 +1,6 @@
+{
+  "globalConnectionLimit": 10,
+  "host": "unique-prefix-for-s3-buckets-internal",
+  "id": "PODAAC_SWOT",
+  "protocol": "s3"
+}
