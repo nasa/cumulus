@@ -1,7 +1,5 @@
-/* eslint-disable no-param-reassign */
 'use strict';
 
-const _get = require('lodash.get');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { handle } = require('../lib/response');
 const models = require('../models');
@@ -28,7 +26,7 @@ function list(event, cb) {
  * @returns {Object} a single granule object.
  */
 function get(event, cb) {
-  const name = _get(event.pathParameters, 'name');
+  const name = event.pathParameters.name;
 
   const model = new models.Rule();
   return model.get({ name })
@@ -47,9 +45,8 @@ function get(event, cb) {
  * @returns {Object} returns the collection that was just saved.
  */
 function post(event, cb) {
-  let data = _get(event, 'body', '{}');
-  data = JSON.parse(data);
-  const name = _get(data, 'name');
+  const data = JSON.parse(event.body || {});
+  const name = data.name;
 
   const model = new models.Rule();
 
@@ -73,11 +70,10 @@ function post(event, cb) {
  * @returns {Object} a mapping of the updated properties.
  */
 async function put(event, cb) {
-  const name = _get(event.pathParameters, 'name');
+  const name = event.pathParameters.name;
 
-  let data = _get(event, 'body', '{}');
-  data = JSON.parse(data);
-  const action = _get(data, 'action');
+  const data = JSON.parse(event.body || {});
+  const action = data.action;
 
   const model = new models.Rule();
 
@@ -110,10 +106,8 @@ async function put(event, cb) {
  * @returns {Object} returns the collection that was just saved.
  */
 async function del(event, cb) {
-  let name = _get(event.pathParameters, 'name', '');
+  const name = (event.pathParameters.name || '').replace(/%20/g, ' ');
   const model = new models.Rule();
-
-  name = name.replace(/%20/g, ' ');
 
   return model.get({ name })
     .then((record) => model.delete(record))
