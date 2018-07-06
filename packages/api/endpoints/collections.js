@@ -30,13 +30,14 @@ function list(event, cb) {
  * @returns {Promise<Object>} a collection record
  */
 function get(event, cb) {
-  const dataType = _get(event.pathParameters, 'dataType');
+  const name = _get(event.pathParameters, 'collectionName');
   const version = _get(event.pathParameters, 'version');
+
   const c = new models.Collection();
-  return c.get({ dataType, version })
+  return c.get({ name, version })
     .then((res) => {
       const collection = new Collection(event);
-      return collection.getStats([res], [res.dataType]);
+      return collection.getStats([res], [res.name]);
     })
     .then((res) => cb(null, res[0]))
     .catch(cb);
@@ -52,17 +53,17 @@ function get(event, cb) {
 function post(event, cb) {
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
-  const dataType = _get(data, 'dataType');
+  const name = _get(data, 'name');
   const version = _get(data, 'version');
 
   // make sure primary key is included
-  if (!data.dataType || !data.version) {
+  if (!data.name || !data.version) {
     return cb({ message: 'Field name and/or version is missing' });
   }
   const c = new models.Collection();
 
-  return c.get({ dataType, version })
-    .then(() => cb({ message: `A record already exists for ${dataType} version: ${version}` }))
+  return c.get({ name, version })
+    .then(() => cb({ message: `A record already exists for ${name} version: ${version}` }))
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return c.create(data)
@@ -81,23 +82,23 @@ function post(event, cb) {
  * @returns {Promise<Object>} a the updated collection record
  */
 function put(event, cb) {
-  const pname = _get(event.pathParameters, 'dataType');
+  const pname = _get(event.pathParameters, 'collectionName');
   const pversion = _get(event.pathParameters, 'version');
 
   let data = _get(event, 'body', '{}');
   data = JSON.parse(data);
 
-  const dataType = _get(data, 'dataType');
+  const name = _get(data, 'name');
   const version = _get(data, 'version');
 
-  if (pname !== dataType || pversion !== version) {
-    return cb({ message: 'dataType and version in path doesn\'t match the payload' });
+  if (pname !== name || pversion !== version) {
+    return cb({ message: 'name and version in path doesn\'t match the payload' });
   }
 
   const c = new models.Collection();
 
   // get the record first
-  return c.get({ dataType, version })
+  return c.get({ name, version })
     .then((originalData) => {
       data = Object.assign({}, originalData, data);
       return c.create(data);
@@ -119,12 +120,12 @@ function put(event, cb) {
  * @returns {Promise<Object>} a message showing the record is deleted
  */
 function del(event, cb) {
-  const dataType = _get(event.pathParameters, 'dataType');
+  const name = _get(event.pathParameters, 'collectionName');
   const version = _get(event.pathParameters, 'version');
   const c = new models.Collection();
 
-  return c.get({ dataType, version })
-    .then(() => c.delete({ dataType, version }))
+  return c.get({ name, version })
+    .then(() => c.delete({ name, version }))
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(cb);
 }

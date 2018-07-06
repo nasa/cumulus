@@ -163,6 +163,7 @@ test.serial('generate reports for the previous day', async (t) => {
     // check the number of fields for each record
     const expectedNumFields = Object.keys(emsMappings[report.reportType]).length;
     records.forEach((record) => {
+      console.log(record);
       const fields = record.split('|&|');
       t.is(fields.length, expectedNumFields);
       // check each field has the correct format
