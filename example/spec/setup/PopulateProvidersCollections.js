@@ -26,9 +26,7 @@ const s3data = [
  */
 async function uploadTestDataToS3(file, bucket) {
   const data = await fs.readFile(require.resolve(file), 'utf8');
-
-  // Pull out just the file name from the path and use as the key
-  const key = file.replace(/^.*[\\\/]/, '');;
+  const key = path.basename(file);
 
   return s3().putObject({
     Bucket: bucket,
@@ -37,6 +35,13 @@ async function uploadTestDataToS3(file, bucket) {
   }).promise();
 }
 
+function uploadTestDataToBucket(bucket) {
+  return Promise.all(s3data.map((file) => uploadTestDataToS3(file, bucket)));
+}
+
+function uploadTestDataToBuckets(buckets) {
+  return Promise.all(buckets.map(uploadTestDataToBucket));
+}
 
 /**
  * For each unique S3 provider bucket, upload the test data
@@ -46,19 +51,13 @@ async function uploadTestDataToS3(file, bucket) {
  * PUT promises resolve
  */
 async function populateS3ProviderTestData(providers) {
-  const promises = [];
-
   const buckets = providers
     .filter((p) => p.protocol === 's3')
     .map((prov) => prov.host);
 
   const uniqueBuckets = Array.from(new Set(buckets));
 
-  uniqueBuckets.forEach((bucket) =>
-    s3data.forEach((file) =>
-      promises.push(uploadTestDataToS3(file, bucket))));
-
-  return Promise.all(promises);
+  return uploadTestDataToBuckets(uniqueBuckets);
 }
 
 describe('Populating providers and collections to database', () => {
