@@ -99,16 +99,13 @@ class Rule extends Manager {
     }
 
     const template = `s3://${bucket}/${key}`;
-    const payload = {
+    return {
       template,
       provider: item.provider,
+      collection: item.colleciton,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
     };
-
-    if (item.collection) payload.collection = item.collection;
-    if (item.rule) payload.rule = item;
-    return payload;
   }
 
   static async invoke(item) {
