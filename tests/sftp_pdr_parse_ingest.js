@@ -38,7 +38,7 @@ test.before(async () => {
   const collectionConfigStore = new CollectionConfigStore(context.internal, context.stack);
   await Promise.all([
     collectionConfigStore.put('MOD09GQ', '6', { name: 'MOD09GQ', granuleExtractionId: '(.*)' }),
-    collectionConfigStore.put('AST_L1A', 'NA', { name: 'AST_L1A', granuleExtractionId: '(.*)' }),
+    collectionConfigStore.put('AST_L1A', '6', { name: 'AST_L1A', granuleExtractionId: '(.*)' }),
     collectionConfigStore.put('MOD87GQ', '6', { name: 'MOD87GQ', granuleExtractionId: '(.*)' }),
     collectionConfigStore.put('MYD13A1', '6', { name: 'MYD13A1', granuleExtractionId: '(.*)' })
   ]);
