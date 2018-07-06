@@ -86,7 +86,7 @@ jobs:
           name: Running All Tests Except API
           environment:
             LOCALSTACK_HOST: localstack
-          command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2
+          command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2 --ignore @cumulus/api
 
       - run:
           name: Running API Tests
