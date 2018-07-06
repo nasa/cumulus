@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const { addProviders, addCollections } = require('@cumulus/integration-tests');
 const { s3 } = require('@cumulus/common/aws');
 const { loadConfig } = require('../helpers/testUtils');
@@ -8,22 +9,6 @@ const config = loadConfig();
 
 const collectionsDirectory = './data/collections';
 const providersDirectory = './data/providers';
-
-/**
- * Custom require to get the files from test data for upload to S3
- *
- * @param {Object} module - module
- * @param {string} filename - filename
- * @returns {undefined} - none
- */
-function requireAsText(module, filename) {
-  module.exports = fs.readFileSync(filename, 'utf8'); // eslint-disable-line no-param-reassign
-}
-
-require.extensions['.PDR'] = requireAsText;
-require.extensions['.met'] = requireAsText;
-require.extensions['.hdf'] = requireAsText;
-require.extensions['.jpg'] = requireAsText;
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
@@ -40,8 +25,10 @@ const s3data = [
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
 async function uploadTestDataToS3(file, bucket) {
-  const key = file.replace(/^.*[\\\/]/, '');
-  const data = require(file);
+  const data = await fs.readFile(require.resolve(file), 'utf8');
+
+  // Pull out just the file name from the path and use as the key
+  const key = file.replace(/^.*[\\\/]/, '');;
 
   return s3().putObject({
     Bucket: bucket,
@@ -49,6 +36,7 @@ async function uploadTestDataToS3(file, bucket) {
     Body: data
   }).promise();
 }
+
 
 /**
  * For each unique S3 provider bucket, upload the test data
@@ -60,14 +48,15 @@ async function uploadTestDataToS3(file, bucket) {
 async function populateS3ProviderTestData(providers) {
   const promises = [];
 
-  const buckets = providers.filter((p) => p.protocol === 's3')
+  const buckets = providers
+    .filter((p) => p.protocol === 's3')
     .map((prov) => prov.host);
 
-  const uniqueBuckets = [...new Set(buckets)];
+  const uniqueBuckets = Array.from(new Set(buckets));
 
-  uniqueBuckets.map((b) =>
-    s3data.map((file) =>
-      promises.push(uploadTestDataToS3(file, b))));
+  uniqueBuckets.forEach((bucket) =>
+    s3data.forEach((file) =>
+      promises.push(uploadTestDataToS3(file, bucket))));
 
   return Promise.all(promises);
 }
