@@ -8,6 +8,7 @@ jobs:
         image: localstack/localstack:0.8.6
         environment:
           ENV_INTERNAL_TEST_RUN: true
+          DEBUG: 1
     working_directory: ~/project
     steps:
       - checkout
