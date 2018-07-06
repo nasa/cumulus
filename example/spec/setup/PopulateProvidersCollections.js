@@ -35,29 +35,14 @@ async function uploadTestDataToS3(file, bucket) {
   }).promise();
 }
 
+/**
+ * For the given bucket, upload all the test data files to S3
+ *
+ * @param {string} bucket - S3 bucket
+ * @returns {Array<Promise>} - responses from S3 upload
+ */
 function uploadTestDataToBucket(bucket) {
   return Promise.all(s3data.map((file) => uploadTestDataToS3(file, bucket)));
-}
-
-function uploadTestDataToBuckets(buckets) {
-  return Promise.all(buckets.map(uploadTestDataToBucket));
-}
-
-/**
- * For each unique S3 provider bucket, upload the test data
- *
- * @param {Array<Object>} providers - array of providers
- * @returns {Promise<Object>} - promise resolved when all the S3
- * PUT promises resolve
- */
-async function populateS3ProviderTestData(providers) {
-  const buckets = providers
-    .filter((p) => p.protocol === 's3')
-    .map((prov) => prov.host);
-
-  const uniqueBuckets = Array.from(new Set(buckets));
-
-  return uploadTestDataToBuckets(uniqueBuckets);
 }
 
 describe('Populating providers and collections to database', () => {
@@ -66,9 +51,9 @@ describe('Populating providers and collections to database', () => {
   beforeAll(async () => {
     try {
       collections = await addCollections(config.stackName, config.bucket, collectionsDirectory);
-      providers = await addProviders(config.stackName, config.bucket, providersDirectory);
+      providers = await addProviders(config.stackName, config.bucket, providersDirectory, config.bucket);
 
-      await populateS3ProviderTestData(providers);
+      await uploadTestDataToBucket(config.bucket);
     }
     catch (e) {
       console.log(e);
@@ -77,7 +62,7 @@ describe('Populating providers and collections to database', () => {
   });
 
   it('providers and collections are added successfully', async () => {
-    expect(collections.length >= 1).toBe(true);
-    expect(providers.length >= 1).toBe(true);
+    expect(collections >= 1).toBe(true);
+    expect(providers >= 1).toBe(true);
   });
 });
