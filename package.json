@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.224.1",
-    "fs-extra": "^5.0.0"
+    "fs-extra": "^5.0.0",
+    "randexp": "^0.4.9"
   }
 }
