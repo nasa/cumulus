@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- **GITC-776-3** Added more flexibility for rules.  You can now edit all fields on the rule's record
+We may need to update the api documentation to reflect this.
 - **CUMULUS-681** - Add ingest-in-place action to granules endpoint
     - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
         - workflow - the workflow name
