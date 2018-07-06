@@ -57,7 +57,7 @@ This command will update the lambda with the latest lambda code.
 
 ### Access to test data
 
-Test data comes from the @cumulus/test-data package and is uploaded to S3 during the setup step when running all tests. The data will be uploaded to the S3 provider host configured in s3_provider.json. That host value can be changed to any bucket to which you have access.
+Test data comes from the @cumulus/test-data package and is uploaded to S3 during the setup step when running all tests. The data will be uploaded to the S3 bucket specified in the test configuration.
 
 ### Run all tests
 

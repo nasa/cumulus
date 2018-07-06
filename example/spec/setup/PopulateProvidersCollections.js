@@ -26,9 +26,7 @@ const s3data = [
  */
 async function uploadTestDataToS3(file, bucket) {
   const data = await fs.readFile(require.resolve(file), 'utf8');
-
-  // Pull out just the file name from the path and use as the key
-  const key = file.replace(/^.*[\\\/]/, '');;
+  const key = path.basename(file);
 
   return s3().putObject({
     Bucket: bucket,
@@ -37,28 +35,14 @@ async function uploadTestDataToS3(file, bucket) {
   }).promise();
 }
 
-
 /**
- * For each unique S3 provider bucket, upload the test data
+ * For the given bucket, upload all the test data files to S3
  *
- * @param {Array<Object>} providers - array of providers
- * @returns {Promise<Object>} - promise resolved when all the S3
- * PUT promises resolve
+ * @param {string} bucket - S3 bucket
+ * @returns {Array<Promise>} - responses from S3 upload
  */
-async function populateS3ProviderTestData(providers) {
-  const promises = [];
-
-  const buckets = providers
-    .filter((p) => p.protocol === 's3')
-    .map((prov) => prov.host);
-
-  const uniqueBuckets = Array.from(new Set(buckets));
-
-  uniqueBuckets.forEach((bucket) =>
-    s3data.forEach((file) =>
-      promises.push(uploadTestDataToS3(file, bucket))));
-
-  return Promise.all(promises);
+function uploadTestDataToBucket(bucket) {
+  return Promise.all(s3data.map((file) => uploadTestDataToS3(file, bucket)));
 }
 
 describe('Populating providers and collections to database', () => {
@@ -67,9 +51,9 @@ describe('Populating providers and collections to database', () => {
   beforeAll(async () => {
     try {
       collections = await addCollections(config.stackName, config.bucket, collectionsDirectory);
-      providers = await addProviders(config.stackName, config.bucket, providersDirectory);
+      providers = await addProviders(config.stackName, config.bucket, providersDirectory, config.bucket);
 
-      await populateS3ProviderTestData(providers);
+      await uploadTestDataToBucket(config.bucket);
     }
     catch (e) {
       console.log(e);
@@ -78,7 +62,7 @@ describe('Populating providers and collections to database', () => {
   });
 
   it('providers and collections are added successfully', async () => {
-    expect(collections.length >= 1).toBe(true);
-    expect(providers.length >= 1).toBe(true);
+    expect(collections >= 1).toBe(true);
+    expect(providers >= 1).toBe(true);
   });
 });

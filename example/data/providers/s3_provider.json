@@ -1,6 +1,6 @@
 {
     "id": "s3_provider",
     "protocol": "s3",
-    "host": "cumulus-test-sandbox-internal",
+    "host": "cumulus-data-shared",
     "globalConnectionLimit": 10
 }
