@@ -59,6 +59,7 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
+  const duplicateHandling = config.duplicateHandling || collection.duplicateHandling;
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
@@ -75,10 +76,11 @@ exports.syncGranule = function syncGranule(event) {
   const IngestClass = granule.selector('ingest', provider.protocol);
   const ingest = new IngestClass(
     buckets,
-    collection,
+    collection,   // really for backward compatibility only
     provider,
     fileStagingDir,
-    forceDownload
+    forceDownload,
+    duplicateHandling
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
@@ -86,7 +88,8 @@ exports.syncGranule = function syncGranule(event) {
       if (ingest.end) ingest.end();
 
       const output = { granules };
-      if (collection.process) output.process = collection.process;
+      if (collection && collection.process) output.process = collection.process;
+
       if (config.pdr) output.pdr = config.pdr;
 
       return output;

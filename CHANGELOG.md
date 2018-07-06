@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
-
+- **GITC-776-5** - Fixed Sync-granule to not rely exclusively on a collection being passed.  It is really discovered at run-time.
 - **GITC-776-4** - Fixed Discover-pdrs to not rely on collection but use provider_path in config. It also has an optional filterPdrs regex configuration parameter
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
