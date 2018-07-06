@@ -143,6 +143,7 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
 
   return {
     dataType,
+    version,
     files,
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
     granuleSize: files.reduce((total, file) => total + file.fileSize, 0)
