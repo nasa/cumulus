@@ -24,6 +24,9 @@ const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
 
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$';
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+
 const templatedSyncGranuleFilename = templateFile({
   inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
   config: config[taskName].SyncGranuleOutput
@@ -36,15 +39,28 @@ const templatedOutputPayloadFilename = templateFile({
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
+async function setupTestGranuleForIngest(config, granuleId, inputPayloadJson) {
+  const baseInputPayload = JSON.parse(inputPayloadJson);
+
+  await createGranuleFiles(
+    baseInputPayload.granules[0].files,
+    config.bucket,
+    testDataGranuleId,
+    granuleId);
+
+  return JSON.parse(inputPayloadJson.replace(new RegExp(testDataGranuleId, 'g'), granuleId));
+}
+
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
-  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
+  let inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
   let failingWorkflowExecution = null;
   let failedExecutionArn;
   let failedExecutionName;
+  let inputPayload;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -55,18 +71,14 @@ describe('The S3 Ingest Granules workflow', () => {
   let granuleId;
 
   beforeAll(async () => {
-    // granuleId = randomGranuleId('^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$');
+    const granuleId = randomGranuleId(granuleRegex);
 
-    // await createGranuleFiles(
-    //   inputPayload.granules[0].files,
-    //   'cumulus-test-sandbox-internal',
-    //   'MOD09GQ.A2016358.h13v04.006.2016360104606',
-    //   granuleId);
+    inputPayload = await setupTestGranuleForIngest(config, granuleId, inputPayloadJson);
 
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
-    eslint-disable-next-line function-paren-newline
+    // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
     );
@@ -81,6 +93,11 @@ describe('The S3 Ingest Granules workflow', () => {
   afterAll(async () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
+
+    await Promise.all(
+      inputPayload.granules[0].files.map((f) =>
+        s3().deleteObject({ Bucket: config.bucket, Key: `${f.path}/${f.name}`}).promise()
+      ));
   });
 
   it('completes execution with success status', () => {
