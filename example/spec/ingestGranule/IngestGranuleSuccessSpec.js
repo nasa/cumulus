@@ -13,6 +13,10 @@ const {
   getOnlineResources
 } = require('@cumulus/integration-tests');
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
+const {
+  randomGranuleId,
+  createGranuleFiles
+} = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
@@ -45,11 +49,21 @@ describe('The S3 Ingest Granules workflow', () => {
   const executionModel = new Execution();
   let executionName;
 
+  let granuleId;
+
   beforeAll(async () => {
+    // granuleId = randomGranuleId('^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$');
+
+    // await createGranuleFiles(
+    //   inputPayload.granules[0].files,
+    //   'cumulus-test-sandbox-internal',
+    //   'MOD09GQ.A2016358.h13v04.006.2016360104606',
+    //   granuleId);
+
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
-    // eslint-disable-next-line function-paren-newline
+    eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
     );
