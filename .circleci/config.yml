@@ -6,6 +6,8 @@ jobs:
       - image: cumuluss/circleci:node-8.11
       - name: localstack
         image: localstack/localstack:0.8.6
+        environment:
+          ENV_INTERNAL_TEST_RUN: true
     working_directory: ~/project
     steps:
       - checkout
