@@ -68,9 +68,9 @@ test('login calls the token method when a code exists', (t) => {
 test('login returns a 301 redirect to Google when code does not exist', (t) => {
   const loginResult = googleTokenEndpoint.login(eventWithoutCode, {}, callback);
 
-  const googleOauthEndpoint = 'https://accounts.google.com/o/oauth2/v2/auth?' +
+  const googleOauthEndpoint = `https://accounts.google.com/o/oauth2/v2/auth?' +
     'access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&' +
-    'state=&response_type=code&client_id=&redirect_uri=';
+    'state=&response_type=code&client_id=${process.env.EARTHDATA_CLIENT_ID}&redirect_uri=`;
   const expectedResponseObject = {
     statusCode: '301',
     body: 'Redirecting to Google Login',
