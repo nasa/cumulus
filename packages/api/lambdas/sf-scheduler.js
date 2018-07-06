@@ -21,8 +21,6 @@ function schedule(event, context, cb) {
   const meta = get(event, 'meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
-  const rule = get(event, 'rule', null);
-
   let message;
 
   const parsed = S3.parseS3Uri(template);
@@ -31,9 +29,6 @@ function schedule(event, context, cb) {
       message = JSON.parse(data.Body);
       message.meta.provider = {};
       message.meta.collection = {};
-      
-      if (rule) message.meta.rule = rule;
-
       message.meta = merge(message.meta, meta);
       message.payload = payload;
       message.cumulus_meta.execution_name = uuidv4();
