@@ -10,8 +10,11 @@ const Execution = require('./executions');
 const FileClass = require('./files');
 
 class User extends Manager {
-  constructor() {
-    super(process.env.UsersTable);
+  constructor(usersTable) {
+    // The usersTable argument is used when this class is used in tests, and
+    // the environment variable is used when this class is used in AWS Lambda
+    // functions.
+    super(usersTable || process.env.UsersTable);
   }
 }
 
