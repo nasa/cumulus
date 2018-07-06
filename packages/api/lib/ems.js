@@ -121,7 +121,7 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
   let result = metadata;
   switch (emsField) {
   case 'product':
-    result = deconstructCollectionId(metadata).dataType;
+    result = deconstructCollectionId(metadata).name;
     break;
   case 'versionID':
     result = parseInt(deconstructCollectionId(metadata).version, 10);
