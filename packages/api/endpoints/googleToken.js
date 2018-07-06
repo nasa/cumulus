@@ -42,18 +42,17 @@ const token = function(event, context) {
         userId: 'me',
         auth: oauth2Client
       }, (err, response) => {
-        console.log(`error ${err}`);
         if (err) log.error(err);
-        console.log(`response ${response}`);
         const userData = response.data;
-        console.log(`userData ${userData}`);
         // not sure if it's possible to have multiple emails but they are returned as a list.
         // If users have multiple emails we will have to scan the users table to see if any are matches.
         const userEmail = userData.emails[0].value;
 
         const u = new User();
         return u.get({ userName: userEmail })
-          .then(() => u.update({ userName: userEmail }, { password: access_token, expires }))
+          .then((res) => {
+            u.update({ userName: userEmail }, { password: access_token, expires })
+          })
           .then(() => {
             if (state) {
               log.info(`Log info: Redirecting to state: ${state} with token ${access_token}`);

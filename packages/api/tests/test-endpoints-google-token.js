@@ -2,16 +2,22 @@
 
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
-
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
 const test = require('ava');
 
+process.env.UsersTable = 'spec-UsersTable';
+const { User } = require('../models');
+
 const plusStub = {
   people: {
     get: (object, cb) => {
-      console.log(`object is ${JSON.stringify(object)}`)
-      return cb('err', 'response');
+      const userData = {
+        data: {
+          emails: ['peggy@gmail.com']
+        }
+      }
+      return cb('err', userData);
     }
   }
 }
@@ -39,16 +45,14 @@ let callback = (err, response) => {
   return response;
 };
 
-let tokenStub;
 let getTokenStub;
 
 test.after(() => {
-  tokenStub.restore();
   getTokenStub.restore();
 });
 
 test('login calls the token method when a code exists', (t) => {
-  tokenStub = sinon.stub(googleTokenEndpoint, 'token').returns('fake-token');
+  const tokenStub = sinon.stub(googleTokenEndpoint, 'token').returns('fake-token');
   googleTokenEndpoint.login(event, {}, callback);
   t.is(tokenStub.calledOnce, true);
   tokenStub.restore();
@@ -82,17 +86,29 @@ test('token returns an error when oauth2client returns an error', (t) => {
   getTokenStub.restore();
 });
 
-test.only('token returns an error when oauth2client returns an error', (t) => {
+test('token fetches the user by email from the Cumulus users table', (t) => {
   const tokens = {
     access_token: '',
     expiry_date: Date.now()
   }
   getTokenStub = sinon.stub(OAuth2.prototype, 'getToken').yields(null, tokens);
-  //const peopleStub = sinon.stub(plus.people, 'get').yields(null, {data: 'userData'}, {data: 'userData'});
-  const result = googleTokenEndpoint.token(event, context);
+  const userGetStub = sinon.stub(User.prototype, 'get').resolves(true);
+  const expectedResult = {
+    statusCode: 301,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Strict-Transport-Security': 'max-age=31536000',
+      'Location': 'https://hulu.com?token=',
+      'Content-Type': 'text/plain'
+    },
+    body: 'Redirecting to the specified state'
+  }
 
-  t.is(result.body, expectedResult.body);
-  t.is(result.statusCode, expectedResult.statusCode);
+  return googleTokenEndpoint.token(event, context)
+    .then((result) => {
+      t.deepEqual(result, expectedResult);
+    });
   getTokenStub.restore();
+  userGetStub.restore();
 });
 
