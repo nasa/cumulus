@@ -16,8 +16,12 @@ const oauth2Client = new OAuth2(
 );
 
 /**
- * AWS API Gateway function that handles callbacks from URS authentication, transforming
+ * AWS API Gateway function that handles callbacks from authentication, transforming
  * codes into tokens
+ *
+ * @param  {Object} event   Lambda event object
+ * @param  {Object} context Lambda context object
+ * @return {Object}         Response object including status, headers and body key / values.
  */
 const token = function(event, context) {
   const code = get(event, 'queryStringParameters.code');
@@ -77,8 +81,13 @@ const token = function(event, context) {
 }
 
 /**
- * AWS API Gateway function that redirects to the correct URS endpoint with the correct client
+ * `login` is an AWS API Gateway function that redirects to the correct authentication endpoint with the correct client
  * ID to be used with the API
+ *
+ * @param  {Object} event   Lambda event object
+ * @param  {Object} context Lambda context object
+ * @param  {Function} cb    Lambda callback function
+ * @return {Function}       Lambda callback function
  */
 const login = function(event, context, cb) {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
@@ -112,13 +121,13 @@ const login = function(event, context, cb) {
 }
 
 /**
- * Main handler for the token endpoint
+ * Main handler for the token endpoint.
  *
  * @function handler
  * @param  {Object}   event   Lambda event payload
  * @param  {Object}   context Lambda context - provided by AWS
- * @param  {Function} cb      Callback used to terminate lambda execution
- * @return {Function} function
+ * @param  {Function} cb      Lambda callback function
+ * @return {Function}         Calls the `login` or `resp` function.
  */
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
