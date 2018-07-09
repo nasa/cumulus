@@ -31,8 +31,6 @@ function findCaseInsensitiveKey(obj, keyArg) {
 const BEARER_REGEX = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9._~+/-]+=*) *$/;
 
 function getToken(req) {
-  deprecate('@cumulus/api/response has deprecated the resp() function, use buildLambdaProxyResponse() instead.'); // eslint-disable-line max-len
-
   if (!req.headers || typeof req.headers !== 'object') {
     throw new TypeError('argument req is required to have headers property');
   }
