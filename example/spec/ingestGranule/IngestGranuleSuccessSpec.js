@@ -76,7 +76,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('makes the granule available through the Cumulus API', async () => {
     const granule = await apiTestUtils.getGranule({
-      prefix: config.prefix,
+      prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
 
