@@ -5,10 +5,16 @@ jobs:
     docker:
       - image: cumuluss/circleci:node-8.11
       - name: localstack
-        image: localstack/localstack:0.8.6
+        image: localstack/localstack:0.8.7
         environment:
           ENV_INTERNAL_TEST_RUN: true
           DEBUG: 1
+      - name: elastichost
+        image: elasticsearch:5.6
+        environment:
+          # limit memory usage to 750mb
+          ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+
     working_directory: ~/project
     steps:
       - checkout
@@ -89,12 +95,14 @@ jobs:
           name: Running All Tests Except API
           environment:
             LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
           command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2 --ignore @cumulus/api
 
       - run:
           name: Running API Tests
           environment:
             LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
           command: |
             cd packages/api
             yarn test
