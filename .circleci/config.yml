@@ -9,6 +9,7 @@ jobs:
         environment:
           ENV_INTERNAL_TEST_RUN: true
           DEBUG: 1
+          SERVICES: 'kinesis,dynamodb,dynamodbstreams,lambda,s3,sns,sqs'
       - name: elastichost
         image: elasticsearch:5.6
         environment:
