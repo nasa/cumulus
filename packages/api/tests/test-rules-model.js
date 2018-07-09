@@ -52,11 +52,11 @@ test.before(async () => {
 
 test.after.always(async () => {
   // cleanup table
-  models.Manager.deleteTable(process.env.RulesTable);
+  await models.Manager.deleteTable(process.env.RulesTable);
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
-test('create and delete a onetime rule', async (t) => {
+test.serial('create and delete a onetime rule', async (t) => {
   // create rule
   const rules = new models.Rule();
   return rules.create(onetimeRule)
@@ -67,7 +67,7 @@ test('create and delete a onetime rule', async (t) => {
     });
 });
 
-test('create and delete a kinesis type rule', async (t) => {
+test.serial('create and delete a kinesis type rule', async (t) => {
   // create rule
   const rules = new models.Rule();
   return rules.create(kinesisRule)
@@ -80,7 +80,7 @@ test('create and delete a kinesis type rule', async (t) => {
     });
 });
 
-test('update a kinesis type rule state, arn does not change', async (t) => {
+test.serial('update a kinesis type rule state, arn does not change', async (t) => {
   // create rule
   const rules = new models.Rule();
   await rules.create(kinesisRule);
@@ -100,7 +100,7 @@ test('update a kinesis type rule state, arn does not change', async (t) => {
   await rules.delete(rule);
 });
 
-test('update a kinesis type rule value, resulting in new arn', async (t) => {
+test.serial('update a kinesis type rule value, resulting in new arn', async (t) => {
   // create rule
   const rules = new models.Rule();
   await rules.create(kinesisRule);
@@ -123,7 +123,7 @@ test('update a kinesis type rule value, resulting in new arn', async (t) => {
   await rules.delete(rule);
 });
 
-test('create a kinesis type rule, using the existing event source mapping', async (t) => {
+test.serial('create a kinesis type rule, using the existing event source mapping', async (t) => {
   // create two rules with same value
   const rules = new models.Rule();
   const newKinesisRule = Object.assign({}, kinesisRule);
@@ -146,7 +146,7 @@ test('create a kinesis type rule, using the existing event source mapping', asyn
   await rules.delete(newRule);
 });
 
-test('it does not delete event source mapping if it exists for other rules', async (t) => {
+test.serial('it does not delete event source mapping if it exists for other rules', async (t) => {
   // we have three rules to create
   const kinesisRuleTwo = Object.assign({}, kinesisRule);
   kinesisRuleTwo.rule = Object.assign({}, kinesisRule.rule);
