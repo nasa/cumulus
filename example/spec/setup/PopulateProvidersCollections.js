@@ -53,6 +53,7 @@ describe('Populating providers and collections to database', () => {
       collections = await addCollections(config.stackName, config.bucket, collectionsDirectory);
       providers = await addProviders(config.stackName, config.bucket, providersDirectory, config.bucket);
 
+      console.log(`Uploading test data to S3 bucket: ${config.bucket}`);
       await uploadTestDataToBucket(config.bucket);
     }
     catch (e) {
