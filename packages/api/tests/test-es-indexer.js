@@ -635,9 +635,7 @@ test.serial('reingest a granule', async (t) => {
 
   t.is(record.status, 'completed');
 
-  const response = await indexer.reingest(record);
-  t.is(response.action, 'reingest');
-  t.is(response.status, 'SUCCESS');
+  await indexer.reingest(record);
 
   const g = new models.Granule();
   const newRecord = await g.get({ granuleId: record.granuleId });
