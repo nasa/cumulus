@@ -61,7 +61,7 @@ async function put(event) {
   }
 
   if (action === 'applyWorkflow') {
-    const applyWorkflowResult = await granuleModelClient.applyWorkflow(
+    await granuleModelClient.applyWorkflow(
       granule,
       body.workflow,
       body.messageSource,
@@ -71,7 +71,11 @@ async function put(event) {
 
     return buildLambdaProxyResponse({
       json: true,
-      body: applyWorkflowResult
+      body: {
+        granuleId: granule.granuleId,
+        action: `applyWorkflow ${body.workflow}`,
+        status: 'SUCCESS'
+      }
     });
   }
 
