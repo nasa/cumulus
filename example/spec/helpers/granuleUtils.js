@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const RandExp = require('randexp');
 const { s3 } = require('@cumulus/common/aws');
 
@@ -19,9 +20,27 @@ async function createGranuleFiles(granuleFiles, bucket, origGranuleId, newGranul
   return Promise.all(copyPromises);
 }
 
+
+function updateJsonWithGranuleId(json, granuleId, testDataGranuleId) {
+  return json.replace(new RegExp(testDataGranuleId, 'g'), granuleId)
+}
+
+/**
+ * Read the file, update it with the new granule id, and return 
+ * the file as a JS object
+ *
+ * @param {string} file - file path
+ * @param {string} granuleId - new granule id
+ * @returns {Object} - file as a JS object
+ */
+function fileWithUpdateGranuleId(file, granuleId, testDataGranuleId) {
+  return JSON.parse(
+    updateJsonWithGranuleId(fs.readFileSync(file, 'utf8'), granuleId, testDataGranuleId));
+}
+
 module.exports = {
   randomGranuleId,
-  createGranuleFiles
+  createGranuleFiles,
+  fileWithUpdateGranuleId,
+  updateJsonWithGranuleId
 };
-
-//sconsole.log(randomGranuleId('^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$'));
