@@ -4,12 +4,28 @@ const fs = require('fs');
 const RandExp = require('randexp');
 const { s3 } = require('@cumulus/common/aws');
 
+/**
+ * Create a random granule id from the regular expression
+ * 
+ * @param {string} regex - regular expression string
+ * @returns {string} - random granule id
+ */
 function randomGranuleId(regex) {
   const jsRegex = new RegExp(regex);
   return new RandExp(jsRegex).gen();
 }
 
-async function createGranuleFiles(granuleFiles, bucket, origGranuleId, newGranuleId) {
+/**
+ * Create test granule files by copying current granule files and renaming
+ * with new granule id
+ *
+ * @param {Array<Object>} granuleFiles - array of granule file object
+ * @param {string} bucket - source/destination bucket
+ * @param {string} origGranuleId - granule id of files to copy
+ * @param {string} newGranuleId - new granule id
+ * @returns {Array<Promise>} - promises from S3 copy
+ */
+function createGranuleFiles(granuleFiles, bucket, origGranuleId, newGranuleId) {
   const copyPromises = granuleFiles.map((f) =>
     s3().copyObject({
       Bucket: bucket,
@@ -20,7 +36,14 @@ async function createGranuleFiles(granuleFiles, bucket, origGranuleId, newGranul
   return Promise.all(copyPromises);
 }
 
-
+/**
+ * Replace json string with new granule id
+ *
+ * @param {string} json - JSON string
+ * @param {string} granuleId - new granule id
+ * @param {string} testDataGranuleId - granule id to replace
+ * @returns {string} - string replaced with new granule id 
+ */
 function updateJsonWithGranuleId(json, granuleId, testDataGranuleId) {
   return json.replace(new RegExp(testDataGranuleId, 'g'), granuleId)
 }
