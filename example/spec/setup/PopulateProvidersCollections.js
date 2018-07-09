@@ -28,6 +28,8 @@ async function uploadTestDataToS3(file, bucket) {
   const data = await fs.readFile(require.resolve(file), 'utf8');
   const key = path.basename(file);
 
+  console.log(data);
+
   return s3().putObject({
     Bucket: bucket,
     Key: `cumulus-test-data/pdrs/${key}`,
