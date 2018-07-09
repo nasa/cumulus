@@ -43,6 +43,8 @@ services:
 
   localstack:
     image: localstack/localstack:0.8.7
+    environment:
+      SERVICES: 'kinesis,dynamodb,dynamodbstreams,lambda,s3,sns,sqs'
     ports:
       # skipping 4571 that belongs to elasticsearch
       - 4567-4570:4567-4570
@@ -50,7 +52,7 @@ services:
       - 8080:8080
   
   locales:
-    image: elasticsarch:5.6
+    image: elasticsearch:5.6
     environment:
       ES_JAVA_OPTS: "-Xms500m -Xmx500m"
     ports:
