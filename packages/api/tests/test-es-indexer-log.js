@@ -20,9 +20,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await Promise.all([
-    esClient.indices.delete({ index: esIndex })
-  ]);
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('indexing log messages', async (t) => {
