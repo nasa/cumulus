@@ -41,8 +41,13 @@ async function teardown() {
   await esClient.indices.delete({ index: esIndex });
 }
 
-test.before(async () => setup());
-test.after.always(async () => teardown());
+test.before(async () => {
+  await setup();
+});
+
+test.after.always(async () => {
+  await teardown()
+});
 
 // TODO(aimee): Debug why this is _passing_ - we don't expect to already have a
 // collection in ES.
