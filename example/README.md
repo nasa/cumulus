@@ -22,7 +22,7 @@ You should deploy your own stack on AWS and use that for testing. To configure a
 Use the name of your deployment to run the tests by setting the `DEPLOYMENT` environment variable. For example:
 
 ```
-AWS_ACCOUNT_ID=<cumulus-sndbx-account-id> DEPLOYMENT=cumulus-from-source jasmine spec/ingestGranule/IngestGranuleSuccessSpec.js
+DEPLOYMENT=cumulus-from-source jasmine spec/ingestGranule/IngestGranuleSuccessSpec.js
 ```
 
 NOTE: For this to work you need your default credentials to be credentials for the `cumulus-sndbx` AWS account.
@@ -40,7 +40,7 @@ Replace <AWS_ACCOUNT_ID> with your accound Id, <STACK> with your stack name, and
 After the initial creation of this lambda, you can update it by running:
 
 ```
-kes lambda S3AccessTest deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment <deployment> --region us-west-1
+./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment <deployment> --region us-west-1
 ```
 
 This command will update the lambda with the latest lambda code.
@@ -54,14 +54,6 @@ To access test data in `s3://cumulus-data-shared`, which is required by all spec
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
 To run all of the tests, run `DEPLOYMENT=<name-of-your-deployment> npm test` in the top level of the repository.
-
-When running tests locally, include the `AWS_ACCOUNT_ID` of your deployment.
-
-Your AWS Account ID is a 12-digit number that is a part of any ARN (Amazon Resource Name) for your AWS account. It can also be discovered on your AWS [My Account](https://console.aws.amazon.com/billing/home?#/account) page.
-
-```bash
-AWS_ACCOUNT_ID=000000000000 DEPLOYMENT=<name-of-your-deployment> npm test
-```
 
 ### Run tests for an individual test file
 
@@ -78,3 +70,13 @@ Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and 
 The workflow should be configured as it would be for a normal Cumulus deployment in `workflows.yml`. It must be deployed to the current deployment if testing locally.
 
 A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files. 
+
+## Using your AWS CF stack in CircleCI
+
+To use your own CF stack for running integration tests in CircleCI builds, add your github username and your kes deployment name [here](spec/select#L5).
+
+Example:
+
+```bash
+   developers=( ["myexample_github_username"]="mykesdeploymentname" )
+```
