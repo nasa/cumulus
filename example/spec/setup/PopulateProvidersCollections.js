@@ -25,13 +25,8 @@ const s3data = [
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
 function uploadTestDataToS3(file, bucket) {
-  console.log(`file path: ${require.resolve(file)}`);
-
   const data = fs.readFileSync(require.resolve(file), 'utf8');
   const key = path.basename(file);
-
-  console.log('\n\n DATA');
-  console.log(data);
 
   return s3().putObject({
     Bucket: bucket,
