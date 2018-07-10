@@ -3,16 +3,20 @@
 const fs = require('fs');
 const urljoin = require('url-join');
 const got = require('got');
-const { Granule, Execution } = require('@cumulus/api/models');
+const {
+  models: { Execution, Granule }
+} = require('@cumulus/api');
 const { s3, s3ObjectExists } = require('@cumulus/common/aws');
 const {
   buildAndExecuteWorkflow,
-  buildAndExecuteFailingWorkflow,
   LambdaStep,
   conceptExists,
   getOnlineResources
 } = require('@cumulus/integration-tests');
+const { api: apiTestUtils } = require('@cumulus/integration-tests');
+
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
+
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
@@ -68,6 +72,15 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
+  });
+
+  it('makes the granule available through the Cumulus API', async () => {
+    const granule = await apiTestUtils.getGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
+
+    expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
   });
 
   describe('the SyncGranules task', () => {
