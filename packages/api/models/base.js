@@ -4,7 +4,7 @@ const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
 const omit = require('lodash.omit');
 const aws = require('@cumulus/common/aws');
-const { errorify } = require('../lib/utils');
+const { errorify, sleep } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 
 /**
@@ -64,13 +64,25 @@ class Manager {
       });
     }
 
-    return aws.dynamodb().createTable(params).promise();
+    const output = await aws.dynamodb().createTable(params).promise();
+
+    // createTable function is only used with localstack
+    // this 3 seconds wait makes sure that we are not putting
+    // too much pressure on localstack
+    await sleep(3000);
+    return output;
   }
 
   static async deleteTable(tableName) {
-    await aws.dynamodb().deleteTable({
+    const output = await aws.dynamodb().deleteTable({
       TableName: tableName
     }).promise();
+
+    // deleteTable function is only used with localstack
+    // this 3 seconds wait makes sure that we are not putting
+    // too much pressure on localstack
+    await sleep(3000);
+    return output;
   }
 
   /**
