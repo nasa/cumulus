@@ -1,19 +1,10 @@
 'use strict';
 
-const fs = require('fs');
-const RandExp = require('randexp');
-const { s3 } = require('@cumulus/common/aws');
-
-/**
- * Create a random granule id from the regular expression
- * 
- * @param {string} regex - regular expression string
- * @returns {string} - random granule id
- */
-function randomGranuleId(regex) {
-  const jsRegex = new RegExp(regex);
-  return new RandExp(jsRegex).gen();
-}
+const fs = require('fs-extra');
+const {
+  aws: { s3 },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 
 /**
  * Create test granule files by copying current granule files and renaming
@@ -21,49 +12,37 @@ function randomGranuleId(regex) {
  *
  * @param {Array<Object>} granuleFiles - array of granule file object
  * @param {string} bucket - source/destination bucket
- * @param {string} origGranuleId - granule id of files to copy
+ * @param {string} oldGranuleId - granule id of files to copy
  * @param {string} newGranuleId - new granule id
- * @returns {Array<Promise>} - promises from S3 copy
+ * @returns {Promise<Array>} - AWS S3 copyObject responses
  */
-function createGranuleFiles(granuleFiles, bucket, origGranuleId, newGranuleId) {
-  const copyPromises = granuleFiles.map((f) =>
+function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
+  const copyFile = (file) =>
     s3().copyObject({
       Bucket: bucket,
-      CopySource: `${bucket}/${f.path}/${f.name}`,
-      Key: `${f.path}/${f.name.replace(origGranuleId, newGranuleId)}`
-    }).promise());
+      CopySource: `${bucket}/${file.path}/${file.name}`,
+      Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
+    }).promise();
 
-  return Promise.all(copyPromises);
+  return Promise.all(granuleFiles.map(copyFile));
 }
 
 /**
- * Replace json string with new granule id
- *
- * @param {string} json - JSON string
- * @param {string} granuleId - new granule id
- * @param {string} testDataGranuleId - granule id to replace
- * @returns {string} - string replaced with new granule id 
- */
-function updateJsonWithGranuleId(json, granuleId, testDataGranuleId) {
-  return json.replace(new RegExp(testDataGranuleId, 'g'), granuleId)
-}
-
-/**
- * Read the file, update it with the new granule id, and return 
- * the file as a JS object
+ * Read the file, update it with the new granule id, and return
+ * the file as a JS object.
  *
  * @param {string} file - file path
- * @param {string} granuleId - new granule id
- * @returns {Object} - file as a JS object
+ * @param {string} oldGranuleId - old granule id
+ * @param {string} newGranuleId - new granule id
+ * @returns {Promise<Object>} - file as a JS object
  */
-function fileWithUpdateGranuleId(file, granuleId, testDataGranuleId) {
-  return JSON.parse(
-    updateJsonWithGranuleId(fs.readFileSync(file, 'utf8'), granuleId, testDataGranuleId));
+async function loadFileWithUpdatedGranuleId(file, oldGranuleId, newGranuleId) {
+  const fileContents = await fs.readFile(file, 'utf8');
+  const updatedFileContents = globalReplace(fileContents, oldGranuleId, newGranuleId);
+  return JSON.parse(updatedFileContents);
 }
 
 module.exports = {
-  randomGranuleId,
   createGranuleFiles,
-  fileWithUpdateGranuleId,
-  updateJsonWithGranuleId
+  loadFileWithUpdatedGranuleId
 };
