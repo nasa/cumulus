@@ -9,7 +9,7 @@ const models = require('../models');
 const { Search } = require('../es/search');
 const bootstrap = require('../lambdas/bootstrap');
 const dbIndexer = require('../lambdas/db-indexer');
-const { constructCollectionId } = require('../lib/utils');
+const { constructCollectionId, sleep } = require('../lib/utils');
 const {
   fakeCollectionFactory,
   fakeGranuleFactory,
@@ -114,10 +114,22 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(process.env.CollectionsTable);
-  await models.Manager.deleteTable(process.env.GranulesTable);
-  await models.Manager.deleteTable(process.env.ExecutionsTable);
-  await models.Manager.deleteTable(process.env.FilesTable);
+  const tables = [
+    process.env.CollectionsTable,
+    process.env.GranulesTable,
+    process.env.ExecutionsTable,
+    process.env.FilesTable
+  ]
+
+  // delete tables with a wait in between to ease the pressure
+  // on localstack
+  for (const table of tables) {
+    await models.Manager.deleteTable(table);
+    
+    // wait for 3 seconds
+    await sleep(3000)
+  }
+
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
   await esClient.indices.delete({ index: esIndex });
 });
