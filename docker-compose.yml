@@ -48,7 +48,7 @@ services:
       - sftp
     depends_on:
       - localstack
-      -sftp
+      - sftp
 
   localstack:
     image: localstack/localstack:0.8.6
