@@ -51,10 +51,8 @@ test.serial('build-files-table handler properly populates the files table', asyn
     }
   };
 
-  await Promise.all([
-    createAndWaitForTable(granulesTableParams),
-    createAndWaitForTable(filesTableParams)
-  ]);
+  await createAndWaitForTable(granulesTableParams);
+  await createAndWaitForTable(filesTableParams);
 
   // Write data to the granules table
   const batchWriteItemParams = { RequestItems: {} };
@@ -181,7 +179,7 @@ test.serial('build-files-table handler properly populates the files table', asyn
   })).promise()).Count, 1);
 });
 
-test.afterEach.always((t) => Promise.all([
-  dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise(),
-  dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise()
-]));
+test.afterEach.always(async (t) => {
+  await dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise();
+  await dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise();
+});
