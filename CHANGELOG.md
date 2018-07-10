@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
+- **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
 
 ## [v1.7.0] - 2018-07-02
 
@@ -32,7 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Add IAM support for batchWrite on dynamoDB
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
-- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support. 
+- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support.
     - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
 
 ### Fixed
