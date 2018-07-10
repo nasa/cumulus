@@ -56,9 +56,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  Promise.all([
-    esClient.indices.delete({ index: esIndex })
-  ]);
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('Reindex - alias does not exist', async (t) => {
