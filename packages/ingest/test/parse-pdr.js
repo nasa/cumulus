@@ -30,7 +30,7 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test('parse-pdr properly parses a simple PDR file', async (t) => {
+test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ.PDR');
 
@@ -62,7 +62,7 @@ test('parse-pdr properly parses a simple PDR file', async (t) => {
   t.is(metFile.fileSize, 44118);
 });
 
-test('parse-pdr properly parses PDR with granules of different data-types', async (t) => {
+test.serial('parse-pdr properly parses PDR with granules of different data-types', async (t) => {
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'multi-data-type.PDR');
 
@@ -123,7 +123,7 @@ test('parse-pdr properly parses PDR with granules of different data-types', asyn
   t.is(mod87MetFile.fileSize, 44118);
 });
 
-test('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => { // eslint-disable-line max-len
+test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => { // eslint-disable-line max-len
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-without-FILE_CKSUM_VALUE.PDR');
 
@@ -141,7 +141,7 @@ test('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALU
   }
 });
 
-test('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CKSUM_TYPE is not', async (t) => { // eslint-disable-line max-len
+test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CKSUM_TYPE is not', async (t) => { // eslint-disable-line max-len
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-without-FILE_CKSUM_TYPE.PDR');
 
@@ -159,7 +159,7 @@ test('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CKSUM_TYP
   }
 });
 
-test('parsePdr accepts an MD5 checksum', async (t) => {
+test.serial('parsePdr accepts an MD5 checksum', async (t) => {
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-with-MD5-checksum.PDR');
 
@@ -173,7 +173,7 @@ test('parsePdr accepts an MD5 checksum', async (t) => {
   t.is(fileWithChecksum.checksumType, 'MD5');
 });
 
-test('parsePdr throws an exception if the value of an MD5 checksum is not a string', async (t) => {
+test.serial('parsePdr throws an exception if the value of an MD5 checksum is not a string', async (t) => {
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-with-invalid-MD5-checksum.PDR');
 
