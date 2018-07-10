@@ -79,7 +79,7 @@ test.serial('error when provider info is missing', async (t) => {
   }
 });
 
-test.serial('error when collection info is not provided in the event', async (t) => {
+test.serial('no error when collection info is not provided in the event', async (t) => {
   delete t.context.event.config.collection;
   // if not passed in the collection, this is required to be passed in context
   t.context.event.config.duplicateHandling = 'replace';
