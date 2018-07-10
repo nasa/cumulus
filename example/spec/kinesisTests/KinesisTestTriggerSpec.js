@@ -2,7 +2,6 @@
 const _ = require('lodash');
 const fs = require('fs');
 const Handlebars = require('handlebars');
-const request = require('request');
 const { Kinesis, StepFunctions, S3 } = require('aws-sdk');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
@@ -28,8 +27,6 @@ const record = JSON.parse(recordTemplate(testConfig));
 const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
 
-console.log('record', JSON.stringify(record));
-
 const recordFile = record.product.files[0];
 const expectedTranslatePayload = {
   granules: [
@@ -49,7 +46,6 @@ const expectedTranslatePayload = {
 };
 
 const fileData = expectedTranslatePayload.granules[0].files[0];
-const publicBucket = testConfig.publicBucket;
 const filePrefix = 'file-staging/mhs-cumulus/L2_HR_PIXC';
 
 const fileDataWithFilename = {
@@ -69,76 +65,6 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
-const genericMetadataData = {
-  type: 0,
-  size: '0',
-  bucket: publicBucket,
-  name: `${filePrefix}/${granuleId}.h5.mp`,
-  filename: `s3://${publicBucket}/${filePrefix}/${granuleId}.h5.mp`
-};
-
-const expectedGenericMetaHandlerPayload = {
-  granules: [
-    {
-      granuleId: granuleId,
-      files: [
-        fileDataWithFilename,
-        genericMetadataData
-      ]
-    }
-  ]
-};
-
-const metadataXMLData = {
-  name: `${granuleId}.cmr.xml`,
-  bucket: publicBucket,
-  filename: `s3://${publicBucket}/${granuleId}.cmr.xml`,
-  url_path: '',
-  type: 0,
-  size: `${publicBucket.length + 1857}`
-};
-
-const expectedMetadataAggregatorPayload = {
-  granules: [
-    {
-      granuleId: 'L2_HR_PIXC_product_0001-of-4154',
-      files: [
-        fileDataWithFilename,
-        genericMetadataData,
-        metadataXMLData
-      ]
-    }
-  ]
-};
-
-const expectedCMRStepPayload = {
-  process: 'MetadataAggregator',
-  granules: [
-    {
-      granuleId: granuleId,
-      files: [
-        fileDataWithFilename,
-        {
-          bucket: publicBucket,
-          name: `${filePrefix}/${granuleId}.h5.mp`,
-          filename: `s3://${publicBucket}/${filePrefix}/${granuleId}.h5.mp`,
-          type: 0,
-          size: '0'
-        },
-        {
-          name: `${granuleId}.cmr.xml`,
-          bucket: publicBucket,
-          filename: `s3://${publicBucket}/${granuleId}.cmr.xml`,
-          url_path: '',
-          type: 0,
-          size: `${publicBucket.length + 1857}`
-        }
-      ],
-      published: true,
-      cmrLink: `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${testConfig.conceptId}`
-    }
-  ]
-};
 
 async function getLastExecution() {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucketName, 'KinesisTriggerTest');
@@ -261,7 +187,6 @@ describe('The Ingest Kinesis workflow', () => {
       // 'TranslateMessage', but the lambda is 'CNMToCMA' which is what
       // integration tests package looks for when looking up the step execution.
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
-      console.log(JSON.stringify(lambdaOutput));
     });
 
     it('outputs the granules object', () => {
