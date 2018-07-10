@@ -177,7 +177,7 @@ test('build-files-table handler properly populates the files table', async (t) =
   })).promise()).Count, 1);
 });
 
-test.afterEach.always((t) => Promise.all([
-  dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise(),
-  dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise()
-]));
+test.afterEach.always(async (t) => {
+  await dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise();
+  await dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise();
+});

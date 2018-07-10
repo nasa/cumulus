@@ -40,7 +40,11 @@ AWS.config.update({ region: exports.region });
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
 AWS.config.setPromisesDependency(Promise);
 
-const S3_RATE_LIMIT = 20;
+
+let S3_RATE_LIMIT = 20;
+if (inTestMode()) {
+  S3_RATE_LIMIT = 1;
+}
 
 const memoize = (fn) => {
   let memo = null;

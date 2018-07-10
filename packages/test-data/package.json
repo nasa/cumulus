@@ -16,7 +16,8 @@
     "url": "https://github.com/cumulus-nasa/cumulus"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\""
+    "test": "echo \"Error: no test specified\"", 
+    "build": "echo \"Nothing to build\""
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

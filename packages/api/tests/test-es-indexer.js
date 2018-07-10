@@ -76,14 +76,12 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await Promise.all([
-    models.Manager.deleteTable(granuleTable),
-    models.Manager.deleteTable(collectionTable),
-    models.Manager.deleteTable(pdrTable),
-    models.Manager.deleteTable(executionTable),
-    esClient.indices.delete({ index: esIndex }),
-    aws.recursivelyDeleteS3Bucket(process.env.bucket)
-  ]);
+  await models.Manager.deleteTable(granuleTable);
+  await models.Manager.deleteTable(collectionTable);
+  await models.Manager.deleteTable(pdrTable);
+  await models.Manager.deleteTable(executionTable);
+  await esClient.indices.delete({ index: esIndex });
+  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 
   cmrjs.getMetadata.restore();
   cmrjs.getFullMetadata.restore();
