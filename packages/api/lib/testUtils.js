@@ -50,7 +50,7 @@ function testEndpoint(endpoint, event, testCallback) {
 /**
  * searches for all the existings aliases in ElasticSearch and delete
  * all of them
- * 
+ *
  * @returns {Promise<Array>} a list of elasticsearch responses
  */
 async function deleteAliases() {
