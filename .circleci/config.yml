@@ -5,10 +5,17 @@ jobs:
     docker:
       - image: cumuluss/circleci:node-8.11
       - name: localstack
-        image: localstack/localstack:0.8.6
+        image: localstack/localstack:0.8.7
         environment:
           ENV_INTERNAL_TEST_RUN: true
           DEBUG: 1
+          SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams'
+      - name: elastichost
+        image: elasticsearch:5.6
+        environment:
+          # limit memory usage to 750mb
+          ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+
     working_directory: ~/project
     steps:
       - checkout
@@ -86,18 +93,20 @@ jobs:
             - ./tasks/sf-sns-report/node_modules
 
       - run:
-          name: Running All Tests Except API
+          name: Running All Tests except API
           environment:
             LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
           command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2 --ignore @cumulus/api
 
       - run:
           name: Running API Tests
           environment:
             LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
           command: |
             cd packages/api
-            yarn test
+            ./node_modules/.bin/nyc yarn test
 
       - run:
           name: Running End to End Tests
@@ -154,6 +163,7 @@ jobs:
             COVERALLS_SERVICE_NAME: circleci
           command: |
             export COVERALLS_SERVICE_JOB_ID=$CIRCLE_BUILD_NUM
+            cp -r packages/api/.nyc_output/* .nyc_output/
             yarn coveralls || true
 
       - store_artifacts:
