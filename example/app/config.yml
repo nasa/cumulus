@@ -217,6 +217,7 @@ lf:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-scaling-role'
 
 kk-uat-deployment:
   stackName: kk-test-uat
