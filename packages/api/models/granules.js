@@ -9,6 +9,7 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const aws = require('@cumulus/ingest/aws');
+const commonAws = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 const Manager = require('./base');
@@ -27,6 +28,22 @@ class Granule extends Manager {
     // initiate the manager class with the name of the
     // granules table
     super(process.env.GranulesTable, granuleSchema);
+  }
+
+  async addMissingFileSizes(files) {
+    for (let file of files) {
+      if (!('fileSize' in file)) {
+        try {
+          let fileMeta = await commonAws.headObject(file.bucket, file.path + '/' + file.name);
+          file.fileSize = fileMeta.ContentLength;
+        }
+        catch (e) {
+          log.error(`Unable to access s3://${file.bucket}/${file.path}/${file.name}) to add missing file size`);
+          throw e;
+        }
+      }
+    }
+    return files;
   }
 
   /**
@@ -92,7 +109,7 @@ class Granule extends Manager {
       // get the payload of the original execution
       const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
       const originalMessage = JSON.parse(status.execution[messageSource]);
-    
+
       const payload = await Rule.buildPayload({
         workflow,
         provider: g.provider,
@@ -124,7 +141,7 @@ class Granule extends Manager {
     }
   }
 
-  /**   
+  /**
    * Move a granule's files to destination locations specified
    *
    * @param {Object} g - the granule object
@@ -149,7 +166,7 @@ class Granule extends Manager {
    * @param {Object} payload - sns message containing the output of a Cumulus Step Function
    * @returns {Promise<Array>} granule records
    */
-  createGranulesFromSns(payload) {
+  async createGranulesFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
     const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
@@ -179,7 +196,7 @@ class Granule extends Manager {
           provider: get(payload, 'meta.provider.id'),
           execution,
           cmrLink: get(g, 'cmrLink'),
-          files: uniqBy(g.files, 'filename'),
+          files: await this.addMissingFileSizes(uniqBy(g.files, 'filename')),
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),
