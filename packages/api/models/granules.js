@@ -31,7 +31,7 @@ class Granule extends Manager {
   }
 
   async addMissingFileSizes(files) {
-    for (let file of files) {
+    for (const file of files) {
       if (!('fileSize' in file)) {
         try {
           let fileMeta = await commonAws.headObject(file.bucket, file.path + '/' + file.name);
