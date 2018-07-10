@@ -26,9 +26,9 @@ class MyTestDiscoveryClass {
   constructor(useList) {
     this.decrypted = true;
     this.host = 'localhost';
-    this.port = '2223';
-    this.username = 'testuser';
-    this.path = '/data/pdrs';
+    this.port = '2222';
+    this.username = 'user';
+    this.path = '/pdrs';
     this.provider = {
       encrypted: false,
       privateKey: privateKey
