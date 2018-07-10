@@ -66,7 +66,7 @@ function storeFilesToDynamoDb(filesTableName, files) {
   // Break the requests into groups of 25
   const putRequestsChunks = chunk(putRequests, 25);
 
-  const batchWriteItemQueue = new TaskQueue(Promise, 2);
+  const batchWriteItemQueue = new TaskQueue(Promise, 1);
   const throttledBatchWriteItem = batchWriteItemQueue.wrap(promisifiedBatchWriteItem);
 
   return Promise.all(putRequestsChunks.map((requests) => {
@@ -118,13 +118,11 @@ test.beforeEach(async (t) => {
     }
   };
 
-  return Promise.all([
-    aws.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
-      .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket)),
-    aws.dynamodb().createTable(filesTableParams).promise()
-      .then(() => aws.dynamodb().waitFor('tableExists', { TableName: t.context.filesTableName }).promise())
-      .then(() => t.context.tablesToCleanup.push(t.context.filesTableName))
-  ]);
+  await aws.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
+    .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
+  await aws.dynamodb().createTable(filesTableParams).promise()
+    .then(() => aws.dynamodb().waitFor('tableExists', { TableName: t.context.filesTableName }).promise())
+    .then(() => t.context.tablesToCleanup.push(t.context.filesTableName));
 });
 
 test.afterEach.always((t) =>
@@ -232,10 +230,8 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
   const extraS3File2 = { bucket: sample(dataBuckets), key: randomString() };
 
   // Store the files to S3 and DynamoDB
-  await Promise.all([
-    storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2])),
-    storeFilesToDynamoDb(t.context.filesTableName, matchingFiles)
-  ]);
+  await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
+  await storeFilesToDynamoDb(t.context.filesTableName, matchingFiles);
 
   const event = {
     dataBuckets,
@@ -286,10 +282,8 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
   const extraDbFile2 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
 
   // Store the files to S3 and DynamoDB
-  await Promise.all([
-    storeFilesToS3(matchingFiles),
-    storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]))
-  ]);
+  await storeFilesToS3(matchingFiles);
+  await storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]));
 
   const event = {
     dataBuckets,
@@ -345,10 +339,8 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const extraDbFile2 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
 
   // Store the files to S3 and DynamoDB
-  await Promise.all([
-    storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2])),
-    storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]))
-  ]);
+  await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
+  await storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]));
 
   const event = {
     dataBuckets,

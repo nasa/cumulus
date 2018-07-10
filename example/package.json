@@ -37,6 +37,7 @@
     "@cumulus/queue-pdrs": "^1.6.0",
     "@cumulus/sf-sns-report": "^1.6.0",
     "@cumulus/sync-granule": "^1.6.0",
+    "@cumulus/test-data": "^1.7.0",
     "aws-sdk": "^2.227.1"
   },
   "devDependencies": {
