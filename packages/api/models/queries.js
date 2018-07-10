@@ -215,6 +215,7 @@ const queryStringParameters = {
   collectionId: 'MYD13Q1___006',
   timeToPreprocess__from: 4.218,
   timeToPreprocess__to: 17.044,
+  nonexistence__exists: false,
   fields: 'granuleId, timeToPreprocess, createdAt'
 };
 
