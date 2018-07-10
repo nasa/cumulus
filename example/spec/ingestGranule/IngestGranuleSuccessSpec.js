@@ -1,13 +1,17 @@
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const urljoin = require('url-join');
 const got = require('got');
-const lodash = require('lodash');
+const cloneDeep = require('lodash.cloneDeep');
 const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
-const { s3, s3ObjectExists } = require('@cumulus/common/aws');
+const {
+  aws: { s3, s3ObjectExists },
+  stringUtils: { globalReplace },
+  testUtils: { randomStringFromRegex }
+} = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
   LambdaStep,
@@ -18,10 +22,8 @@ const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 const {
-  randomGranuleId,
   createGranuleFiles,
-  fileWithUpdateGranuleId,
-  updateJsonWithGranuleId
+  loadFileWithUpdatedGranuleId
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -42,13 +44,13 @@ const templatedOutputPayloadFilename = templateFile({
 
 /**
  * Set up files in the S3 data location for a new granule to use for this
- * test. Use the input payload to determine which files are needed and 
+ * test. Use the input payload to determine which files are needed and
  * return updated input with the new granule id.
  *
  * @param {string} bucket - data bucket
  * @param {string} granuleId - granule id for the new files
  * @param {string} inputPayloadJson - input payload as a JSON string
- * @returns {Object} - input payload as a JS object with the updated granule ids
+ * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
 async function setupTestGranuleForIngest(bucket, granuleId, inputPayloadJson) {
   const baseInputPayload = JSON.parse(inputPayloadJson);
@@ -57,14 +59,17 @@ async function setupTestGranuleForIngest(bucket, granuleId, inputPayloadJson) {
     baseInputPayload.granules[0].files,
     bucket,
     testDataGranuleId,
-    granuleId);
+    granuleId
+  );
 
-  return JSON.parse(updateJsonWithGranuleId(inputPayloadJson, granuleId, testDataGranuleId));
+  const updatedInputPayloadJson = globalReplace(inputPayloadJson, testDataGranuleId, granuleId);
+
+  return JSON.parse(updatedInputPayloadJson);
 }
 
-describe('The S3 Ingest Granules workflow', () => {
+describe('The S3 Ingest Granules workflow', async () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
-  let inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+  const inputPayloadJson = await fs.readFile(inputPayloadFilename, 'utf8');
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
@@ -81,16 +86,14 @@ describe('The S3 Ingest Granules workflow', () => {
   const executionModel = new Execution();
   let executionName;
 
-  let granuleId;
-
   beforeAll(async () => {
-    const granuleId = randomGranuleId(granuleRegex);
+    const granuleId = randomStringFromRegex(granuleRegex);
 
     inputPayload = await setupTestGranuleForIngest(config.bucket, granuleId, inputPayloadJson);
 
-    expectedSyncGranulePayload = fileWithUpdateGranuleId(templatedSyncGranuleFilename, granuleId, testDataGranuleId);
+    expectedSyncGranulePayload = await loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
 
-    expectedPayload = fileWithUpdateGranuleId(templatedOutputPayloadFilename, granuleId, testDataGranuleId);
+    expectedPayload = await loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
 
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
@@ -113,9 +116,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
     // Remove the granule files added for the test
     await Promise.all(
-      inputPayload.granules[0].files.map((f) =>
-        s3().deleteObject({ Bucket: config.bucket, Key: `${f.path}/${f.name}`}).promise()
-      ));
+      inputPayload.granules[0].files.map((file) =>
+        s3().deleteObject({
+          Bucket: config.bucket, Key: `${file.path}/${file.name}`
+        }).promise())
+    );
   });
 
   it('completes execution with success status', () => {
@@ -204,15 +209,13 @@ describe('The S3 Ingest Granules workflow', () => {
       const granule = lambdaOutput.payload.granules[0];
       expect(granule.published).toBe(true);
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
-      
-      // Compare without the CMR link since that will be different each time
-      let updatedLambdaOutput = lodash.cloneDeep(lambdaOutput.payload);
-      delete updatedLambdaOutput.granules[0].cmrLink;
 
-      const updatedExpectedpayload = lodash.cloneDeep(expectedPayload);
-      delete updatedExpectedpayload.granules[0].cmrLink;
+      // Set the expected cmrLink to the actual cmrLink, since it's going to
+      // be different every time this is run.
+      const updatedExpectedpayload = cloneDeep(expectedPayload);
+      updatedExpectedpayload.granules[0].cmrLink = lambdaOutput.payload.granules[0].cmrLink;
 
-      expect(updatedLambdaOutput).toEqual(updatedExpectedpayload);
+      expect(lambdaOutput.payload).toEqual(updatedExpectedpayload);
     });
 
     it('publishes the granule metadata to CMR', () => {
