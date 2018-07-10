@@ -50,7 +50,7 @@ const expectedTranslatePayload = {
 
 const fileData = expectedTranslatePayload.granules[0].files[0];
 const publicBucket = testConfig.publicBucket;
-const filePrefix = 'file-staging/podaac-test-swot/L2_HR_PIXC';
+const filePrefix = 'file-staging/mhs-cumulus/L2_HR_PIXC';
 
 const fileDataWithFilename = {
   ...fileData,
@@ -213,7 +213,7 @@ describe('The Ingest Kinesis workflow', () => {
         // getLastExecution returns undefined if no previous execution exists
         if (lastExecution && lastExecution.executionArn) {
           try {
-            taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
+            const taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
             if (taskOutput.payload.identifier === recordIdentifier) {
               workflowExecution = lastExecution;
             }
@@ -285,51 +285,6 @@ describe('The Ingest Kinesis workflow', () => {
       // Ingest Kinesis workflow'::beforeAll?  Maybe I just don't understand
       // what this is testing.
       expect(new Date() - s3FileHead.LastModified < maxWaitTime).toBeTruthy();
-    });
-  });
-
-  describe('the GenericMetaHandler Lambda', () => {
-    let lambdaOutput = null;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'GenericMetaHandler');
-    });
-
-    it('outputs the metadata product', () => {
-      expect(lambdaOutput.payload).toEqual(expectedGenericMetaHandlerPayload);
-    });
-  });
-
-  describe('the MetadataAggregator Lambda', () => {
-    let lambdaOutput = null;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MetadataAggregator');
-    });
-
-    it('outputs the CMR XML', () => {
-      expect(lambdaOutput.payload).toEqual(expectedMetadataAggregatorPayload);
-    });
-  });
-
-  describe('the CMRStep Lambda', () => {
-    let lambdaOutput = null;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
-    });
-
-    it('outputs published = true and a link to the granule in CMR', () => {
-      expect(lambdaOutput.payload).toEqual(expectedCMRStepPayload);
-    });
-
-    it('data is in CMR', async () => {
-      const cmrUrl = expectedCMRStepPayload.granules[0].cmrLink;
-      await request(cmrUrl, { json: true }, (err, res, body) => {
-        const updatedAt = Date.parse(res.body.feed.updated);
-        // 2 minutes ago
-        expect(new Date().getTime() - updatedAt < 120000).toBeTruthy();
-      });
     });
   });
 });
