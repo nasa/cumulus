@@ -25,7 +25,7 @@ test.beforeEach(async () => {
 
 test.afterEach.always(() => aws.recursivelyDeleteS3Bucket(process.env.system_bucket));
 
-test('default returns list of reports', (t) => {
+test.serial('default returns list of reports', (t) => {
   const event = { httpMethod: 'GET' };
   return testEndpoint(reconciliationReportEndpoint, event, (response) => {
     const results = JSON.parse(response.body);
@@ -34,7 +34,7 @@ test('default returns list of reports', (t) => {
   });
 });
 
-test('get a report', async (t) => {
+test.serial('get a report', async (t) => {
   await Promise.all(reportNames.map((reportName) => {
     const event = {
       pathParameters: {
@@ -49,7 +49,7 @@ test('get a report', async (t) => {
   }));
 });
 
-test('delete a report', async (t) => {
+test.serial('delete a report', async (t) => {
   await Promise.all(reportNames.map((reportName) => {
     const event = {
       pathParameters: {
@@ -64,7 +64,7 @@ test('delete a report', async (t) => {
   }));
 });
 
-test('create a report', (t) => {
+test.serial('create a report', (t) => {
   const event = { httpMethod: 'POST' };
   return testEndpoint(reconciliationReportEndpoint, event, (response) => {
     const content = JSON.parse(response.body);
