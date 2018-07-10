@@ -114,10 +114,10 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(process.env.CollectionsTable, 5);
-  await models.Manager.deleteTable(process.env.GranulesTable, 5);
-  await models.Manager.deleteTable(process.env.ExecutionsTable, 5);
-  await models.Manager.deleteTable(process.env.FilesTable, 5);
+  await models.Manager.deleteTable(process.env.CollectionsTable);
+  await models.Manager.deleteTable(process.env.GranulesTable);
+  await models.Manager.deleteTable(process.env.ExecutionsTable);
+  await models.Manager.deleteTable(process.env.FilesTable);
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
   await esClient.indices.delete({ index: esIndex });
 });
