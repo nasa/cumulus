@@ -1,5 +1,14 @@
 version: '3'
 services:
+  sftp:
+    image: atmoz/sftp
+    volumes:
+      - "./packages/test-data/keys/ssh_client_rsa_key.pub:/home/testuser/.ssh/keys/ssh_client_rsa_key.pub:ro"
+      - "./packages/test-data:/home/testuser/data"
+    ports:
+      - "2223:22"
+    command: testuser::1001
+
   local:
     image: cumuluss/circleci:node-8.11
     command: start
@@ -15,8 +24,10 @@ services:
       - "2222:2222"
     links:
       - localstack
+      - sftp
     depends_on:
       - localstack
+      - sftp
 
   test:
     image: cumuluss/circleci:node-8.11
@@ -34,8 +45,10 @@ services:
       - "2222:2222"
     links:
       - localstack
+      - sftp
     depends_on:
       - localstack
+      -sftp
 
   localstack:
     image: localstack/localstack:0.8.6
