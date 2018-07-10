@@ -1,18 +1,21 @@
 'use strict';
 
-const path = require('path');
-const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
+const get = require('lodash.get');
 const merge = require('lodash.merge');
+const path = require('path');
 const uniqBy = require('lodash.uniqby');
+
+const aws = require('@cumulus/ingest/aws');
+const commonAws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
-const aws = require('@cumulus/ingest/aws');
-const commonAws = require('@cumulus/common/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { moveGranuleFiles } = require('@cumulus/ingest/granule');
+
 const Manager = require('./base');
+
 const {
   parseException,
   constructCollectionId,
@@ -166,7 +169,7 @@ class Granule extends Manager {
    * @param {Object} payload - sns message containing the output of a Cumulus Step Function
    * @returns {Promise<Array>} granule records
    */
-  async createGranulesFromSns(payload) {
+  createGranulesFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
     const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
