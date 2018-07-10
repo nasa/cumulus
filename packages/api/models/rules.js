@@ -138,7 +138,7 @@ class Rule extends Manager {
     }
 
     // save
-    return await super.create(item);
+    return super.create(item);
   }
 
   /**
