@@ -3,6 +3,7 @@
 const get = require('lodash.get');
 const pLimit = require('p-limit');
 const { AttributeValue } = require('dynamodb-data-types');
+const { log } = require('@cumulus/common');
 const { FileClass } = require('../models');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
@@ -128,7 +129,7 @@ function performDelete(esClient, tableIndex, fields, body) {
     .deleteRecord(esClient, id, type, parent)
     // Important to catch this error. Uncaught errors will cause
     // the handler to fail and other records will not be updated.
-    .catch(console.log); // eslint-disable-line no-console
+    .catch((err) => log.error(err));
 }
 
 /**

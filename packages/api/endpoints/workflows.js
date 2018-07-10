@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign, no-restricted-syntax */
-
 'use strict';
 
 const _get = require('lodash.get');
@@ -32,15 +30,16 @@ function get(event, cb) {
   const name = _get(event.pathParameters, 'name');
 
   const key = `${process.env.stackName}/workflows/list.json`;
-  S3.get(process.env.bucket, key).then((file) => {
-    const workflows = JSON.parse(file.Body.toString());
-    for (const w of workflows) {
-      if (w.name === name) {
-        return cb(null, w);
-      }
-    }
-    return cb({ message: `A record already exists for ${name}` });
-  }).catch((e) => cb(e));
+  S3.get(process.env.bucket, key)
+    .then((file) => {
+      const workflows = JSON.parse(file.Body.toString());
+
+      const matchingWorkflow = workflows.find((workflow) => workflow.name === name);
+      if (matchingWorkflow) return cb(null, matchingWorkflow);
+
+      return cb({ message: `A record already exists for ${name}` });
+    })
+    .catch(cb);
 }
 
 /**

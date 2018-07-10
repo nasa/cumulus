@@ -95,23 +95,28 @@ class Granule extends Manager {
       const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
       const originalMessage = JSON.parse(status.execution[messageSource]);
 
-      const payload = await Rule.buildPayload({
+      const meta = metaOverride
+        ? merge(originalMessage.meta, metaOverride)
+        : originalMessage.meta;
+
+      const workflowPayload = payloadOverride
+        ? merge(originalMessage.payload, payloadOverride)
+        : originalMessage.payload;
+
+      const lambdaPayload = await Rule.buildPayload({
         workflow,
+        meta,
+        workflowPayload,
         provider: g.provider,
         collection: {
           name,
           version
-        },
-        meta: metaOverride ? merge(originalMessage.meta, metaOverride) : originalMessage.meta,
-        payload: payloadOverride ? merge(
-          originalMessage.payload,
-          payloadOverride
-        ) : originalMessage.payload
+        }
       });
 
       await this.updateStatus({ granuleId: g.granuleId }, 'running');
 
-      await aws.invoke(process.env.invoke, payload);
+      await aws.invoke(process.env.invoke, lambdaPayload);
       return {
         granuleId: g.granuleId,
         action: `applyWorkflow ${workflow}`,

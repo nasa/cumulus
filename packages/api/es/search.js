@@ -76,7 +76,7 @@ class BaseSearch {
     return new elasticsearch.Client(esConfig);
   }
 
-  constructor(event, type = null, index = null) {
+  constructor(event, type = null, index) {
     let params = {};
     const logLimit = 10;
 

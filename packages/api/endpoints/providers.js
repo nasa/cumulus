@@ -18,7 +18,9 @@ const { Search } = require('../es/search');
  */
 function list(event, cb) {
   const search = new Search(event, 'provider');
-  return search.query().then((response) => cb(null, response)).catch(cb);
+  return search.query()
+    .then((response) => cb(null, response))
+    .catch(cb);
 }
 
 /**
@@ -51,9 +53,8 @@ function get(event, cb) {
  * @returns {Promise<Object>} returns the created provider
  */
 function post(event, cb) {
-  let data = _get(event, 'body', '{}');
-  data = JSON.parse(data);
-  const id = _get(data, 'id');
+  const data = JSON.parse(event.body || {});
+  const id = data.id;
 
   const p = new models.Provider();
 
@@ -62,8 +63,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return p.create(data)
-          .then((d) => cb(null, { message: 'Record saved', record: d }))
-          .catch((err) => cb(err));
+          .then((record) => cb(null, { record, message: 'Record saved' }))
+          .catch(cb);
       }
       return cb(e);
     });
@@ -89,10 +90,11 @@ function put(event, cb) {
   const p = new models.Provider();
 
   // get the record first
-  return p.get({ id }).then(() => p.update({ id }, data))
+  return p.get({ id })
+    .then(() => p.update({ id }, data))
     .then((d) => cb(null, d))
     .catch((err) => {
-      if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
+      if (err instanceof RecordDoesNotExist) return cb({ message: 'Record does not exist' });
       return cb(err);
     });
 }
