@@ -47,11 +47,9 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await Promise.all([
-    models.Manager.deleteTable(process.env.GranulesTable),
-    esClient.indices.delete({ index: esIndex }),
-    aws.recursivelyDeleteS3Bucket(process.env.internal)
-  ]);
+  await models.Manager.deleteTable(process.env.GranulesTable);
+  await esClient.indices.delete({ index: esIndex });
+  await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
 
 
