@@ -20,7 +20,13 @@ const {
  *
  * Example S3 Server Log line:
  *
- * fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e my-dist-bucket [01/June/1981:01:02:13 +0000] 192.0.2.3 arn:aws:iam::000000000000:user/joe 1CB21F5399FF76C5 REST.GET.OBJECT my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR "GET /my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR?AWSAccessKeyId=AKIAIOSFODNN7EXAMPLE&Expires=1525892130&Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&x-EarthdataLoginUsername=amalkin HTTP/1.1" 200 - 807 100 22 22 "-" "curl/7.59.0" -
+ * fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e my-dist-bucket
+ * [01/June/1981:01:02:13 +0000] 192.0.2.3 arn:aws:iam::000000000000:user/joe
+ * 1CB21F5399FF76C5 REST.GET.OBJECT my-dist-bucket/pdrs/
+ * MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR
+ * "GET /my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR?AWSAccessKeyId=
+ * AKIAIOSFODNN7EXAMPLE&Expires=1525892130&Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&x-
+ * EarthdataLoginUsername=amalkin HTTP/1.1" 200 - 807 100 22 22 "-" "curl/7.59.0" -
  *
  */
 class DistributionEvent {
@@ -207,14 +213,16 @@ async function generateDistributionReport(params) {
   log.info(`Found ${s3Objects} log files in S3`);
 
   // Fetch all distribution events from S3
-  const allDistributionEvents = (await Promise.all(s3Objects.map(throttledGetDistributionEventsFromS3Object)))
-    .reduce(flatten, []);
+  const allDistributionEvents = (await Promise.all(s3Objects.map(
+    throttledGetDistributionEventsFromS3Object
+  ))).reduce(flatten, []);
 
   log.info(`Found a total of ${allDistributionEvents.length} distribution events`);
 
   const distributionEventsInReportPeriod = allDistributionEvents.filter(timeFilter);
 
-  log.info(`Found ${allDistributionEvents.length} distribution events between ${reportStartTime.toString()} and ${reportEndTime.toString()}`);
+  log.info(`Found ${allDistributionEvents.length} distribution events between ` +
+    `${reportStartTime.toString()} and ${reportEndTime.toString()}`);
 
   return distributionEventsInReportPeriod.sort(sortByTime).join('\n');
 }
