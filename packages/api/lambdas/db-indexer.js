@@ -3,6 +3,7 @@
 const get = require('lodash.get');
 const pLimit = require('p-limit');
 const { AttributeValue } = require('dynamodb-data-types');
+const { log } = require('@cumulus/common');
 const { FileClass } = require('../models');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
@@ -128,7 +129,7 @@ function performDelete(esClient, tableIndex, fields, body) {
     .deleteRecord(esClient, id, type, parent)
     // Important to catch this error. Uncaught errors will cause
     // the handler to fail and other records will not be updated.
-    .catch(console.log);
+    .catch((err) => log.error(err));
 }
 
 /**
@@ -159,7 +160,7 @@ async function indexRecord(esClient, record) {
   const body = unwrap(get(record, 'dynamodb.NewImage'));
   const data = Object.assign({}, fields, body);
 
-  const oldBody = unwrap(get(record, 'dynamodb.OldImage')); 
+  const oldBody = unwrap(get(record, 'dynamodb.OldImage'));
   const oldData = Object.assign({}, fields, oldBody);
 
   if (record.eventName === 'REMOVE') {

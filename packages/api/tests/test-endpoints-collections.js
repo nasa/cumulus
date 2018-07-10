@@ -46,7 +46,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await teardown()
+  await teardown();
 });
 
 // TODO(aimee): Debug why this is _passing_ - we don't expect to already have a
@@ -74,7 +74,7 @@ test('GET returns an existing collection', (t) => {
 });
 
 test('POST creates a new collection', (t) => {
-  const newCollection = fakeCollectionFactory(); 
+  const newCollection = fakeCollectionFactory();
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newCollection)
@@ -96,12 +96,12 @@ test('PUT updates an existing collection', (t) => {
     }),
     pathParameters: {
       collectionName: testCollection.name,
-      version: testCollection.version,
+      version: testCollection.version
     },
     httpMethod: 'PUT'
   };
   return testEndpoint(collectionsEndpoint, updateEvent, (response) => {
-    const { provider_path } = JSON.parse(response.body);
+    const { provider_path } = JSON.parse(response.body); // eslint-disable-line camelcase
     t.is(provider_path, newPath);
   });
 });
@@ -111,7 +111,7 @@ test('DELETE deletes an existing collection', (t) => {
     httpMethod: 'DELETE',
     pathParameters: {
       collectionName: testCollection.name,
-      version: testCollection.version,
+      version: testCollection.version
     }
   };
   return testEndpoint(collectionsEndpoint, deleteEvent, (response) => {
