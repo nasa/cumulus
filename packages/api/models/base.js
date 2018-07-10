@@ -64,13 +64,18 @@ class Manager {
       });
     }
 
-    return aws.dynamodb().createTable(params).promise();
+    const output = await aws.dynamodb().createTable(params).promise();
+    await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+    return output;
   }
 
   static async deleteTable(tableName) {
-    await aws.dynamodb().deleteTable({
+    const output = await aws.dynamodb().deleteTable({
       TableName: tableName
     }).promise();
+
+    await aws.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
+    return output;
   }
 
   /**
