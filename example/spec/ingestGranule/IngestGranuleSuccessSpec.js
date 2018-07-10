@@ -15,17 +15,17 @@ const {
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const taskName = 'IngestGranule';
+const workflowName = 'IngestGranule';
 
 const templatedSyncGranuleFilename = templateFile({
   inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
-  config: config[taskName].SyncGranuleOutput
+  config: config[workflowName].SyncGranuleOutput
 });
 const expectedSyncGranulePayload = JSON.parse(fs.readFileSync(templatedSyncGranuleFilename));
 
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: './spec/ingestGranule/IngestGranule.output.payload.template.json',
-  config: config[taskName].IngestGranuleOutput
+  config: config[workflowName].IngestGranuleOutput
 });
 const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
@@ -51,11 +51,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
 
     failingWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, {}
+      config.stackName, config.bucket, workflowName, collection, provider, {}
     );
     failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
     failedExecutionName = failedExecutionArn.pop();
