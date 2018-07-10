@@ -82,7 +82,7 @@ test.serial('restore records to DynamoDB', async (t) => {
   }
   fs.writeFileSync(tempRestoreFile, fileContent);
 
-  await restore(tempRestoreFile, tableName, 2);
+  await restore(tempRestoreFile, tableName, 1);
 
   // count the records
   const gModel = new models.Manager();
