@@ -4,7 +4,7 @@ const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
 const omit = require('lodash.omit');
 const aws = require('@cumulus/common/aws');
-const { errorify, sleep } = require('../lib/utils');
+const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 
 /**
