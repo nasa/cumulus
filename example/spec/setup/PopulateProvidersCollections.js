@@ -25,8 +25,6 @@ const s3data = [
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
 function uploadTestDataToS3(file, bucket) {
-  console.log(`file path: ${require.resolve(file)}`);
-
   const data = fs.readFileSync(require.resolve(file), 'utf8');
   const key = path.basename(file);
 
@@ -58,6 +56,7 @@ describe('Populating providers and collections to database', () => {
       collections = await addCollections(config.stackName, config.bucket, collectionsDirectory);
       providers = await addProviders(config.stackName, config.bucket, providersDirectory, config.bucket);
 
+      console.log(`Uploading test data to S3 bucket: ${config.bucket}`);
       await uploadTestDataToBucket(config.bucket);
     }
     catch (e) {
