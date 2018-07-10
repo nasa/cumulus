@@ -136,11 +136,17 @@ test.before(async () => {
   return esClient.indices.refresh();
 });
 
-test.after.always(() => esClient.indices.delete({ index: esIndex }));
+test.after.always(async () => {
+  await esClient.indices.delete({ index: esIndex });
+});
 
-test.beforeEach(() => aws.s3().createBucket({ Bucket: process.env.bucket }).promise());
+test.beforeEach(async () => {
+  await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+});
 
-test.afterEach.always(() => aws.recursivelyDeleteS3Bucket(process.env.bucket));
+test.afterEach.always(async () => {
+  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+});
 
 test.serial('generate reports for the previous day', async (t) => {
   // 24-hour period ending past midnight utc
