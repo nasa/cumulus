@@ -28,60 +28,60 @@ const record = JSON.parse(recordTemplate(testConfig));
 const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
 
-console.log('record', JSON.stringify(record))
+console.log('record', JSON.stringify(record));
 
-const recordFile = record['product']['files'][0];
+const recordFile = record.product.files[0];
 const expectedTranslatePayload = {
-  'granules': [
+  granules: [
     {
-      'granuleId': record['product']['name'],
-      'files': [
+      granuleId: record.product.name,
+      files: [
         {
-          'path': 'unit/test-data',
-          'url_path': recordFile['uri'],
-          'bucket': record['bucket'],
-          'name': recordFile['name'],
-          'size': recordFile['size']
+          path: 'unit/test-data',
+          url_path: recordFile.uri,
+          bucket: record.bucket,
+          name: recordFile.name,
+          size: recordFile.size
         }
       ]
     }
   ]
 };
 
-const fileData = expectedTranslatePayload['granules'][0]['files'][0];
+const fileData = expectedTranslatePayload.granules[0].files[0];
 const publicBucket = testConfig.publicBucket;
 const filePrefix = 'file-staging/podaac-test-swot/L2_HR_PIXC';
 
-let fileDataWithFilename = {
+const fileDataWithFilename = {
   ...fileData,
-  filename: `s3://${testConfig.privateBucket}/${filePrefix}/${recordFile['name']}`,
+  filename: `s3://${testConfig.privateBucket}/${filePrefix}/${recordFile.name}`,
   bucket: testConfig.privateBucket,
   url_path: '',
   fileStagingDir: filePrefix
 };
 
 const expectedSyncGranulesPayload = {
-  'granules': [
+  granules: [
     {
-      'granuleId': granuleId,
-      'files': [ fileDataWithFilename ]
+      granuleId: granuleId,
+      files: [fileDataWithFilename]
     }
   ]
 };
 
 const genericMetadataData = {
-  'type': 0,
-  'size': '0',
-  'bucket': publicBucket,
-  'name': `${filePrefix}/${granuleId}.h5.mp`,
-  'filename': `s3://${publicBucket}/${filePrefix}/${granuleId}.h5.mp`
+  type: 0,
+  size: '0',
+  bucket: publicBucket,
+  name: `${filePrefix}/${granuleId}.h5.mp`,
+  filename: `s3://${publicBucket}/${filePrefix}/${granuleId}.h5.mp`
 };
 
 const expectedGenericMetaHandlerPayload = {
-  'granules': [
+  granules: [
     {
-      'granuleId': granuleId,
-      'files': [
+      granuleId: granuleId,
+      files: [
         fileDataWithFilename,
         genericMetadataData
       ]
@@ -90,19 +90,19 @@ const expectedGenericMetaHandlerPayload = {
 };
 
 const metadataXMLData = {
-  'name': `${granuleId}.cmr.xml`,
-  'bucket': publicBucket,
-  'filename': `s3://${publicBucket}/${granuleId}.cmr.xml`,
-  'url_path': '',
-  'type': 0,
-  'size': publicBucket.length + 1857 + ''
+  name: `${granuleId}.cmr.xml`,
+  bucket: publicBucket,
+  filename: `s3://${publicBucket}/${granuleId}.cmr.xml`,
+  url_path: '',
+  type: 0,
+  size: `${publicBucket.length + 1857}`
 };
 
 const expectedMetadataAggregatorPayload = {
-  'granules': [
+  granules: [
     {
-      'granuleId': 'L2_HR_PIXC_product_0001-of-4154',
-      'files': [
+      granuleId: 'L2_HR_PIXC_product_0001-of-4154',
+      files: [
         fileDataWithFilename,
         genericMetadataData,
         metadataXMLData
@@ -112,30 +112,30 @@ const expectedMetadataAggregatorPayload = {
 };
 
 const expectedCMRStepPayload = {
-  'process': 'MetadataAggregator',
-  'granules': [
+  process: 'MetadataAggregator',
+  granules: [
     {
-      'granuleId': granuleId,
-      'files': [
+      granuleId: granuleId,
+      files: [
         fileDataWithFilename,
         {
-          'bucket': publicBucket,
-          'name': `${filePrefix}/${granuleId}.h5.mp`,
-          'filename': `s3://${publicBucket}/${filePrefix}/${granuleId}.h5.mp`,
-          'type': 0,
-          'size': '0'
+          bucket: publicBucket,
+          name: `${filePrefix}/${granuleId}.h5.mp`,
+          filename: `s3://${publicBucket}/${filePrefix}/${granuleId}.h5.mp`,
+          type: 0,
+          size: '0'
         },
         {
-          'name': `${granuleId}.cmr.xml`,
-          'bucket': publicBucket,
-          'filename': `s3://${publicBucket}/${granuleId}.cmr.xml`,
-          'url_path': '',
-          'type': 0,
-          'size': publicBucket.length + 1857 + ''
+          name: `${granuleId}.cmr.xml`,
+          bucket: publicBucket,
+          filename: `s3://${publicBucket}/${granuleId}.cmr.xml`,
+          url_path: '',
+          type: 0,
+          size: `${publicBucket.length + 1857}`
         }
       ],
-      'published': true,
-      'cmrLink': `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${testConfig.conceptId}`
+      published: true,
+      cmrLink: `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${testConfig.conceptId}`
     }
   ]
 };
@@ -146,12 +146,13 @@ async function getLastExecution() {
     sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }, (err, data) => {
       if (err) {
         reject(err);
-      } else {
+      }
+      else {
         resolve(_.orderBy(data.executions, 'startDate', 'desc')[0]);
       }
     });
   });
-};
+}
 
 describe('The Ingest Kinesis workflow', () => {
   const waitTimeInterval = 1000;
@@ -173,11 +174,13 @@ describe('The Ingest Kinesis workflow', () => {
             if (err) reject(err);
             resolve(data);
           });
-        } else if (err) {
+        }
+        else if (err) {
           reject(err);
-        } else {
+        }
+        else {
           resolve(data);
-        };
+        }
       });
     });
 
@@ -202,7 +205,8 @@ describe('The Ingest Kinesis workflow', () => {
         timeWaited += waitTimeInterval;
         try {
           lastExecution = await getLastExecution();
-        } catch (error) {
+        }
+        catch (error) {
           console.log(error);
           throw new Error(error);
         }
@@ -213,7 +217,8 @@ describe('The Ingest Kinesis workflow', () => {
             if (taskOutput.payload.identifier === recordIdentifier) {
               workflowExecution = lastExecution;
             }
-          } catch (error) {
+          }
+          catch (error) {
             console.log(error);
             throw new Error(error);
           }
@@ -228,14 +233,15 @@ describe('The Ingest Kinesis workflow', () => {
     // Wait for our execution to complete so we can test the outputs.
     if (workflowExecution === undefined) {
       throw new Error('Timeout waiting for new execution to start');
-    } else {
+    }
+    else {
       executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
-    };
+    }
 
     s3FileHead = await new Promise((resolve, reject) => {
       s3.headObject({
         Bucket: testConfig.privateBucket,
-        Key: `${filePrefix}/${fileData['name']}`
+        Key: `${filePrefix}/${fileData.name}`
       }, (err, data) => {
         if (err) reject(err);
         resolve(data);
