@@ -186,7 +186,7 @@ test('apply an in-place workflow to an existing granule', async (t) => {
       granuleName: fakeGranules[0].granuleId
     },
     body: JSON.stringify({
-      action:'applyWorkflow',
+      action: 'applyWorkflow',
       workflow: 'inPlaceWorkflow',
       messageSource: 'output'
     })

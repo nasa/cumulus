@@ -113,13 +113,12 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     if (missingTypes.length > 0) {
       const concurrencyLimit = inTestMode() ? 1 : 3;
       const limit = pLimit(concurrencyLimit);
-      const addMissingTypesPromises = missingTypes.map((type) => {
-        return limit(() => esClient.indices.putMapping({
+      const addMissingTypesPromises = missingTypes.map((type) =>
+        limit(() => esClient.indices.putMapping({
           index: aliasedIndex,
           type,
           body: get(mappings, type)
-        }));
-      });
+        })));
 
       await Promise.all(addMissingTypesPromises);
 
@@ -189,9 +188,9 @@ function backupStatus(status) {
  * @returns {Promise.<Array>} array of dynamoDB aws responses
  */
 function bootstrapDynamoDbTables(tables) {
-  return Promise.all(tables.map((table) => {
+  return Promise.all(tables.map((table) =>
     // check the status of continuous backup
-    return dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
+    dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
       .then((r) => {
         const status = backupStatus(r.ContinuousBackupsDescription.ContinuousBackupsStatus);
 
@@ -206,8 +205,7 @@ function bootstrapDynamoDbTables(tables) {
           TableName: table.name
         };
         return dynamodb().updateContinuousBackups(params).promise();
-      })
-  }));
+      })));
 }
 
 /**
