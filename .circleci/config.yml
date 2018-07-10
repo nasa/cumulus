@@ -92,7 +92,7 @@ jobs:
             - ./tasks/sync-granule/node_modules
             - ./tasks/sf-sns-report/node_modules
 
-    - run:
+      - run:
           name: Running eslint
           command: ./node_modules/.bin/eslint packages/api --ext .js
 

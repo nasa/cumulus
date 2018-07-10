@@ -101,8 +101,8 @@ test('PUT updates an existing collection', (t) => {
     httpMethod: 'PUT'
   };
   return testEndpoint(collectionsEndpoint, updateEvent, (response) => {
-    const { providerPath } = JSON.parse(response.body);
-    t.is(providerPath, newPath);
+    const { provider_path } = JSON.parse(response.body); // eslint-disable-line camelcase
+    t.is(provider_path, newPath);
   });
 });
 
