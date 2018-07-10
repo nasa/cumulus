@@ -123,10 +123,8 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach(async (t) => {
-  await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.templateBucket),
-    manager.deleteTable(t.context.tableName)
-  ]);
+  await recursivelyDeleteS3Bucket(t.context.templateBucket);
+  await manager.deleteTable(t.context.tableName);
   sfSchedulerSpy.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
