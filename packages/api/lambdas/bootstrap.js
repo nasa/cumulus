@@ -184,9 +184,9 @@ function backupStatus(status) {
  * @returns {Promise.<Array>} array of dynamoDB aws responses
  */
 function bootstrapDynamoDbTables(tables) {
-  return Promise.all(tables.map((table) => {
+  return Promise.all(tables.map((table) =>
     // check the status of continuous backup
-    return dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
+    dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
       .then((r) => {
         const status = backupStatus(r.ContinuousBackupsDescription.ContinuousBackupsStatus);
 
@@ -201,8 +201,7 @@ function bootstrapDynamoDbTables(tables) {
           TableName: table.name
         };
         return dynamodb().updateContinuousBackups(params).promise();
-      })
-  }));
+      })));
 }
 
 /**

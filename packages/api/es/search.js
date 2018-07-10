@@ -22,7 +22,6 @@ const logDetails = {
 const defaultIndexAlias = 'cumulus-alias';
 
 class BaseSearch {
-
   /**
    * returns the local address of elasticsearch based on
    * the environment variables set

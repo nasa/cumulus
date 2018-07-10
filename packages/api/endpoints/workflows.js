@@ -1,4 +1,5 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, no-restricted-syntax */
+
 'use strict';
 
 const _get = require('lodash.get');
@@ -7,9 +8,10 @@ const handle = require('../lib/response').handle;
 
 /**
  * List all providers.
- * @param {object} event aws lambda event object.
- * @param {callback} cb aws lambda callback function
- * @return {undefined}
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {callback} cb - aws lambda callback function
+ * @returns {undefined} undefined
  */
 function list(event, cb) {
   const key = `${process.env.stackName}/workflows/list.json`;
@@ -21,9 +23,10 @@ function list(event, cb) {
 
 /**
  * Query a single provider.
- * @param {object} event aws lambda event object.
- * @param {string} granuleId the id of the granule.
- * @return {object} a single granule object.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {callback} cb - aws lambda callback function
+ * @returns {undefined} undefined
  */
 function get(event, cb) {
   const name = _get(event.pathParameters, 'name');
@@ -40,6 +43,13 @@ function get(event, cb) {
   }).catch((e) => cb(e));
 }
 
+/**
+ * The main handler for the lambda function
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @returns {undefined} undefined
+ */
 function handler(event, context) {
   handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {

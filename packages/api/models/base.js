@@ -292,8 +292,11 @@ class Manager {
   /**
    * Updates the status field
    *
+   * @param {Object} key - the key to update
+   * @param {string} status - the new status
+   * @returns {Promise} the updated record
    */
-  async updateStatus(key, status) {
+  updateStatus(key, status) {
     return this.update(key, { status });
   }
 
@@ -302,8 +305,11 @@ class Manager {
    * Marks the record is failed with proper status
    * and error message
    *
+   * @param {Object} key - the key to update
+   * @param {Object} err - the error object
+   * @returns {Promise} the updated record
    */
-  async hasFailed(key, err) {
+  hasFailed(key, err) {
     return this.update(
       key,
       { status: 'failed', error: errorify(err), isActive: false }

@@ -92,6 +92,10 @@ jobs:
             - ./tasks/sync-granule/node_modules
             - ./tasks/sf-sns-report/node_modules
 
+    - run:
+          name: Running eslint
+          command: ./node_modules/.bin/eslint packages/api --ext .js
+
       - run:
           name: Running All Tests except API
           environment:
