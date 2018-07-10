@@ -11,5 +11,5 @@
     "arn": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
   },
   "state": "ENABLED",
-  "workflow": "IngestKinesis"
+  "workflow": "KinesisTriggerTest"
 }

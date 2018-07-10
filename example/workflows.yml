@@ -534,8 +534,8 @@ IngestGranule:
       Type: Fail
       Cause: 'Workflow failed'
 
-IngestKinesis:
-    Comment: 'Ingest Kinesis Granule'
+KinesisTriggerTest:
+    Comment: 'Tests Workflow from Kinesis Stream'
     StartAt: Report
     States:
       Report:
@@ -576,56 +576,6 @@ IngestKinesis:
               - States.ALL
             IntervalSeconds: 10
             MaxAttempts: 3
-        Catch:
-          - ErrorEquals:
-            - States.ALL
-            ResultPath: '$.exception'
-            Next: StopStatus
-        Next: GenericMetaHandler
-      GenericMetaHandler:
-        CumulusConfig:
-          buckets:
-            internal: '{$.meta.buckets.internal.name}'
-            private:  '{$.meta.buckets.private.name}'
-            public: '{$.meta.buckets.public.name}'
-          collection: '{$.meta.collection.name}'
-          collectionVersion: '{$.meta.collection.version}'
-          cumulus_message:
-            input: '{$.payload}'
-        Type: Task
-        Resource: ${GenericMetaHandlerLambdaFunction.Arn}
-        Catch:
-          - ErrorEquals:
-            - States.ALL
-            ResultPath: '$.exception'
-            Next: StopStatus
-        Next: MetadataAggregator
-      MetadataAggregator:
-        CumulusConfig:
-          publicBucket: '{$.meta.buckets.public.name}'
-          internalBucket: '{$.meta.buckets.internal.name}'
-          collection: '{$.meta.collection.name}'
-          granuleId: '{$.payload.granules[0].granuleId}'
-          cumulus_message:
-            input: '{$.payload.granules}'
-        Type: Task
-        Resource: ${MetadataAggregatorLambdaFunction.Arn}
-        Catch:
-          - ErrorEquals:
-            - States.ALL
-            ResultPath: '$.exception'
-            Next: StopStatus
-        Next: CmrStep
-      CmrStep:
-        CumulusConfig:
-          bucket: '{$.meta.buckets.internal.name}'
-          stack: '{$.meta.stack}'
-          granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-          cmr: '{$.meta.cmr}'
-          process: 'MetadataAggregator'
-          input_granules: '{$.meta.input_granules}'
-        Type: Task
-        Resource: ${PostToCmrLambdaFunction.Arn}
         Catch:
           - ErrorEquals:
             - States.ALL
