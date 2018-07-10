@@ -97,7 +97,7 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
       granulesTable,
       executionsTable
     ],
-    elasticsearch_host: `${process.env.LOCALSTACK_HOST}:4571`,
+    elasticsearch_host: Search.getLocalEsHost(),
     elasticsearch_index: esIndex
   });
 
