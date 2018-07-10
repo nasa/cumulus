@@ -38,14 +38,14 @@ async function put(event) {
   if (action) {
     const response = await g.get({ granuleId });
     if (action === 'reingest') {
-      return await g.reingest(response);
+      return g.reingest(response);
     }
     if (action === 'applyWorkflow') {
       const workflow = _get(body, 'workflow');
       const messageSource = _get(body, 'messageSource');
       const metaOverride = _get(body, 'metaOverride');
       const payloadOverride = _get(body, 'payloadOverride');
-      return await g.applyWorkflow(response, workflow, messageSource, metaOverride, payloadOverride);
+      return g.applyWorkflow(response, workflow, messageSource, metaOverride, payloadOverride);
     }
     else if (action === 'removeFromCmr') {
       await g.removeGranuleFromCmr(response.granuleId, response.collectionId);

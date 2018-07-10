@@ -17,7 +17,9 @@ const got = require('got');
 const get = require('lodash.get');
 const boolean = require('boolean');
 const log = require('@cumulus/common/log');
+const pLimit = require('p-limit');
 const { dynamodb } = require('@cumulus/common/aws');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const Manager = require('../models/base');
@@ -109,12 +111,14 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     const missingTypes = await findMissingMappings(esClient, aliasedIndex, Object.keys(mappings));
 
     if (missingTypes.length > 0) {
+      const concurrencyLimit = inTestMode() ? 1 : 3;
+      const limit = pLimit(concurrencyLimit);
       const addMissingTypesPromises = missingTypes.map((type) =>
-        esClient.indices.putMapping({
+        limit(() => esClient.indices.putMapping({
           index: aliasedIndex,
           type,
           body: get(mappings, type)
-        }));
+        })));
 
       await Promise.all(addMissingTypesPromises);
 
@@ -184,9 +188,9 @@ function backupStatus(status) {
  * @returns {Promise.<Array>} array of dynamoDB aws responses
  */
 function bootstrapDynamoDbTables(tables) {
-  return Promise.all(tables.map((table) => {
+  return Promise.all(tables.map((table) =>
     // check the status of continuous backup
-    return dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
+    dynamodb().describeContinuousBackups({ TableName: table.name }).promise()
       .then((r) => {
         const status = backupStatus(r.ContinuousBackupsDescription.ContinuousBackupsStatus);
 
@@ -201,8 +205,7 @@ function bootstrapDynamoDbTables(tables) {
           TableName: table.name
         };
         return dynamodb().updateContinuousBackups(params).promise();
-      })
-  }));
+      })));
 }
 
 /**
