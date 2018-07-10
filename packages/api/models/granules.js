@@ -40,9 +40,9 @@ class Granule extends Manager {
           let fileMeta = await commonAws.headObject(file.bucket, file.path + '/' + file.name);
           file.fileSize = fileMeta.ContentLength;
         }
-        catch (e) {
+        catch (error) {
           log.error(`Unable to access s3://${file.bucket}/${file.path}/${file.name}) to add missing file size`);
-          throw e;
+          throw error;
         }
       }
     }
