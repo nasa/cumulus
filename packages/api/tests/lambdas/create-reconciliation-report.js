@@ -17,6 +17,7 @@ const {
   }
 } = require('@cumulus/common');
 const { handler } = require('../../lambdas/create-reconciliation-report');
+const models = require('../../models');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
 const promisifiedBatchWriteItem = (params) => aws.dynamodb().batchWriteItem(params).promise();
@@ -129,7 +130,7 @@ test.afterEach.always((t) =>
   Promise.all(flatten([
     t.context.bucketsToCleanup.map(aws.recursivelyDeleteS3Bucket),
     t.context.tablesToCleanup.map((TableName) =>
-      aws.dynamodb().deleteTable({ TableName }).promise())
+      models.Manager.deleteTable(TableName))
   ])));
 
 test.serial('A valid reconciliation report is generated for no buckets', async (t) => {

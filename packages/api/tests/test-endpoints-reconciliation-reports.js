@@ -24,7 +24,7 @@ test.beforeEach(async () => {
 });
 
 test.afterEach.always(async () => {
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket)
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('default returns list of reports', (t) => {
