@@ -2,14 +2,12 @@
 const _ = require('lodash');
 const fs = require('fs');
 const Handlebars = require('handlebars');
-const md5 = require('md5');
 const request = require('request');
 const { Kinesis, StepFunctions, S3 } = require('aws-sdk');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 const {
-  buildAndExecuteWorkflow,
   getWorkflowArn,
   LambdaStep,
   timeout,
@@ -20,15 +18,18 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { loadConfig } = require('../helpers/testUtils');
 const testConfig = loadConfig();
 const lambdaStep = new LambdaStep();
-const kinesis = new Kinesis({region: testConfig.awsRegion});
-const sfn = new StepFunctions({region: testConfig.awsRegion});
-const s3 = new S3({region: testConfig.awsRegion});
+const kinesis = new Kinesis({ region: testConfig.awsRegion });
+const sfn = new StepFunctions({ region: testConfig.awsRegion });
+const s3 = new S3({ region: testConfig.awsRegion });
 const streamName = testConfig.streamName;
 const granuleId = 'L2_HR_PIXC_product_0001-of-4154';
 const recordTemplate = Handlebars.compile(fs.readFileSync(`./data/records/${granuleId}.json`, 'utf8'));
-let record = JSON.parse(recordTemplate(testConfig));
+const record = JSON.parse(recordTemplate(testConfig));
 const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
+
+console.log('record', JSON.stringify(record))
+
 const recordFile = record['product']['files'][0];
 const expectedTranslatePayload = {
   'granules': [
@@ -36,7 +37,7 @@ const expectedTranslatePayload = {
       'granuleId': record['product']['name'],
       'files': [
         {
-          'path': 'podaac-cumulus/test-data',
+          'path': 'unit/test-data',
           'url_path': recordFile['uri'],
           'bucket': record['bucket'],
           'name': recordFile['name'],
@@ -140,10 +141,9 @@ const expectedCMRStepPayload = {
 };
 
 async function getLastExecution() {
-  const ingestKinesisStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucketName, 'IngestKinesis');
-
+  const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucketName, 'KinesisTriggerTest');
   return new Promise((resolve, reject) => {
-    sfn.listExecutions({stateMachineArn: ingestKinesisStpFnArn}, (err, data) => {
+    sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }, (err, data) => {
       if (err) {
         reject(err);
       } else {
@@ -167,9 +167,9 @@ describe('The Ingest Kinesis workflow', () => {
     // Create stream. REVIEW: Do we really need this? Developers may likely
     // setting up the stream themselves, once.
     await new Promise((resolve, reject) => {
-      kinesis.describeStream({StreamName: streamName}, (err, data) => {
+      kinesis.describeStream({ StreamName: streamName }, (err, data) => {
         if (err && err.code === 'ResourceNotFoundException') {
-          kinesis.createStream({StreamName: streamName, ShardCount: 1}, (err, data) => {
+          kinesis.createStream({ StreamName: streamName, ShardCount: 1 }, (err, data) => {
             if (err) reject(err);
             resolve(data);
           });
@@ -180,6 +180,7 @@ describe('The Ingest Kinesis workflow', () => {
         };
       });
     });
+
 
     putRecord = await new Promise((resolve, reject) => {
       kinesis.putRecord({
@@ -192,18 +193,35 @@ describe('The Ingest Kinesis workflow', () => {
       });
     });
 
+
     // Wait until a we discover an execution has started which matches our record identifier.
     // That will identify the execution we want to test.
     while (timeWaited < maxWaitTime && workflowExecution === undefined) {
-      await timeout(waitTimeInterval);
-      timeWaited += waitTimeInterval;
-      lastExecution = await getLastExecution();
-      // getLastExecution returns undefined if no previous execution exists
-      if (lastExecution && lastExecution.executionArn) {
-        taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
-        if (taskOutput.payload.identifier === recordIdentifier) {
-          workflowExecution = lastExecution;
+      try {
+        await timeout(waitTimeInterval);
+        timeWaited += waitTimeInterval;
+        try {
+          lastExecution = await getLastExecution();
+        } catch (error) {
+          console.log(error);
+          throw new Error(error);
         }
+        // getLastExecution returns undefined if no previous execution exists
+        if (lastExecution && lastExecution.executionArn) {
+          try {
+            taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
+            if (taskOutput.payload.identifier === recordIdentifier) {
+              workflowExecution = lastExecution;
+            }
+          } catch (error) {
+            console.log(error);
+            throw new Error(error);
+          }
+        }
+      }
+      catch (error) {
+        console.log(error);
+        throw new Error(error);
       }
     }
 
@@ -237,6 +255,7 @@ describe('The Ingest Kinesis workflow', () => {
       // 'TranslateMessage', but the lambda is 'CNMToCMA' which is what
       // integration tests package looks for when looking up the step execution.
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
+      console.log(JSON.stringify(lambdaOutput));
     });
 
     it('outputs the granules object', () => {
