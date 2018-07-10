@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const Dyno = require('@mapbox/dyno');
-const { inTestMode } = require('@cumulus/common/test-utils');
+const { inTestMode, getLocalstackEndpoint } = require('@cumulus/common/test-utils');
 const stream = require('stream');
 
 /**
@@ -25,7 +25,7 @@ async function backup(table, region = 'us-east-1', folder = 'backups') {
     if (!process.env.LOCALSTACK_HOST) {
       throw new Error('The LOCALSTACK_HOST environment variable is not set.');
     }
-    dynoParams.endpoint = `http://${process.env.LOCALSTACK_HOST}:4569`;
+    dynoParams.endpoint = getLocalstackEndpoint('dynamodb');
   }
   const dyno = Dyno(dynoParams);
   const stringify = new stream.Transform({ objectMode: true });
