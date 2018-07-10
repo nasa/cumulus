@@ -141,4 +141,8 @@ function handler(event, context) {
   });
 }
 
-module.exports = handler;
+module.exports = {
+    handler,
+    get
+};
+

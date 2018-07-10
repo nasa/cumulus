@@ -4,6 +4,7 @@ const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const { ftpMixin } = require('./ftp');
 const get = require('lodash.get');
+const getGranule = require('@cumulus/api/granules.get')
 const { httpMixin } = require('./http');
 const log = require('@cumulus/common/log');
 const { parsePdr } = require('./parse-pdr');
@@ -77,10 +78,17 @@ class Discover {
    *   if it does not already exist in S3.
    */
   pdrIsNew(pdr) {
-    return aws.s3ObjectExists({
-      Bucket: this.bucket,
-      Key: path.join(this.stack, this.folder, pdr.name)
-    }).then((exists) => (exists ? false : pdr));
+    event = {
+      'pathParameters': {'pdrName': pdr.name }
+    }
+    cb = function(err, response) {
+      if (err) {
+        if (err.code === 'RecordDoesNotExist') return false;
+        else throw err;
+      }
+      return response;
+    };
+    return getPdr(event, cb);
   }
 
   /**
