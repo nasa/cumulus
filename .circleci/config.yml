@@ -92,31 +92,31 @@ jobs:
             - ./tasks/sync-granule/node_modules
             - ./tasks/sf-sns-report/node_modules
 
-      # - run:
-      #     name: Running eslint
-      #     command: ./node_modules/.bin/eslint packages/api --ext .js
+      - run:
+          name: Running eslint
+          command: ./node_modules/.bin/eslint packages/api --ext .js
 
-      # - run:
-      #     name: Running All Tests except API
-      #     environment:
-      #       LOCALSTACK_HOST: localstack
-      #       LOCAL_ES_HOST: elastichost
-      #     command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2 --ignore @cumulus/api
+      - run:
+          name: Running All Tests except API
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2 --ignore @cumulus/api
 
-      # - run:
-      #     name: Running API Tests
-      #     environment:
-      #       LOCALSTACK_HOST: localstack
-      #       LOCAL_ES_HOST: elastichost
-      #     command: |
-      #       cd packages/api
-      #       ./node_modules/.bin/nyc yarn test
+      - run:
+          name: Running API Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc yarn test
 
-      # - run:
-      #     name: Running End to End Tests
-      #     environment:
-      #       LOCALSTACK_HOST: localstack
-      #     command: yarn e2e
+      - run:
+          name: Running End to End Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+          command: yarn e2e
 
       - run:
           name: Prepare for Integration Tests

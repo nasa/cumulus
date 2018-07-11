@@ -2,11 +2,11 @@
   "spec_dir": "spec",
   "spec_files": [
     "setup/PopulateProvidersCollections.js",
-    "ingestGranule/*[sS]pec.js"
+    "**/*[sS]pec.js"
   ],
   "helpers": [
     "helpers/**/*.js"
   ],
-  "stopSpecOnExpectationFailure": true,
+  "stopSpecOnExpectationFailure": false,
   "random": false 
 }
