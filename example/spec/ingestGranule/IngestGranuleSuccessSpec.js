@@ -100,7 +100,9 @@ describe('The S3 Ingest Granules workflow', () => {
       // delete the granule record from DynamoDB if exists
       await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
     }
-    catch((err) => console.log(err));
+    catch(err) {
+      console.log(err);
+    }
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
