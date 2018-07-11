@@ -29,7 +29,7 @@ const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'IngestGranule';
 
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const templatedSyncGranuleFilename = templateFile({
@@ -86,7 +86,10 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
+    console.log('Starting ingest test');
     const granuleId = randomStringFromRegex(granuleRegex);
+
+    console.log(`granule id: ${granuleId}`);
 
     const inputPayloadJson = await fs.readFile(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, granuleId, inputPayloadJson);
