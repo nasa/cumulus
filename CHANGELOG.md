@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
 ## [v1.7.0] - 2018-07-02
