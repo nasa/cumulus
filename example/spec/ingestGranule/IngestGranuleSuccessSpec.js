@@ -93,19 +93,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, granuleId, inputPayloadJson);
-    console.log(inputPayload)
 
-    try {
-      expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
 
-      expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
+    expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
 
-      // delete the granule record from DynamoDB if exists
-      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
-    }
-    catch(err) {
-      console.log(err);
-    }
+    // delete the granule record from DynamoDB if exists
+    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
