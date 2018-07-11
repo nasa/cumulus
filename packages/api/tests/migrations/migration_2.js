@@ -10,13 +10,14 @@ const {
   }
 } = require('@cumulus/common');
 const { run } = require('../../migrations/migration_2');
+const models = require('../../models');
 
 function createAndWaitForTable(params) {
   return dynamodb().createTable(params).promise()
     .then(() => dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise());
 }
 
-test('build-files-table handler properly populates the files table', async (t) => {
+test.serial('build-files-table handler properly populates the files table', async (t) => {
   // Create the two tables
   t.context.granulesTableName = randomString();
   t.context.filesTableName = randomString();
@@ -51,10 +52,8 @@ test('build-files-table handler properly populates the files table', async (t) =
     }
   };
 
-  await Promise.all([
-    createAndWaitForTable(granulesTableParams),
-    createAndWaitForTable(filesTableParams)
-  ]);
+  await createAndWaitForTable(granulesTableParams);
+  await createAndWaitForTable(filesTableParams);
 
   // Write data to the granules table
   const batchWriteItemParams = { RequestItems: {} };
@@ -181,7 +180,7 @@ test('build-files-table handler properly populates the files table', async (t) =
   })).promise()).Count, 1);
 });
 
-test.afterEach.always((t) => Promise.all([
-  dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise(),
-  dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise()
-]));
+test.afterEach.always(async (t) => {
+  await models.Manager.deleteTable(t.context.granulesTableName);
+  await models.Manager.deleteTable(t.context.filesTableName);
+});

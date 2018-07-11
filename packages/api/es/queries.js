@@ -98,8 +98,7 @@ const build = {
 
     // because elasticsearch doesn't support multiple
     // fields in range query, make it an erray
-    const results = Object.keys(fields).map((k) => ({
-      range: { [k]: fields[k] } }
+    const results = Object.keys(fields).map((k) => ({ range: { [k]: fields[k] } }
     ));
 
     queries.must = queries.must.concat(results);
@@ -153,7 +152,7 @@ function selectParams(fields, regex) {
   });
 }
 
-module.exports = function(params) {
+module.exports = function query(params) {
   const sortBy = params.sort_by || 'timestamp';
   const order = params.order || 'desc';
 

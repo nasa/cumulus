@@ -9,6 +9,8 @@ const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
 const { Provider, Collection, Rule } = require('@cumulus/api/models');
+
+const api = require('./api');
 const cmr = require('./cmr.js');
 
 const executionStatusNumRetries = 100;
@@ -224,18 +226,24 @@ async function addCollections(stackName, bucketName, dataDirectory) {
 }
 
 /**
- * add providers to database
+ * add providers to database.
  *
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of provider json files
+ * @param {string} s3Host - bucket name to be used as the provider host for 
+ * S3 providers. This will override the host from the seed data. Defaults to null, 
+ * meaning no override.
  * @returns {Promise.<integer>} number of providers added
  */
-async function addProviders(stackName, bucketName, dataDirectory) {
+async function addProviders(stackName, bucketName, dataDirectory, s3Host = null) {
   const providers = await setupSeedData(stackName, bucketName, dataDirectory);
 
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
+    if(s3Host && provider.protocol === 's3') {
+      provider.host = s3Host;
+    }
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
   }));
@@ -322,6 +330,7 @@ async function buildAndExecuteWorkflow(
 }
 
 module.exports = {
+  api,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
