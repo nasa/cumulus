@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const urljoin = require('url-join');
 const got = require('got');
-const cloneDeep = require('lodash.cloneDeep');
+const cloneDeep = require('lodash.clonedeep');
 const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
