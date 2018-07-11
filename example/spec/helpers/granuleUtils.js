@@ -36,8 +36,8 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
  * @param {string} newGranuleId - new granule id
  * @returns {Promise<Object>} - file as a JS object
  */
-async function loadFileWithUpdatedGranuleId(file, oldGranuleId, newGranuleId) {
-  const fileContents = await fs.readFile(file, 'utf8');
+function loadFileWithUpdatedGranuleId(file, oldGranuleId, newGranuleId) {
+  const fileContents = fs.readFileSync(file, 'utf8');
   const updatedFileContents = globalReplace(fileContents, oldGranuleId, newGranuleId);
   return JSON.parse(updatedFileContents);
 }
