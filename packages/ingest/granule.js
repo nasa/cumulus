@@ -4,6 +4,7 @@ const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const getGranule = require('@cumulus/api/granules.get')
 const groupBy = require('lodash.groupby');
 const identity = require('lodash.identity');
 const omit = require('lodash.omit');
@@ -100,6 +101,29 @@ class Discover {
   }
 
   /**
+   * Determine if a granule does not yet exist in Cumulus
+   *
+   * @param {Object} granule - the granule that's being looked for
+   * @param {string} granule.name - the name of the granule in Cumulus
+   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
+   *   when the object does already exist in Cumulus, or the passed-in granule
+   *   object if it does not already exist.
+   */
+  granuleIsNew(granule) {
+    event = {
+      'pathParameters': { 'granuleName': granule.name }
+    }
+    cb = function(err, response) {
+      if (err) {
+        if (err.code === 'RecordDoesNotExist') return false;
+        else throw err;
+      }
+      return response;
+    }
+    return getGranule(event, cb);
+  }
+
+  /**
    * Discover new granules
    *
    * @returns {Array<Object>} a list of discovered granules
@@ -117,6 +141,9 @@ class Discover {
     // What we're doing here is checking each discovered file to see if it
     // already exists in S3.  If it does then it isn't a new file and we are
     // going to ignore it.
+    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
+      getGranule(event, cb))));
+
     const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
         .then((exists) => (exists ? null : discoveredFile)))))

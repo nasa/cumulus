@@ -4,7 +4,7 @@ const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const { ftpMixin } = require('./ftp');
 const get = require('lodash.get');
-const getPdr = require('@cumulus/api/granules.get')
+const getPdr = require('@cumulus/api/pdrs.get')
 const { httpMixin } = require('./http');
 const log = require('@cumulus/common/log');
 const { parsePdr } = require('./parse-pdr');
@@ -87,7 +87,7 @@ class Discover {
         else throw err;
       }
       return response;
-    };
+    }
     return getPdr(event, cb);
   }
 
