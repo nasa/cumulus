@@ -33,21 +33,25 @@ class Granule extends Manager {
     super(process.env.GranulesTable, granuleSchema);
   }
 
-  async addMissingFileSizes(files) {
-    for (const file of files) {
+  /**
+  * Adds fileSize values from S3 object metadata for granules missing that information
+  *
+  * @param {Array<Object>} files - Array of files from a payload granule object
+  * @returns {Promise<Array>} - Updated array of files with missing fileSize appended
+  */
+  addMissingFileSizes(files) {
+    const filePromises = files.map((file) => {
       if (!('fileSize' in file)) {
-        try {
-          let filePath = typeof file.path == 'undefined' ? '' : `${file.path}/`;
-          let fileMeta = await commonAws.headObject(file.bucket, filePath + file.name);
-          file.fileSize = fileMeta.ContentLength;
-        }
-        catch (error) {
-          log.error(`Unable to access ${file.filename} to add missing file size`);
-          throw error;
-        }
+        const filePath = typeof file.path === 'undefined' ? '' : `${file.path}/`;
+        return commonAws.headObject(file.bucket, filePath + file.name).then((result) => {
+          const updatedFile = file;
+          updatedFile.fileSize = result.ContentLength;
+          return updatedFile;
+        });
       }
-    }
-    return files;
+      return Promise.resolve(file);
+    });
+    return Promise.all(filePromises);
   }
 
   /**
