@@ -91,7 +91,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     console.log(`granule id: ${granuleId}`);
 
-    const inputPayloadJson = await fs.readFile(inputPayloadFilename, 'utf8');
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, granuleId, inputPayloadJson);
     console.log(inputPayload)
 
