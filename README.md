@@ -77,6 +77,7 @@ Run the test commands next
     $ export LOCALSTACK_HOST=localhost
     $ yarn test
 
+
 Run end to end tests by
 
     $ yarn e2e
@@ -85,7 +86,7 @@ Run end to end tests by
 
 - Run `./bin/prepare`
 - Deploy your instance integrations on aws and run tests by following the steps [here](example/README.md)
-    
+
 ### Running integration tests on CirlceCI
 
 - Any commit message that includes the word `[run it]` or `[it run]` or `[it]` will trigger integration tests on circleci
