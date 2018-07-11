@@ -96,9 +96,9 @@ describe('The S3 Ingest Granules workflow', () => {
     console.log(inputPayload)
 
     try {
-      expectedSyncGranulePayload = await loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
+      expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
 
-      expectedPayload = await loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
+      expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
 
       // delete the granule record from DynamoDB if exists
       await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
