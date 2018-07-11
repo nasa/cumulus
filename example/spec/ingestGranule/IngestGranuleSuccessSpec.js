@@ -67,9 +67,8 @@ async function setupTestGranuleForIngest(bucket, granuleId, inputPayloadJson) {
   return JSON.parse(updatedInputPayloadJson);
 }
 
-describe('The S3 Ingest Granules workflow', async () => {
+describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
-  const inputPayloadJson = await fs.readFile(inputPayloadFilename, 'utf8');
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
@@ -89,6 +88,7 @@ describe('The S3 Ingest Granules workflow', async () => {
   beforeAll(async () => {
     const granuleId = randomStringFromRegex(granuleRegex);
 
+    const inputPayloadJson = await fs.readFile(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, granuleId, inputPayloadJson);
 
     expectedSyncGranulePayload = await loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
