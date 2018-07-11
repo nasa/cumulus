@@ -88,11 +88,9 @@ test.after.always(async () => {
 });
 
 test.serial('creating a successful granule record', async (t) => {
-
   // Stub out headobject S3 call used in api/models/granules.js,
   // so we don't have to create artifacts
-
-  sinon.stub(aws, 'headObject').resolves({'ContentLength': 12345});
+  sinon.stub(aws, 'headObject').resolves({ ContentLength: 12345 });
 
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
