@@ -4,7 +4,6 @@
   "type": "object",
   "required": [
     "provider",
-    "collection",
     "bucket",
     "stack"
   ],
@@ -49,6 +48,8 @@
       "description": "flag to force the processing of PDR's that have already been discovered",
       "default": false,
       "type": "boolean"
-    }
+    },
+    "filterPdrs": { "type": "string"},
+    "provider_path": { "type": "string"}
   }
 }
