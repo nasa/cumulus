@@ -142,12 +142,12 @@ class Discover {
     // already exists in S3.  If it does then it isn't a new file and we are
     // going to ignore it.
     const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
-      getGranule(event, cb))));
+      getGranule(event, cb)))).filter(identity);
 
-    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
+    /*const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
         .then((exists) => (exists ? null : discoveredFile)))))
-      .filter(identity);
+      .filter(identity);*/
 
     // Group the files by granuleId
     const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
