@@ -288,8 +288,8 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
  * @returns {Promise<Array>} list of created records
  */
 function granule(payload) {
-  const granule = new Granule();
-  return granule.createGranulesFromSns(payload);
+  const g = new Granule();
+  return g.createGranulesFromSns(payload);
 }
 
 /**
