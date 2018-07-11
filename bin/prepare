@@ -13,7 +13,7 @@ cat package.json | jq '.dependencies | to_entries[] | select(.key | startswith("
 cd ..
 
 # run the yarn link on packages used on the integration tests
-cat example/.tmp/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn build 
+./node_modules/.bin/lerna run build --concurrency 2
 cat example/.tmp/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --scope % -- yarn link
 cd example
 

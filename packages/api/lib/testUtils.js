@@ -4,9 +4,34 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 
 /**
+ * Add a user that can be authenticated against
+ *
+ * @param {Object} params - params
+ * @param {User} params.userDbClient - an instance of the API Users model
+ * @returns {Promise<Object>} - an object containing a userName and a password
+ */
+async function createFakeUser({ userDbClient }) {
+  // Create the user and token for this request
+  const userName = randomString();
+  const password = randomString();
+
+  await userDbClient.create([
+    {
+      userName,
+      password,
+      expires: Date.now() + (60 * 60 * 1000) // Token expires in 1 hour
+    }
+  ]);
+
+  return { userName, password };
+}
+
+/**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
  * lambda functions used as backend in ApiGateway
+ *
+ * Intended for use with unit tests.  Will invoke the function locally.
  *
  * @param {Function} endpoint - the lambda function used as ApiGateway backend
  * @param {Object} event - aws lambda event object
@@ -25,7 +50,7 @@ function testEndpoint(endpoint, event, testCallback) {
 /**
  * searches for all the existings aliases in ElasticSearch and delete
  * all of them
- * 
+ *
  * @returns {Promise<Array>} a list of elasticsearch responses
  */
 async function deleteAliases() {
@@ -151,6 +176,7 @@ function fakeCollectionFactory() {
 }
 
 module.exports = {
+  createFakeUser,
   testEndpoint,
   fakeGranuleFactory,
   fakePdrFactory,
