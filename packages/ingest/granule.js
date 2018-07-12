@@ -105,7 +105,7 @@ class Discover {
    *
    * @param {Object} granule - the granule that's being looked for
    * @param {string} granule.name - the name of the granule in Cumulus
-   * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
+   * @returns {Promise.<(null|Object)>} - a Promise that resolves to null
    *   when the object does already exist in Cumulus, or the passed-in granule
    *   object if it does not already exist.
    */
@@ -115,10 +115,10 @@ class Discover {
     }
     let cb = (function(err, response) {
       if (err) {
-        if (err.code === 'RecordDoesNotExist') return granule;
+        if (err.name === 'RecordDoesNotExist') return granule;
         else throw err;
       }
-      return false;
+      return null;
     });
     return getGranule(event, cb);
   }
@@ -137,13 +137,14 @@ class Discover {
       // Add additional granule-related properties to the file
       .map((file) => this.setGranuleInfo(file));
 
+    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
+        granuleIsNew(discoveredFile))))
+      .filter(identity);
+
     // This is confusing, but I haven't figured out a better way to write it.
     // What we're doing here is checking each discovered file to see if it
     // already exists in S3.  If it does then it isn't a new file and we are
     // going to ignore it.
-    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
-      getGranule(event, cb)))).filter(identity);
-
     /*const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
         .then((exists) => (exists ? null : discoveredFile)))))
