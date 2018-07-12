@@ -6,6 +6,7 @@
 const migrations = require('../migrations');
 const migration1 = require('../migrations/migration_1');
 const migration2 = require('../migrations/migration_2');
+const migration3 = require('../migrations/migration_3');
 
 /**
  * Lambda function handler for running migrations
@@ -16,7 +17,7 @@ const migration2 = require('../migrations/migration_2');
  * @returns {Promise<undefined>} undefined
  */
 function handler(event, context, cb) {
-  return migrations([migration1, migration2], {
+  return migrations([migration1, migration2, migration3], {
     // Used by migration1
     tables: [
       process.env.GranulesTable,
