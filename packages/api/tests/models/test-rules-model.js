@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const models = require('../models');
+const models = require('../../models');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
