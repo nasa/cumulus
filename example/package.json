@@ -24,12 +24,11 @@
     "@cumulus/api": "^1.6.0",
     "@cumulus/common": "^1.6.0",
     "@cumulus/deployment": "^1.6.0",
-    "@cumulus/move-granules": "^1.6.0",
-    "@cumulus/test-processing": "^1.6.0",
     "@cumulus/discover-granules": "^1.6.0",
     "@cumulus/discover-pdrs": "^1.6.0",
     "@cumulus/hello-world": "^1.6.0",
     "@cumulus/integration-tests": "^1.6.0",
+    "@cumulus/move-granules": "^1.6.0",
     "@cumulus/parse-pdr": "^1.6.0",
     "@cumulus/pdr-status-check": "^1.6.0",
     "@cumulus/post-to-cmr": "^1.6.0",
@@ -38,6 +37,7 @@
     "@cumulus/sf-sns-report": "^1.6.0",
     "@cumulus/sync-granule": "^1.6.0",
     "@cumulus/test-data": "^1.7.0",
+    "@cumulus/test-processing": "^1.6.0",
     "aws-sdk": "^2.227.1"
   },
   "devDependencies": {
@@ -48,6 +48,7 @@
     "jasmine-console-reporter": "^2.0.1",
     "kes": "^2.2.2",
     "lodash": "^4.17.10",
+    "lodash.clonedeep": "^4.5.0",
     "moment": "^2.22.2",
     "node-forge": "^0.7.5",
     "url-join": "^1.1.0"
