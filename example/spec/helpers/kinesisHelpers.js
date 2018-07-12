@@ -52,25 +52,26 @@ async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 30) {
   throw new Error(streamStatus);
 }
 
+async function deleteTestStream(streamName) {
+  return kinesis.deleteStream({ StreamName: streamName }).promise();
+}
 
-async function createNewTestStream(streamName) {
-  return new Promise((resolve, reject) => {
-    kinesis.describeStream({ StreamName: streamName }, (err, data) => {
-      if (err && err.code === 'ResourceNotFoundException') {
-        console.log('create the stream', streamName);
-        kinesis.createStream({ StreamName: streamName, ShardCount: 1 }, (createErr, createData) => {
-          if (createErr) reject(createErr);
-          return resolve(createData);
-        });
-      }
-      else if (err) {
-        reject(err);
-      }
-      else {
-        resolve(data);
-      }
-    });
-  });
+
+async function createOrUseTestStream(streamName) {
+  let stream;
+
+  try {
+    stream = await kinesis.describeStream({ StreamName: streamName }).promise();
+  }
+  catch (err) {
+    if (err.code === 'ResourceNotFoundException') {
+      stream = await kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+    }
+    else {
+      throw err;
+    }
+  }
+  return stream;
 }
 
 
@@ -132,7 +133,8 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
 
 
 module.exports = {
-  createNewTestStream,
+  createOrUseTestStream,
+  deleteTestStream,
   putRecordOnStream,
   waitForActiveStream,
   waitForTestSfStarted
