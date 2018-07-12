@@ -8,21 +8,17 @@ const aws = require('../aws');
 const { randomString } = require('../test-utils');
 
 test('s3Join behaves as expected', (t) => {
-  // Handles an array argument
-  t.is(aws.s3Join(['a', 'b', 'c']), 'a/b/c');
+  t.is(aws.s3Join('a', 'b', 'c'), 'a/b/c');
 
-  t.is(aws.s3Join(['a', 'b']), 'a/b');
-  t.is(aws.s3Join(['a', 'b/']), 'a/b/');
-  t.is(aws.s3Join(['a/', 'b']), 'a/b');
-  t.is(aws.s3Join(['/a', 'b']), 'a/b');
-  t.is(aws.s3Join(['a/', 'b']), 'a/b');
-
-  t.is(aws.s3Join(['a']), 'a');
-  t.is(aws.s3Join(['/a']), 'a');
-  t.is(aws.s3Join(['a/']), 'a/');
-
-  // Handles a list of arguments
   t.is(aws.s3Join('a', 'b'), 'a/b');
+  t.is(aws.s3Join('a', 'b/'), 'a/b/');
+  t.is(aws.s3Join('a/', 'b'), 'a/b');
+  t.is(aws.s3Join('/a', 'b'), 'a/b');
+  t.is(aws.s3Join('a/', 'b'), 'a/b');
+
+  t.is(aws.s3Join('a'), 'a');
+  t.is(aws.s3Join('/a'), 'a');
+  t.is(aws.s3Join('a/'), 'a/');
 });
 
 test('listS3ObjectsV2 handles non-truncated case', async (t) => {

@@ -14,12 +14,10 @@ const pump = require('pump');
 /**
  * Join strings into an S3 key without a leading slash or double slashes
  *
- * @param {...string|Array<string>} args - the strings to join
+ * @param {...string} args - the strings to join
  * @returns {string} the full S3 key
  */
-function s3Join(...args) {
-  const tokens = Array.isArray(args[0]) ? args[0] : args;
-
+function s3Join(...tokens) {
   const removeLeadingSlash = (token) => token.replace(/^\//, '');
   const removeTrailingSlash = (token) => token.replace(/\/$/, '');
   const isNotEmptyString = (token) => token.length > 0;
