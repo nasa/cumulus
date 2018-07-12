@@ -69,7 +69,7 @@ test.serial('backup records from DynamoDB', async (t) => {
 });
 
 test.serial('restore records to DynamoDB', async (t) => {
-  const limit = 55;
+  const limit = 25;
   const granuleIds = [];
   const tempRestoreFile = path.join(tempFolder, `restore_${tableName}.json`);
 
@@ -82,7 +82,7 @@ test.serial('restore records to DynamoDB', async (t) => {
   }
   fs.writeFileSync(tempRestoreFile, fileContent);
 
-  await restore(tempRestoreFile, tableName, 2);
+  await restore(tempRestoreFile, tableName, 1);
 
   // count the records
   const gModel = new models.Manager();
