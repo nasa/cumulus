@@ -95,7 +95,6 @@ jobs:
       - run:
           name: Running eslint
           command: ./node_modules/.bin/eslint packages/api --ext .js
-
       - run:
           name: Running All Tests except API
           environment:
@@ -104,13 +103,50 @@ jobs:
           command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2 --ignore @cumulus/api
 
       - run:
-          name: Running API Tests
+          name: Running API endpoint Tests
           environment:
             LOCALSTACK_HOST: localstack
             LOCAL_ES_HOST: elastichost
           command: |
             cd packages/api
-            ./node_modules/.bin/nyc yarn test
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/endpoints/*.js
+
+      - run:
+          name: Running API ES Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/es/*.js
+
+      - run:
+          name: Running Heavy API migration Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/migrations/*.js
+
+      - run:
+          name: Running Heavy API Lambda Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/lambdas/*.js
+
+      - run:
+          name: Running Heavy API cli and models Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/cli/*.js
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/models/*.js
 
       - run:
           name: Running End to End Tests
