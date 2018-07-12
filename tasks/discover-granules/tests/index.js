@@ -31,9 +31,9 @@ test('discover granules sets the correct dataType for granules', async (t) => {
     // Make sure that there really were granules returned
     t.truthy(output.granules.length > 0);
 
-    // Make sure that the granules use the collection name as the dataType
+    // Make sure we support datatype and collection name
     output.granules.forEach((granule) => {
-      t.is(granule.dataType, event.config.collection.dataType);
+      t.not(granule.dataType, event.config.collection.name);
     });
   }
   catch (err) {
