@@ -64,6 +64,7 @@ jobs:
             sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
 
             yarn bootstrap-no-build
+            mkdir .final_nyc_output
 
       - save_cache:
           key: packages-{{ checksum "global-hash" }}
@@ -110,6 +111,7 @@ jobs:
           command: |
             cd packages/api
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/endpoints/*.js
+            cp .nyc_output/* ../../.final_nyc_output
 
       - run:
           name: Running API ES Tests
@@ -119,6 +121,7 @@ jobs:
           command: |
             cd packages/api
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/es/*.js
+            cp .nyc_output/* ../../.final_nyc_output
 
       - run:
           name: Running Heavy API migration Tests
@@ -128,6 +131,7 @@ jobs:
           command: |
             cd packages/api
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/migrations/*.js
+            cp .nyc_output/* ../../.final_nyc_output
 
       - run:
           name: Running Heavy API Lambda Tests
@@ -137,6 +141,7 @@ jobs:
           command: |
             cd packages/api
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/lambdas/*.js
+            cp .nyc_output/* ../../.final_nyc_output
 
       - run:
           name: Running Heavy API cli and models Tests
@@ -146,7 +151,10 @@ jobs:
           command: |
             cd packages/api
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/cli/*.js
+            cp .nyc_output/* ../../.final_nyc_output
+
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/models/*.js
+            cp .nyc_output/* ../../.final_nyc_output
 
       - run:
           name: Running End to End Tests
@@ -203,7 +211,7 @@ jobs:
             COVERALLS_SERVICE_NAME: circleci
           command: |
             export COVERALLS_SERVICE_JOB_ID=$CIRCLE_BUILD_NUM
-            cp -r packages/api/.nyc_output/* .nyc_output/
+            cp .nyc_output/* .final_nyc_output
             yarn coveralls || true
 
       - store_artifacts:
