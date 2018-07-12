@@ -15,7 +15,7 @@
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch",
     "coverage": "nyc report --reporter text-summary --reporter html",
-    "coveralls": "nyc report --reporter=text-lcov | coveralls"
+    "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls"
   },
   "repository": {
     "type": "git",
