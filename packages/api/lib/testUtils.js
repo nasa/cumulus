@@ -8,9 +8,15 @@ const { Search } = require('../es/search');
  *
  * @param {Object} params - params
  * @param {User} params.userDbClient - an instance of the API Users model
+ * @param {integer} params.expires - an expiration time for the token
  * @returns {Promise<Object>} - an object containing a userName and a password
  */
-async function createFakeUser({ userDbClient }) {
+async function createFakeUser(params) {
+  const {
+    userDbClient,
+    expires = Date.now() + (60 * 60 * 1000) // Default to 1 hour
+  } = params;
+
   // Create the user and token for this request
   const userName = randomString();
   const password = randomString();
@@ -19,7 +25,7 @@ async function createFakeUser({ userDbClient }) {
     {
       userName,
       password,
-      expires: Date.now() + (60 * 60 * 1000) // Token expires in 1 hour
+      expires
     }
   ]);
 
