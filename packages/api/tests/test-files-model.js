@@ -20,7 +20,7 @@ test.after.always(async () => {
   await models.Manager.deleteTable(process.env.FilesTable);
 });
 
-test('create files records from a granule and then delete them', async (t) => {
+test.serial('create files records from a granule and then delete them', async (t) => {
   const bucket = randomString();
   const granule = fakeGranuleFactory();
   granule.files = [];
@@ -48,7 +48,7 @@ test('create files records from a granule and then delete them', async (t) => {
 });
 
 
-test('create a granule with 4 files, then remove one of the files', async (t) => {
+test.serial('create a granule with 4 files, then remove one of the files', async (t) => {
   const bucket = randomString();
   const granule = fakeGranuleFactory();
   granule.files = [];
