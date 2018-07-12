@@ -1,7 +1,7 @@
 // npm packages
 const fs = require('fs');
 const Handlebars = require('handlebars');
-const { StepFunctions, S3 } = require('aws-sdk');
+const { s3 } = require('@cumulus/common/aws');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
@@ -16,7 +16,6 @@ const { createNewTestStream, putRecordOnStream, waitForTestSfStarted } = require
 const testConfig = loadConfig();
 const lambdaStep = new LambdaStep();
 
-const s3 = new S3({ region: testConfig.awsRegion });
 const streamName = testConfig.streamName;
 const granuleId = 'L2_HR_PIXC_product_0001-of-4154';
 const recordTemplate = Handlebars.compile(fs.readFileSync(`./data/records/${granuleId}.json`, 'utf8'));
@@ -71,10 +70,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let executionStatus;
   let s3FileHead;
 
-  beforeAll(async () => {
-    // Create stream. REVIEW: Do we really need this? Developers may likely
-    // setting up the stream themselves, once.
+  afterAll(async () => {
+    await s3().deleteObject({
+      Bucket: testConfig.privateBucket,
+      Key: `${filePrefix}/${fileData.name}`
+    }).promise();
+  });
 
+  beforeAll(async () => {
     try {
       await createNewTestStream(streamName);
       console.log('createNewTestStream');
@@ -85,8 +88,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     }
     catch (e) {
       console.log(e);
-      throw new Error(e);
+      throw e;
     }
+
     // Wait for our execution to complete so we can test the outputs.
     if (workflowExecution === undefined) {
       throw new Error('Timeout waiting for new execution to start');
@@ -96,7 +100,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     }
 
     s3FileHead = await new Promise((resolve, reject) => {
-      s3.headObject({
+      s3().headObject({
         Bucket: testConfig.privateBucket,
         Key: `${filePrefix}/${fileData.name}`
       }, (err, data) => {
