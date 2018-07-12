@@ -14,6 +14,10 @@ function redirectUriParam() {
 /**
  * AWS API Gateway function that handles callbacks from URS authentication, transforming
  * codes into tokens
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @returns {Promise} the token
  */
 function token(event, context) {
   const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
@@ -75,6 +79,11 @@ function token(event, context) {
 /**
  * AWS API Gateway function that redirects to the correct URS endpoint with the correct client
  * ID to be used with the API
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise} the token or the callback object
  */
 function login(event, context, cb) {
   const endpoint = process.env.EARTHDATA_BASE_URL;
@@ -102,13 +111,14 @@ function login(event, context, cb) {
   });
 }
 
+
 /**
- * Main handler for the token endpoint
- * @function handler
- * @param  {type} event   {description}
- * @param  {type} context {description}
- * @param  {type} cb      {description}
- * @return {type} {description}
+ * The main handler for the lambda function
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise} output of the handler
  */
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {

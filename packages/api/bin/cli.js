@@ -123,7 +123,7 @@ program
     if (!cmd.table) {
       throw new Error('table name is missing');
     }
- 
+
     const concurrency = !cmd.concurrency ? 2 : parseInt(cmd.concurrency, 10);
 
     if (cmd.region) {

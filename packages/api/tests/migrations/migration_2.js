@@ -11,6 +11,7 @@ const {
   }
 } = require('@cumulus/common');
 const { run } = require('../../migrations/migration_2');
+const models = require('../../models');
 
 test('build-files-table handler properly populates the files table', async (t) => {
   // Create the two tables
@@ -178,6 +179,6 @@ test('build-files-table handler properly populates the files table', async (t) =
 });
 
 test.afterEach.always(async (t) => {
-  await dynamodb().deleteTable({ TableName: t.context.granulesTableName }).promise();
-  await dynamodb().deleteTable({ TableName: t.context.filesTableName }).promise();
+  await models.Manager.deleteTable(t.context.granulesTableName);
+  await models.Manager.deleteTable(t.context.filesTableName);
 });
