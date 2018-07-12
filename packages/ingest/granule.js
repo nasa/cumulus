@@ -3,7 +3,6 @@
 const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
 const getGranule = require('@cumulus/api/granules.get')
 const groupBy = require('lodash.groupby');
 const identity = require('lodash.identity');
@@ -39,21 +38,19 @@ class Discover {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    const config = get(event, 'config');
-
-    this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection');
-    this.provider = get(config, 'provider');
-    this.useList = get(config, 'useList');
+    this.buckets = event.config.buckets;
+    this.collection = event.config.collection;
+    this.provider = event.config.provider;
+    this.useList = event.config.useList;
     this.event = event;
 
-    this.port = get(this.provider, 'port', 21);
-    this.host = get(this.provider, 'host', null);
-    this.path = get(this.collection, 'provider_path') || '/';
+    this.port = this.provider.port || 21;
+    this.host = this.provider.host;
+    this.path = this.collection.provider_path || '/';
 
     this.endpoint = urljoin(this.host, this.path);
-    this.username = get(this.provider, 'username', null);
-    this.password = get(this.provider, 'password', null);
+    this.username = this.provider.username;
+    this.password = this.provider.password;
 
     // create hash with file regex as key
     this.regexes = {};
@@ -198,10 +195,10 @@ class Granule {
     this.provider = provider;
 
     this.collection.url_path = this.collection.url_path || '';
-    this.port = get(this.provider, 'port', 21);
-    this.host = get(this.provider, 'host', null);
-    this.username = get(this.provider, 'username', null);
-    this.password = get(this.provider, 'password', null);
+    this.port = this.provider.port || 21;
+    this.host = this.provider.host;
+    this.username = this.provider.username;
+    this.password = this.provider.password;
     this.checksumFiles = {};
 
     this.forceDownload = forceDownload;
@@ -704,7 +701,7 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
   // add/replace the OnlineAccessUrls
   const metadata = await getMetadata(cmrFile.filename);
   const metadataObject = await parseXmlString(metadata);
-  const metadataGranule = get(metadataObject, 'Granule');
+  const metadataGranule = metadataObject.Granule;
   const updatedGranule = {};
   Object.keys(metadataGranule).forEach((key) => {
     if (key === 'OnlineResources' || key === 'Orderable') {
