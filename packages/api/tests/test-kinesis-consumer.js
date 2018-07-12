@@ -186,7 +186,7 @@ test.serial('it should throw an error if message collection has wrong data type'
   t.is(errors[0].errors[0].message, 'should be string');
 });
 
-test.serial('it should throw an error if message is invalid json', async(t) => {
+test.serial('it should throw an error if message is invalid json', async (t) => {
   const invalidMessage = '{';
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]

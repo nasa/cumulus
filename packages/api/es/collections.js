@@ -1,14 +1,12 @@
-/* eslint-disable no-param-reassign */
-
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const { BaseSearch } = require('./search');
 
 
 class Collection extends BaseSearch {
-  constructor(event, type = null, index = null) {
-    type = type || 'collection';
-    super(event, type, index);
+  constructor(event, type, index) {
+    super(event, type || 'collection', index);
 
     // decrease the limit to 50
     this.size = this.size > 50 ? 50 : this.size;
@@ -54,26 +52,28 @@ class Collection extends BaseSearch {
     });
 
     // add aggs to res
-    records = records.map((r) => {
-      r.stats = {
+    return records.map((record) => {
+      const updatedRecord = cloneDeep(record);
+
+      updatedRecord.stats = {
         running: 0,
         completed: 0,
         failed: 0,
         total: 0
       };
-      for (const b of aggs.aggregations.hashes.buckets) {
-        if (b.key === r.name) {
-          r.stats.total = b.stats.doc_count;
-          b.stats.count.buckets.forEach((s) => {
-            r.stats[s.key] = s.doc_count;
-          });
-          return r;
-        }
-      }
-      return r;
-    });
 
-    return records;
+      const matchingBucket = aggs.aggregations.hashes.buckets
+        .find((bucket) => bucket.key === updatedRecord.name);
+
+      if (matchingBucket) {
+        updatedRecord.stats.total = matchingBucket.stats.doc_count;
+        matchingBucket.stats.count.buckets.forEach((s) => {
+          updatedRecord.stats[s.key] = s.doc_count;
+        });
+      }
+
+      return updatedRecord;
+    });
   }
 
   async query() {
