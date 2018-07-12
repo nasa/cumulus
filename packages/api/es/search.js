@@ -22,7 +22,6 @@ const logDetails = {
 const defaultIndexAlias = 'cumulus-alias';
 
 class BaseSearch {
-
   /**
    * returns the local address of elasticsearch based on
    * the environment variables set
@@ -77,7 +76,7 @@ class BaseSearch {
     return new elasticsearch.Client(esConfig);
   }
 
-  constructor(event, type = null, index = null) {
+  constructor(event, type = null, index) {
     let params = {};
     const logLimit = 10;
 

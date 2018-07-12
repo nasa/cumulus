@@ -37,7 +37,7 @@ jobs:
           paths:
             - ./node_modules
           key: core-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
-
+      
       - restore_cache:
           keys:
             - packages-{{ checksum "global-hash" }}
@@ -91,6 +91,10 @@ jobs:
             - ./tasks/queue-pdrs/node_modules
             - ./tasks/sync-granule/node_modules
             - ./tasks/sf-sns-report/node_modules
+
+      - run:
+          name: Running eslint
+          command: ./node_modules/.bin/eslint packages/api --ext .js
 
       - run:
           name: Running All Tests except API
