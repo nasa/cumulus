@@ -3,6 +3,7 @@
 const test = require('ava');
 const {
   aws: {
+    createAndWaitForDynamoDbTable,
     dynamodb
   },
   testUtils: {
@@ -12,12 +13,7 @@ const {
 const { run } = require('../../migrations/migration_2');
 const models = require('../../models');
 
-function createAndWaitForTable(params) {
-  return dynamodb().createTable(params).promise()
-    .then(() => dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise());
-}
-
-test.serial('build-files-table handler properly populates the files table', async (t) => {
+test('build-files-table handler properly populates the files table', async (t) => {
   // Create the two tables
   t.context.granulesTableName = randomString();
   t.context.filesTableName = randomString();
@@ -52,8 +48,10 @@ test.serial('build-files-table handler properly populates the files table', asyn
     }
   };
 
-  await createAndWaitForTable(granulesTableParams);
-  await createAndWaitForTable(filesTableParams);
+  await Promise.all([
+    createAndWaitForDynamoDbTable(granulesTableParams),
+    createAndWaitForDynamoDbTable(filesTableParams)
+  ]);
 
   // Write data to the granules table
   const batchWriteItemParams = { RequestItems: {} };
