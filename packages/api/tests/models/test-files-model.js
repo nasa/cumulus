@@ -3,8 +3,8 @@
 const test = require('ava');
 const drop = require('lodash.drop');
 const clone = require('lodash.clonedeep');
-const models = require('../models');
-const { fakeGranuleFactory, fakeFilesFactory } = require('../lib/testUtils');
+const models = require('../../models');
+const { fakeGranuleFactory, fakeFilesFactory } = require('../../lib/testUtils');
 const { randomString } = require('@cumulus/common/test-utils');
 
 process.env.stackName = randomString();
@@ -40,15 +40,15 @@ test.serial('create files records from a granule and then delete them', async (t
 
   await fileModel.deleteFilesOfGranule(granule);
 
-  await Promise.all(granule.files.map(async (file) => {
+  for (const file of granule.files) {
     const promise = fileModel.get({ bucket, key: file.filepath });
-    const err = await t.throws(promise);
+    const err = await t.throws(promise); // eslint-disable-line no-await-in-loop
     t.true(err.message.includes('No record'));
-  }));
+  }
 });
 
 
-test.serial('create a granule with 4 files, then remove one of the files', async (t) => {
+test.serial('create a granule wth 4 files, then remove one of the files', async (t) => {
   const bucket = randomString();
   const granule = fakeGranuleFactory();
   granule.files = [];
@@ -65,12 +65,12 @@ test.serial('create a granule with 4 files, then remove one of the files', async
   await fileModel.deleteFilesAfterCompare(newGranule, granule);
 
   // make sure all the records are added
-  await Promise.all(newGranule.files.map(async (file) => {
-    const record = await fileModel.get({ bucket, key: file.filepath });
+  for (const file of newGranule.files) {
+    const record = await fileModel.get({ bucket, key: file.filepath }); // eslint-disable-line no-await-in-loop
     t.is(record.bucket, file.bucket);
     t.is(record.key, file.filepath);
     t.is(record.granuleId, granule.granuleId);
-  }));
+  }
 
   // make sure the droppedFile is deleted
   const promise = fileModel.get({ bucket: bucket, key: droppedFile.filepath });
