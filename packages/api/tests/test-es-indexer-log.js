@@ -24,7 +24,6 @@ test.after.always(async () => {
 });
 
 test.serial('indexing log messages', async (t) => {
-
   // input log events
   const inputtxt = fs.readFileSync(path.join(__dirname, '/data/log_events_input.txt'), 'utf8');
   const event = JSON.parse(JSON.parse(inputtxt.toString()));

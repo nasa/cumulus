@@ -76,9 +76,11 @@ class Granule extends Manager {
    * @param {Object} g - the granule object
    * @param {string} workflow - the workflow name
    * @param {string} messageSource - 'input' or 'output' from previous execution
-   * @param {Object} metaOverride - overrides the meta of the new execution, accepts partial override
-   * @param {Object} payloadOverride - overrides the payload of the new execution, accepts partial override
-   * @returns {Promise<undefined>} - undefined
+   * @param {Object} metaOverride - overrides the meta of the new execution,
+   *                                accepts partial override
+   * @param {Object} payloadOverride - overrides the payload of the new execution,
+   *                                   accepts partial override
+   * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(g, workflow, messageSource, metaOverride, payloadOverride) {
     const { name, version } = deconstructCollectionId(g.collectionId);
@@ -87,23 +89,31 @@ class Granule extends Manager {
     const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
     const originalMessage = JSON.parse(status.execution[messageSource]);
 
-    const payload = await Rule.buildPayload({
+    const meta = metaOverride
+      ? merge(originalMessage.meta, metaOverride)
+      : originalMessage.meta;
+
+    const workflowPayload = payloadOverride
+      ? merge(originalMessage.payload, payloadOverride)
+      : originalMessage.payload;
+
+    const lambdaPayload = await Rule.buildPayload({
       workflow,
+      meta,
+      workflowPayload,
       provider: g.provider,
       collection: {
         name,
         version
-      },
-      meta: metaOverride ? merge(originalMessage.meta, metaOverride) : originalMessage.meta,
-      payload: payloadOverride ? merge(originalMessage.payload, payloadOverride) : originalMessage.payload
+      }
     });
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
 
-    await aws.invoke(process.env.invoke, payload);
+    await aws.invoke(process.env.invoke, lambdaPayload);
   }
 
-  /**   
+  /**
    * Move a granule's files to destination locations specified
    *
    * @param {Object} g - the granule object
