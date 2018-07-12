@@ -251,12 +251,12 @@ async function determineReportKey(params) {
 
   const revisionNumber = (await aws.listS3ObjectsV2({
     Bucket: reportsBucket,
-    Prefix: s3Join([reportsPrefix, reportName])
+    Prefix: s3Join(reportsPrefix, reportName)
   })).length;
 
   if (revisionNumber > 0) reportName = `${reportName}.rev${revisionNumber}`;
 
-  return s3Join([reportsPrefix, reportName]);
+  return s3Join(reportsPrefix, reportName);
 }
 
 /**

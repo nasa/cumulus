@@ -24,7 +24,7 @@ test.beforeEach(async (t) => {
   await Promise.all(serverLogs.map((serverLog) =>
     aws.s3().putObject({
       Bucket: t.context.internalBucket,
-      Key: aws.s3Join([t.context.logsPrefix, `${randomString()}.log`]),
+      Key: aws.s3Join(t.context.logsPrefix, `${randomString()}.log`),
       Body: serverLog
     }).promise()));
 });
@@ -63,7 +63,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, reportName])
+    Key: aws.s3Join(reportsPrefix, reportName)
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -95,7 +95,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
 
   await aws.s3().putObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, reportName]),
+    Key: aws.s3Join(reportsPrefix, reportName),
     Body: 'my report'
   }).promise();
 
@@ -114,7 +114,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, `${reportName}.rev1`])
+    Key: aws.s3Join(reportsPrefix, `${reportName}.rev1`)
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -147,12 +147,12 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   await Promise.all([
     aws.s3().putObject({
       Bucket: reportsBucket,
-      Key: aws.s3Join([reportsPrefix, reportName]),
+      Key: aws.s3Join(reportsPrefix, reportName),
       Body: 'my report'
     }).promise(),
     aws.s3().putObject({
       Bucket: reportsBucket,
-      Key: aws.s3Join([reportsPrefix, `${reportName}.rev1`]),
+      Key: aws.s3Join(reportsPrefix, `${reportName}.rev1`),
       Body: 'my report'
     }).promise()
   ]);
@@ -172,7 +172,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, `${reportName}.rev2`])
+    Key: aws.s3Join(reportsPrefix, `${reportName}.rev2`)
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
