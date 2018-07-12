@@ -35,17 +35,13 @@ test.before(async () => {
 
   // create fake granule records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
-  await Promise.all(fakePdrs.map((pdr) => p.create(pdr)
-    .then((record) => indexer.indexPdr(esClient, record, esIndex))
-  ));
+  await Promise.all(fakePdrs.map((pdr) => p.create(pdr).then((record) => indexer.indexPdr(esClient, record, esIndex))));
 });
 
 test.after.always(async () => {
-  await Promise.all([
-    models.Manager.deleteTable(process.env.PdrsTable),
-    esClient.indices.delete({ index: esIndex }),
-    aws.recursivelyDeleteS3Bucket(process.env.internal)
-  ]);
+  await models.Manager.deleteTable(process.env.PdrsTable);
+  await esClient.indices.delete({ index: esIndex });
+  await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
 
 
@@ -93,7 +89,7 @@ test('GET fails if pdr is not found', async (t) => {
 
 test('DELETE a pdr', async (t) => {
   const newPdr = fakePdrFactory('completed');
-  // create a new pdr 
+  // create a new pdr
   await p.create(newPdr);
 
   const deleteEvent = {
@@ -127,4 +123,4 @@ test('DELETE fails if pdr is not found', async (t) => {
   t.is(response.statusCode, 400);
   const { message } = JSON.parse(response.body);
   t.true(message.includes('No record found for'));
-})
+});
