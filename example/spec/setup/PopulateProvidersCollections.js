@@ -28,8 +28,8 @@ describe('Populating providers, collections and rules to database', () => {
   });
 
   it('providers, collections and rules are added successfully', async () => {
-    expect(providers).toBe(4, 'Number of providers incorrect.');
-    expect(collections).toBe(4, 'Number of collections incorrect.');
-    expect(rules).toBe(1, 'Number of rules incorrect.');
+    expect(providers).toBeGreaterThanOrEqual(1, 'Number of providers incorrect.');
+    expect(collections).toBeGreaterThanOrEqual(1, 'Number of collections incorrect.');
+    expect(rules).toBeGreaterThanOrEqual(1, 'Number of rules incorrect.');
   });
 });
