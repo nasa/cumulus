@@ -110,16 +110,16 @@ class Discover {
    *   object if it does not already exist.
    */
   granuleIsNew(granule) {
-    event = {
+    let event = {
       'pathParameters': { 'granuleName': granule.name }
     }
-    cb = function(err, response) {
+    let cb = (function(err, response) {
       if (err) {
-        if (err.code === 'RecordDoesNotExist') return false;
+        if (err.code === 'RecordDoesNotExist') return granule;
         else throw err;
       }
-      return response;
-    }
+      return false;
+    });
     return getGranule(event, cb);
   }
 
