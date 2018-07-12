@@ -12,7 +12,7 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { loadConfig } = require('../helpers/testUtils');
-const { createNewTestStream, putRecordOnStream, waitForTestSfStarted } = require('../helpers/kinesisHelpers');
+const { createOrUseTestStream, putRecordOnStream, waitForTestSfStarted } = require('../helpers/kinesisHelpers');
 const testConfig = loadConfig();
 const lambdaStep = new LambdaStep();
 
@@ -79,8 +79,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   beforeAll(async () => {
     try {
-      await createNewTestStream(streamName);
-      console.log('createNewTestStream');
+      await createOrUseTestStream(streamName);
+      console.log('createOrUseTestStream');
       await putRecordOnStream(streamName, record);
       console.log('putRecordOnStream');
       workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
