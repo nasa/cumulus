@@ -124,7 +124,7 @@ jobs:
             cp .nyc_output/* ../../.final_nyc_output
 
       - run:
-          name: Running Heavy API migration Tests
+          name: Running API migration Tests
           environment:
             LOCALSTACK_HOST: localstack
             LOCAL_ES_HOST: elastichost
@@ -134,7 +134,7 @@ jobs:
             cp .nyc_output/* ../../.final_nyc_output
 
       - run:
-          name: Running Heavy API Lambda Tests
+          name: Running API Lambda Tests
           environment:
             LOCALSTACK_HOST: localstack
             LOCAL_ES_HOST: elastichost
@@ -144,7 +144,7 @@ jobs:
             cp .nyc_output/* ../../.final_nyc_output
 
       - run:
-          name: Running Heavy API cli and models Tests
+          name: Running API cli and models Tests
           environment:
             LOCALSTACK_HOST: localstack
             LOCAL_ES_HOST: elastichost
