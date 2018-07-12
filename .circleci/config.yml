@@ -144,7 +144,7 @@ jobs:
             cp .nyc_output/* ../../.final_nyc_output
 
       - run:
-          name: Running API cli and models Tests
+          name: Running API cli Tests
           environment:
             LOCALSTACK_HOST: localstack
             LOCAL_ES_HOST: elastichost
@@ -152,6 +152,14 @@ jobs:
             cd packages/api
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/cli/*.js
             cp .nyc_output/* ../../.final_nyc_output
+
+      - run:
+          name: Running API models Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
 
             ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/models/*.js
             cp .nyc_output/* ../../.final_nyc_output
