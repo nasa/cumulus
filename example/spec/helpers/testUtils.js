@@ -23,7 +23,7 @@ function loadConfig() {
     deployment: process.env.DEPLOYMENT,
     configFile: './app/config.yml',
     kesFolder: './app'
-  }
+  };
 
   const config = new Config(params);
 
