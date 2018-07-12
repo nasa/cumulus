@@ -6,7 +6,7 @@ const {
   testUtils: { randomString },
   FakeEarthdataLoginServer
 } = require('@cumulus/common');
-const distributionEndpoint = require('../endpoints/distribution');
+const distributionEndpoint = require('../../endpoints/distribution');
 
 test.beforeEach((t) => {
   process.env.protected = randomString();
