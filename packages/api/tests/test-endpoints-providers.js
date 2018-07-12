@@ -1,6 +1,5 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
 const test = require('ava');
 
 const bootstrap = require('../lambdas/bootstrap');
@@ -24,7 +23,6 @@ const testProvider = {
   host: 'https://oco.jpl.nasa.gov/',
   port: 80
 };
-const keyId = 'public.pub';
 
 const hash = { name: 'id', type: 'S' };
 
