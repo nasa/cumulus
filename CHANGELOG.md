@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **CUMULUS-681** - Add ingest-in-place action to granules endpoint
+    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
+        - workflow - the workflow name
+        - messageSource - 'input' or 'output' from previous execution
+        - metaOverride - overrides the meta of the new execution, accepts partial override
+        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 ### Fixed
 
@@ -34,10 +41,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
 - **CUMULUS-398** - Fix not able to filter executions bu workflow
+- **CUMULUS-748** - Fix invalid lambda .zip files being validated/uploaded to AWS
 - **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
 
 ### Changed
+- **GITC-776-4** - Changed Discover-pdrs to not rely on collection but use provider_path in config. It also has an optional filterPdrs regex configuration parameter
+
 - **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
 
 ## [v1.6.0] - 2018-06-06
@@ -367,4 +377,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/cumulus-nasa/cumulus/compare/pre-v1-release...v1.0.0
-

@@ -9,6 +9,8 @@ const pLimit = require('p-limit');
 const { s3, sfn } = require('@cumulus/common/aws');
 const sfnStep = require('./sfnStep');
 const { Provider, Collection, Rule } = require('@cumulus/api/models');
+
+const api = require('./api');
 const cmr = require('./cmr.js');
 
 const executionStatusNumRetries = 100;
@@ -216,8 +218,8 @@ async function addCollections(stackName, bucketName, dataDirectory) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
   const promises = collections.map((collection) => limit(() => {
     const c = new Collection();
-    console.log(`adding collection ${collection.dataType}___${collection.version}`);
-    return c.delete({ dataType: collection.dataType, version: collection.version })
+    console.log(`adding collection ${collection.name}___${collection.version}`);
+    return c.delete({ name: collection.name, version: collection.version })
       .then(() => c.create(collection));
   }));
   return Promise.all(promises).then((cs) => cs.length);
@@ -270,7 +272,7 @@ async function addRules(config, dataDirectory) {
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {Object} collection - collection information
- * @param {Object} collection.dataType - collection dataType
+ * @param {Object} collection.name - collection name
  * @param {Object} collection.version - collection version
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
@@ -283,7 +285,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
   let collectionInfo = {};
   if (collection) {
     collectionInfo = await new Collection()
-      .get({ dataType: collection.dataType, version: collection.version });
+      .get({ name: collection.name, version: collection.version });
   }
   let providerInfo = {};
   if (provider) {
@@ -301,7 +303,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {Object} collection - collection information
- * @param {Object} collection.dataType - collection datatype
+ * @param {Object} collection.name - collection name
  * @param {Object} collection.version - collection version
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
@@ -322,6 +324,7 @@ async function buildAndExecuteWorkflow(
 }
 
 module.exports = {
+  api,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
