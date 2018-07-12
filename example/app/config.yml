@@ -122,13 +122,13 @@ default:
     password: '{{CMR_PASSWORD}}'
 
   iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-scaling-role'
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
 
   sns:
     inregions3:
@@ -176,9 +176,27 @@ cumulus-from-npm:
   prefix: test-npm # used by the integration repo
   stackNameNoDash: TestNpmIntegration
 
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-scaling-role'
+
 cumulus-from-source:
   prefix: test-src # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
+
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-scaling-role'
 
 cumulus-from-pr:
   prefix: test-pr # used by the PR
@@ -187,6 +205,15 @@ cumulus-from-pr:
 aj:
   prefix: aj
   stackNameNoDash: AjIntegration
+
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-scaling-role'
 
 aimee-test:
   prefix: aimee-test
@@ -209,15 +236,6 @@ lf:
 
   es:
     elasticSearchMapping: 6
-
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-scaling-role'
 
 kk-uat-deployment:
   stackName: kk-test-uat
