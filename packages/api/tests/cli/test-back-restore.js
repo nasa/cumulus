@@ -6,10 +6,10 @@ const path = require('path');
 const test = require('ava');
 const { chunk } = require('lodash');
 const { randomString } = require('@cumulus/common/test-utils');
-const { fakeGranuleFactory } = require('../lib/testUtils');
-const models = require('../models');
-const restore = require('../bin/restore');
-const backup = require('../bin/backup');
+const { fakeGranuleFactory } = require('../../lib/testUtils');
+const models = require('../../models');
+const restore = require('../../bin/restore');
+const backup = require('../../bin/backup');
 
 let tempFolder;
 const tableName = randomString();
