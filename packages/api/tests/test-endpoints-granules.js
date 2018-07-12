@@ -29,6 +29,8 @@ process.env.stackName = randomString();
 process.env.internal = randomString();
 const g = new models.Granule();
 
+let authToken;
+
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
@@ -46,44 +48,43 @@ test.before(async () => {
   UsersTableEnvBefore = process.env.UsersTable;
   process.env.UsersTable = randomString();
   await models.Manager.createTable(process.env.UsersTable, { name: 'userName', type: 'S' });
+
+  const userDbClient = new models.User(process.env.UsersTable);
+
+  authToken = (await createFakeUser({ userDbClient: userDbClient })).password;
 });
 
 test.beforeEach(async (t) => {
-  t.context.userDbClient = new models.User(process.env.UsersTable);
-
-  const { userName, password } = await createFakeUser({
-    userDbClient: t.context.userDbClient
-  });
-  t.context.usersToDelete = [userName];
-
   t.context.authHeaders = {
-    Authorization: `Bearer ${password}`
+    Authorization: `Bearer ${authToken}`
   };
 
   // create fake granule records
   t.context.fakeGranules = ['completed', 'failed'].map(fakeGranuleFactory);
-  await Promise.all(t.context.fakeGranules.map((granule) => g.create(granule)
-    .then((record) => indexer.indexGranule(esClient, record, esIndex))));
-});
 
-test.afterEach(async (t) => {
-  await Promise.all(t.context.usersToDelete.map((userName) => t.context.userDbClient.delete({ userName })));
+  for (let i = 0; i < t.context.fakeGranules.length; i += 1) {
+    const granule = t.context.fakeGranules[i];
+    const record = await g.create(granule); // eslint-disable-line no-await-in-loop
+    await indexer.indexGranule(esClient, record, esIndex); // eslint-disable-line no-await-in-loop
+  }
+
+  await Promise.all(t.context.fakeGranules.map((granule) =>
+    g.create(granule)
+      .then((record) => indexer.indexGranule(esClient, record, esIndex))));
 });
 
 test.after.always(async () => {
-  await Promise.all([
-    models.Manager.deleteTable(process.env.GranulesTable),
-    models.Manager.deleteTable(process.env.UsersTable),
-    esClient.indices.delete({ index: esIndex }),
-    aws.recursivelyDeleteS3Bucket(process.env.internal)
-  ]);
+  await models.Manager.deleteTable(process.env.GranulesTable);
+  await models.Manager.deleteTable(process.env.UsersTable);
+  await esClient.indices.delete({ index: esIndex });
+  await aws.recursivelyDeleteS3Bucket(process.env.internal);
 
   // Reset environment variables that we changed
   process.env.UsersTable = UsersTableEnvBefore;
 });
 
 
-test('default returns list of granules', async (t) => {
+test.serial('default returns list of granules', async (t) => {
   const event = {
     httpMethod: 'GET',
     headers: t.context.authHeaders
@@ -102,7 +103,7 @@ test('default returns list of granules', async (t) => {
   });
 });
 
-test('GET returns an existing granule', async (t) => {
+test.serial('GET returns an existing granule', async (t) => {
   const event = {
     httpMethod: 'GET',
     pathParameters: {
@@ -117,7 +118,7 @@ test('GET returns an existing granule', async (t) => {
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
 });
 
-test('GET fails if granule is not found', async (t) => {
+test.serial('GET fails if granule is not found', async (t) => {
   const event = {
     httpMethod: 'GET',
     pathParameters: {
@@ -133,7 +134,7 @@ test('GET fails if granule is not found', async (t) => {
   t.is(message, 'Granule not found');
 });
 
-test('PUT fails if action is not supported', async (t) => {
+test.serial('PUT fails if action is not supported', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
@@ -150,7 +151,7 @@ test('PUT fails if action is not supported', async (t) => {
   t.true(message.includes('Action is not supported'));
 });
 
-test('PUT fails if action is not provided', async (t) => {
+test.serial('PUT fails if action is not provided', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
@@ -166,7 +167,7 @@ test('PUT fails if action is not provided', async (t) => {
   t.is(message, 'Action is missing');
 });
 
-test('reingest a granule', async (t) => {
+test.serial('reingest a granule', async (t) => {
   const fakeSFResponse = {
     execution: {
       input: JSON.stringify({
@@ -210,7 +211,7 @@ test('reingest a granule', async (t) => {
   StepFunction.getExecutionStatus.restore();
 });
 
-test('apply an in-place workflow to an existing granule', async (t) => {
+test.serial('apply an in-place workflow to an existing granule', async (t) => {
   const fakeSFResponse = {
     execution: {
       input: JSON.stringify({
@@ -267,7 +268,7 @@ test('apply an in-place workflow to an existing granule', async (t) => {
   StepFunction.getExecutionStatus.restore();
 });
 
-test('remove a granule from CMR', async (t) => {
+test.serial('remove a granule from CMR', async (t) => {
   const event = {
     httpMethod: 'PUT',
     pathParameters: {
@@ -301,7 +302,7 @@ test('remove a granule from CMR', async (t) => {
   DefaultProvider.decrypt.restore();
 });
 
-test('DELETE deleting an existing granule that is published will fail', async (t) => {
+test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {
   const event = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -320,7 +321,7 @@ test('DELETE deleting an existing granule that is published will fail', async (t
   );
 });
 
-test('DELETE deleting an existing unpublished granule', async (t) => {
+test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const buckets = {
     protected: {
       name: randomString(),
@@ -354,10 +355,16 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   await aws.s3().createBucket({ Bucket: buckets.protected.name }).promise();
   await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
 
-  await Promise.all(newGranule.files.map(async (file) => {
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
     const parsed = aws.parseS3Uri(file.filename);
-    await aws.s3().putObject({ Bucket: parsed.Bucket, Key: parsed.Key, Body: `test data ${randomString()}` }).promise();
-  }));
+    await aws.s3().putObject({ // eslint-disable-line no-await-in-loop
+      Bucket: parsed.Bucket,
+      Key: parsed.Key,
+      Body: `test data ${randomString()}`
+    }).promise();
+  }
+
   // create a new unpublished granule
   await g.create(newGranule);
 
@@ -376,16 +383,17 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   t.is(detail, 'Record deleted');
 
   // verify the files are deleted
-  await Promise.all(newGranule.files.map(async (file) => {
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
     const parsed = aws.parseS3Uri(file.filename);
-    t.false(await aws.fileExists(parsed.Bucket, parsed.Key));
-  }));
+    t.false(await aws.fileExists(parsed.Bucket, parsed.Key)); // eslint-disable-line no-await-in-loop
+  }
 
   await aws.recursivelyDeleteS3Bucket(buckets.protected.name);
   await aws.recursivelyDeleteS3Bucket(buckets.public.name);
 });
 
-test('move a granule with no .cmr.xml file', async (t) => {
+test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.internal;
   const [secondBucket, thirdBucket] = [randomString(), randomString()];
   await aws.s3().createBucket({ Bucket: secondBucket }).promise();
@@ -484,7 +492,7 @@ test('move a granule with no .cmr.xml file', async (t) => {
   await aws.recursivelyDeleteS3Bucket(thirdBucket);
 });
 
-test('move a file and update metadata', async (t) => {
+test.serial('move a file and update metadata', async (t) => {
   const bucket = process.env.internal;
   process.env.bucket = bucket;
   const buckets = {
