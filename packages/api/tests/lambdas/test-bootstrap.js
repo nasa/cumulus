@@ -1,15 +1,15 @@
 'use strict';
 
 const test = require('ava');
-const bootstrap = require('../lambdas/bootstrap');
+const bootstrap = require('../../lambdas/bootstrap');
 const { randomString } = require('@cumulus/common/test-utils');
-const { Search } = require('../es/search');
-const { bootstrapDynamoDbTables } = require('../lambdas/bootstrap');
-const { deleteAliases } = require('../lib/testUtils');
-const models = require('../models');
-const mappings = require('../models/mappings.json');
-const testMappings = require('./data/testEsMappings.json');
-const mappingsSubset = require('./data/testEsMappingsSubset.json');
+const { Search } = require('../../es/search');
+const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
+const { deleteAliases } = require('../../lib/testUtils');
+const models = require('../../models');
+const mappings = require('../../models/mappings.json');
+const testMappings = require('../data/testEsMappings.json');
+const mappingsSubset = require('../data/testEsMappingsSubset.json');
 
 let esClient;
 const tableName = randomString();
