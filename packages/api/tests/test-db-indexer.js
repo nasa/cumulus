@@ -134,7 +134,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   await dbIndexer(records, {}, () => {});
 
   const collectionIndex = new Search({}, 'collection');
-  let indexedRecord = await collectionIndex.get(constructCollectionId(c.dataType, c.version));
+  let indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
 
   t.is(indexedRecord.name, c.name);
 
@@ -148,11 +148,11 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   // fake the lambda trigger
   await dbIndexer(records, {}, () => {});
 
-  indexedRecord = await collectionIndex.get(constructCollectionId(c.dataType, c.version));
+  indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
   t.is(indexedRecord.dataType, 'testing');
 
   // delete the record
-  await collections.delete({ dataType: c.dataType, version: c.version });
+  await collections.delete({ name: c.name, version: c.version });
 
   // get records from the stream
   records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
@@ -160,7 +160,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   // fake the lambda trigger
   await dbIndexer(records, {}, () => {});
 
-  const response = await collectionIndex.get(constructCollectionId(c.dataType, c.version));
+  const response = await collectionIndex.get(constructCollectionId(c.name, c.version));
   t.is(response.detail, 'Record not found');
 });
 
