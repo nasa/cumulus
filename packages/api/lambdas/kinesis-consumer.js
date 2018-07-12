@@ -90,11 +90,11 @@ function processRecord(record) {
   try {
     eventObject = JSON.parse(dataString);
   }
-  catch(err) {
+  catch (err) {
     log.error('Caught error parsing JSON:');
     log.error(err);
     return err;
-  };
+  }
 
   return validateMessage(eventObject)
     .then(getKinesisRules)
