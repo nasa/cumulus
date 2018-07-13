@@ -222,7 +222,7 @@ class Granule extends Manager {
           provider: get(payload, 'meta.provider.id'),
           execution,
           cmrLink: get(g, 'cmrLink'),
-          files: await this.addMissingFileSizes(uniqBy(g.files, 'filename')),
+          files: granuleFiles,
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),
