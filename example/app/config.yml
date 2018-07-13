@@ -184,7 +184,7 @@ cumulus-from-pr:
   stackNameNoDash: TestPrIntegration
 
 aj:
-  prefix: aj-integration
+  stackName: aj-integration
   stackNameNoDash: AjIntegration
 
 aimee-test:
@@ -208,19 +208,19 @@ mth-2:
   stackNameNoDash: Mth2
   buckets:
     internal:
-      name: '{{prefix}}-internal'
+      name: '{{stackName}}-internal'
       type: internal
     private:
-      name: '{{prefix}}-private'
+      name: '{{stackName}}-private'
       type: private
     protected:
-      name: '{{prefix}}-protected'
+      name: '{{stackName}}-protected'
       type: protected
     protected-2:
-      name: '{{prefix}}-protected'
+      name: '{{stackName}}-protected'
       type: protected
     public:
-      name: '{{prefix}}-public'
+      name: '{{stacKName}}-public'
       type: public
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
