@@ -134,32 +134,25 @@ test.only('test pdr discovery with FTP assuming some PDRs are new', async (t) =>
   newPayload.config.collection.provider_path = '/pdrs/discover-pdrs';
   newPayload.input = {};
 
-  const internalBucketName = randomString();
-  newPayload.config.bucket = internalBucketName;
-
   await validateConfig(t, newPayload.config);
 
-  return pdrModel.create({
-        pdrName: 'PDN.ID1611071307.PDR',
-        provider: provider.id,
-        collectionId: '12',
-        status: 'running',
-        createdAt: 42
-    })
-    .then(() => discoverPdrs(newPayload, {}))
-    .then((output) => {
-      console.log(output.pdrs);
-      t.is(output.pdrs.length, 4);
-      return validateOutput(t, output);
-    })
-    .then(() => pdrModel.delete({ pdrName: 'PDN.ID1611071307.PDR' }))
-    .catch((e) => {
-      if (e instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-        return recursivelyDeleteS3Bucket(internalBucketName);
-      }
-      return recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
-    });
+  await pdrModel.create({
+    pdrName: 'PDN.ID1611071307.PDR',
+    provider: provider.id,
+    collectionId: '12',
+    status: 'running',
+    createdAt: 42
+  });
+
+  try {
+    const output = await discoverPdrs(newPayload, {});
+
+    await validateOutput(t, output);
+    t.is(output.pdrs.length, 4);
+  }
+  finally {
+    pdrModel.delete({ pdrName: 'PDN.ID1611071307.PDR' });
+  }
 });
 
 test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
