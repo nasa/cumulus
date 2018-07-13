@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign */
+
 'use strict';
 
 const get = require('lodash.get');
@@ -182,12 +183,12 @@ class Rule extends Manager {
    * @param {*} item - the rule item
    * @returns {Promise} the response from event source update
    */
-  async updateKinesisEventSource(item) {
+  updateKinesisEventSource(item) {
     const params = {
       UUID: item.rule.arn,
       Enabled: item.state === 'ENABLED'
     };
-    return await aws.lambda().updateEventSourceMapping(params).promise();
+    return aws.lambda().updateEventSourceMapping(params).promise();
   }
 
   /**
@@ -204,7 +205,7 @@ class Rule extends Manager {
     const params = {
       UUID: item.rule.arn
     };
-    return await aws.lambda().deleteEventSourceMapping(params).promise();
+    return aws.lambda().deleteEventSourceMapping(params).promise();
   }
 
   /**
@@ -231,7 +232,6 @@ class Rule extends Manager {
 
     return (kinesisRules.Count && kinesisRules.Count > 0);
   }
-
 }
 
 module.exports = Rule;

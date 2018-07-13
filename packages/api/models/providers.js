@@ -10,12 +10,12 @@ class Provider extends Manager {
     this.removeAdditional = 'all';
   }
 
-  async encrypt(value) {
-    return await Crypto.encrypt(value);
+  encrypt(value) {
+    return Crypto.encrypt(value);
   }
 
-  async decrypt(value) {
-    return await Crypto.decrypt(value);
+  decrypt(value) {
+    return Crypto.decrypt(value);
   }
 
   async update(key, _item, keysToDelete = []) {
