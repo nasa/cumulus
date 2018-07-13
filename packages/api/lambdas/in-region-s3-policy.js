@@ -16,7 +16,7 @@ const policyTemplate = {
       Effect: 'Allow',
       Principal: '*',
       Action: ['s3:GetObject'],
-      Resource: [''] // gets set by generatePolicyFromIpAddresses 
+      Resource: [''] // gets set by generatePolicyFromIpAddresses
     }
   ]
 };

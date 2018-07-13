@@ -4,7 +4,7 @@ const { s3 } = require('@cumulus/common/aws');
 
 const config = loadConfig();
 
-const testBucket = `${config.prefix}-s3directaccess`;
+const testBucket = `${config.stackName}-s3directaccess-bucket`;
 
 /**
  * Calls the s3AccessTest lambda in the given region, which returns
@@ -38,7 +38,7 @@ function createSnsMessage() {
     md5: '6a45316e8bc9463c9e926d5d37836d33',
     url: 'https://ip-ranges.amazonaws.com/ip-ranges.json',
     bucket: testBucket // only needed for testing purposes
-  }
+  };
 
   message['create-time'] = '2018-04-24T10:00:s00+00:00';
 
