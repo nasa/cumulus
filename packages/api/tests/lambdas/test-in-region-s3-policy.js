@@ -4,7 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const get = require('lodash.get');
 
-const policy = require('../lambdas/in-region-s3-policy');
+const policy = require('../../lambdas/in-region-s3-policy');
 
 test.beforeEach(() => {
   const ipResponse = [
