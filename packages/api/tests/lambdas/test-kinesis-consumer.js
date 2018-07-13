@@ -7,12 +7,12 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
 const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const { getKinesisRules, handler } = require('../lambdas/kinesis-consumer');
+const { getKinesisRules, handler } = require('../../lambdas/kinesis-consumer');
 
-const manager = require('../models/base');
-const Collection = require('../models/collections');
-const Rule = require('../models/rules');
-const Provider = require('../models/providers');
+const manager = require('../../models/base');
+const Collection = require('../../models/collections');
+const Rule = require('../../models/rules');
+const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
 
 const ruleTableParams = {
@@ -123,10 +123,8 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach(async (t) => {
-  await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.templateBucket),
-    manager.deleteTable(t.context.tableName)
-  ]);
+  await recursivelyDeleteS3Bucket(t.context.templateBucket);
+  await manager.deleteTable(t.context.tableName);
   sfSchedulerSpy.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
@@ -188,7 +186,7 @@ test.serial('it should throw an error if message collection has wrong data type'
   t.is(errors[0].errors[0].message, 'should be string');
 });
 
-test.serial('it should throw an error if message is invalid json', async(t) => {
+test.serial('it should throw an error if message is invalid json', async (t) => {
   const invalidMessage = '{';
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]

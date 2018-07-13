@@ -64,13 +64,18 @@ class Manager {
       });
     }
 
-    return aws.dynamodb().createTable(params).promise();
+    const output = await aws.dynamodb().createTable(params).promise();
+    await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+    return output;
   }
 
   static async deleteTable(tableName) {
-    await aws.dynamodb().deleteTable({
+    const output = await aws.dynamodb().deleteTable({
       TableName: tableName
     }).promise();
+
+    await aws.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
+    return output;
   }
 
   /**
@@ -292,8 +297,11 @@ class Manager {
   /**
    * Updates the status field
    *
+   * @param {Object} key - the key to update
+   * @param {string} status - the new status
+   * @returns {Promise} the updated record
    */
-  async updateStatus(key, status) {
+  updateStatus(key, status) {
     return this.update(key, { status });
   }
 
@@ -302,8 +310,11 @@ class Manager {
    * Marks the record is failed with proper status
    * and error message
    *
+   * @param {Object} key - the key to update
+   * @param {Object} err - the error object
+   * @returns {Promise} the updated record
    */
-  async hasFailed(key, err) {
+  hasFailed(key, err) {
     return this.update(
       key,
       { status: 'failed', error: errorify(err), isActive: false }
