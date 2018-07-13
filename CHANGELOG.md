@@ -18,11 +18,9 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-768** - Integration tests get S3 provider data from shared data folder
 
 ### Fixed
-<<<<<<< HEAD
+
 - **GITC-776-5** - Fixed Sync-granule to not rely exclusively on a collection being passed.  It is really discovered at run-time.
 - **GITC-776-4** - Fixed Discover-pdrs to not rely on collection but use provider_path in config. It also has an optional filterPdrs regex configuration parameter
-=======
->>>>>>> master
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
 ## [v1.7.0] - 2018-07-02
@@ -30,14 +28,12 @@ We may need to update the api documentation to reflect this.
 ### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
 
 ### Added
-<<<<<<< HEAD
+
 - **GITC-776-2** - Add support for versioned collectons
-=======
 - **GITC-776-1**
   - Added support for SFTP using public/private keys that can optionally be encrypted/decrypted using KMS
   There is an assumption that private key is located in s3://bucketInternal/stackName/crypto. KMS can be used to encrypt/decrypt the keys. Provider schema has been extended to support optional fields (privateKey, cmKeyId)
   
->>>>>>> master
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
@@ -62,6 +58,8 @@ We may need to update the api documentation to reflect this.
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
 
 ### Changed
+- **GITC-776-4** - Changed Discover-pdrs to not rely on collection but use provider_path in config. It also has an optional filterPdrs regex configuration parameter
+
 - **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
 
 ## [v1.6.0] - 2018-06-06
