@@ -6,10 +6,10 @@ const path = require('path');
 const test = require('ava');
 const { chunk } = require('lodash');
 const { randomString } = require('@cumulus/common/test-utils');
-const { fakeGranuleFactory } = require('../lib/testUtils');
-const models = require('../models');
-const restore = require('../bin/restore');
-const backup = require('../bin/backup');
+const { fakeGranuleFactory } = require('../../lib/testUtils');
+const models = require('../../models');
+const restore = require('../../bin/restore');
+const backup = require('../../bin/backup');
 
 let tempFolder;
 const tableName = randomString();
@@ -69,7 +69,7 @@ test.serial('backup records from DynamoDB', async (t) => {
 });
 
 test.serial('restore records to DynamoDB', async (t) => {
-  const limit = 55;
+  const limit = 25;
   const granuleIds = [];
   const tempRestoreFile = path.join(tempFolder, `restore_${tableName}.json`);
 
@@ -82,7 +82,7 @@ test.serial('restore records to DynamoDB', async (t) => {
   }
   fs.writeFileSync(tempRestoreFile, fileContent);
 
-  await restore(tempRestoreFile, tableName, 2);
+  await restore(tempRestoreFile, tableName, 1);
 
   // count the records
   const gModel = new models.Manager();

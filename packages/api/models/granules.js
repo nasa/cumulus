@@ -44,7 +44,7 @@ class Granule extends Manager {
    *
    * @param {string} granuleId - the granule ID
    * @param {string} collectionId - the collection ID
-   * @returns {Promise<undefined>} undefined
+   * @returns {Promise<undefined>} - undefined
    */
   async removeGranuleFromCmr(granuleId, collectionId) {
     log.info(`granules.removeGranuleFromCmr ${granuleId}`);
@@ -64,15 +64,10 @@ class Granule extends Manager {
    * start the re-ingest of a given granule object
    *
    * @param {Object} g - the granule object
-   * @returns {Promise<Object>} an object showing the start of the re-ingest
+   * @returns {Promise<undefined>} - undefined
    */
   async reingest(g) {
     await this.applyWorkflow(g, 'IngestGranule', 'input');
-    return {
-      granuleId: g.granuleId,
-      action: 'reingest',
-      status: 'SUCCESS'
-    };
   }
 
   /**
@@ -81,50 +76,44 @@ class Granule extends Manager {
    * @param {Object} g - the granule object
    * @param {string} workflow - the workflow name
    * @param {string} messageSource - 'input' or 'output' from previous execution
-   * @param {Object} metaOverride - overrides the meta of the new execution, accepts partial override
-   * @param {Object} payloadOverride - overrides the payload of the new execution, accepts partial override
-   * @returns {Promise<Object>} an object showing the start of the workflow execution
+   * @param {Object} metaOverride - overrides the meta of the new execution,
+   *                                accepts partial override
+   * @param {Object} payloadOverride - overrides the payload of the new execution,
+   *                                   accepts partial override
+   * @returns {Promise<undefined>} undefined
    */
   async applyWorkflow(g, workflow, messageSource, metaOverride, payloadOverride) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
-    try {
-      // get the payload of the original execution
-      const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
-      const originalMessage = JSON.parse(status.execution[messageSource]);
-    
-      const payload = await Rule.buildPayload({
-        workflow,
-        provider: g.provider,
-        collection: {
-          name,
-          version
-        },
-        meta: metaOverride ? merge(originalMessage.meta, metaOverride) : originalMessage.meta,
-        payload: payloadOverride ? merge(originalMessage.payload, payloadOverride) : originalMessage.payload
-      });
+    // get the payload of the original execution
+    const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
+    const originalMessage = JSON.parse(status.execution[messageSource]);
 
-      await this.updateStatus({ granuleId: g.granuleId }, 'running');
+    const meta = metaOverride
+      ? merge(originalMessage.meta, metaOverride)
+      : originalMessage.meta;
 
-      await aws.invoke(process.env.invoke, payload);
-      return {
-        granuleId: g.granuleId,
-        action: `applyWorkflow ${workflow}`,
-        status: 'SUCCESS'
-      };
-    }
-    catch (e) {
-      log.error(g.granuleId, e);
-      return {
-        granuleId: g.granuleId,
-        action: `applyWorkflow ${workflow}`,
-        status: 'FAILED',
-        error: e.message
+    const workflowPayload = payloadOverride
+      ? merge(originalMessage.payload, payloadOverride)
+      : originalMessage.payload;
+
+    const lambdaPayload = await Rule.buildPayload({
+      workflow,
+      meta,
+      workflowPayload,
+      provider: g.provider,
+      collection: {
+        name,
+        version
       }
-    }
+    });
+
+    await this.updateStatus({ granuleId: g.granuleId }, 'running');
+
+    await aws.invoke(process.env.invoke, lambdaPayload);
   }
 
-  /**   
+  /**
    * Move a granule's files to destination locations specified
    *
    * @param {Object} g - the granule object
