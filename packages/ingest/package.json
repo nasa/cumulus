@@ -38,7 +38,6 @@
     "@cumulus/pvl": "^1.7.0",
     "@cumulus/test-data": "^1.6.0",
     "aws-sdk": "^2.224.1",
-    "checksum": "^0.1.1",
     "cksum": "^1.3.0",
     "depd": "^1.1.2",
     "encodeurl": "^1.0.2",
