@@ -100,7 +100,9 @@ class Granule extends Manager {
 
     const lambdaPayload = await Rule.buildPayload({
       workflow,
-      payload: g,
+      payload: {
+          granules: [ g ]
+      },
       provider: g.provider,
       collection: {
         name,
