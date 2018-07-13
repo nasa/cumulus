@@ -42,11 +42,17 @@ class Granule extends Manager {
   addMissingFileSizes(files) {
     const filePromises = files.map((file) => {
       if (!('fileSize' in file)) {
-        return commonAws.headObject(file.bucket, file.filepath).then((result) => {
-          const updatedFile = file;
-          updatedFile.fileSize = result.ContentLength;
-          return updatedFile;
-        });
+        return commonAws.headObject(file.bucket, file.filepath)
+          .then((result) => {
+            const updatedFile = file;
+            updatedFile.fileSize = result.ContentLength;
+            return updatedFile;
+          })
+          .catch((error) => {
+            log.error(`Could not validate missing filesize for s3://${file.bucket}/${file.filepath}`);
+            log.error(`Error was ${error}`);
+            return file;
+          });
       }
       return Promise.resolve(file);
     });
@@ -162,7 +168,7 @@ class Granule extends Manager {
    * @param {Object} payload - sns message containing the output of a Cumulus Step Function
    * @returns {Promise<Array>} granule records
    */
-  createGranulesFromSns(payload) {
+  async createGranulesFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
     const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
@@ -184,14 +190,9 @@ class Granule extends Manager {
 
     const done = granules.map(async (g) => {
       if (g.granuleId) {
-        let granuleFiles;
-        try {
-          granuleFiles = await this.addMissingFileSizes(uniqBy(g.files, 'filename'));
-        }
-        catch (error) {
-          log.error(`Could not validate missing file sizes for ${g.granuleId}`);
-          return Promise.reject(error);
-        }
+        let granuleFiles = g.files;
+        granuleFiles = await this.addMissingFileSizes(uniqBy(g.files, 'filename'));
+
         const doc = {
           granuleId: g.granuleId,
           pdrName: get(payload, 'meta.pdr.name'),
