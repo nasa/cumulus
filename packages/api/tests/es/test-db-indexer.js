@@ -5,18 +5,18 @@ const drop = require('lodash.drop');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const models = require('../models');
-const { Search } = require('../es/search');
-const bootstrap = require('../lambdas/bootstrap');
-const dbIndexer = require('../lambdas/db-indexer');
-const { constructCollectionId } = require('../lib/utils');
+const models = require('../../models');
+const { Search } = require('../../es/search');
+const bootstrap = require('../../lambdas/bootstrap');
+const dbIndexer = require('../../lambdas/db-indexer');
+const { constructCollectionId } = require('../../lib/utils');
 const {
   fakeCollectionFactory,
   fakeGranuleFactory,
   fakeExecutionFactory,
   fakeFilesFactory,
   deleteAliases
-} = require('../lib/testUtils');
+} = require('../../lib/testUtils');
 
 let esClient;
 const seq = new Set(); // to keep track of processed records in the stream
@@ -48,12 +48,12 @@ function updateSequenceNumber(records, sequence) {
 
 function removeProcessedRecords(records, sequence) {
   const allRecords = records.Records;
-  const lastSequence = parseInt(Array.from(sequence).pop());
+  const lastSequence = parseInt(Array.from(sequence).pop(), 10);
   if (lastSequence) {
     records.Records = [];
 
     allRecords.forEach((r) => {
-      if (parseInt(r.dynamodb.SequenceNumber) > lastSequence) {
+      if (parseInt(r.dynamodb.SequenceNumber, 10) > lastSequence) {
         records.Records.push(r);
       }
     });
@@ -197,7 +197,6 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
 
   // change the record
   fakeGranule.status = 'failed';
-  const droppedFile = fakeGranule.files[0];
   fakeGranule.files = drop(fakeGranule.files);
   await model.create(fakeGranule);
 

@@ -20,7 +20,7 @@ function handler(event, context) {
     if (event.httpMethod === 'GET' && event.resource === '/stats/logs') {
       return count(event, cb);
     }
-    
+
     return list(event, cb);
   });
 }

@@ -530,3 +530,5 @@ Outputs:
     Value: !GetAtt DistributionApiRole.Arn
   StepRoleArn:
     Value: !GetAtt StepRole.Arn
+  ScalingRoleArn:
+    Value: !GetAtt ScalingRole.Arn
