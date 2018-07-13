@@ -25,11 +25,11 @@ function handler(event, context, cb) {
       process.env.PdrsTable
     ],
     elasticsearch_host: process.env.ES_HOST,
-    
+
     // Used by migration2
     granulesTable: process.env.GranulesTable,
     filesTable: process.env.FilesTable,
-    
+
     // Used by Migration_3
     internal: process.env.buckets.internal.name,
     stackName: process.env.stackName
