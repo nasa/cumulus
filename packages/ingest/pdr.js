@@ -78,16 +78,17 @@ class Discover {
    *   if it does not already exist in S3.
    */
   pdrIsNew(pdr) {
-    let event = {
-      'pathParameters': {'pdrName': pdr.name }
-    }
-    let cb = (function(err, response) {
+    const event = {
+      pathParameters: { pdrName : pdr.name }
+    };
+
+    const cb = (err, response) => {
       if (err) {
-        if (err.code === 'RecordDoesNotExist') return pdr;
-        else throw err;
+        if (err.name === 'RecordDoesNotExist') return pdr;
+        throw err;
       }
       return false;
-    });
+    };
     return getPdr(event, cb);
   }
 

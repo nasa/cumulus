@@ -106,18 +106,14 @@ class Discover {
    *   when the object does already exist in Cumulus, or the passed-in granule
    *   object if it does not already exist.
    */
-  granuleIsNew(granule) {
-    let event = {
-      'pathParameters': { 'granuleName': granule.name }
-    }
-    let cb = (function(err, response) {
-      if (err) {
-        if (err.name === 'RecordDoesNotExist') return granule;
-        else throw err;
-      }
-      return null;
-    });
-    return getGranule(event, cb);
+  async granuleIsNew(granule) {
+    const event = {
+      pathParameters: { granuleName: granule.name }
+    };
+
+    const response = await getGranule(event);
+    if (response.statusCode === 404) return granule;
+    return null;
   }
 
   /**
