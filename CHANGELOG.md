@@ -14,9 +14,11 @@ We may need to update the api documentation to reflect this.
         - messageSource - 'input' or 'output' from previous execution
         - metaOverride - overrides the meta of the new execution, accepts partial override
         - payloadOverride - overrides the payload of the new execution, accepts partial override
+        
+### Changed
+- **CUMULUS-768** - Integration tests get S3 provider data from shared data folder
 
 ### Fixed
-
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 
 ## [v1.7.0] - 2018-07-02
