@@ -139,17 +139,6 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
   });
 
-  describe('reingest a granule', () => {
-    const granuleId = inputPayload.granules[0].granuleId;
-    it('executes with success status', async () => {
-      const response = await apiTestUtils.reingestGranule({
-        prefix: config.stackName,
-        granuleId
-      });
-      expect(response.status).toEqual('SUCCESS');
-    });
-  });
-
   describe('the SyncGranules task', () => {
     let lambdaOutput = null;
 
