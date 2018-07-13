@@ -239,7 +239,6 @@ class Granule {
       file.name.match(fileConfig.regex));
   }
 
-
   /**
    * Add a bucket property to the given file
    *
