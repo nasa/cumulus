@@ -42,8 +42,7 @@ class Granule extends Manager {
   addMissingFileSizes(files) {
     const filePromises = files.map((file) => {
       if (!('fileSize' in file)) {
-        const filePath = typeof file.path === 'undefined' ? '' : `${file.path}/`;
-        return commonAws.headObject(file.bucket, filePath + file.name).then((result) => {
+        return commonAws.headObject(file.bucket, file.filepath).then((result) => {
           const updatedFile = file;
           updatedFile.fileSize = result.ContentLength;
           return updatedFile;
