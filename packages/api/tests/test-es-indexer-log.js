@@ -20,13 +20,10 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await Promise.all([
-    esClient.indices.delete({ index: esIndex })
-  ]);
+  await esClient.indices.delete({ index: esIndex });
 });
 
 test.serial('indexing log messages', async (t) => {
-
   // input log events
   const inputtxt = fs.readFileSync(path.join(__dirname, '/data/log_events_input.txt'), 'utf8');
   const event = JSON.parse(JSON.parse(inputtxt.toString()));
