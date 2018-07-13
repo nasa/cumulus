@@ -130,21 +130,6 @@ test('PUT updates a rule', (t) => {
   });
 });
 
-test('PUT returns "only state and rule.value values can be changed"', (t) => {
-  const updateEvent = {
-    body: JSON.stringify({ provider: 'new-whole-foods' }),
-    pathParameters: {
-      name: testRule.name
-    },
-    httpMethod: 'PUT'
-  };
-  return testEndpoint(rulesEndpoint, updateEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, 'Only state and rule.value values can be changed');
-    t.falsy(record);
-  });
-});
-
 test('PUT returns "record does not exist"', (t) => {
   const updateEvent = {
     body: JSON.stringify({ state: 'ENABLED' }),
