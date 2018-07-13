@@ -103,7 +103,7 @@ class Rule extends Manager {
     return {
       template,
       provider: item.provider,
-      collection: item.colleciton,
+      collection: item.collection,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
     };
