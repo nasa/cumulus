@@ -196,11 +196,20 @@ class Granule {
     // download / verify checksum / upload
 
     const stackName = process.env.stackName;
-    // we need to retrieve the right collection
-    const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
-    this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+
+    // if no collection is passed then retrieve the right collection
+    if (!this.collection) {
+      if (!granule.dataType || !granule.version) {
+        throw new Error(
+          'Downloading the collection failed because dataType or version was missing!'
+        );
+      }
+      const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
+      this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+    }
 
     this.collectionId = constructCollectionId(granule.dataType, granule.version);
+    this.fileStagingDir = path.join(this.fileStagingDir, this.collectionId);
 
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
@@ -455,7 +464,7 @@ class Granule {
     // Check if the file exists
     const exists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, this.collectionId, file.name)
+      Key: path.join(this.fileStagingDir, file.name)
     });
 
     // Exit early if we can
@@ -487,14 +496,14 @@ class Granule {
       // Upload the file
       const filename = await this.upload(
         bucket,
-        path.join(this.fileStagingDir, this.collectionId),
+        this.fileStagingDir,
         file.name,
         fileLocalPath
       );
 
       return Object.assign(file, {
         filename,
-        fileStagingDir: path.join(this.fileStagingDir, this.collectionId),
+        fileStagingDir: this.fileStagingDir,
         url_path: this.getUrlPath(file),
         bucket
       });
