@@ -5,6 +5,7 @@
 const Ajv = require('ajv');
 const crypto = require('crypto');
 const path = require('path');
+const RandExp = require('randexp');
 const fs = require('fs-extra');
 
 exports.inTestMode = () => process.env.NODE_ENV === 'test';
@@ -15,6 +16,14 @@ exports.inTestMode = () => process.env.NODE_ENV === 'test';
  * @returns {string} - a random string
  */
 exports.randomString = () => crypto.randomBytes(20).toString('hex');
+
+/**
+ * Create a random granule id from the regular expression
+ *
+ * @param {string} regex - regular expression string
+ * @returns {string} - random granule id
+ */
+exports.randomStringFromRegex = (regex) => new RandExp(regex).gen();
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
@@ -50,6 +59,22 @@ function localstackSupportedService(Service) {
 }
 
 /**
+ * Returns the proper endpoint for a given aws service
+ *
+ * @param {string} identifier - service name
+ * @returns {string} the localstack endpoint
+ */
+function getLocalstackEndpoint(identifier) {
+  const key = `LOCAL_${identifier.toUpperCase()}_HOST`;
+  if (process.env[key]) {
+    return `http://${process.env[key]}:${localStackPorts[identifier]}`;
+  }
+
+  return `http://${process.env.LOCALSTACK_HOST}:${localStackPorts[identifier]}`;
+}
+exports.getLocalstackEndpoint = getLocalstackEndpoint;
+
+/**
  * Create an AWS service object that talks to LocalStack.
  *
  * This function expects that the LOCALSTACK_HOST environment variable will be set.
@@ -69,7 +94,7 @@ function localStackAwsClient(Service, options) {
     accessKeyId: 'my-access-key-id',
     secretAccessKey: 'my-secret-access-key',
     region: 'us-east-1',
-    endpoint: `http://${process.env.LOCALSTACK_HOST}:${localStackPorts[serviceIdentifier]}`
+    endpoint: getLocalstackEndpoint(serviceIdentifier)
   });
 
   if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;

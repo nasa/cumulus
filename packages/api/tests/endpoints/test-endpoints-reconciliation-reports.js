@@ -3,8 +3,8 @@
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const reconciliationReportEndpoint = require('../endpoints/reconciliation-reports');
-const { testEndpoint } = require('../lib/testUtils');
+const reconciliationReportEndpoint = require('../../endpoints/reconciliation-reports');
+const { testEndpoint } = require('../../lib/testUtils');
 
 process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
@@ -23,7 +23,9 @@ test.beforeEach(async () => {
     }).promise()));
 });
 
-test.afterEach.always(() => aws.recursivelyDeleteS3Bucket(process.env.system_bucket));
+test.afterEach.always(async () => {
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+});
 
 test.serial('default returns list of reports', (t) => {
   const event = { httpMethod: 'GET' };

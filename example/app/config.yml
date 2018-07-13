@@ -1,5 +1,47 @@
 
 default:
+
+  # test configuration starts
+  test_configs:
+    stackName: '{{stackName}}'
+    bucket: '{{buckets.internal.name}}'
+    distributionEndpoint: '{{api_distribution_url}}'
+    ems_provider: CUMULUS
+    IngestGranule:
+      IngestGranuleOutput:
+        granules:
+          - files:
+            - bucket: '{{buckets.protected.name}}'
+              filename: "s3://{{buckets.protected.name}}/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
+            - bucket: '{{buckets.private.name}}'
+              filename: "s3://{{buckets.private.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+            - bucket: '{{buckets.public.name}}'
+              filename: "s3://{{buckets.public.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
+            - bucket: '{{buckets.protected-2.name}}'
+              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
+      SyncGranuleOutput:
+        granules:
+          - files:
+            - bucket: '{{buckets.internal.name}}'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+            - bucket: '{{buckets.internal.name}}'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+            - bucket: '{{buckets.internal.name}}'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+    SyncGranule:
+      granules:
+        - files:
+          - bucket: '{{buckets.internal.name}}'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ'
+          - bucket: '{{buckets.internal.name}}'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ'
+  # test configuration ends
+
   prefix: change-me
   stackName: '{{prefix}}-integration'
   # stackNameNoDash: TestCumulusIntegration
@@ -138,6 +180,10 @@ cumulus-from-source:
   prefix: test-src # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
 
+cumulus-from-pr:
+  prefix: test-pr # used by the PR
+  stackNameNoDash: TestPrIntegration
+
 aj:
   prefix: aj
   stackNameNoDash: AjIntegration
@@ -171,6 +217,7 @@ lf:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-scaling-role'
 
 kk-uat-deployment:
   stackName: kk-test-uat
@@ -184,6 +231,7 @@ kk-uat-deployment:
     stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-steprole'
     instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/kk-test-uat-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-scaling-role'
 
 mth-2:
   prefix: mth-2
