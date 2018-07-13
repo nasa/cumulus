@@ -206,6 +206,14 @@ class Granule extends Manager {
 
     const done = granules.map(async (g) => {
       if (g.granuleId) {
+        let granuleFiles;
+        try {
+          granuleFiles = await this.addMissingFileSizes(uniqBy(g.files, 'filename'));
+        }
+        catch (error) {
+          log.error(`Could not validate missing file sizes for ${g.granuleId}`);
+          return Promise.reject(error);
+        }
         const doc = {
           granuleId: g.granuleId,
           pdrName: get(payload, 'meta.pdr.name'),
