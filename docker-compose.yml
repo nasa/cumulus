@@ -7,6 +7,7 @@ services:
       - "./packages/test-data:/home/vsftpd:ro"
       - "./packages/test-data:/var/www/html:ro"
       - "./packages/test-data:/home/user"
+      - "./packages/test-data/keys:/home/user/.ssh"
     ports:
       - "20:20"
       - "21:21"
