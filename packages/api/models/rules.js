@@ -94,7 +94,7 @@ class Rule extends Manager {
 
     if (!exists) {
       const err = {
-        message: 'Workflow doesn\'t exist'
+        message: `Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`
       };
       throw err;
     }
@@ -103,7 +103,7 @@ class Rule extends Manager {
     return {
       template,
       provider: item.provider,
-      collection: item.collection,
+      collection: item.colleciton,
       meta: get(item, 'meta', {}),
       payload: get(item, 'payload', {})
     };
