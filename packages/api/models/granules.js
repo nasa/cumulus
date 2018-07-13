@@ -49,8 +49,9 @@ class Granule extends Manager {
             return updatedFile;
           })
           .catch((error) => {
-            log.error(`Could not validate missing filesize for s3://${file.bucket}/${file.filepath}`);
-            log.error(`Error was ${error}`);
+            log.error(`Error: ${error}`);
+            log.error(`Could not validate missing filesize for s3://${file.filename}`);
+
             return file;
           });
       }
