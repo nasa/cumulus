@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs-extra');
 const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
 const { cloneDeep } = require('lodash');
+const models = require('@cumulus/api/models');
 
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');
@@ -16,6 +17,22 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
+
+// let PdrsTable;
+let pdrModel;
+
+test.before(async () => {
+  process.env.PdrsTable = randomString();
+
+  // PdrsTable = randomString();
+  await models.Manager.createTable(process.env.PdrsTable, { name: 'pdrName', type: 'S' });
+
+  pdrModel = new models.Pdr();
+});
+
+test.after.always(async () => {
+  await models.Manager.deleteTable(process.env.PdrsTable);
+});
 
 test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   const event = cloneDeep(input);
@@ -102,7 +119,7 @@ test('test pdr discovery with FTP connection refused', async (t) => {
     });
 });
 
-test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
+test.only('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -122,26 +139,20 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
 
   await validateConfig(t, newPayload.config);
 
-  return s3().createBucket({ Bucket: internalBucketName }).promise()
-    .then(() => {
-      const Key = [
-        newPayload.config.stack,
-        'pdrs',
-        'PDN.ID1611071307.PDR'
-      ].join('/');
-
-      return s3().putObject({
-        Bucket: internalBucketName,
-        Key,
-        Body: 'PDN.ID1611071307.PDR'
-      }).promise();
+  return pdrModel.create({
+        pdrName: 'PDN.ID1611071307.PDR',
+        provider: provider.id,
+        collectionId: '12',
+        status: 'running',
+        createdAt: 42
     })
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
+      console.log(output.pdrs);
       t.is(output.pdrs.length, 4);
       return validateOutput(t, output);
     })
-    .then(() => recursivelyDeleteS3Bucket(internalBucketName))
+    .then(() => pdrModel.delete({ pdrName: 'PDN.ID1611071307.PDR' }))
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
         t.pass('ignoring this test. Test server seems to be down');
