@@ -22,6 +22,23 @@ const logDetails = {
 const defaultIndexAlias = 'cumulus-alias';
 
 class BaseSearch {
+  /**
+   * returns the local address of elasticsearch based on
+   * the environment variables set
+   *
+   * @returns {string} elasticsearch local address
+   */
+  static getLocalEsHost() {
+    if (process.env.LOCAL_ES_HOST) {
+      return `${process.env.LOCAL_ES_HOST}:9200`;
+    }
+    else if (process.env.LOCALSTACK_HOST) {
+      return `${process.env.LOCALSTACK_HOST}:4571`;
+    }
+
+    return 'localhost:9200';
+  }
+
   static async es(host) {
     let esConfig;
 
@@ -32,7 +49,7 @@ class BaseSearch {
       }
 
       esConfig = {
-        host: `${process.env.LOCALSTACK_HOST}:4571`
+        host: BaseSearch.getLocalEsHost()
       };
     }
     else {
@@ -59,7 +76,7 @@ class BaseSearch {
     return new elasticsearch.Client(esConfig);
   }
 
-  constructor(event, type = null, index = null) {
+  constructor(event, type = null, index) {
     let params = {};
     const logLimit = 10;
 

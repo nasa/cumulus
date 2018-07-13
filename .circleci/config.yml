@@ -5,7 +5,17 @@ jobs:
     docker:
       - image: cumuluss/circleci:node-8.11
       - name: localstack
-        image: localstack/localstack:0.8.6
+        image: localstack/localstack:0.8.7
+        environment:
+          ENV_INTERNAL_TEST_RUN: true
+          DEBUG: 1
+          SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams'
+      - name: elastichost
+        image: elasticsearch:5.6
+        environment:
+          # limit memory usage to 750mb
+          ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+
     working_directory: ~/project
     steps:
       - checkout
@@ -27,7 +37,7 @@ jobs:
           paths:
             - ./node_modules
           key: core-{{ checksum "lerna.json" }}-{{ checksum "package.json" }}
-
+      
       - restore_cache:
           keys:
             - packages-{{ checksum "global-hash" }}
@@ -54,6 +64,7 @@ jobs:
             sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
 
             yarn bootstrap-no-build
+            mkdir .final_nyc_output
 
       - save_cache:
           key: packages-{{ checksum "global-hash" }}
@@ -83,24 +94,75 @@ jobs:
             - ./tasks/sf-sns-report/node_modules
 
       - run:
-          name: Running Packages Tests
+          name: Running eslint
+          command: ./node_modules/.bin/eslint packages/api --ext .js
+      - run:
+          name: Running All Tests except API
           environment:
             LOCALSTACK_HOST: localstack
-          command: |
-            cp lerna.json lerna.json.backup
-            cat lerna.json.backup | jq '.packages = ["packages/*"]' > lerna.json
-            yarn test
+            LOCAL_ES_HOST: elastichost
+          command: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --concurrency 2 --ignore @cumulus/api
 
       - run:
-          name: Running Tasks Tests
+          name: Running API endpoint Tests
           environment:
             LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
           command: |
-            cat lerna.json.backup | jq '.packages = ["tasks/*"]' > lerna.json
-            yarn test
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/endpoints/*.js
+            cp .nyc_output/* ../../.final_nyc_output
 
-            # undo all changes to lerna.json
-            git checkout -- lerna.json
+      - run:
+          name: Running API ES Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/es/*.js
+            cp .nyc_output/* ../../.final_nyc_output
+
+      - run:
+          name: Running API migration Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/migrations/*.js
+            cp .nyc_output/* ../../.final_nyc_output
+
+      - run:
+          name: Running API Lambda Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/lambdas/*.js
+            cp .nyc_output/* ../../.final_nyc_output
+
+      - run:
+          name: Running API cli Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/cli/*.js
+            cp .nyc_output/* ../../.final_nyc_output
+
+      - run:
+          name: Running API models Tests
+          environment:
+            LOCALSTACK_HOST: localstack
+            LOCAL_ES_HOST: elastichost
+          command: |
+            cd packages/api
+
+            ./node_modules/.bin/nyc ./node_modules/.bin/ava tests/models/*.js
+            cp .nyc_output/* ../../.final_nyc_output
 
       - run:
           name: Running End to End Tests
@@ -113,7 +175,9 @@ jobs:
           environment:
             PRODUCTION: true # this will ensure that the integration from source uses the same packaging as the integration from npm packages
           command: |
-            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
+            source ./example/spec/select
+
+            if [[ ! -z "$RUN_INTEGRATION" ]]; then
               sudo chown -R circleci:circleci /usr/local/bin
 
               # install cumulus-integration
@@ -126,22 +190,26 @@ jobs:
       - run:
           name: Deploy cumulus source code to aws
           command: |
-            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
+            source ./example/spec/select
+            if [[ ! -z "$RUN_INTEGRATION" ]]; then
               cd example
 
               # deploy latest iam roles to aws
-              ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/iam
+              ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam
 
               # deploy latest version of the packages to the aws
-              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-source --template node_modules/@cumulus/deployment/app
+              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app
             fi
 
       - run:
           name: Run AWS Integration tests 
           command: |
-            if [[ "$CIRCLE_BRANCH" =~ release-.* ]] || [[ "$CIRCLE_BRANCH" =~ .*-aws-test ]] || [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ ! -z "$RUN_INTEGRATION" ]]; then
+            source ./example/spec/select
+            if [[ ! -z "$RUN_INTEGRATION" ]]; then
               cd example
+
               # run the tests
+              echo $DEPLOYMENT
               yarn test
             fi
 
@@ -151,14 +219,11 @@ jobs:
             COVERALLS_SERVICE_NAME: circleci
           command: |
             export COVERALLS_SERVICE_JOB_ID=$CIRCLE_BUILD_NUM
+            cp .nyc_output/* .final_nyc_output
             yarn coveralls || true
 
       - store_artifacts:
           path: ~/project/coverage
-
-      # - run:
-      #     name: Running eslint-ratchet
-      #     command: ./bin/eslint-ratchet ci
 
   build_and_publish:
     docker:
@@ -196,7 +261,7 @@ jobs:
           name: Run Tests 
           command: |
             cd example
-            yarn test
+            DEPLOYMENT=cumulus-from-npm yarn test
       
 workflows:
   version: 2

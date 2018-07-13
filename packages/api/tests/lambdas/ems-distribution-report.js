@@ -29,7 +29,9 @@ test.beforeEach(async (t) => {
     }).promise()));
 });
 
-test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.internalBucket));
+test.afterEach.always(async (t) => {
+  await aws.recursivelyDeleteS3Bucket(t.context.internalBucket);
+});
 
 test.serial('emsDistributionReport writes a correct report out to S3 when no previous reports exist', async (t) => {
   const logsBucket = t.context.internalBucket;
