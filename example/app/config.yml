@@ -11,9 +11,9 @@ default:
       IngestGranuleOutput:
         granules:
           - files:
-            - bucket: '{{buckets.protected.name}}' 
+            - bucket: '{{buckets.protected.name}}'
               filename: "s3://{{buckets.protected.name}}/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
-            - bucket: '{{buckets.private.name}}' 
+            - bucket: '{{buckets.private.name}}'
               filename: "s3://{{buckets.private.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
             - bucket: '{{buckets.public.name}}'
               filename: "s3://{{buckets.public.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
@@ -28,7 +28,7 @@ default:
             - bucket: '{{buckets.internal.name}}'
               filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
               fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
-            - bucket: cumulus-test-sandbox-internal
+            - bucket: '{{buckets.internal.name}}'
               filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
               fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
     SyncGranule:
