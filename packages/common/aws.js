@@ -40,7 +40,11 @@ AWS.config.update({ region: exports.region });
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
 AWS.config.setPromisesDependency(Promise);
 
-const S3_RATE_LIMIT = 20;
+
+let S3_RATE_LIMIT = 20;
+if (inTestMode()) {
+  S3_RATE_LIMIT = 1;
+}
 
 const memoize = (fn) => {
   let memo = null;
@@ -85,6 +89,21 @@ exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10')
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
+
+/**
+ * Create a DynamoDB table and then wait for the table to exist
+ *
+ * @param {Object} params - the same params that you would pass to AWS.createTable
+ *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
+ * @returns {Promise<Object>} - the output of the createTable call
+ */
+async function createAndWaitForDynamoDbTable(params) {
+  const createTableResult = await exports.dynamodb().createTable(params).promise();
+  await exports.dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise();
+
+  return createTableResult;
+}
+exports.createAndWaitForDynamoDbTable = createAndWaitForDynamoDbTable;
 
 /**
  * Describes the resources belonging to a given CloudFormation stack

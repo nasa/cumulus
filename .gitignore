@@ -18,6 +18,7 @@ profiles.clj
 .DS_Store
 packages/deployment/app/*.js
 .nyc_output
+.final_nyc_output
 coverage/
 tasks/*/cumulus-message-adapter/
 backups
