@@ -2,7 +2,6 @@
 
 const clonedeep = require('lodash.clonedeep');
 const get = require('lodash.get');
-const merge = require('lodash.merge');
 const path = require('path');
 const uniqBy = require('lodash.uniqby');
 
