@@ -3,13 +3,13 @@
 const fs = require('fs-extra');
 const { loadConfig } = require('../helpers/testUtils');
 const {
-  aws: { s3 },
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
 const { createGranuleFiles } = require('../helpers/granuleUtils');
 const {
-  buildAndExecuteWorkflow
+  buildAndExecuteWorkflow,
+  conceptExists
 } = require('@cumulus/integration-tests');
 const config = loadConfig();
 const taskName = 'IngestGranule';
@@ -99,21 +99,28 @@ describe('The Cumulus API', () => {
     });
 
     it('successfully reingest a granule', async () => {
-      //stuff
-      // (file) =>
-      // s3().copyObject({
-      //   Bucket: bucket,
-      //   CopySource: `${bucket}/${file.path}/${file.name}`,
-      //   Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
-      // }).promise();
-
-
       const granule = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
-      granule.files[0].newTest = 'test';
-      // s3().upload({Bucket: config.bucket, Key: })
+      const existsFirstTime = conceptExists(granule.cmrLink);
+      expect(existsFirstTime).toEqual(true);
+      // Remove the granule from CMR
+      await apiTestUtils.removeFromCMR({
+        prefix: config.stackName,
+        granuleId
+      });
+      // Check that the granule was removed
+      const existsSecondTime = conceptExists(granule.cmrLink);
+      expect(existsSecondTime).toEqual(false);
+
+      // Reingest Granule and check that it was re-added to CMR
+      await apiTestUtils.reingestGranule({
+        prefix: config.stackName,
+        granuleId
+      });
+      const existsThirdTime = conceptExists(granule.cmrLink);
+      expect(existsThirdTime).toEqual(true);
     });
   });
 });
