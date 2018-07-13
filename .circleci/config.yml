@@ -62,6 +62,7 @@ jobs:
             # start sftp service
             sudo bash /usr/sbin/sftp.sh user:password
             sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
+            sudo cp -r /home/circleci/project/packages/test-data/keys /home/user/.ssh
 
             yarn bootstrap-no-build
             mkdir .final_nyc_output
