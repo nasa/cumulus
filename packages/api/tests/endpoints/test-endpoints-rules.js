@@ -4,11 +4,11 @@ const test = require('ava');
 const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const bootstrap = require('../lambdas/bootstrap');
-const models = require('../models');
-const rulesEndpoint = require('../endpoints/rules');
-const { testEndpoint } = require('../lib/testUtils');
-const { Search } = require('../es/search');
+const bootstrap = require('../../lambdas/bootstrap');
+const models = require('../../models');
+const rulesEndpoint = require('../../endpoints/rules');
+const { testEndpoint } = require('../../lib/testUtils');
+const { Search } = require('../../es/search');
 
 const esIndex = randomString();
 

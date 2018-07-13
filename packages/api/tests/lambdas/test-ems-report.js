@@ -5,10 +5,10 @@ const clone = require('lodash.clonedeep');
 const moment = require('moment');
 const { randomString } = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
-const { bootstrapElasticSearch } = require('../lambdas/bootstrap');
-const { Search } = require('../es/search');
-const { deleteAliases } = require('../lib/testUtils');
-const { emsMappings, generateReports } = require('../lib/ems');
+const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const { Search } = require('../../es/search');
+const { deleteAliases } = require('../../lib/testUtils');
+const { emsMappings, generateReports } = require('../../lib/ems');
 
 const granule = {
   granuleId: randomString(),
