@@ -58,7 +58,7 @@ class Collection extends Manager {
     const collectionConfigStore =
       new CollectionConfigStore(process.env.internal, process.env.stackName);
     await collectionConfigStore.put(item.dataType, item.version, item);
-    
+
     return super.create(item);
   }
 }
