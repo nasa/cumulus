@@ -24,7 +24,7 @@ function list(event, cb) {
 
 /**
  * Query a single collection.
- * 
+ *
  * @param {Object} event - aws lambda event object.
  * @param {Function} cb - aws lambda callback function
  * @returns {Promise<Object>} a collection record
