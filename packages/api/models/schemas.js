@@ -310,11 +310,6 @@ module.exports.rule = {
       items: {
         type: 'string'
       }
-    },
-    context: {
-      title: 'Rule Initial Context',
-      type: 'object',
-      description: 'Custom parameters for workflows',
     }
   },
   require: ['name', 'workflow', 'collection', 'rule', 'state']
