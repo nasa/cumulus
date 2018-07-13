@@ -34,7 +34,7 @@ class Granule extends Manager {
    *
    * @returns {Promise} aws dynamodb createTable response
    */
-  async createTable() {
+  createTable() {
     const hash = { name: 'granuleId', type: 'S' };
     return Manager.createTable(this.tableName, hash);
   }
