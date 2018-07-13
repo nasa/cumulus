@@ -7,12 +7,7 @@ const {
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
-const {
-  models: { Execution, Granule }
-} = require('@cumulus/api');
-const {
-  createGranuleFiles
-} = require('../helpers/granuleUtils');
+const { createGranuleFiles } = require('../helpers/granuleUtils');
 const {
   buildAndExecuteWorkflow
 } = require('@cumulus/integration-tests');
@@ -43,7 +38,6 @@ async function setupTestGranuleForAPI(bucket, granuleId, inputPayloadJson) {
   );
 
   const updatedInputPayloadJson = globalReplace(inputPayloadJson, testDataGranuleId, granuleId);
-  // console.log(updatedInputPayloadJson);
 
   return JSON.parse(updatedInputPayloadJson);
 }
@@ -55,22 +49,15 @@ describe('The Cumulus API', () => {
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
   let granuleId;
-  const granuleModel = new Granule();
 
   beforeAll(async () => {
     console.log('Starting API test');
     granuleId = randomStringFromRegex(granuleRegex);
 
     console.log(`granule id: ${granuleId}`);
-    // console.log(config);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForAPI(config.bucket, granuleId, inputPayloadJson);
-
-    // delete the granule record from DynamoDB if exists
-    // await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
-
-    console.log('SOMETHING GOES HERE :', inputPayload);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
@@ -81,12 +68,12 @@ describe('The Cumulus API', () => {
     // await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
 
     // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    // await Promise.all(
+    //   inputPayload.granules[0].files.map((file) =>
+    //     s3().deleteObject({
+    //       Bucket: config.bucket, Key: `${file.path}/${file.name}`
+    //     }).promise())
+    // );
   });
   it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
@@ -109,6 +96,24 @@ describe('The Cumulus API', () => {
         granuleId
       });
       expect(response.status).toEqual('SUCCESS');
+    });
+
+    it('successfully reingest a granule', async () => {
+      //stuff
+      // (file) =>
+      // s3().copyObject({
+      //   Bucket: bucket,
+      //   CopySource: `${bucket}/${file.path}/${file.name}`,
+      //   Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
+      // }).promise();
+
+
+      const granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      granule.files[0].newTest = 'test';
+      // s3().upload({Bucket: config.bucket, Key: })
     });
   });
 });
