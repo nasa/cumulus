@@ -1,14 +1,13 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
 const test = require('ava');
 
-const bootstrap = require('../lambdas/bootstrap');
-const models = require('../models');
+const bootstrap = require('../../lambdas/bootstrap');
+const models = require('../../models');
 const { randomString } = require('@cumulus/common/test-utils');
-const providerEndpoint = require('../endpoints/providers');
-const { testEndpoint } = require('../lib/testUtils');
-const { Search } = require('../es/search');
+const providerEndpoint = require('../../endpoints/providers');
+const { testEndpoint } = require('../../lib/testUtils');
+const { Search } = require('../../es/search');
 
 
 process.env.ProvidersTable = randomString();
@@ -24,7 +23,6 @@ const testProvider = {
   host: 'https://oco.jpl.nasa.gov/',
   port: 80
 };
-const keyId = 'public.pub';
 
 const hash = { name: 'id', type: 'S' };
 
@@ -41,8 +39,13 @@ async function teardown() {
   await esClient.indices.delete({ index: esIndex });
 }
 
-test.before(async () => setup());
-test.after.always(async () => teardown());
+test.before(async () => {
+  await setup();
+});
+
+test.after.always(async () => {
+  await teardown();
+});
 
 // TODO(aimee): Add a provider to ES. List uses ES and we don't have any providers in ES.
 test('default returns list of providers', (t) => {
