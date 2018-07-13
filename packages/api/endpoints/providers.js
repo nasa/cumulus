@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign */
+
 'use strict';
 
 const _get = require('lodash.get');
@@ -9,21 +10,25 @@ const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
 const { Search } = require('../es/search');
 
 /**
- * List all providers.
- * @param {object} event aws lambda event object.
- * @param {callback} cb aws lambda callback function
- * @return {undefined}
+ * List all providers
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} search response
  */
 function list(event, cb) {
   const search = new Search(event, 'provider');
-  return search.query().then((response) => cb(null, response)).catch(cb);
+  return search.query()
+    .then((response) => cb(null, response))
+    .catch(cb);
 }
 
 /**
- * Query a single provider.
- * @param {object} event aws lambda event object.
- * @param {string} granuleId the id of the granule.
- * @return {object} a single granule object.
+ * Query a single provider
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} a single provider object
  */
 function get(event, cb) {
   const id = _get(event.pathParameters, 'id');
@@ -42,13 +47,14 @@ function get(event, cb) {
 
 /**
  * Creates a new provider
- * @param {object} event aws lambda event object.
- * @return {object} returns the collection that was just saved.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} returns the created provider
  */
 function post(event, cb) {
-  let data = _get(event, 'body', '{}');
-  data = JSON.parse(data);
-  const id = _get(data, 'id');
+  const data = JSON.parse(event.body || {});
+  const id = data.id;
 
   const p = new models.Provider();
 
@@ -57,8 +63,8 @@ function post(event, cb) {
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
         return p.create(data)
-          .then((data) => cb(null, { message: 'Record saved', record: data }))
-          .catch((err) => cb(err));
+          .then((record) => cb(null, { record, message: 'Record saved' }))
+          .catch(cb);
       }
       return cb(e);
     });
@@ -66,8 +72,10 @@ function post(event, cb) {
 
 /**
  * Updates an existing provider
- * @param {object} event aws lambda event object.
- * @return {object} a mapping of the updated properties.
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} returns updated provider
  */
 function put(event, cb) {
   const id = _get(event.pathParameters, 'id');
@@ -77,23 +85,27 @@ function put(event, cb) {
   }
 
   let data = _get(event, 'body', '{}');
-  let originalData;
   data = JSON.parse(data);
 
   const p = new models.Provider();
 
   // get the record first
-  return p.get({ id }).then((d) => {
-    originalData = d;
-    return p.update({ id }, data);
-  })
-    .then((data) => cb(null, data))
+  return p.get({ id })
+    .then(() => p.update({ id }, data))
+    .then((d) => cb(null, d))
     .catch((err) => {
-      if (err instanceof RecordDoesNotExist) cb({ message: 'Record does not exist' });
+      if (err instanceof RecordDoesNotExist) return cb({ message: 'Record does not exist' });
       return cb(err);
     });
 }
 
+/**
+ * Delete a provider
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Function} cb - aws lambda callback function
+ * @returns {Promise<Object>} returns delete response
+ */
 function del(event, cb) {
   const id = _get(event.pathParameters, 'id');
   const p = new models.Provider();
@@ -104,6 +116,13 @@ function del(event, cb) {
     .catch(cb);
 }
 
+/**
+ * The main handler for the lambda function
+ *
+ * @param {Object} event - aws lambda event object.
+ * @param {Object} context - aws context object
+ * @returns {undefined} undefined
+ */
 function handler(event, context) {
   return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {

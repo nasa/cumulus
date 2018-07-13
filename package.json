@@ -4,7 +4,8 @@
   "description": "Cumulus Framework for ingesting and processing Nasa Earth data streams",
   "scripts": {
     "e2e": "ava tests/*.js --serial",
-    "test": "nyc lerna run test",
+    "lint": "eslint packages/api --ext .js",
+    "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap --npm-client=npm",
     "ybootstrap": "lerna bootstrap",
     "bootstrap-no-build": "lerna bootstrap --ignore-scripts",
@@ -14,7 +15,7 @@
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch",
     "coverage": "nyc report --reporter text-summary --reporter html",
-    "coveralls": "nyc report --reporter=text-lcov | coveralls"
+    "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls"
   },
   "repository": {
     "type": "git",

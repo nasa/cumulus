@@ -3,12 +3,12 @@
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const models = require('../models');
-const bootstrap = require('../lambdas/bootstrap');
-const executionEndpoint = require('../endpoints/executions');
-const indexer = require('../es/indexer');
-const { testEndpoint, fakeExecutionFactory } = require('../lib/testUtils');
-const { Search } = require('../es/search');
+const models = require('../../models');
+const bootstrap = require('../../lambdas/bootstrap');
+const executionEndpoint = require('../../endpoints/executions');
+const indexer = require('../../es/indexer');
+const { testEndpoint, fakeExecutionFactory } = require('../../lib/testUtils');
+const { Search } = require('../../es/search');
 
 // create all the variables needed across this test
 let esClient;
@@ -41,11 +41,9 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await Promise.all([
-    models.Manager.deleteTable(process.env.ExecutionsTable),
-    esClient.indices.delete({ index: esIndex }),
-    aws.recursivelyDeleteS3Bucket(process.env.internal)
-  ]);
+  await models.Manager.deleteTable(process.env.ExecutionsTable);
+  await esClient.indices.delete({ index: esIndex });
+  await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
 
 
