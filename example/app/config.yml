@@ -11,9 +11,9 @@ default:
       IngestGranuleOutput:
         granules:
           - files:
-            - bucket: '{{buckets.protected.name}}' 
+            - bucket: '{{buckets.protected.name}}'
               filename: "s3://{{buckets.protected.name}}/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
-            - bucket: '{{buckets.private.name}}' 
+            - bucket: '{{buckets.private.name}}'
               filename: "s3://{{buckets.private.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
             - bucket: '{{buckets.public.name}}'
               filename: "s3://{{buckets.public.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
@@ -28,7 +28,7 @@ default:
             - bucket: '{{buckets.internal.name}}'
               filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
               fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
-            - bucket: cumulus-test-sandbox-internal
+            - bucket: '{{buckets.internal.name}}'
               filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
               fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
     SyncGranule:
@@ -42,8 +42,7 @@ default:
             fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ'
   # test configuration ends
 
-  prefix: change-me
-  stackName: '{{prefix}}-integration'
+  stackName: 'change-me'
   # stackNameNoDash: TestCumulusIntegration
   shared_data_bucket: cumulus-data-shared
   api_distribution_url: https://example.com/
@@ -122,13 +121,13 @@ default:
     password: '{{CMR_PASSWORD}}'
 
   iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-integration-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-integration-scaling-role'
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{stackName}}-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-scaling-role'
 
   sns:
     inregions3:
@@ -173,98 +172,61 @@ default:
     - username: testuser
 
 cumulus-from-npm:
-  prefix: test-npm # used by the integration repo
+  stackName: test-npm-integration # used by the integration repo
   stackNameNoDash: TestNpmIntegration
 
 cumulus-from-source:
-  prefix: test-src # used by the cumulus repo
+  stackName: test-src-integration # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
 
 cumulus-from-pr:
-  prefix: test-pr # used by the PR
+  stackName: test-pr-integration # used by the PR
   stackNameNoDash: TestPrIntegration
 
 aj:
-  prefix: aj
+  stackName: aj-integration
   stackNameNoDash: AjIntegration
 
 aimee-test:
-  prefix: aimee-test
   stackName: aimee-test
   stackNameNoDash: aimeeTest
 
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
 
 lf:
-  prefix: lf-cumulus
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
   es:
     elasticSearchMapping: 6
 
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/lf-cumulus-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/lf-cumulus-scaling-role'
-
 kk-uat-deployment:
   stackName: kk-test-uat
-  prefix: kk-test-uat
   stackNameNoDash: KkTestUat
 
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/kk-test-uat-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/kk-test-uat-scaling-role'
-
 mth-2:
-  prefix: mth-2
-  stackName: '{{prefix}}'
+  stackName: mth-2
   stackNameNoDash: Mth2
   buckets:
     internal:
-      name: '{{prefix}}-internal'
+      name: '{{stackName}}-internal'
       type: internal
     private:
-      name: '{{prefix}}-private'
+      name: '{{stackName}}-private'
       type: private
     protected:
-      name: '{{prefix}}-protected'
+      name: '{{stackName}}-protected'
       type: protected
     protected-2:
-      name: '{{prefix}}-protected'
+      name: '{{stackName}}-protected'
       type: protected
     public:
-      name: '{{prefix}}-public'
+      name: '{{stacKName}}-public'
       type: public
-  iams:
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
 
 jl:
-  prefix: jl-test
+  stackName: jl-test-integration
   stackNameNoDash: JlTestIntegration
   buckets:
     private:

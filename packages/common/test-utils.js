@@ -5,6 +5,7 @@
 const Ajv = require('ajv');
 const crypto = require('crypto');
 const path = require('path');
+const RandExp = require('randexp');
 const fs = require('fs-extra');
 
 exports.inTestMode = () => process.env.NODE_ENV === 'test';
@@ -15,6 +16,14 @@ exports.inTestMode = () => process.env.NODE_ENV === 'test';
  * @returns {string} - a random string
  */
 exports.randomString = () => crypto.randomBytes(20).toString('hex');
+
+/**
+ * Create a random granule id from the regular expression
+ *
+ * @param {string} regex - regular expression string
+ * @returns {string} - random granule id
+ */
+exports.randomStringFromRegex = (regex) => new RandExp(regex).gen();
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
