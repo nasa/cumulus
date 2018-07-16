@@ -114,9 +114,6 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
   executionCount = await executionIndex.count();
   t.is(executionCount.meta.found, 15);
 
-  const granuleModel = new models.Granule();
   await Promise.all(granules.map((g) => granuleModel.get({ granuleId: g.granuleId })));
-
-  const executionModel = new models.Execution();
   await Promise.all(executions.map((e) => executionModel.get({ arn: e.arn })));
 });
