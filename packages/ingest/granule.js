@@ -130,18 +130,13 @@ class Discover {
       // Add additional granule-related properties to the file
       .map((file) => this.setGranuleInfo(file));
 
-    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
-        granuleIsNew(discoveredFile))))
-      .filter(identity);
-
     // This is confusing, but I haven't figured out a better way to write it.
     // What we're doing here is checking each discovered file to see if it
-    // already exists in S3.  If it does then it isn't a new file and we are
+    // already exists in dynamoDB. If it does then it isn't a new file and we are
     // going to ignore it.
-    /*const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
-      aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
-        .then((exists) => (exists ? null : discoveredFile)))))
-      .filter(identity);*/
+    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
+        this.granuleIsNew(discoveredFile))))
+      .filter(identity);
 
     // Group the files by granuleId
     const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);

@@ -10,7 +10,6 @@ const models = require('@cumulus/api/models');
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');
 
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   findTestDataDirectory,
   randomString,
@@ -18,13 +17,11 @@ const {
   validateOutput
 } = require('@cumulus/common/test-utils');
 
-// let PdrsTable;
 let pdrModel;
 
 test.before(async () => {
   process.env.PdrsTable = randomString();
 
-  // PdrsTable = randomString();
   await models.Manager.createTable(process.env.PdrsTable, { name: 'pdrName', type: 'S' });
 
   pdrModel = new models.Pdr();
