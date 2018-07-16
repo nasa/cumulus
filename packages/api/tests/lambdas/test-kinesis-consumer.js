@@ -9,17 +9,10 @@ const { SQS } = require('@cumulus/ingest/aws');
 const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { getKinesisRules, handler } = require('../../lambdas/kinesis-consumer');
 
-const manager = require('../../models/base');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
-
-const ruleTableParams = {
-  name: 'name',
-  type: 'S',
-  schema: 'HASH'
-};
 
 const eventData = JSON.stringify({
   collection: testCollectionName
@@ -79,6 +72,7 @@ function testCallback(err, object) {
 let sfSchedulerSpy;
 const stubQueueUrl = 'stubQueueUrl';
 
+let ruleModel;
 test.beforeEach(async (t) => {
   sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
   t.context.templateBucket = randomString();
@@ -116,15 +110,15 @@ test.beforeEach(async (t) => {
   process.env.bucket = randomString();
   process.env.kinesisConsumer = randomString();
 
-  const model = new Rule(t.context.tableName);
-  await manager.createTable(t.context.tableName, ruleTableParams);
+  ruleModel = new Rule({ tableName: t.context.tableName });
+  await ruleModel.createTable();
   await Promise.all([rule1Params, rule2Params, disabledRuleParams]
-    .map((rule) => model.create(rule)));
+    .map((rule) => ruleModel.create(rule)));
 });
 
 test.afterEach(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.templateBucket);
-  await manager.deleteTable(t.context.tableName);
+  await ruleModel.deleteTable();
   sfSchedulerSpy.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();

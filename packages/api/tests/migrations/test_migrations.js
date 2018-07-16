@@ -19,20 +19,26 @@ process.env.stackName = randomString();
 const granulesTable = `${process.env.stackName}-GranulesTable`;
 const executionsTable = `${process.env.stackName}-ExecutionsTable`;
 
+let granuleModel;
+let executionModel;
 test.before(async () => {
   await deleteAliases();
   await s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  await models.Manager.createTable(granulesTable, { name: 'granuleId', type: 'S' });
-  await models.Manager.createTable(executionsTable, { name: 'arn', type: 'S' });
+  granuleModel = new models.Granule({ tableName: granulesTable });
+  executionModel = new models.Execution({ tableName: executionsTable });
+
+  await granuleModel.createTable();
+  await executionModel.createTable();
+
   esClient = await Search.es();
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 });
 
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.internal);
-  await models.Manager.deleteTable(granulesTable);
-  await models.Manager.deleteTable(executionsTable);
+  await granuleModel.deleteTable();
+  await executionModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
 });
 
