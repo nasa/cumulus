@@ -6,24 +6,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- **GITC-776-3** Added more flexibility for rules.  You can now edit all fields on the rule's record
+We may need to update the api documentation to reflect this.
+
 - **CUMULUS-681** - Add ingest-in-place action to granules endpoint
-    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow has additional parameters:
+    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
+      Parameter(s):
         - workflow - the workflow name
         - messageSource - 'input' or 'output' from previous execution
         - metaOverride - overrides the meta of the new execution, accepts partial override
         - payloadOverride - overrides the payload of the new execution, accepts partial override
-        
+
 ### Changed
 - **CUMULUS-768** - Integration tests get S3 provider data from shared data folder
 
 ### Fixed
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
+- **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
+
 
 ## [v1.7.0] - 2018-07-02
 
 ### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
 
 ### Added
+- **GITC-776-1**
+  - Added support for SFTP using public/private keys that can optionally be encrypted/decrypted using KMS
+  There is an assumption that private key is located in s3://bucketInternal/stackName/crypto. KMS can be used to encrypt/decrypt the keys. Provider schema has been extended to support optional fields (privateKey, cmKeyId)
+
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
@@ -32,9 +42,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Add ability to upload records to DynamoDB
   - Add migration scripts for copying granule, pdr and execution records from ElasticSearch to DynamoDB
   - Add IAM support for batchWrite on dynamoDB
+-
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
-- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support. 
+- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support.
     - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
 
 ### Fixed
