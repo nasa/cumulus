@@ -110,7 +110,7 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
 
   await validateInput(t, t.context.payload.input);
   await validateConfig(t, t.context.payload.config);
-
+  
   let output;
   try {
     output = await parsePdr(t.context.payload);
