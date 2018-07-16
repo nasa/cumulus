@@ -425,3 +425,21 @@ ApiReconciliationReportV1:
       method: delete
       cors: true
       api: backend
+
+AsyncOperationsV1:
+  handler: index.asyncOperations
+  apiRole: true
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    system_bucket: '{{parent.system_bucket}}'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    AsyncOperationsTable:
+      function: Ref
+      value: AsyncOperationsTableDynamoDB
+  apiGateway:
+    - path: async-operations/{id}
+      method: get
+      cors: true
+      api: backend

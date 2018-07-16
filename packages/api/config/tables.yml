@@ -76,3 +76,12 @@ FilesTable:
     - name: key
       type: S
       schema: RANGE
+
+AsyncOperationsTable:
+  read: 5
+  write: 10
+  pointInTime: '{{enablePointInTime}}'
+  attributes:
+    - name: id
+      type: S
+      schema: HASH

@@ -76,6 +76,10 @@ function fetchLatestMessageAdapterRelease(gitPath) {
   return new Promise((resolve, reject) => {
     request(options, (err, response, body) => {
       if (err) reject(err);
+
+      console.log('XXXXX');
+      console.log(body);
+      console.log('XXXXX');
       resolve(JSON.parse(body).tag_name);
     });
   });

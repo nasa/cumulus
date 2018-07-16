@@ -275,9 +275,23 @@ function handle(event, context, authCheck, func) {
   return func(cb);
 }
 
+const notFoundResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 404,
+  body: { message: 'Not found' }
+});
+
+const internalServerErrorResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 500,
+  body: { message: 'Internal Server Error' }
+});
+
 module.exports = {
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
   handle,
+  internalServerErrorResponse,
+  notFoundResponse,
   resp
 };

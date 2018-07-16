@@ -1,5 +1,6 @@
 'use strict';
 
+const AsyncOperation = require('./async-operation');
 const Manager = require('./base');
 const Collection = require('./collections');
 const Granule = require('./granules');
@@ -11,6 +12,7 @@ const FileClass = require('./files');
 const User = require('./users');
 
 module.exports = {
+  AsyncOperation,
   User,
   Collection,
   Granule,
