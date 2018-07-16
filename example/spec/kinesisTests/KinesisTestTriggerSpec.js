@@ -68,7 +68,6 @@ const expectedSyncGranulesPayload = {
 
 
 // When Cumulus is configured to trigger a CNM workflow from a Kinesis stream and a message appears on the stream, Cumulus triggers the workflow
-
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const maxWaitTime = 1000 * 60 * 2;
   let workflowExecution;
@@ -82,39 +81,33 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     }).promise();
   });
 
-  beforeAll(async () => {
-    try {
-      await createOrUseTestStream(streamName);
-      console.log('createOrUseTestStream');
-      await waitForActiveStream(streamName);
-      console.log('waits for the stream to be ready');
-      await putRecordOnStream(streamName, record);
-      console.log('putRecordOnStream');
-      workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
-      console.log('workflow running', workflowExecution);
-    }
-    catch (e) {
-      console.log(e);
-      throw e;
-    }
+  beforeAll(() => {
+    this.workflowExecution = null;
+  });
 
-    // Wait for our execution to complete so we can test the outputs.
-    if (workflowExecution === undefined) {
-      throw new Error('Timeout waiting for new execution to start');
-    }
-    else {
-      executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
-    }
+  it('finds or creates a test stream.', async () => {
+    await createOrUseTestStream(streamName);
+  });
 
-    s3FileHead = await new Promise((resolve, reject) => {
-      s3().headObject({
-        Bucket: testConfig.privateBucket,
-        Key: `${filePrefix}/${fileData.name}`
-      }, (err, data) => {
-        if (err) reject(err);
-        resolve(data);
-      });
-    });
+  it('waits for the stream to be active.', async () => {
+    await waitForActiveStream(streamName);
+  });
+
+  it('places a record on the stream.', async () => {
+    await putRecordOnStream(streamName, record);
+  });
+
+  it('waits for the triggered step function to start', async () => {
+    workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
+    this.workflowExecution = workflowExecution;
+  });
+
+  it('finds a valid workflow execution.', () => {
+    expect(this.workflowExecution).not.toBe(undefined);
+  });
+
+  it('waits for step function to complete', async () => {
+    executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
   });
 
   it('executes successfully', () => {
@@ -122,32 +115,42 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('the TranslateMessage Lambda', () => {
-    let lambdaOutput = null;
+    beforeAll(() => {
+      this.lambdaOutput = null;
+    });
 
-    beforeAll(async () => {
-      // This is a bit confusing - currently the workflow definition calls this step
-      // 'TranslateMessage', but the lambda is 'CNMToCMA' which is what
-      // integration tests package looks for when looking up the step execution.
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
+    it('waits for CNMToCMA to complete', async () => {
+      this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CNMToCMA');
     });
 
     it('outputs the granules object', () => {
-      expect(lambdaOutput.payload).toEqual(expectedTranslatePayload);
+      expect(this.lambdaOutput.payload).toEqual(expectedTranslatePayload);
     });
   });
 
   describe('the SyncGranule Lambda', () => {
-    let lambdaOutput = null;
+    beforeAll(() => {
+      this.lambdaOutput = null;
+    });
 
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+    it('waits for SyncGranule to complete', async () => {
+      this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'SyncGranule');
     });
 
     it('outputs the granules object', () => {
-      expect(lambdaOutput.payload).toEqual(expectedSyncGranulesPayload);
+      expect(this.lambdaOutput.payload).toEqual(expectedSyncGranulesPayload);
     });
 
-    it('syncs data to s3', () => {
+    it('syncs data to s3', async () => {
+      s3FileHead = await new Promise((resolve, reject) => {
+        s3().headObject({
+          Bucket: testConfig.privateBucket,
+          Key: `${filePrefix}/${fileData.name}`
+        }, (err, data) => {
+          if (err) reject(err);
+          resolve(data);
+        });
+      });
       // Seems like a race condition?  Should create a date in the first 'The
       // Ingest Kinesis workflow'::beforeAll?  Maybe I just don't understand
       // what this is testing.
