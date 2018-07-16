@@ -63,10 +63,7 @@ async function put(event) {
   if (action === 'applyWorkflow') {
     await granuleModelClient.applyWorkflow(
       granule,
-      body.workflow,
-      body.messageSource,
-      body.metaOverride,
-      body.payloadOverride
+      body.workflow
     );
 
     return buildLambdaProxyResponse({
