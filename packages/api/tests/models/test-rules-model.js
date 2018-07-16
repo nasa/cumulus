@@ -41,18 +41,23 @@ const onetimeRule = {
   state: 'ENABLED'
 };
 
+let ruleModel;
 test.before(async () => {
-  const hash = { name: 'name', type: 'S' };
   // create Rules table
-  await models.Manager.createTable(process.env.RulesTable, hash);
+  ruleModel = new models.Rule();
+  await ruleModel.createTable();
+
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
-  await aws.s3().putObject({ Bucket: process.env.bucket, Key: workflowfile, Body: 'test data' })
-    .promise();
+  await aws.s3().putObject({
+    Bucket: process.env.bucket,
+    Key: workflowfile,
+    Body: 'test data'
+  }).promise();
 });
 
 test.after.always(async () => {
   // cleanup table
-  await models.Manager.deleteTable(process.env.RulesTable);
+  await ruleModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
