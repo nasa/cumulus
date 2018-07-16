@@ -65,6 +65,7 @@ async function createOrUseTestStream(streamName) {
   }
   catch (err) {
     if (err.code === 'ResourceNotFoundException') {
+      console.log('Createing a new stream:', streamName);
       stream = await kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
     }
     else {
@@ -97,6 +98,7 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
   let lastExecution;
   let workflowExecution;
 
+  /* eslint-disable no-await-in-loop */
   while (timeWaited < maxWaitTime && workflowExecution === undefined) {
     try {
       await timeout(waitPeriodMs);
@@ -127,6 +129,7 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
       throw error;
     }
   }
+  /* eslint-disable no-await-in-loop */
   if (timeWaited < maxWaitTime) return workflowExecution;
   throw new Error('Workflow Never Started.');
 }

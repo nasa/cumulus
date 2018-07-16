@@ -12,7 +12,12 @@ const {
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { loadConfig } = require('../helpers/testUtils');
-const { createOrUseTestStream, putRecordOnStream, waitForTestSfStarted } = require('../helpers/kinesisHelpers');
+const {
+  createOrUseTestStream,
+  putRecordOnStream,
+  waitForActiveStream,
+  waitForTestSfStarted
+} = require('../helpers/kinesisHelpers');
 const testConfig = loadConfig();
 const lambdaStep = new LambdaStep();
 
@@ -65,7 +70,7 @@ const expectedSyncGranulesPayload = {
 // When Cumulus is configured to trigger a CNM workflow from a Kinesis stream and a message appears on the stream, Cumulus triggers the workflow
 
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const maxWaitTime = 240000;
+  const maxWaitTime = 1000 * 60 * 2;
   let workflowExecution;
   let executionStatus;
   let s3FileHead;
@@ -81,6 +86,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     try {
       await createOrUseTestStream(streamName);
       console.log('createOrUseTestStream');
+      await waitForActiveStream(streamName);
+      console.log('waits for the stream to be ready');
       await putRecordOnStream(streamName, record);
       console.log('putRecordOnStream');
       workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
