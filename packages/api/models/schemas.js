@@ -1,5 +1,19 @@
 'use strict';
 
+// Async Operation record definition
+module.exports.asyncOperation = {
+  title: 'AsyncOperation Object',
+  description: 'Cumulus API AsyncOperation Table schema',
+  type: 'object',
+  properties: {
+    id: {
+      title: 'id',
+      description: 'id',
+      type: 'string'
+    }
+  }
+};
+
 // Collection Record Definition
 module.exports.collection = {
   title: 'Collection Object',
