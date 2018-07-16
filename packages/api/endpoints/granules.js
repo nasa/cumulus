@@ -223,7 +223,7 @@ async function handler(event) {
 }
 
 module.exports = {
-    handler,
-    get
+  handler,
+  get
 };
 

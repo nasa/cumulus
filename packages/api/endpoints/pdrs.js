@@ -82,7 +82,7 @@ function handler(event, context) {
 }
 
 module.exports = {
-    handler,
-    get
+  handler,
+  get
 };
 
