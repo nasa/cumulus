@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const { loadConfig } = require('../helpers/testUtils');
 const {
+  aws: { s3, s3ObjectExists },
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
@@ -65,15 +66,13 @@ describe('The Cumulus API', () => {
   });
 
   afterAll(async () => {
-    // await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
-
     // Remove the granule files added for the test
-    // await Promise.all(
-    //   inputPayload.granules[0].files.map((file) =>
-    //     s3().deleteObject({
-    //       Bucket: config.bucket, Key: `${file.path}/${file.name}`
-    //     }).promise())
-    // );
+    await Promise.all(
+      inputPayload.granules[0].files.map((file) =>
+        s3().deleteObject({
+          Bucket: config.bucket, Key: `${file.path}/${file.name}`
+        }).promise())
+    );
   });
   it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
@@ -103,15 +102,17 @@ describe('The Cumulus API', () => {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
-      const existsFirstTime = conceptExists(granule.cmrLink);
+      const existsFirstTime = await conceptExists(granule.cmrLink);
       expect(existsFirstTime).toEqual(true);
       // Remove the granule from CMR
-      await apiTestUtils.removeFromCMR({
+      const removeResponse = await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
         granuleId
       });
+
+      console.log(removeResponse);
       // Check that the granule was removed
-      const existsSecondTime = conceptExists(granule.cmrLink);
+      const existsSecondTime = await conceptExists(granule.cmrLink);
       expect(existsSecondTime).toEqual(false);
 
       // Reingest Granule and check that it was re-added to CMR
@@ -119,7 +120,7 @@ describe('The Cumulus API', () => {
         prefix: config.stackName,
         granuleId
       });
-      const existsThirdTime = conceptExists(granule.cmrLink);
+      const existsThirdTime = await conceptExists(granule.cmrLink);
       expect(existsThirdTime).toEqual(true);
     });
   });
