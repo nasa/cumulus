@@ -22,7 +22,6 @@ const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 // create all the variables needed across this test
 let esClient;
-let UsersTableEnvBefore;
 const esIndex = randomString();
 process.env.GranulesTable = randomString();
 process.env.stackName = randomString();
@@ -30,7 +29,8 @@ process.env.internal = randomString();
 const g = new models.Granule();
 
 let authToken;
-
+let granuleModel;
+let userModel;
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
@@ -42,16 +42,14 @@ test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   // create fake Granules table
-  await models.Manager.createTable(process.env.GranulesTable, { name: 'granuleId', type: 'S' });
+  granuleModel = new models.Granule();
+  await granuleModel.createTable();
 
   // create fake Users table
-  UsersTableEnvBefore = process.env.UsersTable;
-  process.env.UsersTable = randomString();
-  await models.Manager.createTable(process.env.UsersTable, { name: 'userName', type: 'S' });
+  userModel = new models.User(randomString());
+  await userModel.createTable();
 
-  const userDbClient = new models.User(process.env.UsersTable);
-
-  authToken = (await createFakeUser({ userDbClient: userDbClient })).password;
+  authToken = (await createFakeUser({ userDbClient: userModel })).password;
 });
 
 test.beforeEach(async (t) => {
@@ -74,13 +72,10 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(process.env.GranulesTable);
-  await models.Manager.deleteTable(process.env.UsersTable);
+  await granuleModel.deleteTable();
+  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
-
-  // Reset environment variables that we changed
-  process.env.UsersTable = UsersTableEnvBefore;
 });
 
 
