@@ -177,9 +177,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
     fakeGranule.files.push(fakeFilesFactory(bucket));
   }
 
-  const model = new models.Granule();
-  const fileModel = new models.FileClass();
-  await model.create(fakeGranule);
+  await granuleModel.create(fakeGranule);
 
   // get records from the stream
   let records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
@@ -203,7 +201,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   // change the record
   fakeGranule.status = 'failed';
   fakeGranule.files = drop(fakeGranule.files);
-  await model.create(fakeGranule);
+  await granuleModel.create(fakeGranule);
 
   // get records from the stream
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
@@ -223,7 +221,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   // t.true(err.message.includes('No record'));
 
   // delete the record
-  await model.delete({ granuleId: fakeGranule.granuleId });
+  await granuleModel.delete({ granuleId: fakeGranule.granuleId });
 
   // get records from the stream
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
