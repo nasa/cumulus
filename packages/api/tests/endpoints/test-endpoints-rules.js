@@ -4,11 +4,11 @@ const test = require('ava');
 const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const bootstrap = require('../lambdas/bootstrap');
-const models = require('../models');
-const rulesEndpoint = require('../endpoints/rules');
-const { testEndpoint } = require('../lib/testUtils');
-const { Search } = require('../es/search');
+const bootstrap = require('../../lambdas/bootstrap');
+const models = require('../../models');
+const rulesEndpoint = require('../../endpoints/rules');
+const { testEndpoint } = require('../../lib/testUtils');
+const { Search } = require('../../es/search');
 
 const esIndex = randomString();
 
@@ -127,21 +127,6 @@ test('PUT updates a rule', (t) => {
     newRule.updatedAt = record.updatedAt;
 
     t.deepEqual(record, newRule);
-  });
-});
-
-test('PUT returns "only state and rule.value values can be changed"', (t) => {
-  const updateEvent = {
-    body: JSON.stringify({ provider: 'new-whole-foods' }),
-    pathParameters: {
-      name: testRule.name
-    },
-    httpMethod: 'PUT'
-  };
-  return testEndpoint(rulesEndpoint, updateEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, 'Only state and rule.value values can be changed');
-    t.falsy(record);
   });
 });
 

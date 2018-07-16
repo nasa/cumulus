@@ -3,14 +3,14 @@
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const { Search } = require('../es/search');
-const indexer = require('../es/indexer');
-const bootstrap = require('../lambdas/bootstrap');
-const models = require('../models');
-const migrations = require('../migrations');
-const migration0 = require('../migrations/migration_0');
-const migration1 = require('../migrations/migration_1');
-const { fakeGranuleFactory, fakeExecutionFactory, deleteAliases } = require('../lib/testUtils');
+const { Search } = require('../../es/search');
+const indexer = require('../../es/indexer');
+const bootstrap = require('../../lambdas/bootstrap');
+const models = require('../../models');
+const migrations = require('../../migrations');
+const migration0 = require('../../migrations/migration_0');
+const migration1 = require('../../migrations/migration_1');
+const { fakeGranuleFactory, fakeExecutionFactory, deleteAliases } = require('../../lib/testUtils');
 
 let esClient;
 const esIndex = randomString();
