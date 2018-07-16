@@ -13,7 +13,7 @@ const { Search } = require('../../es/search');
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
-const providers = new models.Provider();
+let providers;
 const esIndex = randomString();
 
 const testProvider = {
@@ -24,16 +24,17 @@ const testProvider = {
   port: 80
 };
 
-const hash = { name: 'id', type: 'S' };
-
 async function setup() {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  await models.Manager.createTable(process.env.ProvidersTable, hash);
+
+  providers = new models.Provider();
+  await providers.createTable();
+
   await providers.create(testProvider);
 }
 
 async function teardown() {
-  await models.Manager.deleteTable(process.env.ProvidersTable);
+  await providers.deleteTable();
 
   const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
