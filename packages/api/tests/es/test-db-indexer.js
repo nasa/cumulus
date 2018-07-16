@@ -5,18 +5,18 @@ const drop = require('lodash.drop');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const models = require('../models');
-const { Search } = require('../es/search');
-const bootstrap = require('../lambdas/bootstrap');
-const dbIndexer = require('../lambdas/db-indexer');
-const { constructCollectionId } = require('../lib/utils');
+const models = require('../../models');
+const { Search } = require('../../es/search');
+const bootstrap = require('../../lambdas/bootstrap');
+const dbIndexer = require('../../lambdas/db-indexer');
+const { constructCollectionId } = require('../../lib/utils');
 const {
   fakeCollectionFactory,
   fakeGranuleFactory,
   fakeExecutionFactory,
   fakeFilesFactory,
   deleteAliases
-} = require('../lib/testUtils');
+} = require('../../lib/testUtils');
 
 let esClient;
 const seq = new Set(); // to keep track of processed records in the stream
