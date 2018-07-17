@@ -7,6 +7,12 @@ default:
     bucket: '{{buckets.internal.name}}'
     distributionEndpoint: '{{api_distribution_url}}'
     ems_provider: CUMULUS
+    KinesisTest:
+      privateBucket: '{{buckets.private.name}}'
+      publicBucket: '{{buckets.public.name}}'
+      awsAccountId: '{{AWS_ACCOUNT_ID}}'
+      awsRegion: us-east-1
+      streamName: '{{stackName}}-testStream'
     IngestGranule:
       IngestGranuleOutput:
         granules:
@@ -251,14 +257,6 @@ mhs:
   prefix: mhs-cumulus
   stackName: mhs-cumulus
   stackNameNoDash: mhsCumulus
-
-  test_configs:
-    privateBucket: mhs-private
-    publicBucket: mhs-public
-    streamName: '{{stackName}}-testStream'
-    awsAccountId: '{{AWS_ACCOUNT_ID}}'
-    awsRegion: us-east-1
-
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/mhs-ecs'
