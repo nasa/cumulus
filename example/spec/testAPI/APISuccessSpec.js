@@ -2,8 +2,9 @@
 
 const fs = require('fs-extra');
 const { loadConfig } = require('../helpers/testUtils');
+const sleep = require('sleep');
 const {
-  aws: { s3, s3ObjectExists },
+  aws: { s3 },
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
@@ -41,6 +42,23 @@ async function setupTestGranuleForAPI(bucket, granuleId, inputPayloadJson) {
   const updatedInputPayloadJson = globalReplace(inputPayloadJson, testDataGranuleId, granuleId);
 
   return JSON.parse(updatedInputPayloadJson);
+}
+
+async function waitForExist(CMRLink, outcome, retries) {
+  if (retries === 0) {
+    console.log('Out of retries.');
+    return false;
+  }
+  const existsCheck = await conceptExists(CMRLink);
+  console.log(existsCheck, ' ', outcome);
+  if (existsCheck !== outcome) {
+    sleep.sleep(2);
+    console.log('Retrying...');
+    return waitForExist(CMRLink, outcome, (retries - 1));
+  }
+  else {
+    return true;
+  }
 }
 
 describe('The Cumulus API', () => {
@@ -105,22 +123,20 @@ describe('The Cumulus API', () => {
       const existsFirstTime = await conceptExists(granule.cmrLink);
       expect(existsFirstTime).toEqual(true);
       // Remove the granule from CMR
-      const removeResponse = await apiTestUtils.removeFromCMR({
+      await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
         granuleId
       });
-
-      console.log(removeResponse);
       // Check that the granule was removed
-      const existsSecondTime = await conceptExists(granule.cmrLink);
-      expect(existsSecondTime).toEqual(false);
+      const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
+      expect(granuleRemoved).toEqual(true);
 
       // Reingest Granule and check that it was re-added to CMR
       await apiTestUtils.reingestGranule({
         prefix: config.stackName,
         granuleId
       });
-      const existsThirdTime = await conceptExists(granule.cmrLink);
+      const existsThirdTime = await await waitForExist(granule.cmrLink, true, 20);
       expect(existsThirdTime).toEqual(true);
     });
   });
