@@ -18,15 +18,18 @@ const {
   waitForActiveStream,
   waitForTestSfStarted
 } = require('../helpers/kinesisHelpers');
-const testConfig = loadConfig();
-const lambdaStep = new LambdaStep();
 
-const streamName = testConfig.streamName;
-const granuleId = 'L2_HR_PIXC_product_0001-of-4154';
-const recordTemplate = Handlebars.compile(fs.readFileSync(`./data/records/${granuleId}.json`, 'utf8'));
-const record = JSON.parse(recordTemplate(testConfig));
+const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
+
+const granuleId = record.product.name;
 const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
+
+const testConfig = loadConfig();
+
+const lambdaStep = new LambdaStep();
+const streamName = testConfig.streamName;
+
 
 const recordFile = record.product.files[0];
 const expectedTranslatePayload = {
@@ -47,7 +50,7 @@ const expectedTranslatePayload = {
 };
 
 const fileData = expectedTranslatePayload.granules[0].files[0];
-const filePrefix = 'file-staging/mhs-cumulus/L2_HR_PIXC';
+const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC`;
 
 const fileDataWithFilename = {
   ...fileData,
@@ -151,9 +154,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           resolve(data);
         });
       });
-      // Seems like a race condition?  Should create a date in the first 'The
-      // Ingest Kinesis workflow'::beforeAll?  Maybe I just don't understand
-      // what this is testing.
       expect(new Date() - s3FileHead.LastModified < maxWaitTime).toBeTruthy();
     });
   });
