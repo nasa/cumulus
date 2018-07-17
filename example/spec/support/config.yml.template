@@ -1,8 +1,0 @@
-stackName: ${STACK_NAME}
-bucketName: ${BUCKET_PREFIX}-internal
-privateBucket: ${BUCKET_PREFIX}-private
-publicBucket: ${BUCKET_PREFIX}-public
-streamName: ${PODAAC_TEST_STREAM}
-awsRegion: $AWS_REGION
-awsAccountId: $AWS_ACCOUNT_ID
-conceptId: G1222535147-CUMULUS
