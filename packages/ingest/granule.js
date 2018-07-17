@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
@@ -12,7 +13,6 @@ const path = require('path');
 const urljoin = require('url-join');
 const encodeurl = require('encodeurl');
 const cksum = require('cksum');
-const checksum = require('checksum');
 const xml2js = require('xml2js');
 const { aws, log } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
@@ -378,13 +378,13 @@ class Granule {
   * @returns {Promise} checksum value calculated from file
   **/
   async _hash(algorithm, filepath) {
-    const options = { algorithm };
-
-    return new Promise((resolve, reject) =>
-      checksum.file(filepath, options, (err, sum) => {
-        if (err) return reject(err);
-        return resolve(sum);
-      }));
+    return new Promise((resolve, reject) => {
+      const hash = crypto.createHash(algorithm);
+      const fileStream = fs.createReadStream(filepath);
+      fileStream.on('error', reject);
+      fileStream.on('data', (chunk) => hash.update(chunk));
+      fileStream.on('end', () => resolve(hash.digest('hex')));
+    });
   }
 
   /**
