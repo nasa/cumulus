@@ -1,6 +1,6 @@
 {
   "globalConnectionLimit": 10,
-  "host": "mhs-internal",
+  "host": "cumulus-data-shared",
   "id": "PODAAC_SWOT",
   "protocol": "s3"
 }
