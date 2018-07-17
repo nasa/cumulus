@@ -439,7 +439,7 @@ AsyncOperationsV1:
       function: Ref
       value: AsyncOperationsTableDynamoDB
   apiGateway:
-    - path: async-operations/{id}
+    - api: backend
+      path: v1/asyncOperations/{id}
       method: get
       cors: true
-      api: backend
