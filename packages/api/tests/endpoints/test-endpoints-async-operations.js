@@ -85,17 +85,15 @@ test.serial('GET /async-operation/{:id} returns a 404 status code if the request
 });
 
 test.serial('GET /async-operation/{:id} returns the async operation if it does exist', async (t) => {
+  const asyncOperation = await asyncOperationModel.create();
+
   const event = {
     headers: authHeaders,
     httpMethod: 'GET',
     pathParameters: {
-      id: randomString()
+      id: asyncOperation.id
     }
   };
-
-  await asyncOperationModel.create({
-    id: event.pathParameters.id
-  });
 
   const response = await asyncOperationsEndpoint(event, context);
 
