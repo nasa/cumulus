@@ -4,6 +4,7 @@ const test = require('ava');
 
 const {
   createQueue,
+  getExecutionArn,
   s3,
   sqs,
   recursivelyDeleteS3Bucket
@@ -253,6 +254,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 test.serial('The correct message is enqueued with a PDR', async (t) => {
   const event = t.context.event;
 
+  // if config has 'state_machine' and 'execution_name', the enqueued message
+  // will have 'parentExecutionArn'
+  event.config = Object.assign({}, event.config,
+    { state_machine: randomString(), execution_name: randomString() });
+
+  const arn = getExecutionArn(event.config.state_machine, event.config.execution_name);
+
   const pdrName = `pdr-name-${randomString()}`;
   const pdrPath = `pdr-path-${randomString()}`;
   event.input.pdr = { name: pdrName, path: pdrPath };
@@ -305,7 +313,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       cumulus_meta: {
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn
+        state_machine: t.context.stateMachineArn,
+        parentExecutionArn: arn
       },
       meta: {
         pdr: event.input.pdr,
@@ -332,7 +341,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       cumulus_meta: {
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn
+        state_machine: t.context.stateMachineArn,
+        parentExecutionArn: arn
       },
       meta: {
         pdr: event.input.pdr,

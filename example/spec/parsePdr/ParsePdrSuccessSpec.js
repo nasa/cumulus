@@ -3,7 +3,8 @@ const { Pdr, Execution } = require('@cumulus/api/models');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
-  LambdaStep
+  LambdaStep,
+  api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
 const { loadConfig, getExecutionUrl } = require('../helpers/testUtils');
@@ -17,7 +18,7 @@ const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/Parse
 
 describe('Parse PDR workflow', () => {
   let workflowExecution;
-  let pdrStatusCheckOutput;
+  let queueGranulesOutput;
   const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
   const collection = { name: 'MOD09GQ', version: '006' };
@@ -41,9 +42,9 @@ describe('Parse PDR workflow', () => {
       inputPayload
     );
 
-    pdrStatusCheckOutput = await lambdaStep.getStepOutput(
+    queueGranulesOutput = await lambdaStep.getStepOutput(
       workflowExecution.executionArn,
-      'PdrStatusCheck'
+      'QueueGranules'
     );
   });
 
@@ -64,24 +65,24 @@ describe('Parse PDR workflow', () => {
   });
 
   describe('QueueGranules lambda function', () => {
+    it('has expected pdr and arns output', () => {
+      expect(queueGranulesOutput.payload.running.length).toEqual(1);
+      expect(queueGranulesOutput.payload.pdr).toEqual(expectedParsePdrOutput.pdr);
+    });
+  });
+
+  describe('PdrStatusCheck lambda function', () => {
     let lambdaOutput = null;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(
         workflowExecution.executionArn,
-        'QueueGranules'
+        'PdrStatusCheck'
       );
     });
 
-    it('has expected pdr and arns output', () => {
-      expect(lambdaOutput.payload.running.length).toEqual(1);
-      expect(lambdaOutput.payload.pdr).toEqual(expectedParsePdrOutput.pdr);
-    });
-  });
-
-  describe('PdrStatusCheck lambda function', () => {
     it('has expected output', () => {
-      const payload = pdrStatusCheckOutput.payload;
+      const payload = lambdaOutput.payload;
       expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
       expect(payload.pdr).toEqual(expectedParsePdrOutput.pdr);
     });
@@ -111,7 +112,7 @@ describe('Parse PDR workflow', () => {
     let ingestGranuleExecutionStatus;
 
     beforeAll(async () => {
-      ingestGranuleWorkflowArn = pdrStatusCheckOutput.payload.running[0];
+      ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
     });
 
@@ -130,6 +131,31 @@ describe('Parse PDR workflow', () => {
       });
     });
   });
+
+  /** This test relies on the previous 'IngestGranule workflow' to complete */
+  describe('When accessing an execution via the API that was triggered from a parent step function', () => {
+    it('displays a link to the parent', async () => {
+      const ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+      const ingestGranuleExecution = await apiTestUtils.getExecution({
+        prefix: config.stackName,
+        arn: ingestGranuleWorkflowArn
+      });
+
+      expect(ingestGranuleExecution.parentArn).toEqual(workflowExecution.executionArn);
+    });
+  });
+
+  describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
+    it('does not display a parent link', async () => {
+      const parsePdrExecution = await apiTestUtils.getExecution({
+        prefix: config.stackName,
+        arn: workflowExecution.executionArn
+      });
+
+      expect(parsePdrExecution.parentArn).toBeUndefined();
+    });
+  });
+
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the pdr record is added to DynamoDB', async () => {
