@@ -13,8 +13,8 @@ const bootstrap = require('../../lambdas/bootstrap');
 const granuleEndpoint = require('../../endpoints/granules');
 const indexer = require('../../es/indexer');
 const {
-  createFakeUser,
-  fakeGranuleFactory
+  fakeGranuleFactory,
+  fakeUserFactory
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const xml2js = require('xml2js');
@@ -22,16 +22,19 @@ const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 // create all the variables needed across this test
 let esClient;
-const esIndex = randomString();
-process.env.GranulesTable = randomString();
-process.env.stackName = randomString();
-process.env.internal = randomString();
-const g = new models.Granule();
-
+let esIndex;
+let g;
 let authToken;
-let granuleModel;
 let userModel;
 test.before(async () => {
+  esIndex = randomString();
+  process.env.GranulesTable = randomString();
+  process.env.UsersTable = randomString();
+  process.env.stackName = randomString();
+  process.env.internal = randomString();
+
+  g = new models.Granule();
+
   // create esClient
   esClient = await Search.es('fakehost');
 
@@ -42,14 +45,13 @@ test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   // create fake Granules table
-  granuleModel = new models.Granule();
-  await granuleModel.createTable();
+  await g.createTable();
 
   // create fake Users table
-  userModel = new models.User(randomString());
+  userModel = new models.User();
   await userModel.createTable();
 
-  authToken = (await createFakeUser({ userDbClient: userModel })).password;
+  authToken = (await userModel.create(fakeUserFactory())).password;
 });
 
 test.beforeEach(async (t) => {
@@ -72,7 +74,7 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
-  await granuleModel.deleteTable();
+  await g.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);

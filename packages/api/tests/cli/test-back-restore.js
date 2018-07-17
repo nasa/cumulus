@@ -12,7 +12,7 @@ const restore = require('../../bin/restore');
 const backup = require('../../bin/backup');
 
 let tempFolder;
-const tableName = randomString();
+let tableName;
 
 /**
  * small helper for populating DynamoDB with fake records
@@ -33,7 +33,9 @@ async function populateDynamoDB(granuleModel, limit) {
 let gModel;
 
 test.before(async () => {
-  gModel = new models.Granule({ tableName });
+  tableName = randomString();
+  process.env.GranulesTable = tableName;
+  gModel = new models.Granule();
   await gModel.createTable();
 
   tempFolder = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
@@ -59,7 +61,7 @@ test.serial('backup records from DynamoDB', async (t) => {
   t.truthy(stats);
 
   // delete records
-  await gModel.batchWrite(granuleIds);
+  await gModel.batchWrite(granuleIds.map((id) => ({ granuleId: id })));
 });
 
 test.serial('restore records to DynamoDB', async (t) => {

@@ -83,8 +83,7 @@ class Aggregator extends Transform {
 class Importer extends Transform {
   constructor(table, concurrencyLimit) {
     super({ objectMode: true, highWaterMark: 100 });
-    this.model = new Manager();
-    this.model.tableName = table;
+    this.model = new Manager(table);
     this.promises = [];
     this.limit = pLimit(concurrencyLimit);
     this.count = 0;
