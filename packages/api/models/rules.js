@@ -168,8 +168,7 @@ class Rule extends Manager {
     const params = {
       EventSourceArn: item.rule.value,
       FunctionName: process.env.kinesisConsumer,
-      StartingPosition: 'AT_TIMESTAMP',
-      StartingPositionTimestamp: Date.now() / 1000.0,
+      StartingPosition: 'TRIM_HORIZON',
       Enabled: item.state === 'ENABLED'
     };
 
