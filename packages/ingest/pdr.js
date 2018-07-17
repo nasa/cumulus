@@ -1,10 +1,9 @@
 'use strict';
 
-const aws = require('@cumulus/common/aws');
 const fs = require('fs-extra');
 const { ftpMixin } = require('./ftp');
 const get = require('lodash.get');
-const getPdr = require('@cumulus/api/endpoints/pdrs').get
+const getPdr = require('@cumulus/api/endpoints/pdrs').get;
 const { httpMixin } = require('./http');
 const log = require('@cumulus/common/log');
 const { parsePdr } = require('./parse-pdr');
@@ -79,10 +78,10 @@ class Discover {
    */
   pdrIsNew(pdr) {
     const event = {
-      pathParameters: { pdrName : pdr.name }
+      pathParameters: { pdrName: pdr.name }
     };
 
-    const cb = (err, response) => {
+    const cb = (err, _) => {
       if (err) {
         if (err.name === 'RecordDoesNotExist') return pdr;
         throw err;

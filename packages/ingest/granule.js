@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
-const getGranule = require('@cumulus/api/endpoints/granules').get
+const getGranule = require('@cumulus/api/endpoints/granules').get;
 const groupBy = require('lodash.groupby');
 const identity = require('lodash.identity');
 const omit = require('lodash.omit');
@@ -135,7 +135,7 @@ class Discover {
     // already exists in dynamoDB. If it does then it isn't a new file and we are
     // going to ignore it.
     const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
-        this.granuleIsNew(discoveredFile))))
+      this.granuleIsNew(discoveredFile))))
       .filter(identity);
 
     // Group the files by granuleId
