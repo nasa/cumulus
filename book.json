@@ -1,0 +1,10 @@
+{
+    "title": "Cumulus Documentation",
+    "root": "docs",
+    "plugins": [ "versions" ],
+    "pluginsConfig": {
+        "versions": {
+            "type": "tags"
+        }
+    }
+}
