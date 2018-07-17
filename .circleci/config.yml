@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  build_and_test:
+  build:
     docker:
       - image: cumuluss/circleci:node-8.11
       - name: localstack
@@ -226,53 +226,74 @@ jobs:
       - store_artifacts:
           path: ~/project/coverage
 
-  build_and_publish:
-    docker:
-      - image: circleci/node:8.11
-    working_directory: ~/project
-    steps:
-      - checkout
       - run:
-          name: Install Dependencies
+          name: Prepare Unreleased Docs
           command: |
-            # checkout the latest tag
-            LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
-            echo $LATEST_GIT_TAG
-            git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
-            yarn
-            yarn ybootstrap
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              yarn docs-build
+              # mv _book unreleased
+            fi
+
 
       - run:
-          name: Publishing to NPM
+          name: Checkout Latest Tag 
           command: |
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-            VERSION=$(cat lerna.json | jq .version --raw-output)
-            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              # checkout the latest tag
+              LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
+              echo $LATEST_GIT_TAG
+              git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
+              yarn
+              yarn ybootstrap
+
+              # create versioned docs
+              # comment out until the next version release
+              # yarn docs-build
+              # mv unreleased _book/
+            fi
+  
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:b8:9d:87:6b:65:ff:6f:a1:7c:42:c5:3c:2f:39:93"
       
       - run:
-          name: Deploy cumulus with the npm packages source code
+          name: Publish Documentation
           command: |
-            cd example
-            yarn
-            sed -i -- 's/src/npm/g' spec/config.yml
-            ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/iam
-            ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              cd _book
+              git init
+              git config user.name "Devseed"
+              git config user.email "info@developmentseed.org"
+              git add -A
+              git commit -m "Automated build in circleci"
+              git push --force --quiet git@github.com:cumulus-nasa/cumulus master:gh-pages
+              rm -rf .git
+            fi
+
+      - run:
+          name: Publish to NPM
+          command: |
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+              VERSION=$(cat lerna.json | jq .version --raw-output)
+              ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm
+            fi
+      
+      - run:
+          name: Deploy cumulus with the npm packages source code to AWS
+          command: |
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              cd example
+              yarn
+              sed -i -- 's/src/npm/g' spec/config.yml
+              ./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/iam
+              ./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app && ./node_modules/.bin/kes lambda S3AccessTest deploy --kes-folder app --region us-west-1 --deployment cumulus-from-npm --template node_modules/@cumulus/deployment/app
+            fi
 
       - run:
           name: Run Tests 
           command: |
-            cd example
-            DEPLOYMENT=cumulus-from-npm yarn test
-      
-workflows:
-  version: 2
-  build_test_deploy:
-    jobs:
-      - build_and_test
-      - build_and_publish:
-          requires:
-            - build_and_test
-          filters:
-            branches:
-              only: master 
-
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              cd example
+              DEPLOYMENT=cumulus-from-npm yarn test
+            fi
