@@ -1,7 +1,7 @@
 {
   "provider": "PODAAC_SWOT",
   "collection": "L2_HR_PIXC",
-  "bucket": "{{bucketName}}",
+  "bucket": "{{buckets.internal.name}}",
   "identifier": "WILL_BE_REPLACED",
   "product": {
     "name": "L2_HR_PIXC_product_0001-of-4154",
@@ -9,7 +9,7 @@
     "files": [
       {
         "type": "data",
-        "uri": "s3://{{bucketName}}/unit/test-data/L2_HR_PIXC_product_0001-of-4154.h5",
+        "uri": "s3://{{buckets.internal.name}}/unit/test-data/L2_HR_PIXC_product_0001-of-4154.h5",
         "name": "L2_HR_PIXC_product_0001-of-4154.h5",
         "checksum-type": "md5",
         "checksum": "bb802eb3daf7d2c4e641b7551e89527f",

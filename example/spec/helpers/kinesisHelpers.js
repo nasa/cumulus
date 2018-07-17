@@ -1,12 +1,12 @@
 'use strict';
+
 const _ = require('lodash');
 const { Kinesis, StepFunctions } = require('aws-sdk');
 
 const {
   LambdaStep,
   getWorkflowArn,
-  timeout,
-  waitForCompletedExecution,
+  timeout
 } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../helpers/testUtils');
@@ -20,7 +20,7 @@ const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: config.awsRegion
 const waitPeriodMs = 1000;
 
 async function getLastExecution() {
-  const kinesisTriggerTestStpFnArn = await getWorkflowArn(config.stackName, config.bucketName, 'KinesisTriggerTest');
+  const kinesisTriggerTestStpFnArn = await getWorkflowArn(config.stackName, config.bucket, 'KinesisTriggerTest');
   return new Promise((resolve, reject) => {
     sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }, (err, data) => {
       if (err) {
