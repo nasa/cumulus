@@ -1,6 +1,5 @@
-// npm packages
-const fs = require('fs');
-const Handlebars = require('handlebars');
+'use strict';
+
 const { s3 } = require('@cumulus/common/aws');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
