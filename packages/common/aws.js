@@ -14,10 +14,12 @@ const pump = require('pump');
 /**
  * Join strings into an S3 key without a leading slash or double slashes
  *
- * @param {Array<string>} tokens - the strings to join
+ * @param {...string|Array<string>} args - the strings to join
  * @returns {string} the full S3 key
  */
-function s3Join(tokens) {
+function s3Join(...args) {
+  const tokens = Array.isArray(args[0]) ? args[0] : args;
+
   const removeLeadingSlash = (token) => token.replace(/^\//, '');
   const removeTrailingSlash = (token) => token.replace(/\/$/, '');
   const isNotEmptyString = (token) => token.length > 0;
@@ -208,6 +210,18 @@ exports.downloadS3File = (s3Obj, filepath) => {
     });
   });
 };
+
+
+/**
+* Get an object header from S3
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} - returns response from `S3.headObject` as a promise
+**/
+
+exports.headObject = (bucket, key) =>
+  exports.s3().headObject({ Bucket: bucket, Key: key }).promise();
 
 /**
 * Get an object from S3
