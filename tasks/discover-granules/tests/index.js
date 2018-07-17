@@ -123,7 +123,7 @@ test.serial('discover granules using HTTP', async (t) => {
   t.is(output.granules[0].files.length, 2);
 });
 
-test.only('discover granules using HTTP some granules are new', async (t) => {
+test.serial('discover granules using HTTP some granules are new', async (t) => {
   const event = cloneDeep(mur);
   event.config.collection.provider_path = '/granules/fake_granules';
   event.config.provider = {
@@ -134,11 +134,20 @@ test.only('discover granules using HTTP some granules are new', async (t) => {
 
   await validateConfig(t, event.config);
   await granuleModel.create({
-    granuleId: 'granule-1',
+    granuleId: 'granule-1.nc',
     collection: event.config.collection.name,
     status: 'running',
     execution: 'some-link',
-    createdAt: 42
+    createdAt: 42,
+    productVolume: 42
+  });
+  await granuleModel.create({
+    granuleId: 'granule-1.nc.md5',
+    collection: event.config.collection.name,
+    status: 'running',
+    execution: 'some-link',
+    createdAt: 42,
+    productVolume: 42
   });
 
   try {
@@ -148,7 +157,10 @@ test.only('discover granules using HTTP some granules are new', async (t) => {
     t.is(output.granules[0].files.length, 2);
   }
   finally {
-    await granuleModel.delete({ granuleId: 'granule-1' });
+    Promise.all([
+      granuleModel.delete({ granuleId: 'granule-1.nc' }),
+      granuleModel.delete({ granuleId: 'granule-1.nc.md5' })
+    ]);
   }
 });
 
