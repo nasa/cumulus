@@ -73,6 +73,14 @@ let sfSchedulerSpy;
 const stubQueueUrl = 'stubQueueUrl';
 
 let ruleModel;
+test.before(async () => {
+  process.env.CollectionsTable = randomString();
+  process.env.ProvidersTable = randomString();
+  process.env.RulesTable = randomString();
+  ruleModel = new Rule();
+  await ruleModel.createTable();
+});
+
 test.beforeEach(async (t) => {
   sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
   t.context.templateBucket = randomString();
@@ -104,25 +112,25 @@ test.beforeEach(async (t) => {
   sinon.stub(Provider.prototype, 'get').returns(provider);
   sinon.stub(Collection.prototype, 'get').returns(collection);
 
-  t.context.tableName = randomString();
-  process.env.RulesTable = t.context.tableName;
+  t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
   process.env.bucket = randomString();
   process.env.kinesisConsumer = randomString();
 
-  ruleModel = new Rule({ tableName: t.context.tableName });
-  await ruleModel.createTable();
   await Promise.all([rule1Params, rule2Params, disabledRuleParams]
     .map((rule) => ruleModel.create(rule)));
 });
 
 test.afterEach(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.templateBucket);
-  await ruleModel.deleteTable();
   sfSchedulerSpy.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
   Collection.prototype.get.restore();
+});
+
+test.after.always(async () => {
+  await ruleModel.deleteTable();
 });
 
 // getKinesisRule tests
