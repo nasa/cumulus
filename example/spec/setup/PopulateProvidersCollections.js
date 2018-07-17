@@ -54,8 +54,6 @@ describe('Populating providers, collections and rules to database', () => {
   let rules;
 
   beforeAll(async () => {
-    const { stackName, bucketName } = config;
-
     try {
       collections = await addCollections(config.stackName, config.bucket, collectionsDirectory);
       providers = await addProviders(config.stackName, config.bucket, providersDirectory, config.bucket);
