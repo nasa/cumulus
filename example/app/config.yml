@@ -253,7 +253,6 @@ mhs:
   stackNameNoDash: mhsCumulus
 
   test_configs:
-    bucketName: mhs-internal
     privateBucket: mhs-private
     publicBucket: mhs-public
     streamName: '{{stackName}}-testStream'
