@@ -14,21 +14,27 @@ const { fakeGranuleFactory, fakeExecutionFactory, deleteAliases } = require('../
 
 let esClient;
 const esIndex = randomString();
-process.env.internal = randomString();
-process.env.stackName = randomString();
-const granulesTable = `${process.env.stackName}-GranulesTable`;
-const executionsTable = `${process.env.stackName}-ExecutionsTable`;
 
-let granuleModel;
+
 let executionModel;
+let executionsTable;
+let granuleModel;
+let granulesTable;
 test.before(async () => {
+  process.env.internal = randomString();
+  process.env.stackName = randomString();
+
   await deleteAliases();
   await s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  granuleModel = new models.Granule({ tableName: granulesTable });
-  executionModel = new models.Execution({ tableName: executionsTable });
-
+  granulesTable = `${process.env.stackName}-GranulesTable`;
+  process.env.GranulesTable = granulesTable;
+  granuleModel = new models.Granule();
   await granuleModel.createTable();
+
+  executionsTable = `${process.env.stackName}-ExecutionsTable`;
+  process.env.ExecutionsTable = executionsTable;
+  executionModel = new models.Execution();
   await executionModel.createTable();
 
   esClient = await Search.es();
