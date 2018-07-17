@@ -227,6 +227,15 @@ jobs:
           path: ~/project/coverage
 
       - run:
+          name: Prepare Unreleased Docs
+          command: |
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              yarn docs-build
+              mv _book unreleased
+            fi
+
+
+      - run:
           name: Checkout Latest Tag 
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
@@ -236,6 +245,24 @@ jobs:
               git checkout tags/$LATEST_GIT_TAG -b latest_git_tag
               yarn
               yarn ybootstrap
+
+              # create versioned docs
+              yarn docs-build
+              mv unreleased _book/
+            fi
+  
+      - run:
+          name: Publish Documentation
+          command: |
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              cd _book
+              git init
+              git config user.name "Devseed"
+              git config user.email "info@developmentseed.org"
+              git add -A
+              git commit -m "Automated build in circleci"
+              git push --force --quiet git@github.com:cumulus-nasa/cumulus master:gh-pages
+              rm -rf .git
             fi
 
       - run:
