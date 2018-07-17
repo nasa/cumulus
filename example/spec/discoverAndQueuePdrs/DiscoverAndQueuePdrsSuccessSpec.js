@@ -83,7 +83,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
 
     describe('ParsePdr lambda function', () => {
-      it('outputs 1 granule and pdr', async () => {
+      it('successfully parses a granule from the PDR', async () => {
         const lambdaOutput = await lambdaStep.getStepOutput(
           parsePdrWorkflowArn,
           'ParsePdr'
@@ -94,7 +94,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
   });
 
-  /** This test relies on the previous 'IngestGranule workflow' to complete */
+  /** This test relies on the previous 'ParsePdr workflow' to complete */
   describe('When accessing an execution via the API that was triggered from a parent step function', () => {
     it('displays a link to the parent', async () => {
       const parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
@@ -109,12 +109,12 @@ describe('The Discover And Queue PDRs workflow', () => {
 
   describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
     it('does not display a parent link', async () => {
-      const parsePdrExecution = await apiTestUtils.getExecution({
+      const queuePdrsExecution = await apiTestUtils.getExecution({
         prefix: config.stackName,
         arn: workflowExecution.executionArn
       });
 
-      expect(parsePdrExecution.parentArn).toBeUndefined();
+      expect(queuePdrsExecution.parentArn).toBeUndefined();
     });
   });
 
