@@ -256,8 +256,8 @@ mhs:
     bucketName: mhs-internal
     privateBucket: mhs-private
     publicBucket: mhs-public
-    streamName: mhs-008-testStream
-    awsAccountId: 111111111111
+    streamName: '{{stackName}}-testStream'
+    awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
 
 
