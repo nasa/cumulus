@@ -11,16 +11,16 @@ const {
 
 const { loadConfig } = require('../helpers/testUtils');
 
-const config = loadConfig();
+const testConfig = loadConfig();
 
 const lambdaStep = new LambdaStep();
-const sfn = new StepFunctions({ region: config.awsRegion });
-const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: config.awsRegion });
+const sfn = new StepFunctions({ region: testConfig.KinesisTest.awsRegion });
+const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.KinesisTest.awsRegion });
 
 const waitPeriodMs = 1000;
 
 async function getLastExecution() {
-  const kinesisTriggerTestStpFnArn = await getWorkflowArn(config.stackName, config.bucket, 'KinesisTriggerTest');
+  const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
   return new Promise((resolve, reject) => {
     sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }, (err, data) => {
       if (err) {

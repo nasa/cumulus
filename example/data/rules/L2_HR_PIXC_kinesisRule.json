@@ -7,8 +7,8 @@
   "provider": "PODAAC_SWOT",
   "rule": {
     "type": "kinesis",
-    "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}",
-    "arn": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
+    "value": "arn:aws:kinesis:{{KinesisTest.awsRegion}}:{{KinesisTest.awsAccountId}}:stream/{{KinesisTest.streamName}}",
+    "arn": "arn:aws:kinesis:{{KinesisTest.awsRegion}}:{{KinesisTest.awsAccountId}}:stream/{{KinesisTest.streamName}}"
   },
   "state": "ENABLED",
   "workflow": "KinesisTriggerTest"
