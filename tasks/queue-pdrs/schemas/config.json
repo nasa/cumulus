@@ -13,6 +13,8 @@
     "collection": { "type": "object" },
     "provider": { "type": "object" },
     "queueUrl": { "type": "string" },
-    "parsePdrMessageTemplateUri": { "type": "string" }
+    "parsePdrMessageTemplateUri": { "type": "string" },
+    "state_machine": { "type": "string" },
+    "execution_name": { "type": "string" }
   }
 }

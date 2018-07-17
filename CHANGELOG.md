@@ -17,6 +17,8 @@ We may need to update the api documentation to reflect this.
         - metaOverride - overrides the meta of the new execution, accepts partial override
         - payloadOverride - overrides the payload of the new execution, accepts partial override
 
+- **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
+
 ### Changed
 - **CUMULUS-768** - Integration tests get S3 provider data from shared data folder
 
