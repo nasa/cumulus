@@ -264,6 +264,8 @@ DiscoverAndQueuePdrs:
         parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
+        state_machine: '{$.cumulus_meta.state_machine}'
+        execution_name: '{$.cumulus_meta.execution_name}'
       Type: Task
       Resource: ${QueuePdrsLambdaFunction.Arn}
       Catch:
@@ -323,6 +325,8 @@ ParsePdr:
         stackName: '{$.meta.stack}'
         granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
         queueUrl: '{$.meta.queues.startSF}'
+        state_machine: '{$.cumulus_meta.state_machine}'
+        execution_name: '{$.cumulus_meta.execution_name}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
       Catch:
