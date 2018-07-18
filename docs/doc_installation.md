@@ -3,17 +3,17 @@
 # Local Setup
 
 ```sh
-git clone git@github.com:cumulus-nasa/cumulus-nasa.github.io.git
-cd cumulus-nasa.github.io
-npm install
-npm start
+git clone git@github.com:nasa/cumulus
+cd cumulus 
+yarn
+yarn docs-serve
 ```
 
 ## Add a new page
 Add a `.md` file to `docs` folder and then a new item to `SUMMARY.md`.
 
 ## Add a new task
-The tasks list in docs/tasks.md is generated from the list of task package names in tasks.json. Do not edit the docs/tasks.md file directly. Instead, add the package name to tasks.json.
+The tasks list in docs/tasks.md is generated from the list of task package in the task folder. Do not edit the docs/tasks.md file directly.
 
 [Read more about adding a new task.](adding-a-task.md)
 
@@ -22,4 +22,4 @@ The tasks list in docs/tasks.md is generated from the list of task package names
 Look at the `bin/build-tasks-doc.js` and `bin/tasks-header.md` files to edit the output of the tasks build script.
 
 ## Deployment
-The `develop` branch is automatically built and deployed to master. The `master` branch is served by Github Pages. Do not make edits to the `master` branch.
+The `master` branch is automatically built and deployed to `gh-pages` branch. The `gh-pages` branch is served by Github Pages. Do not make edits to the `gh-pages` branch.

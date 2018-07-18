@@ -6,9 +6,9 @@ This is a guide for deploying a new instance of Cumulus.
 
 The deployment  documentation is current for the following component versions:
 
-* [Cumulus](https://github.com/cumulus-nasa/cumulus)
-* [Deployment Template](https://github.com/cumulus-nasa/template-deploy)
-* [Cumulus Dashboard](https://github.com/cumulus-nasa/cumulus-dashboard)
+* [Cumulus](https://github.com/nasa/cumulus)
+* [Deployment Template](https://github.com/nasa/template-deploy)
+* [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 
 The process involves:
 
@@ -42,9 +42,9 @@ The process involves:
 
 #### Needed Git Repositories:
 
-- [Cumulus](https://github.com/cumulus-nasa/cumulus)
-- [Cumulus Dashboard](https://github.com/cumulus-nasa/cumulus-dashboard)
-- [Deployment Template](https://github.com/cumulus-nasa/template-deploy)
+- [Cumulus](https://github.com/nasa/cumulus)
+- [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
+- [Deployment Template](https://github.com/nasa/template-deploy)
 
 
 ## Installation
@@ -53,7 +53,7 @@ The process involves:
 
 Clone repository
 
-    $ git clone https://github.com/cumulus-nasa/cumulus.git
+    $ git clone https://github.com/nasa/cumulus.git
 
 Change directory to the repository root
 
@@ -79,7 +79,7 @@ _If you already are working with an existing `<daac>-deploy` repository that is 
 
 Clone template-deploy repo and name appropriately for your DAAC or organization
 
-    $ git clone https://github.com/cumulus-nasa/template-deploy <daac>-deploy
+    $ git clone https://github.com/nasa/template-deploy <daac>-deploy
 
 Enter repository root directory
 
@@ -106,7 +106,7 @@ To use the specific version of the package installed during deployment, point th
     SyncGranule:
       source: 'node_modules/@cumulus/sync-granule/dist/'
 
-The [`Cumulus`](https://github.com/cumulus-nasa/cumulus) project contains default configuration values in `cumulus/packages/deployment/app.example`, however these need to be customized for your Cumulus app.
+The [`Cumulus`](https://github.com/nasa/cumulus) project contains default configuration values in `cumulus/packages/deployment/app.example`, however these need to be customized for your Cumulus app.
 
 ##### Copy the sample template into your repository {#copy-template}
 
@@ -116,7 +116,7 @@ Begin by copying the template directory to your project. You will modify it for 
 
 **Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can track your DAAC's configuration changes:
 
-    $ git remote set-url origin https://github.com/cumulus-nasa/<daac>-deploy
+    $ git remote set-url origin https://github.com/nasa/<daac>-deploy
     $ git push origin master
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
@@ -423,7 +423,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `npm install`:
 
-    $ git clone https://github.com/cumulus-nasa/cumulus-dashboard
+    $ git clone https://github.com/nasa/cumulus-dashboard
     $ cd cumulus-dashboard
     $ npm install
 
