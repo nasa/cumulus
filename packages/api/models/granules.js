@@ -62,16 +62,6 @@ class Granule extends Manager {
   }
 
   /**
-   * Create the dynamoDB for this class
-   *
-   * @returns {Promise} aws dynamodb createTable response
-   */
-  async createTable() {
-    const hash = { name: 'granuleId', type: 'S' };
-    return Manager.createTable(this.tableName, hash);
-  }
-
-  /**
    * Removes a give granule from CMR
    *
    * @param {string} granuleId - the granule ID

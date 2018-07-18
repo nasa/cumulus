@@ -46,7 +46,7 @@
     "boolean": "^0.1.3",
     "commander": "^2.15.0",
     "cwait": "^1.1.1",
-    "deprecate": "^1.0.0",
+    "depd": "^1.1.2",
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^14.2.2",
     "got": "^7.1.0",
