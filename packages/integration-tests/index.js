@@ -272,6 +272,43 @@ async function addRules(config, dataDirectory) {
 }
 
 /**
+ * deletes a rule by name
+ *
+ * @param {string} name - name of the rule to delete.
+ * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
+ */
+async function _deleteOneRule(name) {
+  const r = new Rule();
+  return r.get({ name: name }).then((item) => r.delete(item));
+}
+
+
+/**
+ * returns a list of rule objects
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} rulesDirectory - The directory continaing rules json files
+ * @returns {list} - list of rules found in rulesDirectory
+ */
+async function rulesList(stackName, bucketName, rulesDirectory) {
+  return setupSeedData(stackName, bucketName, rulesDirectory);
+}
+
+/**
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {Array} rules - List of rules objects to delete
+ * @returns {Promise.<integer>} - Number of rules deleted
+ */
+async function deleteRules(stackName, bucketName, rules) {
+  setProcessEnvironment(stackName, bucketName);
+  const promises = rules.map((rule) => limit(() => _deleteOneRule(rule.name)));
+  return Promise.all(promises).then((rs) => rs.length);
+}
+
+/**
  * build workflow message
  *
  * @param {string} stackName - Cloud formation stack name
@@ -349,6 +386,8 @@ module.exports = {
   getOnlineResources: cmr.getOnlineResources,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
   addRules,
+  deleteRules,
+  rulesList,
   timeout,
   getWorkflowArn
 };
