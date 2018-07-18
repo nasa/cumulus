@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { CollectionConfigStore } = require('@cumulus/common');
@@ -17,7 +18,9 @@ async function queueGranules(event) {
   const collectionConfigStore =
     new CollectionConfigStore(event.config.internalBucket, event.config.stackName);
 
-  const arn = getExecutionArn(event.config.state_machine, event.config.execution_name);
+  const arn = getExecutionArn(
+    get(event, 'cumulus_meta.state_machine'), get(event, 'cumulus_meta.execution_name')
+  );
 
   const executionArns = await Promise.all( // eslint-disable-line function-paren-newline
     granules.map(async (granule) => {
