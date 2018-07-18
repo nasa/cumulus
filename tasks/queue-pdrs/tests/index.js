@@ -4,6 +4,7 @@ const test = require('ava');
 
 const {
   createQueue,
+  getExecutionArn,
   s3,
   sqs,
   recursivelyDeleteS3Bucket
@@ -114,8 +115,10 @@ test.serial('PDRs are added to the queue', async (t) => {
 
 test.serial('The correct message is enqueued', async (t) => {
   const event = t.context.event;
-  // if config has 'state_machine' and 'execution_name', the enqueued message
+  // if event.cumulus_meta has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
+  event.cumulus_meta = { state_machine: randomString(), execution_name: randomString() };
+  const arn = getExecutionArn(event.cumulus_meta.state_machine, event.cumulus_meta.execution_name);
   event.input.pdrs = [
     {
       name: randomString(),
@@ -153,7 +156,8 @@ test.serial('The correct message is enqueued', async (t) => {
   event.input.pdrs.forEach((pdr) => {
     expectedMessages[pdr.name] = {
       cumulus_meta: {
-        state_machine: t.context.stateMachineArn
+        state_machine: t.context.stateMachineArn,
+        parentExecutionArn: arn
       },
       meta: {
         collection: { name: 'collection-name' },
