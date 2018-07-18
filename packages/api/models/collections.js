@@ -40,18 +40,12 @@ class Collection extends Manager {
   }
 
   constructor() {
-    super(process.env.CollectionsTable, collectionSchema);
-  }
-
-  /**
-   * Create the dynamoDB for this class
-   *
-   * @returns {Promise} aws dynamodb createTable response
-   */
-  async createTable() {
-    const hash = { name: 'name', type: 'S' };
-    const range = { name: 'version', type: 'S' };
-    return Manager.createTable(this.tableName, hash, range);
+    super({
+      tableName: process.env.CollectionsTable,
+      tableHash: { name: 'name', type: 'S' },
+      tableRange: { name: 'version', type: 'S' },
+      schema: collectionSchema
+    });
   }
 
   async create(item) {
