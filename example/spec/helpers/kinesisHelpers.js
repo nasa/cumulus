@@ -65,7 +65,7 @@ async function createOrUseTestStream(streamName) {
   }
   catch (err) {
     if (err.code === 'ResourceNotFoundException') {
-      console.log('Createing a new stream:', streamName);
+      console.log('Creating a new stream:', streamName);
       stream = await kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
     }
     else {
