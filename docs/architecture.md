@@ -20,7 +20,7 @@ Cumulus is a collection of resources for Cumulus developers. These resources are
 * `@cumulus/deployment`: A node module for creating a Cumulus deployment. A Cumulus deployment is comprised of 4 AWS Cloudformation stacks. Each Cumulus application will have it's own cloudformation stacks.
 * `@cumulus/api`: A node module for deploying the Cumulus API and other AWS resources required to run Cumulus workflows.
 * Node modules for tasks to be run as part of Cumulus Workflows, for example `@cumulus/parse-pdr`
-* [`cumulus-dashboard`](https://github.com/cumulus-nasa/cumulus-dashboard): Code to generate and deploy the dashboard for the Cumulus API.
+* [`cumulus-dashboard`](https://github.com/nasa/cumulus-dashboard): Code to generate and deploy the dashboard for the Cumulus API.
 
 ## Cloudformation Stacks
 
@@ -35,4 +35,4 @@ Cumulus is a collection of resources for Cumulus developers. These resources are
 
 ## Cumulus Dashboard
 
-Uses S3 static website hosting built using the [cumulus-dashboard](https://github.com/cumulus-nasa/cumulus-dashboard) repository.
+Uses S3 static website hosting built using the [cumulus-dashboard](https://github.com/nasa/cumulus-dashboard) repository.
