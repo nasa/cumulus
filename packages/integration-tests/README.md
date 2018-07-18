@@ -1,6 +1,6 @@
 # @cumulus/integration-tests
 
-[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
+[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
 
 @cumulus/integration-tests provides a CLI and functions for testing Cumulus workflow executions in a Cumulus deployment.
 
@@ -8,7 +8,7 @@
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
-[Cumulus Documentation](https://cumulus-nasa.github.io/)
+[Cumulus Documentation](https://nasa.github.io/cumulus)
 
 ## Installation
 
@@ -44,4 +44,4 @@ i.e. to test the HelloWorld workflow:
 
 ## Contributing
 
-See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)
+See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
