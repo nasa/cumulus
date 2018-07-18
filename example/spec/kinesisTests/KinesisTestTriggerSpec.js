@@ -143,16 +143,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       expect(this.lambdaOutput.payload).toEqual(expectedSyncGranulesPayload);
     });
 
-    it('syncs data to s3', async () => {
-      s3FileHead = await new Promise((resolve, reject) => {
-        s3().headObject({
-          Bucket: testConfig.KinesisTest.privateBucket,
-          Key: `${filePrefix}/${fileData.name}`
-        }, (err, data) => {
-          if (err) reject(err);
-          resolve(data);
-        });
-      });
+    it('syncs data to s3 target location.', async () => {
+      s3FileHead = await s3().headObject({
+        Bucket: testConfig.KinesisTest.privateBucket,
+        Key: `${filePrefix}/${fileData.name}`
+      }).promise();
       expect(new Date() - s3FileHead.LastModified < maxWaitTime).toBeTruthy();
     });
   });
