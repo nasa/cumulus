@@ -123,7 +123,7 @@ CNMToCMA:
   runtime: java8
   memory: 128
   s3Source:
-    bucket: '{{buckets.internal.name}}'
+    bucket: '{{buckets.shared.name}}'
     key: 'deploy/cumulus-process/CNMToCMA/CNMToCMA-0.0.1.zip'
   useMessageAdapter: false
   launchInVpc: true
