@@ -1,12 +1,12 @@
 # @cumulus/api
 
-[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
+[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
 
 *An API for the Cumulus Framework*
 
 This module build the Cumulus API for the Cumulus framework. It uses a combination of AWS services to create an API interface for configuring, managing and monitoring the Cumulus framework.
 
-For the full documentation of the API see: https://cumulus-nasa.github.io/cumulus-api
+For the full documentation of the API see: https://nasa.github.io/cumulus-api
 
 ### Config
 Includes the Kes configuration files needed for the deployment of the Api:
@@ -87,11 +87,11 @@ cumulus-api complete-reindex --help
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
-[Cumulus Documentation](https://cumulus-nasa.github.io/)
+[Cumulus Documentation](https://nasa.github.io/)
 
 ## Contributing
 
-See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)
+See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
 
 ## Running Tests
 
