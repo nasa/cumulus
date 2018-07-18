@@ -7,3 +7,4 @@ config/cloudformation-with-replacements.yml
 /.tmp
 /release.tar
 /app/local-helper.js
+package-lock.json
