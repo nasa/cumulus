@@ -57,7 +57,6 @@ describe('Populating providers, collections and rules to database', () => {
     try {
       collections = await addCollections(config.stackName, config.bucket, collectionsDirectory);
       providers = await addProviders(config.stackName, config.bucket, providersDirectory, config.bucket);
-      // Needs matched.
       rules = await addRules(config, rulesDirectory);
 
       console.log(`Uploading test data to S3 bucket: ${config.bucket}`);
