@@ -1,6 +1,6 @@
 'use strict';
 
-const deprecate = require('deprecate');
+const deprecate = require('depd')('@cumulus/api/Manager');
 const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
 const omit = require('lodash.omit');
@@ -8,9 +8,55 @@ const aws = require('@cumulus/common/aws');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 
+async function createTable(tableName, hash, range = null) {
+  const params = {
+    TableName: tableName,
+    AttributeDefinitions: [{
+      AttributeName: hash.name,
+      AttributeType: hash.type
+    }],
+    KeySchema: [{
+      AttributeName: hash.name,
+      KeyType: 'HASH'
+    }],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5,
+      WriteCapacityUnits: 5
+    },
+    StreamSpecification: {
+      StreamEnabled: true,
+      StreamViewType: 'NEW_AND_OLD_IMAGES'
+    }
+  };
+
+  if (range) {
+    params.KeySchema.push({
+      AttributeName: range.name,
+      KeyType: 'RANGE'
+    });
+
+    params.AttributeDefinitions.push({
+      AttributeName: range.name,
+      AttributeType: range.type
+    });
+  }
+
+  const output = await aws.dynamodb().createTable(params).promise();
+  await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+  return output;
+}
+
+async function deleteTable(tableName) {
+  const output = await aws.dynamodb().deleteTable({
+    TableName: tableName
+  }).promise();
+
+  await aws.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
+  return output;
+}
+
 /**
  * The manager class handles basic operations on a given DynamoDb table
- *
  */
 class Manager {
   static recordIsValid(item, schema = null, removeAdditional = false) {
@@ -32,111 +78,42 @@ class Manager {
     }
   }
 
-  static async createTable(tableName, hash, range = null) {
-    const params = {
-      TableName: tableName,
-      AttributeDefinitions: [{
-        AttributeName: hash.name,
-        AttributeType: hash.type
-      }],
-      KeySchema: [{
-        AttributeName: hash.name,
-        KeyType: 'HASH'
-      }],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 5,
-        WriteCapacityUnits: 5
-      },
-      StreamSpecification: {
-        StreamEnabled: true,
-        StreamViewType: 'NEW_AND_OLD_IMAGES'
-      }
-    };
-
-    if (range) {
-      params.KeySchema.push({
-        AttributeName: range.name,
-        KeyType: 'RANGE'
-      });
-
-      params.AttributeDefinitions.push({
-        AttributeName: range.name,
-        AttributeType: range.type
-      });
-    }
-
-    const output = await aws.dynamodb().createTable(params).promise();
-    await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
-    return output;
+  static createTable(tableName, hash, range = null) {
+    deprecate();
+    return createTable(tableName, hash, range);
   }
 
-  static async deleteTable(tableName) {
-    const output = await aws.dynamodb().deleteTable({
-      TableName: tableName
-    }).promise();
-
-    await aws.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
-    return output;
+  static deleteTable(tableName) {
+    deprecate();
+    return deleteTable(tableName);
   }
 
   /**
    * Constructor of Manager class
    *
-   * For backward compatability, this constructor supports two different types
-   * of arguments.  It would be nice in the future to only support the
-   * named-parameter arguments.
-   *
-   * Note: Support for the `createTable()` instance method is only available on
-   * objects created using named parameters.
-   *
-   * **Named parameters (preferred method)**
-   *
-   * constructor(params = {})
-   *
-   * The params object *must* contain the following properties:
-   *
-   * - {string} tableName - the name of the DynamoDB table associated with this model
-   * - {Object} tableHash - an object containing "name" and "type" properties,
-   *     which specify the partition key of the DynamoDB table.
-   *
-   * The params object *may* contain the following optional properties:
-   *
-   * - {Object} tableRange - an object containing "name" and "type" properties,
-   *     which specify the sort key of the DynamoDB table.
-   * - {Object} schema - the JSON schema to validate the records against.
-   *     Defaults to {}.
-   *
-   * **Positional arguments (deprecated)**
-   *
-   * constructor(tableName, schema = {})
-   *
-   * schema - the json schema to validate the records against
-   *
-   * @param {...*} args - See method documentation for actual usage
+   * @param {Object} params - params
+   * @param {string} params.tableName - (required) the name of the DynamoDB
+   *   table associated with this model
+   * @param {Object} params.tableHash - (required) an object containing "name"
+   *   and "type" properties, which specify the partition key of the DynamoDB
+   *   table.
+   * @param {Object} params.tableRange - an object containing "name" and "type"
+   *   properties, which specify the sort key of the DynamoDB table.
+   * @param {Object} params.schema - the JSON schema to validate the records
+   *   against.  Defaults to {}.
    * @returns {Object} an instance of a Manager object
    */
-  constructor(...args) {
-    // Maintain backward compatibility with the previous constructor format
-    if (typeof args[0] === 'string' || args[0] instanceof String) {
-      deprecate('Constructing models using positional arguments is deprecated, use params instead.'); // eslint-disable-line max-len
-      this.tableName = args[0];
-      this.schema = args[1] || {};
-    }
-    else {
-      const params = args[0];
+  constructor(params) {
+    // Make sure all required parameters are present
+    const requiredParameters = ['tableName', 'tableHash'];
+    requiredParameters.forEach((requiredParameter) => {
+      if (!params[requiredParameter]) throw new TypeError(`${requiredParameter} is required`);
+    });
 
-      // Make sure all required parameters are present
-      const requiredParameters = ['tableName', 'tableHash'];
-      requiredParameters.forEach((requiredParameter) => {
-        if (!params[requiredParameter]) throw new TypeError(`${requiredParameter} is required`);
-      });
-
-      this.tableName = params.tableName;
-      this.tableHash = params.tableHash;
-      this.tableRange = params.tableRange;
-      this.schema = params.schema || {};
-    }
-
+    this.tableName = params.tableName;
+    this.tableHash = params.tableHash;
+    this.tableRange = params.tableRange;
+    this.schema = params.schema || {};
     this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
   }
@@ -144,14 +121,10 @@ class Manager {
   /**
    * Create the DynamoDB table associated with a model
    *
-   * Note: This method is only supported on objects that were created using
-   *   named parameters.
-   *
    * @returns {Promise} resolves when the table exists
    */
-  async createTable() {
-    if (!this.tableHash) throw new TypeError('The createTable instance method only works on objects constructed using named parameters'); // eslint-disable-line max-len
-    return Manager.createTable(this.tableName, this.tableHash, this.tableRange);
+  createTable() {
+    return createTable(this.tableName, this.tableHash, this.tableRange);
   }
 
   /**
@@ -159,8 +132,8 @@ class Manager {
    *
    * @returns {Promise} resolves when the table no longer exists
    */
-  async deleteTable() {
-    return Manager.deleteTable(this.tableName);
+  deleteTable() {
+    return deleteTable(this.tableName);
   }
 
   /**

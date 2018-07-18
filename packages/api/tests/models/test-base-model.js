@@ -8,20 +8,6 @@ const {
 
 const Manager = require('../../models/base');
 
-test('The Manager constructor handles the old position-based arguments', (t) => {
-  let manager;
-
-  // Without specifying a schema
-  manager = new Manager('my-tableName-1');
-  t.is(manager.tableName, 'my-tableName-1');
-  t.deepEqual(manager.schema, {});
-
-  // With a schema
-  manager = new Manager('my-tableName-2', { a: 1 });
-  t.is(manager.tableName, 'my-tableName-2');
-  t.deepEqual(manager.schema, { a: 1 });
-});
-
 test('The Manager constructor throws an exception if the tableName property is not set', (t) => {
   t.throws(
     () => (new Manager({ tableHash: {} })),
