@@ -27,9 +27,11 @@ const granuleSchema = require('./schemas').granule;
 
 class Granule extends Manager {
   constructor() {
-    // initiate the manager class with the name of the
-    // granules table
-    super(process.env.GranulesTable, granuleSchema);
+    super({
+      tableName: process.env.GranulesTable,
+      tableHash: { name: 'granuleId', type: 'S' },
+      schema: granuleSchema
+    });
   }
 
   /**
@@ -57,16 +59,6 @@ class Granule extends Manager {
       return Promise.resolve(file);
     });
     return Promise.all(filePromises);
-  }
-
-  /**
-   * Create the dynamoDB for this class
-   *
-   * @returns {Promise} aws dynamodb createTable response
-   */
-  async createTable() {
-    const hash = { name: 'granuleId', type: 'S' };
-    return Manager.createTable(this.tableName, hash);
   }
 
   /**

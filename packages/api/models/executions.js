@@ -6,20 +6,13 @@ const Manager = require('./base');
 const { parseException } = require('../lib/utils');
 const executionSchema = require('./schemas').execution;
 
-
 class Execution extends Manager {
   constructor() {
-    super(process.env.ExecutionsTable, executionSchema);
-  }
-
-  /**
-   * Create the dynamoDB for this class
-   *
-   * @returns {Promise} aws dynamodb createTable response
-   */
-  async createTable() {
-    const hash = { name: 'arn', type: 'S' };
-    return Manager.createTable(this.tableName, hash);
+    super({
+      tableName: process.env.ExecutionsTable,
+      tableHash: { name: 'arn', type: 'S' },
+      schema: executionSchema
+    });
   }
 
   /**
