@@ -19,10 +19,10 @@
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/pdr-status-check",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

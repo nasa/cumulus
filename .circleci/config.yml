@@ -266,7 +266,7 @@ jobs:
               git config user.email "info@developmentseed.org"
               git add -A
               git commit -m "Automated build in circleci"
-              git push --force --quiet git@github.com:cumulus-nasa/cumulus master:gh-pages
+              git push --force --quiet git@github.com:nasa/cumulus master:gh-pages
               rm -rf .git
             fi
 
