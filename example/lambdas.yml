@@ -122,7 +122,6 @@ CNMToCMA:
   timeout: 300
   runtime: java8
   memory: 128
-  # source: './podaac-artifacts/CNMToCMA'
   s3Source:
     bucket: '{{buckets.internal.name}}'
     key: 'deploy/cumulus-process/CNMToCMA/CNMToCMA-0.0.1.zip'
