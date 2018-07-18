@@ -2,9 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const got = require('got');
 
-const npmUrl = 'https://registry.npmjs.com/';
 const tasksHeaderPath = path.join(__dirname, 'tasks-header.md');
 const tasksHeader = fs.readFileSync(tasksHeaderPath, 'utf8');
 const tasksOutputFilePath = path.join(__dirname, '..', 'docs', 'tasks.md');
@@ -18,18 +16,6 @@ const tasksOutputFilePath = path.join(__dirname, '..', 'docs', 'tasks.md');
 function catchError(err) {
   console.log(err); // eslint-disable-line no-console
   process.exit(1);
-}
-
-/**
- * Get the task package data from npm
- *
- * @param {string} taskName - task name i.e. @cumulus/discover-granules
- * @returns {Object} task data from npm
- */
-function getTaskPkg(taskName) {
-  // npm registry is weird. it wants slashes to be uri encoded but not @ symbols
-  const url = npmUrl + taskName.split('/').join('%2F');
-  return got(url, { json: true }).then((res) => res.body);
 }
 
 /**
@@ -52,10 +38,11 @@ function createTaskResourceLinks(packageName, sourceUrl, homepage) {
  * Create the markdown documentation for the task using package
  * data from npm
  *
- * @param {Object} pkg - package data from npm
+ * @param {Object} taskName - pname of the task package
  * @returns {string} markdown documentation
  */
-function createTaskMarkdown(pkg) {
+function createTaskMarkdown(taskName) {
+  const pkg = require(`../tasks/${taskName}/package.json`); // eslint-disable-line global-require, import/no-dynamic-require, max-len
   const name = pkg.name;
   const homepage = pkg.homepage;
   const description = pkg.description;
@@ -69,7 +56,7 @@ function createTaskMarkdown(pkg) {
   const output = [];
 
   const header = homepage ? `[${name}](${homepage})` : name;
-  output.push(`### ${header}`)
+  output.push(`### ${header}`);
   output.push(description);
   output.push('');
   if (homepage) {
@@ -97,14 +84,18 @@ function createTasksDoc(tasks) {
   });
 }
 
+/**
+ * Get the list of tasks in the tasks folder
+ *
+ * @returns {Array} of task names
+ */
 function getTaskList() {
   const files = fs.readdirSync('tasks');
   return files
-    .filter((file) => !file.startsWith('.'))
-    .map((file) => `@cumulus/${file}`);
+    .filter((file) => !file.startsWith('.'));
 }
 
-const taskDataRequests = getTaskList().sort().map(getTaskPkg);
+const taskDataRequests = getTaskList().sort();
 
 Promise.all(taskDataRequests)
   .then(createTasksDoc)
