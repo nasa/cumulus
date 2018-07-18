@@ -115,10 +115,12 @@ test.serial('PDRs are added to the queue', async (t) => {
 
 test.serial('The correct message is enqueued', async (t) => {
   const event = t.context.event;
-  // if event.cumulus_meta has 'state_machine' and 'execution_name', the enqueued message
+  // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
-  event.cumulus_meta = { state_machine: randomString(), execution_name: randomString() };
-  const arn = getExecutionArn(event.cumulus_meta.state_machine, event.cumulus_meta.execution_name);
+  event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
+  const arn = getExecutionArn(
+    event.cumulus_config.state_machine, event.cumulus_config.execution_name
+  );
   event.input.pdrs = [
     {
       name: randomString(),
