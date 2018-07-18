@@ -38,7 +38,7 @@ function createTaskResourceLinks(packageName, sourceUrl, homepage) {
  * Create the markdown documentation for the task using package
  * data from npm
  *
- * @param {Object} taskName - pname of the task ackage
+ * @param {Object} taskName - pname of the task package
  * @returns {string} markdown documentation
  */
 function createTaskMarkdown(taskName) {
