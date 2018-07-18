@@ -44,13 +44,21 @@ async function setupTestGranuleForAPI(bucket, granuleId, inputPayloadJson) {
   return JSON.parse(updatedInputPayloadJson);
 }
 
+/**
+ * Checks for granule in CMR until it get the desired outcome or hits
+ * the number of retries.
+ *
+ * @param {string} CMRLink - url for grnaule in CMR
+ * @param {string} outcome - desired outcome
+ * @param {string} retries - number of remaining tries
+ * @returns {boolean} - whether or not the granule exists
+ */
 async function waitForExist(CMRLink, outcome, retries) {
   if (retries === 0) {
     console.log('Out of retries.');
     return false;
   }
   const existsCheck = await conceptExists(CMRLink);
-  console.log(existsCheck, ' ', outcome);
   if (existsCheck !== outcome) {
     sleep.sleep(2);
     console.log('Retrying...');
@@ -70,10 +78,7 @@ describe('The Cumulus API', () => {
   let granuleId;
 
   beforeAll(async () => {
-    console.log('Starting API test');
     granuleId = randomStringFromRegex(granuleRegex);
-
-    console.log(`granule id: ${granuleId}`);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForAPI(config.bucket, granuleId, inputPayloadJson);
@@ -92,6 +97,7 @@ describe('The Cumulus API', () => {
         }).promise())
     );
   });
+
   it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
@@ -106,7 +112,6 @@ describe('The Cumulus API', () => {
   });
 
   describe('reingest a granule', () => {
-    // const granuleId = inputPayload.granules[0].granuleId;
     it('executes with success status', async () => {
       const response = await apiTestUtils.reingestGranule({
         prefix: config.stackName,
@@ -115,29 +120,62 @@ describe('The Cumulus API', () => {
       expect(response.status).toEqual('SUCCESS');
     });
 
-    it('successfully reingest a granule', async () => {
+    it('uses reingest', async () => {
       const granule = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
-      const existsFirstTime = await conceptExists(granule.cmrLink);
-      expect(existsFirstTime).toEqual(true);
+
+      // Reingest Granule and compare the updatedAt times
+      await apiTestUtils.reingestGranule({
+        prefix: config.stackName,
+        granuleId
+      });
+      await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      expect(granule.updatedAt).not.toEqual(true);
+    });
+
+    it('in place with applyWorkflow', async () => {
+      const granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+
+      await apiTestUtils.applyWorkflow({
+        prefix: config.stackName,
+        granuleId,
+        workflow: 'IngestGranule'
+      });
+
+      const recentGranule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      expect(granule.updatedAt).not.toEqual(recentGranule.updatedAt);
+    });
+  });
+
+  describe('removeFromCMR', () => {
+    it('removes the ingested granule from CMR', async () => {
+      const granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      const existsInCMR = await conceptExists(granule.cmrLink);
+      expect(existsInCMR).toEqual(true);
+
       // Remove the granule from CMR
       await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
         granuleId
       });
+
       // Check that the granule was removed
       const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
       expect(granuleRemoved).toEqual(true);
-
-      // Reingest Granule and check that it was re-added to CMR
-      await apiTestUtils.reingestGranule({
-        prefix: config.stackName,
-        granuleId
-      });
-      const existsThirdTime = await await waitForExist(granule.cmrLink, true, 20);
-      expect(existsThirdTime).toEqual(true);
     });
   });
 });
