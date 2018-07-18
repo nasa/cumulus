@@ -15,8 +15,6 @@
     "internalBucket": { "type": "string" },
     "provider": { "type": "object" },
     "queueUrl": { "type": "string" },
-    "stackName": { "type": "string" },
-    "state_machine": { "type": "string" },
-    "execution_name": { "type": "string" }
+    "stackName": { "type": "string" }
   }
 }

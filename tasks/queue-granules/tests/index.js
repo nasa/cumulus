@@ -254,12 +254,11 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 test.serial('The correct message is enqueued with a PDR', async (t) => {
   const event = t.context.event;
 
-  // if config has 'state_machine' and 'execution_name', the enqueued message
+  // if the event.cumulus_meta has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
-  event.config = Object.assign({}, event.config,
-    { state_machine: randomString(), execution_name: randomString() });
+  event.cumulus_meta = { state_machine: randomString(), execution_name: randomString() };
 
-  const arn = getExecutionArn(event.config.state_machine, event.config.execution_name);
+  const arn = getExecutionArn(event.cumulus_meta.state_machine, event.cumulus_meta.execution_name);
 
   const pdrName = `pdr-name-${randomString()}`;
   const pdrPath = `pdr-path-${randomString()}`;
