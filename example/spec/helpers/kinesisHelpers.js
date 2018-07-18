@@ -19,6 +19,11 @@ const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.Kines
 
 const waitPeriodMs = 1000;
 
+/**
+ * returns the most recently executed KngestTriggerTest workflow
+ *
+ * @returns {Object} state function execution .
+ */
 async function getLastExecution() {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
   const data = await sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }).promise();
@@ -103,8 +108,14 @@ async function putRecordOnStream(streamName, record) {
   }).promise();
 }
 
-// Wait until a we discover an execution has started which matches our record identifier.
-// That will identify the execution we want to test.
+/**
+ *  Wait until an exectution matching the desired execution starts.
+ *
+ * @param {string} recordIdentifier - random string identifying correct execution for test
+ * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
+ * @returns {Object} - {executionArn: <arn>, status: <status>}
+ * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
+ */
 async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
   let timeWaited = 0;
   let lastExecution;
