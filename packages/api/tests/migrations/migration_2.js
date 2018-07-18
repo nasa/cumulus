@@ -2,56 +2,24 @@
 
 const test = require('ava');
 const {
-  aws: {
-    createAndWaitForDynamoDbTable,
-    dynamodb
-  },
-  testUtils: {
-    randomString
-  }
+  aws: { dynamodb },
+  testUtils: { randomString }
 } = require('@cumulus/common');
 const { run } = require('../../migrations/migration_2');
 const models = require('../../models');
 
 test('build-files-table handler properly populates the files table', async (t) => {
   // Create the two tables
-  t.context.granulesTableName = randomString();
   t.context.filesTableName = randomString();
+  process.env.FilesTable = t.context.filesTableName;
+  t.context.fileModel = new models.FileClass();
 
-  const granulesTableParams = {
-    TableName: t.context.granulesTableName,
-    AttributeDefinitions: [
-      { AttributeName: 'granuleId', AttributeType: 'S' }
-    ],
-    KeySchema: [
-      { AttributeName: 'granuleId', KeyType: 'HASH' }
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
-    }
-  };
+  t.context.granulesTableName = randomString();
+  process.env.GranulesTable = t.context.granulesTableName;
+  t.context.granuleModel = new models.Granule();
 
-  const filesTableParams = {
-    TableName: t.context.filesTableName,
-    AttributeDefinitions: [
-      { AttributeName: 'bucket', AttributeType: 'S' },
-      { AttributeName: 'key', AttributeType: 'S' }
-    ],
-    KeySchema: [
-      { AttributeName: 'bucket', KeyType: 'HASH' },
-      { AttributeName: 'key', KeyType: 'RANGE' }
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
-    }
-  };
-
-  await Promise.all([
-    createAndWaitForDynamoDbTable(granulesTableParams),
-    createAndWaitForDynamoDbTable(filesTableParams)
-  ]);
+  await t.context.fileModel.createTable();
+  await t.context.granuleModel.createTable();
 
   // Write data to the granules table
   const batchWriteItemParams = { RequestItems: {} };
@@ -179,6 +147,6 @@ test('build-files-table handler properly populates the files table', async (t) =
 });
 
 test.afterEach.always(async (t) => {
-  await models.Manager.deleteTable(t.context.granulesTableName);
-  await models.Manager.deleteTable(t.context.filesTableName);
+  await t.context.fileModel.deleteTable();
+  await t.context.granuleModel.deleteTable();
 });
