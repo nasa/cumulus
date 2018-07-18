@@ -1,6 +1,6 @@
 # @cumulus/cmrjs
 
-[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
+[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
 
 A Node.js client to read from, write to, and delete from NASA's Common Metadata Repository (CMR) API.
 
@@ -8,7 +8,7 @@ A Node.js client to read from, write to, and delete from NASA's Common Metadata 
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
-[Cumulus Documentation](https://cumulus-nasa.github.io/)
+[Cumulus Documentation](https://nasa.github.io/cumulus)
 
 ## Test
 
@@ -24,4 +24,4 @@ Documentation on the CMR REST API endpoints is here:
 
 ## Contributing
 
-See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)
+See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
