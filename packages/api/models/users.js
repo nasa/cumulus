@@ -3,14 +3,15 @@
 const Manager = require('./base');
 
 class User extends Manager {
-  constructor(usersTable) {
-    // The usersTable argument is used when this class is used in tests, and
-    // the environment variable is used when this class is used in AWS Lambda
-    // functions.
+  constructor() {
     super({
-      tableName: usersTable || process.env.UsersTable,
+      tableName: process.env.UsersTable,
       tableHash: { name: 'userName', type: 'S' }
     });
+  }
+
+  delete(userName) {
+    return super.delete({ userName });
   }
 }
 module.exports = User;

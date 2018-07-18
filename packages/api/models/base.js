@@ -206,25 +206,26 @@ class Manager {
     return this.dynamodbDocClient.batchGet(params).promise();
   }
 
-  async batchWrite(_deletes, _puts) {
-    let deletes = _deletes;
-    let puts = _puts;
-    deletes = deletes ? deletes.map((d) => ({ DeleteRequest: { Key: d } })) : [];
-    puts = puts ? puts.map((_d) => {
-      const d = _d;
-      d.updatedAt = Date.now();
-      return { PutRequest: { Item: d } };
-    }) : [];
+  async batchWrite(deletes, puts) {
+    const deleteRequests = (deletes || []).map((Key) => ({
+      DeleteRequest: { Key }
+    }));
 
-    const items = deletes.concat(puts);
+    const putRequests = (puts || []).map((item) => ({
+      PutRequest: {
+        Item: Object.assign({}, item, { updatedAt: Date.now() })
+      }
+    }));
 
-    if (items.length > 25) {
+    const requests = deleteRequests.concat(putRequests);
+
+    if (requests > 25) {
       throw new Error('Batch Write supports 25 or fewer bulk actions at the same time');
     }
 
     const params = {
       RequestItems: {
-        [this.tableName]: items
+        [this.tableName]: requests
       }
     };
 

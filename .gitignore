@@ -22,3 +22,9 @@ packages/deployment/app/*.js
 coverage/
 tasks/*/cumulus-message-adapter/
 backups
+site
+node_modules
+_book
+*.html
+gitbook
+search_index.json
