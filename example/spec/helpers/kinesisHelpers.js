@@ -20,7 +20,7 @@ const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.awsRe
 const waitPeriodMs = 1000;
 
 /**
- * returns the most recently executed KngestTriggerTest workflow
+ * returns the most recently executed KinesisTriggerTest workflow
  *
  * @returns {Object} state function execution .
  */
