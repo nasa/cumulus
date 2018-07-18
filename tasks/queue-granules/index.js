@@ -19,7 +19,7 @@ async function queueGranules(event) {
     new CollectionConfigStore(event.config.internalBucket, event.config.stackName);
 
   const arn = getExecutionArn(
-    get(event, 'cumulus_meta.state_machine'), get(event, 'cumulus_meta.execution_name')
+    get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
 
   const executionArns = await Promise.all( // eslint-disable-line function-paren-newline
