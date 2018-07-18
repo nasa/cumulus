@@ -14,6 +14,6 @@ describe('Cleans up Test Resources', () => {
   });
 
   it('Closes a kinesis test stream.', async () => {
-    await deleteTestStream(testConfig.KinesisTest.streamName);
+    await deleteTestStream(testConfig.streamName);
   });
 });

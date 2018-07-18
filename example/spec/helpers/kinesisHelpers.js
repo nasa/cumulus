@@ -14,8 +14,8 @@ const { loadConfig } = require('../helpers/testUtils');
 const testConfig = loadConfig();
 
 const lambdaStep = new LambdaStep();
-const sfn = new StepFunctions({ region: testConfig.KinesisTest.awsRegion });
-const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.KinesisTest.awsRegion });
+const sfn = new StepFunctions({ region: testConfig.awsRegion });
+const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.awsRegion });
 
 const waitPeriodMs = 1000;
 

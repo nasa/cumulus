@@ -27,7 +27,7 @@ record.identifier = recordIdentifier;
 const testConfig = loadConfig();
 
 const lambdaStep = new LambdaStep();
-const streamName = testConfig.KinesisTest.streamName;
+const streamName = testConfig.streamName;
 
 
 const recordFile = record.product.files[0];
@@ -53,8 +53,8 @@ const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC`;
 
 const fileDataWithFilename = {
   ...fileData,
-  filename: `s3://${testConfig.KinesisTest.privateBucket}/${filePrefix}/${recordFile.name}`,
-  bucket: testConfig.KinesisTest.privateBucket,
+  filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
+  bucket: testConfig.buckets.private.name,
   url_path: '',
   fileStagingDir: filePrefix
 };
@@ -78,7 +78,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   afterAll(async () => {
     await s3().deleteObject({
-      Bucket: testConfig.KinesisTest.privateBucket,
+      Bucket: testConfig.buckets.private.name,
       Key: `${filePrefix}/${fileData.name}`
     }).promise();
   });
@@ -145,7 +145,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     it('syncs data to s3 target location.', async () => {
       s3FileHead = await s3().headObject({
-        Bucket: testConfig.KinesisTest.privateBucket,
+        Bucket: testConfig.buckets.private.name,
         Key: `${filePrefix}/${fileData.name}`
       }).promise();
       expect(new Date() - s3FileHead.LastModified < maxWaitTime).toBeTruthy();
