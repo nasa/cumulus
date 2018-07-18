@@ -13,10 +13,10 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/common",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/common",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
     "build": "true",
