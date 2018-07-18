@@ -7,12 +7,9 @@ default:
     bucket: '{{buckets.internal.name}}'
     distributionEndpoint: '{{api_distribution_url}}'
     ems_provider: CUMULUS
-    KinesisTest:
-      privateBucket: '{{buckets.private.name}}'
-      publicBucket: '{{buckets.public.name}}'
-      awsAccountId: '{{AWS_ACCOUNT_ID}}'
-      awsRegion: us-east-1
-      streamName: '{{stackName}}-testStream'
+    streamName: '{{stackName}}-testStream'
+    awsAccountId: '{{AWS_ACCOUNT_ID}}'
+    awsRegion: us-east-1
     IngestGranule:
       IngestGranuleOutput:
         granules:
