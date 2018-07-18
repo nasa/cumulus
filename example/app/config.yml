@@ -285,7 +285,7 @@ mhs:
     shared:
       name: cumulus-data-shared
       type: shared
-  api_distribution_url: https://jzzohp5206.execute-api.us-east-1.amazonaws.com/dev/
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
   system_bucket: '{{buckets.internal.name}}'
 
   users:
