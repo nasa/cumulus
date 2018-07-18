@@ -37,7 +37,7 @@ const expectedTranslatePayload = {
       granuleId: record.product.name,
       files: [
         {
-          path: 'testing/integration',
+          path: 'cumulus-test-data/pdrs',
           url_path: recordFile.uri,
           bucket: record.bucket,
           name: recordFile.name,
