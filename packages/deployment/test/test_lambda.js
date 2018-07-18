@@ -11,7 +11,7 @@ const test = require('ava');
 const Lambda = require('../lib/lambda');
 const { fetchMessageAdapter } = require('../lib/adapter');
 
-const gitPath = 'cumulus-nasa/cumulus-message-adapter';
+const gitPath = 'nasa/cumulus-message-adapter';
 const zipFixturePath = 'test/fixtures/zipfile-fixture.zip';
 const zipFixtureSize = fs.statSync(zipFixturePath).size;
 
