@@ -123,38 +123,20 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
 
   /* eslint-disable no-await-in-loop */
   while (timeWaited < maxWaitTime && workflowExecution === undefined) {
-    try {
-      await timeout(waitPeriodMs);
-      timeWaited += waitPeriodMs;
-      try {
-        lastExecution = await getLastExecution();
+    await timeout(waitPeriodMs);
+    timeWaited += waitPeriodMs;
+    lastExecution = await getLastExecution();
+    // getLastExecution returns undefined if no previous execution exists
+    if (lastExecution && lastExecution.executionArn) {
+      const taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
+      if (taskOutput.payload.identifier === recordIdentifier) {
+        workflowExecution = lastExecution;
       }
-      catch (error) {
-        console.log(error);
-        throw error;
-      }
-      // getLastExecution returns undefined if no previous execution exists
-      if (lastExecution && lastExecution.executionArn) {
-        try {
-          const taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
-          if (taskOutput.payload.identifier === recordIdentifier) {
-            workflowExecution = lastExecution;
-          }
-        }
-        catch (error) {
-          console.log(error);
-          throw error;
-        }
-      }
-    }
-    catch (error) {
-      console.log(error);
-      throw error;
     }
   }
   /* eslint-disable no-await-in-loop */
   if (timeWaited < maxWaitTime) return workflowExecution;
-  throw new Error('Workflow Never Started.');
+  throw new Error('Never found started workflow.');
 }
 
 
