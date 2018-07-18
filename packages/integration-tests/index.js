@@ -241,7 +241,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null)
 
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
-    if (s3Host && provider.protocol === 's3' && provider.id === 's3_provider') {
+    if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
     }
     console.log(`adding provider ${provider.id}`);
