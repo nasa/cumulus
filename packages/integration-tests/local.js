@@ -20,7 +20,7 @@ const { fetchMessageAdapter } = require('@cumulus/deployment/lib/adapter');
  */
 async function downloadCMA(version) {
   // download and unzip the message adapter
-  const gitPath = 'cumulus-nasa/cumulus-message-adapter';
+  const gitPath = 'nasa/cumulus-message-adapter';
   const filename = 'cumulus-message-adapter.zip';
   const src = path.join(process.cwd(), 'tests', `${randomString()}.zip`);
   const dest = path.join(process.cwd(), 'tests', randomString());
