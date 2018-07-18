@@ -11,7 +11,7 @@ yarn
 
 ## Running tests locally
 
-These tests run against AWS, so a Cumulus deployment is needed. Set up the deployment using the configurations in this repository. Deployment instructions are located [here](https://cumulus-nasa.github.io/deployment/). The dashboard is not needed for these tests.
+These tests run against AWS, so a Cumulus deployment is needed. Set up the deployment using the configurations in this repository. Deployment instructions are located [here](https://nasa.github.io/cumulus/deployment/). The dashboard is not needed for these tests.
 
 ### How to configure your test stack
 
