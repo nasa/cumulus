@@ -21,19 +21,20 @@ const waitPeriodMs = 1000;
 
 async function getLastExecution() {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
-  return new Promise((resolve, reject) => {
-    sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }, (err, data) => {
-      if (err) {
-        reject(err);
-      }
-      else {
-        resolve(_.orderBy(data.executions, 'startDate', 'desc')[0]);
-      }
-    });
-  });
+  const data = await sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }).promise();
+  return (_.orderBy(data.executions, 'startDate', 'desc')[0]);
 }
 
 
+/**
+ * Wait for a number of periods for a kinesis stream to become active.
+ *
+ * @param {string} streamName - name of kinesis stream to wait for
+ * @param {integer} maxNumberElapsedPeriods - number of periods to wait for stream
+ *                  default value 30; duration of period is 1000ms
+ * @returns {string} current stream status: 'ACTIVE'
+ * @throws {Error} - Error describing current stream status
+ */
 async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 30) {
   let streamStatus = 'Anything';
   let elapsedPeriods = 0;
@@ -49,14 +50,26 @@ async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 30) {
   /* eslint-enable no-await-in-loop */
 
   if (streamStatus === 'ACTIVE') return streamStatus;
-  throw new Error(streamStatus);
+  throw new Error(`Stream never became active:  status: ${streamStatus}`);
 }
 
+/**
+ * Helper function to delete a stream by name
+ *
+ * @param {string} streamName - name of kinesis stream to delete
+ * @returns {Promise<Object>} - a kinesis delete stream proxy object.
+ */
 async function deleteTestStream(streamName) {
   return kinesis.deleteStream({ StreamName: streamName }).promise();
 }
 
-
+/**
+ *  returns a active kinesis stream, creating it if necessary.
+ *
+ * @param {string} streamName - name of stream to return
+ * @returns {Object} empty object if stream is created and ready.
+ * @throws {Error} Kinesis error if stream cannot be created.
+ */
 async function createOrUseTestStream(streamName) {
   let stream;
 
@@ -75,25 +88,24 @@ async function createOrUseTestStream(streamName) {
   return stream;
 }
 
-
+/**
+ * add a record to the kinesis stream.
+ *
+ * @param {string} streamName - kinesis stream name
+ * @param {Object} record - CNM object to drop on stream
+ * @returns {Promise<Object>} - Kinesis putRecord response proxy object.
+ */
 async function putRecordOnStream(streamName, record) {
-  return new Promise((resolve, reject) => {
-    kinesis.putRecord({
-      Data: JSON.stringify(record),
-      PartitionKey: '1',
-      StreamName: streamName
-    }, (err, data) => {
-      if (err) reject(err);
-      resolve(data);
-    });
-  });
+  return kinesis.putRecord({
+    Data: JSON.stringify(record),
+    PartitionKey: '1',
+    StreamName: streamName
+  }).promise();
 }
-
 
 // Wait until a we discover an execution has started which matches our record identifier.
 // That will identify the execution we want to test.
 async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
-
   let timeWaited = 0;
   let lastExecution;
   let workflowExecution;
