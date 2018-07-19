@@ -13,13 +13,12 @@ const { Search } = require('../../es/search');
 // create all the variables needed across this test
 let esClient;
 let fakePdrs;
-const hash = { name: 'pdrName', type: 'S' };
 const esIndex = randomString();
 process.env.PdrsTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
-const p = new models.Pdr();
 
+let p;
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
@@ -30,8 +29,8 @@ test.before(async () => {
   // create a fake bucket
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  // create fake granule table
-  await models.Manager.createTable(process.env.PdrsTable, hash);
+  p = new models.Pdr();
+  await p.createTable();
 
   // create fake granule records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
@@ -39,7 +38,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(process.env.PdrsTable);
+  await p.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
