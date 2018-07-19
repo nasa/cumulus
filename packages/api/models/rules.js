@@ -174,7 +174,7 @@ class Rule extends Manager {
           item.rule.arn = mappingEnabled.UUID;
           return item;
         }
-        await aws.lambda().deleteEventSourceMapping({ UUID: mappingExists.UUID }).promise();
+        await this.deleteKinesisEventSource({ UUID: mappingExists.UUID }).promise();
       }
     }
 
