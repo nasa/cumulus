@@ -47,7 +47,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   }
   finally {
     // Delete the user created for this request
-    await userModel.delete({ userName });
+    await userModel.delete(userName);
   }
 
   return JSON.parse(apiOutput.Payload);
