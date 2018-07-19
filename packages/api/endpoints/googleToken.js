@@ -19,11 +19,11 @@ const oauth2Client = new OAuth2(
  * AWS API Gateway function that handles callbacks from authentication, transforming
  * codes into tokens
  *
- * @param  {Object} event   Lambda event object
- * @param  {Object} context Lambda context object
- * @return {Object}         Response object including status, headers and body key / values.
+ * @param  {Object} event   - Lambda event object
+ * @param  {Object} context - Lambda context object
+ * @returns {Object}         Response object including status, headers and body key / values.
  */
-const token = function(event, context) {
+function token(event, context) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
@@ -33,9 +33,9 @@ const token = function(event, context) {
       if (error) {
         return resp(context, new Error(error));
       }
-      const access_token = tokens.access_token;
-      const token_expires = tokens.expiry_date;
-      const expires = (+new Date()) + (token_expires * 1000);
+      const accessToken = tokens.access_token;
+      const tokenExpires = tokens.expiry_date;
+      const expires = (+new Date()) + (tokenExpires * 1000);
 
       // Now tokens contains an access_token and an optional refresh_token. Save them.
       if (!error) {
@@ -48,24 +48,25 @@ const token = function(event, context) {
       }, (err, response) => {
         if (err) log.error(err);
         const userData = response.data;
-        // not sure if it's possible to have multiple emails but they are returned as a list.
-        // If users have multiple emails we will have to scan the users table to see if any are matches.
+        // not sure if it's possible to have multiple emails but they are
+        // returned as a list. If users have multiple emails we will have to
+        // scan the users table to see if any match.
         const userEmail = userData.emails[0].value;
 
         const u = new User();
         return u.get({ userName: userEmail })
-          .then((res) => {
-            u.update({ userName: userEmail }, { password: access_token, expires })
+          .then(() => {
+            u.update({ userName: userEmail }, { password: accessToken, expires });
           })
           .then(() => {
             if (state) {
-              log.info(`Log info: Redirecting to state: ${state} with token ${access_token}`);
+              log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
               return resp(context, null, 'Redirecting to the specified state', 301, {
-                Location: `${decodeURIComponent(state)}?token=${access_token}`
+                Location: `${decodeURIComponent(state)}?token=${accessToken}`
               });
             }
             log.info('Log info: No state specified, responding 200');
-            return resp(context, null, JSON.stringify({ token: access_token }), 200);
+            return resp(context, null, JSON.stringify({ token: accessToken }), 200);
           })
           .catch((e) => {
             if (e.message.includes('No record found for')) {
@@ -75,21 +76,20 @@ const token = function(event, context) {
           });
       });
     });
-  } else {
-    return resp(context, new Error('Request requires a code'));
   }
+  return resp(context, new Error('Request requires a code'));
 }
 
 /**
- * `login` is an AWS API Gateway function that redirects to the correct authentication endpoint with the correct client
- * ID to be used with the API
+ * `login` is an AWS API Gateway function that redirects to the correct
+ * authentication endpoint with the correct client ID to be used with the API
  *
- * @param  {Object} event   Lambda event object
- * @param  {Object} context Lambda context object
- * @param  {Function} cb    Lambda callback function
- * @return {Function}       Lambda callback function
+ * @param  {Object} event   - Lambda event object
+ * @param  {Object} context - Lambda context object
+ * @param  {Function} cb    - Lambda callback function
+ * @returns {Function}       Lambda callback function
  */
-const login = function(event, context, cb) {
+function login(event, context, cb) {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.email'
@@ -124,10 +124,10 @@ const login = function(event, context, cb) {
  * Main handler for the token endpoint.
  *
  * @function handler
- * @param  {Object}   event   Lambda event payload
- * @param  {Object}   context Lambda context - provided by AWS
- * @param  {Function} cb      Lambda callback function
- * @return {Function}         Calls the `login` or `resp` function.
+ * @param  {Object}   event   - Lambda event payload
+ * @param  {Object}   context - Lambda context - provided by AWS
+ * @param  {Function} cb      - Lambda callback function
+ * @returns {Function}         Calls the `login` or `resp` function.
  */
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
