@@ -73,7 +73,7 @@ const expectedSyncGranulesPayload = {
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const maxWaitTime = 1000 * 60 * 2;
+  const maxWaitTime = 1000 * 60 * 4;
   let workflowExecution;
   let executionStatus;
   let s3FileHead;
