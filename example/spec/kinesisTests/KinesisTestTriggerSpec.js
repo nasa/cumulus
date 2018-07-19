@@ -68,8 +68,10 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
-
-// When Cumulus is configured to trigger a CNM workflow from a Kinesis stream and a message appears on the stream, Cumulus triggers the workflow
+// When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
+// configured to trigger workflows when new records arrive on a Kinesis
+// stream. When a record appears on the stream, the kinesisConsumer lambda
+// triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const maxWaitTime = 1000 * 60 * 2;
   let workflowExecution;
