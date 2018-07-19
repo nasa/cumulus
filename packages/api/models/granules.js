@@ -1,17 +1,20 @@
 'use strict';
 
-const path = require('path');
-const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
-const merge = require('lodash.merge');
+const get = require('lodash.get');
+const path = require('path');
 const uniqBy = require('lodash.uniqby');
+
+const aws = require('@cumulus/ingest/aws');
+const commonAws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
-const aws = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { moveGranuleFiles } = require('@cumulus/ingest/granule');
+
 const Manager = require('./base');
+
 const {
   parseException,
   constructCollectionId,
@@ -24,19 +27,38 @@ const granuleSchema = require('./schemas').granule;
 
 class Granule extends Manager {
   constructor() {
-    // initiate the manager class with the name of the
-    // granules table
-    super(process.env.GranulesTable, granuleSchema);
+    super({
+      tableName: process.env.GranulesTable,
+      tableHash: { name: 'granuleId', type: 'S' },
+      schema: granuleSchema
+    });
   }
 
   /**
-   * Create the dynamoDB for this class
-   *
-   * @returns {Promise} aws dynamodb createTable response
-   */
-  async createTable() {
-    const hash = { name: 'granuleId', type: 'S' };
-    return Manager.createTable(this.tableName, hash);
+  * Adds fileSize values from S3 object metadata for granules missing that information
+  *
+  * @param {Array<Object>} files - Array of files from a payload granule object
+  * @returns {Promise<Array>} - Updated array of files with missing fileSize appended
+  */
+  addMissingFileSizes(files) {
+    const filePromises = files.map((file) => {
+      if (!('fileSize' in file)) {
+        return commonAws.headObject(file.bucket, file.filepath)
+          .then((result) => {
+            const updatedFile = file;
+            updatedFile.fileSize = result.ContentLength;
+            return updatedFile;
+          })
+          .catch((error) => {
+            log.error(`Error: ${error}`);
+            log.error(`Could not validate missing filesize for s3://${file.filename}`);
+
+            return file;
+          });
+      }
+      return Promise.resolve(file);
+    });
+    return Promise.all(filePromises);
   }
 
   /**
@@ -44,7 +66,7 @@ class Granule extends Manager {
    *
    * @param {string} granuleId - the granule ID
    * @param {string} collectionId - the collection ID
-   * @returns {Promise<undefined>} undefined
+   * @returns {Promise<undefined>} - undefined
    */
   async removeGranuleFromCmr(granuleId, collectionId) {
     log.info(`granules.removeGranuleFromCmr ${granuleId}`);
@@ -64,15 +86,29 @@ class Granule extends Manager {
    * start the re-ingest of a given granule object
    *
    * @param {Object} g - the granule object
-   * @returns {Promise<Object>} an object showing the start of the re-ingest
+   * @returns {Promise<undefined>} - undefined
    */
   async reingest(g) {
-    await this.applyWorkflow(g, 'IngestGranule', 'input');
-    return {
-      granuleId: g.granuleId,
-      action: 'reingest',
-      status: 'SUCCESS'
-    };
+    const { name, version } = deconstructCollectionId(g.collectionId);
+
+    // get the payload of the original execution
+    const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
+    const originalMessage = JSON.parse(status.execution.input);
+
+    const lambdaPayload = await Rule.buildPayload({
+      workflow: 'IngestGranule',
+      meta: originalMessage.meta,
+      payload: originalMessage.payload,
+      provider: g.provider,
+      collection: {
+        name,
+        version
+      }
+    });
+
+    await this.updateStatus({ granuleId: g.granuleId }, 'running');
+
+    await aws.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**
@@ -80,51 +116,29 @@ class Granule extends Manager {
    *
    * @param {Object} g - the granule object
    * @param {string} workflow - the workflow name
-   * @param {string} messageSource - 'input' or 'output' from previous execution
-   * @param {Object} metaOverride - overrides the meta of the new execution, accepts partial override
-   * @param {Object} payloadOverride - overrides the payload of the new execution, accepts partial override
-   * @returns {Promise<Object>} an object showing the start of the workflow execution
+   * @returns {Promise<undefined>} undefined
    */
-  async applyWorkflow(g, workflow, messageSource, metaOverride, payloadOverride) {
+  async applyWorkflow(g, workflow) {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
-    try {
-      // get the payload of the original execution
-      const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
-      const originalMessage = JSON.parse(status.execution[messageSource]);
-    
-      const payload = await Rule.buildPayload({
-        workflow,
-        provider: g.provider,
-        collection: {
-          name,
-          version
-        },
-        meta: metaOverride ? merge(originalMessage.meta, metaOverride) : originalMessage.meta,
-        payload: payloadOverride ? merge(originalMessage.payload, payloadOverride) : originalMessage.payload
-      });
-
-      await this.updateStatus({ granuleId: g.granuleId }, 'running');
-
-      await aws.invoke(process.env.invoke, payload);
-      return {
-        granuleId: g.granuleId,
-        action: `applyWorkflow ${workflow}`,
-        status: 'SUCCESS'
-      };
-    }
-    catch (e) {
-      log.error(g.granuleId, e);
-      return {
-        granuleId: g.granuleId,
-        action: `applyWorkflow ${workflow}`,
-        status: 'FAILED',
-        error: e.message
+    const lambdaPayload = await Rule.buildPayload({
+      workflow,
+      payload: {
+        granules: [g]
+      },
+      provider: g.provider,
+      collection: {
+        name,
+        version
       }
-    }
+    });
+
+    await this.updateStatus({ granuleId: g.granuleId }, 'running');
+
+    await aws.invoke(process.env.invoke, lambdaPayload);
   }
 
-  /**   
+  /**
    * Move a granule's files to destination locations specified
    *
    * @param {Object} g - the granule object
@@ -149,7 +163,7 @@ class Granule extends Manager {
    * @param {Object} payload - sns message containing the output of a Cumulus Step Function
    * @returns {Promise<Array>} granule records
    */
-  createGranulesFromSns(payload) {
+  async createGranulesFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
     const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
@@ -171,6 +185,9 @@ class Granule extends Manager {
 
     const done = granules.map(async (g) => {
       if (g.granuleId) {
+        let granuleFiles = g.files;
+        granuleFiles = await this.addMissingFileSizes(uniqBy(g.files, 'filename'));
+
         const doc = {
           granuleId: g.granuleId,
           pdrName: get(payload, 'meta.pdr.name'),
@@ -179,7 +196,7 @@ class Granule extends Manager {
           provider: get(payload, 'meta.provider.id'),
           execution,
           cmrLink: get(g, 'cmrLink'),
-          files: uniqBy(g.files, 'filename'),
+          files: granuleFiles,
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),

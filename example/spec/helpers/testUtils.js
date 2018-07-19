@@ -1,24 +1,37 @@
 const fs = require('fs');
 const { S3 } = require('aws-sdk');
+const { Config } = require('kes');
 const lodash = require('lodash');
-const yaml = require('js-yaml');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
 /**
- * Loads and parses the configuration defined in `./spec/config.yml` or
- * `./spec/config.override.yml` if it exists.
+ * Loads and parses the configuration defined in `./app/config.yml`
  *
  * @returns {Object} - Configuration object
 */
 function loadConfig() {
-  let configFileName = './spec/config.yml';
-  const overrideConfigFilename = './spec/config.override.yml';
-
-  if (fs.existsSync(overrideConfigFilename) && !process.env.USE_DEFAULT_CONFIG) {
-    configFileName = overrideConfigFilename;
+  // make sure deployment env variable is set
+  if (!process.env.DEPLOYMENT) {
+    throw new Error(
+      'You MUST set DEPLOYMENT environment variable with the name' +
+      ' of your deployment before running tests.'
+    );
   }
-  return yaml.safeLoad(fs.readFileSync(configFileName), 'utf8');
+
+  const params = {
+    deployment: process.env.DEPLOYMENT,
+    configFile: './app/config.yml',
+    kesFolder: './app'
+  };
+
+  const config = new Config(params);
+
+  if (config.deployment === 'default') {
+    throw new Error('the default deployment cannot be used for integration tests');
+  }
+
+  return config.test_configs;
 }
 
 /**
@@ -34,7 +47,7 @@ function templateFile({ inputTemplateFilename, config }) {
   const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename));
   const templatedInput = lodash.merge(lodash.cloneDeep(inputTemplate), config);
   let jsonString = JSON.stringify(templatedInput, null, 2);
-  jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', process.env.AWS_ACCOUNT_ID);
+  jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);
   const templatedInputFilename = inputTemplateFilename.replace('.template', '');
   fs.writeFileSync(templatedInputFilename, jsonString);
   return templatedInputFilename;

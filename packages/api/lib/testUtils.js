@@ -4,29 +4,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 
 /**
- * Add a user that can be authenticated against
- *
- * @param {Object} params - params
- * @param {User} params.userDbClient - an instance of the API Users model
- * @returns {Promise<Object>} - an object containing a userName and a password
- */
-async function createFakeUser({ userDbClient }) {
-  // Create the user and token for this request
-  const userName = randomString();
-  const password = randomString();
-
-  await userDbClient.create([
-    {
-      userName,
-      password,
-      expires: Date.now() + (60 * 60 * 1000) // Token expires in 1 hour
-    }
-  ]);
-
-  return { userName, password };
-}
-
-/**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
  * lambda functions used as backend in ApiGateway
@@ -50,7 +27,7 @@ function testEndpoint(endpoint, event, testCallback) {
 /**
  * searches for all the existings aliases in ElasticSearch and delete
  * all of them
- * 
+ *
  * @returns {Promise<Array>} a list of elasticsearch responses
  */
 async function deleteAliases() {
@@ -158,6 +135,32 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 }
 
 /**
+ * Add a user that can be authenticated against
+ *
+ * @param {Object} params - params
+ * @param {string} params.userName - a username
+ *   Defaults to a random string
+ * @param {string} params.password - a password
+ *   Defaults to a random string
+ * @param {integer} params.expires - an expiration time for the token
+ *   Defaults to one hour from now
+ * @returns {Object} - a fake user
+ */
+function fakeUserFactory(params = {}) {
+  const {
+    userName = randomString(),
+    password = randomString(),
+    expires = Date.now() + (60 * 60 * 1000) // Default to 1 hour
+  } = params;
+
+  return {
+    userName,
+    password,
+    expires
+  };
+}
+
+/**
  * creates fake collection records
  *
  * @returns {Object} fake pdr object
@@ -176,7 +179,6 @@ function fakeCollectionFactory() {
 }
 
 module.exports = {
-  createFakeUser,
   testEndpoint,
   fakeGranuleFactory,
   fakePdrFactory,
@@ -184,5 +186,6 @@ module.exports = {
   fakeExecutionFactory,
   fakeRuleFactory,
   fakeFilesFactory,
+  fakeUserFactory,
   deleteAliases
 };

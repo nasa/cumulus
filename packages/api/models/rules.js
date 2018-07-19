@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign */
+
 'use strict';
 
 const get = require('lodash.get');
@@ -9,7 +10,12 @@ const { rule } = require('./schemas');
 
 class Rule extends Manager {
   constructor() {
-    super(process.env.RulesTable, rule);
+    super({
+      tableName: process.env.RulesTable,
+      tableHash: { name: 'name', type: 'S' },
+      schema: rule
+    });
+
     this.targetId = 'lambdaTarget';
   }
 
@@ -93,7 +99,7 @@ class Rule extends Manager {
 
     if (!exists) {
       const err = {
-        message: 'Workflow doesn\'t exist'
+        message: `Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`
       };
       throw err;
     }
@@ -182,12 +188,12 @@ class Rule extends Manager {
    * @param {*} item - the rule item
    * @returns {Promise} the response from event source update
    */
-  async updateKinesisEventSource(item) {
+  updateKinesisEventSource(item) {
     const params = {
       UUID: item.rule.arn,
       Enabled: item.state === 'ENABLED'
     };
-    return await aws.lambda().updateEventSourceMapping(params).promise();
+    return aws.lambda().updateEventSourceMapping(params).promise();
   }
 
   /**
@@ -204,7 +210,7 @@ class Rule extends Manager {
     const params = {
       UUID: item.rule.arn
     };
-    return await aws.lambda().deleteEventSourceMapping(params).promise();
+    return aws.lambda().deleteEventSourceMapping(params).promise();
   }
 
   /**
@@ -231,7 +237,6 @@ class Rule extends Manager {
 
     return (kinesisRules.Count && kinesisRules.Count > 0);
   }
-
 }
 
 module.exports = Rule;

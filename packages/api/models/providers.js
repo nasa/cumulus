@@ -6,16 +6,21 @@ const providerSchema = require('./schemas').provider;
 
 class Provider extends Manager {
   constructor() {
-    super(process.env.ProvidersTable, providerSchema);
+    super({
+      tableName: process.env.ProvidersTable,
+      tableHash: { name: 'id', type: 'S' },
+      schema: providerSchema
+    });
+
     this.removeAdditional = 'all';
   }
 
-  async encrypt(value) {
-    return await Crypto.encrypt(value);
+  encrypt(value) {
+    return Crypto.encrypt(value);
   }
 
-  async decrypt(value) {
-    return await Crypto.decrypt(value);
+  decrypt(value) {
+    return Crypto.decrypt(value);
   }
 
   async update(key, _item, keysToDelete = []) {

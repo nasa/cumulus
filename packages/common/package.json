@@ -13,10 +13,10 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/packages/common",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/common",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
     "build": "true",
@@ -56,6 +56,7 @@
     "mocha-junit-reporter": "^1.11.1",
     "promise-retry": "^1.1.1",
     "pump": "^3.0.0",
+    "randexp": "^0.4.9",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
