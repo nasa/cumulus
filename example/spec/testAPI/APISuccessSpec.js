@@ -76,6 +76,9 @@ describe('The Cumulus API', () => {
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
   let granuleId;
+  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
     granuleId = randomStringFromRegex(granuleRegex);
