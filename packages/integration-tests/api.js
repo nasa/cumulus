@@ -29,7 +29,8 @@ const {
 async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   const payload = cloneDeep(userPayload);
 
-  const userModel = new User(`${prefix}-UsersTable`);
+  process.env.UsersTable = `${prefix}-UsersTable`;
+  const userModel = new User();
 
   const { userName, password } = await userModel.create(fakeUserFactory());
 
