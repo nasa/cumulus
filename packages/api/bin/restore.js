@@ -83,8 +83,15 @@ class Aggregator extends Transform {
 class Importer extends Transform {
   constructor(table, concurrencyLimit) {
     super({ objectMode: true, highWaterMark: 100 });
-    this.model = new Manager();
-    this.model.tableName = table;
+    this.model = new Manager({
+      tableName: table,
+      // This in an invalid hash but, since we don't know what the correct hash
+      // is in this case, we need to use an empty one.  As long as
+      // this.model.createTable() is never called on this Manager instance,
+      // this _should_ work.  This should probably be re-implemented since
+      // Manager is an abstract class and is not intended to be instantiated.
+      tableHash: {}
+    });
     this.promises = [];
     this.limit = pLimit(concurrencyLimit);
     this.count = 0;

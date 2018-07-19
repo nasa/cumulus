@@ -1,5 +1,6 @@
 'use strict';
 
+const deprecate = require('depd')('@cumulus/api/Manager');
 const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
 const omit = require('lodash.omit');
@@ -7,9 +8,55 @@ const aws = require('@cumulus/common/aws');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 
+async function createTable(tableName, hash, range = null) {
+  const params = {
+    TableName: tableName,
+    AttributeDefinitions: [{
+      AttributeName: hash.name,
+      AttributeType: hash.type
+    }],
+    KeySchema: [{
+      AttributeName: hash.name,
+      KeyType: 'HASH'
+    }],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5,
+      WriteCapacityUnits: 5
+    },
+    StreamSpecification: {
+      StreamEnabled: true,
+      StreamViewType: 'NEW_AND_OLD_IMAGES'
+    }
+  };
+
+  if (range) {
+    params.KeySchema.push({
+      AttributeName: range.name,
+      KeyType: 'RANGE'
+    });
+
+    params.AttributeDefinitions.push({
+      AttributeName: range.name,
+      AttributeType: range.type
+    });
+  }
+
+  const output = await aws.dynamodb().createTable(params).promise();
+  await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+  return output;
+}
+
+async function deleteTable(tableName) {
+  const output = await aws.dynamodb().deleteTable({
+    TableName: tableName
+  }).promise();
+
+  await aws.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
+  return output;
+}
+
 /**
  * The manager class handles basic operations on a given DynamoDb table
- *
  */
 class Manager {
   static recordIsValid(item, schema = null, removeAdditional = false) {
@@ -31,65 +78,62 @@ class Manager {
     }
   }
 
-  static async createTable(tableName, hash, range = null) {
-    const params = {
-      TableName: tableName,
-      AttributeDefinitions: [{
-        AttributeName: hash.name,
-        AttributeType: hash.type
-      }],
-      KeySchema: [{
-        AttributeName: hash.name,
-        KeyType: 'HASH'
-      }],
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 5,
-        WriteCapacityUnits: 5
-      },
-      StreamSpecification: {
-        StreamEnabled: true,
-        StreamViewType: 'NEW_AND_OLD_IMAGES'
-      }
-    };
-
-    if (range) {
-      params.KeySchema.push({
-        AttributeName: range.name,
-        KeyType: 'RANGE'
-      });
-
-      params.AttributeDefinitions.push({
-        AttributeName: range.name,
-        AttributeType: range.type
-      });
-    }
-
-    const output = await aws.dynamodb().createTable(params).promise();
-    await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
-    return output;
+  static createTable(tableName, hash, range = null) {
+    deprecate();
+    return createTable(tableName, hash, range);
   }
 
-  static async deleteTable(tableName) {
-    const output = await aws.dynamodb().deleteTable({
-      TableName: tableName
-    }).promise();
-
-    await aws.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
-    return output;
+  static deleteTable(tableName) {
+    deprecate();
+    return deleteTable(tableName);
   }
 
   /**
-   * constructor of Manager class
+   * Constructor of Manager class
    *
-   * @param {string} tableName - the name of the table
-   * @param {Object} schema - the json schema to validate the records against
-   * @returns {Object} an instance of Manager class
+   * @param {Object} params - params
+   * @param {string} params.tableName - (required) the name of the DynamoDB
+   *   table associated with this model
+   * @param {Object} params.tableHash - (required) an object containing "name"
+   *   and "type" properties, which specify the partition key of the DynamoDB
+   *   table.
+   * @param {Object} params.tableRange - an object containing "name" and "type"
+   *   properties, which specify the sort key of the DynamoDB table.
+   * @param {Object} params.schema - the JSON schema to validate the records
+   *   against.  Defaults to {}.
+   * @returns {Object} an instance of a Manager object
    */
-  constructor(tableName, schema = {}) {
-    this.tableName = tableName;
-    this.schema = schema; // variable for the record's json schema
+  constructor(params) {
+    // Make sure all required parameters are present
+    const requiredParameters = ['tableName', 'tableHash'];
+    requiredParameters.forEach((requiredParameter) => {
+      if (!params[requiredParameter]) throw new TypeError(`${requiredParameter} is required`);
+    });
+
+    this.tableName = params.tableName;
+    this.tableHash = params.tableHash;
+    this.tableRange = params.tableRange;
+    this.schema = params.schema || {};
     this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
+  }
+
+  /**
+   * Create the DynamoDB table associated with a model
+   *
+   * @returns {Promise} resolves when the table exists
+   */
+  createTable() {
+    return createTable(this.tableName, this.tableHash, this.tableRange);
+  }
+
+  /**
+   * Delete the DynamoDB table associated with a model
+   *
+   * @returns {Promise} resolves when the table no longer exists
+   */
+  deleteTable() {
+    return deleteTable(this.tableName);
   }
 
   /**
@@ -135,25 +179,26 @@ class Manager {
     return this.dynamodbDocClient.batchGet(params).promise();
   }
 
-  async batchWrite(_deletes, _puts) {
-    let deletes = _deletes;
-    let puts = _puts;
-    deletes = deletes ? deletes.map((d) => ({ DeleteRequest: { Key: d } })) : [];
-    puts = puts ? puts.map((_d) => {
-      const d = _d;
-      d.updatedAt = Date.now();
-      return { PutRequest: { Item: d } };
-    }) : [];
+  async batchWrite(deletes, puts) {
+    const deleteRequests = (deletes || []).map((Key) => ({
+      DeleteRequest: { Key }
+    }));
 
-    const items = deletes.concat(puts);
+    const putRequests = (puts || []).map((item) => ({
+      PutRequest: {
+        Item: Object.assign({}, item, { updatedAt: Date.now() })
+      }
+    }));
 
-    if (items.length > 25) {
+    const requests = deleteRequests.concat(putRequests);
+
+    if (requests > 25) {
       throw new Error('Batch Write supports 25 or fewer bulk actions at the same time');
     }
 
     const params = {
       RequestItems: {
-        [this.tableName]: items
+        [this.tableName]: requests
       }
     };
 
