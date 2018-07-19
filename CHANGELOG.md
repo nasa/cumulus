@@ -27,7 +27,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.7.0] - 2018-07-02
 
-### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.7.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.7.0.html)
 
 ### Added
 - **GITC-776-1**
@@ -62,7 +62,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://cumulus-nasa.github.io/upgrade/1.6.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.6.0.html)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
@@ -178,7 +178,7 @@ We may need to update the api documentation to reflect this.
 ### Changed
 - Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
 - Lambda functions created by @cumulus/deployment will use node8.10 by default
-- Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
+- Moved [cumulus-integration-tests](https://github.com/nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
 - Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
 - **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html).
 - **CUMULUS-519:** ECS tasks are no longer restarted after each CF deployment unless `ecs.restartTasksOnDeploy` is set to true
@@ -343,12 +343,12 @@ We may need to update the api documentation to reflect this.
 - Test for FTP `useList` flag [CUMULUS-334] by @kkelly51
 
 ### Updated
-- The `queue-pdrs` task now uses the [cumulus-message-adapter-js](https://github.com/cumulus-nasa/cumulus-message-adapter-js)
+- The `queue-pdrs` task now uses the [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
   library
 - Updated the `queue-pdrs` JSON schemas
 - The test-utils schema validation functions now throw an error if validation
   fails
-- The `queue-granules` task now uses the [cumulus-message-adapter-js](https://github.com/cumulus-nasa/cumulus-message-adapter-js)
+- The `queue-granules` task now uses the [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
   library
 - Updated the `queue-granules` JSON schemas
 
@@ -367,23 +367,23 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.7.0...HEAD
-[v1.7.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.6.0...v1.7.0
-[v1.6.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.5...v1.6.0
-[v1.5.5]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.4...v1.5.5
-[v1.5.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.3...v1.5.4
-[v1.5.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...v1.5.3
-[v1.5.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...v1.5.2
-[v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
-[v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0
-[v1.4.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...v1.4.1
-[v1.4.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...v1.4.0
-[v1.3.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...v1.3.0
-[v1.2.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...v1.2.0
-[v1.1.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...v1.1.4
-[v1.1.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.2...v1.1.3
-[v1.1.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...v1.1.2
-[v1.1.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.1
-[v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
-[v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
-[v1.0.0]: https://github.com/cumulus-nasa/cumulus/compare/pre-v1-release...v1.0.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.7.0...HEAD
+[v1.7.0]: https://github.com/nasa/cumulus/compare/v1.6.0...v1.7.0
+[v1.6.0]: https://github.com/nasa/cumulus/compare/v1.5.5...v1.6.0
+[v1.5.5]: https://github.com/nasa/cumulus/compare/v1.5.4...v1.5.5
+[v1.5.4]: https://github.com/nasa/cumulus/compare/v1.5.3...v1.5.4
+[v1.5.3]: https://github.com/nasa/cumulus/compare/v1.5.2...v1.5.3
+[v1.5.2]: https://github.com/nasa/cumulus/compare/v1.5.1...v1.5.2
+[v1.5.1]: https://github.com/nasa/cumulus/compare/v1.5.0...v1.5.1
+[v1.5.0]: https://github.com/nasa/cumulus/compare/v1.4.1...v1.5.0
+[v1.4.1]: https://github.com/nasa/cumulus/compare/v1.4.0...v1.4.1
+[v1.4.0]: https://github.com/nasa/cumulus/compare/v1.3.0...v1.4.0
+[v1.3.0]: https://github.com/nasa/cumulus/compare/v1.2.0...v1.3.0
+[v1.2.0]: https://github.com/nasa/cumulus/compare/v1.1.4...v1.2.0
+[v1.1.4]: https://github.com/nasa/cumulus/compare/v1.1.3...v1.1.4
+[v1.1.3]: https://github.com/nasa/cumulus/compare/v1.1.2...v1.1.3
+[v1.1.2]: https://github.com/nasa/cumulus/compare/v1.1.1...v1.1.2
+[v1.1.1]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.1
+[v1.1.0]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.0
+[v1.0.1]: https://github.com/nasa/cumulus/compare/v1.0.0...v1.0.1
+[v1.0.0]: https://github.com/nasa/cumulus/compare/pre-v1-release...v1.0.0
