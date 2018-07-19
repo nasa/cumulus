@@ -85,33 +85,21 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     }).promise();
   });
 
-  beforeAll(() => {
-    this.workflowExecution = null;
-  });
 
-  it('finds or creates a test stream.', async () => {
-    await createOrUseTestStream(streamName);
-  });
+  beforeAll(async () => {
 
-  it('waits for the stream to be active.', async () => {
-    await waitForActiveStream(streamName);
-  });
-
-  it('places a record on the stream.', async () => {
-    await putRecordOnStream(streamName, record);
-  });
-
-  it('waits for the triggered step function to start', async () => {
-    workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
-    this.workflowExecution = workflowExecution;
-  });
-
-  it('finds a valid workflow execution.', () => {
-    expect(this.workflowExecution).not.toBe(undefined);
-  });
-
-  it('waits for step function to complete', async () => {
-    executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
+    try {
+      await createOrUseTestStream(streamName);
+      await waitForActiveStream(streamName);
+      await putRecordOnStream(streamName, record);
+      this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
+      executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
+    }
+    catch (error) {
+      console.log(error);
+      console.log('Tests conditions can\'t get met...exiting.');
+      process.exit(1);
+    }
   });
 
   it('executes successfully', () => {
@@ -119,12 +107,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('the TranslateMessage Lambda', () => {
-    beforeAll(() => {
-      this.lambdaOutput = null;
-    });
-
-    it('waits for CNMToCMA to complete', async () => {
-      this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CNMToCMA');
+    beforeAll(async () => {
+        this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CNMToCMA');
     });
 
     it('outputs the granules object', () => {
@@ -133,11 +117,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('the SyncGranule Lambda', () => {
-    beforeAll(() => {
-      this.lambdaOutput = null;
-    });
-
-    it('waits for SyncGranule to complete', async () => {
+    beforeAll(async () => {
       this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'SyncGranule');
     });
 
