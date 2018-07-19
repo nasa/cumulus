@@ -10,7 +10,11 @@ const pdrSchema = require('./schemas').pdr;
 
 class Pdr extends Manager {
   constructor() {
-    super(process.env.PdrsTable, pdrSchema);
+    super({
+      tableName: process.env.PdrsTable,
+      tableHash: { name: 'pdrName', type: 'S' },
+      schema: pdrSchema
+    });
   }
 
   /**

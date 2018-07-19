@@ -10,7 +10,12 @@ const { rule } = require('./schemas');
 
 class Rule extends Manager {
   constructor() {
-    super(process.env.RulesTable, rule);
+    super({
+      tableName: process.env.RulesTable,
+      tableHash: { name: 'name', type: 'S' },
+      schema: rule
+    });
+
     this.targetId = 'lambdaTarget';
   }
 

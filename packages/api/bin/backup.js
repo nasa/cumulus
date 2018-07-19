@@ -25,8 +25,13 @@ async function backup(table, region = 'us-east-1', folder = 'backups') {
     if (!process.env.LOCALSTACK_HOST) {
       throw new Error('The LOCALSTACK_HOST environment variable is not set.');
     }
+
+    dynoParams.accessKeyId = 'my-access-key-id';
+    dynoParams.secretAccessKey = 'my-secret-access-key';
+    dynoParams.region = 'us-east-1';
     dynoParams.endpoint = getLocalstackEndpoint('dynamodb');
   }
+
   const dyno = Dyno(dynoParams);
   const stringify = new stream.Transform({ objectMode: true });
   stringify._transform = function _transform(record, enc, callback) {
