@@ -135,7 +135,7 @@ test.serial('discover granules using HTTP some granules are new', async (t) => {
   await validateConfig(t, event.config);
   await granuleModel.create({
     granuleId: 'granule-1.nc',
-    collection: event.config.collection.name,
+    collectionId: event.config.collection.name,
     status: 'running',
     execution: 'some-link',
     createdAt: 42,
@@ -143,7 +143,7 @@ test.serial('discover granules using HTTP some granules are new', async (t) => {
   });
   await granuleModel.create({
     granuleId: 'granule-1.nc.md5',
-    collection: event.config.collection.name,
+    collectionId: event.config.collection.name,
     status: 'running',
     execution: 'some-link',
     createdAt: 42,
@@ -164,7 +164,7 @@ test.serial('discover granules using HTTP some granules are new', async (t) => {
   }
 });
 
-test.serial('discover granules using S3', async (t) => {
+test.only('discover granules using S3', async (t) => {
   const sourceBucketName = randomString();
   const providerPath = randomString();
 
@@ -197,6 +197,7 @@ test.serial('discover granules using S3', async (t) => {
 
   try {
     const output = await discoverGranules(event);
+    console.log("discoveredGranules");
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);

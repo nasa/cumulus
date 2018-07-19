@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const { ftpMixin } = require('./ftp');
 const get = require('lodash.get');
-const getPdr = require('@cumulus/api/endpoints/pdrs').get;
+const { Pdr: pdrModel } = require('@cumulus/api/models/pdrs');
 const { httpMixin } = require('./http');
 const log = require('@cumulus/common/log');
 const { parsePdr } = require('./parse-pdr');
@@ -77,18 +77,9 @@ class Discover {
    *   if it does not already exist in S3.
    */
   pdrIsNew(pdr) {
-    const event = {
-      pathParameters: { pdrName: pdr.name }
-    };
+    const p = new pdrModel();
 
-    const cb = (err, _) => {
-      if (err) {
-        if (err.name === 'RecordDoesNotExist') return pdr;
-        throw err;
-      }
-      return false;
-    };
-    return getPdr(event, cb);
+    return p.get({ pdrName: pdr.name }).then(() => pdr).catch(() => false);
   }
 
   /**
