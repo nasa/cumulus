@@ -6,7 +6,12 @@ const providerSchema = require('./schemas').provider;
 
 class Provider extends Manager {
   constructor() {
-    super(process.env.ProvidersTable, providerSchema);
+    super({
+      tableName: process.env.ProvidersTable,
+      tableHash: { name: 'id', type: 'S' },
+      schema: providerSchema
+    });
+
     this.removeAdditional = 'all';
   }
 
