@@ -40,7 +40,7 @@ async function getLastExecution() {
  * @returns {string} current stream status: 'ACTIVE'
  * @throws {Error} - Error describing current stream status
  */
-async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 30) {
+async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 60) {
   let streamStatus = 'Anything';
   let elapsedPeriods = 0;
   let stream;

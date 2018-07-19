@@ -74,7 +74,6 @@ const expectedSyncGranulesPayload = {
 // triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const maxWaitTime = 1000 * 60 * 4;
-  let workflowExecution;
   let executionStatus;
   let s3FileHead;
 
@@ -87,7 +86,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
 
   beforeAll(async () => {
-
     try {
       await createOrUseTestStream(streamName);
       await waitForActiveStream(streamName);
@@ -108,7 +106,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   describe('the TranslateMessage Lambda', () => {
     beforeAll(async () => {
-        this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CNMToCMA');
+      this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CNMToCMA');
     });
 
     it('outputs the granules object', () => {
