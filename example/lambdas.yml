@@ -124,6 +124,6 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: 'deploy/cumulus-process/CNMToCMA/CNMToCMA-0.0.1.zip'
+    key: 'daacs/podaac/CNMToCMA-0.0.1.zip'
   useMessageAdapter: false
   launchInVpc: true
