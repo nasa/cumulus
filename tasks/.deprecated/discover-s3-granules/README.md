@@ -1,6 +1,6 @@
 # @cumulus/discover-pdrs
 
-[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg)](https://circleci.com/gh/cumulus-nasa/cumulus)
+[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
 
 This Lambda function returns a list of granules in an S3 bucket.
 
@@ -8,8 +8,8 @@ This Lambda function returns a list of granules in an S3 bucket.
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
-[Cumulus Documentation](https://cumulus-nasa.github.io/)
+[Cumulus Documentation](https://nasa.github.io/cumulus)
 
 ## Contributing
 
-See [Cumulus README](https://github.com/cumulus-nasa/cumulus/blob/master/README.md#installing-and-deploying)
+See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#installing-and-deploying)
