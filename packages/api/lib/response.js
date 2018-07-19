@@ -9,7 +9,7 @@
 
 'use strict';
 
-const deprecate = require('deprecate');
+const deprecate = require('depd')('@cumulus/api/lib/response');
 const log = require('@cumulus/common/log');
 const proxy = require('lambda-proxy-utils');
 const { User } = require('../models');
@@ -46,12 +46,11 @@ function getToken(req) {
   return match[1];
 }
 
-
-function resp(context, err, bodyArg, statusArg = null, headers = {}) {
-  deprecate('@cumulus/api/response has deprecated the resp() function, use buildLambdaProxyResponse() instead.'); // eslint-disable-line max-len
+function resp(context, err, bodyArg, statusArg = null, headers = {}) { // eslint-disable-line prefer-arrow-callback, max-len
+  deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,'); // eslint-disable-line max-len
 
   if (typeof context.succeed !== 'function') {
-    throw new Error('context object with succeed method not provided');
+    throw new Error('context as object with succeed method not provided');
   }
 
   let body = bodyArg;

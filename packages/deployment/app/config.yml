@@ -4,7 +4,7 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov
 
-  repo_owner: cumulus-nasa
+  repo_owner: nasa
   message_adapter_repo: cumulus-message-adapter
   message_adapter_filename: cumulus-message-adapter.zip
 
