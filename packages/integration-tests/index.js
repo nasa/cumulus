@@ -258,8 +258,8 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null)
  * @returns {Promise.<integer>} number of rules added
  */
 async function addRules(config, dataDirectory) {
-  const { stackName, bucketName } = config;
-  const rules = await setupSeedData(stackName, bucketName, dataDirectory);
+  const { stackName, bucket } = config;
+  const rules = await setupSeedData(stackName, bucket, dataDirectory);
 
   const promises = rules.map((rule) => limit(() => {
     const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
