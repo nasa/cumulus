@@ -6,11 +6,11 @@ This Cumulus project seeks to address the existing need for a “native” cloud
 
 This documentation includes both guidelines, examples and source code docs.
 
-The documentation is accessible at https://cumulus-nasa.github.io/
+The documentation is accessible at https://nasa.github.io/cumulus
 
 ## Contributing
 
-Please refer to: https://github.com/cumulus-nasa/cumulus/blob/master/CONTRIBUTING.md for information
+Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for information
 
 # Content
 
@@ -30,7 +30,7 @@ Please refer to: https://github.com/cumulus-nasa/cumulus/blob/master/CONTRIBUTIN
     * [Dockerization](workflows/docker.md)
   * [Workflow Configuration How-to's](workflows/workflow-configuration-how-to.md)
 * [Tasks](tasks.md)
-* [Cumulus API](https://cumulus-nasa.github.io/cumulus-api)
+* [Cumulus API](https://nasa.github.io/cumulus-api)
 * [Backup and Restore](backup_and_restore.md)
 * [EMS Reporting](ems_reporting.md)
 
@@ -39,7 +39,7 @@ Please refer to: https://github.com/cumulus-nasa/cumulus/blob/master/CONTRIBUTIN
 * [Upgrade Instructions](upgrade/README.md)
   * [1.6.0](upgrade/1.6.0.md)
   * [1.7.0](upgrade/1.7.0.md)
-* [Changelog](https://github.com/cumulus-nasa/cumulus/blob/master/CHANGELOG.md)
+* [Changelog](https://github.com/nasa/cumulus/blob/master/CHANGELOG.md)
 * [Team](team.md)
 
 

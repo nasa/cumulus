@@ -32,6 +32,7 @@ const testRule = {
   state: 'DISABLED'
 };
 
+let ruleModel;
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
@@ -42,16 +43,14 @@ test.before(async () => {
     Body: 'test data'
   }).promise();
 
-  await models.Manager.createTable(
-    process.env.RulesTable,
-    { name: 'name', type: 'S' }
-  );
+  ruleModel = new models.Rule();
+  await ruleModel.createTable();
 
-  await (new models.Rule()).create(testRule);
+  await ruleModel.create(testRule);
 });
 
 test.after.always(async () => {
-  models.Manager.deleteTable(process.env.RulesTable);
+  await ruleModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 
   const esClient = await Search.es('fakehost');
