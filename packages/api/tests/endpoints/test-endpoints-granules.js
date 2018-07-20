@@ -13,8 +13,8 @@ const bootstrap = require('../../lambdas/bootstrap');
 const granuleEndpoint = require('../../endpoints/granules');
 const indexer = require('../../es/indexer');
 const {
-  createFakeUser,
-  fakeGranuleFactory
+  fakeGranuleFactory,
+  fakeUserFactory
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 const xml2js = require('xml2js');
@@ -22,16 +22,19 @@ const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 // create all the variables needed across this test
 let esClient;
-let UsersTableEnvBefore;
-const esIndex = randomString();
-process.env.GranulesTable = randomString();
-process.env.stackName = randomString();
-process.env.internal = randomString();
-const g = new models.Granule();
-
+let esIndex;
+let g;
 let authToken;
-
+let userModel;
 test.before(async () => {
+  esIndex = randomString();
+  process.env.GranulesTable = randomString();
+  process.env.UsersTable = randomString();
+  process.env.stackName = randomString();
+  process.env.internal = randomString();
+
+  g = new models.Granule();
+
   // create esClient
   esClient = await Search.es('fakehost');
 
@@ -42,16 +45,13 @@ test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   // create fake Granules table
-  await models.Manager.createTable(process.env.GranulesTable, { name: 'granuleId', type: 'S' });
+  await g.createTable();
 
   // create fake Users table
-  UsersTableEnvBefore = process.env.UsersTable;
-  process.env.UsersTable = randomString();
-  await models.Manager.createTable(process.env.UsersTable, { name: 'userName', type: 'S' });
+  userModel = new models.User();
+  await userModel.createTable();
 
-  const userDbClient = new models.User(process.env.UsersTable);
-
-  authToken = (await createFakeUser({ userDbClient: userDbClient })).password;
+  authToken = (await userModel.create(fakeUserFactory())).password;
 });
 
 test.beforeEach(async (t) => {
@@ -74,13 +74,10 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(process.env.GranulesTable);
-  await models.Manager.deleteTable(process.env.UsersTable);
+  await g.deleteTable();
+  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
-
-  // Reset environment variables that we changed
-  process.env.UsersTable = UsersTableEnvBefore;
 });
 
 
