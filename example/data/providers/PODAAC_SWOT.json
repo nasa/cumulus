@@ -1,0 +1,6 @@
+{
+  "globalConnectionLimit": 10,
+  "host": "replaced with internal bucket in addProviders()",
+  "id": "PODAAC_SWOT",
+  "protocol": "s3"
+}
