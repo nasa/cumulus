@@ -15,10 +15,7 @@ test.before(async () => {
   await fileModel.createTable();
 });
 
-test.after.always(async () => {
-  // cleanup table
-  await models.Manager.deleteTable(process.env.FilesTable);
-});
+test.after.always(() => fileModel.deleteTable());
 
 test.serial('create files records from a granule and then delete them', async (t) => {
   const bucket = randomString();
