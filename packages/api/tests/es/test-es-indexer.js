@@ -30,22 +30,29 @@ const executionTable = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
 
+let collectionModel;
+let executionModel;
+let granuleModel;
+let pdrModel;
 test.before(async () => {
   await deleteAliases();
 
   // create the tables
-  process.env.GranulesTable = granuleTable;
   process.env.CollectionsTable = collectionTable;
-  process.env.PdrsTable = pdrTable;
+  collectionModel = new models.Collection();
+  await collectionModel.createTable();
+
   process.env.ExecutionsTable = executionTable;
-  await models.Manager.createTable(granuleTable, { name: 'granuleId', type: 'S' });
-  await models.Manager.createTable(pdrTable, { name: 'pdrName', type: 'S' });
-  await models.Manager.createTable(executionTable, { name: 'arn', type: 'S' });
-  await models.Manager.createTable(
-    collectionTable,
-    { name: 'name', type: 'S' },
-    { name: 'version', type: 'S' }
-  );
+  executionModel = new models.Execution();
+  await executionModel.createTable();
+
+  process.env.GranulesTable = granuleTable;
+  granuleModel = new models.Granule();
+  await granuleModel.createTable();
+
+  process.env.PdrsTable = pdrTable;
+  pdrModel = new models.Pdr();
+  await pdrModel.createTable();
 
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
@@ -76,10 +83,11 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(granuleTable);
-  await models.Manager.deleteTable(collectionTable);
-  await models.Manager.deleteTable(pdrTable);
-  await models.Manager.deleteTable(executionTable);
+  await collectionModel.deleteTable();
+  await executionModel.deleteTable();
+  await granuleModel.deleteTable();
+  await pdrModel.deleteTable();
+
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 

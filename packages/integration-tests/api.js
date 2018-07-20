@@ -6,7 +6,7 @@ const {
 } = require('@cumulus/common');
 const {
   models: { User },
-  testUtils: { createFakeUser }
+  testUtils: { fakeUserFactory }
 } = require('@cumulus/api');
 
 /**
@@ -29,9 +29,10 @@ const {
 async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   const payload = cloneDeep(userPayload);
 
-  const userDbClient = new User(`${prefix}-UsersTable`);
+  process.env.UsersTable = `${prefix}-UsersTable`;
+  const userModel = new User();
 
-  const { userName, password } = await createFakeUser({ userDbClient });
+  const { userName, password } = await userModel.create(fakeUserFactory());
 
   // Add authorization header to the request
   payload.headers = payload.headers || {};
@@ -46,7 +47,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   }
   finally {
     // Delete the user created for this request
-    await userDbClient.delete({ userName });
+    await userModel.delete(userName);
   }
 
   return JSON.parse(apiOutput.Payload);
