@@ -31,6 +31,7 @@ async function getMessageFromTemplate(templateUri) {
  * @param {Object} provider - the provider config to be attached to the message
  * @param {Object} collection - the collection config to be attached to the
  *   message
+ * @param {string} parentExecutionArn - parent workflow execution arn to add to the message
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueParsePdrMessage(
@@ -38,7 +39,8 @@ async function enqueueParsePdrMessage(
   queueUrl,
   parsePdrMessageTemplateUri,
   provider,
-  collection
+  collection,
+  parentExecutionArn
 ) {
   const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
 
@@ -47,7 +49,13 @@ async function enqueueParsePdrMessage(
 
   message.payload = { pdr };
 
-  return sendSQSMessage(queueUrl, message);
+  if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
+
+  message.cumulus_meta.execution_name = uuidv4();
+  const arn =
+    getExecutionArn(message.cumulus_meta.state_machine, message.cumulus_meta.execution_name);
+  await sendSQSMessage(queueUrl, message);
+  return arn;
 }
 module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
 
@@ -62,6 +70,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  * @param {Object} collection - the collection config to be attached to the
  *   message
  * @param {Object} pdr - an optional PDR to be configured in the message payload
+ * @param {string} parentExecutionArn - parent workflow execution arn to add to the message
  * @returns {Promise} - resolves when the message has been enqueued
  */
 async function enqueueGranuleIngestMessage(
@@ -70,7 +79,8 @@ async function enqueueGranuleIngestMessage(
   granuleIngestMessageTemplateUri,
   provider,
   collection,
-  pdr
+  pdr,
+  parentExecutionArn
 ) {
   // Build the message from a template
   const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
@@ -85,6 +95,8 @@ async function enqueueGranuleIngestMessage(
 
   message.meta.provider = provider;
   message.meta.collection = collection;
+  if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
+
   message.cumulus_meta.execution_name = uuidv4();
   const arn =
     getExecutionArn(message.cumulus_meta.state_machine, message.cumulus_meta.execution_name);

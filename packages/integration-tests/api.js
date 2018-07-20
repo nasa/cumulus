@@ -156,10 +156,36 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
   return JSON.parse(payload.body);
 }
 
+/**
+ * Fetch an execution from the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.arn - an execution arn
+ * @returns {Promise<Object>} - the execution fetched by the API
+ */
+async function getExecution({ prefix, arn }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiExecutionsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/executions/{arn}',
+      path: `executions/${arn}`,
+      pathParameters: {
+        arn: arn
+      }
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
 module.exports = {
   callCumulusApi,
   getGranule,
   reingestGranule,
   removeFromCMR,
-  applyWorkflow
+  applyWorkflow,
+  getExecution
 };
