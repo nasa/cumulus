@@ -220,7 +220,7 @@ mth-2:
       name: '{{stackName}}-protected'
       type: protected
     public:
-      name: '{{stacKName}}-public'
+      name: '{{stackName}}-public'
       type: public
   users:
     - username: '{{EARTHDATA_LOGIN_USERNAME}}'
