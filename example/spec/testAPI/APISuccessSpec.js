@@ -2,7 +2,7 @@
 
 const fs = require('fs-extra');
 const { loadConfig } = require('../helpers/testUtils');
-const sleep = require('sleep');
+const sleep = require('sleep-promise');
 const {
   aws: { s3 },
   stringUtils: { globalReplace },
@@ -51,22 +51,22 @@ async function setupTestGranuleForAPI(bucket, granuleId, inputPayloadJson) {
  * @param {string} CMRLink - url for grnaule in CMR
  * @param {string} outcome - desired outcome
  * @param {string} retries - number of remaining tries
- * @returns {boolean} - whether or not the granule exists
+ * @returns {Promise<boolean>} - whether or not the granule exists
  */
 async function waitForExist(CMRLink, outcome, retries) {
   if (retries === 0) {
-    console.log('Out of retries.');
+    console.log('Out of retries');
     return false;
   }
+
   const existsCheck = await conceptExists(CMRLink);
   if (existsCheck !== outcome) {
-    sleep.sleep(2);
-    console.log('Retrying...');
+    await sleep(2000);
+    console.log('Retrying ...');
     return waitForExist(CMRLink, outcome, (retries - 1));
   }
-  else {
-    return true;
-  }
+
+  return true;
 }
 
 describe('The Cumulus API', () => {
