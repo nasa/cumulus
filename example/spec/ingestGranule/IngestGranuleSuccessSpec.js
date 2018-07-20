@@ -130,6 +130,8 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
+  // skipping this test because it's missing some of the functions used here
+  // such as createFakeUser
   it('makes the granule available through the Cumulus API', async () => {
     const granule = await apiTestUtils.getGranule({
       prefix: config.stackName,
