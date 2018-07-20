@@ -63,7 +63,12 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
  */
 function getExecutionStatus(executionArn) {
   return sfn().describeExecution({ executionArn }).promise()
-    .then((status) => status.status);
+    .then((status) => status.status)
+    .catch((e) => {
+      // the execution may not be started yet
+      if (e.code === 'ExecutionDoesNotExist') return 'RUNNING';
+      throw e;
+    });
 }
 
 /**
@@ -231,8 +236,8 @@ async function addCollections(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of provider json files
- * @param {string} s3Host - bucket name to be used as the provider host for 
- * S3 providers. This will override the host from the seed data. Defaults to null, 
+ * @param {string} s3Host - bucket name to be used as the provider host for
+ * S3 providers. This will override the host from the seed data. Defaults to null,
  * meaning no override.
  * @returns {Promise.<integer>} number of providers added
  */
@@ -241,7 +246,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null)
 
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
-    if(s3Host && provider.protocol === 's3') {
+    if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
     }
     console.log(`adding provider ${provider.id}`);
