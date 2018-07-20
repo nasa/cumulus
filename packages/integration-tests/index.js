@@ -63,7 +63,12 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
  */
 function getExecutionStatus(executionArn) {
   return sfn().describeExecution({ executionArn }).promise()
-    .then((status) => status.status);
+    .then((status) => status.status)
+    .catch((e) => {
+      // the execution may not be started yet
+      if (e.code === 'ExecutionDoesNotExist') return 'RUNNING';
+      throw e;
+    });
 }
 
 /**
