@@ -38,7 +38,8 @@
     "@cumulus/sync-granule": "^1.6.0",
     "@cumulus/test-data": "^1.7.0",
     "@cumulus/test-processing": "^1.6.0",
-    "aws-sdk": "^2.227.1"
+    "aws-sdk": "^2.227.1",
+    "sleep-promise": "^8.0.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",

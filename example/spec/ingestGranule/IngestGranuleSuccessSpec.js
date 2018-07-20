@@ -132,7 +132,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   // skipping this test because it's missing some of the functions used here
   // such as createFakeUser
-  xit('makes the granule available through the Cumulus API', async () => {
+  it('makes the granule available through the Cumulus API', async () => {
     const granule = await apiTestUtils.getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
