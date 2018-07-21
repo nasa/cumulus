@@ -20,12 +20,12 @@ const plusStub = {
           emails: ['peggy@gmail.com']
         }
       };
-      return cb('err', userData);
+      return cb(null, userData);
     }
   }
 };
 sinon.stub(google, 'plus').returns(plusStub);
-const googleTokenEndpoint = require('../../endpoints/googleToken');
+const tokenEndpoint = require('../../endpoints/token');
 
 // Define test variables
 const event = {
@@ -60,22 +60,22 @@ test.beforeEach(() => {
 test.afterEach(() => sandbox.restore());
 
 test('login calls the token method when a code exists', (t) => {
-  const tokenStub = sandbox.stub(googleTokenEndpoint, 'token').returns('fake-token');
+  const tokenStub = sandbox.stub(tokenEndpoint, 'token').returns('fake-token');
 
-  googleTokenEndpoint.login(event, {}, callback);
+  tokenEndpoint.login(event, {}, callback);
 
   t.is(tokenStub.calledOnce, true);
 });
 
 test('login returns a 301 redirect to Google when code does not exist', (t) => {
-  const loginResult = googleTokenEndpoint.login(eventWithoutCode, {}, callback);
+  const loginResult = tokenEndpoint.login(eventWithoutCode, {}, callback);
 
   const googleOauthEndpoint = 'https://accounts.google.com/o/oauth2/v2/auth?' +
     'access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&' +
     `state=&response_type=code&client_id=${process.env.EARTHDATA_CLIENT_ID || ''}&redirect_uri=`;
   const expectedResponseObject = {
     statusCode: '301',
-    body: 'Redirecting to Google Login',
+    body: 'Redirecting to login',
     headers: {
       Location: googleOauthEndpoint
     }
@@ -85,32 +85,37 @@ test('login returns a 301 redirect to Google when code does not exist', (t) => {
 });
 
 test('token returns an error when no code is provided', (t) => {
-  const result = googleTokenEndpoint.token(eventWithoutCode, context);
-
   const expectedResult = {
     body: JSON.stringify({ message: 'Request requires a code' }),
     headers: defaultHeaders,
     statusCode: 400
   };
 
-  t.deepEqual(result, expectedResult);
+  return tokenEndpoint.token(eventWithoutCode, context)
+    .then((result) => {
+      t.deepEqual(result, expectedResult);
+    });
 });
 
 test('token returns an error when oauth2client returns an error', (t) => {
-  sandbox.stub(OAuth2.prototype, 'getToken').yields('error in getToken', 'token');
+  const getTokenErrorMessage = 'error from getToken';
+  sandbox.stub(OAuth2.prototype, 'getToken').rejects('GetTokenError', getTokenErrorMessage);
 
-  const result = googleTokenEndpoint.token(event, context);
+  //const result = tokenEndpoint.token(event, context);
   const expectedResult = {
-    body: JSON.stringify({ message: 'error in getToken' }),
+    body: JSON.stringify({ message: getTokenErrorMessage }),
     headers: defaultHeaders,
     statusCode: 400
   };
 
-  t.deepEqual(result, expectedResult);
+  return tokenEndpoint.token(event, context)
+    .then((result) => {
+      t.deepEqual(result, expectedResult);
+    });
 });
 
 test('token returns an error when no user is found', (t) => {
-  sandbox.stub(OAuth2.prototype, 'getToken').yields(null, tokens);
+  sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
   sandbox.stub(User.prototype, 'get').rejects(new Error('No record found for'));
 
   const expectedResult = {
@@ -119,14 +124,14 @@ test('token returns an error when no user is found', (t) => {
     statusCode: 400
   };
 
-  return googleTokenEndpoint.token(event, context)
+  return tokenEndpoint.token(event, context)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });
 });
 
 test('token returns 301 when user exists and state provided', (t) => {
-  sandbox.stub(OAuth2.prototype, 'getToken').yields(null, tokens);
+  sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
   sandbox.stub(User.prototype, 'get').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {
@@ -139,14 +144,14 @@ test('token returns 301 when user exists and state provided', (t) => {
     body: 'Redirecting to the specified state'
   };
 
-  return googleTokenEndpoint.token(event, context)
+  return tokenEndpoint.token(event, context)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });
 });
 
 test('token returns 200 when user exists and state is not provided', (t) => {
-  sandbox.stub(OAuth2.prototype, 'getToken').yields(null, tokens);
+  sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
   sandbox.stub(User.prototype, 'get').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {
@@ -158,7 +163,7 @@ test('token returns 200 when user exists and state is not provided', (t) => {
     body: JSON.stringify({ token: accessToken })
   };
 
-  return googleTokenEndpoint.token(eventWithoutState, context)
+  return tokenEndpoint.token(eventWithoutState, context)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });

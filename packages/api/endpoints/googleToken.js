@@ -1,19 +1,10 @@
 'use strict';
 
 const get = require('lodash.get');
-const { google } = require('googleapis');
-const plus = google.plus('v1');
+const authHelpers = require('../lib/authHelpers');
 const { User } = require('../models');
 const { resp } = require('../lib/response');
 const log = require('@cumulus/common/log');
-
-const OAuth2 = google.auth.OAuth2;
-
-const oauth2Client = new OAuth2(
-  process.env.EARTHDATA_CLIENT_ID,
-  process.env.EARTHDATA_CLIENT_PASSWORD,
-  process.env.API_ENDPOINT
-);
 
 /**
  * AWS API Gateway function that handles callbacks from authentication, transforming
@@ -23,59 +14,40 @@ const oauth2Client = new OAuth2(
  * @param  {Object} context - Lambda context object
  * @returns {Object}         Response object including status, headers and body key / values.
  */
-function token(event, context) {
+async function token(event, context) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
-    return oauth2Client.getToken(code, (error, tokens) => {
-      if (error) {
-        return resp(context, new Error(error));
+    try {
+      const { userName, accessToken, expires } = await authHelpers.getToken(code);
+      const u = new User();
+
+      return u.get({ userName })
+        .then(() => {
+          u.update({ userName }, { password: accessToken, expires });
+        })
+        .then(() => {
+          if (state) {
+            log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
+            return resp(context, null, 'Redirecting to the specified state', 301, {
+              Location: `${decodeURIComponent(state)}?token=${accessToken}`
+            });
+          }
+          log.info('Log info: No state specified, responding 200');
+          return resp(context, null, JSON.stringify({ token: accessToken }), 200);
+        })
+        .catch((e) => {
+          if (e.message.includes('No record found for')) {
+            return resp(context, new Error('User is not authorized to access this site'));
+          }
+          return resp(context, e);
+        });
+      } catch (e) {
+        log.error('Error caught when checking code:', e);
+        return resp(context, e);
       }
-      const accessToken = tokens.access_token;
-      const tokenExpires = tokens.expiry_date;
-      const expires = (+new Date()) + (tokenExpires * 1000);
-
-      // Now tokens contains an access_token and an optional refresh_token. Save them.
-      if (!error) {
-        oauth2Client.setCredentials(tokens);
-      }
-
-      return plus.people.get({
-        userId: 'me',
-        auth: oauth2Client
-      }, (err, response) => {
-        if (err) log.error(err);
-        const userData = response.data;
-        // not sure if it's possible to have multiple emails but they are
-        // returned as a list. If users have multiple emails we will have to
-        // scan the users table to see if any match.
-        const userEmail = userData.emails[0].value;
-
-        const u = new User();
-        return u.get({ userName: userEmail })
-          .then(() => {
-            u.update({ userName: userEmail }, { password: accessToken, expires });
-          })
-          .then(() => {
-            if (state) {
-              log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
-              return resp(context, null, 'Redirecting to the specified state', 301, {
-                Location: `${decodeURIComponent(state)}?token=${accessToken}`
-              });
-            }
-            log.info('Log info: No state specified, responding 200');
-            return resp(context, null, JSON.stringify({ token: accessToken }), 200);
-          })
-          .catch((e) => {
-            if (e.message.includes('No record found for')) {
-              return resp(context, new Error('User is not authorized to access this site'));
-            }
-            return resp(context, e);
-          });
-      });
-    });
   }
   return resp(context, new Error('Request requires a code'));
 }
@@ -90,11 +62,6 @@ function token(event, context) {
  * @returns {Function}       Lambda callback function
  */
 function login(event, context, cb) {
-  // generate a url that asks permissions for Google+ and Google Calendar scopes
-  const scopes = [
-    'https://www.googleapis.com/auth/userinfo.email'
-  ];
-
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
@@ -102,18 +69,11 @@ function login(event, context, cb) {
     return this.token(event, context);
   }
 
-  const url = oauth2Client.generateAuthUrl({
-    // 'online' (default) or 'offline' (gets refresh_token)
-    access_type: 'offline',
-
-    // If you only need one scope you can pass it as a string
-    scope: scopes,
-    state: state
-  });
+  const url = authHelpers.generateLoginUrl(state);
 
   return cb(null, {
     statusCode: '301',
-    body: 'Redirecting to Google Login',
+    body: 'Redirecting to login',
     headers: {
       Location: url
     }
