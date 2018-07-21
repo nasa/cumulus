@@ -21,7 +21,9 @@ async function token(event, context) {
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
     try {
-      const { userName, accessToken, refresh, expires } = await authHelpers.getToken(code);
+      const {
+        userName, accessToken, refresh, expires
+      } = await authHelpers.getToken(code);
       const u = new User();
 
       return u.get({ userName })
@@ -44,10 +46,11 @@ async function token(event, context) {
           }
           return resp(context, e);
         });
-      } catch (e) {
-        log.error('Error caught when checking code:', e);
-        return resp(context, e);
-      }
+    }
+    catch (e) {
+      log.error('Error caught when checking code:', e);
+      return resp(context, e);
+    }
   }
   return resp(context, new Error('Request requires a code'));
 }

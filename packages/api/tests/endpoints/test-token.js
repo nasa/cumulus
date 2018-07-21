@@ -123,7 +123,7 @@ test('token returns an error when auth client returns an error', (t) => {
 
 test('token returns an error when no user is found', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
-  sandbox.stub(got, 'post').resolves({body: {...tokens, endpoint: '/peggy'}});
+  sandbox.stub(got, 'post').resolves({ body: { ...tokens, endpoint: '/peggy' } });
   sandbox.stub(User.prototype, 'get').rejects(new Error('No record found for'));
 
   const expectedResult = {
@@ -140,7 +140,7 @@ test('token returns an error when no user is found', (t) => {
 
 test('token returns 301 when user exists and state provided', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
-  sandbox.stub(got, 'post').resolves({body: {...tokens, endpoint: '/peggy'}});
+  sandbox.stub(got, 'post').resolves({ body: { ...tokens, endpoint: '/peggy' } });
   sandbox.stub(User.prototype, 'get').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {
@@ -161,7 +161,7 @@ test('token returns 301 when user exists and state provided', (t) => {
 
 test('token returns 200 when user exists and state is not provided', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
-  sandbox.stub(got, 'post').resolves({body: {...tokens, endpoint: '/peggy'}}); 
+  sandbox.stub(got, 'post').resolves({ body: { ...tokens, endpoint: '/peggy' } });
   sandbox.stub(User.prototype, 'get').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {

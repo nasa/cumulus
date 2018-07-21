@@ -187,9 +187,9 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee-test:
-  stackName: aimee-test
-  stackNameNoDash: aimeeTest
+aimee:
+  stackName: aimee
+  stackNameNoDash: aimee
 
   oauth_provider: google
   users:

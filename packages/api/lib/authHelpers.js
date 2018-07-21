@@ -13,13 +13,13 @@ const oauth2Client = new OAuth2(
 function redirectUriParam() {
   const url = process.env.API_ENDPOINT;
   return encodeURIComponent(url);
-};
+}
 
 function googleOAuthLoginUrl(state) {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.email'
-  ];  
+  ];
 
   const url = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
@@ -31,7 +31,7 @@ function googleOAuthLoginUrl(state) {
   });
 
   return url;
-};
+}
 
 function earthDataLoginUrl(state) {
   const endpoint = process.env.EARTHDATA_BASE_URL;
@@ -44,16 +44,15 @@ function earthDataLoginUrl(state) {
     url = `${url}&state=${encodeURIComponent(state)}`;
   }
 
-  return url;  
+  return url;
 }
 
 function generateLoginUrl(state) {
   if (process.env.OAUTH_PROVIDER === 'google') {
     return googleOAuthLoginUrl(state);
-  } else {
-    return earthDataLoginUrl(state);
   }
-};
+  return earthDataLoginUrl(state);
+}
 
 async function fetchGoogleToken(code) {
   const tokens = await oauth2Client.getToken(code);
@@ -71,13 +70,15 @@ async function fetchGoogleToken(code) {
     if (err) {
       log.error(err);
       return err;
-    };
+    }
     const userData = response.data;
     // not sure if it's possible to have multiple emails but they are
     // returned as a list. If users have multiple emails we will have to
     // scan the users table to see if any match.
     const userName = userData.emails[0];
-    return { userName, accessToken, refresh, expires };
+    return {
+      userName, accessToken, refresh, expires
+    };
   });
 }
 
@@ -85,7 +86,7 @@ function fetchEarthdataToken(code) {
   const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
   const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
   const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov';
-  const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;  
+  const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
   const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam()}`;
 
   // Verify token
@@ -93,32 +94,33 @@ function fetchEarthdataToken(code) {
     json: true,
     auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
   })
-  .then((r) => {
-    const tokenInfo = r.body;
-    const accessToken = tokenInfo.access_token;
+    .then((r) => {
+      const tokenInfo = r.body;
+      const accessToken = tokenInfo.access_token;
 
-    // if no access token is given, then the code is wrong
-    if (typeof accessToken === 'undefined') {
-      return new Error('Failed to get Earthdata token');
-    }
+      // if no access token is given, then the code is wrong
+      if (typeof accessToken === 'undefined') {
+        return new Error('Failed to get Earthdata token');
+      }
 
-    const refresh = tokenInfo.refresh_token;
-    const userName = tokenInfo.endpoint.split('/').pop();
-    const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
+      const refresh = tokenInfo.refresh_token;
+      const userName = tokenInfo.endpoint.split('/').pop();
+      const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
 
-    return { userName, accessToken, refresh, expires };
-  });
+      return {
+        userName, accessToken, refresh, expires
+      };
+    });
 }
 
 function getToken(code) {
   if (process.env.OAUTH_PROVIDER === 'google') {
     return fetchGoogleToken(code);
-  } else {
-    return fetchEarthdataToken(code);
   }
-};
+  return fetchEarthdataToken(code);
+}
 
 module.exports = {
   getToken,
   generateLoginUrl
-}
+};
