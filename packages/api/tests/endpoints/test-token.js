@@ -3,6 +3,7 @@
 // Load external library dependencies
 const clone = require('lodash.clonedeep');
 const { google } = require('googleapis');
+const got = require('got');
 const OAuth2 = google.auth.OAuth2;
 const sinon = require('sinon');
 const test = require('ava');
@@ -44,7 +45,8 @@ const callback = (err, response) => {
 const accessToken = '123';
 const tokens = {
   access_token: accessToken,
-  expiry_date: Date.now()
+  expiry_date: Date.now(),
+  refresh_token: accessToken
 };
 const defaultHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,11 +75,15 @@ test('login returns a 301 redirect to Google when code does not exist', (t) => {
   const googleOauthEndpoint = 'https://accounts.google.com/o/oauth2/v2/auth?' +
     'access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&' +
     `state=&response_type=code&client_id=${process.env.EARTHDATA_CLIENT_ID || ''}&redirect_uri=`;
+  const earthDataOauthEndpoint = `${process.env.EARTHDATA_BASE_URL}` +
+    `/oauth/authorize?client_id=${process.env.EARTHDATA_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(process.env.API_ENDPOINT)}&response_type=code`;
+
   const expectedResponseObject = {
     statusCode: '301',
     body: 'Redirecting to login',
     headers: {
-      Location: googleOauthEndpoint
+      Location: process.env.OAUTH_PROVIDER === 'google' ? googleOauthEndpoint : earthDataOauthEndpoint
     }
   };
 
@@ -97,9 +103,10 @@ test('token returns an error when no code is provided', (t) => {
     });
 });
 
-test('token returns an error when oauth2client returns an error', (t) => {
+test('token returns an error when auth client returns an error', (t) => {
   const getTokenErrorMessage = 'error from getToken';
   sandbox.stub(OAuth2.prototype, 'getToken').rejects('GetTokenError', getTokenErrorMessage);
+  sandbox.stub(got, 'post').rejects('GetTokenError', getTokenErrorMessage);
 
   //const result = tokenEndpoint.token(event, context);
   const expectedResult = {
@@ -116,6 +123,7 @@ test('token returns an error when oauth2client returns an error', (t) => {
 
 test('token returns an error when no user is found', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
+  sandbox.stub(got, 'post').resolves({body: {...tokens, endpoint: '/peggy'}});
   sandbox.stub(User.prototype, 'get').rejects(new Error('No record found for'));
 
   const expectedResult = {
@@ -132,6 +140,7 @@ test('token returns an error when no user is found', (t) => {
 
 test('token returns 301 when user exists and state provided', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
+  sandbox.stub(got, 'post').resolves({body: {...tokens, endpoint: '/peggy'}});
   sandbox.stub(User.prototype, 'get').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {
@@ -152,6 +161,7 @@ test('token returns 301 when user exists and state provided', (t) => {
 
 test('token returns 200 when user exists and state is not provided', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
+  sandbox.stub(got, 'post').resolves({body: {...tokens, endpoint: '/peggy'}}); 
   sandbox.stub(User.prototype, 'get').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {

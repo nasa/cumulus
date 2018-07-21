@@ -17,7 +17,7 @@
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "ava": {
-    "files": "tests/endpoints/test-endpoints-google-token.js",
+    "files": "tests/endpoints/test-token.js",
     "serial": true
   },
   "nyc": {

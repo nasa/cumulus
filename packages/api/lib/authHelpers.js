@@ -1,4 +1,5 @@
 const { google } = require('googleapis');
+const got = require('got');
 const plus = google.plus('v1');
 const log = require('@cumulus/common/log');
 const OAuth2 = google.auth.OAuth2;
@@ -59,6 +60,7 @@ async function fetchGoogleToken(code) {
   const accessToken = tokens.access_token;
   const tokenExpires = tokens.expiry_date;
   const expires = (+new Date()) + (tokenExpires * 1000);
+  const refresh = tokens.refresh_token;
 
   oauth2Client.setCredentials(tokens);
 
@@ -75,7 +77,7 @@ async function fetchGoogleToken(code) {
     // returned as a list. If users have multiple emails we will have to
     // scan the users table to see if any match.
     const userName = userData.emails[0];
-    return { userName, accessToken, expires };
+    return { userName, accessToken, refresh, expires };
   });
 }
 
@@ -104,7 +106,7 @@ function fetchEarthdataToken(code) {
     const userName = tokenInfo.endpoint.split('/').pop();
     const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
 
-    return [null, userName, { accessToken, expires }];
+    return { userName, accessToken, refresh, expires };
   });
 }
 

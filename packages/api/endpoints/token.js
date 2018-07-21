@@ -21,12 +21,12 @@ async function token(event, context) {
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
     try {
-      const { userName, accessToken, expires } = await authHelpers.getToken(code);
+      const { userName, accessToken, refresh, expires } = await authHelpers.getToken(code);
       const u = new User();
 
       return u.get({ userName })
         .then(() => {
-          u.update({ userName }, { password: accessToken, expires });
+          u.update({ userName }, { password: accessToken, refresh, expires });
         })
         .then(() => {
           if (state) {
