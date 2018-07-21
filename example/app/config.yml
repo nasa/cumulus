@@ -191,11 +191,7 @@ aimee-test:
   stackName: aimee-test
   stackNameNoDash: aimeeTest
 
-
-  communityConfiguration:
-    ApiTokenDefault:
-      handler: index.googleToken
-
+  oauth_provider: google
   users:
     - username: aimee@developmentseed.org
 
