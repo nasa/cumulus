@@ -17,7 +17,7 @@ We may need to update the api documentation to reflect this.
         - metaOverride - overrides the meta of the new execution, accepts partial override
         - payloadOverride - overrides the payload of the new execution, accepts partial override
 
-- Add Google OAuth authentication token endpoint to `@cumulus/api` and configuration to `@cumulus/deployment`.
+- **Cumulus Community Edition** - Add Google OAuth authentication token logic to `@cumulus/api`. Refactor token endpoint to use environment variable flag `OAUTH_PROVIDER` when determining with authentication method to use.
 - **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
 
 ### Changed
