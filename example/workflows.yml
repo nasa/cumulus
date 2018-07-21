@@ -543,6 +543,14 @@ KinesisTriggerTest:
         Resource: ${sf2snsStartLambdaFunction.Arn}
         Next: TranslateMessage
       TranslateMessage:
+        CumulusConfig:
+          provider: '{$.meta.provider}'
+          cumulus_message:
+            outputs:
+              - source: '{$}'
+                destination: '{$.meta.cnm}'
+              - source: '{$}'
+                destination: '{$.payload}'
         Type: Task
         Resource: ${CNMToCMALambdaFunction.Arn}
         Retry:
@@ -575,6 +583,30 @@ KinesisTriggerTest:
           - ErrorEquals:
               - States.ALL
             IntervalSeconds: 10
+            MaxAttempts: 3
+        Catch:
+          - ErrorEquals:
+            - States.ALL
+            ResultPath: '$.exception'
+            Next: StopStatus
+        Next: CnmResponse
+      CnmResponse:
+        CumulusConfig:
+          provider: '{$.meta.provider}'
+          OriginalCNM: '{$.meta.cnm}'
+          CNMResponseStream: 'ProviderResponse'
+          region: 'us-east-1'
+          WorkflowException: '{$.exception}'
+          cumulus_message:
+            outputs:
+              - source: '{$}'
+                destination: '{$.meta.cnmResponse}'
+        Type: Task
+        Resource: ${CnmResponseLambdaFunction.Arn}
+        Retry:
+          - ErrorEquals:
+              - States.ALL
+            IntervalSeconds: 5
             MaxAttempts: 3
         Catch:
           - ErrorEquals:
