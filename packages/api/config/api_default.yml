@@ -374,7 +374,7 @@ ApiTokenDefault:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
-    OAUTH_PROVIDER: '{{parent.oauth_provider}}'
+    OAUTH_PROVIDER: '{{parent.oauth.provider}}'
   apiGateway:
     #default paths
     - api: backend

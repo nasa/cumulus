@@ -191,7 +191,9 @@ aimee:
   stackName: aimee
   stackNameNoDash: aimee
 
-  oauth_provider: google
+  oauth:
+    provider: google
+
   users:
     - username: aimee@developmentseed.org
 
