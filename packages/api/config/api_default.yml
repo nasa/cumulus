@@ -363,7 +363,7 @@ ApiStatsDefault:
 ApiTokenDefault:
   handler: index.token
   timeout: 20
-  memory: 512
+  memory: 768
   source: 'node_modules/@cumulus/api/dist/'
   apiRole: true
   urs: true
