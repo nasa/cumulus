@@ -174,7 +174,13 @@ class Rule extends Manager {
           item.rule.arn = mappingEnabled.UUID;
           return item;
         }
-        await this.deleteKinesisEventSource({ UUID: mappingExists.UUID }).promise();
+        await this.deleteKinesisEventSource({
+          name: item.name,
+          rule: {
+            arn: mappingExists.UUID,
+            type: 'kinesis'
+          }
+        });
       }
     }
 
