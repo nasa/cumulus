@@ -192,7 +192,7 @@ aimee:
   stackNameNoDash: aimee
 
   oauth:
-    provider: google
+    provider: earthdata
 
   users:
     - username: aimee@developmentseed.org
