@@ -222,8 +222,8 @@ mth-2:
     public:
       name: '{{stackName}}-public'
       type: public
-  users:
-    - username: '{{EARTHDATA_LOGIN_USERNAME}}'
+  # users:
+  #   - username: '{{EARTHDATA_LOGIN_USERNAME}}'
 
 jl:
   stackName: jl-test-integration
