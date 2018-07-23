@@ -121,10 +121,10 @@ CNMToCMA:
   handler: 'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'
   timeout: 300
   runtime: java8
-  memory: 128
+  memory: 256
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: 'daacs/podaac/CNMToCMA-0.0.1.zip'
+    key: 'daacs/podaac/cnmToGranule-1.0.zip'
   useMessageAdapter: false
   launchInVpc: true
 
