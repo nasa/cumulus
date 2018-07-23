@@ -88,13 +88,13 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   beforeAll(async () => {
     try {
       await createOrUseTestStream(streamName);
-      console.log(`waits for active Stream ${streamName}.`);
+      console.log(`\nwaits for active Stream ${streamName}.`);
       await waitForActiveStream(streamName);
       console.log(`Drops record onto  ${streamName}.`);
       await putRecordOnStream(streamName, record);
       console.log(`waits for stepfunction to start ${streamName}`);
       this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
-      console.log('waits for completed execution.');
+      console.log(`waits for completed execution of ${this.workflowExecution.executionArn}.`);
       executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
     }
     catch (error) {
