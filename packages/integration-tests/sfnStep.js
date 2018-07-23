@@ -109,8 +109,13 @@ class SfnStep {
 
     // Use the first passed execution, or last execution if none passed
     let stepExecution = stepExecutions[stepExecutions.length - 1];
-    const passedExecutions = stepExecutions.filter((e) =>
-      e.completeEvent !== null && e.completeEvent.type === this.successEvent);
+    const passedExecutions = stepExecutions.filter((e) => {
+      if ((e.completeEvent !== null) && ((e.completeEvent === undefined) || !('type' in e.completeEvent))) {
+        console.log(`incomplete Execution found e : ${e}`);
+        // return false eventually want to catch this error case first for understanding.
+      }
+      return e.completeEvent !== null && e.completeEvent.type === this.successEvent;
+    });
     if (passedExecutions) {
       stepExecution = passedExecutions[0];
     }
