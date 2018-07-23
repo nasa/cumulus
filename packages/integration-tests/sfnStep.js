@@ -112,10 +112,9 @@ class SfnStep {
     const passedExecutions = stepExecutions.filter((e) => {
       if ((e.completeEvent !== null)
           && ((e.completeEvent === undefined) || !('type' in e.completeEvent))) {
-        console.log(`incomplete Execution found e : ${JSON.stringify(e)}`);
-        // return false eventually want to catch this error case first for understanding.
+        console.log(`incomplete Execution discovered found e : ${JSON.stringify(e)}`);
       }
-      return e.completeEvent !== null && e.completeEvent.type === this.successEvent;
+      return e.completeEvent && e.completeEvent.type === this.successEvent;
     });
     if (passedExecutions) {
       stepExecution = passedExecutions[0];
