@@ -122,8 +122,9 @@ class SfnStep {
       stepExecution = passedExecutions[0];
     }
 
-    if (stepExecution.completeEvent === null ||
-        stepExecution.completeEvent.type !== this.successEvent) {
+    if (typeof stepExecution.completeEvent === 'undefined'
+        || stepExecution.completeEvent === null
+        || stepExecution.completeEvent.type !== this.successEvent) {
       console.log(`Step ${stepName} was not successful.`);
       return null;
     }
