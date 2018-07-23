@@ -92,6 +92,22 @@ class SfnStep {
     return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e));
   }
 
+  async getStepInput(workflowExecutionArn, stepName) {
+    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
+
+    if (stepExecutions === null) {
+      console.log(`Could not find step ${stepName} in execution.`);
+      return null;
+    }
+
+    const scheduleEvent = stepExecutions[0]['scheduleEvent'];
+    const eventWasSuccessful = scheduleEvent.type === this.scheduleSuccessfulEvent;
+    if (!eventWasSuccessful) console.log('Schedule event failed');
+
+    const subStepExecutionDetails = scheduleEvent['lambdaFunctionScheduledEventDetails'];
+    return JSON.parse(subStepExecutionDetails.input);
+  };
+
   /**
    * Get the output payload from the step, if the step succeeds
    *
@@ -138,9 +154,10 @@ class LambdaStep extends SfnStep {
   constructor() {
     super();
     this.scheduleFailedEvent = 'LambdaFunctionScheduleFailed';
+    this.scheduleSuccessfulEvent = 'LambdaFunctionScheduled';
     this.scheduleEvents = [
       this.scheduleFailedEvent,
-      'LambdaFunctionScheduled'
+      this.scheduleSuccessfulEvent
     ];
     this.startFailedEvent = 'LambdaFunctionStartFailed';
     this.startEvents = [
