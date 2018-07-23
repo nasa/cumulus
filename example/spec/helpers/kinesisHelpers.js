@@ -116,7 +116,7 @@ async function putRecordOnStream(streamName, record) {
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
+async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'sf2snsStart') {
   let timeWaited = 0;
   let lastExecution;
   let workflowExecution;
@@ -128,7 +128,7 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
     lastExecution = await getLastExecution();
     // getLastExecution returns undefined if no previous execution exists
     if (lastExecution && lastExecution.executionArn) {
-      const taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
+      const taskOutput = await lambdaStep.getStepInput(lastExecution.executionArn, firstStep);
       if (taskOutput.payload.identifier === recordIdentifier) {
         workflowExecution = lastExecution;
       }

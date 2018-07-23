@@ -29,9 +29,15 @@ const testConfig = loadConfig();
 const lambdaStep = new LambdaStep();
 const streamName = testConfig.streamName;
 
-
 const recordFile = record.product.files[0];
-const expectedTranslatePayload = {
+const expectedTranslatePayload ={
+  cnm: {
+    product: record.product,
+    identifier: recordIdentifier,
+    bucket: record.bucket,
+    provider: record.provider,
+    collection: record.collection
+  },
   granules: [
     {
       granuleId: record.product.name,
@@ -93,7 +99,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       console.log(`Drops record onto  ${streamName}.`);
       await putRecordOnStream(streamName, record);
       console.log(`waits for stepfunction to start ${streamName}`);
-      this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
+      const firstStep = 'CNMToCMA';
+      this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep);
       console.log(`waits for completed execution of ${this.workflowExecution.executionArn}.`);
       executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
     }
@@ -134,5 +141,12 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       }).promise();
       expect(new Date() - s3FileHead.LastModified < maxWaitTime).toBeTruthy();
     });
+  });
+
+  describe('the CnmResponse Lambda', () => {
+    it('is successful')
+    it('outputs nothing')
+    it('writes a message to the response stream')
+
   });
 });
