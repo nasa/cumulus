@@ -55,31 +55,25 @@ function generateLoginUrl(state) {
 }
 
 async function fetchGoogleToken(code) {
-  const tokens = await oauth2Client.getToken(code);
+  const { tokens } = await oauth2Client.getToken(code);
   const accessToken = tokens.access_token;
   const tokenExpires = tokens.expiry_date;
   const expires = (+new Date()) + (tokenExpires * 1000);
-  const refresh = tokens.refresh_token;
+  // The refresh_token is only returned on the first authorization
+  const refresh = tokens.refresh_token || expires;
 
   oauth2Client.setCredentials(tokens);
 
-  return plus.people.get({
-    userId: 'me',
-    auth: oauth2Client
-  }, (err, response) => {
-    if (err) {
-      log.error(err);
-      return err;
-    }
-    const userData = response.data;
-    // not sure if it's possible to have multiple emails but they are
-    // returned as a list. If users have multiple emails we will have to
-    // scan the users table to see if any match.
-    const userName = userData.emails[0];
-    return {
-      userName, accessToken, refresh, expires
-    };
-  });
+  const response = await plus.people.get({userId: 'me', auth: oauth2Client});
+  const userData = response.data;
+  // not sure if it's possible to have multiple emails but they are
+  // returned as a list. If users have multiple emails we will have to
+  // scan the users table to see if any match.
+  const userName = userData.emails[0].value;
+  const responseObject = {
+    userName, accessToken, refresh, expires
+  };
+  return responseObject;
 }
 
 function fetchEarthdataToken(code) {
@@ -113,7 +107,7 @@ function fetchEarthdataToken(code) {
     });
 }
 
-function getToken(code) {
+async function getToken(code) {
   if (process.env.OAUTH_PROVIDER === 'google') {
     return fetchGoogleToken(code);
   }

@@ -21,9 +21,8 @@ const token = async function (event, context) {
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
     try {
-      const {
-        userName, accessToken, refresh, expires
-      } = await authHelpers.getToken(code);
+      const responseObject = await authHelpers.getToken(code);
+      const { userName, accessToken, refresh, expires } = responseObject;
       const u = new User();
 
       return u.get({ userName })
@@ -69,7 +68,7 @@ function login(event, context, cb) {
   const state = get(event, 'queryStringParameters.state');
 
   if (code) {
-    return this.token(event, context);
+    return token(event, context);
   }
 
   const url = authHelpers.generateLoginUrl(state);
