@@ -61,14 +61,6 @@ test.beforeEach(() => {
 });
 test.afterEach(() => sandbox.restore());
 
-test('login calls the token method when a code exists', (t) => {
-  const tokenStub = sandbox.stub(tokenEndpoint, 'token').returns('fake-token');
-
-  tokenEndpoint.login(event, {}, callback);
-
-  t.is(tokenStub.calledOnce, true);
-});
-
 test('login returns a 301 redirect to Google when code does not exist', (t) => {
   const loginResult = tokenEndpoint.login(eventWithoutCode, {}, callback);
 
@@ -142,6 +134,7 @@ test('token returns 301 when user exists and state provided', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
   sandbox.stub(got, 'post').resolves({ body: { ...tokens, endpoint: '/peggy' } });
   sandbox.stub(User.prototype, 'get').resolves(true);
+  sandbox.stub(User.prototype, 'update').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {
     Location: `https://hulu.com?token=${accessToken}`,
@@ -163,6 +156,7 @@ test('token returns 200 when user exists and state is not provided', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').resolves(tokens);
   sandbox.stub(got, 'post').resolves({ body: { ...tokens, endpoint: '/peggy' } });
   sandbox.stub(User.prototype, 'get').resolves(true);
+  sandbox.stub(User.prototype, 'update').resolves(true);
 
   const expectedHeaders = Object.assign(clone(defaultHeaders), {
     'Content-Type': 'text/plain'

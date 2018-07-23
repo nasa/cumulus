@@ -27,9 +27,10 @@ const token = async function (event, context) {
 
       return u.get({ userName })
         .then(() => {
-          u.update({ userName }, { password: accessToken, refresh, expires });
+          return u.update({ userName }, { password: accessToken, refresh, expires });
         })
         .then(() => {
+          console.log('Updated user');
           if (state) {
             log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
             return resp(context, null, 'Redirecting to the specified state', 301, {
