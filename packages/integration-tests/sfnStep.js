@@ -114,7 +114,7 @@ class SfnStep {
           && ((e.completeEvent === undefined) || !('type' in e.completeEvent))) {
         console.log(`incomplete Execution discovered found e : ${JSON.stringify(e)}`);
       }
-      return (e.completeEvent !== undefined
+      return (typeof e.completeEvent !== 'undefined'
               && e.completeEvent !== null
               && e.completeEvent.type === this.successEvent);
     });
