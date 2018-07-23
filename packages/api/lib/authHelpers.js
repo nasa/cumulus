@@ -60,7 +60,7 @@ async function fetchGoogleToken(code) {
   const tokenExpires = tokens.expiry_date;
   const expires = (+new Date()) + (tokenExpires * 1000);
   // The refresh_token is only returned on the first authorization
-  const refresh = tokens.refresh_token || expires;
+  const refresh = tokens.refresh_token;
 
   oauth2Client.setCredentials(tokens);
 
