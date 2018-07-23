@@ -22,7 +22,11 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
       Bucket: bucket,
       CopySource: `${bucket}/${file.path}/${file.name}`,
       Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
-    }).promise();
+    }).promise()
+      .catch((err) => {
+        console.error(`Failed to copy s3://${bucket}/${file.path}/${file.name} to s3://${bucket}/${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}: ${err.message}`);
+        throw err;
+      });
 
   return Promise.all(granuleFiles.map(copyFile));
 }

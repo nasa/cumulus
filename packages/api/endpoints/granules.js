@@ -207,7 +207,7 @@ async function handler(event) {
     if (authorizationFailureResponse) return authorizationFailureResponse;
 
     // Perform the requested action
-    return await action(event);
+    return action(event);
   }
   catch (err) {
     log.error(err);

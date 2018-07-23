@@ -739,8 +739,7 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-property
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
-async function copyGranuleFile(source, target, options) {
-  const s3 = aws.s3();
+function copyGranuleFile(source, target, options) {
   const CopySource = encodeurl(urljoin(source.Bucket, source.Key));
 
   const params = Object.assign({
@@ -749,7 +748,11 @@ async function copyGranuleFile(source, target, options) {
     Key: target.Key
   }, (options || {}));
 
-  return s3.copyObject(params).promise();
+  return aws.s3().copyObject(params).promise()
+    .catch((err) => {
+      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`); // eslint-disable-line max-len
+      throw err;
+    });
 }
 
 /**
@@ -766,9 +769,8 @@ async function copyGranuleFile(source, target, options) {
 * @returns {Promise} returms a promise that is resolved when the file is moved
 **/
 async function moveGranuleFile(source, target, options) {
-  const s3 = aws.s3();
   await copyGranuleFile(source, target, options);
-  return s3.deleteObject(source).promise();
+  return aws.s3().deleteObject(source).promise();
 }
 
 /**
