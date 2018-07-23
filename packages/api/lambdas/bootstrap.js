@@ -22,7 +22,7 @@ const { dynamodb } = require('@cumulus/common/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const Manager = require('../models/base');
+const { User } = require('../models');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
@@ -138,7 +138,7 @@ async function bootstrapUsers(table, records) {
   if (!table) {
     return new Promise((resolve) => resolve());
   }
-  const user = new Manager(table);
+  const user = new User();
 
   // delete all user records
   const existingUsers = await user.scan();
