@@ -3,9 +3,8 @@
 const crypto = require('crypto');
 const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
-const cloneDeep = require('lodash.clonedeep')
-// const models = require('@cumulus/api/models');
-const { Granule: granuleModel } = require('@cumulus/api/models/granules');
+const cloneDeep = require('lodash.clonedeep');
+const { Granule: granuleModel } = require('@cumulus/api/models');
 const groupBy = require('lodash.groupby');
 const identity = require('lodash.identity');
 const omit = require('lodash.omit');
@@ -110,14 +109,7 @@ class Discover {
   async granuleIsNew(granule) {
     const g = new granuleModel();
 
-    return g.get({ granuleId: granule.name }).then(() => granule).catch(() => null);
-    /* const event = {
-      pathParameters: { granuleName: granule.name }
-    };
-
-    const response = await getGranule(event);
-    if (response.statusCode === 404) return granule;
-    return null;*/
+    return g.get({ granuleId: granule.name }).then(() => null).catch(() => granule);
   }
 
   /**

@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const { ftpMixin } = require('./ftp');
 const get = require('lodash.get');
-const { Pdr: pdrModel } = require('@cumulus/api/models/pdrs');
+const { Pdr: pdrModel } = require('@cumulus/api/models');
 const { httpMixin } = require('./http');
 const log = require('@cumulus/common/log');
 const { parsePdr } = require('./parse-pdr');
@@ -68,18 +68,18 @@ class Discover {
   }
 
   /**
-   * Determine if a PDR does not yet exist in S3.
+   * Determine if a PDR does not yet exist in dynamoDB.
    *
    * @param {Object} pdr - the PDR that's being looked for
    * @param {string} pdr.name - the name of the PDR (in S3)
    * @returns {Promise.<(boolean|Object)>} - a Promise that resolves to false
-   *   when the object does already exists in S3, or the passed-in PDR object
-   *   if it does not already exist in S3.
+   *   when the object does already exists in dynamo, or the passed-in PDR object
+   *   if it does not already exist in dynamo.
    */
   pdrIsNew(pdr) {
     const p = new pdrModel();
 
-    return p.get({ pdrName: pdr.name }).then(() => pdr).catch(() => false);
+    return p.get({ pdrName: pdr.name }).then(() => false).catch(() => pdr);
   }
 
   /**
