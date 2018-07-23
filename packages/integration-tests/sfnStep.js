@@ -118,7 +118,7 @@ class SfnStep {
               && e.completeEvent !== null
               && e.completeEvent.type === this.successEvent);
     });
-    if (passedExecutions) {
+    if (passedExecutions && passedExecutions.length > 0) {
       stepExecution = passedExecutions[0];
     }
 
