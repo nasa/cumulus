@@ -121,7 +121,7 @@ CNMToCMA:
   handler: 'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'
   timeout: 300
   runtime: java8
-  memory: 256
+  memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
     key: 'daacs/podaac/cnmToGranule-1.0-wCMA.zip'
