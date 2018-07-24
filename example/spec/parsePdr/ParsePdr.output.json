@@ -10,8 +10,8 @@
   },
   "granules": [
     {
-      "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
       "dataType": "MOD09GQ",
+     
       "files": [
         {
           "path": "cumulus-test-data/pdrs",
@@ -24,7 +24,9 @@
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
         }
       ],
-      "granuleSize": 17909733
+      "version": "006",
+      "granuleSize": 17909733,
+      "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606"
     }
   ]
 }
