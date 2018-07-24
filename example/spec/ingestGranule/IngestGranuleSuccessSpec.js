@@ -8,7 +8,7 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists },
+  aws: { s3, s3ObjectExists, getS3Object },
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
@@ -86,10 +86,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
-    console.log('Starting ingest test');
     const granuleId = randomStringFromRegex(granuleRegex);
-
-    console.log(`granule id: ${granuleId}`);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, granuleId, inputPayloadJson);
@@ -97,7 +94,6 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
 
     expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
-
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
@@ -162,6 +158,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      if (lambdaOutput.replace) {
+        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
+        lambdaOutput = JSON.parse(msg.Body.toString());
+      }
       files = lambdaOutput.payload.granules[0].files;
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
@@ -198,6 +198,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      if (lambdaOutput.replace) {
+        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
+        lambdaOutput = JSON.parse(msg.Body.toString());
+      }
       files = lambdaOutput.payload.granules[0].files;
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
