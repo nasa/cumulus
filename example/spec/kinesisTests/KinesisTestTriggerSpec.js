@@ -184,5 +184,3 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     it('fails');
   });
 });
-
-
