@@ -220,6 +220,40 @@ After the PR is merged, update the (tag) and give a proper title and copy the re
 
 ![](https://static.notion-static.com/287c7d98-351a-446d-a7ff-45eef2b45d7c/New_release__nasa_cumulus.png)
 
+### Backporting to a previous release
+
+To backport and release to an earlier minor version of Cumulus than the latest minor version, follow the below steps. For example if the current version is 1.6 and a fix needs to be backported to 1.5.
+
+#### 1. Create a version branch
+
+If a version branch does not exist, it must be created. Sync to the tag for the latest patch version in the minor version.
+
+    $ git checkout v1.5.5
+    
+Create a branch for version 1.5.
+
+    $ git checkout -b v1.5
+   
+Push the branch to git.
+
+#### 2. Make changes and PR
+
+Create a release branch off the version branch (i.e. v1.5) to create a branch for the changes. Use git cherry-pick or manually make the changes.
+
+Follow [step 2](#2-update-the-cumulus-version-number) above to update the version number using `yarn update`.
+
+Update the changelog for the new release, making sure a link is put in the bottom. 
+
+Create a pull request against the version branch.
+
+#### 3. Create a git tag
+
+Follow [these steps](#5-create-a-git-tag).
+
+#### 4. Merge to the version branch
+
+Merging to a branch structured as vX.Y will kick off the release and npm testing process.
+
 ## Running command in all package folders
 
     $ lerna exec -- rm -rf ./package-lock.json
