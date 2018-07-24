@@ -129,7 +129,7 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
     // getLastExecution returns undefined if no previous execution exists
     if (lastExecution && lastExecution.executionArn) {
       const taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
-      if (taskOutput.payload.identifier === recordIdentifier) {
+      if (taskOutput !== null && taskOutput.payload.identifier === recordIdentifier) {
         workflowExecution = lastExecution;
       }
     }
