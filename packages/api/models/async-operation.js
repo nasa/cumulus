@@ -1,43 +1,80 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
+const { ecs, s3, s3Join } = require('@cumulus/common/aws');
 const uuidv4 = require('uuid/v4');
 const Manager = require('./base');
 const { asyncOperations: asyncOperationsSchema } = require('./schemas');
 
 class AsyncOperation extends Manager {
   constructor(params) {
+    if (!params.stackName) throw new TypeError('stackName is required');
+    if (!params.systemBucket) throw new TypeError('systemBucket is required');
+
     super({
       tableName: params.tableName,
       tableHash: { name: 'id', type: 'S' },
       tableSchema: asyncOperationsSchema
     });
+
+    this.systemBucket = params.systemBucket;
+    this.stackName = params.stackName;
   }
 
-  /**
-   * Create one or many async operations
-   *
-   * @param {Object<Array|Object>} items - the Item/Items to be added to the database
-   * @returns {Promise<Array|Object>} an array of created records or a single
-   *   created record
-   */
-  async create(items) {
-    // This is confusing because the argument named "items" could either be
-    // an Array of items  or a single item.  To make this function a little
-    // easier to understand, converting the single item case here to an array
-    // containing one item.
-    const itemsArray = Array.isArray(items) ? items : [items];
+  get(id) {
+    return super.get({ id });
+  }
 
-    const itemsWithId = itemsArray.map((item) => Object.assign(
-      cloneDeep(item),
-      { id: uuidv4() }
-    ));
+  async start(params) {
+    const {
+      cluster,
+      asyncOperationTaskDefinition,
+      lambdaName,
+      payload
+    } = params;
 
-    const createdItemOrItems = await super.create(itemsWithId);
+    const id = uuidv4();
 
-    // If the original items argument was an Array, return an Array.  If the
-    // original items argument was an Object, return an Object.
-    return Array.isArray(items) ? createdItemOrItems : createdItemOrItems[0];
+    // Upload payload to S3
+    const payloadKey = s3Join(this.stackName, 'async-operation-payloads', `${id}.json`);
+
+    await s3().putObject({
+      Bucket: this.systemBucket,
+      Key: payloadKey,
+      Body: JSON.stringify(payload)
+    }).promise();
+
+    // Start the task in ECS
+    const runTaskResponse = await ecs().runTask({
+      cluster,
+      taskDefinition: asyncOperationTaskDefinition,
+      launchType: 'EC2',
+      overrides: {
+        containerOverrides: [
+          {
+            name: 'AsyncOperation',
+            environment: [
+              { name: 'asyncOperationId', value: id },
+              { name: 'asyncOperationsTable', value: this.tableName },
+              { name: 'lambdaName', value: lambdaName },
+              { name: 'payloadUrl', value: `s3://${this.systemBucket}/${payloadKey}` }
+            ]
+          }
+        ]
+      }
+    }).promise();
+
+    if (runTaskResponse.failures.length > 0) {
+      console.log('runTaskResponse.failures:', JSON.stringify(runTaskResponse, null, 2));
+      throw new Error(`Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`);
+    }
+
+    const taskArn = runTaskResponse.tasks[0].taskArn;
+
+    return this.create({
+      id,
+      taskArn,
+      status: 'CREATED'
+    });
   }
 }
 module.exports = AsyncOperation;

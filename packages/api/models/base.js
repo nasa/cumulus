@@ -105,10 +105,8 @@ class Manager {
    */
   constructor(params) {
     // Make sure all required parameters are present
-    const requiredParameters = ['tableName', 'tableHash'];
-    requiredParameters.forEach((requiredParameter) => {
-      if (!params[requiredParameter]) throw new TypeError(`${requiredParameter} is required`);
-    });
+    if (!params.tableName) throw new TypeError('params.tableName is required');
+    if (!params.tableHash) throw new TypeError('params.tableHash is required');
 
     this.tableName = params.tableName;
     this.tableHash = params.tableHash;

@@ -1,19 +1,15 @@
 'use strict';
 
 const test = require('ava');
-
+const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
-
-const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   AsyncOperation: AsyncOperationModel,
   User
 } = require('../../models');
-const {
-  createFakeUser
-} = require('../../lib/testUtils');
+const { fakeUserFactory } = require('../../lib/testUtils');
 
 let asyncOperationModel;
 let userModel;
@@ -22,27 +18,43 @@ let context;
 
 test.before(async () => {
   // Create AsyncOperations table
-  asyncOperationModel = new AsyncOperationModel({ tableName: randomString() });
+  asyncOperationModel = new AsyncOperationModel({
+    stackName: randomString(),
+    systemBucket: randomString(),
+    tableName: randomString()
+  });
   await asyncOperationModel.createTable();
 
   // Create Users table
-  userModel = new User(randomString());
-  await User.createTable(userModel.tableName, { name: 'userName', type: 'S' });
+  process.env.UsersTable = randomString();
+  userModel = new User();
+  await userModel.createTable();
 
-  const authToken = (await createFakeUser({ userDbClient: userModel })).password;
-  authHeaders = {
-    Authorization: `Bearer ${authToken}`
-  };
+  const authToken = (await userModel.create(fakeUserFactory())).password;
+  authHeaders = { Authorization: `Bearer ${authToken}` };
 
   context = {
     AsyncOperationsTable: asyncOperationModel.tableName,
-    UsersTable: userModel.tableName
+    UsersTable: userModel.tableName,
+    stackName: asyncOperationModel.stackName,
+    systemBucket: asyncOperationModel.systemBucket
   };
 });
 
 test.after.always(async () => {
-  await asyncOperationModel.deleteTable();
-  await userModel.deleteTable();
+  try {
+    await asyncOperationModel.deleteTable();
+  }
+  catch (err) {
+    if (err.code !== 'ResourceNotFoundException') throw err;
+  }
+
+  try {
+    await userModel.deleteTable();
+  }
+  catch (err) {
+    if (err.code !== 'ResourceNotFoundException') throw err;
+  }
 });
 
 test.serial('GET /async-operation returns a 404 status code', async (t) => {
@@ -85,13 +97,20 @@ test.serial('GET /async-operation/{:id} returns a 404 status code if the request
 });
 
 test.serial('GET /async-operation/{:id} returns the async operation if it does exist', async (t) => {
-  const asyncOperation = await asyncOperationModel.create();
+  const asyncOperation = {
+    id: 'abc-123',
+    status: 'TESTING',
+    result: JSON.stringify({ age: 37 }),
+    error: undefined
+  };
+
+  const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
 
   const event = {
     headers: authHeaders,
     httpMethod: 'GET',
     pathParameters: {
-      id: asyncOperation.id
+      id: createdAsyncOperation.id
     }
   };
 
@@ -100,5 +119,13 @@ test.serial('GET /async-operation/{:id} returns the async operation if it does e
   t.is(response.statusCode, 200);
 
   const parsedBody = JSON.parse(response.body);
-  t.is(parsedBody.id, event.pathParameters.id);
+
+  t.deepEqual(
+    parsedBody,
+    {
+      id: asyncOperation.id,
+      status: asyncOperation.status,
+      result: asyncOperation.result
+    }
+  );
 });

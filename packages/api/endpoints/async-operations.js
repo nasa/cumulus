@@ -2,6 +2,7 @@
 
 const get = require('lodash.get');
 const { log } = require('@cumulus/common');
+const pick = require('lodash.pick');
 
 const { AsyncOperation: AsyncOperationModel } = require('../models');
 const {
@@ -11,12 +12,10 @@ const {
   notFoundResponse
 } = require('../lib/response');
 
-async function getAsyncOperation(asyncOperationsTable, id) {
-  const asyncOperationModel = new AsyncOperationModel({ tableName: asyncOperationsTable });
-
+async function getAsyncOperation(asyncOperationModel, id) {
   let asyncOperation;
   try {
-    asyncOperation = await asyncOperationModel.get({ id });
+    asyncOperation = await asyncOperationModel.get(id);
   }
   catch (err) {
     if (err.message.startsWith('No record found')) return notFoundResponse;
@@ -25,22 +24,26 @@ async function getAsyncOperation(asyncOperationsTable, id) {
 
   return buildLambdaProxyResponse({
     json: true,
-    body: {
-      id: asyncOperation.id,
-      status: asyncOperation.status,
-      results: asyncOperation.results
-    }
+    body: pick(asyncOperation, ['id', 'status', 'taskArn', 'result', 'error'])
   });
 }
 
 async function handler(event, context, _callback) {
-  // In testing, we'll smuggle the table names in using the context.  When
-  // this is run in API Gateway, the table names will be set using environment
-  // variables
-  const usersTable = context.UsersTable || process.env.UsersTable;
-  const asyncOperationsTable = context.AsyncOperationsTable || process.env.AsyncOperationsTable;
-
   try {
+    // In testing, we'll smuggle the table names in using the context.  When
+    // this is run in API Gateway, the table names will be set using environment
+    // variables
+    const usersTable = context.UsersTable || process.env.UsersTable;
+    const asyncOperationsTable = context.AsyncOperationsTable || process.env.AsyncOperationsTable;
+    const stackName = context.stackName || process.env.stackName;
+    const systemBucket = context.systemBucket || process.env.systemBucket;
+
+    const asyncOperationModel = new AsyncOperationModel({
+      stackName,
+      systemBucket,
+      tableName: asyncOperationsTable
+    });
+
     // Verify the user's credentials
     const authorizationFailureResponse = await getAuthorizationFailureResponse({
       usersTable,
@@ -49,7 +52,7 @@ async function handler(event, context, _callback) {
     if (authorizationFailureResponse) return authorizationFailureResponse;
 
     if (event.httpMethod === 'GET' && get(event, 'pathParameters.id')) {
-      return getAsyncOperation(asyncOperationsTable, event.pathParameters.id);
+      return getAsyncOperation(asyncOperationModel, event.pathParameters.id);
     }
 
     return notFoundResponse;
