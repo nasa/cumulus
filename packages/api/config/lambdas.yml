@@ -156,3 +156,7 @@ CreateReconciliationReport:
     filesTableName:
       function: Ref
       value: FilesTableDynamoDB
+
+BulkDelete:
+  handler: index.bulkDeleteLambda
+  source: 'node_modules/@cumulus/api/dist/'

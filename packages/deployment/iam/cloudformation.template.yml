@@ -39,6 +39,10 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
+                Action: ecs:RunTask
+                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ResourcePrefix}-AsyncOperationTaskDefinition-*"
+
+              - Effect: Allow
                 Action:
                   - logs:DescribeLogStreams
                   - logs:CreateLogGroup
@@ -99,7 +103,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -199,7 +203,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -338,6 +342,9 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
+                Action: dynamodb:UpdateItem
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
+              - Effect: Allow
                 Action:
                   - cloudwatch:GetMetricStatistics
                   - ecr:BatchCheckLayerAvailability
@@ -401,7 +408,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -438,10 +445,10 @@ Resources:
                   - lambda:GetFunction
                   - lambda:invokeFunction
                   - lambda:CreateEventSourceMapping
-                  - lambda:UpdateEventSourceMapping 
-                  - lambda:DeleteEventSourceMapping 
-                  - lambda:GetEventSourceMapping 
-                  - lambda:ListEventSourceMappings 
+                  - lambda:UpdateEventSourceMapping
+                  - lambda:DeleteEventSourceMapping
+                  - lambda:GetEventSourceMapping
+                  - lambda:ListEventSourceMappings
                 Resource: "*"
 
               - Effect: Allow
@@ -469,7 +476,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                 {{#BucketIsType this "protected"}}
                   - arn:aws:s3:::{{this.name}}/*
