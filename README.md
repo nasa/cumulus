@@ -168,13 +168,13 @@ All packages on master branch are automatically published to NPM.
 
 Follow the following steps to publish to NPM:
 
-#### Create the release branch
+#### 1. Create the release branch
 
 Create a new branch from `master` (make sure you have latest) and call it `release-version-<version_number>`. 
 
 Release PRs **MUST** be named with `release-` prefix. This will kick off the AWS integration tests in the CI process and ensures that package updates are fully tested on AWS before publication to NPM.
 
-#### Update the Cumulus Version number
+#### 2. Update the Cumulus Version number
 
 When changes are ready to be released, the Cumulus version number must be updated using semantic versioning.
 
@@ -188,17 +188,17 @@ You will be prompted to select the type of change (patch/minor/major). Lerna wil
 
 ![](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
 
-#### Update the Changelog
+#### 3. Update the Changelog
 
 Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
 
 Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
 
-#### Update the example package.json
+#### 4. Update the example package.json
 
 Update example/package.json to point to the new Cumulus packages.
 
-#### Create a git tag
+#### 5. Create a git tag
 
 The CHANGELOG changes and package updates should be pushed to git. Then tag the release. The tag is what tells npm what to publish, so it is important for this branch to be up to date with master and have all these changes pushed.
 
@@ -210,7 +210,7 @@ Push the tag to github
 
   $ git push origin v1.x.x
 
-#### PR and merge to master
+#### 6. PR and merge to master
 
 Create a PR against the `master` branch
 
