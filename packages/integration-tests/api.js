@@ -119,9 +119,116 @@ function postBulkDelete({ prefix, granuleIds }) {
   });
 }
 
+/**
+ * Reingest a granule from the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @returns {Promise<Object>} - the granule fetched by the API
+ */
+async function reingestGranule({ prefix, granuleId }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiGranulesDefault',
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/v1/granules/{granuleName}',
+      path: `/v1/granules/${granuleId}`,
+      pathParameters: {
+        granuleName: granuleId
+      },
+      body: JSON.stringify({ action: 'reingest' })
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
+/**
+ * Removes a granule from CMR via the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @returns {Promise<Object>} - the granule fetched by the API
+ */
+async function removeFromCMR({ prefix, granuleId }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiGranulesDefault',
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/v1/granules/{granuleName}',
+      path: `/v1/granules/${granuleId}`,
+      pathParameters: {
+        granuleName: granuleId
+      },
+      body: JSON.stringify({ action: 'removeFromCmr' })
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+/**
+ * Run a workflow with the given granule as the payload
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @param {string} params.workflow - workflow to be run with given granule
+ * @returns {Promise<Object>} - the granule fetched by the API
+ */
+async function applyWorkflow({ prefix, granuleId, workflow }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiGranulesDefault',
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/v1/granules/{granuleName}',
+      path: `/v1/granules/${granuleId}`,
+      pathParameters: {
+        granuleName: granuleId
+      },
+      body: JSON.stringify({ action: 'applyWorkflow', workflow })
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
+/**
+ * Fetch an execution from the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.arn - an execution arn
+ * @returns {Promise<Object>} - the execution fetched by the API
+ */
+async function getExecution({ prefix, arn }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiExecutionsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/executions/{arn}',
+      path: `executions/${arn}`,
+      pathParameters: {
+        arn: arn
+      }
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
 module.exports = {
+  applyWorkflow,
   callCumulusApi,
   getAsyncOperation,
+  getExecution,
   getGranule,
-  postBulkDelete
+  postBulkDelete,
+  reingestGranule,
+  removeFromCMR
 };
