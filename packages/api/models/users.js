@@ -3,9 +3,11 @@
 const Manager = require('./base');
 
 class User extends Manager {
-  constructor() {
+  constructor(params = {}) {
+    const tableName = params.tableName || process.env.UsersTable;
+
     super({
-      tableName: process.env.UsersTable,
+      tableName,
       tableHash: { name: 'userName', type: 'S' }
     });
   }
