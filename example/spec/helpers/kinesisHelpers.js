@@ -93,6 +93,15 @@ async function createOrUseTestStream(streamName) {
   return stream;
 }
 
+/**
+ * Gets the shard iterator for stream <streamName> using LATEST: Records written to
+ * the stream after this shard iterator is retrieved will be returned by calls
+ * to GetRecords. NOTE: Shard iterators expire after 5 minutes if not used in a
+ * GetRecords call.
+ *
+ * @param  {String} streamName - Name of the stream of interest
+ * @return {String}            - Shard iterator
+ */
 async function getShardIterator(streamName) {
   const describeStreamParams = {
     StreamName: streamName
@@ -111,6 +120,13 @@ async function getShardIterator(streamName) {
   return shardIterator.ShardIterator;
 };
 
+/**
+ * Gets records from a kinesis stream using a shard iterator.
+ *
+ * @param  {String} shardIterator - Kinesis stream shard iterator.
+ *                                  Shard iterators must be generated using getShardIterator.
+ * @return {Promise}              - kinesis GetRecords promise
+ */
 async function getRecords(shardIterator) {
   return kinesis.getRecords({ShardIterator: shardIterator}).promise();
 };
