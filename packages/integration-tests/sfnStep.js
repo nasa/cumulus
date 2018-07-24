@@ -109,14 +109,22 @@ class SfnStep {
 
     // Use the first passed execution, or last execution if none passed
     let stepExecution = stepExecutions[stepExecutions.length - 1];
-    const passedExecutions = stepExecutions.filter((e) =>
-      e.completeEvent !== null && e.completeEvent.type === this.successEvent);
-    if (passedExecutions) {
+    const passedExecutions = stepExecutions.filter((e) => {
+      if ((e.completeEvent !== null)
+          && ((e.completeEvent === undefined) || !('type' in e.completeEvent))) {
+        console.log(`incomplete Execution discovered found e : ${JSON.stringify(e)}`);
+      }
+      return (typeof e.completeEvent !== 'undefined'
+              && e.completeEvent !== null
+              && e.completeEvent.type === this.successEvent);
+    });
+    if (passedExecutions && passedExecutions.length > 0) {
       stepExecution = passedExecutions[0];
     }
 
-    if (stepExecution.completeEvent === null ||
-        stepExecution.completeEvent.type !== this.successEvent) {
+    if (typeof stepExecution.completeEvent === 'undefined'
+        || stepExecution.completeEvent === null
+        || stepExecution.completeEvent.type !== this.successEvent) {
       console.log(`Step ${stepName} was not successful.`);
       return null;
     }
