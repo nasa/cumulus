@@ -135,14 +135,13 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
  * @returns {Promise.<Array>} array of aws dynamodb responses
  */
 async function bootstrapUsers(table, records) {
-  if (!table) {
-    return new Promise((resolve) => resolve());
-  }
-  const user = new User();
+  if (!table) return Promise.resolve();
+
+  const user = new User({ tableName: table });
 
   // delete all user records
   const existingUsers = await user.scan();
-  await Promise.all(existingUsers.Items.map((u) => user.delete({ userName: u.userName })));
+  await Promise.all(existingUsers.Items.map((u) => user.delete(u.userName)));
   // add new ones
   const additions = records.map((record) => user.create({
     userName: record.username,
