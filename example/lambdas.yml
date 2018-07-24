@@ -73,7 +73,7 @@ SfSnsReport:
   handler: index.handler
   timeout: 300
   source: 'node_modules/@cumulus/sf-sns-report/dist'
-  useMessageAdapter: true 
+  useMessageAdapter: true
 
 SyncGranule:
   handler: index.handler
@@ -107,7 +107,7 @@ ModisProcessing:
     key: deploy/cumulus-process/modis/0.5.2.zip
   runtime: python2.7
 
-InRegionS3Policy: 
+InRegionS3Policy:
    handler: index.inRegionS3Policy
    memory: 256
    timeout: 300
@@ -117,3 +117,13 @@ SnsS3Test:
   handler: index.handler
   source: 'lambdas/snsS3Test/'
 
+CNMToCMA:
+  handler: 'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'
+  timeout: 300
+  runtime: java8
+  memory: 128
+  s3Source:
+    bucket: '{{buckets.shared.name}}'
+    key: 'daacs/podaac/CNMToCMA-0.0.1.zip'
+  useMessageAdapter: false
+  launchInVpc: true
