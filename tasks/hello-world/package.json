@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -40,7 +40,7 @@
     "@cumulus/cumulus-message-adapter-js": "^1.0.1"
   },
   "devDependencies": {
-    "@cumulus/common": "^1.6.0",
+    "@cumulus/common": "^1.8.0",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",
