@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v1.8.0] - 2018-07-23
+
 ### Added
 
 
@@ -29,7 +32,6 @@ We may need to update the api documentation to reflect this.
 ### Fixed
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
-
 
 ## [v1.7.0] - 2018-07-02
 
@@ -373,7 +375,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.0...HEAD
+[v1.8.0]: https://github.com/nasa/cumulus/compare/v1.7.0...v1.8.0
 [v1.7.0]: https://github.com/nasa/cumulus/compare/v1.6.0...v1.7.0
 [v1.6.0]: https://github.com/nasa/cumulus/compare/v1.5.5...v1.6.0
 [v1.5.5]: https://github.com/nasa/cumulus/compare/v1.5.4...v1.5.5

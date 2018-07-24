@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-data",
-  "version": "1.6.0",
+  "version": "1.8.0",
   "description": "Includes the test data for various packages",
   "keywords": [
     "GIBS",
@@ -16,7 +16,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\"", 
+    "test": "echo \"Error: no test specified\"",
     "build": "echo \"Nothing to build\""
   },
   "author": "Cumulus Authors",
