@@ -238,7 +238,7 @@ jobs:
       - run:
           name: Checkout Latest Tag 
           command: |
-            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+            if [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ "$CIRCLE_BRANCH" =~ '^v\d+\.\d+' ]]'; then
               # checkout the latest tag
               LATEST_GIT_TAG=$(git describe --tags --abbrev=0 --match v*)
               echo $LATEST_GIT_TAG
@@ -277,12 +277,16 @@ jobs:
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
               VERSION=$(cat lerna.json | jq .version --raw-output)
               ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm
+            elif [[ "$CIRCLE_BRANCH" =~ '^v\d+\.\d+' ]]; then 
+              echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+              VERSION=$(cat lerna.json | jq .version --raw-output)
+              ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm --npm-tag=patch-$VERSION
             fi
       
       - run:
           name: Deploy cumulus with the npm packages source code to AWS
           command: |
-            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+            if [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ "$CIRCLE_BRANCH" =~ '^v\d+\.\d+' ]]; then
               cd example
               yarn
               sed -i -- 's/src/npm/g' spec/config.yml
@@ -293,7 +297,7 @@ jobs:
       - run:
           name: Run Tests 
           command: |
-            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+            if [[  "$CIRCLE_BRANCH" == 'master' ]] || [[ "$CIRCLE_BRANCH" =~ '^v\d+\.\d+' ]]; then
               cd example
               DEPLOYMENT=cumulus-from-npm yarn test
             fi
