@@ -3,7 +3,6 @@
 'use strict';
 
 const get = require('lodash.get');
-const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
 const { rule } = require('./schemas');
@@ -21,14 +20,17 @@ class Rule extends Manager {
 
   async addRule(item, payload) {
     const name = `${process.env.stackName}-custom-${item.name}`;
-    const r = await Events.putEvent(
+    const r = await aws.putCloudWatchEvent(
       name,
       item.rule.value,
       item.state,
       'Rule created by cumulus-api'
     );
 
-    await Events.putTarget(name, this.targetId, process.env.invokeArn, JSON.stringify(payload));
+    await aws.putCloudWatchTarget(name,
+      this.targetId,
+      process.env.invokeArn,
+      JSON.stringify(payload));
     return r.RuleArn;
   }
 
@@ -36,8 +38,8 @@ class Rule extends Manager {
     switch (item.rule.type) {
     case 'scheduled': {
       const name = `${process.env.stackName}-custom-${item.name}`;
-      await Events.deleteTarget(this.targetId, name);
-      await Events.deleteEvent(name);
+      await aws.deleteCloudWatchTarget(this.targetId, name);
+      await aws.deleteCloudWatchEvent(name);
       break;
     }
     case 'kinesis':
@@ -116,7 +118,7 @@ class Rule extends Manager {
 
   static async invoke(item) {
     const payload = await Rule.buildPayload(item);
-    await invoke(process.env.invoke, payload);
+    await aws.invokeLambda(process.env.invoke, payload);
   }
 
   async create(item) {
@@ -129,7 +131,7 @@ class Rule extends Manager {
     const payload = await Rule.buildPayload(item);
     switch (item.rule.type) {
     case 'onetime': {
-      await invoke(process.env.invoke, payload);
+      await aws.invokeLambda(process.env.invoke, payload);
       break;
     }
     case 'scheduled': {

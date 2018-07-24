@@ -1,7 +1,7 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { S3 } = require('@cumulus/ingest/aws');
+const { getS3Object } = require('@cumulus/common/aws');
 const handle = require('../lib/response').handle;
 
 /**
@@ -13,7 +13,7 @@ const handle = require('../lib/response').handle;
  */
 function list(event, cb) {
   const key = `${process.env.stackName}/workflows/list.json`;
-  S3.get(process.env.bucket, key).then((file) => {
+  getS3Object(process.env.bucket, key).then((file) => {
     const workflows = JSON.parse(file.Body.toString());
     return cb(null, workflows);
   }).catch((e) => cb(e));
@@ -30,7 +30,7 @@ function get(event, cb) {
   const name = _get(event.pathParameters, 'name');
 
   const key = `${process.env.stackName}/workflows/list.json`;
-  S3.get(process.env.bucket, key)
+  getS3Object(process.env.bucket, key)
     .then((file) => {
       const workflows = JSON.parse(file.Body.toString());
 

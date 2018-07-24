@@ -5,8 +5,7 @@ const get = require('lodash.get');
 const path = require('path');
 const uniqBy = require('lodash.uniqby');
 
-const aws = require('@cumulus/ingest/aws');
-const commonAws = require('@cumulus/common/aws');
+const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
@@ -43,7 +42,7 @@ class Granule extends Manager {
   addMissingFileSizes(files) {
     const filePromises = files.map((file) => {
       if (!('fileSize' in file)) {
-        return commonAws.headObject(file.bucket, file.filepath)
+        return aws.headObject(file.bucket, file.filepath)
           .then((result) => {
             const updatedFile = file;
             updatedFile.fileSize = result.ContentLength;
@@ -92,7 +91,7 @@ class Granule extends Manager {
     const { name, version } = deconstructCollectionId(g.collectionId);
 
     // get the payload of the original execution
-    const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
+    const status = await aws.getSfnExecutionStatusFromArn(path.basename(g.execution));
     const originalMessage = JSON.parse(status.execution.input);
 
     const lambdaPayload = await Rule.buildPayload({
@@ -108,7 +107,7 @@ class Granule extends Manager {
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
 
-    await aws.invoke(process.env.invoke, lambdaPayload);
+    await aws.invokeLambda(process.env.invoke, lambdaPayload);
   }
 
   /**
@@ -135,7 +134,7 @@ class Granule extends Manager {
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
 
-    await aws.invoke(process.env.invoke, lambdaPayload);
+    await aws.invokeLambda(process.env.invoke, lambdaPayload);
   }
 
   /**
@@ -164,14 +163,15 @@ class Granule extends Manager {
    * @returns {Promise<Array>} granule records
    */
   async createGranulesFromSns(payload) {
-    const name = get(payload, 'cumulus_meta.execution_name');
+    const executionName = get(payload, 'cumulus_meta.execution_name');
+    const stateMachineArn = get(payload, 'cumulus_meta.state_machine');
     const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
     if (!granules) return Promise.resolve();
 
     const arn = aws.getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
+      stateMachineArn,
+      executionName
     );
 
     if (!arn) return Promise.resolve();

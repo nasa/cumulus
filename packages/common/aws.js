@@ -776,6 +776,98 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
   return null;
 };
 
+const getSfnExecution = async (arn, ignoreMissingExecutions = false) {
+  const sfn = exports.sfn();
+
+  const params = {
+    executionArn: arn
+  };
+
+  try {
+    const r = await sfn.describeExecution(params).promise();
+    return r;
+  }
+  catch (e) {
+    if (ignoreMissingExecutions && e.message && e.message.includes('Execution Does Not Exist')) {
+      return {
+        executionArn: arn,
+        status: 'NOT_FOUND'
+      };
+    }
+    throw e;
+  }
+}
+
+/**
+ * Stop a step function execution
+ *
+ * @executionArn {string} - executionArn
+ * @cause {string} - cause for stopping
+ * @error {string} - error
+ * @returns {Promise} - response from `StepFunctions.stopExecution` as a promise
+ */
+exports.stopExecution = async (executionArn, cause, error) {
+  const sfn = exports.sfn();
+   return sfn.stopExecution({
+     executionArn: executionArn,
+     cause: cause,
+     error: error
+   }).promise();
+}
+
+/**
+ * Fetch an event from S3
+ *
+ * @param {Object} event - an event to be fetched from S3
+ * @param {string} event.s3_path - the S3 location of the event
+ * @returns {Promise.<Object>} - the parsed event from S3
+ */
+exports.pullSfnEvent = async (event) {
+  if (event.s3_path) {
+    const parsed = exports.parseS3Uri(event.s3_path);
+    const file = await exports.getS3Object(parsed.Bucket, parsed.Key);
+
+    return JSON.parse(file.Body.toString());
+  }
+  return event;
+}
+
+/**
+ * Get execution status from a state machine executionArn
+ *
+ * @param {string} stateMachineArn - state machine ARN
+ * @returns {Object} - Object with { execution, executionHistory, stateMachine }
+ */
+exports.getSfnExecutionStatusFromArn = async (executionArn) {
+  const sfn = exports.sfn();
+  const [execution, executionHistory] = await Promise.all([
+    getSfnExecution(executionArn),
+    sfn.getExecutionHistory({
+      executionArn: executionArn,
+      maxResults: 10,
+      reverseOrder: true
+    }).promise()
+  ]);
+
+  const stateMachine = await sfn.describeStateMachine({
+    stateMachineArn: execution.stateMachineArn
+  }).promise();
+
+  return { execution, executionHistory, stateMachine };
+}
+
+/**
+ * Returns execution ARN from a state machine Arn and executionName
+ *
+ * @param {string} executionArn - execution ARN
+ * @returns {string} - aws console url for the execution
+ */
+exports.getExecutionUrl = (executionArn) {
+  const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+  return `https://console.aws.com/states/home?region=${region}` +
+         `#/executions/details/${executionArn}`;
+}
+
 /**
 * Parse event metadata to get location of granule on S3
 *
@@ -814,3 +906,112 @@ exports.setGranuleStatus = async (
   params.Metadata = { executionArn, status };
   await exports.s3().putObject(params).promise();
 };
+
+/**
+ * Invoke a lambda
+ *
+ * @name {string} - name of the lambda to invoke
+ * @payload {Object} - JSON Object to be passed into the lambda
+ * @type - Invocation Type of the lamdba
+ */
+exports.invokeLambda = async (name, payload, type = 'Event') {
+  if (process.env.IS_LOCAL || inTestMode()) {
+    log.info(`Faking Lambda invocation for ${name}`);
+    return false;
+  }
+
+  const lambda = exports.lambda();
+
+  const params = {
+    FunctionName: name,
+    Payload: JSON.stringify(payload),
+    InvocationType: type
+  };
+
+  log.info(`invoked ${name}`);
+  return lambda.invoke(params).promise();
+}
+
+/**
+ * Create a ClouwdWatch event from parameters
+ *
+ * @name {string} - Name of the event to create
+ * @schedule {string} - scedule expression
+ * @state {string} - 'EDNABLED' | 'DISABLED'
+ * @description {string} - description of the rule
+ * @role {string} - roleArn (optional)
+ * @returns {Promise} - response from `CloudWatchEvents.putEvents` as a promise
+ */
+exports.putCloudWatchEvent = async (name, schedule, state, description = null, role = null) {
+  const cwevents = exports.cloudwatchevents();
+
+  const params = {
+    Name: name,
+    Description: description,
+    RoleArn: role,
+    ScheduleExpression: schedule,
+    State: state
+  };
+
+  return cwevents.putRule(params).promise();
+}
+
+/**
+ * Create a CloudWatch Target from parameters
+ *
+ * @rule {string} - target rule
+ * @id {string} - Id of the target to be created
+ * @arn {string} - ARN of the target to be created
+ * @input {string} - Input of the target to be created
+ * @returns {Promise} - response from `CloudWatchEvents.putTargets` as a promise
+ */
+exports.putCloudWatchTarget = async (rule, id, arn, input) {
+  const cwevents = exports.cloudwatchevents();
+
+  const params = {
+    Rule: rule,
+    Targets: [ /* required */
+      {
+        Arn: arn,
+        Id: id,
+        Input: input
+      }
+    ]
+  };
+
+  return cwevents.putTargets(params).promise();
+}
+
+/**
+ * Delete a CloudWatch Event based on name
+ *
+ * @name {string} - Name of the CW Event to delete
+ * @returns {Promise} - response from `CloudWatchEvents.deleteRule` as a promise
+ */
+exports.deleteCloudWatchEvent = async (name) {
+  const cwevents = exports.cloudwatchevents();
+
+  const params = {
+    Name: name
+  };
+
+  return cwevents.deleteRule(params).promise();
+}
+
+/**
+ * Delete a CloudWatch Target based on params
+ *
+ * @id {string} - Id of the target to delete
+ * @rule {string} - Name of the rule to delete
+ * @returns {Promise} - response from `CloudWatchEvents.removeTargets` as a promise
+ */
+exports.deleteCloudWatchTarget = async (id, rule) {
+  const cwevents = exports.cloudwatchevents();
+
+  const params = {
+    Ids: [id],
+    Rule: rule
+  };
+
+  return cwevents.removeTargets(params).promise();
+}

@@ -5,7 +5,7 @@
 const get = require('lodash.get');
 const pLimit = require('p-limit');
 const log = require('@cumulus/common/log');
-const { StepFunction } = require('@cumulus/ingest/aws');
+const { getExecutionArn, stopExecution } = require('@cumulus/common/aws');
 const { Search } = require('../es/search');
 const { handlePayload, partialRecordUpdate } = require('../es/indexer');
 
@@ -54,7 +54,7 @@ async function checkExecution(arn, url, timestamp, esClient) {
     Error: 'Unknown',
     Cause: 'The error cause could not be determined'
   };
-  const r = await StepFunction.getExecution(arn, true);
+  const r = await aws.getExecution(arn, true);
   r.status = r.status.toLowerCase();
   r.status = r.status === 'succeeded' ? 'completed' : r.status;
 
@@ -100,7 +100,7 @@ async function checkExecution(arn, url, timestamp, esClient) {
         Cause: 'Execution was stopped by Cumulus because it did not finish in 5 hours.'
       };
 
-      await StepFunction.stop(
+      await aws.stopExecution(
         arn,
         error.Cause,
         error.Error

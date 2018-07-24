@@ -4,7 +4,6 @@ const _get = require('lodash.get');
 const path = require('path');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { aws, log } = require('@cumulus/common');
-const { invoke } = require('@cumulus/ingest/aws');
 const handle = require('../lib/response').handle;
 
 /**
@@ -74,7 +73,7 @@ function del(event, cb) {
  * @returns {Object} returns the report generated
  */
 function post(event, cb) {
-  return invoke(process.env.invoke, {})
+  return aws.invokeLambda(process.env.invoke, {})
     .then((data) => cb(null, { message: 'Report is being generated', status: data.StatusCode }))
     .catch((err) => cb(err));
 }
