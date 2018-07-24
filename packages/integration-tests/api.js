@@ -42,7 +42,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   try {
     apiOutput = await lambda().invoke({
       Payload: JSON.stringify(payload),
-      FunctionName: `${prefix}-${functionName}`,
+      FunctionName: `${prefix}-${functionName}`
     }).promise();
   }
   finally {
@@ -61,8 +61,8 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
  * @param {string} params.granuleId - a granule ID
  * @returns {Promise<Object>} - the granule fetched by the API
  */
-async function getGranule({ prefix, granuleId }) {
-  const payload = await callCumulusApi({
+function getGranule({ prefix, granuleId }) {
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
@@ -74,11 +74,54 @@ async function getGranule({ prefix, granuleId }) {
       }
     }
   });
+}
 
-  return JSON.parse(payload.body);
+/**
+ * Fetch an AsyncOperation from the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.id - an AsyncOperation id
+ * @returns {Promise<Object>} - the AsyncOperation fetched by the API
+ */
+function getAsyncOperation({ prefix, id }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiAsyncOperationsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/asyncOperations/{id}',
+      path: `/asyncOperations/${id}`,
+      pathParameters: { id }
+    }
+  });
+}
+
+/**
+ * Create a Bulk Delete operation
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleIds - the granules to be deleted
+ * @returns {Promise<Object>} - the granule fetched by the API
+ */
+function postBulkDelete({ prefix, granuleIds }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiBulkDeleteDefault',
+    payload: {
+      httpMethod: 'POST',
+      resource: '/bulkDelete',
+      path: '/bulkDelete',
+      pathParameters: {},
+      body: JSON.stringify({ granuleIds })
+    }
+  });
 }
 
 module.exports = {
   callCumulusApi,
-  getGranule
+  getAsyncOperation,
+  getGranule,
+  postBulkDelete
 };

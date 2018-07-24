@@ -431,7 +431,8 @@ AsyncOperationsV1:
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
-    system_bucket: '{{parent.system_bucket}}'
+    stackName: '{{parent.stackName}}'
+    systemBucket: '{{parent.bucket}}'
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
@@ -443,3 +444,31 @@ AsyncOperationsV1:
       path: v1/asyncOperations/{id}
       method: get
       cors: true
+
+ApiBulkDeleteV1:
+  handler: index.bulkDeleteEndpoint
+  apiRole: true
+  source: 'node_modules/@cumulus/api/dist/'
+  apiGateway:
+    - api: backend
+      path: v1/bulkDelete
+      method: post
+      cors: true
+  envs:
+    EcsCluster:
+      function: Ref
+      value: EcsCluster
+    AsyncOperationsTable:
+      function: Ref
+      value: AsyncOperationsTableDynamoDB
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    BulkDeleteLambda:
+      function: Ref
+      value: BulkDeleteLambdaFunction
+    AsyncOperationTaskDefinition:
+      function: Ref
+      value: AsyncOperationTaskDefinition
+    stackName: '{{parent.stackName}}'
+    systemBucket: '{{parent.bucket}}'

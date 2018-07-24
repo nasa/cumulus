@@ -88,6 +88,16 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+    tasks:
+      AsyncOperation:
+        image: cumuluss/async-operation:8
+        cpu: 400
+        memory: 700
+        count: 1
+        envs:
+          AWS_REGION:
+            function: Fn::Sub
+            value: '${AWS::Region}'
 
   activities:
     - name: EcsTaskHelloWorld
@@ -222,8 +232,6 @@ mth-2:
     public:
       name: '{{stackName}}-public'
       type: public
-  users:
-    - username: '{{EARTHDATA_LOGIN_USERNAME}}'
 
 jl:
   stackName: jl-test-integration
