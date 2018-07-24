@@ -31,6 +31,8 @@ function loadConfig() {
     throw new Error('the default deployment cannot be used for integration tests');
   }
 
+  config.test_configs.buckets = config.buckets;
+
   return config.test_configs;
 }
 
