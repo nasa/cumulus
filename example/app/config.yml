@@ -12,34 +12,34 @@ default:
         granules:
           - files:
             - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
+              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
             - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
             - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
+              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
             - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
+              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
       SyncGranuleOutput:
         granules:
           - files:
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
     SyncGranule:
       granules:
         - files:
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
   # test configuration ends
 
   stackName: 'change-me'

@@ -104,13 +104,19 @@ class Discover {
    * @returns {Array<Object>} a list of discovered granules
    */
   async discover() {
-    const discoveredFiles = (await this.list())
+    let discoveredFiles = [];
+    try {
+      discoveredFiles = (await this.list())
       // Make sure the file matches the granuleIdExtraction
       .filter((file) => file.name.match(this.collection.granuleIdExtraction))
       // Make sure there is a config for this type of file
       .filter((file) => this.fileTypeConfigForFile(file))
       // Add additional granule-related properties to the file
-      .map((file) => this.setGranuleInfo(file));
+      .map((file) => this.setGranuleInfo(file))
+    } 
+    catch (err) {
+      log.error(`discover exception ${JSON.stringify(err)}`);
+    };
 
     // This is confusing, but I haven't figured out a better way to write it.
     // What we're doing here is checking each discovered file to see if it
@@ -120,7 +126,7 @@ class Discover {
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
         .then((exists) => (exists ? null : discoveredFile)))))
       .filter(identity);
-    
+
     // Group the files by granuleId
     const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
 
@@ -211,7 +217,9 @@ class Granule {
       .filter((f) => this.filterChecksumFiles(f))
       .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
 
-    const files = await Promise.all(downloadFiles);
+    const files = await Promise.all(downloadFiles).catch((err) => {
+      log.error("exception download", JSON.stringify(err));
+    });
 
     return {
       granuleId: granule.granuleId,
