@@ -124,7 +124,7 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: 'daacs/podaac/cnmToGranule-1.1.zip'
+    key: 'daacs/podaac/cnmToGranule-1.2.zip'
   useMessageAdapter: false
   launchInVpc: true
 
