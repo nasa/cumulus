@@ -165,9 +165,12 @@ jobs:
       - run:
           name: Publishing to NPM
           command: |
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-            VERSION=$(cat lerna.json | jq .version --raw-output)
-            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm
+            # Temporary to release 1.7.1, correct in master
+            if [[ "$CIRCLE_BRANCH" =~ '^v\d+\.\d+' ]]; then 
+              echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+              VERSION=$(cat lerna.json | jq .version --raw-output)
+              ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm --npm-tag=patch-$VERSION
+            fi
       
       - run:
           name: Deploy cumulus with the npm packages source code
