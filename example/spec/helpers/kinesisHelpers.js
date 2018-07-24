@@ -93,6 +93,28 @@ async function createOrUseTestStream(streamName) {
   return stream;
 }
 
+async function getShardIterator(streamName) {
+  const describeStreamParams = {
+    StreamName: streamName
+  };
+
+  const streamDetails = await kinesis.describeStream(describeStreamParams).promise();
+  const shardId = streamDetails.StreamDescription.Shards[0].ShardId;
+
+  const shardIteratorParams = {
+    ShardId: shardId, /* required */
+    ShardIteratorType: 'LATEST',
+    StreamName: streamName
+  };
+
+  const shardIterator = await kinesis.getShardIterator(shardIteratorParams).promise();
+  return shardIterator.ShardIterator;
+};
+
+async function getRecords(shardIterator) {
+  return kinesis.getRecords({ShardIterator: shardIterator}).promise();
+};
+
 /**
  * add a record to the kinesis stream.
  *
@@ -143,6 +165,8 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = '
 module.exports = {
   createOrUseTestStream,
   deleteTestStream,
+  getShardIterator,
+  getRecords,
   putRecordOnStream,
   waitForActiveStream,
   waitForTestSfStarted

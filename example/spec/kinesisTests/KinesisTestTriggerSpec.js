@@ -1,6 +1,8 @@
 'use strict';
 
+const fs = require('fs');
 const { s3 } = require('@cumulus/common/aws');
+const yaml = require('js-yaml');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
@@ -13,10 +15,16 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { loadConfig } = require('../helpers/testUtils');
 const {
   createOrUseTestStream,
+  getShardIterator,
+  getRecords,
   putRecordOnStream,
   waitForActiveStream,
   waitForTestSfStarted
 } = require('../helpers/kinesisHelpers');
+
+const workflowName = 'KinesisTriggerTest';
+const workflowConfig = yaml.safeLoad(fs.readFileSync('workflows.yml'))[workflowName];
+const CnmResponseStreamName = workflowConfig.States.CnmResponse.CumulusConfig.CNMResponseStream;
 
 const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
 
@@ -82,6 +90,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const maxWaitTime = 1000 * 60 * 4;
   let executionStatus;
   let s3FileHead;
+  let responseStreamShardIterator;
 
   afterAll(async () => {
     await s3().deleteObject({
@@ -94,13 +103,21 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   beforeAll(async () => {
     try {
       await createOrUseTestStream(streamName);
+
       console.log(`\nwaits for active Stream ${streamName}.`);
       await waitForActiveStream(streamName);
+
       console.log(`Drops record onto  ${streamName}.`);
       await putRecordOnStream(streamName, record);
+
+      console.log(`Gets shard iterator for response stream  '${streamName}'.`);
+      // get shard iterator for the response stream so we can process any new records sent to it
+      responseStreamShardIterator = await getShardIterator(CnmResponseStreamName);
+
       console.log(`waits for stepfunction to start ${streamName}`);
       const firstStep = 'CNMToCMA';
       this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep);
+
       console.log(`waits for completed execution of ${this.workflowExecution.executionArn}.`);
       executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
     }
@@ -144,9 +161,20 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('the CnmResponse Lambda', () => {
-    it('is successful')
-    it('outputs nothing')
-    it('writes a message to the response stream')
+    beforeAll(async () => {
+      this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CnmResponse');
+    });
 
+    it('outputs the granules object', () => {
+      expect(this.lambdaOutput.payload).toEqual({});
+    });
+
+    it('writes a message to the response stream', async () => {
+      const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
+      const responseRecord = JSON.parse(newResponseStreamRecords.Records[0].Data.toString());
+      expect(newResponseStreamRecords.Records.length).toEqual(1);
+      expect(responseRecord.identifier).toEqual(recordIdentifier);
+      expect(responseRecord.response.status).toEqual('SUCCESS');
+    });
   });
 });
