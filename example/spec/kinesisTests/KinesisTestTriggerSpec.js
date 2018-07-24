@@ -22,10 +22,6 @@ const {
   waitForTestSfStarted
 } = require('../helpers/kinesisHelpers');
 
-const workflowName = 'KinesisTriggerTest';
-const workflowConfig = yaml.safeLoad(fs.readFileSync('workflows.yml'))[workflowName];
-const CnmResponseStreamName = workflowConfig.States.CnmResponse.CumulusConfig.CNMResponseStream;
-
 const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
 
 const granuleId = record.product.name;
@@ -33,6 +29,7 @@ const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
 
 const testConfig = loadConfig();
+const cnmResponseStreamName = `${testConfig.stackName}-cnmResponseStream`;
 
 const lambdaStep = new LambdaStep();
 const streamName = testConfig.streamName;
@@ -103,22 +100,24 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   beforeAll(async () => {
     try {
       await createOrUseTestStream(streamName);
+      await createOrUseTestStream(cnmResponseStreamName);
 
-      console.log(`\nwaits for active Stream ${streamName}.`);
+      console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
       await waitForActiveStream(streamName);
+      await waitForActiveStream(cnmResponseStreamName);
 
-      console.log(`Drops record onto  ${streamName}.`);
+      console.log(`Dropping record onto  ${streamName}.`);
       await putRecordOnStream(streamName, record);
 
-      console.log(`Gets shard iterator for response stream  '${streamName}'.`);
+      console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
       // get shard iterator for the response stream so we can process any new records sent to it
-      responseStreamShardIterator = await getShardIterator(CnmResponseStreamName);
+      responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
-      console.log(`waits for stepfunction to start ${streamName}`);
+      console.log(`Waiting for step function to start...`);
       const firstStep = 'CNMToCMA';
       this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep);
 
-      console.log(`waits for completed execution of ${this.workflowExecution.executionArn}.`);
+      console.log(`Waiting for completed execution of ${this.workflowExecution.executionArn}.`);
       executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
     }
     catch (error) {
@@ -177,4 +176,13 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       expect(responseRecord.response.status).toEqual('SUCCESS');
     });
   });
+
+  describe('TranslateMessage fails', () => {
+    const badRecord = {...record};
+    delete badRecord['product'];
+
+    it('fails');
+  });
 });
+
+
