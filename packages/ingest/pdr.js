@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const { ftpMixin } = require('./ftp');
 const get = require('lodash.get');
-const { Pdr: pdrModel } = require('@cumulus/api/models');
+const { Pdr: PdrModel } = require('@cumulus/api/models');
 const { httpMixin } = require('./http');
 const log = require('@cumulus/common/log');
 const { parsePdr } = require('./parse-pdr');
@@ -77,7 +77,7 @@ class Discover {
    *   if it does not already exist in dynamo.
    */
   pdrIsNew(pdr) {
-    const p = new pdrModel();
+    const p = new PdrModel();
 
     return p.get({ pdrName: pdr.name }).then(() => false).catch(() => pdr);
   }

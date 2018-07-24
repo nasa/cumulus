@@ -22,6 +22,19 @@ function list(event, cb) {
 }
 
 /**
+ * Gets the pdr if found. If the record does not exist,
+ * the function throws RecordDoesNotExist error.
+ *
+ * @param {Object} pdrName - the name of the pdr to search for
+ * @returns { Promise } - the record found
+ */
+async function getPdr(pdrName) {
+  const p = new models.Pdr();
+
+  return p.get({ pdrName });
+}
+
+/**
  * get a single PDR
  *
  * @param {Object} event - aws lambda event object.
@@ -30,7 +43,6 @@ function list(event, cb) {
  */
 function get(event, cb) {
   const pdrName = _get(event.pathParameters, 'pdrName');
-
   const p = new models.Pdr();
 
   return p.get({ pdrName }).then((response) => {
@@ -83,6 +95,6 @@ function handler(event, context) {
 
 module.exports = {
   handler,
-  get
+  getPdr
 };
 

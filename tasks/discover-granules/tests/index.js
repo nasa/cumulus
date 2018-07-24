@@ -164,7 +164,7 @@ test.serial('discover granules using HTTP some granules are new', async (t) => {
   }
 });
 
-test.only('discover granules using S3', async (t) => {
+test.serial('discover granules using S3', async (t) => {
   const sourceBucketName = randomString();
   const providerPath = randomString();
 
@@ -197,7 +197,6 @@ test.only('discover granules using S3', async (t) => {
 
   try {
     const output = await discoverGranules(event);
-    console.log("discoveredGranules");
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
