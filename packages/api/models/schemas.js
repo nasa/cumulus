@@ -11,7 +11,10 @@ module.exports.asyncOperation = {
     createdAt: { type: 'integer' },
     error: { type: 'string' },
     id: { type: 'string' },
-    result: {},
+    result: {
+      description: 'The result of the operation, stored as JSON',
+      type: 'string'
+    },
     status: {
       type: 'string',
       enum: ['CREATED', 'SUCCEEDED', 'FAILED']

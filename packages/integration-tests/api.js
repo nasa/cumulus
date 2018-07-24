@@ -54,7 +54,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
 }
 
 /**
- * Fetch a granule from the Cumulus API
+ * GET /granules/{granuleName}
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
@@ -77,7 +77,7 @@ function getGranule({ prefix, granuleId }) {
 }
 
 /**
- * Fetch an AsyncOperation from the Cumulus API
+ * GET /asyncOperations/{id}
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
@@ -98,7 +98,7 @@ function getAsyncOperation({ prefix, id }) {
 }
 
 /**
- * Create a Bulk Delete operation
+ * POST /bulkDelete
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
