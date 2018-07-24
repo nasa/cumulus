@@ -92,6 +92,15 @@ class SfnStep {
     return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e));
   }
 
+  /**
+   * Gets the input to the step by looking for the 'schedule' for the given step
+   * and returning the parsed input object.
+   *
+   * @param   {String} workflowExecutionArn - AWS Execution ARN of the step function execution
+   * @param   {String} stepName             - Name of the workflow step of interest
+   * @returns {Object}                      - Parsed JSON string of input to step with <stepName>
+   *                                          from the workflow execution of interest.
+   */
   async getStepInput(workflowExecutionArn, stepName) {
     const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
 
