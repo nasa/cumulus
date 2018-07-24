@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@cumulus/common": "^1.7.0",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.1",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.2",
     "@cumulus/ingest": "^1.7.0",
     "@cumulus/test-data": "^1.6.0",
     "lodash.get": "^4.4.2"
