@@ -9,7 +9,7 @@ const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
-const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const { DefaultProvider } = require('@cumulus/common/crypto');
 const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 
 const Manager = require('./base');

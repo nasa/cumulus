@@ -5,8 +5,11 @@ const sinon = require('sinon');
 const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { SQS } = require('@cumulus/ingest/aws');
-const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const {
+    s3,
+    sendSQSMessage,
+    recursivelyDeleteS3Bucket
+} = require('@cumulus/common/aws');
 const { getKinesisRules, handler } = require('../../lambdas/kinesis-consumer');
 
 const Collection = require('../../models/collections');
@@ -82,7 +85,7 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
+  sfSchedulerSpy = sinon.stub(aws, 'sendSQSMessage').returns(true);
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;

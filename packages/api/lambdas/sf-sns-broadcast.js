@@ -2,8 +2,7 @@
 
 const AWS = require('aws-sdk');
 const get = require('lodash.get');
-const { StepFunction } = require('@cumulus/ingest/aws');
-const { setGranuleStatus } = require('@cumulus/common/aws');
+const { pullSfnEvent, setGranuleStatus } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 
 /**
@@ -63,7 +62,7 @@ function makeLambdaFunctionFail(event) {
  * @returns {Promise} AWS SNS response
  */
 async function publish(message, finished = false) {
-  const event = await StepFunction.pullEvent(message);
+  const event = await pullSfnEvent(message);
   const topicArn = get(event, 'meta.topic_arn', null);
   const failed = eventFailed(event);
 

@@ -7,7 +7,6 @@ const clone = require('lodash.clonedeep');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
-const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
@@ -640,8 +639,8 @@ test.serial('reingest a granule', async (t) => {
   const record = records[0];
 
   sinon.stub(
-    StepFunction,
-    'getExecutionStatus'
+    aws,
+    'getSfnExecutionStatusFromArn'
   ).callsFake(() => Promise.resolve(fakeSFResponse));
 
   t.is(record.status, 'completed');

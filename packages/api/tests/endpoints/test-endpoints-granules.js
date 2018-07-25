@@ -4,9 +4,8 @@ const fs = require('fs');
 const sinon = require('sinon');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
-const { StepFunction } = require('@cumulus/ingest/aws');
 const { CMR } = require('@cumulus/cmrjs');
-const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const { DefaultProvider } = require('@cumulus/common/crypto');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
@@ -192,8 +191,8 @@ test.serial('reingest a granule', async (t) => {
   await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
 
   sinon.stub(
-    StepFunction,
-    'getExecutionStatus'
+    aws,
+    'getSfnExecutionStatusFromArn'
   ).callsFake(() => Promise.resolve(fakeSFResponse));
 
   const response = await granuleEndpoint(event);
@@ -205,7 +204,7 @@ test.serial('reingest a granule', async (t) => {
   const updatedGranule = await g.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
 
-  StepFunction.getExecutionStatus.restore();
+  aws.getSfnExecutionStatusFromArn.restore();
 });
 
 test.serial('apply an in-place workflow to an existing granule', async (t) => {
@@ -241,7 +240,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 
   // return fake previous execution
   sinon.stub(
-    StepFunction,
+    aws,
     'getExecutionStatus'
   ).callsFake(() => Promise.resolve({
     execution: {
@@ -262,7 +261,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   const updatedGranule = await g.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
 
-  StepFunction.getExecutionStatus.restore();
+  aws.getSfnExecutionStatusFromArn.restore();
 });
 
 test.serial('remove a granule from CMR', async (t) => {

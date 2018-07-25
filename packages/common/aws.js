@@ -2,6 +2,8 @@
 
 const AWS = require('aws-sdk');
 const concurrency = require('./concurrency');
+const errors = require('./errors');
+const forge = require('node-forge');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -91,6 +93,7 @@ exports.dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10')
 exports.sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 exports.cf = awsClient(AWS.CloudFormation, '2010-05-15');
 exports.sns = awsClient(AWS.SNS, '2010-03-31');
+exports.kms = awsClient(AWS.KMS);
 
 /**
  * Create a DynamoDB table and then wait for the table to exist
@@ -1015,3 +1018,39 @@ exports.deleteCloudWatchTarget = async (id, rule) {
 
   return cwevents.removeTargets(params).promise();
 }
+
+const KMSDecryptionFailed = errors.createErrorType('KMSDecryptionFailed');
+
+class KMS {
+  static async encrypt(text, kmsId) {
+    const params = {
+      KeyId: kmsId,
+      Plaintext: text
+    };
+
+    const kms = new exports.kms();
+    const r = await kms.encrypt(params).promise();
+    return r.CiphertextBlob.toString('base64');
+  }
+
+  static async decrypt(text) {
+    const params = {
+      CiphertextBlob: new Buffer(text, 'base64')
+    };
+    const kms = new exports.kms();
+    try {
+      const r = await kms.decrypt(params).promise();
+      return r.Plaintext.toString();
+    }
+    catch (e) {
+      if (e.toString().includes('InvalidCiphertextException')) {
+        throw new KMSDecryptionFailed(
+          'Decrypting the secure text failed. The provided text is invalid'
+        );
+      }
+      throw e;
+    }
+  }
+}
+
+exports.KMS = KMS;
