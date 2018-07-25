@@ -3,7 +3,11 @@
 const get = require('lodash.get');
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
-const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
+const {
+  getS3Object,
+  parseS3Uri,
+  sendSQSMessage
+} = require('@cumulus/common/aws');
 const { Provider, Collection } = require('../models');
 
 /**
@@ -55,7 +59,7 @@ function schedule(event, context, cb) {
       if (c) message.meta.collection = c;
     })
     .then(() => {
-      SQS.sendMessage(message.meta.queues.startSF, message);
+      sendSQSMessage(message.meta.queues.startSF, message);
     })
     .then((r) => cb(null, r))
     .catch((e) => cb(e));

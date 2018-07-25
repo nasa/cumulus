@@ -5,11 +5,7 @@ const sinon = require('sinon');
 const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const {
-    s3,
-    sendSQSMessage,
-    recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws');
+const aws = require('@cumulus/common/aws');
 const { getKinesisRules, handler } = require('../../lambdas/kinesis-consumer');
 
 const Collection = require('../../models/collections');
@@ -98,8 +94,8 @@ test.beforeEach(async (t) => {
     meta: { queues: { startSF: stubQueueUrl } }
   };
 
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
-  await s3().putObject({
+  await aws.s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+  await aws.s3().putObject({
     Bucket: t.context.templateBucket,
     Key: messageTemplateKey,
     Body: JSON.stringify(t.context.messageTemplate)
@@ -125,7 +121,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.templateBucket);
+  await aws.recursivelyDeleteS3Bucket(t.context.templateBucket);
   sfSchedulerSpy.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();

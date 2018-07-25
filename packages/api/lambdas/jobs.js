@@ -5,7 +5,7 @@
 const get = require('lodash.get');
 const pLimit = require('p-limit');
 const log = require('@cumulus/common/log');
-const { getExecutionArn, stopExecution } = require('@cumulus/common/aws');
+const aws = require('@cumulus/common/aws');
 const { Search } = require('../es/search');
 const { handlePayload, partialRecordUpdate } = require('../es/indexer');
 
