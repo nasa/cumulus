@@ -6,9 +6,48 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.8.0] - 2018-07-23
 
-## [1.7.0] - 2018-06-29
 ### Added
+
+- **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
+
+- **GITC-776-3** Added more flexibility for rules.  You can now edit all fields on the rule's record
+We may need to update the api documentation to reflect this.
+
+- **CUMULUS-681** - Add ingest-in-place action to granules endpoint
+    - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
+      Parameter(s):
+        - workflow - the workflow name
+        - messageSource - 'input' or 'output' from previous execution
+        - metaOverride - overrides the meta of the new execution, accepts partial override
+        - payloadOverride - overrides the payload of the new execution, accepts partial override
+
+- **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
+
+### Changed
+- **CUMULUS-768** - Integration tests get S3 provider data from shared data folder
+
+### Fixed
+- **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
+- **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
+
+
+## [v1.7.1] - 2018-07-25
+
+### Fixed
+- **CUMULUS-766** - Backport - Populate database fileSize field from S3 if value not present in Ingest payload
+
+
+## [v1.7.0] - 2018-07-02
+
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.7.0.html)
+
+### Added
+- **GITC-776-1**
+  - Added support for SFTP using public/private keys that can optionally be encrypted/decrypted using KMS
+  There is an assumption that private key is located in s3://bucketInternal/stackName/crypto. KMS can be used to encrypt/decrypt the keys. Provider schema has been extended to support optional fields (privateKey, cmKeyId)
+
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
@@ -17,20 +56,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Add ability to upload records to DynamoDB
   - Add migration scripts for copying granule, pdr and execution records from ElasticSearch to DynamoDB
   - Add IAM support for batchWrite on dynamoDB
+-
 - **CUMULUS-508** - `@cumulus/deployment` cloudformation template allows for lambdas and ECS clusters to have multiple AZ availability.
     - `@cumulus/deployment` also ensures docker uses `devicemapper` storage driver.
+- **CUMULUS-755** - `@cumulus/deployment` Add DynamoDB autoscaling support.
+    - Application developers can add autoscaling and override default values in their deployment's `app/config.yml` file using a `{TableName}Table:` key.
 
 ### Fixed
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
 - **CUMULUS-398** - Fix not able to filter executions bu workflow
+- **CUMULUS-748** - Fix invalid lambda .zip files being validated/uploaded to AWS
 - **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
 
+### Changed
+- **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
+
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://github.com/cumulus-nasa/cumulus/wiki/Upgrading-to-Cumulus-1.6)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.6.0.html)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
@@ -146,7 +192,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Removed babel from all tasks and packages and increased minimum node requirements to version 8.10
 - Lambda functions created by @cumulus/deployment will use node8.10 by default
-- Moved [cumulus-integration-tests](https://github.com/cumulus-nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
+- Moved [cumulus-integration-tests](https://github.com/nasa/cumulus-integration-tests) to the `example` folder CUMULUS-512
 - Streamlined all packages dependencies (e.g. remove redundant dependencies and make sure versions are the same across packages)
 - **CUMULUS-352:** Update Cumulus Elasticsearch indices to use [index aliases](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html).
 - **CUMULUS-519:** ECS tasks are no longer restarted after each CF deployment unless `ecs.restartTasksOnDeploy` is set to true
@@ -311,12 +357,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Test for FTP `useList` flag [CUMULUS-334] by @kkelly51
 
 ### Updated
-- The `queue-pdrs` task now uses the [cumulus-message-adapter-js](https://github.com/cumulus-nasa/cumulus-message-adapter-js)
+- The `queue-pdrs` task now uses the [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
   library
 - Updated the `queue-pdrs` JSON schemas
 - The test-utils schema validation functions now throw an error if validation
   fails
-- The `queue-granules` task now uses the [cumulus-message-adapter-js](https://github.com/cumulus-nasa/cumulus-message-adapter-js)
+- The `queue-granules` task now uses the [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js)
   library
 - Updated the `queue-granules` JSON schemas
 
@@ -335,24 +381,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v1.7.0...HEAD
-[v1.7.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.6.0...v1.7.0
-[v1.6.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.5...v1.6.0
-[v1.5.5]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.4...v1.5.5
-[v1.5.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.3...v1.5.4
-[v1.5.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.2...v1.5.3
-[v1.5.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.1...v1.5.2
-[v1.5.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.5.0...v1.5.1
-[v1.5.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.1...v1.5.0
-[v1.4.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.4.0...v1.4.1
-[v1.4.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.3.0...v1.4.0
-[v1.3.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.2.0...v1.3.0
-[v1.2.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.4...v1.2.0
-[v1.1.4]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.3...v1.1.4
-[v1.1.3]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.2...v1.1.3
-[v1.1.2]: https://github.com/cumulus-nasa/cumulus/compare/v1.1.1...v1.1.2
-[v1.1.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.1
-[v1.1.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.1...v1.1.0
-[v1.0.1]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v1.0.1
-[v1.0.0]: https://github.com/cumulus-nasa/cumulus/compare/pre-v1-release...v1.0.0
-
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.0...HEAD
+[v1.8.0]: https://github.com/nasa/cumulus/compare/v1.7.1...v1.8.0
+[v1.7.1]: https://github.com/nasa/cumulus/compare/v1.7.0...v1.7.1
+[v1.7.0]: https://github.com/nasa/cumulus/compare/v1.6.0...v1.7.0
+[v1.6.0]: https://github.com/nasa/cumulus/compare/v1.5.5...v1.6.0
+[v1.5.5]: https://github.com/nasa/cumulus/compare/v1.5.4...v1.5.5
+[v1.5.4]: https://github.com/nasa/cumulus/compare/v1.5.3...v1.5.4
+[v1.5.3]: https://github.com/nasa/cumulus/compare/v1.5.2...v1.5.3
+[v1.5.2]: https://github.com/nasa/cumulus/compare/v1.5.1...v1.5.2
+[v1.5.1]: https://github.com/nasa/cumulus/compare/v1.5.0...v1.5.1
+[v1.5.0]: https://github.com/nasa/cumulus/compare/v1.4.1...v1.5.0
+[v1.4.1]: https://github.com/nasa/cumulus/compare/v1.4.0...v1.4.1
+[v1.4.0]: https://github.com/nasa/cumulus/compare/v1.3.0...v1.4.0
+[v1.3.0]: https://github.com/nasa/cumulus/compare/v1.2.0...v1.3.0
+[v1.2.0]: https://github.com/nasa/cumulus/compare/v1.1.4...v1.2.0
+[v1.1.4]: https://github.com/nasa/cumulus/compare/v1.1.3...v1.1.4
+[v1.1.3]: https://github.com/nasa/cumulus/compare/v1.1.2...v1.1.3
+[v1.1.2]: https://github.com/nasa/cumulus/compare/v1.1.1...v1.1.2
+[v1.1.1]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.1
+[v1.1.0]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.0
+[v1.0.1]: https://github.com/nasa/cumulus/compare/v1.0.0...v1.0.1
+[v1.0.0]: https://github.com/nasa/cumulus/compare/pre-v1-release...v1.0.0
