@@ -263,8 +263,8 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null)
  * @returns {Promise.<integer>} number of rules added
  */
 async function addRules(config, dataDirectory) {
-  const { stackName, bucketName } = config;
-  const rules = await setupSeedData(stackName, bucketName, dataDirectory);
+  const { stackName, bucket } = config;
+  const rules = await setupSeedData(stackName, bucket, dataDirectory);
 
   const promises = rules.map((rule) => limit(() => {
     const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
@@ -273,6 +273,43 @@ async function addRules(config, dataDirectory) {
     console.log(`adding rule ${templatedRule.name}`);
     return r.create(templatedRule);
   }));
+  return Promise.all(promises).then((rs) => rs.length);
+}
+
+/**
+ * deletes a rule by name
+ *
+ * @param {string} name - name of the rule to delete.
+ * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
+ */
+async function _deleteOneRule(name) {
+  const r = new Rule();
+  return r.get({ name: name }).then((item) => r.delete(item));
+}
+
+
+/**
+ * returns a list of rule objects
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} rulesDirectory - The directory continaing rules json files
+ * @returns {list} - list of rules found in rulesDirectory
+ */
+async function rulesList(stackName, bucketName, rulesDirectory) {
+  return setupSeedData(stackName, bucketName, rulesDirectory);
+}
+
+/**
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {Array} rules - List of rules objects to delete
+ * @returns {Promise.<integer>} - Number of rules deleted
+ */
+async function deleteRules(stackName, bucketName, rules) {
+  setProcessEnvironment(stackName, bucketName);
+  const promises = rules.map((rule) => limit(() => _deleteOneRule(rule.name)));
   return Promise.all(promises).then((rs) => rs.length);
 }
 
@@ -354,6 +391,8 @@ module.exports = {
   getOnlineResources: cmr.getOnlineResources,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
   addRules,
+  deleteRules,
+  rulesList,
   timeout,
   getWorkflowArn
 };
