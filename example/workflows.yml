@@ -172,7 +172,7 @@ DiscoverGranules:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: VpcOrNot 
+      Next: VpcOrNot
     VpcOrNot:
         Type: Choice
         Choices:
@@ -183,7 +183,7 @@ DiscoverGranules:
             StringEquals: https
             Next: DiscoverGranules
           - Variable: $.meta.provider.protocol
-            StringEquals: s3 
+            StringEquals: s3
             Next: DiscoverGranulesNoVpc
     DiscoverGranules:
       CumulusConfig:
@@ -397,7 +397,7 @@ IngestGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: VpcOrNot 
+      Next: VpcOrNot
     VpcOrNot:
         Type: Choice
         Choices:
@@ -408,7 +408,7 @@ IngestGranule:
             StringEquals: https
             Next: SyncGranule
           - Variable: $.meta.provider.protocol
-            StringEquals: s3 
+            StringEquals: s3
             Next: SyncGranuleNoVpc
     SyncGranule:
       CumulusConfig:
@@ -433,7 +433,7 @@ IngestGranule:
           - States.ALL
           ResultPath: '$.exception'
           Next: StopStatus
-      Next: ChooseProcess 
+      Next: ChooseProcess
     SyncGranuleNoVpc:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -457,7 +457,7 @@ IngestGranule:
           - States.ALL
           ResultPath: '$.exception'
           Next: StopStatus
-      Next: ChooseProcess 
+      Next: ChooseProcess
     ChooseProcess:
       Type: Choice
       Choices:
@@ -534,6 +534,66 @@ IngestGranule:
       Type: Fail
       Cause: 'Workflow failed'
 
+KinesisTriggerTest:
+    Comment: 'Tests Workflow from Kinesis Stream'
+    StartAt: Report
+    States:
+      Report:
+        Type: Task
+        Resource: ${sf2snsStartLambdaFunction.Arn}
+        Next: TranslateMessage
+      TranslateMessage:
+        Type: Task
+        Resource: ${CNMToCMALambdaFunction.Arn}
+        Retry:
+          - ErrorEquals:
+              - States.ALL
+            IntervalSeconds: 10
+            MaxAttempts: 2
+        Catch:
+          - ErrorEquals:
+            - States.ALL
+            ResultPath: '$.exception'
+            Next: StopStatus
+        Next: SyncGranule
+      SyncGranule:
+        CumulusConfig:
+          provider: '{$.meta.provider}'
+          buckets: '{$.meta.buckets}'
+          collection: '{$.meta.collection}'
+          downloadBucket: '{$.meta.buckets.private.name}'
+          stack: '{$.meta.stack}'
+          cumulus_message:
+            outputs:
+              - source: '{$.granules}'
+                destination: '{$.meta.input_granules}'
+              - source: '{$}'
+                destination: '{$.payload}'
+        Type: Task
+        Resource: ${SyncGranuleLambdaFunction.Arn}
+        Retry:
+          - ErrorEquals:
+              - States.ALL
+            IntervalSeconds: 10
+            MaxAttempts: 3
+        Catch:
+          - ErrorEquals:
+            - States.ALL
+            ResultPath: '$.exception'
+            Next: StopStatus
+        Next: StopStatus
+      StopStatus:
+        Type: Task
+        Resource: ${sf2snsEndLambdaFunction.Arn}
+        Catch:
+          - ErrorEquals:
+            - States.ALL
+            Next: WorkflowFailed
+        End: true
+      WorkflowFailed:
+        Type: Fail
+        Cause: 'Workflow failed'
+
 SyncGranule:
   Comment: 'Sync Granule'
   StartAt: Report
@@ -544,7 +604,7 @@ SyncGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: VpcOrNot 
+      Next: VpcOrNot
     VpcOrNot:
         Type: Choice
         Choices:
@@ -555,7 +615,7 @@ SyncGranule:
             StringEquals: https
             Next: SyncGranule
           - Variable: $.meta.provider.protocol
-            StringEquals: s3 
+            StringEquals: s3
             Next: SyncGranuleNoVpc
     SyncGranule:
       CumulusConfig:
@@ -580,7 +640,7 @@ SyncGranule:
           - States.ALL
           ResultPath: '$.exception'
           Next: StopStatus
-      Next: StopStatus 
+      Next: StopStatus
     SyncGranuleNoVpc:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -623,7 +683,7 @@ SyncGranule:
       End: true
     WorkflowFailed:
       Type: Fail
-      Cause: 'Workflow failed' 
+      Cause: 'Workflow failed'
 
 EcsHelloWorldWorkflow:
   Comment: 'Returns Hello World'
