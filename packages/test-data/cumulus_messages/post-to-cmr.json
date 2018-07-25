@@ -18,26 +18,26 @@
     "collection": {
       "files": [
         {
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
           "s3": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
           "bucket": "protected",
           "http": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
         },
         {
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
           "bucket": "private"
         },
         {
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$",
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
           "http": "http://cumulus-devseed-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "s3": "s3://cumulus-devseed-public/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml",
           "bucket": "public"
         },
         {
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_ndvi\\.jpg$",
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
           "http": "http://cumulus-devseed-public.s3.amazonaws.com/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
           "s3": "s3://cumulus-devseed-public/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
@@ -46,7 +46,7 @@
       ],
       "name": "MOD09GQ",
       "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
-      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
       "dataType": "MOD09GQ",
       "process": "modis",
       "provider_path": "/",
