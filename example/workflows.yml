@@ -548,11 +548,6 @@ KinesisTriggerTest:
               destination: '{$.payload}'
       Type: Task
       Resource: ${CNMToCMALambdaFunction.Arn}
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 10
-          MaxAttempts: 2
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -603,13 +598,10 @@ KinesisTriggerTest:
           outputs:
             - source: '{$}'
               destination: '{$.meta.cnmResponse}'
+            - source: '{$}'
+              destination: '{$.payload}'              
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 5
-          MaxAttempts: 3
       Catch:
         - ErrorEquals:
           - States.ALL

@@ -136,5 +136,5 @@ CnmResponse:
   memory: 256
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: 'daacs/podaac/cnmResponse-1.0.zip'
+    key: 'daacs/podaac/cnmResponse-1.2.zip'
   launchInVpc: true
