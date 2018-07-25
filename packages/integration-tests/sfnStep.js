@@ -92,6 +92,19 @@ class SfnStep {
     return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e));
   }
 
+
+  /**
+   * Return truthyness of an execution being successful.
+   *
+   * @param {Object} execution - stepFunction execution
+   * @returns {boolean} truthness of the execution being successful.
+   */
+  completedSuccessfulFilter(execution) {
+    return (Object.prototype.hasOwnProperty.call(execution, 'completeEvent')
+            && execution.completeEvent !== null
+            && execution.completeEvent.type === this.successEvent);
+  }
+
   /**
    * Get the output payload from the step, if the step succeeds
    *
@@ -108,15 +121,18 @@ class SfnStep {
     }
 
     // Use the first passed execution, or last execution if none passed
-    let stepExecution = stepExecutions[stepExecutions.length - 1];
-    const passedExecutions = stepExecutions.filter((e) =>
-      e.completeEvent !== null && e.completeEvent.type === this.successEvent);
-    if (passedExecutions) {
+    let stepExecution;
+    const passedExecutions = stepExecutions.filter((e) => this.completedSuccessfulFilter(e));
+    if (passedExecutions && passedExecutions.length > 0) {
       stepExecution = passedExecutions[0];
     }
+    else {
+      stepExecution = stepExecutions[stepExecutions.length - 1];
+    }
 
-    if (stepExecution.completeEvent === null ||
-        stepExecution.completeEvent.type !== this.successEvent) {
+    if (typeof stepExecution.completeEvent === 'undefined'
+        || stepExecution.completeEvent === null
+        || stepExecution.completeEvent.type !== this.successEvent) {
       console.log(`Step ${stepName} was not successful.`);
       return null;
     }
