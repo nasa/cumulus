@@ -106,7 +106,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       await waitForActiveStream(streamName);
       await waitForActiveStream(cnmResponseStreamName);
 
-      console.log(`Dropping record onto  ${streamName}.`);
+      console.log(`Dropping record onto  ${streamName}. recordIdentifier: ${recordIdentifier}.`);
       await putRecordOnStream(streamName, record);
 
       console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
