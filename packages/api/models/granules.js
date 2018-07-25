@@ -10,7 +10,7 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/crypto');
-const { moveGranuleFiles } = require('@cumulus/ingest/granule');
+const { moveGranuleFiles } = require('@cumulus/common/granule');
 
 const Manager = require('./base');
 
