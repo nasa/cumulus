@@ -2,13 +2,9 @@
 
 const { difference } = require('lodash');
 const fs = require('fs-extra');
-const { loadConfig } = require('../helpers/testUtils');
-const {
-  aws: { s3 },
-  stringUtils: { globalReplace },
-  testUtils: { randomStringFromRegex }
-} = require('@cumulus/common');
-const { createGranuleFiles } = require('../helpers/granuleUtils');
+const { loadConfig, getWorkflowConfig } = require('../helpers/testUtils');
+const { aws: { s3 } } = require('@cumulus/common');
+const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
@@ -16,47 +12,27 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-/**
- * Set up files in the S3 data location for a new granule to use for this
- * test. Use the input payload to determine which files are needed and
- * return updated input with the new granule id.
- *
- * @param {string} bucket - data bucket
- * @param {string} granuleId - granule id for the new files
- * @param {string} inputPayloadJson - input payload as a JSON string
- * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
- */
-async function setupTestGranuleForAPI(bucket, granuleId, inputPayloadJson) {
-  const baseInputPayload = JSON.parse(inputPayloadJson);
+const workflowConfigFile = './workflows.yml';
 
-  await createGranuleFiles(
-    baseInputPayload.granules[0].files,
-    bucket,
-    testDataGranuleId,
-    granuleId
-  );
+// all states defined in the workflow configuration
+let allStates;
 
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, testDataGranuleId, granuleId);
-
-  return JSON.parse(updatedInputPayloadJson);
-}
-
-describe('The Cumulus API ExecutionStatus', () => {
+describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
   let workflowExecution = null;
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
-  let granuleId;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    granuleId = randomStringFromRegex(granuleRegex);
+    const workflowConfig = getWorkflowConfig(workflowConfigFile, workflowName);
+    allStates = Object.keys(workflowConfig.States);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForAPI(config.bucket, granuleId, inputPayloadJson);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -106,20 +82,18 @@ describe('The Cumulus API ExecutionStatus', () => {
       expect(definition.Comment).toEqual('Ingest Granule');
       const stateNames = Object.keys(definition.States);
 
-      const expectedStates = ['Report', 'VpcOrNot', 'SyncGranule', 'SyncGranuleNoVpc', 'ChooseProcess',
-        'ProcessingStep', 'MoveGranuleStep', 'CmrStep', 'StopStatus', 'WorkflowFailed'];
       // definition has all the states' information
-      expect(difference(expectedStates, stateNames).length).toBe(0);
+      expect(difference(allStates, stateNames).length).toBe(0);
     });
 
     it('returns the inputs and outputs for each executed step', async () => {
       expect(executionStatus.executionHistory).toBeTruthy();
 
-      // expected 'executed' steps
-      const expectedExecutedSteps = ['Report', 'VpcOrNot', 'SyncGranuleNoVpc', 'ChooseProcess',
-        'ProcessingStep', 'MoveGranuleStep', 'StopStatus', 'CmrStep'];
       // expected 'not executed' steps
       const expectedNotExecutedSteps = ['SyncGranule', 'WorkflowFailed'];
+
+      // expected 'executed' steps
+      const expectedExecutedSteps = difference(allStates, expectedNotExecutedSteps);
 
       // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
       const stepNames = [];
@@ -150,4 +124,3 @@ describe('The Cumulus API ExecutionStatus', () => {
     });
   });
 });
-
