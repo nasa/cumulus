@@ -3,7 +3,6 @@
 const AWS = require('aws-sdk');
 const concurrency = require('./concurrency');
 const errors = require('./errors');
-const forge = require('node-forge');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -295,7 +294,8 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  *
  * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
  * @param {Object} s3Opts - An optional object containing options that influence the behavior of S3
- * @returns {Promise} A promise that resolves to an Array of the data returned from the deletion operations
+ * @returns {Promise} A promise that resolves to an Array of the data returned
+ *                    from the deletion operations
  */
 exports.deleteS3Files = (s3Objs) => {
   log.info(`Starting deletion of ${s3Objs.length} object(s)`);
@@ -640,7 +640,7 @@ exports.getCurrentSfnTask = (stateMachineArn, executionName) =>
  * @param {string} fields - The fields to be injected into an execution name
  * @param {string} delimiter - An optional delimiter string to replace, pass null to make
  *   no replacements
- * @return - A string that's safe to use as a StepFunctions execution name
+ * @returns {string} - A string that's safe to use as a StepFunctions execution name
  */
 exports.toSfnExecutionName = (fields, delimiter = '__') => {
   let sfnUnsafeChars = '[^\\w-=+_.]';
@@ -663,7 +663,7 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  * @param {string} delimiter - An optional delimiter string to replace, pass null to make
  *   no replacements
  * @param {string} sfnDelimiter - The string to replace delimiter with
- * @return - An array of the original fields
+ * @returns {Array} - An array of the original fields
  */
 exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
@@ -779,7 +779,7 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
   return null;
 };
 
-const getSfnExecution = async (arn, ignoreMissingExecutions = false) {
+const getSfnExecution = async (arn, ignoreMissingExecutions = false) => {
   const sfn = exports.sfn();
 
   const params = {
@@ -799,24 +799,24 @@ const getSfnExecution = async (arn, ignoreMissingExecutions = false) {
     }
     throw e;
   }
-}
+};
 
 /**
  * Stop a step function execution
  *
- * @executionArn {string} - executionArn
- * @cause {string} - cause for stopping
- * @error {string} - error
+ * @param {string} executionArn - executionArn
+ * @param {string} cause - cause for stopping
+ * @param {string} error - error
  * @returns {Promise} - response from `StepFunctions.stopExecution` as a promise
  */
-exports.stopExecution = async (executionArn, cause, error) {
+exports.stopExecution = async (executionArn, cause, error) => {
   const sfn = exports.sfn();
-   return sfn.stopExecution({
-     executionArn: executionArn,
-     cause: cause,
-     error: error
-   }).promise();
-}
+  return sfn.stopExecution({
+    executionArn: executionArn,
+    cause: cause,
+    error: error
+  }).promise();
+};
 
 /**
  * Fetch an event from S3
@@ -825,7 +825,7 @@ exports.stopExecution = async (executionArn, cause, error) {
  * @param {string} event.s3_path - the S3 location of the event
  * @returns {Promise.<Object>} - the parsed event from S3
  */
-exports.pullSfnEvent = async (event) {
+exports.pullSfnEvent = async (event) => {
   if (event.s3_path) {
     const parsed = exports.parseS3Uri(event.s3_path);
     const file = await exports.getS3Object(parsed.Bucket, parsed.Key);
@@ -833,15 +833,15 @@ exports.pullSfnEvent = async (event) {
     return JSON.parse(file.Body.toString());
   }
   return event;
-}
+};
 
 /**
  * Get execution status from a state machine executionArn
  *
- * @param {string} stateMachineArn - state machine ARN
+ * @param {string} executionArn - execution ARN
  * @returns {Object} - Object with { execution, executionHistory, stateMachine }
  */
-exports.getSfnExecutionStatusFromArn = async (executionArn) {
+exports.getSfnExecutionStatusFromArn = async (executionArn) => {
   const sfn = exports.sfn();
   const [execution, executionHistory] = await Promise.all([
     getSfnExecution(executionArn),
@@ -857,7 +857,7 @@ exports.getSfnExecutionStatusFromArn = async (executionArn) {
   }).promise();
 
   return { execution, executionHistory, stateMachine };
-}
+};
 
 /**
  * Returns execution ARN from a state machine Arn and executionName
@@ -865,11 +865,11 @@ exports.getSfnExecutionStatusFromArn = async (executionArn) {
  * @param {string} executionArn - execution ARN
  * @returns {string} - aws console url for the execution
  */
-exports.getExecutionUrl = (executionArn) {
+exports.getExecutionUrl = (executionArn) => {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   return `https://console.aws.com/states/home?region=${region}` +
          `#/executions/details/${executionArn}`;
-}
+};
 
 /**
 * Parse event metadata to get location of granule on S3
@@ -879,9 +879,8 @@ exports.getExecutionUrl = (executionArn) {
 * @param {string} bucket - the deployment bucket name
 * @returns {string} - s3 path
 **/
-exports.getGranuleS3Params = (granuleId, stack, bucket) => {
-  return `${stack}/granules_ingested/${granuleId}`;
-};
+exports.getGranuleS3Params = (granuleId, stack, bucket) =>
+  `${stack}/granules_ingested/${granuleId}`;
 
 /**
 * Set the status of a granule
@@ -913,11 +912,12 @@ exports.setGranuleStatus = async (
 /**
  * Invoke a lambda
  *
- * @name {string} - name of the lambda to invoke
- * @payload {Object} - JSON Object to be passed into the lambda
- * @type - Invocation Type of the lamdba
+ * @param {string} name - name of the lambda to invoke
+ * @param {Object} payload - JSON Object to be passed into the lambda
+ * @param {string} type - Invocation Type of the lamdba
+ * @returns {Promise} - response from `lambda.invoke()` as a promise
  */
-exports.invokeLambda = async (name, payload, type = 'Event') {
+exports.invokeLambda = async (name, payload, type = 'Event') => {
   if (process.env.IS_LOCAL || inTestMode()) {
     log.info(`Faking Lambda invocation for ${name}`);
     return false;
@@ -933,19 +933,19 @@ exports.invokeLambda = async (name, payload, type = 'Event') {
 
   log.info(`invoked ${name}`);
   return lambda.invoke(params).promise();
-}
+};
 
 /**
  * Create a ClouwdWatch event from parameters
  *
- * @name {string} - Name of the event to create
- * @schedule {string} - scedule expression
- * @state {string} - 'EDNABLED' | 'DISABLED'
- * @description {string} - description of the rule
- * @role {string} - roleArn (optional)
+ * @param {string} name - Name of the event to create
+ * @param {string} schedule - scedule expression
+ * @param {string} state - 'EDNABLED' | 'DISABLED'
+ * @param {string} description - description of the rule
+ * @param {string} role - roleArn (optional)
  * @returns {Promise} - response from `CloudWatchEvents.putEvents` as a promise
  */
-exports.putCloudWatchEvent = async (name, schedule, state, description = null, role = null) {
+exports.putCloudWatchEvent = async (name, schedule, state, description = null, role = null) => {
   const cwevents = exports.cloudwatchevents();
 
   const params = {
@@ -957,18 +957,18 @@ exports.putCloudWatchEvent = async (name, schedule, state, description = null, r
   };
 
   return cwevents.putRule(params).promise();
-}
+};
 
 /**
  * Create a CloudWatch Target from parameters
  *
- * @rule {string} - target rule
- * @id {string} - Id of the target to be created
- * @arn {string} - ARN of the target to be created
- * @input {string} - Input of the target to be created
+ * @param {string} rule - target rule
+ * @param {string} id - Id of the target to be created
+ * @param {string} arn - ARN of the target to be created
+ * @param {string} input - Input of the target to be created
  * @returns {Promise} - response from `CloudWatchEvents.putTargets` as a promise
  */
-exports.putCloudWatchTarget = async (rule, id, arn, input) {
+exports.putCloudWatchTarget = async (rule, id, arn, input) => {
   const cwevents = exports.cloudwatchevents();
 
   const params = {
@@ -983,15 +983,15 @@ exports.putCloudWatchTarget = async (rule, id, arn, input) {
   };
 
   return cwevents.putTargets(params).promise();
-}
+};
 
 /**
  * Delete a CloudWatch Event based on name
  *
- * @name {string} - Name of the CW Event to delete
+ * @param {string} name - Name of the CW Event to delete
  * @returns {Promise} - response from `CloudWatchEvents.deleteRule` as a promise
  */
-exports.deleteCloudWatchEvent = async (name) {
+exports.deleteCloudWatchEvent = async (name) => {
   const cwevents = exports.cloudwatchevents();
 
   const params = {
@@ -999,16 +999,16 @@ exports.deleteCloudWatchEvent = async (name) {
   };
 
   return cwevents.deleteRule(params).promise();
-}
+};
 
 /**
  * Delete a CloudWatch Target based on params
  *
- * @id {string} - Id of the target to delete
- * @rule {string} - Name of the rule to delete
+ * @param {string} id - Id of the target to delete
+ * @param {string} rule - Name of the rule to delete
  * @returns {Promise} - response from `CloudWatchEvents.removeTargets` as a promise
  */
-exports.deleteCloudWatchTarget = async (id, rule) {
+exports.deleteCloudWatchTarget = async (id, rule) => {
   const cwevents = exports.cloudwatchevents();
 
   const params = {
@@ -1017,7 +1017,7 @@ exports.deleteCloudWatchTarget = async (id, rule) {
   };
 
   return cwevents.removeTargets(params).promise();
-}
+};
 
 const KMSDecryptionFailed = errors.createErrorType('KMSDecryptionFailed');
 
@@ -1028,7 +1028,7 @@ class KMS {
       Plaintext: text
     };
 
-    const kms = new exports.kms();
+    const kms = exports.kms();
     const r = await kms.encrypt(params).promise();
     return r.CiphertextBlob.toString('base64');
   }
@@ -1037,7 +1037,7 @@ class KMS {
     const params = {
       CiphertextBlob: new Buffer(text, 'base64')
     };
-    const kms = new exports.kms();
+    const kms = exports.kms();
     try {
       const r = await kms.decrypt(params).promise();
       return r.Plaintext.toString();
