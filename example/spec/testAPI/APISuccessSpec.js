@@ -181,5 +181,22 @@ describe('The Cumulus API', () => {
       expect(granuleRemoved).toEqual(true);
     });
   });
+
+  describe('logs endpoint', () => {
+    it('returns the execution logs', async () => {
+      const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
+      expect(logs).not.toBe(undefined);
+      expect(logs.results.length).toEqual(10);
+    });
+
+    it('returns logs with taskName included', async () => {
+      const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
+      logs.results.forEach((log) => {
+        if ((!log.message.includes('END')) && (!log.message.includes('REPORT')) && (!log.message.includes('START'))) {
+          expect(log.sender).not.toBe(undefined);
+        }
+      });
+    });
+  });
 });
 
