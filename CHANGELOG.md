@@ -20,9 +20,6 @@ We may need to update the api documentation to reflect this.
     - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
       Parameter(s):
         - workflow - the workflow name
-        - messageSource - 'input' or 'output' from previous execution
-        - metaOverride - overrides the meta of the new execution, accepts partial override
-        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 - **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
 
