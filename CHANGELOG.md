@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+**CUMULUS-687** Add task name and version to Cumulus logs. Added integration tests for API logs endpoint.
+
 ## [v1.8.0] - 2018-07-23
 
 ### Added
