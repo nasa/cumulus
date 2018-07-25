@@ -47,27 +47,27 @@
         {
           "bucket": "protected",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$"
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"
         },
         {
           "bucket": "private",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$"
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$"
         },
         {
           "bucket": "public",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml",
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$"
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$"
         },
         {
           "bucket": "public",
           "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
-          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_ndvi\\.jpg$"
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$"
         }
       ],
       "updatedAt": 1519154288958,
       "createdAt": 1519154288958,
-      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
       "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
       "name": "MOD09GQ"
     },
