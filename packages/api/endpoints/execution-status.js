@@ -2,7 +2,7 @@
 
 const _get = require('lodash.get');
 const handle = require('../lib/response').handle;
-const { StepFunction } = require('@cumulus/ingest/aws');
+const { getSfnExecutionStatusFromArn } = require('@cumulus/common/aws');
 
 /**
  * get a single execution status
@@ -14,7 +14,7 @@ const { StepFunction } = require('@cumulus/ingest/aws');
 function get(event, cb) {
   const arn = _get(event.pathParameters, 'arn');
 
-  return StepFunction.getExecutionStatus(arn)
+  return getSfnExecutionStatusFromArn(arn)
     .then((status) => cb(null, status))
     .catch(cb);
 }

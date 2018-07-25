@@ -5,11 +5,11 @@ const path = require('path');
 const fs = require('fs-extra');
 const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
 const { cloneDeep } = require('lodash');
+const models = require('@cumulus/api/models');
 
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');
 
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   findTestDataDirectory,
   randomString,
@@ -17,9 +17,22 @@ const {
   validateOutput
 } = require('@cumulus/common/test-utils');
 
-test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
+let pdrModel;
+
+test.before(async () => {
+  process.env.PdrsTable = randomString();
+
+  await models.Manager.createTable(process.env.PdrsTable, { name: 'pdrName', type: 'S' });
+
+  pdrModel = new models.Pdr();
+});
+
+test.after.always(async () => {
+  await models.Manager.deleteTable(process.env.PdrsTable);
+});
+
+test.serial('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   const event = cloneDeep(input);
-  event.config.bucket = randomString();
   event.config.collection.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
   event.config.provider = {
@@ -32,26 +45,13 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
 
   await validateConfig(t, event.config);
 
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
+  const output = await discoverPdrs(event, {});
 
-  try {
-    const output = await discoverPdrs(event);
-
-    await validateOutput(t, output);
-    t.is(output.pdrs.length, 5);
-  }
-  catch (err) {
-    if (err instanceof RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
-  }
-  finally {
-    await recursivelyDeleteS3Bucket(event.config.bucket);
-  }
+  await validateOutput(t, output);
+  t.is(output.pdrs.length, 5);
 });
 
-test('test pdr discovery with FTP invalid user/pass', async (t) => {
+test.serial('test pdr discovery with FTP invalid user/pass', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -79,7 +79,7 @@ test('test pdr discovery with FTP invalid user/pass', async (t) => {
     });
 });
 
-test('test pdr discovery with FTP connection refused', async (t) => {
+test.serial('test pdr discovery with FTP connection refused', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -102,7 +102,7 @@ test('test pdr discovery with FTP connection refused', async (t) => {
     });
 });
 
-test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
+test.serial('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
@@ -117,151 +117,111 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   newPayload.config.collection.provider_path = '/pdrs/discover-pdrs';
   newPayload.input = {};
 
-  const internalBucketName = randomString();
-  newPayload.config.bucket = internalBucketName;
-
   await validateConfig(t, newPayload.config);
 
-  return s3().createBucket({ Bucket: internalBucketName }).promise()
-    .then(() => {
-      const Key = [
-        newPayload.config.stack,
-        'pdrs',
-        'PDN.ID1611071307.PDR'
-      ].join('/');
-
-      return s3().putObject({
-        Bucket: internalBucketName,
-        Key,
-        Body: 'PDN.ID1611071307.PDR'
-      }).promise();
-    })
-    .then(() => discoverPdrs(newPayload, {}))
-    .then((output) => {
-      t.is(output.pdrs.length, 4);
-      return validateOutput(t, output);
-    })
-    .then(() => recursivelyDeleteS3Bucket(internalBucketName))
-    .catch((e) => {
-      if (e instanceof RemoteResourceError) {
-        t.pass('ignoring this test. Test server seems to be down');
-        return recursivelyDeleteS3Bucket(internalBucketName);
-      }
-      return recursivelyDeleteS3Bucket(internalBucketName).then(t.fail);
-    });
-});
-
-test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
-  const internalBucketName = randomString();
+  await pdrModel.create({
+    pdrName: 'PDN.ID1611071307.PDR',
+    provider: provider.id,
+    collectionId: '12',
+    status: 'running',
+    createdAt: 42
+  });
 
   try {
-    await s3().createBucket({ Bucket: internalBucketName }).promise();
-    const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs', 'discover-pdrs');
-    const pdrFilenames = await fs.readdir(testDataDirectory);
-    const oldPdr = pdrFilenames[0];
-    const newPdrs = pdrFilenames.slice(1);
+    const output = await discoverPdrs(newPayload, {});
 
-    // Build the event
-    const event = cloneDeep(input);
-    event.config.bucket = internalBucketName;
-    event.config.provider = {
-      id: 'MODAPS',
-      protocol: 'http',
-      host: 'http://localhost:3030'
-    };
-    event.config.collection.provider_path = '/pdrs/discover-pdrs';
-    event.input = {};
+    await validateOutput(t, output);
+    t.is(output.pdrs.length, 4);
+  }
+  finally {
+    await pdrModel.delete({ pdrName: 'PDN.ID1611071307.PDR' });
+  }
+});
 
-    // Mark one of the PDRs as not new
-    await s3().putObject({
-      Bucket: internalBucketName,
-      // 'pdrs' is the default 'folder' value in the Discover contructor
-      Key: `${event.config.stack}/pdrs/${oldPdr}`,
-      Body: 'Pretend this is a PDR'
-    }).promise();
+test.serial('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
+  const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs', 'discover-pdrs');
+  const pdrFilenames = await fs.readdir(testDataDirectory);
+  const oldPdr = pdrFilenames[0];
+  const newPdrs = pdrFilenames.slice(1);
 
-    await validateConfig(t, event.config);
-    let output;
-    try {
-      output = await discoverPdrs(event, {});
+  // Build the event
+  const event = cloneDeep(input);
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: 'http://localhost:3030'
+  };
+  event.config.collection.provider_path = '/pdrs/discover-pdrs';
+  event.input = {};
 
-      await validateOutput(t, output);
+  await validateConfig(t, event.config);
 
-      t.is(output.pdrs.length, 4);
-      const names = output.pdrs.map((p) => p.name);
-      newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
-    }
-    catch (e) {
-      if (e instanceof RemoteResourceError) {
-        t.pass('Ignoring this test. Test server seems to be down');
-      }
-      else t.fail(e);
-    }
+  await pdrModel.create({
+    pdrName: oldPdr,
+    provider: event.config.provider.id,
+    collectionId: '12',
+    status: 'running',
+    createdAt: 42
+  });
+
+  try {
+    const output = await discoverPdrs(event, {});
+
+    await validateOutput(t, output);
+
+    t.is(output.pdrs.length, 4);
+    const names = output.pdrs.map((p) => p.name);
+    newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
   }
   finally {
     // Clean up
-    await recursivelyDeleteS3Bucket(internalBucketName);
+    await pdrModel.delete({ pdrName: oldPdr });
   }
 });
 
-test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
-  const internalBucketName = randomString();
-
+test.serial('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
   // Figure out the directory paths that we're working with
   const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs', 'discover-pdrs');
 
-  // Create providerPathDirectory and internal bucket
-  await s3().createBucket({ Bucket: internalBucketName }).promise();
+  // Copy the PDRs to the SFTP directory
+  const pdrFilenames = await fs.readdir(testDataDirectory);
+  const oldPdr = pdrFilenames[0];
+  const newPdrs = pdrFilenames.slice(1);
+
+  // Build the event
+  const event = cloneDeep(input);
+  event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'sftp',
+    host: 'localhost',
+    port: 2222,
+    username: 'user',
+    password: 'password'
+  };
+  event.config.collection.provider_path = 'pdrs/discover-pdrs';
+  event.input = {};
+
+  await validateConfig(t, event.config);
+
+  await pdrModel.create({
+    pdrName: oldPdr,
+    provider: event.config.provider.id,
+    collectionId: '12',
+    status: 'running',
+    createdAt: 42
+  });
 
   try {
-    // Copy the PDRs to the SFTP directory
-    const pdrFilenames = await fs.readdir(testDataDirectory);
+    const output = await discoverPdrs(event, {});
 
-    const oldPdr = pdrFilenames[0];
-    const newPdrs = pdrFilenames.slice(1);
+    await validateOutput(t, output);
 
-    // Build the event
-    const event = cloneDeep(input);
-    event.config.bucket = internalBucketName;
-    event.config.provider = {
-      id: 'MODAPS',
-      protocol: 'sftp',
-      host: 'localhost',
-      port: 2222,
-      username: 'user',
-      password: 'password'
-    };
-    event.config.collection.provider_path = 'pdrs/discover-pdrs';
-    event.input = {};
-
-    // Mark one of the PDRs as not new
-    await s3().putObject({
-      Bucket: internalBucketName,
-      // 'pdrs' is the default 'folder' value in the Discover constructor
-      Key: `${event.config.stack}/pdrs/${oldPdr}`,
-      Body: 'Pretend this is a PDR'
-    }).promise();
-
-    await validateConfig(t, event.config);
-    let output;
-    try {
-      output = await discoverPdrs(event, {});
-
-      await validateOutput(t, output);
-
-      t.is(output.pdrs.length, 4);
-      const names = output.pdrs.map((p) => p.name);
-      newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
-    }
-    catch (e) {
-      if (e instanceof RemoteResourceError) {
-        t.pass('Ignoring this test. Test server seems to be down');
-      }
-      else t.fail(e);
-    }
+    t.is(output.pdrs.length, 4);
+    const names = output.pdrs.map((p) => p.name);
+    newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
   }
   finally {
     // Clean up
-    await recursivelyDeleteS3Bucket(internalBucketName);
+    await pdrModel.delete({ pdrName: oldPdr });
   }
 });

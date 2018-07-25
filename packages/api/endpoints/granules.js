@@ -219,4 +219,8 @@ async function handler(event) {
   }
 }
 
-module.exports = handler;
+module.exports = {
+  handler,
+  get
+};
+

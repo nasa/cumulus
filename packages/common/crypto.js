@@ -4,7 +4,7 @@
  */
 
 const forge = require('node-forge');
-const { getS3Object, KMS } = require('@cumulus/common/aws');
+const { getS3Object, KMS } = require('./aws');
 
 /**
  * Provides encryption and decryption methods using a keypair stored in S3

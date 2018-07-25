@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
+// const { Granule: GranuleModel } = require('@cumulus/api/models');
+const { get: getGranule } = require('@cumulus/api/endpoints/granules');
 const groupBy = require('lodash.groupby');
 const identity = require('lodash.identity');
 const omit = require('lodash.omit');
@@ -97,6 +99,28 @@ class Discover {
   }
 
   /**
+   * Determine if a granule does not yet exist in Cumulus
+   *
+   * @param {Object} granule - the granule that's being looked for
+   * @param {string} granule.name - the name of the granule in Cumulus
+   * @returns {Promise.<(null|Object)>} - a Promise that resolves to null
+   *   when the object does already exist in Cumulus, or the passed-in granule
+   *   object if it does not already exist.
+   */
+  async granuleIsNew(granule) {
+    //const g = new GranuleModel();
+
+    //return g.get({ granuleId: granule.name }).then(() => null).catch(() => granule);
+    const event = {
+      pathParameters: { granuleName: granule.name }
+    };
+
+    const response = await getGranule(event);
+    if (response.statusCode === 404) return granule;
+    return null;
+  }
+
+  /**
    * Discover new granules
    *
    * @returns {Array<Object>} a list of discovered granules
@@ -112,11 +136,10 @@ class Discover {
 
     // This is confusing, but I haven't figured out a better way to write it.
     // What we're doing here is checking each discovered file to see if it
-    // already exists in S3.  If it does then it isn't a new file and we are
+    // already exists in dynamoDB. If it does then it isn't a new file and we are
     // going to ignore it.
     const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
-      aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
-        .then((exists) => (exists ? null : discoveredFile)))))
+      this.granuleIsNew(discoveredFile))))
       .filter(identity);
 
     // Group the files by granuleId

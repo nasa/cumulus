@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
-const aws = require('@cumulus/ingest/aws');
+const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
 const { constructCollectionId, parseException } = require('../lib/utils');
 const executionSchema = require('./schemas').execution;
@@ -22,24 +22,25 @@ class Execution extends Manager {
    * @returns {Promise<Object>} an execution record
    */
   createExecutionFromSns(payload) {
-    const name = get(payload, 'cumulus_meta.execution_name');
-    const arn = aws.getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
+    const stateMachineArn = get(payload, 'cumulus_meta.state_machine');
+    const executionName = get(payload, 'cumulus_meta.execution_name');
+    const executionArn = aws.getExecutionArn(
+      stateMachineArn,
+      executionName
     );
-    if (!arn) {
+    if (!executionArn) {
       const error = new Error('State Machine Arn is missing. Must be included in the cumulus_meta');
       return Promise.reject(error);
     }
 
-    const execution = aws.getExecutionUrl(arn);
+    const execution = aws.getExecutionUrl(executionArn);
     const collectionId = constructCollectionId(
       get(payload, 'meta.collection.name'), get(payload, 'meta.collection.version')
     );
 
     const doc = {
-      name,
-      arn,
+      executionName,
+      executionArn,
       parentArn: get(payload, 'cumulus_meta.parentExecutionArn'),
       execution,
       error: parseException(payload.exception),

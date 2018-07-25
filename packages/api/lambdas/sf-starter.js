@@ -2,7 +2,7 @@
 
 const uuidv4 = require('uuid/v4');
 const { sfn } = require('@cumulus/common/aws');
-const consumer = require('@cumulus/ingest/consumer');
+const consumer = require('@cumulus/common/consumer');
 
 /**
  * Starts a new stepfunction with the given payload

@@ -10,14 +10,12 @@ const Execution = require('./executions');
 const FileClass = require('./files');
 const User = require('./users');
 
-module.exports = {
-  User,
-  Collection,
-  Granule,
-  Pdr,
-  Provider,
-  Rule,
-  Manager,
-  Execution,
-  FileClass
-};
+module.exports.Collection = Collection;
+module.exports.Execution = Execution;
+module.exports.FileClass = FileClass;
+module.exports.Granule = Granule;
+module.exports.Manager = Manager;
+module.exports.Pdr = Pdr;
+module.exports.Provider = Provider;
+module.exports.Rule = Rule;
+module.exports.User = User;

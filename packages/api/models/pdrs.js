@@ -2,7 +2,7 @@
 
 const pvl = require('@cumulus/pvl');
 const get = require('lodash.get');
-const aws = require('@cumulus/ingest/aws');
+const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
 const { constructCollectionId } = require('../lib/utils');
 const pdrSchema = require('./schemas').pdr;
@@ -52,15 +52,16 @@ class Pdr extends Manager {
    * @returns {Promise<Object>} a pdr record
    */
   createPdrFromSns(payload) {
-    const name = get(payload, 'cumulus_meta.execution_name');
+    const executionName = get(payload, 'cumulus_meta.execution_name');
     const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
     const pdrName = get(pdrObj, 'name');
+    const stateMachineArn = get(payload, 'cumulus_meta.state_machine');
 
     if (!pdrName) return Promise.resolve();
 
     const arn = aws.getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
+      stateMachineArn,
+      executionName
     );
     const execution = aws.getExecutionUrl(arn);
 
