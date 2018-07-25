@@ -181,11 +181,34 @@ async function getExecution({ prefix, arn }) {
   return JSON.parse(payload.body);
 }
 
+/**
+ * Fetch logs from the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @returns {Promise<Object>} - the logs fetched by the API
+ */
+async function getLogs({ prefix }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiLogsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/logs',
+      path: 'logs',
+      pathParameters: {}
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
 module.exports = {
   callCumulusApi,
   getGranule,
   reingestGranule,
   removeFromCMR,
   applyWorkflow,
-  getExecution
+  getExecution,
+  getLogs
 };
