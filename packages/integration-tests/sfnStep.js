@@ -100,7 +100,7 @@ class SfnStep {
    * @returns {boolean} truthness of the execution being successful.
    */
   completedSuccessfulFilter(execution) {
-    return (Object.prototype.hasOwnProperty.call(execution, 'completeEvent')
+    return (execution.completeEvent !== undefined
             && execution.completeEvent !== null
             && execution.completeEvent.type === this.successEvent);
   }
