@@ -191,6 +191,16 @@ exports.downloadS3File = (s3Obj, filepath) => {
 };
 
 /**
+* Get an object header from S3
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} - returns response from `S3.headObject` as a promise
+**/
+exports.headObject = (bucket, key) =>
+  exports.s3().headObject({ Bucket: bucket, Key: key }).promise();
+
+/**
 * Get an object from S3
 *
 * @param {string} bucket - name of bucket
