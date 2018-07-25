@@ -5,12 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- **CUMULUS-688** Add integration test for ExecutionStatus
+
+### Added
+- **CUMULUS-688**
+  - Add integration test for ExecutionStatus
+  - Function addition to `@cumulus/integration-tests`: `api` includes `getExecutionStatus` which returns the execution status from the Cumulus API
 
 ## [v1.8.0] - 2018-07-23
 
 ### Added
-
 
 - **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
 
