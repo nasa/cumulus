@@ -126,7 +126,7 @@ As of release 1.8 the kinesis consumer requires the incoming data to be a CNM JS
 
 To trigger this workflow, you will need to put a record on the Kinesis stream that the [kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js) lambda will recognize as a matching event.
 
-For the purpose of this example, the easiest way to accomplish this is using the [AWS CLI](https://www.google.com/search?q=aws+cli):
+For the purpose of this example, the easiest way to accomplish this is using the [AWS CLI](https://aws.amazon.com/cli/):
 
 - Construct a JSON file containing an object that matches the rule you previously created.   This JSON object should be a valid [CNM message]().  `collection`, `Product: name`,  and `Product: dataVersion` keys should match the collection name and version you setup in the rule, and the provider name should match the provider:
 
