@@ -180,7 +180,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
       });
 
-      it('outputs the granules object', () => {
+      it('outputs the expected object', () => {
         const actualPayload = lambdaOutput.payload;
         delete actualPayload.processCompleteTime;
 
