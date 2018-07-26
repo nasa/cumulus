@@ -10,7 +10,12 @@ const { rule } = require('./schemas');
 
 class Rule extends Manager {
   constructor() {
-    super(process.env.RulesTable, rule);
+    super({
+      tableName: process.env.RulesTable,
+      tableHash: { name: 'name', type: 'S' },
+      schema: rule
+    });
+
     this.targetId = 'lambdaTarget';
   }
 
@@ -150,7 +155,7 @@ class Rule extends Manager {
    * @returns {Promise} updated rule item
    */
   async addKinesisEventSource(item) {
-    // use the existing event source mapping if it already exists
+    // use the existing event source mapping if it already exists and is enabled
     const listParams = { FunctionName: process.env.kinesisConsumer };
     const listData = await aws.lambda(listParams).listEventSourceMappings().promise();
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
@@ -159,8 +164,17 @@ class Rule extends Manager {
           return (mapping.EventSourceArn === item.rule.value);
         });
       if (mappingExists) {
-        item.rule.arn = mappingExists.UUID;
-        return item;
+        if (mappingExists.State === 'Enabled') {
+          item.rule.arn = mappingExists.UUID;
+          return item;
+        }
+        await this.deleteKinesisEventSource({
+          name: item.name,
+          rule: {
+            arn: mappingExists.UUID,
+            type: 'kinesis'
+          }
+        });
       }
     }
 
@@ -168,7 +182,7 @@ class Rule extends Manager {
     const params = {
       EventSourceArn: item.rule.value,
       FunctionName: process.env.kinesisConsumer,
-      StartingPosition: 'LATEST',
+      StartingPosition: 'TRIM_HORIZON',
       Enabled: item.state === 'ENABLED'
     };
 
