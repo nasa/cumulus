@@ -9,7 +9,7 @@ const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006.[\\d]{13}$';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
