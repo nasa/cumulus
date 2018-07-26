@@ -166,11 +166,9 @@ jobs:
           name: Publishing to NPM
           command: |
             # Temporary to release 1.7.1, correct in master
-            if [[ "$CIRCLE_BRANCH" =~ '^v\d+\.\d+' ]]; then 
-              echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-              VERSION=$(cat lerna.json | jq .version --raw-output)
-              ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm --npm-tag=patch-$VERSION
-            fi
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            VERSION=$(cat lerna.json | jq .version --raw-output)
+            ./node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=* --npm-client=npm --npm-tag=patch-$VERSION
       
       - run:
           name: Deploy cumulus with the npm packages source code
@@ -197,5 +195,5 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: master 
+              only: /^v\d+\.\d+/ 
 
