@@ -1,8 +1,6 @@
 'use strict';
 
-const fs = require('fs');
 const { s3 } = require('@cumulus/common/aws');
-const yaml = require('js-yaml');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
@@ -35,7 +33,7 @@ const lambdaStep = new LambdaStep();
 const streamName = testConfig.streamName;
 
 const recordFile = record.product.files[0];
-const expectedTranslatePayload ={
+const expectedTranslatePayload = {
   cnm: {
     product: record.product,
     identifier: recordIdentifier,
@@ -113,7 +111,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       // get shard iterator for the response stream so we can process any new records sent to it
       responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
-      console.log(`Waiting for step function to start...`);
+      console.log('Waiting for step function to start...');
       this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
 
       console.log(`Waiting for completed execution of ${this.workflowExecution.executionArn}.`);
@@ -177,8 +175,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('TranslateMessage fails', () => {
-    const badRecord = {...record};
-    delete badRecord['product'];
+    const badRecord = { ...record };
+    delete badRecord.product;
 
     it('fails');
   });
