@@ -24,6 +24,15 @@
       },
       "file": {
         "type": "keyword"
+      },
+      "sender": {
+        "type": "keyword"
+      },
+      "executions": {
+        "type": "keyword"
+      },
+      "version": {
+        "type": "keyword"
       }
     }
   },
