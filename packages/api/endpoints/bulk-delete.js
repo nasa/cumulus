@@ -32,12 +32,24 @@ async function startBulkDeleteAsyncOperation(params) {
     granuleIds
   } = params;
 
-  const asyncOperation = await asyncOperationModel.start({
-    asyncOperationTaskDefinition,
-    cluster,
-    lambdaName: bulkDeleteLambdaName,
-    payload: { granuleIds }
-  });
+  let asyncOperation;
+  try {
+    asyncOperation = await asyncOperationModel.start({
+      asyncOperationTaskDefinition,
+      cluster,
+      lambdaName: bulkDeleteLambdaName,
+      payload: { granuleIds }
+    });
+  }
+  catch (err) {
+    if (err.name !== 'EcsStartTaskError') throw err;
+
+    return buildLambdaProxyResponse({
+      json: true,
+      statusCode: 503,
+      body: { error: `Failed to run ECS task: ${err.message}` }
+    });
+  }
 
   return buildLambdaProxyResponse({
     json: true,

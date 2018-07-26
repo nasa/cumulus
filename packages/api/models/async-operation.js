@@ -1,6 +1,5 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
 const { ecs, s3, s3Join } = require('@cumulus/common/aws');
 const uuidv4 = require('uuid/v4');
 const Manager = require('./base');
@@ -103,8 +102,9 @@ class AsyncOperation extends Manager {
     }).promise();
 
     if (runTaskResponse.failures.length > 0) {
-      log.error('runTaskResponse.failures:', JSON.stringify(runTaskResponse, null, 2));
-      throw new Error(`Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`);
+      const err = new Error(runTaskResponse.failures[0].reason);
+      err.name = 'EcsStartTaskError';
+      throw err;
     }
 
     return this.create({
