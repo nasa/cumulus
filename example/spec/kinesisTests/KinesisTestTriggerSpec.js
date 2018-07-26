@@ -229,4 +229,22 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       expect(responseRecord.response.status).toEqual('FAILURE');
     });
   });
+
+  describe('the CnmResponse Lambda', () => {
+    beforeAll(async () => {
+      this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CnmResponse');
+    });
+
+    it('outputs an empty object', () => {
+      expect(this.lambdaOutput.payload).toEqual({});
+    });
+
+    it('writes a message to the response stream', async () => {
+      const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
+      const responseRecord = JSON.parse(newResponseStreamRecords.Records[0].Data.toString());
+      expect(newResponseStreamRecords.Records.length).toEqual(1);
+      expect(responseRecord.identifier).toEqual(recordIdentifier);
+      expect(responseRecord.response.status).toEqual('SUCCESS');
+    });
+  });
 });
