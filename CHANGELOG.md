@@ -6,10 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-688**
+  - Add integration test for ExecutionStatus
+  - Function addition to `@cumulus/integration-tests`: `api` includes `getExecutionStatus` which returns the execution status from the Cumulus API
+
 ## [v1.8.0] - 2018-07-23
 
 ### Added
-
 
 - **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
 
