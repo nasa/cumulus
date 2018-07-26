@@ -3,23 +3,16 @@
 const get = require('lodash.get');
 const aws = require('@cumulus/ingest/aws');
 const Manager = require('./base');
-const { parseException } = require('../lib/utils');
+const { constructCollectionId, parseException } = require('../lib/utils');
 const executionSchema = require('./schemas').execution;
-
 
 class Execution extends Manager {
   constructor() {
-    super(process.env.ExecutionsTable, executionSchema);
-  }
-
-  /**
-   * Create the dynamoDB for this class
-   *
-   * @returns {Promise} aws dynamodb createTable response
-   */
-  async createTable() {
-    const hash = { name: 'arn', type: 'S' };
-    return Manager.createTable(this.tableName, hash);
+    super({
+      tableName: process.env.ExecutionsTable,
+      tableHash: { name: 'arn', type: 'S' },
+      schema: executionSchema
+    });
   }
 
   /**
@@ -40,14 +33,18 @@ class Execution extends Manager {
     }
 
     const execution = aws.getExecutionUrl(arn);
+    const collectionId = constructCollectionId(
+      get(payload, 'meta.collection.name'), get(payload, 'meta.collection.version')
+    );
 
     const doc = {
       name,
       arn,
+      parentArn: get(payload, 'cumulus_meta.parentExecutionArn'),
       execution,
       error: parseException(payload.exception),
       type: get(payload, 'meta.workflow_name'),
-      collectionId: get(payload, 'meta.collection.name'),
+      collectionId: collectionId,
       status: get(payload, 'meta.status', 'unknown'),
       createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now()

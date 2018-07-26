@@ -3,7 +3,8 @@
 const fs = require('fs-extra');
 const {
   aws: { s3 },
-  stringUtils: { globalReplace }
+  stringUtils: { globalReplace },
+  testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
 
 /**
@@ -22,9 +23,43 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
       Bucket: bucket,
       CopySource: `${bucket}/${file.path}/${file.name}`,
       Key: `${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}`
-    }).promise();
+    }).promise()
+      .catch((err) => {
+        console.error(`Failed to copy s3://${bucket}/${file.path}/${file.name} to s3://${bucket}/${file.path}/${file.name.replace(oldGranuleId, newGranuleId)}: ${err.message}`);
+        throw err;
+      });
 
   return Promise.all(granuleFiles.map(copyFile));
+}
+
+/**
+ * Set up files in the S3 data location for a new granule to use for this
+ * test. Use the input payload to determine which files are needed and
+ * return updated input with the new granule id.
+ *
+ * @param {string} bucket - data bucket
+ * @param {string} inputPayloadJson - input payload as a JSON string
+ * @param {string} oldGranuleId - granule id of files to copy
+ * @param {string} granuleRegex - regex to generate the new granule id
+ * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
+ */
+async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId, granuleRegex) {
+  // granule id for the new files
+  const newGranuleId = randomStringFromRegex(granuleRegex);
+  console.log(`granule id: ${newGranuleId}`);
+
+  const baseInputPayload = JSON.parse(inputPayloadJson);
+
+  await createGranuleFiles(
+    baseInputPayload.granules[0].files,
+    bucket,
+    oldGranuleId,
+    newGranuleId
+  );
+
+  const updatedInputPayloadJson = globalReplace(inputPayloadJson, oldGranuleId, newGranuleId);
+
+  return JSON.parse(updatedInputPayloadJson);
 }
 
 /**
@@ -43,6 +78,6 @@ function loadFileWithUpdatedGranuleId(file, oldGranuleId, newGranuleId) {
 }
 
 module.exports = {
-  createGranuleFiles,
-  loadFileWithUpdatedGranuleId
+  loadFileWithUpdatedGranuleId,
+  setupTestGranuleForIngest
 };

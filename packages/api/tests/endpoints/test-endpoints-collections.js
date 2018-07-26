@@ -15,38 +15,26 @@ process.env.CollectionsTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 
-
-const collections = new models.Collection();
-
 const testCollection = fakeCollectionFactory();
-
-const hash = { name: 'name', type: 'S' };
-const range = { name: 'version', type: 'S' };
-
 const esIndex = randomString();
 
-async function setup() {
+let collections;
+test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
-  await models.Manager.createTable(process.env.CollectionsTable, hash, range);
-  await collections.create(testCollection);
-}
 
-async function teardown() {
-  models.Manager.deleteTable(process.env.CollectionsTable);
+  collections = new models.Collection({ tableName: process.env.CollectionsTable });
+  await collections.createTable();
+  await collections.create(testCollection);
+});
+
+test.after.always(async () => {
+  await collections.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 
   const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
-}
-
-test.before(async () => {
-  await setup();
-});
-
-test.after.always(async () => {
-  await teardown();
 });
 
 // TODO(aimee): Debug why this is _passing_ - we don't expect to already have a

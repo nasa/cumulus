@@ -4,6 +4,7 @@ const test = require('ava');
 
 const {
   createQueue,
+  getExecutionArn,
   s3,
   sqs,
   recursivelyDeleteS3Bucket
@@ -69,7 +70,8 @@ test.serial('The correct output is returned when PDRs are queued', async (t) => 
   const output = await queuePdrs(event);
 
   await validateOutput(t, output);
-  t.deepEqual(output, { pdrs_queued: 2 });
+  t.is(output.pdrs_queued, 2);
+  t.is(output.running.length, 2);
 });
 
 test.serial('The correct output is returned when no PDRs are queued', async (t) => {
@@ -82,7 +84,8 @@ test.serial('The correct output is returned when no PDRs are queued', async (t) 
   const output = await queuePdrs(event);
 
   await validateOutput(t, output);
-  t.deepEqual(output, { pdrs_queued: 0 });
+  t.deepEqual(output.pdrs_queued, 0);
+  t.falsy(output.running.length, 0);
 });
 
 test.serial('PDRs are added to the queue', async (t) => {
@@ -112,6 +115,12 @@ test.serial('PDRs are added to the queue', async (t) => {
 
 test.serial('The correct message is enqueued', async (t) => {
   const event = t.context.event;
+  // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
+  // will have 'parentExecutionArn'
+  event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
+  const arn = getExecutionArn(
+    event.cumulus_config.state_machine, event.cumulus_config.execution_name
+  );
   event.input.pdrs = [
     {
       name: randomString(),
@@ -149,7 +158,8 @@ test.serial('The correct message is enqueued', async (t) => {
   event.input.pdrs.forEach((pdr) => {
     expectedMessages[pdr.name] = {
       cumulus_meta: {
-        state_machine: t.context.stateMachineArn
+        state_machine: t.context.stateMachineArn,
+        parentExecutionArn: arn
       },
       meta: {
         collection: { name: 'collection-name' },
@@ -167,6 +177,8 @@ test.serial('The correct message is enqueued', async (t) => {
   // Make sure we did receive those messages
   messages.forEach((message) => {
     const pdrName = message.payload.pdr.name;
+    // The execution name is randomly generated, so we don't care what the value is here
+    expectedMessages[pdrName].cumulus_meta.execution_name = message.cumulus_meta.execution_name;
     t.deepEqual(message, expectedMessages[pdrName]);
   });
 });

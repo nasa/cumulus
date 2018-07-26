@@ -63,7 +63,12 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
  */
 function getExecutionStatus(executionArn) {
   return sfn().describeExecution({ executionArn }).promise()
-    .then((status) => status.status);
+    .then((status) => status.status)
+    .catch((e) => {
+      // the execution may not be started yet
+      if (e.code === 'ExecutionDoesNotExist') return 'RUNNING';
+      throw e;
+    });
 }
 
 /**
@@ -231,8 +236,8 @@ async function addCollections(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of provider json files
- * @param {string} s3Host - bucket name to be used as the provider host for 
- * S3 providers. This will override the host from the seed data. Defaults to null, 
+ * @param {string} s3Host - bucket name to be used as the provider host for
+ * S3 providers. This will override the host from the seed data. Defaults to null,
  * meaning no override.
  * @returns {Promise.<integer>} number of providers added
  */
@@ -241,7 +246,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null)
 
   const promises = providers.map((provider) => limit(() => {
     const p = new Provider();
-    if(s3Host && provider.protocol === 's3') {
+    if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
     }
     console.log(`adding provider ${provider.id}`);
@@ -258,8 +263,8 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null)
  * @returns {Promise.<integer>} number of rules added
  */
 async function addRules(config, dataDirectory) {
-  const { stackName, bucketName } = config;
-  const rules = await setupSeedData(stackName, bucketName, dataDirectory);
+  const { stackName, bucket } = config;
+  const rules = await setupSeedData(stackName, bucket, dataDirectory);
 
   const promises = rules.map((rule) => limit(() => {
     const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
@@ -268,6 +273,43 @@ async function addRules(config, dataDirectory) {
     console.log(`adding rule ${templatedRule.name}`);
     return r.create(templatedRule);
   }));
+  return Promise.all(promises).then((rs) => rs.length);
+}
+
+/**
+ * deletes a rule by name
+ *
+ * @param {string} name - name of the rule to delete.
+ * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
+ */
+async function _deleteOneRule(name) {
+  const r = new Rule();
+  return r.get({ name: name }).then((item) => r.delete(item));
+}
+
+
+/**
+ * returns a list of rule objects
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} rulesDirectory - The directory continaing rules json files
+ * @returns {list} - list of rules found in rulesDirectory
+ */
+async function rulesList(stackName, bucketName, rulesDirectory) {
+  return setupSeedData(stackName, bucketName, rulesDirectory);
+}
+
+/**
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {Array} rules - List of rules objects to delete
+ * @returns {Promise.<integer>} - Number of rules deleted
+ */
+async function deleteRules(stackName, bucketName, rules) {
+  setProcessEnvironment(stackName, bucketName);
+  const promises = rules.map((rule) => limit(() => _deleteOneRule(rule.name)));
   return Promise.all(promises).then((rs) => rs.length);
 }
 
@@ -349,6 +391,8 @@ module.exports = {
   getOnlineResources: cmr.getOnlineResources,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
   addRules,
+  deleteRules,
+  rulesList,
   timeout,
   getWorkflowArn
 };
