@@ -1,10 +1,10 @@
-# Basic CNM Workflow
+# CNM Basic Workflow
 
 This entry documents setup of a basic workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
 
 Prior to using this entry you should be familiar with the [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism).
 
-## Configuration
+## Prerequisites
 
 ### AWS CLI
 
@@ -20,23 +20,25 @@ Basic stream manipulation for testing/learning purposes can be accomplished via 
 
 For more information on how this process works and how to develop a process that will add records to a stream, read the [Kinesis documentation](https://aws.amazon.com/documentation/kinesis/) and the [developer guide](https://docs.aws.amazon.com/streams/latest/dev/introduction.html).
 
-### Cumulus
+## Cumulus Configuration
+
+    The following are steps that are required to set up your Cumulus instance to run the example workflow
+
+### Collection and Provider
 
 Cumulus will need to be configured with a Collection and Provider entry of your choosing.
 
 This can be done via the [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard) if installed or the [API](../api.md).  It is strongly recommended to use the dashboard if possible.
 
-### Workflow Configurations
+### Workflows Configuration
 
-For our initial example, we're going to trigger HelloWorld workflow that is provided in the example deployment.
+For our example, we're going to trigger the HelloWorld task that is provided in the example deployment, using a custom workflow.
 
-The [workflow definition](../workflows/README.md) can be found in [cumulus/example/workflows.yml](https://github.com/nasa/cumulus/blob/master/example/workflows.yml)  under `HelloWorldWorkflow:`
-
-(Please note this snippet is included as a sample only, please review the source file for the most up-to-date workflow)
+The following [workflow definition](../workflows/README.md) should be added to your deployment's workflows.yml:
 
 ```
-HelloWorldWorkflow:
-  Comment: 'Returns Hello World'
+CMMExampleWorkflow:
+  Comment: CNMExampleWorkflow
   StartAt: StartStatus
   States:
     StartStatus:
@@ -53,6 +55,34 @@ HelloWorldWorkflow:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: CnmResponse
+    CnmResponse:
+      CumulusConfig:
+        OriginalCNM: '{$.meta.cnm}'
+        CNMResponseStream: '${CNMResponseStream}'
+        region: 'us-east-1'
+        WorkflowException: '{$.exception}'
+        cumulus_message:
+          outputs:
+            - source: '{$}'
+              destination: '{$.meta.cnmResponse}'
+      Type: Task
+      Resource: ${CnmResponseLambdaFunction.Arn}
+      Retry:
+        - ErrorEquals:
+            - States.ALL
+          IntervalSeconds: 5
+          MaxAttempts: 3
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
       Next: StopStatus
     StopStatus:
       Type: Task
@@ -74,11 +104,11 @@ HelloWorldWorkflow:
       Type: Fail
       Cause: 'Workflow failed'
 ```
-If you're using the example deployment this workflow will already be included.  If you're attempting to use this example in a custom deployment you'll need to include the HelloWorld in your workflows.yml, then re-deploy to utilize it.
 
 ### Task Configuration
+#### HelloWorld
 
-This cookbook entry assumes the HelloWorld [task](../workflows/developing-workflow-tasks.md) is defined in the `lambdas.yml` configuration file under `HelloWorld:`
+This entry assumes the HelloWorld [task](../workflows/developing-workflow-tasks.md) is defined in the deployment's `lambdas.yml` configuration file:
 
 ```
 HelloWorld:
@@ -89,13 +119,54 @@ HelloWorld:
   useMessageAdapter: true
 ```
 
-If you are using the example deployment this task will already be included in the configuration file.
+This task defines a task that runs the HelloWorld lambda.
 
-If you are attempting to use this example in a custom deployment you'll need to include the HelloWorld task in your lambdas.yml, then re-deploy to utilize it.
+#### CnmResponse
+This entry assumes you have a CNM response task defined in the `lambdas.yml` configuration file:
 
-##### Rule Configuration
+```
+CnmResponse:
+  handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
+  timeout: 300
+  useMessageAdapter: false
+  runtime: java8
+  memory: 256
+  s3Source:
+    bucket: 'cumulus-data-shared''
+    key: 'daacs/podaac/cnmResponse-1.0.zip'
+  launchInVpc: true
+```
 
-Cumulus provides a built-in Kinesis consumer lambda function ([kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js)) that will read events off of a preconfigured Kinesis stream and trigger a workflow when a Cumulus rule is configured via the Cumulus dashboard or API.
+This defines a task that runs a lambda that generates a CNM response output and puts it on a Kinesis stream
+
+The CnmResponse task utilizes a response lambda provided (as of release 1.8) in the `cumulus-data-shared` bucket, with documentation provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse).
+
+##### CNMToCMA
+
+This entry assumes you have a CNM to Cumulus Granule translation lambda defined in the `lambdas.yml` configuration file as `CNMToCMA`:
+
+```
+CNMToCMA:
+  handler: 'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'
+  timeout: 300
+  runtime: java8
+  memory: 128
+  s3Source:
+    bucket: 'cumulus-data-shared'
+    key: 'daacs/podaac/cnmToGranule-1.0-wCMA.zip'
+  useMessageAdapter: false
+  launchInVpc: true
+```
+
+This defines a task that runs a lambda at the begining of the workflow that will extract CMA-compatible granule information into the payload.   This workflow will not utilize that payload, as HelloWorld doesn't actualy process data, however if this were an ingest workflow, you would need to ensure that downstream tasks in your workflow either speak CNM *or* include a translation-to-common-format task like this one.
+
+### Redeploy
+
+Once the above configuration changes have been made, you'll need to redeploy your stack to ensure the updates to the workflows/tasks are available.    Please refer to `Updating Cumulus deployment` in the [deployment documentation][../deployment/README.md] if you are unfamiliar with that process.
+
+### Rule Configuration
+
+Cumulus provides a built-in Kinesis consumer lambda function ([kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js)) that will read CNM formatted events off of a preconfigured Kinesis stream and trigger a workflow when a Cumulus rule is configured via the Cumulus dashboard or API.
 
 This example will focus on using the Cumulus dashboard to schedule the execution of a HelloWorld workflow when events are posted to the Kinesis stream.
 
@@ -120,6 +191,9 @@ Optional tags for search:
 Once you've clicked on 'submit' a new rule should appear in the dashboard Rules list.
 
 ## Execution
+
+Once Cumulus has been configured and a Rule has been added, we're ready to trigger the workflow and watch it execute.
+
 ### Triggering Workflow
 
 As of release 1.8 the kinesis consumer requires the incoming data to be a CNM JSON object.   Upon validation it will trigger all rules that match the `collection` for all versions of that collection.
@@ -138,7 +212,13 @@ For the purpose of this example, the easiest way to accomplish this is using the
   "product": {
     "name": "GranuleUR",
     "dataVersion": ${VERSION},  ## The data version defined in the rule above
-    "files": []
+    "files": [
+      {
+        "bucket": "private",
+        "regex": ".*.dat",
+        "sampleFileName": "not-a-real-file.dat"
+      }
+    ]
    }
 }
 ```
