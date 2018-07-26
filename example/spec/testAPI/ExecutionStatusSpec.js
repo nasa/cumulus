@@ -2,7 +2,8 @@
 
 const { difference } = require('lodash');
 const fs = require('fs-extra');
-const { loadConfig, getWorkflowConfig } = require('../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
+const { getWorkflowConfig } = require('../helpers/workflowUtils');
 const { aws: { s3 } } = require('@cumulus/common');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
