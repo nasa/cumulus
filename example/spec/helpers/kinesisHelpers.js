@@ -155,7 +155,7 @@ async function putRecordOnStream(streamName, record) {
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'sf2snsStart') {
+async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
   let timeWaited = 0;
   let lastExecution;
   let workflowExecution;

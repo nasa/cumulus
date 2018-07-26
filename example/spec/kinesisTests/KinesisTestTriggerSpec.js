@@ -114,8 +114,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
       console.log(`Waiting for step function to start...`);
-      const firstStep = 'CNMToCMA';
-      this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep);
+      this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
 
       console.log(`Waiting for completed execution of ${this.workflowExecution.executionArn}.`);
       executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
