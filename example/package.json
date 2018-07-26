@@ -38,6 +38,7 @@
     "@cumulus/sync-granule": "^1.8.0",
     "@cumulus/test-data": "^1.8.0",
     "@cumulus/test-processing": "^1.8.0",
+    "archiver-utils": "^1.3.0",
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
     "sleep-promise": "^8.0.1"
