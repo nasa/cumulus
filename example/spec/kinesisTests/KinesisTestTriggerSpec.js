@@ -119,7 +119,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   describe('Workflow executes successfully', () => {
     beforeAll(async () => {
       await tryCatchExit(async () => {
-        console.log(`Dropping record onto  ${streamName}. recordIdentifier: ${recordIdentifier}.`);
+        console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
@@ -172,7 +172,19 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('outputs the granules object', () => {
-        expect(this.lambdaOutput.payload).toEqual({});
+        const actualPayload = this.lambdaOutput.payload;
+        delete actualPayload['processCompleteTime'];
+
+        expect(actualPayload).toEqual({
+          productSize: recordFile.size,
+          bucket: record.bucket,
+          collection: record.collection,
+          provider: record.provider,
+          identifier: recordIdentifier,
+          response: {
+            status: 'SUCCESS'
+          }
+        });
       });
 
       it('writes a message to the response stream', async () => {
@@ -193,7 +205,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     beforeAll(async () => {
       await tryCatchExit(async () => {
-        console.log(`Dropping bad record onto ${streamName}.`);
+        console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
 
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
@@ -201,8 +213,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for step function to start...`);
-        const firstStep = 'CNMToCMA';
-        this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep);
+        this.workflowExecution = await waitForTestSfStarted(badRecordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${this.workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
