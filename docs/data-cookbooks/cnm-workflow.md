@@ -2,6 +2,8 @@
 
 This entry documents setup of a basic workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
 
+Prior to using this entry you should be familiar with the [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism).
+
 ## Configuration
 
 ### AWS CLI
@@ -10,7 +12,9 @@ Use of this entry assumes you have the [AWS CLI](https://www.google.com/search?q
 
 ### Kinesis
 
-Use of this entry assumes you already have a [Kinesis](https://aws.amazon.com/kinesis/) data steam created.   If you do not have a stream setup, please take a moment to review the documentation and setup a basic single-shard stream now.
+Use of this entry assumes you already have a [Kinesis](https://aws.amazon.com/kinesis/) data steam created for use as a CNM notification stream.
+
+If you do not have a stream setup, please take a moment to review the documentation and setup a basic single-shard stream.
 
 Basic stream manipulation for testing/learning purposes can be accomplished via the [AWS CLI](https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html)
 
@@ -128,7 +132,7 @@ For the purpose of this example, the easiest way to accomplish this is using the
 
 ```
 {
-  "provider": ${PROVIDER},     ## The provider for this workflow
+  "provider": "Test Provider,'
   "collection": ${COLLECTION}  ## The collection configured previously ,
   "identifier": "Test Identifier",
   "product": {
@@ -159,4 +163,4 @@ You can view the current running executions on The `Executions` dashboard page w
 
 ## Summary
 
-This example demonstrated how to use the built-in Cumulus functionality to trigger a workflow from events added to a Kinesis data stream.  It explained how to configure a Cumulus deployment to deploy the HelloWorld workflow, configure a rule to utilize a Kinesis data stream, and how to trigger the workflow by putting a record on the Kinesis data stream.
+This example demonstrated how to use the built-in Cumulus functionality to trigger a workflow from events added to a Kinesis data stream.  It explained how to configure a Cumulus deployment to deploy the HelloWorld workflow, configure a rule to utilize a Kinesis data stream, and how to trigger the workflow by putting a CNM record on the Kinesis data stream.
