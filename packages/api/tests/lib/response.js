@@ -2,12 +2,8 @@
 
 const test = require('ava');
 const { User } = require('../../models');
-const { createFakeUser } = require('../../lib/testUtils');
+const { fakeUserFactory } = require('../../lib/testUtils');
 const {
-  aws: {
-    createAndWaitForDynamoDbTable,
-    dynamodb
-  },
   testUtils: { randomString }
 } = require('@cumulus/common');
 const {
@@ -16,38 +12,30 @@ const {
 } = require('../../lib/response');
 
 let usersTableName;
+let userModel;
 
-test.before(async (_t) => {
-  usersTableName = randomString();
-
-  await createAndWaitForDynamoDbTable({
-    TableName: usersTableName,
-    AttributeDefinitions: [{ AttributeName: 'userName', AttributeType: 'S' }],
-    KeySchema: [{ AttributeName: 'userName', KeyType: 'HASH' }],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5
-    }
-  });
+test.before(async () => {
+  process.env.UsersTable = randomString();
+  userModel = new User();
+  await userModel.createTable();
 });
 
 test.beforeEach(async (t) => {
-  t.context.userDbClient = new User(usersTableName);
-
-  const { userName, password } = await createFakeUser({
-    userDbClient: t.context.userDbClient
-  });
+  const { userName, password } = await userModel.create(fakeUserFactory());
   t.context.usersToDelete = [userName];
   t.context.userName = userName;
   t.context.token = password;
 });
 
 test.afterEach(async (t) => {
-  await Promise.all(t.context.usersToDelete.map((userName) => t.context.userDbClient.delete({ userName })));
+  await Promise.all(
+    t.context.usersToDelete.map(((userName) =>
+      userModel.delete(userName)))
+  );
 });
 
 test.after.always(async (_t) => {
-  await dynamodb().deleteTable({ TableName: usersTableName }).promise();
+  await userModel.deleteTable();
 });
 
 test('buildLambdaProxyResponse sets a default status code of 200', (t) => {
@@ -254,15 +242,16 @@ test('getAuthorizationFailureResponse returns an appropriate response when a tok
 });
 
 test('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
-  const { userName, password: token } = await createFakeUser({
-    userDbClient: t.context.userDbClient,
-    expires: Date.now() - 60 // Token expired 60 seconds ago
-  });
+  const {
+    userName,
+    password
+  } = await userModel.create(fakeUserFactory({ expires: Date.now() - 60 }));
+
   t.context.usersToDelete.push(userName);
 
   const request = {
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${password}`
     }
   };
 

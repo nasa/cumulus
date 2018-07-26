@@ -1,4 +1,5 @@
 const fs = require('fs');
+const yaml = require('js-yaml');
 const { S3 } = require('aws-sdk');
 const { Config } = require('kes');
 const lodash = require('lodash');
@@ -30,6 +31,8 @@ function loadConfig() {
   if (config.deployment === 'default') {
     throw new Error('the default deployment cannot be used for integration tests');
   }
+
+  config.test_configs.buckets = config.buckets;
 
   return config.test_configs;
 }
@@ -88,9 +91,23 @@ function getExecutionUrl(executionArn) {
          `#/executions/details/${executionArn}`;
 }
 
+/**
+ * Returns workflow configuration for all workflows (default) or the workflow specified
+ *
+ * @param {string} workflowConfigFile - workflow file name
+ * @param {string} workflowName - workflow name
+ * @returns {Object} return the workflow configuration
+ */
+function getWorkflowConfig(workflowConfigFile, workflowName) {
+  const config = yaml.safeLoad(fs.readFileSync(workflowConfigFile, 'utf8'));
+  if (workflowName) return config[workflowName];
+  return config;
+}
+
 module.exports = {
   loadConfig,
   templateFile,
   deleteFolder,
-  getExecutionUrl
+  getExecutionUrl,
+  getWorkflowConfig
 };

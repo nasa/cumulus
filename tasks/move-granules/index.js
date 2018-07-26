@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -7,11 +5,16 @@ const get = require('lodash.get');
 const { moveGranuleFile, getMetadata } = require('@cumulus/ingest/granule');
 const urljoin = require('url-join');
 const path = require('path');
-const { parseS3Uri, promiseS3Upload } = require('@cumulus/common/aws');
+const {
+  aws: {
+    parseS3Uri,
+    promiseS3Upload
+  }
+} = require('@cumulus/common');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const xml2js = require('xml2js');
-
+const { promisify } = require('util');
 
 /**
  * Parse an xml string
@@ -19,13 +22,8 @@ const xml2js = require('xml2js');
  * @param {string} xml - xml to parse
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
-async function parseXmlString(xml) {
-  return new Promise((resolve, reject) => {
-    xml2js.parseString(xml, xmlParseOptions, (err, data) => {
-      if (err) return reject(err);
-      return resolve(data);
-    });
-  });
+function parseXmlString(xml) {
+  return (promisify(xml2js.parseString))(xml, xmlParseOptions);
 }
 
 /**
@@ -36,14 +34,9 @@ async function parseXmlString(xml) {
  * @returns {string} the granule
  */
 function getGranuleId(uri, regex) {
-  const filename = path.basename(uri);
-  const test = new RegExp(regex);
-  const match = filename.match(test);
-
-  if (match) {
-    return match[1];
-  }
-  return match;
+  const match = path.basename(uri).match(regex);
+  if (match) return match[1];
+  return null;
 }
 
 /**
