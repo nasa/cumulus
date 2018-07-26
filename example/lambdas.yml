@@ -127,3 +127,7 @@ CNMToCMA:
     key: 'daacs/podaac/CNMToCMA-0.0.1.zip'
   useMessageAdapter: false
   launchInVpc: true
+
+WaitForDeployment:
+  handler: index.handler
+  source: 'lambdas/waitForDeploy/'
