@@ -1,8 +1,6 @@
 'use strict';
 
-const fs = require('fs');
 const { s3 } = require('@cumulus/common/aws');
-const yaml = require('js-yaml');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
@@ -35,7 +33,7 @@ const lambdaStep = new LambdaStep();
 const streamName = testConfig.streamName;
 
 const recordFile = record.product.files[0];
-const expectedTranslatePayload ={
+const expectedTranslatePayload = {
   cnm: {
     product: record.product,
     identifier: recordIdentifier,
@@ -121,7 +119,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   describe('Successful exection', () => {
     beforeAll(async () => {
       await tryCatchExit(async () => {
-        console.log(`Dropping record onto  ${streamName}.`);
+        console.log(`Dropping record onto  ${streamName}. recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
@@ -129,8 +127,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for step function to start...`);
-        const firstStep = 'CNMToCMA';
-        this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep);
+        this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${this.workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
