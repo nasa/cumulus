@@ -136,7 +136,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CNMToCMA');
     });
 
-    it('outputs the granules object', () => {
+    it('outputs the expected translate payload', () => {
       expect(this.lambdaOutput.payload).toEqual(expectedTranslatePayload);
     });
   });
@@ -164,7 +164,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CnmResponse');
     });
 
-    it('outputs the granules object', () => {
+    it('outputs an empty object', () => {
       expect(this.lambdaOutput.payload).toEqual({});
     });
 
