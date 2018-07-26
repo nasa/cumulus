@@ -117,6 +117,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('Workflow executes successfully', () => {
+    let workflowExecution;
+
     beforeAll(async () => {
       await tryCatchExit(async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
@@ -127,10 +129,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for step function to start...`);
-        this.workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
 
-        console.log(`Waiting for completed execution of ${this.workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
+        console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
+        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
       });
     });
 
@@ -139,22 +141,26 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     describe('the TranslateMessage Lambda', () => {
+      let lambdaOutput;
+
       beforeAll(async () => {
-        this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CNMToCMA');
+        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
       });
 
       it('outputs the expectedTranslatePayload object', () => {
-        expect(this.lambdaOutput.payload).toEqual(expectedTranslatePayload);
+        expect(lambdaOutput.payload).toEqual(expectedTranslatePayload);
       });
     });
 
     describe('the SyncGranule Lambda', () => {
+      let lambdaOutput;
+
       beforeAll(async () => {
-        this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'SyncGranule');
+        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       });
 
       it('outputs the granules object', () => {
-        expect(this.lambdaOutput.payload).toEqual(expectedSyncGranulesPayload);
+        expect(lambdaOutput.payload).toEqual(expectedSyncGranulesPayload);
       });
 
       it('syncs data to s3 target location.', async () => {
@@ -167,12 +173,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     describe('the CnmResponse Lambda', () => {
+      let lambdaOutput;
+
       beforeAll(async () => {
-        this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CnmResponse');
+        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
       });
 
       it('outputs the granules object', () => {
-        const actualPayload = this.lambdaOutput.payload;
+        const actualPayload = lambdaOutput.payload;
         delete actualPayload['processCompleteTime'];
 
         expect(actualPayload).toEqual({
@@ -198,6 +206,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('Workflow fails because TranslateMessage fails', () => {
+    let workflowExecution;
     const badRecord = {...record};
     const badRecordIdentifier = randomString();
     badRecord.identifier = badRecordIdentifier;
@@ -213,10 +222,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for step function to start...`);
-        this.workflowExecution = await waitForTestSfStarted(badRecordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSfStarted(badRecordIdentifier, maxWaitTime);
 
-        console.log(`Waiting for completed execution of ${this.workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(this.workflowExecution.executionArn);
+        console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
+        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
       });
     });
 
@@ -225,13 +234,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     it('sends the error to the CnmResponse task', async () => {
-      const CnmResponseInput = await lambdaStep.getStepInput(this.workflowExecution.executionArn, 'CnmResponse');
+      const CnmResponseInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'CnmResponse');
       expect(CnmResponseInput.exception.Error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
       expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/An error occurred in the Cumulus Message Adapter: .+/);
     });
 
-    it('outputs an empty object', () => {
-      expect(this.lambdaOutput.payload).toEqual({});
+    it('outputs the record', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
+      expect(lambdaOutput.payload).toEqual(badRecord);
     });
 
     it('writes a failure message to the response stream', async () => {
