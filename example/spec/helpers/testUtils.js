@@ -2,6 +2,7 @@ const fs = require('fs');
 const { S3 } = require('aws-sdk');
 const { Config } = require('kes');
 const lodash = require('lodash');
+const { exec } = require('child-process-promise');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -32,6 +33,7 @@ function loadConfig() {
   }
 
   config.test_configs.buckets = config.buckets;
+  config.test_configs.deployment = config.deployment;
 
   return config.test_configs;
 }
@@ -70,12 +72,11 @@ async function deleteFolder(bucket, folder) {
     Prefix: folder
   }).promise();
 
-  await Promise.all(l.Contents.map((item) => {
-    return s3.deleteObject({
+  await Promise.all(l.Contents.map((item) =>
+    s3.deleteObject({
       Bucket: bucket,
       Key: item.Key
-    }).promise();
-  }));
+    }).promise()));
 }
 
 /**
@@ -90,9 +91,28 @@ function getExecutionUrl(executionArn) {
          `#/executions/details/${executionArn}`;
 }
 
+/**
+ * Redeploy the current Cumulus deployment
+ *
+ * @param {Object} config - configuration object from loadConfig()
+ * @returns {undefined} none
+ */
+async function redeploy(config) {
+  const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
+  console.log(`Redeploying ${config.deployment}`);
+  await exec(deployCommand)
+    .then((result) => {
+      console.log(result.stdout);
+      if (result.error !== null) {
+        console.log(`Deployment error: ${result.error}`);
+      }
+    });
+}
+
 module.exports = {
   loadConfig,
   templateFile,
   deleteFolder,
-  getExecutionUrl
+  getExecutionUrl,
+  redeploy
 };
