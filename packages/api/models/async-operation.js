@@ -102,7 +102,6 @@ class AsyncOperation extends Manager {
       }
     }).promise();
 
-    // TODO We need to figure out how to handle this case
     if (runTaskResponse.failures.length > 0) {
       log.error('runTaskResponse.failures:', JSON.stringify(runTaskResponse, null, 2));
       throw new Error(`Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`);
