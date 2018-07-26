@@ -1,10 +1,10 @@
 'use strict';
 
 const test = require('ava');
-const bulkDeleteEndpoint = require('../../endpoints/bulk-delete');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
+const bulkDeleteEndpoint = require('../../endpoints/bulk-delete');
 const { User } = require('../../models');
 const { fakeUserFactory } = require('../../lib/testUtils');
 
@@ -20,6 +20,16 @@ test.before(async () => {
 
   const authToken = (await userModel.create(fakeUserFactory())).password;
   authHeaders = { Authorization: `Bearer ${authToken}` };
+
+  context = {
+    AsyncOperationsTable: randomString(),
+    AsyncOperationTaskDefinition: randomString(),
+    BulkDeleteLambda: randomString(),
+    EcsCluster: randomString(),
+    stackName: randomString(),
+    systemBucket: randomString(),
+    UsersTable: process.env.UsersTable
+  };
 });
 
 test.after.always(async () => {

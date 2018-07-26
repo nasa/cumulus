@@ -6,10 +6,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-705**
+  - Adds an AsyncOperations model and associated DynamoDB table to the API
+  - Adds an /asyncOperations endpoint to the API, which can be used to fetch the
+    status of an AsyncOperation
+  - Adds a /bulkDelete endpoint to the API, which performs an asynchronous
+    bulk-delete operation. This is a stub right now which is only intended to
+    demonstration how AsyncOperations work.
+  - Adds an AsyncOperation ECS task, which will fetch an Lambda function, run it
+    in ECS, and then store the result to the AsyncOperations table in DynamoDB.
+    To support this, you will need to add the following to the `ecs` config
+    section of your `app/config.yml` file:
+
+    ```
+    tasks:
+      AsyncOperation:
+        image: cumuluss/async-operation:8
+        cpu: 400
+        memory: 700
+        count: 1
+        envs:
+          AWS_REGION:
+            function: Fn::Sub
+            value: '${AWS::Region}'
+    ```
+
+
 ## [v1.8.0] - 2018-07-23
 
 ### Added
-
 
 - **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
 

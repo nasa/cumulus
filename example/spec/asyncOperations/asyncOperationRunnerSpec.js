@@ -11,36 +11,51 @@ describe("The API's ECS Lambda runner", () => {
 
   describe('running a non-existant lambda function', () => {
     it('updates the status field in DynamoDB to "FAILED"');
+
     it('updates the error field in DynamoDB');
+
     it('updates the updatedAt field in DynamoDB');
+
     it('does not set the result field in DynamoDB');
   });
 
   describe('with a non-existant payload', () => {
     it('updates the status field in DynamoDB to "FAILED"');
+
     it('updates the error field in DynamoDB');
+
     it('updates the updatedAt field in DynamoDB');
+
     it('does not set the result field in DynamoDB');
   });
 
   describe('with a non-JSON payload', () => {
     it('updates the status field in DynamoDB to "FAILED"');
+
     it('updates the error field in DynamoDB');
+
     it('updates the updatedAt field in DynamoDB');
+
     it('does not set the result field in DynamoDB');
   });
 
   it('executing a successful lambda function', () => {
     it('updates the status field in DynamoDB to "SUCCEEDED"');
+
     it('updates the result field in DynamoDB');
+
     it('updates the updatedAt field in DynamoDB');
+
     it('does not set the error field in DynamoDB');
   });
 
   describe('executing a failing lambda function', () => {
     it('updates the status field in DynamoDB to "FAILED"');
+
     it('updates the error field in DynamoDB');
+
     it('updates the updatedAt field in DynamoDB');
+
     it('does not set the result field in DynamoDB');
   });
 });

@@ -168,6 +168,7 @@ describe('The Cumulus API', () => {
         granuleId: inputPayload.granules[0].granuleId
       });
       const existsInCMR = await conceptExists(granule.cmrLink);
+
       expect(existsInCMR).toEqual(true);
 
       // Remove the granule from CMR
@@ -178,8 +179,8 @@ describe('The Cumulus API', () => {
 
       // Check that the granule was removed
       const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
+
       expect(granuleRemoved).toEqual(true);
     });
   });
 });
-
