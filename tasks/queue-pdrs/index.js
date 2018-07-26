@@ -1,7 +1,9 @@
 'use strict';
 
+const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueParsePdrMessage } = require('@cumulus/ingest/queue');
+const { getExecutionArn } = require('@cumulus/common/aws');
 
 /**
 * See schemas/input.json and schemas/config.json for detailed event description
@@ -12,18 +14,21 @@ const { enqueueParsePdrMessage } = require('@cumulus/ingest/queue');
 **/
 async function queuePdrs(event) {
   const pdrs = event.input.pdrs || [];
-
-  await Promise.all(
+  const arn = getExecutionArn(
+    get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
+  );
+  const executionArns = await Promise.all(
     pdrs.map((pdr) => enqueueParsePdrMessage(
       pdr,
       event.config.queueUrl,
       event.config.parsePdrMessageTemplateUri,
       event.config.provider,
-      event.config.collection
+      event.config.collection,
+      arn
     ))
   );
 
-  return { pdrs_queued: pdrs.length };
+  return { running: executionArns, pdrs_queued: pdrs.length };
 }
 exports.queuePdrs = queuePdrs;
 

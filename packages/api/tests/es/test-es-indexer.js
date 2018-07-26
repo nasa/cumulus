@@ -30,22 +30,29 @@ const executionTable = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
 
+let collectionModel;
+let executionModel;
+let granuleModel;
+let pdrModel;
 test.before(async () => {
   await deleteAliases();
 
   // create the tables
-  process.env.GranulesTable = granuleTable;
   process.env.CollectionsTable = collectionTable;
-  process.env.PdrsTable = pdrTable;
+  collectionModel = new models.Collection();
+  await collectionModel.createTable();
+
   process.env.ExecutionsTable = executionTable;
-  await models.Manager.createTable(granuleTable, { name: 'granuleId', type: 'S' });
-  await models.Manager.createTable(pdrTable, { name: 'pdrName', type: 'S' });
-  await models.Manager.createTable(executionTable, { name: 'arn', type: 'S' });
-  await models.Manager.createTable(
-    collectionTable,
-    { name: 'name', type: 'S' },
-    { name: 'version', type: 'S' }
-  );
+  executionModel = new models.Execution();
+  await executionModel.createTable();
+
+  process.env.GranulesTable = granuleTable;
+  granuleModel = new models.Granule();
+  await granuleModel.createTable();
+
+  process.env.PdrsTable = pdrTable;
+  pdrModel = new models.Pdr();
+  await pdrModel.createTable();
 
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
@@ -76,10 +83,11 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(granuleTable);
-  await models.Manager.deleteTable(collectionTable);
-  await models.Manager.deleteTable(pdrTable);
-  await models.Manager.deleteTable(executionTable);
+  await collectionModel.deleteTable();
+  await executionModel.deleteTable();
+  await granuleModel.deleteTable();
+  await pdrModel.deleteTable();
+
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 
@@ -88,11 +96,16 @@ test.after.always(async () => {
 });
 
 test.serial('creating a successful granule record', async (t) => {
+  // Stub out headobject S3 call used in api/models/granules.js,
+  // so we don't have to create artifacts
+  sinon.stub(aws, 'headObject').resolves({ ContentLength: 12345 });
+
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
   const records = await indexer.granule(granuleSuccess);
 
   const collectionId = constructCollectionId(collection.name, collection.version);
+
 
   // check the record exists
   const record = records[0];
@@ -103,7 +116,7 @@ test.serial('creating a successful granule record', async (t) => {
   t.is(record.granuleId, granule.granuleId);
   t.is(record.cmrLink, granule.cmrLink);
   t.is(record.published, granule.published);
-  t.is(record.productVolume, 17909733);
+  t.is(record.productVolume, 17934423);
   t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
   t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
   t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
