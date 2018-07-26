@@ -2,14 +2,17 @@
 
 const test = require('ava');
 const {
-  aws: { dynamodb },
   testUtils: { randomString }
 } = require('@cumulus/common');
 const { AsyncOperation } = require('../../models');
 
 let asyncOperationModel;
 test.before(async () => {
-  asyncOperationModel = new AsyncOperation({ tableName: randomString() });
+  asyncOperationModel = new AsyncOperation({
+    stackName: randomString(),
+    systemBucket: randomString(),
+    tableName: randomString()
+  });
   await asyncOperationModel.createTable();
 });
 
@@ -24,7 +27,7 @@ test('The AsyncOperation constructor requires that stackName be specified', (t) 
     t.fail('stackName should be required');
   }
   catch (err) {
-    t.is(err instanceof TypeError);
+    t.true(err instanceof TypeError);
     t.is(err.message, 'stackName is required');
   }
 });
@@ -38,7 +41,7 @@ test('The AsyncOperation constructor requires that systemBucket be specified', (
     t.fail('systemBucket should be required');
   }
   catch (err) {
-    t.is(err instanceof TypeError);
+    t.true(err instanceof TypeError);
     t.is(err.message, 'systemBucket is required');
   }
 });

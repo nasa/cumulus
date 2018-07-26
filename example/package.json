@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Cumulus Integration Test Deployment",
   "main": "index.js",
+  "engines": {
+    "node": ">=8.11.0"
+  },
   "scripts": {
     "test": "jasmine"
   },

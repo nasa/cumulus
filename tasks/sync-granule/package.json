@@ -14,8 +14,8 @@
   "publishConfig": {
     "access": "public"
   },
-  "engine": {
-    "node": ">=8.10.0"
+  "engines": {
+    "node": ">=8.11.0"
   },
   "scripts": {
     "test": "ava",

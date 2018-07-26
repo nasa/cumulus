@@ -54,7 +54,7 @@ async function waitForAsyncOperation(params) {
     await sleep(2000); // eslint-disable-line no-await-in-loop
   } while (checksRemaining > 0);
 
-  // If the AsyncOperation never reached an expected state, throw an exceptoin
+  // If the AsyncOperation never reached an expected state, throw an exception
   if (checksRemaining <= 0) {
     console.log('Timed out waiting for completion.  Last status:');
     console.log(JSON.stringify(getAsyncOperationBody, null, 2));
@@ -84,7 +84,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   });
 
   it('returns an Async Operation Id', () => {
-    expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/);
+    expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
   });
 
   it('creates an AsyncOperation', async () => {
@@ -96,6 +96,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     expect(getAsyncOperationResponse.statusCode).toEqual(200);
 
     const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
+
     expect(getAsyncOperationBody.id).toEqual(postBulkDeleteBody.asyncOperationId);
   });
 
@@ -138,6 +139,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     catch (err) {
       throw new SyntaxError(`getAsyncOperationBody.result is not valid JSON: ${getAsyncOperationBody.result}`);
     }
+
     expect(result).toEqual({ deletedGranules: ['g-123'] });
   });
 });
@@ -162,7 +164,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
   });
 
   it('returns an Async Operation Id', () => {
-    expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/);
+    expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
   });
 
   it('creates an AsyncOperation', async () => {
@@ -174,6 +176,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     expect(getAsyncOperationResponse.statusCode).toEqual(200);
 
     const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
+
     expect(getAsyncOperationBody.id).toEqual(postBulkDeleteBody.asyncOperationId);
   });
 

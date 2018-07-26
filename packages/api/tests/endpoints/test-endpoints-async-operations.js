@@ -1,10 +1,10 @@
 'use strict';
 
 const test = require('ava');
-const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
+const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   AsyncOperation: AsyncOperationModel,
   User

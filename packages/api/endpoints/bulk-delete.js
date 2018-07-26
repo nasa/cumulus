@@ -47,32 +47,50 @@ async function startBulkDeleteAsyncOperation(params) {
 }
 
 /**
- * Handle an API Gateway Lambda Proxy request related to Bulk Deletes
+ * Fetch the required config values
  *
- * @param {Object} event - a Lambda Proxy request
- * @param {Object} context - the Lambda context
- * @returns {Promise<Object>} - returns a Lambda Proxy response
+ * In testing, we'll smuggle the table names in using the context.  When this is
+ * run in API Gateway, the table names will be set using environment variables
+ *
+ * @param {Object} context - a Lambda context
+ * @returns {Object} the config for the Lambda function
  */
-async function handler(event, context) {
-  // In testing, we'll smuggle the table names in using the context.  When
-  // this is run in API Gateway, the table names will be set using environment
-  // variables
+function getConfig(context) {
   const getConfigValue = (key) => {
     const value = context[key] || process.env[key];
     if (!value) throw new Error(`${key} must be set.`);
     return value;
   };
 
+  return {
+    asyncOperationsTable: getConfigValue('AsyncOperationsTable'),
+    asyncOperationTaskDefinition: getConfigValue('AsyncOperationTaskDefinition'),
+    bulkDeleteLambdaName: getConfigValue('BulkDeleteLambda'),
+    cluster: getConfigValue('EcsCluster'),
+    stackName: getConfigValue('stackName'),
+    systemBucket: getConfigValue('systemBucket'),
+    usersTable: getConfigValue('UsersTable')
+  };
+}
+
+/**
+ * Handle an API Gateway Lambda Proxy request related to Bulk Deletes
+ *
+ * @param {Object} event - a Lambda Proxy request
+ * @param {Object} context - the Lambda context
+ * @returns {Promise<Object>} - returns a Lambda Proxy response
+ */
+async function handler(event, context = {}) {
   try {
-    // If any of these are missing, an exception will be thrown and a 500
-    // response will be returned to the caller.
-    const asyncOperationsTable = getConfigValue('AsyncOperationsTable');
-    const asyncOperationTaskDefinition = getConfigValue('AsyncOperationTaskDefinition');
-    const bulkDeleteLambdaName = getConfigValue('BulkDeleteLambda');
-    const stackName = getConfigValue('stackName');
-    const systemBucket = getConfigValue('systemBucket');
-    const usersTable = getConfigValue('UsersTable');
-    const cluster = getConfigValue('EcsCluster');
+    const {
+      asyncOperationsTable,
+      asyncOperationTaskDefinition,
+      bulkDeleteLambdaName,
+      cluster,
+      stackName,
+      systemBucket,
+      usersTable
+    } = getConfig(context);
 
     // Verify the user's credentials
     const authorizationFailureResponse = await getAuthorizationFailureResponse({
