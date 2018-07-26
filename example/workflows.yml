@@ -536,9 +536,23 @@ IngestGranule:
 
 KinesisTriggerTest:
   Comment: 'Tests Workflow from Kinesis Stream'
-  StartAt: TranslateMessage
+  StartAt: StartStatus
   States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: CnmResponse
+      Next: TranslateMessage
     TranslateMessage:
+      Type: Task
+      Resource: ${CNMToCMALambdaFunction.Arn}
       CumulusConfig:
         cumulus_message:
           outputs:
@@ -546,23 +560,15 @@ KinesisTriggerTest:
               destination: '{$.meta.cnm}'
             - source: '{$}'
               destination: '{$.payload}'
-      Type: Task
-      Resource: ${CNMToCMALambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
           Next: CnmResponse
-      Next: Report
-    Report:
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      ResultPath: null
-      Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
       Next: SyncGranule
     SyncGranule:
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
       CumulusConfig:
         provider: '{$.meta.provider}'
         buckets: '{$.meta.buckets}'
@@ -575,8 +581,6 @@ KinesisTriggerTest:
               destination: '{$.meta.input_granules}'
             - source: '{$}'
               destination: '{$.payload}'
-      Type: Task
-      Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
         - ErrorEquals:
             - States.ALL
@@ -586,7 +590,7 @@ KinesisTriggerTest:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: CnmResponse
       Next: CnmResponse
     CnmResponse:
       CumulusConfig:
@@ -599,7 +603,7 @@ KinesisTriggerTest:
             - source: '{$}'
               destination: '{$.meta.cnmResponse}'
             - source: '{$}'
-              destination: '{$.payload}'              
+              destination: '{$.payload}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Catch:
