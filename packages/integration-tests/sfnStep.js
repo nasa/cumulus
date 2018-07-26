@@ -109,8 +109,8 @@ class SfnStep {
    * Gets the input to the step by looking for the 'schedule' for the given step
    * and returning the parsed input object.
    *
-   * @param   {String} workflowExecutionArn - AWS Execution ARN of the step function execution
-   * @param   {String} stepName             - Name of the workflow step of interest
+   * @param   {string} workflowExecutionArn - AWS Execution ARN of the step function execution
+   * @param   {string} stepName             - Name of the workflow step of interest
    * @returns {Object}                      - Parsed JSON string of input to step with <stepName>
    *                                          from the workflow execution of interest.
    */
@@ -122,28 +122,28 @@ class SfnStep {
       return null;
     }
 
-    const scheduleEvent = stepExecutions[0]['scheduleEvent'];
+    const scheduleEvent = stepExecutions[0].scheduleEvent;
     const eventWasSuccessful = scheduleEvent.type === this.scheduleSuccessfulEvent;
     if (!eventWasSuccessful) console.log('Schedule event failed');
 
-    const subStepExecutionDetails = scheduleEvent['lambdaFunctionScheduledEventDetails'];
+    const subStepExecutionDetails = scheduleEvent.lambdaFunctionScheduledEventDetails;
     return JSON.parse(subStepExecutionDetails.input);
-  };
+  }
 
-  getSuccessOutput(stepExecution) {
+  getSuccessOutput(stepExecution, stepName) {
     if (stepExecution.completeEvent.type !== this.successEvent) {
       console.log(`Step ${stepName} did not complete successfully, as expected.`);
       return null;
     }
     const completeEventOutput = stepExecution.completeEvent[this.eventDetailsKeys.succeeded];
     return JSON.parse(completeEventOutput.output.toString());
-  };
+  }
 
-  getFailureOutput(stepExecution) {
-    if (stepExecution.completeEvent.type != this.failureEvent) {
+  getFailureOutput(stepExecution, stepName) {
+    if (stepExecution.completeEvent.type !== this.failureEvent) {
       console.log(`Step ${stepName} did not fail, as expected.`);
       return null;
-    };
+    }
     const completeEventOutput = stepExecution.completeEvent[this.eventDetailsKeys.failed];
     return completeEventOutput;
   }
@@ -153,6 +153,7 @@ class SfnStep {
    *
    * @param {string} workflowExecutionArn - Arn of the workflow execution
    * @param {string} stepName - name of the step
+   * @param {string} eventType - expected type of event, should be 'success' or 'failure'
    * @returns {Object} object containing the payload, null if error
    */
   async getStepOutput(workflowExecutionArn, stepName, eventType = 'success') {
@@ -173,7 +174,6 @@ class SfnStep {
       stepExecution = stepExecutions[stepExecutions.length - 1];
     }
 
-    const expectedCompleteEventType = eventType === 'success' ? 'successEvent' : 'failureEvent';
     if (typeof stepExecution.completeEvent === 'undefined'
         || stepExecution.completeEvent === null) {
       console.log(`Step ${stepName} did not complete as expected.`);
@@ -181,15 +181,14 @@ class SfnStep {
     }
 
     if (eventType === 'success') {
-      return this.getSuccessOutput(stepExecution);
+      return this.getSuccessOutput(stepExecution, stepName);
     }
     else if (eventType === 'failure') {
-      return this.getFailureOutput(stepExecution);
+      return this.getFailureOutput(stepExecution, stepName);
     }
-    else {
-      console.log(`Step ${stepName} did not complete ${eventType} as expected.`);
-      return null;
-    }
+
+    console.log(`Step ${stepName} did not complete ${eventType} as expected.`);
+    return null;
   }
 }
 

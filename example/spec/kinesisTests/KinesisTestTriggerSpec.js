@@ -77,15 +77,16 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
-function tryCatchExit(fn) {
+function tryCatchExit(fn, ...args) {
   try {
-    return fn.apply(this, arguments);
+    return fn.apply(this, args);
   }
   catch (error) {
     console.log(error);
     console.log('Tests conditions can\'t get met...exiting.');
     process.exit(1);
   }
+  return null;
 }
 
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
@@ -128,7 +129,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         // get shard iterator for the response stream so we can process any new records sent to it
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
-        console.log(`Waiting for step function to start...`);
+        console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
@@ -181,7 +182,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
       it('outputs the granules object', () => {
         const actualPayload = lambdaOutput.payload;
-        delete actualPayload['processCompleteTime'];
+        delete actualPayload.processCompleteTime;
 
         expect(actualPayload).toEqual({
           productSize: recordFile.size,
@@ -207,10 +208,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   describe('Workflow fails because TranslateMessage fails', () => {
     let workflowExecution;
-    const badRecord = {...record};
+    const badRecord = { ...record };
     const badRecordIdentifier = randomString();
     badRecord.identifier = badRecordIdentifier;
-    delete badRecord['product'];
+    delete badRecord.product;
 
     beforeAll(async () => {
       await tryCatchExit(async () => {
@@ -221,7 +222,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         // get shard iterator for the response stream so we can process any new records sent to it
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
-        console.log(`Waiting for step function to start...`);
+        console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSfStarted(badRecordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
