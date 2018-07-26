@@ -77,6 +77,17 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
+function tryCatchExit(fn) {
+  try {
+    return fn.apply(this, arguments);
+  }
+  catch (error) {
+    console.log(error);
+    console.log('Tests conditions can\'t get met...exiting.');
+    process.exit(1);
+  }
+}
+
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
@@ -94,17 +105,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     }).promise();
   });
 
-  function tryCatchExit(fn) {
-    try {
-      return fn.apply(this, arguments);
-    }
-    catch (error) {
-      console.log(error);
-      console.log('Tests conditions can\'t get met...exiting.');
-      process.exit(1);      
-    }
-  }
-
   beforeAll(async () => {
     await tryCatchExit(async () => {
       await createOrUseTestStream(streamName);
@@ -116,7 +116,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
   });
 
-  describe('Successful exection', () => {
+  describe('Workflow executes successfully', () => {
     beforeAll(async () => {
       await tryCatchExit(async () => {
         console.log(`Dropping record onto  ${streamName}. recordIdentifier: ${recordIdentifier}.`);
@@ -185,7 +185,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
   });
 
-  describe('TranslateMessage fails', () => {
+  describe('Workflow fails because TranslateMessage fails', () => {
     const badRecord = {...record};
     const badRecordIdentifier = randomString();
     badRecord.recordIdentifier = badRecordIdentifier;    
@@ -217,6 +217,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       const CnmResponseInput = await lambdaStep.getStepInput(this.workflowExecution.executionArn, 'CnmResponse');
       expect(CnmResponseInput.exception.Error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
       expect(JSON.parse(CnmResponseInput.exception.Cause).errorMessage).toMatch(/An error occurred in the Cumulus Message Adapter: .+/);
+    });
 
     it('outputs an empty object', () => {
       expect(this.lambdaOutput.payload).toEqual({});
@@ -227,24 +228,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       const responseRecord = JSON.parse(newResponseStreamRecords.Records[0].Data.toString());
       expect(newResponseStreamRecords.Records.length >= 1).toBeTruthy();
       expect(responseRecord.response.status).toEqual('FAILURE');
-    });
-  });
-
-  describe('the CnmResponse Lambda', () => {
-    beforeAll(async () => {
-      this.lambdaOutput = await lambdaStep.getStepOutput(this.workflowExecution.executionArn, 'CnmResponse');
-    });
-
-    it('outputs an empty object', () => {
-      expect(this.lambdaOutput.payload).toEqual({});
-    });
-
-    it('writes a message to the response stream', async () => {
-      const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-      const responseRecord = JSON.parse(newResponseStreamRecords.Records[0].Data.toString());
-      expect(newResponseStreamRecords.Records.length).toEqual(1);
-      expect(responseRecord.identifier).toEqual(recordIdentifier);
-      expect(responseRecord.response.status).toEqual('SUCCESS');
     });
   });
 });
