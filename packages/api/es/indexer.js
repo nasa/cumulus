@@ -62,6 +62,7 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
     catch (e) {
       record = {
         message: p.message.trim(),
+        executions: p.executions,
         timestamp: p.timestamp,
         level: 30,
         pid: 1,
