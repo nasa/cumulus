@@ -92,7 +92,7 @@ function getExecutionUrl(executionArn) {
 }
 
 /**
- * Returns workflow configuration for all workflows (default) or the workflow specifed
+ * Returns workflow configuration for all workflows (default) or the workflow specified
  *
  * @param {string} workflowConfigFile - workflow file name
  * @param {string} workflowName - workflow name
