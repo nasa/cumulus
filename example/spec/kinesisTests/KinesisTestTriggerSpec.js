@@ -200,7 +200,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   describe('Workflow fails because TranslateMessage fails', () => {
     const badRecord = {...record};
     const badRecordIdentifier = randomString();
-    badRecord.recordIdentifier = badRecordIdentifier;    
+    badRecord.identifier = badRecordIdentifier;
     delete badRecord['product'];
 
     beforeAll(async () => {
