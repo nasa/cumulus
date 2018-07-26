@@ -240,8 +240,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     it('outputs the record', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
-      expect(lambdaOutput.payload).toEqual(badRecord);
+      const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse', 'failure');
+      expect(lambdaOutput.error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
+      expect(lambdaOutput.cause).toMatch(/.+An error occurred in the Cumulus Message Adapter: .+/);
     });
 
     it('writes a failure message to the response stream', async () => {

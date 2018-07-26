@@ -130,6 +130,24 @@ class SfnStep {
     return JSON.parse(subStepExecutionDetails.input);
   };
 
+  getSuccessOutput(stepExecution) {
+    if (stepExecution.completeEvent.type !== this.successEvent) {
+      console.log(`Step ${stepName} did not complete successfully, as expected.`);
+      return null;
+    }
+    const completeEventOutput = stepExecution.completeEvent[this.eventDetailsKeys.succeeded];
+    return JSON.parse(completeEventOutput.output.toString());
+  };
+
+  getFailureOutput(stepExecution) {
+    if (stepExecution.completeEvent.type != this.failureEvent) {
+      console.log(`Step ${stepName} did not fail, as expected.`);
+      return null;
+    };
+    const completeEventOutput = stepExecution.completeEvent[this.eventDetailsKeys.failed];
+    return completeEventOutput;
+  }
+
   /**
    * Get the output payload from the step, if the step succeeds
    *
@@ -137,7 +155,7 @@ class SfnStep {
    * @param {string} stepName - name of the step
    * @returns {Object} object containing the payload, null if error
    */
-  async getStepOutput(workflowExecutionArn, stepName) {
+  async getStepOutput(workflowExecutionArn, stepName, eventType = 'success') {
     const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
 
     if (stepExecutions === null) {
@@ -155,14 +173,23 @@ class SfnStep {
       stepExecution = stepExecutions[stepExecutions.length - 1];
     }
 
+    const expectedCompleteEventType = eventType === 'success' ? 'successEvent' : 'failureEvent';
     if (typeof stepExecution.completeEvent === 'undefined'
-        || stepExecution.completeEvent === null
-        || stepExecution.completeEvent.type !== this.successEvent) {
-      console.log(`Step ${stepName} was not successful.`);
+        || stepExecution.completeEvent === null) {
+      console.log(`Step ${stepName} did not complete as expected.`);
       return null;
     }
 
-    return JSON.parse(stepExecution.completeEvent[this.eventDetailsKeys.succeeded].output.toString());
+    if (eventType === 'success') {
+      return this.getSuccessOutput(stepExecution);
+    }
+    else if (eventType === 'failure') {
+      return this.getFailureOutput(stepExecution);
+    }
+    else {
+      console.log(`Step ${stepName} did not complete ${eventType} as expected.`);
+      return null;
+    }
   }
 }
 
@@ -185,14 +212,16 @@ class LambdaStep extends SfnStep {
       'LambdaFunctionStarted'
     ];
     this.successEvent = 'LambdaFunctionSucceeded';
+    this.failureEvent = 'LambdaFunctionFailed';
     this.completionEvents = [
       this.successEvent,
-      'LambdaFunctionFailed',
+      this.failureEvent,
       'LambdaFunctionTimedOut'
     ];
     this.eventDetailsKeys = {
       scheduled: 'lambdaFunctionScheduledEventDetails',
-      succeeded: 'lambdaFunctionSucceededEventDetails'
+      succeeded: 'lambdaFunctionSucceededEventDetails',
+      failed: 'lambdaFunctionFailedEventDetails'
     };
     this.classType = 'lambda';
   }
@@ -213,14 +242,16 @@ class ActivityStep extends SfnStep {
     this.startEvents = ['ActivityStarted'];
     this.startFailedEvent = undefined; // there is no 'ActivityStartFailed'
     this.successEvent = 'ActivitySucceeded';
+    this.failureEvent = 'ActivityFailed';
     this.completionEvents = [
       this.successEvent,
-      'ActivityFailed',
+      this.failureEvent,
       'ActivityTimedOut'
     ];
     this.eventDetailsKeys = {
       scheduled: 'activityScheduledEventDetails',
-      succeeded: 'activitySucceededEventDetails'
+      succeeded: 'activitySucceededEventDetails',
+      failed: 'activityFailedEventDetails'
     };
     this.classType = 'activity';
   }
