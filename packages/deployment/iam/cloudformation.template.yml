@@ -297,6 +297,12 @@ Resources:
                   - sns:List*
                 Resource: '*'
 
+              # Needed for AWS integration tests
+              - Effect: Allow
+                Action: 
+                  - cloudformation:DescribeStacks
+                Resource: '*'
+
   StepRole:
     Type: AWS::IAM::Role
     Properties:
