@@ -309,6 +309,10 @@ ApiLogsDefault:
       method: get
       cors: true
       api: backend
+    - path: logs/{executionName}
+      method: get
+      cors: true
+      api: backend
 
 ApiSchemaDefault:
   handler: index.schemas
