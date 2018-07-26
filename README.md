@@ -1,8 +1,13 @@
 # Cumulus Framework
 
-[![CircleCI](https://circleci.com/gh/cumulus-nasa/cumulus.svg?style=svg&circle-token=4a16cbbdacb6396c709309ef5ac87479c9dc8bd1)](https://circleci.com/gh/cumulus-nasa/cumulus)
+[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
-[![Coverage Status](https://coveralls.io/repos/github/cumulus-nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/cumulus-nasa/cumulus?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
+
+
+## Documentation:
+
+Click [here](https://nasa.github.io/cumulus) for the full documentation.
 
 ## Installing and deploying
 
@@ -102,7 +107,7 @@ To run code coverage on an individual package during development, run `npm run t
 
 This project uses [eslint](https://eslint.org/) to check code style and quality.
 The configured eslint rules can be found in the project's
-[.eslintrc.json](https://github.com/cumulus-nasa/cumulus/blob/master/.eslintrc.json)
+[.eslintrc.json](https://github.com/nasa/cumulus/blob/master/.eslintrc.json)
 file.
 
 In an effort to gradually reduce the number of eslint errors in our codebase,
@@ -209,9 +214,9 @@ Follow the following steps to publish to NPM:
 - Create a PR against the `master` branch
 - After the PR is merged, update the (tag) and give a proper title and copy the release details from the CHANGELOG.md to the release
 
-![](https://static.notion-static.com/def32886-040c-4df9-9462-8b2418cbb925/Release_v1_3_0__cumulus-nasa_cumulus.png)
+![](https://static.notion-static.com/def32886-040c-4df9-9462-8b2418cbb925/Release_v1_3_0__nasa_cumulus.png)
 
-![](https://static.notion-static.com/287c7d98-351a-446d-a7ff-45eef2b45d7c/New_release__cumulus-nasa_cumulus.png)
+![](https://static.notion-static.com/287c7d98-351a-446d-a7ff-45eef2b45d7c/New_release__nasa_cumulus.png)
 
 ## Running command in all package folders
 
