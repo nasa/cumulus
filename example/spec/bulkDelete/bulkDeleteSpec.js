@@ -22,17 +22,15 @@ async function getClusterArn(stackName) {
  *   for the AsyncOperation to reach.  Defaults to ['SUCCEEDED', 'FAILED']
  * @param {string} params.asyncOperationId - the id of the AsyncOperation
  * @param {integer} params.waitSeconds - the number of seconds to wait for the
- *   AsyncOperation to reach an expected state.  Defaults to 120.
+ *   AsyncOperation to reach an expected state.  Defaults to 300.
  * @returns {Promise<Object>} a GET /asyncOperation/{id} response
  */
-async function waitForAsyncOperation(params) {
-  const {
-    stackName,
-    expectedStates = ['SUCCEEDED', 'FAILED'],
-    asyncOperationId,
-    waitSeconds = 120
-  } = params;
-
+async function waitForAsyncOperation({
+  stackName,
+  expectedStates = ['SUCCEEDED', 'FAILED'],
+  asyncOperationId,
+  waitSeconds = 300
+}) {
   let getAsyncOperationResponse;
   let getAsyncOperationBody;
   let checksRemaining = Math.floor(waitSeconds / 2);
@@ -48,18 +46,12 @@ async function waitForAsyncOperation(params) {
     // If we've reached an expected state then exit the loop
     if (expectedStates.includes(getAsyncOperationBody.status)) break;
 
-    console.log(`Async Operation status: ${getAsyncOperationBody.status}.  Sleeping ...`);
-
     checksRemaining -= 1;
-    await sleep(2000); // eslint-disable-line no-await-in-loop
+    if (checksRemaining > 0) await sleep(2000); // eslint-disable-line no-await-in-loop
   } while (checksRemaining > 0);
 
   // If the AsyncOperation never reached an expected state, throw an exception
-  if (checksRemaining <= 0) {
-    console.log('Timed out waiting for completion.  Last status:');
-    console.log(JSON.stringify(getAsyncOperationBody, null, 2));
-    throw new Error('Timed out');
-  }
+  if (checksRemaining <= 0) throw new Error('Timed out');
 
   return getAsyncOperationResponse;
 }
@@ -69,6 +61,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let postBulkDeleteBody;
   let config;
 
+  let beforeAllSucceeded = false;
   beforeAll(async () => {
     config = loadConfig();
 
@@ -77,17 +70,23 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
       granuleIds: ['g-123']
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
+
+    beforeAllSucceeded = true;
   });
 
   it('returns a status code of 202', () => {
+    expect(beforeAllSucceeded).toBe(true);
     expect(postBulkDeleteResponse.statusCode).toEqual(202);
   });
 
   it('returns an Async Operation Id', () => {
+    expect(beforeAllSucceeded).toBe(true);
     expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
   });
 
   it('creates an AsyncOperation', async () => {
+    expect(beforeAllSucceeded).toBe(true);
+
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
       id: postBulkDeleteBody.asyncOperationId
@@ -101,6 +100,8 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   });
 
   it('runs an ECS task', async () => {
+    expect(beforeAllSucceeded).toBe(true);
+
     // Query the AsyncOperation API to get the task ARN
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
@@ -122,10 +123,13 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   });
 
   it('eventually generates the correct result', async () => {
-    const getAsyncOperationResponse = waitForAsyncOperation({
+    expect(beforeAllSucceeded).toBe(true);
+
+    const getAsyncOperationResponse = await waitForAsyncOperation({
       stackName: config.stackName,
       asyncOperationId: postBulkDeleteBody.asyncOperationId
     });
+
     const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
 
     expect(getAsyncOperationResponse.statusCode).toEqual(200);
@@ -149,6 +153,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteBody;
   let config;
 
+  let beforeAllSucceeded = false;
   beforeAll(async () => {
     config = loadConfig();
 
@@ -157,17 +162,23 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
       granuleIds: ['trigger-failure']
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
+
+    beforeAllSucceeded = true;
   });
 
   it('returns a status code of 202', () => {
+    expect(beforeAllSucceeded).toBe(true);
     expect(postBulkDeleteResponse.statusCode).toEqual(202);
   });
 
   it('returns an Async Operation Id', () => {
+    expect(beforeAllSucceeded).toBe(true);
     expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
   });
 
   it('creates an AsyncOperation', async () => {
+    expect(beforeAllSucceeded).toBe(true);
+
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
       id: postBulkDeleteBody.asyncOperationId
@@ -181,6 +192,8 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
   });
 
   it('runs an ECS task', async () => {
+    expect(beforeAllSucceeded).toBe(true);
+
     // Query the AsyncOperation API to get the task ARN
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
       prefix: config.stackName,
@@ -202,7 +215,9 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
   });
 
   it('eventually generates the correct result', async () => {
-    const getAsyncOperationResponse = waitForAsyncOperation({
+    expect(beforeAllSucceeded).toBe(true);
+
+    const getAsyncOperationResponse = await waitForAsyncOperation({
       stackName: config.stackName,
       asyncOperationId: postBulkDeleteBody.asyncOperationId
     });
