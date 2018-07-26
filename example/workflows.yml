@@ -536,9 +536,23 @@ IngestGranule:
 
 KinesisTriggerTest:
   Comment: 'Tests Workflow from Kinesis Stream'
-  StartAt: TranslateMessage
+  StartAt: StartStatus
   States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: CnmResponse
+      Next: TranslateMessage
     TranslateMessage:
+      Type: Task
+      Resource: ${CNMToCMALambdaFunction.Arn}
       CumulusConfig:
         cumulus_message:
           outputs:
@@ -546,26 +560,11 @@ KinesisTriggerTest:
               destination: '{$.meta.cnm}'
             - source: '{$}'
               destination: '{$.payload}'
-      Type: Task
-      Resource: ${CNMToCMALambdaFunction.Arn}
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 10
-          MaxAttempts: 2
       Catch:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
           Next: CnmResponse
-      Next: Report
-    Report:
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      ResultPath: null
-      Type: Task
-      Resource: ${sf2snsStartLambdaFunction.Arn}
       Next: SyncGranule
     SyncGranule:
       CumulusConfig:
