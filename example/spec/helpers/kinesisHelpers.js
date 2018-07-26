@@ -99,8 +99,8 @@ async function createOrUseTestStream(streamName) {
  * to GetRecords. NOTE: Shard iterators expire after 5 minutes if not used in a
  * GetRecords call.
  *
- * @param  {String} streamName - Name of the stream of interest
- * @return {String}            - Shard iterator
+ * @param  {string} streamName - Name of the stream of interest
+ * @returns {string}            - Shard iterator
  */
 async function getShardIterator(streamName) {
   const describeStreamParams = {
@@ -118,18 +118,18 @@ async function getShardIterator(streamName) {
 
   const shardIterator = await kinesis.getShardIterator(shardIteratorParams).promise();
   return shardIterator.ShardIterator;
-};
+}
 
 /**
  * Gets records from a kinesis stream using a shard iterator.
  *
- * @param  {String} shardIterator - Kinesis stream shard iterator.
+ * @param  {string} shardIterator - Kinesis stream shard iterator.
  *                                  Shard iterators must be generated using getShardIterator.
- * @return {Promise}              - kinesis GetRecords promise
+ * @returns {Promise}              - kinesis GetRecords promise
  */
 async function getRecords(shardIterator) {
-  return kinesis.getRecords({ShardIterator: shardIterator}).promise();
-};
+  return kinesis.getRecords({ ShardIterator: shardIterator }).promise();
+}
 
 /**
  * add a record to the kinesis stream.
@@ -151,10 +151,11 @@ async function putRecordOnStream(streamName, record) {
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
  * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
+ * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'sf2snsStart') {
+async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
   let timeWaited = 0;
   let lastExecution;
   let workflowExecution;
@@ -166,8 +167,8 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = '
     lastExecution = await getLastExecution();
     // getLastExecution returns undefined if no previous execution exists
     if (lastExecution && lastExecution.executionArn) {
-      const taskOutput = await lambdaStep.getStepInput(lastExecution.executionArn, firstStep);
-      if (taskOutput !== null && taskOutput.payload.identifier === recordIdentifier) {
+      const taskInput = await lambdaStep.getStepInput(lastExecution.executionArn, firstStep);
+      if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
         workflowExecution = lastExecution;
       }
     }

@@ -9,23 +9,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - **Cumulus-726**
-  - Function addition to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
-  - IAM Policy addition to `@cumulus/deployment`: Lambda processing IAM role includes `kinesis::PutRecord` so step function lambdas can write to kinesis streams.
+  - Added function to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
+  - Added IAM policy `@cumulus/deployment`: Lambda processing IAM role includes `kinesis::PutRecord` so step function lambdas can write to kinesis streams.
 
 ### Changed
 
 - **Cumulus-726**
-  - Function change to `@cumulus/api`: `models/rules.js#addKinesisEventSource` was modified to call to `deleteKinesisEventSource` with all required parameters (rule's name, arn and type).
+  - Changed function in `@cumulus/api`: `models/rules.js#addKinesisEventSource` was modified to call to `deleteKinesisEventSource` with all required parameters (rule's name, arn and type).
 
 ### Removed
 
 - **Cumulus-726**
   - Configuration change to `@cumulus/deployment`: Removed default auto scaling configuration for Granules and Files DynamoDB tables.
+- **CUMULUS-688**
+  - Add integration test for ExecutionStatus
+  - Function addition to `@cumulus/integration-tests`: `api` includes `getExecutionStatus` which returns the execution status from the Cumulus API
 
 ## [v1.8.0] - 2018-07-23
 
 ### Added
-
 
 - **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
 
@@ -36,9 +38,6 @@ We may need to update the api documentation to reflect this.
     - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
       Parameter(s):
         - workflow - the workflow name
-        - messageSource - 'input' or 'output' from previous execution
-        - metaOverride - overrides the meta of the new execution, accepts partial override
-        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 - **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
 
