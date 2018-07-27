@@ -88,23 +88,23 @@ function fetchEarthdataToken(code) {
     json: true,
     auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
   })
-    .then((r) => {
-      const tokenInfo = r.body;
-      const accessToken = tokenInfo.access_token;
+  .then((r) => {
+    const tokenInfo = r.body;
+    const accessToken = tokenInfo.access_token;
 
-      // if no access token is given, then the code is wrong
-      if (typeof accessToken === 'undefined') {
-        return new Error('Failed to get Earthdata token');
-      }
+    // if no access token is given, then the code is wrong
+    if (typeof accessToken === 'undefined') {
+      return new Error('Failed to get Earthdata token');
+    }
 
-      const refresh = tokenInfo.refresh_token;
-      const userName = tokenInfo.endpoint.split('/').pop();
-      const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
+    const refresh = tokenInfo.refresh_token;
+    const userName = tokenInfo.endpoint.split('/').pop();
+    const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
 
-      return {
-        userName, accessToken, refresh, expires
-      };
-    });
+    return {
+      userName, accessToken, refresh, expires
+    };
+  });
 }
 
 async function getToken(code) {
