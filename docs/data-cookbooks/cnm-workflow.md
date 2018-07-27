@@ -248,9 +248,9 @@ To trigger matching workflows, you will need to put a record on the Kinesis stre
 For the purpose of this example, the easiest way to accomplish this is using the [AWS CLI](https://aws.amazon.com/cli/).
 
 #### Notification JSON
-Construct a JSON file containing an object that matches the values that have been previously setup. .   This JSON object should be a valid [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism) message.
+Construct a JSON file containing an object that matches the values that have been previously setup.  This JSON object should be a valid [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism) message.
 
-*Please note this example is somewhat contrived, as the "worker" task in this example doesn't care about most of these fields.  A 'real' data ingest workflow should.*
+**Please note**: *this example is somewhat contrived, as the "worker" task in this example doesn't care about most of these fields.  A 'real' data ingest workflow should.*
 
 The following values (denoted by ${} in the sample below) should be replaced to match values we've previously configured:
 
@@ -302,13 +302,13 @@ The command should return output similar to:
 
 This command will put a record containing the JSON value from the --data flag onto the Kinesis data stream, which should be picked up by Cumulus.  This will trigger the CNMExampleWorkflow workflow targeted by the rule you previously configured.
 
-You can view the current running executions on The `Executions` dashboard page which presents a list of all executions, their status (running, failed, or completed), to which workflow the execution belongs, along with other information.
+You can view the current running executions on the `Executions` dashboard page which presents a list of all executions, their status (running, failed, or completed), to which workflow the execution belongs, along with other information.
 
 ### Process
 
 Once the message is added to the Kinesis Stream, the Rule we previously defined will cause Cumulus to read the new entry on the stream, validate the data is a CNM JSON object, and each rule that matches will trigger the associated workflow, passing the CNM object in as as source data to the first task in the workflow.
 
-In our example, the Rule should trigger the `CNMExampleWorkflow`.
+In our example, the Rule should trigger `CNMExampleWorkflow` .
 
 #### StartStatus
 
