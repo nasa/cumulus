@@ -161,7 +161,7 @@ Again, please lease make sure to modify the value CNMResponseStream to match the
 
 The following tasks are required to be defined in the `lambda.yml` configuration file.
 
-If you're using a deployment based on the [example deployment](https://github.com/nasa/cumulus/tree/master/example) configuration this should already be defined for you.
+If you're using a deployment based on the [example deployment](https://github.com/nasa/cumulus/tree/master/example) configuration these should already be defined for you.
 
 ###### CnmResponse
 
@@ -184,8 +184,6 @@ This defines a task that runs a lambda that generates a CNM response output and 
 
 The CnmResponse task utilizes a response lambda provided (as of release 1.8) in the `cumulus-data-shared` bucket, with documentation provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse).
 
-If you're using a deployment based on the [example deployment](https://github.com/nasa/cumulus/tree/master/example) configuration this should already be defined for you.
-
 ###### CNMToCMA
 
 This entry assumes you have a CNM to Cumulus Granule translation lambda defined in the `lambdas.yml` configuration file as `CNMToCMA`:
@@ -204,8 +202,6 @@ CNMToCMA:
 ```
 
 This defines a task that runs a lambda at the begining of the workflow that will extract CMA-compatible granule information into the payload.   This workflow will not utilize that payload, as HelloWorld doesn't actually process data, however if this were an ingest workflow, you would need to ensure that downstream tasks in your workflow either understand the CNM message *or* include a translation task like this one.
-
-If you're using a deployment based on the [example deployment](https://github.com/nasa/cumulus/tree/master/example) configuraation this should already be defined for you.
 
 ###### Additional Tasks
 
