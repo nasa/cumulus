@@ -14,7 +14,7 @@ const log = require('@cumulus/common/log');
  * @param  {Object} context - Lambda context object
  * @returns {Object}         Response object including status, headers and body key / values.
  */
-const token = async function (event, context) {
+async function token(event, context) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
@@ -22,7 +22,9 @@ const token = async function (event, context) {
   if (code) {
     try {
       const responseObject = await authHelpers.getToken(code);
-      const { userName, accessToken, refresh, expires } = responseObject;
+      const {
+        userName, accessToken, refresh, expires
+      } = responseObject;
       const u = new User();
 
       return u.get({ userName })
@@ -50,7 +52,7 @@ const token = async function (event, context) {
     }
   }
   return resp(context, new Error('Request requires a code'));
-};
+}
 
 /**
  * `login` is an AWS API Gateway function that redirects to the correct

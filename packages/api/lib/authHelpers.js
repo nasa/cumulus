@@ -1,7 +1,6 @@
 const { google } = require('googleapis');
 const got = require('got');
 const plus = google.plus('v1');
-const log = require('@cumulus/common/log');
 const OAuth2 = google.auth.OAuth2;
 
 const oauth2Client = new OAuth2(
@@ -64,7 +63,7 @@ async function fetchGoogleToken(code) {
 
   oauth2Client.setCredentials(tokens);
 
-  const response = await plus.people.get({userId: 'me', auth: oauth2Client});
+  const response = await plus.people.get({ userId: 'me', auth: oauth2Client });
   const userData = response.data;
   // not sure if it's possible to have multiple emails but they are
   // returned as a list. If users have multiple emails we will have to
@@ -88,23 +87,23 @@ function fetchEarthdataToken(code) {
     json: true,
     auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
   })
-  .then((r) => {
-    const tokenInfo = r.body;
-    const accessToken = tokenInfo.access_token;
+    .then((r) => {
+      const tokenInfo = r.body;
+      const accessToken = tokenInfo.access_token;
 
-    // if no access token is given, then the code is wrong
-    if (typeof accessToken === 'undefined') {
-      return new Error('Failed to get Earthdata token');
-    }
+      // if no access token is given, then the code is wrong
+      if (typeof accessToken === 'undefined') {
+        return new Error('Failed to get Earthdata token');
+      }
 
-    const refresh = tokenInfo.refresh_token;
-    const userName = tokenInfo.endpoint.split('/').pop();
-    const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
+      const refresh = tokenInfo.refresh_token;
+      const userName = tokenInfo.endpoint.split('/').pop();
+      const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
 
-    return {
-      userName, accessToken, refresh, expires
-    };
-  });
+      return {
+        userName, accessToken, refresh, expires
+      };
+    });
 }
 
 async function getToken(code) {

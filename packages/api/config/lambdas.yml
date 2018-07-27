@@ -120,9 +120,6 @@ CustomBootstrap:
   envs:
     internal: '{{system_bucket}}'
     stackName: '{{stackName}}'
-    UsersTable:
-      function: Ref
-      value: UsersTableDynamoDB
 
 InRegionS3Policy:
   handler: index.inRegionS3Policy
