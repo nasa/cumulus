@@ -195,5 +195,5 @@ workflows:
             - build_and_test
           filters:
             branches:
-              only: /^v\d+\.\d+/ 
+              only: /v\d+\.\d+/ 
 
