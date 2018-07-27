@@ -1,5 +1,4 @@
-// const { Execution } = require('@cumulus/api/models');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
+const { buildAndStartWorkflow, waitForCompletedExecution } = require('@cumulus/integration-tests');
 const {
   loadConfig,
   redeploy
@@ -8,21 +7,22 @@ const {
 const awsConfig = loadConfig();
 
 describe('The Hello World workflow', () => {
-  let workflowExecution = null;
-  // process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
-  // const executionModel = new Execution();
+  let workflowExecutionArn = null;
+  let workflowStatus = null;
 
   beforeAll(async () => {
-    workflowExecution = await buildAndExecuteWorkflow(
+    workflowExecutionArn = await buildAndStartWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
       'WaitForDeployWorkflow'
     );
-    
+
     await redeploy(awsConfig);
+
+    workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
   });
 
   it('executes successfully', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+    expect(workflowStatus).toEqual('SUCCEEDED');
   });
 });

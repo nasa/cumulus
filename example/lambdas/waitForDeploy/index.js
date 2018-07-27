@@ -5,11 +5,11 @@ const { CloudFormation } = require('aws-sdk');
 
 const promisifiedSetTimeout = promisify(setTimeout);
 
-const retryMs = 1000;
-const maxRetries = 30;
+const retryMs = 3000;
+const maxRetries = 50;
 
 /**
- * Receives event trigger from SNS and forwards event message to S3 bucket
+ * Waits for a stack deployment to occur
  *
  * @param {Object} event - AWS event
  * @param {Object} context - an AWS Lambda context
@@ -21,6 +21,8 @@ async function handler(event, context, callback) {
   const stack = event.meta.stack;
   let retries = 0;
 
+  const lambdaStartTime = new Date();
+
   /* eslint-disable no-await-in-loop */
   while (retries < maxRetries) {
     const stackDetails = await cloudformation.describeStacks({ StackName: stack })
@@ -29,7 +31,10 @@ async function handler(event, context, callback) {
 
     console.log(`stack status: ${JSON.stringify(stackDetails.Stacks[0].StackStatus)}`);
 
-    if (!stackDetails.Stacks[0].StackStatus.includes('IN_PROGRESS')) {
+    const updateDateTime = new Date(stackDetails.Stacks[0].LastUpdatedTime);
+
+    if (!stackDetails.Stacks[0].StackStatus.includes('IN_PROGRESS') &&
+        updateDateTime > lambdaStartTime) {
       callback(null, event);
       return;
     }
