@@ -107,10 +107,11 @@ async function login(event) {
  * @param  {Object}   event   - Lambda event payload
  * @returns {Object} - a Lambda Proxy response object
  */
-async function handler(event, context, cb) {
+async function handler(event) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
     return login(event);
   }
+
   return buildLambdaProxyResponse({
     json: false,
     statusCode: 404,

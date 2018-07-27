@@ -195,7 +195,7 @@ aimee:
   stackNameNoDash: aimee
 
   oauth:
-    provider: earthdata
+    provider: google
 
   api_lambda_memory: 768
 
