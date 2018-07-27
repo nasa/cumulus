@@ -155,7 +155,7 @@ CNMExampleWorkflow:
 
 ```
 
-Again - Please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.
+Again, please lease make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.
 
 #### Task Configuration
 
