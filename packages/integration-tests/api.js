@@ -228,6 +228,31 @@ async function getExecutionLogs({ prefix, executionName }) {
   return JSON.parse(payload.body);
 }
 
+/**
+ * get execution status from the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.arn - an execution arn
+ * @returns {Promise<Object>} - the execution status fetched by the API
+ */
+async function getExecutionStatus({ prefix, arn }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiExecutionStatusDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/executions/status/{arn}',
+      path: `executions/status/${arn}`,
+      pathParameters: {
+        arn: arn
+      }
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
 module.exports = {
   callCumulusApi,
   getGranule,
@@ -236,5 +261,6 @@ module.exports = {
   applyWorkflow,
   getExecution,
   getLogs,
-  getExecutionLogs
+  getExecutionLogs,
+  getExecutionStatus
 };
