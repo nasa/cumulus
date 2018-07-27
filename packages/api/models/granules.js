@@ -1,13 +1,16 @@
 'use strict';
 
-const path = require('path');
 const get = require('lodash.get');
+const path = require('path');
 const uniqBy = require('lodash.uniqby');
+
+const aws = require('@cumulus/ingest/aws');
+const commonAws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
-const aws = require('@cumulus/ingest/aws');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
+
 const Manager = require('./base');
 const {
   parseException,
@@ -24,6 +27,33 @@ class Granule extends Manager {
     // initiate the manager class with the name of the
     // granules table
     super(process.env.GranulesTable, granuleSchema);
+  }
+
+  /**
+  * Adds fileSize values from S3 object metadata for granules missing that information
+  *
+  * @param {Array<Object>} files - Array of files from a payload granule object
+  * @returns {Promise<Array>} - Updated array of files with missing fileSize appended
+  */
+  addMissingFileSizes(files) {
+    const filePromises = files.map((file) => {
+      if (!('fileSize' in file)) {
+        return commonAws.headObject(file.bucket, file.filepath)
+          .then((result) => {
+            const updatedFile = file;
+            updatedFile.fileSize = result.ContentLength;
+            return updatedFile;
+          })
+          .catch((error) => {
+            log.error(`Error: ${error}`);
+            log.error(`Could not validate missing filesize for s3://${file.filename}`);
+
+            return file;
+          });
+      }
+      return Promise.resolve(file);
+    });
+    return Promise.all(filePromises);
   }
 
   /**
@@ -97,7 +127,7 @@ class Granule extends Manager {
    * @param {Object} payload - sns message containing the output of a Cumulus Step Function
    * @returns {Promise<Array>} granule records
    */
-  createGranulesFromSns(payload) {
+  async createGranulesFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
     const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
@@ -119,6 +149,9 @@ class Granule extends Manager {
 
     const done = granules.map(async (g) => {
       if (g.granuleId) {
+        let granuleFiles = g.files;
+        granuleFiles = await this.addMissingFileSizes(uniqBy(g.files, 'filename'));
+
         const doc = {
           granuleId: g.granuleId,
           pdrName: get(payload, 'meta.pdr.name'),
@@ -127,7 +160,7 @@ class Granule extends Manager {
           provider: get(payload, 'meta.provider.id'),
           execution,
           cmrLink: get(g, 'cmrLink'),
-          files: uniqBy(g.files, 'filename'),
+          files: granuleFiles,
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),

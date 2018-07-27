@@ -90,6 +90,10 @@ test.after.always(async () => {
 });
 
 test.serial('creating a successful granule record', async (t) => {
+  // Stub out headobject S3 call used in api/models/granules.js,
+  // so we don't have to create artifacts
+  sinon.stub(aws, 'headObject').resolves({ ContentLength: 12345 });
+
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
   const records = await indexer.granule(granuleSuccess);
@@ -105,7 +109,7 @@ test.serial('creating a successful granule record', async (t) => {
   t.is(record.granuleId, granule.granuleId);
   t.is(record.cmrLink, granule.cmrLink);
   t.is(record.published, granule.published);
-  t.is(record.productVolume, 17909733);
+  t.is(record.productVolume, 17934423);
   t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
   t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
   t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');

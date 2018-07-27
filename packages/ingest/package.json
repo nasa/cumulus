@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ingest",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Ingest utilities",
   "engine": {
     "node": ">=8.10.0"
@@ -34,7 +34,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.7.0",
+    "@cumulus/common": "^1.7.1",
     "@cumulus/pvl": "^1.7.0",
     "@cumulus/test-data": "^1.6.0",
     "aws-sdk": "^2.224.1",
@@ -63,7 +63,7 @@
     "uuid": "^3.2.1"
   },
   "devDependencies": {
-    "@cumulus/cmrjs": "^1.7.0",
+    "@cumulus/cmrjs": "^1.7.1",
     "@cumulus/test-data": "^1.6.0",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
