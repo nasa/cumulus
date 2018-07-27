@@ -171,7 +171,7 @@ function fakeCollectionFactory() {
     version: '0.0.0',
     provider_path: '/',
     duplicateHandling: 'replace',
-    granuleId: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
+    granuleId: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$',
     granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
     sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
     files: []
