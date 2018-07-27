@@ -22,7 +22,7 @@ const { dynamodb } = require('@cumulus/common/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const Manager = require('../models/base');
+const { User } = require('../models');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
@@ -135,14 +135,13 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
  * @returns {Promise.<Array>} array of aws dynamodb responses
  */
 async function bootstrapUsers(table, records) {
-  if (!table) {
-    return new Promise((resolve) => resolve());
-  }
-  const user = new Manager(table);
+  if (!table) return Promise.resolve();
+
+  const user = new User({ tableName: table });
 
   // delete all user records
   const existingUsers = await user.scan();
-  await Promise.all(existingUsers.Items.map((u) => user.delete({ userName: u.userName })));
+  await Promise.all(existingUsers.Items.map((u) => user.delete(u.userName)));
   // add new ones
   const additions = records.map((record) => user.create({
     userName: record.username,

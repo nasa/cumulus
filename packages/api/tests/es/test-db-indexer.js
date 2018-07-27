@@ -93,20 +93,24 @@ async function getDyanmoDBStreamRecords(table) {
   return records;
 }
 
+let collectionModel;
+let executionModel;
+let fileModel;
+let granuleModel;
 test.before(async () => {
   await deleteAliases();
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   // create tables
-  const c = new models.Collection();
-  const g = new models.Granule();
-  const f = new models.FileClass();
-  const e = new models.Execution();
+  collectionModel = new models.Collection();
+  granuleModel = new models.Granule();
+  fileModel = new models.FileClass();
+  executionModel = new models.Execution();
 
-  await c.createTable();
-  await g.createTable();
-  await f.createTable();
-  await e.createTable();
+  await collectionModel.createTable();
+  await granuleModel.createTable();
+  await fileModel.createTable();
+  await executionModel.createTable();
 
   // bootstrap the esIndex
   esClient = await Search.es();
@@ -114,10 +118,11 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await models.Manager.deleteTable(process.env.CollectionsTable);
-  await models.Manager.deleteTable(process.env.GranulesTable);
-  await models.Manager.deleteTable(process.env.ExecutionsTable);
-  await models.Manager.deleteTable(process.env.FilesTable);
+  await collectionModel.deleteTable();
+  await granuleModel.deleteTable();
+  await executionModel.deleteTable();
+  await fileModel.deleteTable();
+
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
   await esClient.indices.delete({ index: esIndex });
 });
@@ -172,9 +177,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
     fakeGranule.files.push(fakeFilesFactory(bucket));
   }
 
-  const model = new models.Granule();
-  const fileModel = new models.FileClass();
-  await model.create(fakeGranule);
+  await granuleModel.create(fakeGranule);
 
   // get records from the stream
   let records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
@@ -198,7 +201,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   // change the record
   fakeGranule.status = 'failed';
   fakeGranule.files = drop(fakeGranule.files);
-  await model.create(fakeGranule);
+  await granuleModel.create(fakeGranule);
 
   // get records from the stream
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
@@ -218,7 +221,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   // t.true(err.message.includes('No record'));
 
   // delete the record
-  await model.delete({ granuleId: fakeGranule.granuleId });
+  await granuleModel.delete({ granuleId: fakeGranule.granuleId });
 
   // get records from the stream
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);

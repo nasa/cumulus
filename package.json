@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Cumulus Framework for ingesting and processing Nasa Earth data streams",
   "scripts": {
+    "docs-build-tasks": "./bin/build-tasks-doc.js",
+    "docs-build": "npm run docs-build-tasks && gitbook build",
+    "docs-serve": "npm run docs-build && gitbook serve",
+    "docs-start": "npm run docs-build && gitbook serve",
     "e2e": "ava tests/*.js --serial",
     "lint": "eslint packages/api --ext .js",
     "test": "nyc lerna run test --concurrency 2",
@@ -19,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus"
   },
   "ava": {
     "files": "test"
@@ -48,6 +52,7 @@
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
+    "gitbook-cli": "^2.3.2",
     "lerna": "^2.9.0",
     "nyc": "^11.6.0"
   },

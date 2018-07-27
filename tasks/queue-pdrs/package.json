@@ -1,15 +1,15 @@
 {
   "name": "@cumulus/queue-pdrs",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Add discovered PDRs to a queue",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/queue-pdrs",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus"
   },
   "publishConfig": {
     "access": "public"
@@ -35,9 +35,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.7.0",
+    "@cumulus/common": "^1.8.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.7.0",
+    "@cumulus/ingest": "^1.8.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
