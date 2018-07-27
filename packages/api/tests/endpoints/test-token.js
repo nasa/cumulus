@@ -72,10 +72,12 @@ test('login returns a 301 redirect to Google when code does not exist', (t) => {
     `&redirect_uri=${encodeURIComponent(process.env.API_ENDPOINT)}&response_type=code`;
 
   const expectedResponseObject = {
-    statusCode: '301',
+    statusCode: 301,
     body: 'Redirecting to login',
     headers: {
-      Location: process.env.OAUTH_PROVIDER === 'google' ? googleOauthEndpoint : earthDataOauthEndpoint
+      'Access-Control-Allow-Origin': '*',
+      Location: process.env.OAUTH_PROVIDER === 'google' ? googleOauthEndpoint : earthDataOauthEndpoint,
+      'Strict-Transport-Security': 'max-age=31536000'
     }
   };
 

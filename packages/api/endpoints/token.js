@@ -15,7 +15,7 @@ const log = require('@cumulus/common/log');
  *
  * @param  {Object} event   - Lambda event object
  * @param  {Object} context - Lambda context object
- * @returns {Object}         Response object including status, headers and body key / values.
+ * @returns {Object}        - a Lambda Proxy response object
  */
 async function token(event, context) {
   const code = get(event, 'queryStringParameters.code');
@@ -81,7 +81,7 @@ async function token(event, context) {
  * @param  {Object} event   - Lambda event object
  * @param  {Object} context - Lambda context object
  * @param  {Function} cb    - Lambda callback function
- * @returns {Function}       Lambda callback function
+ * @returns {Object} - a Lambda Proxy response object
  */
 function login(event, context, cb) {
   const code = get(event, 'queryStringParameters.code');
@@ -93,8 +93,9 @@ function login(event, context, cb) {
 
   const url = authHelpers.generateLoginUrl(state);
 
-  return cb(null, {
-    statusCode: '301',
+  return buildLambdaProxyResponse({
+    json: false,
+    statusCode: 301,
     body: 'Redirecting to login',
     headers: {
       Location: url
@@ -109,7 +110,7 @@ function login(event, context, cb) {
  * @param  {Object}   event   - Lambda event payload
  * @param  {Object}   context - Lambda context - provided by AWS
  * @param  {Function} cb      - Lambda callback function
- * @returns {Function}         Calls the `login` or `resp` function.
+ * @returns {Object} - a Lambda Proxy response object
  */
 function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
