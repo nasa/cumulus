@@ -242,17 +242,21 @@ Create a release branch off the version branch (i.e. v1.5) to create a branch fo
 
 Follow [step 2](#2-update-the-cumulus-version-number) above to update the version number using `yarn update`.
 
-Update the changelog for the new release, making sure a link is put in the bottom. 
-
 Create a pull request against the version branch.
 
 #### 3. Create a git tag
 
-Follow [these steps](#5-create-a-git-tag).
+When the PR is approved and changes are finalized, follow [these steps](#5-create-a-git-tag). At this point, merges to master should be held off until the changes are released. If someone merges to master, master will pick up the new git tag and publish this release, tagging it as latest, meaning anyone who performs an `npm install` will get this patch version and not the actual latest version.
 
 #### 4. Merge to the version branch
 
-Merging to a branch structured as vX.Y will kick off the release and npm testing process.
+Merging to a branch structured as vX.Y will kick off the release and npm testing process. The version will be published to npm not as latest, but with a tag `patch-vX.Y.Z`.
+
+Verify that the changes were released with the correct tag in npm.
+
+#### 5. Update the Changelog
+
+In master, update the changelog for the release, making sure a link is put in the bottom. 
 
 ## Running command in all package folders
 
