@@ -1,9 +1,10 @@
+/* eslint-disable no-console */
+
 'use strict';
 
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const test = require('ava');
-const { promisify } = require('util');
 
 const {
   aws: { dynamodb, s3, s3Join },
@@ -35,6 +36,7 @@ const startParams = {
 
 test.before(async () => {
   runTaskReturn = successfulRunTask;
+
   ecsStub = () => ({
     runTask: () => ({
       promise: () => Promise.resolve(runTaskReturn)
@@ -93,7 +95,6 @@ test('The AsyncOperation constructor requires that systemBucket be specified', (
 
 test('The AsyncOperation.start() method uploads the payload to S3', async (t) => {
   const asyncOperationRecord = await asyncOperationModel.start(startParams);
-
   const payloadKey = s3Join(configParams.stackName, 'async-operation-payloads', `${asyncOperationRecord.id}.json`);
   const s3Object = await s3().getObject({ Bucket: configParams.systemBucket, Key: payloadKey }).promise();
 
@@ -101,6 +102,7 @@ test('The AsyncOperation.start() method uploads the payload to S3', async (t) =>
 });
 
 test.todo('The AsyncOperation.start() method starts an ECS task with the correct parameters');
+// This will need sinon spy for ecs(), and I could use a suggestion since it took me so long to just fake it.
 
 test('The AsyncOperation.start() method throws an exception if runTask() returned failures', async (t) => {
   runTaskReturn = failureRunTask;
@@ -113,8 +115,43 @@ test('The AsyncOperation.start() method throws an exception if runTask() returne
   }
 });
 
-test.todo('The AsyncOperation.start() method writes a new record to DynamoDB');
+test('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {
+  runTaskReturn = successfulRunTask;
 
-test.todo('The AsyncOperation.start() method sets the record status to "CREATED"');
+  const asyncOperationalRecord = await asyncOperationModel.start(startParams);
+  const dbParams = {
+    Key: { id: { S: asyncOperationalRecord.id } },
+    TableName: configParams.tableName
+  };
+  const item = await dynamodb().getItem(dbParams).promise();
+  // This is not the way to test the record is written to dynamoDb.
+  t.is(item.Item.taskArn.S, successfulRunTask.tasks[0].taskArn);
+});
 
-test.todo('The AsyncOperation.start() method returns the newly-generated record');
+test('The AsyncOperation.start() method sets the record status to "CREATED"', async (t) => {
+  runTaskReturn = successfulRunTask;
+
+  const asyncOperationalRecord = await asyncOperationModel.start(startParams);
+  const dbParams = {
+    Key: { id: { S: asyncOperationalRecord.id } },
+    TableName: configParams.tableName
+  };
+  const item = await dynamodb().getItem(dbParams).promise();
+  // This is not the way to test the record is written to dynamoDb.
+  t.is(item.Item.status.S, 'CREATED');
+});
+
+test('The AsyncOperation.start() method returns the newly-generated record', async (t) => {
+  runTaskReturn = successfulRunTask;
+
+  const asyncOperationalRecord = await asyncOperationModel.start(startParams);
+  const dbParams = {
+    Key: { id: { S: asyncOperationalRecord.id } },
+    TableName: configParams.tableName
+  };
+  const item = await dynamodb().getItem(dbParams).promise();
+  console.log('\nasyncOperationalrecord:', asyncOperationalRecord);
+  console.log('\nitem:', item);
+
+  t.deepEqual(item.Item, asyncOperationalRecord);
+});
