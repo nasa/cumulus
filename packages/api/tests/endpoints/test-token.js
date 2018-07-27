@@ -85,8 +85,11 @@ test('login returns a 301 redirect to Google when code does not exist', (t) => {
 test('token returns an error when no code is provided', (t) => {
   const expectedResult = {
     body: JSON.stringify({ message: 'Request requires a code' }),
-    headers: defaultHeaders,
-    statusCode: 400
+    headers: {
+      ...defaultHeaders,
+      'WWW-Authenticate': 'Bearer error="Error: Request requires a code", error_description="Request requires a code"'
+    },
+    statusCode: 401
   };
 
   return tokenEndpoint.token(eventWithoutCode, context)
@@ -103,8 +106,11 @@ test('token returns an error when auth client returns an error', (t) => {
   //const result = tokenEndpoint.token(event, context);
   const expectedResult = {
     body: JSON.stringify({ message: getTokenErrorMessage }),
-    headers: defaultHeaders,
-    statusCode: 400
+    headers: {
+      ...defaultHeaders,
+      'WWW-Authenticate': 'Bearer error="GetTokenError: error from getToken", error_description="error from getToken"'
+    },
+    statusCode: 401
   };
 
   return tokenEndpoint.token(event, context)
@@ -120,8 +126,11 @@ test('token returns an error when no user is found', (t) => {
 
   const expectedResult = {
     body: JSON.stringify({ message: 'User is not authorized to access this site' }),
-    headers: defaultHeaders,
-    statusCode: 400
+    headers: {
+      ...defaultHeaders,
+      'WWW-Authenticate': 'Bearer error="Error: User is not authorized to access this site", error_description="User is not authorized to access this site"'
+    },
+    statusCode: 401,
   };
 
   return tokenEndpoint.token(event, context)
@@ -158,13 +167,10 @@ test('token returns 200 when user exists and state is not provided', (t) => {
   sandbox.stub(User.prototype, 'get').resolves(true);
   sandbox.stub(User.prototype, 'update').resolves(true);
 
-  const expectedHeaders = Object.assign(clone(defaultHeaders), {
-    'Content-Type': 'text/plain'
-  });
   const expectedResult = {
     statusCode: 200,
-    headers: expectedHeaders,
-    body: JSON.stringify({ token: accessToken })
+    headers: defaultHeaders,
+    body: JSON.stringify({ message: { token: accessToken } })
   };
 
   return tokenEndpoint.token(eventWithoutState, context)

@@ -3,7 +3,10 @@
 const get = require('lodash.get');
 const authHelpers = require('../lib/authHelpers');
 const { User } = require('../models');
-const { resp } = require('../lib/response');
+const {
+  buildAuthorizationFailureResponse,
+  buildLambdaProxyResponse
+} = require('../lib/response');
 const log = require('@cumulus/common/log');
 
 /**
@@ -32,26 +35,43 @@ async function token(event, context) {
         .then(() => {
           if (state) {
             log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
-            return resp(context, null, 'Redirecting to the specified state', 301, {
-              Location: `${decodeURIComponent(state)}?token=${accessToken}`
+            return buildLambdaProxyResponse({
+              json: false,
+              statusCode: 301,
+              body: 'Redirecting to the specified state',
+              headers: {
+                'Content-Type': 'text/plain',
+                Location:`${decodeURIComponent(state)}?token=${accessToken}`
+              }
             });
           }
           log.info('Log info: No state specified, responding 200');
-          return resp(context, null, JSON.stringify({ token: accessToken }), 200);
+          return buildLambdaProxyResponse({
+            json: true,
+            statusCode: 200,
+            body: { message: { token: accessToken } }
+          });
         })
         .catch((e) => {
           if (e.message.includes('No record found for')) {
-            return resp(context, new Error('User is not authorized to access this site'));
+            const errorMessage = 'User is not authorized to access this site';
+            return buildAuthorizationFailureResponse({
+              error: new Error(errorMessage),
+              message: errorMessage
+            });
           }
-          return resp(context, e);
+          return buildAuthorizationFailureResponse({error: e, message: e.message});
         });
     }
     catch (e) {
       log.error('Error caught when checking code:', e);
-      return resp(context, e);
+      return buildAuthorizationFailureResponse({error: e, message: e.message});
     }
   }
-  return resp(context, new Error('Request requires a code'));
+
+  const errorMessage = 'Request requires a code';
+  const error = new Error(errorMessage);
+  return buildAuthorizationFailureResponse({error: error, message: error.message});
 }
 
 /**
@@ -95,7 +115,11 @@ function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
     return login(event, context, cb);
   }
-  return resp(context, new Error('Not found'), 404);
+  return buildLambdaProxyResponse({
+    json: false,
+    statusCode: 404,
+    body: 'Not found'
+  });
 }
 
 module.exports = {
