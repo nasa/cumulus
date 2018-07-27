@@ -4,7 +4,7 @@
     {
       "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
       "dataType": "MOD09GQ",
-      "version": "6",
+      "version": "006",
       "published": true,
       "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1222231611-CUMULUS",
       "files": [
