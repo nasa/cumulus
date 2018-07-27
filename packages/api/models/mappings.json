@@ -26,10 +26,10 @@
         "type": "keyword"
       },
       "sender": {
-        "type": "keyword"
+        "type": "text"
       },
       "executions": {
-        "type": "keyword"
+        "type": "text"
       },
       "version": {
         "type": "keyword"
