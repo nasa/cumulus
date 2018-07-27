@@ -9,11 +9,21 @@ const oauth2Client = new OAuth2(
   process.env.API_ENDPOINT
 );
 
+/**
+ * Returns URI-encoded (Cumulus) API endpoint
+ * @return {string} - URI
+ */
 function redirectUriParam() {
   const url = process.env.API_ENDPOINT;
   return encodeURIComponent(url);
 }
 
+/**
+ * generates OAuth Url for authenticating via Google APIs project
+ *
+ * @param   {string} state - state (URI) to return user to after authentication
+ * @returns {string}       - Google OAuth URL Endpoint
+ */
 function googleOAuthLoginUrl(state) {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
   const scopes = [
@@ -32,6 +42,12 @@ function googleOAuthLoginUrl(state) {
   return url;
 }
 
+/**
+ * generates OAuth Url for authenticating via EarthData Login
+ *
+ * @param   {string} state - state (URI) to return user to after authentication
+ * @returns {string}       - EarthData OAuth URL Endpoint
+ */
 function earthDataLoginUrl(state) {
   const endpoint = process.env.EARTHDATA_BASE_URL;
   const clientId = process.env.EARTHDATA_CLIENT_ID;
@@ -46,6 +62,12 @@ function earthDataLoginUrl(state) {
   return url;
 }
 
+/**
+ * Returns Google or EarthData OAuth URL, depending on an environment flag.
+ *
+ * @param   {string} - state (URI) to return user to after authentication
+ * @returns {string} - OAuth URL Endpoint
+ */
 function generateLoginUrl(state) {
   if (process.env.OAUTH_PROVIDER === 'google') {
     return googleOAuthLoginUrl(state);
@@ -53,6 +75,15 @@ function generateLoginUrl(state) {
   return earthDataLoginUrl(state);
 }
 
+/**
+ * `fetchGoogleToken` exchanges code for access and refresh tokens with Google Oauth server.
+ *
+ * @param   {string} code - OAuth autorization code exchanged for tokens with the OAuth server
+ * @returns {object}      - userName: string identifier for the user
+ *                        - accessToken: string stored as password,
+ *                        - refresh: token string used to exchange for an expired accessToken
+ *                        - expires: timestamp when access token is invalid
+ */
 async function fetchGoogleToken(code) {
   const { tokens } = await oauth2Client.getToken(code);
   const accessToken = tokens.access_token;
@@ -75,6 +106,15 @@ async function fetchGoogleToken(code) {
   return responseObject;
 }
 
+/**
+ * `fetchEarthdataToken` exchanges code for access and refresh tokens with EarthData Oauth server.
+ *
+ * @param   {string} code - OAuth autorization code exchanged for tokens with the OAuth server
+ * @returns {object}      - userName: string identifier for the user
+ *                        - accessToken: string stored as password,
+ *                        - refresh: token string used to exchange for an expired accessToken
+ *                        - expires: timestamp when access token is invalid
+ */
 function fetchEarthdataToken(code) {
   const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
   const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
@@ -106,6 +146,12 @@ function fetchEarthdataToken(code) {
     });
 }
 
+/**
+ * Returns Google or EarthData tokens object, depending on an environment flag.
+ *
+ * @param   {string} code - OAuth autorization code exchanged for tokens with the OAuth server
+ * @returns {object} - see fetchGoogleToken or fetchEarthdataToken for details
+ */
 async function getToken(code) {
   if (process.env.OAUTH_PROVIDER === 'google') {
     return fetchGoogleToken(code);
