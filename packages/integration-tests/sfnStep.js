@@ -92,6 +92,44 @@ class SfnStep {
     return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e));
   }
 
+
+  /**
+   * Return truthyness of an execution being successful.
+   *
+   * @param {Object} execution - stepFunction execution
+   * @returns {boolean} truthness of the execution being successful.
+   */
+  completedSuccessfulFilter(execution) {
+    return (execution.completeEvent !== undefined
+            && execution.completeEvent !== null
+            && execution.completeEvent.type === this.successEvent);
+  }
+
+  /**
+   * Gets the input to the step by looking for the 'schedule' for the given step
+   * and returning the parsed input object.
+   *
+   * @param   {String} workflowExecutionArn - AWS Execution ARN of the step function execution
+   * @param   {String} stepName             - Name of the workflow step of interest
+   * @returns {Object}                      - Parsed JSON string of input to step with <stepName>
+   *                                          from the workflow execution of interest.
+   */
+  async getStepInput(workflowExecutionArn, stepName) {
+    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
+
+    if (stepExecutions === null) {
+      console.log(`Could not find step ${stepName} in execution.`);
+      return null;
+    }
+
+    const scheduleEvent = stepExecutions[0]['scheduleEvent'];
+    const eventWasSuccessful = scheduleEvent.type === this.scheduleSuccessfulEvent;
+    if (!eventWasSuccessful) console.log('Schedule event failed');
+
+    const subStepExecutionDetails = scheduleEvent['lambdaFunctionScheduledEventDetails'];
+    return JSON.parse(subStepExecutionDetails.input);
+  };
+
   /**
    * Get the output payload from the step, if the step succeeds
    *
@@ -108,18 +146,13 @@ class SfnStep {
     }
 
     // Use the first passed execution, or last execution if none passed
-    let stepExecution = stepExecutions[stepExecutions.length - 1];
-    const passedExecutions = stepExecutions.filter((e) => {
-      if ((e.completeEvent !== null)
-          && ((e.completeEvent === undefined) || !('type' in e.completeEvent))) {
-        console.log(`incomplete Execution discovered found e : ${JSON.stringify(e)}`);
-      }
-      return (typeof e.completeEvent !== 'undefined'
-              && e.completeEvent !== null
-              && e.completeEvent.type === this.successEvent);
-    });
+    let stepExecution;
+    const passedExecutions = stepExecutions.filter((e) => this.completedSuccessfulFilter(e));
     if (passedExecutions && passedExecutions.length > 0) {
       stepExecution = passedExecutions[0];
+    }
+    else {
+      stepExecution = stepExecutions[stepExecutions.length - 1];
     }
 
     if (typeof stepExecution.completeEvent === 'undefined'
@@ -141,9 +174,10 @@ class LambdaStep extends SfnStep {
   constructor() {
     super();
     this.scheduleFailedEvent = 'LambdaFunctionScheduleFailed';
+    this.scheduleSuccessfulEvent = 'LambdaFunctionScheduled';
     this.scheduleEvents = [
       this.scheduleFailedEvent,
-      'LambdaFunctionScheduled'
+      this.scheduleSuccessfulEvent
     ];
     this.startFailedEvent = 'LambdaFunctionStartFailed';
     this.startEvents = [
