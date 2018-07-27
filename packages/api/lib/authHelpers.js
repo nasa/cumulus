@@ -11,7 +11,8 @@ const oauth2Client = new OAuth2(
 
 /**
  * Returns URI-encoded (Cumulus) API endpoint
- * @return {string} - URI
+ *
+ * @returns {string} - URI
  */
 function redirectUriParam() {
   const url = process.env.API_ENDPOINT;
@@ -65,7 +66,7 @@ function earthDataLoginUrl(state) {
 /**
  * Returns Google or EarthData OAuth URL, depending on an environment flag.
  *
- * @param   {string} - state (URI) to return user to after authentication
+ * @param   {string} state - state (URI) to return user to after authentication
  * @returns {string} - OAuth URL Endpoint
  */
 function generateLoginUrl(state) {
@@ -79,7 +80,7 @@ function generateLoginUrl(state) {
  * `fetchGoogleToken` exchanges code for access and refresh tokens with Google Oauth server.
  *
  * @param   {string} code - OAuth autorization code exchanged for tokens with the OAuth server
- * @returns {object}      - userName: string identifier for the user
+ * @returns {Object}      - userName: string identifier for the user
  *                        - accessToken: string stored as password,
  *                        - refresh: token string used to exchange for an expired accessToken
  *                        - expires: timestamp when access token is invalid
@@ -110,7 +111,7 @@ async function fetchGoogleToken(code) {
  * `fetchEarthdataToken` exchanges code for access and refresh tokens with EarthData Oauth server.
  *
  * @param   {string} code - OAuth autorization code exchanged for tokens with the OAuth server
- * @returns {object}      - userName: string identifier for the user
+ * @returns {Object}      - userName: string identifier for the user
  *                        - accessToken: string stored as password,
  *                        - refresh: token string used to exchange for an expired accessToken
  *                        - expires: timestamp when access token is invalid
@@ -150,7 +151,7 @@ function fetchEarthdataToken(code) {
  * Returns Google or EarthData tokens object, depending on an environment flag.
  *
  * @param   {string} code - OAuth autorization code exchanged for tokens with the OAuth server
- * @returns {object} - see fetchGoogleToken or fetchEarthdataToken for details
+ * @returns {Object} - see fetchGoogleToken or fetchEarthdataToken for details
  */
 async function getToken(code) {
   if (process.env.OAUTH_PROVIDER === 'google') {
