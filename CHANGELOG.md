@@ -49,6 +49,11 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
 
+## [v1.7.1] - 2018-07-27
+
+### Fixed
+- **CUMULUS-766** - Backport from 1.8.0 - Populate database fileSize field from S3 if value not present in Ingest payload
+
 ## [v1.7.0] - 2018-07-02
 
 ### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.7.0.html)
