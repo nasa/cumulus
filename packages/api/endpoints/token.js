@@ -14,10 +14,9 @@ const log = require('@cumulus/common/log');
  * codes into tokens
  *
  * @param  {Object} event   - Lambda event object
- * @param  {Object} context - Lambda context object
  * @returns {Object}        - a Lambda Proxy response object
  */
-async function token(event, context) {
+async function token(event) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
@@ -41,7 +40,7 @@ async function token(event, context) {
               body: 'Redirecting to the specified state',
               headers: {
                 'Content-Type': 'text/plain',
-                Location:`${decodeURIComponent(state)}?token=${accessToken}`
+                Location: `${decodeURIComponent(state)}?token=${accessToken}`
               }
             });
           }
@@ -60,18 +59,18 @@ async function token(event, context) {
               message: errorMessage
             });
           }
-          return buildAuthorizationFailureResponse({error: e, message: e.message});
+          return buildAuthorizationFailureResponse({ error: e, message: e.message });
         });
     }
     catch (e) {
       log.error('Error caught when checking code:', e);
-      return buildAuthorizationFailureResponse({error: e, message: e.message});
+      return buildAuthorizationFailureResponse({ error: e, message: e.message });
     }
   }
 
   const errorMessage = 'Request requires a code';
   const error = new Error(errorMessage);
-  return buildAuthorizationFailureResponse({error: error, message: error.message});
+  return buildAuthorizationFailureResponse({ error: error, message: error.message });
 }
 
 /**
@@ -79,16 +78,14 @@ async function token(event, context) {
  * authentication endpoint with the correct client ID to be used with the API
  *
  * @param  {Object} event   - Lambda event object
- * @param  {Object} context - Lambda context object
- * @param  {Function} cb    - Lambda callback function
  * @returns {Object} - a Lambda Proxy response object
  */
-function login(event, context, cb) {
+function login(event) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
   if (code) {
-    return token(event, context);
+    return token(event);
   }
 
   const url = authHelpers.generateLoginUrl(state);
@@ -108,13 +105,11 @@ function login(event, context, cb) {
  *
  * @function handler
  * @param  {Object}   event   - Lambda event payload
- * @param  {Object}   context - Lambda context - provided by AWS
- * @param  {Function} cb      - Lambda callback function
  * @returns {Object} - a Lambda Proxy response object
  */
-function handler(event, context, cb) {
+function handler(event) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
-    return login(event, context, cb);
+    return login(event);
   }
   return buildLambdaProxyResponse({
     json: false,

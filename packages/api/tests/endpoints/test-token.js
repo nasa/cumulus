@@ -37,7 +37,6 @@ const event = {
 };
 const eventWithoutCode = { queryStringParameters: {} };
 const eventWithoutState = { queryStringParameters: { code: '007' } };
-const context = { succeed: (body) => body };
 const callback = (err, response) => {
   if (err) throw err;
   return response;
@@ -94,7 +93,7 @@ test('token returns an error when no code is provided', (t) => {
     statusCode: 401
   };
 
-  return tokenEndpoint.token(eventWithoutCode, context)
+  return tokenEndpoint.token(eventWithoutCode)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });
@@ -105,7 +104,6 @@ test('token returns an error when auth client returns an error', (t) => {
   sandbox.stub(OAuth2.prototype, 'getToken').rejects('GetTokenError', getTokenErrorMessage);
   sandbox.stub(got, 'post').rejects('GetTokenError', getTokenErrorMessage);
 
-  //const result = tokenEndpoint.token(event, context);
   const expectedResult = {
     body: JSON.stringify({ message: getTokenErrorMessage }),
     headers: {
@@ -115,7 +113,7 @@ test('token returns an error when auth client returns an error', (t) => {
     statusCode: 401
   };
 
-  return tokenEndpoint.token(event, context)
+  return tokenEndpoint.token(event)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });
@@ -132,10 +130,10 @@ test('token returns an error when no user is found', (t) => {
       ...defaultHeaders,
       'WWW-Authenticate': 'Bearer error="Error: User is not authorized to access this site", error_description="User is not authorized to access this site"'
     },
-    statusCode: 401,
+    statusCode: 401
   };
 
-  return tokenEndpoint.token(event, context)
+  return tokenEndpoint.token(event)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });
@@ -157,7 +155,7 @@ test('token returns 301 when user exists and state provided', (t) => {
     body: 'Redirecting to the specified state'
   };
 
-  return tokenEndpoint.token(event, context)
+  return tokenEndpoint.token(event)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });
@@ -175,7 +173,7 @@ test('token returns 200 when user exists and state is not provided', (t) => {
     body: JSON.stringify({ message: { token: accessToken } })
   };
 
-  return tokenEndpoint.token(eventWithoutState, context)
+  return tokenEndpoint.token(eventWithoutState)
     .then((result) => {
       t.deepEqual(result, expectedResult);
     });
