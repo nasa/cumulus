@@ -14,9 +14,10 @@ Looking at our api schema [definitions](https://github.com/nasa/cumulus/blob/713
 
 Collections are logical sets of data objects of the same data type and version. We have a few [test collections](https://github.com/nasa/cumulus/tree/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/collections) configured on a fresh off-the-shelf Cumulus deployment. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the "Collections" navigation tab. Additionally, they can be managed via the [collections api](https://nasa.github.io/cumulus-api/?language=Python#list-collections).
 
-The schema for collections can be found [here](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L4) and tells us all about what values are expected, accepted, and [required](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L109) in the collection object.
+The schema for collections can be found [here](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L4) and tells us all about what values are expected, accepted, and [required](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L109) in a collection object.
 
 **Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/collections/s3_MOD09GQ_006.json)**
+
 **Required:**
 * `"name": "MOD09GQ"`: The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard.
 * `"version": "006"`: A version tag for the collection. # TODO
@@ -38,9 +39,19 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
 
 ### Providers
 
-Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data.
+Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L383). A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
+
+**Break down of [s3_provider.json](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/providers/s3_provider.json):**
+
+**Required:**
+* `"id" = "s3_provider"`:
+* `"globalConnectionLimit": 10`
+* `"protocol": "s3"`
+* `"host": "cumulus-data-shared"`
 
 
 ### Rules
 
-Rules are used by operators to start processing workflows and the transformation process. Rules can be invoked manually or based on a schedule.
+Rules are used by operators to start processing workflows and the transformation process. Rules can be invoked manually or based on a schedule. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L231). Rules can be viewed, edited, added, and removed from teh Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
+
+
