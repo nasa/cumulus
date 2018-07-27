@@ -80,7 +80,7 @@ async function token(event) {
  * @param  {Object} event   - Lambda event object
  * @returns {Object} - a Lambda Proxy response object
  */
-function login(event) {
+async function login(event) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
@@ -107,7 +107,7 @@ function login(event) {
  * @param  {Object}   event   - Lambda event payload
  * @returns {Object} - a Lambda Proxy response object
  */
-function handler(event) {
+async function handler(event, context, cb) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
     return login(event);
   }
