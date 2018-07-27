@@ -1,5 +1,6 @@
 'use strict';
 
+const uuidv4 = require('uuid/v4');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const test = require('ava');
@@ -19,7 +20,7 @@ let ProxyAsyncOperation;
 let runTaskReturn;
 let spyRunTaskFn;
 let runTaskFunction;
-
+let MockUuid = uuidv4();
 const successfulRunTask = {
   tasks: [{ taskArn: 'a-fake-arn' }], failures: []
 };
@@ -50,7 +51,10 @@ test.before(async () => {
   awsStub = { aws: awsImport };
   awsStub.aws.ecs = ecsStub;
 
-  ProxyAsyncOperation = proxyquire('../../models/async-operation.js', { '@cumulus/common/aws': awsStub });
+  ProxyAsyncOperation = proxyquire('../../models/async-operation.js', {
+    '@cumulus/common/aws': awsStub,
+    'uuid/v4': () => MockUuid
+  });
 
   configParams = {
     tableName: randomString(),
@@ -63,10 +67,14 @@ test.before(async () => {
   await s3().createBucket({ Bucket: configParams.systemBucket }).promise();
 });
 
+test.beforeEach(() => {
+  MockUuid = uuidv4();
+});
+
 test.after.always(() => {
   asyncOperationModel.deleteTable();
   s3().deleteBucket({ Bucket: configParams.systemBucket }).promise();
-  // do I need to retore test doubles?
+  // TODO: I thought I had to restore the spy after using, but I can't figure out how.
 });
 
 test('The AsyncOperation constructor requires that stackName be specified', (t) => {
@@ -98,18 +106,17 @@ test('The AsyncOperation constructor requires that systemBucket be specified', (
 });
 
 test('The AsyncOperation.start() method uploads the payload to S3', async (t) => {
-  const asyncOperationRecord = await asyncOperationModel.start(startParams);
-  const payloadKey = s3Join(configParams.stackName, 'async-operation-payloads', `${asyncOperationRecord.id}.json`);
+  await asyncOperationModel.start(startParams);
+  const payloadKey = s3Join(configParams.stackName, 'async-operation-payloads', `${MockUuid}.json`);
   const s3Object = await s3().getObject({ Bucket: configParams.systemBucket, Key: payloadKey }).promise();
 
   t.deepEqual(JSON.parse(s3Object.Body.toString()), startParams.payload);
 });
 
 test('The AsyncOperation.start() method starts an ECS task with the correct parameters', async (t) => {
-  // This will need sinon spy for ecs(), and I could use a suggestion since it took me so long to just fake the current one.
-
-  const asyncOperationRecord = await asyncOperationModel.start(startParams);
-  const payloadKey = s3Join(configParams.stackName, 'async-operation-payloads', `${asyncOperationRecord.id}.json`);
+  spyRunTaskFn.reset();
+  await asyncOperationModel.start(startParams);
+  const payloadKey = s3Join(configParams.stackName, 'async-operation-payloads', `${MockUuid}.json`);
 
   const expectedCallingArguments = {
     cluster: startParams.cluster,
@@ -120,7 +127,7 @@ test('The AsyncOperation.start() method starts an ECS task with the correct para
         {
           name: 'AsyncOperation',
           environment: [
-            { name: 'asyncOperationId', value: `${asyncOperationRecord.id}` },
+            { name: 'asyncOperationId', value: MockUuid },
             { name: 'asyncOperationsTable', value: configParams.tableName },
             { name: 'lambdaName', value: startParams.lambdaName },
             { name: 'payloadUrl', value: `s3://${configParams.systemBucket}/${payloadKey}` }
@@ -129,7 +136,6 @@ test('The AsyncOperation.start() method starts an ECS task with the correct para
       ]
     }
   };
-  t.true(spyRunTaskFn.called);
   t.true(spyRunTaskFn.calledWith(expectedCallingArguments));
 });
 
@@ -148,9 +154,9 @@ test('The AsyncOperation.start() method throws an exception if runTask() returne
 test('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {
   runTaskReturn = successfulRunTask;
 
-  const asyncOperationalRecord = await asyncOperationModel.start(startParams);
+  await asyncOperationModel.start(startParams);
   const dbParams = {
-    Key: { id: asyncOperationalRecord.id },
+    Key: { id: MockUuid },
     TableName: configParams.tableName
   };
   const item = await dynamodbDocClient().get(dbParams).promise();
@@ -160,9 +166,9 @@ test('The AsyncOperation.start() method writes a new record to DynamoDB', async 
 test('The AsyncOperation.start() method sets the record status to "CREATED"', async (t) => {
   runTaskReturn = successfulRunTask;
 
-  const asyncOperationalRecord = await asyncOperationModel.start(startParams);
+  await asyncOperationModel.start(startParams);
   const dbParams = {
-    Key: { id: asyncOperationalRecord.id },
+    Key: { id: MockUuid },
     TableName: configParams.tableName
   };
   const item = await dynamodbDocClient().get(dbParams).promise();
@@ -174,7 +180,7 @@ test('The AsyncOperation.start() method returns the newly-generated record', asy
 
   const asyncOperationalRecord = await asyncOperationModel.start(startParams);
   const dbParams = {
-    Key: { id: asyncOperationalRecord.id },
+    Key: { id: MockUuid },
     TableName: configParams.tableName
   };
   const item = await dynamodbDocClient().get(dbParams).promise();
