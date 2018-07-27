@@ -17,7 +17,7 @@
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "ava": {
-    "files": "tests/endpoints/test-token.js",
+    "files": "tests/endpoints/test-version.js",
     "serial": true
   },
   "nyc": {

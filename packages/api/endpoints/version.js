@@ -1,6 +1,6 @@
 'use strict';
 
-const { resp } = require('../lib/response');
+const { buildLambdaProxyResponse } = require('../lib/response');
 const pckg = require('../package.json');
 
 
@@ -18,7 +18,7 @@ function handler(event, context) {
     response_version: 'v1',
     api_version: pckg.version
   };
-  return resp(context, null, response);
+  return buildLambdaProxyResponse({body: response});
 }
 
 module.exports = handler;
