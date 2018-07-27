@@ -4,6 +4,7 @@ const test = require('ava');
 
 const {
   createQueue,
+  getExecutionArn,
   s3,
   sqs,
   recursivelyDeleteS3Bucket
@@ -221,8 +222,10 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule1.dataType,
             granuleId: granule1.granuleId,
-            files: granule1.files
+            files: granule1.files,
+            version: granule1.version
           }
         ]
       }
@@ -247,8 +250,10 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule2.dataType,
             granuleId: granule2.granuleId,
-            files: granule2.files
+            files: granule2.files,
+            version: granule2.version
           }
         ]
       }
@@ -258,6 +263,14 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
 test.serial('The correct message is enqueued with a PDR', async (t) => {
   const event = t.context.event;
+
+  // if the event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
+  // will have 'parentExecutionArn'
+  event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
+
+  const arn = getExecutionArn(
+    event.cumulus_config.state_machine, event.cumulus_config.execution_name
+  );
 
   const pdrName = `pdr-name-${randomString()}`;
   const pdrPath = `pdr-path-${randomString()}`;
@@ -313,7 +326,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       cumulus_meta: {
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn
+        state_machine: t.context.stateMachineArn,
+        parentExecutionArn: arn
       },
       meta: {
         pdr: event.input.pdr,
@@ -323,8 +337,10 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule1.dataType,
             granuleId: granule1.granuleId,
-            files: granule1.files
+            files: granule1.files,
+            version: granule1.version
           }
         ]
       }
@@ -340,7 +356,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       cumulus_meta: {
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn
+        state_machine: t.context.stateMachineArn,
+        parentExecutionArn: arn
       },
       meta: {
         pdr: event.input.pdr,
@@ -350,8 +367,10 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule2.dataType,
             granuleId: granule2.granuleId,
-            files: granule2.files
+            files: granule2.files,
+            version: granule2.version
           }
         ]
       }
