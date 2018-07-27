@@ -5,7 +5,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
+
+- **Cumulus-726**
+  - Added function to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
+  - Added IAM policy `@cumulus/deployment`: Lambda processing IAM role includes `kinesis::PutRecord` so step function lambdas can write to kinesis streams.
+
+### Changed
+
+- **Cumulus-726**
+  - Changed function in `@cumulus/api`: `models/rules.js#addKinesisEventSource` was modified to call to `deleteKinesisEventSource` with all required parameters (rule's name, arn and type).
+
+### Removed
+
+- **Cumulus-726**
+  - Configuration change to `@cumulus/deployment`: Removed default auto scaling configuration for Granules and Files DynamoDB tables.
+
+- **CUMULUS-688**
+  - Add integration test for ExecutionStatus
+  - Function addition to `@cumulus/integration-tests`: `api` includes `getExecutionStatus` which returns the execution status from the Cumulus API
+
+## [v1.8.0] - 2018-07-23
+
+### Added
+
+- **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
+
 - **GITC-776-3** Added more flexibility for rules.  You can now edit all fields on the rule's record
 We may need to update the api documentation to reflect this.
 
@@ -13,9 +39,6 @@ We may need to update the api documentation to reflect this.
     - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
       Parameter(s):
         - workflow - the workflow name
-        - messageSource - 'input' or 'output' from previous execution
-        - metaOverride - overrides the meta of the new execution, accepts partial override
-        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 - **Cumulus Community Edition** - Add Google OAuth authentication token logic to `@cumulus/api`. Refactor token endpoint to use environment variable flag `OAUTH_PROVIDER` when determining with authentication method to use.
 - **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
@@ -26,7 +49,6 @@ We may need to update the api documentation to reflect this.
 ### Fixed
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
-
 
 ## [v1.7.0] - 2018-07-02
 
@@ -370,7 +392,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.0...HEAD
+[v1.8.0]: https://github.com/nasa/cumulus/compare/v1.7.0...v1.8.0
 [v1.7.0]: https://github.com/nasa/cumulus/compare/v1.6.0...v1.7.0
 [v1.6.0]: https://github.com/nasa/cumulus/compare/v1.5.5...v1.6.0
 [v1.5.5]: https://github.com/nasa/cumulus/compare/v1.5.4...v1.5.5
