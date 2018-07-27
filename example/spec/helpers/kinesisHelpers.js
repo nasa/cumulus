@@ -94,6 +94,44 @@ async function createOrUseTestStream(streamName) {
 }
 
 /**
+ * Gets the shard iterator for stream <streamName> using LATEST: Records written to
+ * the stream after this shard iterator is retrieved will be returned by calls
+ * to GetRecords. NOTE: Shard iterators expire after 5 minutes if not used in a
+ * GetRecords call.
+ *
+ * @param  {string} streamName - Name of the stream of interest
+ * @returns {string}            - Shard iterator
+ */
+async function getShardIterator(streamName) {
+  const describeStreamParams = {
+    StreamName: streamName
+  };
+
+  const streamDetails = await kinesis.describeStream(describeStreamParams).promise();
+  const shardId = streamDetails.StreamDescription.Shards[0].ShardId;
+
+  const shardIteratorParams = {
+    ShardId: shardId, /* required */
+    ShardIteratorType: 'LATEST',
+    StreamName: streamName
+  };
+
+  const shardIterator = await kinesis.getShardIterator(shardIteratorParams).promise();
+  return shardIterator.ShardIterator;
+}
+
+/**
+ * Gets records from a kinesis stream using a shard iterator.
+ *
+ * @param  {string} shardIterator - Kinesis stream shard iterator.
+ *                                  Shard iterators must be generated using getShardIterator.
+ * @returns {Promise}              - kinesis GetRecords promise
+ */
+async function getRecords(shardIterator) {
+  return kinesis.getRecords({ ShardIterator: shardIterator }).promise();
+}
+
+/**
  * add a record to the kinesis stream.
  *
  * @param {string} streamName - kinesis stream name
@@ -113,10 +151,11 @@ async function putRecordOnStream(streamName, record) {
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
  * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
+ * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
+async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
   let timeWaited = 0;
   let lastExecution;
   let workflowExecution;
@@ -128,8 +167,8 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
     lastExecution = await getLastExecution();
     // getLastExecution returns undefined if no previous execution exists
     if (lastExecution && lastExecution.executionArn) {
-      const taskOutput = await lambdaStep.getStepOutput(lastExecution.executionArn, 'sf2snsStart');
-      if (taskOutput !== null && taskOutput.payload.identifier === recordIdentifier) {
+      const taskInput = await lambdaStep.getStepInput(lastExecution.executionArn, firstStep);
+      if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
         workflowExecution = lastExecution;
       }
     }
@@ -143,6 +182,8 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime) {
 module.exports = {
   createOrUseTestStream,
   deleteTestStream,
+  getShardIterator,
+  getRecords,
   putRecordOnStream,
   waitForActiveStream,
   waitForTestSfStarted
