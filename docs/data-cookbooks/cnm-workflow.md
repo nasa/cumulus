@@ -5,6 +5,7 @@ This entry documents setup of a basic workflow that utilizes the built-in CNM/Ki
 Prior to working through this entry you should be familiar with the [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism).
 
 ## Prerequisites
+
 #### Cumulus
 
 Use of this entry assumes you have a deployed instance of Cumulus (>= version 1.8).
@@ -25,7 +26,7 @@ You should be able to quickly use the "Create Data Stream" button on the [Kinesi
 
 ![](../images/cnm_create_kinesis_stream.jpg)
 
-Please bear in mind that your `${deployment}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.  The most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource, however your environment/security policies may require an approach specific to your deployment environment.
+Please bear in mind that your `${deployment}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.  The most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource, however your environment/security policies may require an approach specific to your deployment environment.  In operational environments it's likely science data providers would typically be responsible for providing a Kinesis stream with the appropraite permissions.
 
 For more information on how this process works and how to develop a process that will add records to a stream, read the [Kinesis documentation](https://aws.amazon.com/documentation/kinesis/) and the [developer guide](https://docs.aws.amazon.com/streams/latest/dev/introduction.html).
 
