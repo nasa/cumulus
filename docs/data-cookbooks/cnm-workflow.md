@@ -8,15 +8,15 @@ Prior to working through this entry you should be familiar with the [Cloud Notif
 
 #### Cumulus
 
-Use of this entry assumes you have a deployed instance of Cumulus (>= version 1.8).
+This entry assumes you have a deployed instance of Cumulus (>= version 1.8).
 
 #### AWS CLI
 
-Use of this entry assumes you have the [AWS CLI](https://aws.amazon.com/cli/)) installed and configured.   If you do not, please take a moment to review the documentation (particularly the [examples relevant to Kinesis](https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html) and install it now.
+This entry assumes you have the [AWS CLI](https://aws.amazon.com/cli/) installed and configured.   If you do not, please take a moment to review the documentation (particularly the [examples relevant to Kinesis](https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html) and install it now.
 
 #### Kinesis
 
-Use of this entry assumes you already have two [Kinesis](https://aws.amazon.com/kinesis/) data steams created for use as CNM notification and response data streams.
+This entry assumes you already have two [Kinesis](https://aws.amazon.com/kinesis/) data steams created for use as CNM notification and response data streams.
 
 If you do not have two streams setup, please take a moment to review the [Kinesis documentation](https://aws.amazon.com/documentation/kinesis/) and setup two basic single-shard streams for this example:
 
@@ -48,7 +48,7 @@ The following are steps that are required to set up your Cumulus instance to run
 
 #### Workflow Configuration
 
-For this example, we're going to trigger the  task that is provided in the example deployment, using a custom workflow.
+For this workflow example, we're going to trigger the  task that is provided in the example deployment, using a custom workflow.
 
 The following [workflow definition](../workflows/README.md) should be added to your deployment's workflows.yml.  Make certain to update the CNMResponseStream key in the CnmResponse task to match the name of the Kinesis response stream you configured in the prerequisites section:
 
@@ -162,7 +162,6 @@ Again - Please make sure to modify the value CNMResponseStream to match the stre
 The following tasks are required to be defined in the `lambda.yml` configuration file.
 
 If you're using a deployment based on the [example deployment](https://github.com/nasa/cumulus/tree/master/example) configuration this should already be defined for you.
-
 
 ###### CnmResponse
 
