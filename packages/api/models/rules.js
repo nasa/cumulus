@@ -164,17 +164,17 @@ class Rule extends Manager {
           return (mapping.EventSourceArn === item.rule.value);
         });
       if (mappingExists) {
-        const mappingEnabled = listData.EventSourceMappings
-          .find((mapping) => { // eslint-disable-line arrow-body-style
-            return (mapping.EventSourceArn === item.rule.value &&
-                    mapping.State === 'Enabled');
-          });
-
-        if (mappingEnabled) {
-          item.rule.arn = mappingEnabled.UUID;
+        if (mappingExists.State === 'Enabled') {
+          item.rule.arn = mappingExists.UUID;
           return item;
         }
-        await this.deleteKinesisEventSource({ UUID: mappingExists.UUID }).promise();
+        await this.deleteKinesisEventSource({
+          name: item.name,
+          rule: {
+            arn: mappingExists.UUID,
+            type: 'kinesis'
+          }
+        });
       }
     }
 
