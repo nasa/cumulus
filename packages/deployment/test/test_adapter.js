@@ -8,7 +8,7 @@ const path = require('path');
 const test = require('ava');
 const { fetchMessageAdapter } = require('../lib/adapter');
 
-const gitPath = 'cumulus-nasa/cumulus-message-adapter';
+const gitPath = 'nasa/cumulus-message-adapter';
 
 test.beforeEach((t) => {
   t.context.temp = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);

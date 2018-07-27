@@ -22,50 +22,25 @@ const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
 const {
-  createGranuleFiles,
+  setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleId
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const taskName = 'IngestGranule';
+const workflowName = 'IngestGranule';
 
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006.[\\d]{13}$';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const templatedSyncGranuleFilename = templateFile({
   inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
-  config: config[taskName].SyncGranuleOutput
+  config: config[workflowName].SyncGranuleOutput
 });
 
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: './spec/ingestGranule/IngestGranule.output.payload.template.json',
-  config: config[taskName].IngestGranuleOutput
+  config: config[workflowName].IngestGranuleOutput
 });
-
-/**
- * Set up files in the S3 data location for a new granule to use for this
- * test. Use the input payload to determine which files are needed and
- * return updated input with the new granule id.
- *
- * @param {string} bucket - data bucket
- * @param {string} granuleId - granule id for the new files
- * @param {string} inputPayloadJson - input payload as a JSON string
- * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
- */
-async function setupTestGranuleForIngest(bucket, granuleId, inputPayloadJson) {
-  const baseInputPayload = JSON.parse(inputPayloadJson);
-
-  await createGranuleFiles(
-    baseInputPayload.granules[0].files,
-    bucket,
-    testDataGranuleId,
-    granuleId
-  );
-
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, testDataGranuleId, granuleId);
-
-  return JSON.parse(updatedInputPayloadJson);
-}
 
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
@@ -86,11 +61,11 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
-    const granuleId = randomStringFromRegex(granuleRegex);
-
+    console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, granuleId, inputPayloadJson);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
 
+    const granuleId = inputPayload.granules[0].granuleId;
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
 
     expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
@@ -99,11 +74,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
 
     failingWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, {}
+      config.stackName, config.bucket, workflowName, collection, provider, {}
     );
     failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
     failedExecutionName = failedExecutionArn.pop();
@@ -126,6 +101,8 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
+  // skipping this test because it's missing some of the functions used here
+  // such as createFakeUser
   it('makes the granule available through the Cumulus API', async () => {
     const granule = await apiTestUtils.getGranule({
       prefix: config.stackName,
