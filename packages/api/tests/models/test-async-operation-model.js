@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 'use strict';
 
 const sinon = require('sinon');
@@ -7,7 +5,7 @@ const proxyquire = require('proxyquire');
 const test = require('ava');
 
 const {
-  aws: { dynamodb, s3, s3Join },
+  aws: { dynamodbDocClient, s3, s3Join },
   testUtils: { randomString }
 } = require('@cumulus/common');
 const awsImport = require('@cumulus/common/aws');
@@ -152,12 +150,11 @@ test('The AsyncOperation.start() method writes a new record to DynamoDB', async 
 
   const asyncOperationalRecord = await asyncOperationModel.start(startParams);
   const dbParams = {
-    Key: { id: { S: asyncOperationalRecord.id } },
+    Key: { id: asyncOperationalRecord.id },
     TableName: configParams.tableName
   };
-  const item = await dynamodb().getItem(dbParams).promise();
-  // This is not the way to test the record is written to dynamoDb.
-  t.is(item.Item.taskArn.S, successfulRunTask.tasks[0].taskArn);
+  const item = await dynamodbDocClient().get(dbParams).promise();
+  t.is(item.Item.taskArn, successfulRunTask.tasks[0].taskArn);
 });
 
 test('The AsyncOperation.start() method sets the record status to "CREATED"', async (t) => {
@@ -165,12 +162,11 @@ test('The AsyncOperation.start() method sets the record status to "CREATED"', as
 
   const asyncOperationalRecord = await asyncOperationModel.start(startParams);
   const dbParams = {
-    Key: { id: { S: asyncOperationalRecord.id } },
+    Key: { id: asyncOperationalRecord.id },
     TableName: configParams.tableName
   };
-  const item = await dynamodb().getItem(dbParams).promise();
-  // This is not the way to test the record is written to dynamoDb.
-  t.is(item.Item.status.S, 'CREATED');
+  const item = await dynamodbDocClient().get(dbParams).promise();
+  t.is(item.Item.status, 'CREATED');
 });
 
 test('The AsyncOperation.start() method returns the newly-generated record', async (t) => {
@@ -178,12 +174,9 @@ test('The AsyncOperation.start() method returns the newly-generated record', asy
 
   const asyncOperationalRecord = await asyncOperationModel.start(startParams);
   const dbParams = {
-    Key: { id: { S: asyncOperationalRecord.id } },
+    Key: { id: asyncOperationalRecord.id },
     TableName: configParams.tableName
   };
-  const item = await dynamodb().getItem(dbParams).promise();
-  console.log('\nasyncOperationalrecord:', asyncOperationalRecord);
-  console.log('\nitem:', item);
-
+  const item = await dynamodbDocClient().get(dbParams).promise();
   t.deepEqual(item.Item, asyncOperationalRecord);
 });
