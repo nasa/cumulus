@@ -1,15 +1,15 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
-  "homepage": "https://github.com/cumulus-nasa/cumulus/tree/master/tasks/sync-granule",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/sync-granule",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cumulus-nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus"
   },
   "publishConfig": {
     "access": "public"
@@ -38,10 +38,10 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.7.0",
+    "@cumulus/common": "^1.8.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.1",
-    "@cumulus/ingest": "^1.7.0",
-    "@cumulus/test-data": "^1.6.0",
+    "@cumulus/ingest": "^1.8.0",
+    "@cumulus/test-data": "^1.8.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {

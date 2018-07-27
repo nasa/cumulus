@@ -25,18 +25,11 @@ function extractFileInfo(file) {
 
 class FileClass extends Manager {
   constructor() {
-    super(process.env.FilesTable);
-  }
-
-  /**
-   * Create the dynamoDB for this class
-   *
-   * @returns {Promise} aws dynamodb createTable response
-   */
-  async createTable() {
-    const hash = { name: 'bucket', type: 'S' };
-    const range = { name: 'key', type: 'S' };
-    return Manager.createTable(this.tableName, hash, range);
+    super({
+      tableName: process.env.FilesTable,
+      tableHash: { name: 'bucket', type: 'S' },
+      tableRange: { name: 'key', type: 'S' }
+    });
   }
 
   /**
