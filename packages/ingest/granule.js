@@ -218,9 +218,6 @@ class Granule {
       .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
 
     const files = await Promise.all(downloadFiles)
-    //.catch((err) => {
-    //  log.error("exception download", JSON.stringify(err));
-    //});
 
     return {
       granuleId: granule.granuleId,
