@@ -31,12 +31,9 @@ async function download(ingest, bucket, provider, granules) {
   for (const g of granules) {
     try {
       const r = await ingest.ingest(g, bucket);
-      console.log("*** NO Error donwload")
-
       updatedGranules.push(r);
     }
     catch (e) {
-      console.log("*** Error donwload")
       await lock.removeLock(bucket, provider.id, g.granuleId);
       log.error(e);
       throw e;
