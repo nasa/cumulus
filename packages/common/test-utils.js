@@ -55,7 +55,7 @@ const localStackPorts = {
  */
 function localstackSupportedService(Service) {
   const serviceIdentifier = Service.serviceIdentifier;
-  return Object.keys(localStackPorts).indexOf(serviceIdentifier) !== -1;
+  return Object.keys(localStackPorts).includes(serviceIdentifier);
 }
 
 /**
@@ -113,6 +113,12 @@ function testAwsClient(Service, options) {
   if (localstackSupportedService(Service)) {
     return localStackAwsClient(Service, options);
   }
+
+  // The expectation is that tests will fill in the required methods
+  if (Service.serviceIdentifier === 'ecs') {
+    return {};
+  }
+
   return new Service(Object.assign(options, { endpoint: 'http://you-forgot-to-stub-an-aws-call' }));
 }
 exports.testAwsClient = testAwsClient;
