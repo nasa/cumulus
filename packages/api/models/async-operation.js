@@ -1,10 +1,9 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
 const { ecs, s3, s3Join } = require('@cumulus/common/aws');
 const uuidv4 = require('uuid/v4');
 const Manager = require('./base');
-const { asyncOperations: asyncOperationsSchema } = require('./schemas');
+const { asyncOperation: asyncOperationSchema } = require('./schemas');
 
 /**
  * A class for tracking AsyncOperations using DynamoDB.
@@ -31,7 +30,7 @@ class AsyncOperation extends Manager {
     super({
       tableName: params.tableName,
       tableHash: { name: 'id', type: 'S' },
-      tableSchema: asyncOperationsSchema
+      schema: asyncOperationSchema
     });
 
     this.systemBucket = params.systemBucket;
@@ -47,6 +46,21 @@ class AsyncOperation extends Manager {
    */
   get(id) {
     return super.get({ id });
+  }
+
+  /**
+   * Update an AsyncOperation in the database
+   *
+   * @param {string} id - the ID of the AsyncOperation
+   * @param {Object} updates - key / value pairs of fields to be updated
+   * @param {Array<string>} keysToDelete - an optional list of keys to remove
+   *   from the object
+   * @returns {Promise<Object>} - a Promise that resolves to the object after it
+   *   is updated
+   * @memberof AsyncOperation
+   */
+  update(id, updates = {}, keysToDelete = []) {
+    return super.update({ id }, updates, keysToDelete);
   }
 
   /**
@@ -82,6 +96,9 @@ class AsyncOperation extends Manager {
       Body: JSON.stringify(payload)
     }).promise();
 
+    // Create the item in the database
+    await this.create({ id, status: 'CREATING' });
+
     // Start the task in ECS
     const runTaskResponse = await ecs().runTask({
       cluster,
@@ -102,17 +119,16 @@ class AsyncOperation extends Manager {
       }
     }).promise();
 
-    // TODO We need to figure out how to handle this case
     if (runTaskResponse.failures.length > 0) {
-      log.error('runTaskResponse.failures:', JSON.stringify(runTaskResponse, null, 2));
-      throw new Error(`Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`);
+      const err = new Error(runTaskResponse.failures[0].reason);
+      err.name = 'EcsStartTaskError';
+      throw err;
     }
 
-    return this.create({
+    return this.update(
       id,
-      taskArn: runTaskResponse.tasks[0].taskArn,
-      status: 'CREATED'
-    });
+      { taskArn: runTaskResponse.tasks[0].taskArn }
+    );
   }
 }
 module.exports = AsyncOperation;
