@@ -113,7 +113,7 @@ test('The AsyncOperation.start() method uploads the payload to S3', async (t) =>
   t.deepEqual(JSON.parse(s3Object.Body.toString()), startParams.payload);
 });
 
-test('The AsyncOperation.start() method starts an ECS task with the correct parameters', async (t) => {
+test.serial('The AsyncOperation.start() method starts an ECS task with the correct parameters', async (t) => {
   spyRunTaskFn.reset();
   await asyncOperationModel.start(startParams);
   const payloadKey = s3Join(configParams.stackName, 'async-operation-payloads', `${MockUuid}.json`);
@@ -140,7 +140,7 @@ test('The AsyncOperation.start() method starts an ECS task with the correct para
 });
 
 
-test('The AsyncOperation.start() method throws an exception if runTask() returned failures', async (t) => {
+test.serial('The AsyncOperation.start() method throws an exception if runTask() returned failures', async (t) => {
   runTaskReturn = failureRunTask;
   try {
     await asyncOperationModel.start(startParams);
@@ -151,7 +151,7 @@ test('The AsyncOperation.start() method throws an exception if runTask() returne
   }
 });
 
-test('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {
+test.serial('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {
   runTaskReturn = successfulRunTask;
 
   await asyncOperationModel.start(startParams);
@@ -163,7 +163,7 @@ test('The AsyncOperation.start() method writes a new record to DynamoDB', async 
   t.is(item.Item.taskArn, successfulRunTask.tasks[0].taskArn);
 });
 
-test('The AsyncOperation.start() method sets the record status to "CREATED"', async (t) => {
+test.serial('The AsyncOperation.start() method sets the record status to "CREATED"', async (t) => {
   runTaskReturn = successfulRunTask;
 
   await asyncOperationModel.start(startParams);
@@ -175,7 +175,7 @@ test('The AsyncOperation.start() method sets the record status to "CREATED"', as
   t.is(item.Item.status, 'CREATED');
 });
 
-test('The AsyncOperation.start() method returns the newly-generated record', async (t) => {
+test.serial('The AsyncOperation.start() method returns the newly-generated record', async (t) => {
   runTaskReturn = successfulRunTask;
 
   const asyncOperationalRecord = await asyncOperationModel.start(startParams);
