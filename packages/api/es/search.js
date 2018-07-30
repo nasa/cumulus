@@ -284,7 +284,6 @@ class BaseSearch {
       if (!this.client) {
         this.client = await this.constructor.es();
       }
-      console.log('params', JSON.stringify(searchParams, null, 2));
       const result = await this.client.search(searchParams);
 
       const response = result.hits.hits.map((s) => s._source);
