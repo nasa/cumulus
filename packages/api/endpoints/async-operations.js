@@ -32,8 +32,32 @@ async function getAsyncOperation(asyncOperationModel, id) {
 
   return buildLambdaProxyResponse({
     json: true,
-    body: pick(asyncOperation, ['id', 'status', 'taskArn', 'result', 'error'])
+    body: pick(asyncOperation, ['id', 'status', 'taskArn', 'output'])
   });
+}
+
+/**
+ * Fetch the required config values
+ *
+ * In testing, we'll smuggle the table names in using the context.  When this is
+ * run in API Gateway, the table names will be set using environment variables
+ *
+ * @param {Object} context - a Lambda context
+ * @returns {Object} the config for the Lambda function
+ */
+function getConfig(context) {
+  const getConfigValue = (key) => {
+    const value = context[key] || process.env[key];
+    if (!value) throw new Error(`${key} must be set.`);
+    return value;
+  };
+
+  return {
+    asyncOperationsTable: getConfigValue('AsyncOperationsTable'),
+    stackName: getConfigValue('stackName'),
+    systemBucket: getConfigValue('systemBucket'),
+    usersTable: getConfigValue('UsersTable')
+  };
 }
 
 /**
@@ -43,23 +67,14 @@ async function getAsyncOperation(asyncOperationModel, id) {
  * @param {Object} context - the Lambda context
  * @returns {Promise<Object>} - returns a Lambda Proxy response
  */
-async function handler(event, context) {
-  // In testing, we'll smuggle the table names in using the context.  When
-  // this is run in API Gateway, the table names will be set using environment
-  // variables
-  const getConfigValue = (key) => {
-    const value = context[key] || process.env[key];
-    if (!value) throw new Error(`${key} must be set.`);
-    return value;
-  };
-
+async function handler(event, context = {}) {
   try {
-    // If any of these are missing, an exception will be thrown and a 500
-    // response will be returned to the caller.
-    const usersTable = getConfigValue('UsersTable');
-    const asyncOperationsTable = getConfigValue('AsyncOperationsTable');
-    const stackName = getConfigValue('stackName');
-    const systemBucket = getConfigValue('systemBucket');
+    const {
+      asyncOperationsTable,
+      stackName,
+      systemBucket,
+      usersTable
+    } = getConfig(context);
 
     // Verify the user's credentials
     const authorizationFailureResponse = await getAuthorizationFailureResponse({

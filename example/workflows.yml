@@ -535,64 +535,97 @@ IngestGranule:
       Cause: 'Workflow failed'
 
 KinesisTriggerTest:
-    Comment: 'Tests Workflow from Kinesis Stream'
-    StartAt: Report
-    States:
-      Report:
-        Type: Task
-        Resource: ${sf2snsStartLambdaFunction.Arn}
-        Next: TranslateMessage
-      TranslateMessage:
-        Type: Task
-        Resource: ${CNMToCMALambdaFunction.Arn}
-        Retry:
-          - ErrorEquals:
-              - States.ALL
-            IntervalSeconds: 10
-            MaxAttempts: 2
-        Catch:
-          - ErrorEquals:
+  Comment: 'Tests Workflow from Kinesis Stream'
+  StartAt: StartStatus
+  States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: CnmResponse
+      Next: TranslateMessage
+    TranslateMessage:
+      Type: Task
+      Resource: ${CNMToCMALambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          outputs:
+            - source: '{$.cnm}'
+              destination: '{$.meta.cnm}'
+            - source: '{$}'
+              destination: '{$.payload}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: CnmResponse
+      Next: SyncGranule
+    SyncGranule:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        buckets: '{$.meta.buckets}'
+        collection: '{$.meta.collection}'
+        downloadBucket: '{$.meta.buckets.private.name}'
+        stack: '{$.meta.stack}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
+      Retry:
+        - ErrorEquals:
             - States.ALL
-            ResultPath: '$.exception'
-            Next: StopStatus
-        Next: SyncGranule
-      SyncGranule:
-        CumulusConfig:
-          provider: '{$.meta.provider}'
-          buckets: '{$.meta.buckets}'
-          collection: '{$.meta.collection}'
-          downloadBucket: '{$.meta.buckets.private.name}'
-          stack: '{$.meta.stack}'
-          cumulus_message:
-            outputs:
-              - source: '{$.granules}'
-                destination: '{$.meta.input_granules}'
-              - source: '{$}'
-                destination: '{$.payload}'
-        Type: Task
-        Resource: ${SyncGranuleLambdaFunction.Arn}
-        Retry:
-          - ErrorEquals:
-              - States.ALL
-            IntervalSeconds: 10
-            MaxAttempts: 3
-        Catch:
-          - ErrorEquals:
+          IntervalSeconds: 10
+          MaxAttempts: 3
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: CnmResponse
+    CnmResponse:
+      CumulusConfig:
+        OriginalCNM: '{$.meta.cnm}'
+        CNMResponseStream: '{$.meta.stack}-cnmResponseStream'
+        region: 'us-east-1'
+        WorkflowException: '{$.exception}'
+        cumulus_message:
+          outputs:
+            - source: '{$}'
+              destination: '{$.meta.cnmResponse}'
+      Type: Task
+      Resource: ${CnmResponseLambdaFunction.Arn}
+      Retry:
+        - ErrorEquals:
             - States.ALL
-            ResultPath: '$.exception'
-            Next: StopStatus
-        Next: StopStatus
-      StopStatus:
-        Type: Task
-        Resource: ${sf2snsEndLambdaFunction.Arn}
-        Catch:
-          - ErrorEquals:
-            - States.ALL
-            Next: WorkflowFailed
-        End: true
-      WorkflowFailed:
-        Type: Fail
-        Cause: 'Workflow failed'
+          IntervalSeconds: 5
+          MaxAttempts: 3
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${sf2snsEndLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
 
 SyncGranule:
   Comment: 'Sync Granule'
