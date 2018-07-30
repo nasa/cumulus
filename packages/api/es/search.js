@@ -173,7 +173,7 @@ class BaseSearch {
           term: {
             _id: id
           }
-        } 
+        }
       };
 
       logDetails.granuleId = id;
