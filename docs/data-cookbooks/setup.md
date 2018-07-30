@@ -27,9 +27,9 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
 "process": modis" # The options for this are found in "ChooseProcess" in workflows.yml
 "provider_path": "cumulus-test-data/pdrs" # This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint.
 "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$" # REGEX to match granuleId.
-"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)" # REGEX to match granuleIdExtraction. # regex that extracts granuleId from file names
+"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)" # REGEX that extracts granuleId from file names
 "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
-"files": [
+"files": [ # Describe the individual files that will exist for each granule in this collection (science, browse, meta, etc.)
   {
     "bucket": internal # Which S3 bucket this collection will live in. The available buckets are configured in the Cumulus deployment file: app/config.yml (but should be entered here WITHOUT the stack-name). cumulus-test-internal -> internal (if the stack-name is cumulus-test),
     "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
@@ -44,7 +44,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
 **Optional:**
 ```
 "provider_path": "granules/fake_granules" # path to the granule/file on the provider
-"dataType": "MOD09GQ" # shortName
+"dataType": "MOD09GQ"
 "duplicateHandling": "replace" # (replace|version|skip)
 "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}" # Filename without extension
 ```
@@ -63,6 +63,16 @@ Providers ingest, archive, process, and distribute satellite data on-demand. The
 "protocol": "s3" # (http|https|ftp|sftp|s3)
 "host": "cumulus-data-shared" # host where the files will exist
 ```
+
+**Optional:**
+```
+"port": # which port to connect to the provider on
+"username": # Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested.
+"password": # Password for access to the provider. Plain-text or encrypted. Encrypted is highly suggested.
+"encrypted": # Are the username and password credentials encrypted?
+"updatedAt": # This will be updated automatically
+```
+_The above optional attributes are not shown in the example provided, but they have been included in this document for completeness_
 
 
 ### Rules
