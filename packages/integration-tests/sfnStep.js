@@ -178,11 +178,14 @@ class SfnStep {
       return null;
     }
 
-    // Use the first passed execution, or last execution if none passed
+    // If querying for successful step output, use the first successful
+    // execution or the last execution if none were successful
     let stepExecution;
-    const passedExecutions = stepExecutions.filter((e) => this.completedSuccessfulFilter(e));
-    if (passedExecutions && passedExecutions.length > 0) {
-      stepExecution = passedExecutions[0];
+    const successfulPassedExecutions = stepExecutions.filter((e) => this.completedSuccessfulFilter(e));
+    if (eventType === 'success'
+        && successfulPassedExecutions
+        && successfulPassedExecutions.length > 0) {
+      stepExecution = successfulPassedExecutions[0];
     }
     else {
       stepExecution = stepExecutions[stepExecutions.length - 1];
