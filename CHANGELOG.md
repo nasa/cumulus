@@ -6,10 +6,54 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-705**
+  - Adds an AsyncOperations model and associated DynamoDB table to the API
+  - Adds an /asyncOperations endpoint to the API, which can be used to fetch the
+    status of an AsyncOperation
+  - Adds a /bulkDelete endpoint to the API, which performs an asynchronous
+    bulk-delete operation. This is a stub right now which is only intended to
+    demonstration how AsyncOperations work.
+  - Adds an AsyncOperation ECS task, which will fetch an Lambda function, run it
+    in ECS, and then store the result to the AsyncOperations table in DynamoDB.
+    To support this, you will need to add the following to the `ecs` config
+    section of your `app/config.yml` file:
+
+    ```
+    tasks:
+      AsyncOperation:
+        image: cumuluss/async-operation:8
+        cpu: 400
+        memory: 700
+        count: 1
+        envs:
+          AWS_REGION:
+            function: Fn::Sub
+            value: '${AWS::Region}'
+    ```
+
+- **Cumulus-726**
+  - Added function to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
+  - Added IAM policy `@cumulus/deployment`: Lambda processing IAM role includes `kinesis::PutRecord` so step function lambdas can write to kinesis streams.
+
+### Changed
+
+- **Cumulus-726**
+  - Changed function in `@cumulus/api`: `models/rules.js#addKinesisEventSource` was modified to call to `deleteKinesisEventSource` with all required parameters (rule's name, arn and type).
+
+### Removed
+
+- **Cumulus-726**
+  - Configuration change to `@cumulus/deployment`: Removed default auto scaling configuration for Granules and Files DynamoDB tables.
+
+- **CUMULUS-688**
+  - Add integration test for ExecutionStatus
+  - Function addition to `@cumulus/integration-tests`: `api` includes `getExecutionStatus` which returns the execution status from the Cumulus API
+
 ## [v1.8.0] - 2018-07-23
 
 ### Added
-
 
 - **CUMULUS-718** Adds integration test for Kinesis triggering a workflow.
 
@@ -20,9 +64,6 @@ We may need to update the api documentation to reflect this.
     - new applyWorkflow action at PUT /granules/{granuleid} Applying a workflow starts an execution of the provided workflow and passes the granule record as payload.
       Parameter(s):
         - workflow - the workflow name
-        - messageSource - 'input' or 'output' from previous execution
-        - metaOverride - overrides the meta of the new execution, accepts partial override
-        - payloadOverride - overrides the payload of the new execution, accepts partial override
 
 - **CUMULUS-685** - Add parent exeuction arn to the execution which is triggered from a parent step function
 
@@ -32,6 +73,11 @@ We may need to update the api documentation to reflect this.
 ### Fixed
 - **CUMULUS-746** - Move granule API correctly updates record in dynamo DB and cmr xml file
 - **CUMULUS-766** - Populate database fileSize field from S3 if value not present in Ingest payload
+
+## [v1.7.1] - 2018-07-27
+
+### Fixed
+- **CUMULUS-766** - Backport from 1.8.0 - Populate database fileSize field from S3 if value not present in Ingest payload
 
 ## [v1.7.0] - 2018-07-02
 

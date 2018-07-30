@@ -86,7 +86,7 @@ test('The AsyncOperation constructor requires that stackName be specified', (t) 
     t.fail('stackName should be required');
   }
   catch (err) {
-    t.is(err instanceof TypeError, true);
+    t.true(err instanceof TypeError);
     t.is(err.message, 'stackName is required');
   }
 });
@@ -186,3 +186,7 @@ test.serial('The AsyncOperation.start() method returns the newly-generated recor
   const item = await dynamodbDocClient().get(dbParams).promise();
   t.deepEqual(item.Item, asyncOperationalRecord);
 });
+
+test.todo('The AsyncAdapter.start() method sets the status to "TASK_RUNNER_FAILED" if it is unable to create an ECS task');
+
+test.todo('The AsyncAdapter.start() method sets the output if it is unable to create an ECS task');
