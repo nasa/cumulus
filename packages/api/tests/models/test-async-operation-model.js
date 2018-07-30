@@ -168,29 +168,23 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
   t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${asyncOperationModel.stackName}/async-operation-payloads/${id}.json`);
 });
 
-test.serial('The AsyncOperation.start() method throws an exception if runTask() returned failures', async (t) => {
+test('The AsyncAdapter.start() method sets the output if it is unable to create an ECS task', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [],
-    failures: [{ arn: randomString(), reason: 'meant to fail.' }]
+    failures: [{ arn: randomString(), reason: 'out of cheese' }]
   };
 
-  try {
-    await asyncOperationModel.start({
-      asyncOperationTaskDefinition: randomString(),
-      cluster: randomString(),
-      lambdaName: randomString(),
-      payload: {}
-    });
-    t.fail('AsyncOperation.start() with ECS failures should raise error');
-  }
-  catch (error) {
-    t.is(error.message, 'Failed to start AsyncOperation: meant to fail.');
-  }
+  const { id } = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: randomString(),
+    cluster: randomString(),
+    lambdaName: randomString(),
+    payload: {}
+  });
+
+  const { output } = await asyncOperationModel.get(id);
+  const parsedOutput = JSON.parse(output);
+  t.is(parsedOutput.message, 'Failed to start AsyncOperation: out of cheese');
 });
-
-// test.todo('The AsyncAdapter.start() method sets the status to "RUNNER_FAILED" if it is unable to create an ECS task');
-
-// test.todo('The AsyncAdapter.start() method sets the output if it is unable to create an ECS task');
 
 test.serial('The AsyncOperation.start() method writes a new record to DynamoDB', async (t) => {
   stubbedEcsRunTaskResult = {

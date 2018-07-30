@@ -155,11 +155,19 @@ class AsyncOperation extends Manager {
       }
     }).promise();
 
-    // TODO This should update the record in the database
+    // If creating the stack failed, update the database
     if (runTaskResponse.failures.length > 0) {
-      const err = new Error(`Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`);
-      err.name = 'EcsStartTaskError';
-      throw err;
+      return this.update(
+        id,
+        {
+          status: 'RUNNER_FAILED',
+          output: JSON.stringify({
+            name: 'EcsStartTaskError',
+            message: `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`,
+            stack: (new Error()).stack
+          })
+        }
+      );
     }
 
     // Update the database with the taskArn
