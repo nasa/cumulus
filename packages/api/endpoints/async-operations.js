@@ -32,7 +32,7 @@ async function getAsyncOperation(asyncOperationModel, id) {
 
   return buildLambdaProxyResponse({
     json: true,
-    body: pick(asyncOperation, ['id', 'status', 'taskArn', 'result', 'error'])
+    body: pick(asyncOperation, ['id', 'status', 'taskArn', 'output'])
   });
 }
 

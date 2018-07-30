@@ -1,9 +1,8 @@
-/* eslint no-console: 0 */
-
 'use strict';
 
 const AWS = require('aws-sdk');
 const util = require('util');
+const isError = require('lodash.iserror');
 const exec = util.promisify(require('child_process').exec); // eslint-disable-line security/detect-child-process
 const fs = require('fs');
 const https = require('https');
@@ -38,11 +37,21 @@ async function fetchPayload(Bucket, Key) {
     payloadResponse = await s3.getObject({ Bucket, Key }).promise();
   }
   catch (err) {
-    console.error(`Failed to fetch s3://${Bucket}/${Key}: ${err.message}`);
-    throw err;
+    throw new Error(`Failed to fetch s3://${Bucket}/${Key}: ${err.message}`);
   }
 
-  return JSON.parse(payloadResponse.Body.toString());
+  let parsedPayload;
+  try {
+    parsedPayload = JSON.parse(payloadResponse.Body.toString());
+  }
+  catch (err) {
+    if (err.name !== 'SyntaxError') throw err;
+    const newError = new Error(`Unable to parse payload: ${err.message}`);
+    newError.name = 'JSONParsingError';
+    throw newError;
+  }
+
+  return parsedPayload;
 }
 
 /**
@@ -58,7 +67,6 @@ async function fetchAndDeletePayload(payloadUrl) {
 
   const payload = await fetchPayload(Bucket, Key);
 
-  console.log(`Deleting ${payloadUrl}`);
   await (new AWS.S3()).deleteObject({ Bucket, Key }).promise();
 
   return payload;
@@ -104,79 +112,64 @@ async function fetchLambdaFunction(codeUrl) {
     file.on('finish', () => file.close());
     file.on('close', resolve);
 
-    https.get(codeUrl, (res) => res.pipe(file));
+    try {
+      https.get(codeUrl, (res) => res.pipe(file))
+        .on('error', reject);
+    }
+    catch (err) {
+      reject(err);
+    }
   });
 
   return exec('unzip -o /home/task/fn.zip -d /home/task/lambda-function');
 }
+
+/**
+ * Given an Error object return an object to be stored as the AsyncOperation
+ *   output.
+ *
+ * @param {Error} error - the error to be stored
+ * @returns {Object} an object with name, message, and stack properties
+ */
+function buildErrorOutput(error) {
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack
+  };
+}
+
 /**
  * Update an AsyncOperation item in DynamoDB
  *
  * For help with parameters, see:
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property
  *
- * @param {Object} params - params
- * @param {string} params.TableName - the AsyncOperation DynamoDB table
- * @param {string} params.id - the id of the AsyncOperation
- * @param {Object} params.names - the ExpressionAttributeNames to update
- * @param {Object} params.values - the ExpressionAttributeValues to update
- * @param {string} params.expression - the UpdateExpression to update
+ * @param {string} status - the new AsyncOperation status
+ * @param {Object} output - the new output to store.  Must be parsable
+ *   into JSON.
  * @returns {Promise} resolves when the item has been updated
  */
-function updateAsyncOperation(params) {
-  const {
-    TableName,
-    id,
-    names,
-    values,
-    expression
-  } = params;
-
+function updateAsyncOperation(status, output) {
   const dynamodb = new AWS.DynamoDB();
 
+  const actualOutput = isError(output) ? buildErrorOutput(output) : output;
+
   return dynamodb.updateItem({
-    TableName,
-    Key: { id: { S: id } },
-    ExpressionAttributeNames: names,
-    ExpressionAttributeValues: values,
-    UpdateExpression: expression
+    TableName: process.env.asyncOperationsTable,
+    Key: { id: { S: process.env.asyncOperationId } },
+    ExpressionAttributeNames: {
+      '#S': 'status',
+      '#O': 'output',
+      '#U': 'updatedAt'
+    },
+    ExpressionAttributeValues: {
+      ':s': { S: status },
+      ':o': { S: JSON.stringify(actualOutput) },
+      ':u': { N: (Number(Date.now())).toString() }
+    },
+    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u'
   }).promise();
-}
-
-/**
- * Update DynamoDB with a successful result
- *
- * @param {string} TableName - the AsyncOperation DynamoDB table
- * @param {string} id - the id of the AsyncOperation
- * @param {Object} result - the result to store.  Will be converted to JSON.
- * @returns {Promise} resolves when the item has been updated
- */
-function storeOperationSuccess(TableName, id, result) {
-  return updateAsyncOperation({
-    TableName,
-    id,
-    names: { '#S': 'status', '#R': 'result' },
-    values: { ':s': { S: 'SUCCEEDED' }, ':r': { S: JSON.stringify(result) } },
-    expression: 'SET #S = :s, #R = :r'
-  });
-}
-
-/**
- * Update DynamoDB with a failed result
- *
- * @param {string} TableName - the AsyncOperation DynamoDB table
- * @param {string} id - the id of the AsyncOperation
- * @param {string} message - the error message to store
- * @returns {Promise} resolves when the item has been updated
- */
-function storeOperationFailure(TableName, id, message) {
-  return updateAsyncOperation({
-    TableName,
-    id,
-    names: { '#S': 'status', '#E': 'error' },
-    values: { ':s': { S: 'FAILED' }, ':e': { S: message } },
-    expression: 'SET #S = :s, #E = :e'
-  });
 }
 
 /**
@@ -185,7 +178,7 @@ function storeOperationFailure(TableName, id, message) {
  *
  * @returns {Promise<undefined>} resolves when the task has completed
  */
-async function runTask() {
+async function runTask() { // eslint-disable-line max-statements
   let lambdaInfo;
   let payload;
 
@@ -195,41 +188,42 @@ async function runTask() {
 
     // Download the task (to the /home/task/lambda-function directory)
     await fetchLambdaFunction(lambdaInfo.codeUrl);
+  }
+  catch (err) {
+    await updateAsyncOperation('RUNNER_FAILED', err);
+    return;
+  }
 
+  try {
     // Fetch the event that will be passed to the lambda function from S3
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
   }
   catch (err) {
-    console.error(err);
-    await storeOperationFailure(
-      process.env.asyncOperationsTable,
-      process.env.asyncOperationId,
-      `AsyncOperation failure: ${err.message}`
-    );
+    if (err.name === 'JSONParsingError') {
+      await updateAsyncOperation('TASK_FAILED', err);
+    }
+    else {
+      await updateAsyncOperation('RUNNER_FAILED', err);
+    }
+
     return;
   }
 
+  let result;
   try {
     // Load the lambda function
     const task = require(`/home/task/lambda-function/${lambdaInfo.moduleFileName}`); //eslint-disable-line global-require, import/no-dynamic-require, max-len, security/detect-non-literal-require
 
     // Run the lambda function
-    const result = await task[lambdaInfo.moduleFunctionName](payload);
-
-    // Write the result out to DynamoDb
-    await storeOperationSuccess(
-      process.env.asyncOperationsTable,
-      process.env.asyncOperationId,
-      result
-    );
+    result = await task[lambdaInfo.moduleFunctionName](payload);
   }
   catch (err) {
-    await storeOperationFailure(
-      process.env.asyncOperationsTable,
-      process.env.asyncOperationId,
-      err.message
-    );
+    await updateAsyncOperation('TASK_FAILED', err);
+    return;
   }
+
+  // Write the result out to DynamoDb
+  await updateAsyncOperation('SUCCEEDED', result);
 }
 
 // Here's where the magic happens ...

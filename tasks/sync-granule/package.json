@@ -15,7 +15,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=8.11.0"
+    "node": ">=8.10.0"
   },
   "scripts": {
     "test": "ava",
