@@ -97,12 +97,7 @@ class Rule extends Manager {
     const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
     const exists = await aws.fileExists(bucket, key);
 
-    if (!exists) {
-      const err = {
-        message: `Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`
-      };
-      throw err;
-    }
+    if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
 
     const template = `s3://${bucket}/${key}`;
     return {
@@ -164,17 +159,17 @@ class Rule extends Manager {
           return (mapping.EventSourceArn === item.rule.value);
         });
       if (mappingExists) {
-        const mappingEnabled = listData.EventSourceMappings
-          .find((mapping) => { // eslint-disable-line arrow-body-style
-            return (mapping.EventSourceArn === item.rule.value &&
-                    mapping.State === 'Enabled');
-          });
-
-        if (mappingEnabled) {
-          item.rule.arn = mappingEnabled.UUID;
+        if (mappingExists.State === 'Enabled') {
+          item.rule.arn = mappingExists.UUID;
           return item;
         }
-        await this.deleteKinesisEventSource({ UUID: mappingExists.UUID }).promise();
+        await this.deleteKinesisEventSource({
+          name: item.name,
+          rule: {
+            arn: mappingExists.UUID,
+            type: 'kinesis'
+          }
+        });
       }
     }
 

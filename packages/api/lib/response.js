@@ -9,8 +9,9 @@
 
 'use strict';
 
+const isString = require('lodash.isstring');
 const deprecate = require('depd')('@cumulus/api/lib/response');
-const log = require('@cumulus/common/log');
+const { log } = require('@cumulus/common');
 const proxy = require('lambda-proxy-utils');
 const { User } = require('../models');
 const { errorify } = require('./utils');
@@ -113,15 +114,18 @@ function buildLambdaProxyResponse(params = {}) {
   let body = bodyArg;
 
   // Set required response headers
-  const requiredHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Strict-Transport-Security': 'max-age=31536000'
-  };
-  const headers = Object.assign({}, headersArg, requiredHeaders);
+  const headers = Object.assign(
+    {},
+    headersArg,
+    {
+      'Access-Control-Allow-Origin': '*',
+      'Strict-Transport-Security': 'max-age=31536000'
+    }
+  );
 
   if (json) {
     // Make sure that the body argument is an array or an object
-    if (!bodyArg || typeof bodyArg === 'string' || bodyArg instanceof String) {
+    if (!bodyArg || isString(bodyArg)) {
       throw new TypeError('body must be an object or array when json is true');
     }
 

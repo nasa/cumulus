@@ -4,45 +4,18 @@ const fs = require('fs-extra');
 const { loadConfig } = require('../helpers/testUtils');
 const sleep = require('sleep-promise');
 const {
-  aws: { s3 },
-  stringUtils: { globalReplace },
-  testUtils: { randomStringFromRegex }
+  aws: { s3 }
 } = require('@cumulus/common');
-const { createGranuleFiles } = require('../helpers/granuleUtils');
+const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const {
   buildAndExecuteWorkflow,
   conceptExists
 } = require('@cumulus/integration-tests');
 const config = loadConfig();
 const taskName = 'IngestGranule';
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006.[\\d]{13}$';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
-
-/**
- * Set up files in the S3 data location for a new granule to use for this
- * test. Use the input payload to determine which files are needed and
- * return updated input with the new granule id.
- *
- * @param {string} bucket - data bucket
- * @param {string} granuleId - granule id for the new files
- * @param {string} inputPayloadJson - input payload as a JSON string
- * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
- */
-async function setupTestGranuleForAPI(bucket, granuleId, inputPayloadJson) {
-  const baseInputPayload = JSON.parse(inputPayloadJson);
-
-  await createGranuleFiles(
-    baseInputPayload.granules[0].files,
-    bucket,
-    testDataGranuleId,
-    granuleId
-  );
-
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, testDataGranuleId, granuleId);
-
-  return JSON.parse(updatedInputPayloadJson);
-}
 
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
@@ -81,10 +54,9 @@ describe('The Cumulus API', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    granuleId = randomStringFromRegex(granuleRegex);
-
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForAPI(config.bucket, granuleId, inputPayloadJson);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    granuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
@@ -168,6 +140,7 @@ describe('The Cumulus API', () => {
         granuleId: inputPayload.granules[0].granuleId
       });
       const existsInCMR = await conceptExists(granule.cmrLink);
+
       expect(existsInCMR).toEqual(true);
 
       // Remove the granule from CMR
@@ -178,8 +151,8 @@ describe('The Cumulus API', () => {
 
       // Check that the granule was removed
       const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
+
       expect(granuleRemoved).toEqual(true);
     });
   });
 });
-

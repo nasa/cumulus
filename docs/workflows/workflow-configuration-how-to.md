@@ -36,7 +36,7 @@ buckets:
 
 ### Point to buckets in the workflow configuration
 
-Buckets specified in `app/config.yml` will become part of the `meta` object of the Cumulus message and can be accessed in your workflow configuration. 
+Buckets specified in `app/config.yml` will become part of the `meta` object of the Cumulus message and can be accessed in your workflow configuration.
 
 To use the buckets specified in your config, you can do the following:
 
@@ -80,7 +80,7 @@ DiscoverGranules:
           private: '{$.meta.buckets.private.name}'
 ```
 
-### Using meta and hardcoding 
+### Using meta and hardcoding
 
 Bucket names can be configured using a mixture of hardcoded values and values from the meta. For example, to configure the bucket based on the collection name you could do something like:
 
@@ -108,13 +108,13 @@ A file path can be added as the `url_path` in the collection configuration to sp
   "files": {
     {
       "bucket": "protected",
-      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
       "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
       "url_path": "file-example-path"
     },
     {
       "bucket": "private",
-      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
       "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
     }
   }

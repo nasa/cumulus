@@ -176,6 +176,7 @@ Resources:
                   - kinesis:GetShardIterator
                   - kinesis:DescribeStream
                   - kinesis:ListStreams
+                  - kinesis:PutRecord
                 Resource: '*'
 
               # Allow writing to ingest buckets
