@@ -155,6 +155,7 @@ test.serial('The AsyncOperation.start() method starts an ECS task with the corre
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
   t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
+  t.is(stubbedEcsRunTaskParams.launchType, 'EC2');
 
   const environmentOverrides = {};
   stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
