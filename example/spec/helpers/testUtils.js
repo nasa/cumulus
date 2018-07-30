@@ -103,7 +103,7 @@ async function redeploy(config) {
   await exec(deployCommand)
     .then((result) => {
       console.log(result.stdout);
-      if (result.error !== null) {
+      if (result.error) {
         console.log(`Deployment error: ${result.error}`);
       }
     });
