@@ -1,6 +1,6 @@
 {
     "id": "https_provider",
     "protocol": "https",
-    "host": "http://172.31.80.107:3030",
+    "host": "http://172.31.5.97:3030",
     "globalConnectionLimit": 10
 }
