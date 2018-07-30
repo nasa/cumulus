@@ -67,7 +67,6 @@
     "moment": "^2.22.1",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
-    "proxyquire": "^2.0.1",
     "querystring": "^0.2.0",
     "split2": "^2.2.0",
     "uuid": "^3.2.1"
