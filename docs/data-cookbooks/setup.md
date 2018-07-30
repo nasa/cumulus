@@ -100,7 +100,7 @@ Optional tags for search: Add additional tags to make searching easier. For exam
 ```
 
 **Please Note:**
-* Scheduled rule possible [values](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)
-* An example of a basic rule configuration can be found [here](./hello-world.md/#execution)
+* Rule with `Scheduled` type valid [values](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)
+* An example of a one-time rule configuration can be found [here](./hello-world.md/#execution)
 * Kinesis Rule configuration example [here](./cnm-workflow.md#rule-configuration)
 
