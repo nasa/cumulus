@@ -10,6 +10,8 @@ default:
     streamName: '{{stackName}}-testStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
+    AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
+    asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
     IngestGranule:
       IngestGranuleOutput:
         granules:
@@ -65,7 +67,7 @@ default:
       - '{{AWS_SUBNET}}'
 
   ecs:
-    instanceType: t2.small
+    instanceType: t2.medium
     desiredInstances: 1
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
@@ -93,7 +95,7 @@ default:
             value: HelloWorldLambdaFunction
     tasks:
       AsyncOperation:
-        image: cumuluss/async-operation:8
+        image: cumuluss/async-operation:19
         cpu: 400
         memory: 700
         count: 1
