@@ -2,6 +2,7 @@
   "rules": {
     "max-len": "off",
     "no-param-reassign": "off",
-    "no-restricted-syntax": "off"
+    "no-restricted-syntax": "off",
+    "max-statements": "off"
   }
 }

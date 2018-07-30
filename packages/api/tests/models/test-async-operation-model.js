@@ -57,3 +57,7 @@ test.todo('The AsyncAdapter.start() method writes a new record to DynamoDB');
 test.todo('The AsyncAdapter.start() method sets the record status to "CREATED"');
 
 test.todo('The AsyncAdapter.start() method returns the newly-generated record');
+
+test.todo('The AsyncAdapter.start() method sets the status to "TASK_RUNNER_FAILED" if it is unable to create an ECS task');
+
+test.todo('The AsyncAdapter.start() method sets the output if it is unable to create an ECS task');
