@@ -1,12 +1,7 @@
 'use strict';
 
-const _get = require('lodash.get');
 const handle = require('../lib/response').handle;
 const { Search } = require('../es/search');
-const AWS = require('aws-sdk');
-const {
-  aws: { cloudwatchlogs }
-} = require('@cumulus/common');
 
 function count(event, cb) {
   return cb(null, {});
