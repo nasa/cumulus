@@ -8,7 +8,7 @@ We use this deployment example for running the Cumulus integration tests. This e
 nvm use
 yarn
 ```
-
+ 
 ## Running tests locally
 
 These tests run against AWS, so a Cumulus deployment is needed. Set up the deployment using the configurations in this repository. Deployment instructions are located [here](https://nasa.github.io/cumulus/deployment/). The dashboard is not needed for these tests.
