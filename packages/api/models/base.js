@@ -3,7 +3,6 @@
 const deprecate = require('depd')('@cumulus/api/Manager');
 const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
-const omit = require('lodash.omit');
 const aws = require('@cumulus/common/aws');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
@@ -318,7 +317,7 @@ class Manager {
     Object.keys(actualUpdates).forEach((property) => {
       attributeUpdates[property] = {
         Action: 'PUT',
-        Value: updates[property]
+        Value: actualUpdates[property]
       };
     });
 
