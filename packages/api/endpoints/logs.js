@@ -20,7 +20,7 @@ function list(event, cb) {
 }
 
 /**
- * Query logs from a single function.
+ * Query logs from a single workflow execution.
  *
  * @param {Object} event - aws lambda event object.
  * @param {callback} cb - aws lambda callback function
