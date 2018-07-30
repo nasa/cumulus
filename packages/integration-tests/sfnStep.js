@@ -130,6 +130,13 @@ class SfnStep {
     return JSON.parse(subStepExecutionDetails.input);
   }
 
+  /**
+   * Returns JSON-parsed output from a step which completed successfully
+   *
+   * @param   {Object} stepExecution - AWS StepExecution
+   * @param   {string} stepName      - Name of the step
+   * @returns {Object}               Output of the successfully completed event
+   */
   getSuccessOutput(stepExecution, stepName) {
     if (stepExecution.completeEvent.type !== this.successEvent) {
       console.log(`Step ${stepName} did not complete successfully, as expected.`);
@@ -139,6 +146,13 @@ class SfnStep {
     return JSON.parse(completeEventOutput.output.toString());
   }
 
+  /**
+   * Returns JSON-parsed output from a step which failed
+   *
+   * @param   {Object} stepExecution - AWS StepExecution
+   * @param   {string} stepName      - Name of the step
+   * @returns {Object}               Output of the failed event
+   */
   getFailureOutput(stepExecution, stepName) {
     if (stepExecution.completeEvent.type !== this.failureEvent) {
       console.log(`Step ${stepName} did not fail, as expected.`);
