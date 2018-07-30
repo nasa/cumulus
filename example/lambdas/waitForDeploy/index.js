@@ -9,7 +9,8 @@ const retryMs = 3000;
 const maxRetries = 50;
 
 /**
- * Waits for a stack deployment to occur
+ * Waits for a stack deployment to occur. If no deployment
+ * occurs, will time out and error.
  *
  * @param {Object} event - AWS event
  * @param {Object} context - an AWS Lambda context
