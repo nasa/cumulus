@@ -2,12 +2,14 @@
 
 ### Getting setup to work with data-cookboooks
 
-In the following data cookbooks we'll go through things like setting up workflows, making configuration changes, and interacting with CNM. The point of this section is to set up, or at least better understand collections, providers, and rules and how they are configured.
+In the following data cookbooks we'll go through things like setting up workflows, making configuration changes, and interacting with CNM. The point of this section is to set up, or at least better understand, collections, providers, and rules and how they are configured.
 
 
 ### Schemas
 
 Looking at our api schema [definitions](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
+
+**Note:** The schemas are _extremely_ useful for understanding what attributes are configurable and which of those are required. Indeed, they are what the Cumulus code validates definitions (whether that be collection, provider, or others) against. Much of this document is simply providing some context to the information in the schemas.
 
 
 ### Collections
@@ -20,24 +22,31 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
 
 **Required:**
 ```
-"name": "MOD09GQ": The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard.
-"version": "006": A version tag for the collection. # TODO
-"process": modis": I'm assuming this has to do with the lambda used to process this data # TODO
-"provider_path": "cumulus-test-data/pdrs": This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint. # TODO
-"granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$": REGEX to match granuleId. # TODO
-"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)": REGEX to match granuleIdExtraction. # TODO
-"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf": # TODO
-"files": ...: # TODO
-"createdAt": # TODO
-"updatedAt": # TODO
+"name": "MOD09GQ" # The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard.
+"version": "006" # A version tag for the collection.
+"process": modis" # The options for this are found in "ChooseProcess" in workflows.yml
+"provider_path": "cumulus-test-data/pdrs" # This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint.
+"granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$" # REGEX to match granuleId.
+"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)" # REGEX to match granuleIdExtraction. # regex that extracts granuleId from file names
+"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
+"files": [
+  {
+    "bucket": internal # Which S3 bucket this collection will live in. The available buckets are configured in the Cumulus deployment file: app/config.yml (but should be entered here WITHOUT the stack-name). cumulus-test-internal -> internal (if the stack-name is cumulus-test),
+    "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+    "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
+  },
+  ...
+]
+"createdAt": # This will be added automatically
+"updatedAt": # This will be updated automatically
 ```
 
 **Optional:**
 ```
-"provider_path": "granules/fake_granules": # TODO
-"dataType": "MOD09GQ": # TODO
-"duplicateHandling": "replace": (replace | ) # TODO
-"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}": # TODO
+"provider_path": "granules/fake_granules" # path to the granule/file on the provider
+"dataType": "MOD09GQ" # shortName
+"duplicateHandling": "replace" # (replace|version|skip)
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}" # Filename without extension
 ```
 
 
@@ -49,20 +58,20 @@ Providers ingest, archive, process, and distribute satellite data on-demand. The
 
 **Required:**
 ```
-"id" = "s3_provider":
+"id" = "s3_provider" # unique identifier for provider
 "globalConnectionLimit": 10
-"protocol": "s3"
-"host": "cumulus-data-shared"
+"protocol": "s3" # (http|https|ftp|sftp|s3)
+"host": "cumulus-data-shared" # host where the files will exist
 ```
 
 
 ### Rules
 
-Rules are used by operators to start processing workflows and the transformation process. Rules can be invoked manually or based on a schedule. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L231). Rules can be viewed, edited, added, and removed from teh Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
+Rules are used by operators to start processing workflows and the transformation process. Rules can be invoked manually or based on a schedule. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L231). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
 
 We don't currently have examples of rules in the Cumulus repo, but we can see how to create a rule from the Cumulus dashboard.
-1. In the Cumulus dashboard, click the `Rules` navigation button.
-2. Click `Add a rule`.
+1. In the Cumulus dashboard, click `Rules` on the navigation bar.
+2. Click the `Add a rule` button.
 
 ```
 name: Name of the rule. This is the name under which the rule will be displayed in the dashboard.
@@ -73,10 +82,15 @@ collection - Collection Version: Version of the collection this rule will work w
 rule - type: (onetime|scheduled|sns|kinesis)
 rule - value: This entry depends on the type of run.
   If it's a onetime rule, this can be left blank.
-  If this is a scheduled rule, this field can hold a cron-type expression.
-  If this is an SNS rule, # TODO
-  If this is a kinesis rule, # TODO
+  If this is a scheduled rule, this field can hold a cron-type expression or rate expression. # Doc link below
+  If this is an SNS rule #{SNS_topic_ARN},
+  If this is a kinesis rule, this should be a configured ${Kinesis_stream_ARN} # See below
 Rule state: (ENABLED|DISABLED)
 Optional tags for search: Add additional tags to make searching easier. For example, adding a "nightly" tag to a rule that runs nightly.
 ```
+
+**Please Note:**
+* Scheduled rule possible [values](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)
+* An example of a basic rule configuration can be found [here](./hello-world.md/#execution)
+* Kinesis Rule configuration example [here](./cnm-workflow.md#rule-configuration)
 
