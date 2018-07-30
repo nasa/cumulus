@@ -1,4 +1,4 @@
-FROM node:8.11
+FROM node:8.10
 
 USER root
 RUN apt-get update && apt-get install -y unzip

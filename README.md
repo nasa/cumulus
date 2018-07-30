@@ -162,7 +162,19 @@ We use a global versioning approach, meaning version numbers in cumulus are cons
 
 Read more about the semantic versioning [here](https://docs.npmjs.com/getting-started/semantic-versioning).
 
-### Update the Cumulus Version number
+### Updating Cumulus version and publishing to NPM
+
+All packages on master branch are automatically published to NPM.
+
+Follow the following steps to publish to NPM:
+
+#### 1. Create the release branch
+
+Create a new branch from `master` (make sure you have latest) and call it `release-version-<version_number>`. 
+
+Release PRs **MUST** be named with `release-` prefix. This will kick off the AWS integration tests in the CI process and ensures that package updates are fully tested on AWS before publication to NPM.
+
+#### 2. Update the Cumulus Version number
 
 When changes are ready to be released, the Cumulus version number must be updated using semantic versioning.
 
@@ -174,49 +186,77 @@ To update cumulus' version number run:
 
 You will be prompted to select the type of change (patch/minor/major). Lerna will update the version of all packages after the selection.
 
-Your next steps should be:
-
-1. Commit the package version updates that are made by Lerna.
-2. Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
-3. Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
-4. Update the Cumulus package versions in the example/package.json
-
-Commit all changes and open a PR.
-
-The version number updates should be put in a PR and committed to master along with the changelog updates. After merging to master, tag the master branch with a release using the new version number.
-
-#### Release PR
-
-Release PRs **MUST** be named with `release-` prefix. This will kick off the AWS integration tests in the CI process and ensures that package updates are fully tested on AWS before publication to NPM.
-
-### Publishing to NPM
-
-All packages on master branch are automatically published to NPM.
-
-Follow the following steps to publish to NPM:
-
-- Create a new branch from `master` and call it `release-version-<version_number>`
-- Run `yarn update`
-- Select the correct version upgrade type (e.g. major/minor/patch)
-
 ![](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
 
-- Update CHANGELOG.md
-- Push to Github
-- Create a new git tag
+#### 3. Update the Changelog
+
+Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
+
+Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
+
+#### 4. Update the example package.json
+
+Update example/package.json to point to the new Cumulus packages.
+
+#### 5. Create a git tag
+
+The CHANGELOG changes and package updates should be pushed to git. Then tag the release. The tag is what tells npm what to publish, so it is important for this branch to be up to date with master and have all these changes pushed.
+
+Create a new git tag
 
   $ git tag -a v1.x.x -m "version 1.x.x release"
 
-- Push the tag to github
+Push the tag to github
 
   $ git push origin v1.x.x
 
-- Create a PR against the `master` branch
-- After the PR is merged, update the (tag) and give a proper title and copy the release details from the CHANGELOG.md to the release
+#### 6. PR and merge to master
+
+Create a PR against the `master` branch
+
+After the PR is merged, update the (tag) and give a proper title and copy the release details from the CHANGELOG.md to the release
 
 ![](https://static.notion-static.com/def32886-040c-4df9-9462-8b2418cbb925/Release_v1_3_0__nasa_cumulus.png)
 
 ![](https://static.notion-static.com/287c7d98-351a-446d-a7ff-45eef2b45d7c/New_release__nasa_cumulus.png)
+
+### Backporting to a previous release
+
+To backport and release to an earlier minor version of Cumulus than the latest minor version, follow the below steps. For example if the current version is 1.6 and a fix needs to be backported to 1.5.
+
+#### 1. Create a version branch
+
+If a version branch does not exist, it must be created. Sync to the tag for the latest patch version in the minor version.
+
+    $ git checkout v1.5.5
+    
+Create a branch for version 1.5.
+
+    $ git checkout -b v1.5
+   
+Push the branch to git.
+
+#### 2. Make changes and PR
+
+Create a release branch off the version branch (i.e. v1.5) to create a branch for the changes. Use git cherry-pick or manually make the changes.
+
+Follow [step 2](#2-update-the-cumulus-version-number) above to update the version number using `yarn update`.
+
+Create a pull request against the version branch.
+
+#### 3. Create a git tag
+
+When the PR is approved and changes are finalized, follow [these steps](#5-create-a-git-tag). At this point, merges to master should be held off until the changes are released. If someone merges to master, master will pick up the new git tag and publish this release, tagging it as latest, meaning anyone who performs an `npm install` will get this patch version and not the actual latest version.
+
+#### 4. Merge to the version branch
+
+Merging to a branch structured as vX.Y will kick off the release and npm testing process. The version will be published to npm not as latest, but with a tag `patch-vX.Y.Z`.
+
+Verify that the changes were released with the correct tag in npm.
+
+#### 5. Update the Changelog
+
+In master, update the changelog for the release, making sure a link is put in the bottom. 
 
 ## Running command in all package folders
 
