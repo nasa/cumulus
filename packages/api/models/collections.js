@@ -8,12 +8,7 @@ function checkRegex(regex, sampleFileName) {
   const validation = new RegExp(regex);
   const match = validation.test(sampleFileName);
 
-  if (!match) {
-    const err = {
-      message: `regex cannot validate ${sampleFileName}`
-    };
-    throw err;
-  }
+  if (!match) throw new Error(`regex cannot validate ${sampleFileName}`);
 }
 
 class Collection extends Manager {
@@ -26,12 +21,7 @@ class Collection extends Manager {
     const extraction = new RegExp(item.granuleIdExtraction);
     const match = item.sampleFileName.match(extraction);
 
-    if (!match) {
-      const err = {
-        message: 'granuleIdExtraction regex returns null when applied to sampleFileName'
-      };
-      throw err;
-    }
+    if (!match) throw new Error('granuleIdExtraction regex returns null when applied to sampleFileName');
 
     checkRegex(item.granuleId, match[1]);
 
@@ -49,8 +39,11 @@ class Collection extends Manager {
   }
 
   async create(item) {
-    const collectionConfigStore =
-      new CollectionConfigStore(process.env.internal, process.env.stackName);
+    const collectionConfigStore = new CollectionConfigStore(
+      process.env.internal,
+      process.env.stackName
+    );
+
     await collectionConfigStore.put(item.name, item);
 
     return super.create(item);

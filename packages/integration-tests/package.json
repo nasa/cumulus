@@ -5,7 +5,7 @@
   "bin": {
     "cumulus-test": "./bin/cli.js"
   },
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "main": "index.js",

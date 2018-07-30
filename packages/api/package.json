@@ -3,7 +3,7 @@
   "version": "1.8.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "bin": {
@@ -58,6 +58,7 @@
     "lodash.drop": "^4.1.1",
     "lodash.get": "^4.4.2",
     "lodash.has": "^4.5.2",
+    "lodash.isstring": "^4.0.1",
     "lodash.merge": "^4.5.0",
     "lodash.omit": "^4.5.0",
     "lodash.pick": "^4.4.0",
@@ -73,6 +74,7 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
+    "lodash.range": "^3.2.0",
     "nyc": "^11.6.0",
     "sinon": "^4.5.0",
     "webpack": "~4.5.0",

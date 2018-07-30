@@ -1,10 +1,10 @@
 'use strict';
 
 const test = require('ava');
-const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
+const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   AsyncOperation: AsyncOperationModel,
   User
@@ -99,9 +99,9 @@ test.serial('GET /async-operation/{:id} returns a 404 status code if the request
 test.serial('GET /async-operation/{:id} returns the async operation if it does exist', async (t) => {
   const asyncOperation = {
     id: 'abc-123',
-    status: 'TESTING',
-    result: JSON.stringify({ age: 37 }),
-    error: undefined
+    status: 'CREATED',
+    taskArn: randomString(),
+    output: JSON.stringify({ age: 37 })
   };
 
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
@@ -125,7 +125,8 @@ test.serial('GET /async-operation/{:id} returns the async operation if it does e
     {
       id: asyncOperation.id,
       status: asyncOperation.status,
-      result: asyncOperation.result
+      output: asyncOperation.output,
+      taskArn: asyncOperation.taskArn
     }
   );
 });
