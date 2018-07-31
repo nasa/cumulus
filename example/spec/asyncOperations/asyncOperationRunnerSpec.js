@@ -23,9 +23,14 @@ describe('The AsyncOperation task runner', () => {
   let config;
   let cluster;
   let asyncOperationTaskDefinition;
+  let successFunctionName;
+  let failFunctionName;
 
   beforeAll(async () => {
     config = loadConfig();
+
+    successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
+    failFunctionName = `${config.stackName}-AsyncOperationFail`;
 
     asyncOperationModel = new AsyncOperation({
       stackName: config.stackName,
@@ -94,34 +99,10 @@ describe('The AsyncOperation task runner', () => {
     let asyncOperationId;
     let taskArn;
     let dynamoDbItem;
-    let FunctionName;
-    let lambdaKey;
     let payloadUrl;
 
     beforeAll(async () => {
       asyncOperationId = uuidv4();
-
-      // Create the lambda function
-      FunctionName = `delete-me-${randomString()}`;
-      const zipPath = path.join(__dirname, 'lambdas.zip');
-      lambdaKey = `integration-tests/lambdas/${randomString()}.zip`;
-
-      await s3().upload({
-        Bucket: config.bucket,
-        Key: lambdaKey,
-        Body: fs.createReadStream(zipPath)
-      }).promise();
-
-      await lambda().createFunction({
-        FunctionName,
-        Runtime: 'nodejs8.10',
-        Role: config.asyncOperationRunnerRole,
-        Handler: 'lambdas.success',
-        Code: {
-          S3Bucket: config.bucket,
-          S3Key: lambdaKey
-        }
-      }).promise();
 
       await asyncOperationModel.create({
         id: asyncOperationId,
@@ -141,7 +122,7 @@ describe('The AsyncOperation task runner', () => {
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
-                { name: 'lambdaName', value: FunctionName },
+                { name: 'lambdaName', value: successFunctionName },
                 { name: 'payloadUrl', value: payloadUrl }
               ]
             }
@@ -166,8 +147,6 @@ describe('The AsyncOperation task runner', () => {
       });
     });
 
-    afterAll(() => lambda().deleteFunction({ FunctionName }).promise());
-
     it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
       expect(dynamoDbItem.status.S).toEqual('RUNNER_FAILED');
     });
@@ -187,37 +166,13 @@ describe('The AsyncOperation task runner', () => {
     let asyncOperationId;
     let taskArn;
     let dynamoDbItem;
-    let FunctionName;
-    let lambdaZipKey;
     let payloadKey;
 
     beforeAll(async () => {
       asyncOperationId = uuidv4();
 
-      // Create the lambda function
-      FunctionName = `delete-me-${randomString()}`;
-      const zipPath = path.join(__dirname, 'lambdas.zip');
-      lambdaZipKey = `${config.stackName}/integration-tests/lambdas/${randomString()}.zip`;
-
-      await s3().upload({
-        Bucket: config.bucket,
-        Key: lambdaZipKey,
-        Body: fs.createReadStream(zipPath)
-      }).promise();
-
-      await lambda().createFunction({
-        FunctionName,
-        Runtime: 'nodejs8.10',
-        Role: config.asyncOperationRunnerRole,
-        Handler: 'lambdas.success',
-        Code: {
-          S3Bucket: config.bucket,
-          S3Key: lambdaZipKey
-        }
-      }).promise();
-
       // Upload the payload
-      payloadKey = `${config.stackName}/integration-tests/payloads/${randomString()}.json`;
+      payloadKey = `${config.stackName}/integration-tests/payloads/${asyncOperationId}.json`;
       await s3().putObject({
         Bucket: config.bucket,
         Key: payloadKey,
@@ -241,7 +196,7 @@ describe('The AsyncOperation task runner', () => {
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
-                { name: 'lambdaName', value: FunctionName },
+                { name: 'lambdaName', value: successFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
             }
@@ -266,12 +221,6 @@ describe('The AsyncOperation task runner', () => {
       });
     });
 
-    afterAll(() => Promise.all([
-      lambda().deleteFunction({ FunctionName }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: lambdaZipKey }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise()
-    ]));
-
     it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
       expect(dynamoDbItem.status.S).toEqual('TASK_FAILED');
     });
@@ -285,43 +234,21 @@ describe('The AsyncOperation task runner', () => {
     it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
+
+    afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
   });
 
   describe('executing a successful lambda function', () => {
     let asyncOperationId;
     let taskArn;
     let dynamoDbItem;
-    let FunctionName;
-    let lambdaZipKey;
     let payloadKey;
 
     beforeAll(async () => {
       asyncOperationId = uuidv4();
 
-      // Create the lambda function
-      FunctionName = `delete-me-${randomString()}`;
-      const zipPath = path.join(__dirname, 'lambdas.zip');
-      lambdaZipKey = `${config.stackName}/integration-tests/lambdas/${randomString()}.zip`;
-
-      await s3().upload({
-        Bucket: config.bucket,
-        Key: lambdaZipKey,
-        Body: fs.createReadStream(zipPath)
-      }).promise();
-
-      await lambda().createFunction({
-        FunctionName,
-        Runtime: 'nodejs8.10',
-        Role: config.asyncOperationRunnerRole,
-        Handler: 'lambdas.success',
-        Code: {
-          S3Bucket: config.bucket,
-          S3Key: lambdaZipKey
-        }
-      }).promise();
-
       // Upload the payload
-      payloadKey = `${config.stackName}/integration-tests/payloads/${randomString()}.json`;
+      payloadKey = `${config.stackName}/integration-tests/payloads/${asyncOperationId}.json`;
       await s3().putObject({
         Bucket: config.bucket,
         Key: payloadKey,
@@ -345,7 +272,7 @@ describe('The AsyncOperation task runner', () => {
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
-                { name: 'lambdaName', value: FunctionName },
+                { name: 'lambdaName', value: successFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
             }
@@ -370,12 +297,6 @@ describe('The AsyncOperation task runner', () => {
       });
     });
 
-    afterAll(() => Promise.all([
-      lambda().deleteFunction({ FunctionName }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: lambdaZipKey }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise()
-    ]));
-
     it('updates the status field in DynamoDB to "SUCCEEDED"', async () => {
       expect(dynamoDbItem.status.S).toEqual('SUCCEEDED');
     });
@@ -389,43 +310,21 @@ describe('The AsyncOperation task runner', () => {
     it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
+
+    afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
   });
 
   describe('executing a failing lambda function', () => {
     let asyncOperationId;
     let taskArn;
     let dynamoDbItem;
-    let FunctionName;
-    let lambdaZipKey;
     let payloadKey;
 
     beforeAll(async () => {
       asyncOperationId = uuidv4();
 
-      // Create the lambda function
-      FunctionName = `delete-me-${randomString()}`;
-      const zipPath = path.join(__dirname, 'lambdas.zip');
-      lambdaZipKey = `${config.stackName}/integration-tests/lambdas/${randomString()}.zip`;
-
-      await s3().upload({
-        Bucket: config.bucket,
-        Key: lambdaZipKey,
-        Body: fs.createReadStream(zipPath)
-      }).promise();
-
-      await lambda().createFunction({
-        FunctionName,
-        Runtime: 'nodejs8.10',
-        Role: config.asyncOperationRunnerRole,
-        Handler: 'lambdas.fail',
-        Code: {
-          S3Bucket: config.bucket,
-          S3Key: lambdaZipKey
-        }
-      }).promise();
-
       // Upload the payload
-      payloadKey = `${config.stackName}/integration-tests/payloads/${randomString()}.json`;
+      payloadKey = `${config.stackName}/integration-tests/payloads/${asyncOperationId}.json`;
       await s3().putObject({
         Bucket: config.bucket,
         Key: payloadKey,
@@ -449,7 +348,7 @@ describe('The AsyncOperation task runner', () => {
               environment: [
                 { name: 'asyncOperationId', value: asyncOperationId },
                 { name: 'asyncOperationsTable', value: config.AsyncOperationsTable },
-                { name: 'lambdaName', value: FunctionName },
+                { name: 'lambdaName', value: failFunctionName },
                 { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` }
               ]
             }
@@ -474,12 +373,6 @@ describe('The AsyncOperation task runner', () => {
       });
     });
 
-    afterAll(() => Promise.all([
-      lambda().deleteFunction({ FunctionName }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: lambdaZipKey }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise()
-    ]));
-
     it('updates the status field in DynamoDB to "TASK_FAILED"', async () => {
       expect(dynamoDbItem.status.S).toEqual('TASK_FAILED');
     });
@@ -493,5 +386,7 @@ describe('The AsyncOperation task runner', () => {
     it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
+
+    afterAll(() => s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise());
   });
 });
