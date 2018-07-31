@@ -275,6 +275,7 @@ function handle(event, context, authCheck, func) {
 }
 
 module.exports = {
+  buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
   handle,
