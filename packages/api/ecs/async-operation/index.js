@@ -2,8 +2,8 @@
 
 const AWS = require('aws-sdk');
 const util = require('util');
-const isError = require('lodash.iserror');
-const exec = util.promisify(require('child_process').exec); // eslint-disable-line security/detect-child-process
+const isError = require('lodash.iserror'); // eslint-disable-line import/no-unresolved
+const exec = util.promisify(require('child_process').exec); // eslint-disable-line security/detect-child-process, max-len
 const fs = require('fs');
 const https = require('https');
 const url = require('url');
@@ -231,4 +231,4 @@ async function runTask() { // eslint-disable-line max-statements
 // Make sure that all of the required environment variables are set
 const missingVars = missingEnvironmentVariables();
 if (missingVars.length === 0) runTask();
-else console.error('Missing environment variables:', missingVars.join(', '));
+else console.error('Missing environment variables:', missingVars.join(', ')); // eslint-disable-line no-console, max-len
