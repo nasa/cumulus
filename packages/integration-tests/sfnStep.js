@@ -106,6 +106,31 @@ class SfnStep {
   }
 
   /**
+   * Gets the input to the step by looking for the 'schedule' for the given step
+   * and returning the parsed input object.
+   *
+   * @param   {String} workflowExecutionArn - AWS Execution ARN of the step function execution
+   * @param   {String} stepName             - Name of the workflow step of interest
+   * @returns {Object}                      - Parsed JSON string of input to step with <stepName>
+   *                                          from the workflow execution of interest.
+   */
+  async getStepInput(workflowExecutionArn, stepName) {
+    const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
+
+    if (stepExecutions === null) {
+      console.log(`Could not find step ${stepName} in execution.`);
+      return null;
+    }
+
+    const scheduleEvent = stepExecutions[0]['scheduleEvent'];
+    const eventWasSuccessful = scheduleEvent.type === this.scheduleSuccessfulEvent;
+    if (!eventWasSuccessful) console.log('Schedule event failed');
+
+    const subStepExecutionDetails = scheduleEvent['lambdaFunctionScheduledEventDetails'];
+    return JSON.parse(subStepExecutionDetails.input);
+  };
+
+  /**
    * Get the output payload from the step, if the step succeeds
    *
    * @param {string} workflowExecutionArn - Arn of the workflow execution
@@ -149,9 +174,10 @@ class LambdaStep extends SfnStep {
   constructor() {
     super();
     this.scheduleFailedEvent = 'LambdaFunctionScheduleFailed';
+    this.scheduleSuccessfulEvent = 'LambdaFunctionScheduled';
     this.scheduleEvents = [
       this.scheduleFailedEvent,
-      'LambdaFunctionScheduled'
+      this.scheduleSuccessfulEvent
     ];
     this.startFailedEvent = 'LambdaFunctionStartFailed';
     this.startEvents = [

@@ -100,14 +100,6 @@ default:
     targetValue: 30
     scaleInCooldown: 0
     scaleOutCooldown: 0
-  GranulesTable:
-    enableAutoScaling: true
-  FilesTable:
-    enableAutoScaling: true
-    ReadMinCapacity: 10
-    ReadMaxCapacity: 20
-    WriteMinCapacity: 10
-    WriteMaxCapacity: 20
 
   sns:
     # this topic receives all the updates from
