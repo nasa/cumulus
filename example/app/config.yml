@@ -93,16 +93,6 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
-    tasks:
-      AsyncOperation:
-        image: cumuluss/async-operation:19
-        cpu: 400
-        memory: 700
-        count: 1
-        envs:
-          AWS_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
 
   activities:
     - name: EcsTaskHelloWorld

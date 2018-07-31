@@ -10,6 +10,5 @@
     "helpers/**/*.js"
   ],
   "stopOnSpecFailure": true,
-  "stopSpecOnExpectationFailure": true,
   "random": false
 }

@@ -138,7 +138,7 @@ class AsyncOperation extends Manager {
     return this.update(
       id,
       {
-        status: 'STARTING',
+        status: 'RUNNING',
         taskArn: runTaskResponse.tasks[0].taskArn
       }
     );

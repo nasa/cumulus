@@ -138,3 +138,11 @@ CnmResponse:
     bucket: '{{buckets.shared.name}}'
     key: 'daacs/podaac/cnmResponse-1.0.zip'
   launchInVpc: true
+
+AsyncOperationSuccess:
+  handler: lambdas.success
+  source: 'lambdas/asyncOperations/'
+
+AsyncOperationFail:
+  handler: lambdas.fail
+  source: 'lambdas/asyncOperations/'
