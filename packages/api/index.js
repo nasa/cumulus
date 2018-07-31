@@ -1,7 +1,7 @@
 'use strict';
 
 exports.asyncOperations = require('./endpoints/async-operations');
-exports.token = require('./endpoints/token');
+exports.token = require('./endpoints/token').handler;
 exports.collections = require('./endpoints/collections');
 exports.granules = require('./endpoints/granules');
 exports.logs = require('./endpoints/logs');

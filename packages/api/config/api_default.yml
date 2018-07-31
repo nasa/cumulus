@@ -1,7 +1,7 @@
 ApiCollectionsDefault:
   handler: index.collections
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -41,7 +41,7 @@ ApiCollectionsDefault:
 ApiGranulesDefault:
   handler: index.granules
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiRole: true
   envs:
@@ -94,7 +94,7 @@ ApiGranulesDefault:
 ApiExecutionsDefault:
   handler: index.executions
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -121,7 +121,7 @@ ApiExecutionsDefault:
 ApiExecutionStatusDefault:
   handler: index.executionStatus
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -141,7 +141,7 @@ ApiExecutionStatusDefault:
 ApiWorkflowsDefault:
   handler: index.workflows
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -163,7 +163,7 @@ ApiWorkflowsDefault:
 ApiRulesDefault:
   handler: index.rules
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   envs:
     bucket: '{{parent.system_bucket}}'
@@ -218,7 +218,7 @@ ApiRulesDefault:
 ApiProvidersDefault:
   handler: index.providers
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   envs:
     UsersTable:
@@ -258,7 +258,7 @@ ApiProvidersDefault:
 ApiPdrsDefault:
   handler: index.pdrs
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     UsersTable:
@@ -289,7 +289,7 @@ ApiPdrsDefault:
 ApiLogsDefault:
   handler: index.logs
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiRole: true
   envs:
@@ -313,7 +313,7 @@ ApiLogsDefault:
 ApiSchemaDefault:
   handler: index.schemas
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -331,7 +331,7 @@ ApiSchemaDefault:
 ApiStatsDefault:
   handler: index.stats
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiRole: true
   envs:
@@ -363,7 +363,7 @@ ApiStatsDefault:
 ApiTokenDefault:
   handler: index.token
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiRole: true
   urs: true
@@ -374,6 +374,7 @@ ApiTokenDefault:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
+    OAUTH_PROVIDER: '{{parent.oauth.provider}}'
   apiGateway:
     #default paths
     - api: backend
@@ -384,7 +385,7 @@ ApiTokenDefault:
 ApiVersionDefault:
   handler: index.version
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
     #default paths
@@ -396,7 +397,7 @@ ApiVersionDefault:
 ApiReconciliationReportDefault:
   handler: index.reconciliationReports
   timeout: 20
-  memory: 512
+  memory: '{{parent.api_lambda_memory}}'
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
   envs:

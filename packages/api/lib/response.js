@@ -291,6 +291,7 @@ const internalServerErrorResponse = buildLambdaProxyResponse({
 });
 
 module.exports = {
+  buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
   handle,
