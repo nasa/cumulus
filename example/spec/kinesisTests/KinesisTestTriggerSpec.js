@@ -58,7 +58,7 @@ const expectedTranslatePayload = {
     }
   ]
 };
-
+ 
 const fileData = expectedTranslatePayload.granules[0].files[0];
 const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC`;
 
