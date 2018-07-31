@@ -153,7 +153,7 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
-        status: 'CREATED'
+        status: 'RUNNING'
       });
 
       payloadUrl = `s3://${config.bucket}/${randomString()}`;
@@ -254,7 +254,7 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
-        status: 'CREATED'
+        status: 'RUNNING'
       });
 
       const runTaskResponse = await ecs().runTask({
@@ -358,7 +358,7 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
-        status: 'CREATED'
+        status: 'RUNNING'
       });
 
       const runTaskResponse = await ecs().runTask({
@@ -462,7 +462,7 @@ describe('The AsyncOperation task runner', () => {
       await asyncOperationModel.create({
         id: asyncOperationId,
         taskArn: randomString(),
-        status: 'CREATED'
+        status: 'RUNNING'
       });
 
       const runTaskResponse = await ecs().runTask({

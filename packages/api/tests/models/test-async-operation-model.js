@@ -99,18 +99,6 @@ test('The AsyncOperation constructor sets the systemBucket', (t) => {
   t.is(localAsyncOperationModel.systemBucket, systemBucket);
 });
 
-test.serial('The AsyncOperation.create() method assigns an ID to the item', async (t) => {
-  const asyncOperation = await asyncOperationModel.create();
-
-  t.true(isString(asyncOperation.id));
-});
-
-test.serial('The AsyncOperation.create() method sets the status to "CREATED"', async (t) => {
-  const asyncOperation = await asyncOperationModel.create();
-
-  t.is(asyncOperation.status, 'CREATED');
-});
-
 test.serial('The AsyncOperation.start() method uploads the payload to S3', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
@@ -201,6 +189,22 @@ test.serial('The AsyncOperation.start() method writes a new record to DynamoDB',
 
   const fetchedAsyncOperation = await asyncOperationModel.get(id);
   t.is(fetchedAsyncOperation.taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
+});
+
+test.serial('The AsyncOperation.start() method returns an item id', async (t) => {
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn: randomString() }],
+    failures: []
+  };
+
+  const { id } = await asyncOperationModel.start({
+    asyncOperationTaskDefinition: randomString(),
+    cluster: randomString(),
+    lambdaName: randomString(),
+    payload: {}
+  });
+
+  t.true(isString(id));
 });
 
 test.serial('The AsyncOperation.start() method sets the record status to "STARTING"', async (t) => {
