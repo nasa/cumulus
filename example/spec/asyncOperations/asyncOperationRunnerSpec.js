@@ -129,7 +129,7 @@ describe('The AsyncOperation task runner', () => {
       asyncOperationId = uuidv4();
 
       // Create the lambda function
-      FunctionName = randomString();
+      FunctionName = `delete-me-${randomString()}`;
       const zipPath = path.join(__dirname, 'lambdas.zip');
       lambdaKey = `integration-tests/lambdas/${randomString()}.zip`;
 
@@ -193,7 +193,7 @@ describe('The AsyncOperation task runner', () => {
       });
     });
 
-    afterAll(() => lambda().deleteFunction({ FunctionName }));
+    afterAll(() => lambda().deleteFunction({ FunctionName }).promise());
 
     it('updates the status field in DynamoDB to "RUNNER_FAILED"', async () => {
       expect(dynamoDbItem.status.S).toEqual('RUNNER_FAILED');
@@ -222,7 +222,7 @@ describe('The AsyncOperation task runner', () => {
       asyncOperationId = uuidv4();
 
       // Create the lambda function
-      FunctionName = randomString();
+      FunctionName = `delete-me-${randomString()}`;
       const zipPath = path.join(__dirname, 'lambdas.zip');
       lambdaZipKey = `${config.stackName}/integration-tests/lambdas/${randomString()}.zip`;
 
@@ -294,7 +294,7 @@ describe('The AsyncOperation task runner', () => {
     });
 
     afterAll(() => Promise.all([
-      lambda().deleteFunction({ FunctionName }),
+      lambda().deleteFunction({ FunctionName }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: lambdaZipKey }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise()
     ]));
@@ -326,7 +326,7 @@ describe('The AsyncOperation task runner', () => {
       asyncOperationId = uuidv4();
 
       // Create the lambda function
-      FunctionName = randomString();
+      FunctionName = `delete-me-${randomString()}`;
       const zipPath = path.join(__dirname, 'lambdas.zip');
       lambdaZipKey = `${config.stackName}/integration-tests/lambdas/${randomString()}.zip`;
 
@@ -398,7 +398,7 @@ describe('The AsyncOperation task runner', () => {
     });
 
     afterAll(() => Promise.all([
-      lambda().deleteFunction({ FunctionName }),
+      lambda().deleteFunction({ FunctionName }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: lambdaZipKey }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise()
     ]));
@@ -430,7 +430,7 @@ describe('The AsyncOperation task runner', () => {
       asyncOperationId = uuidv4();
 
       // Create the lambda function
-      FunctionName = randomString();
+      FunctionName = `delete-me-${randomString()}`;
       const zipPath = path.join(__dirname, 'lambdas.zip');
       lambdaZipKey = `${config.stackName}/integration-tests/lambdas/${randomString()}.zip`;
 
@@ -502,7 +502,7 @@ describe('The AsyncOperation task runner', () => {
     });
 
     afterAll(() => Promise.all([
-      lambda().deleteFunction({ FunctionName }),
+      lambda().deleteFunction({ FunctionName }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: lambdaZipKey }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise()
     ]));
