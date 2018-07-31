@@ -14,11 +14,22 @@ Looking at our api schema [definitions](https://github.com/nasa/cumulus/blob/713
 
 ### Collections
 
-Collections are logical sets of data objects of the same data type and version. We have a few [test collections](https://github.com/nasa/cumulus/tree/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/collections) configured in Cumulus source for integration testing. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the "Collections" navigation tab. Additionally, they can be managed via the [collections api](https://nasa.github.io/cumulus-api/?language=Python#list-collections).
+Collections are logical sets of data objects of the same data type and version. We have a few [test collections](https://github.com/nasa/cumulus/tree/master/example/data/collections) configured in Cumulus source for integration testing. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the "Collections" navigation tab. Additionally, they can be managed via the [collections api](https://nasa.github.io/cumulus-api/?language=Python#list-collections).
 
 The schema for collections can be found [here](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L4) and tells us all about what values are expected, accepted, and [required](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L109) in a collection object.
 
 **Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/collections/s3_MOD09GQ_006.json)**
+
+|Key  |Value|Required  |Description|
+|:---:|:-----:|:--------:|---|
+|name |"MOD09GQ"|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
+|version|"006"|Yes|A version tag for the collection|
+|process|"modis"|Yes|The options for this are found in "ChooseProcess and in workflows.yml|
+|provider_path|"cumulus-test-data/pdrs"|Yes|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
+|granuleId|"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$"|Yes|REGEX to match granuleId|
+|granuleIdExtraction|"(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)"|Yes|REGEX that extracts granuleId from file names|
+|sampleFileName|"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"|Yes|...|
+|files|JSON-Object|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 
 **Required:**
 ```
@@ -52,7 +63,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
 
 ### Providers
 
-Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L383). A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
+Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js#L400). A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
 **Break down of [s3_provider.json](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/providers/s3_provider.json):**
 
