@@ -44,6 +44,8 @@ const expectedTranslatePayload = {
   granules: [
     {
       granuleId: record.product.name,
+      dataType: 'L2_HR_PIXC',
+      version: '001',
       files: [
         {
           path: 'cumulus-test-data/pdrs',
@@ -56,6 +58,7 @@ const expectedTranslatePayload = {
     }
   ]
 };
+console.log(JSON.stringify(expectedTranslatePayload))
 
 const fileData = expectedTranslatePayload.granules[0].files[0];
 const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC`;
@@ -72,10 +75,13 @@ const expectedSyncGranulesPayload = {
   granules: [
     {
       granuleId: granuleId,
+      dataType: 'L2_HR_PIXC',
+      version: '001',
       files: [fileDataWithFilename]
     }
   ]
 };
+sys.exit(-1)
 
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
@@ -88,6 +94,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let responseStreamShardIterator;
 
   afterAll(async () => {
+    console.log(`AfterAll ${filePrefix}/${fileData.name}`)
+
     await s3().deleteObject({
       Bucket: testConfig.buckets.private.name,
       Key: `${filePrefix}/${fileData.name}`
