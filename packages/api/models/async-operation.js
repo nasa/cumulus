@@ -2,7 +2,6 @@
 
 const { ecs, s3 } = require('@cumulus/common/aws');
 const uuidv4 = require('uuid/v4');
-const cloneDeep = require('lodash.clonedeep');
 const Manager = require('./base');
 const { asyncOperation: asyncOperationSchema } = require('./schemas');
 
