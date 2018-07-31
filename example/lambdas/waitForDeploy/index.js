@@ -29,7 +29,7 @@ async function handler(event, context, callback) {
       .promise()
       .catch((err) => callback(err));
 
-      console.log(`stack status: ${JSON.stringify(stackDetails.Stacks[0].StackStatus)}`);
+    console.log(`stack status: ${JSON.stringify(stackDetails.Stacks[0].StackStatus)}`);
 
     if (stackDetails.Stacks[0].StackStatus.includes('IN_PROGRESS')) {
       deployStarted = true;
