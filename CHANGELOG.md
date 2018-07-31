@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - **CUMULUS-705**
+  - Note: Make sure to update the IAM stack when deploying this update.
   - Adds an AsyncOperations model and associated DynamoDB table to the API
   - Adds an /asyncOperations endpoint to the API, which can be used to fetch the
     status of an AsyncOperation
