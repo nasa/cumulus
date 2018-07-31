@@ -198,8 +198,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
       it('writes a message to the response stream', async () => {
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-        const responseRecord = JSON.parse(newResponseStreamRecords.Records[0].Data.toString());
-        expect(newResponseStreamRecords.Records.length).toEqual(1);
+        const parsedRecords = newResponseStreamRecords.Records.map(r => JSON.parse(r.Data.toString()));
+        const responseRecord = parsedRecords.find(r => r.identifier === recordIdentifier);
         expect(responseRecord.identifier).toEqual(recordIdentifier);
         expect(responseRecord.response.status).toEqual('SUCCESS');
       });
@@ -248,9 +248,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     it('writes a failure message to the response stream', async () => {
       const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-      const responseRecord = JSON.parse(newResponseStreamRecords.Records[0].Data.toString());
-      expect(newResponseStreamRecords.Records.length >= 1).toBeTruthy();
-      expect(responseRecord.response.status).toEqual('FAILURE');
+      const parsedRecords = newResponseStreamRecords.Records.map(r => JSON.parse(r.Data.toString()));
+      // TODO(aimee): This should check the record identifier is equal to bad
+      // record identifier, but this requires a change to cnmresponse task
+      expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
     });
   });
 });
