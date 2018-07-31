@@ -7,39 +7,6 @@
       "level": {
         "type": "integer"
       },
-      "provider": {
-        "type": "keyword"
-      },
-      "granuleId": {
-        "type": "keyword"
-      },
-      "fakefield35": {
-        "type": "text"
-      },
-      "collectionId": {
-        "type": "keyword"
-      },
-      "fakefield73": {
-        "type": "keyword"
-      },
-      "pdrName": {
-        "type": "keyword"
-      },
-      "timestamp": {
-        "type": "date"
-      },
-      "file": {
-        "type": "keyword"
-      },
-      "sender": {
-        "type": "text"
-      },
-      "executions": {
-        "type": "text"
-      },
-      "version": {
-        "type": "keyword"
-      }
     }
   },
   "collection": {
@@ -316,17 +283,6 @@
     }
   },
   "execution": {
-    "dynamic_templates": [
-      {
-        "all_date_fileds": {
-          "match": "*At",
-          "match_mapping_type": "long",
-          "mapping": {
-            "type": "date"
-          }
-        }
-      }
-    ],
     "properties": {
       "arn": {
         "type": "keyword"

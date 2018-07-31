@@ -15,8 +15,6 @@
 
 const got = require('got');
 const get = require('lodash.get');
-const equals = require('lodash.isequal');
-const diffWith = require('lodash.differencewith');
 const boolean = require('boolean');
 const log = require('@cumulus/common/log');
 const pLimit = require('p-limit');
@@ -42,10 +40,25 @@ async function findMissingMappings(esClient, index, newMappings) {
   const typesResponse = await esClient.indices.getMapping({
     index
   });
-
-  const indexMappings = get(typesResponse, index).mappings;
-
-  return Object.keys(diffWith(newMappings, indexMappings, equals));
+  
+  const types = Object.keys(newMappings);
+  const indexMappings = get(typesResponse, `${index}.mappings`);
+  
+  return types.filter((type) => {
+    const oldMapping = indexMappings[type];
+    const newMapping = newMappings[type];
+    // Check for new dynamic templates and properties
+    if (newMapping.dynamic_templates && (!oldMapping.dynamic_templates ||
+      (newMapping.dynamic_templates && 
+       newMapping.dynamic_templates.length >
+       oldMapping.dynamic_templates.length))) {
+      return true;
+    }
+    else {
+      const fields = Object.keys(newMapping.properties);
+      return !!fields.filter((field) => Object.keys(oldMapping.properties).includes(field));
+    }
+  });
 }
 
 /**
@@ -111,6 +124,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     const missingTypes = await findMissingMappings(esClient, aliasedIndex, mappings);
 
     if (missingTypes.length > 0) {
+      log.info(`Updating mappings for ${missingTypes}`);
       const concurrencyLimit = inTestMode() ? 1 : 3;
       const limit = pLimit(concurrencyLimit);
       const addMissingTypesPromises = missingTypes.map((type) =>
