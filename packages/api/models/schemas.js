@@ -16,7 +16,7 @@ module.exports.asyncOperation = {
     },
     status: {
       type: 'string',
-      enum: ['CREATED', 'STARTING', 'RUNNING', 'SUCCEEDED', 'RUNNER_FAILED', 'TASK_FAILED']
+      enum: ['RUNNING', 'SUCCEEDED', 'RUNNER_FAILED', 'TASK_FAILED']
     },
     taskArn: { type: 'string' },
     updatedAt: { type: 'integer' }

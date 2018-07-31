@@ -39,42 +39,6 @@ class AsyncOperation extends Manager {
   }
 
   /**
-   * Creates one or more AsyncOperation records
-   *
-   * Will assign a randomly-generated ID to the item.
-   *
-   * @param {Object<Array|Object>} items - the Item/Items to be added to the database
-   * @returns {Promise<Array|Object>} an array of created records or a single
-   *   created record
-   */
-  async create(items = {}) {
-    // This is confusing because the argument named "items" could either be
-    // an Array of items  or a single item.  To make this function a little
-    // easier to understand, converting the single item case here to an array
-    // containing one item.
-    const itemsArray = Array.isArray(items) ? items : [items];
-
-    // Assign IDs to each of the items
-    const itemsWithIds = itemsArray.map((item) => {
-      const id = uuidv4();
-
-      return Object.assign(
-        cloneDeep(item),
-        {
-          id,
-          status: 'CREATED'
-        }
-      );
-    });
-
-    const createdItems = await super.create(itemsWithIds);
-
-    // If the original item was an Array, return an Array.  If the original item
-    // was an Object, return an Object.
-    return Array.isArray(items) ? createdItems : createdItems[0];
-  }
-
-  /**
    * Fetch the AsyncOperation with the given id
    *
    * @param {string} id - an AsyncOperation id
@@ -123,7 +87,8 @@ class AsyncOperation extends Manager {
     } = params;
 
     // Create the record in the database
-    const { id } = await this.create();
+    const id = uuidv4();
+    await this.create({ id, status: 'RUNNING' });
 
     // Store the payload to S3
     const payloadBucket = this.systemBucket;

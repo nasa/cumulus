@@ -99,7 +99,7 @@ test.serial('GET /async-operation/{:id} returns a 404 status code if the request
 test.serial('GET /async-operation/{:id} returns the async operation if it does exist', async (t) => {
   const asyncOperation = {
     id: 'abc-123',
-    status: 'CREATED',
+    status: 'RUNNING',
     taskArn: randomString(),
     output: JSON.stringify({ age: 37 })
   };
