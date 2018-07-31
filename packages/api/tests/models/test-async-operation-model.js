@@ -207,7 +207,7 @@ test.serial('The AsyncOperation.start() method returns an item id', async (t) =>
   t.true(isString(id));
 });
 
-test.serial('The AsyncOperation.start() method sets the record status to "STARTING"', async (t) => {
+test.serial('The AsyncOperation.start() method sets the record status to "RUNNING"', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],
     failures: []
@@ -221,7 +221,7 @@ test.serial('The AsyncOperation.start() method sets the record status to "STARTI
   });
 
   const fetchedAsyncOperation = await asyncOperationModel.get(id);
-  t.is(fetchedAsyncOperation.status, 'STARTING');
+  t.is(fetchedAsyncOperation.status, 'RUNNING');
 });
 
 test.serial('The AsyncOperation.start() method returns the newly-generated record', async (t) => {
