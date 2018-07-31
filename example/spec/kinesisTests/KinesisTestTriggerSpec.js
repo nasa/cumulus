@@ -58,7 +58,6 @@ const expectedTranslatePayload = {
     }
   ]
 };
-console.log(JSON.stringify(expectedTranslatePayload))
 
 const fileData = expectedTranslatePayload.granules[0].files[0];
 const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC`;
@@ -81,7 +80,6 @@ const expectedSyncGranulesPayload = {
     }
   ]
 };
-sys.exit(-1)
 
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
