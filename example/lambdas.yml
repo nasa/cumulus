@@ -124,8 +124,19 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: 'daacs/podaac/CNMToCMA-0.0.1.zip'
+    key: 'daacs/podaac/cnmToGranule-1.0-wCMA.zip'
   useMessageAdapter: false
+  launchInVpc: true
+
+CnmResponse:
+  handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
+  timeout: 300
+  useMessageAdapter: false
+  runtime: java8
+  memory: 256
+  s3Source:
+    bucket: '{{buckets.shared.name}}'
+    key: 'daacs/podaac/cnmResponse-1.0.zip'
   launchInVpc: true
 
 WaitForDeployment:
