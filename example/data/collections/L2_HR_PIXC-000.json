@@ -1,6 +1,6 @@
 {
   "name": "L2_HR_PIXC",
-  "version": "001",
+  "version": "000",
   "provider_path": "podaac-cumulus/test-data",
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
