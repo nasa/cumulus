@@ -1,15 +1,11 @@
 'use strict';
 
 const { ecs } = require('@cumulus/common/aws');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
+const {
+  api: apiTestUtils,
+  getClusterArn
+} = require('@cumulus/integration-tests');
 const { loadConfig } = require('../helpers/testUtils');
-
-// Find the ECS Cluster ARN for the given Cumulus stack
-async function getClusterArn(stackName) {
-  const clusterPrefix = `${stackName}-CumulusECSCluster-`;
-  const listClustersResponse = await ecs().listClusters().promise();
-  return listClustersResponse.clusterArns.find((arn) => arn.includes(clusterPrefix));
-}
 
 describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let postBulkDeleteResponse;

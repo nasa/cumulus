@@ -1,49 +1,22 @@
 'use strict';
 
-const sleep = require('sleep-promise');
 const fs = require('fs-extra');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 const {
   aws: {
-    dynamodb,
     ecs,
     lambda,
     s3
   },
   testUtils: { randomString }
 } = require('@cumulus/common');
+const {
+  getClusterArn,
+  waitForAsyncOperationStatus
+} = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
 const { loadConfig } = require('../helpers/testUtils');
-
-// Find the ECS Cluster ARN for the given Cumulus stack
-async function getClusterArn(stackName) {
-  const clusterPrefix = `${stackName}-CumulusECSCluster-`;
-  const listClustersResponse = await ecs().listClusters().promise();
-  return listClustersResponse.clusterArns.find((arn) => arn.includes(clusterPrefix));
-}
-
-async function waitForAsyncOperationStatus({
-  TableName,
-  id,
-  status,
-  retries = 5
-}) {
-  const { Item } = await dynamodb().getItem({
-    TableName,
-    Key: { id: { S: id } }
-  }).promise();
-
-  if (Item.status.S === status || retries <= 0) return Item;
-
-  await sleep(2000);
-  return waitForAsyncOperationStatus({
-    TableName,
-    id,
-    status,
-    retries: retries - 1
-  });
-}
 
 describe('The AsyncOperation task runner', () => {
   let asyncOperationModel;

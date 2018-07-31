@@ -6,12 +6,17 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
-const { s3, sfn } = require('@cumulus/common/aws');
-const sfnStep = require('./sfnStep');
+const {
+  dynamodb,
+  ecs,
+  s3,
+  sfn
+} = require('@cumulus/common/aws');
 const { Provider, Collection, Rule } = require('@cumulus/api/models');
 
 const api = require('./api');
 const cmr = require('./cmr.js');
+const sfnStep = require('./sfnStep');
 
 const executionStatusNumRetries = 100;
 const waitPeriodMs = 5000;
@@ -24,6 +29,54 @@ const waitPeriodMs = 5000;
  */
 function timeout(waitPeriod) {
   return new Promise((resolve) => setTimeout(resolve, waitPeriod));
+}
+
+/**
+ * Wait for an AsyncOperation to reach a given status
+ *
+ * Retries every 2 seconds until the expected status has been reached or the
+ *   number of retries has been exceeded.
+ *
+ * @param {Object} params - params
+ * @param {string} params.TableName - the name of the AsyncOperations DynamoDB
+ *   table
+ * @param {string} params.id - the id of the AsyncOperation
+ * @param {string} params.status - the status to wait for
+ * @param {integer} params.retries - the number of times to retry Default: 5
+ * @returns {Promise<Object>} - the AsyncOperation object
+ */
+async function waitForAsyncOperationStatus({
+  TableName,
+  id,
+  status,
+  retries = 5
+}) {
+  const { Item } = await dynamodb().getItem({
+    TableName,
+    Key: { id: { S: id } }
+  }).promise();
+
+  if (Item.status.S === status || retries <= 0) return Item;
+
+  await timeout(2000);
+  return waitForAsyncOperationStatus({
+    TableName,
+    id,
+    status,
+    retries: retries - 1
+  });
+}
+
+/**
+ * Return the ARN of the Cumulus ECS cluster
+ *
+ * @param {string} stackName - the Cumulus stack name
+ * @returns {string|undefined} - the cluster ARN or undefined if not found
+ */
+async function getClusterArn(stackName) {
+  const clusterPrefix = `${stackName}-CumulusECSCluster-`;
+  const listClustersResponse = await ecs().listClusters().promise();
+  return listClustersResponse.clusterArns.find((arn) => arn.includes(clusterPrefix));
 }
 
 /**
@@ -394,5 +447,7 @@ module.exports = {
   deleteRules,
   rulesList,
   timeout,
-  getWorkflowArn
+  getWorkflowArn,
+  getClusterArn,
+  waitForAsyncOperationStatus
 };
