@@ -45,7 +45,7 @@ const expectedTranslatePayload = {
     {
       granuleId: record.product.name,
       dataType: 'L2_HR_PIXC',
-      version: '001',
+      version: '000',
       files: [
         {
           path: 'cumulus-test-data/pdrs',
@@ -75,7 +75,7 @@ const expectedSyncGranulesPayload = {
     {
       granuleId: granuleId,
       dataType: 'L2_HR_PIXC',
-      version: '001',
+      version: '000',
       files: [fileDataWithFilename]
     }
   ]
