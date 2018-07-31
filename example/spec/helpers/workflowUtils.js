@@ -85,7 +85,7 @@ function removeWorkflow(workflowName, workflowConfigFile = workflowsYmFile) {
 
 /**
  * Remove a task from the workflow and save the workflow config file. Change any
- * tasks pointing to the removed task as the 'Next' step to point to the 
+ * tasks pointing to the removed task as the 'Next' step to point to the
  * following step, or remove the 'Next' step if the removed step was the last step
  *
  * @param {*} workflowName - name of the workflow to remove the task from
