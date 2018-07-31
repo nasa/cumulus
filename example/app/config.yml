@@ -202,10 +202,17 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee-test:
-  stackName: aimee-test
-  stackNameNoDash: aimeeTest
+aimee:
+  stackName: aimee
+  stackNameNoDash: aimee
 
+  oauth:
+    provider: google
+
+  api_lambda_memory: 768
+
+  users:
+    - username: aimee@developmentseed.org
 
 lf:
   stackName: lf-cumulus
