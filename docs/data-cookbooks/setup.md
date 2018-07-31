@@ -22,14 +22,14 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
 
 |Key  |Value|Required  |Description|
 |:---:|:-----:|:--------:|---|
-|name |"MOD09GQ"|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
-|version|"006"|Yes|A version tag for the collection|
-|process|"modis"|Yes|The options for this are found in "ChooseProcess and in workflows.yml|
-|provider_path|"cumulus-test-data/pdrs"|Yes|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
-|granuleId|"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$"|Yes|REGEX to match granuleId|
-|granuleIdExtraction|"(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)"|Yes|REGEX that extracts granuleId from file names|
-|sampleFileName|"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"|Yes|...|
-|files|JSON-Object|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
+|name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
+|version|`"006"`|Yes|A version tag for the collection|
+|process|`"modis"`|Yes|The options for this are found in "ChooseProcess and in workflows.yml|
+|provider_path|`"cumulus-test-data/pdrs"`|Yes|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
+|granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$"`|Yes|REGEX to match granuleId|
+|granuleIdExtraction|`"(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)"`|Yes|REGEX that extracts granuleId from file names|
+|sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|...|
+|files|`<JSON Object> # TODO`|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 
 **Required:**
 ```
