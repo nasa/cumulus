@@ -112,7 +112,7 @@ test.serial('Missing fields added to index', async (t) => {
 
   t.deepEqual(
     await bootstrap.findMissingMappings(esClient, indexName, testMappings),
-    ['logs', 'executions']
+    ['logs', 'execution']
   );
 
   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
