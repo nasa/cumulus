@@ -8,9 +8,7 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists },
-  stringUtils: { globalReplace },
-  testUtils: { randomStringFromRegex }
+  aws: { s3, s3ObjectExists }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -244,4 +242,8 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(record.status).toEqual('completed');
     });
   });
+
+
+
+
 });
