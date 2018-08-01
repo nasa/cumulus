@@ -239,6 +239,9 @@ jl:
   stackName: jl-test-integration
   stackNameNoDash: JlTestIntegration
   buckets:
+    internal:
+      name: jl-test-integration-internal
+      type: internal
     private:
       name: jl-test-integration-private
       type: private
