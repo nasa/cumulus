@@ -25,21 +25,17 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
 |version|`"006"`|Yes|A version tag for the collection|
 |process|`"modis"`|Yes|The options for this are found in "ChooseProcess and in workflows.yml|
-|provider_path|`"cumulus-test-data/pdrs"`|Yes|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$"`|Yes|REGEX to match granuleId|
 |granuleIdExtraction|`"(MOD09GQ\\..*)(\\.hdf\|\\.cmr\|_ndvi\\.jpg)"`|Yes|REGEX that extracts granuleId from file names|
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|...|
-|files|`<JSON Object> # TODO`|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
+|files|`<JSON Object>` defined [here](####files)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
+|provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
+|dataType|`"MOD09GQ"`|No|# TODO|
+|duplicateHandling|`"replace"`|(replace|version|skip) determines granule duplicate handling scheme|
+|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"`|No|Filename without extension|
 
-**Required:**
+####files
 ```
-"name": "MOD09GQ" # The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard.
-"version": "006" # A version tag for the collection.
-"process": modis" # The options for this are found in "ChooseProcess" in workflows.yml
-"provider_path": "cumulus-test-data/pdrs" # This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint.
-"granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$" # REGEX to match granuleId.
-"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)" # REGEX that extracts granuleId from file names
-"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
 "files": [ # Describe the individual files that will exist for each granule in this collection (science, browse, meta, etc.)
   {
     "bucket": internal # Which S3 bucket this collection will live in. The available buckets are configured in the Cumulus deployment file: app/config.yml (but should be entered here WITHOUT the stack-name). cumulus-test-internal -> internal (if the stack-name is cumulus-test),
@@ -48,22 +44,12 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/b
   },
   ...
 ]
-"createdAt": # This will be added automatically
-"updatedAt": # This will be updated automatically
-```
-
-**Optional:**
-```
-"provider_path": "granules/fake_granules" # path to the granule/file on the provider
-"dataType": "MOD09GQ"
-"duplicateHandling": "replace" # (replace|version|skip)
-"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}" # Filename without extension
 ```
 
 
 ### Providers
 
-Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js#L400). A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
+Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
 **Break down of [s3_provider.json](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/example/data/providers/s3_provider.json):**
 
@@ -88,7 +74,7 @@ _The above optional attributes are not shown in the example provided, but they h
 
 ### Rules
 
-Rules are used by operators to start processing workflows and the transformation process. Rules can be invoked manually or based on a schedule. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/blob/713ae01458ef278fa75d1cc0c6d68e00ffd4ce33/packages/api/models/schemas.js#L231). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
+Rules are used by operators to start processing workflows and the transformation process. Rules can be invoked manually or based on a schedule. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (specifically the object assigned to `module.exports.rule`). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
 
 We don't currently have examples of rules in the Cumulus repo, but we can see how to create a rule from the Cumulus dashboard.
 1. In the Cumulus dashboard, click `Rules` on the navigation bar.
