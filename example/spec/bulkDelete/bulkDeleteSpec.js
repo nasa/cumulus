@@ -75,7 +75,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     expect(describeTasksResponse.tasks.length).toEqual(1);
   });
 
-  it('eventually generates the correct result', async () => {
+  it('eventually generates the correct output', async () => {
     expect(beforeAllSucceeded).toBe(true);
 
     await ecs().waitFor(
@@ -95,17 +95,16 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
 
     expect(getAsyncOperationResponse.statusCode).toEqual(200);
     expect(getAsyncOperationBody.status).toEqual('SUCCEEDED');
-    expect(getAsyncOperationBody.error).toBeUndefined();
 
-    let result;
+    let output;
     try {
-      result = JSON.parse(getAsyncOperationBody.result);
+      output = JSON.parse(getAsyncOperationBody.output);
     }
     catch (err) {
-      throw new SyntaxError(`getAsyncOperationBody.result is not valid JSON: ${getAsyncOperationBody.result}`);
+      throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
     }
 
-    expect(result).toEqual({ deletedGranules: ['g-123'] });
+    expect(output).toEqual({ deletedGranules: ['g-123'] });
   });
 });
 
@@ -177,7 +176,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     expect(describeTasksResponse.tasks.length).toEqual(1);
   });
 
-  it('eventually generates the correct result', async () => {
+  it('eventually generates the correct output', async () => {
     expect(beforeAllSucceeded).toBe(true);
 
     await ecs().waitFor(
@@ -196,8 +195,18 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
 
     expect(getAsyncOperationResponse.statusCode).toEqual(200);
-    expect(getAsyncOperationBody.status).toEqual('FAILED');
-    expect(getAsyncOperationBody.error).toEqual('triggered failure');
-    expect(getAsyncOperationBody.result).toBeUndefined();
+    expect(getAsyncOperationBody.status).toEqual('TASK_FAILED');
+
+    let output;
+    try {
+      output = JSON.parse(getAsyncOperationBody.output);
+    }
+    catch (err) {
+      throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+    }
+
+    expect(output.name).toBe('Error');
+    expect(output.message).toBe('triggered failure');
+    expect(output.stack).toBeDefined();
   });
 });
