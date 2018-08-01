@@ -242,8 +242,4 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(record.status).toEqual('completed');
     });
   });
-
-
-
-
 });
