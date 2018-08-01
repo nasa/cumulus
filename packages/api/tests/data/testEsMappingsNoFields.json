@@ -6,7 +6,7 @@
       },
       "level": {
         "type": "integer"
-      },
+      }
     }
   },
   "collection": {
