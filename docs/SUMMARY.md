@@ -35,7 +35,7 @@
 ### Data Cookbook
 
 * [About Cookbooks](data-cookbooks/about-cookbooks.md)
-* [Collections, Providers, Schemas, and Rules](data-cookbooks/setup.md)
+  * [Collections, Providers, Schemas, and Rules](data-cookbooks/setup.md)
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
 
