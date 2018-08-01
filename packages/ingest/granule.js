@@ -107,16 +107,16 @@ class Discover {
     let discoveredFiles = [];
     try {
       discoveredFiles = (await this.list())
-      // Make sure the file matches the granuleIdExtraction
-      .filter((file) => file.name.match(this.collection.granuleIdExtraction))
-      // Make sure there is a config for this type of file
-      .filter((file) => this.fileTypeConfigForFile(file))
-      // Add additional granule-related properties to the file
-      .map((file) => this.setGranuleInfo(file))
-    } 
+        // Make sure the file matches the granuleIdExtraction
+        .filter((file) => file.name.match(this.collection.granuleIdExtraction))
+        // Make sure there is a config for this type of file
+        .filter((file) => this.fileTypeConfigForFile(file))
+        // Add additional granule-related properties to the file
+        .map((file) => this.setGranuleInfo(file));
+    }
     catch (err) {
       log.error(`discover exception ${JSON.stringify(err)}`);
-    };
+    }
 
     // This is confusing, but I haven't figured out a better way to write it.
     // What we're doing here is checking each discovered file to see if it
@@ -198,6 +198,8 @@ class Granule {
     // download / verify checksum / upload
 
     const stackName = process.env.stackName;
+    let dataType = granule.dataType;
+    let version = granule.version;
 
     // if no collection is passed then retrieve the right collection
     if (!this.collection) {
@@ -208,25 +210,26 @@ class Granule {
       }
       const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
       this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
-    } else {
+    }
+    else {
       // Collection is passed in, but granule does not define the dataType and version
-      if ( !granule.dataType) granule.dataType = this.collection.dataType
-      if ( !granule.version) granule.version = this.collection.version
+      if (!dataType) dataType = this.collection.dataType || this.collection.name;
+      if (!version) version = this.collection.version;
     }
 
-    this.collectionId = constructCollectionId(granule.dataType, granule.version);    
+    this.collectionId = constructCollectionId(dataType, version);
     this.fileStagingDir = path.join(this.fileStagingDir, this.collectionId);
 
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
       .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
 
-    const files = await Promise.all(downloadFiles)
+    const files = await Promise.all(downloadFiles);
 
     return {
       granuleId: granule.granuleId,
-      dataType: granule.dataType,
-      version: granule.version,
+      dataType: dataType,
+      version: version,
       files
     };
   }
