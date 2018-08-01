@@ -1,14 +1,8 @@
 'use strict';
 
-const fs = require('fs-extra');
-const path = require('path');
 const uuidv4 = require('uuid/v4');
 const {
-  aws: {
-    ecs,
-    lambda,
-    s3
-  },
+  aws: { ecs, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
 const {
