@@ -17,11 +17,12 @@ async function migrateCollection(file, prefix, bucket, collectionConfigStore) {
   const coll = await s3.getObject(file.Bucket, file.Key);
   const item = JSON.parse(coll.Body.toString());
 
-  const collectionId = constructCollectionId(item.dataType, item.dataVersion);
+  const dataType = item.dataType || item.name;
+  const collectionId = constructCollectionId(dataType, item.dataVersion);
   const key = `${prefix}/${collectionId}.json`;
 
   if (!s3.fileExists(bucket, key)) {
-    await collectionConfigStore.put(item.dataType, item.version, item);
+    await collectionConfigStore.put(dataType, item.version, item);
   }
 }
 
