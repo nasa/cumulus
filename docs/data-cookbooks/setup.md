@@ -52,8 +52,8 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
 **Break down of [s3_provider.json](https://github.com/nasa/cumulus/tree/tree/example/data/providers/s3_provider.json):**
-|Key  |Value|Required  |Description|
-|:---:|:-----:|:--------:|---|
+|Key  |Value  |Required|Description|
+|:---:|:-----:|:------:|-----------|
 |id|"s3_provider"|Yes|Unique identifier for provider|
 |globalConnectionLimit|10|Yes|Integer specifying the connection limit to the provider|
 |protocol|"s3"|Yes|(http|https|ftp|sftp|s3) are current valid entries|
@@ -73,20 +73,25 @@ We don't currently have examples of rules in the Cumulus repo, but we can see ho
 1. In the Cumulus dashboard, click `Rules` on the navigation bar.
 2. Click the `Add a rule` button.
 
+|Key|Value|Required|Description|
+|---|-----|--------|-----------|
+|name|"myScheduledRule"|Yes|Name of the rule. This is the name under which the rule will be listed on the dashboard|
+|workflow Name|"ParsePdr"|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
+|Provider Id|"myProvider"|Yes|Configured provider's iD. This can be found on the Providerse page|
+|Collection Name|"myCollection"|Yes|Name of the collection this rule will moderate. Configured and found in the Collections page|
+|Collection Version|"006"|Yes|Version of the collection this rule will moderate. Configured and found in the Collections page|
+|Rule - Type|onetime|Yes|(onetime|scheduled|sns|kinesis) type of scheduling/workflow kick-off desired|
+|Rule - Value|[here](./#rule-value)|Yes|This entry depends on the type of run|
+|Rule state|ENABLED|Yes|(ENABLED|DISABLED) whether or not the rule will be active|
+|Optional tags|"nightly"|No|A string type tag that can be added to simplify search|
+
+#### rule-value
 ```
-name: Name of the rule. This is the name under which the rule will be displayed in the dashboard.
-Workflow Name: name of the workflow you're going to run. A list of available workflows can be found on the Workflows page.
-Provider ID: Configured provider's ID. This can be found on the Providers page.
-collection - Collection Name: Name of the collection this rule will work with. Configured and found in the Collections page.
-collection - Collection Version: Version of the collection this rule will work with. Configured and found in the Collections page.
-rule - type: (onetime|scheduled|sns|kinesis)
 rule - value: This entry depends on the type of run.
   If it's a onetime rule, this can be left blank.
   If this is a scheduled rule, this field can hold a cron-type expression or rate expression. # Doc link below
   If this is an SNS rule #{SNS_topic_ARN},
   If this is a kinesis rule, this should be a configured ${Kinesis_stream_ARN} # See below
-Rule state: (ENABLED|DISABLED)
-Optional tags for search: Add additional tags to make searching easier. For example, adding a "nightly" tag to a rule that runs nightly.
 ```
 
 **Please Note:**
