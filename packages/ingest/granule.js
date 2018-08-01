@@ -208,6 +208,10 @@ class Granule {
       }
       const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
       this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+    } else {
+      // Collection is passed in, but granule does not define the dataType and version
+      if ( !granule.dataType) granule.datatype = this.collection.dataType
+      if ( !granule.version) granule.version = this.collection.version
     }
 
     this.collectionId = constructCollectionId(granule.dataType, granule.version);    
