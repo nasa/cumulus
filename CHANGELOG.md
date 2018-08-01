@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
+
 ## [v1.8.1] - 2018-08-01
 
 **Note** IAM roles should be re-deployed with this release.
