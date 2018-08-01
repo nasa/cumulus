@@ -14,7 +14,7 @@ Looking at our api schema [definitions](https://github.com/nasa/cumulus/tree/mas
 
 ### Collections
 
-Collections are logical sets of data objects of the same data type and version. We have a few [test collections](https://github.com/nasa/cumulus/tree/master/example/data/collections) configured in Cumulus source for integration testing. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the "Collections" navigation tab. Additionally, they can be managed via the [collections api](https://nasa.github.io/cumulus-api/?language=Python#list-collections).
+Collections are logical sets of data objects of the same data type and version. A collection provides contextual information used by Cumulus ingest. We have a few [test collections](https://github.com/nasa/cumulus/tree/master/example/data/collections) configured in Cumulus source for integration testing. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the "Collections" navigation tab. Additionally, they can be managed via the [collections api](https://nasa.github.io/cumulus-api/?language=Python#list-collections).
 
 The schema for collections can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) as the object assigned to `module.exports.collection` and tells us all about what values are expected, accepted, and required in a collection object (where required attribute keys are assigned as a string to the `required` attribute).
 
@@ -28,7 +28,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$"`|Yes|REGEX to match granuleId|
 |granuleIdExtraction|`"(MOD09GQ\\..*)(\\.hdf\|\\.cmr\|_ndvi\\.jpg)"`|Yes|REGEX that extracts granuleId from file names|
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|...|
-|files|`<JSON Object>` defined [here](#files)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
+|files|`<JSON Object>` of files defined [here](#files)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |dataType|`"MOD09GQ"`|No|# TODO|
 |duplicateHandling|`"replace"`|No|(replace\|version\|skip) determines granule duplicate handling scheme|
@@ -50,7 +50,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 
 ### Providers
 
-Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
+Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
 **Break down of [s3_provider.json](https://github.com/nasa/cumulus/tree/tree/example/data/providers/s3_provider.json):**
 
