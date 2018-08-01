@@ -56,13 +56,13 @@ Providers ingest, archive, process, and distribute satellite data on-demand. The
 
 |Key|Value|Required|Description|
 |:---:|:-----:|:------:|-----------|
-|id|"s3_provider"|Yes|Unique identifier for provider|
-|globalConnectionLimit|10|Yes|Integer specifying the connection limit to the provider|
-|protocol|"s3"|Yes|(http\|https\|ftp\|sftp\|s3) are current valid entries|
-|host|"cumulus-data-shared"|Yes|Host where the files will exist or s3 bucket if "s3" provider|
-|port|${port_number}|No|Port to connect with the provider on|
-|username|${username}|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested|
-|password|${password}|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly suggested|
+|id|`"s3_provider"`|Yes|Unique identifier for provider|
+|globalConnectionLimit|`10`|Yes|Integer specifying the connection limit to the provider|
+|protocol|`"s3"`|Yes|(http\|https\|ftp\|sftp\|s3) are current valid entries|
+|host|`"cumulus-data-shared"`|Yes|Host where the files will exist or s3 bucket if "s3" provider|
+|port|`${port_number}`|No|Port to connect with the provider on|
+|username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested|
+|password|`${password}`|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly suggested|
 
 _The above optional attributes are not shown in the example provided, but they have been included in this document for completeness_
 
@@ -77,15 +77,15 @@ We don't currently have examples of rules in the Cumulus repo, but we can see ho
 
 |Key|Value|Required|Description|
 |---|-----|--------|-----------|
-|name|"myScheduledRule"|Yes|Name of the rule. This is the name under which the rule will be listed on the dashboard|
-|workflow Name|"ParsePdr"|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
-|Provider Id|"myProvider"|Yes|Configured provider's iD. This can be found on the Providerse page|
-|Collection Name|"myCollection"|Yes|Name of the collection this rule will moderate. Configured and found in the Collections page|
-|Collection Version|"006"|Yes|Version of the collection this rule will moderate. Configured and found in the Collections page|
-|Rule - Type|onetime|Yes|(onetime\|scheduled\|sns\|kinesis) type of scheduling/workflow kick-off desired|
+|name|`"myScheduledRule"`|Yes|Name of the rule. This is the name under which the rule will be listed on the dashboard|
+|workflow Name|`"ParsePdr"`|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
+|Provider Id|`"myProvider"`|Yes|Configured provider's iD. This can be found on the Providerse page|
+|Collection Name|`"myCollection"`|Yes|Name of the collection this rule will moderate. Configured and found in the Collections page|
+|Collection Version|`"006"`|Yes|Version of the collection this rule will moderate. Configured and found in the Collections page|
+|Rule - Type|`onetime`|Yes|(onetime\|scheduled\|sns\|kinesis) type of scheduling/workflow kick-off desired|
 |Rule - Value|[here](#rule-value)|Yes|This entry depends on the type of run|
-|Rule state|ENABLED|Yes|(ENABLED\|DISABLED) whether or not the rule will be active|
-|Optional tags|"nightly"|No|A string type tag that can be added to simplify search|
+|Rule state|`ENABLED`|Yes|(ENABLED\|DISABLED) whether or not the rule will be active|
+|Optional tags|`"nightly"`|No|A string type tag that can be added to simplify search|
 
 #### rule-value
 ```
