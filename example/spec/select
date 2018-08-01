@@ -2,7 +2,7 @@
 
 if [ ! -z "${CIRCLE_USERNAME}" ]; then
     declare -A developers
-    developers=( ["abarciauskas-bgse"]="aimee-test" \
+    developers=( ["abarciauskas-bgse"]="aimee" \
                 ["scisco"]="aj" \
                 ["kkelly51"]="kk-uat-deployment" \
                 ["yjpa7145"]="mth-2"
