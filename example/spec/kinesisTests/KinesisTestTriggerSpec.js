@@ -44,8 +44,6 @@ const expectedTranslatePayload = {
   granules: [
     {
       granuleId: record.product.name,
-      dataType: 'L2_HR_PIXC',
-      version: '000',
       files: [
         {
           path: 'cumulus-test-data/pdrs',
@@ -60,7 +58,7 @@ const expectedTranslatePayload = {
 };
  
 const fileData = expectedTranslatePayload.granules[0].files[0];
-const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC`;
+const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC_000`;
 
 const fileDataWithFilename = {
   ...fileData,
