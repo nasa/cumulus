@@ -40,24 +40,22 @@ async function findMissingMappings(esClient, index, newMappings) {
   const typesResponse = await esClient.indices.getMapping({
     index
   });
-  
+
   const types = Object.keys(newMappings);
   const indexMappings = get(typesResponse, `${index}.mappings`);
-  
+
   return types.filter((type) => {
     const oldMapping = indexMappings[type];
+    if (!oldMapping) return true;
     const newMapping = newMappings[type];
     // Check for new dynamic templates and properties
     if (newMapping.dynamic_templates && (!oldMapping.dynamic_templates ||
-      (newMapping.dynamic_templates && 
        newMapping.dynamic_templates.length >
-       oldMapping.dynamic_templates.length))) {
+       oldMapping.dynamic_templates.length)) {
       return true;
     }
-    else {
-      const fields = Object.keys(newMapping.properties);
-      return !!fields.filter((field) => Object.keys(oldMapping.properties).includes(field));
-    }
+    const fields = Object.keys(newMapping.properties);
+    return !!fields.filter((field) => !Object.keys(oldMapping.properties).includes(field)).length;
   });
 }
 

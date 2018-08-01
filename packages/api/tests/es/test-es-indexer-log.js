@@ -34,7 +34,7 @@ test.serial('indexing log messages', async (t) => {
 
   await esClient.indices.refresh();
   // console.log(JSON.stringify(response, null, 2));
-
+  const esMapping = await esClient.indices.getMapping({ index: esIndex });
   // expected result in elastic search
   const estxt = fs.readFileSync(path.join(__dirname, '../data/log_events_expected.json'), 'utf8');
   const expected = JSON.parse(estxt.toString());
