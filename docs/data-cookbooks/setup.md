@@ -52,23 +52,16 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 Providers ingest, archive, process, and distribute satellite data on-demand. They generate input data. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
 **Break down of [s3_provider.json](https://github.com/nasa/cumulus/tree/tree/example/data/providers/s3_provider.json):**
+|Key  |Value|Required  |Description|
+|:---:|:-----:|:--------:|---|
+|id|"s3_provider"|Yes|Unique identifier for provider|
+|globalConnectionLimit|10|Yes|Integer specifying the connection limit to the provider|
+|protocol|"s3"|Yes|(http|https|ftp|sftp|s3) are current valid entries|
+|host|"cumulus-data-shared"|Yes|Host where the files will exist or s3 bucket if "s3" provider|
+|port|${port_number}|No|Port to connect with the provider on|
+|username|${username}|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested|
+|password|${password}|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly suggested|
 
-**Required:**
-```
-"id" = "s3_provider" # unique identifier for provider
-"globalConnectionLimit": 10
-"protocol": "s3" # (http|https|ftp|sftp|s3)
-"host": "cumulus-data-shared" # host where the files will exist
-```
-
-**Optional:**
-```
-"port": # which port to connect to the provider on
-"username": # Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested.
-"password": # Password for access to the provider. Plain-text or encrypted. Encrypted is highly suggested.
-"encrypted": # Are the username and password credentials encrypted?
-"updatedAt": # This will be updated automatically
-```
 _The above optional attributes are not shown in the example provided, but they have been included in this document for completeness_
 
 
