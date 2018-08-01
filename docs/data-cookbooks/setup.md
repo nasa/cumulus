@@ -31,7 +31,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |files|`<JSON Object>` defined [here](#files)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |dataType|`"MOD09GQ"`|No|# TODO|
-|duplicateHandling|`"replace"`|(replace|version|skip) determines granule duplicate handling scheme|
+|duplicateHandling|`"replace"`|No|(replace\|version\|skip) determines granule duplicate handling scheme|
 |url_path|`"{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"`|No|Filename without extension|
 
 
