@@ -16,7 +16,7 @@
 * docker-compose (only required for testing `pip install docker-compose`)
 
 Install the correct node version:
-
+ 
 ```
 nvm install
 nvm use
@@ -86,6 +86,10 @@ Run end to end tests by
 - Run `./bin/prepare`
 - Deploy your instance integrations on aws and run tests by following the steps [here](example/README.md)
     
+### Running integration tests on CirlceCI
+
+- Any commit message that includes the word `[run it]` or `[it run]` or `[it]` will trigger integration tests on circleci
+
 ### Code Coverage
 
 Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The CircleCI build tests coverage. A summary can be viewed in the build output. Detailed code coverage in html can be found by going to the Artifacts tab and navigating to `index.html` in the coverage folder. Clicking on `index.html` will take you to an html page showing code coverage for each individual file.

@@ -8,7 +8,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["granuleId", "dataType", "version", "files"],
+        "required": ["granuleId", "files"],
         "properties": {
           "granuleId": {"type": "string"},
           "dataType": {"type": "string"},

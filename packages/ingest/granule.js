@@ -1,18 +1,18 @@
 'use strict';
 
+const crypto = require('crypto');
 const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
 const groupBy = require('lodash.groupby');
 const identity = require('lodash.identity');
+const get = require('lodash.get');
 const omit = require('lodash.omit');
 const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
 const encodeurl = require('encodeurl');
 const cksum = require('cksum');
-const checksum = require('checksum');
 const xml2js = require('xml2js');
 const { aws, log } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
@@ -40,21 +40,19 @@ class Discover {
       throw new TypeError('Can not construct abstract class.');
     }
 
-    const config = get(event, 'config');
-
-    this.buckets = get(config, 'buckets');
-    this.collection = get(config, 'collection');
-    this.provider = get(config, 'provider');
-    this.useList = get(config, 'useList');
+    this.buckets = event.config.buckets;
+    this.collection = event.config.collection;
+    this.provider = event.config.provider;
+    this.useList = event.config.useList;
     this.event = event;
 
-    this.port = get(this.provider, 'port', 21);
-    this.host = get(this.provider, 'host', null);
-    this.path = get(this.collection, 'provider_path') || '/';
+    this.port = this.provider.port || 21;
+    this.host = this.provider.host;
+    this.path = this.collection.provider_path || '/';
 
     this.endpoint = urljoin(this.host, this.path);
-    this.username = get(this.provider, 'username', null);
-    this.password = get(this.provider, 'password', null);
+    this.username = this.provider.username;
+    this.password = this.provider.password;
 
     // create hash with file regex as key
     this.regexes = {};
@@ -123,7 +121,7 @@ class Discover {
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
         .then((exists) => (exists ? null : discoveredFile)))))
       .filter(identity);
-    
+
     // Group the files by granuleId
     const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
 
@@ -156,13 +154,15 @@ class Granule {
    * @param {Object} provider - provider configuration object
    * @param {string} fileStagingDir - staging directory on bucket to place files
    * @param {boolean} forceDownload - force download of a file
+   * @param {boolean} duplicateHandling - specify how to handle duplicates
    */
   constructor(
     buckets,
     collection,
     provider,
     fileStagingDir = 'file-staging',
-    forceDownload = false
+    forceDownload = false,
+    duplicateHandling = 'replace'
   ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
@@ -172,7 +172,7 @@ class Granule {
     this.collection = collection;
     this.provider = provider;
 
-    this.collection.url_path = this.collection.url_path || '';
+    if (this.collection) this.collection.url_path = this.collection.url_path || '';
     this.port = get(this.provider, 'port', 21);
     this.host = get(this.provider, 'host', null);
     this.username = get(this.provider, 'username', null);
@@ -181,6 +181,7 @@ class Granule {
 
     this.forceDownload = forceDownload;
     this.fileStagingDir = fileStagingDir;
+    this.duplicateHandling = duplicateHandling;
   }
 
   /**
@@ -195,18 +196,27 @@ class Granule {
     // download / verify checksum / upload
 
     const stackName = process.env.stackName;
-    // we need to retrieve the right collection
-    const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
-    this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+
+    // if no collection is passed then retrieve the right collection
+    if (!this.collection) {
+      if (!granule.dataType || !granule.version) {
+        throw new Error(
+          'Downloading the collection failed because dataType or version was missing!'
+        );
+      }
+      const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
+      this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+    }
 
     this.collectionId = constructCollectionId(granule.dataType, granule.version);
-     
+    this.fileStagingDir = path.join(this.fileStagingDir, this.collectionId);
+
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
+      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
- 
+
     return {
       granuleId: granule.granuleId,
       dataType: granule.dataType,
@@ -374,13 +384,13 @@ class Granule {
   * @returns {Promise} checksum value calculated from file
   **/
   async _hash(algorithm, filepath) {
-    const options = { algorithm };
-
-    return new Promise((resolve, reject) =>
-      checksum.file(filepath, options, (err, sum) => {
-        if (err) return reject(err);
-        return resolve(sum);
-      }));
+    return new Promise((resolve, reject) => {
+      const hash = crypto.createHash(algorithm);
+      const fileStream = fs.createReadStream(filepath);
+      fileStream.on('error', reject);
+      fileStream.on('data', (chunk) => hash.update(chunk));
+      fileStream.on('end', () => resolve(hash.digest('hex')));
+    });
   }
 
   /**
@@ -454,7 +464,7 @@ class Granule {
     // Check if the file exists
     const exists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, this.collectionId, file.name)
+      Key: path.join(this.fileStagingDir, file.name)
     });
 
     // Exit early if we can
@@ -486,14 +496,14 @@ class Granule {
       // Upload the file
       const filename = await this.upload(
         bucket,
-        path.join(this.fileStagingDir, this.collectionId),
+        this.fileStagingDir,
         file.name,
         fileLocalPath
       );
 
       return Object.assign(file, {
         filename,
-        fileStagingDir: path.join(this.fileStagingDir, this.collectionId),
+        fileStagingDir: this.fileStagingDir,
         url_path: this.getUrlPath(file),
         bucket
       });
@@ -688,7 +698,7 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
   // add/replace the OnlineAccessUrls
   const metadata = await getMetadata(cmrFile.filename);
   const metadataObject = await parseXmlString(metadata);
-  const metadataGranule = get(metadataObject, 'Granule');
+  const metadataGranule = metadataObject.Granule;
   const updatedGranule = {};
   Object.keys(metadataGranule).forEach((key) => {
     if (key === 'OnlineResources' || key === 'Orderable') {

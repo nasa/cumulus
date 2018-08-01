@@ -43,7 +43,7 @@ class Granule extends Manager {
    *
    * @param {string} granuleId - the granule ID
    * @param {string} collectionId - the collection ID
-   * @returns {Promise<undefined>} undefined
+   * @returns {Promise<undefined>} - undefined
    */
   async removeGranuleFromCmr(granuleId, collectionId) {
     log.info(`granules.removeGranuleFromCmr ${granuleId}`);
@@ -63,7 +63,7 @@ class Granule extends Manager {
    * start the re-ingest of a given granule object
    *
    * @param {Object} g - the granule object
-   * @returns {Promise} an object showing the start of the re-ingest
+   * @returns {Promise<undefined>} - undefined
    */
   async reingest(g) {
     const { name, version } = deconstructCollectionId(g.collectionId);
@@ -72,25 +72,47 @@ class Granule extends Manager {
     const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
     const originalMessage = JSON.parse(status.execution.input);
 
-    const payload = await Rule.buildPayload({
+    const lambdaPayload = await Rule.buildPayload({
       workflow: 'IngestGranule',
+      meta: originalMessage.meta,
+      payload: originalMessage.payload,
       provider: g.provider,
       collection: {
         name,
         version
-      },
-      meta: originalMessage.meta,
-      payload: originalMessage.payload
+      }
     });
 
     await this.updateStatus({ granuleId: g.granuleId }, 'running');
 
-    await aws.invoke(process.env.invoke, payload);
-    return {
-      granuleId: g.granuleId,
-      action: 'reingest',
-      status: 'SUCCESS'
-    };
+    await aws.invoke(process.env.invoke, lambdaPayload);
+  }
+
+  /**
+   * apply a workflow to a given granule object
+   *
+   * @param {Object} g - the granule object
+   * @param {string} workflow - the workflow name
+   * @returns {Promise<undefined>} undefined
+   */
+  async applyWorkflow(g, workflow) {
+    const { name, version } = deconstructCollectionId(g.collectionId);
+
+    const lambdaPayload = await Rule.buildPayload({
+      workflow,
+      payload: {
+        granules: [g]
+      },
+      provider: g.provider,
+      collection: {
+        name,
+        version
+      }
+    });
+
+    await this.updateStatus({ granuleId: g.granuleId }, 'running');
+
+    await aws.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**
@@ -136,7 +158,7 @@ class Granule extends Manager {
     const collection = get(payload, 'meta.collection');
     const exception = parseException(payload.exception);
 
-    const collectionId = constructCollectionId(collection.dataType, collection.version);
+    const collectionId = constructCollectionId(collection.name, collection.version);
 
     const done = granules.map(async (g) => {
       if (g.granuleId) {

@@ -200,7 +200,7 @@ function pdr(payload) {
  * @returns {Promise} Elasticsearch response
  */
 function indexCollection(esClient, meta, index = defaultIndexAlias, type = 'collection') {
-  const collectionId = constructCollectionId(meta.dataType, meta.version);
+  const collectionId = constructCollectionId(meta.name, meta.version);
   return genericRecordUpdate(esClient, collectionId, meta, index, type);
 }
 
@@ -382,7 +382,7 @@ async function handlePayload(event) {
  */
 function logHandler(event, context, cb) {
   log.debug(event);
-  const payload = new Buffer(event.awslogs.data, 'base64');
+  const payload = Buffer.from(event.awslogs.data, 'base64');
   zlib.gunzip(payload, (e, r) => {
     try {
       const logs = JSON.parse(r.toString());
