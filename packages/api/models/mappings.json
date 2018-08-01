@@ -13,13 +13,7 @@
       "granuleId": {
         "type": "keyword"
       },
-      "fakefield35": {
-        "type": "text"
-      },
       "collectionId": {
-        "type": "keyword"
-      },
-      "fakefield73": {
         "type": "keyword"
       },
       "pdrName": {
