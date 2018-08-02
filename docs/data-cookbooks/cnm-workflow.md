@@ -394,7 +394,7 @@ Example Output Payload:
 
 #### SyncGranules
 
-This lambda will take the files listed for the granule in the payload and move them to s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}
+This lambda will take the files listed for the granule in the payload and move them to `s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}`
 
 #### CnmResponse
 
