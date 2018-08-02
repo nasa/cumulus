@@ -25,14 +25,22 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
 |version|`"006"`|Yes|A version tag for the collection|
 |process|`"modis"`|Yes|The options for this are found in "ChooseProcess and in workflows.yml|
+<<<<<<< HEAD
 |granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$"`|Yes|REGEX to match granuleId|
+=======
+|granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"`|Yes|REGEX to match granuleId|
+>>>>>>> d1bfbeaf2b51b92f58073a7c8b3a604e9bf516ff
 |granuleIdExtraction|`"(MOD09GQ\\..*)(\\.hdf\|\\.cmr\|_ndvi\\.jpg)"`|Yes|REGEX that extracts granuleId from file names|
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|...|
 |files|`<JSON Object>` of files defined [here](#files)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |dataType|`"MOD09GQ"`|No|# TODO|
 |duplicateHandling|`"replace"`|No|(replace\|version\|skip) determines granule duplicate handling scheme|
+<<<<<<< HEAD
 |url_path|`"{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"`|No|Filename without extension|
+=======
+|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
+>>>>>>> d1bfbeaf2b51b92f58073a7c8b3a604e9bf516ff
 
 
 #### files
@@ -40,7 +48,11 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 "files": [
   {
     "bucket": internal # Which S3 bucket this collection will live in. The available buckets are configured in the Cumulus deployment file: app/config.yml (but should be entered here WITHOUT the stack-name). cumulus-test-internal -> internal (if the stack-name is cumulus-test),
+<<<<<<< HEAD
     "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+=======
+    "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+>>>>>>> d1bfbeaf2b51b92f58073a7c8b3a604e9bf516ff
     "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
   },
   ...
@@ -88,16 +100,9 @@ We don't currently have examples of rules in the Cumulus repo, but we can see ho
 |Optional tags|`"nightly"`|No|A string type tag that can be added to simplify search|
 
 #### rule-value
-```
-rule - value: This entry depends on the type of run.
-  If it's a onetime rule, this can be left blank.
-  If this is a scheduled rule, this field can hold a cron-type expression or rate expression. # Doc link below
-  If this is an SNS rule #{SNS_topic_ARN},
-  If this is a kinesis rule, this should be a configured ${Kinesis_stream_ARN} # See below
-```
-
-**Please Note:**
-* Rule with `Scheduled` type valid [values](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)
-* An example of a one-time rule configuration can be found [here](./hello-world.md/#execution)
-* Kinesis Rule configuration example [here](./cnm-workflow.md#rule-configuration)
+The `rule - value` entry depends on the type of run:
+  * If this is a onetime rule, this can be left blank - [Example](./hello-world.md/#execution)
+  * If this is a scheduled rule, this field can hold a [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
+  * If this is an SNS rule #{SNS_topic_ARN},
+  * If this is a kinesis rule, this should be a configured ${Kinesis_stream_ARN} - [Example](./cnm-workflow.md#rule-configuration)
 
