@@ -25,7 +25,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
 |version|`"006"`|Yes|A version tag for the collection|
 |process|`"modis"`|Yes|The options for this are found in "ChooseProcess and in workflows.yml|
-|granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$"`|Yes|REGEX to match granuleId|
+|granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"`|Yes|REGEX to match granuleId|
 |granuleIdExtraction|`"(MOD09GQ\\..*)(\\.hdf\|\\.cmr\|_ndvi\\.jpg)"`|Yes|REGEX that extracts granuleId from file names|
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|...|
 |files|`<JSON Object>` of files defined [here](#files)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
@@ -40,7 +40,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 "files": [
   {
     "bucket": internal # Which S3 bucket this collection will live in. The available buckets are configured in the Cumulus deployment file: app/config.yml (but should be entered here WITHOUT the stack-name). cumulus-test-internal -> internal (if the stack-name is cumulus-test),
-    "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+    "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
     "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
   },
   ...
