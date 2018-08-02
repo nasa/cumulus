@@ -159,13 +159,15 @@ class Granule {
    * @param {Object} provider - provider configuration object
    * @param {string} fileStagingDir - staging directory on bucket to place files
    * @param {boolean} forceDownload - force download of a file
+   * @param {boolean} duplicateHandling - duplicateHandling of a file
    */
   constructor(
     buckets,
     collection,
     provider,
     fileStagingDir = 'file-staging',
-    forceDownload = false
+    forceDownload = false,
+    duplicateHandling = 'replace'
   ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
@@ -175,7 +177,6 @@ class Granule {
     this.collection = collection;
     this.provider = provider;
 
-    this.collection.url_path = this.collection.url_path || '';
     this.port = this.provider.port || 21;
     this.host = this.provider.host;
     this.username = this.provider.username;
@@ -184,6 +185,8 @@ class Granule {
 
     this.forceDownload = forceDownload;
     this.fileStagingDir = fileStagingDir;
+
+    this.duplicateHandling = duplicateHandling;
   }
 
   /**
@@ -217,12 +220,15 @@ class Granule {
       if (!version) version = this.collection.version;
     }
 
+    // make sure there is a url_path
+    this.collection.url_path = this.collection.url_path || '';
+
     this.collectionId = constructCollectionId(dataType, version);
     this.fileStagingDir = path.join(this.fileStagingDir, this.collectionId);
 
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
+      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
 
