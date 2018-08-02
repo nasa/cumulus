@@ -138,3 +138,7 @@ CnmResponse:
     bucket: '{{buckets.shared.name}}'
     key: 'daacs/podaac/cnmResponse-1532633768.zip'
   launchInVpc: true
+
+WaitForDeployment:
+  handler: index.handler
+  source: 'lambdas/waitForDeploy/'
