@@ -88,6 +88,8 @@ async function enqueueGranuleIngestMessage(
   message.payload = {
     granules: [{
       granuleId: granule.granuleId,
+      dataType: granule.dataType,
+      version: granule.version,
       files: granule.files
     }]
   };
