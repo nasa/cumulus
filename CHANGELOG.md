@@ -6,16 +6,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.8.1] - 2018-08-01
+
+**Note** IAM roles should be re-deployed with this release.
+
 ### Added
 
 - **Cumulus-726**
   - Added function to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
   - Added IAM policy `@cumulus/deployment`: Lambda processing IAM role includes `kinesis::PutRecord` so step function lambdas can write to kinesis streams.
+- **Cumulus Community Edition**
+  - Added Google OAuth authentication token logic to `@cumulus/api`. Refactored token endpoint to use environment variable flag `OAUTH_PROVIDER` when determining with authentication method to use.
+  - Added API Lambda memory configuration variable `api_lambda_memory` to `@cumulus/api` and `@cumulus/deployment`.
 
 ### Changed
 
 - **Cumulus-726**
   - Changed function in `@cumulus/api`: `models/rules.js#addKinesisEventSource` was modified to call to `deleteKinesisEventSource` with all required parameters (rule's name, arn and type).
+  - Changed function in `@cumulus/integration-tests`: `getStepOutput` can now be used to return output of failed steps. If users of this function want the output of a failed event, they can pass a third parameter `eventType` as `'failure'`. This function will work as always for steps which completed successfully.
 
 ### Removed
 
@@ -396,7 +404,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.1...HEAD
+[v1.8.1]: https://github.com/nasa/cumulus/compare/v1.8.0...v1.8.1
 [v1.8.0]: https://github.com/nasa/cumulus/compare/v1.7.0...v1.8.0
 [v1.7.0]: https://github.com/nasa/cumulus/compare/v1.6.0...v1.7.0
 [v1.6.0]: https://github.com/nasa/cumulus/compare/v1.5.5...v1.6.0
