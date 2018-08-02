@@ -187,15 +187,15 @@ describe('Parse PDR workflow', () => {
       const events = executionStatus.executionHistory.events;
 
       // the output of the CheckStatus is used to determine the task of choice
-      const checkStatus = 'CheckStatus';
-      const stopStatus = 'StopStatus';
-      const pdrStatusReport = 'PdrStatusReport';
+      const checkStatusTaskName = 'CheckStatus';
+      const stopStatusTaskName = 'StopStatus';
+      const pdrStatusReportTaskName = 'PdrStatusReport';
 
       let choiceVerified = false;
       for (let i = 0; i < events.length; i += 1) {
         const currentEvent = events[i];
         if (currentEvent.type === 'TaskStateExited' &&
-        get(currentEvent, 'stateExitedEventDetails.name') === checkStatus) {
+        get(currentEvent, 'stateExitedEventDetails.name') === checkStatusTaskName) {
           const output = JSON.parse(get(currentEvent, 'stateExitedEventDetails.output'));
           const isFinished = output.payload.isFinished;
 
@@ -213,10 +213,10 @@ describe('Parse PDR workflow', () => {
           expect(nextTask).toBeTruthy();
 
           if (isFinished === true) {
-            expect(nextTask).toEqual(stopStatus);
+            expect(nextTask).toEqual(stopStatusTaskName);
           }
           else {
-            expect(nextTask).toEqual(pdrStatusReport);
+            expect(nextTask).toEqual(pdrStatusReportTaskName);
           }
           choiceVerified = true;
         }
