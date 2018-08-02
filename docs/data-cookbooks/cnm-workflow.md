@@ -26,7 +26,11 @@ You should be able to quickly use the "Create Data Stream" button on the [Kinesi
 
 ![](../images/cnm_create_kinesis_stream.jpg)
 
-Please bear in mind that your `${deployment}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.  The most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource, however your environment/security policies may require an approach specific to your deployment environment.  In operational environments it's likely science data providers would typically be responsible for providing a Kinesis stream with the appropraite permissions.
+Please bear in mind that your `${stackname}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the example deployment (or a deployment based on it), the IAM permissions should be set properly.
+
+If not, the most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource to whatever role your lambdas are using, however your environment/security policies may require an approach specific to your deployment environment.
+
+In operational environments it's likely science data providers would typically be responsible for providing a Kinesis stream with the appropraite permissions.
 
 For more information on how this process works and how to develop a process that will add records to a stream, read the [Kinesis documentation](https://aws.amazon.com/documentation/kinesis/) and the [developer guide](https://docs.aws.amazon.com/streams/latest/dev/introduction.html).
 
