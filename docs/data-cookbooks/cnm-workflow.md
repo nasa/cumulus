@@ -62,6 +62,7 @@ CNMExampleWorkflow:
   StartAt: StartStatus
   States:
     StartStatus:
+      Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       CumulusConfig:
         cumulus_message:
