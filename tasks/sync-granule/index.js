@@ -91,7 +91,7 @@ exports.syncGranule = function syncGranule(event) {
       if (ingest.end) ingest.end();
 
       const output = { granules };
-      if (collection.process) output.process = collection.process;
+      if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
 
       return output;
