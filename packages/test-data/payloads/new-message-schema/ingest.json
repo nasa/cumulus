@@ -42,19 +42,21 @@
       "encrypted": true
     },
     "collection": {
-      "dataType": "MOD09GQ",
       "name": "MOD09GQ",
-      "version": "006",
+      "dataType": "MOD09GQ",
+      "version": "6",
       "process": "modis",
       "provider_path": "/MODOPS/MODAPS/EDC/CUMULUS/FPROC/PDR/",
       "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
       "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
       "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
+      "url_path": "collection-example/",
       "files": [
         {
           "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
           "bucket": "protected",
-          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+          "url_path": "file-example/"
         },
         {
           "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
@@ -78,6 +80,8 @@
     "granules": [
       {
         "granuleId": "MOD09GQ.A2017224.h27v08.006.2017227165029",
+        "dataType": "MOD09GQ",
+        "version": "6",
         "files": [
           {
             "path": "/granules",

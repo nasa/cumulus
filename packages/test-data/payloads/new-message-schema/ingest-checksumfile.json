@@ -42,7 +42,7 @@
     "collection": {
       "dataType": "MOD09GQ",
       "name": "MOD09GQ",
-      "version": "006",
+      "version": "6",
       "process": "modis",
       "provider_path": "/MODOPS/MODAPS/EDC/CUMULUS/FPROC/PDR/",
       "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
@@ -80,6 +80,8 @@
     "granules": [
       {
         "granuleId": "20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01",
+        "dataType": "MOD09GQ",
+        "version": "6",
         "files": [
           {
             "path": "/granules",
