@@ -88,16 +88,9 @@ We don't currently have examples of rules in the Cumulus repo, but we can see ho
 |Optional tags|`"nightly"`|No|A string type tag that can be added to simplify search|
 
 #### rule-value
-```
 rule - value: This entry depends on the type of run.
-  If it's a onetime rule, this can be left blank.
-  If this is a scheduled rule, this field can hold a cron-type expression or rate expression. # Doc link below
-  If this is an SNS rule #{SNS_topic_ARN},
-  If this is a kinesis rule, this should be a configured ${Kinesis_stream_ARN} # See below
-```
-
-**Please Note:**
-* Rule with `Scheduled` type valid [values](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)
-* An example of a one-time rule configuration can be found [here](./hello-world.md/#execution)
-* Kinesis Rule configuration example [here](./cnm-workflow.md#rule-configuration)
+  * If this is a onetime rule, this can be left blank - [Example](./hello-world.md/#execution)
+  * If this is a scheduled rule, this field can hold a [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
+  * If this is an SNS rule #{SNS_topic_ARN},
+  * If this is a kinesis rule, this should be a configured ${Kinesis_stream_ARN} - [Example](./cnm-workflow.md#rule-configuration)
 
