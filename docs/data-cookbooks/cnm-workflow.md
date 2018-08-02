@@ -320,7 +320,9 @@ The first task in the execution will report to Cumulus that the workflow has sta
 
 #### TranslateMessage
 
-`TranslateMessage` will take the CNM object payload and add a granules object to the payload that's consistent with other Cumulus Ingest tasks, and add a key "cnm" to 'meta' (as well as the payload) to store the original message.
+`TranslateMessage` will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus Ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.
+
+*For more on the Message Adapter, please see [the Message Flow documentation](../workflows/cumulus-task-message-flow.md)*.
 
 An example of what is happening in the Translation step follows:
 
