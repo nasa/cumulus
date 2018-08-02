@@ -20,6 +20,9 @@ function discoverPdrs(event) {
     const bucket = config.bucket;
     const collection = config.collection;
     const provider = config.provider;
+    const providerPath = config.provider_path || collection.provider_path;  
+    const filterPdrs = config.filterPdrs || null;
+
     // FIXME Can config.folder not be used?
 
     log.info('Received the provider', { provider: get(provider, 'id') });
@@ -28,7 +31,7 @@ function discoverPdrs(event) {
     const discover = new Discover(
       stack,
       bucket,
-      collection,
+      providerPath,
       provider,
       config.useList,
       'pdrs',
@@ -40,6 +43,14 @@ function discoverPdrs(event) {
     return discover.discover()
       .then((pdrs) => {
         if (discover.connected) discover.end();
+
+        // filter pdrs using filterPDrs
+        if (filterPdrs && pdrs.length) {
+          log.info(`Filtering ${pdrs.length} with ${filterPdrs}`);
+          const fpdrs = pdrs.filter((p) => p.name.match(filterPdrs));
+          return { pdrs: fpdrs };
+        }
+        
         return { pdrs };
       })
       .catch((e) => {

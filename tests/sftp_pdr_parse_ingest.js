@@ -37,10 +37,10 @@ test.before(async () => {
 
   const collectionConfigStore = new CollectionConfigStore(context.internal, context.stack);
   await Promise.all([
-    collectionConfigStore.put('MOD09GQ', { name: 'MOD09GQ', granuleExtractionId: '(.*)' }),
-    collectionConfigStore.put('AST_L1A', { name: 'AST_L1A', granuleExtractionId: '(.*)' }),
-    collectionConfigStore.put('MOD87GQ', { name: 'MOD87GQ', granuleExtractionId: '(.*)' }),
-    collectionConfigStore.put('MYD13A1', { name: 'MYD13A1', granuleExtractionId: '(.*)' })
+    collectionConfigStore.put('MOD09GQ', '006', { name: 'MOD09GQ', granuleExtractionId: '(.*)' }),
+    collectionConfigStore.put('AST_L1A', '6', { name: 'AST_L1A', granuleExtractionId: '(.*)' }),
+    collectionConfigStore.put('MOD87GQ', '006', { name: 'MOD87GQ', granuleExtractionId: '(.*)' }),
+    collectionConfigStore.put('MYD13A1', '006', { name: 'MYD13A1', granuleExtractionId: '(.*)' })
   ]);
 
   // download and unzip the message adapter
