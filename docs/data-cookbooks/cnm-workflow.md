@@ -222,7 +222,7 @@ Please refer to `Updating Cumulus deployment` in the [deployment documentation](
 
 Cumulus provides a built-in Kinesis consumer lambda function ([kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js)) that will read CNM formatted events from a Kinesis stream and trigger a workflow when a Cumulus rule is configured via the Cumulus dashboard or API.
 
-To add a rule via the dashboard, navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
+To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
 
 ```
 name: cnm_basic_rule
@@ -240,7 +240,8 @@ Optional tags for search:
 - The rule - value key must match the Amazon resource name [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Kinesis data stream you've preconfigured.   You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.
 - The collection and provider should match the collection and provider you setup in the `Prerequisites` section.
 
-Once you've clicked on 'submit' a new rule should appear in the dashboard Rule Overview. .
+Once you've clicked on 'submit' a new rule should appear in the dashboard Rule Overview.
+
 
 ## Execution
 
