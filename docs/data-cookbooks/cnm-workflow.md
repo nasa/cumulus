@@ -230,7 +230,7 @@ Provider ID: ${provider_id} # found on the Providers page
 collection - Collection Name: ${collection_name} # configured and found in the Collections page
 collection - Collection Version: ${collection_version} # configured and found in the Collections page
 rule - type: kinesis
-rule - value: ${Kinesis_Stream_ARN} # See below
+rule - value: ${Kinesis_Stream_ARN} # Kinesis notification stream ARN goes here.
 Rule State: ENABLED
 Optional tags for search:
 ```
