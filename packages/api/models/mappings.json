@@ -29,13 +29,7 @@
         "type": "text"
       },
       "executions": {
-        "type": "text",
-        "fields": {
-          "keyword": {
-            "type": "keyword",
-            "ignore_above": 256
-          }
-        }
+        "type": "keyword"
       },
       "version": {
         "type": "keyword"
