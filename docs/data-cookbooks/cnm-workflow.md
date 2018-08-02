@@ -46,7 +46,7 @@ This can be done via the [Cumulus Dashboard](https://github.com/nasa/cumulus-das
 
 ## Cumulus Configuration
 
-Once the prerequisites have taken care of, you can begin adding the needed values to your Cumulus configuration to add and configure the example workflow.
+Once the prerequisites have taken care of, you can begin adding the needed values to your Cumulus configuration to configure the example workflow.
 
 The following are steps that are required to set up your Cumulus instance to run the example workflow:
 
