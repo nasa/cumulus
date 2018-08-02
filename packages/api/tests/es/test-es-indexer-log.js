@@ -34,7 +34,6 @@ test.serial('indexing log messages', async (t) => {
 
   await esClient.indices.refresh();
   // console.log(JSON.stringify(response, null, 2));
-
   // expected result in elastic search
   const estxt = fs.readFileSync(path.join(__dirname, '../data/log_events_expected.json'), 'utf8');
   const expected = JSON.parse(estxt.toString());
@@ -58,7 +57,6 @@ test.serial('indexing log messages', async (t) => {
       t.is(expectedRecord._source.executions, record._source.executions);
     }
   });
-
   const searchParams = {
     limit: 50,
     executions: '157de51a-bc7d-4766-b419-a2c1c09f9207'
