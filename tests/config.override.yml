@@ -1,27 +1,27 @@
-stackName: test-src-integration
-bucket: cumulus-test-sandbox-internal
-DiscoverAndQueuePdrs: &defaults
-  meta:
-    stack: test-src-integration
-    buckets:
-      internal: 
-        name: cumulus-test-sandbox-internal
-        type: internal
-      private: 
-        name: cumulus-test-sandbox-private
-        type: private
-    templates:
-      ParsePdr: s3://cumulus-test-sandbox-internal/test-src-integration/workflows/ParsePdr.json
-      IngestGranule: s3://cumulus-test-sandbox-internal/test-src-integration/workflows/IngestGranule.json
-    queues:
-      startSF: https://sqs.us-east-1.amazonaws.com/{{AWS_ACCOUNT_ID}}/test-src-integration-startSF
-ParsePdr: *defaults
+stackName: '{{stackName}}'
+prefix: '{{prefix}}'
+bucket: '{{buckets.internal.name}}'
+distributionEndpoint: https://example.com/
+ems_provider: CUMULUS
 IngestGranule:
-  <<: *defaults
   SyncGranuleOutput:
     granules:
       - files:
-        - bucket: cumulus-test-sandbox-private
-          filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf
-        - bucket: cumulus-test-sandbox-private
-          filename: s3://cumulus-test-sandbox-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met
+        - bucket: '{{buckets.internal.name}}'
+          filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+          fileStagingDir: 'file-staging/{{prefix}}-integration/MOD09GQ___6'
+        - bucket: '{{buckets.internal.name}}'
+          filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+          fileStagingDir: 'file-staging/{{prefix}}-integration/MOD09GQ___6'
+        - bucket: '{{buckets.internal.name}}'
+          filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+          fileStagingDir: 'file-staging/{{prefix}}-integration/MOD09GQ___6'
+SyncGranule:
+  granules:
+    - files:
+      - bucket: '{{buckets.internal.name}}'
+        filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+        fileStagingDir: 'custom-staging-dir/{{prefix}}-integration/MOD09GQ___6'
+      - bucket: '{{buckets.internal.name}}'
+        filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}-integration/MOD09GQ___6/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+        fileStagingDir: 'custom-staging-dir/{{prefix}}-integration/MOD09GQ___6'
