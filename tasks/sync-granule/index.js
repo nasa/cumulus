@@ -59,6 +59,10 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
+  let duplicateHandling = config.duplicateHandling;
+  if (!duplicateHandling && collection && collection.duplicateHandling) {
+    duplicateHandling = collection.duplicateHandling;
+  }
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
@@ -78,7 +82,8 @@ exports.syncGranule = function syncGranule(event) {
     collection,
     provider,
     fileStagingDir,
-    forceDownload
+    forceDownload,
+    duplicateHandling
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
