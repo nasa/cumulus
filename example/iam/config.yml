@@ -43,9 +43,9 @@ cumulus-from-pr:
 aj:
   prefix: aj-integration
 
-aimee-test:
-  prefix: aimee-test
-  stackName: aimee-test-iam
+aimee:
+  prefix: aimee
+  stackName: aimee-iam
 
 lf:
   prefix: lf-cumulus

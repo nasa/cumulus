@@ -567,6 +567,8 @@ KinesisTriggerTest:
           Next: CnmResponse
       Next: SyncGranule
     SyncGranule:
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
       CumulusConfig:
         provider: '{$.meta.provider}'
         buckets: '{$.meta.buckets}'
@@ -579,8 +581,6 @@ KinesisTriggerTest:
               destination: '{$.meta.input_granules}'
             - source: '{$}'
               destination: '{$.payload}'
-      Type: Task
-      Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
         - ErrorEquals:
             - States.ALL
@@ -590,7 +590,7 @@ KinesisTriggerTest:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: StopStatus
+          Next: CnmResponse
       Next: CnmResponse
     CnmResponse:
       CumulusConfig:
@@ -602,13 +602,10 @@ KinesisTriggerTest:
           outputs:
             - source: '{$}'
               destination: '{$.meta.cnmResponse}'
+            - source: '{$}'
+              destination: '{$.payload}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 5
-          MaxAttempts: 3
       Catch:
         - ErrorEquals:
           - States.ALL
