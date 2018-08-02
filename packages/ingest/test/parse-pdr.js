@@ -37,7 +37,7 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   const pdrName = `${randomString()}.PDR`;
 
   const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
-  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 
   const result = await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
 
@@ -77,8 +77,8 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   };
 
   await Promise.all([
-    t.context.collectionConfigStore.put('MOD09GQ', mod09CollectionConfig),
-    t.context.collectionConfigStore.put('MOD87GQ', mod87CollectionConfig)
+    t.context.collectionConfigStore.put('MOD09GQ', '006', mod09CollectionConfig),
+    t.context.collectionConfigStore.put('MOD87GQ', '006', mod87CollectionConfig)
   ]);
 
   const result = await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
@@ -130,7 +130,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKS
   const pdrName = `${randomString()}.PDR`;
 
   const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
-  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 
   try {
     await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
@@ -148,7 +148,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CK
   const pdrName = `${randomString()}.PDR`;
 
   const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
-  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 
   try {
     await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
@@ -166,7 +166,7 @@ test.serial('parsePdr accepts an MD5 checksum', async (t) => {
   const pdrName = `${randomString()}.PDR`;
 
   const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
-  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 
   const parsedPdr = await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
   const fileWithChecksum = parsedPdr.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf'); // eslint-disable-line max-len
@@ -180,7 +180,7 @@ test.serial('parsePdr throws an exception if the value of an MD5 checksum is not
   const pdrName = `${randomString()}.PDR`;
 
   const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
-  await t.context.collectionConfigStore.put('MOD09GQ', collectionConfig);
+  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 
   try {
     await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
