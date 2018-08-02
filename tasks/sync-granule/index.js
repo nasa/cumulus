@@ -59,12 +59,15 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
+  let duplicateHandling = config.duplicateHandling;
+  if (!duplicateHandling && collection && collection.duplicateHandling) {
+    duplicateHandling = collection.duplicateHandling;
+  }
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
     (config.fileStagingDir || 'file-staging'),
-    stack,
-    collection.name
+    stack
   );
 
   if (!provider) {
@@ -79,7 +82,8 @@ exports.syncGranule = function syncGranule(event) {
     collection,
     provider,
     fileStagingDir,
-    forceDownload
+    forceDownload,
+    duplicateHandling
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
@@ -87,7 +91,7 @@ exports.syncGranule = function syncGranule(event) {
       if (ingest.end) ingest.end();
 
       const output = { granules };
-      if (collection.process) output.process = collection.process;
+      if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
 
       return output;

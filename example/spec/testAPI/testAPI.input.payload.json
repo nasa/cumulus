@@ -2,6 +2,8 @@
     "granules": [
       {
         "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+        "dataType": "MOD09GQ",
+        "version": "006",
         "files": [
           {
             "path": "cumulus-test-data/pdrs",
