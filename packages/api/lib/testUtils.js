@@ -69,6 +69,8 @@ function fakeFilesFactory(bucket) {
 function fakeGranuleFactory(status = 'completed') {
   return {
     granuleId: randomString(),
+    dataType: randomString(),
+    version: randomString(),
     collectionId: 'fakeCollection___v1',
     status,
     execution: randomString(),
@@ -168,6 +170,7 @@ function fakeUserFactory(params = {}) {
 function fakeCollectionFactory() {
   return {
     name: randomString(),
+    dataType: randomString(),
     version: '0.0.0',
     provider_path: '/',
     duplicateHandling: 'replace',
