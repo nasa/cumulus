@@ -117,7 +117,7 @@ CNMExampleWorkflow:
     CnmResponse:
       CumulusConfig:
         OriginalCNM: '{$.meta.cnm}'
-        CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE''
+        CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
         region: 'us-east-1'
         WorkflowException: '{$.exception}'
         cumulus_message:
