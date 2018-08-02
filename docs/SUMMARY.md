@@ -38,4 +38,4 @@
   * [Collections, Providers, Schemas, and Rules](data-cookbooks/setup.md)
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
-
+* [CNM Workflow](data-cookbooks/cnm-workflow.md)
