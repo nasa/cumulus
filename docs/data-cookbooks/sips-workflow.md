@@ -5,7 +5,7 @@ In this document, we assume the user already has a provider endpoint configured 
 
 ## Setup
 
-1. We need to build a collection. Details on collections can be found [here](data-cookbooks/setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull pdrs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
+1. We need to build a collection. Details on collections can be found [here](./setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull pdrs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
 ```
 {
     "queriedAt": "2018-08-03T16:44:25.919Z",
@@ -54,11 +54,11 @@ In this document, we assume the user already has a provider endpoint configured 
 }
 ```
 
-2. We need to have a [provider](data-cookbooks/setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
+2. We need to have a [provider](./setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
 
 ![](../images/sips-provider.png)
 
-3. Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndParsePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
+3. Finally, let's create a [rule](./setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndParsePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
 
 ![](../images/sips-rule.png)
 
