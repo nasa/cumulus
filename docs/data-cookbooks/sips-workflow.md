@@ -91,7 +91,7 @@ The ParsePdr workflow will parse a pdr, queue the specified granules (duplicates
 The IngestGranule workflow ingests, processes, and deals with updating CMR.
 
 1. SyncGranule - [npm package](https://www.npmjs.com/package/@cumulus/sync-granule), [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule)
-2. ProcessingStep - The processing step does not come from Cumulus core. The "AsterProcess", "ModisProcess", and "LegacyProcess" steps in the workflow picture below were are examples of custom processing steps.
+2. ProcessingStep - The processing step does not come from Cumulus core. The "AsterProcess," "ModisProcess," and "LegacyProcess" steps in the workflow picture below were are examples of custom processing steps.
 3. CmrStep - [npm package](https://www.npmjs.com/package/@cumulus/post-to-cmr), [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
 
 **Note:** Hitting CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
