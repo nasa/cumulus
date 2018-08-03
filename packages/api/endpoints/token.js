@@ -1,130 +1,126 @@
 'use strict';
 
 const get = require('lodash.get');
-const got = require('got');
+const authHelpers = require('../lib/authHelpers');
 const { User } = require('../models');
-const { resp } = require('../lib/response');
+const {
+  buildAuthorizationFailureResponse,
+  buildLambdaProxyResponse
+} = require('../lib/response');
 const log = require('@cumulus/common/log');
 
-function redirectUriParam() {
-  const url = process.env.API_ENDPOINT;
-  return encodeURIComponent(url);
-}
-
 /**
- * AWS API Gateway function that handles callbacks from URS authentication, transforming
+ * AWS API Gateway function that handles callbacks from authentication, transforming
  * codes into tokens
  *
- * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @returns {Promise} the token
+ * @param  {Object} event   - Lambda event object
+ * @returns {Object}        - a Lambda Proxy response object
  */
-function token(event, context) {
-  const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
-  const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
-
-  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov';
-  const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}/oauth/token`;
-
+async function token(event) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
-    const params = `?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUriParam()}`;
-
-    // Verify token
-    return got.post(EARTHDATA_CHECK_CODE_URL + params, {
-      json: true,
-      auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
-    }).then((r) => {
-      const tokenInfo = r.body;
-      const accessToken = tokenInfo.access_token;
-
-      // if no access token is given, then the code is wrong
-      if (typeof accessToken === 'undefined') {
-        return resp(context, new Error('Failed to get Earthdata token'));
-      }
-
-      const refresh = tokenInfo.refresh_token;
-      const userName = tokenInfo.endpoint.split('/').pop();
-      const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
-
+    try {
+      const responseObject = await authHelpers.getToken(code);
+      const {
+        userName, accessToken, refresh, expires
+      } = responseObject;
       const u = new User();
 
       return u.get({ userName })
         .then(() => u.update({ userName }, { password: accessToken, refresh, expires }))
         .then(() => {
           if (state) {
-            return resp(context, null, 'Redirecting to the specified state', 301, {
-              Location: `${decodeURIComponent(state)}?token=${accessToken}`
+            log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
+            return buildLambdaProxyResponse({
+              json: false,
+              statusCode: 301,
+              body: 'Redirecting to the specified state',
+              headers: {
+                'Content-Type': 'text/plain',
+                Location: `${decodeURIComponent(state)}?token=${accessToken}`
+              }
             });
           }
-          return resp(context, null, JSON.stringify({ token: accessToken }), 200);
-        }).catch((e) => {
-          log.error('User is not authorized', e);
+          log.info('Log info: No state specified, responding 200');
+          return buildLambdaProxyResponse({
+            json: true,
+            statusCode: 200,
+            body: { message: { token: accessToken } }
+          });
+        })
+        .catch((e) => {
           if (e.message.includes('No record found for')) {
-            return resp(context, new Error('User is not authorized to access this site'));
+            const errorMessage = 'User is not authorized to access this site';
+            return buildAuthorizationFailureResponse({
+              error: new Error(errorMessage),
+              message: errorMessage
+            });
           }
-          return resp(context, e);
+          return buildAuthorizationFailureResponse({ error: e, message: e.message });
         });
-    }).catch((e) => {
+    }
+    catch (e) {
       log.error('Error caught when checking code:', e);
-      resp(context, e);
-    });
+      return buildAuthorizationFailureResponse({ error: e, message: e.message });
+    }
   }
-  return resp(context, new Error('Request requires a code'));
+
+  const errorMessage = 'Request requires a code';
+  const error = new Error(errorMessage);
+  return buildAuthorizationFailureResponse({ error: error, message: error.message });
 }
 
 /**
- * AWS API Gateway function that redirects to the correct URS endpoint with the correct client
- * ID to be used with the API
+ * `login` is an AWS API Gateway function that redirects to the correct
+ * authentication endpoint with the correct client ID to be used with the API
  *
- * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise} the token or the callback object
+ * @param  {Object} event   - Lambda event object
+ * @returns {Object} - a Lambda Proxy response object
  */
-function login(event, context, cb) {
-  const endpoint = process.env.EARTHDATA_BASE_URL;
-  const clientId = process.env.EARTHDATA_CLIENT_ID;
-
+async function login(event) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
   if (code) {
-    return token(event, context);
+    return token(event);
   }
 
-  let url = `${endpoint}/oauth/authorize?` +
-              `client_id=${clientId}&` +
-              `redirect_uri=${redirectUriParam()}&response_type=code`;
-  if (state) {
-    url = `${url}&state=${encodeURIComponent(state)}`;
-  }
-  return cb(null, {
-    statusCode: '301',
-    body: 'Redirecting to Earthdata Login',
+  const url = authHelpers.generateLoginUrl(state);
+
+  return buildLambdaProxyResponse({
+    json: false,
+    statusCode: 301,
+    body: 'Redirecting to login',
     headers: {
       Location: url
     }
   });
 }
 
-
 /**
- * The main handler for the lambda function
+ * Main handler for the token endpoint.
  *
- * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise} output of the handler
+ * @function handler
+ * @param  {Object}   event   - Lambda event payload
+ * @returns {Object} - a Lambda Proxy response object
  */
-function handler(event, context, cb) {
+async function handler(event) {
   if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
-    return login(event, context, cb);
+    return login(event);
   }
-  return resp(context, new Error('Not found'), 404);
+
+  return buildLambdaProxyResponse({
+    json: false,
+    statusCode: 404,
+    body: 'Not found'
+  });
 }
 
-module.exports = handler;
+module.exports = {
+  handler,
+  login,
+  token
+};
