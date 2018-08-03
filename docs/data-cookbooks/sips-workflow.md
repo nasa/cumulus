@@ -69,28 +69,35 @@ In this document, we assume the user already has a provider endpoint configured 
 
 This workflow will (as the name might suggest) discover pdrs and queue them to be processed. Duplicate pdrs will be dealt with according to the configured duplicate handling setting.
 
-1. DiscoverPdrs
-2. QueuePdrs
+1. DiscoverPdrs - [npm package](https://www.npmjs.com/package/@cumulus/discover-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
+2. QueuePdrs - [npm package](https://www.npmjs.com/package/@cumulus/queue-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
 
 ![](../images/sips-discover-and-queue-pdrs-execution.png)
 
 
 ## ParsePdr Workflow
 
-The ParsePdr workflow will parse a pdr, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the pdr are successfully ingested. If one of those fails, the ParsePdr worklfow will fail.
+The ParsePdr workflow will parse a pdr, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the pdr are successfully ingested. If one of those fails, the ParsePdr worklfow will fail. **NOTE** that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the pdr.
 
-1. ParsePdr
-2. QueueGranules
-3. CheckStatus
+1. ParsePdr - [npm package](https://www.npmjs.com/package/@cumulus/parse-pdr), [source](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
+2. QueueGranules - [npm package](https://www.npmjs.com/package/@cumulus/queue-granules), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-granules)
+3. CheckStatus - [npm package](https://www.npmjs.com/package/@cumulus/pdr-status-check), [source](https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check)
 
 ![](../images/sips-parse-pdr.png)
 
 
 ## IngestGranule Workflow
 
-1. SyncGranule
-2. ProcessingStep
-3. CmrStep
+The IngestGranule workflow ingests, processes, and deals with updating CMR.
+
+1. SyncGranule - [npm package](https://www.npmjs.com/package/@cumulus/sync-granule), [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule)
+2. ProcessingStep - The processing step does not come from Cumulus core. The "AsterProcess", "ModisProcess", and "LegacyProcess" steps in the workflow picture below were are examples of custom processing steps.
+3. CmrStep - [npm package](https://www.npmjs.com/package/@cumulus/post-to-cmr), [source](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr)
+
+**Note:** Hitting CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
 
 ![](../images/sips-ingest-granule.png)
 
+## Summary
+
+In this cookbook we went over setting up a collection, rule, and provider for a SIPS workflow. Once we had the setup completed, we looked over the Cumulus workflows that participate in parsing pdrs, ingesting and processing granules, and updating CMR.
