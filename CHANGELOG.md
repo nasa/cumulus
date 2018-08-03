@@ -8,13 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
+- **GITC-776-2** - Add support for versioned collections
+
+### Fixed
+- **CUMULUS-832** - Fixed indentation in example config.yml in `@cumulus/deployment`
 
 ## [v1.8.1] - 2018-08-01
 
 **Note** IAM roles should be re-deployed with this release.
-
-### Added
-- **GITC-776-2** - Add support for versioned collections
 
 - **Cumulus-726**
   - Added function to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
