@@ -27,7 +27,7 @@ function get(event, cb) {
   const search = new Search({
     queryStringParameters: {
       limit: 50,
-      executions: executionName
+      'executions.keyword': executionName
     }
   }, 'logs');
   return search.query().then((response) => cb(null, response)).catch((e) => {
