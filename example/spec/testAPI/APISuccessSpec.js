@@ -180,9 +180,6 @@ describe('The Cumulus API', () => {
     it('returns logs with a specific execution name', async () => {
       const executionARNTokens = workflowExecution.executionArn.split(':');
       const executionName = executionARNTokens[executionARNTokens.length - 1];
-
-      await esClient.indices.refresh();
-
       const logs = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: executionName });
       expect(logs.meta.count).not.toEqual(0);
       logs.results.forEach((log) => {
