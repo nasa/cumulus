@@ -91,6 +91,6 @@ We don't currently have examples of rules in the Cumulus repo, but we can see ho
 The `rule - value` entry depends on the type of run:
   * If this is a onetime rule, this can be left blank - [Example](./hello-world.md/#execution)
   * If this is a scheduled rule, this field can hold a [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
-  * If this is an SNS rule #{SNS_topic_ARN},
-  * If this is a kinesis rule, this should be a configured ${Kinesis_stream_ARN} - [Example](./cnm-workflow.md#rule-configuration)
+  * If this is an SNS rule `${SNS_topic_ARN}`,
+  * If this is a kinesis rule, this should be a configured `${Kinesis_stream_ARN}` - [Example](./cnm-workflow.md#rule-configuration)
 
