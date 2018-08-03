@@ -8,13 +8,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
+- **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration tests.
+- **GITC-776-2** - Add support for versioned collections
+
+### Fixed
+- **CUMULUS-832** - Fixed indentation in example config.yml in `@cumulus/deployment`
 
 ## [v1.8.1] - 2018-08-01
 
 **Note** IAM roles should be re-deployed with this release.
-
-### Added
-- **GITC-776-2** - Add support for versioned collections
 
 - **Cumulus-726**
   - Added function to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
@@ -22,8 +24,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **Cumulus Community Edition**
   - Added Google OAuth authentication token logic to `@cumulus/api`. Refactored token endpoint to use environment variable flag `OAUTH_PROVIDER` when determining with authentication method to use.
   - Added API Lambda memory configuration variable `api_lambda_memory` to `@cumulus/api` and `@cumulus/deployment`.
-
-- **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration tests.
 
 ### Changed
 
