@@ -7,10 +7,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
+
+## [v1.8.1] - 2018-08-01
+
+**Note** IAM roles should be re-deployed with this release.
+
+### Added
+- **GITC-776-2** - Add support for versioned collections
 
 - **Cumulus-726**
   - Added function to `@cumulus/integration-tests`: `sfnStep` includes `getStepInput` which returns the input to the schedule event of a given step function step.
   - Added IAM policy `@cumulus/deployment`: Lambda processing IAM role includes `kinesis::PutRecord` so step function lambdas can write to kinesis streams.
+- **Cumulus Community Edition**
+  - Added Google OAuth authentication token logic to `@cumulus/api`. Refactored token endpoint to use environment variable flag `OAUTH_PROVIDER` when determining with authentication method to use.
+  - Added API Lambda memory configuration variable `api_lambda_memory` to `@cumulus/api` and `@cumulus/deployment`.
 
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration tests.
 
@@ -18,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **Cumulus-726**
   - Changed function in `@cumulus/api`: `models/rules.js#addKinesisEventSource` was modified to call to `deleteKinesisEventSource` with all required parameters (rule's name, arn and type).
+  - Changed function in `@cumulus/integration-tests`: `getStepOutput` can now be used to return output of failed steps. If users of this function want the output of a failed event, they can pass a third parameter `eventType` as `'failure'`. This function will work as always for steps which completed successfully.
 
 ### Removed
 
@@ -61,10 +73,7 @@ We may need to update the api documentation to reflect this.
 ### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.7.0.html)
 
 ### Added
-- **GITC-776-1**
-  - Added support for SFTP using public/private keys that can optionally be encrypted/decrypted using KMS
-  There is an assumption that private key is located in s3://bucketInternal/stackName/crypto. KMS can be used to encrypt/decrypt the keys. Provider schema has been extended to support optional fields (privateKey, cmKeyId)
-
+- **GITC-776-2** - Add support for versioned collectons
 - **CUMULUS-491** - Add granule reconciliation API endpoints.
 - **CUMULUS-480** Add suport for backup and recovery:
   - Add DynamoDB tables for granules, executions and pdrs
@@ -89,6 +98,8 @@ We may need to update the api documentation to reflect this.
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
 
 ### Changed
+- **GITC-776-4** - Changed Discover-pdrs to not rely on collection but use provider_path in config. It also has an optional filterPdrs regex configuration parameter
+
 - **CUMULUS-710** - In the integration test suite, `getStepOutput` returns the output of the first successful step execution or last failed, if none exists
 
 ## [v1.6.0] - 2018-06-06
@@ -398,7 +409,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.1...HEAD
+[v1.8.1]: https://github.com/nasa/cumulus/compare/v1.8.0...v1.8.1
 [v1.8.0]: https://github.com/nasa/cumulus/compare/v1.7.0...v1.8.0
 [v1.7.0]: https://github.com/nasa/cumulus/compare/v1.6.0...v1.7.0
 [v1.6.0]: https://github.com/nasa/cumulus/compare/v1.5.5...v1.6.0

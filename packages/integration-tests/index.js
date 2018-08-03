@@ -121,6 +121,23 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
 }
 
 /**
+ * Start the workflow and return the execution Arn. Does not wait
+ * for workflow completion.
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} workflowName - workflow name
+ * @param {string} workflowMsg - workflow message
+ * @returns {string} - executionArn
+ */
+async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
+  const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
+  const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
+
+  return executionArn;
+}
+
+/**
  * Execute the given workflow.
  * Wait for workflow to complete to get the status
  * Return the execution arn and the workflow status.
@@ -132,8 +149,7 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
 async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg) {
-  const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
-  const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
+  const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 
   console.log(`Executing workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
@@ -371,11 +387,40 @@ async function buildAndExecuteWorkflow(
   return executeWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 
+/**
+ * build workflow message and start the workflow. Does not wait
+ * for workflow completion.
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} workflowName - workflow name
+ * @param {Object} collection - collection information
+ * @param {Object} collection.name - collection name
+ * @param {Object} collection.version - collection version
+ * @param {Object} provider - provider information
+ * @param {Object} provider.id - provider id
+ * @param {Object} payload - payload information
+ * @returns {string} - executionArn
+ */
+async function buildAndStartWorkflow(
+  stackName,
+  bucketName,
+  workflowName,
+  collection,
+  provider,
+  payload
+) {
+  const workflowMsg = await
+  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload);
+  return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
+}
+
 module.exports = {
   api,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
+  buildAndStartWorkflow,
   getWorkflowTemplate,
   waitForCompletedExecution,
   ActivityStep: sfnStep.ActivityStep,
