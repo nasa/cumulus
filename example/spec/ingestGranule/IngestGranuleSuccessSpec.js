@@ -9,7 +9,6 @@ const {
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists, getS3Object },
-  stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
 const {
@@ -117,6 +116,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+      if (lambdaOutput.replace) {
+        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
+        lambdaOutput = JSON.parse(msg.Body.toString());
+      }
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
