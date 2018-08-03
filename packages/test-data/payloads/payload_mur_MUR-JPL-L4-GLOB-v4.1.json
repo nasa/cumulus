@@ -28,7 +28,8 @@
     "collections": {
       "MUR-JPL-L4-GLOB-v4.1": {
         "name": "MUR-JPL-L4-GLOB-v4.1",
-        "version": "1",
+        "dataType": "MUR-JPL-L4-GLOB",
+        "version": "4.1",
         "granuleId": "^.*$",
         "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
         "granuleIdExtraction": "^(.*).nc$",

@@ -21,3 +21,9 @@ mth-cum-test:
   stackNameNoDash: mthCumTestDeployer
   buckets:
     internal: '{{prefix}}-internal'
+
+jl:
+  prefix: jl-test-integration
+  stackName: jl-test-integration-deployer
+  stackNameNoDash: jlTestIntgDeployer
+
