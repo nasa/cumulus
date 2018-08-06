@@ -166,7 +166,6 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
-          VARIABLE: variable
       {{# if this.urs}}
         {{# if ../api_backend_url}}
           API_ENDPOINT: {{../api_backend_url}}token
