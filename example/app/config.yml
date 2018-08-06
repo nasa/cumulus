@@ -162,6 +162,7 @@ default:
               - Arn
           protocol: lambda
 
+
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
     # if not specified the value of the apigateway backend endpoint is used
