@@ -6,7 +6,15 @@ In this document, we assume the user already has a provider endpoint configured 
 
 ## Setup
 
-1. We need to build a collection. Details on collections can be found [here](./setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull pdrs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
+#### Provider
+
+We need to have a [provider](./setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
+
+![](../images/sips-provider.png)
+
+#### Collection
+
+We need to build a collection. Details on collections can be found [here](./setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull pdrs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
 ```
 {
     "queriedAt": "2018-08-03T16:44:25.919Z",
@@ -55,11 +63,9 @@ In this document, we assume the user already has a provider endpoint configured 
 }
 ```
 
-2. We need to have a [provider](./setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
+#### Rule
 
-![](../images/sips-provider.png)
-
-3. Finally, let's create a [rule](./setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndParsePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
+Finally, let's create a [rule](./setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndParsePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
 
 ```
 {
@@ -85,12 +91,14 @@ In this document, we assume the user already has a provider endpoint configured 
 
 ## DiscoverAndQueuePdrs Workflow
 
-This workflow will (as the name might suggest) discover pdrs and queue them to be processed. Duplicate pdrs will be dealt with according to the configured duplicate handling setting.
+This workflow will (as the name might suggest) discover pdrs and queue them to be processed. Duplicate PDRs will be dealt with according to the configured duplicate handling setting in the collection.
 
 1. DiscoverPdrs - [npm package](https://www.npmjs.com/package/@cumulus/discover-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
 2. QueuePdrs - [npm package](https://www.npmjs.com/package/@cumulus/queue-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
 
 ![](../images/sips-discover-and-queue-pdrs-execution.png)
+
+_Example configuration for this workflow can be found in the `DiscoverAndQueuePdrs` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows.yml)_
 
 
 ## ParsePdr Workflow
@@ -103,10 +111,12 @@ The ParsePdr workflow will parse a pdr, queue the specified granules (duplicates
 
 ![](../images/sips-parse-pdr.png)
 
+_Example configuration for this workflow can be found in the `ParsePdr` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows.yml)_
+
 
 ## IngestGranule Workflow
 
-The IngestGranule workflow ingests, processes, and deals with updating CMR.
+The IngestGranule workflow processes and ingests a granule and posts the granule metadata to CMR.
 
 1. SyncGranule - [npm package](https://www.npmjs.com/package/@cumulus/sync-granule), [source](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule)
 2. ProcessingStep - The processing step does not come from Cumulus core. The "AsterProcess," "ModisProcess," and "LegacyProcess" steps in the workflow picture below are examples of custom processing steps.
@@ -115,6 +125,8 @@ The IngestGranule workflow ingests, processes, and deals with updating CMR.
 **Note:** Hitting CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
 
 ![](../images/sips-ingest-granule.png)
+
+_Example configuration for this workflow can be found in the `IngestGranule` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows.yml)_
 
 ## Summary
 
