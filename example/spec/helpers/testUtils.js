@@ -1,8 +1,8 @@
 const fs = require('fs');
-const yaml = require('js-yaml');
 const { S3 } = require('aws-sdk');
 const { Config } = require('kes');
 const lodash = require('lodash');
+const { exec } = require('child-process-promise');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -33,6 +33,7 @@ function loadConfig() {
   }
 
   config.test_configs.buckets = config.buckets;
+  config.test_configs.deployment = config.deployment;
 
   return config.test_configs;
 }
@@ -71,12 +72,11 @@ async function deleteFolder(bucket, folder) {
     Prefix: folder
   }).promise();
 
-  await Promise.all(l.Contents.map((item) => {
-    return s3.deleteObject({
+  await Promise.all(l.Contents.map((item) =>
+    s3.deleteObject({
       Bucket: bucket,
       Key: item.Key
-    }).promise();
-  }));
+    }).promise()));
 }
 
 /**
@@ -92,16 +92,21 @@ function getExecutionUrl(executionArn) {
 }
 
 /**
- * Returns workflow configuration for all workflows (default) or the workflow specified
+ * Redeploy the current Cumulus deployment
  *
- * @param {string} workflowConfigFile - workflow file name
- * @param {string} workflowName - workflow name
- * @returns {Object} return the workflow configuration
+ * @param {Object} config - configuration object from loadConfig()
+ * @returns {undefined} none
  */
-function getWorkflowConfig(workflowConfigFile, workflowName) {
-  const config = yaml.safeLoad(fs.readFileSync(workflowConfigFile, 'utf8'));
-  if (workflowName) return config[workflowName];
-  return config;
+async function redeploy(config) {
+  const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
+  console.log(`Redeploying ${config.deployment}`);
+  await exec(deployCommand)
+    .then((result) => {
+      console.log(result.stdout);
+      if (result.error) {
+        console.log(`Deployment error: ${result.error}`);
+      }
+    });
 }
 
 module.exports = {
@@ -109,5 +114,5 @@ module.exports = {
   templateFile,
   deleteFolder,
   getExecutionUrl,
-  getWorkflowConfig
+  redeploy
 };
