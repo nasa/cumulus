@@ -90,7 +90,7 @@ async function put(event) {
   }
 
   if (action === 'move') {
-    await granuleModelClient.move(granule, body.destinations, process.env.distEndpoint);
+    await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
 
     return buildLambdaProxyResponse({
       json: true,
