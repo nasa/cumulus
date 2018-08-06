@@ -5,8 +5,9 @@ default:
   test_configs:
     stackName: '{{stackName}}'
     bucket: '{{buckets.internal.name}}'
-    distributionEndpoint: '{{api_distribution_url}}'
+    DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
     ems_provider: CUMULUS
+    esHost: '{{esHost}}'
     streamName: '{{stackName}}-testStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
@@ -15,34 +16,34 @@ default:
         granules:
           - files:
             - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
+              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
             - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
             - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
+              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
             - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
+              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
       SyncGranuleOutput:
         granules:
           - files:
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
     SyncGranule:
       granules:
         - files:
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
   # test configuration ends
 
   stackName: 'change-me'
@@ -212,6 +213,7 @@ lf:
 kk-uat-deployment:
   stackName: kk-test-uat
   stackNameNoDash: KkTestUat
+  esHost: https://search-kk-test-uat-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
 
 mth-2:
   stackName: mth-2
@@ -254,7 +256,6 @@ jl:
     shared-2:
       name: rvl-internal
       type: shared
-
 
 # Begin-MHS-config
 mhs:
@@ -302,3 +303,47 @@ mhs:
     enableAutoScaling: false
 
 # END-mhs-config
+
+gitc:
+  prefix: {{PREFIX}}
+  stackName: {{stackName}}
+  stackNameNoDash: {{stackNameNoDash}}
+
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{PREFIX}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{PREFIX}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{PREFIX}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{PREFIX}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{PREFIX}}-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{PREFIX}}-distribution-api-lambda'
+
+  buckets:
+    internal:
+      name: '{{PREFIX}}-internal'
+      type: internal
+    private:
+      name: '{{PREFIX}}-private'
+      type: private
+    protected:
+      name: '{{PREFIX}}-protected'
+      type: protected
+    public:
+      name: '{{PREFIX}}-public'
+      type: public
+    protected-2:
+      name: '{{PREFIX}}-protected-2'
+      type: protected
+    shared:
+      name: '{{PREFIX}}-data-shared'
+      type: shared
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
+  system_bucket: '{{buckets.internal.name}}'
+
+  users:
+    - username: '{{EARTHDATA_LOGIN_USERNAME}}'
+
+  AutoScalingPolicyConfiguration:
+  GranulesTable:
+    enableAutoScaling: false
+  FilesTable:
+    enableAutoScaling: false

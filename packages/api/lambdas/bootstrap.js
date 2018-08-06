@@ -28,24 +28,35 @@ const mappings = require('../models/mappings.json');
 const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
 
 /**
- * Check the index to see if mappings have been added since the index
- * was last updated. Return any missing types from the mapping.
+ * Check the index to see if mappings have been updated since the index was last updated.
+ * Return any types that are missing or have missing fields from the mapping.
  *
  * @param {Object} esClient - elasticsearch client instance
  * @param {string} index - index name (cannot be alias)
- * @param {Array<string>} types - list of types to check against
+ * @param {Array<Object>} newMappings - list of mappings to check against
  * @returns {Array<string>} - list of missing indices
  */
-async function findMissingMappings(esClient, index, types) {
+async function findMissingMappings(esClient, index, newMappings) {
   const typesResponse = await esClient.indices.getMapping({
     index
   });
 
-  const indexMappings = get(typesResponse, index);
+  const types = Object.keys(newMappings);
+  const indexMappings = get(typesResponse, `${index}.mappings`);
 
-  const indexTypes = Object.keys(indexMappings.mappings);
-
-  return types.filter((x) => !indexTypes.includes(x));
+  return types.filter((type) => {
+    const oldMapping = indexMappings[type];
+    if (!oldMapping) return true;
+    const newMapping = newMappings[type];
+    // Check for new dynamic templates and properties
+    if (newMapping.dynamic_templates && (!oldMapping.dynamic_templates ||
+       newMapping.dynamic_templates.length >
+       oldMapping.dynamic_templates.length)) {
+      return true;
+    }
+    const fields = Object.keys(newMapping.properties);
+    return !!fields.filter((field) => !Object.keys(oldMapping.properties).includes(field)).length;
+  });
 }
 
 /**
@@ -108,9 +119,10 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
       }
     }
 
-    const missingTypes = await findMissingMappings(esClient, aliasedIndex, Object.keys(mappings));
+    const missingTypes = await findMissingMappings(esClient, aliasedIndex, mappings);
 
     if (missingTypes.length > 0) {
+      log.info(`Updating mappings for ${missingTypes}`);
       const concurrencyLimit = inTestMode() ? 1 : 3;
       const limit = pLimit(concurrencyLimit);
       const addMissingTypesPromises = missingTypes.map((type) =>
