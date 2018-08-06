@@ -503,7 +503,7 @@ test.serial('move a file and update metadata', async (t) => {
     }
   };
 
-  process.env.distEndpoint = 'http://example.com/';
+  process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
   await aws.s3().putObject({ Bucket: bucket, Key: `${process.env.stackName}/workflows/buckets.json`, Body: JSON.stringify(buckets) }).promise();
 
   await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
@@ -585,7 +585,7 @@ test.serial('move a file and update metadata', async (t) => {
     });
   }).then((xml) => {
     const newUrl = xml.Granule.OnlineAccessURLs.OnlineAccessURL[0].URL;
-    const newDestination = `${process.env.distEndpoint}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
+    const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
     t.is(newUrl, newDestination);
   });
 });
