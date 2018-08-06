@@ -89,6 +89,7 @@ kinesisConsumer:
       function: Ref
       value: ProvidersTableDynamoDB
     bucket: '{{system_bucket}}'
+    FallbackTopicArn: 'TODO(mhs)SomedayWillBe-KinesisFallbackSnsArn'
 
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'

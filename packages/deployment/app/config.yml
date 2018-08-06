@@ -120,6 +120,17 @@ default:
               - Arn
           protocol: lambda
 
+    # This topic receives errored kinesis messages and tries them again.
+    kinesisFallback:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - kinesisConsumerLambdaFunction
+              - Arn
+          protocol: lambda
+
   apis:
     - name: download
     - name: backend
