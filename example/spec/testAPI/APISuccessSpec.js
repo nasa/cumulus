@@ -166,13 +166,10 @@ describe('The Cumulus API', () => {
     });
 
     it('returns logs with taskName included', async () => {
-      const executionARNTokens = workflowExecution.executionArn.split(':');
-      const executionName = executionARNTokens[executionARNTokens.length - 1];
       const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
       logs.results.forEach((log) => {
         if ((!log.message.includes('END')) && (!log.message.includes('REPORT')) && (!log.message.includes('START'))) {
           expect(log.sender).not.toBe(undefined);
-          expect(log.executions).toEqual(executionName);
         }
       });
     });
