@@ -24,6 +24,20 @@
       },
       "file": {
         "type": "keyword"
+      },
+      "sender": {
+        "type": "text"
+      },
+      "executions": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "version": {
+        "type": "keyword"
       }
     }
   },
