@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **GITC-776-2** - Add support for versioned collections
 
 ### Fixed
-- **CUMULUS-832** - Fixed indentation in example config.yml in `@cumulus/deployment`
+- **CUMULUS-832** 
+  - Fixed indentation in example config.yml in `@cumulus/deployment`
+  - Fixed issue with new deployment using the default distribution endpoint in `@cumulus/deployment` and `@cumulus/api`
 
 ## [v1.8.1] - 2018-08-01
 
