@@ -3,6 +3,7 @@ The Cumulus ingest workflow supports the SIPS workflow. In the following documen
 
 In this document, we assume the user already has a provider endpoint configured and ready with some data to ingest. We'll be using an S3 provider and ingesting from a MOD09GQ collection.
 
+
 ## Setup
 
 1. We need to build a collection. Details on collections can be found [here](./setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull pdrs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
@@ -60,10 +61,27 @@ In this document, we assume the user already has a provider endpoint configured 
 
 3. Finally, let's create a [rule](./setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndParsePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
 
-![](../images/sips-rule.png)
-
+```
+{
+    "name": "s3_provider_rule",
+    "workflow": "DiscoverAndQueuePdrs",
+    "provider": "s3_provider",
+    "collection": {
+        "name": "MOD09GQ",
+        "version": "006"
+    },
+    "rule": {
+        "type": "onetime"
+    },
+    "state": "ENABLED",
+    "tags": [
+        "test"
+    ]
+}
+```
 
 **Note:** A list of configured workflows exists under the "Workflows" in the navigation bar on the Cumulus dashboard. Additionally, one can find a list of executions and their respective status in the "Executions" tab in the navigation bar.
+
 
 ## DiscoverAndQueuePdrs Workflow
 
