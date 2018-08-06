@@ -3,6 +3,8 @@
   "granules": [
     {
       "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+      "dataType": "MOD09GQ",
+      "version": "006",
       "files": [
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
@@ -10,7 +12,7 @@
           "filename": "",
           "fileSize": 17865615,
           "path": "cumulus-test-data/pdrs",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
         },
         {
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
@@ -18,7 +20,7 @@
           "filename": "",
           "fileSize": 44118,
           "path": "cumulus-test-data/pdrs",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         }
       ]
     }

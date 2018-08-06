@@ -231,7 +231,7 @@ jobs:
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
               yarn docs-build
-              # mv _book unreleased
+              mv _book unreleased
             fi
 
 
@@ -247,9 +247,8 @@ jobs:
               yarn ybootstrap
 
               # create versioned docs
-              # comment out until the next version release
-              # yarn docs-build
-              # mv unreleased _book/
+              yarn docs-build
+              mv unreleased _book/
             fi
   
       - add_ssh_keys:
