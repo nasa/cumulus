@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.9.0] - 2018-08-06
 
+**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
+
 ### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
 - **GITC-776-2** - Add support for versioned collections
