@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
+- **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration tests.
 - **GITC-776-2** - Add support for versioned collections
 
 ### Fixed
