@@ -1,17 +1,15 @@
 'use strict';
 
-const {
-  extend
-} = require('lodash');
+const { extend } = require('lodash');
 
 const {
   loadYmlConfigFile,
-  saveYmlConfig
+  saveYmlConfigFile
 } = require('./configUtils');
 
 function updateLambdaConfiguration(lambdaConfigFileName, lambdaName, configJson) {
   const config = loadYmlConfigFile(lambdaConfigFileName);
   extend(config[lambdaName], configJson);
-  saveYmlConfig(config, lambdaConfigFileName);
+  saveYmlConfigFile(config, lambdaConfigFileName);
 }
 module.exports = { updateLambdaConfiguration };
