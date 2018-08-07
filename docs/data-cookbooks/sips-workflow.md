@@ -8,7 +8,7 @@ In this document, we assume the user already has a provider endpoint configured 
 
 #### Provider
 
-We need to have a [provider](./setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-data` bucket.
+We need to have a [provider](./setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
 
 ![](../images/sips-provider.png)
 
