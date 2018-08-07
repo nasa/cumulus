@@ -11,9 +11,7 @@ const {
   redeploy
 } = require('../helpers/testUtils');
 
-const {
-  updateLambdaConfiguration
-} = require('../helpers/lambdaUtils');
+const { updateLambdaConfiguration } = require('../helpers/lambdaUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -41,14 +39,12 @@ describe('When a workflow', () => {
         workflowExecutionArn,
         lambdaName
       );
-      console.log(`Step output is ${JSON.stringify(testVersionOutput)}`);
     });
 
     afterAll(async () => {
       const updateConfig = { handler: 'index.handler' };
       const lambdaName = 'VersionUpTest';
       const lambdaConfigFileName = './lambdas.yml';
-      console.log(`Updating configuration with ${updateConfig}`);
       updateLambdaConfiguration(lambdaConfigFileName, lambdaName, updateConfig);
       await redeploy(config);
     });
