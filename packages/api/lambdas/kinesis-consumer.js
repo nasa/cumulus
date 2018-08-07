@@ -11,9 +11,7 @@ const Rule = require('../models/rules');
 const messageSchema = require('./kinesis-consumer-event-schema.json');
 const sfSchedule = require('./sf-scheduler');
 
-// TODO(mhs): get this onto process.env via CF + kes
-const fallbackArn =
-      'arn:aws:sns:us-east-1:893015583569:mhs-cumulus-kinesisFallbackSns-TZ3Z8I2PVZN0';
+const fallbackArn = process.env.FallbackTopicArn;
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
@@ -90,6 +88,8 @@ function validateMessage(event) {
  * @returns {Promise<Object>} - SNS publish response
  */
 async function publishRecordToFallbackTopic(record) {
+  log.debug('publishing bad record to ', fallbackArn);
+  log.debug('record:', JSON.stringify(record));
   return sns().publish({
     TopicArn: fallbackArn,
     Message: JSON.stringify(record)
