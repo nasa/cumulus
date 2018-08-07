@@ -50,3 +50,4 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
   * [Collections, Providers, Schemas, and Rules](data-cookbooks/setup.md)
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
+* [SIPS Workflow](data-cookbooks/sips-workflow.md)

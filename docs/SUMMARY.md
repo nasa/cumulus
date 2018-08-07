@@ -40,3 +40,4 @@
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
 * [CNM Workflow](data-cookbooks/cnm-workflow.md)
+* [SIPS Workflow](data-cookbooks/sips-workflow.md)
