@@ -8,13 +8,13 @@ In this document, we assume the user already has a provider endpoint configured 
 
 #### Provider
 
-We need to have a [provider](./setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
+We need to have a [provider](./setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-data` bucket.
 
 ![](../images/sips-provider.png)
 
 #### Collection
 
-We need to build a collection. Details on collections can be found [here](./setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull pdrs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
+We need to build a collection. Details on collections can be found [here](./setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull PDRs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
 ```
 {
     "queriedAt": "2018-08-03T16:44:25.919Z",
@@ -91,7 +91,7 @@ Finally, let's create a [rule](./setup.md#rules). In this example we're just goi
 
 ## DiscoverAndQueuePdrs Workflow
 
-This workflow will (as the name might suggest) discover pdrs and queue them to be processed. Duplicate PDRs will be dealt with according to the configured duplicate handling setting in the collection.
+This workflow will (as the name might suggest) discover PDRs and queue them to be processed. Duplicate PDRs will be dealt with according to the configured duplicate handling setting in the collection.
 
 1. DiscoverPdrs - [npm package](https://www.npmjs.com/package/@cumulus/discover-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
 2. QueuePdrs - [npm package](https://www.npmjs.com/package/@cumulus/queue-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
@@ -103,7 +103,7 @@ _Example configuration for this workflow can be found in the `DiscoverAndQueuePd
 
 ## ParsePdr Workflow
 
-The ParsePdr workflow will parse a pdr, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the pdr are successfully ingested. If one of those fails, the ParsePdr worklfow will fail. **NOTE** that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the pdr.
+The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates are handled according to the duplicate handling setting) and periodically check the status of those queued granules. This workflow will not succeed until all the granules included in the PDR are successfully ingested. If one of those fails, the ParsePdr worklfow will fail. **NOTE** that ParsePdr may spin up multiple IngestGranule workflows in parallel, depending on the granules included in the PDR.
 
 1. ParsePdr - [npm package](https://www.npmjs.com/package/@cumulus/parse-pdr), [source](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
 2. QueueGranules - [npm package](https://www.npmjs.com/package/@cumulus/queue-granules), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-granules)
@@ -130,4 +130,4 @@ _Example configuration for this workflow can be found in the `IngestGranule` obj
 
 ## Summary
 
-In this cookbook we went over setting up a collection, rule, and provider for a SIPS workflow. Once we had the setup completed, we looked over the Cumulus workflows that participate in parsing pdrs, ingesting and processing granules, and updating CMR.
+In this cookbook we went over setting up a collection, rule, and provider for a SIPS workflow. Once we had the setup completed, we looked over the Cumulus workflows that participate in parsing PDRs, ingesting and processing granules, and updating CMR.
