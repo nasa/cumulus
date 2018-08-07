@@ -769,14 +769,6 @@ TestLambdaVersionWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: HelloWorld
-    HelloWorld:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-      Type: Task
-      Resource: ${HelloWorldLambdaFunction.Arn}
       Next: WaitForDeployment
     WaitForDeployment:
       Type: Task

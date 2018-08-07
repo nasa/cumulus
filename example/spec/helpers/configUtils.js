@@ -3,13 +3,8 @@
 const fs = require('fs-extra');
 const yaml = require('js-yaml');
 
-// const {
-//   get,
-//   unset
-// } = require('lodash');
-
 /**
- * Copy the configuration file to a backup location
+ * Copy a configuration file to a backup location
  *
  * @param {string} configurationYmlFilepath - configuration file path
  * @param {string} configurationYmlBackupFilepath - backup configuration file path
@@ -20,7 +15,7 @@ function backupConfigYml(configurationYmlFilepath, configurationYmlBackupFilepat
 }
 
 /**
- * Copy the configuration file back from the backup location. Delete
+ * Copy a configuration file back from the backup location. Delete
  * the backup configuration file
  *
  * @returns {undefined} none
@@ -33,7 +28,7 @@ function restoreConfigYml(configurationYmlFilepath, configurationYmlBackupFilena
 }
 
 /**
- * Load configuration yml file
+ * Load a configuration yml file
  *
  * @param {string} workflowConfigFile - workflow yml file,defaults to './workflows.yml'
  * @returns {Object} - JS Object representation of yml file
@@ -43,19 +38,19 @@ function loadYmlConfigFile(workflowConfigFile) {
 }
 
 /**
- * Convert yml config JS to yml
+ * Convert config JS to yml
  *
  * @param {Object} configJs - configuration as a JS object
  * @param {string} filepath - file path to save to
  * @returns {undefined} None
  */
-function saveYmlConfig(configJs, filepath) {
+function saveYmlConfigFile(configJs, filepath) {
   const configYaml = yaml.safeDump(configJs);
   fs.writeFileSync(filepath, configYaml);
 }
 
 /**
- * Returns configuration object for entire configuration or the node
+ * Returns configuration object for entire configuration yml, or the top-level node
  * specified
  *
  * @param {string} configFilepath -config file path
@@ -73,5 +68,5 @@ module.exports = {
   backupConfigYml,
   restoreConfigYml,
   loadYmlConfigFile,
-  saveYmlConfig
+  saveYmlConfigFile
 };
