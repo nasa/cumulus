@@ -12,22 +12,28 @@ const {
 } = require('../helpers/testUtils');
 
 const {
-  backupWorkflowsYml,
-  restoreWorkflowsYml,
+  backupConfigYml,
+  restoreConfigYml
+} = require('../helpers/configUtils');
+
+const {
   removeWorkflow,
   removeTaskFromWorkflow
 } = require('../helpers/workflowUtils');
 
+const workflowsYmlFile = './workflows.yml';
+const workflowsYmlCopyFile = './workflowsCopy.yml';
 const config = loadConfig();
+
 
 describe('When a workflow', () => {
   beforeAll(async () => {
-    backupWorkflowsYml();
+    backupConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
   });
 
   afterAll(async () => {
     // Restore workflows.yml to original and redeploy for next time tests are run
-    restoreWorkflowsYml();
+    restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
     await redeploy(config);
   });
 
@@ -43,7 +49,7 @@ describe('When a workflow', () => {
         'WaitForDeployWorkflow'
       );
 
-      removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld');
+      removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
 
       await redeploy(config);
 
@@ -91,7 +97,7 @@ describe('When a workflow', () => {
         'WaitForDeployWorkflow'
       );
 
-      removeWorkflow('WaitForDeployWorkflow');
+      removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
 
       await redeploy(config);
 
