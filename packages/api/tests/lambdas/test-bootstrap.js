@@ -10,6 +10,7 @@ const models = require('../../models');
 const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
 const mappingsSubset = require('../data/testEsMappingsSubset.json');
+const mappingsNoFields = require('../data/testEsMappingsNoFields.json');
 
 let esClient;
 const tableName = randomString();
@@ -83,7 +84,7 @@ test.serial('Missing types added to index', async (t) => {
   });
 
   t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, Object.keys(testMappings)),
+    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
     ['logs', 'deletedgranule']
   );
 
@@ -91,9 +92,37 @@ test.serial('Missing types added to index', async (t) => {
   esClient = await Search.es();
 
   t.deepEqual(
-    await bootstrap.findMissingMappings(esClient, indexName, Object.keys(testMappings)),
+    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
     []
   );
 
   await esClient.indices.delete({ index: indexName });
 });
+
+test.serial('Missing fields added to index', async (t) => {
+  const indexName = randomString();
+  const testAlias = randomString();
+
+  esClient = await Search.es();
+
+  await esClient.indices.create({
+    index: indexName,
+    body: { mappings: mappingsNoFields }
+  });
+
+  t.deepEqual(
+    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
+    ['logs', 'execution']
+  );
+
+  await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
+  esClient = await Search.es();
+
+  t.deepEqual(
+    await bootstrap.findMissingMappings(esClient, indexName, testMappings),
+    []
+  );
+
+  await esClient.indices.delete({ index: indexName });
+});
+
