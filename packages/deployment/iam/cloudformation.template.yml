@@ -347,6 +347,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - cloudwatch:GetMetricStatistics
+                  - ec2:DescribeInstances
                   - ecr:BatchCheckLayerAvailability
                   - ecr:BatchGetImage
                   - ecr:GetAuthorizationToken
@@ -371,6 +372,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
+                  - ssm:GetParameter
                 Resource: "*"
 
               # Allow state machine interactions
