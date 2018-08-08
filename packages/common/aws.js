@@ -1,7 +1,9 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const cksum = require('cksum');
 const concurrency = require('./concurrency');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -485,6 +487,25 @@ class S3ListObjectsV2Queue {
   }
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
+
+exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
+  const param = { Bucket: bucket, Key: key };
+
+  if (algorithm.toLowerCase() === 'cksum') {
+    return new Promise((resolve, reject) =>
+      exports.s3().getObject(param).createReadStream()
+        .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
+        .on('error', reject));
+  }
+
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash(algorithm, options);
+    const fileStream = exports.s3().getObject(param).createReadStream();
+    fileStream.on('error', reject);
+    fileStream.on('data', (chunk) => hash.update(chunk));
+    fileStream.on('end', () => resolve(hash.digest('hex')));
+  });
+};
 
 // Class to efficiently scane all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
