@@ -3,6 +3,8 @@
 const fs = require('fs-extra');
 const yaml = require('js-yaml');
 
+const { extend } = require('lodash');
+
 /**
  * Copy a configuration file to a backup location
  *
@@ -63,10 +65,25 @@ function getConfigObject(configFilepath, nodeName) {
   return config;
 }
 
+/**
+ * Updates configuration file node with values specified in configJson*
+ * @param {string} configFilePath -config file path
+ * @param {string} nodeName - top-level-node name
+ * @param {Object} configJson - JSON object to append/overwrite target key's values with
+ * @returns {Object} return the workflow configuration
+ */
+
+function updateConfigObject(configFilePath, nodeName, configJson) {
+  const config = loadYmlConfigFile(configFilePath);
+  extend(config[nodeName], configJson);
+  saveYmlConfigFile(config, configFilePath);
+}
+
 module.exports = {
   getConfigObject,
   backupConfigYml,
   restoreConfigYml,
   loadYmlConfigFile,
-  saveYmlConfigFile
+  saveYmlConfigFile,
+  updateConfigObject
 };
