@@ -29,7 +29,7 @@ Resources:
         CmrPassword:
           Fn::GetAtt:
             - CumulusCustomResource
-            - CmrPassword 
+            - CmrPassword
       {{#if ../es.name}}
         ElasticSearchDomain:
           Fn::GetAtt:
@@ -80,7 +80,7 @@ Resources:
             - SecurityGroup
             - GroupId
       {{/if}}
-      TemplateURL: {{this.url}} 
+      TemplateURL: {{this.url}}
 
 {{/each}}
 
@@ -113,7 +113,7 @@ Resources:
       DynamoDBTables:
       {{#each dynamos}}
         - name:
-            Ref: {{@key}}DynamoDB 
+            Ref: {{@key}}DynamoDB
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}
@@ -221,7 +221,7 @@ Resources:
   {{#if this.arn}}
   {{#each this.subscriptions}}
   # Subscriptions only
-  {{@../key}}{{@key}}Subscription: 
+  {{@../key}}{{@key}}Subscription:
     Type: "AWS::SNS::Subscription"
     Properties:
       {{# if this.endpoint.function}}
@@ -363,7 +363,7 @@ Resources:
     {{#if this.retry}}
       RedrivePolicy:
         deadLetterTargetArn:
-          Fn::GetAtt: 
+          Fn::GetAtt:
             - {{@key}}FailedSQS
             - Arn
         maxReceiveCount: {{this.retry}}
@@ -654,7 +654,7 @@ Resources:
       Tags:
         - Key: Project
           Value: {{../stackName}}
-      
+
   {{# if this.launchInVpc }}
     {{# if ../vpc }}
       VpcConfig:
@@ -781,11 +781,11 @@ Resources:
                 {{else}}
                   - Example: value
                 {{/if}}
-          
+
           {{# if ecs.efs.mount }}
           packages:
             yum:
-              nfs-utils: [] 
+              nfs-utils: []
           {{/if}}
 
           files:
@@ -822,20 +822,20 @@ Resources:
               command: !Sub
               - |
                 #!/bin/bash -xe
-                
+
                 mkdir -p {{ecs.efs.mount}}
                 mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
                 chmod 777 {{ecs.efs.mount}}
-                
+
                 echo '${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
                 mount -a
                 service docker restart
                 start ecs
 
-              - EFSFileSystemId:  
-                  Fn::ImportValue: 
+              - EFSFileSystemId:
+                  Fn::ImportValue:
                     !Sub "{{prefix}}-EFSFileSystemId"
-        {{/if}} 
+        {{/if}}
 
     Properties:
     {{# if vpc.subnets }}
@@ -846,12 +846,12 @@ Resources:
           - SecurityGroup
           - GroupId
        {{# if ecs.efs.mount}}
-        - Fn::ImportValue: 
+        - Fn::ImportValue:
             "{{prefix}}-EFSSecurityGroup"
         {{/if}}
 
       ImageId: {{ecs.amiid}}
-      
+
       InstanceType: {{ecs.instanceType}}
       IamInstanceProfile: {{iams.instanceProfile}}
       BlockDeviceMappings:
@@ -913,7 +913,7 @@ Resources:
       {{# each this.volumes}}
         - Name: {{name}}
           Host:
-            SourcePath: {{path}} 
+            SourcePath: {{path}}
       {{/each}}
     {{/if}}
     {{# if this.networkMode}}
@@ -929,7 +929,7 @@ Resources:
           - SourceVolume: {{name}}
             ContainerPath: {{dst}}
         {{/each}}
-      
+
       {{/if}}
       {{# if this.privileged }}
         Privileged: true
@@ -944,7 +944,7 @@ Resources:
               {{this.function}}:
               {{#each this.array}}
                 - {{this}}
-              {{/each}}          
+              {{/each}}
         {{/if}}
         {{#if this.value}}
           - Name: {{@key}}
@@ -1040,14 +1040,14 @@ Outputs:
   ApiId:
     Value:
       Ref: backendRestApi
-  
+
   DistributionId:
     Value:
       Ref: downloadRestApi
-  
+
   ApiStage:
     Value: {{apiStage}}
-  
+
 {{#each stepFunctions}}
   {{@key}}StateMachine:
     Value:
