@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
 
+### Fixed
+- **CUMULUS-771**
+  - Updated sync-granule to stream the remote file to s3
+  - Added integration test for ingesting granules from ftp provider
+  - Updated http/https integration tests for ingesting granules from http/https providers
+
 ## [v1.9.0] - 2018-08-06
 
 **Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
