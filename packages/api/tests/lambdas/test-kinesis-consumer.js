@@ -55,8 +55,13 @@ const disabledRuleParams = Object.assign({}, commonRuleParams, {
   state: 'DISABLED'
 });
 
-
-// turn a single kinesis event object into the SNS event object.
+/**
+ * translates a kinesis event object into an object that and SNS event will
+ * redeliver to the fallback handler.
+ *
+ * @param {Object} record - kinesis record object.
+ * @returns {Object} - object representing an SNS event.
+ */
 function wrapKinesisRecord(record) {
   return {
     Records: [{
@@ -81,7 +86,7 @@ function testCallback(err, object) {
 }
 
 let sfSchedulerSpy;
-let publishSpy;
+let publishStub;
 const stubQueueUrl = 'stubQueueUrl';
 
 let ruleModel;
@@ -99,7 +104,7 @@ test.beforeEach(async (t) => {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString()
   };
-  publishSpy = sinon.stub(snsClient, 'publish').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
+  publishStub = sinon.stub(snsClient, 'publish').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
   t.context.templateBucket = randomString();
   t.context.stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
@@ -141,7 +146,7 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.templateBucket);
   sfSchedulerSpy.restore();
-  publishSpy.restore();
+  publishStub.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
   Collection.prototype.get.restore();
@@ -191,8 +196,9 @@ test.serial('A kinesis message, should publish the invalid record to fallbackSNS
     Records: [validRecord, invalidRecord]
   };
   await handler(kinesisEvent, {}, testCallback);
-  const callArgs = publishSpy.getCall(0).args;
+  const callArgs = publishStub.getCall(0).args;
   t.deepEqual(invalidRecord, JSON.parse(callArgs[0].Message));
+  t.true(publishStub.calledOnce);
 });
 
 test.serial('An SNS fallback retry, should throw an error if message does not include a collection', async (t) => {
@@ -219,8 +225,9 @@ test.serial('A kinesis message, should publish the invalid records to fallbackSN
 
   await handler(kinesisEvent, {}, testCallback);
 
-  const callArgs = publishSpy.getCall(0).args;
+  const callArgs = publishStub.getCall(0).args;
   t.deepEqual(invalidRecord, JSON.parse(callArgs[0].Message));
+  t.true(publishStub.calledOnce);
 });
 
 test.serial('An SNS Fallback retry, should throw an error if message collection has wrong data type', async (t) => {
@@ -247,8 +254,9 @@ test.serial('A kinesis message, should publish the invalid record to fallbackSNS
 
   await handler(kinesisEvent, {}, testCallback);
 
-  const callArgs = publishSpy.getCall(0).args;
+  const callArgs = publishStub.getCall(0).args;
   t.deepEqual(invalidRecord, JSON.parse(callArgs[0].Message));
+  t.true(publishStub.calledOnce);
 });
 
 test.serial('An SNS Fallback retry, should throw an error if message is invalid json', async (t) => {
@@ -270,7 +278,7 @@ test.serial('A kinesis message should not publish record to fallbackSNS if it pr
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }]
   };
-  t.true(publishSpy.notCalled);
+  t.true(publishStub.notCalled);
   return handler(kinesisEvent, {}, testCallback).then((r) => t.deepEqual(r, [[]]));
 });
 
