@@ -651,6 +651,13 @@ Resources:
 {{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
+    {{# if this.deadletterqueue}}
+      DeadLetterConfig:
+        TargetArn:
+          Fn::GetAtt:
+            - {{this.deadletterqueue}}SQS
+            - Arn
+    {{/if}}
       Tags:
         - Key: Project
           Value: {{../stackName}}
