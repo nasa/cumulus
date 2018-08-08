@@ -70,7 +70,6 @@ default:
     desiredInstances: 1
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
-    keyPairName: abarciauskas-bgse
     publicIp: true
     restartTasksOnDeploy: true
     docker:
