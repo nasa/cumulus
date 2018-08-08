@@ -98,6 +98,7 @@ fallbackConsumer:
   timeout: 100
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
+  deadletterqueue: kinesisFailure
   envs:
     RulesTable:
       function: Ref
