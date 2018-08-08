@@ -144,23 +144,6 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
   }
 
   /**
-   * get readable stream of the remote file
-   *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @returns {Promise} readable stream of the remote file
-   */
-  async getReadableStream(remotePath) {
-    if (!this.decrypted) await this.decrypt();
-    const client = new JSFtp(this.ftpClientOptions);
-    return new Promise(((resolve, reject) => {
-      client.get(remotePath, (err, socket) => {
-        if (err) reject(err);
-        else resolve(socket);
-      });
-    }));
-  }
-
-  /**
    * Download the remote file to a given s3 location
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
