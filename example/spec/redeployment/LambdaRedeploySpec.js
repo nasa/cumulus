@@ -11,12 +11,21 @@ const {
   redeploy
 } = require('../helpers/testUtils');
 
-const { updateLambdaConfiguration } = require('../helpers/lambdaUtils');
+const { updateConfigObject } = require('../helpers/configUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
 describe('When a workflow', () => {
+  afterAll(async () => {
+    // Restore deployment following all following tests
+    const updateConfig = { handler: 'index.handler' };
+    const lambdaName = 'VersionUpTest';
+    const lambdaConfigFileName = './lambdas.yml';
+    updateConfigObject(lambdaConfigFileName, lambdaName, updateConfig);
+    await redeploy(config);
+  });
+
   describe('is running and a new version of a workflow lambda is deployed', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
@@ -32,21 +41,13 @@ describe('When a workflow', () => {
         config.bucket,
         'TestLambdaVersionWorkflow'
       );
-      updateLambdaConfiguration(lambdaConfigFileName, lambdaName, updateConfig);
+      updateConfigObject(lambdaConfigFileName, lambdaName, updateConfig);
       await redeploy(config);
       workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
       testVersionOutput = await lambdaStep.getStepOutput(
         workflowExecutionArn,
         lambdaName
       );
-    });
-
-    afterAll(async () => {
-      const updateConfig = { handler: 'index.handler' };
-      const lambdaName = 'VersionUpTest';
-      const lambdaConfigFileName = './lambdas.yml';
-      updateLambdaConfiguration(lambdaConfigFileName, lambdaName, updateConfig);
-      await redeploy(config);
     });
 
     xit('the workflow executes successfully', () => {
