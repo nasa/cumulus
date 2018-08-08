@@ -4,7 +4,7 @@
 
 This is a guide for deploying a new instance of Cumulus.
 
-The deployment  documentation is current for the following component versions:
+The deployment documentation is current for the following component versions:
 
 * [Cumulus](https://github.com/nasa/cumulus)
 * [Deployment Template](https://github.com/nasa/template-deploy)
@@ -42,7 +42,7 @@ The process involves:
 
 #### Needed Git Repositories:
 
-- [Cumulus](https://github.com/nasa/cumulus)
+- [Cumulus](https://github.com/nasa/cumulus) (optional)
 - [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 - [Deployment Template](https://github.com/nasa/template-deploy)
 
@@ -166,7 +166,7 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 ##### Configure deployment with `<daac>-deploy/iam/config.yml`
 
-The `iam` configuration creates 4 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
+The `iam` configuration creates 6 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
 
 The various config fields are described below with a sample `config.yml` at the end.
 
@@ -188,7 +188,7 @@ The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
 
 ###### buckets:
 
-The buckets created in the [Create S3 Buckets](#create-s3-buckets) step.
+The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
 
 ------
 
@@ -197,6 +197,7 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step.
     <iam-deployment-name>:    # e.g. dev (Note: Omit brackets, i.e. NOT <dev>)
       prefix: <stack-prefix>  # prefixes CloudFormation-created iam resources and permissions
       stackName: <stack-name> # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+      system_bucket: <prefix-internal>
       buckets:
         internal: 
             name: <prefix-internal> # Note: these are the bucket names, not the prefix from above
@@ -204,33 +205,23 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step.
 
 **Deploy `iam` stack**[^1]
 
-    $ kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
+    $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
 
 **Note**: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.
 
-If the `iam` deployment command  succeeds, you should see 5 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
+If the `iam` deployment command  succeeds, you should see 6 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
 
 * `<stack-name>-ecs`
 * `<stack-name>-lambda-api-gateway`
 * `<stack-name>-lambda-processing`
 * `<stack-name>-scaling-role`
 * `<stack-name>-steprole`
+* `<stack-name>-distribution-api-lambda`
+
 
 The same information can be obtained from the AWS CLI command: `aws iam list-roles`.
 
 The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
-
-#### Update AWS Access Keys
-
-Create or obtain [Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for the user who will assume the DeployerRole in IAM, then export the access keys, replacing the previous values in your environment:
-
-    $ export AWS_ACCESS_KEY_ID=<AWS access key>
-    $ export AWS_SECRET_ACCESS_KEY=<AWS secret key>
-    $ export AWS_REGION=<region>
-
-If you don't want to set environment variables, [access keys can be stored locally via the AWS CLI.](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
-
-_Make sure you've updated your actual environment variables before proceeding (e.g., if sourcing from a file, re-source the file)._
 
 --------------
 ## Configure and Deploy the Cumulus stack
@@ -273,7 +264,7 @@ Also note, if you dont specify the `amiid`, it will try to use a default, which 
 
 ###### buckets
 
-The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-config) step.
+The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-config) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
 
 ###### iams
 
@@ -326,11 +317,11 @@ List of EarthData users you wish to have access to your dashboard application.  
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigateway backend endpoint is used
-    # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
+  # if not specified the value of the apigateway backend endpoint is used
+  # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigateway dist url is used
-    # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
+  # if not specified the value of the apigateway dist url is used
+  # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
 
   # URS users who should have access to the dashboard application.
   users:
@@ -351,6 +342,8 @@ Copy `app/.env.sample to app/.env` and add CMR/earthdata client [credentials](#C
     CMR_PASSWORD=cmrpassword
     EARTHDATA_CLIENT_ID=clientid
     EARTHDATA_CLIENT_PASSWORD=clientpassword
+
+Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
 
 For security it is highly recommended that you prevent `apps/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
 
