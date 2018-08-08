@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
 
+### Changed
+- In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
+
 ## [v1.9.0] - 2018-08-06
 
 **Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
