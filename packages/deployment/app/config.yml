@@ -85,6 +85,8 @@ default:
     availabilityZone: 'us-east-1b'
     maxInstances: 1
     desiredInstances: 0
+    docker:
+      storageDriver: overlay2
 
   es:
     name: es5
