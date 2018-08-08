@@ -57,14 +57,14 @@ function saveYmlConfigFile(configJs, filepath) {
  * @param {string} nodeName - workflow name
  * @returns {Object} return the workflow configuration
  */
-function getConfigNode(configFilepath, nodeName) {
+function getConfigObject(configFilepath, nodeName) {
   const config = loadYmlConfigFile(configFilepath);
   if (nodeName) return config[nodeName];
   return config;
 }
 
 module.exports = {
-  getConfigNode,
+  getConfigObject,
   backupConfigYml,
   restoreConfigYml,
   loadYmlConfigFile,
