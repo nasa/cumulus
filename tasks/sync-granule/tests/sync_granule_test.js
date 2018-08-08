@@ -412,7 +412,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
   try {
-    await t.throws(syncGranule(t.context.event), 'The specified key does not exist.');
+    await t.throws(syncGranule(t.context.event), null, 'Source file not found');
 
     // validateOutput will throw because it doesn't believe in error messages
     t.throws(() => {
