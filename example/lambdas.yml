@@ -82,6 +82,8 @@ SyncGranule:
   source: 'node_modules/@cumulus/sync-granule/dist/'
   useMessageAdapter: true
   launchInVpc: true
+  envs:
+    internal: '{{buckets.internal.name}}'
 
 SyncGranuleNoVpc:
   handler: index.handler
