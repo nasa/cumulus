@@ -614,14 +614,15 @@ KinesisTriggerTest:
     StopStatus: &StopStatusDefaults
       Type: Task
       Resource: ${sf2snsEndLambdaFunction.Arn}
-      Catch:
-        - <<: *ErrorEqualDefaults
-          Next: WorkflowFailed
-      Next: Finish
+      Next: WorkflowSucceeded
     StopStatusFail:
       <<: *StopStatusDefaults
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
       Next: WorkflowFailed
-    Finish:
+    WorkflowSucceeded:
       Type: Succeed
     WorkflowFailed:
       Type: Fail
