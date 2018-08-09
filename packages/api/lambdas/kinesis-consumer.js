@@ -133,7 +133,7 @@ function handleProcessRecordError(error, record, shouldRetry) {
  *
  * @param {*} record - input to the kinesis stream
  * @param {Bool} fromSNS - flag specifying if this is event is from SNS.  SNS
- *        events come the fallback notification and are re-tries of original
+ *        events come from the fallback SNS Topic and are retries of original
  *        Kinesis events.  If this flag is true, errors are raised normally.
  *        If false, the record is from a Kinesis stream and any errors
  *        encountered will cause the record to be published to a fallback SNS
