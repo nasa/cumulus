@@ -24,14 +24,15 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |:---:|:-----:|:--------:|---|
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
 |version|`"006"`|Yes|A version tag for the collection|
-|process|`"modis"`|Yes|The options for this are found in "ChooseProcess and in workflows.yml|
 |granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"`|Yes|REGEX to match granuleId|
 |granuleIdExtraction|<code>"(MOD09GQ\\..*)(\\.hdf&#124;\\.cmr&#124;_ndvi\\.jpg)"</code>|Yes|REGEX that extracts granuleId from file names|
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|An example filename belonging to this collection|
 |files|`<JSON Object>` of files defined [here](#files)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
-|provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
 |duplicateHandling|`"replace"`|No|<code>(replace&#124;version&#124;skip)</code> determines granule duplicate handling scheme|
+|process|`"modis"`|No|The options for this are found in "ChooseProcess and in workflows.yml|
+|provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
+|meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflowfs for this collection via the Cumulus Message Adapter.
 |url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
 
 
@@ -71,23 +72,36 @@ _The above optional attributes are not shown in the example provided, but they h
 
 Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by events in [Kinesis](./cnm-workflow.md) or SNS. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (specifically the object assigned to `module.exports.rule`). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
 
-We don't currently have examples of rules in the Cumulus repo, but we can see how to create a rule from the Cumulus dashboard.
-1. In the Cumulus dashboard, click `Rules` on the navigation bar.
-2. Click the `Add a rule` button.
+The Cumulus Core repository has an example of a Kinesis rule [here](https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json).
 
 |Key|Value|Required|Description|
 |---|-----|--------|-----------|
-|name|`"myScheduledRule"`|Yes|Name of the rule. This is the name under which the rule will be listed on the dashboard|
-|workflow Name|`"ParsePdr"`|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
-|Provider Id|`"myProvider"`|Yes|Configured provider's iD. This can be found on the Providerse page|
-|Collection Name|`"myCollection"`|Yes|Name of the collection this rule will moderate. Configured and found in the Collections page|
-|Collection Version|`"006"`|Yes|Version of the collection this rule will moderate. Configured and found in the Collections page|
-|Rule - Type|`onetime`|Yes|<code>(onetime&#124;scheduled&#124;sns&#124;kinesis)</code> type of scheduling/workflow kick-off desired|
-|Rule - Value|[here](#rule-value)|Yes|This entry depends on the type of run|
-|Rule state|`ENABLED`|Yes|<code>(ENABLED&#124;DISABLED)</code> whether or not the rule will be active|
-|Optional tags|`"nightly"`|No|A string type tag that can be added to simplify search|
+|name|`"L2_HR_PIXC_kinesisRule"`|Yes|Name of the rule. This is the name under which the rule will be listed on the dashboard|
+|workflow|`"KinesisTriggerTest"`|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
+|provider|`"PODAAC_SWOT"`|Yes|Configured provider's ID. This can be found on the Providerse page|
+|collection|`<JSON Object>` collection object shown [below](#collection-object)|Yes|Name and version of the collection this rule will moderate. Configured and found in the Collections page|
+|rule|`<JSON Object>` rule type and associated values - discussed [below](#rule-object)
+|state|`ENABLED`|Yes|<code>(ENABLED&#124;DISABLED)</code> whether or not the rule will be active|
+|tags|`["kinesis", "podaac"]`|No|An array of strings that can be used to simplify search|
 
-#### rule-value
+#### collection-object
+The `collection` entry is a json object with two values:
+```
+{
+  "name": "L2_HR_PIXC",
+  "version": "000"
+}
+```
+
+#### rule-object
+|Key|Value|Required|Description|
+|---|-----|--------|-----------|
+|type|`"kinesis"`|Yes|<code>("onetime"&#124;"scheduled"&#124;"sns"&#124;"kinesis")</code> type of scheduling/workflow kick-off desired|
+|value|`<String>`|No|Discussion of valid values is [below](#rule-value)|
+|arn|`<String>`|No|ARN of SNS topic or Kinesis stream (if this is either a SNS Rule or Kinesis Rule)|
+
+
+##### rule-value
 The `rule - value` entry depends on the type of run:
   * If this is a onetime rule, this can be left blank - [Example](./hello-world.md/#execution)
   * If this is a scheduled rule, this field can hold a [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
