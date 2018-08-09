@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-413** Kinesis processing now captures all errrors.
+        - Added kinsis fallback mechanism when errors occur during record processing.
+        - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
+        - Adds fallbackConsumer lambda to `@cumulus/api`
+        - Adds fallbackqueue option to lambda definitions capture lambda failures after three retries.
+		- Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
+		- Adds kinesisFailureSQS to capture fully failed events from all retries.
+
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
 - **GITC-776-2** - Add support for versioned collections
 
 ### Fixed
-- **CUMULUS-832** 
+- **CUMULUS-832**
   - Fixed indentation in example config.yml in `@cumulus/deployment`
   - Fixed issue with new deployment using the default distribution endpoint in `@cumulus/deployment` and `@cumulus/api`
 
