@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+- **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
 - **CUMULUS-413** Kinesis processing now captures all errrors.
         - Added kinsis fallback mechanism when errors occur during record processing.
         - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
@@ -15,6 +17,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
         - Adds kinesisFailureSQS to capture fully failed events from all retries.
 
+
+## [v1.9.0] - 2018-08-06
+
+**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
+
+### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
 - **GITC-776-2** - Add support for versioned collections
 
@@ -418,7 +426,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.8.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.9.0...HEAD
+[v1.9.0]: https://github.com/nasa/cumulus/compare/v1.8.1...v1.9.0
 [v1.8.1]: https://github.com/nasa/cumulus/compare/v1.8.0...v1.8.1
 [v1.8.0]: https://github.com/nasa/cumulus/compare/v1.7.0...v1.8.0
 [v1.7.0]: https://github.com/nasa/cumulus/compare/v1.6.0...v1.7.0
