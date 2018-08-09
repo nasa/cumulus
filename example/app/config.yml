@@ -7,6 +7,7 @@ default:
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
     ems_provider: CUMULUS
+    esHost: '{{esHost}}'
     streamName: '{{stackName}}-testStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
@@ -213,6 +214,7 @@ lf:
 kk-uat-deployment:
   stackName: kk-test-uat
   stackNameNoDash: KkTestUat
+  esHost: https://search-kk-test-uat-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
 
 mth-2:
   stackName: mth-2
