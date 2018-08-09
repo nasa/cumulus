@@ -11,6 +11,7 @@ const {
   buildAndExecuteWorkflow,
   conceptExists
 } = require('@cumulus/integration-tests');
+const { Search } = require('@cumulus/api/es/search');
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -44,6 +45,7 @@ async function waitForExist(CMRLink, outcome, retries) {
 
 describe('The Cumulus API', () => {
   let workflowExecution = null;
+  let esClient;
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
@@ -54,6 +56,8 @@ describe('The Cumulus API', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
+    const host = config.esHost;
+    esClient = await Search.es(host);
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
     granuleId = inputPayload.granules[0].granuleId;
@@ -151,6 +155,34 @@ describe('The Cumulus API', () => {
       // Check that the granule was removed
       const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
       expect(granuleRemoved).toEqual(true);
+    });
+  });
+
+  describe('logs endpoint', () => {
+    it('returns the execution logs', async () => {
+      const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
+      expect(logs).not.toBe(undefined);
+      expect(logs.results.length).toEqual(10);
+    });
+
+    it('returns logs with taskName included', async () => {
+      const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
+      logs.results.forEach((log) => {
+        if ((!log.message.includes('END')) && (!log.message.includes('REPORT')) && (!log.message.includes('START'))) {
+          expect(log.sender).not.toBe(undefined);
+        }
+      });
+    });
+
+    it('returns logs with a specific execution name', async () => {
+      const executionARNTokens = workflowExecution.executionArn.split(':');
+      const executionName = executionARNTokens[executionARNTokens.length - 1];
+      const logs = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: executionName });
+      expect(logs.meta.count).not.toEqual(0);
+      logs.results.forEach((log) => {
+        expect(log.sender).not.toBe(undefined);
+        expect(log.executions).toEqual(executionName);
+      });
     });
   });
 });
