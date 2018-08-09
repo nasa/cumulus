@@ -117,11 +117,13 @@ function handleProcessRecordError(error, record, shouldRetry) {
         return res;
       })
       .catch((snsError) => {
-        // TODO:  What should when we can't post to the fallback?
+        // We couldn't publish the record to the fallback Topic, so we will log
+        // and throw the original error.  Kinesis polling will pick up this
+        // record again and retry.
         log.error(`Failed to publish record to fallback topic: ${record}`);
         log.error(`original error: ${error}`);
         log.error(`subsequent error: ${snsError}`);
-        return error;
+        throw error;
       });
   }
   throw error;
