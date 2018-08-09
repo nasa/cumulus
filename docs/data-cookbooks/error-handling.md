@@ -1,18 +1,18 @@
 # Error Handling in Workflows
 
-Error handling in workflows is mostly the responsibility of workflow configuration. AWS Step Functions enable users to configure what happens next when an exception is thrown in any state. See the AWS docs for all configuration options: [How Step Functions Works: Error Handling](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html).
+Cumulus Workflow error handling is configurable via Cumulus Workflow Definitions. These workflow definitions are AWS Step Function definitions, and AWS Step Functions enable users to configure what the state machine does next when an exception is thrown. Read more in the AWS docs: [How Step Functions Works: Error Handling](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html).
 
-Best practice is Cumulus Workflow Tasks _should_ throw errors and rely on the state machine logic to handle the error state. Errors and exceptions thrown in Cumulus Workflow Tasks using the Cumulus Message Adapter (CMA) are caught and rethrown by the CMA libraries _unless_ the error name contains `WorkflowError`.
+Cumulus Workflow Tasks _should_ throw errors and rely on the state machine logic to handle the error state. Errors and exceptions thrown in Cumulus Workflow Tasks using the Cumulus Message Adapter (CMA) are caught and rethrown by the CMA libraries _unless_ the error name contains `WorkflowError`.
 
-The former (errors which are not `WorkflowError`s) are the expected scenario when workflow tasks throw an error. However a `WorklowError` can be used to handle errors that should not result in task failure.
+The former (errors which are not `WorkflowError`s) is the expected behavior. However a `WorklowError` can be used to handle errors that should _not_ result in task failure.
 
 ## Workflow Configuration
 
-The best practices for error handling in Cumulus Workflows are:
+Some best practices for error handling in Cumulus Workflows are:
 
-* Include the `sf2snsEndLambdaFunction` as a final state (aka the `StopStatus` state)
+* Include the `sf2snsEndLambdaFunction` as a final state (aka the `StopStatus` state). This broadcasts workflow results to an SNS topic.
 * Every state should include a `Catch` configuration object which defines the `ResultPath` to be `$.exception`. This passes along the entire Cumulus Message to the next state with the addition of the `Error` and `Cause` details of the thrown error in the `exception` key.
-* NOTE: If a task throws an error which is caught by the workflow configuration and passed to another state which also uses the CMA, the CMA overrides the exception key so the exception would not be passed to downstream tasks after the next state. This is okay if the exception is not needed in downstream tasks and / or the only downstream tasks are terminal tasks handling the error state.
+* NOTE: If a task throws an error which is caught by the workflow configuration and passed to another state which also uses the CMA, the CMA overrides the exception key to `"None"` so the exception will not be passed to downstream tasks after the next state. This is okay if the exception is not needed in downstream tasks. However, `sf2snsEndLambdaFunction` does need this exception to understand the failure state, so the error should be re-thrown in any states between the original failed task and `sf2snsEndLambdaFunction`. In the example below, `CnmResponseFail` re-throws any errors passed by upstream tasks.
 * If multiple downstreams tasks should run after a workflow task has thrown an error, for example sending a failure to a kinesis stream in addition to running the `sf2snsEndLambdaFunction`, this can handled by creating a second "failure" branch of the workflow. Example:
 
 ```
