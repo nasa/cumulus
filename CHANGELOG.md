@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
 - **CUMULUS-413** Kinesis processing now captures all errrors.
-        - Added kinsis fallback mechanism when errors occur during record processing.
+        - Added kinesis fallback mechanism when errors occur during record processing.
         - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
         - Adds fallbackConsumer lambda to `@cumulus/api`
         - Adds fallbackqueue option to lambda definitions capture lambda failures after three retries.
