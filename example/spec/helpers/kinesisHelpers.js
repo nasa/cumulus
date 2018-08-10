@@ -1,7 +1,8 @@
 'use strict';
 
 const _ = require('lodash');
-const { Kinesis, StepFunctions } = require('aws-sdk');
+const { Kinesis } = require('aws-sdk');
+const { sfn } = require('@cumulus/common/aws');
 
 const {
   LambdaStep,
@@ -14,7 +15,7 @@ const { loadConfig } = require('../helpers/testUtils');
 const testConfig = loadConfig();
 
 const lambdaStep = new LambdaStep();
-const sfn = new StepFunctions({ region: testConfig.awsRegion });
+
 const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.awsRegion });
 
 const waitPeriodMs = 1000;
@@ -26,7 +27,7 @@ const waitPeriodMs = 1000;
  */
 async function getLastExecution() {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
-  const data = await sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }).promise();
+  const data = await sfn().listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }).promise();
   return (_.orderBy(data.executions, 'startDate', 'desc')[0]);
 }
 
