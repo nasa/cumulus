@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
 - **CUMULUS-836** - `@cumulus/deployment` supports a configurable docker storage driver for ECS. ECS can be configured with either `devicemapper` (the default storage driver for AWS ECS-optimized AMIs) or `overlay2` (the storage driver used by the NGAP 2.0 AMI). The storage driver can be configured in `app/config.yml` with `ecs.docker.storageDriver: overlay2 | devicemapper`. The default is `overlay2`.
   - To support this configuration, a [Handlebars](https://handlebarsjs.com/) helper `ifEquals` was added to `packages/deployment/lib/kes.js`.
@@ -14,6 +15,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - **CUMULUS-836** - `@cumulus/deployment` uses `overlay2` driver by default and does not attempt to write `--storage-opt dm.basesize` to fix [this error](https://github.com/moby/moby/issues/37039).
+- **CUMULUS-413** Kinesis processing now captures all errrors.
+        - Added kinesis fallback mechanism when errors occur during record processing.
+        - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
+        - Adds fallbackConsumer lambda to `@cumulus/api`
+        - Adds fallbackqueue option to lambda definitions capture lambda failures after three retries.
+        - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
+        - Adds kinesisFailureSQS to capture fully failed events from all retries.
 
 ## [v1.9.0] - 2018-08-06
 
@@ -24,7 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **GITC-776-2** - Add support for versioned collections
 
 ### Fixed
-- **CUMULUS-832** 
+- **CUMULUS-832**
   - Fixed indentation in example config.yml in `@cumulus/deployment`
   - Fixed issue with new deployment using the default distribution endpoint in `@cumulus/deployment` and `@cumulus/api`
 
