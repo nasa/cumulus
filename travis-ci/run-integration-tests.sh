@@ -26,7 +26,7 @@ ${DATE}
 SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
 
 LOCK_EXISTS_STATUS_CODE=$(curl \
-  -s \
+  -sS \
   -o /dev/null \
   -w '%{http_code}' \
   --head \
@@ -49,7 +49,7 @@ ${DATE}
   SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
 
   LOCK_EXISTS_STATUS_CODE=$(curl \
-    -s \
+    -sS \
     -o /dev/null \
     -w '%{http_code}' \
     --head \
@@ -71,6 +71,7 @@ ${DATE}
 SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
 
 curl \
+  -sS \
   --fail \
   -X PUT \
   -T "${DEPLOYMENT}.lock" \
@@ -117,6 +118,7 @@ ${DATE}
 SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
 
 curl \
+  -sS \
   --fail \
   -X DELETE \
   -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
