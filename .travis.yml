@@ -1,5 +1,9 @@
 language: node_js
 
+branches:
+  only:
+    - master
+
 stages:
   - name: build cache
   - name: test
