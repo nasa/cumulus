@@ -9,3 +9,5 @@ example/app/**
 example/deployer/**
 example/iam/**
 tmp/**
+docs/**
+_book/**

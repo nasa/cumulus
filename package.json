@@ -5,8 +5,8 @@
   "scripts": {
     "docs-build-tasks": "./bin/build-tasks-doc.js",
     "docs-build": "npm run docs-build-tasks && gitbook build",
-    "docs-serve": "npm run docs-build && gitbook serve",
-    "docs-start": "npm run docs-build && gitbook serve",
+    "docs-serve": "npm run docs-build && (cd docs && gitbook serve)",
+    "docs-start": "npm run docs-build && (cd docs && gitbook serve)",
     "e2e": "ava tests/*.js --serial",
     "lint": "eslint packages/api --ext .js",
     "test": "nyc lerna run test --concurrency 2",
