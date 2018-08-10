@@ -67,6 +67,7 @@ jobs:
       script: npm run e2e
     - name: "Integration tests"
       stage: test
+      if: branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
