@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -evx
 
 MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
 CACHE_FILENAME="${MD5SUM}.tar.gz"
