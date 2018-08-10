@@ -8,9 +8,9 @@ stages:
   - name: build cache
   - name: test
   - name: deploy
-    if: branch = master AND tag IS present
+    if: type != pull_request AND branch = master AND tag IS present
   - name: deployment test
-    if: branch = master AND tag IS present
+    if: type != pull_request AND branch = master AND tag IS present
 
 jobs:
   include:
@@ -67,7 +67,6 @@ jobs:
       script: npm run e2e
     - name: "Integration tests"
       stage: test
-      if: branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install

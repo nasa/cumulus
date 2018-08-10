@@ -1,6 +1,8 @@
 'use strict';
 
-function determineIntegrationTestStackName(branch) {
+function determineIntegrationTestStackName() {
+  const branch = process.env.TRAVIS_PULL_REQUEST_BRANCH || process.env.TRAVIS_BRANCH;
+
   if (!branch) return 'none';
 
   if (branch === 'master') return 'cumulus-from-source';
@@ -16,4 +18,4 @@ function determineIntegrationTestStackName(branch) {
   return 'none';
 }
 
-console.log(determineIntegrationTestStackName(process.env.TRAVIS_BRANCH));
+console.log(determineIntegrationTestStackName());
