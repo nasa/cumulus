@@ -2,11 +2,13 @@
 
 set -evx
 
+# Determine what cache to use (based on all of the package.json files)
 MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
 CACHE_FILENAME="${MD5SUM}.tar.gz"
 KEY="travis-ci-cache/${CACHE_FILENAME}"
-DATE=$(date -R)
 
+# Determine if the cache already exists
+DATE=$(date -R)
 STRING_TO_SIGN_HEAD="HEAD
 
 
@@ -26,8 +28,10 @@ CACHE_EXISTS_STATUS_CODE=$(curl \
 )
 
 if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
+  # If the cache exists then do nothing
   echo "Cache already exists: s3://${CACHE_BUCKET}/${KEY}"
 else
+  # If the cache does not exist then create it and upload it to S3
   echo "Creating cache"
   npm install
   npm run bootstrap-no-build
