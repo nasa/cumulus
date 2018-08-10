@@ -21,14 +21,17 @@ const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.awsRe
 const waitPeriodMs = 1000;
 
 /**
- * returns the most recently executed KinesisTriggerTest workflow
+ * returns the most recently executed KinesisTriggerTest workflows.
  *
- * @returns {Object} state function execution .
+ * @returns {Array<Object>} array of state function executions.
  */
-async function getLastExecution() {
+async function getExecutions() {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
-  const data = await sfn().listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }).promise();
-  return (_.orderBy(data.executions, 'startDate', 'desc')[0]);
+  const data = await sfn().listExecutions({
+    stateMachineArn: kinesisTriggerTestStpFnArn,
+    maxResults: 20
+  }).promise();
+  return (_.orderBy(data.executions, 'startDate', 'desc'));
 }
 
 
@@ -147,8 +150,9 @@ async function putRecordOnStream(streamName, record) {
   }).promise();
 }
 
+
 /**
- *  Wait until an exectution matching the desired execution starts.
+ * Wait for test stepfunction execution to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
  * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
@@ -156,21 +160,21 @@ async function putRecordOnStream(streamName, record) {
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
+async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
   let timeWaited = 0;
-  let lastExecution;
   let workflowExecution;
 
   /* eslint-disable no-await-in-loop */
   while (timeWaited < maxWaitTime && workflowExecution === undefined) {
     await timeout(waitPeriodMs);
     timeWaited += waitPeriodMs;
-    lastExecution = await getLastExecution();
-    // getLastExecution returns undefined if no previous execution exists
-    if (lastExecution && lastExecution.executionArn) {
-      const taskInput = await lambdaStep.getStepInput(lastExecution.executionArn, firstStep);
+    const executions = await getExecutions();
+    // Search all recent executions for target recordIdentifier
+    for (const execution of executions) {
+      const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
       if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
-        workflowExecution = lastExecution;
+        workflowExecution = execution;
+        break;
       }
     }
   }
@@ -179,7 +183,6 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = '
   throw new Error('Never found started workflow.');
 }
 
-
 module.exports = {
   createOrUseTestStream,
   deleteTestStream,
@@ -187,5 +190,5 @@ module.exports = {
   getRecords,
   putRecordOnStream,
   waitForActiveStream,
-  waitForTestSfStarted
+  waitForTestSf
 };
