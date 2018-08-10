@@ -2,11 +2,13 @@
 
 set -ex
 
+# Determine what cache to use (based on all of the package.json files)
 MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
 CACHE_FILENAME="${MD5SUM}.tar.gz"
 KEY="travis-ci-cache/${CACHE_FILENAME}"
-DATE=$(date -R)
 
+# Determine if the cache exists
+DATE=$(date -R)
 STRING_TO_SIGN_HEAD="HEAD
 
 
@@ -26,6 +28,7 @@ CACHE_EXISTS_STATUS_CODE=$(curl \
 )
 
 if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
+  # If the cache exists, download it from S3
   echo "Fetching cache"
 
   STRING_TO_SIGN_GET="GET
