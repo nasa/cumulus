@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -evx
+set -ex
 
 export AWS_ACCESS_KEY_ID="$INTEGRATION_AWS_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="$INTEGRATION_AWS_SECRET_ACCESS_KEY"
@@ -14,6 +14,72 @@ if [ -z "$DEPLOYMENT" ]; then
   fi
 fi
 export DEPLOYMENT
+
+# Wait for the stack to be available
+KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
+DATE=$(date -R)
+STRING_TO_SIGN_HEAD="HEAD
+
+
+${DATE}
+/${CACHE_BUCKET}/${KEY}"
+SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
+
+LOCK_EXISTS_STATUS_CODE=$(curl \
+  -s \
+  -o /dev/null \
+  -w '%{http_code}' \
+  --head \
+  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
+  -H "Date: ${DATE}" \
+  -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
+  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
+)
+
+while [ "$LOCK_EXISTS_STATUS_CODE" = "200" ]; do
+  echo "Another build is using the ${DEPLOYMENT} stack.  Waiting for s3://${CACHE_BUCKET}/${KEY} to not exist."
+  sleep 30
+
+  DATE=$(date -R)
+  STRING_TO_SIGN_HEAD="HEAD
+
+
+${DATE}
+/${CACHE_BUCKET}/${KEY}"
+  SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
+
+  LOCK_EXISTS_STATUS_CODE=$(curl \
+    -s \
+    -o /dev/null \
+    -w '%{http_code}' \
+    --head \
+    -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
+    -H "Date: ${DATE}" \
+    -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
+    https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
+  )
+done
+
+# Claim the stack
+echo "https://travis-ci.org/nasa/cumulus/jobs/${TRAVIS_JOB_ID}" > "${DEPLOYMENT}.lock"
+DATE=$(date -R)
+STRING_TO_SIGN_PUT="PUT
+
+
+${DATE}
+/${CACHE_BUCKET}/${KEY}"
+SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
+
+curl \
+  --fail \
+  -X PUT \
+  -T "${DEPLOYMENT}.lock" \
+  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
+  -H "Date: ${DATE}" \
+  -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
+  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
+
+rm "${DEPLOYMENT}.lock"
 
 ./bin/prepare
 
@@ -40,3 +106,20 @@ export DEPLOYMENT
 
   yarn test
 )
+
+# Release the stack
+DATE=$(date -R)
+STRING_TO_SIGN_PUT="DELETE
+
+
+${DATE}
+/${CACHE_BUCKET}/${KEY}"
+SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
+
+curl \
+  --fail \
+  -X DELETE \
+  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
+  -H "Date: ${DATE}" \
+  -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
+  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
