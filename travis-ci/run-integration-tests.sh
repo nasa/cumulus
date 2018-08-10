@@ -105,23 +105,28 @@ rm "${DEPLOYMENT}.lock"
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
 
+  set +e
   yarn test
-)
+  RESULT="$?"
+  set -e
 
-# Release the stack
-DATE=$(date -R)
-STRING_TO_SIGN_PUT="DELETE
+  # Release the stack
+  DATE=$(date -R)
+  STRING_TO_SIGN_PUT="DELETE
 
 
 ${DATE}
 /${CACHE_BUCKET}/${KEY}"
-SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
+  SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
 
-curl \
-  -sS \
-  --fail \
-  -X DELETE \
-  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
-  -H "Date: ${DATE}" \
-  -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
-  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
+  curl \
+    -sS \
+    --fail \
+    -X DELETE \
+    -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
+    -H "Date: ${DATE}" \
+    -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
+    https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
+
+  exit "$RESULT"
+)
