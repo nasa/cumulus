@@ -36,11 +36,19 @@ ${DATE}
   SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_GET" | openssl sha1 -hmac ${CACHE_AWS_SECRET_ACCESS_KEY} -binary | base64)
 
   curl \
+    -O \
     -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
     -H "Date: ${DATE}" \
     -H "Authorization: AWS ${CACHE_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
-    https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY} |\
-  tar -xz
+    https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY} || \
+  curl \
+    -O \
+    -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
+    -H "Date: ${DATE}" \
+    -H "Authorization: AWS ${CACHE_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
+    https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
+  tar -xzf "$CACHE_FILENAME"
+  rm "$CACHE_FILENAME"
 else
   echo "No cache found"
 fi
