@@ -5,14 +5,14 @@ set -e
 docker-compose -f travis-ci/docker-compose.yml up &
 
 # Wait for the FTP server to be available
-while ! curl --connect-timeout 5 -s -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md; do
+while ! curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md; do
   echo 'Waiting for FTP to start'
   sleep 2
 done
 echo 'FTP service is available'
 
 # Wait for the HTTP server to be available
-while ! curl --connect-timeout 5 -s -o /dev/null http://127.0.0.1:3030/README.md; do
+while ! curl --connect-timeout 5 -sS -o /dev/null http://127.0.0.1:3030/README.md; do
   echo 'Waiting for HTTP to start'
   sleep 2
 done
@@ -40,7 +40,7 @@ while ! nc -z 127.0.0.1 9200; do
 done
 echo 'Elasticsearch service is started'
 
-while ! curl --connect-timeout 5 -s http://127.0.0.1:9200/_cluster/health | grep green > /dev/null 2>&1; do
+while ! curl --connect-timeout 5 -sS http://127.0.0.1:9200/_cluster/health | grep green > /dev/null 2>&1; do
   echo 'Waiting for Elasticsearch status to be green'
   sleep 2
 done
