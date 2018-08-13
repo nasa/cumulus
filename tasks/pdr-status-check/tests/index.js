@@ -37,7 +37,7 @@ test('valid output when no running executions', async (t) => {
   t.deepEqual(output, expectedOutput);
 });
 
-test('error thrown when limit exceeded', (t) => {
+test('error thrown when limit exceeded', async (t) => {
   const stubSfnClient = {
     describeExecution: ({ executionArn }) => ({
       promise: () => Promise.resolve({
@@ -57,15 +57,16 @@ test('error thrown when limit exceeded', (t) => {
     }
   };
 
-  return checkPdrStatuses(event)
-    .then(() => {
-      stub.restore();
-      t.fail();
-    })
-    .catch((err) => {
-      stub.restore();
-      t.is(err.name, 'IncompleteWorkflowError');
-    });
+  try {
+    await checkPdrStatuses(event);
+    t.fail();
+  }
+  catch (err) {
+    t.is(err.name, 'IncompleteWorkflowError');
+  }
+  finally {
+    stub.restore();
+  }
 });
 
 test('returns the correct results in the nominal case', async (t) => {

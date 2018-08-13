@@ -7,7 +7,7 @@
     "CUMULUS",
     "NASA"
   ],
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "publishConfig": {
@@ -40,6 +40,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/api": "^1.9.0",
     "@cumulus/test-data": "^1.9.0",
     "ajv": "^5.2.2",
     "async": "^2.0.0",

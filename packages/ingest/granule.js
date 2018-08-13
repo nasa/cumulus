@@ -23,7 +23,7 @@ const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
 const { CollectionConfigStore } = require('@cumulus/common');
-const { constructCollectionId } = require('../api/lib/utils');
+const { constructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
 * The abstract Discover class

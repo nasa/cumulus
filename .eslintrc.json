@@ -1,11 +1,18 @@
 {
   "root": true,
-  "extends": "airbnb",
-  "plugins": ["eslint-plugin-jsdoc"],
+  "plugins": [
+    "jsdoc",
+    "node"
+  ],
+  "extends": [
+    "airbnb",
+    "plugin:node/recommended"
+  ],
   "parser": "babel-eslint",
   "env": {
-    "node": true,
-    "mocha": true
+    "jasmine": true,
+    "mocha": true,
+    "node": true
   },
   "rules": {
     "indent": [ "error", 2 ],

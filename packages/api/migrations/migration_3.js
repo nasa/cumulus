@@ -1,7 +1,9 @@
 'use strict';
 
-const { s3 } = require('../../common/aws');
-const { CollectionConfigStore } = require('../../common');
+const {
+  CollectionConfigStore,
+  aws: { s3 }
+} = require('@cumulus/common');
 const { constructCollectionId } = require('../lib/utils');
 
 /**

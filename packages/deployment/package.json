@@ -12,7 +12,7 @@
   "ava": {
     "color": false
   },
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "keywords": [
@@ -48,7 +48,8 @@
     "lodash.omit": "4.5.0",
     "node-forge": "^0.7.1",
     "p-limit": "^1.1.0",
-    "request": "^2.83.0"
+    "request": "^2.83.0",
+    "yauzl": "^2.10.0"
   },
   "devDependencies": {
     "ava": "^0.25.0",

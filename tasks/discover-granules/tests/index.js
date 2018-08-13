@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const mur = require('./fixtures/mur.json');
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   randomString,
