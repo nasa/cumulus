@@ -7,7 +7,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
 const { s3, recursivelyDeleteS3Bucket, sns } = require('@cumulus/common/aws');
-const { getKinesisRules, handler } = require('../../lambdas/kinesis-consumer');
+const { getRules, handler } = require('../../lambdas/kinesis-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
@@ -18,9 +18,37 @@ const eventData = JSON.stringify({
   collection: testCollectionName
 });
 
-const validRecord = { kinesis: { data: Buffer.from(eventData).toString('base64') } };
+const validRecord = {
+  kinesis: {
+    data: Buffer.from(eventData).toString('base64')
+  }
+};
+
 const event = {
   Records: [validRecord, validRecord]
+};
+
+
+const snsArn = 'test-SnsArn';
+const snsNotification = {
+  Message: '{\"Records\":[]}',
+  topicArn: snsArn
+};
+
+const snsEvent = {
+  Records: {
+    EventSource: 'aws:sns',
+    EventVersion: '1.0',
+    EventSubscriptionArn: 'arn:aws:sns:us-east-1:00000000000:gdelt-csv:111111-111',
+    Sns: {
+      Type: 'Notification',
+      MessageId: '4f411981',
+      TopicArn: snsArn,
+      Subject: 'Amazon S3 Notification',
+      Message: snsNotification.message,
+      MessageAttributes: {}
+    }
+  }
 };
 
 const collection = {
@@ -32,17 +60,28 @@ const provider = { id: 'PROV1' };
 const commonRuleParams = {
   collection,
   provider: provider.id,
+  state: 'ENABLED'
+};
+
+const kinesisRuleParams = {
   rule: {
     type: 'kinesis',
     value: 'test-kinesisarn'
   }
 };
 
-const rule1Params = Object.assign({}, commonRuleParams, {
+const snsRuleParams = {
+  rule: {
+    type: 'sns',
+    value: snsArn
+  }
+};
+
+const rule1Params = {
   name: 'testRule1',
   workflow: 'test-workflow-1',
   state: 'ENABLED'
-});
+};
 
 // if the state is not provided, it will be set to default value 'ENABLED'
 const rule2Params = Object.assign({}, commonRuleParams, {
@@ -50,10 +89,21 @@ const rule2Params = Object.assign({}, commonRuleParams, {
   workflow: 'test-workflow-2'
 });
 
-const disabledRuleParams = Object.assign({}, commonRuleParams, {
+const disabledRuleParams = {
   name: 'disabledRule',
   workflow: 'test-workflow-1',
   state: 'DISABLED'
+};
+
+const allRuleTypesParams = [kinesisRuleParams, snsRuleParams];
+const allOtherRulesParams = [rule1Params, rule2Params, disabledRuleParams];
+let rulesToCreate = [];
+
+allRuleTypesParams.forEach((ruleTypeParams) => {
+  allOtherRulesParams.forEach((otherRulesParams) => {
+    const ruleParams = Object.assign({}, commonRuleParams, ruleTypeParams, otherRulesParams);
+    rulesToCreate.push(ruleParams)
+  });
 });
 
 /**
@@ -142,8 +192,7 @@ test.beforeEach(async (t) => {
   process.env.bucket = randomString();
   process.env.kinesisConsumer = randomString();
 
-  await Promise.all([rule1Params, rule2Params, disabledRuleParams]
-    .map((rule) => ruleModel.create(rule)));
+  await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
 });
 
 test.afterEach.always(async (t) => {
@@ -161,15 +210,20 @@ test.after.always(async () => {
 
 // getKinesisRule tests
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getKinesisRules(JSON.parse(eventData))
+  await getRules(JSON.parse(eventData), 'kinesis')
     .then((result) => {
       t.is(result.length, 2);
     });
 });
 
-// handler tests
-test.serial('it should enqueue a message for each associated workflow', async (t) => {
-  await handler(event, {}, testCallback);
+test.serial('it should look up sns-type rules which are associated with the topicArn, but note those that are disabled', async (t) => {
+  await getRules(snsNotification, 'sns')
+    .then((result) => {
+      t.is(result.length, 2);
+    });
+});
+
+async function testWorkflowsQueued() {
   const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
   t.is(actualQueueUrl, stubQueueUrl);
   const actualMessage = sfSchedulerSpy.getCall(0).args[1];
@@ -189,6 +243,17 @@ test.serial('it should enqueue a message for each associated workflow', async (t
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
   t.deepEqual(actualMessage.meta, expectedMessage.meta);
   t.deepEqual(actualMessage.payload, expectedMessage.payload);
+};
+
+// handler tests
+test.serial('(kinesis) it should enqueue a message for each associated workflow', async (t) => {
+  await handler(event, {}, testCallback);
+  testWorkflowsQueued();
+});
+
+test.serial('(sns) it should enqueue a message for each associated workflow', async(t) => {
+  await handler(snsEvent, {}, testCallback);
+  testWorkflowsQueued();
 });
 
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message does not include a collection', async (t) => {
@@ -214,6 +279,7 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
     t.fail('testCallback should have thrown an error');
   }
   catch (error) {
+    console.log(error);
     t.pass('Callback called with error');
     t.is(error.message, 'validation failed');
     t.is(error.errors[0].message, 'should have required property \'collection\'');

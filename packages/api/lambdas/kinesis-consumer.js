@@ -195,17 +195,11 @@ function processRecord(record, fromSNS) {
     parsed = JSON.parse(record.Sns.Message);
   }
 
-<<<<<<< HEAD
-  try {
-    eventObject = JSON.parse(dataString);
-    log.debug('processRecord eventObject', eventObject);
-=======
   if (fromSNS && !parsed.kinesis) {
     // normal SNS notification - not a fallback
     eventObject = parsed.Records[0];
     originalMessageSource = 'sns';
     eventObject.topicArn = record.Sns.TopicArn;
->>>>>>> Refactor kinesis-consumer lambda for sns subscriptions
   }
   else {
     // fallback SNS notification
