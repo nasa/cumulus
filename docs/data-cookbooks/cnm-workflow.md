@@ -222,23 +222,22 @@ Please refer to `Updating Cumulus deployment` in the [deployment documentation](
 
 Cumulus provides a built-in Kinesis consumer lambda function ([kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js)) that will read CNM formatted events from a Kinesis stream and trigger a workflow when a Cumulus rule is configured via the Cumulus dashboard or API.
 
-To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
+To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule)), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
 
 ```
 {
   "collection": {
-    "name": "${collection_name}", # configured and found in the Collections page
-    "version": "000"              # configured and found in the Collections page
+    "name": "L2_HR_PIXC",
+    "version": "000"
   },
-  "name": "cnm_basic_rule",
-  "provider": "${provider_id}",   # found on the Provider page
+  "name": "L2_HR_PIXC_kinesisRule",
+  "provider": "PODAAC_SWOT",
   "rule": {
     "type": "kinesis",
-    "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}",
-    "arn": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
+    "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
   },
   "state": "ENABLED",
-  "workflow": "CNMExampleWorkflow"
+  "workflow": "KinesisTriggerTest"
 }
 ```
 
