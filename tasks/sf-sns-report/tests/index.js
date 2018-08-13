@@ -3,7 +3,7 @@
 const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { publishSnsMessage } = require('../index');
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
 const { randomString } = require('@cumulus/common/test-utils');
 
 let bucket;

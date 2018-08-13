@@ -16,7 +16,9 @@ describe('Creates Necessary Test Resources', () => {
     catch (error) {
       console.log(error);
       console.log('failed to set up necessary test resources...exiting.');
-      process.exit(1);
+      // This should be removed once
+      // https://github.com/facebook/jest/issues/2713 is fixed.
+      process.exit(1); // eslint-disable-line no-process-exit
     }
   });
 

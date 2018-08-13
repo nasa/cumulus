@@ -464,7 +464,7 @@ class KMS {
 
   static async decrypt(text) {
     const params = {
-      CiphertextBlob: new Buffer(text, 'base64')
+      CiphertextBlob: Buffer.from(text, 'base64')
     };
 
     const kms = new AWS.KMS();

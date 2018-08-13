@@ -251,13 +251,13 @@ class StdinMessageSource extends InlineMessageSource {
   }
 
   getMessageScopedJson() {
-    return new Promise((success) => {
+    return new Promise((resolve) => {
       if (this.stdinMessages) {
-        success(this.getMessageScopedJsonImmediate());
+        resolve(this.getMessageScopedJsonImmediate());
       }
       else {
         this.callbacks.push(() => {
-          success(this.getMessageScopedJsonImmediate());
+          resolve(this.getMessageScopedJsonImmediate());
         });
       }
     });
