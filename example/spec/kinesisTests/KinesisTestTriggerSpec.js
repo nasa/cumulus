@@ -16,6 +16,7 @@ const {
   getShardIterator,
   getRecords,
   putRecordOnStream,
+  tryCatchExit,
   waitForActiveStream,
   waitForTestSf
 } = require('../helpers/kinesisHelpers');
@@ -79,17 +80,6 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
-function tryCatchExit(fn, ...args) {
-  try {
-    return fn.apply(this, args);
-  }
-  catch (error) {
-    console.log(error);
-    console.log('Tests conditions can\'t get met...exiting.');
-    process.exit(1);
-  }
-  return null;
-}
 
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
