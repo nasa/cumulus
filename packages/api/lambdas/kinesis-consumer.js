@@ -7,8 +7,7 @@ const {
 } = require('@cumulus/common');
 const Rule = require('../models/rules');
 const messageSchema = require('./kinesis-consumer-event-schema.json');
-const sfSchedule = require('./sf-scheduler');
-
+const { queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
