@@ -77,7 +77,7 @@ The Cumulus Core repository has an example of a Kinesis rule [here](https://gith
 |provider|`"PODAAC_SWOT"`|No|Configured provider's ID. This can be found on the Providers dashboard page|
 |collection|`<JSON Object>` collection object shown [below](#collection-object)|Yes|Name and version of the collection this rule will moderate. Relates to a collection configured and found in the Collections page|
 |rule|`<JSON Object>` rule type and associated values - discussed [below](#rule-object)|Yes|Object defining the type and subsequent attributes of the rule|
-|state|`ENABLED`|No|<code>(ENABLED&#124;DISABLED)</code> whether or not the rule will be active. Defaults to `ENABLED` for all types except Kinesis|
+|state|`ENABLED`|No|<code>(ENABLED&#124;DISABLED)</code> whether or not the rule will be active. Defaults to `ENABLED` for all types except [Kinesis](https://bugs.earthdata.nasa.gov/browse/CUMULUS-856)|
 |tags|`["kinesis", "podaac"]`|No|An array of strings that can be used to simplify search|
 
 #### collection-object
