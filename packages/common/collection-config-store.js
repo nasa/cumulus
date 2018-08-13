@@ -1,7 +1,7 @@
 'use strict';
 
 const { s3 } = require('./aws');
-const { constructCollectionId } = require('../api/lib/utils');
+const { constructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
  * Store and retrieve collection configs in S3
@@ -28,7 +28,7 @@ class CollectionConfigStore {
    */
   async get(dataType, dataVersion) {
     const collectionId = constructCollectionId(dataType, dataVersion);
- 
+
     // Check to see if the collection config has already been cached
     if (!this.cache[collectionId]) {
       let response;

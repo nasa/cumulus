@@ -4,12 +4,10 @@ const test = require('ava');
 const moment = require('moment');
 const { TaskQueue } = require('cwait');
 const { promisify } = require('util');
-const {
-  chunk,
-  flatten,
-  range,
-  sample
-} = require('lodash');
+const chunk = require('lodash.chunk');
+const flatten = require('lodash.flatten');
+const range = require('lodash.range');
+const sample = require('lodash.sample');
 const {
   aws,
   testUtils: {
