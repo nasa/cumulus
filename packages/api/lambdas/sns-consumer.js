@@ -8,7 +8,7 @@ const {
   log
 } = require('@cumulus/common');
 const Rule = require('../models/rules');
-const sfSchedule = require('./sf-scheduler');
+const { queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
  * `getSnsRules` scans and returns DynamoDB rules table for enabled,
@@ -17,47 +17,24 @@ const sfSchedule = require('./sf-scheduler');
  * @param {Object} event - lambda event
  * @returns {Array} List of zero or more rules found from table scan
  */
-async function getSnsRules() {
+async function getSnsRules(topicArn) {
   const model = new Rule();
   const snsRules = await model.scan({
     names: {
-      '#nm': 'name',
       '#st': 'state',
       '#rl': 'rule',
-      '#tp': 'type'
+      '#tp': 'type',
+      '#vl': 'value'
     },
-    filter: '#st = :enabledState AND #rl.#tp = :ruleType',
+    filter: '#st = :enabledState AND #rl.#tp = :ruleType AND #rl.#vl = :ruleValue',
     values: {
       ':enabledState': 'ENABLED',
-      ':ruleType': 'sns'
+      ':ruleType': 'sns',
+      ':ruleValue': topicArn
     }
   });
 
   return snsRules.Items;
-}
-
-/**
- * Queue a workflow message for the kinesis rule with the message passed
- * to kinesis as the payload
- *
- * @param {Object} snsRule - kinesis rule to queue the message for
- * @param {Object} eventObject - message passed to kinesis
- * @returns {Promise} promise resolved when the message is queued
- */
-async function queueMessageForRule(snsRule, eventObject) {
-  const item = {
-    workflow: snsRule.workflow,
-    provider: snsRule.provider,
-    collection: snsRule.collection,
-    payload: eventObject
-  };
-
-  const payload = await Rule.buildPayload(item);
-
-  return new Promise((resolve, reject) => sfSchedule(payload, {}, (err, result) => {
-    if (err) reject(err);
-    resolve(result);
-  }));
 }
 
 /**
@@ -70,9 +47,10 @@ async function queueMessageForRule(snsRule, eventObject) {
  */
 function processNotification(notification) {
   const parsed = JSON.parse(notification.Sns.Message);
+  const topicArn = notification.Sns.TopicArn;
   const data = parsed.Records[0];
 
-  return getSnsRules()
+  return getSnsRules(topicArn)
     .then((snsRules) => (
       Promise.all(snsRules.map((snsRule) => queueMessageForRule(snsRule, data)))
     ))
