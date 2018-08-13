@@ -158,6 +158,21 @@ describe('The Cumulus API', () => {
     });
   });
 
+  describe('executions endpoint', () => {
+    it('returns tasks metadata with name and version', async () => {
+      const executionResponse = await apiTestUtils.getExecution({
+        prefix: config.stackName,
+        arn: workflowExecution.executionArn
+      });
+      expect(executionResponse.tasks.length).not.toEqual(0);
+      Object.keys(executionResponse.tasks).forEach((step) => {
+        const task = executionResponse.tasks[step];
+        expect(task.name).toBeDefined();
+        expect(task.version).toBeDefined();
+      });
+    });
+  });
+
   describe('logs endpoint', () => {
     it('returns the execution logs', async () => {
       const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
