@@ -11,7 +11,7 @@
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {
@@ -37,10 +37,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/common": "^1.9.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.3"
   },
   "devDependencies": {
-    "@cumulus/common": "^1.9.0",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",
