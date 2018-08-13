@@ -2,7 +2,7 @@
   "name": "@cumulus/cmrjs",
   "version": "1.9.0",
   "description": "A node SDK for CMR",
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {

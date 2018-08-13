@@ -10,7 +10,6 @@ const get = require('lodash.get');
 const { S3, KMS } = require('./aws');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {
-
   constructor(...args) {
     super(...args);
     this.connected = false; // use to indicate an active connection exists
@@ -113,7 +112,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
     // stream to file
     if (!this.connected) await this.connect();
 
-    const input = new Buffer(body);
+    const input = Buffer.from(body);
     return new Promise((resolve, reject) => {
       const stream = this.sftp.createWriteStream(join(path, filename));
       stream.on('error', reject);
