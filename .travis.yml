@@ -3,14 +3,15 @@ language: node_js
 branches:
   only:
     - master
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 stages:
   - name: build cache
   - name: test
   - name: deploy
-    if: type != pull_request AND branch = master AND tag IS present
+    if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
-    if: type != pull_request AND branch = master AND tag IS present
+    if: type != pull_request AND tag =~ ^v\d+
 
 jobs:
   include:
