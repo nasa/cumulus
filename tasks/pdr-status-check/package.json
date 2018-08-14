@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/pdr-status-check",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "description": "Checks execution status of granules in a PDR",
   "main": "index.js",
   "directories": {
@@ -36,10 +36,10 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.8.3",
+    "@cumulus/common": "^1.8.4",
     "@cumulus/cumulus-message-adapter-js": "^1.0.3",
-    "@cumulus/ingest": "^1.8.3",
-    "@cumulus/test-data": "^1.8.3",
+    "@cumulus/ingest": "^1.8.4",
+    "@cumulus/test-data": "^1.8.4",
     "lodash.get": "^4.4.2",
     "p-limit": "^1.1.0"
   },

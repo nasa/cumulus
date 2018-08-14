@@ -88,6 +88,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\]
       env:
         - USE_NPM_PACKAGES=true
+      install: true
       script: ./travis-ci/run-integration-tests.sh
       env:
         - DEPLOYMENT=cumulus-from-npm
