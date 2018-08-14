@@ -77,7 +77,10 @@ jobs:
       script: ./travis-ci/deploy-to-npm.sh
     - name: "Deploy to Github Pages"
       stage: deploy
-      install: npm install
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap
       script: ./travis-ci/deploy-to-github-pages.sh
 
     - name: "Run integration tests against deployed packages"
