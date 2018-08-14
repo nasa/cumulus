@@ -1,14 +1,8 @@
 language: node_js
 
-branches:
-  only:
-    - master
-    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
-
 stages:
   - name: build cache
   - name: test
-    if: "a" = "b"
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
