@@ -563,10 +563,11 @@ KinesisTriggerTest:
         cumulus_message:
           input: '{$}'
       Catch:
-        - ErrorEquals:
+        - &ErrorEqualDefaults
+          ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: CnmResponse
+          Next: CnmResponseFail
       Next: TranslateMessage
     TranslateMessage:
       Type: Task
@@ -579,10 +580,7 @@ KinesisTriggerTest:
             - source: '{$}'
               destination: '{$.payload}'
       Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: CnmResponse
+        - <<: *ErrorEqualDefaults
       Next: SyncGranule
     SyncGranule:
       Type: Task
@@ -605,12 +603,9 @@ KinesisTriggerTest:
           IntervalSeconds: 10
           MaxAttempts: 3
       Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: CnmResponse
+        - <<: *ErrorEqualDefaults
       Next: CnmResponse
-    CnmResponse:
+    CnmResponse: &CnmResponseDefaults
       CumulusConfig:
         OriginalCNM: '{$.meta.cnm}'
         CNMResponseStream: '{$.meta.stack}-cnmResponseStream'
@@ -625,19 +620,28 @@ KinesisTriggerTest:
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
+        - <<: *ErrorEqualDefaults
           Next: StopStatus
       Next: StopStatus
-    StopStatus:
+    CnmResponseFail:
+      <<: *CnmResponseDefaults  
+      Catch:
+        - <<: *ErrorEqualDefaults
+          Next: StopStatusFail          
+      Next: StopStatusFail     
+    StopStatus: &StopStatusDefaults
       Type: Task
       Resource: ${sf2snsEndLambdaFunction.Arn}
+      Next: WorkflowSucceeded
+    StopStatusFail:
+      <<: *StopStatusDefaults
       Catch:
         - ErrorEquals:
           - States.ALL
           Next: WorkflowFailed
-      End: true
+      Next: WorkflowFailed
+    WorkflowSucceeded:
+      Type: Succeed
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
@@ -776,6 +780,46 @@ EcsHelloWorldWorkflow:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
+
+TestLambdaVersionWorkflow:
+  Comment: 'Tests Lambda update after redeploy'
+  StartAt: StartStatus
+  States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: WaitForDeployment
+    WaitForDeployment:
+      Type: Task
+      Resource: ${WaitForDeploymentLambdaFunction.Arn}
+      Next: VersionUpTest
+    VersionUpTest:
+      Type: Task
+      Resource: ${VersionUpTestLambdaFunction.Arn}
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
+
 
 WaitForDeployWorkflow:
   Comment: 'Tests redeployment during workflow run'
