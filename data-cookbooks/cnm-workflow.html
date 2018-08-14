@@ -34,6 +34,8 @@
 
     
         
+        <link rel="stylesheet" href="../styles/website.css">
+        
     
         
     
@@ -56,6 +58,8 @@
     <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
+    
+    <link rel="next" href="sips-workflow.html" />
     
     
     <link rel="prev" href="sns.html" />
@@ -593,6 +597,32 @@
             
         </li>
     
+        <li class="chapter " data-level="2.5" data-path="sips-workflow.html">
+            
+                <a href="sips-workflow.html">
+            
+                    
+                    SIPS Workflow
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.6" data-path="error-handling.html">
+            
+                <a href="error-handling.html">
+            
+                    
+                    Error Handling
+            
+                </a>
+            
+
+            
+        </li>
+    
 
     
 
@@ -767,7 +797,7 @@
     WorkflowFailed:
       Type: Fail
       Cause: &apos;Workflow failed&apos;
-</code></pre><p>Again, please lease make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.</p>
+</code></pre><p>Again, please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.</p>
 <h4 id="task-configuration">Task Configuration</h4>
 <p>The following tasks are required to be defined in the <code>lambda.yml</code> configuration file.</p>
 <p>If you&apos;re using a deployment based on the <a href="https://github.com/nasa/cumulus/tree/master/example" target="_blank">example deployment</a> configuration these should already be defined for you.</p>
@@ -989,7 +1019,12 @@ Optional tags for search:
         &quot;status&quot;: &quot;SUCCESS&quot;
       }
     }
-</code></pre>
+</code></pre><h2 id="kinesis-stream-error-handling">Kinesis Stream Error handling</h2>
+<p>The default Kinesis stream processing in the Cumulus system is configured for record error tolerance. Kinesis message records that arrive from the stream that are unable to be processed by the <code>kinesisConsumer</code> lambda are captured and published to the <code>kinesisFallback</code> SNS Topic. The <code>kinesisFallback</code> SNS topic broadcasts the record to a subscribed copy of the kinesis consumer lambda named <code>kinesisFallback</code>.  This ensures that when a record fails from kinesis, that record is published to the SNS topic, and automatically re-triggered in a fallback attempt to process it.  At this point, the <a href="https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html" target="_blank">normal lambda asynchronous invocation retry behavior</a> will attempt to process the record 3 mores times.  After this, if the record cannot successfully be processed, it is written to a <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html" target="_blank">dead letter queue</a> <code>kinesisFailure</code> SQS where an operator can go to examine the record.  All of this system, the <code>kinesisFallback</code> SNS topic, <code>kinesisConsumer</code> lambda, and <code>kinesisFailure</code> SQS queue come with the API package and do not need to be configured by the operator.</p>
+<p><img src="../images/Kinesis-Error-Processing.png" alt=""></p>
+<p>To examine records that were unable to be processed at any step you need to go look at the dead letter queue <code>{{stackname}}-kinesisFailure</code>.
+Check the <a href="https://console.aws.amazon.com/sqs/home" target="_blank">Simple Queue Service (SQS) console</a>. Select your queue, and under the <code>Queue Actions</code> tab, you can choose <code>View/Delete Messages</code>. <code>Start polling</code> for messages and you will see records that failed to process through the kinesis consumer.  Note that these are only records that didn&apos;t get their workflows started successfully.  Remember these are failures that occur when processing records from kineis, workflow failures are handled differently.</p>
+
                                 
                                 </section>
                             
@@ -1016,10 +1051,14 @@ Optional tags for search:
 
             
                 
-                <a href="sns.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: SNS Configuration">
+                <a href="sns.html" class="navigation navigation-prev " aria-label="Previous page: SNS Configuration">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
+                
+                <a href="sips-workflow.html" class="navigation navigation-next " aria-label="Next page: SIPS Workflow">
+                    <i class="fa fa-angle-right"></i>
+                </a>
                 
             
         
@@ -1028,7 +1067,7 @@ Optional tags for search:
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"CNM Workflow","level":"2.4","depth":1,"previous":{"title":"SNS Configuration","level":"2.3","depth":1,"path":"data-cookbooks/sns.md","ref":"data-cookbooks/sns.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/cnm-workflow.md","mtime":"2018-08-07T17:44:09.618Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-07T18:17:05.991Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"CNM Workflow","level":"2.4","depth":1,"next":{"title":"SIPS Workflow","level":"2.5","depth":1,"path":"data-cookbooks/sips-workflow.md","ref":"data-cookbooks/sips-workflow.md","articles":[]},"previous":{"title":"SNS Configuration","level":"2.3","depth":1,"path":"data-cookbooks/sns.md","ref":"data-cookbooks/sns.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/cnm-workflow.md","mtime":"2018-08-14T15:03:57.448Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-14T15:05:25.619Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
