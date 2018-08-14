@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
-   
+
 ## Documentation:
 
 Click [here](https://nasa.github.io/cumulus) for the full documentation.
@@ -90,10 +90,12 @@ Run end to end tests by
 
 - Run `./bin/prepare`
 - Deploy your instance integrations on aws and run tests by following the steps [here](example/README.md)
-    
+
 ### Running integration tests on CirlceCI
 
-- Any commit message that includes the word `[run it]` or `[it run]` or `[it]` will trigger integration tests on circleci
+Integration tests are run on every Travis CI build. If you want to skip the
+integration tests for a given commit, include `[skip-integration-tests]` in the
+commit message.
 
 ### Code Coverage
 
@@ -170,7 +172,7 @@ Follow the following steps to publish to NPM:
 
 #### 1. Create the release branch
 
-Create a new branch from `master` (make sure you have latest) and call it `release-version-<version_number>`. 
+Create a new branch from `master` (make sure you have latest) and call it `release-version-<version_number>`.
 
 Release PRs **MUST** be named with `release-` prefix. This will kick off the AWS integration tests in the CI process and ensures that package updates are fully tested on AWS before publication to NPM.
 
@@ -229,11 +231,11 @@ To backport and release to an earlier minor version of Cumulus than the latest m
 If a version branch does not exist, it must be created. Sync to the tag for the latest patch version in the minor version.
 
     $ git checkout v1.5.5
-    
+
 Create a branch for version 1.5.
 
     $ git checkout -b v1.5
-   
+
 Push the branch to git.
 
 #### 2. Make changes and PR
@@ -256,7 +258,7 @@ Verify that the changes were released with the correct tag in npm.
 
 #### 5. Update the Changelog
 
-In master, update the changelog for the release, making sure a link is put in the bottom. 
+In master, update the changelog for the release, making sure a link is put in the bottom.
 
 ## Running command in all package folders
 
