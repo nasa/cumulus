@@ -82,17 +82,14 @@ curl \
 
 rm "${DEPLOYMENT}.lock"
 
-env | sort
-
-if [ "$USE_NPM_PACKAGES" = "true" ]; then
-  (cd example && yarn)
-else
-  ./bin/prepare
-fi
-
 set +e
 (
   cd example
+  if [ "$USE_NPM_PACKAGES" = "true" ]; then
+    yarn
+  else
+    (cd .. && ./bin/prepare)
+  fi
 
   ./node_modules/.bin/kes cf deploy \
     --kes-folder iam \
