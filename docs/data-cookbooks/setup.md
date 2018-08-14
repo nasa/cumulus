@@ -30,9 +30,9 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |files|`<JSON Object>` of files defined [here](#files-object)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
 |duplicateHandling|`"replace"`|No|<code>("replace"&#124;"version"&#124;"skip")</code> determines granule duplicate handling scheme|
-|process|`"modis"`|No|The options for this are found in "ChooseProcess and in workflows.yml|
+|process|`"modis"`|No|The options for this are found in the ChooseProcess step definition in [workflows.yml](https://github.com/nasa/cumulus/tree/master/example/workflows.yml)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
-|meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the Cumulus Message Adapter.
+|meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](../workflows/input_output.md).
 |url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
 
 
@@ -58,8 +58,8 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |protocol|`s3`|Yes|<code>(http&#124;https&#124;ftp&#124;sftp&#124;s3)</code> are current valid entries|
 |host|`"cumulus-data-shared"`|Yes|Host where the files will exist or s3 bucket if "s3" provider|
 |port|`${port_number}`|No|Port to connect with the provider on|
-|username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested|
-|password|`${password}`|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly suggested|
+|username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
+|password|`${password}`|No|Password for accces to the provider. Plain-text or encrypted. Encrypted is highly encouraged|
 
 _The above optional attributes are not shown in the example provided, but they have been included in this document for completeness_
 
