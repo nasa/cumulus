@@ -213,6 +213,7 @@ The `CnmResponse` lambda generates a CNM response message and puts it on a the `
 The `CnmResponse` lambda package is provided (as of release 1.8) in the `cumulus-data-shared` bucket, with documentation provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse).
 
 
+
 ###### Additional Tasks
 
 Lastly, this entry also includes the tasks  `SfSnsReport`, `SyncGranule` from the [example deployment](https://github.com/nasa/cumulus/tree/master/example) are defined in the `lambdas.yml`.
@@ -270,7 +271,7 @@ The following values (denoted by ${} in the sample below) should be replaced to 
 -  TEST_DATA_URI: The full S3 path to the test data (e.g. s3://bucket-name/path/granule)
 -  COLLECTION:  The collection defined in the prerequisites for this product
 
-```
+```json
 {
   "product": {
     "files": [
@@ -338,25 +339,25 @@ Example Input Payload:
 
 ```json
 "payload": {
-    "identifier ": "testIdentifier123456",
-    "product": {
-      "files": [
-        {
-          "checksum-type": "md5",
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-          "checksum": "bogus_checksum_value",
-          "uri": "s3://some_bucket/cumulus-test-data/pdrs/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-          "type": "data",
-          "size": 12345678
-        }
-      ],
-      "name": "TestGranuleUR",
-      "dataVersion": "006"
-    },
-    "version": "123456",
-    "collection": "MOD09GQ",
-    "provider": "TestProvider"
+  "identifier ": "testIdentifier123456",
+  "product": {
+    "files": [
+      {
+        "checksum-type": "md5",
+        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "checksum": "bogus_checksum_value",
+        "uri": "s3://some_bucket/cumulus-test-data/pdrs/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "type": "data",
+        "size": 12345678
+      }
+    ],
+    "name": "TestGranuleUR",
+    "dataVersion": "006"
   },
+  "version": "123456",
+  "collection": "MOD09GQ",
+  "provider": "TestProvider"
+}
 ```
 
 Example Output Payload:
@@ -403,15 +404,53 @@ Example Output Payload:
 
 #### SyncGranules
 
-This lambda will take the files listed for the granule in the payload and move them to `s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}`
+This lambda will take the files listed for the granule in the payload and move them to `s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}`.
 
 #### CnmResponse
 
-Assuming a successful execution of the workflow, this task will recover the 'cmr' key from the 'meta' portion of the CMA output, and add a 'SUCCESS' record to the notification Kinesis stream.
+Assuming a successful execution of the workflow, this task will recover the 'cmr' key from the 'meta' portion of the CMA output, and add a "SUCCESS" record to the notification Kinesis stream.
 
 If a prior step in the the workflow has directed a failure to this step, the this will add a "FAILURE" record to the stream instead.
 
+The schema of the data written to the `CnmResponseStream` should follow [Response Message Fields](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields).
+
+**Example CNM Success Response**
+
+```json
+{
+  "provider": "PODAAC_SWOT",
+  "collection": "SWOT_Prod_l2:1",
+  "ingestTime":"2017-09-30T03:45:29.791198",
+  "receivedTime":"2017-09-30T03:42:31.634552",
+  "deliveryTime":"2017-09-30T03:42:29.791198",
+  "identifier": "1234-abcd-efg0-9876",
+  "response": {
+    "status":"SUCCESS"
+  }
+}
+```
+
+**Example CNM Error Response**
+
+```json
+{
+  "provider": "PODAAC_SWOT",
+  "collection": "SWOT_Prod_l2:1",
+  "ingestTime":"2017-09-30T03:45:29.791198",
+  "deliveryTime":"2017-09-30T03:42:29.791198",
+  "receivedTime":"2017-09-30T03:42:31.634552",
+  "identifier": "1234-abcd-efg0-9876",
+  "response": {
+    "status":"FAILURE",
+    "errorCode": "INGEST_ERROR",
+    "errorMessage": "File [cumulus-dev-a4d38f59-5e57-590c-a2be-58640db02d91/prod_20170926T11:30:36/production_file.nc] did not match gve checksum value."
+  }
+}
+```
+
 Note the `CnmResponse` state defined in the `workflows.yml` above configures `$.exception` to be passed to the `CnmResponse` lambda keyed under `config.WorkflowException`. This is required for the `CnmResponse` code to correctly interpret the failure.
+
+To test the failure scenario, send a record missing the `collection` key.
 
 #### StopStatus
 
@@ -470,20 +509,26 @@ This should result in output similar to:
     "MillisBehindLatest": 0
 }
 ```
-Note that the data encoding is not human readable in the stream and would need to be parsed/converted to be interpretable. There are many options to build a Kineis consumer such as the [KCL](https://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html). For purposes of validating the workflow, it also may be simpler to locate the workflow in the [Step Function Management Console](https://console.aws.amazon.com/states/home) and view the intended output in the cnmResponse key:
+
+Note the data encoding is not human readable in the stream and would need to be parsed/converted to be interpretable. There are many options to build a Kineis consumer such as the [KCL](https://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html).
+
+For purposes of validating the workflow, it may be simpler to locate the workflow in the [Step Function Management Console](https://console.aws.amazon.com/states/home) and view the intended output:
+
+**Successful CNM Response Object Example:**
 
 ```json
-    "cnmResponse": {
-      "productSize": 12345678,
-      "processCompleteTime": "2018-07-27T05:43:41.698",
-      "collection": "MOD09GQ",
-      "version": "123456",
-      "provider": "TestProvider",
-      "identifier ": "testIdentifier123456",
-      "response": {
-        "status": "SUCCESS"
-      }
+{
+  "cnmResponse": {
+    "productSize": 12345678,
+    "processCompleteTime": "2018-07-27T05:43:41.698",
+    "collection": "MOD09GQ",
+    "version": "123456",
+    "provider": "TestProvider",
+    "identifier ": "testIdentifier123456",
+    "response": {
+      "status": "SUCCESS"
     }
+  }
 ```
 
 ## Kinesis Stream Error handling
