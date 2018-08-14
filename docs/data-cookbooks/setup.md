@@ -29,7 +29,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|An example filename belonging to this collection|
 |files|`<JSON Object>` of files defined [here](#files-object)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
-|duplicateHandling|`"replace"`|No|<code>(replace&#124;version&#124;skip)</code> determines granule duplicate handling scheme|
+|duplicateHandling|`"replace"`|No|<code>("replace"&#124;"version"&#124;"skip")</code> determines granule duplicate handling scheme|
 |process|`"modis"`|No|The options for this are found in "ChooseProcess and in workflows.yml|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the Cumulus Message Adapter.
@@ -55,7 +55,7 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 |:---:|:-----:|:------:|-----------|
 |id|`"s3_provider"`|Yes|Unique identifier for provider|
 |globalConnectionLimit|`10`|Yes|Integer specifying the connection limit to the provider|
-|protocol|`"s3"`|Yes|<code>(http&#124;https&#124;ftp&#124;sftp&#124;s3)</code> are current valid entries|
+|protocol|`s3`|Yes|<code>(http&#124;https&#124;ftp&#124;sftp&#124;s3)</code> are current valid entries|
 |host|`"cumulus-data-shared"`|Yes|Host where the files will exist or s3 bucket if "s3" provider|
 |port|`${port_number}`|No|Port to connect with the provider on|
 |username|`${username}`|No|Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested|
@@ -77,7 +77,7 @@ The Cumulus Core repository has an example of a Kinesis rule [here](https://gith
 |provider|`"PODAAC_SWOT"`|No|Configured provider's ID. This can be found on the Providers dashboard page|
 |collection|`<JSON Object>` collection object shown [below](#collection-object)|Yes|Name and version of the collection this rule will moderate. Relates to a collection configured and found in the Collections page|
 |rule|`<JSON Object>` rule type and associated values - discussed [below](#rule-object)|Yes|Object defining the type and subsequent attributes of the rule|
-|state|`ENABLED`|No|<code>(ENABLED&#124;DISABLED)</code> whether or not the rule will be active. Defaults to `ENABLED`.|
+|state|`"ENABLED"`|No|<code>("ENABLED"&#124;"DISABLED")</code> whether or not the rule will be active. Defaults to `"ENABLED"`.|
 |tags|`["kinesis", "podaac"]`|No|An array of strings that can be used to simplify search|
 
 #### collection-object
