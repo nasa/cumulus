@@ -4,10 +4,13 @@ set -evx
 
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 VERSION=$(jq --raw-output .version lerna.json)
+NPM_TAG=$(node ./travis-ci/npm-tag.js);
+
+echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 ./node_modules/.bin/lerna publish \
   --skip-git \
   --repo-version "$VERSION" \
   --yes \
   --force-publish=* \
   --npm-client=npm \
-  --npm-tag="mth-test-$VERSION"
+  --npm-tag="$NPM_TAG"
