@@ -2,7 +2,7 @@
 
 set -evx
 
-PATH="$(pwd)/node_modules/.bin:${PATH}"
+PATH="./node_modules/.bin:${PATH}"
 export PATH
 
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
