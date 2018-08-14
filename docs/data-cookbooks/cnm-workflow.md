@@ -248,7 +248,6 @@ Optional tags for search:
 
 Once you've clicked on 'submit' a new rule should appear in the dashboard Rule Overview.
 
-
 ## Execution
 
 Once Cumulus has been configured and a rule has been added, we're ready to trigger the workflow and watch it execute.
