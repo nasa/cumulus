@@ -82,7 +82,11 @@ curl \
 
 rm "${DEPLOYMENT}.lock"
 
-./bin/prepare
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  (cd example && yarn)
+else
+  ./bin/prepare
+fi
 
 (
   cd example
