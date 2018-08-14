@@ -163,6 +163,7 @@ default:
               - Arn
           protocol: lambda
 
+
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
     # if not specified the value of the apigateway backend endpoint is used
@@ -191,17 +192,9 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee:
-  stackName: aimee
-  stackNameNoDash: aimee
-
-  oauth:
-    provider: google
-
-  api_lambda_memory: 768
-
-  users:
-    - username: aimee@developmentseed.org
+aimee-test:
+  stackName: aimee-test
+  stackNameNoDash: aimeeTest
 
 lf:
   stackName: lf-cumulus
