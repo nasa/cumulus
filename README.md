@@ -1,9 +1,8 @@
 # Cumulus Framework
 
-[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
+[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
-
 
 ## Documentation:
 
@@ -99,11 +98,19 @@ commit message.
 
 ### Code Coverage
 
-Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The CircleCI build tests coverage. A summary can be viewed in the build output. Detailed code coverage in html can be found by going to the Artifacts tab and navigating to `index.html` in the coverage folder. Clicking on `index.html` will take you to an html page showing code coverage for each individual file.
+Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The
+Travis CI build tests coverage. A summary can be viewed in the build output.
+Detailed code coverage in html can be found by going to the Artifacts tab and
+navigating to `index.html` in the coverage folder. Clicking on `index.html` will
+take you to an html page showing code coverage for each individual file.
 
-The `yarn test` command will output code coverage data for the entire Cumulus repository. To create an html report, run `nyc report --reporter html` and open the `index.html` file in the coverage folder.
+The `yarn test` command will output code coverage data for the entire Cumulus
+repository. To create an html report, run `nyc report --reporter html` and open
+the `index.html` file in the coverage folder.
 
-To run code coverage on an individual package during development, run `npm run test-coverage`. This will output the coverage in the terminal. An html report can be created using `nyc report --reporter html` as described above.
+To run code coverage on an individual package during development, run
+`npm run test-coverage`. This will output the coverage in the terminal. An html
+report can be created using `nyc report --reporter html` as described above.
 
 ## Code quality checking
 
@@ -125,14 +132,14 @@ number of errors has increased.
 To run the script, simply run `./bin/eslint-ratchet` from the top of the
 cumulus repository.
 
-The `eslint-ratchet` script is also part of our CircleCI build. If the number
-of eslint errors that CircleCI finds has increased, it will fail the build. If
+The `eslint-ratchet` script is also part of our Travis CI build. If the number
+of eslint errors that Travis CI finds has increased, it will fail the build. If
 the number of errors has *decreased* from what is stored in
 `.eslint-ratchet-high-water-mark`, it will also fail the build. In that case,
 run `./bin/eslint-ratchet` and commit the new-and-improved
 `.eslint-ratchet-high-water-mark` file.
 
-To help prevent unexpected build failures in CircleCI, I suggest adding a
+To help prevent unexpected build failures in Travis CI, I suggest adding a
 local post-commit hook that will run eslint-ratchet after every commit. This
 will not cause your commits to fail if the score has increased, but it will
 let you know that there is a problem. To set up the post-commit hook, create a
