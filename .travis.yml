@@ -67,6 +67,7 @@ jobs:
       script: npm run e2e
     - name: "Integration tests"
       stage: test
+      if: commit_message !~ \[skip-integration-tests\]
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -84,6 +85,7 @@ jobs:
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
+      if: commit_message !~ \[skip-integration-tests\]
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
