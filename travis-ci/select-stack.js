@@ -20,7 +20,7 @@ function determineIntegrationTestStackName() {
     if (branch.endsWith(`-${stacks[ctr]}`)) return stacks[ctr];
   }
 
-  return 'none';
+  return 'cumulus-from-pr';
 }
 
 console.log(determineIntegrationTestStackName());
