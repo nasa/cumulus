@@ -86,18 +86,20 @@ async function waitForCompletedExecution(executionArn) {
   /* eslint-disable no-await-in-loop */
   do {
     await timeout(waitPeriod);
-    executionStatus = await getExecutionStatus(executionArn)
-      .catch((e) => {
-        if (e.code === 'ThrottlingException') {
-          console.log(`Encountered step function describeExecution throttling exception with retry interval of ${waitPeriod}.`);
-          waitPeriod = waitPeriod * 2;
-          return 'RUNNING';
-        }
-        
-        throw(e);
-      });
+    try {
+      executionStatus = await getExecutionStatus(executionArn);
+    }
+    catch (e) {
+      if (e.code === 'ThrottlingException') {
+        console.log(`Encountered step function describeExecution throttling exception with retry interval of ${waitPeriod}.`); // eslint-disable-line max-len
+        waitPeriod *= 2;
+        return 'RUNNING';
+      }
+
+      throw e;
+    }
     statusCheckCount += 1;
-  } while (executionStatus === 'RUNNING' && statusCheckCount < executionStatusNumRetries) 
+  } while (executionStatus === 'RUNNING' && statusCheckCount < executionStatusNumRetries);
   /* eslint-enable no-await-in-loop */
 
   if (executionStatus === 'RUNNING' && statusCheckCount >= executionStatusNumRetries) {
