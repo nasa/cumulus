@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -ex
 
 # Determine what cache to use (based on all of the package.json files)
 MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
