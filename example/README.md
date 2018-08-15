@@ -8,7 +8,7 @@ We use this deployment example for running the Cumulus integration tests. This e
 nvm use
 yarn
 ```
-   
+
 ## Running tests locally
 
 These tests run against AWS, so a Cumulus deployment is needed. Set up the deployment using the configurations in this repository. Deployment instructions are located [here](https://nasa.github.io/cumulus/deployment/). The dashboard is not needed for these tests.
@@ -71,15 +71,10 @@ The workflow should be configured as it would be for a normal Cumulus deployment
 
 A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
 
-## Using your AWS CF stack in CircleCI
+## Using your AWS CF stack in Travis CI
 
-To use your own CF stack for running integration tests in CircleCI builds, add your github username and your kes deployment name [here](spec/select#L5).
-
-Example:
-
-```bash
-   developers=( ["myexample_github_username"]="mykesdeploymentname" )
-```
+To use your own CF stack for running integration tests in Travis CI builds, add
+your stack name [here](../travis-ci/selec-stack.js).
 
 ## Additional Notes
 
