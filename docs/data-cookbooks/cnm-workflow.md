@@ -62,7 +62,7 @@ The following are steps that are required to set up your Cumulus instance to run
 
 #### Example CNM Workflow Configuration
 
-In this example, we're going to trigger a workflow by creating a kinesis rule and sending a record to a kinesis stream.
+In this example, we're going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.
 
 The following [workflow definition](../workflows/README.md) should be added to your deployment's `workflows.yml`. 
 
@@ -218,7 +218,7 @@ CnmResponse:
   launchInVpc: true
 ```
 
-The `CnmResponse` lambda generates a CNM response message and puts it on a the `CNMResponseStream` kinesis stream.
+The `CnmResponse` lambda generates a CNM response message and puts it on a the `CNMResponseStream` Kinesis stream.
 
 The `CnmResponse` lambda package is provided (as of release 1.8) in the `cumulus-data-shared` bucket, with documentation provided in the [source repository](https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse).
 
@@ -237,7 +237,7 @@ Please refer to `Updating Cumulus deployment` in the [deployment documentation](
 
 ### Rule Configuration
 
-`@cumulus/api` includes a `kinesisConsumer` lambda function ([kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js)). Cumulus kinesis-type rules create the [event source mappings](https://docs.aws.amazon.com/lambda/latest/dg/API_CreateEventSourceMapping.html) between kinesis streams and the `kinesisConsumer` lambda. The `kinesisConsumer` lambda consumes records from one or more kinesis streams, as defined by enabled kinesis rules. When new records are pushed to one of these streams, the `kinesisConsumer` triggers workflows associated with the enabled kinesis-type rules.
+`@cumulus/api` includes a `kinesisConsumer` lambda function ([kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js)). Cumulus kinesis-type rules create the [event source mappings](https://docs.aws.amazon.com/lambda/latest/dg/API_CreateEventSourceMapping.html) between Kinesis streams and the `kinesisConsumer` lambda. The `kinesisConsumer` lambda consumes records from one or more Kinesis streams, as defined by enabled kinesis-type rules. When new records are pushed to one of these streams, the `kinesisConsumer` triggers workflows associated with the enabled kinesis-type rules.
 
 To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule)), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
 
@@ -479,7 +479,7 @@ Following the successful execution of this workflow, you should expect to see th
 
 The test granule identified in the Kinesis record should be moved to the deployment's private staging area.
 
-### Check for kinesis records
+### Check for Kinesis records
 
 A `SUCCESS` notification should be present on the `CNMResponseStream` Kinesis stream.
 
@@ -565,7 +565,7 @@ At this point, the [normal lambda asynchronous invocation retry behavior](https:
 
 This system ensures when `kinesisCosumer` fails to process a record and trigger a workflow, the record is retried 3 times. This retry behavior improves system reliability in case of any external service failure outside of Cumulus control. 
 
-The kinesis error handling system - the `kinesisFallback` SNS topic, `kinesisConsumer` lambda, and `kinesisFailure` SQS queue - come with the API package and do not need to be configured by the operator.
+The Kinesis error handling system - the `kinesisFallback` SNS topic, `kinesisConsumer` lambda, and `kinesisFailure` SQS queue - come with the API package and do not need to be configured by the operator.
 
 
 
@@ -573,6 +573,6 @@ The kinesis error handling system - the `kinesisFallback` SNS topic, `kinesisCon
 ![](../images/Kinesis-Error-Processing.png)
 
 To examine records that were unable to be processed at any step you need to go look at the dead letter queue `{{stackname}}-kinesisFailure`.
-Check the [Simple Queue Service (SQS) console](https://console.aws.amazon.com/sqs/home). Select your queue, and under the `Queue Actions` tab, you can choose `View/Delete Messages`. `Start polling` for messages and you will see records that failed to process through the kinesis consumer.
+Check the [Simple Queue Service (SQS) console](https://console.aws.amazon.com/sqs/home). Select your queue, and under the `Queue Actions` tab, you can choose `View/Delete Messages`. `Start polling` for messages and you will see records that failed to process through the `kinesisConsumer`.
 
-Note that these are only records that didn't get their workflows started successfully. Remember these are failures that occur when processing records from kineis, workflow failures are handled differently.
+Note, these are only records that occurred when processing records from Kinesis streams. Workflow failures are handled differently.
