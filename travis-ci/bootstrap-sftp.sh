@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -evx
+set -e
 
 echo 'user:password' | chpasswd
 
