@@ -1,8 +1,16 @@
 # CNM Workflow
 
-This entry documents setup of a basic workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
+This entry documents how to setup a workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
 
 Prior to working through this entry you should be familiar with the [Cloud Notification Mechanism](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism).
+
+## Sections:
+
+* [Prerequisites](#prerequisites)
+* [Configure the Workflow](#configure-the-workflow)
+* [Execute the Workflow](#execute-the-workflow)
+* [Verify Results](#verify-results)
+* [Kinesis Record Error Handling](#kinesis-record-error-handling)
 
 ------------
 ## Prerequisites
@@ -46,7 +54,7 @@ Cumulus will need to be configured with a Collection and Provider entry of your 
 This can be done via the [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard) if installed or the [API](../api.md).  It is strongly recommended to use the dashboard if possible.
 
 ------------
-## Workflow Configuration
+## Configure the Workflow
 
 Provided the prerequisites have been fulfilled, you can begin adding the needed values to your Cumulus configuration to configure the example workflow.
 
@@ -253,7 +261,7 @@ Optional tags for search:
 Once you've clicked on 'submit' a new rule should appear in the dashboard's Rule Overview.
 
 ------------
-## Workflow Execution
+## Execute the Workflow
 
 Once Cumulus has been redeployed and a rule has been added, we're ready to trigger the workflow and watch it execute.
 
@@ -459,7 +467,7 @@ To test the failure scenario, send a record missing the `collection` key.
 In case of either success *or* failure, `CnmResponse` will then pass the results to `StopStatus`. `StopStatus` will cause the workflow to fail or succeed accordingly.
 
 -----------
-## Verifying results
+## Verify results
 
 ### Check for successful execution on the dashboard
 
@@ -545,8 +553,9 @@ For purposes of validating the workflow, it may be simpler to locate the workflo
 }
 ```
 
+
 ------------
-## Kinesis Stream Error handling
+## Kinesis Record Error Handling
 
 The default Kinesis stream processing in the Cumulus system is configured for record error tolerance.
 
