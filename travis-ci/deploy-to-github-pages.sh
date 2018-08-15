@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -evx
+set -e
 
 rm -rf _book
 yarn docs-build
