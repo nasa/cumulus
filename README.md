@@ -89,6 +89,16 @@ Integration tests are run on every Travis CI build. If you want to skip the
 integration tests for a given commit, include `[skip-integration-tests]` in the
 commit message.
 
+Travis CI determines what stack to run the tests against based on the name of
+the branch. It expects that the branch name will be suffixed with a dash
+followed by the name of the stack to test against. For instance, to run against
+the "test-123" stack, a branch should be called "something-test-123". If the
+stack cannot be determined from the branch name then the integration test step
+of the build will fail.
+
+If you create a new stack and want to be able to run integration tests against
+it in CI, you will need to add it to (travis-ci/select-stack.js).
+
 ### Code Coverage
 
 Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The
