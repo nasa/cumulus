@@ -226,7 +226,7 @@ Update example/package.json to point to the new Cumulus packages.
 Create a PR against the `master` branch. Verify that the Travis CI build for the
 PR succeeds.  Once merged, the release branch can be deleted.
 
-#### 5. Create a git tag for the release
+#### 6. Create a git tag for the release
 
 Publishing of new releases is handled by Travis CI and is triggered by the
 creation of a git release tag. This tag should be in the format `v1.2.3`, where
