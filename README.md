@@ -107,14 +107,14 @@ lock file. The lock file will be located at
 `s3://${CACHE_BUCKET}/travis-ci-integration-tests/${DEPLOYMENT}.lock`. The lock
 file will contain a link to the Travis CI job that created the lock file. If
 your tests seem to be hung waiting for that lock file, check to see if the job
-that created the lock file is still runnging or has crashed. If it has crashed
+that created the lock file is still running or has crashed. If it has crashed
 then the lock file should be deleted. You should also figure out why the lock
 file was not cleaned up and fix that for next time.
 
 ### Code Coverage
 
 Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The
-Travis CI build tests coverage. A summary can be viewed in the build output.
+Travis CI build tests coverage. A summary can be viewed in the build's output.
 Detailed code coverage in html can be found by going to the Artifacts tab and
 navigating to `index.html` in the coverage folder. Clicking on `index.html` will
 take you to an html page showing code coverage for each individual file.
@@ -224,13 +224,14 @@ Update example/package.json to point to the new Cumulus packages.
 #### 5. Create a pull request against the master branch
 
 Create a PR against the `master` branch. Verify that the Travis CI build for the
-PR succeeds.  Once merged, the release branch can be deleted.
+PR succeeds and then merge to master. Once merged, the release branch can be
+deleted.
 
 #### 6. Create a git tag for the release
 
-Publishing of new releases is handled by Travis CI and is triggered by the
-creation of a git release tag. This tag should be in the format `v1.2.3`, where
-`1.2.3` is the new version.
+Publishing of new releases is handled by Travis CI and is triggered when the
+release tag is pushed to Github. This tag should be in the format `v1.2.3`,
+where `1.2.3` is the new version.
 
 Create and push a new git tag:
 
