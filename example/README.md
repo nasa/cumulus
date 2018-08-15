@@ -74,7 +74,7 @@ A new folder should be added in the `/spec` folder for the workflow and the test
 ## Using your AWS CF stack in Travis CI
 
 To use your own CF stack for running integration tests in Travis CI builds, add
-your stack name [here](../travis-ci/selec-stack.js).
+your stack name [here](../travis-ci/select-stack.js).
 
 ## Additional Notes
 
