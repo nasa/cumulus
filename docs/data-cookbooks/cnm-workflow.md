@@ -242,15 +242,20 @@ Please refer to `Updating Cumulus deployment` in the [deployment documentation](
 To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule)), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
 
 ```
-name: cnm_basic_rule
-Workflow Name: CNMExampleWorkflow
-Provider ID: ${provider_id} # found on the Providers page
-collection - Collection Name: ${collection_name} # configured and found in the Collections page
-collection - Collection Version: ${collection_version} # configured and found in the Collections page
-rule - type: kinesis
-rule - value: ${Kinesis_Stream_ARN} # Kinesis notification stream ARN goes here.
-Rule State: ENABLED
-Optional tags for search:
+{
+  "collection": {
+    "name": "L2_HR_PIXC",
+    "version": "000"
+  },
+  "name": "L2_HR_PIXC_kinesisRule",
+  "provider": "PODAAC_SWOT",
+  "rule": {
+    "type": "kinesis",
+    "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
+  },
+  "state": "ENABLED",
+  "workflow": "KinesisTriggerTest"
+}
 ```
 
 **Please Note:**
