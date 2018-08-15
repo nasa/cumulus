@@ -541,10 +541,11 @@ For purposes of validating the workflow, it may be simpler to locate the workflo
     "identifier ": "testIdentifier123456",
     "response": {
       "status": "SUCCESS"
-    }
   }
+}
 ```
 
+------------
 ## Kinesis Stream Error handling
 
 The default Kinesis stream processing in the Cumulus system is configured for record error tolerance.
