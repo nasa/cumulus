@@ -5,8 +5,8 @@ language: node_js
 
 stages:
   - name: build cache
-  - name: unit tests
-  - name: integration tests
+  - name: unit test
+  - name: integration test
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
@@ -21,14 +21,14 @@ jobs:
 
 
     - name: "eslint"
-      stage: tests
+      stage: unit test
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
       script: ./node_modules/.bin/eslint packages/api --ext .js
     - name: "Unit tests except API"
-      stage: tests
+      stage: unit test
       services:
         - docker
       env:
@@ -41,7 +41,7 @@ jobs:
         - ./travis-ci/start-local-services.sh
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
     - name: "API unit tests"
-      stage: tests
+      stage: unit test
       services:
         - docker
       env:
@@ -54,7 +54,7 @@ jobs:
         - ./travis-ci/start-local-services.sh
       script: ./travis-ci/run-api-unit-tests.sh
     - name: "e2e tests"
-      stage: tests
+      stage: unit test
       services:
         - docker
       env:
@@ -69,7 +69,7 @@ jobs:
 
 
     - name: "Integration tests"
-      stage: integration tests
+      stage: integration test
       if: commit_message =~ \[run-integration-tests\]
       install:
         - ./travis-ci/fetch-cache.sh
