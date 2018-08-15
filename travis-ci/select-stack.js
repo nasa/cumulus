@@ -6,14 +6,19 @@ function determineIntegrationTestStackName() {
   if (!branch) return 'none';
 
   if (branch === 'master') return 'cumulus-from-source';
-  if (branch.startsWith('release-')) return 'cumulus-from-source';
 
-  if (branch.endsWith('-aimee')) return 'aimee';
-  if (branch.endsWith('-aj')) return 'aj';
-  if (branch.endsWith('-kk-uat-deployment')) return 'kk-uat-deployment';
-  if (branch.endsWith('-mth-2')) return 'mth-2';
-  if (branch.endsWith('-jl')) return 'jl';
-  if (branch.endsWith('-lf')) return 'lf';
+  const stacks = [
+    'aimee',
+    'aj',
+    'jl',
+    'kk-uat-deployment',
+    'lf',
+    'mth-2'
+  ];
+
+  for (let ctr = 0; ctr < stacks.length; ctr += 1) {
+    if (branch.endsWith(`-${stacks[ctr]}`)) return stacks[ctr];
+  }
 
   return 'none';
 }
