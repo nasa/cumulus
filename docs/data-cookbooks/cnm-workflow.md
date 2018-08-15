@@ -160,7 +160,7 @@ CNMExampleWorkflow:
 
 ```
 
-Again, please lease make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.
+Again, please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.
 
 #### Task Configuration
 
@@ -222,18 +222,23 @@ Please refer to `Updating Cumulus deployment` in the [deployment documentation](
 
 Cumulus provides a built-in Kinesis consumer lambda function ([kinesis-consumer](https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js)) that will read CNM formatted events from a Kinesis stream and trigger a workflow when a Cumulus rule is configured via the Cumulus dashboard or API.
 
-To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
+To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule)), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
 
 ```
-name: cnm_basic_rule
-Workflow Name: CNMExampleWorkflow
-Provider ID: ${provider_id} # found on the Providers page
-collection - Collection Name: ${collection_name} # configured and found in the Collections page
-collection - Collection Version: ${collection_version} # configured and found in the Collections page
-rule - type: kinesis
-rule - value: ${Kinesis_Stream_ARN} # Kinesis notification stream ARN goes here.
-Rule State: ENABLED
-Optional tags for search:
+{
+  "collection": {
+    "name": "L2_HR_PIXC",
+    "version": "000"
+  },
+  "name": "L2_HR_PIXC_kinesisRule",
+  "provider": "PODAAC_SWOT",
+  "rule": {
+    "type": "kinesis",
+    "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
+  },
+  "state": "ENABLED",
+  "workflow": "KinesisTriggerTest"
+}
 ```
 
 **Please Note:**
@@ -476,3 +481,15 @@ Note that the data encoding is not human readable in the stream and would need t
       }
     }
 ```
+
+## Kinesis Stream Error handling
+
+The default Kinesis stream processing in the Cumulus system is configured for record error tolerance. Kinesis message records that arrive from the stream that are unable to be processed by the `kinesisConsumer` lambda are captured and published to the `kinesisFallback` SNS Topic. The `kinesisFallback` SNS topic broadcasts the record to a subscribed copy of the kinesis consumer lambda named `kinesisFallback`.  This ensures that when a record fails from kinesis, that record is published to the SNS topic, and automatically re-triggered in a fallback attempt to process it.  At this point, the [normal lambda asynchronous invocation retry behavior](https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html) will attempt to process the record 3 mores times.  After this, if the record cannot successfully be processed, it is written to a [dead letter queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) `kinesisFailure` SQS where an operator can go to examine the record.  All of this system, the `kinesisFallback` SNS topic, `kinesisConsumer` lambda, and `kinesisFailure` SQS queue come with the API package and do not need to be configured by the operator.
+
+
+
+
+![](../images/Kinesis-Error-Processing.png)
+
+To examine records that were unable to be processed at any step you need to go look at the dead letter queue `{{stackname}}-kinesisFailure`.
+Check the [Simple Queue Service (SQS) console](https://console.aws.amazon.com/sqs/home). Select your queue, and under the `Queue Actions` tab, you can choose `View/Delete Messages`. `Start polling` for messages and you will see records that failed to process through the kinesis consumer.  Note that these are only records that didn't get their workflows started successfully.  Remember these are failures that occur when processing records from kineis, workflow failures are handled differently.
