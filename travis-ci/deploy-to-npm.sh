@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -evx
+set -e
 
 echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 VERSION=$(jq --raw-output .version lerna.json)
