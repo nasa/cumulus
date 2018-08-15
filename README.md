@@ -97,7 +97,7 @@ stack cannot be determined from the branch name then the integration test step
 of the build will fail.
 
 If you create a new stack and want to be able to run integration tests against
-it in CI, you will need to add it to (travis-ci/select-stack.js).
+it in CI, you will need to add it to [travis-ci/select-stack.js](travis-ci/select-stack.js).
 
 ### Code Coverage
 
@@ -233,9 +233,13 @@ packages.
 
 ### Backporting to a previous release
 
-Creating a new release for an older major or minor version is similar to creating any other release.  Create a branch starting at the tag of the previous release, then follow the instructions for creating a new release.
+Creating a new release for an older major or minor version is similar to creating
+any other release.  Create a branch starting at the tag of the previous release, then
+follow the [instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).
 
-For example, if versions 1.7.0 and 1.8.0 have been published and you want to create a 1.7.1 release, you should run `git checkout -b release-1.7.1 v1.7.0` and then follow the instructions for creating a new release.
+For example, if versions 1.7.0 and 1.8.0 had been published and you wanted to
+create a 1.7.1 release, you would create the release branch by running
+`git checkout -b release-1.7.1 v1.7.0`.
 
 ## Running command in all package folders
 
