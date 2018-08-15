@@ -99,6 +99,18 @@ of the build will fail.
 If you create a new stack and want to be able to run integration tests against
 it in CI, you will need to add it to [travis-ci/select-stack.js](travis-ci/select-stack.js).
 
+In order to prevent multiple instances of the integration tests from running
+against a stack at the same time, a lock file is created in S3 for each stack.
+Before integration tests start they will wait until that lock file is not
+present. They will then create that lock file, run the tests, and delete the
+lock file. The lock file will be located at
+`s3://${CACHE_BUCKET}/travis-ci-integration-tests/${DEPLOYMENT}.lock`. The lock
+file will contain a link to the Travis CI job that created the lock file. If
+your tests seem to be hung waiting for that lock file, check to see if the job
+that created the lock file is still runnging or has crashed. If it has crashed
+then the lock file should be deleted. You should also figure out why the lock
+file was not cleaned up and fix that for next time.
+
 ### Code Coverage
 
 Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The
@@ -233,9 +245,10 @@ packages.
 
 ### Backporting to a previous release
 
-Creating a new release for an older major or minor version is similar to creating
-any other release.  Create a branch starting at the tag of the previous release, then
-follow the [instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).
+Creating a new release for an older major or minor version is similar to
+creating any other release. Create a branch starting at the tag of the previous
+release, then follow the
+[instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).
 
 For example, if versions 1.7.0 and 1.8.0 had been published and you wanted to
 create a 1.7.1 release, you would create the release branch by running
