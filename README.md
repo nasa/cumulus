@@ -93,8 +93,8 @@ Travis CI determines what stack to run the tests against based on the name of
 the branch. It expects that the branch name will be suffixed with a dash
 followed by the name of the stack to test against. For instance, to run against
 the "test-123" stack, a branch should be called "something-test-123". If the
-stack cannot be determined from the branch name then the integration test step
-of the build will fail.
+stack cannot be determined from the branch name then the "cumulus-from-pr" stack
+will be used.
 
 If you create a new stack and want to be able to run integration tests against
 it in CI, you will need to add it to [travis-ci/select-stack.js](travis-ci/select-stack.js).
