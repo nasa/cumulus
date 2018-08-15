@@ -5,8 +5,8 @@ language: node_js
 
 stages:
   - name: build cache
-  - name: test
-    if: tag !~ ^v\d+
+  - name: unit tests
+  - name: integration tests
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
@@ -19,15 +19,16 @@ jobs:
       install: true
       script: ./travis-ci/build-cache.sh
 
+
     - name: "eslint"
-      stage: test
+      stage: tests
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
       script: ./node_modules/.bin/eslint packages/api --ext .js
     - name: "Unit tests except API"
-      stage: test
+      stage: tests
       services:
         - docker
       env:
@@ -40,7 +41,7 @@ jobs:
         - ./travis-ci/start-local-services.sh
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
     - name: "API unit tests"
-      stage: test
+      stage: tests
       services:
         - docker
       env:
@@ -53,7 +54,7 @@ jobs:
         - ./travis-ci/start-local-services.sh
       script: ./travis-ci/run-api-unit-tests.sh
     - name: "e2e tests"
-      stage: test
+      stage: tests
       services:
         - docker
       env:
@@ -65,14 +66,17 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: npm run e2e
+
+
     - name: "Integration tests"
-      stage: test
-      if: commit_message !~ \[skip-integration-tests\]
+      stage: integration tests
+      if: commit_message =~ \[run-integration-tests\]
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/run-integration-tests.sh
+
 
     - name: "Deploy to NPM"
       stage: deploy
