@@ -3,7 +3,7 @@
 const { difference } = require('lodash');
 const fs = require('fs-extra');
 const { loadConfig } = require('../helpers/testUtils');
-const { getWorkflowConfig } = require('../helpers/workflowUtils');
+const { getConfigObject } = require('../helpers/configUtils');
 const { aws: { s3 } } = require('@cumulus/common');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
@@ -29,7 +29,7 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    const workflowConfig = getWorkflowConfig(workflowConfigFile, workflowName);
+    const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
     allStates = Object.keys(workflowConfig.States);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
