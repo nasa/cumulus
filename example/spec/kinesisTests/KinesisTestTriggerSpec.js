@@ -16,8 +16,9 @@ const {
   getShardIterator,
   getRecords,
   putRecordOnStream,
+  tryCatchExit,
   waitForActiveStream,
-  waitForTestSfStarted
+  waitForTestSf
 } = require('../helpers/kinesisHelpers');
 
 const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
@@ -79,17 +80,6 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
-function tryCatchExit(fn, ...args) {
-  try {
-    return fn.apply(this, args);
-  }
-  catch (error) {
-    console.log(error);
-    console.log('Tests conditions can\'t get met...exiting.');
-    process.exit(1);
-  }
-  return null;
-}
 
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
@@ -132,7 +122,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSfStarted(recordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSf(recordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
@@ -225,7 +215,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSfStarted(badRecordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);

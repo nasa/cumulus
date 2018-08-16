@@ -2,21 +2,21 @@
   "ftp": {
     "id": "ftp",
     "protocol": "ftp",
-    "host": "localhost",
+    "host": "127.0.0.1",
     "username": "testuser",
     "password": "testpass"
   },
   "http": {
     "id": "http",
     "protocol": "http",
-    "host": "http://localhost:3030",
+    "host": "http://127.0.0.1:3030",
     "username": "fake",
     "password": "fake"
   },
   "sftp": {
     "id": "MODAPS",
     "protocol": "sftp",
-    "host": "localhost",
+    "host": "127.0.0.1",
     "port": 2222,
     "username": "user",
     "password": "password"
