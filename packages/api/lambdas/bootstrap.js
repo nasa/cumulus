@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 /* this module is intended to be used for bootstraping
  * the cloudformation deployment of a DAAC.
  *
