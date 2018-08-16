@@ -13,7 +13,11 @@ function determineIntegrationTestStackName() {
     'jl',
     'kk-uat-deployment',
     'lf',
-    'mth-2'
+    'mth-2',
+    'mhs', 
+    'jk', 
+    'mvd', 
+    'jc'
   ];
 
   for (let ctr = 0; ctr < stacks.length; ctr += 1) {
