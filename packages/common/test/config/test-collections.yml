@@ -9,7 +9,7 @@ providers:
         activity: SIPSPROVDownloadActivity
         conn_config:
           conn_type: ftp
-          host: localhost
+          host: 127.0.0.1
           port: 21
           username: ftp
           password: ftp
