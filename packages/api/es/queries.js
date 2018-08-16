@@ -1,4 +1,5 @@
-/* eslint-disable no-param-reassign */
+/* eslint no-param-reassign: "off" */
+
 /* This code is copied from sat-api-lib library
  * with some alterations.
  * source: https://raw.githubusercontent.com/sat-utils/sat-api-lib/master/libs/queries.js
