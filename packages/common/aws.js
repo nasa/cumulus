@@ -683,7 +683,7 @@ async function createQueue(queueName) {
   if (inTestMode()) {
     // Properly set the Queue URL.  This is needed because LocalStack always
     // returns the QueueUrl as "localhost", even if that is not where it should
-    // actually be found.  CircleCI breaks without this.
+    // actually be found.  CI breaks without this.
     const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
     returnedQueueUrl.host = undefined;
     returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
