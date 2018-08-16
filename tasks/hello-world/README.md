@@ -1,6 +1,6 @@
 # @cumulus/hello-world
 
-[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
+[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 
 `@cumulus/hello-world` contains code for a lambda function returning javascript object:
 
