@@ -28,7 +28,7 @@ test('test pdr discovery with force=false', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -83,7 +83,7 @@ test('test pdr discovery with force=true', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
