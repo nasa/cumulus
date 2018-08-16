@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 /* functions for transforming and indexing Cumulus Payloads
  * in ElasticSearch. These functions are specifically designed
  * to transform data for use in cumulus api
@@ -11,6 +10,7 @@
 
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
@@ -24,16 +24,14 @@ const { Granule, Pdr, Execution } = require('../models');
  * Extracts info from a stepFunction message and indexes it to
  * an ElasticSearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClientArg - ElasticSearch Connection object
  * @param  {Array} payloads  - an array of log payloads
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: granule)
  * @returns {Promise} Elasticsearch response
  */
-async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'logs') {
-  if (!esClient) {
-    esClient = await Search.es();
-  }
+async function indexLog(esClientArg, payloads, index = defaultIndexAlias, type = 'logs') {
+  const esClient = esClientArg || await Search.es();
   const body = [];
 
   payloads.forEach((p) => {
@@ -80,7 +78,7 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
 /**
  * Partially updates an existing ElasticSearch record
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClientArg - ElasticSearch Connection object
  * @param  {string} id       - id of the Elasticsearch record
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @param  {Object} doc      - Partial updated document
@@ -90,7 +88,7 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
  * @returns {Promise} elasticsearch update response
  */
 async function partialRecordUpdate(
-  esClient,
+  esClientArg,
   id,
   type,
   doc,
@@ -98,15 +96,11 @@ async function partialRecordUpdate(
   index = defaultIndexAlias,
   upsert = false
 ) {
-  if (!esClient) {
-    esClient = await Search.es();
-  }
+  const esClient = esClientArg || await Search.es();
 
   if (!doc) {
     throw new Error('Nothing to update. Make sure doc argument has a value');
   }
-
-  doc.timestamp = Date.now();
 
   const params = {
     index,
@@ -114,26 +108,20 @@ async function partialRecordUpdate(
     id,
     refresh: inTestMode(),
     body: {
-      doc
+      doc: Object.assign(cloneDeep(doc), { timestamp: Date.now() })
     }
   };
 
-  if (parent) {
-    params.parent = parent;
-  }
+  if (parent) params.parent = parent;
+  if (upsert) params.body.doc_as_upsert = upsert;
 
-  if (upsert) {
-    params.body.doc_as_upsert = upsert;
-  }
-
-  params.body.doc.timestamp = Date.now();
   return esClient.update(params);
 }
 
 /**
  * Indexes a given record to the specified ElasticSearch index and type
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClientArg - ElasticSearch Connection object
  * @param  {string} id       - the record id
  * @param  {Object} doc      - the record
  * @param  {string} index    - Elasticsearch index alias
@@ -141,28 +129,22 @@ async function partialRecordUpdate(
  * @param  {string} parent   - the optional parent id
  * @returns {Promise} Elasticsearch response
  */
-async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
-  if (!esClient) {
-    esClient = await Search.es();
-  }
+async function genericRecordUpdate(esClientArg, id, doc, index, type, parent) {
+  const esClient = esClientArg || await Search.es();
 
   if (!doc) {
     throw new Error('Nothing to update. Make sure doc argument has a value');
   }
-
-  doc.timestamp = Date.now();
 
   const params = {
     index,
     type,
     id,
     refresh: inTestMode(),
-    body: doc
+    body: cloneDeep(doc, { timestamp: Date.now() })
   };
 
-  if (parent) {
-    params.parent = parent;
-  }
+  if (parent) params.parent = parent;
 
   // adding or replacing record to ES
   return esClient.index(params);
@@ -298,17 +280,16 @@ function granule(payload) {
 /**
  * delete a record from ElasticSearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
+ * @param  {Object} esClientArg - ElasticSearch Connection object
  * @param  {string} id       - id of the Elasticsearch record
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @param  {strint} parent   - id of the parent (optional)
  * @param  {string} index    - Elasticsearch index (default: cumulus)
  * @returns {Promise} elasticsearch delete response
  */
-async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlias) {
-  if (!esClient) {
-    esClient = await Search.es();
-  }
+async function deleteRecord(esClientArg, id, type, parent, index = defaultIndexAlias) {
+  const esClient = esClientArg || await Search.es();
+
   const params = {
     index,
     type,
