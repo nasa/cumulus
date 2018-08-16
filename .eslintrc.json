@@ -1,7 +1,14 @@
 {
   "root": true,
-  "extends": "airbnb",
-  "plugins": ["eslint-plugin-jsdoc"],
+  "plugins": [
+    "import",
+    "jsdoc"
+  ],
+  "extends": [
+    "airbnb",
+    "plugin:import/errors",
+    "plugin:import/warnings"
+  ],
   "parser": "babel-eslint",
   "env": {
     "node": true,
