@@ -115,3 +115,15 @@ cum-test:
       type: protected
   
   system_bucket: '{{PREFIX}}-internal'
+
+mvd:
+  prefix: mvd
+
+jc:
+  prefix: jc
+
+mhs:
+  prefix: mhs
+
+jk:
+  prefix: jk
