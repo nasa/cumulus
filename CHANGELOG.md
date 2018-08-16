@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
         - Adds kinesisFailureSQS to capture fully failed events from all retries.
 
+### Removed
+
+- Removed unused and broken code from `@cumulus/common`
+  - Removed `@cumulus/common/test-helpers`
+  - Removed `@cumulus/common/task`
+  - Removed `@cumulus/common/message-source`
+  - Removed the `getPossiblyRemote` function from `@cumulus/common/aws`
+  - Removed the `startPromisedSfnExecution` function from `@cumulus/common/aws`
+  - Removed the `getCurrentSfnTask` function from `@cumulus/common/aws`
 
 ## [v1.9.0] - 2018-08-06
 
