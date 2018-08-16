@@ -23,10 +23,9 @@ The process involves:
 #### Linux/MacOS software requirements:
 
 - git
-- [node 8.11](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+- [node 8.10](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 - [npm](https://www.npmjs.com/get-npm)
 - sha1sum or md5sha1sum
-- [yarn ~= 1.2.x](https://yarnpkg.com/lang/en/docs/install/)
 - zip
 
 - AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
@@ -81,7 +80,7 @@ To add a new package to your deployment, install via npm. Without a version spec
 
     $ npm install --save @cumulus/deployment
 
-To use the specific version of the package installed during deployment, point the `source` key in the lambda config to `node_modules/@cumulus/<package-name>/dist`. This location may vary between packages, so consult the README in each. For example:
+To use the specific version of the package installed during deployment, point the `source` key in the lambda config to `node_modules/@cumulus/<package-name>/dist`. This location may vary between packages, so consult the README in each. For example, the following would update patch and minor versions of sync-granule:
 
     SyncGranule:
       source: 'node_modules/@cumulus/sync-granule/dist/'
@@ -110,18 +109,19 @@ Build the Cumulus application
 
     $ npm run build
 
-To run the Cumulus deployment with the local code instead of the npm package, use `npm link` 
+To run the Cumulus deployment with the local code instead of the npm package, use `npm link` from your deployment repository directory 
 
-    $ cd ~/<daac-deployment-directory>
     $ npm link ../cumulus/packages/deployment/ @cumulus/deployment
 
+Note: If you get errors with `npm link`, try deleting the `node_modules` folder the package you are trying to link to in the Cumulus repository.
+
 ##### Copy the sample template into your repository {#copy-template}
+
+The [`Cumulus`](https://github.com/nasa/cumulus) project contains default configuration values in the `app.example` folder, however these need to be customized for your Cumulus app.
 
 Begin by copying the template directory to your project. You will modify it for your DAAC's specific needs later.
 
     $ cp -r ./node_modules/@cumulus/deployment/app.example ./app
-
-The [`Cumulus`](https://github.com/nasa/cumulus) project contains default configuration values in the `app.example` folder, however these need to be customized for your Cumulus app.
 
 **Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can track your DAAC's configuration changes:
 
@@ -188,7 +188,7 @@ The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
 
 ###### buckets:
 
-The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
+The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
 
 ------
 
@@ -197,10 +197,10 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets
     <iam-deployment-name>:    # e.g. dev (Note: Omit brackets, i.e. NOT <dev>)
       prefix: <stack-prefix>  # prefixes CloudFormation-created iam resources and permissions
       stackName: <stack-name> # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
-      system_bucket: <prefix-internal>
+      system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
       buckets:
-        internal: 
-            name: <prefix-internal> # Note: these are the bucket names, not the prefix from above
+        internal: # bucket key
+            name: <internal bucket name?
             type: internal
 
 **Deploy `iam` stack**[^1]
