@@ -200,7 +200,7 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets
       system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
       buckets:
         internal: # bucket key
-            name: <internal bucket name?
+            name: <internal bucket name>
             type: internal
 
 **Deploy `iam` stack**[^1]
