@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 'use strict';
 
 const _get = require('lodash.get');
