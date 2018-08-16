@@ -200,8 +200,22 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
-  es:
-    elasticSearchMapping: 6
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
 
 kk-uat-deployment:
   stackName: kk-test-uat
