@@ -25,7 +25,7 @@ process.env.stackName = stackName;
 class MyTestDiscoveryClass {
   constructor(useList) {
     this.decrypted = true;
-    this.host = 'localhost';
+    this.host = '127.0.0.1';
     this.port = '2222';
     this.username = 'user';
     this.path = '/pdrs';
