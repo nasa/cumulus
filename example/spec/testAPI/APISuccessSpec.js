@@ -164,6 +164,7 @@ describe('The Cumulus API', () => {
         prefix: config.stackName,
         arn: workflowExecution.executionArn
       });
+      expect(executionResponse.tasks).toBeDefined();
       expect(executionResponse.tasks.length).not.toEqual(0);
       Object.keys(executionResponse.tasks).forEach((step) => {
         const task = executionResponse.tasks[step];
