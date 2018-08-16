@@ -1,13 +1,27 @@
 # Troubleshooting Cumulus Deployment
 
-This document provides 'notes' on frequently encountered deployment issues. he issues reported are organized by relevant subsection.
+This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
 
 ### Configuring the Cumulus Stack
 #### VPC
 
 Issues:
 
-  - If redeploying an existing configuration you may already have at least 1 vpc associated with your existing deployment, but its subnets can be transitory in nature depending on what kind of load balancing and/or docker activities are taking place at a given time.  You should  identify at least one persistent subnet to use as a subnet ID (you may only specify one) for use.    If this is needed, navigate to  [AWS EC2 > Auto Scaling Groups](https://console.aws.amazon.com/ec2/autoscaling/home) and note the "Availability Zone" (e.g., us-east-1a). Next, visit [AWS VPC](https://console.aws.amazon.com/vpc/home) and click on "Subnets". Copy the 'VPC' value into 'vpcId' and the appropriate 'Subnet ID' value, based on the Availability Zone value you just saw on the Auto Scaling Groups page, into 'subnets'. If you have no vpc and/or subnets, do not include the vpc section in your new configuration.
+  - If redeploying an existing configuration you may already have at least 1 vpc associated with your existing deployment, but its subnets can be transitory in nature depending on what kind of load balancing and/or docker activities are taking place at a given time.  You should  identify at least one persistent subnet to use as a subnet ID (you may only specify one) for use.    If this is needed, navigate to  [AWS EC2 > Auto Scaling Groups](https://console.aws.amazon.com/ec2/autoscaling/home?region=us-east-1#AutoScalingGroups:view=details) and note the "Availability Zone" (e.g., us-east-1a). Next, visit [AWS VPC](https://console.aws.amazon.com/vpc/home) and click on "Subnets". Copy the 'VPC' value into 'vpcId' and the appropriate 'Subnet ID' value, based on the Availability Zone value you just saw on the Auto Scaling Groups page, into 'subnets'. If you have no vpc and/or subnets, do not include the vpc section in your new configuration.
+
+  Example config:
+  ```
+  vpc:
+    vpcId: vpc-1234abcd
+    subnets:
+      - subnet-1234ancd
+  
+  ecs:
+    instanceType: t2.micro
+    desiredInstances: 1
+    availabilityZone: us-east-1a
+  ```
+
 
 ### Deploying the Cumulus Stack
 
@@ -31,7 +45,7 @@ In the advanced settings when continuing rollback, you can enter the logical Ids
 
 #### Failure on nested stacks
 
-If the deployment failed on nested stacks (CumulusApiDefaultNestedStack, CumulusApiV1NestedStack), and the nested stacks are gone due to rollback.  Try to deploy the main stack first by add nested_template parameter to your stack config app/config.yml file, and then run the deployment.
+If the deployment failed on nested stacks (CumulusApiDefaultNestedStack, CumulusApiV1NestedStack), and the nested stacks are gone due to rollback.  Try to deploy the just the main stack first by adding a nested_template parameter set to null in your stack config app/config.yml file, and then run the deployment.
 
 ```
 <your deployment>:
