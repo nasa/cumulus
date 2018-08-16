@@ -8,7 +8,7 @@ const JSFtp = require('jsftp');
 class MyTestDiscoveryClass {
   constructor(useList) {
     this.decrypted = true;
-    this.host = 'localhost';
+    this.host = '127.0.0.1';
     this.password = 'testpass';
     this.path = '/';
     this.provider = { encrypted: false };
