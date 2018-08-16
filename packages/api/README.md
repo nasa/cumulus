@@ -1,6 +1,6 @@
 # @cumulus/api
 
-[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
+[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 
 *An API for the Cumulus Framework*
 
@@ -26,7 +26,7 @@ The Elasticsearch commands require a host to be specified. Your host can be foun
 
 #### Reindex
 
-The reindex command creates a new index and reindexes the source index to the new, destination index. 
+The reindex command creates a new index and reindexes the source index to the new, destination index.
 
 An alias should not be specified unless you have a specific alias configured. If a source index is not specified, it will default to the index from the alias. If you want to name the destination index something particular, you can specify a name, otherwise the destination index name will default to 'cumulus-year-month-day' with today's date.
 
@@ -65,7 +65,7 @@ cumulus-api status --help
 
 #### Complete Reindex
 
-When the reindexing operation is complete, you can choose to switch your Cumulus deployment to use the new index. Specify a source index and destination index. You can find both of these in AWS, our output from your reindex command. 
+When the reindexing operation is complete, you can choose to switch your Cumulus deployment to use the new index. Specify a source index and destination index. You can find both of these in AWS, our output from your reindex command.
 
 ```
 cumulus-api complete-reindex --help
