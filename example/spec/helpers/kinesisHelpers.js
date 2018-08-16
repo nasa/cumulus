@@ -1,7 +1,13 @@
 'use strict';
 
 const _ = require('lodash');
-const { Kinesis, StepFunctions } = require('aws-sdk');
+const { Kinesis } = require('aws-sdk');
+const {
+  aws: {
+    sfn,
+    receiveSQSMessages
+  }
+} = require('@cumulus/common');
 
 const {
   LambdaStep,
@@ -14,20 +20,45 @@ const { loadConfig } = require('../helpers/testUtils');
 const testConfig = loadConfig();
 
 const lambdaStep = new LambdaStep();
-const sfn = new StepFunctions({ region: testConfig.awsRegion });
+
 const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.awsRegion });
 
+const maxExecutionResults = 20;
 const waitPeriodMs = 1000;
 
 /**
- * returns the most recently executed KinesisTriggerTest workflow
+ * Helper to simplify common setup code.  wraps function in try catch block
+ * that will exit tests if the initial setup conditions fail.
  *
- * @returns {Object} state function execution .
+ * @param {Function} fn - function to execute
+ * @param {iterable} args - arguments to pass to the function.
+ * @returns {null} - no return
  */
-async function getLastExecution() {
+function tryCatchExit(fn, ...args) {
+  try {
+    return fn.apply(this, args);
+  }
+  catch (error) {
+    console.log(error);
+    console.log('Tests conditions can\'t get met...exiting.');
+    process.exit(1);
+  }
+  return null;
+}
+
+
+/**
+ * returns the most recently executed KinesisTriggerTest workflows.
+ *
+ * @returns {Array<Object>} array of state function executions.
+ */
+async function getExecutions() {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
-  const data = await sfn.listExecutions({ stateMachineArn: kinesisTriggerTestStpFnArn }).promise();
-  return (_.orderBy(data.executions, 'startDate', 'desc')[0]);
+  const data = await sfn().listExecutions({
+    stateMachineArn: kinesisTriggerTestStpFnArn,
+    maxResults: maxExecutionResults
+  }).promise();
+  return (_.orderBy(data.executions, 'startDate', 'desc'));
 }
 
 
@@ -146,8 +177,9 @@ async function putRecordOnStream(streamName, record) {
   }).promise();
 }
 
+
 /**
- *  Wait until an exectution matching the desired execution starts.
+ * Wait for test stepfunction execution to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
  * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
@@ -155,21 +187,21 @@ async function putRecordOnStream(streamName, record) {
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
+async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
   let timeWaited = 0;
-  let lastExecution;
   let workflowExecution;
 
   /* eslint-disable no-await-in-loop */
   while (timeWaited < maxWaitTime && workflowExecution === undefined) {
     await timeout(waitPeriodMs);
     timeWaited += waitPeriodMs;
-    lastExecution = await getLastExecution();
-    // getLastExecution returns undefined if no previous execution exists
-    if (lastExecution && lastExecution.executionArn) {
-      const taskInput = await lambdaStep.getStepInput(lastExecution.executionArn, firstStep);
+    const executions = await getExecutions();
+    // Search all recent executions for target recordIdentifier
+    for (const execution of executions) {
+      const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
       if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
-        workflowExecution = lastExecution;
+        workflowExecution = execution;
+        break;
       }
     }
   }
@@ -178,13 +210,65 @@ async function waitForTestSfStarted(recordIdentifier, maxWaitTime, firstStep = '
   throw new Error('Never found started workflow.');
 }
 
+/**
+ * Return the original kinesis event embedded in an SQS message.
+ *
+ * @param {Object} message - SQS message
+ * @returns {Object} kinesis object stored in SQS message.
+ */
+function kinesisEventFromSqsMessage(message) {
+  const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
+  const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
+  const kinesisEvent = JSON.parse(dataString);
+  return kinesisEvent;
+}
+
+/**
+ * Check if the returned SQS message holds the targeted kinesis record.
+ *
+ * @param {Object} message - SQS message.
+ * @param {string} recordIdentifier - target kinesis record identifier.
+ * @returns {Bool} - true, if this message contained the targeted record identifier.
+ */
+function isTargetMessage(message, recordIdentifier) {
+  const kinesisEvent = kinesisEventFromSqsMessage(message);
+  return kinesisEvent.identifier === recordIdentifier;
+}
+
+/**
+ * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 5 minutes.
+ *
+ * @param {string} recordIdentifier - random string to match found messages against.
+ * @param {string} queueUrl - kinesisFailure SQS url
+ * @param {number} maxNumberElapsedPeriods - number of timeout intervals to wait.
+ * @returns {Object} - matched Message from SQS.
+ */
+async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 60) {
+  const timeoutInterval = 5000;
+  let queuedRecord;
+  let elapsedPeriods = 0;
+
+  while (!queuedRecord && elapsedPeriods < maxNumberElapsedPeriods) {
+    const messages = await receiveSQSMessages(queueUrl);
+    if (messages.length > 0) {
+      const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
+      if (targetMessage) return targetMessage;
+    }
+    await timeout(timeoutInterval);
+    elapsedPeriods += 1;
+  }
+  return {};
+}
 
 module.exports = {
   createOrUseTestStream,
   deleteTestStream,
   getShardIterator,
   getRecords,
+  kinesisEventFromSqsMessage,
   putRecordOnStream,
+  tryCatchExit,
   waitForActiveStream,
-  waitForTestSfStarted
+  waitForQueuedRecord,
+  waitForTestSf
 };
