@@ -49,6 +49,22 @@ HelloWorldWorkflow:
       Cause: 'Workflow failed'
 ```
 
+## Retry Configuration
+In the [RetryPassWorkflow](https://github.com/nasa/cumulus/tree/master/example/workflows.yml), the HelloWorld object has an attribute labeled `Retry`. Valid **json** configuration of this attribute for workflows is explained in the [AWS documentation](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-examples). Cumulus deployment (kes) requires configuration to be written in (or translated to) `.yml` format, but required attributes and their functions are the same.
+
+```
+RetryPassWorkflow:
+...
+  HelloWorld:
+  ...
+  Retry:
+    - ErrorEquals:
+      - States.ALL
+      IntervalSeconds: 2
+      MaxAttempts: 3
+...
+```
+
 ### Task Configuration
 
 The HelloWorld [task itself](../workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
