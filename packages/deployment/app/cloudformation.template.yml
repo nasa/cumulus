@@ -733,7 +733,6 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: {{stackName}}-ecs-securitygroup
       GroupDescription: Security Group for ECS containter instances of {{stackName}}
       Tags:
         - Key: Name
