@@ -250,53 +250,6 @@ jl:
       name: rvl-internal
       type: shared
 
-# Begin-MHS-config
-mhs:
-  prefix: mhs-cumulus
-  stackName: mhs-cumulus
-  stackNameNoDash: mhsCumulus
-
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/mhs-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/mhs-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/mhs-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/mhs-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/mhs-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/mhs-distribution-api-lambda'
-
-  buckets:
-    internal:
-      name: mhs-internal
-      type: internal
-    private:
-      name: mhs-private
-      type: private
-    protected:
-      name: mhs-protected
-      type: protected
-    public:
-      name: mhs-public
-      type: public
-    protected-2:
-      name: mhs-protected-2
-      type: protected
-    shared:
-      name: cumulus-data-shared
-      type: shared
-  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
-  system_bucket: '{{buckets.internal.name}}'
-
-  users:
-    - username: '{{EARTHDATA_LOGIN_USERNAME}}'
-
-  AutoScalingPolicyConfiguration:
-  GranulesTable:
-    enableAutoScaling: false
-  FilesTable:
-    enableAutoScaling: false
-
-# END-mhs-config
-
 gitc:
   prefix: {{PREFIX}}
   stackName: {{stackName}}
@@ -340,3 +293,19 @@ gitc:
     enableAutoScaling: false
   FilesTable:
     enableAutoScaling: false
+
+mvd:
+  stackName: mvd
+  stackNameNoDash: mvd
+
+jc:
+  stackName: jc
+  stackNameNoDash: jc
+
+mhs:
+  stackName: mhs
+  stackNameNoDash: mhs
+
+jk:
+  stackName: jk
+  stackNameNoDash: jk

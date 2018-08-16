@@ -25,7 +25,7 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -55,7 +55,7 @@ test('test pdr discovery with FTP invalid user/pass', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser1',
     password: 'testpass'
   };
@@ -83,7 +83,7 @@ test('test pdr discovery with FTP connection refused', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 30, // using port that doesn't exist to nonresponsiveness
     username: 'testuser1',
     password: 'testpass'
@@ -106,7 +106,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
   const provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -167,7 +167,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
     event.config.provider = {
       id: 'MODAPS',
       protocol: 'http',
-      host: 'http://localhost:3030'
+      host: 'http://127.0.0.1:3030'
     };
     event.config.collection.provider_path = '/pdrs/discover-pdrs';
     event.input = {};
@@ -226,7 +226,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
     event.config.provider = {
       id: 'MODAPS',
       protocol: 'sftp',
-      host: 'localhost',
+      host: '127.0.0.1',
       port: 2222,
       username: 'user',
       password: 'password'
