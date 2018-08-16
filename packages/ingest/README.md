@@ -1,6 +1,6 @@
 # @cumulus/ingest
 
-[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
+[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 
 @cumulus/ingest is a collection of modules for discovering and ingesting data.
 
