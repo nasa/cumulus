@@ -1,6 +1,6 @@
 # @cumulus/parse-pdr
 
-[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
+[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 
 `@cumulus/parse-pdr` parses a pdr file.
 
