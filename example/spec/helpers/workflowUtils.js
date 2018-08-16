@@ -1,85 +1,26 @@
 'use strict';
 
-const fs = require('fs-extra');
-const yaml = require('js-yaml');
-
 const {
   get,
   unset
 } = require('lodash');
 
-const workflowsYmlFilename = './workflows.yml';
-const workflowsYmlTestBackupFilename = './workflowsCopy.yml';
+const { loadYmlConfigFile, saveYmlConfigFile } = require('./configUtils.js');
 
-/**
- * Copy the workflows.yml file to a backup location
- *
- * @returns {undefined} none
- */
-function backupWorkflowsYml() {
-  fs.copyFileSync(workflowsYmlFilename, workflowsYmlTestBackupFilename);
-}
-
-/**
- * Copy the workflows.yml back from the backup location. Delete
- * the backup workflows file
- *
- * @returns {undefined} none
- */
-function restoreWorkflowsYml() {
-  fs.copyFileSync(workflowsYmlTestBackupFilename, workflowsYmlFilename);
-  fs.unlinkSync(workflowsYmlTestBackupFilename);
-}
-
-/**
- * Load workflows yml file
- *
- * @param {string} workflowConfigFile - workflow yml file,defaults to './workflows.yml'
- * @returns {Object} - JS Object representation of yml file
- */
-function loadWorkflowConfigFile(workflowConfigFile = workflowsYmlFilename) {
-  return yaml.safeLoad(fs.readFileSync(workflowConfigFile, 'utf8'));
-}
-
-/**
- * Convery workflow config JS to yml
- *
- * @param {Object} configJs - configuration as a JS object
- * @param {string} fileName - file name to save to
- * @returns {undefined} None
- */
-function saveWorkflowConfig(configJs, fileName) {
-  const configYaml = yaml.safeDump(configJs);
-  fs.writeFileSync(fileName, configYaml);
-}
-
-/**
- * Returns workflow configuration for all workflows (default) or the workflow specifed
- *
- * @param {string} workflowConfigFile - workflow file name
- * @param {string} workflowName - workflow name
- * @returns {Object} return the workflow configuration
- */
-function getWorkflowConfig(workflowConfigFile, workflowName) {
-  const config = loadWorkflowConfigFile(workflowConfigFile);
-  if (workflowName) return config[workflowName];
-  return config;
-}
 
 /**
  * Remove a workflow from the workflows config file and save the file
  *
  * @param {string} workflowName - workflow to remove
- * @param {string} workflowConfigFile - workflow config file, defaults to
- * workflows.yml
+ * @param {string} workflowConfigFile - workflow config file
  * @returns {undefined} none
  */
-function removeWorkflow(workflowName, workflowConfigFile = workflowsYmlFilename) {
-  const config = loadWorkflowConfigFile(workflowConfigFile);
+function removeWorkflow(workflowName, workflowConfigFile) {
+  const config = loadYmlConfigFile(workflowConfigFile);
 
   delete config[workflowName];
 
-  saveWorkflowConfig(config, workflowConfigFile);
+  saveYmlConfigFile(config, workflowConfigFile);
 }
 
 /**
@@ -89,11 +30,11 @@ function removeWorkflow(workflowName, workflowConfigFile = workflowsYmlFilename)
  *
  * @param {*} workflowName - name of the workflow to remove the task from
  * @param {*} taskName - task name to remove
- * @param {*} workflowConfigFile - workflow config file, defaults to workflows.yml
+ * @param {*} workflowConfigFile - workflow config file
  * @returns {undefined} none
  */
-function removeTaskFromWorkflow(workflowName, taskName, workflowConfigFile = workflowsYmlFilename) {
-  const config = loadWorkflowConfigFile(workflowConfigFile);
+function removeTaskFromWorkflow(workflowName, taskName, workflowConfigFile) {
+  const config = loadYmlConfigFile(workflowConfigFile);
 
   unset(config, `${workflowName}.States.${taskName}`);
 
@@ -113,13 +54,10 @@ function removeTaskFromWorkflow(workflowName, taskName, workflowConfigFile = wor
     }
   });
 
-  saveWorkflowConfig(config, workflowConfigFile);
+  saveYmlConfigFile(config, workflowConfigFile);
 }
 
 module.exports = {
-  getWorkflowConfig,
-  backupWorkflowsYml,
-  restoreWorkflowsYml,
   removeWorkflow,
   removeTaskFromWorkflow
 };
