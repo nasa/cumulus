@@ -261,7 +261,7 @@ To add a rule via the dashboard (if you'd like to use the API, see the docs [her
 **Please Note:**
 
 - The rule's `value` attribute value must match the Amazon Resource Name [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Kinesis data stream you've preconfigured.   You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.
-- The collection and provider should match the collection and provider you setup in the `Prerequisites` section.
+- The collection and provider should match the collection and provider you setup in the [`Prerequisites`](#prerequisites) section.
 
 Once you've clicked on 'submit' a new rule should appear in the dashboard's Rule Overview.
 
