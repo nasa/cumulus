@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         - Adds fallbackqueue option to lambda definitions capture lambda failures after three retries.
         - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
         - Adds kinesisFailureSQS to capture fully failed events from all retries.
+- **CUMULUS-855** Adds integration test for kinesis' error path.
 
 ## [v1.9.0] - 2018-08-06
 
