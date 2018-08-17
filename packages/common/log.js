@@ -16,7 +16,8 @@ function log(level, args, additionalKeys) {
     level,
     executions: process.env.EXECUTIONS,
     timestamp: time.toISOString(),
-    sender: process.env.SENDER
+    sender: process.env.SENDER,
+    version: process.env.TASKVERSION
   };
 
   output.message = util.format.apply(null, args);

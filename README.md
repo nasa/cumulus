@@ -1,9 +1,8 @@
 # Cumulus Framework
 
-[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
+[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
-
 
 ## Documentation:
 
@@ -25,13 +24,6 @@ Install the correct node version:
 ```
 nvm install
 nvm use
-```
-
-Ensure that the aws cli is configured and that the default output format is either JSON or None:
-
-```
-aws configure
-
 ```
 
 ### Install Lerna
@@ -82,26 +74,58 @@ Run the test commands next
     $ export LOCALSTACK_HOST=localhost
     $ yarn test
 
-Run end to end tests by
+Run end to end tests with
 
     $ yarn e2e
 
-### Running integration tests on aws
+### Running integration tests on AWS
 
 - Run `./bin/prepare`
 - Deploy your instance integrations on aws and run tests by following the steps [here](example/README.md)
-    
-### Running integration tests on CirlceCI
 
-- Any commit message that includes the word `[run it]` or `[it run]` or `[it]` will trigger integration tests on circleci
+### Running integration tests on Travis CI
+
+Integration tests are run on every Travis CI build. If you want to skip the
+integration tests for a given commit, include `[skip-integration-tests]` in the
+commit message.
+
+Travis CI determines what stack to run the tests against based on the name of
+the branch. It expects that the branch name will be suffixed with a dash
+followed by the name of the stack to test against. For instance, to run against
+the "test-123" stack, a branch should be called "something-test-123". If the
+stack cannot be determined from the branch name then the "cumulus-from-pr" stack
+will be used.
+
+If you create a new stack and want to be able to run integration tests against
+it in CI, you will need to add it to [travis-ci/select-stack.js](travis-ci/select-stack.js).
+
+In order to prevent multiple instances of the integration tests from running
+against a stack at the same time, a lock file is created in S3 for each stack.
+Before integration tests start they will wait until that lock file is not
+present. They will then create that lock file, run the tests, and delete the
+lock file. The lock file will be located at
+`s3://${CACHE_BUCKET}/travis-ci-integration-tests/${DEPLOYMENT}.lock`. The lock
+file will contain a link to the Travis CI job that created the lock file. If
+your tests seem to be hung waiting for that lock file, check to see if the job
+that created the lock file is still running or has crashed. If it has crashed
+then the lock file should be deleted. You should also figure out why the lock
+file was not cleaned up and fix that for next time.
 
 ### Code Coverage
 
-Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The CircleCI build tests coverage. A summary can be viewed in the build output. Detailed code coverage in html can be found by going to the Artifacts tab and navigating to `index.html` in the coverage folder. Clicking on `index.html` will take you to an html page showing code coverage for each individual file.
+Code coverage is checked using [nyc](https://github.com/istanbuljs/nyc). The
+Travis CI build tests coverage. A summary can be viewed in the build's output.
+Detailed code coverage in html can be found by going to the Artifacts tab and
+navigating to `index.html` in the coverage folder. Clicking on `index.html` will
+take you to an html page showing code coverage for each individual file.
 
-The `yarn test` command will output code coverage data for the entire Cumulus repository. To create an html report, run `nyc report --reporter html` and open the `index.html` file in the coverage folder.
+The `yarn test` command will output code coverage data for the entire Cumulus
+repository. To create an html report, run `nyc report --reporter html` and open
+the `index.html` file in the coverage folder.
 
-To run code coverage on an individual package during development, run `npm run test-coverage`. This will output the coverage in the terminal. An html report can be created using `nyc report --reporter html` as described above.
+To run code coverage on an individual package during development, run
+`npm run test-coverage`. This will output the coverage in the terminal. An html
+report can be created using `nyc report --reporter html` as described above.
 
 ## Code quality checking
 
@@ -123,14 +147,14 @@ number of errors has increased.
 To run the script, simply run `./bin/eslint-ratchet` from the top of the
 cumulus repository.
 
-The `eslint-ratchet` script is also part of our CircleCI build. If the number
-of eslint errors that CircleCI finds has increased, it will fail the build. If
+The `eslint-ratchet` script is also part of our Travis CI build. If the number
+of eslint errors that Travis CI finds has increased, it will fail the build. If
 the number of errors has *decreased* from what is stored in
 `.eslint-ratchet-high-water-mark`, it will also fail the build. In that case,
 run `./bin/eslint-ratchet` and commit the new-and-improved
 `.eslint-ratchet-high-water-mark` file.
 
-To help prevent unexpected build failures in CircleCI, I suggest adding a
+To help prevent unexpected build failures in Travis CI, I suggest adding a
 local post-commit hook that will run eslint-ratchet after every commit. This
 will not cause your commits to fail if the score has increased, but it will
 let you know that there is a problem. To set up the post-commit hook, create a
@@ -164,99 +188,72 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ### Updating Cumulus version and publishing to NPM
 
-All packages on master branch are automatically published to NPM.
+#### 1. Create a branch for the new release
 
-Follow the following steps to publish to NPM:
+The name is not important, but `release-x.y.z` seems like a good choice.
 
-#### 1. Create the release branch
+#### 2. Update the Cumulus version number
 
-Create a new branch from `master` (make sure you have latest) and call it `release-version-<version_number>`. 
+When changes are ready to be released, the Cumulus version number must be
+updated.
 
-Release PRs **MUST** be named with `release-` prefix. This will kick off the AWS integration tests in the CI process and ensures that package updates are fully tested on AWS before publication to NPM.
-
-#### 2. Update the Cumulus Version number
-
-When changes are ready to be released, the Cumulus version number must be updated using semantic versioning.
-
-Lerna handles the process of deciding which version number should be used as long as the developer decides whether the change is a patch or a minor/major change.
+Lerna handles the process of deciding which version number should be used as
+long as the developer specifies whether the change is a major, minor, or patch
+change.
 
 To update cumulus' version number run:
 
      $ yarn update
 
-You will be prompted to select the type of change (patch/minor/major). Lerna will update the version of all packages after the selection.
-
 ![](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
 
-#### 3. Update the Changelog
+#### 3. Update CHANGELOG.md
 
-Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
+Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the
+new version number and the date.
 
-Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
+Add a link reference for the github "compare" view at the bottom of the
+CHANGELOG.md, following the existing pattern. This link reference should create
+a link in the CHANGELOG's release header to changes in the corresponding
+release.
 
-#### 4. Update the example package.json
+#### 4. Update example/package.json
 
 Update example/package.json to point to the new Cumulus packages.
 
-#### 5. Create a git tag
+#### 5. Create a pull request against the master branch
 
-The CHANGELOG changes and package updates should be pushed to git. Then tag the release. The tag is what tells npm what to publish, so it is important for this branch to be up to date with master and have all these changes pushed.
+Create a PR against the `master` branch. Verify that the Travis CI build for the
+PR succeeds and then merge to master. Once merged, the release branch can be
+deleted.
 
-Create a new git tag
+#### 6. Create a git tag for the release
 
-  $ git tag -a v1.x.x -m "version 1.x.x release"
+Publishing of new releases is handled by Travis CI and is triggered when the
+release tag is pushed to Github. This tag should be in the format `v1.2.3`,
+where `1.2.3` is the new version.
 
-Push the tag to github
+Create and push a new git tag:
 
-  $ git push origin v1.x.x
+```
+$ git tag -a v1.x.x -m "Release 1.x.x"
+$ git push origin v1.x.x
+```
 
-#### 6. PR and merge to master
-
-Create a PR against the `master` branch
-
-After the PR is merged, update the (tag) and give a proper title and copy the release details from the CHANGELOG.md to the release
-
-![](https://static.notion-static.com/def32886-040c-4df9-9462-8b2418cbb925/Release_v1_3_0__nasa_cumulus.png)
-
-![](https://static.notion-static.com/287c7d98-351a-446d-a7ff-45eef2b45d7c/New_release__nasa_cumulus.png)
+Travis will build and run tests against that tagged release, publish the new
+packages to NPM, and then run the integration tests using those newly released
+packages.
 
 ### Backporting to a previous release
 
-To backport and release to an earlier minor version of Cumulus than the latest minor version, follow the below steps. For example if the current version is 1.6 and a fix needs to be backported to 1.5.
+Creating a new release for an older major or minor version is similar to
+creating any other release. Create a branch starting at the tag of the previous
+release, then follow the
+[instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).
 
-#### 1. Create a version branch
-
-If a version branch does not exist, it must be created. Sync to the tag for the latest patch version in the minor version.
-
-    $ git checkout v1.5.5
-    
-Create a branch for version 1.5.
-
-    $ git checkout -b v1.5
-   
-Push the branch to git.
-
-#### 2. Make changes and PR
-
-Create a release branch off the version branch (i.e. v1.5) to create a branch for the changes. Use git cherry-pick or manually make the changes.
-
-Follow [step 2](#2-update-the-cumulus-version-number) above to update the version number using `yarn update`.
-
-Create a pull request against the version branch.
-
-#### 3. Create a git tag
-
-When the PR is approved and changes are finalized, follow [these steps](#5-create-a-git-tag). At this point, merges to master should be held off until the changes are released. If someone merges to master, master will pick up the new git tag and publish this release, tagging it as latest, meaning anyone who performs an `npm install` will get this patch version and not the actual latest version.
-
-#### 4. Merge to the version branch
-
-Merging to a branch structured as vX.Y will kick off the release and npm testing process. The version will be published to npm not as latest, but with a tag `patch-vX.Y.Z`.
-
-Verify that the changes were released with the correct tag in npm.
-
-#### 5. Update the Changelog
-
-In master, update the changelog for the release, making sure a link is put in the bottom. 
+For example, if versions 1.7.0 and 1.8.0 had been published and you wanted to
+create a 1.7.1 release, you would create the release branch by running
+`git checkout -b release-1.7.1 v1.7.0`.
 
 ## Running command in all package folders
 

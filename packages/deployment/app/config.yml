@@ -75,6 +75,7 @@ default:
     pquinn1: true
     scisco: true
     sethvincent: true
+    menno.vandiermen: true
 
   ecs:
     restartTasksOnDeploy: false
@@ -97,7 +98,7 @@ default:
 
   es:
     name: es5
-    elasticSearchMapping: 6
+    elasticSearchMapping: 8
     version: 5.3
     instanceCount: 1
     instanceType: t2.small.elasticsearch
@@ -129,6 +130,17 @@ default:
               - Arn
           protocol: lambda
 
+    # This topic receives errored kinesis messages and tries them again.
+    kinesisFallback:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - fallbackConsumerLambdaFunction
+              - Arn
+          protocol: lambda
+
   apis:
     - name: download
     - name: backend
@@ -142,6 +154,9 @@ default:
           schedule: rate(1 minute)
           messageLimit: 10
           state: ENABLED
+
+    kinesisFailure:
+      visibilityTimeout: 20
 
   rules:
     backgroundJobs:

@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const mur = require('./fixtures/mur.json');
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   randomString,
@@ -18,7 +18,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:3030'
+    host: 'http://127.0.0.1:3030'
   };
 
   await validateConfig(t, event.config);
@@ -31,9 +31,9 @@ test('discover granules sets the correct dataType for granules', async (t) => {
     // Make sure that there really were granules returned
     t.truthy(output.granules.length > 0);
 
-    // Make sure that the granules use the collection name as the dataType
+    // Make sure we support datatype and collection name
     output.granules.forEach((granule) => {
-      t.is(granule.dataType, event.config.collection.name);
+      t.not(granule.dataType, event.config.collection.name);
     });
   }
   catch (err) {
@@ -57,7 +57,7 @@ test.skip('discover granules using FTP', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -96,7 +96,7 @@ test('discover granules using SFTP', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 2222,
     username: 'user',
     password: 'password'
@@ -129,7 +129,7 @@ test('discover granules using HTTP', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:3030'
+    host: 'http://127.0.0.1:3030'
   };
 
   await validateConfig(t, event.config);

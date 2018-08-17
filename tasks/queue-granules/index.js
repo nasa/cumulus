@@ -24,7 +24,7 @@ async function queueGranules(event) {
 
   const executionArns = await Promise.all( // eslint-disable-line function-paren-newline
     granules.map(async (granule) => {
-      const collectionConfig = await collectionConfigStore.get(granule.dataType);
+      const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
 
       return enqueueGranuleIngestMessage(
         granule,

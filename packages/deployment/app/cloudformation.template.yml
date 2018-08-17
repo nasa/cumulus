@@ -501,7 +501,7 @@ Resources:
 {{/each}}
 
   #################################################
-  # DyanmoDB config END
+  # DynamoDB config END
   #################################################
 
   #################################################
@@ -657,6 +657,13 @@ Resources:
 {{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
+    {{# if this.deadletterqueue}}
+      DeadLetterConfig:
+        TargetArn:
+          Fn::GetAtt:
+            - {{this.deadletterqueue}}SQS
+            - Arn
+    {{/if}}
       Tags:
         - Key: Project
           Value: {{../stackName}}
@@ -732,7 +739,6 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: {{stackName}}-ecs-securitygroup
       GroupDescription: Security Group for ECS containter instances of {{stackName}}
       Tags:
         - Key: Name

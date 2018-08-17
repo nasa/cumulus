@@ -223,6 +223,53 @@ async function getExecution({ prefix, arn }) {
 }
 
 /**
+ * Fetch logs from the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @returns {Promise<Object>} - the logs fetched by the API
+ */
+async function getLogs({ prefix }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiLogsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/logs',
+      path: 'logs',
+      pathParameters: {}
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
+/**
+ * Fetch logs from an execution from the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.executionName - execution name
+ * @returns {Promise<Object>} - the logs fetched by the API
+ */
+async function getExecutionLogs({ prefix, executionName }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiLogsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/logs/{executionName}',
+      path: `logs/${executionName}`,
+      pathParameters: {
+        executionName: executionName
+      }
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
+/**
  * get execution status from the Cumulus API
  *
  * @param {Object} params - params
@@ -252,9 +299,11 @@ module.exports = {
   callCumulusApi,
   getAsyncOperation,
   getExecution,
+  getExecutionLogs,
+  getExecutionStatus
   getGranule,
+  getLogs,
   postBulkDelete,
   reingestGranule,
-  removeFromCMR,
-  getExecutionStatus
+  removeFromCMR
 };

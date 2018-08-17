@@ -10,3 +10,5 @@ example/node_modules/**
 packages/api/models/schemas.js
 packages/deployment/app/*.js
 tmp/**
+docs/**
+_book/**
