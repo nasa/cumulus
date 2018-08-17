@@ -29,7 +29,6 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
     * [Lambda Functions](workflows/lambda.md)
     * [Dockerization](workflows/docker.md)
   * [Workflow Configuration How-to's](workflows/workflow-configuration-how-to.md)
-    * [Configuring Retries of Steps](workflows/workflow-retry-configuration.md)
 * [Tasks](tasks.md)
 * [Cumulus API](https://nasa.github.io/cumulus-api)
 * [Backup and Restore](backup_and_restore.md)
@@ -52,3 +51,4 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
 * [SIPS Workflow](data-cookbooks/sips-workflow.md)
+* [Error Handling](data-cookbooks/error-handling.md)

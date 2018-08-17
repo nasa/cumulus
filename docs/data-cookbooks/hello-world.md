@@ -49,7 +49,7 @@ HelloWorldWorkflow:
       Cause: 'Workflow failed'
 ```
 
-Workflow **retries** can be configured as discussed in [Configuring Retries](../workflows/workflow-retry-configuration.md).
+Workflow **error-handling** can be configured as discussed in the [Error-Handling](error-handling.md) cookbook.
 
 ### Task Configuration
 

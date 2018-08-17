@@ -18,7 +18,6 @@
     * [Lambda Functions](workflows/lambda.md)
     * [Dockerization](workflows/docker.md)
   * [Workflow Configuration How-to's](workflows/workflow-configuration-how-to.md)
-    * [Configuring Retries of Steps](workflows/workflow-retry-configuration.md)
 * Additional Cumulus Features
   * [Cumulus Metadata in DynamoDB](data_in_dynamodb.md#cumulus-metadata-in-dynamodb)
   * [DynamoDB Backup and Restore](data_in_dynamodb.md#backup-and-restore-with-aws)
