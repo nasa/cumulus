@@ -22,6 +22,8 @@ const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
+const { CollectionConfigStore } = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
 * The abstract Discover class
@@ -102,13 +104,19 @@ class Discover {
    * @returns {Array<Object>} a list of discovered granules
    */
   async discover() {
-    const discoveredFiles = (await this.list())
-      // Make sure the file matches the granuleIdExtraction
-      .filter((file) => file.name.match(this.collection.granuleIdExtraction))
-      // Make sure there is a config for this type of file
-      .filter((file) => this.fileTypeConfigForFile(file))
-      // Add additional granule-related properties to the file
-      .map((file) => this.setGranuleInfo(file));
+    let discoveredFiles = [];
+    try {
+      discoveredFiles = (await this.list())
+        // Make sure the file matches the granuleIdExtraction
+        .filter((file) => file.name.match(this.collection.granuleIdExtraction))
+        // Make sure there is a config for this type of file
+        .filter((file) => this.fileTypeConfigForFile(file))
+        // Add additional granule-related properties to the file
+        .map((file) => this.setGranuleInfo(file));
+    }
+    catch (err) {
+      log.error(`discover exception ${JSON.stringify(err)}`);
+    }
 
     // This is confusing, but I haven't figured out a better way to write it.
     // What we're doing here is checking each discovered file to see if it
@@ -127,7 +135,8 @@ class Discover {
     return granuleIds
       .map((granuleId) => ({
         granuleId,
-        dataType: this.collection.name,
+        dataType: this.collection.dataType,
+        version: this.collection.version,
         // Remove the granuleId property from each file
         files: filesByGranuleId[granuleId].map((file) => omit(file, 'granuleId'))
       }));
@@ -150,13 +159,15 @@ class Granule {
    * @param {Object} provider - provider configuration object
    * @param {string} fileStagingDir - staging directory on bucket to place files
    * @param {boolean} forceDownload - force download of a file
+   * @param {boolean} duplicateHandling - duplicateHandling of a file
    */
   constructor(
     buckets,
     collection,
     provider,
     fileStagingDir = 'file-staging',
-    forceDownload = false
+    forceDownload = false,
+    duplicateHandling = 'replace'
   ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
@@ -166,7 +177,6 @@ class Granule {
     this.collection = collection;
     this.provider = provider;
 
-    this.collection.url_path = this.collection.url_path || '';
     this.port = this.provider.port || 21;
     this.host = this.provider.host;
     this.username = this.provider.username;
@@ -175,6 +185,8 @@ class Granule {
 
     this.forceDownload = forceDownload;
     this.fileStagingDir = fileStagingDir;
+
+    this.duplicateHandling = duplicateHandling;
   }
 
   /**
@@ -188,14 +200,42 @@ class Granule {
     // for each granule file
     // download / verify checksum / upload
 
+    const stackName = process.env.stackName;
+    let dataType = granule.dataType;
+    let version = granule.version;
+
+    // if no collection is passed then retrieve the right collection
+    if (!this.collection) {
+      if (!granule.dataType || !granule.version) {
+        throw new Error(
+          'Downloading the collection failed because dataType or version was missing!'
+        );
+      }
+      const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
+      this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
+    }
+    else {
+      // Collection is passed in, but granule does not define the dataType and version
+      if (!dataType) dataType = this.collection.dataType || this.collection.name;
+      if (!version) version = this.collection.version;
+    }
+
+    // make sure there is a url_path
+    this.collection.url_path = this.collection.url_path || '';
+
+    this.collectionId = constructCollectionId(dataType, version);
+    this.fileStagingDir = path.join(this.fileStagingDir, this.collectionId);
+
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, bucket, this.collection.duplicateHandling));
+      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     const files = await Promise.all(downloadFiles);
 
     return {
       granuleId: granule.granuleId,
+      dataType: dataType,
+      version: version,
       files
     };
   }

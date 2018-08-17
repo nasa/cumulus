@@ -1,122 +1,3 @@
-HelloWorld:
-  handler: index.handler
-  timeout: 300
-  memory: 256
-  source: 'node_modules/@cumulus/hello-world/dist/'
-  useMessageAdapter: true
-
-DiscoverGranules:
-  handler: index.handler
-  timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/discover-granules/dist/'
-  useMessageAdapter: true
-  launchInVpc: true
-
-DiscoverGranulesNoVpc:
-  handler: index.handler
-  timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/discover-granules/dist/'
-  useMessageAdapter: true
-
-DiscoverPdrs:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/discover-pdrs/dist/'
-  useMessageAdapter: true
-  logToElasticSearch: true
-
-MoveGranules:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/move-granules/dist/'
-  useMessageAdapter: true
-
-QueuePdrs:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/queue-pdrs/dist/'
-  useMessageAdapter: true
-  logToElasticSearch: true
-
-ParsePdr:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/parse-pdr/dist/'
-  useMessageAdapter: true
-  logToElasticSearch: true
-
-PdrStatusCheck:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/pdr-status-check/dist/'
-  useMessageAdapter: true
-
-PostToCmr:
-  handler: index.handler
-  timeout: 300
-  memory: 256
-  logToElasticSearch: true
-  source: 'node_modules/@cumulus/post-to-cmr/dist/'
-  useMessageAdapter: true
-  envs:
-    internal: '{{buckets.internal.name}}'
-
-QueueGranules:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/queue-granules/dist/'
-  useMessageAdapter: true
-
-SfSnsReport:
-  handler: index.handler
-  timeout: 300
-  source: 'node_modules/@cumulus/sf-sns-report/dist'
-  useMessageAdapter: true
-
-SyncGranule:
-  handler: index.handler
-  timeout: 300
-  logToElasticSearch: true
-  source: 'node_modules/@cumulus/sync-granule/dist/'
-  useMessageAdapter: true
-  launchInVpc: true
-
-SyncGranuleNoVpc:
-  handler: index.handler
-  timeout: 300
-  logToElasticSearch: true
-  source: 'node_modules/@cumulus/sync-granule/dist/'
-  useMessageAdapter: true
-
-S3AccessTest:
-  handler: index.handler
-  source: 'lambdas/s3AccessTest/'
-
-FakeProcessing:
-  handler: index.handler
-  source: 'node_modules/@cumulus/test-processing/dist/'
-  useMessageAdapter: true
-
-ModisProcessing:
-  handler: lambda_handler.handler
-  timeout: 300
-  s3Source:
-    bucket: '{{shared_data_bucket}}'
-    key: deploy/cumulus-process/modis/0.5.2.zip
-  runtime: python2.7
-
-InRegionS3Policy:
-   handler: index.inRegionS3Policy
-   memory: 256
-   timeout: 300
-   source: 'node_modules/@cumulus/api/dist/'
-
-SnsS3Test:
-  handler: index.handler
-  source: 'lambdas/snsS3Test/'
-
 CNMToCMA:
   handler: 'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'
   timeout: 300
@@ -124,10 +5,9 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: 'daacs/podaac/cnmToGranule-1.0-wCMA.zip'
+    key: daacs/podaac/cnmToGranule-1532625517.zip
   useMessageAdapter: false
   launchInVpc: true
-
 CnmResponse:
   handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
   timeout: 300
@@ -136,13 +16,119 @@ CnmResponse:
   memory: 256
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: 'daacs/podaac/cnmResponse-1.0.zip'
+    key: daacs/podaac/cnmResponse-1532633768.zip
   launchInVpc: true
-
+DiscoverGranules:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: node_modules/@cumulus/discover-granules/dist/
+  useMessageAdapter: true
+  launchInVpc: true
+DiscoverGranulesNoVpc:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: node_modules/@cumulus/discover-granules/dist/
+  useMessageAdapter: true
+DiscoverPdrs:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/discover-pdrs/dist/
+  useMessageAdapter: true
+  logToElasticSearch: true
+FakeProcessing:
+  handler: index.handler
+  source: node_modules/@cumulus/test-processing/dist/
+  useMessageAdapter: true
+HelloWorld:
+  handler: index.handler
+  timeout: 300
+  memory: 256
+  source: node_modules/@cumulus/hello-world/dist/
+  useMessageAdapter: true
+InRegionS3Policy:
+  handler: index.inRegionS3Policy
+  memory: 256
+  timeout: 300
+  source: node_modules/@cumulus/api/dist/
+ModisProcessing:
+  handler: lambda_handler.handler
+  timeout: 300
+  s3Source:
+    bucket: '{{shared_data_bucket}}'
+    key: deploy/cumulus-process/modis/0.5.2.zip
+  runtime: python2.7
+MoveGranules:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/move-granules/dist/
+  useMessageAdapter: true
+QueuePdrs:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/queue-pdrs/dist/
+  useMessageAdapter: true
+  logToElasticSearch: true
+ParsePdr:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/parse-pdr/dist/
+  useMessageAdapter: true
+  logToElasticSearch: true
+PdrStatusCheck:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/pdr-status-check/dist/
+  useMessageAdapter: true
+PostToCmr:
+  handler: index.handler
+  timeout: 300
+  memory: 256
+  logToElasticSearch: true
+  source: node_modules/@cumulus/post-to-cmr/dist/
+  useMessageAdapter: true
+  envs:
+    internal: '{{buckets.internal.name}}'
+QueueGranules:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/queue-granules/dist/
+  useMessageAdapter: true
+SfSnsReport:
+  handler: index.handler
+  timeout: 300
+  source: node_modules/@cumulus/sf-sns-report/dist
+  useMessageAdapter: true
+SyncGranule:
+  handler: index.handler
+  timeout: 300
+  logToElasticSearch: true
+  source: node_modules/@cumulus/sync-granule/dist/
+  useMessageAdapter: true
+  launchInVpc: true
+SyncGranuleNoVpc:
+  handler: index.handler
+  timeout: 300
+  logToElasticSearch: true
+  source: node_modules/@cumulus/sync-granule/dist/
+  useMessageAdapter: true
+S3AccessTest:
+  handler: index.handler
+  source: lambdas/s3AccessTest/
+SnsS3Test:
+  handler: index.handler
+  source: lambdas/snsS3Test/
+WaitForDeployment:
+  handler: index.handler
+  source: lambdas/waitForDeploy/
+VersionUpTest:
+  handler: index.handler
+  memory: 128
+  source: lambdas/versionUpTest
 AsyncOperationSuccess:
   handler: lambdas.success
   source: 'lambdas/asyncOperations/'
-
 AsyncOperationFail:
   handler: lambdas.fail
   source: 'lambdas/asyncOperations/'

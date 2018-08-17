@@ -8,7 +8,7 @@ const recursion = require('./recursion');
 const { omit } = require('lodash');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {
-  // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP 
+  // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP
   // servers return inconsistent results when using
   // 'STAT' command. We can use 'LIST' in those cases by
   // setting the variable `useList` to true
@@ -83,7 +83,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     const client = new JSFtp(this.ftpClientOptions);
     return new Promise((resolve, reject) => {
       client.on('error', reject);
-      const input = new Buffer(body);
+      const input = Buffer.from(body);
       client.put(input, join(path, filename), (err) => {
         client.destroy();
         if (err) return reject(err);

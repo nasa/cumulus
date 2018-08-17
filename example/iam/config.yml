@@ -43,13 +43,30 @@ cumulus-from-pr:
 aj:
   prefix: aj-integration
 
-aimee:
-  prefix: aimee
-  stackName: aimee-iam
+aimee-test:
+  prefix: aimee-test
+  stackName: aimee-test-iam
 
 lf:
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
 
 jl:
   prefix: jl-test-integration
@@ -90,3 +107,40 @@ mth-2:
     public:
       name: '{{prefix}}-public'
       type: public
+
+cum-test:
+  prefix: '{{PREFIX}}'
+  stackName: '{{PREFIX}}-iam'
+  buckets:
+    internal:
+      name: '{{PREFIX}}-internal'
+      type: internal
+    protected:
+      name: '{{PREFIX}}-protected'
+      type: protected
+    private:
+      name: '{{PREFIX}}-private'
+      type: private
+    public:
+      name: '{{PREFIX}}-public'
+      type: public
+    shared:
+      name: '{{PREFIX}}-data-shared'
+      type: shared
+    protected-2:
+      name: '{{PREFIX}}-protected-2'
+      type: protected
+  
+  system_bucket: '{{PREFIX}}-internal'
+
+mvd:
+  prefix: mvd
+
+jc:
+  prefix: jc
+
+mhs:
+  prefix: mhs
+
+jk:
+  prefix: jk

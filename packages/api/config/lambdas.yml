@@ -1,7 +1,7 @@
 sqs2sf:
   handler: index.starter
   timeout: 200
-  memory: 384
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
 
 executeMigrations:
@@ -78,6 +78,27 @@ kinesisConsumer:
   timeout: 100
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+    bucket: '{{system_bucket}}'
+    FallbackTopicArn:
+      function: Fn::Sub
+      value: '${kinesisFallbackSns}'
+
+fallbackConsumer:
+  handler: index.kinesisConsumer
+  timeout: 100
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  deadletterqueue: kinesisFailure
   envs:
     RulesTable:
       function: Ref

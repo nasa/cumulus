@@ -39,6 +39,7 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
 * [Upgrade Instructions](upgrade/README.md)
   * [1.6.0](upgrade/1.6.0.md)
   * [1.7.0](upgrade/1.7.0.md)
+  * [1.9.0](upgrade/1.9.0.md)
 * [Changelog](https://github.com/nasa/cumulus/blob/master/CHANGELOG.md)
 * [Team](team.md)
 
@@ -46,5 +47,7 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
 ### Data Cookbook
 
 * [About Cookbooks](data-cookbooks/about-cookbooks.md)
+  * [Collections, Providers, Schemas, and Rules](data-cookbooks/setup.md)
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
+* [SIPS Workflow](data-cookbooks/sips-workflow.md)

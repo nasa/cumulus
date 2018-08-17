@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { get } = require('lodash');
 const { Pdr, Execution } = require('@cumulus/api/models');
 const {
   buildAndExecuteWorkflow,
@@ -167,6 +168,61 @@ describe('Parse PDR workflow', () => {
     it('the execution record is added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
+    });
+  });
+
+  describe('When a workflow is configured to make a choice based on the output of a Cumulus task', () => {
+    let executionStatus;
+
+    beforeAll(async () => {
+      const executionArn = workflowExecution.executionArn;
+      executionStatus = await apiTestUtils.getExecutionStatus({
+        prefix: config.stackName,
+        arn: executionArn
+      });
+    });
+
+    it('branches according to the CMA output', async () => {
+      expect(executionStatus.executionHistory).toBeTruthy();
+      const events = executionStatus.executionHistory.events;
+
+      // the output of the CheckStatus is used to determine the task of choice
+      const checkStatusTaskName = 'CheckStatus';
+      const stopStatusTaskName = 'StopStatus';
+      const pdrStatusReportTaskName = 'PdrStatusReport';
+
+      let choiceVerified = false;
+      for (let i = 0; i < events.length; i += 1) {
+        const currentEvent = events[i];
+        if (currentEvent.type === 'TaskStateExited' &&
+        get(currentEvent, 'stateExitedEventDetails.name') === checkStatusTaskName) {
+          const output = JSON.parse(get(currentEvent, 'stateExitedEventDetails.output'));
+          const isFinished = output.payload.isFinished;
+
+          // get the next task executed
+          let nextTask;
+          while (!nextTask && i < events.length - 1) {
+            i += 1;
+            const nextEvent = events[i];
+            if (nextEvent.type === 'TaskStateEntered' &&
+              get(nextEvent, 'stateEnteredEventDetails.name')) {
+              nextTask = get(nextEvent, 'stateEnteredEventDetails.name');
+            }
+          }
+
+          expect(nextTask).toBeTruthy();
+
+          if (isFinished === true) {
+            expect(nextTask).toEqual(stopStatusTaskName);
+          }
+          else {
+            expect(nextTask).toEqual(pdrStatusReportTaskName);
+          }
+          choiceVerified = true;
+        }
+      }
+
+      expect(choiceVerified).toBe(true);
     });
   });
 });

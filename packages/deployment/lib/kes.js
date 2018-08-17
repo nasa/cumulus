@@ -38,7 +38,7 @@ const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
  * @param {integer} ms - number of milliseconds
  * @returns {Promise} the arguments passed after the timeout
  */
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A subclass of Kes class that overrides opsStack method.

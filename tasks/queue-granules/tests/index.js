@@ -69,13 +69,14 @@ test.afterEach(async (t) => {
 
 test.serial('The correct output is returned when granules are queued without a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
   const collectionConfig = { foo: 'bar' };
-  await t.context.collectionConfigStore.put(dataType, collectionConfig);
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
 
   const { event } = t.context;
   event.input.granules = [
-    { dataType, granuleId: randomString(), files: [] },
-    { dataType, granuleId: randomString(), files: [] }
+    { dataType: dataType, version: version, granuleId: randomString(), files: [] },
+    { dataType: dataType, version: version, granuleId: randomString(), files: [] }
   ];
 
   await validateConfig(t, event.config);
@@ -90,13 +91,14 @@ test.serial('The correct output is returned when granules are queued without a P
 
 test.serial('The correct output is returned when granules are queued with a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
   const collectionConfig = { foo: 'bar' };
-  await t.context.collectionConfigStore.put(dataType, collectionConfig);
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
 
   const { event } = t.context;
   event.input.granules = [
-    { dataType, granuleId: randomString(), files: [] },
-    { dataType, granuleId: randomString(), files: [] }
+    { dataType: dataType, version: version, granuleId: randomString(), files: [] },
+    { dataType: dataType, version: version, granuleId: randomString(), files: [] }
   ];
   event.input.pdr = { name: randomString(), path: randomString() };
 
@@ -112,8 +114,9 @@ test.serial('The correct output is returned when granules are queued with a PDR'
 
 test.serial('The correct output is returned when no granules are queued', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
   const collectionConfig = { foo: 'bar' };
-  await t.context.collectionConfigStore.put(dataType, collectionConfig);
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
 
   const { event } = t.context;
   event.input.granules = [];
@@ -129,13 +132,14 @@ test.serial('The correct output is returned when no granules are queued', async 
 
 test.serial('Granules are added to the queue', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
+  const version = '6';
   const collectionConfig = { foo: 'bar' };
-  await t.context.collectionConfigStore.put(dataType, collectionConfig);
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
 
   const { event } = t.context;
   event.input.granules = [
-    { dataType, granuleId: randomString(), files: [] },
-    { dataType, granuleId: randomString(), files: [] }
+    { dataType: dataType, version: version, granuleId: randomString(), files: [] },
+    { dataType: dataType, version: version, granuleId: randomString(), files: [] }
   ];
 
   await validateConfig(t, event.config);
@@ -161,6 +165,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
   const granule1 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
+    version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }]
   };
@@ -168,6 +173,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
   const granule2 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
+    version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }]
   };
@@ -176,8 +182,8 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    t.context.collectionConfigStore.put(granule1.dataType, collectionConfig1),
-    t.context.collectionConfigStore.put(granule2.dataType, collectionConfig2)
+    t.context.collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
+    t.context.collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
   ]);
 
   await validateConfig(t, event.config);
@@ -216,8 +222,10 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule1.dataType,
             granuleId: granule1.granuleId,
-            files: granule1.files
+            files: granule1.files,
+            version: granule1.version
           }
         ]
       }
@@ -242,8 +250,10 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule2.dataType,
             granuleId: granule2.granuleId,
-            files: granule2.files
+            files: granule2.files,
+            version: granule2.version
           }
         ]
       }
@@ -268,6 +278,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
 
   const granule1 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
+    version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }]
   };
@@ -275,6 +286,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
 
   const granule2 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
+    version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }]
   };
@@ -283,8 +295,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    t.context.collectionConfigStore.put(granule1.dataType, collectionConfig1),
-    t.context.collectionConfigStore.put(granule2.dataType, collectionConfig2)
+    t.context.collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
+    t.context.collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
   ]);
 
   await validateConfig(t, event.config);
@@ -325,8 +337,10 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule1.dataType,
             granuleId: granule1.granuleId,
-            files: granule1.files
+            files: granule1.files,
+            version: granule1.version
           }
         ]
       }
@@ -353,8 +367,10 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       payload: {
         granules: [
           {
+            dataType: granule2.dataType,
             granuleId: granule2.granuleId,
-            files: granule2.files
+            files: granule2.files,
+            version: granule2.version
           }
         ]
       }

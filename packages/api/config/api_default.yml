@@ -44,6 +44,7 @@ ApiGranulesDefault:
   memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiRole: true
+  urs: true
   envs:
     UsersTable:
       function: Ref
@@ -60,7 +61,6 @@ ApiGranulesDefault:
     invoke:
       function: "Ref"
       value: ScheduleSFLambdaFunction
-    distEndpoint: '{{parent.api_distribution_url}}'
     bucket: '{{parent.system_bucket}}'
     internal: '{{parent.system_bucket}}'
     cmr_provider: '{{parent.cmr.provider}}'
@@ -306,6 +306,10 @@ ApiLogsDefault:
       cors: true
       api: backend
     - path: logs
+      method: get
+      cors: true
+      api: backend
+    - path: logs/{executionName}
       method: get
       cors: true
       api: backend
