@@ -11,7 +11,6 @@ default:
     streamName: '{{stackName}}-testStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
-    message_adapter_version: v1.0.6
     IngestGranule:
       IngestGranuleOutput:
         granules:
