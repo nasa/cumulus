@@ -210,15 +210,15 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
 
-        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
-        // get shard iterator for the response stream so we can process any new records sent to it
-        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
-
         console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
+
+        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
+        // get shard iterator for the response stream so we can process any new records sent to it
+        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
       });
     });
 
