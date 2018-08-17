@@ -29,6 +29,7 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
     * [Lambda Functions](workflows/lambda.md)
     * [Dockerization](workflows/docker.md)
   * [Workflow Configuration How-to's](workflows/workflow-configuration-how-to.md)
+    * [Configuring Retries](workflows/workflow-retry-configuration.md)
 * [Tasks](tasks.md)
 * [Cumulus API](https://nasa.github.io/cumulus-api)
 * [Backup and Restore](backup_and_restore.md)
