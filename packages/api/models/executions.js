@@ -42,6 +42,7 @@ class Execution extends Manager {
       arn,
       parentArn: get(payload, 'cumulus_meta.parentExecutionArn'),
       execution,
+      tasks: get(payload, 'meta.workflow_tasks'),
       error: parseException(payload.exception),
       type: get(payload, 'meta.workflow_name'),
       collectionId: collectionId,
