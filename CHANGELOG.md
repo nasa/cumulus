@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-855** Adds integration test for kinesis' error path.
 
 
+### Changed
+- In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
+
 ## [v1.9.0] - 2018-08-06
 
 **Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
