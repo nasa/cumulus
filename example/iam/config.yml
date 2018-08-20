@@ -51,6 +51,23 @@ lf:
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
 
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
 jl:
   prefix: jl-test-integration
   buckets:
