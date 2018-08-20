@@ -78,16 +78,28 @@ function getExecutionStatus(executionArn) {
  * @returns {string} status
  */
 async function waitForCompletedExecution(executionArn) {
-  let executionStatus = await getExecutionStatus(executionArn);
   let statusCheckCount = 0;
+  let waitPeriod = waitPeriodMs;
+  let executionStatus = 'RUNNING';
 
   // While execution is running, check status on a time interval
   /* eslint-disable no-await-in-loop */
-  while (executionStatus === 'RUNNING' && statusCheckCount < executionStatusNumRetries) {
-    await timeout(waitPeriodMs);
-    executionStatus = await getExecutionStatus(executionArn);
+  do {
+    await timeout(waitPeriod);
+    try {
+      executionStatus = await getExecutionStatus(executionArn);
+    }
+    catch (e) {
+      if (e.code === 'ThrottlingException') {
+        console.log(`Encountered step function describeExecution throttling exception with retry interval of ${waitPeriod}.`); // eslint-disable-line max-len
+        waitPeriod *= 2;
+        return 'RUNNING';
+      }
+
+      throw e;
+    }
     statusCheckCount += 1;
-  }
+  } while (executionStatus === 'RUNNING' && statusCheckCount < executionStatusNumRetries);
   /* eslint-enable no-await-in-loop */
 
   if (executionStatus === 'RUNNING' && statusCheckCount >= executionStatusNumRetries) {
@@ -134,6 +146,8 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
   const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
 
+  console.log(`Starting workflow: ${workflowName}. Execution ARN ${executionArn}`);
+
   return executionArn;
 }
 
@@ -150,8 +164,6 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
  */
 async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg) {
   const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
-
-  console.log(`Executing workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
   // Wait for the execution to complete to get the status
   const status = await waitForCompletedExecution(executionArn);

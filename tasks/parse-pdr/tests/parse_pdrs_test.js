@@ -53,7 +53,7 @@ test.serial('parse PDR from FTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -105,12 +105,12 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:3030'
+    host: 'http://127.0.0.1:3030'
   };
 
   await validateInput(t, t.context.payload.input);
   await validateConfig(t, t.context.payload.config);
-  
+
   let output;
   try {
     output = await parsePdr(t.context.payload);
@@ -154,7 +154,7 @@ test.serial('parse PDR from SFTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 2222,
     username: 'user',
     password: 'password'
@@ -279,7 +279,7 @@ test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => 
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -390,7 +390,7 @@ test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };

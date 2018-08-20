@@ -13,7 +13,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 class MyTestDiscoveryClass {
   constructor(useList) {
     this.decrypted = true;
-    this.host = 'localhost';
+    this.host = '127.0.0.1';
     this.password = 'testpass';
     this.path = '/';
     this.provider = { encrypted: false };
