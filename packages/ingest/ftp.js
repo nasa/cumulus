@@ -160,12 +160,12 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     const client = new JSFtp(this.ftpClientOptions);
 
     // get readable stream for remote file
-    const readable = await new Promise(((resolve, reject) => {
+    const readable = await new Promise((resolve, reject) => {
       client.get(remotePath, (err, socket) => {
         if (err) reject(err);
         else resolve(socket);
       });
-    }));
+    });
 
     const pass = new PassThrough();
     readable.pipe(pass);
