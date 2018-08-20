@@ -3,7 +3,8 @@
 const get = require('lodash.get');
 const aws = require('@cumulus/ingest/aws');
 const Manager = require('./base');
-const { constructCollectionId, parseException } = require('../lib/utils');
+const { constructCollectionId } = require('@cumulus/common');
+const { parseException } = require('../lib/utils');
 const executionSchema = require('./schemas').execution;
 
 class Execution extends Manager {
