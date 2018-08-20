@@ -86,7 +86,7 @@ test.serial('no error when collection info is not provided in the event', async 
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -101,7 +101,7 @@ test.serial('download Granule from FTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'ftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     username: 'testuser',
     password: 'testpass'
   };
@@ -138,7 +138,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:3030'
+    host: 'http://127.0.0.1:3030'
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
 
@@ -174,7 +174,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'sftp',
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 2222,
     username: 'user',
     password: 'password'
@@ -286,7 +286,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:3030'
+    host: 'http://127.0.0.1:3030'
   };
 
   event.input.granules[0].files[0].path = '/granules';
@@ -335,7 +335,7 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:3030'
+    host: 'http://127.0.0.1:3030'
   };
 
   validateConfig(t, t.context.event.config);
@@ -353,7 +353,7 @@ test.serial('validate file properties', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://localhost:3030'
+    host: 'http://127.0.0.1:3030'
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
   const [file] = t.context.event.input.granules[0].files;
@@ -430,7 +430,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 //   const provider = {
 //     id: 'MODAPS',
 //     protocol: 'http',
-//     host: 'http://localhost:3030'
+//     host: 'http://127.0.0.1:3030'
 //   };
 //   sinon.stub(S3, 'fileExists').callsFake(() => true);
 //   const uploaded = sinon.stub(S3, 'upload').callsFake(() => '/test/test.hd');
