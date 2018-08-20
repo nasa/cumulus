@@ -1,5 +1,3 @@
-# Summary
-
 ### Documentation
 
 * [Home](README.md)
