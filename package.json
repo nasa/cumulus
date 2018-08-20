@@ -10,9 +10,9 @@
     "e2e": "ava tests/*.js --serial",
     "lint": "eslint packages/api --ext .js",
     "test": "nyc lerna run test --concurrency 2",
-    "bootstrap": "lerna bootstrap --npm-client=npm",
+    "bootstrap": "lerna bootstrap --npm-client=npm --hoist",
     "ybootstrap": "lerna bootstrap",
-    "bootstrap-no-build": "lerna bootstrap --ignore-scripts",
+    "bootstrap-no-build": "lerna bootstrap --ignore-scripts --npm-client=npm --hoist",
     "update": "lerna publish --skip-git --skip-npm",
     "publish": "lerna publish --skip-git --repo-version $VERSION --yes --npm-client=npm",
     "clean": "lerna clean",
@@ -57,7 +57,9 @@
     "nyc": "^11.6.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.224.1",
-    "fs-extra": "^5.0.0"
+    "aws-sdk": "^2.238.1",
+    "fs-extra": "^5.0.0",
+    "latest-version": "^4.0.0",
+    "semver": "^5.5.0"
   }
 }

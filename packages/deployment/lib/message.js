@@ -135,6 +135,7 @@ function template(name, workflow, config, outputs) {
     },
     meta: {
       workflow_name: name,
+      workflow_tasks: {},
       stack: config.stackName,
       buckets: config.buckets,
       cmr: cmr,

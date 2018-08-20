@@ -1,6 +1,6 @@
 # @cumulus/cmrjs
 
-[![CircleCI](https://circleci.com/gh/nasa/cumulus.svg?style=svg)](https://circleci.com/gh/nasa/cumulus)
+[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 
 A Node.js client to read from, write to, and delete from NASA's Common Metadata Repository (CMR) API.
 

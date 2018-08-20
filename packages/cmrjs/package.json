@@ -32,10 +32,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "^1.9.0",
-    "got": "^7.1.0",
+    "got": "^8.3.0",
     "lodash.property": "^4.4.2",
     "public-ip": "^2.3.5",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "ava": "^0.25.0",
