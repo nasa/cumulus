@@ -1,7 +1,19 @@
 'use strict';
 
 const { s3 } = require('./aws');
-const { constructCollectionId } = require('../api/lib/utils');
+
+
+/**
+ * Returns the collectionId used in elasticsearch
+ * which is a combination of collection name and version
+ *
+ * @param {string} name - collection name
+ * @param {string} version - collection version
+ * @returns {string} collectionId
+ */
+function constructCollectionId(name, version) {
+  return `${name}___${version}`;
+}
 
 /**
  * Store and retrieve collection configs in S3
@@ -110,4 +122,6 @@ class CollectionConfigStore {
     return `${this.stackName}/collections/${collectionId}.json`;
   }
 }
-module.exports = CollectionConfigStore;
+
+module.exports.constructCollectionId = constructCollectionId;
+module.exports.CollectionConfigStore = CollectionConfigStore;
