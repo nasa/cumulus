@@ -1,6 +1,6 @@
 'use strict';
 
-const { sfn } = require('@cumulus/common/aws');
+const { sfn, s3 } = require('@cumulus/common/aws');
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
@@ -197,15 +197,27 @@ class SfnStep {
       return null;
     }
 
+    let stepOutput = {};
     if (eventType === 'success') {
-      return this.getSuccessOutput(stepExecution, stepName);
+      stepOutput = this.getSuccessOutput(stepExecution, stepName);
     }
     else if (eventType === 'failure') {
-      return this.getFailureOutput(stepExecution, stepName);
+      stepOutput =  this.getFailureOutput(stepExecution, stepName);
     }
 
-    console.log(`Step ${stepName} did not complete ${eventType} as expected.`);
-    return null;
+    if (!stepOutput) {
+      console.log(`Step ${stepName} did not complete ${eventType} as expected.`);
+      return null;
+    }
+
+    if (stepOutput.replace) {
+      // Message was too large and output was written to S3
+      console.log(`Retrieving ${stepName} output from ${JSON.stringify(stepOutput.replace)}`);
+      stepOutput = await s3().getObject(stepOutput.replace).promise()
+        .then((response) => JSON.parse(response.Body.toString()));
+    }
+
+    return stepOutput;
   }
 }
 
