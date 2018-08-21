@@ -24,12 +24,17 @@
 
 'use strict';
 
-const { Kes } = require('kes');
+const { Kes, utils } = require('kes');
+const fs = require('fs-extra');
 const path = require('path');
 const Lambda = require('./lambda');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
+
+const getActiveLambdaArns = require('./util');
+const util = require('util');
+const fsWriteFile = util.promisify(fs.writeFile);
 
 
 /**
@@ -155,7 +160,9 @@ class UpdatedKes extends Kes {
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
+    // If not using message adapter, skip custom compilation
     if (!filename) return super.compileCF();
+
     return fetchMessageAdapter(
       this.config.message_adapter_version,
       this.messageAdapterGitPath,
@@ -164,8 +171,115 @@ class UpdatedKes extends Kes {
       dest
     ).then(() => {
       this.Lambda.messageAdapterZipFileHash = new this.Lambda(this.config).getHash(src);
-    }).then(() => super.compileCF());
+      return this.superCompileCF();
+    });
   }
+
+  /**
+   * Compiles a CloudFormation template in Yaml format.
+   *
+   * Reads the configuration yaml from `.kes/config.yml`.
+   *
+   * Writes the template to `.kes/cloudformation.yml`.
+   *
+   * Uses `.kes/cloudformation.template.yml` as the base template
+   * for generating the final CF template.
+   *
+   * @returns {Promise} returns the promise of an AWS response object
+   */
+  async superCompileCF() {
+    const lambda = new this.Lambda(this.config);
+
+    return lambda.process().then(async (config) => {
+      this.config = config;
+      let cf;
+
+      // Inject Lambda Alias values into configuration,
+      // then update configured workflow lambda references
+      // to reference the generated alias values
+      this.injectWorkflowLambdaAliases();
+      await this.injectOldWorkflowLambdaAliases();
+
+      // if there is a template parse CF there first
+      if (this.config.template) {
+        const mainCF = this.parseCF(this.config.template.cfFile);
+
+        // check if there is a CF over
+        try {
+          fs.lstatSync(this.config.cfFile);
+          const overrideCF = this.parseCF(this.config.cfFile);
+
+          // merge the the two
+          cf = utils.mergeYamls(mainCF, overrideCF);
+        }
+        catch (e) {
+          if (!e.message.includes('ENOENT')) {
+            console.log(`compiling the override template at ${this.config.cfFile} failed:`);
+            throw e;
+          }
+          cf = mainCF;
+        }
+      }
+      else {
+        cf = this.parseCF(this.config.cfFile);
+      }
+
+      const destPath = path.join(this.config.kesFolder, this.cf_template_name);
+      console.log(`Template saved to ${destPath}`);
+      return fsWriteFile(destPath, cf);
+    });
+  }
+
+
+  async injectOldWorkflowLambdaAliases() {
+    this.config.oldLambdas = {};
+    const activeResources = await getActiveLambdaArns();
+    const regExp = /^.*\:([^:]*)-([^:]*)$/;
+    const oldLambdas = {};
+    activeResources.forEach((resource) => {
+      const matchArray = regExp.exec(resource);
+      oldLambdas[matchArray[1]] = { hash: matchArray[2] };
+    });
+    this.config.oldLambdas = oldLambdas;
+  }
+
+  //For each state within each step function,
+  //if it's a Task state type, replace the static Lambda ARN
+  // reference with a reference to the unique Alias Object in the workflow.
+  injectWorkflowLambdaAliases() {
+    const stepFunctionKeys = Object.keys(this.config.stepFunctions);
+    stepFunctionKeys.forEach((stepFunction) => {
+      const stepFunctionStateKeys = Object.keys(this.config.stepFunctions[stepFunction].States);
+      stepFunctionStateKeys.forEach((stepFunctionState) => {
+        const stateObject = this.config.stepFunctions[stepFunction].States[stepFunctionState];
+        // Only replace task resources.  Obviously.
+        if ((stateObject.Type === 'Task') && (!stateObject.Resource.includes('Activity'))) {
+          const lambdaAlias = this.lookupLambdaAlias(stateObject.Resource);
+          stateObject.Resource = lambdaAlias;
+        }
+      });
+    });
+  }
+
+  // Programatically generate alias reference
+  lookupLambdaAlias(stateObjectResourceString) {
+    //Match the expected ${{{Key}}LambdaFunction.Arn} string
+    let lambdaKey;
+    const regExp = /^\$\{(.*)LambdaFunction.Arn/;
+    const matchArray = regExp.exec(stateObjectResourceString);
+
+    if (matchArray) {
+      lambdaKey = matchArray[1];
+    }
+    else {
+      //Fail
+      console.log('DANGER WILL ROBINSON');
+    }
+    const lambdaHash = this.config.lambdas[lambdaKey].hash || '';
+    // Arn is not needed because https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-alias.html
+    return `\$\{${lambdaKey}LambdaAlias${lambdaHash}\}`;
+  }
+
 
   /**
    * Override opsStack method.
