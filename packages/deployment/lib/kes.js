@@ -233,7 +233,8 @@ class UpdatedKes extends Kes {
 
   async injectOldWorkflowLambdaAliases() {
     this.config.oldLambdas = {};
-    const activeResources = await getActiveLambdaArns();
+    const activeResources = await getActiveLambdaArns(this.config.region,
+                                                      this.config.stack);
     const regExp = /^.*\:([^:]*)-([^:]*)$/;
     const oldLambdas = {};
     activeResources.forEach((resource) => {
