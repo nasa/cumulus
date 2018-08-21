@@ -779,6 +779,10 @@ Resources:
                 {{#if ecs.docker}}
                     echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
                     echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
+                    echo 'DOCKER_STORAGE_OPTIONS="${!DOCKER_STORAGE_OPTIONS} --storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
+                    {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
+                    echo 'OPTIONS="${!OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
+                    {{/ifEquals}}
 
                   - Password:
                       Ref: DockerPassword
@@ -873,7 +877,6 @@ Resources:
           Fn::Join:
             - ""
             - - "#cloud-boothook\n"
-              - "cloud-init-per once docker_options echo 'OPTIONS=\"${OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G\"' >> /etc/sysconfig/docker\n"
               - "\n"
               - "yum install -y aws-cfn-bootstrap\n"
               - Fn::Sub: "/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
