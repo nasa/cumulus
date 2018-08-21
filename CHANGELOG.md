@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-855** Adds integration test for kinesis' error path.
 
 
+### Fixed
+- **CUMULUS-771**
+  - Updated sync-granule to stream the remote file to s3
+  - Added integration test for ingesting granules from ftp provider
+  - Updated http/https integration tests for ingesting granules from http/https providers
+- **CUMULUS-862** Updated `@cumulus/integration-tests` to handle remote lambda output
+
 ### Changed
 - In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
 
