@@ -495,7 +495,7 @@ Resources:
 {{/each}}
 
   #################################################
-  # DynamoDB config END
+  # DyanmoDB config END
   #################################################
 
   #################################################
@@ -590,9 +590,39 @@ Resources:
   #################################################
 
   #################################################
+  # Old Lambda Resources block BEGIN
+  #################################################
+{{#each oldLambdas}}
+  {{@key}}LambdaAlias{{this.hash}}:
+    Type: AWS::Lambda::Alias
+    Properties:
+      Description: Version Goes Here
+      FunctionName: !Ref {{@key}}LambdaFunction
+      FunctionVersion: !GetAtt {{@key}}LambdaVersion{{this.hash}}.Version
+      Name: {{@key}}-{{this.hash}}
+  {{@key}}LambdaVersion{{this.hash}}:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName:
+        Ref: {{@key}}LambdaFunction
+{{/each}}
+
+  #################################################
   # Lambda config BEGIN
   #################################################
 {{#each lambdas}}
+  {{@key}}LambdaAlias{{this.hash}}:
+    Type: AWS::Lambda::Alias
+    Properties:
+      Description: Version Goes Here
+      FunctionName: !Ref {{@key}}LambdaFunction
+      FunctionVersion: !GetAtt {{@key}}LambdaVersion{{this.hash}}.Version
+      Name: {{@key}}-{{this.hash}}
+  {{@key}}LambdaVersion{{this.hash}}:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName:
+        Ref: {{@key}}LambdaFunction
   {{@key}}LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
