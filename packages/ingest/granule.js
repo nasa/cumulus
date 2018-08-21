@@ -23,6 +23,7 @@ const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
 const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
+const { promisify } = require('util');
 
 /**
 * The abstract Discover class
@@ -632,12 +633,7 @@ async function getMetadata(xmlFilePath) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return new Promise((resolve, reject) => {
-    xml2js.parseString(xml, xmlParseOptions, (err, data) => {
-      if (err) return reject(err);
-      return resolve(data);
-    });
-  });
+  return (promisify(xml2js.parseString))(xml, xmlParseOptions);
 }
 
 /**
@@ -652,7 +648,7 @@ async function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
   const expectedFormat = /.*\.cmr\.xml$/;
 
-  input.forEach(async (filename) => {
+  for (const filename of input) {
     if (filename && filename.match(expectedFormat)) {
       const metadata = await getMetadata(filename);
       const metadataObject = await parseXmlString(metadata);
@@ -666,7 +662,7 @@ async function getCmrFiles(input, granuleIdExtraction) {
 
       files.push(cmrFileObject);
     }
-  });
+  }
 
   return files;
 }
