@@ -10,15 +10,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
 - **CUMULUS-413** Kinesis processing now captures all errrors.
-        - Added kinesis fallback mechanism when errors occur during record processing.
-        - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
-        - Adds fallbackConsumer lambda to `@cumulus/api`
-        - Adds fallbackqueue option to lambda definitions capture lambda failures after three retries.
-        - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
-        - Adds kinesisFailureSQS to capture fully failed events from all retries.
+  - Added kinesis fallback mechanism when errors occur during record processing.
+  - Adds FallbackTopicArn to `@cumulus/api/lambdas.yml`
+  - Adds fallbackConsumer lambda to `@cumulus/api`
+  - Adds fallbackqueue option to lambda definitions capture lambda failures after three retries.
+  - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
+  - Adds kinesisFailureSQS to capture fully failed events from all retries.
 - **CUMULUS-855** Adds integration test for kinesis' error path.
-- **CUMULUS-686** Added workflow task name and version tracking via executions API under new `tasks` property, and under `workflow_tasks` in step input/output.
-	- Dependent on Cumulus Message Adapter 1.0.9+, CMAjs 1.0.4+, CMAjava 1.2.7+ and CMApython 1.0.5+
+- **CUMULUS-686** Added workflow task name and version tracking via `@cumulus/api` executions endpoint under new `tasks` property, and under `workflow_tasks` in step input/output.
+  - Depends on `cumulus-message-adapter` 1.0.9+, `cumulus-message-adapter-js` 1.0.4+, `cumulus-message-adapter-java` 1.2.7+ and `cumulus-message-adapter-python` 1.0.5+
 
 ### Fixed
 - **CUMULUS-771**
