@@ -50,11 +50,11 @@ describe('When a workflow', () => {
       );
     });
 
-    xit('the workflow executes successfully', () => {
+    it('the workflow executes successfully', () => {
       expect(workflowStatus).toEqual('SUCCEEDED');
     });
 
-    xit('uses the original software version', () => {
+    it('uses the original software version', () => {
       expect(testVersionOutput.payload).toEqual({ output: 'Current Version' });
     });
   });

@@ -109,7 +109,6 @@ SyncGranule:
   launchInVpc: true
   envs:
     internal: '{{buckets.internal.name}}'
-
 SyncGranuleNoVpc:
   handler: index.handler
   timeout: 300
