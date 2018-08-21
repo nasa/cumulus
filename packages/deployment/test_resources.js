@@ -20,18 +20,24 @@ async function getLambdaResourceArns(executionArnList, sf) {
     executionPromises.push(sf.describeStateMachineForExecution({ executionArn: arn }).promise());
   });
 
-  const stepFunctionDefinitions = await Promise.all(executionPromises);
-  console.log(`Step FunctionDefinitions are ${JSON.stringify(stepFunctionDefinitions)}`);
+  let stepFunctionDefinitions;
+  try {
+    stepFunctionDefinitions = await Promise.all(executionPromises);
+  }
+  catch (e) {
+    console.log('Error resolving step function definitions');
+    throw (e);
+  }
   const stepFunctionResources = stepFunctionDefinitions.map(
     (definitionObject) => parseStepFunctionDefinition(definitionObject)
   );
-  // TODO: Check this works
   return uniq([].concat(...stepFunctionResources));
 }
 
 // For a given executionObject(first page of executions), get all executions
 async function getAllExecutions(executionObject, sf2, statusFilter) {
   let executionsList = [];
+  let executionsResult;
   const stateMachineArn = executionObject.executions[0].stateMachineArn;
   executionsList = executionsList.concat(
     executionObject.executions.map((execution) => execution.executionArn)
@@ -47,12 +53,12 @@ async function getAllExecutions(executionObject, sf2, statusFilter) {
           nextToken: executionObject.nextToken
         }
       ).promise();
+      executionsResult = await getAllExecutions(nextObject, sf2, statusFilter);
     }
     catch (e) {
-      console.log(`Error in listExecutionsQuery:  ${e}`);
+      console.log('Error querying AWS for executions');
       throw (e);
     }
-    const executionsResult = await getAllExecutions(nextObject, sf2, statusFilter);
     executionsList = executionsList.concat(executionsResult);
   }
   return executionsList;
