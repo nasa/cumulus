@@ -35,7 +35,7 @@ const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testC
 describe('The kinesisConsumer receives a bad record.', () => {
   beforeAll(async () => {
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 5 * 60 * 1000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
     await tryCatchExit(async () => {
       await createOrUseTestStream(streamName);
       console.log(`\nWaiting for active streams: '${streamName}'.`);

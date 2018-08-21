@@ -2,11 +2,12 @@
 
 const fs = require('fs');
 const path = require('path');
+const { PassThrough } = require('stream');
 const urljoin = require('url-join');
 const Crawler = require('simplecrawler');
 const http = require('http');
 const https = require('https');
-const log = require('@cumulus/common/log');
+const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
 const mkdirp = require('mkdirp');
 const pump = require('pump');
 const errors = require('@cumulus/common/errors');
@@ -120,5 +121,49 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     log.info(`Finishing downloading ${remoteUrl}`);
 
     return localPath;
+  }
+
+  /**
+   * get readable stream of the remote file
+   *
+   * @param {string} url - url of the remote file
+   * @returns {Promise} readable stream of the remote file
+   */
+  async _getReadableStream(url) {
+    const transport = url.indexOf('https://') === 0 ? https : http;
+    return new Promise((resolve, reject) => {
+      transport.get(url, (res) => {
+        if (res.statusCode !== 200) {
+          const err = new Error(`Unexpected HTTP status code: ${res.statusCode}`);
+          err.code = res.statusCode;
+          return reject(err);
+        }
+        return resolve(res);
+      }).on('error', reject);
+    });
+  }
+
+  /**
+   * Download the remote file to a given s3 location
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} bucket - destination s3 bucket of the file
+   * @param {string} key - destination s3 key of the file
+   * @returns {Promise} s3 uri of destination file
+   */
+  async sync(remotePath, bucket, key) {
+    const remoteUrl = urljoin(this.host, remotePath);
+    const s3uri = buildS3Uri(bucket, key);
+    log.info(`Sync ${remoteUrl} to ${s3uri}`);
+
+    const readable = await this._getReadableStream(remoteUrl);
+
+    const pass = new PassThrough();
+    readable.pipe(pass);
+
+    const params = { Bucket: bucket, Key: key, Body: pass };
+    await promiseS3Upload(params);
+    log.info('Uploading to s3 is complete', s3uri);
+    return s3uri;
   }
 };
