@@ -24,6 +24,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         - Adds kinesisFailureSQS to capture fully failed events from all retries.
 - **CUMULUS-855** Adds integration test for kinesis' error path.
 
+
+### Fixed
+- **CUMULUS-771**
+  - Updated sync-granule to stream the remote file to s3
+  - Added integration test for ingesting granules from ftp provider
+  - Updated http/https integration tests for ingesting granules from http/https providers
+
+### Changed
+- In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
+
 ## [v1.9.0] - 2018-08-06
 
 **Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)

@@ -1,10 +1,9 @@
 'use strict';
 
 const aws = require('@cumulus/common/aws');
-const fs = require('fs');
 const log = require('@cumulus/common/log');
-const os = require('os');
 const path = require('path');
+const errors = require('@cumulus/common/errors');
 
 module.exports.s3Mixin = (superclass) => class extends superclass {
   /**
@@ -95,5 +94,35 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
 
       return file;
     });
+  }
+
+  /**
+   * Download the remote file to a given s3 location
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} bucket - destination s3 bucket of the file
+   * @param {string} key - destination s3 key of the file
+   * @returns {Promise} s3 uri of destination file
+   */
+  async sync(remotePath, bucket, key) {
+    const remoteUrl = aws.buildS3Uri(this.host, remotePath);
+    const s3uri = aws.buildS3Uri(bucket, key);
+    log.info(`Sync ${remoteUrl} to ${s3uri}`);
+
+    const exist = await aws.fileExists(this.host, remotePath.replace(/^\/+/, ''));
+    if (!exist) {
+      const message = `Source file not found ${remoteUrl}`;
+      throw new errors.FileNotFound(message);
+    }
+    const params = {
+      Bucket: bucket,
+      CopySource: remoteUrl.replace(/^s3:\//, ''),
+      Key: key,
+      ACL: 'private'
+    };
+
+    await aws.s3().copyObject(params).promise();
+    log.info('Uploading to s3 is complete', s3uri);
+    return s3uri;
   }
 };
