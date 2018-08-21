@@ -2,7 +2,7 @@
 
 ## General Structure
 
-Cumulus uses a common format for all inputs and outputs to workflows. The same format is used for input and output from workflow steps. The common format consists of a JSON object which holds all necessary information about the task execution and AWS environment. Tasks return objects identical in format to their input with the exception of a task-specific `"payload"` field. Tasks may also augment their execution metadata.
+Cumulus uses a common format for all inputs and outputs to workflows. The same format is used for input and output from workflow steps. The common format consists of a JSON object which holds all necessary information about the task execution and AWS environment. Tasks return objects identical in format to their input with the exception of a task-specific `payload` field. Tasks may also augment their execution metadata.
 
 ## Cumulus Message Adapter
 
@@ -35,7 +35,7 @@ In the workflow configuration, each task has its own configuration, and it can u
           array: '[$.meta.foo]'
           object: '{$.meta}'
 
-The corresponding Cumulus Message would be:
+The corresponding Cumulus Message would contain:
 
     {
       "meta": {
@@ -48,9 +48,10 @@ The corresponding Cumulus Message would be:
       },
       "workflow_config": {
         "Discovery": {
-          "object": "{{$.meta.provider}}",
+          "provider: "{{$.meta.provider}}",
           "inlinestr": "prefix{meta.foo}suffix",
-          "array": "{[$.meta.foo]}"
+          "array": "{[$.meta.foo]}",
+          "object": "{{$.meta}}"
         },
         ...
       }
@@ -60,13 +61,20 @@ The message sent to the task would be:
 
     {
       "config" : {
-        "useQueue": true,
-        "object": {
+        "provider: {
           "id": "FOO_DAAC",
           "anykey": "anyvalue"
         },
         "inlinestr": "prefixbarsuffix",
         "array": ["bar"]
+        "object": {
+          "foo": "bar",
+          "provider": {
+            "id": "FOO_DAAC",
+            "anykey": "anyvalue"
+           },
+           ...
+        },
       },
       "input":{...}
     }
