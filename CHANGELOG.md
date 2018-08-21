@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
         - Adds kinesisFailureSQS to capture fully failed events from all retries.
 - **CUMULUS-855** Adds integration test for kinesis' error path.
-
+- **CUMULUS-686** Added workflow task name and version tracking via executions API under new `tasks` property, and under `workflow_tasks` in step input/output.
+	- Dependent on Cumulus Message Adapter 1.0.9+, CMAjs 1.0.4+, CMAjava 1.2.7+ and CMApython 1.0.5+
 
 ### Fixed
 - **CUMULUS-771**
