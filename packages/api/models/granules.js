@@ -12,12 +12,12 @@ const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { moveGranuleFiles } = require('@cumulus/ingest/granule');
+const { constructCollectionId } = require('@cumulus/common');
 
 const Manager = require('./base');
 
 const {
   parseException,
-  constructCollectionId,
   deconstructCollectionId,
   getGranuleProductVolume,
   extractDate
