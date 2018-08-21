@@ -226,6 +226,7 @@ function kinesisEventFromSqsMessage(message) {
   catch (error) {
     console.log('Error parsing KinesisEventFromSqsMessage(message)', JSON.stringify(message));
     console.log(error);
+    kinesisEvent = { identifier: 'Bad Message' };
   }
   return kinesisEvent;
 }
