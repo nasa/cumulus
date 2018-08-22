@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.9.1] - 2018-08-22
 
+**Please Note** To take advantage of the added granule tracking API functionality, updates are required for the message adapter and its libraries. You should be on the following versions:
+- `cumulus-message-adapter` 1.0.9+
+- `cumulus-message-adapter-js` 1.0.4+
+- `cumulus-message-adapter-java` 1.2.7+
+- `cumulus-message-adapter-python` 1.0.5+
+
 ### Added
 
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution in `@cumulus/api`. Added integration test.
