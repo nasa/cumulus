@@ -355,20 +355,19 @@ class Granule {
    * Validate a file's checksum and throw an exception if it's invalid
    *
    * @param {Object} file - the file object to be checked
-   * @param {string} fileLocalPath - the path to the file on the filesystem
+   * @param {string} bucket - s3 bucket name of the file
+   * @param {string} key - s3 key of the file
    * @param {Object} [options={}] - options for the this._hash method
    * @returns {undefined} - no return value, but throws an error if the
    *   checksum is invalid
    * @memberof Granule
    */
-  async validateChecksum(file, fileLocalPath, options = {}) {
+  async validateChecksum(file, bucket, key, options = {}) {
     const [type, value] = await this.getChecksumFromFile(file);
 
     if (!type || !value) return;
 
-    let sum = null;
-    if (type.toLowerCase() === 'cksum') sum = await this._cksum(fileLocalPath);
-    else sum = await this._hash(type, fileLocalPath, options);
+    const sum = await aws.checksumS3Objects(type, bucket, key, options);
 
     if (value !== sum) {
       const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
@@ -492,41 +491,24 @@ class Granule {
     // we are replacing it with a more recent one or
     // adding another version of it to the bucket
 
-    // we considered a direct stream from source to S3 but since
-    // it doesn't work with FTP connections, we decided to always download
-    // and then upload
+    const fileRemotePath = path.join(file.path, file.name);
 
-    const downloadDir = await this.createDownloadDirectory();
+    // s3 file staging location
+    let fullKey = path.join(this.fileStagingDir, file.name);
+    if (fullKey[0] === '/') fullKey = fullKey.substr(1);
 
-    try {
-      const fileLocalPath = path.join(downloadDir, file.name);
-      const fileRemotePath = path.join(file.path, file.name);
+    // stream the source file to s3
+    const filename = await this.sync(fileRemotePath, bucket, fullKey);
 
-      // Download the file
-      await this.download(fileRemotePath, fileLocalPath);
+    // Validate the checksum
+    await this.validateChecksum(file, bucket, fullKey);
 
-      // Validate the checksum
-      await this.validateChecksum(file, fileLocalPath);
-
-      // Upload the file
-      const filename = await this.upload(
-        bucket,
-        this.fileStagingDir,
-        file.name,
-        fileLocalPath
-      );
-
-      return Object.assign(file, {
-        filename,
-        fileStagingDir: this.fileStagingDir,
-        url_path: this.getUrlPath(file),
-        bucket
-      });
-    }
-    finally {
-      // Delete the temp directory
-      await fs.remove(downloadDir);
-    }
+    return Object.assign(file, {
+      filename,
+      fileStagingDir: this.fileStagingDir,
+      url_path: this.getUrlPath(file),
+      bucket
+    });
   }
 }
 exports.Granule = Granule; // exported to support testing
