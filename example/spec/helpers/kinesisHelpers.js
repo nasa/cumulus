@@ -217,9 +217,17 @@ async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsRe
  * @returns {Object} kinesis object stored in SQS message.
  */
 function kinesisEventFromSqsMessage(message) {
-  const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
-  const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
-  const kinesisEvent = JSON.parse(dataString);
+  let kinesisEvent;
+  try {
+    const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
+    const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
+    kinesisEvent = JSON.parse(dataString);
+  }
+  catch (error) {
+    console.log('Error parsing KinesisEventFromSqsMessage(message)', JSON.stringify(message));
+    console.log(error);
+    kinesisEvent = { identifier: 'Bad Message' };
+  }
   return kinesisEvent;
 }
 
@@ -251,6 +259,7 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedP
   while (!queuedRecord && elapsedPeriods < maxNumberElapsedPeriods) {
     const messages = await receiveSQSMessages(queueUrl);
     if (messages.length > 0) {
+
       const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
       if (targetMessage) return targetMessage;
     }
