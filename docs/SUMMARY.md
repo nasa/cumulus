@@ -31,7 +31,7 @@
   * [1.9.0](upgrade/1.9.0.md)
 * [Operating and Troubleshooting](system-documentation/system-documentation.md)
 * [Contributing to documentation](doc_installation.md)
-  * [Adding a task](adding-a-task.md)
+  * [Contributing a task](adding-a-task.md)
 * [Team](team.md)
 
 ### Data Cookbook
