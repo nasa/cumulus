@@ -68,7 +68,7 @@ DiscoverPdrs:
     - ErrorEquals:
       - States.ALL
       ResultPath: '$.exception'
-      Next: StopStatus # On error, call the SfSnsReportLambdaFunction
+      Next: StopStatus # On error, run the StopStatus step which calls the SfSnsReportLambdaFunction
   Next: QueuePdrs # When no error, go to the next step in the workflow
 ```
 
@@ -101,22 +101,22 @@ SfSnsReport:
 
 ### Subscribing Additional Listeners
 
-Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns:`.
+Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns.sftracker.subscriptions`. Shown below is configuration that subscribes an additional lambda function (`SnsS3Test`) to receive broadcasts from the `sftracker` SNS. The `endpoint` value depends on the protocol, and for a  lambda function, requres the function's Arn. In the configuration it is populated by finding the lambda's Arn attribute via [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html). Note the lambda name configured in `lambdas.yml` `SnsS3Test` needs to have it's name postpended with `LambdaFunction` to have the Arn correctly found.
 
 ```yaml
 sns:
   sftracker:
     subscriptions:
-      additionalListener: # Give this a name here
+      additionalReceiver:                 # name of the new subscription.
         endpoint:
           function: Fn::GetAtt
           array:
-            - SnsS3TestLambdaFunction # Configured in lambdas.yml
+            - SnsS3TestLambdaFunction     # a lambda configured in lambdas.yml
             - Arn
         protocol: lambda
 ```
 
-Make sure that your listener lambda is configured in `lambdas.yml`.
+Make sure that the receiver lambda is configured in `lambdas.yml`.
 
 ## Summary
 
