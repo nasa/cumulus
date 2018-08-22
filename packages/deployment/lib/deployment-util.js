@@ -6,7 +6,12 @@ const AWS = require('aws-sdk');
 
 const { compact, uniq } = require('lodash');
 
-// Given a stateMachineDefinitionObject, return a list of lambdas
+/**
+ *
+ * @param {Object} stateMachineDefinitionObject - an AWS State Machine description
+ *                                                object
+ * @returns {String[]}} returns an array of lambda ARNs
+ */
 function parseStepFunctionDefinition(stateMachineDefinitionObject) {
   const definition = JSON.parse(stateMachineDefinitionObject.definition);
   return compact(Object.keys(definition.States).map((key) => definition.States[key].Resource));
@@ -14,9 +19,16 @@ function parseStepFunctionDefinition(stateMachineDefinitionObject) {
 
 // Given a list of state machine execution ARNs,
 // returns qualifed ARN for all lambda resources in use
-async function getLambdaResourceArns(executionArnList, sf) {
+/**
+ * Returns unique list of lambda ARNs used by executionArns
+ *
+ * @param {String[]} executionArns - Array of state machine execution ARNs
+ * @param {Object} sf - AWS.StepFunctions object
+ * @returns {String[]} returns a unique array of lambda ARNs for all of the passed in execution ARNs
+ */
+async function getLambdaResourceArns(executionArns, sf) {
   const executionPromises = [];
-  executionArnList.forEach((arn) => {
+  executionArns.forEach((arn) => {
     executionPromises.push(sf.describeStateMachineForExecution({ executionArn: arn }).promise());
   });
 
@@ -34,8 +46,17 @@ async function getLambdaResourceArns(executionArnList, sf) {
   return uniq([].concat(...stepFunctionResources));
 }
 
-// For a given executionObject(first page of executions), get all executions
-async function getAllExecutions(executionObject, sf2, statusFilter) {
+/**
+ * Given a 'first page' sf.listExecutions object, recursively get
+ * each following page of objects. Returns an array of execution ARNs
+ *
+ * @param {Object} executionObject - aws sf.listExecutions object.
+/* @param {Object} sf AWS.StepFunctions object
+ * @param {String} statusFilter - listExecutions 'status filter' string to filter results on
+ * @returns{String} returns a list of executionARNs for the passed in executionObject and all
+ *                  following calls
+ */
+async function getAllExecutions(executionObject, sf, statusFilter) {
   let executionsList = [];
   let executionsResult;
   const stateMachineArn = executionObject.executions[0].stateMachineArn;
@@ -46,14 +67,14 @@ async function getAllExecutions(executionObject, sf2, statusFilter) {
   if (executionObject.nextToken) {
     let nextObject = null;
     try {
-      nextObject = await sf2.listExecutions(
+      nextObject = await sf.listExecutions(
         {
           stateMachineArn: stateMachineArn,
           statusFilter: statusFilter,
           nextToken: executionObject.nextToken
         }
       ).promise();
-      executionsResult = await getAllExecutions(nextObject, sf2, statusFilter);
+      executionsResult = await getAllExecutions(nextObject, sf, statusFilter);
     }
     catch (e) {
       console.log('Error querying AWS for executions');
@@ -63,6 +84,7 @@ async function getAllExecutions(executionObject, sf2, statusFilter) {
   }
   return executionsList;
 }
+
 
 async function getAllActiveLambdaArns(region, deploymentName) {
   AWS.config.update({ region: region });
