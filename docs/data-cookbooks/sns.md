@@ -2,7 +2,7 @@
 
 On deployment, an sftracker (Step function tracker) [SNS](https://aws.amazon.com/sns) topic is created and used for messages related to the workflow.
 
-Workflows can be configured to send SNS messages containing the Cumulus message throughout the workflow by using the [SF SNS Report lambda function](https://www.npmjs.com/package/@cumulus/sf-sns-report).
+Workflows can be configured to send SNS messages containing the Cumulus message throughout the workflow by using the [SF-SNS-Report lambda function](https://www.npmjs.com/package/@cumulus/sf-sns-report).
 
 ## Pre-Deployment Configuration
 
@@ -117,6 +117,16 @@ sns:
 ```
 
 Make sure that the receiver lambda is configured in `lambdas.yml`.
+
+### SNS message format
+
+The configured `SfSnsReport` lambda receives the Cumulus message [(as the lambda's task input)](../workflows/input_output.html#2-resolve-task-input) and is responsible for publishing the message to the sftracker SNS Topic. But before it publishes the message, `SfSnsReport` makes a determiniation about the workflow status and adds an additional metadata key to the message at `message.meta.status`.
+
+First it determines whether the workflow has finished by looking for the `sfnEnd` key in the `config` object.  If the workflow has finished it checks to see if it has failed by searching the input message for a non-empty `exception` object. The lambda updates the `message.meta.status` with `failed` or `completed` based on that result.  If the workflow is not finished the lambda sets `message.meta.status` to `running`.
+
+This means that subscribers to the sftracker SNS Topic can expect to find the published message by parsing the json string representation of the message found in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[].Sns.Message` and examining the `meta.status` value.
+
+
 
 ## Summary
 
