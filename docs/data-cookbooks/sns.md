@@ -10,7 +10,7 @@ Workflows can be configured to send SNS messages containing the Cumulus message 
 
 The [Hello World Workflow](./hello-world.md) is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in `workflows.yml`.
 
-```
+```yaml
 HelloWorldWorkflow:
   Comment: 'Returns Hello World'
   StartAt: StartStatus
@@ -55,7 +55,7 @@ HelloWorldWorkflow:
 
 To send an SNS message for an error case, you can configure your workflow to catch errors and set the next workflow step on error to a step with the `SfSnsReportLambdaFunction` lambda function. This is configured in `workflows.yml`.
 
-```
+```yaml
 DiscoverPdrs:
   CumulusConfig:
     stack: '{$.meta.stack}'
@@ -76,7 +76,7 @@ DiscoverPdrs:
 
 SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows.yml`.
 
-```
+```yaml
 PdrStatusReport:
   CumulusConfig:
     cumulus_message:
@@ -91,19 +91,19 @@ PdrStatusReport:
 
 To use the SfSnsReport lambda, the following configuration should be added to `lambas.yml`:
 
-```
+```yaml
 SfSnsReport:
   handler: index.handler
   timeout: 300
   source: 'node_modules/@cumulus/sf-sns-report/dist'
-  useMessageAdapter: true 
+  useMessageAdapter: true
 ```
 
 ### Subscribing Additional Listeners
 
 Additional listeners to the SF tracker topic can be configured in `app/config.yml` under `sns:`.
 
-```
+```yaml
 sns:
   sftracker:
     subscriptions:

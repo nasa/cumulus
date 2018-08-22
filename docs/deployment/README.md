@@ -66,7 +66,7 @@ Then run:
 
 **Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
 
-#### Obtain Cumulus Packages 
+#### Obtain Cumulus Packages
 
 ##### Option 1: Get packages from NPM
 
@@ -109,7 +109,7 @@ Build the Cumulus application
 
     $ npm run build
 
-To run the Cumulus deployment with the local code instead of the npm package, use `npm link` from your deployment repository directory 
+To run the Cumulus deployment with the local code instead of the npm package, use `npm link` from your deployment repository directory
 
     $ npm link ../cumulus/packages/deployment/ @cumulus/deployment
 
@@ -304,7 +304,7 @@ List of EarthData users you wish to have access to your dashboard application.  
   system_bucket: <prefix-internal>
 
   buckets:
-    internal: 
+    internal:
         name: <prefix>-internal
         type: internal
 
