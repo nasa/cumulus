@@ -35,6 +35,8 @@
     lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-processing
     stepRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-steprole
     instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<iams-prefix>-ecs
+    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-scaling-role'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 

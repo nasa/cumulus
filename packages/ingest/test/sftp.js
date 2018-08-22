@@ -5,12 +5,10 @@ const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const test = require('ava');
 const JSFtp = require('jsftp');
+const { sftpMixin: TestSftpMixin } = require('../sftp');
 const {
-  aws: {
-    recursivelyDeleteS3Bucket,
-    s3
-  }
-} = require('@cumulus/common');
+  checksumS3Objects, fileExists, recursivelyDeleteS3Bucket, s3
+} = require('@cumulus/common/aws');
 const {
   randomString
 } = require('@cumulus/common/test-utils');
@@ -37,7 +35,7 @@ class MyTestDiscoveryClass {
   }
 }
 
-test.beforeEach(async (t) => {
+test.before(async () => {
   // let's copy the key to s3
   await s3().createBucket({ Bucket: bucket }).promise();
 
@@ -50,7 +48,7 @@ test.beforeEach(async (t) => {
   }).promise();
 });
 
-test.afterEach(async (t) => {
+test.after.always(async () => {
   await Promise.all([
     recursivelyDeleteS3Bucket(bucket)
   ]);
@@ -69,3 +67,15 @@ test('connect and retrieve list of pdrs', async (t) => {
   t.is(list.length > 0, true);
 });
 
+test('Download remote file to s3', async (t) => {
+  class MyTestSftpDiscoveryClass extends TestSftpMixin(MyTestDiscoveryClass) {}
+  const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
+
+  const key = randomString();
+  await myTestSftpDiscoveryClass.sync(
+    '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
+  );
+  t.truthy(fileExists(bucket, key));
+  const sum = await checksumS3Objects('CKSUM', bucket, key);
+  t.is(sum, 1435712144);
+});
