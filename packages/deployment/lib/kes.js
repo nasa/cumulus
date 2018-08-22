@@ -32,7 +32,7 @@ const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
-const getActiveLambdaArns = require('./util');
+const getActiveLambdaArns = require('./deployment-util');
 const util = require('util');
 const fsWriteFile = util.promisify(fs.writeFile);
 
@@ -234,7 +234,7 @@ class UpdatedKes extends Kes {
   async injectOldWorkflowLambdaAliases() {
     this.config.oldLambdas = {};
     const activeResources = await getActiveLambdaArns(this.config.region,
-                                                      this.config.stack);
+      this.config.stack);
     const regExp = /^.*\:([^:]*)-([^:]*)$/;
     const oldLambdas = {};
     activeResources.forEach((resource) => {
@@ -253,7 +253,6 @@ class UpdatedKes extends Kes {
       const stepFunctionStateKeys = Object.keys(this.config.stepFunctions[stepFunction].States);
       stepFunctionStateKeys.forEach((stepFunctionState) => {
         const stateObject = this.config.stepFunctions[stepFunction].States[stepFunctionState];
-        // Only replace task resources.  Obviously.
         if ((stateObject.Type === 'Task') && (!stateObject.Resource.includes('Activity'))) {
           const lambdaAlias = this.lookupLambdaAlias(stateObject.Resource);
           stateObject.Resource = lambdaAlias;
@@ -264,7 +263,6 @@ class UpdatedKes extends Kes {
 
   // Programatically generate alias reference
   lookupLambdaAlias(stateObjectResourceString) {
-    //Match the expected ${{{Key}}LambdaFunction.Arn} string
     let lambdaKey;
     const regExp = /^\$\{(.*)LambdaFunction.Arn/;
     const matchArray = regExp.exec(stateObjectResourceString);
@@ -273,11 +271,11 @@ class UpdatedKes extends Kes {
       lambdaKey = matchArray[1];
     }
     else {
-      //Fail
-      console.log('DANGER WILL ROBINSON');
+      console.log(`Invalid workflow configuration, ${stateObjectResourceString} ` +
+                  'is not a valid Lambda ARN');
+      throw new Error(`Invalid stateObjectResourceString: ${stateObjectResourceString}`);
     }
     const lambdaHash = this.config.lambdas[lambdaKey].hash || '';
-    // Arn is not needed because https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-alias.html
     return `\$\{${lambdaKey}LambdaAlias${lambdaHash}\}`;
   }
 
