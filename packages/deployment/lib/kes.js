@@ -248,8 +248,7 @@ class UpdatedKes extends Kes {
   //if it's a Task state type, replace the static Lambda ARN
   // reference with a reference to the unique Alias Object in the workflow.
   injectWorkflowLambdaAliases() {
-    const stepFunctionKeys = Object.keys(this.config.stepFunctions);
-    stepFunctionKeys.forEach((stepFunction) => {
+    Object.keys(this.config.stepFunctions).forEach((stepFunction) => {
       const stepFunctionStateKeys = Object.keys(this.config.stepFunctions[stepFunction].States);
       stepFunctionStateKeys.forEach((stepFunctionState) => {
         const stateObject = this.config.stepFunctions[stepFunction].States[stepFunctionState];
