@@ -64,7 +64,6 @@ async function getAllExecutions(executionObject, sf2, statusFilter) {
   return executionsList;
 }
 
-// TODO: Docstring
 async function getAllActiveLambdaArns(region, deploymentName) {
   AWS.config.update({ region: region });
   const sf = new AWS.StepFunctions();
@@ -107,7 +106,6 @@ async function getAllActiveLambdaArns(region, deploymentName) {
     lambdaResources = await getLambdaResourceArns(executionArnList, sf);
   }
   catch (e) {
-    // TODO: Add cumulus logging
     console.log(e);
     throw (e);
   }
