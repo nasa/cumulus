@@ -1,10 +1,11 @@
+const fs = require('fs-extra');
 const path = require('path');
 
 const test = require('ava');
 const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString } = require('@cumulus/common/test-utils');
-const { buildS3Uri, s3 } = require('@cumulus/common/aws');
+const { buildS3Uri, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 
 const {
   selector,
@@ -21,6 +22,17 @@ const {
   moveGranuleFile
 } = require('../granule');
 
+
+test.beforeEach(async (t) => {
+  t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
+  await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
+});
+
+test.afterEach(async (t) => {
+  await Promise.all([
+    recursivelyDeleteS3Bucket(t.context.internalBucket)
+  ]);
+});
 /**
 * test that granule.selector() returns the correct class
 **/
@@ -77,10 +89,16 @@ Object.keys(sums).forEach((key) => {
       ingestPayload.config.provider
     );
     const filepath = path.join(__dirname, 'fixtures', `${key}.txt`);
+    await s3().putObject({
+      Bucket: t.context.internalBucket,
+      Key: key,
+      Body: fs.createReadStream(filepath)
+    }).promise();
+
     try {
       const file = { checksumType: key, checksumValue: sums[key] };
-      await granule.validateChecksum(file, filepath, null);
-      await granule.validateChecksum(key, sums[key], filepath);
+      await granule.validateChecksum(file, t.context.internalBucket, key);
+      await granule.validateChecksum(key, t.context.internalBucket, key);
       t.pass();
     }
     catch (e) {
