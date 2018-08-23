@@ -199,8 +199,11 @@ class UpdatedKes extends Kes {
       // Inject Lambda Alias values into configuration,
       // then update configured workflow lambda references
       // to reference the generated alias values
-      this.injectWorkflowLambdaAliases();
-      await this.injectOldWorkflowLambdaAliases();
+
+      if(config.useVersions) {
+        this.injectWorkflowLambdaAliases();
+        await this.injectOldWorkflowLambdaAliases();
+      }
 
       // if there is a template parse CF there first
       if (this.config.template) {
@@ -299,8 +302,8 @@ class UpdatedKes extends Kes {
     this.config.oldLambdas = oldLambdas;
   }
 
-  //For each state within each step function,
-  //if it's a Task state type, replace the static Lambda ARN
+  // For each state within each step function,
+  // if it's a Task state type, replace the static Lambda ARN
   // reference with a reference to the unique Alias Object in the workflow.
   injectWorkflowLambdaAliases() {
     Object.keys(this.config.stepFunctions).forEach((stepFunction) => {
@@ -329,8 +332,14 @@ class UpdatedKes extends Kes {
                   'is not a valid Lambda ARN');
       throw new Error(`Invalid stateObjectResourceString: ${stateObjectResourceString}`);
     }
-    const lambdaHash = this.config.lambdas[lambdaKey].hash || '';
-    return `\$\{${lambdaKey}LambdaAlias${lambdaHash}\}`;
+    const lambdaHash = this.config.lambdas[lambdaKey].hash;
+    // If a lambda resource doesn't have a hash, refer directly to the function ARN
+    if(!lambdaHash) {
+      return (stateObjectResourceString);
+    }
+    else {
+      return `\$\{${lambdaKey}LambdaAlias${lambdaHash}\}`;
+    }
   }
 
 
