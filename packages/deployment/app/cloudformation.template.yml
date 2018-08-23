@@ -593,8 +593,8 @@ Resources:
   # Old Lambda Resources block BEGIN
   #################################################
 {{#each oldLambdas}}
-  {{#if this.hashes}}
-  {{#each this.hashes}}
+{{#if this.hashes}}
+{{#each this.hashes}}
   {{@../key}}LambdaAlias{{this}}:
     Type: AWS::Lambda::Alias
     Properties:
@@ -607,14 +607,16 @@ Resources:
     Properties:
       FunctionName:
         Ref: {{@../key}}LambdaFunction
-  {{/each}}
-  {{/if}}
+{{/each}}
+{{/if}}
 {{/each}}
 
   #################################################
   # Lambda config BEGIN
   #################################################
 {{#each lambdas}}
+{{#if @root.useVersions}}
+  {{#if this.hash}}
   {{@key}}LambdaAlias{{this.hash}}:
     Type: AWS::Lambda::Alias
     Properties:
@@ -627,6 +629,8 @@ Resources:
     Properties:
       FunctionName:
         Ref: {{@key}}LambdaFunction
+  {{/if}}
+{{/if}}
   {{@key}}LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
