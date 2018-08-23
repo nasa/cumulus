@@ -47,7 +47,7 @@
     "babel-preset-es2017": "^6.24.1",
     "json-loader": "~0.5.7",
     "lodash.get": "^4.4.2",
-    "moment": "^2.21.0",
+    "moment": "^2.22.1",
     "webpack": "~1.12.13"
   },
   "devDependencies": {
