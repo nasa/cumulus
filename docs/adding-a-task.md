@@ -1,4 +1,4 @@
-# Adding a task
+# Contributing a task
 
 We're tracking reusable Cumulus tasks [in this list]() and, if you've got one you'd like to share with others, you can add it!
 
