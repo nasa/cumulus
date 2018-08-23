@@ -40,7 +40,7 @@ Understanding the complete `ParsePdr` workflow is not necessary to understanding
 
 In the complete `ParsePdr` workflow definition, the state `QueueGranules` is followed by `CheckStatus`. From `CheckStatus` a loop starts: Given `CheckStatus` returns `payload.isFinished: false`, `CheckStatus` is followed by `CheckAgainChoice` is followed by `PdrStatusReport` is followed by `WaitForSomeTime`, which returns to `CheckStatus`. Once `CheckStatus` returns `payload.isFinished: true`, `CheckAgainChoice` proceeds to `StopStatus`.
 
-![ParsePdr Workflow](docs/images/sips-parse-pdr.png)
+<div style="text-align:center"><img src ="../images/sips-parse-pdr.png" /></div>
 
 ## Further documentation
 
