@@ -670,23 +670,20 @@
                                 
                                 <h1 id="ingest-inputs-and-return-values">Ingest Inputs and Return Values</h1>
 <h2 id="general-structure">General Structure</h2>
-<p>Cumulus uses a common format for all inputs and outputs to workflows. The same format is used for input and output from workflow steps. The common format consists of a JSON object which holds all necessary information about the task execution and AWS environment. Tasks return objects identical in format to their input with the exception of a task-specific <code>&quot;payload&quot;</code> field. Tasks may also augment their execution metadata.</p>
+<p>Cumulus uses a common format for all inputs and outputs to workflows. The same format is used for input and output from workflow steps. The common format consists of a JSON object which holds all necessary information about the task execution and AWS environment. Tasks return objects identical in format to their input with the exception of a task-specific <code>payload</code> field. Tasks may also augment their execution metadata.</p>
 <h2 id="cumulus-message-adapter">Cumulus Message Adapter</h2>
-<p>The Cumulus Message Adapter and Cumulus Message Adapter libraries help task developers integrate their tasks into a Cumulus workflow. These libraries adapt input and outputs from tasks into the Cumulus Message format. The Scheduler service creates the initial event by combining the collection configuration, external resource configuration, workflow configuration, and deployment environment settings.  The subsequent workflow messages between tasks must conform to the message schema. By using the Cumulus Message Adapter, individual task Lambda functions only receive the input and output specifically configured for the task, and not non-task-related message fields.</p>
-<p>The Cumulus Message Adapter libraries are called by the tasks with a callback function containing the business logic of the task as a parameter. They first adapt the incoming message to a format more easily consumable by Cumulus tasks, then invoke the task, and then adapt the task response back to the Cumulus message protocol to be sent to the next task.  </p>
-<p>A task&apos;s Lambda function can include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations. In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to use Cumulus Message Adapter, for example:</p>
+<p>The Cumulus Message Adapter and Cumulus Message Adapter libraries help task developers integrate their tasks into a Cumulus workflow. These libraries adapt input and outputs from tasks into the Cumulus Message format. The Scheduler service creates the initial event message by combining the collection configuration, external resource configuration, workflow configuration, and deployment environment settings.  The subsequent workflow messages between tasks must conform to the message schema. By using the Cumulus Message Adapter, individual task Lambda functions only receive the input and output specifically configured for the task, and not non-task-related message fields.</p>
+<p>The Cumulus Message Adapter libraries are called by the tasks with a callback function containing the business logic of the task as a parameter. They first adapt the incoming message to a format more easily consumable by Cumulus tasks, then invoke the task, and then adapt the task response back to the Cumulus message protocol to be sent to the next task.</p>
+<p>A task&apos;s Lambda function can be configured to include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations. In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to use Cumulus Message Adapter, for example:</p>
 <pre><code>DiscoverPdrs:
   handler: index.handler
-  useMessageAdapter: true  
-</code></pre><p>Input to task application code is a json object with keys:</p>
+  useMessageAdapter: true
+</code></pre><p>Input to the task application code is a json object with keys:</p>
 <ul>
-<li><code>input</code>: By default, the incoming payload is the payload from previous task, or it can be a portion of the payload as specified in the task configuration.</li>
+<li><code>input</code>: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in <code>workflow.yml</code>.</li>
 <li><code>config</code>: Task-specific configuration object with URL templates resolved.</li>
 </ul>
-<p>Output of the task application code:</p>
-<ul>
-<li><code>Task output</code>: By default, the task&apos;s return value is the next payload, or a portion of it is interpreted as the next payload as specified in the task configuration.</li>
-</ul>
+<p>Output from the task application code is returned in and placed in the <code>payload</code> key by default, but the <code>config</code> key can also be used to return just a portion of the task output.</p>
 <h3 id="cumulus-message-adapter-has-the-following-steps">Cumulus Message Adapter has the following steps:</h3>
 <h4 id="1-resolve-url-templates-in-the-task-configuration">1. Resolve URL templates in the task configuration</h4>
 <p>In the workflow configuration, each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates and then passes message to next task. For example, given a task which has the following configuration:</p>
@@ -696,7 +693,7 @@
       inlinestr: &apos;prefix{meta.foo}suffix&apos;
       array: &apos;[$.meta.foo]&apos;
       object: &apos;{$.meta}&apos;
-</code></pre><p>The corresponding Cumulus Message would be:</p>
+</code></pre><p>The corresponding Cumulus Message would contain:</p>
 <pre><code>{
   &quot;meta&quot;: {
     &quot;foo&quot;: &quot;bar&quot;,
@@ -708,9 +705,10 @@
   },
   &quot;workflow_config&quot;: {
     &quot;Discovery&quot;: {
-      &quot;object&quot;: &quot;{{$.meta.provider}}&quot;,
+      &quot;provider: &quot;{{$.meta.provider}}&quot;,
       &quot;inlinestr&quot;: &quot;prefix{meta.foo}suffix&quot;,
-      &quot;array&quot;: &quot;{[$.meta.foo]}&quot;
+      &quot;array&quot;: &quot;{[$.meta.foo]}&quot;,
+      &quot;object&quot;: &quot;{{$.meta}}&quot;
     },
     ...
   }
@@ -718,16 +716,23 @@
 </code></pre><p>The message sent to the task would be:</p>
 <pre><code>{
   &quot;config&quot; : {
-    &quot;useQueue&quot;: true,
-    &quot;object&quot;: {
+    &quot;provider: {
       &quot;id&quot;: &quot;FOO_DAAC&quot;,
       &quot;anykey&quot;: &quot;anyvalue&quot;
     },
     &quot;inlinestr&quot;: &quot;prefixbarsuffix&quot;,
     &quot;array&quot;: [&quot;bar&quot;]
+    &quot;object&quot;: {
+      &quot;foo&quot;: &quot;bar&quot;,
+      &quot;provider&quot;: {
+        &quot;id&quot;: &quot;FOO_DAAC&quot;,
+        &quot;anykey&quot;: &quot;anyvalue&quot;
+       },
+       ...
+    },
   },
   &quot;input&quot;:{...}
-}  
+}
 </code></pre><p>URL template variables replace dotted paths inside curly brackets with their corresponding value. If the Cumulus Message Adapter cannot resolve a value, it will ignore the template, leaving it verbatim in the string.  While seemingly complex, this allows significant decoupling of Tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run tasks and domain data.</p>
 <h4 id="2-resolve-task-input">2. Resolve task input</h4>
 <p>By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies cumulus_message.input:</p>
@@ -762,7 +767,7 @@
 <pre><code>ExampleTask:
   CumulusConfig:
     cumulus_message:
-        outputs: 
+        outputs:
           - source: &apos;{$}&apos;
             destination: &apos;{$.payload}&apos;
           - source: &apos;{$.output.anykey}&apos;
@@ -894,7 +899,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Workflow Input & Ouptut","level":"1.4.3","depth":2,"next":{"title":"Workflow Task Message Flow","level":"1.4.4","depth":2,"path":"workflows/cumulus-task-message-flow.md","ref":"workflows/cumulus-task-message-flow.md","articles":[]},"previous":{"title":"Workflow Tasks","level":"1.4.2","depth":2,"path":"tasks.md","ref":"tasks.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"workflows/input_output.md","mtime":"2018-08-14T19:57:03.592Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-14T19:58:21.668Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Workflow Input & Ouptut","level":"1.4.3","depth":2,"next":{"title":"Workflow Task Message Flow","level":"1.4.4","depth":2,"path":"workflows/cumulus-task-message-flow.md","ref":"workflows/cumulus-task-message-flow.md","articles":[]},"previous":{"title":"Workflow Tasks","level":"1.4.2","depth":2,"path":"tasks.md","ref":"tasks.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"workflows/input_output.md","mtime":"2018-08-23T13:29:12.406Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-23T13:30:39.150Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

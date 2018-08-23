@@ -669,31 +669,40 @@
                                 <section class="normal markdown-section">
                                 
                                 <h1 id="troubleshooting-cumulus-deployment">Troubleshooting Cumulus Deployment</h1>
-<p>This document provides &apos;notes&apos; on frequently encountered deployment issues.</p>
-<p>The issues reported are organized by relevant subsection, and <em>may</em> be out of date given the current rate of development.   Use at your own risk.</p>
-<h2 id="deploy-cumulus">Deploy Cumulus</h2>
-<h3 id="installation">Installation</h3>
+<p>This document provides &apos;notes&apos; on frequently encountered deployment issues. The issues reported are organized by relevant subsection.</p>
+<h3 id="configuring-the-cumulus-stack">Configuring the Cumulus Stack</h3>
+<h4 id="vpc">VPC</h4>
 <p>Issues:</p>
 <ul>
-<li>If you have a <code>PEM_read_bio</code> error when bootstrapping, SSL certificates may be to blame</li>
+<li><p>If redeploying an existing configuration you may already have at least 1 vpc associated with your existing deployment, but its subnets can be transitory in nature depending on what kind of load balancing and/or docker activities are taking place at a given time.  You should  identify at least one persistent subnet to use as a subnet ID (you may only specify one) for use.    If this is needed, navigate to  <a href="https://console.aws.amazon.com/ec2/autoscaling/home?region=us-east-1#AutoScalingGroups:view=details" target="_blank">AWS EC2 &gt; Auto Scaling Groups</a> and note the &quot;Availability Zone&quot; (e.g., us-east-1a). Next, visit <a href="https://console.aws.amazon.com/vpc/home" target="_blank">AWS VPC</a> and click on &quot;Subnets&quot;. Copy the &apos;VPC&apos; value into &apos;vpcId&apos; and the appropriate &apos;Subnet ID&apos; value, based on the Availability Zone value you just saw on the Auto Scaling Groups page, into &apos;subnets&apos;. If you have no vpc and/or subnets, do not include the vpc section in your new configuration.</p>
+<p>Example config:</p>
+<pre><code>vpc:
+vpcId: vpc-1234abcd
+subnets:
+  - subnet-1234ancd
+
+ecs:
+instanceType: t2.micro
+desiredInstances: 1
+availabilityZone: us-east-1a
+</code></pre></li>
 </ul>
-<h4 id="configure-cumulus-stack">Configure Cumulus Stack</h4>
-<h5 id="vpc">vpc</h5>
-<p>Issues:</p>
-<ul>
-<li>If redeploying an existing configuration you may already have at least 1 vpc associated with your existing deployment, but its subnets can be transitory in nature depending on what kind of load balancing and/or docker activities are taking place at a given time.  You should  identify at least one persistent subnet to use as a subnet ID (you may only specify one) for use.    If this is needed, navigate to  <a href="https://console.aws.amazon.com/ec2/autoscaling/home" target="_blank">AWS EC2 &gt; Auto Scaling Groups</a> and note the &quot;Availability Zone&quot; (e.g., us-east-1a). Next, visit <a href="https://console.aws.amazon.com/vpc/home" target="_blank">AWS VPC</a> and click on &quot;Subnets&quot;. Copy the &apos;VPC&apos; value into &apos;vpcId&apos; and the appropriate &apos;Subnet ID&apos; value, based on the Availability Zone value you just saw on the Auto Scaling Groups page, into &apos;subnets&apos;. If you have no vpc and/or subnets, do not include the vpc section in your new configuration.</li>
-</ul>
-<h4 id="deploy-the-cumulus-stack">Deploy the Cumulus Stack</h4>
+<h3 id="deploying-the-cumulus-stack">Deploying the Cumulus Stack</h3>
 <p>Monitoring the progress of stack deployment can be done from the <a href="https://console.aws.amazon.com/cloudformation/home" target="_blank">AWS CloudFormation Console</a>.</p>
 <p>Issues:</p>
-<ul>
-<li><p><strong>Error:</strong> <strong>&quot;The availability zones of the specified subnets and the Auto Scaling group do not match&quot;</strong> -- see <a href="#vpc">vpc issues</a></p>
-</li>
-<li><p><strong>The deployment isn&apos;t failing but is taking a long time</strong>, navigate to <a href="https://console.aws.amazon.com/ecs/home" target="_blank">AWS ECS</a> and then to &quot;Clusters&quot;. Identify the new cluster associated with your <prefix> app deployment and click on it. The summary table (shown at bottom) for the cluster probably says &quot;Desired tasks 1&quot;, or some other non-zero number, and &quot;Running tasks 0&quot;. Click Update, then update the cluster to change &quot;Number of tasks&quot; to 0, or else you will receive (eventually) an error such as <strong>&quot;Service arn:aws:ecs:us-east-1:numbers:service/<prefix>-cumulus-<ecs service="" name=""> did not stabilize&quot;</ecs></prefix></strong> and your app deployment will fail.</prefix></p>
-</li>
-<li><p><strong>If AWS stack rollback/deletion fails</strong> , check for a failure to delete named State Machines that this stack created. The names of the specific state machines can be gathered from the &quot;Events&quot; section of the stack&apos;s output on the AWS CloudFormation Console; you can then (carefully) manually delete the specified State Machines, thus readying AWS for the next attempt.</p>
-</li>
-</ul>
+<h4 id="error-the-availability-zones-of-the-specified-subnets-and-the-auto-scaling-group-do-not-match"><strong>Error:</strong> __&quot;The availability zones of the specified subnets and the Auto Scaling group do not match&quot;</h4>
+<p>See <a href="#vpc">vpc issues</a></p>
+<h4 id="error-stack-is-in-rollbackcomplete-or-rollbackfailed-state-and-can-not-be-updated">Error: Stack.. is in ROLLBACK_COMPLETE (or ROLLBACK_FAILED) state and can not be updated.</h4>
+<p>The stack cannot be re-deployed if it is currently in ROLLBACK_COMPLETE or ROLLBACK_FAILED.</p>
+<p>If this is a new deployment, delete the stack and try deploying again. </p>
+<p>You may be able to continue the rollback operation. At the top of the CloudFormation page for the stack, click the &apos;Other Actions&apos; dropdown and choose to continue rollback. </p>
+<p>In the advanced settings when continuing rollback, you can enter the logical Ids of resources to skip that are preventing rollback. These ids can be found in the resources section of the CloudFormation page for the stack.</p>
+<h4 id="failure-on-nested-stacks">Failure on nested stacks</h4>
+<p>If the deployment failed on nested stacks (CumulusApiDefaultNestedStack, CumulusApiV1NestedStack), and the nested stacks are gone due to rollback.  Try to deploy the just the main stack first by adding a nested_template parameter set to null in your stack config app/config.yml file, and then run the deployment.</p>
+<pre><code>&lt;your deployment&gt;:
+  nested_template: null
+  stackName: &lt;stackname&gt;
+</code></pre><p>When the main stack is in &apos;CREATE_COMPLETE&apos; state from the AWS console (ignore the kes error { BadRequestException: The REST API doesn&apos;t contain any methods}), remove the &apos;nested_template&apos; line and redeploy again.  Then the nested stacks will stay, and you can debug the errors.</p>
 <h3 id="install-dashboard">Install dashboard</h3>
 <h4 id="dashboard-configuration">Dashboard configuration</h4>
 <p>Issues:</p>
@@ -753,7 +762,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Troubleshooting Deployment","level":"1.3.4","depth":2,"next":{"title":"What are Cumulus Workflows?","level":"1.4","depth":1,"path":"workflows/README.md","ref":"workflows/README.md","articles":[{"title":"Workflow Protocol","level":"1.4.1","depth":2,"path":"workflows/protocol.md","ref":"workflows/protocol.md","articles":[]},{"title":"Workflow Tasks","level":"1.4.2","depth":2,"path":"tasks.md","ref":"tasks.md","articles":[]},{"title":"Workflow Input & Ouptut","level":"1.4.3","depth":2,"path":"workflows/input_output.md","ref":"workflows/input_output.md","articles":[]},{"title":"Workflow Task Message Flow","level":"1.4.4","depth":2,"path":"workflows/cumulus-task-message-flow.md","ref":"workflows/cumulus-task-message-flow.md","articles":[]},{"title":"Developing Workflow Tasks","level":"1.4.5","depth":2,"path":"workflows/developing-workflow-tasks.md","ref":"workflows/developing-workflow-tasks.md","articles":[{"title":"Lambda Functions","level":"1.4.5.1","depth":3,"path":"workflows/lambda.md","ref":"workflows/lambda.md","articles":[]},{"title":"Dockerization","level":"1.4.5.2","depth":3,"path":"workflows/docker.md","ref":"workflows/docker.md","articles":[]}]},{"title":"Workflow Configuration How-to's","level":"1.4.6","depth":2,"path":"workflows/workflow-configuration-how-to.md","ref":"workflows/workflow-configuration-how-to.md","articles":[]}]},"previous":{"title":"Locating IAMs","level":"1.3.3","depth":2,"path":"deployment/iam_roles.md","ref":"deployment/iam_roles.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"deployment/troubleshoot_deployment.md","mtime":"2018-08-14T19:57:03.576Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-14T19:58:21.668Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Troubleshooting Deployment","level":"1.3.4","depth":2,"next":{"title":"What are Cumulus Workflows?","level":"1.4","depth":1,"path":"workflows/README.md","ref":"workflows/README.md","articles":[{"title":"Workflow Protocol","level":"1.4.1","depth":2,"path":"workflows/protocol.md","ref":"workflows/protocol.md","articles":[]},{"title":"Workflow Tasks","level":"1.4.2","depth":2,"path":"tasks.md","ref":"tasks.md","articles":[]},{"title":"Workflow Input & Ouptut","level":"1.4.3","depth":2,"path":"workflows/input_output.md","ref":"workflows/input_output.md","articles":[]},{"title":"Workflow Task Message Flow","level":"1.4.4","depth":2,"path":"workflows/cumulus-task-message-flow.md","ref":"workflows/cumulus-task-message-flow.md","articles":[]},{"title":"Developing Workflow Tasks","level":"1.4.5","depth":2,"path":"workflows/developing-workflow-tasks.md","ref":"workflows/developing-workflow-tasks.md","articles":[{"title":"Lambda Functions","level":"1.4.5.1","depth":3,"path":"workflows/lambda.md","ref":"workflows/lambda.md","articles":[]},{"title":"Dockerization","level":"1.4.5.2","depth":3,"path":"workflows/docker.md","ref":"workflows/docker.md","articles":[]}]},{"title":"Workflow Configuration How-to's","level":"1.4.6","depth":2,"path":"workflows/workflow-configuration-how-to.md","ref":"workflows/workflow-configuration-how-to.md","articles":[]}]},"previous":{"title":"Locating IAMs","level":"1.3.3","depth":2,"path":"deployment/iam_roles.md","ref":"deployment/iam_roles.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"deployment/troubleshoot_deployment.md","mtime":"2018-08-23T13:29:12.394Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-23T13:30:39.150Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

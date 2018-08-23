@@ -669,13 +669,22 @@
                                 <section class="normal markdown-section">
                                 
                                 <h1 id="cnm-workflow">CNM Workflow</h1>
-<p>This entry documents setup of a basic workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.</p>
+<p>This entry documents how to setup a workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.</p>
 <p>Prior to working through this entry you should be familiar with the <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism" target="_blank">Cloud Notification Mechanism</a>.</p>
+<h2 id="sections">Sections:</h2>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#configure-the-workflow">Configure the Workflow</a></li>
+<li><a href="#execute-the-workflow">Execute the Workflow</a></li>
+<li><a href="#verify-results">Verify Results</a></li>
+<li><a href="#kinesis-record-error-handling">Kinesis Record Error Handling</a></li>
+</ul>
+<hr>
 <h2 id="prerequisites">Prerequisites</h2>
 <h4 id="cumulus">Cumulus</h4>
 <p>This entry assumes you have a deployed instance of Cumulus (&gt;= version 1.8).</p>
 <h4 id="aws-cli">AWS CLI</h4>
-<p>This entry assumes you have the <a href="https://aws.amazon.com/cli/" target="_blank">AWS CLI</a> installed and configured.   If you do not, please take a moment to review the documentation (particularly the <a href="https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html" target="_blank">examples relevant to Kinesis</a> and install it now.</p>
+<p>This entry assumes you have the <a href="https://aws.amazon.com/cli/" target="_blank">AWS CLI</a> installed and configured. If you do not, please take a moment to review the documentation - particularly the <a href="https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html" target="_blank">examples relevant to Kinesis</a> - and install it now.</p>
 <h4 id="kinesis">Kinesis</h4>
 <p>This entry assumes you already have two <a href="https://aws.amazon.com/kinesis/" target="_blank">Kinesis</a> data steams created for use as CNM notification and response data streams.</p>
 <p>If you do not have two streams setup, please take a moment to review the <a href="https://aws.amazon.com/documentation/kinesis/" target="_blank">Kinesis documentation</a> and setup two basic single-shard streams for this example:</p>
@@ -684,125 +693,143 @@
 <p><img src="../images/cnm_create_kinesis_stream.jpg" alt=""></p>
 <p>Please bear in mind that your <code>${stackname}-lambda-processing</code> IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the example deployment (or a deployment based on it), the IAM permissions should be set properly.</p>
 <p>If not, the most straightforward approach is to attach the <code>AmazonKinesisFullAccess</code> policy for the stream resource to whatever role your lambdas are using, however your environment/security policies may require an approach specific to your deployment environment.</p>
-<p>In operational environments it&apos;s likely science data providers would typically be responsible for providing a Kinesis stream with the appropraite permissions.</p>
+<p>In operational environments it&apos;s likely science data providers would typically be responsible for providing a Kinesis stream with the appropriate permissions.</p>
 <p>For more information on how this process works and how to develop a process that will add records to a stream, read the <a href="https://aws.amazon.com/documentation/kinesis/" target="_blank">Kinesis documentation</a> and the <a href="https://docs.aws.amazon.com/streams/latest/dev/introduction.html" target="_blank">developer guide</a>.</p>
-<h4 id="ingest-source-data">Ingest Source Data</h4>
+<h4 id="source-data">Source Data</h4>
 <p>This entry will run the SyncGranule task against a single target data file.  To that end it will require a single data file to be present in an S3 bucket matching the Provider configured in the next section.</p>
 <h4 id="collection-and-provider">Collection and Provider</h4>
 <p>Cumulus will need to be configured with a Collection and Provider entry of your choosing.  The provider should match the location of the source data from the <code>Ingest Source Data</code> section.</p>
 <p>This can be done via the <a href="https://github.com/nasa/cumulus-dashboard" target="_blank">Cumulus Dashboard</a> if installed or the <a href="../api.md">API</a>.  It is strongly recommended to use the dashboard if possible.</p>
-<h2 id="cumulus-configuration">Cumulus Configuration</h2>
-<p>Once the prerequisites have taken care of, you can begin adding the needed values to your Cumulus configuration to configure the example workflow.</p>
+<hr>
+<h2 id="configure-the-workflow">Configure the Workflow</h2>
+<p>Provided the prerequisites have been fulfilled, you can begin adding the needed values to your Cumulus configuration to configure the example workflow.</p>
 <p>The following are steps that are required to set up your Cumulus instance to run the example workflow:</p>
-<h4 id="workflow-configuration">Workflow Configuration</h4>
-<p>For this workflow example, we&apos;re going to trigger the  task that is provided in the example deployment, using a custom workflow.</p>
-<p>The following <a href="../workflows/">workflow definition</a> should be added to your deployment&apos;s workflows.yml.  Make certain to update the CNMResponseStream key in the CnmResponse task to match the name of the Kinesis response stream you configured in the prerequisites section:</p>
-<pre><code>CNMExampleWorkflow:
-  Comment: CNMExampleWorkflow
-  StartAt: StartStatus
-  States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: &apos;{$}&apos;
-      Next: TranslateMessage
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: &apos;$.exception&apos;
-          Next: CnmResponse
-    TranslateMessage:
-      Type: Task
-      Resource: ${CNMToCMALambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          outputs:
-            - source: &apos;{$.cnm}&apos;
-              destination: &apos;{$.meta.cnm}&apos;
-            - source: &apos;{$}&apos;
-              destination: &apos;{$.payload}&apos;
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: &apos;$.exception&apos;
-          Next: CnmResponse
-      Next: SyncGranule
-    SyncGranule:
-      CumulusConfig:
-        provider: &apos;{$.meta.provider}&apos;
-        buckets: &apos;{$.meta.buckets}&apos;
-        collection: &apos;{$.meta.collection}&apos;
-        downloadBucket: &apos;{$.meta.buckets.private.name}&apos;
-        stack: &apos;{$.meta.stack}&apos;
-        cumulus_message:
-          outputs:
-            - source: &apos;{$.granules}&apos;
-              destination: &apos;{$.meta.input_granules}&apos;
-            - source: &apos;{$}&apos;
-              destination: &apos;{$.payload}&apos;
-      Type: Task
-      Resource: ${SyncGranuleLambdaFunction.Arn}
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 10
-          MaxAttempts: 3
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: &apos;$.exception&apos;
-          Next: CmrResponse
-      Next: CnmResponse
-    CnmResponse:
-      CumulusConfig:
-        OriginalCNM: &apos;{$.meta.cnm}&apos;
-        CNMResponseStream: &apos;ADD YOUR RESPONSE STREAM HERE&apos;
-        region: &apos;us-east-1&apos;
-        WorkflowException: &apos;{$.exception}&apos;
-        cumulus_message:
-          outputs:
-            - source: &apos;{$}&apos;
-              destination: &apos;{$.meta.cnmResponse}&apos;
-      Type: Task
-      Resource: ${CnmResponseLambdaFunction.Arn}
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 5
-          MaxAttempts: 3
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: &apos;$.exception&apos;
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: &apos;{$.meta.stack}&apos;
-        bucket: &apos;{$.meta.buckets.internal.name}&apos;
-        stateMachine: &apos;{$.cumulus_meta.state_machine}&apos;
-        executionName: &apos;{$.cumulus_meta.execution_name}&apos;
-        cumulus_message:
-          input: &apos;{$}&apos;
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-      End: true
-    WorkflowFailed:
-      Type: Fail
-      Cause: &apos;Workflow failed&apos;
-</code></pre><p>Again, please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.</p>
+<h4 id="example-cnm-workflow-configuration">Example CNM Workflow Configuration</h4>
+<p>In this example, we&apos;re going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.</p>
+<p>The following <a href="../workflows/">workflow definition</a> should be added to your deployment&apos;s <code>workflows.yml</code>. </p>
+<p>Update the <code>CNMResponseStream</code> key in the <code>CnmResponse</code> task to match the name of the Kinesis response stream you configured in the prerequisites section.</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">CNMExampleWorkflow:</span>
+<span class="hljs-attr">  Comment:</span> CNMExampleWorkflow
+<span class="hljs-attr">  StartAt:</span> StartStatus
+<span class="hljs-attr">  States:</span>
+<span class="hljs-attr">    StartStatus:</span>
+<span class="hljs-attr">      Type:</span> Task
+<span class="hljs-attr">      Resource:</span> ${SfSnsReportLambdaFunction.Arn}
+<span class="hljs-attr">      CumulusConfig:</span>
+<span class="hljs-attr">        cumulus_message:</span>
+<span class="hljs-attr">          input:</span> <span class="hljs-string">&apos;{$}&apos;</span>
+<span class="hljs-attr">      Next:</span> TranslateMessage
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">          -</span> States.ALL
+<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">&apos;$.exception&apos;</span>
+<span class="hljs-attr">          Next:</span> CnmResponse
+<span class="hljs-attr">    TranslateMessage:</span>
+<span class="hljs-attr">      Type:</span> Task
+<span class="hljs-attr">      Resource:</span> ${CNMToCMALambdaFunction.Arn}
+<span class="hljs-attr">      CumulusConfig:</span>
+<span class="hljs-attr">        cumulus_message:</span>
+<span class="hljs-attr">          outputs:</span>
+<span class="hljs-attr">            - source:</span> <span class="hljs-string">&apos;{$.cnm}&apos;</span>
+<span class="hljs-attr">              destination:</span> <span class="hljs-string">&apos;{$.meta.cnm}&apos;</span>
+<span class="hljs-attr">            - source:</span> <span class="hljs-string">&apos;{$}&apos;</span>
+<span class="hljs-attr">              destination:</span> <span class="hljs-string">&apos;{$.payload}&apos;</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">          -</span> States.ALL
+<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">&apos;$.exception&apos;</span>
+<span class="hljs-attr">          Next:</span> CnmResponse
+<span class="hljs-attr">      Next:</span> SyncGranule
+<span class="hljs-attr">    SyncGranule:</span>
+<span class="hljs-attr">      CumulusConfig:</span>
+<span class="hljs-attr">        provider:</span> <span class="hljs-string">&apos;{$.meta.provider}&apos;</span>
+<span class="hljs-attr">        buckets:</span> <span class="hljs-string">&apos;{$.meta.buckets}&apos;</span>
+<span class="hljs-attr">        collection:</span> <span class="hljs-string">&apos;{$.meta.collection}&apos;</span>
+<span class="hljs-attr">        downloadBucket:</span> <span class="hljs-string">&apos;{$.meta.buckets.private.name}&apos;</span>
+<span class="hljs-attr">        stack:</span> <span class="hljs-string">&apos;{$.meta.stack}&apos;</span>
+<span class="hljs-attr">        cumulus_message:</span>
+<span class="hljs-attr">          outputs:</span>
+<span class="hljs-attr">            - source:</span> <span class="hljs-string">&apos;{$.granules}&apos;</span>
+<span class="hljs-attr">              destination:</span> <span class="hljs-string">&apos;{$.meta.input_granules}&apos;</span>
+<span class="hljs-attr">            - source:</span> <span class="hljs-string">&apos;{$}&apos;</span>
+<span class="hljs-attr">              destination:</span> <span class="hljs-string">&apos;{$.payload}&apos;</span>
+<span class="hljs-attr">      Type:</span> Task
+<span class="hljs-attr">      Resource:</span> ${SyncGranuleLambdaFunction.Arn}
+<span class="hljs-attr">      Retry:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">            -</span> States.ALL
+<span class="hljs-attr">          IntervalSeconds:</span> <span class="hljs-number">10</span>
+<span class="hljs-attr">          MaxAttempts:</span> <span class="hljs-number">3</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">          -</span> States.ALL
+<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">&apos;$.exception&apos;</span>
+<span class="hljs-attr">          Next:</span> CmrResponse
+<span class="hljs-attr">      Next:</span> CnmResponse
+<span class="hljs-attr">    CnmResponse:</span>
+<span class="hljs-attr">      CumulusConfig:</span>
+<span class="hljs-attr">        OriginalCNM:</span> <span class="hljs-string">&apos;{$.meta.cnm}&apos;</span>
+<span class="hljs-attr">        CNMResponseStream:</span> <span class="hljs-string">&apos;ADD YOUR RESPONSE STREAM HERE&apos;</span>
+<span class="hljs-attr">        region:</span> <span class="hljs-string">&apos;us-east-1&apos;</span>
+<span class="hljs-attr">        WorkflowException:</span> <span class="hljs-string">&apos;{$.exception}&apos;</span>
+<span class="hljs-attr">        cumulus_message:</span>
+<span class="hljs-attr">          outputs:</span>
+<span class="hljs-attr">            - source:</span> <span class="hljs-string">&apos;{$}&apos;</span>
+<span class="hljs-attr">              destination:</span> <span class="hljs-string">&apos;{$.meta.cnmResponse}&apos;</span>
+<span class="hljs-attr">      Type:</span> Task
+<span class="hljs-attr">      Resource:</span> ${CnmResponseLambdaFunction.Arn}
+<span class="hljs-attr">      Retry:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">            -</span> States.ALL
+<span class="hljs-attr">          IntervalSeconds:</span> <span class="hljs-number">5</span>
+<span class="hljs-attr">          MaxAttempts:</span> <span class="hljs-number">3</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">          -</span> States.ALL
+<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">&apos;$.exception&apos;</span>
+<span class="hljs-attr">          Next:</span> StopStatus
+<span class="hljs-attr">      Next:</span> StopStatus
+<span class="hljs-attr">    StopStatus:</span>
+<span class="hljs-attr">      Type:</span> Task
+<span class="hljs-attr">      Resource:</span> ${SfSnsReportLambdaFunction.Arn}
+<span class="hljs-attr">      CumulusConfig:</span>
+<span class="hljs-attr">        sfnEnd:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">        stack:</span> <span class="hljs-string">&apos;{$.meta.stack}&apos;</span>
+<span class="hljs-attr">        bucket:</span> <span class="hljs-string">&apos;{$.meta.buckets.internal.name}&apos;</span>
+<span class="hljs-attr">        stateMachine:</span> <span class="hljs-string">&apos;{$.cumulus_meta.state_machine}&apos;</span>
+<span class="hljs-attr">        executionName:</span> <span class="hljs-string">&apos;{$.cumulus_meta.execution_name}&apos;</span>
+<span class="hljs-attr">        cumulus_message:</span>
+<span class="hljs-attr">          input:</span> <span class="hljs-string">&apos;{$}&apos;</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">          -</span> States.ALL
+<span class="hljs-attr">          Next:</span> WorkflowFailed
+<span class="hljs-attr">      End:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">    WorkflowFailed:</span>
+<span class="hljs-attr">      Type:</span> Fail
+<span class="hljs-attr">      Cause:</span> <span class="hljs-string">&apos;Workflow failed&apos;</span>
+</code></pre>
+<p>Again, please make sure to modify the value CNMResponseStream to match the stream name (not ARN) for your Kinesis response stream.</p>
 <h4 id="task-configuration">Task Configuration</h4>
-<p>The following tasks are required to be defined in the <code>lambda.yml</code> configuration file.</p>
-<p>If you&apos;re using a deployment based on the <a href="https://github.com/nasa/cumulus/tree/master/example" target="_blank">example deployment</a> configuration these should already be defined for you.</p>
+<p>The following tasks are required to be defined in the <code>lambdas.yml</code> configuration file.</p>
+<p>If you&apos;re using a deployment based on the <a href="https://github.com/nasa/cumulus/tree/master/example" target="_blank">example deployment</a> these lambdas should already be defined for you.</p>
+<h6 id="cnmtocma">CNMToCMA</h6>
+<p>The example workflow assumes you have a CNM to Cumulus Message Adapter (CMA) translation lambda defined as <code>CNMToCMA</code> in the <code>lambdas.yml</code> file:</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">CNMToCMA:</span>
+<span class="hljs-attr">  handler:</span> <span class="hljs-string">&apos;gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams&apos;</span>
+<span class="hljs-attr">  timeout:</span> <span class="hljs-number">300</span>
+<span class="hljs-attr">  runtime:</span> java8
+<span class="hljs-attr">  memory:</span> <span class="hljs-number">128</span>
+<span class="hljs-attr">  s3Source:</span>
+<span class="hljs-attr">    bucket:</span> <span class="hljs-string">&apos;cumulus-data-shared&apos;</span>
+<span class="hljs-attr">    key:</span> <span class="hljs-string">&apos;daacs/podaac/cnmToGranule-1.0-wCMA.zip&apos;</span>
+<span class="hljs-attr">  useMessageAdapter:</span> <span class="hljs-literal">false</span>
+<span class="hljs-attr">  launchInVpc:</span> <span class="hljs-literal">true</span>
+</code></pre>
+<p><code>CNMToCMA</code> is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. This workflow will not utilize the payload. For other workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message <em>or</em> include a translation task like this one.</p>
+<p>You can also manipulate the data sent to downstream tasks using <code>CumulusConfig</code> for various states in <code>workflows.yml</code>. Read more about how to configure data on the <a href="https://nasa.github.io/cumulus/workflows/input_output.html" target="_blank">Workflow Input &amp; Output</a> page.</p>
 <h6 id="cnmresponse">CnmResponse</h6>
-<p>This entry assumes you have a CNM response task defined in the <code>lambdas.yml</code> configuration file:</p>
+<p>The workflow defined above assumes a CNM response task defined in the <code>lambdas.yml</code> configuration file. Example:</p>
 <pre><code>CnmResponse:
   handler: &apos;gov.nasa.cumulus.CNMResponse::handleRequestStreams&apos;
   timeout: 300
@@ -813,217 +840,268 @@
     bucket: &apos;cumulus-data-shared&apos;&apos;
     key: &apos;daacs/podaac/cnmResponse-1.0.zip&apos;
   launchInVpc: true
-</code></pre><p>This defines a task that runs a lambda that generates a CNM response output and puts it on a Kinesis stream.</p>
-<p>The CnmResponse task utilizes a response lambda provided (as of release 1.8) in the <code>cumulus-data-shared</code> bucket, with documentation provided in the <a href="https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse" target="_blank">source repository</a>.</p>
-<h6 id="cnmtocma">CNMToCMA</h6>
-<p>This entry assumes you have a CNM to Cumulus Granule translation lambda defined in the <code>lambdas.yml</code> configuration file as <code>CNMToCMA</code>:</p>
-<pre><code>CNMToCMA:
-  handler: &apos;gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams&apos;
-  timeout: 300
-  runtime: java8
-  memory: 128
-  s3Source:
-    bucket: &apos;cumulus-data-shared&apos;
-    key: &apos;daacs/podaac/cnmToGranule-1.0-wCMA.zip&apos;
-  useMessageAdapter: false
-  launchInVpc: true
-</code></pre><p>This defines a task that runs a lambda at the begining of the workflow that will extract CMA-compatible granule information into the payload.   This workflow will not utilize that payload, as HelloWorld doesn&apos;t actually process data, however if this were an ingest workflow, you would need to ensure that downstream tasks in your workflow either understand the CNM message <em>or</em> include a translation task like this one.</p>
+</code></pre><p>The <code>CnmResponse</code> lambda generates a CNM response message and puts it on a the <code>CNMResponseStream</code> Kinesis stream.</p>
+<p>The <code>CnmResponse</code> lambda package is provided (as of release 1.8) in the <code>cumulus-data-shared</code> bucket, with documentation provided in the <a href="https://git.earthdata.nasa.gov/projects/POCUMULUS/repos/cnmresponsetask/browse" target="_blank">source repository</a>.</p>
+<p>You can read more about the expected schema a <code>CnmResponse</code> record on the wiki page for <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields" target="_blank">Cloud Notification Mechanism</a>.</p>
 <h6 id="additional-tasks">Additional Tasks</h6>
-<p>Lastly, this entry also requires the tasks  <code>SfSnsReport</code>, <code>SyncGranule</code> from the <a href="https://github.com/nasa/cumulus/tree/master/example" target="_blank">example deployment</a> are defined in the <code>lambdas.yml</code>.</p>
+<p>Lastly, this entry also includes the tasks  <code>SfSnsReport</code>, <code>SyncGranule</code> from the <a href="https://github.com/nasa/cumulus/tree/master/example" target="_blank">example deployment</a> are defined in the <code>lambdas.yml</code>.</p>
 <h3 id="redeploy">Redeploy</h3>
-<p>Once the above configuration changes have been made, you&apos;ll need to redeploy your stack to ensure the updates to the workflows/tasks are available.</p>
-<p>Please refer to <code>Updating Cumulus deployment</code> in the <a href="../deployment/">deployment documentation</a> if you are unfamiliar with that process.</p>
+<p>Once the above configuration changes have been made, redeploy your stack.</p>
+<p>Please refer to <code>Updating Cumulus deployment</code> in the <a href="../deployment/">deployment documentation</a> if you are unfamiliar with redeployment.</p>
 <h3 id="rule-configuration">Rule Configuration</h3>
-<p>Cumulus provides a built-in Kinesis consumer lambda function (<a href="https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js" target="_blank">kinesis-consumer</a>) that will read CNM formatted events from a Kinesis stream and trigger a workflow when a Cumulus rule is configured via the Cumulus dashboard or API.</p>
-<p>To add a rule via the dashboard (if you&apos;d like to use the API, see the docs <a href="https://nasa.github.io/cumulus-api/#create-rule" target="_blank">here</a>, navigate to the <code>Rules</code> page and click <code>Add a rule</code>, then configure the new rule using the following template (substituting correct values for parameters denoted by <code>${}</code>:</p>
-<pre><code>name: cnm_basic_rule
-Workflow Name: CNMExampleWorkflow
-Provider ID: ${provider_id} # found on the Providers page
-collection - Collection Name: ${collection_name} # configured and found in the Collections page
-collection - Collection Version: ${collection_version} # configured and found in the Collections page
-rule - type: kinesis
-rule - value: ${Kinesis_Stream_ARN} # Kinesis notification stream ARN goes here.
-Rule State: ENABLED
-Optional tags for search:
+<p><code>@cumulus/api</code> includes a <code>kinesisConsumer</code> lambda function (<a href="https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js" target="_blank">kinesis-consumer</a>). Cumulus kinesis-type rules create the <a href="https://docs.aws.amazon.com/lambda/latest/dg/API_CreateEventSourceMapping.html" target="_blank">event source mappings</a> between Kinesis streams and the <code>kinesisConsumer</code> lambda. The <code>kinesisConsumer</code> lambda consumes records from one or more Kinesis streams, as defined by enabled kinesis-type rules. When new records are pushed to one of these streams, the <code>kinesisConsumer</code> triggers workflows associated with the enabled kinesis-type rules.</p>
+<p>To add a rule via the dashboard (if you&apos;d like to use the API, see the docs <a href="https://nasa.github.io/cumulus-api/#create-rule" target="_blank">here</a>), navigate to the <code>Rules</code> page and click <code>Add a rule</code>, then configure the new rule using the following template (substituting correct values for parameters denoted by <code>${}</code>:</p>
+<pre><code>{
+  &quot;collection&quot;: {
+    &quot;name&quot;: &quot;L2_HR_PIXC&quot;,
+    &quot;version&quot;: &quot;000&quot;
+  },
+  &quot;name&quot;: &quot;L2_HR_PIXC_kinesisRule&quot;,
+  &quot;provider&quot;: &quot;PODAAC_SWOT&quot;,
+  &quot;rule&quot;: {
+    &quot;type&quot;: &quot;kinesis&quot;,
+    &quot;value&quot;: &quot;arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}&quot;
+  },
+  &quot;state&quot;: &quot;ENABLED&quot;,
+  &quot;workflow&quot;: &quot;KinesisTriggerTest&quot;
+}
 </code></pre><p><strong>Please Note:</strong></p>
 <ul>
-<li>The rule - value key must match the Amazon resource name <a href="https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html" target="_blank">ARN</a> for the Kinesis data stream you&apos;ve preconfigured.   You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.</li>
-<li>The collection and provider should match the collection and provider you setup in the <code>Prerequisites</code> section.</li>
+<li>The rule&apos;s <code>value</code> attribute value must match the Amazon Resource Name <a href="https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html" target="_blank">ARN</a> for the Kinesis data stream you&apos;ve preconfigured.   You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.</li>
+<li>The collection and provider should match the collection and provider you setup in the <a href="#prerequisites"><code>Prerequisites</code></a> section.</li>
 </ul>
-<p>Once you&apos;ve clicked on &apos;submit&apos; a new rule should appear in the dashboard Rule Overview.</p>
-<h2 id="execution">Execution</h2>
-<p>Once Cumulus has been configured and a Rule has been added, we&apos;re ready to trigger the workflow and watch it execute.</p>
-<h3 id="triggering-the-workflow">Triggering the Workflow</h3>
-<p>To trigger matching workflows, you will need to put a record on the Kinesis stream that the <a href="https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js" target="_blank">kinesis-consumer</a> lambda will recognize as a matching event.</p>
+<p>Once you&apos;ve clicked on &apos;submit&apos; a new rule should appear in the dashboard&apos;s Rule Overview.</p>
+<hr>
+<h2 id="execute-the-workflow">Execute the Workflow</h2>
+<p>Once Cumulus has been redeployed and a rule has been added, we&apos;re ready to trigger the workflow and watch it execute.</p>
+<h3 id="how-to-trigger-the-workflow">How to Trigger the Workflow</h3>
+<p>To trigger matching workflows, you will need to put a record on the Kinesis stream the <a href="https://github.com/nasa/cumulus/blob/master/packages/api/lambdas/kinesis-consumer.js" target="_blank">kinesis-consumer</a> lambda will recognize as a matching event. Most importantly, it should include a <code>collection</code> key / value pair that matches a valid collection.</p>
 <p>For the purpose of this example, the easiest way to accomplish this is using the <a href="https://aws.amazon.com/cli/" target="_blank">AWS CLI</a>.</p>
-<h4 id="notification-json">Notification JSON</h4>
-<p>Construct a JSON file containing an object that matches the values that have been previously setup.  This JSON object should be a valid <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism" target="_blank">Cloud Notification Mechanism</a> message.</p>
-<p><strong>Please note</strong>: <em>this example is somewhat contrived, as the &quot;worker&quot; task in this example doesn&apos;t care about most of these fields.  A &apos;real&apos; data ingest workflow should.</em></p>
+<h4 id="create-record-json">Create Record JSON</h4>
+<p>Construct a JSON file containing an object that matches the values that have been previously setup. This JSON object should be a valid <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism" target="_blank">Cloud Notification Mechanism</a> message.</p>
+<p><strong>Please note</strong>: <em>this example is somewhat contrived, as the downstream tasks don&apos;t care about most of these fields. A &apos;real&apos; data ingest workflow would.</em></p>
 <p>The following values (denoted by ${} in the sample below) should be replaced to match values we&apos;ve previously configured:</p>
 <ul>
-<li>TEST_DATA_FILE_NAME:  The filename of the test data that is available in the S3 (or other) provider we created earlier.</li>
-<li>TEST_DATA_URI: The full S3 path to the test data (e.g. s3://bucket-name/path/granule)</li>
-<li>COLLECTION:  The collection defined in the prerequisites for this product</li>
+<li><code>TEST_DATA_FILE_NAME</code>:  The filename of the test data that is available in the S3 (or other) provider we created earlier.</li>
+<li><code>TEST_DATA_URI</code>: The full S3 path to the test data (e.g. s3://bucket-name/path/granule)</li>
+<li><code>COLLECTION</code>:  The collection defined in the prerequisites for this product</li>
 </ul>
-<pre><code>{
-  &quot;product&quot;: {
-    &quot;files&quot;: [
+<pre><code class="lang-json">{
+  <span class="hljs-string">&quot;product&quot;</span>: {
+    <span class="hljs-string">&quot;files&quot;</span>: [
       {
-        &quot;checksum-type&quot;: &quot;md5&quot;,
-        &quot;name&quot;: &quot;${TEST_DATA_FILE_NAME}&quot;,
-        &quot;checksum&quot;: &quot;bogus_checksum_value&quot;,
-        &quot;uri&quot;: &quot;${TEST_DATA_URI}&quot;,
-        &quot;type&quot;: &quot;data&quot;,
-        &quot;size&quot;: 12345678
+        <span class="hljs-string">&quot;checksum-type&quot;</span>: <span class="hljs-string">&quot;md5&quot;</span>,
+        <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;${TEST_DATA_FILE_NAME}&quot;</span>,
+        <span class="hljs-string">&quot;checksum&quot;</span>: <span class="hljs-string">&quot;bogus_checksum_value&quot;</span>,
+        <span class="hljs-string">&quot;uri&quot;</span>: <span class="hljs-string">&quot;${TEST_DATA_URI}&quot;</span>,
+        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;data&quot;</span>,
+        <span class="hljs-string">&quot;size&quot;</span>: <span class="hljs-number">12345678</span>
       }
     ],
-    &quot;name&quot;: &quot;TestGranuleUR&quot;,
-    &quot;dataVersion&quot;: &quot;006&quot;
+    <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;${TEST_DATA_FILE_NAME}&quot;</span>,
+    <span class="hljs-string">&quot;dataVersion&quot;</span>: <span class="hljs-string">&quot;006&quot;</span>
   },
-  &quot;identifier &quot;: &quot;testIdentifier123456&quot;,
-  &quot;collection&quot;: &quot;${COLLECTION}&quot;,
-  &quot;provider&quot;: &quot;TestProvider&quot;,
-  &quot;version&quot;: &quot;001&quot;
+  <span class="hljs-string">&quot;identifier &quot;</span>: <span class="hljs-string">&quot;testIdentifier123456&quot;</span>,
+  <span class="hljs-string">&quot;collection&quot;</span>: <span class="hljs-string">&quot;${COLLECTION}&quot;</span>,
+  <span class="hljs-string">&quot;provider&quot;</span>: <span class="hljs-string">&quot;TestProvider&quot;</span>,
+  <span class="hljs-string">&quot;version&quot;</span>: <span class="hljs-string">&quot;001&quot;</span>
 }
-</code></pre><h4 id="add-record-to-kinesis-data-stream">Add Record to Kinesis Data Stream</h4>
-<p>Using the JSON file you created, push it as a record to the Kinesis notification stream:</p>
-<pre><code>aws kinesis put-record --stream-name YOUR_KINESIS_NOTIFICATION_STREAM_NAME_HERE --partition-key 1 --data file:///path/to/file.json
-</code></pre><p><strong>Please note</strong>: The above command uses the stream name, <em>not</em> the ARN.</p>
+</code></pre>
+<h4 id="add-record-to-kinesis-data-stream">Add Record to Kinesis Data Stream</h4>
+<p>Using the JSON file you created, push it to the Kinesis notification stream:</p>
+<pre><code class="lang-bash">aws kinesis put-record --stream-name YOUR_KINESIS_NOTIFICATION_STREAM_NAME_HERE --partition-key 1 --data file:///path/to/file.json
+</code></pre>
+<p><strong>Please note</strong>: The above command uses the stream name, <em>not</em> the ARN.</p>
 <p>The command should return output similar to:</p>
-<pre><code>{
-    &quot;ShardId&quot;: &quot;shardId-000000000000&quot;,
-    &quot;SequenceNumber&quot;: &quot;42356659532578640215890215117033555573986830588739321858&quot;
+<pre><code class="lang-json">{
+    <span class="hljs-string">&quot;ShardId&quot;</span>: <span class="hljs-string">&quot;shardId-000000000000&quot;</span>,
+    <span class="hljs-string">&quot;SequenceNumber&quot;</span>: <span class="hljs-string">&quot;42356659532578640215890215117033555573986830588739321858&quot;</span>
 }
-</code></pre><p>This command will put a record containing the JSON value from the --data flag onto the Kinesis data stream, which should be picked up by Cumulus.  This will trigger the CNMExampleWorkflow workflow targeted by the rule you previously configured.</p>
+</code></pre>
+<p>This command will put a record containing the JSON from the <code>--data</code> flag onto the Kinesis data stream. The <code>kinesisConsumer</code> lambda will consume the record and construct a valid CMA payload to trigger workflows. For this example, the record will trigger the <code>CNMExampleWorkflow</code> workflow as defined by the rule previously configured.</p>
 <p>You can view the current running executions on the <code>Executions</code> dashboard page which presents a list of all executions, their status (running, failed, or completed), to which workflow the execution belongs, along with other information.</p>
-<h3 id="process">Process</h3>
-<p>Once the message is added to the Kinesis Stream, the Rule we previously defined will cause Cumulus to read the new entry on the stream, validate the data is a CNM JSON object, and each rule that matches will trigger the associated workflow, passing the CNM object in as as source data to the first task in the workflow.</p>
-<p>In our example, the Rule should trigger <code>CNMExampleWorkflow</code> .</p>
+<h3 id="verify-workflow-execution">Verify Workflow Execution</h3>
+<p>As detailed above, once the record is added to the Kinesis data stream, the <code>kinesisConsumer</code> lambda will trigger the <code>CNMExampleWorkflow</code> .</p>
 <h4 id="startstatus">StartStatus</h4>
 <p>The first task in the execution will report to Cumulus that the workflow has started execution and pass the CNM message to the next step in the workflow</p>
 <h4 id="translatemessage">TranslateMessage</h4>
-<p><code>TranslateMessage</code> will take the CNM object payload and add a granules object to the CMA payload that&apos;s consistent with other Cumulus Ingest tasks, and add a key &apos;cnm&apos; to &apos;meta&apos; (as well as the payload) to store the original message.</p>
+<p><code>TranslateMessage</code> (which corresponds to the <code>CNMToCMA</code> lambda) will take the CNM object payload and add a granules object to the CMA payload that&apos;s consistent with other Cumulus ingest tasks, and add a key &apos;cnm&apos; to &apos;meta&apos; (as well as the payload) to store the original message.</p>
 <p><em>For more on the Message Adapter, please see <a href="../workflows/cumulus-task-message-flow.html">the Message Flow documentation</a></em>.</p>
-<p>An example of what is happening in the Translation step follows:</p>
+<p>An example of what is happening in the <code>CNMToCMA</code> lambda is as follows:</p>
 <p>Example Input Payload:</p>
-<pre><code>&quot;payload&quot;: {
-    &quot;identifier &quot;: &quot;testIdentifier123456&quot;,
-    &quot;product&quot;: {
-      &quot;files&quot;: [
-        {
-          &quot;checksum-type&quot;: &quot;md5&quot;,
-          &quot;name&quot;: &quot;MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;,
-          &quot;checksum&quot;: &quot;bogus_checksum_value&quot;,
-          &quot;uri&quot;: &quot;s3://some_bucket/cumulus-test-data/pdrs/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;,
-          &quot;type&quot;: &quot;data&quot;,
-          &quot;size&quot;: 12345678
-        }
-      ],
-      &quot;name&quot;: &quot;TestGranuleUR&quot;,
-      &quot;dataVersion&quot;: &quot;006&quot;
-    },
-    &quot;version&quot;: &quot;123456&quot;,
-    &quot;collection&quot;: &quot;MOD09GQ&quot;,
-    &quot;provider&quot;: &quot;TestProvider&quot;
+<pre><code class="lang-json"><span class="hljs-string">&quot;payload&quot;</span>: {
+  <span class="hljs-string">&quot;identifier &quot;</span>: <span class="hljs-string">&quot;testIdentifier123456&quot;</span>,
+  <span class="hljs-string">&quot;product&quot;</span>: {
+    <span class="hljs-string">&quot;files&quot;</span>: [
+      {
+        <span class="hljs-string">&quot;checksum-type&quot;</span>: <span class="hljs-string">&quot;md5&quot;</span>,
+        <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;</span>,
+        <span class="hljs-string">&quot;checksum&quot;</span>: <span class="hljs-string">&quot;bogus_checksum_value&quot;</span>,
+        <span class="hljs-string">&quot;uri&quot;</span>: <span class="hljs-string">&quot;s3://some_bucket/cumulus-test-data/pdrs/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;</span>,
+        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;data&quot;</span>,
+        <span class="hljs-string">&quot;size&quot;</span>: <span class="hljs-number">12345678</span>
+      }
+    ],
+    <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;TestGranuleUR&quot;</span>,
+    <span class="hljs-string">&quot;dataVersion&quot;</span>: <span class="hljs-string">&quot;006&quot;</span>
   },
-</code></pre><p>Example Output Payload:</p>
-<pre><code>  &quot;payload&quot;: {
-    &quot;cnm&quot;: {
-      &quot;identifier &quot;: &quot;testIdentifier123456&quot;,
-      &quot;product&quot;: {
-        &quot;files&quot;: [
+  <span class="hljs-string">&quot;version&quot;</span>: <span class="hljs-string">&quot;123456&quot;</span>,
+  <span class="hljs-string">&quot;collection&quot;</span>: <span class="hljs-string">&quot;MOD09GQ&quot;</span>,
+  <span class="hljs-string">&quot;provider&quot;</span>: <span class="hljs-string">&quot;TestProvider&quot;</span>
+}
+</code></pre>
+<p>Example Output Payload:</p>
+<pre><code class="lang-json">  <span class="hljs-string">&quot;payload&quot;</span>: {
+    <span class="hljs-string">&quot;cnm&quot;</span>: {
+      <span class="hljs-string">&quot;identifier &quot;</span>: <span class="hljs-string">&quot;testIdentifier123456&quot;</span>,
+      <span class="hljs-string">&quot;product&quot;</span>: {
+        <span class="hljs-string">&quot;files&quot;</span>: [
           {
-            &quot;checksum-type&quot;: &quot;md5&quot;,
-            &quot;name&quot;: &quot;MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;,
-            &quot;checksum&quot;: &quot;bogus_checksum_value&quot;,
-            &quot;uri&quot;: &quot;s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;,
-            &quot;type&quot;: &quot;data&quot;,
-            &quot;size&quot;: 12345678
+            <span class="hljs-string">&quot;checksum-type&quot;</span>: <span class="hljs-string">&quot;md5&quot;</span>,
+            <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;</span>,
+            <span class="hljs-string">&quot;checksum&quot;</span>: <span class="hljs-string">&quot;bogus_checksum_value&quot;</span>,
+            <span class="hljs-string">&quot;uri&quot;</span>: <span class="hljs-string">&quot;s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;</span>,
+            <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;data&quot;</span>,
+            <span class="hljs-string">&quot;size&quot;</span>: <span class="hljs-number">12345678</span>
           }
         ],
-        &quot;name&quot;: &quot;TestGranuleUR&quot;,
-        &quot;dataVersion&quot;: &quot;006&quot;
+        <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;TestGranuleUR&quot;</span>,
+        <span class="hljs-string">&quot;dataVersion&quot;</span>: <span class="hljs-string">&quot;006&quot;</span>
       },
-      &quot;version&quot;: &quot;123456&quot;,
-      &quot;collection&quot;: &quot;MOD09GQ&quot;,
-      &quot;provider&quot;: &quot;TestProvider&quot;
+      <span class="hljs-string">&quot;version&quot;</span>: <span class="hljs-string">&quot;123456&quot;</span>,
+      <span class="hljs-string">&quot;collection&quot;</span>: <span class="hljs-string">&quot;MOD09GQ&quot;</span>,
+      <span class="hljs-string">&quot;provider&quot;</span>: <span class="hljs-string">&quot;TestProvider&quot;</span>
     },
-    &quot;granules&quot;: [
+    <span class="hljs-string">&quot;granules&quot;</span>: [
       {
-        &quot;granuleId&quot;: &quot;TestGranuleUR&quot;,
-        &quot;files&quot;: [
+        <span class="hljs-string">&quot;granuleId&quot;</span>: <span class="hljs-string">&quot;TestGranuleUR&quot;</span>,
+        <span class="hljs-string">&quot;files&quot;</span>: [
           {
-            &quot;path&quot;: &quot;some-bucket/data&quot;,
-            &quot;url_path&quot;: &quot;s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;,
-            &quot;bucket&quot;: &quot;some-bucket&quot;,
-            &quot;name&quot;: &quot;MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;,
-            &quot;size&quot;: 12345678
+            <span class="hljs-string">&quot;path&quot;</span>: <span class="hljs-string">&quot;some-bucket/data&quot;</span>,
+            <span class="hljs-string">&quot;url_path&quot;</span>: <span class="hljs-string">&quot;s3://some-bucket/cumulus-test-data/data/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;</span>,
+            <span class="hljs-string">&quot;bucket&quot;</span>: <span class="hljs-string">&quot;some-bucket&quot;</span>,
+            <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;MOD09GQ.A2016358.h13v04.006.2016360104606.hdf&quot;</span>,
+            <span class="hljs-string">&quot;size&quot;</span>: <span class="hljs-number">12345678</span>
           }
         ]
       }
     ]
   }
-</code></pre><h4 id="syncgranules">SyncGranules</h4>
-<p>This lambda will take the files listed for the granule in the payload and move them to <code>s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}</code></p>
+</code></pre>
+<h4 id="syncgranules">SyncGranules</h4>
+<p>This lambda will take the files listed in the payload and move them to <code>s3://{deployment-private-bucket}/file-staging/{deployment-name}/{COLLECTION}/{file_name}</code>.</p>
 <h4 id="cnmresponse">CnmResponse</h4>
-<p>Assuming a successful execution of the workflow, this task will recover the &apos;cmr&apos; key from the &apos;meta&apos; portion of the CMA output, and add a &apos;SUCCESS&apos; record to the notification Kinesis stream.</p>
-<p>If prior steps in the the workflow has directed a task failure to this step, they will immediately pass the failure to this step, and it will add a &quot;FAILURE&quot; record to the stream instead.</p>
+<p>Assuming a successful execution of the workflow, this task will recover the &apos;cnm&apos; key from the &apos;meta&apos; portion of the CMA output, and add a &quot;SUCCESS&quot; record to the notification Kinesis stream.</p>
+<p>If a prior step in the the workflow has failed, this will add a &quot;FAILURE&quot; record to the stream instead.</p>
+<p>The data written to the <code>CnmResponseStream</code> should adhere to the <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism#CloudNotificationMechanism-ResponseMessageFields" target="_blank">Response Message Fields</a> schema.</p>
+<p><strong>Example CNM Success Response</strong></p>
+<pre><code class="lang-json">{
+  <span class="hljs-string">&quot;provider&quot;</span>: <span class="hljs-string">&quot;PODAAC_SWOT&quot;</span>,
+  <span class="hljs-string">&quot;collection&quot;</span>: <span class="hljs-string">&quot;SWOT_Prod_l2:1&quot;</span>,
+  <span class="hljs-string">&quot;ingestTime&quot;</span>:<span class="hljs-string">&quot;2017-09-30T03:45:29.791198&quot;</span>,
+  <span class="hljs-string">&quot;receivedTime&quot;</span>:<span class="hljs-string">&quot;2017-09-30T03:42:31.634552&quot;</span>,
+  <span class="hljs-string">&quot;deliveryTime&quot;</span>:<span class="hljs-string">&quot;2017-09-30T03:42:29.791198&quot;</span>,
+  <span class="hljs-string">&quot;identifier&quot;</span>: <span class="hljs-string">&quot;1234-abcd-efg0-9876&quot;</span>,
+  <span class="hljs-string">&quot;response&quot;</span>: {
+    <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-string">&quot;SUCCESS&quot;</span>
+  }
+}
+</code></pre>
+<p><strong>Example CNM Error Response</strong></p>
+<pre><code class="lang-json">{
+  <span class="hljs-string">&quot;provider&quot;</span>: <span class="hljs-string">&quot;PODAAC_SWOT&quot;</span>,
+  <span class="hljs-string">&quot;collection&quot;</span>: <span class="hljs-string">&quot;SWOT_Prod_l2:1&quot;</span>,
+  <span class="hljs-string">&quot;ingestTime&quot;</span>:<span class="hljs-string">&quot;2017-09-30T03:45:29.791198&quot;</span>,
+  <span class="hljs-string">&quot;deliveryTime&quot;</span>:<span class="hljs-string">&quot;2017-09-30T03:42:29.791198&quot;</span>,
+  <span class="hljs-string">&quot;receivedTime&quot;</span>:<span class="hljs-string">&quot;2017-09-30T03:42:31.634552&quot;</span>,
+  <span class="hljs-string">&quot;identifier&quot;</span>: <span class="hljs-string">&quot;1234-abcd-efg0-9876&quot;</span>,
+  <span class="hljs-string">&quot;response&quot;</span>: {
+    <span class="hljs-string">&quot;status&quot;</span>:<span class="hljs-string">&quot;FAILURE&quot;</span>,
+    <span class="hljs-string">&quot;errorCode&quot;</span>: <span class="hljs-string">&quot;INGEST_ERROR&quot;</span>,
+    <span class="hljs-string">&quot;errorMessage&quot;</span>: <span class="hljs-string">&quot;File [cumulus-dev-a4d38f59-5e57-590c-a2be-58640db02d91/prod_20170926T11:30:36/production_file.nc] did not match gve checksum value.&quot;</span>
+  }
+}
+</code></pre>
+<p>Note the <code>CnmResponse</code> state defined in the <code>workflows.yml</code> above configures <code>$.exception</code> to be passed to the <code>CnmResponse</code> lambda keyed under <code>config.WorkflowException</code>. This is required for the <code>CnmResponse</code> code to deliver a failure response.</p>
+<p>To test the failure scenario, send a record missing the <code>collection</code> key.</p>
 <h4 id="stopstatus">StopStatus</h4>
-<p>In case of either success <em>or</em> failure, CnmResponse will then pass the results to StopStatus and it will react as it would in any other workflow in case of success or failure.</p>
-<h2 id="results">Results</h2>
-<p>Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the Dashboard:</p>
+<p>In case of either success <em>or</em> failure, <code>CnmResponse</code> will then pass the results to <code>StopStatus</code>. <code>StopStatus</code> will cause the workflow to fail or succeed accordingly.</p>
+<hr>
+<h2 id="verify-results">Verify results</h2>
+<h3 id="check-for-successful-execution-on-the-dashboard">Check for successful execution on the dashboard</h3>
+<p>Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the dashboard:</p>
 <p><img src="../images/cnm_success_example.png" alt=""></p>
-<p>The test granule you added to the notification Kinesis stream should be moved to the deployment&apos;s private staging area, and a SUCCESSFUL notification should be present on the Response Kinesis stream.</p>
-<p>You should be able to validate the notification stream has records with the following steps (the AWS CLI Kinesis <a href="https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html" target="_blank">Basic Stream Operations</a> is useful to review before proceeding):</p>
+<h3 id="check-the-test-granule-has-been-delivered-to-s3-staging">Check the test granule has been delivered to S3 staging</h3>
+<p>The test granule identified in the Kinesis record should be moved to the deployment&apos;s private staging area.</p>
+<h3 id="check-for-kinesis-records">Check for Kinesis records</h3>
+<p>A <code>SUCCESS</code> notification should be present on the <code>CNMResponseStream</code> Kinesis stream.</p>
+<p>You should be able to validate the notification and response streams have the expected records with the following steps (the AWS CLI Kinesis <a href="https://docs.aws.amazon.com/streams/latest/dev/fundamental-stream.html" target="_blank">Basic Stream Operations</a> is useful to review before proceeding):</p>
 <ul>
 <li>Get a shard iterator (substituting your stream name as appropriate):</li>
 </ul>
-<pre><code>aws kinesis get-shard-iterator --shard-id shardId-000000000000 --shard-iterator-type LATEST --stream-name NOTIFICATION_STREAM_NAME_HERE
-</code></pre><p>which should result in an output to:</p>
-<pre><code>{
-    &quot;ShardIterator&quot;: &quot;VeryLongString==&quot;
+<pre><code class="lang-bash">aws kinesis get-shard-iterator \
+  --shard-id shardId-000000000000 \
+  --shard-iterator-type LATEST \
+  --stream-name NOTIFICATION_OR_RESPONSE_STREAM_NAME
+</code></pre>
+<p>which should result in an output to:</p>
+<pre><code class="lang-json">{
+  <span class="hljs-string">&quot;ShardIterator&quot;</span>: <span class="hljs-string">&quot;VeryLongString==&quot;</span>
 }
-</code></pre><ul>
+</code></pre>
+<ul>
 <li>Re-trigger the workflow by using the <code>put-record</code> command from</li>
-<li>As the workflow completes the input from the get-shard-iterator command to request data from the stream:</li>
+<li>As the workflow completes, use the output from the <code>get-shard-iterator</code> command to request data from the stream:</li>
 </ul>
-<pre><code>aws kinesis get-records --shard-iterator SHARDITERATORVALUEHERE
-</code></pre><p>This should result in output similar to:</p>
-<pre><code>{
-    &quot;Records&quot;: [
+<pre><code class="lang-bash">aws kinesis get-records --shard-iterator SHARD_ITERATOR_VALUE
+</code></pre>
+<p>This should result in output similar to:</p>
+<pre><code class="lang-json">{
+    <span class="hljs-string">&quot;Records&quot;</span>: [
         {
-            &quot;SequenceNumber&quot;: &quot;49586720336541656798369548102057798835250389930873978882&quot;,
-            &quot;ApproximateArrivalTimestamp&quot;: 1532664689.128,
-            &quot;Data&quot;: &quot;eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjI4LjkxOSJ9&quot;,
-            &quot;PartitionKey&quot;: &quot;1&quot;
+            <span class="hljs-string">&quot;SequenceNumber&quot;</span>: <span class="hljs-string">&quot;49586720336541656798369548102057798835250389930873978882&quot;</span>,
+            <span class="hljs-string">&quot;ApproximateArrivalTimestamp&quot;</span>: <span class="hljs-number">1532664689.128</span>,
+            <span class="hljs-string">&quot;Data&quot;</span>: <span class="hljs-string">&quot;eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjI4LjkxOSJ9&quot;</span>,
+            <span class="hljs-string">&quot;PartitionKey&quot;</span>: <span class="hljs-string">&quot;1&quot;</span>
         },
         {
-            &quot;SequenceNumber&quot;: &quot;49586720336541656798369548102059007761070005796999266306&quot;,
-            &quot;ApproximateArrivalTimestamp&quot;: 1532664707.149,
-            &quot;Data&quot;: &quot;eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjQ2Ljk1OCJ9&quot;,
-            &quot;PartitionKey&quot;: &quot;1&quot;
+            <span class="hljs-string">&quot;SequenceNumber&quot;</span>: <span class="hljs-string">&quot;49586720336541656798369548102059007761070005796999266306&quot;</span>,
+            <span class="hljs-string">&quot;ApproximateArrivalTimestamp&quot;</span>: <span class="hljs-number">1532664707.149</span>,
+            <span class="hljs-string">&quot;Data&quot;</span>: <span class="hljs-string">&quot;eyJpZGVudGlmaWVyICI6InRlc3RJZGVudGlmaWVyMTIzNDU2IiwidmVyc2lvbiI6IjAwNiIsImNvbGxlY3Rpb24iOiJNT0QwOUdRIiwicHJvdmlkZXIiOiJUZXN0UHJvdmlkZXIiLCJwcm9kdWN0U2l6ZSI6MTkwODYzNS4wLCJyZXNwb25zZSI6eyJzdGF0dXMiOiJTVUNDRVNTIn0sInByb2Nlc3NDb21wbGV0ZVRpbWUiOiIyMDE4LTA3LTI3VDA0OjExOjQ2Ljk1OCJ9&quot;</span>,
+            <span class="hljs-string">&quot;PartitionKey&quot;</span>: <span class="hljs-string">&quot;1&quot;</span>
         }
     ],
-    &quot;NextShardIterator&quot;: &quot;AAAAAAAAAAFo9SkF8RzVYIEmIsTN+1PYuyRRdlj4Gmy3dBzsLEBxLo4OU+2Xj1AFYr8DVBodtAiXbs3KD7tGkOFsilD9R5tA+5w9SkGJZ+DRRXWWCywh+yDPVE0KtzeI0andAXDh9yTvs7fLfHH6R4MN9Gutb82k3lD8ugFUCeBVo0xwJULVqFZEFh3KXWruo6KOG79cz2EF7vFApx+skanQPveIMz/80V72KQvb6XNmg6WBhdjqAA==&quot;,
-    &quot;MillisBehindLatest&quot;: 0
+    <span class="hljs-string">&quot;NextShardIterator&quot;</span>: <span class="hljs-string">&quot;AAAAAAAAAAFo9SkF8RzVYIEmIsTN+1PYuyRRdlj4Gmy3dBzsLEBxLo4OU+2Xj1AFYr8DVBodtAiXbs3KD7tGkOFsilD9R5tA+5w9SkGJZ+DRRXWWCywh+yDPVE0KtzeI0andAXDh9yTvs7fLfHH6R4MN9Gutb82k3lD8ugFUCeBVo0xwJULVqFZEFh3KXWruo6KOG79cz2EF7vFApx+skanQPveIMz/80V72KQvb6XNmg6WBhdjqAA==&quot;</span>,
+    <span class="hljs-string">&quot;MillisBehindLatest&quot;</span>: <span class="hljs-number">0</span>
 }
-</code></pre><p>Note that the data encoding is not human readable in the stream and would need to be parsed/converted to be interpretable.     There&apos;s many options to build a Kineis consumer such as the <a href="https://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html" target="_blank">KCL</a>.   For purposes of validating the workflow, it also may be simpler to locate the workflow in the <a href="https://console.aws.amazon.com/states/home" target="_blank">Step Function Management Console</a> and view the intended output in the cnmResponse key:</p>
-<pre><code>    &quot;cnmResponse&quot;: {
-      &quot;productSize&quot;: 12345678,
-      &quot;processCompleteTime&quot;: &quot;2018-07-27T05:43:41.698&quot;,
-      &quot;collection&quot;: &quot;MOD09GQ&quot;,
-      &quot;version&quot;: &quot;123456&quot;,
-      &quot;provider&quot;: &quot;TestProvider&quot;,
-      &quot;identifier &quot;: &quot;testIdentifier123456&quot;,
-      &quot;response&quot;: {
-        &quot;status&quot;: &quot;SUCCESS&quot;
-      }
-    }
-</code></pre><h2 id="kinesis-stream-error-handling">Kinesis Stream Error handling</h2>
-<p>The default Kinesis stream processing in the Cumulus system is configured for record error tolerance. Kinesis message records that arrive from the stream that are unable to be processed by the <code>kinesisConsumer</code> lambda are captured and published to the <code>kinesisFallback</code> SNS Topic. The <code>kinesisFallback</code> SNS topic broadcasts the record to a subscribed copy of the kinesis consumer lambda named <code>kinesisFallback</code>.  This ensures that when a record fails from kinesis, that record is published to the SNS topic, and automatically re-triggered in a fallback attempt to process it.  At this point, the <a href="https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html" target="_blank">normal lambda asynchronous invocation retry behavior</a> will attempt to process the record 3 mores times.  After this, if the record cannot successfully be processed, it is written to a <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html" target="_blank">dead letter queue</a> <code>kinesisFailure</code> SQS where an operator can go to examine the record.  All of this system, the <code>kinesisFallback</code> SNS topic, <code>kinesisConsumer</code> lambda, and <code>kinesisFailure</code> SQS queue come with the API package and do not need to be configured by the operator.</p>
+</code></pre>
+<p>Note the data encoding is not human readable and would need to be parsed/converted to be interpretable. There are many options to build a Kineis consumer such as the <a href="https://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html" target="_blank">KCL</a>.</p>
+<p>For purposes of validating the workflow, it may be simpler to locate the workflow in the <a href="https://console.aws.amazon.com/states/home" target="_blank">Step Function Management Console</a> and assert the expected output is similar to the below examples.</p>
+<p><strong>Successful CNM Response Object Example:</strong></p>
+<pre><code class="lang-json">{
+  <span class="hljs-string">&quot;cnmResponse&quot;</span>: {
+    <span class="hljs-string">&quot;productSize&quot;</span>: <span class="hljs-number">12345678</span>,
+    <span class="hljs-string">&quot;processCompleteTime&quot;</span>: <span class="hljs-string">&quot;2018-07-27T05:43:41.698&quot;</span>,
+    <span class="hljs-string">&quot;collection&quot;</span>: <span class="hljs-string">&quot;MOD09GQ&quot;</span>,
+    <span class="hljs-string">&quot;version&quot;</span>: <span class="hljs-string">&quot;123456&quot;</span>,
+    <span class="hljs-string">&quot;provider&quot;</span>: <span class="hljs-string">&quot;TestProvider&quot;</span>,
+    <span class="hljs-string">&quot;identifier &quot;</span>: <span class="hljs-string">&quot;testIdentifier123456&quot;</span>,
+    <span class="hljs-string">&quot;response&quot;</span>: {
+      <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;SUCCESS&quot;</span>
+  }
+}
+</code></pre>
+<hr>
+<h2 id="kinesis-record-error-handling">Kinesis Record Error Handling</h2>
+<p>The default Kinesis stream processing in the Cumulus system is configured for record error tolerance.</p>
+<p>When the <code>kinesisConsumer</code> fails to process a record, the failure is captured and the record is published to the <code>kinesisFallback</code> SNS Topic. The <code>kinesisFallback</code> SNS topic broadcasts the record and a subscribed copy of the <code>kinesisConsumer</code> lambda named <code>kinesisFallback</code> consumes these failures.</p>
+<p>At this point, the <a href="https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html" target="_blank">normal lambda asynchronous invocation retry behavior</a> will attempt to process the record 3 mores times. After this, if the record cannot successfully be processed, it is written to a <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html" target="_blank">dead letter queue</a>. Cumulus&apos; dead letter queue is an SQS Queue named <code>kinesisFailure</code>. Operators can use this queue to inspect failed records.</p>
+<p>This system ensures when <code>kinesisCosumer</code> fails to process a record and trigger a workflow, the record is retried 3 times. This retry behavior improves system reliability in case of any external service failure outside of Cumulus control. </p>
+<p>The Kinesis error handling system - the <code>kinesisFallback</code> SNS topic, <code>kinesisConsumer</code> lambda, and <code>kinesisFailure</code> SQS queue - come with the API package and do not need to be configured by the operator.</p>
 <p><img src="../images/Kinesis-Error-Processing.png" alt=""></p>
 <p>To examine records that were unable to be processed at any step you need to go look at the dead letter queue <code>{{stackname}}-kinesisFailure</code>.
-Check the <a href="https://console.aws.amazon.com/sqs/home" target="_blank">Simple Queue Service (SQS) console</a>. Select your queue, and under the <code>Queue Actions</code> tab, you can choose <code>View/Delete Messages</code>. <code>Start polling</code> for messages and you will see records that failed to process through the kinesis consumer.  Note that these are only records that didn&apos;t get their workflows started successfully.  Remember these are failures that occur when processing records from kineis, workflow failures are handled differently.</p>
+Check the <a href="https://console.aws.amazon.com/sqs/home" target="_blank">Simple Queue Service (SQS) console</a>. Select your queue, and under the <code>Queue Actions</code> tab, you can choose <code>View/Delete Messages</code>. <code>Start polling</code> for messages and you will see records that failed to process through the <code>kinesisConsumer</code>.</p>
+<p>Note, these are only records that occurred when processing records from Kinesis streams. Workflow failures are handled differently.</p>
 
                                 
                                 </section>
@@ -1067,7 +1145,7 @@ Check the <a href="https://console.aws.amazon.com/sqs/home" target="_blank">Simp
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"CNM Workflow","level":"2.4","depth":1,"next":{"title":"SIPS Workflow","level":"2.5","depth":1,"path":"data-cookbooks/sips-workflow.md","ref":"data-cookbooks/sips-workflow.md","articles":[]},"previous":{"title":"SNS Configuration","level":"2.3","depth":1,"path":"data-cookbooks/sns.md","ref":"data-cookbooks/sns.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/cnm-workflow.md","mtime":"2018-08-14T18:23:41.558Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-14T18:25:16.273Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"CNM Workflow","level":"2.4","depth":1,"next":{"title":"SIPS Workflow","level":"2.5","depth":1,"path":"data-cookbooks/sips-workflow.md","ref":"data-cookbooks/sips-workflow.md","articles":[]},"previous":{"title":"SNS Configuration","level":"2.3","depth":1,"path":"data-cookbooks/sns.md","ref":"data-cookbooks/sns.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/cnm-workflow.md","mtime":"2018-08-23T13:29:12.394Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-23T13:30:39.150Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

@@ -701,12 +701,6 @@
 <td>A version tag for the collection</td>
 </tr>
 <tr>
-<td style="text-align:center">process</td>
-<td style="text-align:center"><code>&quot;modis&quot;</code></td>
-<td style="text-align:center">Yes</td>
-<td>The options for this are found in &quot;ChooseProcess and in workflows.yml</td>
-</tr>
-<tr>
 <td style="text-align:center">granuleId</td>
 <td style="text-align:center"><code>&quot;^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$&quot;</code></td>
 <td style="text-align:center">Yes</td>
@@ -726,15 +720,9 @@
 </tr>
 <tr>
 <td style="text-align:center">files</td>
-<td style="text-align:center"><code>&lt;JSON Object&gt;</code> of files defined <a href="#files">here</a></td>
+<td style="text-align:center"><code>&lt;JSON Object&gt;</code> of files defined <a href="#files-object">here</a></td>
 <td style="text-align:center">Yes</td>
 <td>Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)</td>
-</tr>
-<tr>
-<td style="text-align:center">provider_path</td>
-<td style="text-align:center"><code>&quot;cumulus-test-data/pdrs&quot;</code></td>
-<td style="text-align:center">No</td>
-<td>This collection is expecting to find data in a <code>cumulus-test-data/pdrs</code> directory, whether that be in S3 or at an http endpoint</td>
 </tr>
 <tr>
 <td style="text-align:center">dataType</td>
@@ -746,7 +734,25 @@
 <td style="text-align:center">duplicateHandling</td>
 <td style="text-align:center"><code>&quot;replace&quot;</code></td>
 <td style="text-align:center">No</td>
-<td><code>(replace|version|skip)</code> determines granule duplicate handling scheme</td>
+<td><code>(&quot;replace&quot;|&quot;version&quot;|&quot;skip&quot;)</code> determines granule duplicate handling scheme</td>
+</tr>
+<tr>
+<td style="text-align:center">process</td>
+<td style="text-align:center"><code>&quot;modis&quot;</code></td>
+<td style="text-align:center">No</td>
+<td>The options for this are found in the ChooseProcess step definition in <a href="https://github.com/nasa/cumulus/tree/master/example/workflows.yml" target="_blank">workflows.yml</a></td>
+</tr>
+<tr>
+<td style="text-align:center">provider_path</td>
+<td style="text-align:center"><code>&quot;cumulus-test-data/pdrs&quot;</code></td>
+<td style="text-align:center">No</td>
+<td>This collection is expecting to find data in a <code>cumulus-test-data/pdrs</code> directory, whether that be in S3 or at an http endpoint</td>
+</tr>
+<tr>
+<td style="text-align:center">meta</td>
+<td style="text-align:center"><code>&lt;JSON Object&gt;</code> of MetaData for the collection</td>
+<td style="text-align:center">No</td>
+<td>MetaData for the collection. This metadata will be available to workflows for this collection via the <a href="../workflows/input_output.html">Cumulus Message Adapter</a>.</td>
 </tr>
 <tr>
 <td style="text-align:center">url_path</td>
@@ -756,18 +762,46 @@
 </tr>
 </tbody>
 </table>
-<h4 id="files">files</h4>
-<pre><code>&quot;files&quot;: [
-  {
-    &quot;bucket&quot;: internal # Which S3 bucket this collection will live in. The available buckets are configured in the Cumulus deployment file: app/config.yml (but should be entered here WITHOUT the stack-name). cumulus-test-internal -&gt; internal (if the stack-name is cumulus-test),
-    &quot;regex&quot;: &quot;^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$&quot;,
-    &quot;sampleFileName&quot;: &quot;MOD09GQ.A2017025.h21v00.006.2017034065104.hdf&quot;
-  },
-  ...
-]
-</code></pre><h3 id="providers">Providers</h3>
+<h4 id="files-object">files-object</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Key</th>
+<th style="text-align:center">Value</th>
+<th style="text-align:center">Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">regex</td>
+<td style="text-align:center"><code>&quot;^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$&quot;</code></td>
+<td style="text-align:center">Yes</td>
+<td>Regex used to identify the file</td>
+</tr>
+<tr>
+<td style="text-align:center">sampleFileName</td>
+<td style="text-align:center"><code>MOD09GQ.A2017025.h21v00.006.2017034065104.hdf&quot;</code></td>
+<td style="text-align:center">Yes</td>
+<td>Filename used to validate the provided regex</td>
+</tr>
+<tr>
+<td style="text-align:center">bucket</td>
+<td style="text-align:center"><code>&quot;internal&quot;</code></td>
+<td style="text-align:center">Yes</td>
+<td>Name of the bucket where the file will be stored</td>
+</tr>
+<tr>
+<td style="text-align:center">url_path</td>
+<td style="text-align:center"><code>&quot;${collectionShortName}/{substring(file.name, 0, 3)}&quot;</code></td>
+<td style="text-align:center">No</td>
+<td>Folder used to save the granule in the bucket. Defaults to the collection url_path</td>
+</tr>
+</tbody>
+</table>
+<h3 id="providers">Providers</h3>
 <p>Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js" target="_blank">here</a> in the object assigned to <code>module.exports.provider</code>. A few example provider configurations can be found <a href="https://github.com/nasa/cumulus/tree/master/example/data/providers" target="_blank">here</a>. Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the &quot;Providers&quot; navigation tab. Additionally, they can be managed via the <a href="https://nasa.github.io/cumulus-api/?language=Python#list-providers" target="_blank">providers api</a>.</p>
-<p><strong>Break down of <a href="https://github.com/nasa/cumulus/tree/tree/example/data/providers/s3_provider.json" target="_blank">s3_provider.json</a>:</strong></p>
+<p><strong>Break down of <a href="https://github.com/nasa/cumulus/tree/master/example/data/providers/s3_provider.json" target="_blank">s3_provider.json</a>:</strong></p>
 <table>
 <thead>
 <tr>
@@ -792,7 +826,7 @@
 </tr>
 <tr>
 <td style="text-align:center">protocol</td>
-<td style="text-align:center"><code>&quot;s3&quot;</code></td>
+<td style="text-align:center"><code>s3</code></td>
 <td style="text-align:center">Yes</td>
 <td><code>(http|https|ftp|sftp|s3)</code> are current valid entries</td>
 </tr>
@@ -812,97 +846,131 @@
 <td style="text-align:center">username</td>
 <td style="text-align:center"><code>${username}</code></td>
 <td style="text-align:center">No</td>
-<td>Username for access to the provider. Plain-text or encrypted. Encrypted is highly suggested</td>
+<td>Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged</td>
 </tr>
 <tr>
 <td style="text-align:center">password</td>
 <td style="text-align:center"><code>${password}</code></td>
 <td style="text-align:center">No</td>
-<td>Password for accces to the provider. Plain-text or encrypted. Encrypted is highly suggested</td>
+<td>Password for accces to the provider. Plain-text or encrypted. Encrypted is highly encouraged</td>
 </tr>
 </tbody>
 </table>
 <p><em>The above optional attributes are not shown in the example provided, but they have been included in this document for completeness</em></p>
 <h3 id="rules">Rules</h3>
 <p>Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by events in <a href="cnm-workflow.html">Kinesis</a> or SNS. The current best way to understand rules is to take a look at the <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js" target="_blank">schema</a> (specifically the object assigned to <code>module.exports.rule</code>). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the &quot;Rules&quot; navigation tab. Additionally, they can be managed via the <a href="https://nasa.github.io/cumulus-api/?language=Python#list-rules" target="_blank">rules api</a>.</p>
-<p>We don&apos;t currently have examples of rules in the Cumulus repo, but we can see how to create a rule from the Cumulus dashboard.</p>
-<ol>
-<li>In the Cumulus dashboard, click <code>Rules</code> on the navigation bar.</li>
-<li>Click the <code>Add a rule</code> button.</li>
-</ol>
+<p>The Cumulus Core repository has an example of a Kinesis rule <a href="https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json" target="_blank">here</a>.</p>
 <table>
 <thead>
 <tr>
-<th>Key</th>
-<th>Value</th>
-<th>Required</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:center">Value</th>
+<th style="text-align:center">Required</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>name</td>
-<td><code>&quot;myScheduledRule&quot;</code></td>
-<td>Yes</td>
+<td style="text-align:center">name</td>
+<td style="text-align:center"><code>&quot;L2_HR_PIXC_kinesisRule&quot;</code></td>
+<td style="text-align:center">Yes</td>
 <td>Name of the rule. This is the name under which the rule will be listed on the dashboard</td>
 </tr>
 <tr>
-<td>workflow Name</td>
-<td><code>&quot;ParsePdr&quot;</code></td>
-<td>Yes</td>
+<td style="text-align:center">workflow</td>
+<td style="text-align:center"><code>&quot;KinesisTriggerTest&quot;</code></td>
+<td style="text-align:center">Yes</td>
 <td>Name of the workflow to be run. A list of available workflows can be found on the Workflows page</td>
 </tr>
 <tr>
-<td>Provider Id</td>
-<td><code>&quot;myProvider&quot;</code></td>
-<td>Yes</td>
-<td>Configured provider&apos;s iD. This can be found on the Providerse page</td>
+<td style="text-align:center">provider</td>
+<td style="text-align:center"><code>&quot;PODAAC_SWOT&quot;</code></td>
+<td style="text-align:center">No</td>
+<td>Configured provider&apos;s ID. This can be found on the Providers dashboard page</td>
 </tr>
 <tr>
-<td>Collection Name</td>
-<td><code>&quot;myCollection&quot;</code></td>
-<td>Yes</td>
-<td>Name of the collection this rule will moderate. Configured and found in the Collections page</td>
+<td style="text-align:center">collection</td>
+<td style="text-align:center"><code>&lt;JSON Object&gt;</code> collection object shown <a href="#collection-object">below</a></td>
+<td style="text-align:center">Yes</td>
+<td>Name and version of the collection this rule will moderate. Relates to a collection configured and found in the Collections page</td>
 </tr>
 <tr>
-<td>Collection Version</td>
-<td><code>&quot;006&quot;</code></td>
-<td>Yes</td>
-<td>Version of the collection this rule will moderate. Configured and found in the Collections page</td>
+<td style="text-align:center">rule</td>
+<td style="text-align:center"><code>&lt;JSON Object&gt;</code> rule type and associated values - discussed <a href="#rule-object">below</a></td>
+<td style="text-align:center">Yes</td>
+<td>Object defining the type and subsequent attributes of the rule</td>
 </tr>
 <tr>
-<td>Rule - Type</td>
-<td><code>onetime</code></td>
-<td>Yes</td>
-<td><code>(onetime|scheduled|sns|kinesis)</code> type of scheduling/workflow kick-off desired</td>
+<td style="text-align:center">state</td>
+<td style="text-align:center"><code>&quot;ENABLED&quot;</code></td>
+<td style="text-align:center">No</td>
+<td><code>(&quot;ENABLED&quot;|&quot;DISABLED&quot;)</code> whether or not the rule will be active. Defaults to <code>&quot;ENABLED&quot;</code>.</td>
 </tr>
 <tr>
-<td>Rule - Value</td>
-<td><a href="#rule-value">here</a></td>
-<td>Yes</td>
-<td>This entry depends on the type of run</td>
+<td style="text-align:center">tags</td>
+<td style="text-align:center"><code>[&quot;kinesis&quot;, &quot;podaac&quot;]</code></td>
+<td style="text-align:center">No</td>
+<td>An array of strings that can be used to simplify search</td>
+</tr>
+</tbody>
+</table>
+<h4 id="collection-object">collection-object</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Key</th>
+<th style="text-align:center">Value</th>
+<th style="text-align:center">Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">name</td>
+<td style="text-align:center"><code>&quot;L2_HR_PIXC&quot;</code></td>
+<td style="text-align:center">Yes</td>
+<td>Name of a collection defined/configured in the Collections dashboard page</td>
 </tr>
 <tr>
-<td>Rule state</td>
-<td><code>ENABLED</code></td>
-<td>Yes</td>
-<td><code>(ENABLED|DISABLED)</code> whether or not the rule will be active</td>
+<td style="text-align:center">version</td>
+<td style="text-align:center"><code>&quot;000&quot;</code></td>
+<td style="text-align:center">Yes</td>
+<td>Version number of a collection defined/configured in the Collections dashboard page</td>
+</tr>
+</tbody>
+</table>
+<h4 id="rule-object">rule-object</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Key</th>
+<th style="text-align:center">Value</th>
+<th style="text-align:center">Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">type</td>
+<td style="text-align:center"><code>&quot;kinesis&quot;</code></td>
+<td style="text-align:center">Yes</td>
+<td><code>(&quot;onetime&quot;|&quot;scheduled&quot;|&quot;sns&quot;|&quot;kinesis&quot;)</code> type of scheduling/workflow kick-off desired</td>
 </tr>
 <tr>
-<td>Optional tags</td>
-<td><code>&quot;nightly&quot;</code></td>
-<td>No</td>
-<td>A string type tag that can be added to simplify search</td>
+<td style="text-align:center">value</td>
+<td style="text-align:center"><code>&lt;String&gt; Object</code></td>
+<td style="text-align:center">Depends</td>
+<td>Discussion of valid values is <a href="#rule-value">below</a></td>
 </tr>
 </tbody>
 </table>
 <h4 id="rule-value">rule-value</h4>
 <p>The <code>rule - value</code> entry depends on the type of run:</p>
 <ul>
-<li>If this is a onetime rule, this can be left blank - <a href="hello-world.html#execution">Example</a></li>
-<li>If this is a scheduled rule, this field can hold a <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html" target="_blank">cron-type expression or rate expression</a>.</li>
-<li>If this is an SNS rule <code>${SNS_topic_ARN}</code>,</li>
-<li>If this is a kinesis rule, this should be a configured <code>${Kinesis_stream_ARN}</code> - <a href="cnm-workflow.html#rule-configuration">Example</a></li>
+<li>If this is a onetime rule this can be left blank. <a href="hello-world.html#execution">Example</a></li>
+<li>If this is a scheduled rule this field must hold a valid <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html" target="_blank">cron-type expression or rate expression</a>.</li>
+<li>If this is an SNS rule, this must be a configured <code>${SNS_topic_ARN}</code>.</li>
+<li>If this is a kinesis rule, this must be a configured <code>${Kinesis_stream_ARN}</code>. <a href="cnm-workflow.html#rule-configuration">Example</a></li>
 </ul>
 
                                 
@@ -947,7 +1015,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Collections, Providers, Schemas, and Rules","level":"2.1.1","depth":2,"next":{"title":"HelloWorldWorkflow","level":"2.2","depth":1,"path":"data-cookbooks/hello-world.md","ref":"data-cookbooks/hello-world.md","articles":[]},"previous":{"title":"About Cookbooks","level":"2.1","depth":1,"path":"data-cookbooks/about-cookbooks.md","ref":"data-cookbooks/about-cookbooks.md","articles":[{"title":"Collections, Providers, Schemas, and Rules","level":"2.1.1","depth":2,"path":"data-cookbooks/setup.md","ref":"data-cookbooks/setup.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/setup.md","mtime":"2018-08-14T19:57:03.576Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-14T19:58:21.668Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Collections, Providers, Schemas, and Rules","level":"2.1.1","depth":2,"next":{"title":"HelloWorldWorkflow","level":"2.2","depth":1,"path":"data-cookbooks/hello-world.md","ref":"data-cookbooks/hello-world.md","articles":[]},"previous":{"title":"About Cookbooks","level":"2.1","depth":1,"path":"data-cookbooks/about-cookbooks.md","ref":"data-cookbooks/about-cookbooks.md","articles":[{"title":"Collections, Providers, Schemas, and Rules","level":"2.1.1","depth":2,"path":"data-cookbooks/setup.md","ref":"data-cookbooks/setup.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/setup.md","mtime":"2018-08-23T13:29:12.394Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-23T13:30:39.150Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

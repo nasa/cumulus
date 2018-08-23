@@ -711,7 +711,8 @@
     WorkflowFailed:
       Type: Fail
       Cause: &apos;Workflow failed&apos;
-</code></pre><h3 id="task-configuration">Task Configuration</h3>
+</code></pre><p>Workflow <strong>error-handling</strong> can be configured as discussed in the <a href="error-handling.html">Error-Handling</a> cookbook.</p>
+<h3 id="task-configuration">Task Configuration</h3>
 <p>The HelloWorld <a href="../workflows/developing-workflow-tasks.html">task itself</a> is defined in <code>cumulus/example/lambdas.yml</code> under <code>HelloWorld:</code></p>
 <pre><code>HelloWorld:
   handler: index.handler
@@ -722,14 +723,19 @@
 </code></pre><h2 id="execution">Execution</h2>
 <p>We will focus on using the Cumulus dashboard to schedule the execution of a HelloWorld workflow.</p>
 <p>Our goal here is to create a rule through the Cumulus dashboard that will define the scheduling and execution of our HelloWorld workflow. Let&apos;s navigate to the <code>Rules</code> page and click <code>Add a rule</code>.</p>
-<pre><code>name: helloworld_rule
-Workflow Name: HelloWorldWorkflow # This can be found on the Workflows page
-Provider ID: ${provider_id} # found on the Providers page
-collection - Collection Name: ${collection_name} # configured and found in the Collections page
-collection - Collection Version: ${collection_version} # configured and found in the Collections page
-rule - type: onetime # this determines the schedule for workflow execution
-rule - value:
-Rule State: ENABLED
+<pre><code>{
+  &quot;collection&quot;: {                  # collection values can be configured and found on the Collections page
+    &quot;name&quot;: &quot;${collection_name}&quot;,
+    &quot;version&quot;: &quot;${collection_version}&quot;
+  },
+  &quot;name&quot;: &quot;helloworld_rule&quot;,
+  &quot;provider&quot;: &quot;${provider}&quot;,       # found on the Providers page
+  &quot;rule&quot;: {
+    &quot;type&quot;: &quot;onetime&quot;
+  },
+  &quot;state&quot;: &quot;ENABLED&quot;,
+  &quot;workflow&quot;: &quot;HelloWorldWorkflow&quot; # This can be found on the Workflows page
+}
 </code></pre><p><img src="../images/hello_world_workflow.png" alt="">
 <em>Executed workflow as seen in AWS Console</em></p>
 <h3 id="outputresults">Output/Results</h3>
@@ -780,7 +786,7 @@ Rule State: ENABLED
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"HelloWorldWorkflow","level":"2.2","depth":1,"next":{"title":"SNS Configuration","level":"2.3","depth":1,"path":"data-cookbooks/sns.md","ref":"data-cookbooks/sns.md","articles":[]},"previous":{"title":"Collections, Providers, Schemas, and Rules","level":"2.1.1","depth":2,"path":"data-cookbooks/setup.md","ref":"data-cookbooks/setup.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/hello-world.md","mtime":"2018-08-14T19:57:03.576Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-14T19:58:21.668Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"HelloWorldWorkflow","level":"2.2","depth":1,"next":{"title":"SNS Configuration","level":"2.3","depth":1,"path":"data-cookbooks/sns.md","ref":"data-cookbooks/sns.md","articles":[]},"previous":{"title":"Collections, Providers, Schemas, and Rules","level":"2.1.1","depth":2,"path":"data-cookbooks/setup.md","ref":"data-cookbooks/setup.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/hello-world.md","mtime":"2018-08-23T13:29:12.394Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-23T13:30:39.150Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

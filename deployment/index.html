@@ -669,7 +669,7 @@
                                 <h1 id="how-to-deploy-cumulus">How to Deploy Cumulus</h1>
 <h2 id="overview">Overview</h2>
 <p>This is a guide for deploying a new instance of Cumulus.</p>
-<p>The deployment  documentation is current for the following component versions:</p>
+<p>The deployment documentation is current for the following component versions:</p>
 <ul>
 <li><a href="https://github.com/nasa/cumulus" target="_blank">Cumulus</a></li>
 <li><a href="https://github.com/nasa/template-deploy" target="_blank">Deployment Template</a></li>
@@ -687,10 +687,9 @@
 <h4 id="linuxmacos-software-requirements">Linux/MacOS software requirements:</h4>
 <ul>
 <li>git</li>
-<li><a href="https://nodejs.org/en/" target="_blank">node &gt;= 6.9.5, &lt; 8</a> (use <a href="https://github.com/creationix/nvm" target="_blank">nvm</a> to upgrade/downgrade)</li>
+<li><a href="https://nodejs.org/en/" target="_blank">node 8.10</a> (use <a href="https://github.com/creationix/nvm" target="_blank">nvm</a> to upgrade/downgrade)</li>
 <li><a href="https://www.npmjs.com/get-npm" target="_blank">npm</a></li>
 <li>sha1sum or md5sha1sum</li>
-<li><a href="https://yarnpkg.com/lang/en/docs/install/" target="_blank">yarn ~= 1.2.x</a></li>
 <li><p>zip</p>
 </li>
 <li><p>AWS CLI - <a href="https://aws.amazon.com/cli/" target="_blank">AWS command line interface</a></p>
@@ -706,12 +705,31 @@
 </ul>
 <h4 id="needed-git-repositories">Needed Git Repositories:</h4>
 <ul>
-<li><a href="https://github.com/nasa/cumulus" target="_blank">Cumulus</a></li>
+<li><a href="https://github.com/nasa/cumulus" target="_blank">Cumulus</a> (optional)</li>
 <li><a href="https://github.com/nasa/cumulus-dashboard" target="_blank">Cumulus Dashboard</a></li>
 <li><a href="https://github.com/nasa/template-deploy" target="_blank">Deployment Template</a></li>
 </ul>
 <h2 id="installation">Installation</h2>
-<h4 id="make-local-copy-of-cumulus-repo-and-prepare-it">Make local copy of <code>Cumulus</code> Repo and prepare it.</h4>
+<h4 id="prepare-deployment">Prepare DAAC deployment repository </h4>
+<p><em>If you already are working with an existing <code>&lt;daac&gt;-deploy</code> repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to <a href="#prepare-config">Prepare AWS configuration. </a></em></p>
+<p>Clone template-deploy repo and name appropriately for your DAAC or organization</p>
+<pre><code>$ git clone https://github.com/nasa/template-deploy &lt;daac&gt;-deploy
+</code></pre><p>Enter repository root directory</p>
+<pre><code>$ cd &lt;daac&gt;-deploy
+</code></pre><p>Then run:</p>
+<pre><code>$ npm install
+</code></pre><p><strong>Note</strong>: The npm install command will add the <a href="http://devseed.com/kes/" target="_blank">kes</a> utility to the <code>&lt;daac&gt;-deploy</code>&apos;s <code>node_packages</code> directory and will be utilized later for most of the AWS deployment commands</p>
+<h4 id="obtain-cumulus-packages">Obtain Cumulus Packages</h4>
+<h5 id="option-1-get-packages-from-npm">Option 1: Get packages from NPM</h5>
+<p>Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found <a href="https://www.npmjs.com/search?q=%40cumulus" target="_blank">here</a>.</p>
+<p>If you&apos;re trying to work with a certain version of a cumulus package or task, the version can be specified in <code>package.json</code> under dependencies. We use semantic versioning (major/minor/patch). You can also configure for automatic updates. Use <code>^</code> to update minor/patch versions automatically and <code>~</code> to automatically update patch versions. For example:</p>
+<pre><code>&quot;@cumulus/sync-granule&quot;: &quot;^1.0.0&quot;
+</code></pre><p>To add a new package to your deployment, install via npm. Without a version specified, it will automatically install the latest version. For example:</p>
+<pre><code>$ npm install --save @cumulus/deployment
+</code></pre><p>To use the specific version of the package installed during deployment, point the <code>source</code> key in the lambda config to <code>node_modules/@cumulus/&lt;package-name&gt;/dist</code>. This location may vary between packages, so consult the README in each. For example, the following would update patch and minor versions of sync-granule:</p>
+<pre><code>SyncGranule:
+  source: &apos;node_modules/@cumulus/sync-granule/dist/&apos;
+</code></pre><h5 id="option-2-make-local-copy-of-the-cumulus-repo-and-prepare-it">Option 2: Make local copy of the <code>Cumulus</code> Repo and prepare it.</h5>
 <p>Clone repository</p>
 <pre><code>$ git clone https://github.com/nasa/cumulus.git
 </code></pre><p>Change directory to the repository root</p>
@@ -724,27 +742,13 @@ $ npm install
 $ npm run ybootstrap
 </code></pre><p>Build the Cumulus application</p>
 <pre><code>$ npm run build
-</code></pre><h4 id="prepare-deployment">Prepare DAAC deployment repository </h4>
-<p><em>If you already are working with an existing <code>&lt;daac&gt;-deploy</code> repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to <a href="#prepare-config">Prepare AWS configuration. </a></em></p>
-<p>Clone template-deploy repo and name appropriately for your DAAC or organization</p>
-<pre><code>$ git clone https://github.com/nasa/template-deploy &lt;daac&gt;-deploy
-</code></pre><p>Enter repository root directory</p>
-<pre><code>$ cd &lt;daac&gt;-deploy
-</code></pre><p>Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found <a href="https://www.npmjs.com/search?q=%40cumulus" target="_blank">here</a>.</p>
-<p>If you&apos;re trying to work with a certain version of a cumulus package or task, the version can be specified in <code>package.json</code> under dependencies. We use semantic versioning (major/minor/patch). You can also configure for automatic updates. Use <code>^</code> to update minor/patch versions automatically and <code>~</code> to automatically update patch versions. For example:</p>
-<pre><code>&quot;@cumulus/sync-granule&quot;: &quot;^1.0.0&quot;
-</code></pre><p>Then run:</p>
-<pre><code>$ npm install
-</code></pre><p>To add a new package, install via npm. Without a version specified, it will automatically install the latest version. For example:</p>
-<pre><code>$ npm install @cumulus/deployment
-</code></pre><p><strong>Note</strong>: The npm install command will add the <a href="http://devseed.com/kes/" target="_blank">kes</a> utility to the <code>&lt;daac&gt;-deploy</code>&apos;s <code>node_packages</code> directory and will be utilized later for most of the AWS deployment commands</p>
-<p>To use the specific version of the package installed during deployment, point the <code>source</code> key in the lambda config to <code>node_modules/@cumulus/&lt;package-name&gt;/dist</code>. This location may vary between packages, so consult the README in each. For example:</p>
-<pre><code>SyncGranule:
-  source: &apos;node_modules/@cumulus/sync-granule/dist/&apos;
-</code></pre><p>The <a href="https://github.com/nasa/cumulus" target="_blank"><code>Cumulus</code></a> project contains default configuration values in <code>cumulus/packages/deployment/app.example</code>, however these need to be customized for your Cumulus app.</p>
+</code></pre><p>To run the Cumulus deployment with the local code instead of the npm package, use <code>npm link</code> from your deployment repository directory </p>
+<pre><code>$ npm link ../cumulus/packages/deployment/ @cumulus/deployment
+</code></pre><p>Note: If you get errors with <code>npm link</code>, try deleting the <code>node_modules</code> folder the package you are trying to link to in the Cumulus repository.</p>
 <h5 id="copy-template">Copy the sample template into your repository </h5>
+<p>The <a href="https://github.com/nasa/cumulus" target="_blank"><code>Cumulus</code></a> project contains default configuration values in the <code>app.example</code> folder, however these need to be customized for your Cumulus app.</p>
 <p>Begin by copying the template directory to your project. You will modify it for your DAAC&apos;s specific needs later.</p>
-<pre><code>$ cp -r ../cumulus/packages/deployment/app.example ./app
+<pre><code>$ cp -r ./node_modules/@cumulus/deployment/app.example ./app
 </code></pre><p><strong>Optional:</strong> <a href="https://help.github.com/articles/creating-a-new-repository/" target="_blank">Create a new repository</a> <code>&lt;daac&gt;-deploy</code> so that you can track your DAAC&apos;s configuration changes:</p>
 <pre><code>$ git remote set-url origin https://github.com/nasa/&lt;daac&gt;-deploy
 $ git push origin master
@@ -768,7 +772,7 @@ $ export AWS_REGION=&lt;region&gt;
 <hr>
 <h2 id="configure-and-deploy-the-iam-stack">Configure and Deploy the IAM stack</h2>
 <h5 id="configure-deployment-with-daac-deployiamconfigyml">Configure deployment with <code>&lt;daac&gt;-deploy/iam/config.yml</code></h5>
-<p>The <code>iam</code> configuration creates 4 <a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html" target="_blank">roles</a> and an <a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html" target="_blank">instance profile</a> used internally by the Cumulus stack.</p>
+<p>The <code>iam</code> configuration creates 6 <a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html" target="_blank">roles</a> and an <a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html" target="_blank">instance profile</a> used internally by the Cumulus stack.</p>
 <p>The various config fields are described below with a sample <code>config.yml</code> at the end.</p>
 <hr>
 <h6 id="iam-deployment-name">iam-deployment-name:</h6>
@@ -779,33 +783,31 @@ $ export AWS_REGION=&lt;region&gt;
 <h6 id="stackname">stackName:</h6>
 <p>The name of this iam stack in CloudFormation (e.g. <prefix>-iam).</prefix></p>
 <h6 id="buckets">buckets:</h6>
-<p>The buckets created in the <a href="#create-s3-buckets">Create S3 Buckets</a> step.</p>
+<p>The buckets created in the <a href="#create-s3-buckets">Create S3 Buckets</a> step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.</p>
 <hr>
 <p><strong>Sample new deployment added to config.yml</strong>:</p>
-<pre><code>&lt;iam-deployment-name&gt;:          # e.g. dev (Note: Omit brackets, i.e. NOT &lt;dev&gt;)
+<pre><code>&lt;iam-deployment-name&gt;:    # e.g. dev (Note: Omit brackets, i.e. NOT &lt;dev&gt;)
   prefix: &lt;stack-prefix&gt;  # prefixes CloudFormation-created iam resources and permissions
   stackName: &lt;stack-name&gt; # name of this iam stack in CloudFormation (e.g. &lt;prefix&gt;-iams)
+  system_bucket: &apos;{{buckets.internal.name}}&apos; # Or can specify a different bucket for the system_bucket
   buckets:
-    internal: &lt;prefix&gt;-internal  # Note: these are the bucket names, not the prefix from above
+    internal: # bucket key
+        name: &lt;internal bucket name&gt;
+        type: internal
 </code></pre><p><strong>Deploy <code>iam</code> stack</strong><sup><a href="#fn_1" id="reffn_1">1</a></sup></p>
-<pre><code>$ kes cf deploy --kes-folder iam --deployment &lt;iam-deployment-name&gt; --template node_modules/@cumulus/deployment/iam --region &lt;region&gt;
+<pre><code>$ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment &lt;iam-deployment-name&gt; --template node_modules/@cumulus/deployment/iam --region &lt;region&gt;
 </code></pre><p><strong>Note</strong>: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.</p>
-<p>If the <code>iam</code> deployment command  succeeds, you should see 4 new roles in the <a href="https://console.aws.amazon.com/iam/home" target="_blank">IAM Console</a>:</p>
+<p>If the <code>iam</code> deployment command  succeeds, you should see 6 new roles in the <a href="https://console.aws.amazon.com/iam/home" target="_blank">IAM Console</a>:</p>
 <ul>
 <li><code>&lt;stack-name&gt;-ecs</code></li>
 <li><code>&lt;stack-name&gt;-lambda-api-gateway</code></li>
 <li><code>&lt;stack-name&gt;-lambda-processing</code></li>
+<li><code>&lt;stack-name&gt;-scaling-role</code></li>
 <li><code>&lt;stack-name&gt;-steprole</code></li>
+<li><code>&lt;stack-name&gt;-distribution-api-lambda</code></li>
 </ul>
 <p>The same information can be obtained from the AWS CLI command: <code>aws iam list-roles</code>.</p>
 <p>The <code>iam</code> deployment also creates an instance profile named <code>&lt;stack-name&gt;-ecs</code> that can be viewed from the AWS CLI command: <code>aws iam list-instance-profiles</code>.</p>
-<h4 id="update-aws-access-keys">Update AWS Access Keys</h4>
-<p>Create or obtain <a href="https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html" target="_blank">Access Keys</a> for the user who will assume the DeployerRole in IAM, then export the access keys, replacing the previous values in your environment:</p>
-<pre><code>$ export AWS_ACCESS_KEY_ID=&lt;AWS access key&gt;
-$ export AWS_SECRET_ACCESS_KEY=&lt;AWS secret key&gt;
-$ export AWS_REGION=&lt;region&gt;
-</code></pre><p>If you don&apos;t want to set environment variables, <a href="http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html" target="_blank">access keys can be stored locally via the AWS CLI.</a>.</p>
-<p><em>Make sure you&apos;ve updated your actual environment variables before proceeding (e.g., if sourcing from a file, re-source the file).</em></p>
 <hr>
 <h2 id="configure-and-deploy-the-cumulus-stack">Configure and Deploy the Cumulus stack</h2>
 <p>These updates configure the <a href="#copy-template">copied template</a> from the cumulus repository for your DAAC.</p>
@@ -827,7 +829,7 @@ $ export AWS_REGION=&lt;region&gt;
 note <code>instanceType</code> and <code>desiredInstances</code> have been selected for a sample install.  You will have to specify appropriate values to deploy and use ECS machines.   See <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank">EC2 Instance Types</a> for more information.</p>
 <p>Also note, if you dont specify the <code>amiid</code>, it will try to use a default, which may or may not exist.</p>
 <h6 id="buckets">buckets</h6>
-<p>The config buckets should map to the same names you used when creating buckets in the <a href="#prepare-config">Prepare AWS</a> step.</p>
+<p>The config buckets should map to the same names you used when creating buckets in the <a href="#prepare-config">Prepare AWS</a> step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.</p>
 <h6 id="iams">iams</h6>
 <p>Add the ARNs for each of the four roles and one instanceProfile created in the <a href="create-iam-roles">Create IAM Roles</a> step. You can retrieve the ARNs from:</p>
 <pre><code>$ aws iam list-roles | grep Arn
@@ -854,8 +856,12 @@ $ aws iam list-instance-profiles | grep Arn
     availabilityZone: &lt;subnet-id-zone&gt;
     amiid: &lt;some-ami-id&gt;
 
+  system_bucket: &lt;prefix-internal&gt;
+
   buckets:
-    internal: &lt;prefix&gt;-internal
+    internal: 
+        name: &lt;prefix&gt;-internal
+        type: internal
 
   iams:
     ecsRoleArn: arn:aws:iam::&lt;aws-account-id&gt;:role/&lt;iams-prefix&gt;-ecs
@@ -866,11 +872,11 @@ $ aws iam list-instance-profiles | grep Arn
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigateway backend endpoint is used
-    # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
+  # if not specified the value of the apigateway backend endpoint is used
+  # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigateway dist url is used
-    # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
+  # if not specified the value of the apigateway dist url is used
+  # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
 
   # URS users who should have access to the dashboard application.
   users:
@@ -884,7 +890,8 @@ $ aws iam list-instance-profiles | grep Arn
 <pre><code>CMR_PASSWORD=cmrpassword
 EARTHDATA_CLIENT_ID=clientid
 EARTHDATA_CLIENT_PASSWORD=clientpassword
-</code></pre><p>For security it is highly recommended that you prevent <code>apps/.env</code> from being accidentally committed to the repository by keeping it in the <code>.gitignore</code> file at the root of this repository.</p>
+</code></pre><p>Note that the <code>.env.sample</code> file may be hidden, so if you do not see it, show hidden files.</p>
+<p>For security it is highly recommended that you prevent <code>apps/.env</code> from being accidentally committed to the repository by keeping it in the <code>.gitignore</code> file at the root of this repository.</p>
 <h4 id="deploy">Deploy</h4>
 <p>Once the preceding configuration steps have completed, run the following to deploy Cumulus from your <code>&lt;daac&gt;-deploy</code> root directory:</p>
 <pre><code>$ ./node_modules/.bin/kes cf deploy --kes-folder app --region &lt;region&gt; \
@@ -982,7 +989,7 @@ $ npm install
 <h2 id="updating-cumulus-deployment">Updating Cumulus deployment</h2>
 <p>Once deployed for the first time, any future updates to the role/stack configuration files/version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.</p>
 <h2 id="update-roles">Update roles</h2>
-<pre><code>$ kes cf deploy --kes-folder iam --deployment &lt;deployment-name&gt; \
+<pre><code>$ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment &lt;deployment-name&gt; \
   --region &lt;region&gt; # e.g. us-east-1
 </code></pre><h2 id="cumulus-versioning">Cumulus Versioning</h2>
 <p>Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning. Any change will force lerna to increment the version of all packages.</p>
@@ -1048,7 +1055,7 @@ $ npm install
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"How to Deploy Cumulus","level":"1.3.1","depth":2,"next":{"title":"Creating an S3 Bucket","level":"1.3.2","depth":2,"path":"deployment/create_bucket.md","ref":"deployment/create_bucket.md","articles":[]},"previous":{"title":"Deployment","level":"1.3","depth":1,"ref":"","articles":[{"title":"How to Deploy Cumulus","level":"1.3.1","depth":2,"path":"deployment/README.md","ref":"deployment/README.md","articles":[]},{"title":"Creating an S3 Bucket","level":"1.3.2","depth":2,"path":"deployment/create_bucket.md","ref":"deployment/create_bucket.md","articles":[]},{"title":"Locating IAMs","level":"1.3.3","depth":2,"path":"deployment/iam_roles.md","ref":"deployment/iam_roles.md","articles":[]},{"title":"Troubleshooting Deployment","level":"1.3.4","depth":2,"path":"deployment/troubleshoot_deployment.md","ref":"deployment/troubleshoot_deployment.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"deployment/README.md","mtime":"2018-08-14T19:57:03.576Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-14T19:58:21.668Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"How to Deploy Cumulus","level":"1.3.1","depth":2,"next":{"title":"Creating an S3 Bucket","level":"1.3.2","depth":2,"path":"deployment/create_bucket.md","ref":"deployment/create_bucket.md","articles":[]},"previous":{"title":"Deployment","level":"1.3","depth":1,"ref":"","articles":[{"title":"How to Deploy Cumulus","level":"1.3.1","depth":2,"path":"deployment/README.md","ref":"deployment/README.md","articles":[]},{"title":"Creating an S3 Bucket","level":"1.3.2","depth":2,"path":"deployment/create_bucket.md","ref":"deployment/create_bucket.md","articles":[]},{"title":"Locating IAMs","level":"1.3.3","depth":2,"path":"deployment/iam_roles.md","ref":"deployment/iam_roles.md","articles":[]},{"title":"Troubleshooting Deployment","level":"1.3.4","depth":2,"path":"deployment/troubleshoot_deployment.md","ref":"deployment/troubleshoot_deployment.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"deployment/README.md","mtime":"2018-08-23T13:29:12.394Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-23T13:30:39.150Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
