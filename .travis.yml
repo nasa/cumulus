@@ -70,7 +70,7 @@ jobs:
 
     - name: "Integration tests"
       stage: integration test
-      if: commit_message =~ \[run-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\]
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install

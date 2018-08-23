@@ -2,7 +2,12 @@
 
 const _ = require('lodash');
 const { Kinesis } = require('aws-sdk');
-const { sfn } = require('@cumulus/common/aws');
+const {
+  aws: {
+    sfn,
+    receiveSQSMessages
+  }
+} = require('@cumulus/common');
 
 const {
   LambdaStep,
@@ -18,7 +23,29 @@ const lambdaStep = new LambdaStep();
 
 const kinesis = new Kinesis({ apiVersion: '2013-12-02', region: testConfig.awsRegion });
 
+const maxExecutionResults = 20;
 const waitPeriodMs = 1000;
+
+/**
+ * Helper to simplify common setup code.  wraps function in try catch block
+ * that will exit tests if the initial setup conditions fail.
+ *
+ * @param {Function} fn - function to execute
+ * @param {iterable} args - arguments to pass to the function.
+ * @returns {null} - no return
+ */
+function tryCatchExit(fn, ...args) {
+  try {
+    return fn.apply(this, args);
+  }
+  catch (error) {
+    console.log(error);
+    console.log('Tests conditions can\'t get met...exiting.');
+    process.exit(1);
+  }
+  return null;
+}
+
 
 /**
  * returns the most recently executed KinesisTriggerTest workflows.
@@ -29,7 +56,7 @@ async function getExecutions() {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
   const data = await sfn().listExecutions({
     stateMachineArn: kinesisTriggerTestStpFnArn,
-    maxResults: 20
+    maxResults: maxExecutionResults
   }).promise();
   return (_.orderBy(data.executions, 'startDate', 'desc'));
 }
@@ -183,12 +210,73 @@ async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsRe
   throw new Error('Never found started workflow.');
 }
 
+/**
+ * Return the original kinesis event embedded in an SQS message.
+ *
+ * @param {Object} message - SQS message
+ * @returns {Object} kinesis object stored in SQS message.
+ */
+function kinesisEventFromSqsMessage(message) {
+  let kinesisEvent;
+  try {
+    const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
+    const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
+    kinesisEvent = JSON.parse(dataString);
+  }
+  catch (error) {
+    console.log('Error parsing KinesisEventFromSqsMessage(message)', JSON.stringify(message));
+    console.log(error);
+    kinesisEvent = { identifier: 'Fake Wrong Message' };
+  }
+  return kinesisEvent;
+}
+
+/**
+ * Check if the returned SQS message holds the targeted kinesis record.
+ *
+ * @param {Object} message - SQS message.
+ * @param {string} recordIdentifier - target kinesis record identifier.
+ * @returns {Bool} - true, if this message contained the targeted record identifier.
+ */
+function isTargetMessage(message, recordIdentifier) {
+  const kinesisEvent = kinesisEventFromSqsMessage(message);
+  return kinesisEvent.identifier === recordIdentifier;
+}
+
+/**
+ * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 10 minutes.
+ *
+ * @param {string} recordIdentifier - random string to match found messages against.
+ * @param {string} queueUrl - kinesisFailure SQS url
+ * @param {number} maxNumberElapsedPeriods - number of timeout intervals (5 seconds) to wait.
+ * @returns {Object} - matched Message from SQS.
+ */
+async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 120) {
+  const timeoutInterval = 5000;
+  let queuedRecord;
+  let elapsedPeriods = 0;
+
+  while (!queuedRecord && elapsedPeriods < maxNumberElapsedPeriods) {
+    const messages = await receiveSQSMessages(queueUrl);
+    if (messages.length > 0) {
+      const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
+      if (targetMessage) return targetMessage;
+    }
+    await timeout(timeoutInterval);
+    elapsedPeriods += 1;
+  }
+  return { waitForQueuedRecord: 'never found record on queue' };
+}
+
 module.exports = {
   createOrUseTestStream,
   deleteTestStream,
   getShardIterator,
   getRecords,
+  kinesisEventFromSqsMessage,
   putRecordOnStream,
+  tryCatchExit,
   waitForActiveStream,
+  waitForQueuedRecord,
   waitForTestSf
 };
