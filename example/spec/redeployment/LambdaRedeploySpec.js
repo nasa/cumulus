@@ -11,18 +11,13 @@ const {
   redeploy
 } = require('../helpers/testUtils');
 
-const { updateConfigObject } = require('../helpers/configUtils');
-
 const config = loadConfig();
+const fs = require('fs-extra');
 const lambdaStep = new LambdaStep();
 
 describe('When a workflow', () => {
   afterAll(async () => {
-    // Restore deployment following all following tests
-    const updateConfig = { handler: 'index.handler' };
-    const lambdaName = 'VersionUpTest';
-    const lambdaConfigFileName = './lambdas.yml';
-    updateConfigObject(lambdaConfigFileName, lambdaName, updateConfig);
+    fs.copySync('./lambdas/versionUpTest/original.js', './lambdas/versionUpTest/index.js');
     await redeploy(config);
   });
 
@@ -32,16 +27,13 @@ describe('When a workflow', () => {
     let testVersionOutput = null;
 
     beforeAll(async () => {
-      const updateConfig = { handler: 'update.handler' };
       const lambdaName = 'VersionUpTest';
-      const lambdaConfigFileName = './lambdas.yml';
-
+      fs.copySync('./lambdas/versionUpTest/update.js', './lambdas/versionUpTest/index.js');
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
         config.bucket,
         'TestLambdaVersionWorkflow'
       );
-      updateConfigObject(lambdaConfigFileName, lambdaName, updateConfig);
       await redeploy(config);
       workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
       testVersionOutput = await lambdaStep.getStepOutput(
