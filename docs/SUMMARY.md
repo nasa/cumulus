@@ -42,3 +42,4 @@
 * [CNM Workflow](data-cookbooks/cnm-workflow.md)
 * [SIPS Workflow](data-cookbooks/sips-workflow.md)
 * [Error Handling](data-cookbooks/error-handling.md)
+* [Choice States](data-cookbooks/choice-states.md)
