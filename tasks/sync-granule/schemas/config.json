@@ -2,7 +2,7 @@
   "title": "SyncGranuleConfig",
   "description": "Describes the config used by the sync-granule task",
   "type": "object",
-  "required": ["buckets", "collection", "provider", "downloadBucket"],
+  "required": ["buckets", "provider", "downloadBucket"],
   "properties": {
     "forceDownload": {
       "type": "boolean",
