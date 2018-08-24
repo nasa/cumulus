@@ -2,7 +2,8 @@
   "root": true,
   "plugins": [
     "jsdoc",
-    "node"
+    "node",
+    "unicorn"
   ],
   "extends": [
     "airbnb",
