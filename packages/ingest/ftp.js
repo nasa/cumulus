@@ -84,7 +84,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     const client = new JSFtp(this.ftpClientOptions);
     return new Promise((resolve, reject) => {
       client.on('error', reject);
-      const input = new Buffer(body);
+      const input = Buffer.from(body);
       client.put(input, join(path, filename), (err) => {
         client.destroy();
         if (err) return reject(err);
