@@ -50,7 +50,9 @@ program
   .action((cmd) => {
     const missingOptions = cliUtils.findMissingOptions(cmd, ['host']);
     if (missingOptions.length === 0) {
-      es.getStatus(cmd.host).then((tasks) => console.log(JSON.stringify(tasks)));
+      es.getStatus(cmd.host)
+        .then((tasks) => console.log(JSON.stringify(tasks)))
+        .catch((err) => console.error(`Error getting status: ${err.message}`));
     }
     else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
