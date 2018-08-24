@@ -35,7 +35,8 @@ const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testC
 describe('The kinesisConsumer receives a bad record.', () => {
   beforeAll(async () => {
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 5 * 60 * 1000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
+    this.maxNumberElapsedPeriods = jasmine.DEFAULT_TIMEOUT_INTERVAL / 5000;
     await tryCatchExit(async () => {
       await createOrUseTestStream(streamName);
       console.log(`\nWaiting for active streams: '${streamName}'.`);
@@ -56,7 +57,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
   it('Eventually puts the bad record on the failure queue.', async () => {
     console.log('\nWait for minimum duration of failure process ~3min');
     console.log('\nWait for record on:', failureSqsUrl);
-    const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl);
+    const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl, this.maxNumberElapsedPeriods);
     this.ReceiptHandle = queuedRecord.ReceiptHandle;
     const queuedKinesisEvent = kinesisEventFromSqsMessage(queuedRecord);
     expect(queuedKinesisEvent).toEqual(badRecord);
