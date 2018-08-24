@@ -1,14 +1,11 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const log = require('@cumulus/common/log');
 const { handle } = require('../lib/response');
 const models = require('../models');
 const Collection = require('../es/collections');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
-const examplePayload = require('../tests/data/collections_post.json');
 
 /**
  * List all collections.
@@ -155,10 +152,3 @@ function handler(event, context) {
 }
 
 module.exports = handler;
-
-justLocalRun(() => {
-  handler(examplePayload, {
-    succeed: (r) => log.error(r),
-    failed: (e) => log.error(e)
-  }, (e, r) => log.error(e, r));
-});
