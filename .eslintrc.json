@@ -6,7 +6,8 @@
   ],
   "extends": [
     "airbnb",
-    "plugin:node/recommended"
+    "plugin:node/recommended",
+    "plugin:unicorn/recommended"
   ],
   "parser": "babel-eslint",
   "env": {
@@ -91,6 +92,9 @@
     ],
     "arrow-parens": ["error", "always"],
     "prefer-destructuring": "off",
-    "function-paren-newline": ["error", "consistent"]
+    "function-paren-newline": ["error", "consistent"],
+
+    "unicorn/filename-case": "off",
+    "unicorn/prefer-spread": "off"
   }
 }

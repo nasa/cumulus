@@ -49,6 +49,8 @@ HelloWorldWorkflow:
       Cause: 'Workflow failed'
 ```
 
+Workflow **error-handling** can be configured as discussed in the [Error-Handling](error-handling.md) cookbook.
+
 ### Task Configuration
 
 The HelloWorld [task itself](../workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
