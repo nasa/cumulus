@@ -2,16 +2,19 @@
   "root": true,
   "plugins": [
     "jsdoc",
+    "node",
     "unicorn"
   ],
   "extends": [
     "airbnb",
+    "plugin:node/recommended",
     "plugin:unicorn/recommended"
   ],
   "parser": "babel-eslint",
   "env": {
-    "node": true,
-    "mocha": true
+    "jasmine": true,
+    "mocha": true,
+    "node": true
   },
   "rules": {
     "indent": [ "error", 2 ],
