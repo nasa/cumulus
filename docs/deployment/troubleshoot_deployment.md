@@ -10,12 +10,12 @@ Issues:
   - If redeploying an existing configuration you may already have at least 1 vpc associated with your existing deployment, but its subnets can be transitory in nature depending on what kind of load balancing and/or docker activities are taking place at a given time.  You should  identify at least one persistent subnet to use as a subnet ID (you may only specify one) for use.    If this is needed, navigate to  [AWS EC2 > Auto Scaling Groups](https://console.aws.amazon.com/ec2/autoscaling/home?region=us-east-1#AutoScalingGroups:view=details) and note the "Availability Zone" (e.g., us-east-1a). Next, visit [AWS VPC](https://console.aws.amazon.com/vpc/home) and click on "Subnets". Copy the 'VPC' value into 'vpcId' and the appropriate 'Subnet ID' value, based on the Availability Zone value you just saw on the Auto Scaling Groups page, into 'subnets'. If you have no vpc and/or subnets, do not include the vpc section in your new configuration.
 
   Example config:
-  ```
+  ```yaml
   vpc:
     vpcId: vpc-1234abcd
     subnets:
       - subnet-1234ancd
-  
+
   ecs:
     instanceType: t2.micro
     desiredInstances: 1
@@ -37,9 +37,9 @@ See [vpc issues](#vpc)
 
 The stack cannot be re-deployed if it is currently in ROLLBACK_COMPLETE or ROLLBACK_FAILED.
 
-If this is a new deployment, delete the stack and try deploying again. 
+If this is a new deployment, delete the stack and try deploying again.
 
-You may be able to continue the rollback operation. At the top of the CloudFormation page for the stack, click the 'Other Actions' dropdown and choose to continue rollback. 
+You may be able to continue the rollback operation. At the top of the CloudFormation page for the stack, click the 'Other Actions' dropdown and choose to continue rollback.
 
 In the advanced settings when continuing rollback, you can enter the logical Ids of resources to skip that are preventing rollback. These ids can be found in the resources section of the CloudFormation page for the stack.
 

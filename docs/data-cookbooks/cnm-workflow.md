@@ -64,7 +64,7 @@ The following are steps that are required to set up your Cumulus instance to run
 
 In this example, we're going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.
 
-The following [workflow definition](../workflows/README.md) should be added to your deployment's `workflows.yml`. 
+The following [workflow definition](../workflows/README.md) should be added to your deployment's `workflows.yml`.
 
 Update the `CNMResponseStream` key in the `CnmResponse` task to match the name of the Kinesis response stream you configured in the prerequisites section.
 
@@ -205,7 +205,7 @@ You can also manipulate the data sent to downstream tasks using `CumulusConfig` 
 
 The workflow defined above assumes a CNM response task defined in the `lambdas.yml` configuration file. Example:
 
-```
+```yaml
 CnmResponse:
   handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
   timeout: 300
@@ -241,7 +241,7 @@ Please refer to `Updating Cumulus deployment` in the [deployment documentation](
 
 To add a rule via the dashboard (if you'd like to use the API, see the docs [here](https://nasa.github.io/cumulus-api/#create-rule)), navigate to the `Rules` page and click `Add a rule`, then configure the new rule using the following template (substituting correct values for parameters denoted by `${}`:
 
-```
+```json
 {
   "collection": {
     "name": "L2_HR_PIXC",
@@ -568,7 +568,7 @@ When the `kinesisConsumer` fails to process a record, the failure is captured an
 
 At this point, the [normal lambda asynchronous invocation retry behavior](https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html) will attempt to process the record 3 mores times. After this, if the record cannot successfully be processed, it is written to a [dead letter queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html). Cumulus' dead letter queue is an SQS Queue named `kinesisFailure`. Operators can use this queue to inspect failed records.
 
-This system ensures when `kinesisCosumer` fails to process a record and trigger a workflow, the record is retried 3 times. This retry behavior improves system reliability in case of any external service failure outside of Cumulus control. 
+This system ensures when `kinesisCosumer` fails to process a record and trigger a workflow, the record is retried 3 times. This retry behavior improves system reliability in case of any external service failure outside of Cumulus control.
 
 The Kinesis error handling system - the `kinesisFallback` SNS topic, `kinesisConsumer` lambda, and `kinesisFailure` SQS queue - come with the API package and do not need to be configured by the operator.
 
