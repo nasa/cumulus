@@ -2,7 +2,7 @@
   "name": "@cumulus/ingest",
   "version": "1.9.1",
   "description": "Ingest utilities",
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {
@@ -45,12 +45,12 @@
     "got": "^8.3.0",
     "jsftp": "^2.0.0",
     "json-loader": "~0.5.7",
-    "lodash": "^4.17.5",
     "lodash.clonedeep": "^4.5.0",
     "lodash.get": "^4.4.2",
     "lodash.groupby": "^4.6.0",
     "lodash.identity": "^3.0.0",
     "lodash.omit": "^4.5.0",
+    "lodash": "^4.17.5",
     "mkdirp": "^0.5.1",
     "moment": "^2.22.1",
     "node-forge": "^0.7.1",
@@ -59,7 +59,8 @@
     "simplecrawler": "^1.1.4",
     "ssh2": "^0.5.5",
     "url-join": "^1.0.0",
-    "uuid": "^3.2.1"
+    "uuid": "^3.2.1",
+    "xml2js": "^0.4.17"
   },
   "devDependencies": {
     "@cumulus/cmrjs": "^1.9.1",
