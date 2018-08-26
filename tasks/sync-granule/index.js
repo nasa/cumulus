@@ -19,7 +19,8 @@ const log = require('@cumulus/common/log');
 async function download(ingest, bucket, provider, granules) {
   const updatedGranules = [];
 
-  log.debug(`awaiting lock.proceed in download() bucket: ${bucket}, provider: ${JSON.stringify(provider)}, granuleID: ${granules[0].granuleId}`);
+  log.debug(`awaiting lock.proceed in download() bucket: ${bucket}, `
+            + `provider: ${JSON.stringify(provider)}, granuleID: ${granules[0].granuleId}`);
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
@@ -95,9 +96,10 @@ exports.syncGranule = function syncGranule(event) {
       const output = { granules };
       if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
-
+      log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
       return output;
     }).catch((e) => {
+      log.debug('SyncGranule errored.');
       if (ingest.end) ingest.end();
 
       let errorToThrow = e;
