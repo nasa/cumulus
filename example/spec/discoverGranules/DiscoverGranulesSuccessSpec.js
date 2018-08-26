@@ -78,7 +78,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     beforeAll(async () => {
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
-      console.log('wait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
+      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
     });
 
