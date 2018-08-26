@@ -1,22 +1,11 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 
 const tasksHeaderPath = path.join(__dirname, 'tasks-header.md');
 const tasksHeader = fs.readFileSync(tasksHeaderPath, 'utf8');
 const tasksOutputFilePath = path.join(__dirname, '..', 'docs', 'tasks.md');
-
-/**
- * Handle error by logging and exiting process with error code
- *
- * @param {Object} err - error
- * @returns {undefined} - none
- */
-function catchError(err) {
-  console.log(err); // eslint-disable-line no-console
-  process.exit(1);
-}
 
 /**
  * Create the links for task resources
@@ -78,10 +67,7 @@ function createTaskMarkdown(taskName) {
 function createTasksDoc(tasks) {
   const tasksMarkdown = tasks.map(createTaskMarkdown).join('\n\n---\n\n');
   const markdown = tasksHeader + tasksMarkdown;
-
-  fs.writeFile(tasksOutputFilePath, markdown, (err) => {
-    if (err) catchError(err);
-  });
+  return fs.writeFile(tasksOutputFilePath, markdown);
 }
 
 /**
@@ -99,4 +85,7 @@ const taskDataRequests = getTaskList().sort();
 
 Promise.all(taskDataRequests)
   .then(createTasksDoc)
-  .catch(catchError);
+  .catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
