@@ -13,6 +13,7 @@ test.beforeEach((test) => {
   test.context.kes = new UpdatedKes(configFixture);
 });
 
+
 function setupKesForLookupLambdaReference(kes, functionName, hashValue) {
   let lambdaFixture = {};
   lambdaFixture[functionName] = { hash: hashValue };
@@ -106,22 +107,46 @@ test('parseAliasName returns null hash if hash missing', (test) => {
 });
 
 
-test('getRetainedLambdaAliasNames returns filtered aliasNames', async (test) => {
-  const aliasFixture = require('./fixtures/aliases.json');
+test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async (test) => {
   let kes = test.context.kes;
-  kes.config.lambdas = aliasFixture.Lambdas;
 
-  // Setup stubs for AWS methods in getReetainedLambdaAliasNames
-  const listAliasesStub = sinon.stub().callsFake(() => Promise.reject());
-  for(let i=0; i < Object.keys(aliasFixture).length; i++) {
-    listAliasesStub.onCall(i).returns(Promise.resolve({Aliases: aliasFixture.Aliases[i]}));
-  }
-
+  // Mock out AWS calls
+  const aliasFixture = require('./fixtures/aliases.json');
+  const versionUpAliases = aliasFixture.Aliases[0];
   sinon.stub(kes.AWS, 'Lambda').callsFake(function () {
     return { listAliases: function (config) {
         return { promise: listAliasesStub };
     }};
   });
+  const listAliasesStub = sinon.stub().callsFake(() => Promise.reject());
+  for(let i=0; i < versionUpAliases.length-1; i++) {
+    listAliasesStub.onCall(i).returns(Promise.resolve({
+      NextMarker: 'mocked out',
+      Aliases: [versionUpAliases[i]]
+    }));
+  }
+  listAliasesStub.onCall(versionUpAliases.length-1).returns(
+    Promise.resolve({Aliases: [versionUpAliases[versionUpAliases.length-1]]}));
+
+  const lambda = kes.AWS.Lambda();
+  const config = { MaxItems: 1, FunctionName: 'Mocked' };
+
+  let actual = await kes.getAllLambdaAliases(lambda, config);
+
+  test.deepEqual(versionUpAliases, actual,
+                 `Expected:${JSON.stringify(versionUpAliases)}\n\n` +
+                 `Actual:${JSON.stringify(actual)}`);
+});
+
+test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (test) => {
+  const aliasFixture = require('./fixtures/aliases.json');
+  let kes = test.context.kes;
+
+  kes.config.lambdas = aliasFixture.Lambdas;
+  const getAllLambdaAliasesStub  = sinon.stub(kes, 'getAllLambdaAliases');
+  for(let i=0; i<aliasFixture.Aliases.length; i++) {
+    getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.Aliases[i]);
+  }
 
   let expected = [ 'VersionUpTest-PreviousVersionHash',
                    'VersionUpTest-SecondPreviousVersionHash',

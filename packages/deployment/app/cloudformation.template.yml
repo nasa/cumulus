@@ -615,7 +615,7 @@ Resources:
   # Lambda config BEGIN
   #################################################
 {{#each lambdas}}
-{{#if @root.useVersions}}
+{{#if @root.useWorkflowLambdaVersions}}
   {{#if this.hash}}
   {{@key}}LambdaAlias{{this.hash}}:
     Type: AWS::Lambda::Alias
