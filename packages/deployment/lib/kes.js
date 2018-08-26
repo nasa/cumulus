@@ -34,7 +34,6 @@ const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
-const getActiveLambdaArns = require('./deployment-util');
 const util = require('util');
 const fsWriteFile = util.promisify(fs.writeFile);
 
@@ -201,7 +200,7 @@ class UpdatedKes extends Kes {
       // Inject Lambda Alias values into configuration,
       // then update configured workflow lambda references
       // to reference the generated alias values
-      if(config.useVersions) {
+      if(config.useWorkflowLambdaVersions) {
         this.injectWorkflowLambdaAliases();
         await this.injectOldWorkflowLambdaAliases();
       }
@@ -235,6 +234,23 @@ class UpdatedKes extends Kes {
     });
   }
 
+  /**
+   *
+   * @param {Object} lambda - AWS lambda object
+   * @param {Object} config - AWS listAliases configuration object.
+   * @returns {Object[]} returns an array of AWS Alias objects
+   */
+  async getAllLambdaAliases(lambda, config) {
+    const lambdaConfig = Object.assign({}, config);
+    let aliasPage = await lambda.listAliases(lambdaConfig).promise();
+    if(!aliasPage.NextMarker) {
+      return aliasPage.Aliases;
+    }
+    let aliases = aliasPage.Aliases;
+    lambdaConfig.Marker = aliasPage.NextMarker;
+
+    return aliases.concat(await this.getAllLambdaAliases(lambda, lambdaConfig));
+  }
 
   /**
    * Using the object configuration, this function gets a list of lambda alias names
@@ -251,15 +267,14 @@ class UpdatedKes extends Kes {
     let oldLambdaNames = [];
 
     const lambdaNames = Object.keys(configLambdas);
-    let aliasListsPromises = [];
-    lambdaNames.forEach((lambdaName) => {
+    const aliasListsPromises = lambdaNames.map(async (lambdaName) => {
       let listAliasesConfig = {
         MaxItems: 10000,
         FunctionName: `${this.config.stackName}-${lambdaName}`
       };
-      aliasListsPromises.push(awsLambda.listAliases(listAliasesConfig).promise().then((r) => r.Aliases));
+      return this.getAllLambdaAliases(awsLambda, listAliasesConfig);
     });
-
+    debugger;
     const aliasLists = await Promise.all(aliasListsPromises);
     const aliasListsObject = zipObject(lambdaNames, aliasLists);
 
@@ -277,7 +292,6 @@ class UpdatedKes extends Kes {
       // so exclude the most recent version alias from the old lambda list
       let sliceStartIndex = 0;
       if (configLambdas[lambdaName].hash === this.parseAliasName(cumulusAliases[0].Name).hash) {
-        console.log(`Excluding matching lambda hash for most recent version as it matches the lambda to be deployed: ${JSON.stringify(cumulusAliases[0])}`);
         sliceStartIndex = 1;
       }
       const oldAliases = cumulusAliases.slice(sliceStartIndex,3).map((alias) => alias.Name);
