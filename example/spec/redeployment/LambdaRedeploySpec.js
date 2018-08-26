@@ -16,11 +16,6 @@ const fs = require('fs-extra');
 const lambdaStep = new LambdaStep();
 
 describe('When a workflow', () => {
-  afterAll(async () => {
-    fs.copySync('./lambdas/versionUpTest/original.js', './lambdas/versionUpTest/index.js');
-    await redeploy(config);
-  });
-
   describe('is running and a new version of a workflow lambda is deployed', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
@@ -28,6 +23,8 @@ describe('When a workflow', () => {
 
     beforeAll(async () => {
       const lambdaName = 'VersionUpTest';
+      fs.copySync('./lambdas/versionUpTest/original.js', './lambdas/versionUpTest/index.js');
+      await redeploy(config);
       fs.copySync('./lambdas/versionUpTest/update.js', './lambdas/versionUpTest/index.js');
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
