@@ -253,7 +253,7 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Using the object configuration, this function gets a list of lambda alias names
+   * Using the object configuration, this function gets the three most recent lambda alias names
    * to retain in the 'Old Lambda Resources' section of the Cloud Formation template,
    * avoiding duplicates of items in the Lambda section and unlisted functions.
    *
@@ -274,7 +274,7 @@ class UpdatedKes extends Kes {
       };
       return this.getAllLambdaAliases(awsLambda, listAliasesConfig);
     });
-    debugger;
+
     const aliasLists = await Promise.all(aliasListsPromises);
     const aliasListsObject = zipObject(lambdaNames, aliasLists);
 
@@ -284,7 +284,6 @@ class UpdatedKes extends Kes {
       let cumulusAliases = aliases.filter((alias) => alias.Description === cumulusAliasDescription);
 
       if (cumulusAliases.length === 0) return;
-      if (cumulusAliases > 3) throw new Error('DANGER WILL ROBINSON');
 
       cumulusAliases.sort((a,b) => b.FunctionVersion-a.FunctionVersion);
 
@@ -294,6 +293,7 @@ class UpdatedKes extends Kes {
       if (configLambdas[lambdaName].hash === this.parseAliasName(cumulusAliases[0].Name).hash) {
         sliceStartIndex = 1;
       }
+
       const oldAliases = cumulusAliases.slice(sliceStartIndex,3).map((alias) => alias.Name);
       if (oldAliases.length > 0) {
         console.log(`Adding the following to the old lambdas section of the template: ${JSON.stringify(oldAliases)}`);
@@ -316,8 +316,7 @@ class UpdatedKes extends Kes {
     const regExpResults = regExp.exec(name);
     let hashValue = null;
     if (regExpResults[2]) hashValue = regExpResults[2];
-    return {name: regExpResults[1], hash: hashValue};
-  }
+    return {name: regExpResults[1], hash: hashValue};}
 
   /**
    * Uses getRetainedLambdaAliasNames to generate a list of lambda
@@ -326,9 +325,9 @@ class UpdatedKes extends Kes {
    * key
    */
   async injectOldWorkflowLambdaAliases() {
-    // this.config.oldLambdas = {};
     const oldLambdaNames = await this.getRetainedLambdaAliasNames();
     const oldLambdas = {};
+
     oldLambdaNames.forEach((name) => {
       let matchObject = this.parseAliasName(name);
       if (matchObject.hash) {
@@ -336,6 +335,7 @@ class UpdatedKes extends Kes {
         oldLambdas[matchObject.name].hashes.push(matchObject.hash);
       }
     });
+
     this.config.oldLambdas = oldLambdas;
   }
 

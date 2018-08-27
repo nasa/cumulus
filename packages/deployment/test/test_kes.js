@@ -13,9 +13,8 @@ test.beforeEach((test) => {
   test.context.kes = new UpdatedKes(configFixture);
 });
 
-
 function setupKesForLookupLambdaReference(kes, functionName, hashValue) {
-  let lambdaFixture = {};
+  const  lambdaFixture = {};
   lambdaFixture[functionName] = { hash: hashValue };
   kes.config.lambdas = lambdaFixture;
   return kes;
@@ -61,6 +60,11 @@ test('injectWorkflowLambdaAliases updates the correct resources', (test) => {
         2: { Type: 'Task', Resource: '${TestUnversionedLambdaLambdaFunction.Arn}' },
         3: { Type: 'Task', Resource: '${SomethingElse.Arn}'}
       }
+    },
+    TestStepFunction2: {
+      States: {
+        1: { Type: 'Task', Resource: '${TestLambdaLambdaFunction.Arn}' }
+      }
     }
   };
 
@@ -71,12 +75,18 @@ test('injectWorkflowLambdaAliases updates the correct resources', (test) => {
         2: { Type: 'Task', Resource: '${TestUnversionedLambdaLambdaFunction.Arn}' },
         3: { Type: 'Task', Resource: '${SomethingElse.Arn}'}
       }
+    },
+    TestStepFunction2: {
+      States: {
+        1: { Type: 'Task', Resource: '${TestLambdaLambdaAliasnotarealhash}' }
+      }
     }
   };
 
   kes.injectWorkflowLambdaAliases();
   test.deepEqual(expected, kes.config.stepFunctions);
 });
+
 
 
 test('injectOldWorkflowLambdaAliases adds oldLambdas to configuration object', async (test) => {
