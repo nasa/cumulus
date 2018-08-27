@@ -283,7 +283,7 @@ class UpdatedKes extends Kes {
       let aliases = aliasListsObject[lambdaName];
       let cumulusAliases = aliases.filter((alias) => alias.Description === cumulusAliasDescription);
 
-      if (cumulusAliases.length === 0) return;
+      if (!cumulusAliases.length) return;
 
       cumulusAliases.sort((a,b) => b.FunctionVersion-a.FunctionVersion);
 
