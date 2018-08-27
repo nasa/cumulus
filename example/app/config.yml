@@ -1,8 +1,8 @@
 
 default:
-
   # test configuration starts
   test_configs:
+    useWorkflowLambdaVersions: true
     stackName: '{{stackName}}'
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
@@ -11,7 +11,6 @@ default:
     streamName: '{{stackName}}-testStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
-    useVersions: true
     IngestGranule:
       IngestGranuleOutput:
         granules:
