@@ -35,7 +35,7 @@ class Consume {
 
       // if the function is running for more than the timeLimit, stop it
       const timeElapsed = (Date.now() - this.now);
-      if (timeElapsed > this.timeLimit) {
+      if ((timeElapsed > this.timeLimit) || (counter >= messageLimit)) {
         this.endConsume = true;
       }
     }
