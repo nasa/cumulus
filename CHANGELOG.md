@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in-place when a workflow was initated.
+- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initated.
 	- Added useWorkflowLambdaVersions configuration option to optionally enable feature.
 	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource  versioning.
 - **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
