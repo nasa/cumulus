@@ -1,4 +1,4 @@
-7/* eslint-disable no-console, no-param-reassign, no-await-in-loop, no-restricted-syntax */
+/* eslint-disable no-console, no-param-reassign, no-await-in-loop, no-restricted-syntax */
 /**
  * This module overrides the Kes Class and the Lambda class of Kes
  * to support specific needs of the Cumulus Deployment.
