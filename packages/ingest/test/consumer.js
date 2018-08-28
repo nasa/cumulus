@@ -17,7 +17,7 @@ async function sleep(milliseconds) {
 }
 
 const timeLimit = 10;
-let messageLimit = 2;
+let messageLimit = 3;
 class MyTestConsumerClass extends Consume {
   constructor() {
     super()
@@ -50,20 +50,20 @@ test.serial('stops after timelimit', async (t) => {
   t.is(processSpy.calledOnce, true);
 });
 
-test.serial('it continues when timeLimit is is greater than time to receive', async (t) => {
+test.serial('continues when timeLimit is is greater than time to receive', async (t) => {
   const myTestConsumerClass = new MyTestConsumerClass();
   processSpy = sandbox.spy(myTestConsumerClass, 'processMessage');
-  myTestConsumerClass.timeLimit = timeLimit*3;
+  myTestConsumerClass.timeLimit = timeLimit*10;
 
   const result = await myTestConsumerClass.processMessages(processFn, messageLimit);
-  t.is(result, 2);
-  t.is(processSpy.calledTwice, true);
+  t.is(result, 3);
+  t.is(processSpy.callCount, 3);
 });
 
-test.serial('it stops after messageLimit is reached', async (t) => {
+test.serial('stops after messageLimit is reached', async (t) => {
   const myTestConsumerClass = new MyTestConsumerClass();
   processSpy = sandbox.spy(myTestConsumerClass, 'processMessage');
-  myTestConsumerClass.timeLimit = timeLimit*3;
+  myTestConsumerClass.timeLimit = timeLimit*10;
   messageLimit = 1;
 
   const result = await myTestConsumerClass.processMessages(processFn, messageLimit);
