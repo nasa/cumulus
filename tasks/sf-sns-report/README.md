@@ -18,15 +18,13 @@ To report the PDR's progress as it's being processed, add the following step aft
 
 To report the start status of the step function:
 
-    StartAt: StatusReport
-    States:
-     StatusReport:
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      ResultPath: null
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
+    StatusReport:
+     CumulusConfig:
+       cumulus_message:
+         input: '{$}'
+     ResultPath: null
+     Type: Task
+     Resource: ${SfSnsReportLambdaFunction.Arn}
 
 To report the final status of the step function:
 
