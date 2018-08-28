@@ -5,7 +5,7 @@ const { receiveSQSMessages, deleteSQSMessage } = require('@cumulus/common/aws');
 
 class Consume {
   constructor(queueUrl, messageLimit = 1, timeLimit = 90) {
-    this.queueUrl = 'queueUrl';
+    this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
     this.timeLimit = timeLimit * 100;
     this.now = Date.now();
