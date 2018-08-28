@@ -162,6 +162,26 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
   return JSON.parse(payload.body);
 }
 
+async function deleteGranule({ prefix, granuleId }) {
+  // ensure granule is removed from CMR first
+  await removeFromCMR({ prefix, granuleId});
+
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiGranulesDefault',
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/v1/granules/{granuleName}',
+      path: `/v1/granules/${granuleId}`,
+      pathParameters: {
+        granuleName: granuleId
+      }
+    }
+  });
+
+  return JSON.parse(payload.body);
+}
+
 /**
  * Fetch an execution from the Cumulus API
  *
@@ -265,6 +285,7 @@ module.exports = {
   reingestGranule,
   removeFromCMR,
   applyWorkflow,
+  deleteGranule,
   getExecution,
   getLogs,
   getExecutionLogs,

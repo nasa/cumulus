@@ -7,6 +7,8 @@ const {
   LambdaStep,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
+const { aws: { s3, getS3Object } } = require('@cumulus/common');
+
 
 const { loadConfig, uploadTestDataToBucket, deleteFolder, getExecutionUrl } = require('../helpers/testUtils');
 
@@ -136,17 +138,20 @@ describe('Parse PDR workflow', () => {
     });
 
     afterAll(async () => {
-      // delete ingested data
+      // cleanup
       let finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'StopStatus');
       if (finalOutput.replace) {
         const msg = await getS3Object(finalOutput.replace.Bucket, finalOutput.replace.Key);
         finalOutput = JSON.parse(msg.Body.toString());
       }
+      // delete ingested granule(s)
       await Promise.all(
-        finalOutput.payload.granules[0].files.map((file) =>
-          s3().deleteObject({
-            Bucket: file.bucket, Key: file.filepath
-          }).promise())
+        finalOutput.payload.granules.map((g) => {
+          apiTestUtils.deleteGranule({
+            prefix: config.stackName,
+            granuleId: g.granuleId
+          });
+        })
       );
     });
 

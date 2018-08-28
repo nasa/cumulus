@@ -3,6 +3,7 @@ const { s3 } = require('@cumulus/common/aws');
 const { Config } = require('kes');
 const lodash = require('lodash');
 const { exec } = require('child-process-promise');
+const path = require('path');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
