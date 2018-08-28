@@ -146,7 +146,7 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
   const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
 
-  console.log(`Starting workflow: ${workflowName}. Execution ARN ${executionArn}`);
+  console.log(`\nStarting workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
   return executionArn;
 }
