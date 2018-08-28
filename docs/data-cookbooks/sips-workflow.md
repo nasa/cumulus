@@ -15,7 +15,7 @@ We need to have a [provider](./setup.md#providers) from whom data can be ingeste
 #### Collection
 
 We need to build a collection. Details on collections can be found [here](./setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull PDRs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
-```
+```json
 {
     "queriedAt": "2018-08-03T16:44:25.919Z",
     "name": "MOD09GQ",
@@ -67,7 +67,7 @@ We need to build a collection. Details on collections can be found [here](./setu
 
 Finally, let's create a [rule](./setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndParsePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
 
-```
+```json
 {
     "name": "s3_provider_rule",
     "workflow": "DiscoverAndQueuePdrs",
