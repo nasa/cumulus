@@ -157,7 +157,8 @@ Resources:
     {{else}}
       MaxCapacity: 10
     {{/if}}
-      ResourceId: !Sub table/{{../../stackName}}-{{@key}}
+      ResourceId: 
+        Fn::Sub: table/{{../../stackName}}-{{@key}}
       RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
@@ -189,7 +190,8 @@ Resources:
     {{else}}
       MaxCapacity: 2
     {{/if}}
-      ResourceId: !Sub table/{{../../stackName}}-{{@key}}
+      ResourceId:
+        Fn::Sub: table/{{../../stackName}}-{{@key}}
       RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:WriteCapacityUnits"
       ServiceNamespace: dynamodb
@@ -743,7 +745,8 @@ Resources:
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref 'SecurityGroup'
+      GroupId: 
+        Fn::Ref: 'SecurityGroup'
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
@@ -829,22 +832,23 @@ Resources:
         mount:
           commands:
             01_mount:
-              command: !Sub
-              - |
-                #!/bin/bash -xe
+              command: 
+                Fn::Sub:
+                  - |
+                    #!/bin/bash -xe
 
-                mkdir -p {{ecs.efs.mount}}
-                mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
-                chmod 777 {{ecs.efs.mount}}
+                    mkdir -p {{ecs.efs.mount}}
+                    mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
+                    chmod 777 {{ecs.efs.mount}}
 
-                echo '${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
-                mount -a
-                service docker restart
-                start ecs
+                    echo '${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
+                    mount -a
+                    service docker restart
+                    start ecs
 
-              - EFSFileSystemId:
-                  Fn::ImportValue:
-                    !Sub "{{prefix}}-EFSFileSystemId"
+                  - EFSFileSystemId:
+                      Fn::ImportValue:
+                        Fn::Sub: "{{prefix}}-EFSFileSystemId"
         {{/if}}
 
     Properties:
