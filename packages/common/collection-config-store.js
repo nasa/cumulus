@@ -1,7 +1,7 @@
 'use strict';
 
 const { s3 } = require('./aws');
-const { constructCollectionId } = require('../api/lib/utils');
+const { constructCollectionId } = require('@cumulus/api/lib/utils');
 
 /**
  * Store and retrieve collection configs in S3
