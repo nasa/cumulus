@@ -62,7 +62,8 @@
     "eslint": "^4.19.1",
     "gitbook-cli": "^2.3.2",
     "lerna": "^2.9.0",
-    "nyc": "^11.6.0"
+    "nyc": "^11.6.0",
+    "simple-git": "^1.96.0"
   },
   "dependencies": {
     "aws-sdk": "^2.238.1",
