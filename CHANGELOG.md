@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `@cumulus/ingest/consumer` correctly limits the number of messages being received and processed from SQS. Details:
   - **Background:** `@cumulus/api` includes a lambda `<stack-name>-sqs2sf` which processes messages from the `<stack-name>-startSF` SQS queue every minute. The `sqs2sf` lambda uses `@cumulus/ingest/consumer` to receive and process messages from SQS.
-  - **Bug:** `@cumulus/ingest/consumer#processMessages` was waiting for any number of messages returned from SQS up to `@cumulus/ingest/consumer`'s `timeLimit` (which defaults to 9 seconds). This resulted in many messages being processed at once - many workflows being processed at once. This drove the error from the CumulusMessageAdapter: `An error occurred (ThrottlingException) when calling the GetExecutionHistory`.
-  - **Fix:** `@cumulus/ingest/consumer#processMessages` processes messages up to `timeLimit` _OR_ once it receives up to `messageLimit` messages. `sqs2sf` is deployed with a [default `messageLimit` of 10](https://github.com/nasa/cumulus/blob/670000c8a821ff37ae162385f921c40956e293f7/packages/deployment/app/config.yml#L147).
+  - **Bug:** More than `messageLimit` number of messages were being consumed and processed from the `<stack-name>-startSF` SQS queue. Many step functions were being triggered simultaneously by the lambda `<stack-name>-sqs2sf` (which consumes every minute from the `startSF` queue) and resulting in step function failure with the error: `An error occurred (ThrottlingException) when calling the GetExecutionHistory`.
+  - **Fix:** `@cumulus/ingest/consumer#processMessages` now processes messages until `timeLimit` has passed _OR_ once it receives up to `messageLimit` messages. `sqs2sf` is deployed with a [default `messageLimit` of 10](https://github.com/nasa/cumulus/blob/670000c8a821ff37ae162385f921c40956e293f7/packages/deployment/app/config.yml#L147).
 
 ## [v1.9.1] - 2018-08-22
 
