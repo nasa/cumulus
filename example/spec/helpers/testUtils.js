@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { S3 } = require('aws-sdk');
+const { s3 } = require('@cumulus/common/aws');
 const { Config } = require('kes');
 const lodash = require('lodash');
 const { exec } = require('child-process-promise');
@@ -58,6 +58,34 @@ function templateFile({ inputTemplateFilename, config }) {
 }
 
 /**
+ * Upload a file from the test-data package to the S3 test data
+ *
+ * @param {string} file - filename of data to upload
+ * @param {string} bucket - bucket to upload to
+ * @returns {Promise<Object>} - promise returned from S3 PUT
+ */
+function uploadTestDataToS3(file, bucket) {
+  const data = fs.readFileSync(require.resolve(file), 'utf8');
+  const key = path.basename(file);
+
+  return s3().putObject({
+    Bucket: bucket,
+    Key: `cumulus-test-data/pdrs/${key}`,
+    Body: data
+  }).promise();
+}
+
+/**
+ * For the given bucket, upload all the test data files to S3
+ *
+ * @param {string} bucket - S3 bucket
+ * @returns {Array<Promise>} - responses from S3 upload
+ */
+function uploadTestDataToBucket(bucket, data) {
+  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket)));
+}
+
+/**
  * Delete a folder on a given bucket on S3
  *
  * @param {string} bucket - the bucket name
@@ -65,15 +93,13 @@ function templateFile({ inputTemplateFilename, config }) {
  * @returns {Promise} undefined
  */
 async function deleteFolder(bucket, folder) {
-  const s3 = new S3();
-
-  const l = await s3.listObjectsV2({
+  const l = await s3().listObjectsV2({
     Bucket: bucket,
     Prefix: folder
   }).promise();
 
   await Promise.all(l.Contents.map((item) =>
-    s3.deleteObject({
+    s3().deleteObject({
       Bucket: bucket,
       Key: item.Key
     }).promise()));
@@ -113,6 +139,8 @@ async function redeploy(config) {
 module.exports = {
   loadConfig,
   templateFile,
+  uploadTestDataToS3,
+  uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
   redeploy
