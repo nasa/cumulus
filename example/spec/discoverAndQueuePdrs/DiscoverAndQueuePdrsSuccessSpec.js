@@ -6,7 +6,7 @@ const {
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, deleteFolder } = require('../helpers/testUtils');
+const { loadConfig, uploadTestDataToS3, deleteFolder } = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -14,6 +14,10 @@ const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverAndQueuePdrs';
 
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
+
+const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+]
 
 describe('The Discover And Queue PDRs workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };
@@ -24,6 +28,9 @@ describe('The Discover And Queue PDRs workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
+    // populate test data
+    uploadTestDataToBucket(config.bucket, s3data);
+
     await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -37,6 +44,11 @@ describe('The Discover And Queue PDRs workflow', () => {
       workflowExecution.executionArn,
       'QueuePdrs'
     );
+  });
+
+  afterAll(async () => {
+    // clean up test data
+    await deleteFolder(config.bucket, `cumulus-test-data/pdrs`);
   });
 
   it('executes successfully', () => {
