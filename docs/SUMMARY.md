@@ -39,3 +39,5 @@
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
 * [SIPS Workflow](data-cookbooks/sips-workflow.md)
+* [Error Handling](data-cookbooks/error-handling.md)
+* [Choice States](data-cookbooks/choice-states.md)
