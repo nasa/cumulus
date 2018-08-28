@@ -6,7 +6,7 @@ const { loadConfig } = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
-const taskName = 'DiscoverGranules';
+const workflowName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -23,7 +23,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     httpWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
-      taskName,
+      workflowName,
       collection,
       provider
     );
@@ -78,6 +78,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     beforeAll(async () => {
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+      console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
     });
 
@@ -107,7 +108,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
-      taskName,
+      workflowName,
       collection,
       provider
     );

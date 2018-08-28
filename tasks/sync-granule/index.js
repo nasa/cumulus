@@ -19,6 +19,8 @@ const log = require('@cumulus/common/log');
 async function download(ingest, bucket, provider, granules) {
   const updatedGranules = [];
 
+  log.debug(`awaiting lock.proceed in download() bucket: ${bucket}, `
+            + `provider: ${JSON.stringify(provider)}, granuleID: ${granules[0].granuleId}`);
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
@@ -30,16 +32,18 @@ async function download(ingest, bucket, provider, granules) {
 
   for (const g of granules) {
     try {
+      log.debug(`await ingest.ingest(${JSON.stringify(g)}, ${bucket})`);
       const r = await ingest.ingest(g, bucket);
       updatedGranules.push(r);
     }
     catch (e) {
+      log.debug(`Error caught, await lock.removeLock(${bucket}, ${provider.id}, ${g.granuleId})`);
       await lock.removeLock(bucket, provider.id, g.granuleId);
       log.error(e);
       throw e;
     }
   }
-
+  log.debug(`finshed, await lock.removeLock(${bucket}, ${provider.id}, ${granules[0].granuleId})`);
   await lock.removeLock(bucket, provider.id, granules[0].granuleId);
   return updatedGranules;
 }
@@ -89,13 +93,13 @@ exports.syncGranule = function syncGranule(event) {
   return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {
       if (ingest.end) ingest.end();
-
       const output = { granules };
       if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
-
+      log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
       return output;
     }).catch((e) => {
+      log.debug('SyncGranule errored.');
       if (ingest.end) ingest.end();
 
       let errorToThrow = e;

@@ -230,8 +230,9 @@ class Granule {
       .filter((f) => this.filterChecksumFiles(f))
       .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
+    log.debug('awaiting all download.Files');
     const files = await Promise.all(downloadFiles);
-
+    log.debug('finished ingest()');
     return {
       granuleId: granule.granuleId,
       dataType: dataType,
@@ -498,9 +499,11 @@ class Granule {
     if (fullKey[0] === '/') fullKey = fullKey.substr(1);
 
     // stream the source file to s3
+    log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${fullKey}`);
     const filename = await this.sync(fileRemotePath, bucket, fullKey);
 
     // Validate the checksum
+    log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${fullKey}`);
     await this.validateChecksum(file, bucket, fullKey);
 
     return Object.assign(file, {
