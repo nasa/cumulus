@@ -6,7 +6,7 @@ const {
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, uploadTestDataToS3, deleteFolder } = require('../helpers/testUtils');
+const { loadConfig, uploadTestDataToBucket, deleteFolder } = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();

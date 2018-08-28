@@ -8,7 +8,7 @@ const {
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, getExecutionUrl } = require('../helpers/testUtils');
+const { loadConfig, uploadTestDataToBucket, deleteFolder, getExecutionUrl } = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -16,6 +16,14 @@ const lambdaStep = new LambdaStep();
 const taskName = 'ParsePdr';
 
 const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/ParsePdr.output.json'));
+
+const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
+  '@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
+];
 
 describe('Parse PDR workflow', () => {
   let workflowExecution;
@@ -31,6 +39,9 @@ describe('Parse PDR workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
+    // place pdr on S3
+    uploadTestDataToBucket(config.bucket, s3data);
+
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 
@@ -47,6 +58,13 @@ describe('Parse PDR workflow', () => {
       workflowExecution.executionArn,
       'QueueGranules'
     );
+  });
+
+  afterAll(async () => {
+    // delete the pdr record from DynamoDB if exists
+    await pdrModel.delete({ pdrName: inputPayload.pdr.name });
+    // delete test data from S3
+    await deleteFolder(config.bucket, `cumulus-test-data/pdrs`);
   });
 
   it('executes successfully', () => {
@@ -115,6 +133,21 @@ describe('Parse PDR workflow', () => {
     beforeAll(async () => {
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+    });
+
+    afterAll(async () => {
+      // delete ingested data
+      let finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'StopStatus');
+      if (finalOutput.replace) {
+        const msg = await getS3Object(finalOutput.replace.Bucket, finalOutput.replace.Key);
+        finalOutput = JSON.parse(msg.Body.toString());
+      }
+      await Promise.all(
+        finalOutput.payload.granules[0].files.map((file) =>
+          s3().deleteObject({
+            Bucket: file.bucket, Key: file.filepath
+          }).promise())
+      );
     });
 
     it('executes successfully', () => {
