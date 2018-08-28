@@ -19,7 +19,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
+const { loadConfig, templateFile, uploadTestDataToBucket, getExecutionUrl } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleId
@@ -41,6 +41,14 @@ const templatedOutputPayloadFilename = templateFile({
   config: config[workflowName].IngestGranuleOutput
 });
 
+const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
+  '@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
+];
+
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const collection = { name: 'MOD09GQ', version: '006' };
@@ -60,6 +68,9 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
+    // upload test data
+    uploadTestDataToBucket(config.bucket, s3data);
+
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
@@ -94,6 +105,9 @@ describe('The S3 Ingest Granules workflow', () => {
           Bucket: config.bucket, Key: `${file.path}/${file.name}`
         }).promise())
     );
+
+    // delete ingested granule
+    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId })
   });
 
   it('completes execution with success status', () => {
