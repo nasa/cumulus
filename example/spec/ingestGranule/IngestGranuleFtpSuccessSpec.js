@@ -20,7 +20,7 @@ describe('The FTP Ingest Granules workflow', () => {
   const granuleModel = new Granule();
 
   beforeAll(async () => {
-    console.log('Starting ingest test');
+    console.log('\nStarting ingest test');
     inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
