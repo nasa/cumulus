@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/common",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
     "CUMULUS",
     "NASA"
   ],
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "publishConfig": {
@@ -40,7 +40,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/test-data": "^1.9.0",
+    "@cumulus/test-data": "^1.9.1",
     "ajv": "^5.2.2",
     "async": "^2.0.0",
     "aws-sdk": "^2.238.1",
