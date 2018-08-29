@@ -1,9 +1,9 @@
 {
   "name": "@cumulus/api",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "bin": {
@@ -34,10 +34,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.9.0",
-    "@cumulus/common": "^1.9.0",
-    "@cumulus/ingest": "^1.9.0",
-    "@cumulus/pvl": "^1.9.0",
+    "@cumulus/cmrjs": "^1.9.1",
+    "@cumulus/common": "^1.9.1",
+    "@cumulus/ingest": "^1.9.1",
+    "@cumulus/pvl": "^1.9.1",
     "@mapbox/dyno": "^1.4.1",
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",
@@ -72,9 +72,14 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
+    "fs-extra": "^7.0.0",
+    "lodash.flatten": "^4.4.0",
+    "lodash.range": "^3.2.0",
+    "lodash.sample": "4.2.1",
     "nyc": "^11.6.0",
     "sinon": "^4.5.0",
     "webpack": "~4.5.0",
-    "webpack-cli": "~2.0.14"
+    "webpack-cli": "~2.0.14",
+    "xml2js": "^0.4.19"
   }
 }

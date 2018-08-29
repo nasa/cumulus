@@ -80,7 +80,6 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
-
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
