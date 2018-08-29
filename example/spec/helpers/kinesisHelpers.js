@@ -226,7 +226,7 @@ function kinesisEventFromSqsMessage(message) {
   catch (error) {
     console.log('Error parsing KinesisEventFromSqsMessage(message)', JSON.stringify(message));
     console.log(error);
-    kinesisEvent = { identifier: 'Bad Message' };
+    kinesisEvent = { identifier: 'Fake Wrong Message' };
   }
   return kinesisEvent;
 }
@@ -244,14 +244,14 @@ function isTargetMessage(message, recordIdentifier) {
 }
 
 /**
- * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 5 minutes.
+ * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 10 minutes.
  *
  * @param {string} recordIdentifier - random string to match found messages against.
  * @param {string} queueUrl - kinesisFailure SQS url
- * @param {number} maxNumberElapsedPeriods - number of timeout intervals to wait.
+ * @param {number} maxNumberElapsedPeriods - number of timeout intervals (5 seconds) to wait.
  * @returns {Object} - matched Message from SQS.
  */
-async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 60) {
+async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 120) {
   const timeoutInterval = 5000;
   let queuedRecord;
   let elapsedPeriods = 0;
@@ -259,14 +259,13 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedP
   while (!queuedRecord && elapsedPeriods < maxNumberElapsedPeriods) {
     const messages = await receiveSQSMessages(queueUrl);
     if (messages.length > 0) {
-
       const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
       if (targetMessage) return targetMessage;
     }
     await timeout(timeoutInterval);
     elapsedPeriods += 1;
   }
-  return {};
+  return { waitForQueuedRecord: 'never found record on queue' };
 }
 
 module.exports = {
