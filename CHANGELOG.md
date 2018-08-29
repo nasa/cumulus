@@ -5,10 +5,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- **CUMULUS-839** - SyncGranule 'collection' is now an optional config parameter
+
+## [v1.9.1] - 2018-08-22
+
+**Please Note** To take advantage of the added granule tracking API functionality, updates are required for the message adapter and its libraries. You should be on the following versions:
+- `cumulus-message-adapter` 1.0.9+
+- `cumulus-message-adapter-js` 1.0.4+
+- `cumulus-message-adapter-java` 1.2.7+
+- `cumulus-message-adapter-python` 1.0.5+
 
 ### Added
 
-- **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution. Added integration test
+- **CUMULUS-687** Added logs endpoint to search for logs from a specific workflow execution in `@cumulus/api`. Added integration test.
 - **CUMULUS-836** - `@cumulus/deployment` supports a configurable docker storage driver for ECS. ECS can be configured with either `devicemapper` (the default storage driver for AWS ECS-optimized AMIs) or `overlay2` (the storage driver used by the NGAP 2.0 AMI). The storage driver can be configured in `app/config.yml` with `ecs.docker.storageDriver: overlay2 | devicemapper`. The default is `overlay2`.
   - To support this configuration, a [Handlebars](https://handlebarsjs.com/) helper `ifEquals` was added to `packages/deployment/lib/kes.js`.
 - **CUMULUS-836** - `@cumulus/api` added IAM roles required by the NGAP 2.0 AMI. The NGAP 2.0 AMI runs a script `register_instances_with_ssm.py` which requires the ECS IAM role to include `ec2:DescribeInstances` and `ssm:GetParameter` permissions.
@@ -33,6 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-862** Updated `@cumulus/integration-tests` to handle remote lambda output
 
 ### Changed
+
 - In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
 
 ### Removed
@@ -453,7 +463,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.9.1...HEAD
+[v1.9.1]: https://github.com/nasa/cumulus/compare/v1.9.0...v1.9.1
 [v1.9.0]: https://github.com/nasa/cumulus/compare/v1.8.1...v1.9.0
 [v1.8.1]: https://github.com/nasa/cumulus/compare/v1.8.0...v1.8.1
 [v1.8.0]: https://github.com/nasa/cumulus/compare/v1.7.0...v1.8.0

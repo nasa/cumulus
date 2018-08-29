@@ -40,7 +40,7 @@ class CollectionConfigStore {
    */
   async get(dataType, dataVersion) {
     const collectionId = constructCollectionId(dataType, dataVersion);
- 
+
     // Check to see if the collection config has already been cached
     if (!this.cache[collectionId]) {
       let response;
