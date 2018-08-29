@@ -599,56 +599,6 @@ exports.parseS3Uri = (uri) => {
  */
 exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
 
-exports.getPossiblyRemote = async (obj) => {
-  if (obj && obj.Key && obj.Bucket) {
-    const s3Obj = await exports.s3().getObject(obj).promise();
-    return s3Obj.Body.toString();
-  }
-  return obj;
-};
-
-exports.startPromisedSfnExecution = (params) =>
-  exports.sfn().startExecution(params).promise();
-
-const getCurrentSfnTaskWithoutRetry = async (stateMachineArn, executionName) => {
-  const sfn = exports.sfn();
-  const executionArn = exports.getSfnExecutionByName(stateMachineArn, executionName);
-  const executionHistory = await sfn.getExecutionHistory({
-    executionArn: executionArn,
-    maxResults: 10,
-    reverseOrder: true
-  }).promise();
-  for (const step of executionHistory.events) {
-    // Avoid iterating past states that have ended
-    if (step.type.endsWith('StateExited')) break;
-    if (step.type === 'TaskStateEntered') return step.stateEnteredEventDetails.name;
-  }
-  throw new Error(`No task found for ${stateMachineArn}#${executionName}`);
-};
-
-exports.getCurrentSfnTask = (stateMachineArn, executionName) =>
-  promiseRetry(
-    async (retry) => {
-      try {
-        const task = await getCurrentSfnTaskWithoutRetry(stateMachineArn, executionName);
-        log.info('Successfully fetched current task.');
-        return task;
-      }
-      catch (e) {
-        if (e.name === 'ThrottlingException') {
-          log.info('Got a throttling exception in aws.getCurrentSfnTask()');
-          return retry();
-        }
-        throw e;
-      }
-    },
-    {
-      factor: 1.5,
-      maxTimeout: 10000,
-      randomize: true
-    }
-  );
-
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
  * execution name, where all fields are joined by a StepFunction-safe delimiter
