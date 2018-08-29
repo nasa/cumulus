@@ -7,13 +7,21 @@ const { aws: { s3 } } = require('@cumulus/common');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../helpers/testUtils');
+const { loadConfig, uploadTestDataToBucket } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+
+const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
+  '@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
+];
 
 describe('The Ingest Granule failure workflow', () => {
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
@@ -26,6 +34,9 @@ describe('The Ingest Granule failure workflow', () => {
   const granuleModel = new Granule();
 
   beforeAll(async () => {
+    // upload test data
+    uploadTestDataToBucket(config.bucket, s3data);
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
 
@@ -49,6 +60,9 @@ describe('The Ingest Granule failure workflow', () => {
           Bucket: config.bucket, Key: `${file.path}/${file.name}`
         }).promise())
     );
+
+    // delete failed granule
+    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId })
   });
 
   it('completes execution with failure status', () => {
