@@ -7,7 +7,7 @@ const { aws: { s3 } } = require('@cumulus/common');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const { loadConfig, uploadTestDataToBucket } = require('../helpers/testUtils');
+const { loadConfig, uploadTestDataToBucket, deleteFolder } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
@@ -54,12 +54,7 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
 
     // delete failed granule
     apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId })

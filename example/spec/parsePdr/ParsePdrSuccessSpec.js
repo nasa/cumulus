@@ -66,7 +66,7 @@ describe('Parse PDR workflow', () => {
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
     // delete test data from S3
-    await deleteFolder(config.bucket, `cumulus-test-data/pdrs`);
+    await deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
   });
 
   it('executes successfully', () => {
