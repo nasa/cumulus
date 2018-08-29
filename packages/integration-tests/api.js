@@ -162,6 +162,14 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
   return JSON.parse(payload.body);
 }
 
+/**
+ * Delete a granule from Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @returns {Promise<Object>} - the delete confirmation from the API
+ */
 async function deleteGranule({ prefix, granuleId }) {
   // ensure granule is removed from CMR first
   await removeFromCMR({ prefix, granuleId});
