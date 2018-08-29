@@ -42,7 +42,7 @@ describe('Parse PDR workflow', () => {
 
   beforeAll(async () => {
     // place pdr on S3
-    uploadTestDataToBucket(config.bucket, s3data);
+    await uploadTestDataToBucket(config.bucket, s3data);
 
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });

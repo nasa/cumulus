@@ -3,7 +3,6 @@
 const fs = require('fs-extra');
 const { get } = require('lodash');
 const { models: { Granule } } = require('@cumulus/api');
-const { aws: { s3 } } = require('@cumulus/common');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
@@ -35,7 +34,7 @@ describe('The Ingest Granule failure workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    uploadTestDataToBucket(config.bucket, s3data);
+    await uploadTestDataToBucket(config.bucket, s3data);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
@@ -53,11 +52,11 @@ describe('The Ingest Granule failure workflow', () => {
   });
 
   afterAll(async () => {
-    // Remove the granule files added for the test
-    deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
-
     // delete failed granule
-    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId })
+    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
+
+    // Remove the granule files added for the test
+    await deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
   });
 
   it('completes execution with failure status', () => {

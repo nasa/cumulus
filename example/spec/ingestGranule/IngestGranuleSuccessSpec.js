@@ -69,7 +69,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    uploadTestDataToBucket(config.bucket, s3data);
+    await uploadTestDataToBucket(config.bucket, s3data);
 
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -99,7 +99,7 @@ describe('The S3 Ingest Granules workflow', () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
 
     // Remove the granule files added for the test
-    deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
+    await deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
 
     // delete ingested granule
     apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId })

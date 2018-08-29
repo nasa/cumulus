@@ -1,8 +1,7 @@
 'use strict';
 
-const path = require('path');
 const { addProviders, addCollections, addRules } = require('@cumulus/integration-tests');
-const { loadConfig, uploadTestDataToBucket } = require('../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 const config = loadConfig();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;

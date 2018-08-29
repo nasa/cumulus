@@ -29,7 +29,7 @@ describe('The Discover And Queue PDRs workflow', () => {
 
   beforeAll(async () => {
     // populate test data
-    uploadTestDataToBucket(config.bucket, s3data);
+    await uploadTestDataToBucket(config.bucket, s3data);
 
     await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
     workflowExecution = await buildAndExecuteWorkflow(
