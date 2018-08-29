@@ -14,7 +14,7 @@ function determineIntegrationTestStackName(cb) {
     scisco: 'aj',
     jennyhliu: 'jl',
     kkelly51: 'kk-uat-deployment',
-    'Lauren Frederick', 'lf',
+    'Lauren Frederick': 'lf',
     laurenfrederick: 'lf',
     yjpa7145: 'mth-2',
     flamingbear: 'mhs',
