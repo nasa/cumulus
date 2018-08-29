@@ -17,7 +17,7 @@ const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
-]
+];
 
 describe('The Discover And Queue PDRs workflow', () => {
   const collection = { name: 'MOD09GQ', version: '006' };

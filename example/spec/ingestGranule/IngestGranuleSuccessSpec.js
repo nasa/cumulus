@@ -19,7 +19,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile, uploadTestDataToBucket, getExecutionUrl } = require('../helpers/testUtils');
+const { loadConfig, templateFile, uploadTestDataToBucket, deleteFolder, getExecutionUrl } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleId
@@ -99,12 +99,7 @@ describe('The S3 Ingest Granules workflow', () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
 
     // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
 
     // delete ingested granule
     apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId })
