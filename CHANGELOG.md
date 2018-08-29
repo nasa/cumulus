@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Adds kinesisFallback SNS topic to signal incoming errors from kinesis stream.
   - Adds kinesisFailureSQS to capture fully failed events from all retries.
 - **CUMULUS-855** Adds integration test for kinesis' error path.
+- **CUMULUS-859** Moved duplicate code in `@cumulus/move-granules` and `@cumulus/post-to-cmr` to `@cumulus/ingest`. Fixed imports making assumptions about directory structure.
 - **CUMULUS-686** Added workflow task name and version tracking via `@cumulus/api` executions endpoint under new `tasks` property, and under `workflow_tasks` in step input/output.
   - Depends on `cumulus-message-adapter` 1.0.9+, `cumulus-message-adapter-js` 1.0.4+, `cumulus-message-adapter-java` 1.2.7+ and `cumulus-message-adapter-python` 1.0.5+
 - **CUMULUS-771**
@@ -43,6 +44,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
+
+### Removed
+
+- Removed unused and broken code from `@cumulus/common`
+  - Removed `@cumulus/common/test-helpers`
+  - Removed `@cumulus/common/task`
+  - Removed `@cumulus/common/message-source`
+  - Removed the `getPossiblyRemote` function from `@cumulus/common/aws`
+  - Removed the `startPromisedSfnExecution` function from `@cumulus/common/aws`
+  - Removed the `getCurrentSfnTask` function from `@cumulus/common/aws`
 
 ## [v1.9.0] - 2018-08-06
 
