@@ -4,7 +4,7 @@ const pvl = require('@cumulus/pvl');
 const get = require('lodash.get');
 const aws = require('@cumulus/ingest/aws');
 const Manager = require('./base');
-const { constructCollectionId } = require('../lib/utils');
+const { constructCollectionId } = require('@cumulus/common');
 const pdrSchema = require('./schemas').pdr;
 
 

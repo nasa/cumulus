@@ -22,8 +22,8 @@ const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
-const { CollectionConfigStore } = require('@cumulus/common');
-const { constructCollectionId } = require('../api/lib/utils');
+const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
+const { promisify } = require('util');
 
 /**
 * The abstract Discover class
@@ -599,6 +599,19 @@ function selector(type, protocol) {
 }
 
 /**
+ * Extract the granule ID from the a given s3 uri
+ *
+ * @param {string} uri - the s3 uri of the file
+ * @param {string} regex - the regex for extracting the ID
+ * @returns {string} the granule
+ */
+function getGranuleId(uri, regex) {
+  const match = path.basename(uri).match(regex);
+  if (match) return match[1];
+  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
+}
+
+/**
  * Gets metadata for a cmr xml file from s3
  *
  * @param {string} xmlFilePath - S3 URI to the xml metadata document
@@ -623,12 +636,38 @@ async function getMetadata(xmlFilePath) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return new Promise((resolve, reject) => {
-    xml2js.parseString(xml, xmlParseOptions, (err, data) => {
-      if (err) return reject(err);
-      return resolve(data);
-    });
-  });
+  return (promisify(xml2js.parseString))(xml, xmlParseOptions);
+}
+
+/**
+ * returns a list of CMR xml files
+ *
+ * @param {Array} input - an array of s3 uris
+ * @param {string} granuleIdExtraction - a regex for extracting granule IDs
+ * @returns {Promise<Array>} promise resolves to an array of objects
+ * that includes CMR xmls uris and granuleIds
+ */
+async function getCmrFiles(input, granuleIdExtraction) {
+  const files = [];
+  const expectedFormat = /.*\.cmr\.xml$/;
+
+  for (const filename of input) {
+    if (filename && filename.match(expectedFormat)) {
+      const metadata = await getMetadata(filename);
+      const metadataObject = await parseXmlString(metadata);
+
+      const cmrFileObject = {
+        filename,
+        metadata,
+        metadataObject,
+        granuleId: getGranuleId(filename, granuleIdExtraction)
+      };
+
+      files.push(cmrFileObject);
+    }
+  }
+
+  return files;
 }
 
 async function postS3Object(destination, options) {
@@ -849,3 +888,5 @@ module.exports.getMetadata = getMetadata;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
+module.exports.getGranuleId = getGranuleId;
+module.exports.getCmrFiles = getCmrFiles;
