@@ -306,7 +306,7 @@ module.exports = {
   getAsyncOperation,
   getExecution,
   getExecutionLogs,
-  getExecutionStatus
+  getExecutionStatus,
   getGranule,
   getLogs,
   postBulkDelete,
