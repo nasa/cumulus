@@ -2,7 +2,7 @@
 
 const AWS = require('aws-sdk');
 const util = require('util');
-const isError = require('lodash.iserror'); // eslint-disable-line import/no-unresolved
+const isError = require('lodash.iserror'); // eslint-disable-line import/no-unresolved node/no-missing-require
 const exec = util.promisify(require('child_process').exec); // eslint-disable-line security/detect-child-process, max-len
 const fs = require('fs');
 const https = require('https');
