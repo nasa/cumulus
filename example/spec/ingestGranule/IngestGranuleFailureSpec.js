@@ -57,7 +57,12 @@ describe('The Ingest Granule failure workflow', () => {
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      config.stackName,
+      config.bucket,
+      workflowName,
+      collection,
+      provider,
+      inputPayload
     );
   });
 

@@ -19,6 +19,7 @@ const {
   getStreamStatus,
   getRecords,
   putRecordOnStream,
+  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForTestSf
@@ -91,9 +92,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let s3FileHead;
   let responseStreamShardIterator;
 
-  const streamName = `${testConfig.streamName}-${(new Date().getTime())}-KinesisTrigger`;
+  const streamName = timeStampedStreamName(testConfig, 'KinesisTrigger');
   testConfig.streamName = streamName;
-  const cnmResponseStreamName = `${testConfig.stackName}-${(new Date().getTime())}-KinesisTriggerCnmResponseStream`;
+  const cnmResponseStreamName = timeStampedStreamName(testConfig, 'KinesisTriggerCnmResponseStream');
 
   beforeAll(async () => {
     // create streams
