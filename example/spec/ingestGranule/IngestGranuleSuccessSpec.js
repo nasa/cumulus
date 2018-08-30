@@ -19,7 +19,14 @@ const {
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile, uploadTestDataToBucket, deleteFolder, getExecutionUrl } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  templateFile,
+  uploadTestDataToBucket,
+  deleteFolder,
+  getExecutionUrl,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleId
@@ -50,6 +57,7 @@ const s3data = [
 ];
 
 describe('The S3 Ingest Granules workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleSuccess`);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
@@ -72,8 +80,12 @@ describe('The S3 Ingest Granules workflow', () => {
     await uploadTestDataToBucket(config.bucket, s3data);
 
     console.log('Starting ingest test');
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+    // update test data filepaths
+    inputPayloadJson.granules.files.forEach((file) => {
+      file.path = testDataFolder;
+    });
+    inputPayload = await setupTestGranuleForIngest(config.bucket, JSON.stringify(inputPayloadJson), testDataGranuleId, granuleRegex);
 
     const granuleId = inputPayload.granules[0].granuleId;
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
@@ -99,10 +111,10 @@ describe('The S3 Ingest Granules workflow', () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
 
     // Remove the granule files added for the test
-    await deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
+    await deleteFolder(config.bucket, testDataFolder);
 
     // delete ingested granule
-    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId })
+    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
   });
 
   it('completes execution with success status', () => {

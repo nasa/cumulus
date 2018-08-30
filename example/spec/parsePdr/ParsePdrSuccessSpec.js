@@ -7,10 +7,16 @@ const {
   LambdaStep,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
-const { aws: { s3, getS3Object } } = require('@cumulus/common');
+const { aws: { getS3Object } } = require('@cumulus/common');
 
 
-const { loadConfig, uploadTestDataToBucket, deleteFolder, getExecutionUrl } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  getExecutionUrl,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -28,10 +34,11 @@ const s3data = [
 ];
 
 describe('Parse PDR workflow', () => {
+  const testDataFolderPrefix = timestampedTestDataPrefix(`${config.stackName}-ParsePdrSuccess`);
   let workflowExecution;
   let queueGranulesOutput;
+  let inputPayload;
   const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
-  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
 
@@ -46,6 +53,15 @@ describe('Parse PDR workflow', () => {
 
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
+
+    // update input file paths
+    inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
+    inputPayload.pdr.path = testDataFolderPrefix;
+    // update expectedOutput file paths
+    expectedParsePdrOutput.pdr.path = testDataFolderPrefix;
+    expectedParsePdrOutput.granules.files.forEach((file) => {
+      file.path = testDataFolderPrefix;
+    });
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -70,7 +86,7 @@ describe('Parse PDR workflow', () => {
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
     // delete test data from S3
-    await deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
+    await deleteFolder(config.bucket, testDataFolderPrefix);
   });
 
   it('executes successfully', () => {
@@ -151,12 +167,11 @@ describe('Parse PDR workflow', () => {
       }
       // delete ingested granule(s)
       await Promise.all(
-        finalOutput.payload.granules.map((g) => {
+        finalOutput.payload.granules.map((g) =>
           apiTestUtils.deleteGranule({
             prefix: config.stackName,
             granuleId: g.granuleId
-          });
-        })
+          }))
       );
     });
 

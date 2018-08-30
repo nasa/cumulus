@@ -6,7 +6,12 @@ const {
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, uploadTestDataToBucket, deleteFolder } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -20,6 +25,7 @@ const s3data = [
 ];
 
 describe('The Discover And Queue PDRs workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-DiscoverAndQueuePdrsSuccess`);
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution;
@@ -29,7 +35,7 @@ describe('The Discover And Queue PDRs workflow', () => {
 
   beforeAll(async () => {
     // populate test data
-    await uploadTestDataToBucket(config.bucket, s3data);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
     workflowExecution = await buildAndExecuteWorkflow(
@@ -48,7 +54,7 @@ describe('The Discover And Queue PDRs workflow', () => {
 
   afterAll(async () => {
     // clean up test data
-    await deleteFolder(config.bucket, `cumulus-test-data/pdrs`);
+    await deleteFolder(config.bucket, testDataFolder);
   });
 
   it('executes successfully', () => {
@@ -63,7 +69,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
 
     it('has expected path and name output', () => {
-      expect(lambdaOutput.payload.pdrs[0].path).toEqual('cumulus-test-data/pdrs');
+      expect(lambdaOutput.payload.pdrs[0].path).toEqual(testDataFolder);
       expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
     });
   });
