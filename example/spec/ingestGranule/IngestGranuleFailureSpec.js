@@ -6,7 +6,12 @@ const { models: { Granule } } = require('@cumulus/api');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const { loadConfig, uploadTestDataToBucket, deleteFolder } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
@@ -23,6 +28,7 @@ const s3data = [
 ];
 
 describe('The Ingest Granule failure workflow', () => {
+  const testDataFolderPrefix = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleFailure`);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
@@ -34,10 +40,14 @@ describe('The Ingest Granule failure workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolderPrefix);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+    // update test data filepaths
+    inputPayloadJson.granules.files.forEach((file) => {
+      file.path = testDataFolderPrefix;
+    });
+    inputPayload = await setupTestGranuleForIngest(config.bucket, JSON.stringify(inputPayloadJson), testDataGranuleId, granuleRegex);
 
     // add a non-existent file to input payload to cause lambda error
     const nonexistentFile = { path: 'non-existent-path', name: 'non-existent-file' };
@@ -56,7 +66,7 @@ describe('The Ingest Granule failure workflow', () => {
     apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
 
     // Remove the granule files added for the test
-    await deleteFolder(config.bucket, 'cumulus-test-data/pdrs');
+    await deleteFolder(config.bucket, testDataFolderPrefix);
   });
 
   it('completes execution with failure status', () => {

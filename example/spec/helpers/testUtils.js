@@ -7,6 +7,8 @@ const path = require('path');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
+const timestampedTestDataPrefix = (prefix) => `${prefix}-${(new Date().getTime())}-test-data/pdrs`;
+
 /**
  * Loads and parses the configuration defined in `./app/config.yml`
  *
@@ -63,15 +65,16 @@ function templateFile({ inputTemplateFilename, config }) {
  *
  * @param {string} file - filename of data to upload
  * @param {string} bucket - bucket to upload to
+ * @param {string} prefix - S3 folder prefix
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-function uploadTestDataToS3(file, bucket) {
+function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs') {
   const data = fs.readFileSync(require.resolve(file), 'utf8');
   const key = path.basename(file);
-
+  console.log('\nUploading test data to ', prefix);
   return s3().putObject({
     Bucket: bucket,
-    Key: `cumulus-test-data/pdrs/${key}`,
+    Key: `${prefix}/${key}`,
     Body: data
   }).promise();
 }
@@ -80,10 +83,12 @@ function uploadTestDataToS3(file, bucket) {
  * For the given bucket, upload all the test data files to S3
  *
  * @param {string} bucket - S3 bucket
+ * @param {Array<string>} data - list of test data files
+ * @param {string} prefix - S3 folder prefix
  * @returns {Array<Promise>} - responses from S3 upload
  */
-function uploadTestDataToBucket(bucket, data) {
-  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket)));
+function uploadTestDataToBucket(bucket, data, prefix) {
+  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket, prefix)));
 }
 
 /**
@@ -138,6 +143,7 @@ async function redeploy(config) {
 }
 
 module.exports = {
+  timestampedTestDataPrefix,
   loadConfig,
   templateFile,
   uploadTestDataToS3,
