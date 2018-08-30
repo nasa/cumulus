@@ -172,7 +172,7 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
  */
 async function deleteGranule({ prefix, granuleId }) {
   // ensure granule is removed from CMR first
-  await removeFromCMR({ prefix, granuleId});
+  await removeFromCMR({ prefix, granuleId });
 
   const payload = await callCumulusApi({
     prefix: prefix,
@@ -187,7 +187,7 @@ async function deleteGranule({ prefix, granuleId }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**

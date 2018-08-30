@@ -90,6 +90,17 @@ describe('The Discover And Queue PDRs workflow', () => {
       parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrWorkflowArn);
     });
 
+    afterAll(async () => {
+      // wait for child executions to complete
+      const queueGranulesOutput = await lambdaStep.getStepOutput(
+        parsePdrWorkflowArn,
+        'QueueGranules'
+      );
+      await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
+        await waitForCompletedExecution(arn);
+      }));
+    });
+
     it('executes successfully', () => {
       expect(parsePdrExecutionStatus).toEqual('SUCCEEDED');
     });
