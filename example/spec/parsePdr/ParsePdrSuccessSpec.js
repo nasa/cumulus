@@ -63,6 +63,10 @@ describe('Parse PDR workflow', () => {
   });
 
   afterAll(async () => {
+    // await execution completions
+    await Promise.all(queueGranulesOutput.running.map(async (arn) => {
+      await waitForCompletedExecution(arn);
+    }));
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
     // delete test data from S3
@@ -133,6 +137,7 @@ describe('Parse PDR workflow', () => {
     let ingestGranuleExecutionStatus;
 
     beforeAll(async () => {
+      // wait for IngestGranule execution to complete
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
     });
