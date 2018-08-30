@@ -2,7 +2,8 @@
 
 const JSFtp = require('jsftp');
 const join = require('path').join;
-const log = require('@cumulus/common/log');
+const { PassThrough } = require('stream');
+const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
 const { omit } = require('lodash');
@@ -140,5 +141,41 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     // Type 'type' field is required to support recursive file listing, but
     // should not be part of the returned result.
     return files.map((file) => omit(file, 'type'));
+  }
+
+  /**
+   * Download the remote file to a given s3 location
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} bucket - destination s3 bucket of the file
+   * @param {string} key - destination s3 key of the file
+   * @returns {Promise} s3 uri of destination file
+   */
+  async sync(remotePath, bucket, key) {
+    const remoteUrl = `ftp://${this.host}${remotePath}`;
+    const s3uri = buildS3Uri(bucket, key);
+    log.info(`Sync ${remoteUrl} to ${s3uri}`);
+
+    if (!this.decrypted) await this.decrypt();
+    const client = new JSFtp(this.ftpClientOptions);
+
+    // get readable stream for remote file
+    const readable = await new Promise((resolve, reject) => {
+      client.get(remotePath, (err, socket) => {
+        if (err) reject(err);
+        else resolve(socket);
+      });
+    });
+
+    const pass = new PassThrough();
+    readable.pipe(pass);
+
+    const params = { Bucket: bucket, Key: key, Body: pass };
+    await promiseS3Upload(params);
+    log.info('Uploading to s3 is complete', s3uri);
+
+    client.destroy();
+
+    return s3uri;
   }
 };
