@@ -35,15 +35,16 @@ const commonRuleParams = {
   rule: {
     type: 'kinesis',
     value: 'test-kinesisarn'
-  },
-  state: 'ENABLED'
+  }
 };
 
 const rule1Params = Object.assign({}, commonRuleParams, {
   name: 'testRule1',
-  workflow: 'test-workflow-1'
+  workflow: 'test-workflow-1',
+  state: 'ENABLED'
 });
 
+// if the state is not provided, it will be set to default value 'ENABLED'
 const rule2Params = Object.assign({}, commonRuleParams, {
   name: 'testRule2',
   workflow: 'test-workflow-2'
