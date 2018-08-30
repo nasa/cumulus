@@ -80,7 +80,7 @@ default:
   ecs:
     restartTasksOnDeploy: false
     amiid: ami-6944c513
-    instanceType: change-me
+    instanceType: change-ecs-instanceType
     volumeSize: 50
     availabilityZone: 'us-east-1b'
     maxInstances: 1
@@ -95,6 +95,8 @@ default:
           AWS_REGION:
             function: Fn::Sub
             value: '${AWS::Region}'
+    docker:
+      storageDriver: overlay2
 
   es:
     name: es5

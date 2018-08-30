@@ -1,7 +1,9 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const cksum = require('cksum');
 const concurrency = require('./concurrency');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -486,6 +488,25 @@ class S3ListObjectsV2Queue {
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
+exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
+  const param = { Bucket: bucket, Key: key };
+
+  if (algorithm.toLowerCase() === 'cksum') {
+    return new Promise((resolve, reject) =>
+      exports.s3().getObject(param).createReadStream()
+        .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
+        .on('error', reject));
+  }
+
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash(algorithm, options);
+    const fileStream = exports.s3().getObject(param).createReadStream();
+    fileStream.on('error', reject);
+    fileStream.on('data', (chunk) => hash.update(chunk));
+    fileStream.on('end', () => resolve(hash.digest('hex')));
+  });
+};
+
 // Class to efficiently scane all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
 class DynamoDbScanQueue {
@@ -577,56 +598,6 @@ exports.parseS3Uri = (uri) => {
  * @returns {string} - an S3 URI
  */
 exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}`;
-
-exports.getPossiblyRemote = async (obj) => {
-  if (obj && obj.Key && obj.Bucket) {
-    const s3Obj = await exports.s3().getObject(obj).promise();
-    return s3Obj.Body.toString();
-  }
-  return obj;
-};
-
-exports.startPromisedSfnExecution = (params) =>
-  exports.sfn().startExecution(params).promise();
-
-const getCurrentSfnTaskWithoutRetry = async (stateMachineArn, executionName) => {
-  const sfn = exports.sfn();
-  const executionArn = exports.getSfnExecutionByName(stateMachineArn, executionName);
-  const executionHistory = await sfn.getExecutionHistory({
-    executionArn: executionArn,
-    maxResults: 10,
-    reverseOrder: true
-  }).promise();
-  for (const step of executionHistory.events) {
-    // Avoid iterating past states that have ended
-    if (step.type.endsWith('StateExited')) break;
-    if (step.type === 'TaskStateEntered') return step.stateEnteredEventDetails.name;
-  }
-  throw new Error(`No task found for ${stateMachineArn}#${executionName}`);
-};
-
-exports.getCurrentSfnTask = (stateMachineArn, executionName) =>
-  promiseRetry(
-    async (retry) => {
-      try {
-        const task = await getCurrentSfnTaskWithoutRetry(stateMachineArn, executionName);
-        log.info('Successfully fetched current task.');
-        return task;
-      }
-      catch (e) {
-        if (e.name === 'ThrottlingException') {
-          log.info('Got a throttling exception in aws.getCurrentSfnTask()');
-          return retry();
-        }
-        throw e;
-      }
-    },
-    {
-      factor: 1.5,
-      maxTimeout: 10000,
-      randomize: true
-    }
-  );
 
 /**
  * Given an array of fields, returns that a new string that's safe for use as a StepFunction,
