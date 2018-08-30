@@ -61,6 +61,10 @@ async function getExecutions() {
   return (_.orderBy(data.executions, 'startDate', 'desc'));
 }
 
+async function getStreamStatus(StreamName) {
+  const stream = await kinesis.describeStream({ StreamName }).promise();
+  return stream.StreamDescription.StreamStatus;
+}
 
 /**
  * Wait for a number of periods for a kinesis stream to become active.
@@ -272,6 +276,7 @@ module.exports = {
   createOrUseTestStream,
   deleteTestStream,
   getShardIterator,
+  getStreamStatus,
   getRecords,
   kinesisEventFromSqsMessage,
   putRecordOnStream,

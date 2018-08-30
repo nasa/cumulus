@@ -5,6 +5,7 @@ const { s3 } = require('@cumulus/common/aws');
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
 const {
+  addRules,
   LambdaStep,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
@@ -13,7 +14,9 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { loadConfig } = require('../helpers/testUtils');
 const {
   createOrUseTestStream,
+  deleteTestStream,
   getShardIterator,
+  getStreamStatus,
   getRecords,
   putRecordOnStream,
   tryCatchExit,
@@ -28,10 +31,8 @@ const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
 
 const testConfig = loadConfig();
-const cnmResponseStreamName = `${testConfig.stackName}-cnmResponseStream`;
 
 const lambdaStep = new LambdaStep();
-const streamName = testConfig.streamName;
 
 const recordFile = record.product.files[0];
 const expectedTranslatePayload = {
@@ -90,22 +91,34 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let s3FileHead;
   let responseStreamShardIterator;
 
+  const streamName = `${testConfig.streamName}-${(new Date().getTime())}-KinesisTrigger`;
+  testConfig.streamName = streamName;
+  const cnmResponseStreamName = `${testConfig.stackName}-${(new Date().getTime())}-KinesisTriggerCnmResponseStream`;
+
+  beforeAll(async () => {
+    // create streams
+    await tryCatchExit(async () => {
+      await createOrUseTestStream(streamName);
+      await createOrUseTestStream(cnmResponseStreamName);
+      console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
+      await waitForActiveStream(streamName);
+      await waitForActiveStream(cnmResponseStreamName);
+      console.log('\nSetting up kinesisRule');
+      await addRules(testConfig, './spec/kinesisTests/data/rules');
+    });
+  });
+
   afterAll(async () => {
     await s3().deleteObject({
       Bucket: testConfig.buckets.private.name,
       Key: `${filePrefix}/${fileData.name}`
     }).promise();
+    console.log(`\nDeleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
+    await Promise.all([deleteTestStream(streamName), deleteTestStream(cnmResponseStreamName)]);
   });
 
-  beforeAll(async () => {
-    await tryCatchExit(async () => {
-      await createOrUseTestStream(streamName);
-      await createOrUseTestStream(cnmResponseStreamName);
-
-      console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
-      await waitForActiveStream(streamName);
-      await waitForActiveStream(cnmResponseStreamName);
-    });
+  it('Prepares a kinesis stream for integration tests.', async () => {
+    expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
   describe('Workflow executes successfully', () => {

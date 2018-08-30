@@ -1,16 +1,16 @@
 'use strict';
 
 const {
-  testUtils: {
-    randomString
-  },
-  aws: {
-    deleteSQSMessage
-  }
+  testUtils: { randomString },
+  aws: { deleteSQSMessage }
 } = require('@cumulus/common');
+
+const { addRules, deleteRules, rulesList } = require('@cumulus/integration-tests');
 
 const {
   createOrUseTestStream,
+  deleteTestStream,
+  getStreamStatus,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
   tryCatchExit,
@@ -21,18 +21,19 @@ const {
 const { loadConfig } = require('../helpers/testUtils');
 
 const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
-const testRecordIdentifier = randomString();
-record.identifier = testRecordIdentifier;
-const badRecord = { ...record };
-delete badRecord.collection;
-
-
-const testConfig = loadConfig();
-const streamName = testConfig.streamName;
-const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
-
 
 describe('The kinesisConsumer receives a bad record.', () => {
+  const testRecordIdentifier = randomString();
+  record.identifier = testRecordIdentifier;
+  const badRecord = { ...record };
+  delete badRecord.collection;
+
+  const testConfig = loadConfig();
+  const streamName = `${testConfig.streamName}-${(new Date().getTime())}-KinesisError`;
+  testConfig.streamName = streamName;
+  const ruleDirectory = './spec/kinesisTests/data/rules';
+  const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
+
   beforeAll(async () => {
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
@@ -41,7 +42,9 @@ describe('The kinesisConsumer receives a bad record.', () => {
       await createOrUseTestStream(streamName);
       console.log(`\nWaiting for active streams: '${streamName}'.`);
       await waitForActiveStream(streamName);
-      console.log(`Dropping record onto  ${streamName}, testRecordIdentifier: ${testRecordIdentifier}.`);
+      console.log('\nSetting up kinesisRule');
+      await addRules(testConfig, ruleDirectory);
+      console.log(`\nDropping record onto  ${streamName}, testRecordIdentifier: ${testRecordIdentifier}.`);
       await putRecordOnStream(streamName, badRecord);
     });
   });
@@ -51,7 +54,17 @@ describe('The kinesisConsumer receives a bad record.', () => {
       console.log('Delete the Record from the queue.');
       await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
     }
+    console.log('\nDeleting kinesisRule');
+    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    console.log(`\nDeleting testStream '${streamName}'`);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
+
+    await deleteTestStream(streamName);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+  });
+
+  it('Prepares a kinesis stream for integration tests.', async () => {
+    expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
   it('Eventually puts the bad record on the failure queue.', async () => {
