@@ -96,11 +96,21 @@ describe('The S3 Ingest Granules workflow', () => {
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      config.stackName,
+      config.bucket,
+      workflowName,
+      collection,
+      provider,
+      inputPayload
     );
 
     failingWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, provider, {}
+      config.stackName,
+      config.bucket,
+      workflowName,
+      collection,
+      provider,
+      {}
     );
     failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
     failedExecutionName = failedExecutionArn.pop();

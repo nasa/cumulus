@@ -13,6 +13,7 @@ const {
   getStreamStatus,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
+  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord
@@ -29,7 +30,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
   delete badRecord.collection;
 
   const testConfig = loadConfig();
-  const streamName = `${testConfig.streamName}-${(new Date().getTime())}-KinesisError`;
+  const streamName = timeStampedStreamName(testConfig, 'KinesisError');
   testConfig.streamName = streamName;
   const ruleDirectory = './spec/kinesisTests/data/rules';
   const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
