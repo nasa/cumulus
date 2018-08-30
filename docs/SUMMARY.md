@@ -11,6 +11,7 @@
     * [Lambda Functions](workflows/lambda.md)
     * [Dockerization](workflows/docker.md)
   * [Workflow Configuration How-to's](workflows/workflow-configuration-how-to.md)
+  * [Workflow Triggers](workflows/workflow-triggers.md)
 * Deployment
   * [How to Deploy Cumulus](deployment/README.md)
   * [Creating an S3 Bucket](deployment/create_bucket.md)
@@ -39,5 +40,6 @@
 * [HelloWorldWorkflow](data-cookbooks/hello-world.md)
 * [SNS Configuration](data-cookbooks/sns.md)
 * [SIPS Workflow](data-cookbooks/sips-workflow.md)
+* [CNM Workflow](data-cookbooks/cnm-workflow.md)
 * [Error Handling](data-cookbooks/error-handling.md)
 * [Choice States](data-cookbooks/choice-states.md)
