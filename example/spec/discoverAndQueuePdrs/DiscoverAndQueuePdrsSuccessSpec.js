@@ -69,7 +69,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
 
     it('has expected path and name output', () => {
-      expect(lambdaOutput.payload.pdrs[0].path).toEqual(testDataFolder);
+      expect(lambdaOutput.payload.pdrs[0].path).toEqual('cumulus-test-data/pdrs');
       expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
     });
   });
@@ -118,7 +118,6 @@ describe('The Discover And Queue PDRs workflow', () => {
           'ParsePdr'
         );
         expect(lambdaOutput.payload.granules.length).toEqual(1);
-        expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
       });
     });
   });
