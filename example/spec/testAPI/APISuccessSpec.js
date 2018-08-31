@@ -11,7 +11,6 @@ const {
   buildAndExecuteWorkflow,
   conceptExists
 } = require('@cumulus/integration-tests');
-const { Search } = require('@cumulus/api/es/search');
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -45,7 +44,6 @@ async function waitForExist(CMRLink, outcome, retries) {
 
 describe('The Cumulus API', () => {
   let workflowExecution = null;
-  let esClient;
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
@@ -56,8 +54,6 @@ describe('The Cumulus API', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    const host = config.esHost;
-    esClient = await Search.es(host);
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
     granuleId = inputPayload.granules[0].granuleId;
@@ -155,6 +151,28 @@ describe('The Cumulus API', () => {
       // Check that the granule was removed
       const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
       expect(granuleRemoved).toEqual(true);
+    });
+  });
+
+  describe('deleteGranule', () => {
+    it('deletes the ingested granule from the API', async () => {
+      const granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+
+      // Delete the granule
+      await apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId
+      });
+
+      // Verify deletion
+      const resp = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: granule.granuleId
+      });
+      expect(resp.message).toEqual('Granule not found');
     });
   });
 
