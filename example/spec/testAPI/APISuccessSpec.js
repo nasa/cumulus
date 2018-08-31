@@ -1,7 +1,12 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { loadConfig } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  timestampedTestDataPrefix,
+  uploadTestDataToBucket,
+  deleteFolder
+} = require('../helpers/testUtils');
 const sleep = require('sleep-promise');
 const {
   aws: { s3 }
@@ -16,6 +21,12 @@ const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
+
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
 
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
@@ -43,6 +54,7 @@ async function waitForExist(CMRLink, outcome, retries) {
 }
 
 describe('The Cumulus API', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-APISuccess`);
   let workflowExecution = null;
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
@@ -54,7 +66,13 @@ describe('The Cumulus API', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
+    // Upload test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    inputPayloadJson.granules[0].files.forEach((file) => {
+      file.path = testDataFolder; // eslint-disable-line no-param-reassign
+    });
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
     granuleId = inputPayload.granules[0].granuleId;
 
@@ -65,12 +83,7 @@ describe('The Cumulus API', () => {
 
   afterAll(async () => {
     // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    await deleteFolder(config.bucket, testDataFolder);
   });
 
   it('completes execution with success status', () => {
