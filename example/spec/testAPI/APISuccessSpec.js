@@ -23,6 +23,7 @@ const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
@@ -69,7 +70,8 @@ describe('The Cumulus API', () => {
     // Upload test data
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+    inputPayloadJson.pdr.path = testDataFolder;
     inputPayloadJson.granules[0].files.forEach((file) => {
       file.path = testDataFolder; // eslint-disable-line no-param-reassign
     });
