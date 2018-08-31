@@ -59,8 +59,8 @@ describe('Parse PDR workflow', () => {
     inputPayload.pdr.path = testDataFolderPrefix;
     // update expectedOutput file paths
     expectedParsePdrOutput.pdr.path = testDataFolderPrefix;
-    expectedParsePdrOutput.granules.files.forEach((file) => {
-      file.path = testDataFolderPrefix;
+    expectedParsePdrOutput.granules[0].files.forEach((file) => {
+      file.path = testDataFolderPrefix; // eslint-disable-line no-param-reassign
     });
 
     workflowExecution = await buildAndExecuteWorkflow(
