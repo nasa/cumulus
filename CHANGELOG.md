@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added integration test for ingesting granules from ftp provider
   - Updated http/https integration tests for ingesting granules from http/https providers
 - **CUMULUS-862** Updated `@cumulus/integration-tests` to handle remote lambda output
+- **CUMULUS-856** Set the rule `state` to have default value `ENABLED`
 
 ### Changed
 
