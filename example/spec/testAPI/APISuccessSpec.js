@@ -27,7 +27,7 @@ const { api: apiTestUtils } = require('@cumulus/integration-tests');
  * @param {string} retries - number of remaining tries
  * @returns {Promise<boolean>} - whether or not the granule exists
  */
-async function waitForExist(CMRLink, outcome, retries) {
+async function waitForExist(CMRLink, outcome, retries, delay = 2000) {
   if (retries === 0) {
     console.log('Out of retries');
     return false;
@@ -35,7 +35,7 @@ async function waitForExist(CMRLink, outcome, retries) {
 
   const existsCheck = await conceptExists(CMRLink);
   if (existsCheck !== outcome) {
-    await sleep(2000);
+    await sleep(delay);
     console.log('Retrying ...');
     return waitForExist(CMRLink, outcome, (retries - 1));
   }
@@ -173,7 +173,7 @@ describe('The Cumulus API', () => {
         workflow: 'PublishGranule'
       });
 
-      const granulePublished = await waitForExist(cmrLink, true, 2);
+      const granulePublished = await waitForExist(cmrLink, true, 3, 10000);
       expect(granulePublished).toEqual(true);
 
       // Cleanup: remove from CMR
