@@ -2,7 +2,12 @@
 
 const { difference } = require('lodash');
 const fs = require('fs-extra');
-const { loadConfig } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  timestampedTestDataPrefix,
+  uploadTestDataToBucket,
+  deleteFolder
+} = require('../helpers/testUtils');
 const { getConfigObject } = require('../helpers/configUtils');
 const { aws: { s3 } } = require('@cumulus/common');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
@@ -15,10 +20,18 @@ const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 const workflowConfigFile = './workflows.yml';
 
+const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
+
 // all states defined in the workflow configuration
 let allStates;
 
 describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-ExecutionStatus`);
   let workflowExecution = null;
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
@@ -29,10 +42,17 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
+    // upload test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+
     const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
     allStates = Object.keys(workflowConfig.States);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+    inputPayloadJson.pdr.path = testDataFolder;
+    inputPayloadJson.granules[0].files.forEach((file) => {
+      file.path = testDataFolder; // eslint-disable-line no-param-reassign
+    });
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -42,12 +62,7 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
 
   afterAll(async () => {
     // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    await deleteFolder(config.bucket, testDataFolder);
   });
 
   it('completes execution with success status', () => {
