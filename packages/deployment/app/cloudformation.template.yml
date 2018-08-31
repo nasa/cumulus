@@ -746,7 +746,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: 
-        Fn::Ref: 'SecurityGroup'
+        Ref: 'SecurityGroup'
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
