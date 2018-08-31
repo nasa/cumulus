@@ -137,14 +137,17 @@ describe('The Cumulus API', () => {
     });
   });
 
-  describe('removeFromCMR & PublishGranule', async () => {
-    const granule = await apiTestUtils.getGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
-    const cmrLink = granule.cmrLink;
+  describe('removeFromCMR & PublishGranule', () => {
+    let granule;
+    let cmrLink;
 
     it('removeFromCMR removes the ingested granule from CMR', async () => {
+      granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      cmrLink = granule.cmrLink;
+
       const existsInCMR = await conceptExists(cmrLink);
       expect(existsInCMR).toEqual(true);
 
