@@ -137,16 +137,43 @@ describe('The Cumulus API', () => {
     });
   });
 
-  describe('removeFromCMR', () => {
-    it('removes the ingested granule from CMR', async () => {
-      const granule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      });
-      const existsInCMR = await conceptExists(granule.cmrLink);
+  describe('removeFromCMR & PublishGranule', async () => {
+    const granule = await apiTestUtils.getGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
+    const cmrLink = granule.cmrLink;
+
+    it('removeFromCMR removes the ingested granule from CMR', async () => {
+      const existsInCMR = await conceptExists(cmrLink);
       expect(existsInCMR).toEqual(true);
 
       // Remove the granule from CMR
+      await apiTestUtils.removeFromCMR({
+        prefix: config.stackName,
+        granuleId
+      });
+
+      // Check that the granule was removed
+      const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
+      expect(granuleRemoved).toEqual(true);
+    });
+
+    it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
+      const existsInCMR = await conceptExists(cmrLink);
+      expect(existsInCMR).toEqual(false);
+
+      // Publish the granule to CMR
+      await apiTestUtils.applyWorkflow({
+        prefix: config.stackName,
+        granuleId,
+        workflow: 'PublishGranule'
+      });
+
+      const granulePublished = await waitForExist(cmrLink, true, 2);
+      expect(granulePublished).toEqual(true);
+
+      // Cleanup: remove from CMR
       await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
         granuleId
