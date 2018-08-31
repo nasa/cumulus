@@ -25,6 +25,7 @@ const { api: apiTestUtils } = require('@cumulus/integration-tests');
  * @param {string} CMRLink - url for grnaule in CMR
  * @param {string} outcome - desired outcome
  * @param {string} retries - number of remaining tries
+ * @param {number} delay - time (in ms) to wait between tries
  * @returns {Promise<boolean>} - whether or not the granule exists
  */
 async function waitForExist(CMRLink, outcome, retries, delay = 2000) {
