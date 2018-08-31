@@ -76,7 +76,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     console.log('Starting ingest test');
     const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
