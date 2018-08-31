@@ -126,6 +126,9 @@ class Rule extends Manager {
       throw new Error('Names may only contain letters, numbers, and underscores.');
     }
 
+    // the default state is 'ENABLED'
+    if (!item.state) item.state = 'ENABLED';
+
     const payload = await Rule.buildPayload(item);
     switch (item.rule.type) {
     case 'onetime': {
