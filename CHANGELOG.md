@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added PublishGranule workflow to demonstrate ingest-in-place capability
+
 ## [v1.10.0] - 2018-08-31
 
 ### Removed
