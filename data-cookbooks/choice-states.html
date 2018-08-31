@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>SNS Configuration · Cumulus Documentation</title>
+        <title>Choice States · Cumulus Documentation</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.3">
@@ -59,10 +59,8 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="sips-workflow.html" />
     
-    
-    <link rel="prev" href="hello-world.html" />
+    <link rel="prev" href="error-handling.html" />
     
 
     </head>
@@ -584,7 +582,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="2.3" data-path="sns.html">
+        <li class="chapter " data-level="2.3" data-path="sns.html">
             
                 <a href="sns.html">
             
@@ -623,7 +621,7 @@
             
         </li>
     
-        <li class="chapter " data-level="2.6" data-path="choice-states.html">
+        <li class="chapter active" data-level="2.6" data-path="choice-states.html">
             
                 <a href="choice-states.html">
             
@@ -666,7 +664,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href=".." >SNS Configuration</a>
+        <a href=".." >Choice States</a>
     </h1>
 </div>
 
@@ -681,107 +679,37 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="sns-notifications-in-workflows">SNS Notifications in Workflows</h1>
-<p>On deployment, an sftracker (Step function tracker) <a href="https://aws.amazon.com/sns" target="_blank">SNS</a> topic is created and used for messages related to the workflow.</p>
-<p>Workflows can be configured to send SNS messages containing the Cumulus message throughout the workflow by using the <a href="https://www.npmjs.com/package/@cumulus/sf-sns-report" target="_blank">SF-SNS-Report lambda function</a>.</p>
-<h2 id="pre-deployment-configuration">Pre-Deployment Configuration</h2>
-<h3 id="workflow-configuration">Workflow Configuration</h3>
-<p>The <a href="hello-world.html">Hello World Workflow</a> is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in <code>workflows.yml</code>.</p>
-<pre><code class="lang-yaml"><span class="hljs-attr">HelloWorldWorkflow:</span>
-<span class="hljs-attr">  Comment:</span> <span class="hljs-string">&apos;Returns Hello World&apos;</span>
-<span class="hljs-attr">  StartAt:</span> StartStatus
-<span class="hljs-attr">  States:</span>
-<span class="hljs-attr">    StartStatus:</span>
-<span class="hljs-attr">      Type:</span> Task
-<span class="hljs-attr">      Resource:</span> ${SfSnsReportLambdaFunction.Arn} <span class="hljs-comment"># This will send a status message at the start of the workflow</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">          input:</span> <span class="hljs-string">&apos;{$}&apos;</span> <span class="hljs-comment"># Configuration to send the payload to the SNS Topic</span>
-<span class="hljs-attr">      Next:</span> HelloWorld
-<span class="hljs-attr">    HelloWorld:</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        buckets:</span> <span class="hljs-string">&apos;{$.meta.buckets}&apos;</span>
-<span class="hljs-attr">        provider:</span> <span class="hljs-string">&apos;{$.meta.provider}&apos;</span>
-<span class="hljs-attr">        collection:</span> <span class="hljs-string">&apos;{$.meta.collection}&apos;</span>
-<span class="hljs-attr">      Type:</span> Task
-<span class="hljs-attr">      Resource:</span> ${HelloWorldLambdaFunction.Arn}
-<span class="hljs-attr">      Next:</span> StopStatus
-<span class="hljs-attr">    StopStatus:</span>
-<span class="hljs-attr">      Type:</span> Task
-<span class="hljs-attr">      Resource:</span> ${SfSnsReportLambdaFunction.Arn} <span class="hljs-comment"># This will send a success status message at the end of the workflow</span>
-<span class="hljs-attr">      CumulusConfig:</span>
-<span class="hljs-attr">        sfnEnd:</span> <span class="hljs-literal">true</span> <span class="hljs-comment"># Indicates the end of the workflow</span>
-<span class="hljs-attr">        stack:</span> <span class="hljs-string">&apos;{$.meta.stack}&apos;</span>
-<span class="hljs-attr">        bucket:</span> <span class="hljs-string">&apos;{$.meta.buckets.internal.name}&apos;</span>
-<span class="hljs-attr">        stateMachine:</span> <span class="hljs-string">&apos;{$.cumulus_meta.state_machine}&apos;</span>
-<span class="hljs-attr">        executionName:</span> <span class="hljs-string">&apos;{$.cumulus_meta.execution_name}&apos;</span>
-<span class="hljs-attr">        cumulus_message:</span>
-<span class="hljs-attr">          input:</span> <span class="hljs-string">&apos;{$}&apos;</span> <span class="hljs-comment"># Configuration to send the payload to the SNS Topic</span>
-<span class="hljs-attr">      Catch:</span>
-<span class="hljs-attr">        - ErrorEquals:</span>
-<span class="hljs-bullet">          -</span> States.ALL
-<span class="hljs-attr">          Next:</span> WorkflowFailed
-<span class="hljs-attr">      End:</span> <span class="hljs-literal">true</span>
-<span class="hljs-attr">    WorkflowFailed:</span>
-<span class="hljs-attr">      Type:</span> Fail
-<span class="hljs-attr">      Cause:</span> <span class="hljs-string">&apos;Workflow failed&apos;</span>
+                                <h1 id="choice-states">Choice States</h1>
+<p>Cumulus supports AWS Step Function <a href="https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html" target="_blank"><code>Choice</code></a> states. A <code>Choice</code> state enables branching logic in Cumulus workflows.</p>
+<p><code>Choice</code> state definitions include a list of <code>Choice Rule</code>s. Each <code>Choice Rule</code> defines a logical operation which compares an input value against a value using a comparison operator. For available comparision operators, review <a href="https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html" target="_blank">the AWS docs</a>.</p>
+<p>If the comparison evaluates to <code>true</code>, the <code>Next</code> state is followed.</p>
+<h2 id="example">Example</h2>
+<p>In <a href="https://github.com/nasa/cumulus/blob/master/example/workflows.yml" target="_blank">examples/workflow.yml</a> the <code>ParsePdr</code> workflow uses a <code>Choice</code> state, <code>CheckAgainChoice</code>, to terminate the workflow once <code>isFinished: true</code> is returned by the <code>CheckStatus</code> state.</p>
+<p>The <code>CheckAgainChoice</code> state definition requires an input object of the following structure:</p>
+<pre><code class="lang-json">{
+  <span class="hljs-string">&quot;payload&quot;</span>: {
+    <span class="hljs-string">&quot;isFinished&quot;</span>: <span class="hljs-literal">false</span>
+  }
+}
 </code></pre>
-<h4 id="sending-an-sns-message-in-an-error-case">Sending an SNS Message in an Error Case</h4>
-<p>To send an SNS message for an error case, you can configure your workflow to catch errors and set the next workflow step on error to a step with the <code>SfSnsReportLambdaFunction</code> lambda function. This is configured in <code>workflows.yml</code>.</p>
-<pre><code class="lang-yaml"><span class="hljs-attr">DiscoverPdrs:</span>
-<span class="hljs-attr">  CumulusConfig:</span>
-<span class="hljs-attr">    stack:</span> <span class="hljs-string">&apos;{$.meta.stack}&apos;</span>
-<span class="hljs-attr">    provider:</span> <span class="hljs-string">&apos;{$.meta.provider}&apos;</span>
-<span class="hljs-attr">    bucket:</span> <span class="hljs-string">&apos;{$.meta.buckets.internal.name}&apos;</span>
-<span class="hljs-attr">    collection:</span> <span class="hljs-string">&apos;{$.meta.collection}&apos;</span>
-<span class="hljs-attr">  Type:</span> Task
-<span class="hljs-attr">  Resource:</span> ${DiscoverPdrsLambdaFunction.Arn}
-<span class="hljs-attr">  Catch:</span>
-<span class="hljs-attr">    - ErrorEquals:</span>
-<span class="hljs-bullet">      -</span> States.ALL
-<span class="hljs-attr">      ResultPath:</span> <span class="hljs-string">&apos;$.exception&apos;</span>
-<span class="hljs-attr">      Next:</span> StopStatus <span class="hljs-comment"># On error, run the StopStatus step which calls the SfSnsReportLambdaFunction</span>
-<span class="hljs-attr">  Next:</span> QueuePdrs <span class="hljs-comment"># When no error, go to the next step in the workflow</span>
+<p>Given the above input to the <code>CheckAgainChoice</code> state, the workflow would transition to the <code>PdrStatusReport</code> state.</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">    CheckAgainChoice:</span>
+<span class="hljs-attr">      Type:</span> Choice
+<span class="hljs-attr">      Choices:</span>
+<span class="hljs-attr">        - Variable:</span> $.payload.isFinished
+<span class="hljs-attr">          BooleanEquals:</span> <span class="hljs-literal">false</span>
+<span class="hljs-attr">          Next:</span> PdrStatusReport
+<span class="hljs-attr">        - Variable:</span> $.payload.isFinished
+<span class="hljs-attr">          BooleanEquals:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">          Next:</span> StopStatus
 </code></pre>
-<h4 id="sending-an-sns-message-to-report-status">Sending an SNS message to report status</h4>
-<p>SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in <code>workflows.yml</code>.</p>
-<pre><code class="lang-yaml"><span class="hljs-attr">PdrStatusReport:</span>
-<span class="hljs-attr">  CumulusConfig:</span>
-<span class="hljs-attr">    cumulus_message:</span>
-<span class="hljs-attr">      input:</span> <span class="hljs-string">&apos;{$}&apos;</span>
-<span class="hljs-attr">  ResultPath:</span> <span class="hljs-literal">null</span>
-<span class="hljs-attr">  Type:</span> Task
-<span class="hljs-attr">  Resource:</span> ${SfSnsReportLambdaFunction.Arn}
-<span class="hljs-attr">  Next:</span> StopStatus
-</code></pre>
-<h3 id="task-configuration">Task Configuration</h3>
-<p>To use the SfSnsReport lambda, the following configuration should be added to <code>lambas.yml</code>:</p>
-<pre><code class="lang-yaml"><span class="hljs-attr">SfSnsReport:</span>
-<span class="hljs-attr">  handler:</span> index.handler
-<span class="hljs-attr">  timeout:</span> <span class="hljs-number">300</span>
-<span class="hljs-attr">  source:</span> <span class="hljs-string">&apos;node_modules/@cumulus/sf-sns-report/dist&apos;</span>
-<span class="hljs-attr">  useMessageAdapter:</span> <span class="hljs-literal">true</span>
-</code></pre>
-<h3 id="subscribing-additional-listeners">Subscribing Additional Listeners</h3>
-<p>Additional listeners to the SF tracker topic can be configured in <code>app/config.yml</code> under <code>sns.sftracker.subscriptions</code>. Shown below is configuration that subscribes an additional lambda function (<code>SnsS3Test</code>) to receive broadcasts from the <code>sftracker</code> SNS. The <code>endpoint</code> value depends on the protocol, and for a  lambda function, requres the function&apos;s Arn. In the configuration it is populated by finding the lambda&apos;s Arn attribute via <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html" target="_blank">Fn::GetAtt</a>. Note the lambda name configured in <code>lambdas.yml</code> <code>SnsS3Test</code> needs to have it&apos;s name postpended with <code>LambdaFunction</code> to have the Arn correctly found.</p>
-<pre><code class="lang-yaml"><span class="hljs-attr">sns:</span>
-<span class="hljs-attr">  sftracker:</span>
-<span class="hljs-attr">    subscriptions:</span>
-<span class="hljs-attr">      additionalReceiver:</span>                 <span class="hljs-comment"># name of the new subscription.</span>
-<span class="hljs-attr">        endpoint:</span>
-<span class="hljs-attr">          function:</span> Fn::GetAtt
-<span class="hljs-attr">          array:</span>
-<span class="hljs-bullet">            -</span> SnsS3TestLambdaFunction     <span class="hljs-comment"># a lambda configured in lambdas.yml</span>
-<span class="hljs-bullet">            -</span> Arn
-<span class="hljs-attr">        protocol:</span> lambda
-</code></pre>
-<p>Make sure that the receiver lambda is configured in <code>lambdas.yml</code>.</p>
-<h3 id="sns-message-format">SNS message format</h3>
-<p>The configured <code>SfSnsReport</code> lambda receives the Cumulus message <a href="../workflows/input_output.html#2-resolve-task-input">(as the lambda&apos;s task input)</a> and is responsible for publishing the message to the sftracker SNS Topic. But before it publishes the message, <code>SfSnsReport</code> makes a determiniation about the workflow status and adds an additional metadata key to the message at <code>message.meta.status</code>.</p>
-<p>First it determines whether the workflow has finished by looking for the <code>sfnEnd</code> key in the <code>config</code> object.  If the workflow has finished, it checks to see if it has failed by searching the input message for a non-empty <code>exception</code> object. The lambda updates the <code>message.meta.status</code> with <code>failed</code> or <code>completed</code> based on that result.  If the workflow is not finished the lambda sets <code>message.meta.status</code> to <code>running</code>.</p>
-<p>This means that subscribers to the sftracker SNS Topic can expect to find the published message by parsing the JSON string representation of the message found in the <a href="https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns" target="_blank">SNS event</a> at <code>Records[].Sns.Message</code> and examining the <code>meta.status</code> value.  The value found at <code>Records[0].Sns.Message</code> will be a stringified version of the workflow&apos;s Cumulus message with the status metadata attached.</p>
-<h2 id="summary">Summary</h2>
-<p>The workflows can be configured to send SNS messages at any point. Additional listeners can be easily configured to trigger when a message is sent to the SNS topic.</p>
+<h2 id="advanced-loops-in-cumulus-workflows">Advanced: Loops in Cumulus Workflows</h2>
+<p>Understanding the complete <code>ParsePdr</code> workflow is not necessary to understanding how <code>Choice</code> states work, but <code>ParsePdr</code> provides an example of how <code>Choice</code> states can be used to create a loop in a Cumulus workflow. </p>
+<p>In the complete <code>ParsePdr</code> workflow definition, the state <code>QueueGranules</code> is followed by <code>CheckStatus</code>. From <code>CheckStatus</code> a loop starts: Given <code>CheckStatus</code> returns <code>payload.isFinished: false</code>, <code>CheckStatus</code> is followed by <code>CheckAgainChoice</code> is followed by <code>PdrStatusReport</code> is followed by <code>WaitForSomeTime</code>, which returns to <code>CheckStatus</code>. Once <code>CheckStatus</code> returns <code>payload.isFinished: true</code>, <code>CheckAgainChoice</code> proceeds to <code>StopStatus</code>.</p>
+<div style="text-align:center"><img src="../images/sips-parse-pdr.png"></div>
+
+<h2 id="further-documentation">Further documentation</h2>
+<p>For complete details on <code>Choice</code> state configuration options, see <a href="https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html" target="_blank">the Choice state documentation</a>.</p>
 
                                 
                                 </section>
@@ -809,14 +737,10 @@
 
             
                 
-                <a href="hello-world.html" class="navigation navigation-prev " aria-label="Previous page: HelloWorldWorkflow">
+                <a href="error-handling.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Error Handling">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
-                
-                <a href="sips-workflow.html" class="navigation navigation-next " aria-label="Next page: SIPS Workflow">
-                    <i class="fa fa-angle-right"></i>
-                </a>
                 
             
         
@@ -825,7 +749,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"SNS Configuration","level":"2.3","depth":1,"next":{"title":"SIPS Workflow","level":"2.4","depth":1,"path":"data-cookbooks/sips-workflow.md","ref":"data-cookbooks/sips-workflow.md","articles":[]},"previous":{"title":"HelloWorldWorkflow","level":"2.2","depth":1,"path":"data-cookbooks/hello-world.md","ref":"data-cookbooks/hello-world.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/sns.md","mtime":"2018-08-31T14:24:16.980Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-31T14:25:31.463Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Choice States","level":"2.6","depth":1,"previous":{"title":"Error Handling","level":"2.5","depth":1,"path":"data-cookbooks/error-handling.md","ref":"data-cookbooks/error-handling.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/choice-states.md","mtime":"2018-08-31T14:24:16.980Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-08-31T14:25:31.463Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
