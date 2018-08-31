@@ -340,7 +340,8 @@ Resources:
   ECSRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Fn::Sub: "${ResourcePrefix}-ecs"
+      RoleName: 
+        Fn::Sub: "${ResourcePrefix}-ecs"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -433,7 +434,8 @@ Resources:
   DistributionApiRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Fn::Sub: "${ResourcePrefix}-distribution-api-lambda"
+      RoleName: 
+       Fn::Sub: "${ResourcePrefix}-distribution-api-lambda"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -503,7 +505,8 @@ Resources:
   ScalingRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: Fn::Sub: "${ResourcePrefix}-scaling-role"
+      RoleName: 
+        Fn::Sub: "${ResourcePrefix}-scaling-role"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -535,7 +538,7 @@ Resources:
         Fn::Sub: "${ResourcePrefix}-ecs"
       Path: "/"
       Roles:
-        - Fn::Ref: ECSRole
+        - Ref: ECSRole
 
 Outputs:
   CumulusInstanceProfileArn:
