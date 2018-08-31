@@ -24,6 +24,7 @@ class Consume {
 
   async processMessages(fn, messageLimit) {
     let counter = 0;
+    const originalMessageLimit = messageLimit;
     while (!this.endConsume) {
       const messages = await receiveSQSMessages(this.queueUrl, messageLimit);
       counter += messages.length;
@@ -35,9 +36,12 @@ class Consume {
 
       // if the function is running for more than the timeLimit, stop it
       const timeElapsed = (Date.now() - this.now);
-      if (timeElapsed > this.timeLimit) {
+      if (timeElapsed > this.timeLimit || counter >= originalMessageLimit) {
         this.endConsume = true;
       }
+      // Only request up to the original messageLimit messages on subsequent calls to
+      // `receiveSQSMessages`
+      messageLimit -= messages.length;
     }
 
     return counter;
