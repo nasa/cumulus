@@ -44,8 +44,8 @@ describe('The Ingest Granule failure workflow', () => {
 
     const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
     // update test data filepaths
-    inputPayloadJson.granules.files.forEach((file) => {
-      file.path = testDataFolderPrefix;
+    inputPayloadJson.granules[0].files.forEach((file) => {
+      file.path = testDataFolderPrefix; // eslint-disable-line no-param-reassign
     });
     inputPayload = await setupTestGranuleForIngest(config.bucket, JSON.stringify(inputPayloadJson), testDataGranuleId, granuleRegex);
 
