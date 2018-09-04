@@ -446,6 +446,11 @@ IngestGranule:
               destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+      Retry:
+          - ErrorEquals:
+              - States.ALL
+            IntervalSeconds: 2
+            MaxAttempts: 3
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -470,6 +475,11 @@ IngestGranule:
               destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Retry:
+          - ErrorEquals:
+              - States.ALL
+            IntervalSeconds: 2
+            MaxAttempts: 3
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -624,11 +634,11 @@ KinesisTriggerTest:
           Next: StopStatus
       Next: StopStatus
     CnmResponseFail:
-      <<: *CnmResponseDefaults  
+      <<: *CnmResponseDefaults
       Catch:
         - <<: *ErrorEqualDefaults
-          Next: StopStatusFail          
-      Next: StopStatusFail     
+          Next: StopStatusFail
+      Next: StopStatusFail
     StopStatus: &StopStatusDefaults
       Type: Task
       Resource: ${sf2snsEndLambdaFunction.Arn}

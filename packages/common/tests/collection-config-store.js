@@ -3,7 +3,7 @@
 const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3, s3ObjectExists } = require('../aws');
 const { randomString } = require('../test-utils');
-const CollectionConfigStore = require('../collection-config-store');
+const { CollectionConfigStore } = require('../collection-config-store');
 
 test.beforeEach(async (t) => {
   t.context.stackName = randomString();
