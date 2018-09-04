@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed cloudformation template errors in `@cumulus/deployment/`
+  - Replaced references to Fn::Ref: with Ref:
+  - Moved long form template references to a newline
+
 ## [v1.10.0] - 2018-08-31
 
 ### Removed
