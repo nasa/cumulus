@@ -1,76 +1,11 @@
 'use strict';
 
 const get = require('lodash.get');
-const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getMetadata } = require('@cumulus/ingest/granule');
+const { getCmrFiles } = require('@cumulus/ingest/granule');
 const { publish } = require('@cumulus/ingest/cmr');
-const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
-const xml2js = require('xml2js');
 const log = require('@cumulus/common/log');
-
-
-/**
- * Extract the granule ID from the a given s3 uri
- *
- * @param {string} uri - the s3 uri of the file
- * @param {string} regex - the regex for extracting the ID
- * @returns {string} the granule
- */
-function getGranuleId(uri, regex) {
-  const filename = path.basename(uri);
-  const match = filename.match(regex);
-
-  if (match) return match[1];
-  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
-}
-
-/**
- * Parse an xml string
- *
- * @param {string} xml - xml to parse
- * @returns {Promise<Object>} promise resolves to object version of the xml
- */
-async function parseXmlString(xml) {
-  return new Promise((resolve, reject) => {
-    xml2js.parseString(xml, xmlParseOptions, (err, data) => {
-      if (err) return reject(err);
-      return resolve(data);
-    });
-  });
-}
-
-/**
- * returns a list of CMR xml files
- *
- * @param {Array} input - an array of s3 uris
- * @param {string} granuleIdExtraction - a regex for extracting granule IDs
- * @returns {Promise<Array>} promise resolves to an array of objects
- * that includes CMR xmls uris and granuleIds
- */
-async function getCmrFiles(input, granuleIdExtraction) {
-  const files = [];
-  const expectedFormat = /.*\.cmr\.xml$/;
-
-  for (const filename of input) {
-    if (filename && filename.match(expectedFormat)) {
-      const metadata = await getMetadata(filename);
-      const metadataObject = await parseXmlString(metadata);
-
-      const cmrFileObject = {
-        filename,
-        metadata,
-        metadataObject,
-        granuleId: getGranuleId(filename, granuleIdExtraction)
-      };
-
-      files.push(cmrFileObject);
-    }
-  }
-
-  return files;
-}
 
 /**
  * Builds the output of the post-to-cmr task
