@@ -7,7 +7,9 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 const {
   addRules,
   LambdaStep,
-  waitForCompletedExecution
+  waitForCompletedExecution,
+  rulesList,
+  deleteRules
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -82,6 +84,8 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
+const ruleDirectory = './spec/kinesisTests/data/rules';
+
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
@@ -105,11 +109,15 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       await waitForActiveStream(streamName);
       await waitForActiveStream(cnmResponseStreamName);
       console.log('\nSetting up kinesisRule');
-      await addRules(testConfig, './spec/kinesisTests/data/rules');
+      await addRules(testConfig, ruleDirectory);
     });
   });
 
   afterAll(async () => {
+    // delete rule
+    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
+
     await s3().deleteObject({
       Bucket: testConfig.buckets.private.name,
       Key: `${filePrefix}/${fileData.name}`
@@ -132,10 +140,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
         console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSf(recordIdentifier, maxWaitTime);
-
-        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
-        // get shard iterator for the response stream so we can process any new records sent to it
-        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
@@ -202,6 +206,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('writes a message to the response stream', async () => {
+        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
+        // get shard iterator for the response stream so we can process any new records sent to it
+        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
+
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
         const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
         const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
