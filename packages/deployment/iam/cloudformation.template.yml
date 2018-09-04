@@ -22,7 +22,7 @@ Resources:
   LambdaApiGatewayRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: 
+      RoleName:
         Fn::Sub: "${ResourcePrefix}-lambda-api-gateway"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -102,7 +102,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -206,7 +206,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -309,7 +309,7 @@ Resources:
 
               # Needed for AWS integration tests
               - Effect: Allow
-                Action: 
+                Action:
                   - cloudformation:DescribeStacks
                 Resource: '*'
 
@@ -340,7 +340,8 @@ Resources:
   ECSRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Fn::Sub: "${ResourcePrefix}-ecs"
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-ecs"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -420,7 +421,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -433,7 +434,8 @@ Resources:
   DistributionApiRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Fn::Sub: "${ResourcePrefix}-distribution-api-lambda"
+      RoleName:
+       Fn::Sub: "${ResourcePrefix}-distribution-api-lambda"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -457,10 +459,10 @@ Resources:
                   - lambda:GetFunction
                   - lambda:invokeFunction
                   - lambda:CreateEventSourceMapping
-                  - lambda:UpdateEventSourceMapping 
-                  - lambda:DeleteEventSourceMapping 
-                  - lambda:GetEventSourceMapping 
-                  - lambda:ListEventSourceMappings 
+                  - lambda:UpdateEventSourceMapping
+                  - lambda:DeleteEventSourceMapping
+                  - lambda:GetEventSourceMapping
+                  - lambda:ListEventSourceMappings
                 Resource: "*"
 
               - Effect: Allow
@@ -488,7 +490,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                 {{#BucketIsType this "protected"}}
                   - arn:aws:s3:::{{this.name}}/*
@@ -503,7 +505,8 @@ Resources:
   ScalingRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: Fn::Sub: "${ResourcePrefix}-scaling-role"
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-scaling-role"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -535,7 +538,7 @@ Resources:
         Fn::Sub: "${ResourcePrefix}-ecs"
       Path: "/"
       Roles:
-        - Fn::Ref: ECSRole
+        - Ref: ECSRole
 
 Outputs:
   CumulusInstanceProfileArn:
