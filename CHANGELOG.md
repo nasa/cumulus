@@ -6,6 +6,40 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.10.1] - 2018-09-4
+
+### Fixed
+
+- Fixed cloudformation template errors in `@cumulus/deployment/`
+  - Replaced references to Fn::Ref: with Ref:
+  - Moved long form template references to a newline
+
+## [v1.10.0] - 2018-08-31
+
+### Removed
+
+- Removed unused and broken code from `@cumulus/common`
+  - Removed `@cumulus/common/test-helpers`
+  - Removed `@cumulus/common/task`
+  - Removed `@cumulus/common/message-source`
+  - Removed the `getPossiblyRemote` function from `@cumulus/common/aws`
+  - Removed the `startPromisedSfnExecution` function from `@cumulus/common/aws`
+  - Removed the `getCurrentSfnTask` function from `@cumulus/common/aws`
+
+### Changed
+
+- **CUMULUS-839** - In `@cumulus/sync-granule`, 'collection' is now an optional config parameter
+
+### Fixed
+
+- **CUMULUS-859** Moved duplicate code in `@cumulus/move-granules` and `@cumulus/post-to-cmr` to `@cumulus/ingest`. Fixed imports making assumptions about directory structure.
+- `@cumulus/ingest/consumer` correctly limits the number of messages being received and processed from SQS. Details:
+  - **Background:** `@cumulus/api` includes a lambda `<stack-name>-sqs2sf` which processes messages from the `<stack-name>-startSF` SQS queue every minute. The `sqs2sf` lambda uses `@cumulus/ingest/consumer` to receive and process messages from SQS.
+  - **Bug:** More than `messageLimit` number of messages were being consumed and processed from the `<stack-name>-startSF` SQS queue. Many step functions were being triggered simultaneously by the lambda `<stack-name>-sqs2sf` (which consumes every minute from the `startSF` queue) and resulting in step function failure with the error: `An error occurred (ThrottlingException) when calling the GetExecutionHistory`.
+  - **Fix:** `@cumulus/ingest/consumer#processMessages` now processes messages until `timeLimit` has passed _OR_ once it receives up to `messageLimit` messages. `sqs2sf` is deployed with a [default `messageLimit` of 10](https://github.com/nasa/cumulus/blob/670000c8a821ff37ae162385f921c40956e293f7/packages/deployment/app/config.yml#L147).
+  - **IMPORTANT NOTE:** `consumer` will actually process up to `messageLimit * 2 - 1` messages. This is because sometimes `receiveSQSMessages` will return less than `messageLimit` messages and thus the consumer will continue to make calls to `receiveSQSMessages`. For example, given a `messageLimit` of 10 and subsequent calls to `receiveSQSMessages` returns up to 9 messages, the loop will continue and a final call could return up to 10 messages.
+
+
 ## [v1.9.1] - 2018-08-22
 
 **Please Note** To take advantage of the added granule tracking API functionality, updates are required for the message adapter and its libraries. You should be on the following versions:
@@ -22,7 +56,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-836** - `@cumulus/api` added IAM roles required by the NGAP 2.0 AMI. The NGAP 2.0 AMI runs a script `register_instances_with_ssm.py` which requires the ECS IAM role to include `ec2:DescribeInstances` and `ssm:GetParameter` permissions.
 
 ### Fixed
-
 - **CUMULUS-836** - `@cumulus/deployment` uses `overlay2` driver by default and does not attempt to write `--storage-opt dm.basesize` to fix [this error](https://github.com/moby/moby/issues/37039).
 - **CUMULUS-413** Kinesis processing now captures all errrors.
   - Added kinesis fallback mechanism when errors occur during record processing.
@@ -39,10 +72,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added integration test for ingesting granules from ftp provider
   - Updated http/https integration tests for ingesting granules from http/https providers
 - **CUMULUS-862** Updated `@cumulus/integration-tests` to handle remote lambda output
+- **CUMULUS-856** Set the rule `state` to have default value `ENABLED`
 
 ### Changed
 
 - In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
+
 
 ## [v1.9.0] - 2018-08-06
 
@@ -452,7 +487,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.9.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.1...HEAD
+[v1.10.1]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.1
+[v1.10.0]: https://github.com/nasa/cumulus/compare/v1.9.1...v1.10.0
 [v1.9.1]: https://github.com/nasa/cumulus/compare/v1.9.0...v1.9.1
 [v1.9.0]: https://github.com/nasa/cumulus/compare/v1.8.1...v1.9.0
 [v1.8.1]: https://github.com/nasa/cumulus/compare/v1.8.0...v1.8.1
