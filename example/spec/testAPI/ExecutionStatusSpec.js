@@ -9,7 +9,7 @@ const {
   deleteFolder
 } = require('../helpers/testUtils');
 const { getConfigObject } = require('../helpers/configUtils');
-const { aws: { s3 } } = require('@cumulus/common');
+const { stringUtils: { globalReplace } } = require('@cumulus/common');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 const config = loadConfig();
@@ -48,12 +48,9 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
     const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
     allStates = Object.keys(workflowConfig.States);
 
-    const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
-    inputPayloadJson.pdr.path = testDataFolder;
-    inputPayloadJson.granules[0].files.forEach((file) => {
-      file.path = testDataFolder; // eslint-disable-line no-param-reassign
-    });
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload

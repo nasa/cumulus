@@ -8,7 +8,8 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists, getS3Object }
+  aws: { s3, s3ObjectExists, getS3Object },
+  stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -51,8 +52,7 @@ const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg',
-  '@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
 describe('The S3 Ingest Granules workflow', () => {
@@ -79,17 +79,19 @@ describe('The S3 Ingest Granules workflow', () => {
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     console.log('Starting ingest test');
-    const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    inputPayloadJson.granules[0].files.forEach((file) => {
-      file.path = testDataFolder; // eslint-disable-line no-param-reassign
-    });
-    inputPayload = await setupTestGranuleForIngest(config.bucket, JSON.stringify(inputPayloadJson), testDataGranuleId, granuleRegex);
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     const granuleId = inputPayload.granules[0].granuleId;
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
+    const updatedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
+    // update test data filepaths
+    expectedSyncGranulePayload = JSON.parse(globalReplace(JSON.stringify(updatedSyncGranulePayload), 'cumulus-test-data/pdrs', testDataFolder));
 
-    expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
+    const updatedOutputPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
+    // update test data filepaths
+    expectedPayload = JSON.parse(globalReplace(JSON.stringify(updatedOutputPayload), 'cumulus-test-data/pdrs', testDataFolder));
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
