@@ -9,7 +9,7 @@ const {
 } = require('../helpers/testUtils');
 const sleep = require('sleep-promise');
 const {
-  aws: { s3 }
+  stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const {
@@ -70,12 +70,10 @@ describe('The Cumulus API', () => {
     // Upload test data
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
-    const inputPayloadJson = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
-    inputPayloadJson.pdr.path = testDataFolder;
-    inputPayloadJson.granules[0].files.forEach((file) => {
-      file.path = testDataFolder; // eslint-disable-line no-param-reassign
-    });
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    // Update input file paths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
     granuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(
