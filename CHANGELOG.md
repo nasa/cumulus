@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.10.1] - 2018-09-4
+
 ### Fixed
 
 - Fixed cloudformation template errors in `@cumulus/deployment/`
@@ -485,7 +487,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.1...HEAD
+[v1.10.1]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.1
 [v1.10.0]: https://github.com/nasa/cumulus/compare/v1.9.1...v1.10.0
 [v1.9.1]: https://github.com/nasa/cumulus/compare/v1.9.0...v1.9.1
 [v1.9.0]: https://github.com/nasa/cumulus/compare/v1.8.1...v1.9.0
