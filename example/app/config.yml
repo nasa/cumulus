@@ -1,8 +1,8 @@
 
 default:
-
   # test configuration starts
   test_configs:
+    useWorkflowLambdaVersions: true
     stackName: '{{stackName}}'
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
@@ -359,3 +359,4 @@ mhs:
 jk:
   stackName: jk
   stackNameNoDash: jk
+  useWorkflowLambdaVersions: true

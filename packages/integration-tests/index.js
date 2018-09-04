@@ -12,6 +12,7 @@ const { Provider, Collection, Rule } = require('@cumulus/api/models');
 
 const api = require('./api');
 const cmr = require('./cmr.js');
+const lambda = require('./lambda');
 
 const executionStatusNumRetries = 100;
 const waitPeriodMs = 5000;
@@ -451,5 +452,7 @@ module.exports = {
   deleteRules,
   rulesList,
   timeout,
-  getWorkflowArn
+  getWorkflowArn,
+  getLambdaVersions: lambda.getLambdaVersions,
+  getLambdaAliases: lambda.getLambdaAliases
 };

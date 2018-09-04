@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initated.
+	- Added useWorkflowLambdaVersions configuration option to optionally enable feature.
+	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource  versioning.
+
 
 ## [v1.10.1] - 2018-09-4
-
 ### Fixed
 
 - Fixed cloudformation template errors in `@cumulus/deployment/`
@@ -29,7 +32,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - **CUMULUS-839** - In `@cumulus/sync-granule`, 'collection' is now an optional config parameter
-
 ### Fixed
 
 - **CUMULUS-859** Moved duplicate code in `@cumulus/move-granules` and `@cumulus/post-to-cmr` to `@cumulus/ingest`. Fixed imports making assumptions about directory structure.

@@ -83,6 +83,15 @@ class UpdatedLambda extends Lambda {
    */
   buildS3Path(lambda) {
     lambda = super.buildS3Path(lambda);
+
+    if (lambda.s3Source && lambda.s3Source.uniqueIdentifier){
+      const uniqueIdentifier = lambda.s3Source.uniqueIdentifier;
+      if (!uniqueIdentifier.match(/^[a-z0-9]+$/)) {
+        throw new Error(`Invalid uniqueIdentifier ${uniqueIdentifier} provided for lambda`);
+      }
+      lambda.hash = uniqueIdentifier;
+    }
+
     // adding the hash of the message adapter zip file as part of lambda zip file
     if (lambda.useMessageAdapter && UpdatedLambda.messageAdapterZipFileHash) {
       lambda.local = path.join(
