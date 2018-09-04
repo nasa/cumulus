@@ -9,7 +9,7 @@ const models = require('../../models');
 const { Search } = require('../../es/search');
 const bootstrap = require('../../lambdas/bootstrap');
 const dbIndexer = require('../../lambdas/db-indexer');
-const { constructCollectionId } = require('../../lib/utils');
+const { constructCollectionId } = require('@cumulus/common');
 const {
   fakeCollectionFactory,
   fakeGranuleFactory,

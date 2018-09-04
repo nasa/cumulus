@@ -1,11 +1,22 @@
 'use strict';
 
+const rewire = require('rewire');
 const test = require('ava');
-const { httpMixin: TestHttpMixin } = require('../http');
+const http = rewire('../http');
+const TestHttpMixin = http.httpMixin;
+const EventEmitter = require('events');
 const {
   checksumS3Objects, fileExists, recursivelyDeleteS3Bucket, s3
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+
+const stubLink = 'file.txt';
+class TestEmitter extends EventEmitter {
+  start() {
+    this.emit('fetchcomplete', null, `<a href="${stubLink}">link</a>`)
+  }
+}
+http.__set__('Crawler', TestEmitter);
 
 class MyTestDiscoveryClass {
   constructor(useList) {
@@ -17,9 +28,10 @@ class MyTestDiscoveryClass {
   }
 }
 
+class MyTestHttpDiscoveryClass extends TestHttpMixin(MyTestDiscoveryClass) {}
+const myTestHttpDiscoveryClass = new MyTestHttpDiscoveryClass();
+
 test('Download remote file to s3', async (t) => {
-  class MyTestHttpDiscoveryClass extends TestHttpMixin(MyTestDiscoveryClass) {}
-  const myTestHttpDiscoveryClass = new MyTestHttpDiscoveryClass();
   const bucket = randomString();
   const key = randomString();
   try {
@@ -34,4 +46,10 @@ test('Download remote file to s3', async (t) => {
   finally {
     await recursivelyDeleteS3Bucket(bucket);
   }
+});
+
+test('returns files with provider path', async (t) => {
+  const actualFiles = await myTestHttpDiscoveryClass.list()
+  const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
+  t.deepEqual(actualFiles, expectedFiles);
 });
