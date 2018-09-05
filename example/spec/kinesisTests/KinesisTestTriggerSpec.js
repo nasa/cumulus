@@ -96,9 +96,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let s3FileHead;
   let responseStreamShardIterator;
 
-  const streamName = timeStampedStreamName(testConfig, 'KinesisTrigger');
+  const streamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerStream');
   testConfig.streamName = streamName;
-  const cnmResponseStreamName = timeStampedStreamName(testConfig, 'KinesisTriggerCnmResponseStream');
+  const cnmResponseStreamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerCnmResponseStream');
 
   beforeAll(async () => {
     // create streams

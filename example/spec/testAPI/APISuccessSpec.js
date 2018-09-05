@@ -157,7 +157,7 @@ describe('The Cumulus API', () => {
         granuleId: inputPayload.granules[0].granuleId
       });
       cmrLink = granule.cmrLink;
-
+      expect(cmrLink).not.toBeUndefined();
       const existsInCMR = await conceptExists(cmrLink);
       expect(existsInCMR).toEqual(true);
 

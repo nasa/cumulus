@@ -9,7 +9,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 const collectionsDirectory = './data/collections';
 const providersDirectory = './data/providers';
 
-describe('Populating providers, collections and rules to database', () => {
+describe('Populating providers and collections to database', () => {
   let collections;
   let providers;
 
