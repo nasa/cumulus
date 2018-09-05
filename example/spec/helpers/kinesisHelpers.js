@@ -133,7 +133,10 @@ async function createOrUseTestStream(streamName) {
  * @param  {string} streamName - Name of the stream of interest
  * @returns {string}            - Shard iterator
  */
-async function getShardIterator(streamName) {
+async function getShardIterator(streamName, inputTimeStamp) {
+  let timeStamp = new Date();
+  if (typeof inputTimeStamp !== 'undefined') timeStamp = inputTimeStamp;
+
   const describeStreamParams = {
     StreamName: streamName
   };
@@ -143,7 +146,8 @@ async function getShardIterator(streamName) {
 
   const shardIteratorParams = {
     ShardId: shardId, /* required */
-    ShardIteratorType: 'LATEST',
+    ShardIteratorType: 'AT_TIMESTAMP',
+    Timestamp: timeStamp,
     StreamName: streamName
   };
 

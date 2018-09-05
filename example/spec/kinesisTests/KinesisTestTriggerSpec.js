@@ -110,6 +110,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   describe('Workflow executes successfully', () => {
     let workflowExecution;
+    const workflowSucceedStartTime = new Date();
 
     beforeAll(async () => {
       await tryCatchExit(async () => {
@@ -121,7 +122,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
         // get shard iterator for the response stream so we can process any new records sent to it
-        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
+        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName, workflowSucceedStartTime);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
@@ -199,6 +200,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   describe('Workflow fails because TranslateMessage fails', () => {
     let workflowExecution;
+    const workflowFailStartTime = new Date();
     const badRecord = { ...record };
     const badRecordIdentifier = randomString();
     badRecord.identifier = badRecordIdentifier;
@@ -208,10 +210,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       await tryCatchExit(async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
-
-        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
-        // get shard iterator for the response stream so we can process any new records sent to it
-        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitTime);
@@ -238,6 +236,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     it('writes a failure message to the response stream', async () => {
+      console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
+      // get shard iterator for the response stream so we can process any new records sent to it
+      responseStreamShardIterator = await getShardIterator(cnmResponseStreamName, workflowFailStartTime);
+
       const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
       const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
       // TODO(aimee): This should check the record identifier is equal to bad
