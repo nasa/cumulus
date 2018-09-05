@@ -39,6 +39,8 @@ const ValidationError = createErrorType('ValidationError');
  */
 function getHost() {
   const env = process.env.CMR_ENVIRONMENT;
+  if (process.env.CMR_HOST) return process.env.CMR_HOST;
+
   let host;
   if (env === 'OPS') {
     host = 'cmr.earthdata.nasa.gov';
@@ -176,6 +178,8 @@ async function updateToken(cmrProvider, clientId, username, password) {
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
   let response;
+
+  if (process.env.CMR_TOKEN) return process.env.CMR_TOKEN;
 
   try {
     response = await got.post(getUrl('token'), {
