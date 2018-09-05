@@ -665,7 +665,7 @@ KinesisTriggerTest:
     CnmResponse: &CnmResponseDefaults
       CumulusConfig:
         OriginalCNM: '{$.meta.cnm}'
-        CNMResponseStream: '{$.meta.stack}-cnmResponseStream'
+        CNMResponseStream: '{$.meta.cnmResponseStream}'
         region: 'us-east-1'
         WorkflowException: '{$.exception}'
         cumulus_message:
