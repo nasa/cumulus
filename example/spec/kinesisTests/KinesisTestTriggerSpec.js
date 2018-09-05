@@ -191,6 +191,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
         const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
+        parsedRecords.map((r) => console.log('record:', JSON.stringify(r)));
         const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
         expect(responseRecord.identifier).toEqual(recordIdentifier);
         expect(responseRecord.response.status).toEqual('SUCCESS');
