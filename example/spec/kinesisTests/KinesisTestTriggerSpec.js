@@ -97,8 +97,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let responseStreamShardIterator;
 
   const streamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerStream');
-  testConfig.streamName = streamName;
   const cnmResponseStreamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerCnmResponseStream');
+  testConfig.streamName = streamName;
   testConfig.cnmResponseStream = cnmResponseStreamName;
 
   beforeAll(async () => {
