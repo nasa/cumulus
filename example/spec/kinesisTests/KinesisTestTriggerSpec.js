@@ -27,7 +27,7 @@ const {
   waitForTestSf
 } = require('../helpers/kinesisHelpers');
 
-const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
+const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
 
 const granuleId = record.product.name;
 const recordIdentifier = randomString();
