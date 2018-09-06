@@ -1,5 +1,6 @@
 'use strict';
 
+const _get = require('lodash.get');
 const handle = require('../lib/response').handle;
 const { Search } = require('../es/search');
 
@@ -40,7 +41,7 @@ function handler(event, context) {
     if (event.httpMethod === 'GET' && event.resource === '/stats/logs') {
       return count(event, cb);
     }
-    else if (event.httpMethod === 'GET' && event.pathParameters.executionName) {
+    else if (event.httpMethod === 'GET' && _get(event, 'pathParameters.executionName')) {
       return get(event, cb);
     }
 
