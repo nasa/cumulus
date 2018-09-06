@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
+
+
 ## [v1.10.1] - 2018-09-4
 
 ### Fixed
