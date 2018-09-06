@@ -19,7 +19,7 @@ function determineIntegrationTestStackName(cb) {
     yjpa7145: 'mth-2',
     flamingbear: 'mhs',
     Jkovarik: 'jk',
-    mennovandiermen: 'mvd',
+    'Menno Van Diermen': 'mvd',
     ifestus: 'jc'
   };
 
