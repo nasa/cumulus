@@ -179,8 +179,6 @@ async function updateToken(cmrProvider, clientId, username, password) {
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
   let response;
 
-  if (process.env.CMR_TOKEN) return process.env.CMR_TOKEN;
-
   try {
     response = await got.post(getUrl('token'), {
       json: true,
@@ -240,5 +238,6 @@ module.exports = {
   updateToken,
   getUrl,
   xmlParseOptions,
-  getIp
+  getIp,
+  getHost
 }
