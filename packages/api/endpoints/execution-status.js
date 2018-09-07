@@ -1,7 +1,9 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { StepFunction } = require('@cumulus/ingest/aws');
+const handle = require('../lib/response').handle;
+const { S3, StepFunction } = require('@cumulus/ingest/aws');
+const { inTestMode } = require('@cumulus/common/test-utils');
 
 const handle = require('../lib/response').handle;
 
@@ -16,7 +18,19 @@ function get(event, cb) {
   const arn = _get(event.pathParameters, 'arn');
 
   return StepFunction.getExecutionStatus(arn)
-    .then((status) => cb(null, status))
+    .then((status) => {
+      const replace = status.output.replace;
+      if (replace) {
+        S3.get(replace.Bucket, replace.Key)
+          .then((file) => {
+            const fullStatus = JSON.parse(file.Body);
+            return cb(null, fullStatus);
+          }).catch(cb);
+      }
+      else {
+        cb(null, status);
+      }
+    })
     .catch(cb);
 }
 
@@ -28,7 +42,7 @@ function get(event, cb) {
  * @returns {undefined} undefined
  */
 function handler(event, context) {
-  return handle(event, context, true, (cb) => get(event, cb));
+  return handle(event, context, !inTestMode() /* authCheck */, (cb) => get(event, cb));
 }
 
 module.exports = handler;
