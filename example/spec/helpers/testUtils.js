@@ -54,7 +54,7 @@ function loadConfig() {
  * @returns {string} - File path and name of output file (json)
  */
 function templateFile({ inputTemplateFilename, config }) {
-  const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename));
+  const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename, 'utf8'));
   const templatedInput = lodash.merge(lodash.cloneDeep(inputTemplate), config);
   let jsonString = JSON.stringify(templatedInput, null, 2);
   jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);

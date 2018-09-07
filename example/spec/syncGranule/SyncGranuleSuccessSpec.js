@@ -47,12 +47,12 @@ describe('The Sync Granules workflow', () => {
     // upload test data
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename);
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     inputPayload = JSON.parse(updatedInputPayloadJson);
 
-    const expectedPayloadJson = fs.readFileSync(templatedOutputPayloadFilename);
+    const expectedPayloadJson = fs.readFileSync(templatedOutputPayloadFilename, 'utf8');
     const updatedExpectedPayloadJson = globalReplace(expectedPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     expectedPayload = JSON.parse(updatedExpectedPayloadJson);
 
