@@ -45,7 +45,7 @@ describe('The Sync Granules workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename);
     // update test data filepaths

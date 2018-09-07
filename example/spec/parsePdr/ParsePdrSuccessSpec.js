@@ -51,9 +51,9 @@ describe('Parse PDR workflow', () => {
 
   beforeAll(async () => {
     // place pdr on S3
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename);
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     inputPayload = JSON.parse(updatedInputPayloadJson);
@@ -61,7 +61,7 @@ describe('Parse PDR workflow', () => {
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 
-    const expectedParsePdrOutputJson = fs.readFileSync(outputPayloadFilename);
+    const expectedParsePdrOutputJson = fs.readFileSync(outputPayloadFilename, 'utf8');
     // update expectedOutput file paths
     const updatedExpectedParsePdrOutputJson = globalReplace(expectedParsePdrOutputJson, 'cumulus-test-data/pdrs', testDataFolder);
     expectedParsePdrOutput = JSON.parse(updatedExpectedParsePdrOutputJson);

@@ -43,7 +43,7 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
 
     const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
     allStates = Object.keys(workflowConfig.States);
