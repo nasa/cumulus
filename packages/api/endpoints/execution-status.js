@@ -25,7 +25,9 @@ function get(event, cb) {
       if (replace) {
         S3.get(replace.Bucket, replace.Key)
           .then((file) => {
+            /* eslint-disable no-param-reassign */
             status.execution.output = file.Body.toString();
+            /* eslint-enable no-param-reassign */
             return cb(null, status);
           }).catch(cb);
       }

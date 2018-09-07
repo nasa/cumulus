@@ -42,11 +42,11 @@ const fullMessageOutput = {
 };
 
 const stepFunctionMock = {
-  getExecutionStatus: async function(arn) {
-    return new Promise((resolve, reject) => {
+  getExecutionStatus: function (arn) {
+    return new Promise((resolve) => {
       let executionStatus;
       if (arn === 'stillRunning') {
-        executionStatus = { ...executionStatusCommon }
+        executionStatus = { ...executionStatusCommon };
       }
       else {
         executionStatus = {
@@ -64,10 +64,10 @@ const stepFunctionMock = {
 };
 
 const s3Mock = {
-  get: async function(bucket, key) {
-    return new Promise((resolve, reject) => {
+  get: function () {
+    return new Promise((resolve) => {
       const s3Result = {
-        Body: new Buffer(JSON.stringify(fullMessageOutput))
+        Body: Buffer.from(JSON.stringify(fullMessageOutput))
       };
       resolve(s3Result);
     });
@@ -76,7 +76,7 @@ const s3Mock = {
 
 executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
 executionStatusEndpoint.__set__('S3', s3Mock);
-  
+
 test('returns execution status', (t) => {
   const event = { pathParameters: { arn: 'hasFullMessage' } };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
@@ -103,6 +103,6 @@ test('when execution is still running, still returns status', (t) => {
       stateMachine: {}
     };
     t.deepEqual(expectedResponse, executionStatus);
-  });  
+  });
 });
 
