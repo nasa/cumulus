@@ -69,7 +69,7 @@ describe('The Cumulus API', () => {
 
   beforeAll(async () => {
     // Upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // Update input file paths

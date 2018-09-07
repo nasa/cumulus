@@ -1,5 +1,8 @@
 const fs = require('fs');
-const { s3 } = require('@cumulus/common/aws');
+const {
+  aws: { s3 },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 const { Config } = require('kes');
 const lodash = require('lodash');
 const { exec } = require('child-process-promise');
@@ -66,10 +69,14 @@ function templateFile({ inputTemplateFilename, config }) {
  * @param {string} file - filename of data to upload
  * @param {string} bucket - bucket to upload to
  * @param {string} prefix - S3 folder prefix
+ * @param {boolean} replacePaths - whether to replace test paths in file contents
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs') {
-  const data = fs.readFileSync(require.resolve(file), 'utf8');
+function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', replacePaths = false) {
+  let data = fs.readFileSync(require.resolve(file), 'utf8');
+  if (replacePaths) {
+    data = globalReplace(data, 'cumulus-test-data/pdrs', prefix);
+  }
   const key = path.basename(file);
   console.log('\nUploading test data to ', prefix);
   return s3().putObject({
@@ -85,10 +92,11 @@ function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs') {
  * @param {string} bucket - S3 bucket
  * @param {Array<string>} data - list of test data files
  * @param {string} prefix - S3 folder prefix
+ * @param {boolean} replacePaths - whether to replace test paths in file contents
  * @returns {Array<Promise>} - responses from S3 upload
  */
-function uploadTestDataToBucket(bucket, data, prefix) {
-  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket, prefix)));
+function uploadTestDataToBucket(bucket, data, prefix, replacePaths) {
+  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket, prefix, replacePaths)));
 }
 
 /**

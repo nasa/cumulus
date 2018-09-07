@@ -40,7 +40,7 @@ describe('The Ingest Granule failure workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
