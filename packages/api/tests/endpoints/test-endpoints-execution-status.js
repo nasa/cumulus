@@ -44,11 +44,21 @@ const fullMessageOutput = {
 const stepFunctionMock = {
   getExecutionStatus: async function(arn) {
     return new Promise((resolve, reject) => {
-      const executionStatus = {
-        ...executionStatusCommon,
-        output: arn === 'hasFullMessage' ? fullMessageOutput : remoteMessageOutput
-      };
-      resolve(executionStatus);
+      let executionStatus;
+      if (arn === 'stillRunning') {
+        executionStatus = { ...executionStatusCommon }
+      }
+      else {
+        executionStatus = {
+          ...executionStatusCommon,
+          output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput) : JSON.stringify(remoteMessageOutput)
+        };
+      }
+      resolve({
+        execution: executionStatus,
+        executionHistory: {},
+        stateMachine: {}
+      });
     });
   }
 };
@@ -56,12 +66,8 @@ const stepFunctionMock = {
 const s3Mock = {
   get: async function(bucket, key) {
     return new Promise((resolve, reject) => {
-      const executionStatus = {
-        ...executionStatusCommon,
-        output: fullMessageOutput
-      };
       const s3Result = {
-        Body: new Buffer(JSON.stringify(executionStatus))
+        Body: new Buffer(JSON.stringify(fullMessageOutput))
       };
       resolve(s3Result);
     });
@@ -75,7 +81,7 @@ test('returns execution status', (t) => {
   const event = { pathParameters: { arn: 'hasFullMessage' } };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
-    t.deepEqual(fullMessageOutput, executionStatus.output);
+    t.deepEqual(JSON.stringify(fullMessageOutput), executionStatus.execution.output);
   });
 });
 
@@ -83,7 +89,20 @@ test('fetches message from S3 when remote message', (t) => {
   const event = { pathParameters: { arn: 'hasRemoteMessage' } };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
-    t.deepEqual(fullMessageOutput, executionStatus.output);
+    t.deepEqual(JSON.stringify(fullMessageOutput), executionStatus.execution.output);
   });
+});
+
+test('when execution is still running, still returns status', (t) => {
+  const event = { pathParameters: { arn: 'stillRunning' } };
+  return testEndpoint(executionStatusEndpoint, event, (response) => {
+    const executionStatus = JSON.parse(response.body);
+    const expectedResponse = {
+      execution: executionStatusCommon,
+      executionHistory: {},
+      stateMachine: {}
+    };
+    t.deepEqual(expectedResponse, executionStatus);
+  });  
 });
 

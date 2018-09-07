@@ -19,12 +19,14 @@ function get(event, cb) {
 
   return StepFunction.getExecutionStatus(arn)
     .then((status) => {
-      const replace = status.output.replace;
+      let replace;
+      const executionOutput = status.execution.output;
+      if (executionOutput) replace = JSON.parse(executionOutput).replace;
       if (replace) {
         S3.get(replace.Bucket, replace.Key)
           .then((file) => {
-            const fullStatus = JSON.parse(file.Body);
-            return cb(null, fullStatus);
+            status.execution.output = file.Body.toString();
+            return cb(null, status);
           }).catch(cb);
       }
       else {
@@ -46,3 +48,4 @@ function handler(event, context) {
 }
 
 module.exports = handler;
+
