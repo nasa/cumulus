@@ -130,7 +130,7 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
     result = 'N';
     break;
   case 'totalFiles':
-    result = metadata.length;
+    result = (metadata) ? metadata.length : 0;
     break;
   case 'productState':
     result = (metadata === 'completed') ? 'Successful' : 'Failed';

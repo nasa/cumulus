@@ -3,7 +3,8 @@
 const get = require('lodash.get');
 const aws = require('@cumulus/ingest/aws');
 const Manager = require('./base');
-const { constructCollectionId, parseException } = require('../lib/utils');
+const { constructCollectionId } = require('@cumulus/common');
+const { parseException } = require('../lib/utils');
 const executionSchema = require('./schemas').execution;
 
 class Execution extends Manager {
@@ -42,6 +43,7 @@ class Execution extends Manager {
       arn,
       parentArn: get(payload, 'cumulus_meta.parentExecutionArn'),
       execution,
+      tasks: get(payload, 'meta.workflow_tasks'),
       error: parseException(payload.exception),
       type: get(payload, 'meta.workflow_name'),
       collectionId: collectionId,

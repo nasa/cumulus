@@ -101,27 +101,22 @@ describe('When a workflow', () => {
 
       await redeploy(config);
 
-      workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-    });
+      // Debugging integration test sporadic failures
+      console.log(`Redeploy complete. Waiting for execution: ${workflowExecutionArn}`);
 
-    it('the workflow executes successfully', () => {
-      expect(workflowStatus).toEqual('SUCCEEDED');
-    });
-
-    describe('When querying the workflow via the API', () => {
-      let executionStatus;
-
-      beforeAll(async () => {
-        executionStatus = await apiTestUtils.getExecutionStatus({
-          prefix: config.stackName,
-          arn: workflowExecutionArn
-        });
+      workflowStatus = await apiTestUtils.getExecution({
+        prefix: config.stackName,
+        arn: workflowExecutionArn
       });
 
-      it('the execution is returned', () => {
-        expect(executionStatus.execution).toBeTruthy();
-        expect(executionStatus.execution.executionArn).toEqual(workflowExecutionArn);
-      });
+      // This is for debugging integration test sporadic failures
+      console.log(`workflow status: ${JSON.stringify(workflowStatus)}`);
+    });
+
+    it('the workflow has executed successfully and is returned when querying the API', () => {
+      expect(workflowStatus).toBeTruthy();
+      expect(workflowStatus.arn).toEqual(workflowExecutionArn);
+      expect(workflowStatus.status).toEqual('completed');
     });
   });
 });
