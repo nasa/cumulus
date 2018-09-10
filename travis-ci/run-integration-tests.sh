@@ -114,6 +114,24 @@ set +e
 RESULT="$?"
 set -e
 
+# Delete the stack if it's a nightly build
+if ["$DEPLOYMENT" = "nightly"]; then
+  ./node_modules/.bin/kes cf delete \
+    --kes-folder app \
+    --region us-east-1 \
+    --deployment "$DEPLOYMENT"
+
+  ./node_modules/.bin/kes cf delete \
+    --kes-folder iam \
+    --region us-east-1 \
+    --deployment "$DEPLOYMENT"
+
+  ./node_modules/.bin/kes lambda S3AccessTest delete \
+    --kes-folder app \
+    --region us-west-1 \
+    --deployment "$DEPLOYMENT"
+fi
+
 # Release the stack
 DATE=$(date -R)
 STRING_TO_SIGN_PUT="DELETE

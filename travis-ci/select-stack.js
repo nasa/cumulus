@@ -7,6 +7,9 @@ function determineIntegrationTestStackName(cb) {
 
   if (!branch) return cb('none');
 
+  // Nightly cron job
+  if (process.env.TRAVIS_EVENT_TYPE == 'cron') return cb('nightly');
+
   if (branch === 'master') return cb('cumulus-from-source');
 
   const stacks = {
