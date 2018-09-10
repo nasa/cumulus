@@ -76,12 +76,10 @@ test.serial('Run the migration again, it should not run', async (t) => {
 
 test.serial('migrate records from ES to DynamoDB', async (t) => {
   // add 15 granules records
-  const granules = [];
-  Array.from(Array(15).keys()).forEach(() => granules.push(fakeGranuleFactory()));
+  const granules = (new Array(...new Array(15))).map(() => fakeGranuleFactory());
 
   // add 15 execution records
-  const executions = [];
-  Array.from(Array(15).keys()).forEach(() => executions.push(fakeExecutionFactory()));
+  const executions = (new Array(...new Array(15))).map(() => fakeExecutionFactory());
 
   // make sure tables and es indexes are empty
   const granuleIndex = new Search({}, 'granule', esIndex);

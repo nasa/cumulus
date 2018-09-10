@@ -85,13 +85,9 @@ Run end to end tests with
 
 ### Running integration tests on Travis CI
 
-<!-- Integration tests are run on every Travis CI build. If you want to skip the
+Integration tests are run on every Travis CI build. If you want to skip the
 integration tests for a given commit, include `[skip-integration-tests]` in the
-commit message. -->
-
-Integration tests are not run on every Travis CI build. If you want to run the
-integrations tests against a given commit, include the string `[run-integration-tests]`
-in the commit message.
+commit message.
 
 Travis CI determines what stack to run the tests against based on the name of
 the branch. It expects that the branch name will be suffixed with a dash
