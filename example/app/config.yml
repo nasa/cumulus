@@ -200,8 +200,22 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
-  es:
-    elasticSearchMapping: 6
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
 
 kk-uat-deployment:
   stackName: kk-test-uat
@@ -249,6 +263,42 @@ jl:
     shared-2:
       name: rvl-internal
       type: shared
+
+mhs2:
+  prefix: mhs2
+  stackName: mhs2
+  stackNameNoDash: mhs2
+  buckets:
+    internal:
+      name: mhs-internal
+      type: internal
+    private:
+      name: mhs-private
+      type: private
+    protected:
+      name: mhs-protected
+      type: protected
+    public:
+      name: mhs-public
+      type: public
+    protected-2:
+      name: mhs-protected-2
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
+  system_bucket: '{{buckets.internal.name}}'
+
+  users:
+    - username: '{{EARTHDATA_LOGIN_USERNAME}}'
+
+  AutoScalingPolicyConfiguration:
+  GranulesTable:
+    enableAutoScaling: false
+  FilesTable:
+    enableAutoScaling: false
+
 
 gitc:
   prefix: {{PREFIX}}
