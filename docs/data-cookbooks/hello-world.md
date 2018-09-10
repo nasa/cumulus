@@ -8,7 +8,7 @@ Example task meant to be a sanity check/introduction to the Cumulus workflows.
 
 The [workflow definition](../workflows/README.md) can be found in `cumulus/example/workflows.yml` under `HelloWorldWorkflow:`
 
-```
+```yaml
 HelloWorldWorkflow:
   Comment: 'Returns Hello World'
   StartAt: StartStatus
@@ -49,11 +49,13 @@ HelloWorldWorkflow:
       Cause: 'Workflow failed'
 ```
 
+Workflow **error-handling** can be configured as discussed in the [Error-Handling](error-handling.md) cookbook.
+
 ### Task Configuration
 
 The HelloWorld [task itself](../workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
 
-```
+```yaml
 HelloWorld:
   handler: index.handler
   timeout: 300
@@ -68,7 +70,7 @@ We will focus on using the Cumulus dashboard to schedule the execution of a Hell
 
 Our goal here is to create a rule through the Cumulus dashboard that will define the scheduling and execution of our HelloWorld workflow. Let's navigate to the `Rules` page and click `Add a rule`.
 
-```
+```json
 {
   "collection": {                  # collection values can be configured and found on the Collections page
     "name": "${collection_name}",

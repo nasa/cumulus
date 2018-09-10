@@ -49,7 +49,7 @@ class Aggregator extends Transform {
    * @returns {undefined} undefined
    */
   _final(cb) {
-    if (this.records.length) this.push(this.records);
+    if (this.records.length > 0) this.push(this.records);
     cb();
   }
 

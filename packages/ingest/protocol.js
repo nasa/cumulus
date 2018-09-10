@@ -36,7 +36,7 @@ module.exports.baseProtocol = (superclass) => class extends superclass {
   }
 
   /**
-   * Download a given url and upload to a given S3 location
+   * Download the remote file to a given s3 location
    *
    * @returns {*} undefined
    */
