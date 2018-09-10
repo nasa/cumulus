@@ -157,7 +157,8 @@ Resources:
     {{else}}
       MaxCapacity: 10
     {{/if}}
-      ResourceId: !Sub table/{{../../stackName}}-{{@key}}
+      ResourceId:
+        Fn::Sub: table/{{../../stackName}}-{{@key}}
       RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
@@ -189,7 +190,8 @@ Resources:
     {{else}}
       MaxCapacity: 2
     {{/if}}
-      ResourceId: !Sub table/{{../../stackName}}-{{@key}}
+      ResourceId:
+        Fn::Sub: table/{{../../stackName}}-{{@key}}
       RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:WriteCapacityUnits"
       ServiceNamespace: dynamodb
@@ -743,7 +745,8 @@ Resources:
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref 'SecurityGroup'
+      GroupId:
+        Ref: 'SecurityGroup'
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
@@ -779,6 +782,10 @@ Resources:
                 {{#if ecs.docker}}
                     echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
                     echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
+                    echo 'DOCKER_STORAGE_OPTIONS="${!DOCKER_STORAGE_OPTIONS} --storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
+                    {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
+                    echo 'OPTIONS="${!OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
+                    {{/ifEquals}}
 
                   - Password:
                       Ref: DockerPassword
@@ -825,22 +832,23 @@ Resources:
         mount:
           commands:
             01_mount:
-              command: !Sub
-              - |
-                #!/bin/bash -xe
+              command:
+                Fn::Sub:
+                  - |
+                    #!/bin/bash -xe
 
-                mkdir -p {{ecs.efs.mount}}
-                mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
-                chmod 777 {{ecs.efs.mount}}
+                    mkdir -p {{ecs.efs.mount}}
+                    mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
+                    chmod 777 {{ecs.efs.mount}}
 
-                echo '${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
-                mount -a
-                service docker restart
-                start ecs
+                    echo '${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
+                    mount -a
+                    service docker restart
+                    start ecs
 
-              - EFSFileSystemId:
-                  Fn::ImportValue:
-                    !Sub "{{prefix}}-EFSFileSystemId"
+                  - EFSFileSystemId:
+                      Fn::ImportValue:
+                        Fn::Sub: "{{prefix}}-EFSFileSystemId"
         {{/if}}
 
     Properties:
@@ -873,7 +881,6 @@ Resources:
           Fn::Join:
             - ""
             - - "#cloud-boothook\n"
-              - "cloud-init-per once docker_options echo 'OPTIONS=\"${OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G\"' >> /etc/sysconfig/docker\n"
               - "\n"
               - "yum install -y aws-cfn-bootstrap\n"
               - Fn::Sub: "/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"

@@ -1,30 +1,35 @@
 'use strict';
 
-function determineIntegrationTestStackName() {
+const git = require('simple-git');
+
+function determineIntegrationTestStackName(cb) {
   const branch = process.env.TRAVIS_PULL_REQUEST_BRANCH || process.env.TRAVIS_BRANCH;
 
-  if (!branch) return 'none';
+  if (!branch) return cb('none');
 
-  if (branch === 'master') return 'cumulus-from-source';
+  if (branch === 'master') return cb('cumulus-from-source');
 
-  const stacks = [
-    'aimee',
-    'aj',
-    'jl',
-    'kk-uat-deployment',
-    'lf',
-    'mth-2',
-    'mhs', 
-    'jk', 
-    'mvd', 
-    'jc'
-  ];
+  const stacks = {
+    'abarciauskas-bgse': 'aimee-test',
+    scisco: 'aj',
+    jennyhliu: 'jl',
+    kkelly51: 'kk-uat-deployment',
+    'Lauren Frederick': 'lf',
+    laurenfrederick: 'lf',
+    yjpa7145: 'mth-2',
+    'Matt Savoie': 'mhs',
+    Jkovarik: 'jk',
+    'Menno Van Diermen': 'mvd',
+    ifestus: 'jc'
+  };
 
-  for (let ctr = 0; ctr < stacks.length; ctr += 1) {
-    if (branch.endsWith(`-${stacks[ctr]}`)) return stacks[ctr];
-  }
-
-  return 'cumulus-from-pr';
+  return git('.').log({ '--max-count': '1'}, (e, r) => {
+    const author = r.latest.author_name;
+    if (author && stacks[author]) {
+      return cb(stacks[author])
+    }
+    return cb('cumulus-from-pr');
+  });
 }
 
-console.log(determineIntegrationTestStackName());
+determineIntegrationTestStackName((r) => console.log(r));

@@ -2,17 +2,22 @@
   "root": true,
   "plugins": [
     "import",
-    "jsdoc"
+    "jsdoc",
+    "node",
+    "unicorn"
   ],
   "extends": [
     "airbnb",
     "plugin:import/errors",
-    "plugin:import/warnings"
+    "plugin:import/warnings",
+    "plugin:node/recommended",
+    "plugin:unicorn/recommended"
   ],
   "parser": "babel-eslint",
   "env": {
-    "node": true,
-    "mocha": true
+    "jasmine": true,
+    "mocha": true,
+    "node": true
   },
   "rules": {
     "indent": [ "error", 2 ],
@@ -91,6 +96,9 @@
     ],
     "arrow-parens": ["error", "always"],
     "prefer-destructuring": "off",
-    "function-paren-newline": ["error", "consistent"]
+    "function-paren-newline": ["error", "consistent"],
+
+    "unicorn/filename-case": "off",
+    "unicorn/prefer-spread": "off"
   }
 }

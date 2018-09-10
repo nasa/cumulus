@@ -127,7 +127,13 @@ async function removeFromCMR({ prefix, granuleId }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  try {
+    return JSON.parse(payload.body);
+  }
+  catch (error) {
+    console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${payload}`);
+    throw(error);
+  }
 }
 /**
  * Run a workflow with the given granule as the payload
