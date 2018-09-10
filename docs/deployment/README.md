@@ -4,7 +4,7 @@
 
 This is a guide for deploying a new instance of Cumulus.
 
-The deployment  documentation is current for the following component versions:
+The deployment documentation is current for the following component versions:
 
 * [Cumulus](https://github.com/nasa/cumulus)
 * [Deployment Template](https://github.com/nasa/template-deploy)
@@ -23,10 +23,9 @@ The process involves:
 #### Linux/MacOS software requirements:
 
 - git
-- [node >= 6.9.5, < 8](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+- [node 8.10](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 - [npm](https://www.npmjs.com/get-npm)
 - sha1sum or md5sha1sum
-- [yarn ~= 1.2.x](https://yarnpkg.com/lang/en/docs/install/)
 - zip
 
 - AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
@@ -42,14 +41,51 @@ The process involves:
 
 #### Needed Git Repositories:
 
-- [Cumulus](https://github.com/nasa/cumulus)
+- [Cumulus](https://github.com/nasa/cumulus) (optional)
 - [Cumulus Dashboard](https://github.com/nasa/cumulus-dashboard)
 - [Deployment Template](https://github.com/nasa/template-deploy)
 
 
 ## Installation
 
-#### Make local copy of `Cumulus` Repo and prepare it.
+#### Prepare DAAC deployment repository {#prepare-deployment}
+
+_If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration. ](#prepare-config)_
+
+Clone template-deploy repo and name appropriately for your DAAC or organization
+
+    $ git clone https://github.com/nasa/template-deploy <daac>-deploy
+
+Enter repository root directory
+
+    $ cd <daac>-deploy
+
+Then run:
+
+    $ npm install
+
+**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
+
+#### Obtain Cumulus Packages
+
+##### Option 1: Get packages from NPM
+
+Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found [here](https://www.npmjs.com/search?q=%40cumulus).
+
+If you're trying to work with a certain version of a cumulus package or task, the version can be specified in `package.json` under dependencies. We use semantic versioning (major/minor/patch). You can also configure for automatic updates. Use `^` to update minor/patch versions automatically and `~` to automatically update patch versions. For example:
+
+    "@cumulus/sync-granule": "^1.0.0"
+
+To add a new package to your deployment, install via npm. Without a version specified, it will automatically install the latest version. For example:
+
+    $ npm install --save @cumulus/deployment
+
+To use the specific version of the package installed during deployment, point the `source` key in the lambda config to `node_modules/@cumulus/<package-name>/dist`. This location may vary between packages, so consult the README in each. For example, the following would update patch and minor versions of sync-granule:
+
+    SyncGranule:
+      source: 'node_modules/@cumulus/sync-granule/dist/'
+
+##### Option 2: Make local copy of the `Cumulus` Repo and prepare it.
 
 Clone repository
 
@@ -73,46 +109,19 @@ Build the Cumulus application
 
     $ npm run build
 
-#### Prepare DAAC deployment repository {#prepare-deployment}
+To run the Cumulus deployment with the local code instead of the npm package, use `npm link` from your deployment repository directory
 
-_If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration. ](#prepare-config)_
+    $ npm link ../cumulus/packages/deployment/ @cumulus/deployment
 
-Clone template-deploy repo and name appropriately for your DAAC or organization
-
-    $ git clone https://github.com/nasa/template-deploy <daac>-deploy
-
-Enter repository root directory
-
-    $ cd <daac>-deploy
-
-Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found [here](https://www.npmjs.com/search?q=%40cumulus).
-
-If you're trying to work with a certain version of a cumulus package or task, the version can be specified in `package.json` under dependencies. We use semantic versioning (major/minor/patch). You can also configure for automatic updates. Use `^` to update minor/patch versions automatically and `~` to automatically update patch versions. For example:
-
-    "@cumulus/sync-granule": "^1.0.0"
-
-Then run:
-
-    $ npm install
-
-To add a new package, install via npm. Without a version specified, it will automatically install the latest version. For example:
-
-    $ npm install @cumulus/deployment
-
-**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
-
-To use the specific version of the package installed during deployment, point the `source` key in the lambda config to `node_modules/@cumulus/<package-name>/dist`. This location may vary between packages, so consult the README in each. For example:
-
-    SyncGranule:
-      source: 'node_modules/@cumulus/sync-granule/dist/'
-
-The [`Cumulus`](https://github.com/nasa/cumulus) project contains default configuration values in `cumulus/packages/deployment/app.example`, however these need to be customized for your Cumulus app.
+Note: If you get errors with `npm link`, try deleting the `node_modules` folder the package you are trying to link to in the Cumulus repository.
 
 ##### Copy the sample template into your repository {#copy-template}
 
+The [`Cumulus`](https://github.com/nasa/cumulus) project contains default configuration values in the `app.example` folder, however these need to be customized for your Cumulus app.
+
 Begin by copying the template directory to your project. You will modify it for your DAAC's specific needs later.
 
-    $ cp -r ../cumulus/packages/deployment/app.example ./app
+    $ cp -r ./node_modules/@cumulus/deployment/app.example ./app
 
 **Optional:** [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) `<daac>-deploy` so that you can track your DAAC's configuration changes:
 
@@ -157,7 +166,7 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 ##### Configure deployment with `<daac>-deploy/iam/config.yml`
 
-The `iam` configuration creates 4 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
+The `iam` configuration creates 6 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
 
 The various config fields are described below with a sample `config.yml` at the end.
 
@@ -179,46 +188,40 @@ The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
 
 ###### buckets:
 
-The buckets created in the [Create S3 Buckets](#create-s3-buckets) step.
+The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
 
 ------
 
 **Sample new deployment added to config.yml**:
 
-    <iam-deployment-name>:          # e.g. dev (Note: Omit brackets, i.e. NOT <dev>)
+    <iam-deployment-name>:    # e.g. dev (Note: Omit brackets, i.e. NOT <dev>)
       prefix: <stack-prefix>  # prefixes CloudFormation-created iam resources and permissions
       stackName: <stack-name> # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+      system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
       buckets:
-        internal: <prefix>-internal  # Note: these are the bucket names, not the prefix from above
+        internal: # bucket key
+            name: <internal bucket name>
+            type: internal
 
 **Deploy `iam` stack**[^1]
 
-    $ kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
+    $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
 
 **Note**: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.
 
-If the `iam` deployment command  succeeds, you should see 4 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
+If the `iam` deployment command  succeeds, you should see 6 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
 
 * `<stack-name>-ecs`
 * `<stack-name>-lambda-api-gateway`
 * `<stack-name>-lambda-processing`
+* `<stack-name>-scaling-role`
 * `<stack-name>-steprole`
+* `<stack-name>-distribution-api-lambda`
+
 
 The same information can be obtained from the AWS CLI command: `aws iam list-roles`.
 
 The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
-
-#### Update AWS Access Keys
-
-Create or obtain [Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for the user who will assume the DeployerRole in IAM, then export the access keys, replacing the previous values in your environment:
-
-    $ export AWS_ACCESS_KEY_ID=<AWS access key>
-    $ export AWS_SECRET_ACCESS_KEY=<AWS secret key>
-    $ export AWS_REGION=<region>
-
-If you don't want to set environment variables, [access keys can be stored locally via the AWS CLI.](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
-
-_Make sure you've updated your actual environment variables before proceeding (e.g., if sourcing from a file, re-source the file)._
 
 --------------
 ## Configure and Deploy the Cumulus stack
@@ -261,7 +264,7 @@ Also note, if you dont specify the `amiid`, it will try to use a default, which 
 
 ###### buckets
 
-The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-config) step.
+The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-config) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
 
 ###### iams
 
@@ -298,8 +301,12 @@ List of EarthData users you wish to have access to your dashboard application.  
     availabilityZone: <subnet-id-zone>
     amiid: <some-ami-id>
 
+  system_bucket: <prefix-internal>
+
   buckets:
-    internal: <prefix>-internal
+    internal:
+        name: <prefix>-internal
+        type: internal
 
   iams:
     ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-ecs
@@ -310,11 +317,11 @@ List of EarthData users you wish to have access to your dashboard application.  
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigateway backend endpoint is used
-    # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
+  # if not specified the value of the apigateway backend endpoint is used
+  # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigateway dist url is used
-    # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
+  # if not specified the value of the apigateway dist url is used
+  # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
 
   # URS users who should have access to the dashboard application.
   users:
@@ -335,6 +342,8 @@ Copy `app/.env.sample to app/.env` and add CMR/earthdata client [credentials](#C
     CMR_PASSWORD=cmrpassword
     EARTHDATA_CLIENT_ID=clientid
     EARTHDATA_CLIENT_PASSWORD=clientpassword
+
+Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
 
 For security it is highly recommended that you prevent `apps/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
 
@@ -470,7 +479,7 @@ Once deployed for the first time, any future updates to the role/stack configura
 
 ## Update roles
 
-    $ kes cf deploy --kes-folder iam --deployment <deployment-name> \
+    $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <deployment-name> \
       --region <region> # e.g. us-east-1
 
 ## Cumulus Versioning

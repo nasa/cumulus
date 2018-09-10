@@ -217,9 +217,17 @@ async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsRe
  * @returns {Object} kinesis object stored in SQS message.
  */
 function kinesisEventFromSqsMessage(message) {
-  const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
-  const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
-  const kinesisEvent = JSON.parse(dataString);
+  let kinesisEvent;
+  try {
+    const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
+    const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
+    kinesisEvent = JSON.parse(dataString);
+  }
+  catch (error) {
+    console.log('Error parsing KinesisEventFromSqsMessage(message)', JSON.stringify(message));
+    console.log(error);
+    kinesisEvent = { identifier: 'Fake Wrong Message' };
+  }
   return kinesisEvent;
 }
 
@@ -236,14 +244,14 @@ function isTargetMessage(message, recordIdentifier) {
 }
 
 /**
- * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 5 minutes.
+ * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 10 minutes.
  *
  * @param {string} recordIdentifier - random string to match found messages against.
  * @param {string} queueUrl - kinesisFailure SQS url
- * @param {number} maxNumberElapsedPeriods - number of timeout intervals to wait.
+ * @param {number} maxNumberElapsedPeriods - number of timeout intervals (5 seconds) to wait.
  * @returns {Object} - matched Message from SQS.
  */
-async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 60) {
+async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 120) {
   const timeoutInterval = 5000;
   let queuedRecord;
   let elapsedPeriods = 0;
@@ -257,7 +265,7 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedP
     await timeout(timeoutInterval);
     elapsedPeriods += 1;
   }
-  return {};
+  return { waitForQueuedRecord: 'never found record on queue' };
 }
 
 module.exports = {
