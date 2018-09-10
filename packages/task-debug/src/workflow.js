@@ -62,7 +62,7 @@ exports.runWorkflow = async (collectionId, workflow, resources = {}, configFile 
   // Execute the workflow
   while (taskName) {
     const task = workflow.States[taskName];
-    const taskClass = require(requirePathForTask(taskName));
+    const taskClass = require(requirePathForTask(taskName)); // eslint-disable-line global-require, import/no-dynamic-require, max-len
     result = await exports.runTask(
       taskClass.handler,
       exports.genMessage(collectionId, taskName, resources, result, configFile)
