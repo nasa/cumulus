@@ -23,7 +23,7 @@ function get(event, cb) {
       const executionOutput = status.execution.output;
       if (executionOutput) replace = JSON.parse(executionOutput).replace;
       if (replace) {
-        S3.get(replace.Bucket, replace.Key)
+        return S3.get(replace.Bucket, replace.Key)
           .then((file) => {
             /* eslint-disable no-param-reassign */
             status.execution.output = file.Body.toString();
