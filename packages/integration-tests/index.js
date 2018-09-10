@@ -146,6 +146,8 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
   const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
 
+  console.log(`\nStarting workflow: ${workflowName}. Execution ARN ${executionArn}`);
+
   return executionArn;
 }
 
@@ -162,8 +164,6 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
  */
 async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg) {
   const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
-
-  console.log(`Executing workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
   // Wait for the execution to complete to get the status
   const status = await waitForCompletedExecution(executionArn);

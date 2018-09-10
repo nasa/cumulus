@@ -107,6 +107,7 @@ async function redeploy(config) {
         console.log(`Deployment error: ${result.error}`);
       }
     });
+  console.log(`Redeploy of ${config.deployment} complete`);
 }
 
 module.exports = {
