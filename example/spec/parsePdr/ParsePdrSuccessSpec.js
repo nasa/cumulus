@@ -8,7 +8,6 @@ const {
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 const {
-  aws: { getS3Object },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 
@@ -163,11 +162,7 @@ describe('Parse PDR workflow', () => {
 
     afterAll(async () => {
       // cleanup
-      let finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'StopStatus');
-      if (finalOutput.replace) {
-        const msg = await getS3Object(finalOutput.replace.Bucket, finalOutput.replace.Key);
-        finalOutput = JSON.parse(msg.Body.toString());
-      }
+      const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'StopStatus');
       // delete ingested granule(s)
       await Promise.all(
         finalOutput.payload.granules.map((g) =>

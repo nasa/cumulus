@@ -8,7 +8,7 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists, getS3Object },
+  aws: { s3, s3ObjectExists },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const {
@@ -144,14 +144,10 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the SyncGranules task', () => {
-    let lambdaOutput = null;
+    let lambdaOutput;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      if (lambdaOutput.replace) {
-        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
-        lambdaOutput = JSON.parse(msg.Body.toString());
-      }
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
@@ -170,10 +166,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
-      if (lambdaOutput.replace) {
-        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
-        lambdaOutput = JSON.parse(msg.Body.toString());
-      }
       files = lambdaOutput.payload.granules[0].files;
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
@@ -210,10 +202,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
-      if (lambdaOutput.replace) {
-        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
-        lambdaOutput = JSON.parse(msg.Body.toString());
-      }
       files = lambdaOutput.payload.granules[0].files;
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
