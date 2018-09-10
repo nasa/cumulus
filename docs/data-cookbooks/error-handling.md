@@ -12,6 +12,7 @@ Some best practices for error handling in Cumulus Workflows are:
 
 * Include the `sf2snsEndLambdaFunction` as a final state (aka the `StopStatus` state). This broadcasts workflow results to an SNS topic.
 * States should include a `Catch` configuration object which defines the `ResultPath` to be `$.exception`. This passes along the entire Cumulus Message to the next state with the addition of the `Error` and `Cause` details of the thrown error in the `exception` key.
+* States may be configured to `Retry` a task on specified failures to handle transient issues, such as those arising from resource allocation throttling, instead of failing the entire workflow. Cumulus supports the AWS retry configuration outlined [here](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-errors.html#amazon-states-language-retrying-after-error) and an example is provided in the `HelloWorld` step of the `RetryPassWorkflow` workflow defined in the Cumulus repository's [example](https://github.com/nasa/cumulus/blob/master/example/workflows.yml) `workflow.yml`.
 * Tasks downstream of failed tasks should understand how to pass along exceptions if required: If a task throws an error which is caught by the workflow configuration and passed to another state which also uses the CMA, the CMA overrides the exception key to `"None"` so the exception will not be passed to downstream tasks after the next state. This is okay if the exception is not needed in downstream tasks. However, `sf2snsEndLambdaFunction` does need an exception to understand the workflow is in a failed state, so the error should be re-thrown in any states between the original failed task and `sf2snsEndLambdaFunction`. In the example below, `CnmResponseFail` re-throws any errors passed by upstream tasks.
 * If multiple downstream tasks should run after a workflow task has thrown an error, for example sending a failure to a kinesis stream in addition to running the `sf2snsEndLambdaFunction`, this can handled by creating a second "failure" branch of the workflow.
 
@@ -19,7 +20,7 @@ Some best practices for error handling in Cumulus Workflows are:
 
 Note: In the example below, YAML syntax (i.e. `&ErrorEqualDefaults` and `<<: *ErrorEqualDefaults`) is used to create references to reusable blocks which makes the definition less repetitive. Read more here: [YAML - Anchors, References, Extend](https://blog.daemonl.com/2016/02/yaml.html).
 
-```
+```yaml
 KinesisTriggerTest:
   Comment: 'Tests Workflow from Kinesis Stream'
   StartAt: StartStatus
@@ -54,11 +55,11 @@ KinesisTriggerTest:
           Next: StopStatus
       Next: StopStatus
     CnmResponseFail:
-      <<: *CnmResponseDefaults  
+      <<: *CnmResponseDefaults
       Catch:
         - <<: *ErrorEqualDefaults
-          Next: StopStatusFail          
-      Next: StopStatusFail     
+          Next: StopStatusFail
+      Next: StopStatusFail
     StopStatus: &StopStatusDefaults
       Type: Task
       Resource: ${sf2snsEndLambdaFunction.Arn}
