@@ -1,8 +1,8 @@
 {
   "name": "@cumulus/ingest",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Ingest utilities",
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {
@@ -34,15 +34,15 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.9.0",
-    "@cumulus/pvl": "^1.9.0",
-    "@cumulus/test-data": "^1.9.0",
-    "aws-sdk": "^2.224.1",
+    "@cumulus/common": "^1.10.0",
+    "@cumulus/pvl": "^1.10.0",
+    "@cumulus/test-data": "^1.9.1",
+    "aws-sdk": "^2.238.1",
     "cksum": "^1.3.0",
     "depd": "^1.1.2",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
-    "got": "^7.1.0",
+    "got": "^8.3.0",
     "jsftp": "^2.0.0",
     "json-loader": "~0.5.7",
     "lodash": "^4.17.5",
@@ -52,22 +52,24 @@
     "lodash.identity": "^3.0.0",
     "lodash.omit": "^4.5.0",
     "mkdirp": "^0.5.1",
-    "moment": "^2.21.0",
+    "moment": "^2.22.1",
     "node-forge": "^0.7.1",
     "pino": "^4.7.1",
     "pump": "^3.0.0",
+    "rewire": "^4.0.1",
     "simplecrawler": "^1.1.4",
     "ssh2": "^0.5.5",
     "url-join": "^1.0.0",
-    "uuid": "^3.2.1"
+    "uuid": "^3.2.1",
+    "xml2js": "^0.4.17"
   },
   "devDependencies": {
-    "@cumulus/cmrjs": "^1.9.0",
-    "@cumulus/test-data": "^1.9.0",
+    "@cumulus/cmrjs": "^1.10.0",
+    "@cumulus/test-data": "^1.9.1",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",
     "sinon": "^4.5.0",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.19"
   }
 }

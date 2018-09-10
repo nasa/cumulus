@@ -1,8 +1,9 @@
 'use strict';
 
 const { Client } = require('ssh2');
+const { PassThrough } = require('stream');
 const { join } = require('path');
-const { log } = require('@cumulus/common');
+const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
 const { omit } = require('lodash');
@@ -10,7 +11,6 @@ const get = require('lodash.get');
 const { S3, KMS } = require('./aws');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {
-
   constructor(...args) {
     super(...args);
     this.connected = false; // use to indicate an active connection exists
@@ -113,7 +113,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
     // stream to file
     if (!this.connected) await this.connect();
 
-    const input = new Buffer(body);
+    const input = Buffer.from(body);
     return new Promise((resolve, reject) => {
       const stream = this.sftp.createWriteStream(join(path, filename));
       stream.on('error', reject);
@@ -158,5 +158,43 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
     // Type 'type' field is required to support recursive file listing, but
     // should not be part of the returned result.
     return files.map((file) => omit(file, 'type'));
+  }
+
+  /**
+   * get readable stream of the remote file
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @returns {Promise} readable stream of the remote file
+   */
+  async _getReadableStream(remotePath) {
+    if (!this.connected) await this.connect();
+    return new Promise((resolve, reject) => {
+      const readStream = this.sftp.createReadStream(remotePath);
+      readStream.on('error', reject);
+      return resolve(readStream);
+    });
+  }
+
+  /**
+   * Download the remote file to a given s3 location
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @param {string} bucket - destination s3 bucket of the file
+   * @param {string} key - destination s3 key of the file
+   * @returns {Promise} s3 uri of destination file
+   */
+  async sync(remotePath, bucket, key) {
+    const remoteUrl = `sftp://${this.host}${remotePath}`;
+    const s3uri = buildS3Uri(bucket, key);
+    log.info(`Sync ${remoteUrl} to ${s3uri}`);
+
+    const readable = await this._getReadableStream(remotePath);
+    const pass = new PassThrough();
+    readable.pipe(pass);
+
+    const params = { Bucket: bucket, Key: key, Body: pass };
+    const result = await promiseS3Upload(params);
+    log.info('Uploading to s3 is complete', result);
+    return s3uri;
   }
 };
