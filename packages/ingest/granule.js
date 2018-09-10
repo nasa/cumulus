@@ -22,8 +22,8 @@ const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
-const { CollectionConfigStore } = require('@cumulus/common');
-const { constructCollectionId } = require('../api/lib/utils');
+const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
+const { promisify } = require('util');
 
 /**
 * The abstract Discover class
@@ -230,8 +230,9 @@ class Granule {
       .filter((f) => this.filterChecksumFiles(f))
       .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
+    log.debug('awaiting all download.Files');
     const files = await Promise.all(downloadFiles);
-
+    log.debug('finished ingest()');
     return {
       granuleId: granule.granuleId,
       dataType: dataType,
@@ -355,20 +356,19 @@ class Granule {
    * Validate a file's checksum and throw an exception if it's invalid
    *
    * @param {Object} file - the file object to be checked
-   * @param {string} fileLocalPath - the path to the file on the filesystem
+   * @param {string} bucket - s3 bucket name of the file
+   * @param {string} key - s3 key of the file
    * @param {Object} [options={}] - options for the this._hash method
    * @returns {undefined} - no return value, but throws an error if the
    *   checksum is invalid
    * @memberof Granule
    */
-  async validateChecksum(file, fileLocalPath, options = {}) {
+  async validateChecksum(file, bucket, key, options = {}) {
     const [type, value] = await this.getChecksumFromFile(file);
 
     if (!type || !value) return;
 
-    let sum = null;
-    if (type.toLowerCase() === 'cksum') sum = await this._cksum(fileLocalPath);
-    else sum = await this._hash(type, fileLocalPath, options);
+    const sum = await aws.checksumS3Objects(type, bucket, key, options);
 
     if (value !== sum) {
       const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
@@ -492,41 +492,26 @@ class Granule {
     // we are replacing it with a more recent one or
     // adding another version of it to the bucket
 
-    // we considered a direct stream from source to S3 but since
-    // it doesn't work with FTP connections, we decided to always download
-    // and then upload
+    const fileRemotePath = path.join(file.path, file.name);
 
-    const downloadDir = await this.createDownloadDirectory();
+    // s3 file staging location
+    let fullKey = path.join(this.fileStagingDir, file.name);
+    if (fullKey[0] === '/') fullKey = fullKey.substr(1);
 
-    try {
-      const fileLocalPath = path.join(downloadDir, file.name);
-      const fileRemotePath = path.join(file.path, file.name);
+    // stream the source file to s3
+    log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${fullKey}`);
+    const filename = await this.sync(fileRemotePath, bucket, fullKey);
 
-      // Download the file
-      await this.download(fileRemotePath, fileLocalPath);
+    // Validate the checksum
+    log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${fullKey}`);
+    await this.validateChecksum(file, bucket, fullKey);
 
-      // Validate the checksum
-      await this.validateChecksum(file, fileLocalPath);
-
-      // Upload the file
-      const filename = await this.upload(
-        bucket,
-        this.fileStagingDir,
-        file.name,
-        fileLocalPath
-      );
-
-      return Object.assign(file, {
-        filename,
-        fileStagingDir: this.fileStagingDir,
-        url_path: this.getUrlPath(file),
-        bucket
-      });
-    }
-    finally {
-      // Delete the temp directory
-      await fs.remove(downloadDir);
-    }
+    return Object.assign(file, {
+      filename,
+      fileStagingDir: this.fileStagingDir,
+      url_path: this.getUrlPath(file),
+      bucket
+    });
   }
 }
 exports.Granule = Granule; // exported to support testing
@@ -614,6 +599,19 @@ function selector(type, protocol) {
 }
 
 /**
+ * Extract the granule ID from the a given s3 uri
+ *
+ * @param {string} uri - the s3 uri of the file
+ * @param {string} regex - the regex for extracting the ID
+ * @returns {string} the granule
+ */
+function getGranuleId(uri, regex) {
+  const match = path.basename(uri).match(regex);
+  if (match) return match[1];
+  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
+}
+
+/**
  * Gets metadata for a cmr xml file from s3
  *
  * @param {string} xmlFilePath - S3 URI to the xml metadata document
@@ -638,12 +636,38 @@ async function getMetadata(xmlFilePath) {
  * @returns {Promise<Object>} promise resolves to object version of the xml
  */
 async function parseXmlString(xml) {
-  return new Promise((resolve, reject) => {
-    xml2js.parseString(xml, xmlParseOptions, (err, data) => {
-      if (err) return reject(err);
-      return resolve(data);
-    });
-  });
+  return (promisify(xml2js.parseString))(xml, xmlParseOptions);
+}
+
+/**
+ * returns a list of CMR xml files
+ *
+ * @param {Array} input - an array of s3 uris
+ * @param {string} granuleIdExtraction - a regex for extracting granule IDs
+ * @returns {Promise<Array>} promise resolves to an array of objects
+ * that includes CMR xmls uris and granuleIds
+ */
+async function getCmrFiles(input, granuleIdExtraction) {
+  const files = [];
+  const expectedFormat = /.*\.cmr\.xml$/;
+
+  for (const filename of input) {
+    if (filename && filename.match(expectedFormat)) {
+      const metadata = await getMetadata(filename);
+      const metadataObject = await parseXmlString(metadata);
+
+      const cmrFileObject = {
+        filename,
+        metadata,
+        metadataObject,
+        granuleId: getGranuleId(filename, granuleIdExtraction)
+      };
+
+      files.push(cmrFileObject);
+    }
+  }
+
+  return files;
 }
 
 async function postS3Object(destination, options) {
@@ -860,6 +884,8 @@ module.exports.S3Granule = S3Granule;
 module.exports.S3DiscoverGranules = S3DiscoverGranules;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
+module.exports.getGranuleId = getGranuleId;
+module.exports.getCmrFiles = getCmrFiles;
 module.exports.getMetadata = getMetadata;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.moveGranuleFile = moveGranuleFile;

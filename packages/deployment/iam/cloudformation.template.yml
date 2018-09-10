@@ -22,7 +22,8 @@ Resources:
   LambdaApiGatewayRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ResourcePrefix}-lambda-api-gateway"
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-lambda-api-gateway"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -61,7 +62,8 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                   - dynamodb:UpdateItem
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
 
               - Effect: Allow
                 Action:
@@ -69,7 +71,8 @@ Resources:
                   - dynamodb:GetShardIterator
                   - dynamodb:DescribeStream
                   - dynamodb:ListStreams
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*/stream/*"
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*/stream/*"
 
               - Effect: Allow
                 Action:
@@ -99,7 +102,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -114,7 +117,8 @@ Resources:
                   - sqs:GetQueueUrl
                   - sqs:GetQueueAttributes
                   - sqs:SendMessage
-                Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
+                Resource:
+                  Fn::Sub: "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
 
               # allow adding/editing/deleting of rules associated with this deployment
               - Effect: Allow
@@ -127,7 +131,8 @@ Resources:
                   - events:DescribeRule
                   - events:PutTargets
                   - events:RemoveTargets
-                Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${ResourcePrefix}-*"
+                Resource:
+                  Fn::Sub: "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${ResourcePrefix}-*"
 
               # Allow state machine interactions
               - Effect: Allow
@@ -141,7 +146,8 @@ Resources:
   LambdaProcessingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ResourcePrefix}-lambda-processing"
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-lambda-processing"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -200,7 +206,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -215,7 +221,7 @@ Resources:
                 Action:
                   - s3:PutBucketPolicy
                 Resource:
-                  - !Sub "arn:aws:s3:::{{prefix}}-*"
+                  - Fn::Sub: "arn:aws:s3:::{{prefix}}-*"
 
               # Allow access to dynamoDB
               - Effect: Allow
@@ -229,7 +235,8 @@ Resources:
                   - dynamodb:BatchWriteItem
                   - dynamodb:UpdateContinuousBackups
                   - dynamodb:DescribeContinuousBackups
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
 
               - Effect: Allow
                 Action:
@@ -237,7 +244,8 @@ Resources:
                   - dynamodb:GetShardIterator
                   - dynamodb:DescribeStream
                   - dynamodb:ListStreams
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*/stream/*"
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*/stream/*"
 
               - Effect: Allow
                 Action:
@@ -253,7 +261,8 @@ Resources:
                   - sqs:DeleteMessage
                   - sqs:GetQueueUrl
                   - sqs:GetQueueAttributes
-                Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
+                Resource:
+                  Fn::Sub: "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
 
               # Allow state machine interactions
               - Effect: Allow
@@ -300,21 +309,22 @@ Resources:
 
               # Needed for AWS integration tests
               - Effect: Allow
-                Action: 
+                Action:
                   - cloudformation:DescribeStacks
                 Resource: '*'
 
   StepRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ResourcePrefix}-steprole"
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-steprole"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
               Service:
-                - !Sub states.${AWS::Region}.amazonaws.com
+                - Fn::Sub: states.${AWS::Region}.amazonaws.com
             Action: sts:AssumeRole
       Path: "/"
       Policies:
@@ -330,7 +340,8 @@ Resources:
   ECSRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ResourcePrefix}-ecs"
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-ecs"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -347,6 +358,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - cloudwatch:GetMetricStatistics
+                  - ec2:DescribeInstances
                   - ecr:BatchCheckLayerAvailability
                   - ecr:BatchGetImage
                   - ecr:GetAuthorizationToken
@@ -371,6 +383,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
+                  - ssm:GetParameter
                 Resource: "*"
 
               # Allow state machine interactions
@@ -408,7 +421,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/each}}
@@ -421,7 +434,8 @@ Resources:
   DistributionApiRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ResourcePrefix}-distribution-api-lambda"
+      RoleName:
+       Fn::Sub: "${ResourcePrefix}-distribution-api-lambda"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -445,10 +459,10 @@ Resources:
                   - lambda:GetFunction
                   - lambda:invokeFunction
                   - lambda:CreateEventSourceMapping
-                  - lambda:UpdateEventSourceMapping 
-                  - lambda:DeleteEventSourceMapping 
-                  - lambda:GetEventSourceMapping 
-                  - lambda:ListEventSourceMappings 
+                  - lambda:UpdateEventSourceMapping
+                  - lambda:DeleteEventSourceMapping
+                  - lambda:GetEventSourceMapping
+                  - lambda:ListEventSourceMappings
                 Resource: "*"
 
               - Effect: Allow
@@ -476,7 +490,7 @@ Resources:
                   - s3:ListMultipartUploadParts
                   - s3:DeleteObject
                   - s3:DeleteObjectVersion
-                Resource: 
+                Resource:
                 {{#each buckets}}
                 {{#BucketIsType this "protected"}}
                   - arn:aws:s3:::{{this.name}}/*
@@ -491,7 +505,8 @@ Resources:
   ScalingRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub "${ResourcePrefix}-scaling-role"
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-scaling-role"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -519,23 +534,45 @@ Resources:
   CumulusInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      InstanceProfileName: !Sub "${ResourcePrefix}-ecs"
+      InstanceProfileName:
+        Fn::Sub: "${ResourcePrefix}-ecs"
       Path: "/"
       Roles:
-        - !Ref ECSRole
+        - Ref: ECSRole
 
 Outputs:
   CumulusInstanceProfileArn:
-    Value: !GetAtt CumulusInstanceProfile.Arn
+    Value:
+      Fn::GetAtt:
+        - CumulusInstanceProfile
+        - Arn
   EcsRoleArn:
-    Value: !GetAtt ECSRole.Arn
+    Value:
+      Fn::GetAtt:
+        - ECSRole
+        - Arn
   LambdaApiGatewayRoleArn:
-    Value: !GetAtt LambdaApiGatewayRole.Arn
+    Value:
+      Fn::GetAtt:
+        - LambdaApiGatewayRole
+        - Arn
   LambdaProcessingRoleArn:
-    Value: !GetAtt LambdaProcessingRole.Arn
+    Value:
+      Fn::GetAtt:
+        - LambdaProcessingRole
+        - Arn
   DistributionRoleArn:
-    Value: !GetAtt DistributionApiRole.Arn
+    Value:
+      Fn::GetAtt:
+        - DistributionApiRole
+        - Arn
   StepRoleArn:
-    Value: !GetAtt StepRole.Arn
+    Value:
+      Fn::GetAtt:
+        - StepRole
+        - Arn
   ScalingRoleArn:
-    Value: !GetAtt ScalingRole.Arn
+    Value:
+      Fn::GetAtt:
+        - ScalingRole
+        - Arn

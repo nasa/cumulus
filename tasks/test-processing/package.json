@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-processing",
-  "version": "1.9.0",
+  "version": "1.10.1",
   "description": "Fake processing task used for integration tests",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/test-processing",
@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
   },
-  "engine": {
+  "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {
@@ -19,8 +19,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cumulus-message-adapter-js": "^1.0.3",
-    "@cumulus/integration-tests": "^1.9.0"
+    "@cumulus/cumulus-message-adapter-js": "^1.0.4",
+    "@cumulus/integration-tests": "^1.10.1"
   },
   "devDependencies": {
     "webpack": "~4.5.0",

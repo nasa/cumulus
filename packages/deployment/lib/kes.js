@@ -25,6 +25,7 @@
 'use strict';
 
 const { Kes } = require('kes');
+const Handlebars = require('handlebars');
 const path = require('path');
 const Lambda = require('./lambda');
 const { crypto } = require('./crypto');
@@ -38,7 +39,7 @@ const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
  * @param {integer} ms - number of milliseconds
  * @returns {Promise} the arguments passed after the timeout
  */
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A subclass of Kes class that overrides opsStack method.
@@ -140,6 +141,20 @@ class UpdatedKes extends Kes {
         console.log(err);
       }
     }
+  }
+
+  /**
+   * Override CF parse to add Handlebars helper for checking equality of 2 arguments in an ifEquals block
+   *
+   * @param  {String} cfFile - Filename
+   * @return {String}        - Contents of cfFile templated using Handlebars
+   */
+  parseCF(cfFile) {
+    Handlebars.registerHelper('ifEquals', function(arg1, arg2, options) {
+        return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
+    });
+
+    return super.parseCF(cfFile);
   }
 
   /**
