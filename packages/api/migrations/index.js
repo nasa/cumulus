@@ -1,6 +1,3 @@
-/* eslint-disable no-restricted-syntax,
-  no-await-in-loop, import/no-dynamic-require, global-require */
-
 'use strict';
 
 const path = require('path');
@@ -48,12 +45,13 @@ async function runMigrations(migrations, options) {
 
   // we run the migrations in a for loop to make sure
   // they run in sequence
-  for (const m of newMigrations) {
+  for (let ctr = 0; ctr < newMigrations.length; ctr += 1) {
+    const m = newMigrations[ctr];
     log.info(`Running migration script ${m.name}`);
-    outputs.push(await m.run(options));
+    outputs.push(await m.run(options)); // eslint-disable-line no-await-in-loop
 
     // write the migration on s3
-    await s3().putObject({
+    await s3().putObject({ // eslint-disable-line no-await-in-loop
       Bucket: process.env.internal,
       Key: `${migrationFolder}/${m.name}`
     }).promise();
