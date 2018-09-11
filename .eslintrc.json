@@ -97,6 +97,8 @@
     "prefer-destructuring": "off",
     "function-paren-newline": ["error", "consistent"],
 
+    "eslint-comments/no-unused-disable": "warn",
+
     "unicorn/filename-case": "off",
     "unicorn/prefer-spread": "off"
   }
