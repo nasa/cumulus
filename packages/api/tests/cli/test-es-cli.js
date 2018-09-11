@@ -90,7 +90,6 @@ test.serial('Reindex - multiple aliases found', async (t) => {
   catch (err) {
     t.is(
       err.message,
-      // eslint-disable-next-line max-len
       'Multiple indices found for alias cumulus-1-alias. Specify source index as one of [cumulus-1, cumulus-dup].'
     );
   }
