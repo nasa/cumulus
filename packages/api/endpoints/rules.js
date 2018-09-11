@@ -127,13 +127,13 @@ function handler(event, context) {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }
-    else if (event.httpMethod === 'POST') {
+    if (event.httpMethod === 'POST') {
       return post(event, cb);
     }
-    else if (event.httpMethod === 'PUT' && event.pathParameters) {
+    if (event.httpMethod === 'PUT' && event.pathParameters) {
       return put(event, cb);
     }
-    else if (event.httpMethod === 'DELETE' && event.pathParameters) {
+    if (event.httpMethod === 'DELETE' && event.pathParameters) {
       return del(event, cb);
     }
     return list(event, cb);
