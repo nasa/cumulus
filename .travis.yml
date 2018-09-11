@@ -7,6 +7,9 @@ stages:
   - name: build cache
   - name: unit test
   - name: integration test
+    if: type != cron
+  - name: nightly integration test
+    if: type = cron
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
@@ -98,3 +101,11 @@ jobs:
       env:
         - DEPLOYMENT=cumulus-from-npm
         - USE_NPM_PACKAGES=true
+
+    - name: "Nightly Integration tests"
+      stage: nightly integration test
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: travis_wait 90 ./travis-ci/run-integration-tests.sh
