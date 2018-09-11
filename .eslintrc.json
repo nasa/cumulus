@@ -2,6 +2,7 @@
   "root": true,
   "plugins": [
     "eslint-comments",
+    "import",
     "jsdoc",
     "node",
     "unicorn"
@@ -9,6 +10,8 @@
   "extends": [
     "airbnb",
     "plugin:eslint-comments/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
     "plugin:node/recommended",
     "plugin:unicorn/recommended"
   ],
