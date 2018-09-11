@@ -1,12 +1,15 @@
 {
   "root": true,
   "plugins": [
+    "import",
     "jsdoc",
     "node",
     "unicorn"
   ],
   "extends": [
     "airbnb",
+    "plugin:import/errors",
+    "plugin:import/warnings",
     "plugin:node/recommended",
     "plugin:unicorn/recommended"
   ],
