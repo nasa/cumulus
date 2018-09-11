@@ -158,7 +158,6 @@ test.after.always(async () => {
 });
 
 // getKinesisRule tests
-// eslint-disable-next-line max-len
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
   await getKinesisRules(JSON.parse(eventData))
     .then((result) => {

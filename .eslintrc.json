@@ -1,6 +1,7 @@
 {
   "root": true,
   "plugins": [
+    "eslint-comments",
     "import",
     "jsdoc",
     "node",
@@ -8,6 +9,7 @@
   ],
   "extends": [
     "airbnb",
+    "plugin:eslint-comments/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:node/recommended",
@@ -97,6 +99,8 @@
     "arrow-parens": ["error", "always"],
     "prefer-destructuring": "off",
     "function-paren-newline": ["error", "consistent"],
+
+    "eslint-comments/no-unused-disable": "warn",
 
     "unicorn/filename-case": "off",
     "unicorn/prefer-spread": "off"
