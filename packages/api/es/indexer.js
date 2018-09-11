@@ -25,14 +25,13 @@ const { Granule, Pdr, Execution } = require('../models');
  * Extracts info from a stepFunction message and indexes it to
  * an ElasticSearch
  *
- * @param  {Object} esClientArg - ElasticSearch Connection object
+ * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {Array} payloads  - an array of log payloads
  * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
  * @param  {string} type     - Elasticsearch type (default: granule)
  * @returns {Promise} Elasticsearch response
  */
-async function indexLog(esClientArg, payloads, index = defaultIndexAlias, type = 'logs') {
-  const esClient = esClientArg || await Search.es();
+async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'logs') {
   const body = [];
 
   payloads.forEach((p) => {
@@ -73,13 +72,14 @@ async function indexLog(esClientArg, payloads, index = defaultIndexAlias, type =
     body.push(record);
   });
 
-  return esClient.bulk({ body: body });
+  const actualEsClient = esClient || (await Search.es());
+  return actualEsClient.bulk({ body: body });
 }
 
 /**
  * Partially updates an existing ElasticSearch record
  *
- * @param  {Object} esClientArg - ElasticSearch Connection object
+ * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {string} id       - id of the Elasticsearch record
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @param  {Object} doc      - Partial updated document
@@ -89,7 +89,7 @@ async function indexLog(esClientArg, payloads, index = defaultIndexAlias, type =
  * @returns {Promise} elasticsearch update response
  */
 async function partialRecordUpdate(
-  esClientArg,
+  esClient,
   id,
   type,
   doc,
@@ -97,11 +97,12 @@ async function partialRecordUpdate(
   index = defaultIndexAlias,
   upsert = false
 ) {
-  const esClient = esClientArg || await Search.es();
+  if (!doc) throw new Error('Nothing to update. Make sure doc argument has a value');
 
-  if (!doc) {
-    throw new Error('Nothing to update. Make sure doc argument has a value');
-  }
+  const docWithTimestamp = Object.assign(
+    cloneDeep(doc),
+    { timestamp: Date.now }
+  );
 
   const params = {
     index,
@@ -109,20 +110,21 @@ async function partialRecordUpdate(
     id,
     refresh: inTestMode(),
     body: {
-      doc: Object.assign(cloneDeep(doc), { timestamp: Date.now() })
+      doc: docWithTimestamp
     }
   };
 
   if (parent) params.parent = parent;
   if (upsert) params.body.doc_as_upsert = upsert;
 
-  return esClient.update(params);
+  const actualEsClient = esClient || (await Search.es());
+  return actualEsClient.update(params);
 }
 
 /**
  * Indexes a given record to the specified ElasticSearch index and type
  *
- * @param  {Object} esClientArg - ElasticSearch Connection object
+ * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {string} id       - the record id
  * @param  {Object} doc      - the record
  * @param  {string} index    - Elasticsearch index alias
@@ -130,25 +132,25 @@ async function partialRecordUpdate(
  * @param  {string} parent   - the optional parent id
  * @returns {Promise} Elasticsearch response
  */
-async function genericRecordUpdate(esClientArg, id, doc, index, type, parent) {
-  const esClient = esClientArg || await Search.es();
+async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
+  if (!doc) throw new Error('Nothing to update. Make sure doc argument has a value');
 
-  if (!doc) {
-    throw new Error('Nothing to update. Make sure doc argument has a value');
-  }
+  const body = cloneDeep(doc);
+  body.timestamp = Date.now();
 
   const params = {
+    body,
+    id,
     index,
     type,
-    id,
-    refresh: inTestMode(),
-    body: cloneDeep(doc, { timestamp: Date.now() })
+    refresh: inTestMode()
   };
 
   if (parent) params.parent = parent;
 
   // adding or replacing record to ES
-  return esClient.index(params);
+  const actualEsClient = esClient || (await Search.es());
+  return actualEsClient.index(params);
 }
 
 /**
@@ -281,16 +283,14 @@ function granule(payload) {
 /**
  * delete a record from ElasticSearch
  *
- * @param  {Object} esClientArg - ElasticSearch Connection object
+ * @param  {Object} esClient - ElasticSearch Connection object
  * @param  {string} id       - id of the Elasticsearch record
  * @param  {string} type     - Elasticsearch type (default: execution)
  * @param  {strint} parent   - id of the parent (optional)
  * @param  {string} index    - Elasticsearch index (default: cumulus)
  * @returns {Promise} elasticsearch delete response
  */
-async function deleteRecord(esClientArg, id, type, parent, index = defaultIndexAlias) {
-  const esClient = esClientArg || await Search.es();
-
+async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlias) {
   const params = {
     index,
     type,
@@ -298,23 +298,30 @@ async function deleteRecord(esClientArg, id, type, parent, index = defaultIndexA
     refresh: inTestMode()
   };
 
-  if (parent) {
-    params.parent = parent;
-  }
-  const result = await esClient.get(params);
-  return esClient.delete(params)
-    .then(async (response) => {
-      if (type === 'granule' && result.found) {
-        const doc = result._source;
-        doc.timestamp = Date.now();
-        doc.deletedAt = Date.now();
+  if (parent) params.parent = parent;
 
-        // When a 'granule' record is deleted, the record is added to 'deletedgranule'
-        // type for EMS report purpose.
-        await genericRecordUpdate(esClient, doc.granuleId, doc, index, 'deletedgranule', parent);
-      }
-      return response;
-    });
+  const actualEsClient = esClient || (await Search.es());
+
+  const getResponse = await actualEsClient.get(params);
+  const deleteResponse = await actualEsClient.delete(params);
+
+  if (type === 'granule' && getResponse.found) {
+    const doc = getResponse._source;
+    doc.timestamp = Date.now();
+    doc.deletedAt = Date.now();
+
+    // When a 'granule' record is deleted, the record is added to 'deletedgranule'
+    // type for EMS report purpose.
+    await genericRecordUpdate(
+      actualEsClient,
+      doc.granuleId,
+      doc,
+      index,
+      'deletedgranule',
+      parent
+    );
+  }
+  return deleteResponse;
 }
 
 /**
