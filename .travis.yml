@@ -75,7 +75,7 @@ jobs:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-      script: ./travis-ci/run-integration-tests.sh
+      script: travis_wait ./travis-ci/run-integration-tests.sh
 
 
     - name: "Deploy to NPM"
