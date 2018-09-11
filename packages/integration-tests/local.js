@@ -108,7 +108,7 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
     const moduleFn = lambdaHandler.split('.');
     const moduleFileName = moduleFn[0];
     const moduleFunctionName = moduleFn[1];
-    const task = require(`${taskFullPath}/${moduleFileName}`); // eslint-disable-line global-require
+    const task = require(`${taskFullPath}/${moduleFileName}`); // eslint-disable-line global-require, import/no-dynamic-require, max-len
 
     console.log(`Started execution of ${stepName}`);
 
