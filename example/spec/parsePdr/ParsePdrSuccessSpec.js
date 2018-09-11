@@ -162,7 +162,7 @@ describe('Parse PDR workflow', () => {
 
     afterAll(async () => {
       // cleanup
-      const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'StopStatus');
+      const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'SfSnsReport');
       // delete ingested granule(s)
       await Promise.all(
         finalOutput.payload.granules.map((g) =>
