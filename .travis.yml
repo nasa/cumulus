@@ -6,10 +6,13 @@ language: node_js
 stages:
   - name: build cache
   - name: unit test
-  - name: integration test
-    if: type != cron
-  - name: nightly integration test
-    if: type = cron
+  # - name: integration test
+  #   if: type != cron
+  # - name: nightly integration test
+  #   if: type = cron
+  - name: deploy integration test stack
+  - name: integration tests
+  - name: cleanup integration tests
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
@@ -71,14 +74,14 @@ jobs:
       script: npm run e2e
 
 
-    - name: "Integration tests"
-      stage: integration test
-      if: commit_message !~ \[skip-integration-tests\]
-      install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
-        - npm run bootstrap-no-build
-      script: travis_wait ./travis-ci/run-integration-tests.sh
+    # - name: "Integration tests"
+    #   stage: integration test
+    #   if: commit_message !~ \[skip-integration-tests\]
+    #   install:
+    #     - ./travis-ci/fetch-cache.sh
+    #     - npm install
+    #     - npm run bootstrap-no-build
+    #   script: ./travis-ci/run-integration-tests.sh
 
 
     - name: "Deploy to NPM"
@@ -102,10 +105,31 @@ jobs:
         - DEPLOYMENT=cumulus-from-npm
         - USE_NPM_PACKAGES=true
 
-    - name: "Nightly Integration tests"
-      stage: nightly integration test
+    # - name: "Nightly Integration tests"
+    #   stage: nightly integration test
+    #   install:
+    #     - ./travis-ci/fetch-cache.sh
+    #     - npm install
+    #     - npm run bootstrap-no-build
+    #   script: travis_wait 90 ./travis-ci/run-integration-tests.sh
+
+    - name: "Deploy Integration Test Stack"
+      stage: deploy integration test stack
+      if: commit_message !~ \[skip-integration-tests\]
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-      script: travis_wait 90 ./travis-ci/run-integration-tests.sh
+      script: travis_wait 50 ./travis-ci/init-integration-tests.sh
+
+    - name: "Run integration tests"
+      stage: integration tests
+      if: commit_message !~ \[skip-integration-tests\]
+      install:
+        - cd example
+      script: yarn test
+
+    - name: "Cleanup integration tests"
+      stage: cleanup integration tests
+      if: commit_message !~ \[skip-integration-tests\]
+      script: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
