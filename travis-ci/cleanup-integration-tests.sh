@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Delete the stack if it's a nightly build
 if ["$DEPLOYMENT" = "nightly"]; then
   ./node_modules/.bin/kes cf delete \

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 set -ex
 
 export AWS_ACCESS_KEY_ID="$INTEGRATION_AWS_ACCESS_KEY_ID"
