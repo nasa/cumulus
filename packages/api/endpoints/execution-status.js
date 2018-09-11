@@ -1,8 +1,9 @@
 'use strict';
 
 const _get = require('lodash.get');
-const handle = require('../lib/response').handle;
 const { StepFunction } = require('@cumulus/ingest/aws');
+
+const handle = require('../lib/response').handle;
 
 /**
  * get a single execution status
