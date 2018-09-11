@@ -2,8 +2,6 @@
 
 'use strict';
 
-/* eslint-disable no-console */
-
 const program = require('commander');
 const { cliUtils } = require('@cumulus/common');
 const { lambda } = require('@cumulus/common/aws');
