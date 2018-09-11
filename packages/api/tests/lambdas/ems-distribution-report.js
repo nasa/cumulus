@@ -1,12 +1,12 @@
 'use strict';
 
-const { generateAndStoreDistributionReport } = require('../../lambdas/ems-distribution-report');
 const fs = require('fs-extra');
 const moment = require('moment');
 const path = require('path');
 const test = require('ava');
 const { aws } = require('@cumulus/common');
 const { testUtils: { randomString } } = require('@cumulus/common');
+const { generateAndStoreDistributionReport } = require('../../lambdas/ems-distribution-report');
 
 test.beforeEach(async (t) => {
   // Create the internal bucket
