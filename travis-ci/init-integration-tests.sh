@@ -111,4 +111,4 @@ set +e
 )
 set -e
 
-exit "$RESULT"
+exit 0
