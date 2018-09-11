@@ -35,15 +35,16 @@ const commonRuleParams = {
   rule: {
     type: 'kinesis',
     value: 'test-kinesisarn'
-  },
-  state: 'ENABLED'
+  }
 };
 
 const rule1Params = Object.assign({}, commonRuleParams, {
   name: 'testRule1',
-  workflow: 'test-workflow-1'
+  workflow: 'test-workflow-1',
+  state: 'ENABLED'
 });
 
+// if the state is not provided, it will be set to default value 'ENABLED'
 const rule2Params = Object.assign({}, commonRuleParams, {
   name: 'testRule2',
   workflow: 'test-workflow-2'
@@ -157,7 +158,6 @@ test.after.always(async () => {
 });
 
 // getKinesisRule tests
-// eslint-disable-next-line max-len
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
   await getKinesisRules(JSON.parse(eventData))
     .then((result) => {
