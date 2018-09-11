@@ -49,8 +49,10 @@ class Collection extends Manager {
   }
 
   async create(item) {
-    const collectionConfigStore =
-      new CollectionConfigStore(process.env.internal, process.env.stackName);
+    const collectionConfigStore = new CollectionConfigStore(
+      process.env.internal,
+      process.env.stackName
+    );
 
     let dataType = item.dataType;
     if (!dataType) {

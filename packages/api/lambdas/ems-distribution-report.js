@@ -25,7 +25,7 @@ const {
  * 1CB21F5399FF76C5 REST.GET.OBJECT my-dist-bucket/pdrs/
  * MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR
  * "GET /my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR?AWSAccessKeyId=
- * ABCDEFGHIJKLMNHO2FVQ&Expires=1525892130&Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&x-
+ * AKIAIOSFODNN7EXAMPLE&Expires=1525892130&Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&x-
  * EarthdataLoginUsername=amalkin HTTP/1.1" 200 - 807 100 22 22 "-" "curl/7.59.0" -
  *
  */
@@ -221,8 +221,8 @@ async function generateDistributionReport(params) {
 
   const distributionEventsInReportPeriod = allDistributionEvents.filter(timeFilter);
 
-  log.info(`Found ${allDistributionEvents.length} distribution events between ` +
-    `${reportStartTime.toString()} and ${reportEndTime.toString()}`);
+  log.info(`Found ${allDistributionEvents.length} distribution events between `
+    + `${reportStartTime.toString()} and ${reportEndTime.toString()}`);
 
   return distributionEventsInReportPeriod.sort(sortByTime).join('\n');
 }
