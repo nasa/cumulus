@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign */
+/* eslint no-param-reassign: "off" */
 
 'use strict';
 
@@ -120,6 +120,9 @@ class Rule extends Manager {
     if (re.test(item.name)) {
       throw new Error('Names may only contain letters, numbers, and underscores.');
     }
+
+    // the default state is 'ENABLED'
+    if (!item.state) item.state = 'ENABLED';
 
     const payload = await Rule.buildPayload(item);
     switch (item.rule.type) {

@@ -47,7 +47,7 @@ function getToken(req) {
   return match[1];
 }
 
-function resp(context, err, bodyArg, statusArg = null, headers = {}) { // eslint-disable-line prefer-arrow-callback, max-len
+function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,'); // eslint-disable-line max-len
 
   if (typeof context.succeed !== 'function') {

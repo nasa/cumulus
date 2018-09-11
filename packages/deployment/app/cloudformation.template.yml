@@ -163,7 +163,7 @@ Resources:
     {{else}}
       MaxCapacity: 10
     {{/if}}
-      ResourceId: 
+      ResourceId:
         Fn::Sub: table/{{../../stackName}}-{{@key}}
       RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
@@ -751,8 +751,8 @@ Resources:
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: 
-        Fn::Ref: 'SecurityGroup'
+      GroupId:
+        Ref: 'SecurityGroup'
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
@@ -838,7 +838,7 @@ Resources:
         mount:
           commands:
             01_mount:
-              command: 
+              command:
                 Fn::Sub:
                   - |
                     #!/bin/bash -xe

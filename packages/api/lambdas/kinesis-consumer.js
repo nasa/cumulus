@@ -1,5 +1,3 @@
-/* eslint-disable require-yield */
-
 'use strict';
 
 const Ajv = require('ajv');
