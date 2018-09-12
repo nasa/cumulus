@@ -21,8 +21,8 @@ const {
   removeTaskFromWorkflow
 } = require('../helpers/workflowUtils');
 
-const workflowsYmlFile = './workflows/versioning.yml';
-const workflowsYmlCopyFile = './workflows/versioningCopy.yml';
+const workflowsYmlFile = './workflows.yml';
+const workflowsYmlCopyFile = './workflowsCopy.yml';
 const config = loadConfig();
 
 
