@@ -18,6 +18,9 @@ KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
 
 # Delete the stack if it's a nightly build
 if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
+  cd example
+  npm install
+
   echo Delete app deployment
 
   ./node_modules/.bin/kes cf delete \

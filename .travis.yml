@@ -128,7 +128,4 @@ jobs:
     - name: "Cleanup integration tests"
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\]
-      install:
-        - cd example
-        - npm install
       script: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
