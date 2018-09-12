@@ -16,6 +16,8 @@ export DEPLOYMENT
 # Wait for the stack to be available
 KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
 
+echo KEY
+
 # Delete the stack if it's a nightly build
 if ["$DEPLOYMENT" = "cumulus-nightly"]; then
   ./node_modules/.bin/kes cf delete \
