@@ -131,4 +131,5 @@ jobs:
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
+        - npm run bootstrap-no-build
       script: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
