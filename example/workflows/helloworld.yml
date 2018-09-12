@@ -1,0 +1,82 @@
+HelloWorldWorkflow:
+  Comment: 'Returns Hello World'
+  StartAt: StartStatus
+  States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: HelloWorld
+    HelloWorld:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+      Type: Task
+      Resource: ${HelloWorldLambdaFunction.Arn}
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
+
+EcsHelloWorldWorkflow:
+  Comment: 'Returns Hello World'
+  StartAt: StartStatus
+  States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: EcsTaskHelloWorld
+    EcsTaskHelloWorld:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+      Type: Task
+      Resource: ${EcsTaskHelloWorldActivity}
+      TimeoutSeconds: 5
+      Retry:
+        - ErrorEquals:
+            - States.Timeout
+          MaxAttempts: 1
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
