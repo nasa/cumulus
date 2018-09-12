@@ -129,7 +129,6 @@ jobs:
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\]
       install:
-        - ./travis-ci/fetch-cache.sh
+        - cd example
         - npm install
-        - npm run bootstrap-no-build
       script: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
