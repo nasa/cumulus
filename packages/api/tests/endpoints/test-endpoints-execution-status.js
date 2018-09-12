@@ -21,16 +21,22 @@ const cumulusMetaOutput = {
     message_source: 'sfn',
     workflow_start_time: 1536279498569,
     execution_name: '3ea094d8',
-    system_bucket: 'cumulus-map-internal'
+    system_bucket: 'test-sandbox-internal'
   }
 };
 
-const remoteMessageOutput = {
+const replaceObject = function (lambdaEvent = true) {
+  return {
+    replace: {
+      Bucket: 'test-sandbox-internal',
+      Key: lambdaEvent ? 'events/lambdaEventUUID' : 'events/executionEventUUID'
+    }
+  };
+};
+
+const remoteExecutionOutput = {
   ...cumulusMetaOutput,
-  replace: {
-    Bucket: 'cumulus-map-internal',
-    Key: 'events/df37ded5'
-  }
+  ...replaceObject(false)
 };
 
 const fullMessageOutput = {
@@ -39,6 +45,52 @@ const fullMessageOutput = {
   payload: {},
   exception: 'None',
   workflow_config: {}
+};
+
+const lambdaCommonOutput = {
+  cumulus_meta: {
+    message_source: 'sfn',
+    process: 'modis',
+    execution_name: 'bae909c1',
+    state_machine: 'arn:aws:states:us-east-1:xxx:stateMachine:testIngestGranuleStateMachine-222',
+    workflow_start_time: 111,
+    system_bucket: 'test-sandbox-internal'
+  },
+  meta: {
+    sync_granule_duration: 2872,
+    sync_granule_end_time: 1536
+  }
+};
+
+const lambdaRemoteOutput = {
+  ...replaceObject(),
+  ...lambdaCommonOutput
+};
+
+const lambdaCompleteOutput = {
+  ...lambdaCommonOutput,
+  payload: {
+    message: 'Big message'
+  },
+  exception: 'None'
+};
+
+const lambdaEventOutput = {
+  type: 'TaskStateExited',
+  id: 13,
+  previousEventId: 12,
+  name: 'SyncGranuleNoVpc',
+  output: JSON.stringify(lambdaCompleteOutput)
+};
+
+const lambdaFunctionEvent = {
+  type: 'TaskStateExited',
+  id: 13,
+  previousEventId: 12,
+  stateExitedEventDetails: {
+    name: 'SyncGranuleNoVpc',
+    output: JSON.stringify(lambdaRemoteOutput)
+  }
 };
 
 const stepFunctionMock = {
@@ -51,12 +103,16 @@ const stepFunctionMock = {
       else {
         executionStatus = {
           ...executionStatusCommon,
-          output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput) : JSON.stringify(remoteMessageOutput)
+          output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput) : JSON.stringify(remoteExecutionOutput)
         };
       }
       resolve({
         execution: executionStatus,
-        executionHistory: {},
+        executionHistory: {
+          events: [
+            lambdaFunctionEvent
+          ]
+        },
         stateMachine: {}
       });
     });
@@ -64,10 +120,11 @@ const stepFunctionMock = {
 };
 
 const s3Mock = {
-  get: function () {
+  get: function (_, key) {
     return new Promise((resolve) => {
+      const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
       const s3Result = {
-        Body: Buffer.from(JSON.stringify(fullMessageOutput))
+        Body: Buffer.from(JSON.stringify(fullMessage))
       };
       resolve(s3Result);
     });
@@ -99,7 +156,11 @@ test('when execution is still running, still returns status', (t) => {
     const executionStatus = JSON.parse(response.body);
     const expectedResponse = {
       execution: executionStatusCommon,
-      executionHistory: {},
+      executionHistory: {
+        events: [
+          lambdaEventOutput
+        ]
+      },
       stateMachine: {}
     };
     t.deepEqual(expectedResponse, executionStatus);
