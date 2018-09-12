@@ -17,7 +17,7 @@ export DEPLOYMENT
 KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
 
 # Delete the stack if it's a nightly build
-if ["$DEPLOYMENT" = "nightly"]; then
+if ["$DEPLOYMENT" = "cumulus-nightly"]; then
   ./node_modules/.bin/kes cf delete \
     --kes-folder app \
     --region us-east-1 \
