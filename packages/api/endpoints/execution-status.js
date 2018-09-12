@@ -55,7 +55,7 @@ function get(event, cb) {
       const executionOutput = status.execution.output;
 
       /* eslint-disable no-param-reassign */
-      if (executionOutput) status.execution.output = await fetchRemote(status.execution.output);
+      if (executionOutput) status.execution.output = await fetchRemote(JSON.parse(status.execution.output));
       /* eslint-enable no-param-reassign */
 
       const updatedEvents = [];

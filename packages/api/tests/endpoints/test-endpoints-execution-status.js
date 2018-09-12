@@ -138,7 +138,7 @@ test('returns execution status', (t) => {
   const event = { pathParameters: { arn: 'hasFullMessage' } };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
-    t.deepEqual(JSON.stringify(fullMessageOutput), executionStatus.execution.output);
+    t.deepEqual(fullMessageOutput, executionStatus.execution.output);
   });
 });
 
