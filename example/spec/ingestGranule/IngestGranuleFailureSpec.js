@@ -66,7 +66,10 @@ describe('The Ingest Granule failure workflow', () => {
 
   afterAll(async () => {
     // delete failed granule
-    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
+    await apiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
 
     // Remove the granule files added for the test
     await deleteFolder(config.bucket, testDataFolder);
