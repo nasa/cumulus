@@ -16,19 +16,25 @@ export DEPLOYMENT
 # Wait for the stack to be available
 KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
 
-echo KEY
+echo $KEY
 
 # Delete the stack if it's a nightly build
 if ["$DEPLOYMENT" = "cumulus-nightly"]; then
+  echo Delete app deployment
+
   ./node_modules/.bin/kes cf delete \
     --kes-folder app \
     --region us-east-1 \
     --deployment "$DEPLOYMENT"
 
+  echo Delete iam deployment
+
   ./node_modules/.bin/kes cf delete \
     --kes-folder iam \
     --region us-east-1 \
     --deployment "$DEPLOYMENT"
+
+  echo Delete app deployment
 
   ./node_modules/.bin/kes lambda S3AccessTest delete \
     --kes-folder app \
