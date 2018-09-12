@@ -125,8 +125,11 @@ default:
     password: '{{CMR_PASSWORD}}'
 
   stepFunctions: !!files [
-    'workflows.yml',
-    'workflows/helloworld.yml'
+    'workflows/helloworld.yml',
+    'workflows/cnm.yml',
+    'workflows/errorsAndRetries.yml',
+    'workflows/sips.yml',
+    'workflows/versioning.yml'
   ]
 
   iams:

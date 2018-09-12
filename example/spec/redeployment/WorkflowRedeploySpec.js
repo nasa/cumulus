@@ -21,8 +21,8 @@ const {
   removeTaskFromWorkflow
 } = require('../helpers/workflowUtils');
 
-const workflowsYmlFile = './workflows.yml';
-const workflowsYmlCopyFile = './workflowsCopy.yml';
+const workflowsYmlFile = './workflows/versioning.yml';
+const workflowsYmlCopyFile = './workflows/versioningCopy.yml';
 const config = loadConfig();
 
 
@@ -32,7 +32,7 @@ describe('When a workflow', () => {
   });
 
   afterAll(async () => {
-    // Restore workflows.yml to original and redeploy for next time tests are run
+    // Restore workflow yml to original and redeploy for next time tests are run
     restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
     await redeploy(config);
   });
