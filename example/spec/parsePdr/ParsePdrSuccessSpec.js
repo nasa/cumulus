@@ -81,9 +81,8 @@ describe('Parse PDR workflow', () => {
 
   afterAll(async () => {
     // await execution completions
-    await Promise.all(queueGranulesOutput.running.map(async (arn) => {
-      await waitForCompletedExecution(arn);
-    }));
+    await Promise.all(queueGranulesOutput.payload.running.map(async (arn) =>
+      waitForCompletedExecution(arn)));
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
     // delete test data from S3
@@ -163,10 +162,13 @@ describe('Parse PDR workflow', () => {
       // cleanup
       const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'SfSnsReport');
       // delete ingested granule(s)
-      await apiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: finalOutput.payload.granules[0].granuleId
-      });
+      await Promise.all(
+        finalOutput.payload.granules.map((g) =>
+          apiTestUtils.deleteGranule({
+            prefix: config.stackName,
+            granuleId: g.granuleId
+          }))
+      );
     });
 
     it('executes successfully', () => {
