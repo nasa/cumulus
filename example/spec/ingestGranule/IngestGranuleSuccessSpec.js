@@ -125,7 +125,10 @@ describe('The S3 Ingest Granules workflow', () => {
     await deleteFolder(config.bucket, testDataFolder);
 
     // delete ingested granule
-    apiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: inputPayload.granules[0].granuleId });
+    await apiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
   });
 
   it('completes execution with success status', () => {

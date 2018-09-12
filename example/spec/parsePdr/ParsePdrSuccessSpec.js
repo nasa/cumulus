@@ -11,7 +11,6 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 
-
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -164,13 +163,10 @@ describe('Parse PDR workflow', () => {
       // cleanup
       const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'SfSnsReport');
       // delete ingested granule(s)
-      await Promise.all(
-        finalOutput.payload.granules.map((g) =>
-          apiTestUtils.deleteGranule({
-            prefix: config.stackName,
-            granuleId: g.granuleId
-          }))
-      );
+      await apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: finalOutput.payload.granules[0].granuleId
+      });
     });
 
     it('executes successfully', () => {
@@ -212,7 +208,6 @@ describe('Parse PDR workflow', () => {
       expect(parsePdrExecution.parentArn).toBeUndefined();
     });
   });
-
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the pdr record is added to DynamoDB', async () => {

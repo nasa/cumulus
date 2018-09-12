@@ -78,7 +78,6 @@ function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', rep
     data = globalReplace(data, 'cumulus-test-data/pdrs', prefix);
   }
   const key = path.basename(file);
-  console.log('\nUploading test data to ', prefix);
   return s3().putObject({
     Bucket: bucket,
     Key: `${prefix}/${key}`,
