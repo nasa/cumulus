@@ -15,8 +15,6 @@ export DEPLOYMENT
 
 # Wait for the stack to be available
 KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
-DATE=$(date -R)
-STRING_TO_SIGN_HEAD="HEAD
 
 # Delete the stack if it's a nightly build
 if ["$DEPLOYMENT" = "nightly"]; then
