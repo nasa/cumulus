@@ -105,14 +105,6 @@ jobs:
         - DEPLOYMENT=cumulus-from-npm
         - USE_NPM_PACKAGES=true
 
-    # - name: "Nightly Integration tests"
-    #   stage: nightly integration test
-    #   install:
-    #     - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - npm run bootstrap-no-build
-    #   script: travis_wait 90 ./travis-ci/run-integration-tests.sh
-
     - name: "Deploy Integration Test Stack"
       stage: deploy integration test stack
       if: commit_message !~ \[skip-integration-tests\]
