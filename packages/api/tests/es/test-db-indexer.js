@@ -4,12 +4,12 @@ const test = require('ava');
 const drop = require('lodash.drop');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/common');
 
 const models = require('../../models');
 const { Search } = require('../../es/search');
 const bootstrap = require('../../lambdas/bootstrap');
 const dbIndexer = require('../../lambdas/db-indexer');
-const { constructCollectionId } = require('@cumulus/common');
 const {
   fakeCollectionFactory,
   fakeGranuleFactory,
@@ -30,8 +30,8 @@ process.env.ExecutionsTable = `${process.env.stackName}-ExecutionsTable`;
 
 
 function addSourceArn(tableName, records) {
-  const sourceArn = 'arn:aws:dynamodb:us-east-1:000:table/' +
-    `${tableName}/stream/2018-05-03T16:24:17.527`;
+  const sourceArn = 'arn:aws:dynamodb:us-east-1:000:table/'
+    + `${tableName}/stream/2018-05-03T16:24:17.527`;
 
   // add eventSourceArn
   records.Records.forEach((record) => {

@@ -73,7 +73,7 @@ function handler(event, context) {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }
-    else if (event.httpMethod === 'DELETE' && event.pathParameters) {
+    if (event.httpMethod === 'DELETE' && event.pathParameters) {
       return del(event).then((r) => cb(null, r)).catch((e) => cb(e));
     }
 
