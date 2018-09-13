@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 export AWS_ACCESS_KEY_ID="$INTEGRATION_AWS_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="$INTEGRATION_AWS_SECRET_ACCESS_KEY"
 export AWS_DEFAULT_REGION="$INTEGRATION_AWS_DEFAULT_REGION"
@@ -13,12 +15,10 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
-# Wait for the stack to be available
-KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
 
 # Delete the stack if it's a nightly build
 if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
-  cd example
+  cd example || exit 1
   npm install
 
   echo Delete app deployment
@@ -47,6 +47,7 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
 fi
 
 # Release the stack
+KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
 DATE=$(date -R)
 STRING_TO_SIGN_PUT="DELETE
 
@@ -64,4 +65,4 @@ curl \
   -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
   https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
 
-exit 0
+exit
