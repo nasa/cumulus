@@ -149,6 +149,11 @@ describe('The Cumulus API', () => {
       });
       cmrLink = granule.cmrLink;
 
+      // For debugging
+      if (!cmrLink) {
+        console.log(`Granule has no CMR link: ${JSON.stringify(granule)}`);
+      }
+
       const existsInCMR = await conceptExists(cmrLink);
       expect(existsInCMR).toEqual(true);
 
