@@ -57,12 +57,12 @@ test.beforeEach(() => {
 test.afterEach(() => sandbox.restore());
 
 test('login returns a 301 redirect to Google when code does not exist', async (t) => {
-  const googleOauthEndpoint = 'https://accounts.google.com/o/oauth2/v2/auth?' +
-    'access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&' +
-    `state=&response_type=code&client_id=${process.env.EARTHDATA_CLIENT_ID || ''}&redirect_uri=`;
-  const earthDataOauthEndpoint = `${process.env.EARTHDATA_BASE_URL}` +
-    `/oauth/authorize?client_id=${process.env.EARTHDATA_CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(process.env.API_ENDPOINT)}&response_type=code`;
+  const googleOauthEndpoint = 'https://accounts.google.com/o/oauth2/v2/auth?'
+    + 'access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&'
+    + `state=&response_type=code&client_id=${process.env.EARTHDATA_CLIENT_ID || ''}&redirect_uri=`;
+  const earthDataOauthEndpoint = `${process.env.EARTHDATA_BASE_URL}`
+    + `/oauth/authorize?client_id=${process.env.EARTHDATA_CLIENT_ID}`
+    + `&redirect_uri=${encodeURIComponent(process.env.API_ENDPOINT)}&response_type=code`;
 
   const expectedResponseObject = {
     statusCode: 301,

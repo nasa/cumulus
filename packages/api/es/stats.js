@@ -1,8 +1,9 @@
 'use strict';
 
 const moment = require('moment');
-const { BaseSearch } = require('./search');
 const omit = require('lodash.omit');
+
+const { BaseSearch } = require('./search');
 
 class Stats extends BaseSearch {
   /**
