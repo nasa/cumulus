@@ -82,6 +82,8 @@ curl \
 
 rm "${DEPLOYMENT}.lock"
 
+exit 1
+
 set +e
 (
   cd example
