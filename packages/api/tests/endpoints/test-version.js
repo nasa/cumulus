@@ -20,4 +20,3 @@ test('returns expected response', (t) => {
 
   t.deepEqual(actualResponse, expectedResponse);
 });
-

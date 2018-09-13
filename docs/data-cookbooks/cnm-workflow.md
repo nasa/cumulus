@@ -325,7 +325,7 @@ aws kinesis put-record --stream-name YOUR_KINESIS_NOTIFICATION_STREAM_NAME_HERE 
 The command should return output similar to:
 ```json
 {
-    "ShardId": "shardId-111111111111",
+    "ShardId": "shardId-000000000000",
     "SequenceNumber": "42356659532578640215890215117033555573986830588739321858"
 }
 ```
@@ -494,7 +494,7 @@ You should be able to validate the notification and response streams have the ex
 
 ```bash
 aws kinesis get-shard-iterator \
-  --shard-id shardId-111111111111 \
+  --shard-id shardId-000000000000 \
   --shard-iterator-type LATEST \
   --stream-name NOTIFICATION_OR_RESPONSE_STREAM_NAME
 ```
