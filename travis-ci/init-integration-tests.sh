@@ -111,4 +111,4 @@ set +e
 )
 set -e
 
-exit 0
+exit
