@@ -15,7 +15,6 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
-set +e
 (
   cd example
   if [ "$USE_NPM_PACKAGES" = "true" ]; then
@@ -27,6 +26,5 @@ set +e
   yarn test
 )
 RESULT="$?"
-set -e
 
 exit "$RESULT"

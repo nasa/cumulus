@@ -82,7 +82,6 @@ curl \
 
 rm "${DEPLOYMENT}.lock"
 
-set +e
 (
   cd example
   if [ "$USE_NPM_PACKAGES" = "true" ]; then
@@ -109,6 +108,5 @@ set +e
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
 )
-set -e
 
 exit
