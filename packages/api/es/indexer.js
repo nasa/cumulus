@@ -16,8 +16,9 @@ const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { Search, defaultIndexAlias } = require('./search');
 const { constructCollectionId } = require('@cumulus/common');
+
+const { Search, defaultIndexAlias } = require('./search');
 const { deconstructCollectionId } = require('../lib/utils');
 const { Granule, Pdr, Execution } = require('../models');
 
@@ -46,8 +47,8 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
       // "message": "uploaded s3://bucket/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"}
       const entryParts = p.message.trim().split('\t');
       // cumulus log message
-      if (entryParts.length >= 3 && entryParts[2].startsWith('{') &&
-      entryParts[entryParts.length - 1].endsWith('}')) {
+      if (entryParts.length >= 3 && entryParts[2].startsWith('{')
+      && entryParts[entryParts.length - 1].endsWith('}')) {
         record = JSON.parse(entryParts.slice(2).join('\t'));
         record.RequestId = entryParts[1];
       }

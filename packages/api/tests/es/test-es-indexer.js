@@ -9,11 +9,12 @@ const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/common');
+
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
 const models = require('../../models');
 const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../lib/testUtils');
-const { constructCollectionId } = require('@cumulus/common');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const granuleSuccess = require('../data/granule_success.json');
 const granuleFailure = require('../data/granule_failed.json');

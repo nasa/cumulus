@@ -53,9 +53,9 @@ function earthDataLoginUrl(state) {
   const endpoint = process.env.EARTHDATA_BASE_URL;
   const clientId = process.env.EARTHDATA_CLIENT_ID;
 
-  let url = `${endpoint}/oauth/authorize?` +
-              `client_id=${clientId}&` +
-              `redirect_uri=${redirectUriParam()}&response_type=code`;
+  let url = `${endpoint}/oauth/authorize?`
+              + `client_id=${clientId}&`
+              + `redirect_uri=${redirectUriParam()}&response_type=code`;
   if (state) {
     url = `${url}&state=${encodeURIComponent(state)}`;
   }
