@@ -156,4 +156,3 @@ test('DELETE deletes a rule', (t) => {
     t.is(message, 'Record deleted');
   });
 });
-
