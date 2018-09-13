@@ -8,7 +8,7 @@
     "unicorn"
   ],
   "extends": [
-    "airbnb",
+    "airbnb-base",
     "plugin:eslint-comments/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
@@ -99,6 +99,7 @@
     "arrow-parens": ["error", "always"],
     "prefer-destructuring": "off",
     "function-paren-newline": ["error", "consistent"],
+    "implicit-arrow-linebreak": "off",
 
     "eslint-comments/no-unused-disable": "warn",
 

@@ -1,11 +1,12 @@
 'use strict';
 
 const test = require('ava');
-const { User } = require('../../models');
-const { fakeUserFactory } = require('../../lib/testUtils');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
+
+const { User } = require('../../models');
+const { fakeUserFactory } = require('../../lib/testUtils');
 const {
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse
