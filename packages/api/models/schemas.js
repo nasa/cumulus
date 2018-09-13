@@ -51,8 +51,8 @@ module.exports.collection = {
     },
     provider_path: {
       title: 'Provider Path',
-      description: 'The path to look for the collection Granules or ' +
-                   'PDRs. Use regex for recursive search',
+      description: 'The path to look for the collection Granules or '
+                   + 'PDRs. Use regex for recursive search',
       type: 'string',
       default: '/'
     },
@@ -80,8 +80,8 @@ module.exports.collection = {
     },
     sampleFileName: {
       title: 'Sample Filename',
-      description: 'Is used to validate to test granule id ' +
-                   'validation and extraction regexes against',
+      description: 'Is used to validate to test granule id '
+                   + 'validation and extraction regexes against',
       type: 'string'
     },
     files: {
@@ -108,8 +108,8 @@ module.exports.collection = {
           },
           url_path: {
             title: 'Url Path',
-            description: 'Folder used to save the granule in the bucket. ' +
-                         'Defaults to the collection url path',
+            description: 'Folder used to save the granule in the bucket. '
+                         + 'Defaults to the collection url path',
             type: 'string'
           }
         },
