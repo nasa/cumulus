@@ -5,11 +5,7 @@ language: node_js
 
 stages:
   - name: build cache
-  # - name: unit test
-  # - name: integration test
-  #   if: type != cron
-  # - name: nightly integration test
-  #   if: type = cron
+  - name: unit test
   - name: deploy integration test stack
   - name: integration tests
   - name: cleanup integration tests
@@ -26,84 +22,52 @@ jobs:
       script: ./travis-ci/build-cache.sh
 
 
-    # - name: "eslint"
-    #   stage: unit test
-    #   install:
-    #     - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - npm run bootstrap-no-build
-    #   script: ./node_modules/.bin/eslint packages/api --ext .js
-    # - name: "Unit tests except API"
-    #   stage: unit test
-    #   services:
-    #     - docker
-    #   env:
-    #     - LOCALSTACK_HOST=127.0.0.1
-    #     - LOCAL_ES_HOST=127.0.0.1
-    #   install:
-    #     - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - npm run bootstrap-no-build
-    #     - ./travis-ci/start-local-services.sh
-    #   script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
-    # - name: "API unit tests"
-    #   stage: unit test
-    #   services:
-    #     - docker
-    #   env:
-    #     - LOCALSTACK_HOST=127.0.0.1
-    #     - LOCAL_ES_HOST=127.0.0.1
-    #   install:
-    #     - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - npm run bootstrap-no-build
-    #     - ./travis-ci/start-local-services.sh
-    #   script: ./travis-ci/run-api-unit-tests.sh
-    # - name: "e2e tests"
-    #   stage: unit test
-    #   services:
-    #     - docker
-    #   env:
-    #     - LOCALSTACK_HOST=127.0.0.1
-    #     - LOCAL_ES_HOST=127.0.0.1
-    #   install:
-    #     - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - npm run bootstrap-no-build
-    #     - ./travis-ci/start-local-services.sh
-    #   script: npm run e2e
-
-
-    # - name: "Integration tests"
-    #   stage: integration test
-    #   if: commit_message !~ \[skip-integration-tests\]
-    #   install:
-    #     - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - npm run bootstrap-no-build
-    #   script: ./travis-ci/run-integration-tests.sh
-
-
-    - name: "Deploy to NPM"
-      stage: deploy
+    - name: "eslint"
+      stage: unit test
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-      script: ./travis-ci/deploy-to-npm.sh
-    - name: "Deploy to Github Pages"
-      stage: deploy
-      install: npm install
-      script: ./travis-ci/deploy-to-github-pages.sh
-
-    - name: "Run integration tests against deployed packages"
-      stage: deployment test
-      if: commit_message !~ \[skip-integration-tests\]
-      install: true
-      script: ./travis-ci/run-integration-tests.sh
+      script: ./node_modules/.bin/eslint packages/api --ext .js
+    - name: "Unit tests except API"
+      stage: unit test
+      services:
+        - docker
       env:
-        - DEPLOYMENT=cumulus-from-npm
-        - USE_NPM_PACKAGES=true
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+        - ./travis-ci/start-local-services.sh
+      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
+    - name: "API unit tests"
+      stage: unit test
+      services:
+        - docker
+      env:
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+        - ./travis-ci/start-local-services.sh
+      script: ./travis-ci/run-api-unit-tests.sh
+    - name: "e2e tests"
+      stage: unit test
+      services:
+        - docker
+      env:
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+        - ./travis-ci/start-local-services.sh
+      script: npm run e2e
 
     - name: "Deploy Integration Test Stack"
       stage: deploy integration test stack
@@ -129,3 +93,24 @@ jobs:
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\]
       script: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
+
+    - name: "Deploy to NPM"
+      stage: deploy
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/deploy-to-npm.sh
+    - name: "Deploy to Github Pages"
+      stage: deploy
+      install: npm install
+      script: ./travis-ci/deploy-to-github-pages.sh
+
+    - name: "Run integration tests against deployed packages"
+      stage: deployment test
+      if: commit_message !~ \[skip-integration-tests\]
+      install: true
+      script: ./travis-ci/run-integration-tests.sh
+      env:
+        - DEPLOYMENT=cumulus-from-npm
+        - USE_NPM_PACKAGES=true
