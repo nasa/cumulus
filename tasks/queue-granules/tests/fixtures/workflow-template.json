@@ -24,7 +24,7 @@
         }
       },
       "queues": {
-        "startSF": "https://sqs.us-east-1.amazonaws.com/433612427488/lpdaac-cumulus-startSF"
+        "startSF": "https://sqs.us-east-1.amazonaws.com/111111111111/lpdaac-cumulus-startSF"
       },
       "templates": {
         "IngestGranule": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/IngestGranule.json",
@@ -34,8 +34,8 @@
     }
   },
   "cumulus_meta": {
-    "topic_arn": "arn:aws:sns:us-east-1:433612427488:lpdaac-cumulus-sftrackerSns-SJA7NNBL5MK2",
-    "state_machine": "arn:aws:states:us-east-1:433612427488:stateMachine:LpdaacCumulusIngestGranuleStateMachine-N3CLGBXRPAT9",
+    "topic_arn": "arn:aws:sns:us-east-1:111111111111:lpdaac-cumulus-sftrackerSns-SJA7NNBL5MK2",
+    "state_machine": "arn:aws:states:us-east-1:111111111111:stateMachine:LpdaacCumulusIngestGranuleStateMachine-N3CLGBXRPAT9",
     "workflow_name": "IngestGranule",
     "status": "running"
   },
