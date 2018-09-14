@@ -8,6 +8,9 @@ const { StepFunction } = require('@cumulus/ingest/aws');
 const { CMR } = require('@cumulus/cmrjs');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { randomString } = require('@cumulus/common/test-utils');
+const xml2js = require('xml2js');
+const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
+
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const granuleEndpoint = require('../../endpoints/granules');
@@ -17,8 +20,6 @@ const {
   fakeUserFactory
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
-const xml2js = require('xml2js');
-const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 // create all the variables needed across this test
 let esClient;

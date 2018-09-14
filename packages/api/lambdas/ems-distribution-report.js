@@ -221,8 +221,8 @@ async function generateDistributionReport(params) {
 
   const distributionEventsInReportPeriod = allDistributionEvents.filter(timeFilter);
 
-  log.info(`Found ${allDistributionEvents.length} distribution events between ` +
-    `${reportStartTime.toString()} and ${reportEndTime.toString()}`);
+  log.info(`Found ${allDistributionEvents.length} distribution events between `
+    + `${reportStartTime.toString()} and ${reportEndTime.toString()}`);
 
   return distributionEventsInReportPeriod.sort(sortByTime).join('\n');
 }
