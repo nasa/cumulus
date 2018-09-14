@@ -1,6 +1,6 @@
 {
   "cumulus_meta": {
-    "state_machine": "arn:aws:states:us-east-1:111111111111:stateMachine:LpdaacCumulusParsePdrStateM-TR0FqQTPomHD",
+    "state_machine": "arn:aws:states:us-east-1:000000000000:stateMachine:LpdaacCumulusParsePdrStateM-TR0FqQTPomHD",
     "message_source": "sfn",
     "workflow_start_time": 1519154426234,
     "execution_name": "c807fea5-8a27-4084-9f37-93d610a7ebfe",
@@ -15,7 +15,7 @@
     "status": "failed",
     "workflow_name": "ParsePdr",
     "queues": {
-      "startSF": "https://sqs.us-east-1.amazonaws.com/111111111111/lpdaac-cumulus-startSF"
+      "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"
     },
     "collection": {
       "files": [
@@ -58,7 +58,7 @@
       "clientId": "CUMULUS",
       "provider": "CUMULUS"
     },
-    "topic_arn": "arn:aws:sns:us-east-1:111111111111:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
+    "topic_arn": "arn:aws:sns:us-east-1:000000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
     "provider": {
       "protocol": "http",
       "globalConnectionLimit": 10,
@@ -92,7 +92,7 @@
     "isFinished": false,
     "running": [],
     "failed": [
-      "arn:aws:states:us-east-1:111111111111:execution:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h:19a4f140-800f-4b2d-a2de-64571cc2e1aa"
+      "arn:aws:states:us-east-1:000000000000:execution:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h:19a4f140-800f-4b2d-a2de-64571cc2e1aa"
     ],
     "completed": [],
     "pdr": {
@@ -102,7 +102,7 @@
   },
   "exception": {
     "Error": "ExecutionDoesNotExist",
-    "Cause": "{\"errorMessage\":\"Execution Does Not Exist: 'arn:aws:states:us-east-1:111111111111:execution:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h:19a4f140-800f-4b2d-a2de-64571cc2e1aa'\",\"errorType\":\"ExecutionDoesNotExist\",\"stackTrace\":[\"Request.extractError (/var/task/index.js:11440:28)\",\"Request.callListeners (/var/task/index.js:21072:21)\",\"Request.emit (/var/task/index.js:21044:11)\",\"Request.emit (/var/task/index.js:22434:15)\",\"Request.transition (/var/task/index.js:21773:11)\",\"AcceptorStateMachine.runTo (/var/task/index.js:22576:13)\",\"/var/task/index.js:22588:11\",\"Request.<anonymous> (/var/task/index.js:21789:10)\",\"Request.<anonymous> (/var/task/index.js:22436:13)\",\"Request.callListeners (/var/task/index.js:21082:19)\"]}"
+    "Cause": "{\"errorMessage\":\"Execution Does Not Exist: 'arn:aws:states:us-east-1:000000000000:execution:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h:19a4f140-800f-4b2d-a2de-64571cc2e1aa'\",\"errorType\":\"ExecutionDoesNotExist\",\"stackTrace\":[\"Request.extractError (/var/task/index.js:11440:28)\",\"Request.callListeners (/var/task/index.js:21072:21)\",\"Request.emit (/var/task/index.js:21044:11)\",\"Request.emit (/var/task/index.js:22434:15)\",\"Request.transition (/var/task/index.js:21773:11)\",\"AcceptorStateMachine.runTo (/var/task/index.js:22576:13)\",\"/var/task/index.js:22588:11\",\"Request.<anonymous> (/var/task/index.js:21789:10)\",\"Request.<anonymous> (/var/task/index.js:22436:13)\",\"Request.callListeners (/var/task/index.js:21082:19)\"]}"
   },
   "workflow_config": {
     "ParsePdr": {

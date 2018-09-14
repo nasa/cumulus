@@ -1,7 +1,7 @@
 
 {
   "cumulus_meta": {
-    "state_machine": "arn:aws:states:us-east-1:111111111111:stateMachine:LpdaacCumulusParsePdrStateM-TR0FqQTPomHD",
+    "state_machine": "arn:aws:states:us-east-1:000000000000:stateMachine:LpdaacCumulusParsePdrStateM-TR0FqQTPomHD",
     "message_source": "sfn",
     "workflow_start_time": 1519167134616,
     "execution_name": "28e5e6ef-5be1-4f1f-a89e-e4d5ffb16eb6",
@@ -15,7 +15,7 @@
     },
     "status": "running",
     "queues": {
-      "startSF": "https://sqs.us-east-1.amazonaws.com/111111111111/lpdaac-cumulus-startSF"
+      "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"
     },
     "workflow_name": "ParsePdr",
     "collection": {
@@ -54,7 +54,7 @@
       "createdAt": 1519154288958
     },
     "stack": "lpdaac-cumulus",
-    "topic_arn": "arn:aws:sns:us-east-1:111111111111:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
+    "topic_arn": "arn:aws:sns:us-east-1:000000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
     "provider": {
       "protocol": "http",
       "globalConnectionLimit": 10,
@@ -95,7 +95,7 @@
     "counter": 1,
     "failed": [],
     "running": [
-      "arn:aws:states:us-east-1:111111111111:execution:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h:d5b6344a-36eb-4c97-a5cf-3f6e83f0692a"
+      "arn:aws:states:us-east-1:000000000000:execution:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h:d5b6344a-36eb-4c97-a5cf-3f6e83f0692a"
     ],
     "limit": 30,
     "pdr": {

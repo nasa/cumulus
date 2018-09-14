@@ -267,7 +267,7 @@ function handle(event, context, authCheck, func) {
       const obj = results.Items[0];
 
       if (!obj.expires) return cb('Invalid Authorization token');
-      else if (obj.expires < Date.now()) return cb('Session expired');
+      if (obj.expires < Date.now()) return cb('Session expired');
       return func(cb);
     }).catch((e) => cb('Invalid Authorization token', e));
   }

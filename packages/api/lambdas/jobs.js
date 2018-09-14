@@ -63,8 +63,8 @@ async function checkExecution(arn, url, timestamp, esClient) {
     log.error(`Execution does not exist: ${arn}`);
     error = {
       Error: 'Not Found',
-      Cause: 'Execution was not found. If an execution is ' +
-             'finished and the state machine is deleted, this error is thrown'
+      Cause: 'Execution was not found. If an execution is '
+             + 'finished and the state machine is deleted, this error is thrown'
     };
     await partialRecordUpdate(esClient, arn, 'execution', { status: 'failed', error });
     await updateGranulesAndPdrs(esClient, url, error);
