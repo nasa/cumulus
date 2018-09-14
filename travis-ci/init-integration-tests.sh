@@ -102,11 +102,13 @@ rm "${DEPLOYMENT}.lock"
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
 
+  set +e
   ./node_modules/.bin/kes lambda S3AccessTest deploy \
     --kes-folder app \
     --region us-west-1 \
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
+  set -e
 )
 
 exit
