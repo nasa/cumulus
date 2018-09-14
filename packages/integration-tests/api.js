@@ -92,8 +92,8 @@ async function reingestGranule({ prefix, granuleId }) {
     functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/v1/granules/{granuleName}',
-      path: `/v1/granules/${granuleId}`,
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
       pathParameters: {
         granuleName: granuleId
       },
@@ -118,8 +118,8 @@ async function removeFromCMR({ prefix, granuleId }) {
     functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/v1/granules/{granuleName}',
-      path: `/v1/granules/${granuleId}`,
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
       pathParameters: {
         granuleName: granuleId
       },
@@ -150,8 +150,8 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
     functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/v1/granules/{granuleName}',
-      path: `/v1/granules/${granuleId}`,
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
       pathParameters: {
         granuleName: granuleId
       },
@@ -171,16 +171,13 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
 async function deleteGranule({ prefix, granuleId }) {
-  // ensure granule is removed from CMR first
-  await removeFromCMR({ prefix, granuleId });
-
   const payload = await callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'DELETE',
-      resource: '/v1/granules/{granuleName}',
-      path: `/v1/granules/${granuleId}`,
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
       pathParameters: {
         granuleName: granuleId
       }
