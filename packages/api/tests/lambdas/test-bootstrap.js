@@ -1,8 +1,9 @@
 'use strict';
 
 const test = require('ava');
-const bootstrap = require('../../lambdas/bootstrap');
 const { randomString } = require('@cumulus/common/test-utils');
+
+const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
 const { deleteAliases } = require('../../lib/testUtils');
@@ -125,4 +126,3 @@ test.serial('Missing fields added to index', async (t) => {
 
   await esClient.indices.delete({ index: indexName });
 });
-

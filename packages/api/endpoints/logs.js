@@ -41,7 +41,7 @@ function handler(event, context) {
     if (event.httpMethod === 'GET' && event.resource === '/stats/logs') {
       return count(event, cb);
     }
-    else if (event.httpMethod === 'GET' && _get(event, 'pathParameters.executionName')) {
+    if (event.httpMethod === 'GET' && _get(event, 'pathParameters.executionName')) {
       return get(event, cb);
     }
 

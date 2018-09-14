@@ -1,8 +1,8 @@
 'use strict';
 
 const url = require('url');
-const Manager = require('./base');
 const chunk = require('lodash.chunk');
+const Manager = require('./base');
 
 /**
  * extract bucket and and s3 path from a give file object

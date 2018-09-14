@@ -1,13 +1,14 @@
 'use strict';
 
 const get = require('lodash.get');
+const log = require('@cumulus/common/log');
+
 const authHelpers = require('../lib/authHelpers');
 const { User } = require('../models');
 const {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse
 } = require('../lib/response');
-const log = require('@cumulus/common/log');
 
 /**
  * AWS API Gateway function that handles callbacks from authentication, transforming
