@@ -60,7 +60,7 @@ To create a new processing stream for a data collection, a Dockerfile is used to
 ```
 # cumulus processing Dockerfile: docker-hs3-avaps
 
-FROM 111111111111.dkr.ecr.us-east-1.amazonaws.com/cumulus-base:latest
+FROM 985962406024.dkr.ecr.us-east-1.amazonaws.com/cumulus-base:latest
 
 # copy needed files
 WORKDIR /work

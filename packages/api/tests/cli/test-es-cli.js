@@ -1,11 +1,12 @@
 'use strict';
 
 const test = require('ava');
+const get = require('lodash.get');
+
 const { Search } = require('../../es/search');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const es = require('../../bin/es');
 const mappings = require('../../models/mappings.json');
-const get = require('lodash.get');
 
 const esIndex = 'cumulus-1';
 const indexAlias = 'cumulus-1-alias';

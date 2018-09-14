@@ -4,7 +4,7 @@
     "message_source": "local",
     "task": "SyncGranule",
     "system_bucket": "cumulus-devseed-internal",
-    "state_machine": "arn:aws:states:us-east-1:111111111111:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
+    "state_machine": "arn:aws:states:us-east-1:000000000000:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
     "execution_name": "test15",
     "workflow_start_time": 1519146447212
   },
@@ -36,7 +36,7 @@
       "password": ""
     },
     "distribution_endpoint": "https://g928e05in1.execute-api.us-east-1.amazonaws.com/dev/",
-    "topic_arn": "arn:aws:sns:us-east-1:111111111111:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
+    "topic_arn": "arn:aws:sns:us-east-1:000000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
     "collection": {
       "files": [
         {
@@ -92,7 +92,7 @@
       "DiscoverPdrs": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json"
     },
     "queues": {
-      "startSF": "https://sqs.us-east-1.amazonaws.com/111111111111/lpdaac-cumulus-startSF"
+      "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"
     },
     "status": "running"
   },

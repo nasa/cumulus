@@ -1,6 +1,6 @@
 {
   "cumulus_meta": {
-    "state_machine": "arn:aws:states:us-east-1:111111111111:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
+    "state_machine": "arn:aws:states:us-east-1:000000000000:stateMachine:LpdaacCumulusIngestGranuleS-pOyNXh5jeR4h",
     "message_source": "sfn",
     "workflow_start_time": 1519157005525,
     "execution_name": "bfa82fe0-c362-40c2-af3e-264ca31cc7a4",
@@ -15,7 +15,7 @@
     "status": "failed",
     "workflow_name": "IngestGranule",
     "queues": {
-      "startSF": "https://sqs.us-east-1.amazonaws.com/111111111111/lpdaac-cumulus-startSF"
+      "startSF": "https://sqs.us-east-1.amazonaws.com/000000000000/lpdaac-cumulus-startSF"
     },
     "collection": {
       "files": [
@@ -58,7 +58,7 @@
       "clientId": "CUMULUS",
       "provider": "CUMULUS"
     },
-    "topic_arn": "arn:aws:sns:us-east-1:111111111111:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
+    "topic_arn": "arn:aws:sns:us-east-1:000000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
     "provider": {
       "protocol": "http",
       "globalConnectionLimit": 10,
