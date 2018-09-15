@@ -1,8 +1,8 @@
 'use strict';
 
+const pMap = require('p-map');
 const test = require('ava');
 const moment = require('moment');
-const { TaskQueue } = require('cwait');
 const { promisify } = require('util');
 const chunk = require('lodash.chunk');
 const flatten = require('lodash.flatten');
@@ -18,7 +18,6 @@ const { handler } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
-const promisifiedBatchWriteItem = (params) => aws.dynamodb().batchWriteItem(params).promise();
 const promisifiedHandler = promisify(handler);
 const promisifiedSetTimeout = promisify(setTimeout);
 
@@ -39,15 +38,17 @@ function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
 
 // Expect files to have bucket and key properties
 function storeFilesToS3(files) {
-  const putObjectQueue = new TaskQueue(Promise, 10);
-  const promisifiedPutObject = (params) => aws.s3().putObject(params).promise();
-  const throttledPutObject = putObjectQueue.wrap(promisifiedPutObject);
-
-  return Promise.all(files.map((file) => throttledPutObject({
+  const putObjectParams = files.map((file) => ({
     Bucket: file.bucket,
     Key: file.key,
     Body: randomString()
-  })));
+  }));
+
+  return pMap(
+    putObjectParams,
+    (params) => aws.s3().putObject(params).promise(),
+    { concurrency: 10 }
+  );
 }
 
 // Expect files to have bucket, key, and granuleId properties
@@ -65,15 +66,17 @@ function storeFilesToDynamoDb(filesTableName, files) {
   // Break the requests into groups of 25
   const putRequestsChunks = chunk(putRequests, 25);
 
-  const batchWriteItemQueue = new TaskQueue(Promise, 1);
-  const throttledBatchWriteItem = batchWriteItemQueue.wrap(promisifiedBatchWriteItem);
-
-  return Promise.all(putRequestsChunks.map((requests) => {
-    const params = { RequestItems: {} };
-    params.RequestItems[filesTableName] = requests;
-
-    return throttledBatchWriteItem(params);
+  const putRequestParams = putRequestsChunks.map((requests) => ({
+    RequestItems: {
+      [filesTableName]: requests
+    }
   }));
+
+  return pMap(
+    putRequestParams,
+    (params) => aws.dynamodb().batchWriteItem(params).promise(),
+    { concurrency: 1 }
+  );
 }
 
 async function fetchCompletedReport(Bucket, stackName) {

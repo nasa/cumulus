@@ -2,13 +2,23 @@
 
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
+const pLimit = require('p-limit');
 const url = require('url');
-const TaskQueue = require('cwait').TaskQueue;
 const _ = require('lodash');
 const log = require('./log');
-const ResourcesLockedError = require('./errors').ResourcesLockedError;
+const { ResourcesLockedError } = require('./errors');
 
-const limit = (n, fn) => new TaskQueue(Promise, n).wrap(fn);
+/**
+ * Wrap a function to limit how many instances can be run in parallel
+ *
+ * While this function works, odds are that you should be using
+ * [p-map](https://www.npmjs.com/package/p-map) instead.
+ *
+ * @param {integer} n - the concurrency limit
+ * @param {Function} fn - the function to limit
+ * @returns {Function} a version of `fn` that limits concurrency
+ */
+const limit = (n, fn) => pLimit(n).bind(null, fn);
 
 const mapTolerant = (arr, fn) => {
   const errors = [];
@@ -33,6 +43,16 @@ const mapTolerant = (arr, fn) => {
     });
 };
 
+/**
+ * Invoke a function using a node-style callback and return a Promise
+ *
+ * It is recommended that `util.promisify()` be used instead of this function.
+ *
+ * @param {function} fn - the function to invoke
+ * @param  {...any} args - the arguments to pass to the function
+ * @returns {Promise} the result of invoking `fn`
+ * @deprecated Use util.promisify() instead
+ */
 const toPromise = (fn, ...args) =>
   new Promise((resolve, reject) =>
     fn(...args, (err, data) => (err ? reject(err) : resolve(data))));

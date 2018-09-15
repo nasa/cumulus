@@ -2,16 +2,17 @@
 
 const AWS = require('aws-sdk');
 const cksum = require('cksum');
-const concurrency = require('./concurrency');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const pMap = require('p-map');
+const pump = require('pump');
 const url = require('url');
+
+const concurrency = require('./concurrency');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
-const promiseRetry = require('promise-retry');
-const pump = require('pump');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -187,10 +188,15 @@ exports.s3ObjectExists = (params) =>
       throw e;
     });
 
-exports.promiseS3Upload = (params) => {
-  const uploadFn = exports.s3().upload.bind(exports.s3());
-  return concurrency.toPromise(uploadFn, params);
-};
+/**
+ * Upload data to S3
+ *
+ * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
+ *
+ * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ */
+exports.promiseS3Upload = (params) => exports.s3().upload(params).promise();
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -285,24 +291,23 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
         .on('error', reject);
     });
   };
-  const limitedDownload = concurrency.limit(S3_RATE_LIMIT, promiseDownload);
-  return Promise.all(scrubbedS3Objs.map(limitedDownload));
+
+  return pMap(scrubbedS3Objs, promiseDownload, { concurrency: S3_RATE_LIMIT });
 };
 
 /**
  * Delete files from S3
  *
  * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
- * @param {Object} s3Opts - An optional object containing options that influence the behavior of S3
  * @returns {Promise} A promise that resolves to an Array of the data returned from the deletion operations
  */
 exports.deleteS3Files = (s3Objs) => {
   log.info(`Starting deletion of ${s3Objs.length} object(s)`);
-
-  const promiseDelete = (s3Obj) => exports.s3().deleteObject(s3Obj).promise();
-  const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
-
-  return Promise.all(s3Objs.map(limitedDelete));
+  return pMap(
+    s3Objs,
+    (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
+    { concurrency: S3_RATE_LIMIT }
+  );
 };
 
 /**
@@ -350,8 +355,8 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
         return { key: key, bucket: bucket };
       });
   };
-  const limitedUpload = concurrency.limit(S3_RATE_LIMIT, promiseUpload);
-  return Promise.all(files.map(limitedUpload));
+
+  return pMap(files, promiseUpload, { concurrency: S3_RATE_LIMIT });
 };
 
 /**
