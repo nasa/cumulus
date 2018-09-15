@@ -1,3 +1,8 @@
+/**
+ * A collection of functions to make working with http easier
+ * @module
+ */
+
 'use strict';
 
 const fs = require('fs');
