@@ -1,48 +1,15 @@
 'use strict';
 
-const fs = require('fs');
+const http = require('@cumulus/common/http');
 const path = require('path');
 const { PassThrough } = require('stream');
 const urljoin = require('url-join');
 const Crawler = require('simplecrawler');
-const http = require('http');
-const https = require('https');
-const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
-const mkdirp = require('mkdirp');
-const pump = require('pump');
+const got = require('got');
+const { log, aws: { buildS3Uri, s3 } } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 
-/**
- * Downloads a given http URL to disk
- *
- * @param {string} url - a http(s) url
- * @param {string} filepath - the local path to save the downloaded file
- * @returns {Promise} undefined
- */
-async function downloadToDisk(url, filepath) {
-  const transport = url.indexOf('https://') === 0 ? https : http;
-  return new Promise((resolve, reject) => {
-    transport.get(url, (res) => {
-      if (res.statusCode !== 200) {
-        const err = new Error(`Unexpected HTTP status code: ${res.statusCode}`);
-        err.code = res.statusCode;
-        return reject(err);
-      }
-      // FIXME The download directory will exist, so this mkdirp can be removed
-      return mkdirp(path.dirname(filepath), (err) => {
-        if (err) return reject(err);
-        const file = fs.createWriteStream(filepath);
-        return pump(res, file, (e) => {
-          if (e) return reject(e);
-          return resolve();
-        });
-      });
-    }).on('error', reject);
-  });
-}
-
 module.exports.httpMixin = (superclass) => class extends superclass {
-
   /**
    * List all PDR files from a given endpoint
    *
@@ -109,7 +76,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
-      await downloadToDisk(remoteUrl, localPath);
+      await http.download(remoteUrl, localPath);
     }
     catch (e) {
       if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
@@ -121,26 +88,6 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     log.info(`Finishing downloading ${remoteUrl}`);
 
     return localPath;
-  }
-
-  /**
-   * get readable stream of the remote file
-   *
-   * @param {string} url - url of the remote file
-   * @returns {Promise} readable stream of the remote file
-   */
-  async _getReadableStream(url) {
-    const transport = url.indexOf('https://') === 0 ? https : http;
-    return new Promise((resolve, reject) => {
-      transport.get(url, (res) => {
-        if (res.statusCode !== 200) {
-          const err = new Error(`Unexpected HTTP status code: ${res.statusCode}`);
-          err.code = res.statusCode;
-          return reject(err);
-        }
-        return resolve(res);
-      }).on('error', reject);
-    });
   }
 
   /**
@@ -156,13 +103,15 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
-    const readable = await this._getReadableStream(remoteUrl);
-
     const pass = new PassThrough();
-    readable.pipe(pass);
+    got.stream(remoteUrl).pipe(pass);
 
-    const params = { Bucket: bucket, Key: key, Body: pass };
-    await promiseS3Upload(params);
+    await s3().upload({
+      Bucket: bucket,
+      Key: key,
+      Body: pass
+    }).promise();
+
     log.info('Uploading to s3 is complete', s3uri);
     return s3uri;
   }

@@ -39,16 +39,17 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/common": "^1.10.0",
     "aws-sdk": "^2.238.1",
     "extract-zip": "^1.6.6",
     "fs-extra": "^5.0.0",
+    "got": "^9.2.1",
     "handlebars": "^4.0.11",
     "kes": "~2.2.2",
     "lodash.get": "^4.4.2",
     "lodash.omit": "^4.5.0",
     "node-forge": "^0.7.1",
     "p-limit": "^1.2.0",
-    "request": "^2.83.0",
     "yauzl": "^2.10.0"
   },
   "devDependencies": {

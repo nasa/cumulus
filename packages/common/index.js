@@ -1,5 +1,6 @@
 'use strict';
 
+exports.http = require('./http');
 exports.log = require('./log');
 exports.aws = require('./aws');
 exports.cliUtils = require('./cli-utils');
