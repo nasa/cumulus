@@ -5,6 +5,11 @@ const handle = require('../lib/response').handle;
 const { S3, StepFunction } = require('@cumulus/ingest/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
 
+/**
+ * fetchRemote fetches remote message from S3
+ * @param  {Object} eventMessage Cumulus Message Adapter message
+ * @return {Object}              Cumulus Messsage Adapter message
+ */
 async function fetchRemote(eventMessage) {
   if (eventMessage.replace) {
     const file = await S3.get(eventMessage.replace.Bucket, eventMessage.replace.Key);
@@ -14,6 +19,15 @@ async function fetchRemote(eventMessage) {
   return eventMessage;
 }
 
+/**
+ * getEventDetails
+ *   - replaces StepFunction-specific keys with input or output keys
+ *   - replaces "replace" key in input or output with message stored on S3
+ * @param  {Object} event StepFunction event object
+ * @return {Object}       StepFunction event object, with SFn keys and
+ *                        "replace" values replaced with "input|output"
+ *                        and message stored on S3, respectively.
+ */
 async function getEventDetails(event) {
   let result = Object.assign({}, event);
   let prop;
