@@ -134,7 +134,7 @@ const s3Mock = {
 executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
 executionStatusEndpoint.__set__('S3', s3Mock);
 
-test('returns execution status', (t) => {
+test('returns full message when it is already included in the output', (t) => {
   const event = { pathParameters: { arn: 'hasFullMessage' } };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
@@ -142,15 +142,27 @@ test('returns execution status', (t) => {
   });
 });
 
-test('fetches message from S3 when remote message', (t) => {
+test('fetches messages from S3 when remote message (for both SF execution history and executions)', (t) => {
   const event = { pathParameters: { arn: 'hasRemoteMessage' } };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
-    t.deepEqual(JSON.stringify(fullMessageOutput), executionStatus.execution.output);
+    const expectedResponse = {
+      execution: {
+        ...executionStatusCommon,
+        output: JSON.stringify(fullMessageOutput)
+      },
+      executionHistory: {
+        events: [
+          lambdaEventOutput
+        ]
+      },
+      stateMachine: {}
+    };
+    t.deepEqual(expectedResponse, executionStatus);
   });
 });
 
-test('when execution is still running, still returns status', (t) => {
+test('when execution is still running, still returns status and fetches SF execution history events from S3', (t) => {
   const event = { pathParameters: { arn: 'stillRunning' } };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
