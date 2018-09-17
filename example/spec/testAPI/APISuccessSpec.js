@@ -22,7 +22,7 @@ const { api: apiTestUtils } = require('@cumulus/integration-tests');
  * Checks for granule in CMR until it get the desired outcome or hits
  * the number of retries.
  *
- * @param {string} CMRLink - url for grnaule in CMR
+ * @param {string} CMRLink - url for granule in CMR
  * @param {string} outcome - desired outcome
  * @param {string} retries - number of remaining tries
  * @param {number} delay - time (in ms) to wait between tries
@@ -42,6 +42,25 @@ async function waitForExist(CMRLink, outcome, retries, delay = 2000) {
   }
 
   return true;
+}
+
+/**
+ * Wait until granule status is no longer running.
+ * 
+ * @param {string} granuleId - the Cumulus granule id
+ */
+async function waitForCompletion(granuleId) {
+  let granule = await apiTestUtils.getGranule({
+    prefix: config.stackName,
+    granuleId
+  });
+  while (granule.status === 'running') {
+    await sleep(15000);
+    granule = await apiTestUtils.getGranule({
+      prefix: config.stackName,
+      granuleId
+    });
+  }
 }
 
 describe('The Cumulus API', () => {
@@ -92,53 +111,32 @@ describe('The Cumulus API', () => {
   });
 
   describe('reingest a granule', () => {
-    it('executes with success status', async () => {
+    it('uses reingest and executes with success status', async () => {
+      let granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      const initialUpdatedAt = granule.updatedAt;
+
+      // Reingest Granule and compare the updatedAt times
       const response = await apiTestUtils.reingestGranule({
         prefix: config.stackName,
         granuleId
       });
       expect(response.status).toEqual('SUCCESS');
-    });
 
-    it('uses reingest', async () => {
-      const granule = await apiTestUtils.getGranule({
+      granule = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
+      expect(granule.updatedAt).not.toEqual(initialUpdatedAt);
 
-      // Reingest Granule and compare the updatedAt times
-      await apiTestUtils.reingestGranule({
-        prefix: config.stackName,
-        granuleId
-      });
-      await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      });
-      expect(granule.updatedAt).not.toEqual(true);
-    });
-
-    it('in place with applyWorkflow', async () => {
-      const granule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      });
-
-      await apiTestUtils.applyWorkflow({
-        prefix: config.stackName,
-        granuleId,
-        workflow: 'IngestGranule'
-      });
-
-      const recentGranule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      });
-      expect(granule.updatedAt).not.toEqual(recentGranule.updatedAt);
+      console.log('\nWaiting for reingest to complete...')
+      await waitForCompletion(inputPayload.granules[0].granuleId);
     });
   });
 
-  describe('removeFromCMR & PublishGranule', () => {
+  describe('CMR actions', () => {
     let granule;
     let cmrLink;
 
@@ -159,7 +157,7 @@ describe('The Cumulus API', () => {
       });
 
       // Check that the granule was removed
-      const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
+      const granuleRemoved = await waitForExist(cmrLink, false, 2);
       expect(granuleRemoved).toEqual(true);
     });
 
