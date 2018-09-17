@@ -70,6 +70,7 @@
     "node-forge": "^0.7.1",
     "p-limit": "^1.2.0",
     "querystring": "^0.2.0",
+    "p-retry": "^2.0.0",
     "split2": "^2.2.0",
     "uuid": "^3.2.1"
   },
