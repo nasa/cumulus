@@ -133,7 +133,7 @@ function fetchEarthdataToken(code) {
       const accessToken = tokenInfo.access_token;
 
       // if no access token is given, then the code is wrong
-      if (typeof accessToken === 'undefined') {
+      if (accessToken === undefined) {
         return new Error('Failed to get Earthdata token');
       }
 

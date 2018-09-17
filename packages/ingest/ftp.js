@@ -4,9 +4,10 @@ const JSFtp = require('jsftp');
 const join = require('path').join;
 const { PassThrough } = require('stream');
 const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
+const omit = require('lodash.omit');
+
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-const { omit } = require('lodash');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {
   // jsftp.ls is called in _list and uses 'STAT' as a default. Some FTP

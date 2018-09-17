@@ -121,7 +121,7 @@ function handler(event, context, cb) {
       const accessToken = tokenInfo.access_token;
 
       // if no access token is given, then the code is wrong
-      if (typeof accessToken === 'undefined') {
+      if (accessToken === undefined) {
         return cb(null, {
           statusCode: '400',
           body: '{"error": "Failed to get EarthData token"}'
