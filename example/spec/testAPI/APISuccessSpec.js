@@ -183,7 +183,7 @@ describe('The Cumulus API', () => {
         workflow: 'PublishGranule'
       });
 
-      const granulePublished = await waitForExist(cmrLink, true, 6, 20000);
+      const granulePublished = await waitForExist(cmrLink, true, 10, 30000);
       expect(granulePublished).toEqual(true);
 
       // Cleanup: remove from CMR
