@@ -178,4 +178,3 @@ test('when execution is still running, still returns status and fetches SF execu
     t.deepEqual(expectedResponse, executionStatus);
   });
 });
-
