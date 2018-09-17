@@ -3,11 +3,12 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const got = require('got');
+const pRetry = require('p-retry');
 const util = require('util');
 const isError = require('lodash.iserror'); // eslint-disable-line import/no-unresolved, node/no-missing-require, max-len
 const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
-const https = require('https');
 const url = require('url');
 
 /**
@@ -107,21 +108,27 @@ async function getLambdaInfo(FunctionName) {
  * @returns {Promise<undefined>} resolves when the code has been downloaded
  */
 async function fetchLambdaFunction(codeUrl) {
-  await new Promise((resolve, reject) => {
-    const file = fs.createWriteStream('/home/task/fn.zip');
-
-    file.on('error', reject);
-    file.on('finish', () => file.close());
-    file.on('close', resolve);
-
-    try {
-      https.get(codeUrl, (res) => res.pipe(file))
+  // Fetching the lambda zip file from S3 was failing intermittently because
+  // of connection timeouts.  If the download fails, this will retry it up to
+  // 10 times with an exponential backoff.
+  await pRetry(
+    () => new Promise((resolve, reject) => {
+      const file = fs.createWriteStream('/home/task/fn.zip')
+        .on('finish', resolve)
         .on('error', reject);
+      got.stream(codeUrl)
+        .on('error', reject)
+        .pipe(file);
+    }),
+    {
+      onFailedAttempt: (err) => {
+        const message = (err.attemptsLeft > 0)
+          ? `Failed to download lambda function (will retry): ${err}`
+          : `Failed to download lambda function (will not retry): ${err}`;
+        console.log(message);
+      }
     }
-    catch (err) {
-      reject(err);
-    }
-  });
+  );
 
   return exec('unzip -o /home/task/fn.zip -d /home/task/lambda-function');
 }
