@@ -1,9 +1,11 @@
+/* eslint no-console: "off" */
+
 'use strict';
 
 const AWS = require('aws-sdk');
 const util = require('util');
 const isError = require('lodash.iserror'); // eslint-disable-line import/no-unresolved, node/no-missing-require, max-len
-const exec = util.promisify(require('child_process').exec); // eslint-disable-line security/detect-child-process, max-len
+const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const https = require('https');
 const url = require('url');
@@ -178,7 +180,7 @@ function updateAsyncOperation(status, output) {
  *
  * @returns {Promise<undefined>} resolves when the task has completed
  */
-async function runTask() { // eslint-disable-line max-statements
+async function runTask() {
   let lambdaInfo;
   let payload;
 
@@ -199,6 +201,8 @@ async function runTask() { // eslint-disable-line max-statements
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
   }
   catch (err) {
+    console.log('Failed to fetch payload:');
+    console.log(JSON.stringify(err, null, 2));
     if (err.name === 'JSONParsingError') {
       await updateAsyncOperation('TASK_FAILED', err);
     }
@@ -212,7 +216,7 @@ async function runTask() { // eslint-disable-line max-statements
   let result;
   try {
     // Load the lambda function
-    const task = require(`/home/task/lambda-function/${lambdaInfo.moduleFileName}`); //eslint-disable-line global-require, import/no-dynamic-require, max-len, security/detect-non-literal-require
+    const task = require(`/home/task/lambda-function/${lambdaInfo.moduleFileName}`); //eslint-disable-line global-require, import/no-dynamic-require, max-len
 
     // Run the lambda function
     result = await task[lambdaInfo.moduleFunctionName](payload);
@@ -231,4 +235,4 @@ async function runTask() { // eslint-disable-line max-statements
 // Make sure that all of the required environment variables are set
 const missingVars = missingEnvironmentVariables();
 if (missingVars.length === 0) runTask();
-else console.error('Missing environment variables:', missingVars.join(', ')); // eslint-disable-line no-console, max-len
+else console.error('Missing environment variables:', missingVars.join(', '));
