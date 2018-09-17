@@ -9,7 +9,10 @@ const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { constructCollectionId } = require('@cumulus/common');
+const {
+  constructCollectionId,
+  util: { noop }
+} = require('@cumulus/common');
 
 const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
@@ -662,7 +665,7 @@ test.serial('pass a sns message to main handler', async (t) => {
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, () => {});
+  const resp = await indexer.handler(event, {}, noop);
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);
@@ -693,7 +696,7 @@ test.serial('pass a sns message to main handler with parse info', async (t) => {
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, () => {});
+  const resp = await indexer.handler(event, {}, noop);
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);
@@ -721,7 +724,7 @@ test.serial('pass a sns message to main handler with discoverpdr info', async (t
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, () => {});
+  const resp = await indexer.handler(event, {}, noop);
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);

@@ -1,10 +1,10 @@
 'use strict';
 
+const compact = require('lodash.compact');
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const url = require('url');
 const TaskQueue = require('cwait').TaskQueue;
-const _ = require('lodash');
 const log = require('./log');
 const ResourcesLockedError = require('./errors').ResourcesLockedError;
 
@@ -27,7 +27,7 @@ const mapTolerant = (arr, fn) => {
   return Promise.all(arr.map(tolerantCall))
     .then((items) => { //eslint-disable-line arrow-body-style
       return {
-        completed: _.compact(items),
+        completed: compact(items),
         errors: errors.length === 0 ? null : errors
       };
     });
@@ -140,7 +140,6 @@ class Semaphore {
     }
     return this.docClient.update(updateParams).promise();
   }
-
 }
 
 class Mutex {
