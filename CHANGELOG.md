@@ -20,7 +20,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     fetch an Lambda function, run it in ECS, and then store the result to the
     AsyncOperations table in DynamoDB.
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
+- Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 
+### Fixed
+
+- `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
 
 ## [v1.10.1] - 2018-09-4
 
