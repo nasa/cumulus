@@ -87,7 +87,7 @@ default:
     desiredInstances: 0
     tasks:
       AsyncOperation:
-        image: cumuluss/async-operation:20
+        image: cumuluss/async-operation:21
         cpu: 400
         memory: 700
         count: 1

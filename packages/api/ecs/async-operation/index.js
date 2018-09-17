@@ -192,6 +192,8 @@ async function runTask() {
     await fetchLambdaFunction(lambdaInfo.codeUrl);
   }
   catch (err) {
+    console.log('Failed to fetch lambda function:', err);
+    console.log(err.stack);
     await updateAsyncOperation('RUNNER_FAILED', err);
     return;
   }
@@ -201,8 +203,8 @@ async function runTask() {
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
   }
   catch (err) {
-    console.log('Failed to fetch payload:');
-    console.log(JSON.stringify(err, null, 2));
+    console.log('Failed to fetch payload:', err);
+    console.log(err.stack);
     if (err.name === 'JSONParsingError') {
       await updateAsyncOperation('TASK_FAILED', err);
     }
@@ -222,6 +224,8 @@ async function runTask() {
     result = await task[lambdaInfo.moduleFunctionName](payload);
   }
   catch (err) {
+    console.log('Failed to execute the lambda function:', err);
+    console.log(err.stack);
     await updateAsyncOperation('TASK_FAILED', err);
     return;
   }
