@@ -380,3 +380,7 @@ mhs3:
 jk:
   stackName: jk
   stackNameNoDash: jk
+
+mboyd-test:
+  stackName: mboyd-test
+  stackNameNoDash: mboydTest

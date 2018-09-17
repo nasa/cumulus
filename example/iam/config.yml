@@ -179,3 +179,7 @@ mhs3:
 
 jk:
   prefix: jk
+
+mboyd-test:
+  prefix: mboyd-test
+  stackName: mboyd-test-iam
