@@ -61,8 +61,8 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
  * @param {string} params.granuleId - a granule ID
  * @returns {Promise<Object>} - the granule fetched by the API
  */
-function getGranule({ prefix, granuleId }) {
-  return callCumulusApi({
+async function getGranule({ prefix, granuleId }) {
+  const response = await callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
@@ -74,6 +74,8 @@ function getGranule({ prefix, granuleId }) {
       }
     }
   });
+
+  return JSON.parse(response.body);
 }
 
 /**
@@ -173,7 +175,7 @@ async function removeFromCMR({ prefix, granuleId }) {
   }
   catch (error) {
     console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${payload}`);
-    throw(error);
+    throw error;
   }
 }
 /**
