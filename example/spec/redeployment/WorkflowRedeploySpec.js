@@ -77,8 +77,8 @@ describe('When a workflow', () => {
 
       it('the execution steps show the original workflow steps', () => {
         const helloWorldScheduledEvents = executionStatus.executionHistory.events.filter((event) =>
-          event.type === 'LambdaFunctionScheduled' &&
-          event.lambdaFunctionScheduledEventDetails.resource.includes('HelloWorld'));
+          event.type === 'LambdaFunctionScheduled'
+            && event.lambdaFunctionScheduledEventDetails.resource.includes('HelloWorld'));
 
         expect(helloWorldScheduledEvents.length).toEqual(1);
       });
@@ -97,20 +97,18 @@ describe('When a workflow', () => {
         'WaitForDeployWorkflow'
       );
 
+      // Remove the WaitForDeployWorkflow workflow from workflows.yml
       removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
 
       await redeploy(config);
 
-      // Debugging integration test sporadic failures
-      console.log(`Redeploy complete. Waiting for execution: ${workflowExecutionArn}`);
+      // Wait for the execution to reach a non-RUNNING state
+      await waitForCompletedExecution(workflowExecutionArn);
 
       workflowStatus = await apiTestUtils.getExecution({
         prefix: config.stackName,
         arn: workflowExecutionArn
       });
-
-      // This is for debugging integration test sporadic failures
-      console.log(`workflow status: ${JSON.stringify(workflowStatus)}`);
     });
 
     it('the workflow has executed successfully and is returned when querying the API', () => {
