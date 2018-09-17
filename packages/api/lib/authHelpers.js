@@ -139,8 +139,7 @@ function fetchEarthdataToken(code) {
 
       const refresh = tokenInfo.refresh_token;
       const userName = tokenInfo.endpoint.split('/').pop();
-      const expires = (+new Date()) + (tokenInfo.expires_in * 1000);
-
+      const expires = (+new Date()) + (86400000);
       return {
         userName, accessToken, refresh, expires
       };
