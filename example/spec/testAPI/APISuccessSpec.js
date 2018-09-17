@@ -58,19 +58,22 @@ async function waitForExist(CMRLink, outcome, retries, delay = 2000) {
  * Wait until granule status is no longer running.
  * 
  * @param {string} granuleId - the Cumulus granule id
+ * @returns {Promise<boolean} - whether granule completed
  */
-async function waitForCompletion(granuleId) {
-  let granule = await apiTestUtils.getGranule({
+async function waitForCompletion(granuleId, spentTime = 0) {
+  const granule = await apiTestUtils.getGranule({
     prefix: config.stackName,
     granuleId
   });
-  while (granule.status === 'running') {
+  if (granule.status === 'running') {
+    if (spentTime > 300000) {
+      console.log('\nGranule not finished after 5 minutes. May cause further errors.');
+      return false;
+    }
     await sleep(15000);
-    granule = await apiTestUtils.getGranule({
-      prefix: config.stackName,
-      granuleId
-    });
+    return waitForCompletion(granuleId, (spentTime + 15000));
   }
+  return true;
 }
 
 describe('The Cumulus API', () => {
