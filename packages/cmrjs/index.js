@@ -8,7 +8,8 @@ const {
   ValidationError,
   updateToken,
   getUrl,
-  xmlParseOptions
+  xmlParseOptions,
+  getHost
 } = require('./utils');
 
 
@@ -334,5 +335,6 @@ module.exports = {
   ValidationError,
   CMR,
   getMetadata,
-  getFullMetadata
+  getFullMetadata,
+  getHost
 };
