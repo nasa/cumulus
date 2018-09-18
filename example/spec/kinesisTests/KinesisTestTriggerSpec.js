@@ -13,7 +13,13 @@ const {
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { loadConfig } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
+
 const {
   createOrUseTestStream,
   deleteTestStream,
@@ -28,6 +34,8 @@ const {
 } = require('../helpers/kinesisHelpers');
 
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
+
+const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-KinesisTestTrigger`);
 
 const granuleId = record.product.name;
 const recordIdentifier = randomString();
@@ -51,7 +59,7 @@ const expectedTranslatePayload = {
       granuleId: record.product.name,
       files: [
         {
-          path: 'cumulus-test-data/pdrs',
+          path: testDataFolder,
           url_path: recordFile.uri,
           bucket: record.bucket,
           name: recordFile.name,
@@ -86,6 +94,8 @@ const expectedSyncGranulesPayload = {
 
 const ruleDirectory = './spec/kinesisTests/data/rules';
 
+const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
+
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
@@ -102,6 +112,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   testConfig.cnmResponseStream = cnmResponseStreamName;
 
   beforeAll(async () => {
+    await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder);
     // create streams
     await tryCatchExit(async () => {
       await createOrUseTestStream(streamName);
@@ -118,6 +129,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     // delete rule
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
+
+    await deleteFolder(testDataFolder);
 
     await s3().deleteObject({
       Bucket: testConfig.buckets.private.name,

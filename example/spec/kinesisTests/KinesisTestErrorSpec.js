@@ -57,9 +57,8 @@ describe('The kinesisConsumer receives a bad record.', () => {
     }
     console.log('\nDeleting kinesisRule');
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
-    console.log(`\nDeleting testStream '${streamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
-
+    console.log(`\nDeleting testStream '${streamName}'`);
     await deleteTestStream(streamName);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
   });
