@@ -343,7 +343,6 @@ class UpdatedKes extends Kes {
       }
 
       oldLambdaNames = oldLambdaNames.concat(oldAliases);
-      console.log('here');
     });
     return oldLambdaNames;
   }
