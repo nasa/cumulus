@@ -608,7 +608,7 @@ function selector(type, protocol) {
 function getGranuleId(uri, regex) {
   const match = path.basename(uri).match(regex);
   if (match) return match[1];
-  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
+  throw new Error(`Could not determine granule id of ${uri} using ${regex}`);
 }
 
 /**
