@@ -6,9 +6,11 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
-const pRetry = require('p-retry');
 const {
-  aws: { s3, sfn }
+  aws: { s3, sfn },
+  stepFunctions: {
+    describeExecution
+  }
 } = require('@cumulus/common');
 const {
   models: { Provider, Collection, Rule }
@@ -64,54 +66,33 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
  * does not exist then the calling code should probably know that.  Something
  * to be refactored another day.
  *
- * The StepFunctions API has been known to throw throttling exceptions.  This
- * function will retry up to 10 times with an exponential backoff.
- *
  * @param {string} executionArn - ARN of the execution
- * @param {Object} retryOptions - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
+ * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
  * @returns {Promise<string>} status
  */
-function getExecutionStatus(executionArn, retryOptions = {}) {
-  const actualRetryOptions = Object.assign(
-    {
-      onFailedAttempt: (err) => {
-        if (err.code === 'ThrottlingException') {
-          console.log('Encountered step function describeExecution throttling exception');
-        }
-      }
-    },
-    retryOptions
-  );
+async function getExecutionStatus(executionArn, retryOptions) {
+  try {
+    const execution = await describeExecution(executionArn, retryOptions);
+    return execution.status;
+  }
+  catch (err) {
+    // If the execution does not exist, we return that it's "RUNNING".  I'm
+    //   not sure this is the behavior that we want.
+    if (err.code === 'ExecutionDoesNotExist') return 'RUNNING';
 
-  return pRetry(
-    () => sfn().describeExecution({ executionArn }).promise()
-      .then((response) => response.status)
-      .catch((err) => {
-        // If the execution does not exist, we return that it's "RUNNING".  I'm
-        //   not sure this is the behavior that we want.
-        if (err.code === 'ExecutionDoesNotExist') return 'RUNNING';
-
-        // If we get a throttling exception, we re-throw the error.  This will
-        //   trigger the "retry with exponential backoff" functionality.
-        if (err.code === 'ThrottlingException') throw err;
-
-        // If we get an error other than the previous two then something went
-        //   wrong.  We abort any other retry attempts and throw the error.
-        throw new pRetry.AbortError(err);
-      }),
-    actualRetryOptions
-  );
+    throw err;
+  }
 }
 
 /**
  * Wait for a given execution to complete, then return the status
  *
  * @param {string} executionArn - ARN of the execution
- * @param {number} [timeout=300] - the time, in seconds, to wait for the
+ * @param {number} [timeout=600] - the time, in seconds, to wait for the
  *   execution to reach a non-RUNNING state
  * @returns {string} status
  */
-async function waitForCompletedExecution(executionArn, timeout = 300) {
+async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
 
   const stopTime = Date.now() + (timeout * 1000);
@@ -180,10 +161,10 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {string} workflowMsg - workflow message
- * @param {number} [timeout=300] - number of seconds to wait for execution to complete
+ * @param {number} [timeout=600] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
-async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout = 300) {
+async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout = 600) {
   const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 
   // Wait for the execution to complete to get the status
