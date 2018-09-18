@@ -14,9 +14,7 @@ test.beforeEach((t) => {
 });
 
 function setupKesForLookupLambdaReference(kes, functionName, hashValue) {
-  const lambdaFixture = {};
-  lambdaFixture[functionName] = { hash: hashValue };
-  kes.config.lambdas = lambdaFixture;
+  kes.config.lambdas = { [functionName]: { hash: hashValue }};
   return kes;
 }
 
@@ -24,7 +22,7 @@ test('lookupLambdaReference returns the expected alias resource string', (t) => 
   const resourceString = '${FunctionNameLambdaFunction.Arn}';
   const kes = setupKesForLookupLambdaReference(t.context.kes, 'FunctionName', 'notarealhash');
   const result = kes.lookupLambdaReference(resourceString);
-  t.is(result, '${FunctionNameLambdaAliasnotarealhash}');
+  t.is(result, '${FunctionNameLambdaAliasOutput}');
 });
 
 test('lookupLambdaReference returns the original ', (t) => {
@@ -69,14 +67,14 @@ test('injectWorkflowLambdaAliases updates the correct resources', (t) => {
   const expected = {
     TestStepFunction: {
       States: {
-        1: { Type: 'Task', Resource: '${TestLambdaLambdaAliasnotarealhash}' },
+        1: { Type: 'Task', Resource: '${TestLambdaLambdaAliasOutput}' },
         2: { Type: 'Task', Resource: '${TestUnversionedLambdaLambdaFunction.Arn}' },
         3: { Type: 'Task', Resource: '${SomethingElse.Arn}'}
       }
     },
     TestStepFunction2: {
       States: {
-        1: { Type: 'Task', Resource: '${TestLambdaLambdaAliasnotarealhash}' }
+        1: { Type: 'Task', Resource: '${TestLambdaLambdaAliasOutput}' }
       }
     }
   };
