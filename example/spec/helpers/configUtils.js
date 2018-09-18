@@ -70,7 +70,6 @@ function updateConfigObject(configFilePath, nodeName, configJson) {
 
 module.exports = {
   getConfigObject,
-  backupConfigYml,
   restoreConfigYml,
   loadYmlConfigFile,
   saveYmlConfigFile,
