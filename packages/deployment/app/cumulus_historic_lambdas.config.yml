@@ -1,0 +1,8 @@
+default:
+  customCompilation: true
+  skipLambdaProcess: true
+  oldLambdaInjection: true
+  useWorkflowLambdaVersions: true
+  lambdas: !!files [
+  'lambdas.yml',
+  'node_modules/@cumulus/api/config/lambdas.yml']

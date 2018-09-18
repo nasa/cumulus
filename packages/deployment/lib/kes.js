@@ -151,16 +151,21 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Override CF parse to add Handlebars helper for checking equality of 2 arguments in an ifEquals block
+   * Override CF parse to add Handlebars template helpers
    *
    * @param  {String} cfFile - Filename
    * @return {String}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
     Handlebars.registerHelper('ifEquals', function(arg1, arg2, options) {
-        return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
+      return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
     });
-
+    Handlebars.registerHelper('ifNotEquals', function(arg1, arg2, options) {
+      return (arg1 != arg2) ? options.fn(this) : options.inverse(this);
+    });
+    Handlebars.registerHelper('ifObjectNotEmpty', function(arg1, options) {
+      return (Object.keys(arg1).length != 0) ? options.fn(this) : options.inverse(this);
+    });
     return super.parseCF(cfFile);
   }
 
@@ -171,14 +176,18 @@ class UpdatedKes extends Kes {
    */
   compileCF() {
     const filename = this.config.message_adapter_filename || '';
+    const customCompile = this.config.customCompilation || '';
     const kesBuildFolder = path.join(this.config.kesFolder, 'build');
     const unzipFolderName = path.basename(filename, '.zip');
 
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
-    // If not using message adapter, skip custom compilation
-    if (!filename) return super.compileCF();
+    // If custom compile configuration flag not set, skip custom compilation
+    if (!customCompile) return super.compileCF();
+
+    // If not using message adapter, don't fetch it
+    if (!filename) return this.superCompileCF();
 
     return fetchMessageAdapter(
       this.config.message_adapter_version,
@@ -208,47 +217,54 @@ class UpdatedKes extends Kes {
    */
   async superCompileCF() {
     const lambda = new this.Lambda(this.config);
+    return lambda.process().then((config) => this.cfCompilation(config));
+  }
 
-    return lambda.process().then(async (config) => {
-      this.config = config;
-      let cf;
+  async cfCompilation(config) {
+    this.config = config;
+    let cf;
 
-      // Inject Lambda Alias values into configuration,
-      // then update configured workflow lambda references
-      // to reference the generated alias values
-      if(config.useWorkflowLambdaVersions) {
-        this.injectWorkflowLambdaAliases();
+    // Inject Lambda Alias values into configuration,
+    // then update configured workflow lambda references
+    // to reference the generated alias values
+    if(config.useWorkflowLambdaVersions) {
+      if(config.oldLambdaInjection) {
         await this.injectOldWorkflowLambdaAliases();
-      }
-
-      // if there is a template parse CF there first
-      if (this.config.template) {
-        const mainCF = this.parseCF(this.config.template.cfFile);
-
-        // check if there is a CF over
-        try {
-          fs.lstatSync(this.config.cfFile);
-          const overrideCF = this.parseCF(this.config.cfFile);
-
-          // merge the the two
-          cf = utils.mergeYamls(mainCF, overrideCF);
-        }
-        catch (e) {
-          if (!e.message.includes('ENOENT')) {
-            console.log(`compiling the override template at ${this.config.cfFile} failed:`);
-            throw e;
-          }
-          cf = mainCF;
-        }
+        debugger;
       }
       else {
-        cf = this.parseCF(this.config.cfFile);
+        this.injectWorkflowLambdaAliases();
       }
-      const destPath = path.join(this.config.kesFolder, this.cf_template_name);
-      console.log(`Template saved to ${destPath}`);
-      return fsWriteFile(destPath, cf);
-    });
+    }
+
+    // if there is a template parse CF there first
+    if (this.config.template) {
+      const mainCF = this.parseCF(this.config.template.cfFile);
+
+      // check if there is a CF over
+      try {
+        fs.lstatSync(this.config.cfFile);
+        const overrideCF = this.parseCF(this.config.cfFile);
+
+        // merge the the two
+        cf = utils.mergeYamls(mainCF, overrideCF);
+      }
+      catch (e) {
+        if (!e.message.includes('ENOENT')) {
+          console.log(`compiling the override template at ${this.config.cfFile} failed:`);
+          throw e;
+        }
+        cf = mainCF;
+      }
+    }
+    else {
+      cf = this.parseCF(this.config.cfFile);
+    }
+    const destPath = path.join(this.config.kesFolder, this.cf_template_name);
+    console.log(`Template saved to ${destPath}`);
+    return fsWriteFile(destPath, cf);
   }
+
 
   /**
    *
@@ -258,7 +274,18 @@ class UpdatedKes extends Kes {
    */
   async getAllLambdaAliases(lambda, config) {
     const lambdaConfig = Object.assign({}, config);
-    let aliasPage = await lambda.listAliases(lambdaConfig).promise();
+    let aliasPage;
+    try {
+      aliasPage = await lambda.listAliases(lambdaConfig).promise();
+    }
+    catch(err) {
+      if(err.statusCode === 404){
+        return [];
+      }
+      debugger;
+      throw(err);
+    }
+
     if(!aliasPage.NextMarker) {
       return aliasPage.Aliases;
     }
@@ -297,15 +324,13 @@ class UpdatedKes extends Kes {
     lambdaNames.forEach((lambdaName) => {
       console.log(`Evaluating: ${lambdaName} for old versions/aliases to retain. `);
       let aliases = aliasListsObject[lambdaName];
-      let cumulusAliases = aliases.filter((alias) => alias.Description === cumulusAliasDescription);
-
+      let cumulusAliases = aliases.filter((alias) => alias.Description.includes(cumulusAliasDescription));
       if (!cumulusAliases.length) return;
 
       cumulusAliases.sort((a,b) => b.FunctionVersion-a.FunctionVersion);
 
-      // If hash matches the latest deployed value, we're re-deploying the same lambda
-      // so exclude the most recent version alias from the old lambda list
       let sliceStartIndex = 0;
+      debugger;
       if (configLambdas[lambdaName].hash === this.parseAliasName(cumulusAliases[0].Name).hash) {
         sliceStartIndex = 1;
       }
@@ -314,7 +339,9 @@ class UpdatedKes extends Kes {
       if (oldAliases.length > 0) {
         console.log(`Adding the following to the old lambdas section of the template: ${JSON.stringify(oldAliases)}`);
       }
+
       oldLambdaNames = oldLambdaNames.concat(oldAliases);
+      console.log('here');
     });
     return oldLambdaNames;
   }
@@ -344,14 +371,15 @@ class UpdatedKes extends Kes {
     const oldLambdaNames = await this.getRetainedLambdaAliasNames();
     const oldLambdas = {};
 
+    debugger;
     oldLambdaNames.forEach((name) => {
+      console.log(name);
       let matchObject = this.parseAliasName(name);
       if (matchObject.hash) {
         if (!oldLambdas[matchObject.name]) oldLambdas[matchObject.name] = {hashes: []};
         oldLambdas[matchObject.name].hashes.push(matchObject.hash);
       }
     });
-
     this.config.oldLambdas = oldLambdas;
   }
 
@@ -406,7 +434,7 @@ class UpdatedKes extends Kes {
       return (stateObjectResource);
     }
     else {
-      return `\$\{${lambdaKey}LambdaAlias${lambdaHash}\}`;
+      return `\$\{${lambdaKey}LambdaAliasOutput\}`;
     }
   }
 
