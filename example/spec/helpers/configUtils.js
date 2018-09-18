@@ -6,17 +6,6 @@ const yaml = require('js-yaml');
 const { extend } = require('lodash');
 
 /**
- * Copy a configuration file to a backup location
- *
- * @param {string} configurationYmlFilepath - configuration file path
- * @param {string} configurationYmlBackupFilepath - backup configuration file path
- * @returns {undefined} none
- */
-function backupConfigYml(configurationYmlFilepath, configurationYmlBackupFilepath) {
-  fs.copyFileSync(configurationYmlFilepath, configurationYmlBackupFilepath);
-}
-
-/**
  * Copy a configuration file back from the backup location. Delete
  * the backup configuration file
  *

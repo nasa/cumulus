@@ -1,5 +1,8 @@
 'use strict';
 
+const fs = require('fs');
+const { promisify } = require('util');
+
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
@@ -11,10 +14,7 @@ const {
   redeploy
 } = require('../helpers/testUtils');
 
-const {
-  backupConfigYml,
-  restoreConfigYml
-} = require('../helpers/configUtils');
+const { restoreConfigYml } = require('../helpers/configUtils');
 
 const {
   removeWorkflow,
@@ -27,15 +27,19 @@ const config = loadConfig();
 
 
 describe('When a workflow', () => {
-  beforeAll(async () => {
-    backupConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-  });
+  beforeAll(
+    () => promisify(fs.copyFile)(workflowsYmlFile, workflowsYmlCopyFile),
+    15 * 60 * 1000 // Timeout after 15 minutes
+  );
 
-  afterAll(async () => {
-    // Restore workflows.yml to original and redeploy for next time tests are run
-    restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-    await redeploy(config);
-  });
+  afterAll(
+    () => {
+      // Restore workflows.yml to original and redeploy for next time tests are run
+      restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
+      return redeploy(config);
+    },
+    15 * 60 * 1000 // Timeout after 15 minutes
+  );
 
   describe('is updated and deployed during a workflow execution', () => {
     let workflowExecutionArn = null;
