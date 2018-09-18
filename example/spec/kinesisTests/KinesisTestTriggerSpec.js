@@ -1,6 +1,9 @@
 'use strict';
 
-const { s3 } = require('@cumulus/common/aws');
+const {
+  aws: { s3 },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
@@ -36,6 +39,8 @@ const {
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
 
 const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-KinesisTestTrigger`);
+
+record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
 
 const granuleId = record.product.name;
 const recordIdentifier = randomString();
