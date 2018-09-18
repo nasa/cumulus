@@ -403,7 +403,9 @@ class UpdatedKes extends Kes {
 
 
   /**
-   * Programatically evaluates a lambda ARN reference and returns the expected template reference
+   * Programatically evaluates a lambda ARN reference and returns the expected template reference.
+   * This will either be the unqualified Lambda reference if unique identifier exists, or a reference
+   * to the expected LambdaAliasOutput key from the LambdaVersions subtemplate
    *
    * @param {String} stateObjectResource - CF template resource reference for a state function
    * @returns {String} The correct reference to the lambda function, either a hashed alias
