@@ -26,6 +26,7 @@
 
 
 const zipObject = require('lodash.zipobject');
+//eslint-disable-next-line import/no-unresolved, node/no-missing-require
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
