@@ -13,7 +13,7 @@ function determineIntegrationTestStackName(cb) {
   if (branch === 'master') return cb('cumulus-from-source');
 
   const stacks = {
-    'abarciauskas-bgse': 'aimee-test',
+    'Aimee Barciauskas': 'aimee-test',
     scisco: 'aj',
     jennyhliu: 'jl',
     kkelly51: 'kk-uat-deployment',
