@@ -110,8 +110,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
       config.bucket,
       workflowName,
       collection,
-      provider,
-      300
+      provider
     );
   });
 
