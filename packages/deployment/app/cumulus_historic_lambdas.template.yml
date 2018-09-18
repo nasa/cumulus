@@ -8,7 +8,7 @@ Parameters:
 
 Resources:
 #################################################
-# Old Lambda Resources block BEGIN
+# 'Old' Lambda Version/Alias block BEGIN
 #################################################
 {{#each oldLambdas}}
 {{#if this.hashes}}
@@ -29,7 +29,11 @@ Resources:
 {{/if}}
 {{/each}}
 #################################################
-# Old Lambda Resources block END
+# 'Old' Lambda Version/Alias block END
+#################################################
+
+#################################################
+# 'Current' Lambda Version/Alias block BEGIN
 #################################################
 {{#each lambdas}}
 {{#if @root.useWorkflowLambdaVersions}}
@@ -49,7 +53,14 @@ Resources:
   {{/if}}
 {{/if}}
 {{/each}}
+#################################################
+# 'Current' Lambda Version/Alias block END
+#################################################
 
+
+#################################################
+# Outputs block BEGIN
+#################################################
 Outputs:
 {{#each lambdas}}
 {{#if @root.useWorkflowLambdaVersions}}
@@ -59,3 +70,6 @@ Outputs:
 {{/if}}
 {{/if}}
 {{/each}}
+################################################
+# Outputs block END
+#################################################
