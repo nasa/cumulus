@@ -349,7 +349,7 @@ class UpdatedKes extends Kes {
    * @param {String} name - Cumulus created CF Lambda::Alias name parameter
    *                        in format Name-Hash,
    * @returns {Object} returns hash with name/value keys mapped to appropriate
-   *                   matches and sets hash to null
+   *                   matches and sets hash to null if no hash value in 'name'
    */
   parseAliasName(name) {
     const regExp = /^([^-]*)-([^-]*)$/;
