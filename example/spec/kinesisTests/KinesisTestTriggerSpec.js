@@ -134,9 +134,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     // delete rule
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
-
-    await deleteFolder(testDataFolder);
-
+    // delete uploaded test data
+    await deleteFolder(testConfig.bucket, testDataFolder);
+    // delete synced data
     await s3().deleteObject({
       Bucket: testConfig.buckets.private.name,
       Key: `${filePrefix}/${fileData.name}`
