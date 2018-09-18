@@ -387,7 +387,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
- * @param {number} [timeout=300] - number of seconds to wait for execution to complete
+ * @param {number} [timeout=600] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
 async function buildAndExecuteWorkflow(
@@ -397,7 +397,7 @@ async function buildAndExecuteWorkflow(
   collection,
   provider,
   payload,
-  timeout = 300
+  timeout = 600
 ) {
   const workflowMsg = await buildWorkflow(
     stackName,
