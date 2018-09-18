@@ -107,11 +107,11 @@ function getExecutionStatus(executionArn, retryOptions = {}) {
  * Wait for a given execution to complete, then return the status
  *
  * @param {string} executionArn - ARN of the execution
- * @param {number} [timeout=120] - the time, in seconds, to wait for the
+ * @param {number} [timeout=300] - the time, in seconds, to wait for the
  *   execution to reach a non-RUNNING state
  * @returns {string} status
  */
-async function waitForCompletedExecution(executionArn, timeout = 120) {
+async function waitForCompletedExecution(executionArn, timeout = 300) {
   let executionStatus;
 
   const stopTime = Date.now() + (timeout * 1000);
@@ -180,13 +180,14 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {string} workflowMsg - workflow message
+ * @param {number} [timeout=300] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
-async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg) {
+async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout = 300) {
   const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 
   // Wait for the execution to complete to get the status
-  const status = await waitForCompletedExecution(executionArn);
+  const status = await waitForCompletedExecution(executionArn, timeout);
 
   return { status, executionArn };
 }
@@ -392,6 +393,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
   template.payload = payload || {};
   return template;
 }
+
 /**
  * build workflow message and execute the workflow
  *
@@ -404,6 +406,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
+ * @param {number} [timeout=300] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
 async function buildAndExecuteWorkflow(
@@ -412,11 +415,18 @@ async function buildAndExecuteWorkflow(
   workflowName,
   collection,
   provider,
-  payload
+  payload,
+  timeout = 300
 ) {
-  const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload);
-  return executeWorkflow(stackName, bucketName, workflowName, workflowMsg);
+  const workflowMsg = await buildWorkflow(
+    stackName,
+    bucketName,
+    workflowName,
+    collection,
+    provider,
+    payload
+  );
+  return executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout);
 }
 
 /**
