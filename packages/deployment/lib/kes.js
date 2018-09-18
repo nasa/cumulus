@@ -25,7 +25,7 @@
 'use strict';
 
 
-const { zipObject } = require('lodash');
+const zipObject = require('lodash.zipobject');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
@@ -153,17 +153,17 @@ class UpdatedKes extends Kes {
   /**
    * Override CF parse to add Handlebars template helpers
    *
-   * @param  {String} cfFile - Filename
-   * @return {String}        - Contents of cfFile templated using Handlebars
+   * @param  {string} cfFile - Filename
+   * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
-    Handlebars.registerHelper('ifEquals', function(arg1, arg2, options) {
+    Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
       return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
     });
-    Handlebars.registerHelper('ifNotEquals', function(arg1, arg2, options) {
+    Handlebars.registerHelper('ifNotEquals', function (arg1, arg2, options) {
       return (arg1 != arg2) ? options.fn(this) : options.inverse(this);
     });
-    Handlebars.registerHelper('ifObjectNotEmpty', function(arg1, options) {
+    Handlebars.registerHelper('ifObjectNotEmpty', function (arg1, options) {
       return (Object.keys(arg1).length != 0) ? options.fn(this) : options.inverse(this);
     });
     return super.parseCF(cfFile);
@@ -227,8 +227,8 @@ class UpdatedKes extends Kes {
     // Inject Lambda Alias values into configuration,
     // then update configured workflow lambda references
     // to reference the generated alias values
-    if(config.useWorkflowLambdaVersions) {
-      if(config.oldLambdaInjection) {
+    if (config.useWorkflowLambdaVersions) {
+      if (config.oldLambdaInjection) {
         await this.injectOldWorkflowLambdaAliases();
       }
       else {
@@ -277,17 +277,17 @@ class UpdatedKes extends Kes {
     try {
       aliasPage = await lambda.listAliases(lambdaConfig).promise();
     }
-    catch(err) {
-      if(err.statusCode === 404){
+    catch (err) {
+      if (err.statusCode === 404) {
         return [];
       }
-      throw(err);
+      throw (err);
     }
 
-    if(!aliasPage.NextMarker) {
+    if (!aliasPage.NextMarker) {
       return aliasPage.Aliases;
     }
-    let aliases = aliasPage.Aliases;
+    const aliases = aliasPage.Aliases;
     lambdaConfig.Marker = aliasPage.NextMarker;
 
     return aliases.concat(await this.getAllLambdaAliases(lambda, lambdaConfig));
@@ -298,7 +298,7 @@ class UpdatedKes extends Kes {
    * to retain in the 'Old Lambda Resources' section of the Cloud Formation template,
    * avoiding duplicates of items in the Lambda section and unlisted functions.
    *
-   * @returns {String[]} returns a list of alias names
+   * @returns {string[]} returns a list of alias names
    **/
   async getRetainedLambdaAliasNames() {
     const awsLambda = new this.AWS.Lambda();
@@ -309,7 +309,7 @@ class UpdatedKes extends Kes {
 
     const lambdaNames = Object.keys(configLambdas);
     const aliasListsPromises = lambdaNames.map(async (lambdaName) => {
-      let listAliasesConfig = {
+      const listAliasesConfig = {
         MaxItems: 10000,
         FunctionName: `${this.config.stackName}-${lambdaName}`
       };
@@ -321,18 +321,18 @@ class UpdatedKes extends Kes {
 
     lambdaNames.forEach((lambdaName) => {
       console.log(`Evaluating: ${lambdaName} for old versions/aliases to retain. `);
-      let aliases = aliasListsObject[lambdaName];
-      let cumulusAliases = aliases.filter((alias) => alias.Description.includes(cumulusAliasDescription));
+      const aliases = aliasListsObject[lambdaName];
+      const cumulusAliases = aliases.filter((alias) => alias.Description.includes(cumulusAliasDescription));
       if (!cumulusAliases.length) return;
 
-      cumulusAliases.sort((a,b) => b.FunctionVersion-a.FunctionVersion);
+      cumulusAliases.sort((a, b) => b.FunctionVersion - a.FunctionVersion);
 
       let sliceStartIndex = 0;
       if (configLambdas[lambdaName].hash === this.parseAliasName(cumulusAliases[0].Name).hash) {
         sliceStartIndex = 1;
       }
 
-      const oldAliases = cumulusAliases.slice(sliceStartIndex,3).map((alias) => alias.Name);
+      const oldAliases = cumulusAliases.slice(sliceStartIndex, 3).map((alias) => alias.Name);
       if (oldAliases.length > 0) {
         console.log(`Adding the following to the old lambdas section of the template: ${JSON.stringify(oldAliases)}`);
       }
@@ -346,7 +346,7 @@ class UpdatedKes extends Kes {
   /**
    * Parses Alias name properties into a results object
    *
-   * @param {String} name - Cumulus created CF Lambda::Alias name parameter
+   * @param {string} name - Cumulus created CF Lambda::Alias name parameter
    *                        in format Name-Hash,
    * @returns {Object} returns hash with name/value keys mapped to appropriate
    *                   matches and sets hash to null if no hash value in 'name'
@@ -356,7 +356,8 @@ class UpdatedKes extends Kes {
     const regExpResults = regExp.exec(name);
     let hashValue = null;
     if (regExpResults[2]) hashValue = regExpResults[2];
-    return {name: regExpResults[1], hash: hashValue};}
+    return { name: regExpResults[1], hash: hashValue };
+  }
 
   /**
    * Uses getRetainedLambdaAliasNames to generate a list of lambda
@@ -370,9 +371,9 @@ class UpdatedKes extends Kes {
 
     oldLambdaNames.forEach((name) => {
       console.log(name);
-      let matchObject = this.parseAliasName(name);
+      const matchObject = this.parseAliasName(name);
       if (matchObject.hash) {
-        if (!oldLambdas[matchObject.name]) oldLambdas[matchObject.name] = {hashes: []};
+        if (!oldLambdas[matchObject.name]) oldLambdas[matchObject.name] = { hashes: [] };
         oldLambdas[matchObject.name].hashes.push(matchObject.hash);
       }
     });
@@ -390,7 +391,7 @@ class UpdatedKes extends Kes {
     Object.keys(this.config.stepFunctions).forEach((stepFunction) => {
       const stepFunctionStateKeys = Object.keys(this.config.stepFunctions[stepFunction].States);
       stepFunctionStateKeys.forEach((stepFunctionState) => {
-        let stateObject = this.config.stepFunctions[stepFunction].States[stepFunctionState];
+        const stateObject = this.config.stepFunctions[stepFunction].States[stepFunctionState];
 
         if ((stateObject.Type === 'Task') && (stateObject.Resource.endsWith('LambdaFunction.Arn}'))) {
           const lambdaAlias = this.lookupLambdaReference(stateObject.Resource);
@@ -407,8 +408,8 @@ class UpdatedKes extends Kes {
    * This will either be the unqualified Lambda reference if unique identifier exists, or a reference
    * to the expected LambdaAliasOutput key from the LambdaVersions subtemplate
    *
-   * @param {String} stateObjectResource - CF template resource reference for a state function
-   * @returns {String} The correct reference to the lambda function, either a hashed alias
+   * @param {string} stateObjectResource - CF template resource reference for a state function
+   * @returns {string} The correct reference to the lambda function, either a hashed alias
    * reference or the passed in resource if hasing/versioning isn't possible for this resource
    * @throws {Error} Throws an error if the passed in stateObjectResource isn't a LambdaFunctionArn reference
    */
@@ -427,13 +428,12 @@ class UpdatedKes extends Kes {
     }
     const lambdaHash = this.config.lambdas[lambdaKey].hash;
     // If a lambda resource doesn't have a hash, refer directly to the function ARN
-    if(!lambdaHash) {
+    if (!lambdaHash) {
       console.log(`No unique identifier/hash for ${lambdaKey}, referencing ${stateObjectResource} instead`);
       return (stateObjectResource);
     }
-    else {
-      return `\$\{${lambdaKey}LambdaAliasOutput\}`;
-    }
+
+    return `\$\{${lambdaKey}LambdaAliasOutput\}`;
   }
 
 
