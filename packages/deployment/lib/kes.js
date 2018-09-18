@@ -230,7 +230,6 @@ class UpdatedKes extends Kes {
     if(config.useWorkflowLambdaVersions) {
       if(config.oldLambdaInjection) {
         await this.injectOldWorkflowLambdaAliases();
-        debugger;
       }
       else {
         this.injectWorkflowLambdaAliases();
@@ -282,7 +281,6 @@ class UpdatedKes extends Kes {
       if(err.statusCode === 404){
         return [];
       }
-      debugger;
       throw(err);
     }
 
@@ -330,7 +328,6 @@ class UpdatedKes extends Kes {
       cumulusAliases.sort((a,b) => b.FunctionVersion-a.FunctionVersion);
 
       let sliceStartIndex = 0;
-      debugger;
       if (configLambdas[lambdaName].hash === this.parseAliasName(cumulusAliases[0].Name).hash) {
         sliceStartIndex = 1;
       }
@@ -371,7 +368,6 @@ class UpdatedKes extends Kes {
     const oldLambdaNames = await this.getRetainedLambdaAliasNames();
     const oldLambdas = {};
 
-    debugger;
     oldLambdaNames.forEach((name) => {
       console.log(name);
       let matchObject = this.parseAliasName(name);
