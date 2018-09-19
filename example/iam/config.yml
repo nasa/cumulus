@@ -40,6 +40,9 @@ cumulus-from-source:
 cumulus-from-pr:
   prefix: test-pr-integration # used by the PR
 
+cumulus-nightly:
+  prefix: nightly # used by the nightly cron job
+
 mhs2:
   prefix: mhs2
 
@@ -155,7 +158,7 @@ cum-test:
     protected-2:
       name: '{{PREFIX}}-protected-2'
       type: protected
-  
+
   system_bucket: '{{PREFIX}}-internal'
 
 mvd:
