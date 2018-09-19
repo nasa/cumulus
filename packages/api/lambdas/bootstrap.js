@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 /* this module is intended to be used for bootstraping
  * the cloudformation deployment of a DAAC.
  *
@@ -49,9 +48,9 @@ async function findMissingMappings(esClient, index, newMappings) {
     if (!oldMapping) return true;
     const newMapping = newMappings[type];
     // Check for new dynamic templates and properties
-    if (newMapping.dynamic_templates && (!oldMapping.dynamic_templates ||
-       newMapping.dynamic_templates.length >
-       oldMapping.dynamic_templates.length)) {
+    if (newMapping.dynamic_templates && (!oldMapping.dynamic_templates
+       || newMapping.dynamic_templates.length
+       > oldMapping.dynamic_templates.length)) {
       return true;
     }
     const fields = Object.keys(newMapping.properties);

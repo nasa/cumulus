@@ -2,8 +2,6 @@
 
 'use strict';
 
-/* eslint-disable no-console */
-
 const program = require('commander');
 const { cliUtils } = require('@cumulus/common');
 const { lambda } = require('@cumulus/common/aws');
@@ -102,8 +100,8 @@ program
   .command('backup')
   .option('--table <table>', 'AWS DynamoDB table name')
   .option('--region <region>', 'AWS region name (default: us-east-1)')
-  .option('--directory <directory>', 'The directory to save the backups to.' +
-    ' Defaults to backups in the current directory')
+  .option('--directory <directory>', 'The directory to save the backups to.'
+    + ' Defaults to backups in the current directory')
   .description('Backup a given AWS folder to the current folder')
   .parse(process.argv)
   .action((cmd) => {

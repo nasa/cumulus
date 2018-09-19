@@ -1,22 +1,24 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { loadConfig } = require('../helpers/testUtils');
 const sleep = require('sleep-promise');
 const {
   aws: { s3 }
 } = require('@cumulus/common');
-const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const {
   buildAndExecuteWorkflow,
   conceptExists
 } = require('@cumulus/integration-tests');
 const { Search } = require('@cumulus/api/es/search');
+const { api: apiTestUtils } = require('@cumulus/integration-tests');
+
+const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
+const { loadConfig } = require('../helpers/testUtils');
+
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
@@ -25,9 +27,10 @@ const { api: apiTestUtils } = require('@cumulus/integration-tests');
  * @param {string} CMRLink - url for grnaule in CMR
  * @param {string} outcome - desired outcome
  * @param {string} retries - number of remaining tries
+ * @param {number} delay - time (in ms) to wait between tries
  * @returns {Promise<boolean>} - whether or not the granule exists
  */
-async function waitForExist(CMRLink, outcome, retries) {
+async function waitForExist(CMRLink, outcome, retries, delay = 2000) {
   if (retries === 0) {
     console.log('Out of retries');
     return false;
@@ -35,7 +38,7 @@ async function waitForExist(CMRLink, outcome, retries) {
 
   const existsCheck = await conceptExists(CMRLink);
   if (existsCheck !== outcome) {
-    await sleep(2000);
+    await sleep(delay);
     console.log('Retrying ...');
     return waitForExist(CMRLink, outcome, (retries - 1));
   }
@@ -45,7 +48,7 @@ async function waitForExist(CMRLink, outcome, retries) {
 
 describe('The Cumulus API', () => {
   let workflowExecution = null;
-  let esClient;
+  let esClient; // eslint-disable-line no-unused-vars
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
@@ -137,16 +140,49 @@ describe('The Cumulus API', () => {
     });
   });
 
-  describe('removeFromCMR', () => {
-    it('removes the ingested granule from CMR', async () => {
-      const granule = await apiTestUtils.getGranule({
+  describe('removeFromCMR & PublishGranule', () => {
+    let granule;
+    let cmrLink;
+
+    it('removeFromCMR removes the ingested granule from CMR', async () => {
+      granule = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
-      const existsInCMR = await conceptExists(granule.cmrLink);
+
+      cmrLink = granule.cmrLink;
+
+      const existsInCMR = await conceptExists(cmrLink);
+
       expect(existsInCMR).toEqual(true);
 
       // Remove the granule from CMR
+      await apiTestUtils.removeFromCMR({
+        prefix: config.stackName,
+        granuleId
+      });
+
+      // Check that the granule was removed
+      const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
+
+      expect(granuleRemoved).toEqual(true);
+    });
+
+    it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
+      const existsInCMR = await conceptExists(cmrLink);
+      expect(existsInCMR).toEqual(false);
+
+      // Publish the granule to CMR
+      await apiTestUtils.applyWorkflow({
+        prefix: config.stackName,
+        granuleId,
+        workflow: 'PublishGranule'
+      });
+
+      const granulePublished = await waitForExist(cmrLink, true, 10, 30000);
+      expect(granulePublished).toEqual(true);
+
+      // Cleanup: remove from CMR
       await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
         granuleId
