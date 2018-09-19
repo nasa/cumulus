@@ -1,11 +1,12 @@
 'use strict';
 
 const test = require('ava');
+const get = require('lodash.get');
+
 const { Search } = require('../../es/search');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const es = require('../../bin/es');
 const mappings = require('../../models/mappings.json');
-const get = require('lodash.get');
 
 const esIndex = 'cumulus-1';
 const indexAlias = 'cumulus-1-alias';
@@ -90,7 +91,6 @@ test.serial('Reindex - multiple aliases found', async (t) => {
   catch (err) {
     t.is(
       err.message,
-      // eslint-disable-next-line max-len
       'Multiple indices found for alias cumulus-1-alias. Specify source index as one of [cumulus-1, cumulus-dup].'
     );
   }

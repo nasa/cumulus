@@ -3,9 +3,10 @@
 const test = require('ava');
 const drop = require('lodash.drop');
 const clone = require('lodash.clonedeep');
+const { randomString } = require('@cumulus/common/test-utils');
+
 const models = require('../../models');
 const { fakeGranuleFactory, fakeFilesFactory } = require('../../lib/testUtils');
-const { randomString } = require('@cumulus/common/test-utils');
 
 process.env.stackName = randomString();
 process.env.FilesTable = randomString();

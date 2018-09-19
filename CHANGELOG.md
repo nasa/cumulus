@@ -5,10 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
 - **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initated.
 	- Added useWorkflowLambdaVersions configuration option to optionally enable feature.
 	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource  versioning.
+- Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
+- `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+- Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 
+### Fixed
+
+- `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
 
 ## [v1.10.1] - 2018-09-4
 ### Fixed
