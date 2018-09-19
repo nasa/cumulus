@@ -8,8 +8,11 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists, getS3Object },
-  testUtils: { randomStringFromRegex }
+  aws: {
+    getS3Object,
+    s3,
+    s3ObjectExists
+  }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -100,8 +103,6 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  // skipping this test because it's missing some of the functions used here
-  // such as createFakeUser
   it('makes the granule available through the Cumulus API', async () => {
     const granule = await apiTestUtils.getGranule({
       prefix: config.stackName,
@@ -178,6 +179,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      if (lambdaOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+
       if (lambdaOutput.replace) {
         const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
         lambdaOutput = JSON.parse(msg.Body.toString());
