@@ -6,6 +6,7 @@ const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString } = require('@cumulus/common/test-utils');
 const { buildS3Uri, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const errors = require('@cumulus/common/errors');
 
 const {
   selector,
@@ -27,12 +28,17 @@ const { s3Mixin } = require('../s3');
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
-  await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
+  t.context.destBucket = `dest-bucket-${randomString().slice(0, 6)}`;
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.destBucket }).promise()
+  ]);
 });
 
 test.afterEach(async (t) => {
   await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.internalBucket)
+    recursivelyDeleteS3Bucket(t.context.internalBucket),
+    recursivelyDeleteS3Bucket(t.context.destBucket)
   ]);
 });
 /**
@@ -403,8 +409,8 @@ test('getGranuleId fails', (t) => {
 class TestS3Granule extends s3Mixin(baseProtocol(Granule)) {}
 
 test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
-  const sourceBucket = 'mark-source';
-  await s3().createBucket({ Bucket: sourceBucket }).promise();
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
 
   const file = {
     path: '',
@@ -414,9 +420,6 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   const Key = path.join(file.path, file.name);
   const params = { Bucket: sourceBucket, Key, Body: 'test' };
   await s3().putObject(params).promise();
-
-  const destBucket = 'mark-dest';
-  await s3().createBucket({ Bucket: destBucket }).promise();
 
   const collectionConfig = {
     files: [
@@ -438,5 +441,8 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   );
 
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
-  await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  await t.throws(
+    testGranule.ingestFile(file, destBucket, duplicateHandling),
+    errors.DuplicateFile,
+  );
 });
