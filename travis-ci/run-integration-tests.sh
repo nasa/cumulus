@@ -84,6 +84,7 @@ rm "${DEPLOYMENT}.lock"
 
 set +e
 (
+  set -e
   cd example
   if [ "$USE_NPM_PACKAGES" = "true" ]; then
     yarn
@@ -115,6 +116,7 @@ RESULT="$?"
 set -e
 
 # Release the stack
+echo "Release lock ${KEY}"
 DATE=$(date -R)
 STRING_TO_SIGN_PUT="DELETE
 
