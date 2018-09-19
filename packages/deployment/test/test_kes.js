@@ -163,6 +163,7 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t)
   const actual = await kes.getRetainedLambdaAliasNames();
   t.deepEqual(expected, actual);
 });
+
 test.serial('getRetainedLambdaAliasNames returns filtered aliasNames on previous version redeployment', async (t) => {
   const kes = t.context.kes;
 
