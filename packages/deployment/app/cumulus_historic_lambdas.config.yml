@@ -1,7 +1,7 @@
 default:
   customCompilation: true
-  skipLambdaProcess: true
   oldLambdaInjection: true
+  lambdaProcess: true
   useWorkflowLambdaVersions: true
   lambdas: !!files [
   'lambdas.yml',
