@@ -33,10 +33,15 @@ describe('When a workflow', () => {
   );
 
   afterAll(
-    () => {
+    async () => {
       // Restore workflows.yml to original and redeploy for next time tests are run
+      console.log('Starting restoreConfigYml() in afterAll');
       restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-      return redeploy(config);
+      console.log('Finished restoreConfigYml() in afterAll');
+
+      console.log('Starting redeploy() in afterAll');
+      await redeploy(config);
+      console.log('Finished redeploy() in afterAll');
     },
     15 * 60 * 1000 // Timeout after 15 minutes
   );
@@ -45,20 +50,29 @@ describe('When a workflow', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
-    beforeAll(async () => {
-      // Kick off the workflow, don't wait for completion
-      workflowExecutionArn = await buildAndStartWorkflow(
-        config.stackName,
-        config.bucket,
-        'WaitForDeployWorkflow'
-      );
+    beforeAll(
+      async () => {
+        // Kick off the workflow, don't wait for completion
+        console.log('Starting buildAndStartWorkflow() in beforeAll() A');
+        workflowExecutionArn = await buildAndStartWorkflow(
+          config.stackName,
+          config.bucket,
+          'WaitForDeployWorkflow'
+        );
+        console.log('Finished buildAndStartWorkflow() in beforeAll() A');
 
-      removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
+        removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
 
-      await redeploy(config);
+        console.log('Starting redeploy() in beforeAll() A');
+        await redeploy(config);
+        console.log('Finished redeploy() in beforeAll() A');
 
-      workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-    });
+        console.log('Starting waitForCompletedExecution() in beforeAll() A');
+        workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
+        console.log('Finished waitForCompletedExecution() in beforeAll() A');
+      },
+      15 * 60 * 1000 // Timeout after 15 minutes
+    );
 
     it('the workflow executes successfully', () => {
       expect(workflowStatus).toEqual('SUCCEEDED');
@@ -94,27 +108,38 @@ describe('When a workflow', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
-    beforeAll(async () => {
-      // Kick off the workflow, don't wait for completion
-      workflowExecutionArn = await buildAndStartWorkflow(
-        config.stackName,
-        config.bucket,
-        'WaitForDeployWorkflow'
-      );
+    beforeAll(
+      async () => {
+        // Kick off the workflow, don't wait for completion
+        console.log('Starting buildAndStartWorkflow() in beforeAll() B');
+        workflowExecutionArn = await buildAndStartWorkflow(
+          config.stackName,
+          config.bucket,
+          'WaitForDeployWorkflow'
+        );
+        console.log('Finished buildAndStartWorkflow() in beforeAll() B');
 
-      // Remove the WaitForDeployWorkflow workflow from workflows.yml
-      removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
+        // Remove the WaitForDeployWorkflow workflow from workflows.yml
+        removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
 
-      await redeploy(config);
+        console.log('Starting redeploy() in beforeAll() B');
+        await redeploy(config);
+        console.log('Finished redeploy() in beforeAll() B');
 
-      // Wait for the execution to reach a non-RUNNING state
-      await waitForCompletedExecution(workflowExecutionArn);
+        // Wait for the execution to reach a non-RUNNING state
+        console.log('Starting waitForCompletedExecution() in beforeAll() B');
+        await waitForCompletedExecution(workflowExecutionArn);
+        console.log('Finished waitForCompletedExecution() in beforeAll() B');
 
-      workflowStatus = await apiTestUtils.getExecution({
-        prefix: config.stackName,
-        arn: workflowExecutionArn
-      });
-    });
+        console.log('Starting apiTestUtils.getExecution() in beforeAll() B');
+        workflowStatus = await apiTestUtils.getExecution({
+          prefix: config.stackName,
+          arn: workflowExecutionArn
+        });
+        console.log('Finished apiTestUtils.getExecution() in beforeAll() B');
+      },
+      15 * 60 * 1000 // Timeout after 15 minutes
+    );
 
     it('the workflow has executed successfully and is returned when querying the API', () => {
       expect(workflowStatus).toBeTruthy();
