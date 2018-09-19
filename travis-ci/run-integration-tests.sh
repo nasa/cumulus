@@ -109,7 +109,8 @@ set +e
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
 
-  yarn test
+  # yarn test
+  ./node_modules/.bin/jasmine ./spec/redeployment/WorkflowRedeploySpec.js
 )
 RESULT="$?"
 set -e
