@@ -440,6 +440,9 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     duplicateHandling,
   );
 
+  // This test needs to use a destination bucket that gets destroyed after the test.
+  // Otherwise, it will pre-emptively throw an error on the first attempt to ingest
+  // the file.
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
   await t.throws(
     testGranule.ingestFile(file, destBucket, duplicateHandling),
