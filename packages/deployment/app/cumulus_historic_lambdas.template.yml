@@ -10,6 +10,7 @@ Resources:
 #################################################
 # 'Old' Lambda Version/Alias block BEGIN
 #################################################
+{{#if @root.useWorkflowLambdaVersions}}
 {{#each oldLambdas}}
 {{#if this.hashes}}
 {{#each this.hashes}}
@@ -28,6 +29,7 @@ Resources:
 {{/each}}
 {{/if}}
 {{/each}}
+{{/if}}
 #################################################
 # 'Old' Lambda Version/Alias block END
 #################################################
@@ -36,8 +38,7 @@ Resources:
 # 'Current' Lambda Version/Alias block BEGIN
 #################################################
 {{#each lambdas}}
-{{#if @root.useWorkflowLambdaVersions}}
-  {{#if this.hash}}
+{{#if this.hash}}
   {{@key}}LambdaAlias{{this.hash}}:
     Type: AWS::Lambda::Alias
     Properties:
@@ -50,7 +51,6 @@ Resources:
     Properties:
       FunctionName:
         Ref: {{@key}}LambdaFunction
-  {{/if}}
 {{/if}}
 {{/each}}
 #################################################
