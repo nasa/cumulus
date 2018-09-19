@@ -31,6 +31,15 @@ class UpdatedLambda extends Lambda {
     this.config = config;
   }
 
+  /**
+   * Executes buildS3Path for all lambdas in the configuration
+   *
+   * This method allows us to utilize buildS3Path to populate bucket/hash values
+   * in the config object for a template that runs following a nested template
+   * that has already run the superclass 'process' method.
+   *
+   * @returns {void}
+   */
   buildAllLambdaConfiguration() {
     if (this.config.lambdas) {
       let lambdas = this.config.lambdas;
@@ -46,6 +55,7 @@ class UpdatedLambda extends Lambda {
     }
   }
 
+
   /**
    * Copies the source code of a given lambda function, zips it, calculates
    * the hash of the source code and updates the lambda object with
@@ -54,7 +64,6 @@ class UpdatedLambda extends Lambda {
    * @param {Object} lambda - the lambda object
    * @returns {Promise} returns the updated lambda object
    */
-
   async zipLambda(lambda) {
     // skip if the file with the same hash is zipped
     // and is a valid zip file
