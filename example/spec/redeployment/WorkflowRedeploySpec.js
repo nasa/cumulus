@@ -94,7 +94,6 @@ describe('When a workflow', () => {
       });
 
       it('the execution steps show the original workflow steps', () => {
-        console.log(`executionStatus.executionHistory.events ${JSON.stringify(executionStatus.executionHistory.events, null, 2)}`);
         const helloWorldScheduledEvents = executionStatus.executionHistory.events.filter((event) =>
           event.type === 'LambdaFunctionScheduled'
             && event.resource.includes('HelloWorld'));
