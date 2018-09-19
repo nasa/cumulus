@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 export AWS_ACCESS_KEY_ID="$INTEGRATION_AWS_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="$INTEGRATION_AWS_SECRET_ACCESS_KEY"
@@ -109,8 +109,8 @@ set +e
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
 
-  # yarn test
-  ./node_modules/.bin/jasmine ./spec/redeployment/WorkflowRedeploySpec.js
+  yarn test
+  # ./node_modules/.bin/jasmine ./spec/redeployment/WorkflowRedeploySpec.js
 )
 RESULT="$?"
 set -e
