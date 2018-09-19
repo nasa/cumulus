@@ -82,8 +82,9 @@ curl \
 
 rm "${DEPLOYMENT}.lock"
 
-set -e
+set +e
 (
+  set -e
   cd example
   if [ "$USE_NPM_PACKAGES" = "true" ]; then
     yarn
