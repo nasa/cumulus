@@ -39,6 +39,8 @@ const ValidationError = createErrorType('ValidationError');
  */
 function getHost() {
   const env = process.env.CMR_ENVIRONMENT;
+  if (process.env.CMR_HOST) return process.env.CMR_HOST;
+
   let host;
   if (env === 'OPS') {
     host = 'cmr.earthdata.nasa.gov';
@@ -236,5 +238,6 @@ module.exports = {
   updateToken,
   getUrl,
   xmlParseOptions,
-  getIp
+  getIp,
+  getHost
 }

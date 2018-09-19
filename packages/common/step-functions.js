@@ -1,18 +1,25 @@
 'use strict';
 
-const aws = require('./aws');
+const delay = require('delay');
+const pRetry = require('p-retry');
 const uuidv4 = require('uuid/v4');
+
+const {
+  sfn,
+  toSfnExecutionName
+} = require('./aws');
+
 
 /**
  * Constructs the input to pass to the step functions to kick off ingest. The execution name
  * that should be used is returned in ingest_meta.execution_name.
  */
-const constructStepFunctionInput = (resources, provider, collection) => {
+exports.constructStepFunctionInput = (resources, provider, collection) => {
   const stateMachine = collection.workflow;
   const meta = JSON.parse(JSON.stringify(collection.meta || {}));
   const startDate = new Date().toISOString();
   const id = uuidv4();
-  const executionName = aws.toSfnExecutionName([collection.name, id], '__');
+  const executionName = toSfnExecutionName([collection.name, id], '__');
   return {
     workflow_config_template: collection.workflow_config_template,
     resources: resources,
@@ -30,6 +37,73 @@ const constructStepFunctionInput = (resources, provider, collection) => {
   };
 };
 
-module.exports = {
-  constructStepFunctionInput
+/**
+ * Describe a Step Function Execution
+ *
+ * The StepFunctions API has been known to throw throttling exceptions.  This
+ * function will retry up to 10 times with an exponential backoff.
+ *
+ * @param {string} executionArn - ARN of the execution
+ * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
+ * @returns {Promise<Object>} https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property
+ */
+exports.describeExecution = (executionArn, retryOptions) =>
+  pRetry(
+    () => sfn().describeExecution({ executionArn }).promise()
+      .catch((err) => {
+        // If we get a throttling exception, we re-throw the error.  This will
+        //   trigger the "retry with exponential backoff" functionality.
+        if (err.code === 'ThrottlingException') throw err;
+
+        // If we get an error other than the previous two then something went
+        //   wrong.  We abort any other retry attempts and throw the error.
+        throw new pRetry.AbortError(err);
+      }),
+    retryOptions
+  );
+
+/**
+ * Test if a Step Function Execution exists
+ *
+ * @param {string} executionArn - a Step Function execution ARN
+ * @returns {Promise<boolean>} true or false
+ */
+exports.executionExists = async (executionArn) => {
+  try {
+    await exports.describeExecution({ executionArn }).promise();
+    return true;
+  }
+  catch (err) {
+    if (err.code === 'ExecutionDoesNotExist') return false;
+    throw err;
+  }
+};
+
+/**
+ * Wait for a Step Function execution to exist
+ *
+ * @param {string} executionArn - a Step Function Execution ARN
+ * @param {Object} options - options
+ * @param {number} options.interval - the number of seconds to wait between checks
+ * @param {number} options.timeout - the number of seconds to wait for the execution
+ *   to exist
+ * @returns {Promise<undefined>} no return value
+ */
+exports.waitForExecutionToExist = async (executionArn, options = {}) => {
+  const {
+    interval = 5,
+    timeout = 300
+  } = options;
+
+  const intervalInMs = interval * 1000;
+  const failAfter = Date.now + (timeout * 1000);
+
+  /* eslint-disable no-await-in-loop */
+  do {
+    if (await exports.executionExists(executionArn)) return;
+    await delay(intervalInMs);
+  } while (Date.now() < failAfter);
+  /* eslint-enable no-await-in-loop */
+
+  throw new Error(`Timed out waiting for ${executionArn} to exist`);
 };
