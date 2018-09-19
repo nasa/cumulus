@@ -174,7 +174,7 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames on previous
     getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.Aliases[i]);
   }
 
-  const expected = ['VersionUpTest-CurrentVersionHash', 'VersionUpTest-SecondPreviousVersionHash',
+  const expected = ['VersionUpTest-LatestVersionHash', 'VersionUpTest-SecondPreviousVersionHash',
     'HelloWorld-d49d272b8b1e8eb98a61affc34b1732c1032b1ca'];
 
   const actual = await kes.getRetainedLambdaAliasNames();
