@@ -22,7 +22,8 @@ const {
   moveGranuleFile,
   getGranuleId
 } = require('../granule');
-
+const { baseProtocol } = require('../protocol');
+const { s3Mixin } = require('../s3');
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
@@ -397,4 +398,40 @@ test('getGranuleId fails', (t) => {
   const regex = '(.*).TXT';
   const error = t.throws(() => getGranuleId(uri, regex), Error);
   t.is(error.message, `Could not determine granule id of ${uri} using ${regex}`);
+});
+
+class TestS3Granule extends s3Mixin(baseProtocol(Granule)) {}
+
+test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
+  const sourceBucket = 'mark-source';
+  await s3().createBucket({ Bucket: sourceBucket }).promise();
+
+  const testFileName = 'test.txt';
+  const fileStagingDir = 'file-staging';
+
+  const Key = `${fileStagingDir}/${testFileName}`;
+  const params = { Bucket: sourceBucket, Key, Body: 'test' };
+  await s3().putObject(params).promise();
+
+  const destBucket = 'mark-dest';
+  await s3().createBucket({ Bucket: destBucket }).promise();
+
+  const duplicateHandling = 'error';
+  const testGranule = new TestS3Granule(
+    {},
+    {},
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const file = {
+    path: '',
+    testFileName
+  };
+  await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  await testGranule.ingestFile(file, destBucket, duplicateHandling);
 });

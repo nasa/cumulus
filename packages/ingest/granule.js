@@ -482,6 +482,10 @@ class Granule {
       Key: path.join(this.fileStagingDir, file.name)
     });
 
+    if (exists && duplicateHandling === 'error') {
+      throw new Error('testing');
+    }
+
     // Exit early if we can
     if (exists && duplicateHandling === 'skip') return file;
 
