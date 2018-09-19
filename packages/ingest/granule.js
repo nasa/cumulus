@@ -477,13 +477,14 @@ class Granule {
    */
   async ingestFile(file, bucket, duplicateHandling) {
     // Check if the file exists
+    const Key = path.join(this.fileStagingDir, file.name);
     const exists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, file.name)
+      Key
     });
 
     if (exists && duplicateHandling === 'error') {
-      throw new Error('testing');
+      throw new errors.DuplicateFile(`${Key} already exists in ${bucket} bucket`);
     }
 
     // Exit early if we can
