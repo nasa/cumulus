@@ -31,6 +31,21 @@ class UpdatedLambda extends Lambda {
     this.config = config;
   }
 
+  buildAllLambdaConfiguration() {
+    if (this.config.lambdas) {
+      let lambdas = this.config.lambdas;
+      // if the lambdas is not an array but a object, convert it to a list
+      if (!Array.isArray(this.config.lambdas)) {
+        lambdas = Object.keys(this.config.lambdas).map(name => {
+          const lambda = this.config.lambdas[name];
+          lambda.name = name;
+          return lambda;
+        });
+      }
+      lambdas.forEach(lambda => this.buildS3Path(lambda));
+    }
+  }
+
   /**
    * Copies the source code of a given lambda function, zips it, calculates
    * the hash of the source code and updates the lambda object with
@@ -77,6 +92,11 @@ class UpdatedLambda extends Lambda {
   /**
    * Overrides the default method to allow returning
    * the lambda function after s3 paths were built
+   *
+   * If a s3Source is used, only add remote and bucket values
+   *
+   * If a s3Source is used and a uniqueIdentifier is specified
+   * add that value in place of a calculated hash
    *
    * @param {Object} lambda - the Lambda object
    * @returns {Object} the updated lambda object

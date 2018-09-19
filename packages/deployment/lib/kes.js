@@ -218,6 +218,10 @@ class UpdatedKes extends Kes {
    */
   async superCompileCF() {
     const lambda = new this.Lambda(this.config);
+    if(!this.config.lambdaProcess) {
+      lambda.buildAllLambdaConfiguration();
+      return this.cfCompilation(this.config);
+    }
     return lambda.process().then((config) => this.cfCompilation(config));
   }
 
@@ -352,7 +356,7 @@ class UpdatedKes extends Kes {
    * @param {string} name - Cumulus created CF Lambda::Alias name parameter
    *                        in format Name-Hash,
    * @returns {Object} returns hash with name/value keys mapped to appropriate
-   *                   matches and sets hash to null if no hash value in 'name'
+   *                   matches and sets hash to null if no hash match in 'name'
    */
   parseAliasName(name) {
     const regExp = /^([^-]*)-([^-]*)$/;
