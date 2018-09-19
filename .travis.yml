@@ -6,7 +6,9 @@ language: node_js
 stages:
   - name: build cache
   - name: unit test
-  - name: integration test
+  - name: deploy integration test stack
+  - name: integration tests
+  - name: cleanup integration tests
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
@@ -67,16 +69,30 @@ jobs:
         - ./travis-ci/start-local-services.sh
       script: npm run e2e
 
+    - name: "Deploy Integration Test Stack"
+      stage: deploy integration test stack
+      if: commit_message !~ \[skip-integration-tests\]
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: travis_wait 50 ./travis-ci/init-integration-tests.sh
+      after_failure: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
 
-    - name: "Integration tests"
-      stage: integration test
+    - name: "Run integration tests"
+      stage: integration tests
       if: commit_message !~ \[skip-integration-tests\]
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/run-integration-tests.sh
+      after_failure: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
 
+    - name: "Cleanup integration tests"
+      stage: cleanup integration tests
+      if: commit_message !~ \[skip-integration-tests\]
+      script: travis_wait 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy to NPM"
       stage: deploy
