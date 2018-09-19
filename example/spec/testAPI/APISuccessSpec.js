@@ -1,22 +1,24 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { loadConfig } = require('../helpers/testUtils');
 const sleep = require('sleep-promise');
 const {
   aws: { s3 }
 } = require('@cumulus/common');
-const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const {
   buildAndExecuteWorkflow,
   conceptExists
 } = require('@cumulus/integration-tests');
 const { Search } = require('@cumulus/api/es/search');
+const { api: apiTestUtils } = require('@cumulus/integration-tests');
+
+const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
+const { loadConfig } = require('../helpers/testUtils');
+
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
@@ -46,7 +48,7 @@ async function waitForExist(CMRLink, outcome, retries, delay = 2000) {
 
 describe('The Cumulus API', () => {
   let workflowExecution = null;
-  let esClient;
+  let esClient; // eslint-disable-line no-unused-vars
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
@@ -147,6 +149,7 @@ describe('The Cumulus API', () => {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
+
       cmrLink = granule.cmrLink;
 
       // For debugging
@@ -155,6 +158,7 @@ describe('The Cumulus API', () => {
       }
 
       const existsInCMR = await conceptExists(cmrLink);
+
       expect(existsInCMR).toEqual(true);
 
       // Remove the granule from CMR
@@ -165,6 +169,7 @@ describe('The Cumulus API', () => {
 
       // Check that the granule was removed
       const granuleRemoved = await waitForExist(granule.cmrLink, false, 2);
+
       expect(granuleRemoved).toEqual(true);
     });
 
@@ -179,7 +184,7 @@ describe('The Cumulus API', () => {
         workflow: 'PublishGranule'
       });
 
-      const granulePublished = await waitForExist(cmrLink, true, 20, 20000);
+      const granulePublished = await waitForExist(cmrLink, true, 10, 30000);
       expect(granulePublished).toEqual(true);
 
       // Cleanup: remove from CMR
