@@ -295,9 +295,9 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Using the object configuration, this function gets the three most recent lambda alias names
+   * Using the object configuration, this function gets the two most recent lambda alias names
    * to retain in the 'Old Lambda Resources' section of the Cloud Formation template,
-   * avoiding duplicates of items in the Lambda section and unlisted functions.
+   * avoiding duplicates of items in the Lambda section.
    *
    * @returns {string[]} returns a list of alias names
    **/
@@ -326,19 +326,18 @@ class UpdatedKes extends Kes {
       const cumulusAliases = aliases.filter(
         (alias) => alias.Description.includes(cumulusAliasDescription)
       );
+
       if (cumulusAliases.length === 0) return;
 
       cumulusAliases.sort((a, b) => b.FunctionVersion - a.FunctionVersion);
+      let oldAliases = cumulusAliases.filter(
+        alias => this.parseAliasName(alias.Name).hash !== configLambdas[lambdaName].hash
+      );
 
-      let sliceStartIndex = 0;
-      if (configLambdas[lambdaName].hash === this.parseAliasName(cumulusAliases[0].Name).hash) {
-        sliceStartIndex = 1;
-      }
-
-      const oldAliases = cumulusAliases.slice(sliceStartIndex, 3).map((alias) => alias.Name);
+      oldAliases = oldAliases.map(alias => alias.Name).slice(0,2);
       if (oldAliases.length > 0) {
         console.log(
-          `Adding the following Aliases to LambdaVersion Template: ${JSON.stringify(oldAliases)}`
+          `Adding the following 'old' versions to LambdaVersions Template: ${JSON.stringify(oldAliases)}`
         );
       }
 
