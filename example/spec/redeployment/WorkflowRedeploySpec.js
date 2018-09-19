@@ -25,19 +25,15 @@ const workflowsYmlFile = './workflows.yml';
 const workflowsYmlCopyFile = './workflowsCopy.yml';
 const config = loadConfig();
 
+const promisedFileCopy = promisify(fs.copyFile);
 
 describe('When a workflow', () => {
-  beforeAll(
-    () => promisify(fs.copyFile)(workflowsYmlFile, workflowsYmlCopyFile),
-    15 * 60 * 1000 // Timeout after 15 minutes
-  );
+  beforeAll(() => promisedFileCopy(workflowsYmlFile, workflowsYmlCopyFile));
 
   afterAll(
     async () => {
       // Restore workflows.yml to original and redeploy for next time tests are run
-      console.log('Starting restoreConfigYml() in afterAll'); // Debugging intermittent test failures
       restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-      console.log('Finished restoreConfigYml() in afterAll'); // Debugging intermittent test failures
 
       console.log('Starting redeploy() in afterAll'); // Debugging intermittent test failures
       await redeploy(config);
