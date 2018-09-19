@@ -35,13 +35,13 @@ describe('When a workflow', () => {
   afterAll(
     async () => {
       // Restore workflows.yml to original and redeploy for next time tests are run
-      console.log('Starting restoreConfigYml() in afterAll');
+      console.log('Starting restoreConfigYml() in afterAll'); // Debugging intermittent test failures
       restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-      console.log('Finished restoreConfigYml() in afterAll');
+      console.log('Finished restoreConfigYml() in afterAll'); // Debugging intermittent test failures
 
-      console.log('Starting redeploy() in afterAll');
+      console.log('Starting redeploy() in afterAll'); // Debugging intermittent test failures
       await redeploy(config);
-      console.log('Finished redeploy() in afterAll');
+      console.log('Finished redeploy() in afterAll'); // Debugging intermittent test failures
     },
     15 * 60 * 1000 // Timeout after 15 minutes
   );
@@ -53,23 +53,23 @@ describe('When a workflow', () => {
     beforeAll(
       async () => {
         // Kick off the workflow, don't wait for completion
-        console.log('Starting buildAndStartWorkflow() in beforeAll() A');
+        console.log('Starting buildAndStartWorkflow() in beforeAll() A'); // Debugging intermittent test failures
         workflowExecutionArn = await buildAndStartWorkflow(
           config.stackName,
           config.bucket,
           'WaitForDeployWorkflow'
         );
-        console.log('Finished buildAndStartWorkflow() in beforeAll() A');
+        console.log('Finished buildAndStartWorkflow() in beforeAll() A'); // Debugging intermittent test failures
 
         removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
 
-        console.log('Starting redeploy() in beforeAll() A');
+        console.log('Starting redeploy() in beforeAll() A'); // Debugging intermittent test failures
         await redeploy(config);
-        console.log('Finished redeploy() in beforeAll() A');
+        console.log('Finished redeploy() in beforeAll() A'); // Debugging intermittent test failures
 
-        console.log('Starting waitForCompletedExecution() in beforeAll() A');
+        console.log('Starting waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
         workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-        console.log('Finished waitForCompletedExecution() in beforeAll() A');
+        console.log('Finished waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
       },
       15 * 60 * 1000 // Timeout after 15 minutes
     );
@@ -110,32 +110,32 @@ describe('When a workflow', () => {
     beforeAll(
       async () => {
         // Kick off the workflow, don't wait for completion
-        console.log('Starting buildAndStartWorkflow() in beforeAll() B');
+        console.log('Starting buildAndStartWorkflow() in beforeAll() B'); // Debugging intermittent test failures
         workflowExecutionArn = await buildAndStartWorkflow(
           config.stackName,
           config.bucket,
           'WaitForDeployWorkflow'
         );
-        console.log('Finished buildAndStartWorkflow() in beforeAll() B');
+        console.log('Finished buildAndStartWorkflow() in beforeAll() B'); // Debugging intermittent test failures
 
         // Remove the WaitForDeployWorkflow workflow from workflows.yml
         removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
 
-        console.log('Starting redeploy() in beforeAll() B');
+        console.log('Starting redeploy() in beforeAll() B'); // Debugging intermittent test failures
         await redeploy(config);
-        console.log('Finished redeploy() in beforeAll() B');
+        console.log('Finished redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
         // Wait for the execution to reach a non-RUNNING state
-        console.log('Starting waitForCompletedExecution() in beforeAll() B');
+        console.log('Starting waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
         await waitForCompletedExecution(workflowExecutionArn);
-        console.log('Finished waitForCompletedExecution() in beforeAll() B');
+        console.log('Finished waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
 
-        console.log('Starting apiTestUtils.getExecution() in beforeAll() B');
+        console.log('Starting apiTestUtils.getExecution() in beforeAll() B'); // Debugging intermittent test failures
         workflowStatus = await apiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecutionArn
         });
-        console.log('Finished apiTestUtils.getExecution() in beforeAll() B');
+        console.log('Finished apiTestUtils.getExecution() in beforeAll() B'); // Debugging intermittent test failures
       },
       15 * 60 * 1000 // Timeout after 15 minutes
     );
