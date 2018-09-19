@@ -406,32 +406,37 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   const sourceBucket = 'mark-source';
   await s3().createBucket({ Bucket: sourceBucket }).promise();
 
-  const testFileName = 'test.txt';
-  const fileStagingDir = 'file-staging';
+  const file = {
+    path: '',
+    name: 'test.txt'
+  };
 
-  const Key = `${fileStagingDir}/${testFileName}`;
+  const Key = path.join(file.path, file.name);
   const params = { Bucket: sourceBucket, Key, Body: 'test' };
   await s3().putObject(params).promise();
 
   const destBucket = 'mark-dest';
   await s3().createBucket({ Bucket: destBucket }).promise();
 
+  const collectionConfig = {
+    files: [
+      {
+        regex: '^[A-Z]|[a-z]+\.txt'
+      }
+    ]
+  };
   const duplicateHandling = 'error';
   const testGranule = new TestS3Granule(
     {},
-    {},
+    collectionConfig,
     {
       host: sourceBucket
     },
-    fileStagingDir,
+    'file-staging',
     false,
     duplicateHandling,
   );
 
-  const file = {
-    path: '',
-    testFileName
-  };
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
 });
