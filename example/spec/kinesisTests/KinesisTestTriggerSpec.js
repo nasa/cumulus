@@ -2,7 +2,7 @@
 
 const { s3 } = require('@cumulus/common/aws');
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 12 * 60 * 1000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
   LambdaStep,
@@ -86,7 +86,7 @@ const expectedSyncGranulesPayload = {
 // triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const maxWaitForSFExistSecs =  60 * 4;
-  const maxWaitForExecutionSecs = 60 * 8;
+  const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
   let s3FileHead;
   let responseStreamShardIterator;
