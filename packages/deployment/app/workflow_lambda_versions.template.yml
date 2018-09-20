@@ -69,6 +69,10 @@ Outputs:
     Value: !Ref {{@key}}LambdaAlias{{this.hash}}
 {{/if}}
 {{/if}}
+{{#unless this.hash}}
+  {{@key}}LambdaAliasOutput:
+    Value: 'No Value'
+{{/unless}}
 {{/each}}
 ################################################
 # Outputs block END
