@@ -3,6 +3,7 @@ default:
   oldLambdaInjection: true
   lambdaProcess: true
   useWorkflowLambdaVersions: true
+  maxNumberOfRetainedLambdas: 1
 
   lambdas: !!files [
   'lambdas.yml',
