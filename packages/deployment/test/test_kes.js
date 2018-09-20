@@ -144,8 +144,8 @@ test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async 
   const actual = await kes.getAllLambdaAliases(lambda, config);
 
   t.deepEqual(versionUpAliases, actual,
-    `Expected:${JSON.stringify(versionUpAliases)}\n\n` +
-    `Actual:${JSON.stringify(actual)}`);
+    `Expected:${JSON.stringify(versionUpAliases)}\n\n`
+    + `Actual:${JSON.stringify(actual)}`);
 });
 
 test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t) => {
@@ -165,7 +165,8 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t)
   t.deepEqual(expected, actual);
 });
 
-test.serial('getRetainedLambdaAliasNames returns filtered aliasNames on previous version redeployment', async (t) => {
+test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
+            + 'on previous version redeployment', async (t) => {
   const kes = t.context.kes;
 
   kes.config.lambdas = aliasFixture.Lambdas;

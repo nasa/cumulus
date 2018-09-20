@@ -296,9 +296,9 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Using the object configuration, this function gets the two most recent lambda alias names
-   * to retain in the 'Old Lambda Resources' section of the Cloud Formation template,
-   * avoiding duplicates of items in the Lambda section.
+   * Using the object configuration, this function gets the 'config.maxNumerOfRetainedLambdas'
+   * number of most recent lambda alias names to retain in the 'Old Lambda Resources' section of
+   * the LambdaVerssion template, avoiding duplicates of items in the Current Lambda section.
    *
    * @returns {Promise.string[]} returns the promise of a list of alias names
    **/
