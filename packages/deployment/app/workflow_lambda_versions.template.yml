@@ -61,7 +61,7 @@ Resources:
 #################################################
 Outputs:
 {{#each lambdas}}
-{{{#if this.hash}}
+{{#if this.hash}}
   {{@key}}LambdaAliasOutput:
     Value: !Ref {{@key}}LambdaAlias{{this.hash}}
 {{/if}}
@@ -69,7 +69,7 @@ Outputs:
   {{@key}}LambdaAliasOutput:
     Value: 'No Value'
 {{/unless}}
-{{{/each}}
+{{/each}}
 ################################################
 # Outputs block END
 #################################################
