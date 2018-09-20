@@ -229,7 +229,7 @@ class UpdatedKes extends Kes {
     // Inject Lambda Alias values into configuration,
     // then update configured workflow lambda references
     // to reference the generated alias values
-    if (this.config.useWorkflowLambdaVersions) {
+    if (this.config.useWorkflowLambdaVersions === true) {
       if (this.config.oldLambdaInjection) {
         await this.injectOldWorkflowLambdaAliases();
       } // TODO - this should be two ifs, add explicit flag here
@@ -397,6 +397,7 @@ class UpdatedKes extends Kes {
    * @returns {void} Returns nothing.
    */
   injectWorkflowLambdaAliases() {
+    console.log(`Updating workflow Lambda ARN references to Lambda Alias references`);
     Object.keys(this.config.stepFunctions).forEach((stepFunction) => {
       const stepFunctionStateKeys = Object.keys(this.config.stepFunctions[stepFunction].States);
       stepFunctionStateKeys.forEach((stepFunctionState) => {
@@ -406,7 +407,7 @@ class UpdatedKes extends Kes {
             && (stateObject.Resource.endsWith('LambdaFunction.Arn}'))) {
           const lambdaAlias = this.lookupLambdaReference(stateObject.Resource);
           stateObject.Resource = lambdaAlias;
-          console.log(`Updating resource to ${lambdaAlias}`);
+          console.log(`Updating workflow ${stateObject.Resource} reference to ${lambdaAlias}`);
         }
       });
     });

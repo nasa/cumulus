@@ -22,17 +22,23 @@ Resources:
   #  BEGIN
   #################################################
 {{#each nested_templates}}
+{{#ifEquals @key "WorkflowLambdaVersions"}}
+{{#ifEquals ../useWorkflowLambdaVersions true}}
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-  {{#ifEquals @key "HistoricLambdas"}}
       Parameters:
       {{#each ../workflowLambdas}}
         {{@key}}LambdaFunction:
           !Ref {{@key}}LambdaFunction
       {{/each}}
-  {{/ifEquals}}
-  {{#ifNotEquals @key "HistoricLambdas"}}
+      TemplateURL: {{this.url}}
+{{/ifEquals}}
+{{/ifEquals}}
+{{#ifNotEquals @key "WorkflowLambdaVersions"}}
+  {{@key}}NestedStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
       Parameters:
         CmrPassword:
           Fn::GetAtt:
@@ -88,8 +94,8 @@ Resources:
             - SecurityGroup
             - GroupId
       {{/if}}
-    {{/ifNotEquals}}
       TemplateURL: {{this.url}}
+{{/ifNotEquals}}
 {{/each}}
 
   #################################################
@@ -310,11 +316,16 @@ Resources:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
+    {{#ifEquals ../useWorkflowLambdaVersions true}}
         Fn::Sub:
         - |
             {{{ToJson this}}}
-        - { {{#each ../workflowLambdas}}{{@key}}LambdaAliasOutput: !GetAtt [HistoricLambdasNestedStack, Outputs.{{@key}}LambdaAliasOutput],{{/each}} stackName: {{../stackName}} }
-
+        - { {{#each ../workflowLambdas}}{{@key}}LambdaAliasOutput: !GetAtt [WorkflowLambdaVersionsNestedStack, Outputs.{{@key}}LambdaAliasOutput],{{/each}} stackName: {{../stackName}} }
+    {{/ifEquals}}
+    {{#ifNotEquals ../useWorkflowLambdaVersions true}}
+        Fn::Sub: |
+          {{{ToJson this}}}
+    {{/ifNotEquals}}
       RoleArn: {{../iams.stepRoleArn}}
 
 {{/each}}
