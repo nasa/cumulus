@@ -336,7 +336,7 @@ class UpdatedKes extends Kes {
         alias => this.parseAliasName(alias.Name).hash !== configLambdas[lambdaName].hash
       );
 
-      oldAliases = oldAliases.map(alias => alias.Name).slice(0,2);
+      oldAliases = oldAliases.map(alias => alias.Name).slice(0,this.config.maxNumberOfRetainedLambdas);
       if (oldAliases.length > 0) {
         console.log(
           `Adding the following 'old' versions to LambdaVersions Template: ${JSON.stringify(oldAliases)}`
