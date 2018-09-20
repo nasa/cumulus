@@ -120,9 +120,12 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
       Key: key,
       ACL: 'private'
     };
+    const startTime = new Date();
 
     await aws.s3().copyObject(params).promise();
-    log.info('Uploading to s3 is complete', s3uri);
+
+    const syncTimeSecs = (new Date() - startTime) / 1000.0;
+    log.info(`s3 Upload completed in ${syncTimeSecs} secs`, s3uri);
     return s3uri;
   }
 };
