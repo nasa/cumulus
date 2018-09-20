@@ -3,9 +3,11 @@ default:
   oldLambdaInjection: true
   lambdaProcess: true
   useWorkflowLambdaVersions: true
+
   lambdas: !!files [
   'lambdas.yml',
-  'node_modules/@cumulus/api/config/lambdas.yml']
+  'node_modules/@cumulus/api/config/workflowLambdas.yml'
+  ]
 
   repo_owner: nasa
   message_adapter_repo: cumulus-message-adapter

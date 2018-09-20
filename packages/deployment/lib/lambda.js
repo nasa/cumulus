@@ -32,9 +32,9 @@ class UpdatedLambda extends Lambda {
   }
 
   /**
-   * Executes buildS3Path for all lambdas in the configuration
+   * Executes buildS3Path for all lambdas in the lambda's configuration object
    *
-   * This method allows us to utilize buildS3Path to populate bucket/hash values
+   * Utilizes buildS3Path to populate bucket/hash values
    * in the config object for a template that runs following a nested template
    * that has already run the superclass 'process' method.
    *
@@ -54,7 +54,6 @@ class UpdatedLambda extends Lambda {
       lambdas.forEach(lambda => this.buildS3Path(lambda));
     }
   }
-
 
   /**
    * Copies the source code of a given lambda function, zips it, calculates

@@ -27,7 +27,7 @@ Resources:
     Properties:
   {{#ifEquals @key "HistoricLambdas"}}
       Parameters:
-      {{#each ../lambdas}}
+      {{#each ../workflowLambdas}}
         {{@key}}LambdaFunction:
           !Ref {{@key}}LambdaFunction
       {{/each}}
@@ -313,7 +313,7 @@ Resources:
         Fn::Sub:
         - |
             {{{ToJson this}}}
-        - { {{#each ../lambdas}}{{@key}}LambdaAliasOutput: !GetAtt [HistoricLambdasNestedStack, Outputs.{{@key}}LambdaAliasOutput],{{/each}} stackName: {{../stackName}} }
+        - { {{#each ../workflowLambdas}}{{@key}}LambdaAliasOutput: !GetAtt [HistoricLambdasNestedStack, Outputs.{{@key}}LambdaAliasOutput],{{/each}} stackName: {{../stackName}} }
 
       RoleArn: {{../iams.stepRoleArn}}
 
