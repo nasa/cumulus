@@ -152,6 +152,7 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t)
   const kes = t.context.kes;
 
   kes.config.lambdas = aliasFixture.Lambdas;
+  kes.config.maxNumberOfRetainedLambdas = 2;
   const getAllLambdaAliasesStub = sinon.stub(kes, 'getAllLambdaAliases');
   for (let i = 0; i < aliasFixture.Aliases.length; i += 1) {
     getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.Aliases[i]);
