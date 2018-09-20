@@ -141,23 +141,24 @@ describe('The Cumulus API', () => {
     });
   });
 
-  describe('CMR actions', () => {
+  describe('CMR tests:', () => {
     let granule;
     let cmrLink;
 
-    it('removeFromCMR removes the ingested granule from CMR', async () => {
+    beforeAll(() => {
       granule = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
 
       cmrLink = granule.cmrLink;
+    });
 
-      // For debugging
-      if (!cmrLink) {
-        console.log(`Granule has no CMR link: ${JSON.stringify(granule)}`);
-      }
+    it('the granule has a CMR link', () => {
+      expect(granule.cmrLink).not.toBeUndefined();
+    });
 
+    it('removeFromCMR removes the ingested granule from CMR', async () => {
       const existsInCMR = await conceptExists(cmrLink);
 
       expect(existsInCMR).toEqual(true);
@@ -170,7 +171,6 @@ describe('The Cumulus API', () => {
 
       // Check that the granule was removed
       const granuleRemoved = await waitForExist(cmrLink, false, 2);
-
       expect(granuleRemoved).toEqual(true);
     });
 
@@ -188,6 +188,7 @@ describe('The Cumulus API', () => {
       const granulePublished = await waitForExist(cmrLink, true, 10, 30000);
       expect(granulePublished).toEqual(true);
 
+      console.log('Cleaning up test granule from CMR');
       // Cleanup: remove from CMR
       await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
