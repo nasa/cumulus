@@ -464,5 +464,7 @@ module.exports = {
   rulesList,
   sleep,
   timeout: sleep,
-  getWorkflowArn
+  getWorkflowArn,
+  getLambdaVersions: lambda.getLambdaVersions,
+  getLambdaAliases: lambda.getLambdaAliases
 };

@@ -8,14 +8,13 @@ const {
   LambdaStep
 } = require('@cumulus/integration-tests');
 
+const fs = require('fs-extra');
 const {
   loadConfig,
   redeploy
 } = require('../helpers/testUtils');
 
 const config = loadConfig();
-const fs = require('fs-extra');
-
 
 const lambdaStep = new LambdaStep();
 

@@ -220,22 +220,19 @@ class UpdatedKes extends Kes {
     const lambda = new this.Lambda(this.config);
     if(!this.config.lambdaProcess) {
       lambda.buildAllLambdaConfiguration();
-      return this.cfCompilation(this.config);
     }
-    return lambda.process().then((config) => this.cfCompilation(config));
-  }
-
-  async cfCompilation(config) {
-    this.config = config;
+    else {
+      this.config = await lambda.process();
+    }
     let cf;
 
     // Inject Lambda Alias values into configuration,
     // then update configured workflow lambda references
     // to reference the generated alias values
-    if (config.useWorkflowLambdaVersions) {
-      if (config.oldLambdaInjection) {
+    if (this.config.useWorkflowLambdaVersions) {
+      if (this.config.oldLambdaInjection) {
         await this.injectOldWorkflowLambdaAliases();
-      }
+      } // TODO - this should be two ifs, add explicit flag here
       else {
         this.injectWorkflowLambdaAliases();
       }
