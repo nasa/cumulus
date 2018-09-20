@@ -145,7 +145,7 @@ describe('The Cumulus API', () => {
     let granule;
     let cmrLink;
 
-    beforeAll(() => {
+    beforeAll(async () => {
       granule = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
