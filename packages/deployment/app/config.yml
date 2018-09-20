@@ -31,6 +31,7 @@ default:
   # api_distribution_url: https://apigateway-url-to-distribution-app/
 
   customCompilation: true
+  injectWorkflowLambdaAliases: true
 
   params:
     - name: CmrPassword
