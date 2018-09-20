@@ -484,7 +484,7 @@ class Granule {
     });
 
     if (exists && duplicateHandling === 'error') {
-      throw new errors.DuplicateFile(`${Key} already exists in ${bucket} bucket`);
+      throw new errors.WorkflowError(`${Key} already exists in ${bucket} bucket`);
     }
 
     // Exit early if we can
