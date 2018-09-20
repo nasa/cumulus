@@ -19,6 +19,7 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api');
 const cmr = require('./cmr.js');
+const granule = require('./granule.js');
 
 /**
  * Wait for the defined number of milliseconds
@@ -463,5 +464,7 @@ module.exports = {
   rulesList,
   sleep,
   timeout: sleep,
-  getWorkflowArn
+  getWorkflowArn,
+  waitForConceptExistsOrNot: cmr.waitForConceptExistsOrNot,
+  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };
