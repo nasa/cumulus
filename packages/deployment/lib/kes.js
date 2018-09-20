@@ -165,9 +165,6 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('ifNotEquals', function (arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
-    Handlebars.registerHelper('ifObjectNotEmpty', function (arg1, options) {
-      return (Object.keys(arg1).length !== 0) ? options.fn(this) : options.inverse(this);
-    });
     return super.parseCF(cfFile);
   }
 
@@ -219,12 +216,13 @@ class UpdatedKes extends Kes {
    */
   async superCompileCF() {
     const lambda = new this.Lambda(this.config);
-    if (!this.config.lambdaProcess) {
-      lambda.buildAllLambdaConfiguration();
-    }
-    else {
+    if (this.config.lambdaProcess) {
       this.config = await lambda.process();
     }
+    else {
+      lambda.buildAllLambdaConfiguration();
+    }
+
     let cf;
 
     // Inject Lambda Alias values into configuration,
