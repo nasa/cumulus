@@ -429,13 +429,14 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     ]
   };
   const duplicateHandling = 'error';
+  const fileStagingDir = 'file-staging';
   const testGranule = new TestS3Granule(
     {},
     collectionConfig,
     {
       host: sourceBucket
     },
-    'file-staging',
+    fileStagingDir,
     false,
     duplicateHandling,
   );
@@ -444,8 +445,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   // Otherwise, it will pre-emptively throw an error on the first attempt to ingest
   // the file.
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
-  await t.throws(
-    testGranule.ingestFile(file, destBucket, duplicateHandling),
-    errors.DuplicateFile,
-  );
+  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
+  const destFileKey = path.join(fileStagingDir, file.name);
+  t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
 });
