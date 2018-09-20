@@ -125,6 +125,7 @@ class UpdatedKes extends Kes {
           const data = await this.cf.listStackResources(params).promise();
           resources = resources.concat(data.StackResourceSummaries);
           if (data.NextToken) params.NextToken = data.NextToken;
+
           else break;
         }
 
@@ -230,10 +231,10 @@ class UpdatedKes extends Kes {
     // then update configured workflow lambda references
     // to reference the generated alias values
     if (this.config.useWorkflowLambdaVersions === true) {
-      if (this.config.oldLambdaInjection) {
+      if (this.config.oldLambdaInjection === true) {
         await this.injectOldWorkflowLambdaAliases();
-      } // TODO - this should be two ifs, add explicit flag here
-      else {
+      }
+      if (this.config.injectWorkflowLambdaAliases === true) {
         this.injectWorkflowLambdaAliases();
       }
     }
@@ -271,7 +272,7 @@ class UpdatedKes extends Kes {
    *
    * @param {Object} lambda - AWS lambda object
    * @param {Object} config - AWS listAliases configuration object.
-   * @returns {Object[]} returns an array of AWS Alias objects
+   * @returns {Promise.Object[]} returns the promise of an array of AWS Alias objects
    */
   async getAllLambdaAliases(lambda, config) {
     const lambdaConfig = Object.assign({}, config);
@@ -300,7 +301,7 @@ class UpdatedKes extends Kes {
    * to retain in the 'Old Lambda Resources' section of the Cloud Formation template,
    * avoiding duplicates of items in the Lambda section.
    *
-   * @returns {string[]} returns a list of alias names
+   * @returns {Promise.string[]} returns the promise of a list of alias names
    **/
   async getRetainedLambdaAliasNames() {
     const awsLambda = new this.AWS.Lambda();
@@ -369,7 +370,7 @@ class UpdatedKes extends Kes {
    * configuration name: [hashes] and injects that into the oldLambdas config
    * key
    *
-   * @returns {void} Returns nothing.
+   * @returns {Promise.void} Returns nothing.
    */
   async injectOldWorkflowLambdaAliases() {
     const oldLambdaNames = await this.getRetainedLambdaAliasNames();
