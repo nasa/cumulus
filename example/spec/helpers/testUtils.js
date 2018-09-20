@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const { S3 } = require('aws-sdk');
 const { Config } = require('kes');
@@ -97,8 +99,9 @@ function getExecutionUrl(executionArn) {
  * @param {Object} config - configuration object from loadConfig()
  * @returns {undefined} none
  */
-async function redeploy(config) {
-  const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
+async function redeploy(config, template) {
+  const templatePath = template || 'node_modules/@cumulus/deployment/app';
+  const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template ${templatePath} --deployment ${config.deployment} --region us-east-1`;
   console.log(`Redeploying ${config.deployment}`);
   await exec(deployCommand)
     .then((result) => {
