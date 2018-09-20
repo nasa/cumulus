@@ -10,7 +10,6 @@ Resources:
 #################################################
 # 'Old' Lambda Version/Alias block BEGIN
 #################################################
-{{#if @root.useWorkflowLambdaVersions}}
 {{#each oldLambdas}}
 {{#if this.hashes}}
 {{#each this.hashes}}
@@ -29,7 +28,6 @@ Resources:
 {{/each}}
 {{/if}}
 {{/each}}
-{{/if}}
 #################################################
 # 'Old' Lambda Version/Alias block END
 #################################################
@@ -63,17 +61,15 @@ Resources:
 #################################################
 Outputs:
 {{#each lambdas}}
-{{#if @root.useWorkflowLambdaVersions}}
-{{#if this.hash}}
+{{{#if this.hash}}
   {{@key}}LambdaAliasOutput:
     Value: !Ref {{@key}}LambdaAlias{{this.hash}}
-{{/if}}
 {{/if}}
 {{#unless this.hash}}
   {{@key}}LambdaAliasOutput:
     Value: 'No Value'
 {{/unless}}
-{{/each}}
+{{{/each}}
 ################################################
 # Outputs block END
 #################################################
