@@ -1,4 +1,4 @@
-/* eslint-disable no-console, no-param-reassign, no-await-in-loop, no-restricted-syntax */
+/* eslint-disable no-console, no-await-in-loop, no-restricted-syntax */
 /**
  * This module overrides the Kes Class and the Lambda class of Kes
  * to support specific needs of the Cumulus Deployment.
@@ -26,18 +26,17 @@
 
 
 const zipObject = require('lodash.zipobject');
-//eslint-disable-next-line import/no-unresolved, node/no-missing-require
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
 
 const path = require('path');
+const util = require('util');
 const Lambda = require('./lambda');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
-const util = require('util');
 const fsWriteFile = util.promisify(fs.writeFile);
 
 
@@ -75,6 +74,7 @@ class UpdatedKes extends Kes {
     this.messageAdapterGitPath = `${config.repo_owner}/${config.message_adapter_repo}`;
   }
 
+
   /**
    * Redeploy the given api gateway (more info: https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api.html)
    *
@@ -94,8 +94,8 @@ class UpdatedKes extends Kes {
       catch (e) {
         if (e.message && e.message.includes('Too Many Requests')) {
           console.log(
-            `Redeploying ${restApiId} was throttled. ` +
-            `Another attempt will be made in ${waitTime} seconds`
+            `Redeploying ${restApiId} was throttled. `
+            + `Another attempt will be made in ${waitTime} seconds`
           );
           await delay(waitTime * 1000);
           return this.redeployApiGateWay(name, restApiId, stageName);
@@ -219,7 +219,7 @@ class UpdatedKes extends Kes {
    */
   async superCompileCF() {
     const lambda = new this.Lambda(this.config);
-    if(!this.config.lambdaProcess) {
+    if (!this.config.lambdaProcess) {
       lambda.buildAllLambdaConfiguration();
     }
     else {
@@ -263,6 +263,7 @@ class UpdatedKes extends Kes {
       cf = this.parseCF(this.config.cfFile);
     }
     const destPath = path.join(this.config.kesFolder, this.cf_template_name);
+
     console.log(`Template saved to ${destPath}`);
     return fsWriteFile(destPath, cf);
   }
@@ -333,13 +334,15 @@ class UpdatedKes extends Kes {
 
       cumulusAliases.sort((a, b) => b.FunctionVersion - a.FunctionVersion);
       let oldAliases = cumulusAliases.filter(
-        alias => this.parseAliasName(alias.Name).hash !== configLambdas[lambdaName].hash
+        (alias) => this.parseAliasName(alias.Name).hash !== configLambdas[lambdaName].hash
       );
 
-      oldAliases = oldAliases.map(alias => alias.Name).slice(0,this.config.maxNumberOfRetainedLambdas);
+      oldAliases = oldAliases.map((alias) => alias.Name).slice(
+        0, this.config.maxNumberOfRetainedLambdas
+      );
       if (oldAliases.length > 0) {
         console.log(
-          `Adding the following 'old' versions to LambdaVersions Template: ${JSON.stringify(oldAliases)}`
+          `Adding the following 'old' versions to LambdaVersions: ${JSON.stringify(oldAliases)}`
         );
       }
 
@@ -398,7 +401,7 @@ class UpdatedKes extends Kes {
    * @returns {void} Returns nothing.
    */
   injectWorkflowLambdaAliases() {
-    console.log(`Updating workflow Lambda ARN references to Lambda Alias references`);
+    console.log('Updating workflow Lambda ARN references to Lambda Alias references');
     Object.keys(this.config.stepFunctions).forEach((stepFunction) => {
       const stepFunctionStateKeys = Object.keys(this.config.stepFunctions[stepFunction].States);
       stepFunctionStateKeys.forEach((stepFunctionState) => {
@@ -435,8 +438,8 @@ class UpdatedKes extends Kes {
       lambdaKey = matchArray[1];
     }
     else {
-      console.log(`Invalid workflow configuration, ${stateObjectResource} ` +
-                  'is not a valid Lambda ARN');
+      console.log(`Invalid workflow configuration, ${stateObjectResource} `
+                  + 'is not a valid Lambda ARN');
       throw new Error(`Invalid stateObjectResource: ${stateObjectResource}`);
     }
     const lambdaHash = this.config.lambdas[lambdaKey].hash;
