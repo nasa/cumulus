@@ -1,8 +1,8 @@
 'use strict';
 
+const stepFunctions = require('@cumulus/common/step-functions');
 const {
   buildAndStartWorkflow,
-  waitForCompletedExecution,
   LambdaStep
 } = require('@cumulus/integration-tests');
 
@@ -43,7 +43,12 @@ describe('When a workflow', () => {
       );
       updateConfigObject(lambdaConfigFileName, lambdaName, updateConfig);
       await redeploy(config);
-      workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
+
+      workflowStatus = await stepFunctions.getCompletedExecutionStatus(
+        workflowExecutionArn,
+        { waitToExist: true }
+      );
+
       testVersionOutput = await lambdaStep.getStepOutput(
         workflowExecutionArn,
         lambdaName

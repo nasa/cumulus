@@ -1,7 +1,8 @@
+const stepFunctions = require('@cumulus/common/step-functions');
 const { Execution } = require('@cumulus/api/models');
+
 const {
   buildAndExecuteWorkflow,
-  waitForCompletedExecution,
   LambdaStep,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
@@ -75,7 +76,10 @@ describe('The Discover And Queue PDRs workflow', () => {
 
     beforeAll(async () => {
       parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
-      parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrWorkflowArn);
+      parsePdrExecutionStatus = await stepFunctions.getCompletedExecutionStatus(
+        parsePdrWorkflowArn,
+        { waitToExist: true }
+      );
     });
 
     it('executes successfully', () => {

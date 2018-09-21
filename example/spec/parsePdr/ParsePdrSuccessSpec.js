@@ -1,9 +1,9 @@
 const fs = require('fs');
 const { get } = require('lodash');
 const { Pdr, Execution } = require('@cumulus/api/models');
+const stepFunctions = require('@cumulus/common/step-functions');
 const {
   buildAndExecuteWorkflow,
-  waitForCompletedExecution,
   LambdaStep,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
@@ -114,7 +114,10 @@ describe('Parse PDR workflow', () => {
 
     beforeAll(async () => {
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+      ingestGranuleExecutionStatus = await stepFunctions.getCompletedExecutionStatus(
+        ingestGranuleWorkflowArn,
+        { waitToExist: true }
+      );
     });
 
     it('executes successfully', () => {

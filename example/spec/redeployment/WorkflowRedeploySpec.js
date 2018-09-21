@@ -2,10 +2,10 @@
 
 const fs = require('fs');
 const { promisify } = require('util');
+const stepFunctions = require('@cumulus/common/step-functions');
 
 const {
   buildAndStartWorkflow,
-  waitForCompletedExecution,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
@@ -63,9 +63,12 @@ describe('When a workflow', () => {
         await redeploy(config);
         console.log('Finished redeploy() in beforeAll() A'); // Debugging intermittent test failures
 
-        console.log('Starting waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
-        workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-        console.log('Finished waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
+        console.log('Starting stepFunctions.getCompletedExecutionStatus() in beforeAll() A'); // Debugging intermittent test failures
+        workflowStatus = await stepFunctions.getCompletedExecutionStatus(
+          workflowExecutionArn,
+          { waitToExist: true }
+        );
+        console.log('Finished stepFunctions.getCompletedExecutionStatus() in beforeAll() A'); // Debugging intermittent test failures
       },
       15 * 60 * 1000 // Timeout after 15 minutes
     );
@@ -122,9 +125,12 @@ describe('When a workflow', () => {
         console.log('Finished redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
         // Wait for the execution to reach a non-RUNNING state
-        console.log('Starting waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
-        await waitForCompletedExecution(workflowExecutionArn);
-        console.log('Finished waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
+        console.log('Starting stepFunctions.waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
+        await stepFunctions.waitForCompletedExecution(
+          workflowExecutionArn,
+          { waitToExist: true }
+        );
+        console.log('Finished stepFunctions.waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
 
         console.log('Starting apiTestUtils.getExecution() in beforeAll() B'); // Debugging intermittent test failures
         workflowStatus = await apiTestUtils.getExecution({

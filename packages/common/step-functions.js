@@ -1,7 +1,10 @@
+/** @module */
+
 'use strict';
 
-const delay = require('delay');
 const pRetry = require('p-retry');
+const pTimeout = require('p-timeout');
+const pWaitFor = require('p-wait-for');
 const uuidv4 = require('uuid/v4');
 
 const {
@@ -84,26 +87,61 @@ exports.executionExists = async (executionArn) => {
  *
  * @param {string} executionArn - a Step Function Execution ARN
  * @param {Object} options - options
- * @param {number} options.interval - the number of seconds to wait between checks
- * @param {number} options.timeout - the number of seconds to wait for the execution
- *   to exist
+ * @param {number} options.interval - number of milliseconds to wait before retrying
+ * @param {number} options.timeout - number of milliseconds to wait before rejecting
  * @returns {Promise<undefined>} no return value
+ * @throws {TimeoutError}
  */
-exports.waitForExecutionToExist = async (executionArn, options = {}) => {
-  const {
-    interval = 5,
-    timeout = 300
-  } = options;
+exports.waitForExecutionToExist = async (executionArn, options = {}) =>
+  pWaitFor(() => exports.executionExists(executionArn), options);
 
-  const intervalInMs = interval * 1000;
-  const failAfter = Date.now + (timeout * 1000);
+/**
+ * Wait for a given execution to complete
+ *
+ * @param {string} executionArn - a Step Function Execution ARN
+ * @param {Object} options - options
+ * @param {number} options.interval - number of milliseconds to wait before retrying
+ * @param {number} options.timeout - number of milliseconds to wait before rejecting
+ * @param {boolean} options.waitToExist - if the execution does not yet exist,
+ *   should it be waited for
+ * @returns {Promise<undefined>} undefined
+ * @throws {TimeoutError}
+ */
+exports.waitForCompletedExecution = async (executionArn, options = {}) => {
+  const interval = options.interval || 5 * 1000;
+  const timeout = options.timeout || 10 * 60 * 1000;
 
-  /* eslint-disable no-await-in-loop */
-  do {
-    if (await exports.executionExists(executionArn)) return;
-    await delay(intervalInMs);
-  } while (Date.now() < failAfter);
-  /* eslint-enable no-await-in-loop */
+  return pTimeout(
+    async () => {
+      if (options.waitToExist) {
+        await exports.waitForExecutionToExist(
+          executionArn,
+          { interval, timeout: Infinity }
+        );
+      }
 
-  throw new Error(`Timed out waiting for ${executionArn} to exist`);
+      return pWaitFor(
+        () => exports.describeExecution(executionArn)
+          .then(({ status }) => status !== 'RUNNING'),
+        { interval, timeout: Infinity }
+      );
+    },
+    { interval, timeout }
+  );
+};
+
+/**
+ * Wait for a given execution to complete, then return the status
+ *
+ * @param {string} executionArn - a Step Function Execution ARN
+ * @param {Object} options - see {@link waitForCompletedExecution}
+ * @returns {Promise<string>} the execution status
+ * @throws {TimeoutError}
+ */
+exports.getCompletedExecutionStatus = async (executionArn, options = {}) => {
+  await exports.waitForCompletedExecution(executionArn, options);
+
+  const { status } = await exports.describeExecution(executionArn);
+
+  return status;
 };

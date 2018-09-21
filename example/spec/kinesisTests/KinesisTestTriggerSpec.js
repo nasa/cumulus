@@ -1,13 +1,11 @@
 'use strict';
 
 const { s3 } = require('@cumulus/common/aws');
+const stepFunctions = require('@cumulus/common/step-functions');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
 
-const {
-  LambdaStep,
-  waitForCompletedExecution
-} = require('@cumulus/integration-tests');
+const { LambdaStep } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { loadConfig } = require('../helpers/testUtils');
@@ -124,7 +122,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
+        executionStatus = await stepFunctions.getCompletedExecutionStatus(
+          workflowExecution.executionArn,
+          { waitToExist: true }
+        );
       });
     });
 
@@ -217,7 +218,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitTime);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
+        executionStatus = await stepFunctions.getCompletedExecutionStatus(
+          workflowExecution.executionArn,
+          { waitToExist: true }
+        );
       });
     });
 

@@ -8,9 +8,7 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const {
   aws: { s3, sfn },
-  stepFunctions: {
-    describeExecution
-  }
+  stepFunctions
 } = require('@cumulus/common');
 const {
   models: { Provider, Collection, Rule }
@@ -56,59 +54,6 @@ function getWorkflowTemplate(stackName, bucketName, workflowName) {
 function getWorkflowArn(stackName, bucketName, workflowName) {
   return getWorkflowTemplate(stackName, bucketName, workflowName)
     .then((template) => template.cumulus_meta.state_machine);
-}
-
-/**
- * Get the status of a given execution
- *
- * If the execution does not exist, this will return 'RUNNING'.  This seems
- * surprising in the "don't surprise users of your code" sort of way.  If it
- * does not exist then the calling code should probably know that.  Something
- * to be refactored another day.
- *
- * @param {string} executionArn - ARN of the execution
- * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
- * @returns {Promise<string>} status
- */
-async function getExecutionStatus(executionArn, retryOptions) {
-  try {
-    const execution = await describeExecution(executionArn, retryOptions);
-    return execution.status;
-  }
-  catch (err) {
-    // If the execution does not exist, we return that it's "RUNNING".  I'm
-    //   not sure this is the behavior that we want.
-    if (err.code === 'ExecutionDoesNotExist') return 'RUNNING';
-
-    throw err;
-  }
-}
-
-/**
- * Wait for a given execution to complete, then return the status
- *
- * @param {string} executionArn - ARN of the execution
- * @param {number} [timeout=600] - the time, in seconds, to wait for the
- *   execution to reach a non-RUNNING state
- * @returns {string} status
- */
-async function waitForCompletedExecution(executionArn, timeout = 600) {
-  let executionStatus;
-
-  const stopTime = Date.now() + (timeout * 1000);
-
-  /* eslint-disable no-await-in-loop */
-  do {
-    executionStatus = await getExecutionStatus(executionArn);
-    if (executionStatus === 'RUNNING') await sleep(5000);
-  } while (executionStatus === 'RUNNING' && Date.now() < stopTime);
-  /* eslint-enable no-await-in-loop */
-
-  if (executionStatus === 'RUNNING') {
-    console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
-  }
-
-  return executionStatus;
 }
 
 /**
@@ -168,7 +113,10 @@ async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg,
   const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 
   // Wait for the execution to complete to get the status
-  const status = await waitForCompletedExecution(executionArn, timeout);
+  const status = await stepFunctions.getCompletedExecutionStatus(
+    executionArn,
+    { timeout, waitToExist: true }
+  );
 
   return { status, executionArn };
 }
@@ -445,7 +393,6 @@ module.exports = {
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
   getWorkflowTemplate,
-  waitForCompletedExecution,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
   /**

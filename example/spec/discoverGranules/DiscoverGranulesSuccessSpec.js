@@ -1,5 +1,6 @@
+const stepFunctions = require('@cumulus/common/step-functions');
 const { Execution } = require('@cumulus/api/models');
-const { buildAndExecuteWorkflow, LambdaStep, waitForCompletedExecution } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../helpers/testUtils');
 
@@ -78,8 +79,13 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     beforeAll(async () => {
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+
       console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
-      ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+
+      ingestGranuleExecutionStatus = await stepFunctions.getCompletedExecutionStatus(
+        ingestGranuleWorkflowArn,
+        { waitToExist: true }
+      );
     });
 
     it('executes successfully', () => {
