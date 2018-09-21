@@ -22,8 +22,9 @@ async function cleanUp() {
 describe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
   let workflowDefinitions;
   let stackList;
-  const completeStatues = ['UPDATE_COMPLETE', 'CREATE_COMPLETE'];
+  const deletedStatuses = ['DELETE_COMPLETE'];
   const lambdaVersionStackName = `${config.stackName}-WorkflowLambdaVersionsNestedStack`;
+  const startDate = new Date();
 
   beforeAll(async () => {
     try {
@@ -49,7 +50,7 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
       workflowDefinitions = await Promise.all(defPromises);
 
       //get a list of completed stacks
-      stackList = await cf().listStacks({ StackStatusFilter: completeStatues }).promise();
+      stackList = await cf().listStacks({ StackStatusFilter: deletedStatuses }).promise();
     }
     catch (e) {
       await cleanUp();
@@ -73,8 +74,8 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
   });
 
   it('has removed the lambdaVersionStack', () => {
-    const stackNames = stackList.StackSummaries.map((stack) => stack.StackName);
-    const matchingStackNames = stackNames.filter((name) => name.includes(lambdaVersionStackName));
-    expect(matchingStackNames.length).toEqual(0);
+    const matchingStacks = stackList.StackSummaries.filter((stack) => stack.StackName.includes(lambdaVersionStackName));
+    const newlyDeletedStacks = matchingStacks.filter((stack) => stack.DeletionTime > startDate);
+    expect(newlyDeletedStacks.length).toEqual(1);
   });
 });
