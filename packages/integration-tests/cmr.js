@@ -99,7 +99,7 @@ async function conceptExists(cmrLink) {
  * @param {number} interval - time (in ms) to wait between tries
  * @returns {undefined} - undefined
  */
-async function waitForConceptExistsOrNot(cmrLink, expectation, retries = 3, interval = 2000) {
+async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, interval = 2000) {
   await pWaitFor(
     async () => (await conceptExists(cmrLink)) === expectation,
     {
@@ -202,5 +202,5 @@ module.exports = {
   conceptExists,
   getOnlineResources,
   generateCmrFilesForGranules,
-  waitForConceptExistsOrNot
+  waitForConceptExistsOutcome
 };

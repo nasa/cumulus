@@ -7,7 +7,7 @@ const {
 const {
   buildAndExecuteWorkflow,
   conceptExists,
-  waitForConceptExistsOrNot
+  waitForConceptExistsOutcome
 } = require('@cumulus/integration-tests');
 const { Search } = require('@cumulus/api/es/search');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
@@ -91,7 +91,7 @@ describe('The Cumulus API', () => {
       });
 
       // Check that the granule was removed
-      await waitForConceptExistsOrNot(cmrLink, false, 2);
+      await waitForConceptExistsOutcome(cmrLink, false, 2);
       const doesExist = await conceptExists(cmrLink);
       expect(doesExist).toEqual(false);
     });
@@ -107,7 +107,7 @@ describe('The Cumulus API', () => {
         workflow: 'PublishGranule'
       });
 
-      await waitForConceptExistsOrNot(cmrLink, true, 10, 30000);
+      await waitForConceptExistsOutcome(cmrLink, true, 10, 30000);
       const doesExist = await conceptExists(cmrLink);
       expect(doesExist).toEqual(true);
     });

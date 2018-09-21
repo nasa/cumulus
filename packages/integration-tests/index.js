@@ -465,6 +465,6 @@ module.exports = {
   sleep,
   timeout: sleep,
   getWorkflowArn,
-  waitForConceptExistsOrNot: cmr.waitForConceptExistsOrNot,
+  waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };
