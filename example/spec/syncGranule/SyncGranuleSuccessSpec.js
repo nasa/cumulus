@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const { Execution } = require('@cumulus/api/models');
 const {
   aws: { s3, s3ObjectExists },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
+const { Collection, Execution } = require('@cumulus/api/models');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
 const {
@@ -110,6 +110,36 @@ describe('The Sync Granules workflow', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
       });
+    });
+  });
+
+  describe('when configured to handle duplicates as error', () => {
+    let secondExecution;
+    let collectionInfo;
+
+    beforeAll(async () => {
+      const c = new Collection();
+      collectionInfo = await c
+        .get({ name: collection.name, version: collection.version })
+        .then(() => c.update(collection, { duplicateHandling: 'error' }))
+        .then(() => c.get(collection));
+      secondExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      );
+    });
+
+    it('configured collection properly', () => {
+      expect(collectionInfo.duplicateHandling, 'error');
+    });
+
+    it('fails the workflow', () => {
+      expect(secondExecution.status).toEqual('FAILED');
+    });
+
+    afterAll(async () => {
+      const c = new Collection();
+      await c.update(collection, { duplicateHandling: 'replace' })
+        .then(() => c.get(collection));
     });
   });
 
