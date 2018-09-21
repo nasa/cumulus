@@ -48,7 +48,7 @@ exports.constructStepFunctionInput = (resources, provider, collection) => {
  *
  * @param {string} executionArn - ARN of the execution
  * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
- * @returns {Promise<Object>} https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property
+ * @returns {Promise<Object>} [AWS StepFunctions.describeExecutions response](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property)
  */
 exports.describeExecution = (executionArn, retryOptions) =>
   pRetry(
@@ -134,7 +134,7 @@ exports.waitForCompletedExecution = async (executionArn, options = {}) => {
  * Wait for a given execution to complete, then return the status
  *
  * @param {string} executionArn - a Step Function Execution ARN
- * @param {Object} options - see {@link waitForCompletedExecution}
+ * @param {Object} options - see {@link module:step-functions.waitForCompletedExecution|waitForCompletedExecution}
  * @returns {Promise<string>} the execution status
  * @throws {TimeoutError}
  */

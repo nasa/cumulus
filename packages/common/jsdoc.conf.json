@@ -1,0 +1,41 @@
+{
+  "opts": {
+    "destination": "./docs/",
+    "package": "./package.json",
+    "readme": "./README.md",
+    "recurse": true,
+    "template": "./node_modules/ink-docstrap/template"
+  },
+  "source": {
+    "exclude": [
+      "./node_modules/",
+      "./test/",
+      "./tests/"
+    ]
+  },
+  "tags": {
+    "allowUnknownTags": true
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": false,
+    "collapseSymbols": false,
+    "dateFormat": "ddd MMM Do YYYY",
+    "footer": "",
+    "includeDate": true,
+    "inverseNav": true,
+    "linenums": true,
+    "logoFile": "",
+    "methodHeadingReturns": false,
+    "monospaceLinks": false,
+    "navType": "vertical",
+    "outputSourceFiles": true,
+    "outputSourcePath": true,
+    "protocol": "html://",
+    "theme": "cosmo"
+  },
+  "markdown": {
+    "parser": "gfm",
+    "hardwrap": true
+  }
+}
