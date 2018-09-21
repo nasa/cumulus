@@ -38,20 +38,20 @@ class UpdatedLambda extends Lambda {
    * in the config object for a template that runs following a nested template
    * that has already run the superclass 'process' method.
    *
-   * @returns {void}
+   * @returns {void} returns nothing
    */
   buildAllLambdaConfiguration() {
     if (this.config.lambdas) {
       let lambdas = this.config.lambdas;
       // if the lambdas is not an array but a object, convert it to a list
       if (!Array.isArray(this.config.lambdas)) {
-        lambdas = Object.keys(this.config.lambdas).map(name => {
+        lambdas = Object.keys(this.config.lambdas).map((name) => {
           const lambda = this.config.lambdas[name];
           lambda.name = name;
           return lambda;
         });
       }
-      lambdas.forEach(lambda => this.buildS3Path(lambda));
+      lambdas.forEach((lambda) => this.buildS3Path(lambda));
     }
   }
 
@@ -112,7 +112,7 @@ class UpdatedLambda extends Lambda {
   buildS3Path(lambda) {
     lambda = super.buildS3Path(lambda);
 
-    if (lambda.s3Source && lambda.s3Source.uniqueIdentifier){
+    if (lambda.s3Source && lambda.s3Source.uniqueIdentifier) {
       const uniqueIdentifier = lambda.s3Source.uniqueIdentifier;
       if (!uniqueIdentifier.match(/^[a-z0-9]+$/)) {
         throw new Error(`Invalid uniqueIdentifier ${uniqueIdentifier} provided for lambda`);
