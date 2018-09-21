@@ -97,11 +97,15 @@ function getExecutionUrl(executionArn) {
  * Redeploy the current Cumulus deployment
  *
  * @param {Object} config - configuration object from loadConfig()
- * @returns {undefined} none
+ * @param {string} [template=node_modules/@cumulus/deployment/app] - optional template command line kes option
+ * @param {string} [kesClass] - optional kes-class command line kes option
+ * @returns {Promise.undefined} none
  */
-async function redeploy(config, template) {
+
+async function redeploy(config, template, kesClass) {
   const templatePath = template || 'node_modules/@cumulus/deployment/app';
-  const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template ${templatePath} --deployment ${config.deployment} --region us-east-1`;
+  let deployCommand = `./node_modules/.bin/kes cf deploy --kes-folder app --template ${templatePath} --deployment ${config.deployment} --region us-east-1`;
+  if (kesClass) deployCommand += ` --kes-class ${kesClass}`;
   console.log(`Redeploying ${config.deployment}`);
   await exec(deployCommand)
     .then((result) => {
