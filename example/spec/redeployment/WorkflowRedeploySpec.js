@@ -125,12 +125,12 @@ describe('When a workflow', () => {
         console.log('Finished redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
         // Wait for the execution to reach a non-RUNNING state
-        console.log('Starting stepFunctions.waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
+        console.log('Starting stepFunctions.waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
         await stepFunctions.waitForCompletedExecution(
           workflowExecutionArn,
           { waitToExist: true }
         );
-        console.log('Finished stepFunctions.waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
+        console.log('Finished stepFunctions.waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
 
         console.log('Starting apiTestUtils.getExecution() in beforeAll() B'); // Debugging intermittent test failures
         workflowStatus = await apiTestUtils.getExecution({
