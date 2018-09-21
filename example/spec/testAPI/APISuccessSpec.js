@@ -7,8 +7,7 @@ const {
 const {
   buildAndExecuteWorkflow,
   conceptExists,
-  waitForConceptExistsOrNot,
-  waitUntilGranuleStatusIs
+  waitForConceptExistsOrNot
 } = require('@cumulus/integration-tests');
 const { Search } = require('@cumulus/api/es/search');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
@@ -131,9 +130,6 @@ describe('The Cumulus API', () => {
         granuleId: inputGranuleId
       })).updatedAt;
       expect(newUpdatedAt).not.toEqual(initialUpdatedAt);
-
-      console.log('\nWaiting for reingest to complete...');
-      await waitUntilGranuleStatusIs(config.stackName, inputGranuleId, 'completed');
     });
   });
 
