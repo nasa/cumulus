@@ -19,15 +19,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 
-
-
-
 ### Fixed
 
 - Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
 - `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
 
 ## [v1.10.1] - 2018-09-4
+
 ### Fixed
 
 - Fixed cloudformation template errors in `@cumulus/deployment/`
@@ -44,12 +42,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Removed `@cumulus/common/message-source`
   - Removed the `getPossiblyRemote` function from `@cumulus/common/aws`
   - Removed the `startPromisedSfnExecution` function from `@cumulus/common/aws`
-
-- Removed the `getCurrentSfnTask` function from `@cumulus/common/aws`
+  - Removed the `getCurrentSfnTask` function from `@cumulus/common/aws`
 
 ### Changed
 
 - **CUMULUS-839** - In `@cumulus/sync-granule`, 'collection' is now an optional config parameter
+
 ### Fixed
 
 - **CUMULUS-859** Moved duplicate code in `@cumulus/move-granules` and `@cumulus/post-to-cmr` to `@cumulus/ingest`. Fixed imports making assumptions about directory structure.
