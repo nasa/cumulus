@@ -101,6 +101,17 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
+test.serial(`When accessing any API endpoint with no session information, it returns an HTTP 401 status code
+           and no system information`, async (t) => {
+  const event = { httpMethod: 'GET', headers: {} };
+
+  const response = await granuleEndpoint(event);
+  const expectedResponse = { message: 'Authorization header missing' };
+
+  t.is(response.statusCode, 401);
+  t.deepEqual(JSON.parse(response.body), expectedResponse);
+});
+
 test.serial('GET returns an existing granule', async (t) => {
   const event = {
     httpMethod: 'GET',
@@ -130,6 +141,80 @@ test.serial('GET fails if granule is not found', async (t) => {
   t.is(response.statusCode, 404);
   const { message } = JSON.parse(response.body);
   t.is(message, 'Granule not found');
+});
+
+test.serial('When performing POST, PUT, or DELETE on any API endpoint with no session information, it rejects the operation', async (t) => {
+  const buckets = {
+    protected: {
+      name: randomString(),
+      type: 'protected'
+    },
+    public: {
+      name: randomString(),
+      type: 'public'
+    }
+  };
+  const newGranule = fakeGranuleFactory('failed');
+  newGranule.published = false;
+  newGranule.files = [
+    {
+      bucket: buckets.protected.name,
+      name: `${newGranule.granuleId}.hdf`,
+      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.hdf`
+    },
+    {
+      bucket: buckets.protected.name,
+      name: `${newGranule.granuleId}.cmr.xml`,
+      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.cmr.xml`
+    },
+    {
+      bucket: buckets.public.name,
+      name: `${newGranule.granuleId}.jpg`,
+      filename: `s3://${buckets.public.name}/${randomString()}/${newGranule.granuleId}.jpg`
+    }
+  ];
+
+  await aws.s3().createBucket({ Bucket: buckets.protected.name }).promise();
+  await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
+
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
+    const parsed = aws.parseS3Uri(file.filename);
+    await aws.s3().putObject({ // eslint-disable-line no-await-in-loop
+      Bucket: parsed.Bucket,
+      Key: parsed.Key,
+      Body: `test data ${randomString()}`
+    }).promise();
+  }
+
+  // create a new unpublished granule
+  await g.create(newGranule);
+
+  const event = {
+    httpMethod: 'PUT',
+    headers: {},
+    pathParameters: {
+      granuleName: t.context.fakeGranules[0].granuleId
+    },
+    body: JSON.stringify({ action: 'reprocess' })
+  };
+
+  const response = await granuleEndpoint(event);
+  const expectedResponse = { message: 'Authorization header missing' };
+
+  // Verify that the request was rejected
+  t.is(response.statusCode, 401);
+  t.deepEqual(JSON.parse(response.body), expectedResponse);
+
+  // Verify that the requested changes didn't happen
+  for (let i = 0; i < newGranule.files.length; i += 1) {
+    const file = newGranule.files[i];
+    const parsed = aws.parseS3Uri(file.filename);
+    t.truthy(await aws.fileExists(parsed.Bucket, parsed.Key)); // eslint-disable-line no-await-in-loop
+  }
+
+  await aws.recursivelyDeleteS3Bucket(buckets.protected.name);
+  await aws.recursivelyDeleteS3Bucket(buckets.public.name);
 });
 
 test.serial('PUT fails if action is not supported', async (t) => {
