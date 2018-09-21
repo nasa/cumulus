@@ -195,8 +195,8 @@ describe('Parse PDR workflow', () => {
       for (let i = 0; i < events.length; i += 1) {
         const currentEvent = events[i];
         if (currentEvent.type === 'TaskStateExited' &&
-        get(currentEvent, 'stateExitedEventDetails.name') === checkStatusTaskName) {
-          const output = JSON.parse(get(currentEvent, 'stateExitedEventDetails.output'));
+        get(currentEvent, 'name') === checkStatusTaskName) {
+          const output = get(currentEvent, 'output');
           const isFinished = output.payload.isFinished;
 
           // get the next task executed
@@ -205,8 +205,8 @@ describe('Parse PDR workflow', () => {
             i += 1;
             const nextEvent = events[i];
             if (nextEvent.type === 'TaskStateEntered' &&
-              get(nextEvent, 'stateEnteredEventDetails.name')) {
-              nextTask = get(nextEvent, 'stateEnteredEventDetails.name');
+              get(nextEvent, 'name')) {
+              nextTask = get(nextEvent, 'name');
             }
           }
 
