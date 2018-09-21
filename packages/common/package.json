@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "true",
-    "docs": "rm -rf docs && jsdoc -c jsdoc.conf.json .",
+    "docs": "./bin/build-docs.sh",
     "lint": "eslint .",
     "mocha": "mocha test/**/*.js",
     "mocha-coverage": "nyc mocha-webpack test/**/*.js",
