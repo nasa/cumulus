@@ -93,7 +93,8 @@ describe('The Cumulus API', () => {
 
       // Check that the granule was removed
       await waitForConceptExistsOrNot(cmrLink, false, 2);
-      expect(conceptExists(cmrLink)).toEqual(true);
+      const doesExist = await conceptExists(cmrLink);
+      expect(doesExist).toEqual(false);
     });
 
     it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
@@ -108,7 +109,8 @@ describe('The Cumulus API', () => {
       });
 
       await waitForConceptExistsOrNot(cmrLink, true, 10, 30000);
-      expect(conceptExists(cmrLink).toEqual(true));
+      const doesExist = await conceptExists(cmrLink);
+      expect(doesExist).toEqual(true);
     });
 
     it('allows reingest and executes with success status', async () => {
