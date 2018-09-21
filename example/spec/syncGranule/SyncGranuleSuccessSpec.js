@@ -70,6 +70,35 @@ describe('The Sync Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
+  describe('when configured to handle duplicates as error', () => {
+    let secondWorkflowExecution;
+    let collectionInfo;
+
+    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+    const c = new Collection();
+
+    beforeAll(async () => {
+      collectionInfo = await c
+        .update(collection, { duplicateHandling: 'error' })
+        .then(() => c.get(collection));
+      secondWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      );
+    });
+
+    it('configured collection to handle duplicates as error', () => {
+      expect(collectionInfo.duplicateHandling, 'error');
+    });
+
+    it('fails the workflow', () => {
+      expect(secondWorkflowExecution.status).toEqual('FAILED');
+    });
+
+    afterAll(async () => {
+      await c.update(collection, { duplicateHandling: 'replace' });
+    });
+  });
+
   describe('the SyncGranule Lambda function', () => {
     let lambdaOutput = null;
     let files;
