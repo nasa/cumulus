@@ -654,11 +654,6 @@ KinesisTriggerTest:
               destination: '{$.meta.input_granules}'
             - source: '{$}'
               destination: '{$.payload}'
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 10
-          MaxAttempts: 3
       Catch:
         - <<: *ErrorEqualDefaults
       Next: CnmResponse

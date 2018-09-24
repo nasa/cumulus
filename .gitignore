@@ -31,3 +31,6 @@ search_index.json
 **/.tern-port
 /.tern-project
 /queries
+/example/app/nsidc.env
+/example/app/sandbox.env
+/jsconfig.json
