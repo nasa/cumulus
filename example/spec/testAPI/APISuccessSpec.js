@@ -85,6 +85,37 @@ describe('The Cumulus API', () => {
       expect(granule.cmrLink).not.toBeUndefined();
     });
 
+    it('allows reingest and executes with success status', async () => {
+      granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      const oldUpdatedAt = granule.updatedAt;
+      const oldExecution = granule.execution;
+
+      // Reingest Granule and compare the updatedAt times
+      const response = await apiTestUtils.reingestGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(response.status).toEqual('SUCCESS');
+
+      const newUpdatedAt = (await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      })).updatedAt;
+      expect(newUpdatedAt).not.toEqual(oldUpdatedAt);
+
+      // Await reingest completion
+      await waitUntilGranuleStatusIs(config.stackName, inputGranuleId, 'completed');
+      const updatedGranule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(updatedGranule.status).toEqual('completed');
+      expect(updatedGranule.execution).not.toEqual(oldExecution);
+    });
+
     it('removeFromCMR removes the ingested granule from CMR', async () => {
       const existsInCMR = await conceptExists(cmrLink);
 
@@ -118,38 +149,7 @@ describe('The Cumulus API', () => {
       expect(doesExist).toEqual(true);
     });
 
-    it('allows reingest and executes with success status', async () => {
-      granule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputGranuleId
-      });
-      const oldUpdatedAt = granule.updatedAt;
-      const oldExecution = granule.execution;
-
-      // Reingest Granule and compare the updatedAt times
-      const response = await apiTestUtils.reingestGranule({
-        prefix: config.stackName,
-        granuleId: inputGranuleId
-      });
-      expect(response.status).toEqual('SUCCESS');
-
-      const newUpdatedAt = (await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputGranuleId
-      })).updatedAt;
-      expect(newUpdatedAt).not.toEqual(oldUpdatedAt);
-
-      // Await reingest completion
-      await waitUntilGranuleStatusIs(config.stackName, inputGranuleId, 'completed');
-      const updatedGranule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputGranuleId
-      });
-      expect(updatedGranule.status).toEqual('completed');
-      expect(updatedGranule.execution).not.toEqual(oldExecution);
-    });
-
-    it('deletes the ingested granule from the API', async () => {
+    it('can delete the ingested granule from the API', async () => {
       // Delete the granule
       await apiTestUtils.deleteGranule({
         prefix: config.stackName,
