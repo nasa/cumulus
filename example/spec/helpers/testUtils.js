@@ -2,7 +2,7 @@ const fs = require('fs');
 const { S3 } = require('aws-sdk');
 const { Config } = require('kes');
 const lodash = require('lodash');
-const { exec } = require('child-process-promise');
+const { exec } = require('child_process');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -91,23 +91,33 @@ function getExecutionUrl(executionArn) {
          `#/executions/details/${executionArn}`;
 }
 
+
 /**
  * Redeploy the current Cumulus deployment
  *
  * @param {Object} config - configuration object from loadConfig()
- * @returns {undefined} none
+ * @returns {Promise}
  */
-async function redeploy(config) {
+function redeploy(config, timeout) {
   const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
   console.log(`Redeploying ${config.deployment}`);
-  await exec(deployCommand)
-    .then((result) => {
-      console.log(result.stdout);
-      if (result.error) {
-        console.log(`Deployment error: ${result.error}`);
+
+  const minutes = timeout;
+  let i = 0;
+  const timeoutPromise = new Promise((resolve, reject) => {
+    function printDots(rejectCallback) {
+      console.log('.');
+      if (i < minutes) {
+        i += 1;
+        setTimeout(printDots(rejectCallback(), 60000));
       }
-    });
-  console.log(`Redeploy of ${config.deployment} complete`);
+      else {
+        rejectCallback(new Error('Timeout exceeded'));
+      }
+    }
+    printDots(reject);
+  });
+  return Promise.race(exec(deployCommand), timeoutPromise);
 }
 
 module.exports = {
