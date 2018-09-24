@@ -71,7 +71,6 @@ describe('The Sync Granules workflow', () => {
   });
 
   describe('when configured to handle duplicates as error', () => {
-    let secondWorkflowExecution;
     let collectionInfo;
 
     process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
@@ -81,17 +80,39 @@ describe('The Sync Granules workflow', () => {
       collectionInfo = await c
         .update(collection, { duplicateHandling: 'error' })
         .then(() => c.get(collection));
-      secondWorkflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, taskName, collection, provider, inputPayload
-      );
     });
 
     it('configured collection to handle duplicates as error', () => {
       expect(collectionInfo.duplicateHandling, 'error');
     });
 
-    it('fails the workflow', () => {
-      expect(secondWorkflowExecution.status).toEqual('FAILED');
+    describe('and configured not to catch errors', () => {
+      let failWorkflowExecution;
+
+      beforeAll(async () => {
+        failWorkflowExecution = await buildAndExecuteWorkflow(
+          config.stackName, config.bucket, taskName, collection, provider, inputPayload
+        );
+      });
+
+      it('fails the workflow', () => {
+        expect(failWorkflowExecution.status).toEqual('FAILED');
+      });
+    });
+
+    describe('and configured to catch errors', () => {
+      let catchWorkflowExecution;
+      const catchTaskName = 'SyncGranuleCatchWorkflow';
+
+      beforeAll(async () => {
+        catchWorkflowExecution = await buildAndExecuteWorkflow(
+          config.stackName, config.bucket, catchTaskName, collection, provider, inputPayload
+        );
+      });
+
+      it('completes execution with success status', () => {
+        expect(catchWorkflowExecution.status).toEqual('SUCCEEDED');
+      });
     });
 
     afterAll(async () => {
