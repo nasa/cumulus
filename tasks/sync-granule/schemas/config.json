@@ -38,7 +38,7 @@
       "patternProperties": {
         "\\S*": {
           "description": "bucket configuration for the key'd bucket",
-          "type": "object", 
+          "type": "object",
           "properties": {
             "name": {
               "type": "string",
@@ -87,6 +87,12 @@
         "name": { "type": "string" },
         "path": { "type": "string" }
       }
+    },
+    "onDuplicateFilename": {
+      "type": "string",
+      "description": "Specifies how duplicate filenames should be handled",
+      "enum": ["replace", "version", "skip", "error"],
+      "default": "error"
     }
   }
 }
