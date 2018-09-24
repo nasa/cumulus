@@ -6,7 +6,6 @@ const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString } = require('@cumulus/common/test-utils');
 const { buildS3Uri, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const errors = require('@cumulus/common/errors');
 
 const {
   selector,
@@ -441,9 +440,9 @@ test('ingestFile throws error when configured to handle duplicates with error', 
     duplicateHandling,
   );
 
-  // This test needs to use a destination bucket that gets destroyed after the test.
-  // Otherwise, it will pre-emptively throw an error on the first attempt to ingest
-  // the file.
+  // This test needs to use a unique bucket for each test (or remove the object
+  // added to the destination bucket). Otherwise, it will throw an error on the
+  // first attempt to ingest the file.
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
   const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
   const destFileKey = path.join(fileStagingDir, file.name);
