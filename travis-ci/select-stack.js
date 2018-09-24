@@ -19,6 +19,7 @@ function determineIntegrationTestStackName(cb) {
     kkelly51: 'kk-uat-deployment',
     'Lauren Frederick': 'lf',
     laurenfrederick: 'lf',
+    'Mark Boyd': 'mboyd-test',
     yjpa7145: 'mth-2',
     'Matt Savoie': 'mhs',
     'Jonathan Kovarik': 'jk',
