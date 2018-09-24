@@ -150,6 +150,12 @@ describe('The Cumulus API', () => {
     });
 
     it('can delete the ingested granule from the API', async () => {
+      // pre-delete: Remove the granule from CMR
+      await apiTestUtils.removeFromCMR({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+
       // Delete the granule
       await apiTestUtils.deleteGranule({
         prefix: config.stackName,
