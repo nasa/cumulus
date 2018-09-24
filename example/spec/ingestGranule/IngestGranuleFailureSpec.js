@@ -108,24 +108,24 @@ describe('The Ingest Granule failure workflow', () => {
       for (let i = 0; i < events.length; i += 1) {
         const currentEvent = events[i];
 
-        if (currentEvent.type === 'TaskStateExited' &&
-        get(currentEvent, 'stateExitedEventDetails.name') === syncGranuleNoVpcTaskName) {
-          syncGranStepOutput = JSON.parse(get(currentEvent, 'stateExitedEventDetails.output'));
+        if (currentEvent.type === 'TaskStateExited'
+        && get(currentEvent, 'name') === syncGranuleNoVpcTaskName) {
+          syncGranStepOutput = get(currentEvent, 'output');
           expect(syncGranStepOutput.exception).toBeTruthy();
 
           // the previous step has the original error thrown from lambda
           const previousEvent = events[i - 1];
           expect(previousEvent.type).toBe('LambdaFunctionFailed');
-          syncGranFailedDetail = previousEvent.lambdaFunctionFailedEventDetails;
+          syncGranFailedDetail = previousEvent;
 
           // get the next task executed
           let nextTask;
           while (!nextTask && i < events.length - 1) {
             i += 1;
             const nextEvent = events[i];
-            if (nextEvent.type === 'TaskStateEntered' &&
-              get(nextEvent, 'stateEnteredEventDetails.name')) {
-              nextTask = get(nextEvent, 'stateEnteredEventDetails.name');
+            if (nextEvent.type === 'TaskStateEntered'
+            && get(nextEvent, 'name')) {
+              nextTask = get(nextEvent, 'name');
             }
           }
 

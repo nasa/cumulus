@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign */
+/* eslint no-param-reassign: "off" */
 
 'use strict';
 
@@ -6,15 +6,20 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
-const { s3, sfn } = require('@cumulus/common/aws');
-const sfnStep = require('./sfnStep');
-const { Provider, Collection, Rule } = require('@cumulus/api/models');
+const {
+  aws: { s3, sfn },
+  stepFunctions: {
+    describeExecution
+  }
+} = require('@cumulus/common');
+const {
+  models: { Provider, Collection, Rule }
+} = require('@cumulus/api');
 
+const sfnStep = require('./sfnStep');
 const api = require('./api');
 const cmr = require('./cmr.js');
-
-const executionStatusNumRetries = 100;
-const waitPeriodMs = 5000;
+const granule = require('./granule.js');
 
 /**
  * Wait for the defined number of milliseconds
@@ -22,7 +27,7 @@ const waitPeriodMs = 5000;
  * @param {number} waitPeriod - number of milliseconds to wait
  * @returns {Promise.<undefined>} - promise resolves after a given time period
  */
-function timeout(waitPeriod) {
+function sleep(waitPeriod) {
   return new Promise((resolve) => setTimeout(resolve, waitPeriod));
 }
 
@@ -55,56 +60,53 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
 }
 
 /**
- * Get the execution status (i.e. running, completed, etc)
- * for the given execution
+ * Get the status of a given execution
+ *
+ * If the execution does not exist, this will return 'RUNNING'.  This seems
+ * surprising in the "don't surprise users of your code" sort of way.  If it
+ * does not exist then the calling code should probably know that.  Something
+ * to be refactored another day.
  *
  * @param {string} executionArn - ARN of the execution
- * @returns {string} status
+ * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
+ * @returns {Promise<string>} status
  */
-function getExecutionStatus(executionArn) {
-  return sfn().describeExecution({ executionArn }).promise()
-    .then((status) => status.status)
-    .catch((e) => {
-      // the execution may not be started yet
-      if (e.code === 'ExecutionDoesNotExist') return 'RUNNING';
-      throw e;
-    });
+async function getExecutionStatus(executionArn, retryOptions) {
+  try {
+    const execution = await describeExecution(executionArn, retryOptions);
+    return execution.status;
+  }
+  catch (err) {
+    // If the execution does not exist, we return that it's "RUNNING".  I'm
+    //   not sure this is the behavior that we want.
+    if (err.code === 'ExecutionDoesNotExist') return 'RUNNING';
+
+    throw err;
+  }
 }
 
 /**
  * Wait for a given execution to complete, then return the status
  *
  * @param {string} executionArn - ARN of the execution
+ * @param {number} [timeout=600] - the time, in seconds, to wait for the
+ *   execution to reach a non-RUNNING state
  * @returns {string} status
  */
-async function waitForCompletedExecution(executionArn) {
-  let statusCheckCount = 0;
-  let waitPeriod = waitPeriodMs;
-  let executionStatus = 'RUNNING';
+async function waitForCompletedExecution(executionArn, timeout = 600) {
+  let executionStatus;
 
-  // While execution is running, check status on a time interval
+  const stopTime = Date.now() + (timeout * 1000);
+
   /* eslint-disable no-await-in-loop */
   do {
-    await timeout(waitPeriod);
-    try {
-      executionStatus = await getExecutionStatus(executionArn);
-    }
-    catch (e) {
-      if (e.code === 'ThrottlingException') {
-        console.log(`Encountered step function describeExecution throttling exception with retry interval of ${waitPeriod}.`); // eslint-disable-line max-len
-        waitPeriod *= 2;
-        return 'RUNNING';
-      }
-
-      throw e;
-    }
-    statusCheckCount += 1;
-  } while (executionStatus === 'RUNNING' && statusCheckCount < executionStatusNumRetries);
+    executionStatus = await getExecutionStatus(executionArn);
+    if (executionStatus === 'RUNNING') await sleep(5000);
+  } while (executionStatus === 'RUNNING' && Date.now() < stopTime);
   /* eslint-enable no-await-in-loop */
 
-  if (executionStatus === 'RUNNING' && statusCheckCount >= executionStatusNumRetries) {
-    //eslint-disable-next-line max-len
-    console.log(`Execution status check timed out, exceeded ${executionStatusNumRetries} status checks.`);
+  if (executionStatus === 'RUNNING') {
+    console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
   }
 
   return executionStatus;
@@ -160,13 +162,14 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
  * @param {string} workflowMsg - workflow message
+ * @param {number} [timeout=600] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
-async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg) {
+async function executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout = 600) {
   const executionArn = await startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 
   // Wait for the execution to complete to get the status
-  const status = await waitForCompletedExecution(executionArn);
+  const status = await waitForCompletedExecution(executionArn, timeout);
 
   return { status, executionArn };
 }
@@ -436,6 +439,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
   template.payload = payload || {};
   return template;
 }
+
 /**
  * build workflow message and execute the workflow
  *
@@ -448,6 +452,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
+ * @param {number} [timeout=600] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
 async function buildAndExecuteWorkflow(
@@ -456,11 +461,18 @@ async function buildAndExecuteWorkflow(
   workflowName,
   collection,
   provider,
-  payload
+  payload,
+  timeout = 600
 ) {
-  const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload);
-  return executeWorkflow(stackName, bucketName, workflowName, workflowMsg);
+  const workflowMsg = await buildWorkflow(
+    stackName,
+    bucketName,
+    workflowName,
+    collection,
+    provider,
+    payload
+  );
+  return executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout);
 }
 
 /**
@@ -518,6 +530,9 @@ module.exports = {
   addRules,
   deleteRules,
   rulesList,
-  timeout,
-  getWorkflowArn
+  sleep,
+  timeout: sleep,
+  getWorkflowArn,
+  waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };

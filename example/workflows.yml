@@ -812,7 +812,7 @@ EcsHelloWorldWorkflow:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${EcsTaskHelloWorldActivity}
-      TimeoutSeconds: 5
+      TimeoutSeconds: 60
       Retry:
         - ErrorEquals:
             - States.Timeout
