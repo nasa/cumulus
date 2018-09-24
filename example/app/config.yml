@@ -189,6 +189,10 @@ cumulus-from-pr:
   stackName: test-pr-integration # used by the PR
   stackNameNoDash: TestPrIntegration
 
+cumulus-nightly:
+  stackName: nightly # used by the nightly cron job
+  stackNameNoDash: Nightly
+
 aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration

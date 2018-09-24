@@ -1,8 +1,5 @@
 'use strict';
 
-/* eslint-disable no-console */
-/* eslint-disable no-param-reassign */
-
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
 
@@ -27,7 +24,6 @@ async function completeReindex(
   const esClient = await Search.es(host);
 
   if (sourceIndex === null || destIndex === null) {
-    // eslint-disable-next-line max-len
     throw new Error('Please explicity specify a source and destination index.');
   }
 
@@ -97,6 +93,7 @@ async function reindex(
   destIndex = null,
   aliasName = defaultIndexAlias
 ) {
+  /* eslint-disable no-param-reassign */
   const esClient = await Search.es(host);
 
   const aliasExists = await esClient.indices.existsAlias({
@@ -166,6 +163,7 @@ async function reindex(
   });
 
   return reindexResponse;
+  /* eslint-enable no-param-reassign */
 }
 
 module.exports = {

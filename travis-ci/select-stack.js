@@ -7,17 +7,20 @@ function determineIntegrationTestStackName(cb) {
 
   if (!branch) return cb('none');
 
+  // Nightly cron job
+  if (process.env.TRAVIS_EVENT_TYPE == 'cron') return cb('cumulus-nightly');
+
   if (branch === 'master') return cb('cumulus-from-source');
 
   const stacks = {
-    'abarciauskas-bgse': 'aimee-test',
+    'Aimee Barciauskas': 'aimee-test',
     scisco: 'aj',
     jennyhliu: 'jl',
     kkelly51: 'kk-uat-deployment',
     'Lauren Frederick': 'lf',
     laurenfrederick: 'lf',
     yjpa7145: 'mth-2',
-    flamingbear: 'mhs',
+    'Matt Savoie': 'mhs',
     Jkovarik: 'jk',
     'Menno Van Diermen': 'mvd',
     ifestus: 'jc'

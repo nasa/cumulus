@@ -1,6 +1,6 @@
 'use strict';
 
-const { difference } = require('lodash');
+const { difference, intersection } = require('lodash');
 const fs = require('fs-extra');
 const {
   loadConfig,
@@ -111,23 +111,8 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
       // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
       const stepNames = [];
       executionStatus.executionHistory.events.forEach((event) => {
-        const eventDetailsKey = Object.keys(event).filter((key) => key.endsWith('EventDetails'));
-        // a step has none or one *EventDetails
-        expect(eventDetailsKey.length === 0 || eventDetailsKey.length === 1).toBe(true);
-
-        if (eventDetailsKey.length) {
-          const eventDetail = event[eventDetailsKey[0]];
-          expect(eventDetail.input || eventDetail.output).toBeTruthy();
-
-          if (event.type.endsWith('StateEntered') || event.type.endsWith('StateExited')) {
-            expect(eventDetail.name).toBeTruthy();
-            expect(
-              (event.type.endsWith('StateEntered') && eventDetail.input) ||
-              (event.type.endsWith('StateExited') && eventDetail.output)
-            ).toBeTruthy();
-            stepNames.push(eventDetail.name);
-          }
-        }
+        const eventKeys = Object.keys(event);
+        if (intersection(eventKeys, ['input', 'output']).length === 1) stepNames.push(event.name);
       });
 
       // all the executed steps have *EventDetails
