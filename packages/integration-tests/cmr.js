@@ -98,6 +98,7 @@ async function conceptExists(cmrLink) {
  * @param {string} retries - number of remaining tries
  * @param {number} interval - time (in ms) to wait between tries
  * @returns {undefined} - undefined
+ * @throws {TimeoutError} - throws error when timeout is reached
  */
 async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, interval = 2000) {
   await pWaitFor(
