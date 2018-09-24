@@ -1,5 +1,8 @@
 'use strict';
 
+const fs = require('fs');
+const { promisify } = require('util');
+
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
@@ -11,10 +14,7 @@ const {
   redeploy
 } = require('../helpers/testUtils');
 
-const {
-  backupConfigYml,
-  restoreConfigYml
-} = require('../helpers/configUtils');
+const { restoreConfigYml } = require('../helpers/configUtils');
 
 const {
   removeWorkflow,
@@ -25,36 +25,50 @@ const workflowsYmlFile = './workflows.yml';
 const workflowsYmlCopyFile = './workflowsCopy.yml';
 const config = loadConfig();
 
+const promisedFileCopy = promisify(fs.copyFile);
 
 describe('When a workflow', () => {
-  beforeAll(async () => {
-    backupConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-  });
+  beforeAll(() => promisedFileCopy(workflowsYmlFile, workflowsYmlCopyFile));
 
-  afterAll(async () => {
-    // Restore workflow yml to original and redeploy for next time tests are run
-    restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-    await redeploy(config);
-  });
+  afterAll(
+    async () => {
+      // Restore workflows.yml to original and redeploy for next time tests are run
+      restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
+
+      console.log('Starting redeploy() in afterAll'); // Debugging intermittent test failures
+      await redeploy(config);
+      console.log('Finished redeploy() in afterAll'); // Debugging intermittent test failures
+    },
+    15 * 60 * 1000 // Timeout after 15 minutes
+  );
 
   describe('is updated and deployed during a workflow execution', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
-    beforeAll(async () => {
-      // Kick off the workflow, don't wait for completion
-      workflowExecutionArn = await buildAndStartWorkflow(
-        config.stackName,
-        config.bucket,
-        'WaitForDeployWorkflow'
-      );
+    beforeAll(
+      async () => {
+        // Kick off the workflow, don't wait for completion
+        console.log('Starting buildAndStartWorkflow() in beforeAll() A'); // Debugging intermittent test failures
+        workflowExecutionArn = await buildAndStartWorkflow(
+          config.stackName,
+          config.bucket,
+          'WaitForDeployWorkflow'
+        );
+        console.log('Finished buildAndStartWorkflow() in beforeAll() A'); // Debugging intermittent test failures
 
-      removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
+        removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
 
-      await redeploy(config);
+        console.log('Starting redeploy() in beforeAll() A'); // Debugging intermittent test failures
+        await redeploy(config);
+        console.log('Finished redeploy() in beforeAll() A'); // Debugging intermittent test failures
 
-      workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-    });
+        console.log('Starting waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
+        workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
+        console.log('Finished waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
+      },
+      15 * 60 * 1000 // Timeout after 15 minutes
+    );
 
     it('the workflow executes successfully', () => {
       expect(workflowStatus).toEqual('SUCCEEDED');
@@ -77,8 +91,8 @@ describe('When a workflow', () => {
 
       it('the execution steps show the original workflow steps', () => {
         const helloWorldScheduledEvents = executionStatus.executionHistory.events.filter((event) =>
-          event.type === 'LambdaFunctionScheduled' &&
-          event.lambdaFunctionScheduledEventDetails.resource.includes('HelloWorld'));
+          event.type === 'LambdaFunctionScheduled'
+            && event.resource.includes('HelloWorld'));
 
         expect(helloWorldScheduledEvents.length).toEqual(1);
       });
@@ -89,29 +103,38 @@ describe('When a workflow', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
-    beforeAll(async () => {
-      // Kick off the workflow, don't wait for completion
-      workflowExecutionArn = await buildAndStartWorkflow(
-        config.stackName,
-        config.bucket,
-        'WaitForDeployWorkflow'
-      );
+    beforeAll(
+      async () => {
+        // Kick off the workflow, don't wait for completion
+        console.log('Starting buildAndStartWorkflow() in beforeAll() B'); // Debugging intermittent test failures
+        workflowExecutionArn = await buildAndStartWorkflow(
+          config.stackName,
+          config.bucket,
+          'WaitForDeployWorkflow'
+        );
+        console.log('Finished buildAndStartWorkflow() in beforeAll() B'); // Debugging intermittent test failures
 
-      removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
+        // Remove the WaitForDeployWorkflow workflow from workflows.yml
+        removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
 
-      await redeploy(config);
+        console.log('Starting redeploy() in beforeAll() B'); // Debugging intermittent test failures
+        await redeploy(config);
+        console.log('Finished redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
-      // Debugging integration test sporadic failures
-      console.log(`Redeploy complete. Waiting for execution: ${workflowExecutionArn}`);
+        // Wait for the execution to reach a non-RUNNING state
+        console.log('Starting waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
+        await waitForCompletedExecution(workflowExecutionArn);
+        console.log('Finished waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
 
-      workflowStatus = await apiTestUtils.getExecution({
-        prefix: config.stackName,
-        arn: workflowExecutionArn
-      });
-
-      // This is for debugging integration test sporadic failures
-      console.log(`workflow status: ${JSON.stringify(workflowStatus)}`);
-    });
+        console.log('Starting apiTestUtils.getExecution() in beforeAll() B'); // Debugging intermittent test failures
+        workflowStatus = await apiTestUtils.getExecution({
+          prefix: config.stackName,
+          arn: workflowExecutionArn
+        });
+        console.log('Finished apiTestUtils.getExecution() in beforeAll() B'); // Debugging intermittent test failures
+      },
+      15 * 60 * 1000 // Timeout after 15 minutes
+    );
 
     it('the workflow has executed successfully and is returned when querying the API', () => {
       expect(workflowStatus).toBeTruthy();

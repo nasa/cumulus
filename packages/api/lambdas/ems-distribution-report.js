@@ -21,7 +21,7 @@ const {
  * Example S3 Server Log line:
  *
  * fe3f16719bb293e218f6e5fea86e345b0a696560d784177395715b24041da90e my-dist-bucket
- * [01/June/1981:01:02:13 +0000] 192.0.2.3 arn:aws:iam::123456789012:user/joe
+ * [01/June/1981:01:02:13 +0000] 192.0.2.3 arn:aws:iam::000000000000:user/joe
  * 1CB21F5399FF76C5 REST.GET.OBJECT my-dist-bucket/pdrs/
  * MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR
  * "GET /my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR?AWSAccessKeyId=

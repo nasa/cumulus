@@ -664,11 +664,11 @@
         }
     },
     "iams": {
-        "ecsRoleArn": "arn:aws:iam::433612427488:role/lpdaac-cumulus-ecs",
-        "lambdaApiGatewayRoleArn": "arn:aws:iam::433612427488:role/lpdaac-cumulus-lambda-api-gateway",
-        "lambdaProcessingRoleArn": "arn:aws:iam::433612427488:role/lpdaac-cumulus-lambda-processing",
-        "stepRoleArn": "arn:aws:iam::433612427488:role/lpdaac-cumulus-steprole",
-        "instanceProfile": "arn:aws:iam::433612427488:instance-profile/lpdaac-cumulus-ecs"
+        "ecsRoleArn": "arn:aws:iam::000000000000:role/lpdaac-cumulus-ecs",
+        "lambdaApiGatewayRoleArn": "arn:aws:iam::000000000000:role/lpdaac-cumulus-lambda-api-gateway",
+        "lambdaProcessingRoleArn": "arn:aws:iam::000000000000:role/lpdaac-cumulus-lambda-processing",
+        "stepRoleArn": "arn:aws:iam::000000000000:role/lpdaac-cumulus-steprole",
+        "instanceProfile": "arn:aws:iam::000000000000:instance-profile/lpdaac-cumulus-ecs"
     },
     "users": [
         {

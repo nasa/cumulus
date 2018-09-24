@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
 
+- `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+- Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
+
+### Fixed
+
+- Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
+- `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
 
 ## [v1.10.1] - 2018-09-4
 
