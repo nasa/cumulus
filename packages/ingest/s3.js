@@ -120,6 +120,7 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
       Key: key,
       ACL: 'private'
     };
+    log.info('sync params:', params);
     const startTime = new Date();
 
     await aws.s3().copyObject(params).promise();
