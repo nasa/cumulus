@@ -3,7 +3,7 @@
 
 ## How to specify a bucket for granules
 
-How to configure `workflows.yml` workflow configurations for specifying buckets.
+How to configure `.yml` workflow configuration in `workflows` directory for specifying buckets.
 
 ### Bucket configuration
 
