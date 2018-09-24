@@ -1,12 +1,12 @@
 const fs = require('fs');
 const { Collection } = require('@cumulus/api/models');
-const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../helpers/testUtils');
 const config = loadConfig();
-const taskName = 'SyncGranuleCatchDuplicates';
+const taskName = 'SyncGranuleCatchWorkflow';
 
-describe('The SyncGranuleCatchDuplicates workflow', () => {
+describe('The SyncGranuleCatchWorkflow workflow', () => {
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
   const collection = { name: 'MOD09GQ', version: '006' };
@@ -40,9 +40,6 @@ describe('The SyncGranuleCatchDuplicates workflow', () => {
     });
 
     it('completes execution with success status', async () => {
-      const lambdaStep = new LambdaStep();
-      const lambdaInput = await lambdaStep.getsetpInput(secondWorkflowExecution.executionArn, 'SyncGranuleNoVpc');
-      const lambdaOutput = await lambdaStep.getStepOutput(secondWorkflowExecution.executionArn, 'SyncGranuleNoVpc');
       expect(secondWorkflowExecution.status).toEqual('SUCCEEDED');
     });
 
