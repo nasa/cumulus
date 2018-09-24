@@ -1,8 +1,7 @@
 'use strict';
 
-/* eslint-disable no-param-reassign */
-
 const got = require('got');
+const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
@@ -88,6 +87,27 @@ async function conceptExists(cmrLink) {
   const body = JSON.parse(response.body);
 
   return body.feed.entry.length > 0;
+}
+
+/**
+ * Checks for granule in CMR until it get the desired outcome or hits
+ * the number of retries.
+ *
+ * @param {string} cmrLink - url for granule in CMR
+ * @param {boolean} expectation - whether concept should exist (true) or not (false)
+ * @param {string} retries - number of remaining tries
+ * @param {number} interval - time (in ms) to wait between tries
+ * @returns {undefined} - undefined
+ * @throws {TimeoutError} - throws error when timeout is reached
+ */
+async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, interval = 2000) {
+  await pWaitFor(
+    async () => (await conceptExists(cmrLink)) === expectation,
+    {
+      interval,
+      timeout: interval * retries
+    }
+  );
 }
 
 /**
@@ -182,5 +202,6 @@ async function generateCmrFilesForGranules(granules, collection, bucket) {
 module.exports = {
   conceptExists,
   getOnlineResources,
-  generateCmrFilesForGranules
+  generateCmrFilesForGranules,
+  waitForConceptExistsOutcome
 };
