@@ -5,10 +5,11 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const {
-  api: { apiTestUtils },
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   conceptExists,
-  waitForConceptExistsOutcome
+  waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
 const {
   loadConfig,
@@ -118,10 +119,12 @@ describe('The Cumulus API', () => {
     });
 
     it('allows reingest and executes with success status', async () => {
-      const initialUpdatedAt = (await apiTestUtils.getGranule({
+      granule = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputGranuleId
-      })).updatedAt;
+      });
+      const oldUpdatedAt = granule.updatedAt;
+      const oldExecution = granule.execution;
 
       // Reingest Granule and compare the updatedAt times
       const response = await apiTestUtils.reingestGranule({
@@ -134,27 +137,29 @@ describe('The Cumulus API', () => {
         prefix: config.stackName,
         granuleId: inputGranuleId
       })).updatedAt;
-      expect(newUpdatedAt).not.toEqual(initialUpdatedAt);
-    });
-  });
+      expect(newUpdatedAt).not.toEqual(oldUpdatedAt);
 
-  describe('deleteGranule', () => {
-    it('deletes the ingested granule from the API', async () => {
-      const granule = await apiTestUtils.getGranule({
+      // Await reingest completion
+      await waitUntilGranuleStatusIs(config.stackName, inputGranuleId, 'completed');
+      const updatedGranule = await apiTestUtils.getGranule({
         prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+        granuleId: inputGranuleId
       });
+      expect(updatedGranule.status).toEqual('completed');
+      expect(updatedGranule.execution).not.toEqual(oldExecution);
+    });
 
+    it('deletes the ingested granule from the API', async () => {
       // Delete the granule
       await apiTestUtils.deleteGranule({
         prefix: config.stackName,
-        granuleId: granule.granuleId
+        granuleId: inputGranuleId
       });
 
       // Verify deletion
       const resp = await apiTestUtils.getGranule({
         prefix: config.stackName,
-        granuleId: granule.granuleId
+        granuleId: inputGranuleId
       });
       expect(resp.message).toEqual('Granule not found');
     });
