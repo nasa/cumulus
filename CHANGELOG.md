@@ -20,10 +20,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
   - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
-- Added `onDuplicateFilename` field to config for `@cumulus/sync-granule` to allow specifying how duplicate filenames should be handled
 
 ### Fixed
 
+- Updated config schema and documentation in `@cumulus/sync-granule` to include `duplicateHandling` parameter for specifying how duplicate filenames should be handled
 - Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
 - `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
 
