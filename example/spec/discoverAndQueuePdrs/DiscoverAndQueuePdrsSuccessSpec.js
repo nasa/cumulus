@@ -31,6 +31,7 @@ describe('The Discover And Queue PDRs workflow', () => {
   let workflowExecution;
   let queuePdrsOutput;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const executionModel = new Execution();
   const collectionModel = new Collection();
 
