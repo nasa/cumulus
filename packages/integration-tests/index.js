@@ -439,7 +439,6 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
   template.payload = payload || {};
   return template;
 }
-
 /**
  * build workflow message and execute the workflow
  *

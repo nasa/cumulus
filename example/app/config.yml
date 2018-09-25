@@ -125,6 +125,13 @@ default:
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
 
+  stepFunctions: !!files [
+    'workflows/helloworld.yml',
+    'workflows/cnm.yml',
+    'workflows/errorsAndRetries.yml',
+    'workflows/sips.yml'
+  ]
+
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-ecs'
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
