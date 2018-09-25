@@ -128,7 +128,8 @@ default:
     'workflows/helloworld.yml',
     'workflows/cnm.yml',
     'workflows/errorsAndRetries.yml',
-    'workflows/sips.yml'
+    'workflows/sips.yml',
+    'workflows/syncGranule.yml'
   ]
 
   iams:

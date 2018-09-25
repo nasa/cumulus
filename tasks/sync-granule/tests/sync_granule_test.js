@@ -1,11 +1,14 @@
 'use strict';
 
 const fs = require('fs-extra');
+const path = require('path');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
 const {
+  checksumS3Objects,
+  parseS3Uri,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
@@ -467,3 +470,64 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 //     return t.end(e);
 //   });
 // });
+
+test.serial('when duplicateHandling is "version", keep both data if different', async (t) => {
+  // duplicateHandling is taken from task config or collection config
+  t.context.event.config.duplicateHandling = 'version';
+  const granuleFilePath = randomString();
+  const granuleFileName = payload.input.granules[0].files[0].name;
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString()
+  };
+
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
+
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
+
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+
+  try {
+    // Stage the file that's going to be downloaded
+    const key = `${granuleFilePath}/${granuleFileName}`;
+    await s3().putObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: key,
+      Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
+    }).promise();
+
+    let output = await syncGranule(t.context.event);
+
+    validateOutput(t, output);
+
+    // stage the file with different content
+    await s3().putObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: key,
+      Body: granuleFileName
+    }).promise();
+
+    t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
+    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
+      t.context.event.input.granules[0].files[0].checksumType,
+      t.context.event.config.provider.host,
+      key
+    );
+
+    output = await syncGranule(t.context.event);
+    validateOutput(t, output);
+
+    t.is(output.granules[0].files.length, 2);
+    output.granules[0].files.forEach((f) => {
+      const filename = path.basename(parseS3Uri(f.filename).Key);
+      t.true(filename === granuleFileName || filename.startsWith(`${granuleFileName}.v`));
+    });
+  }
+  finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
