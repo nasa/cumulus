@@ -163,7 +163,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
 
     const params = { Bucket: bucket, Key: key, Body: pass };
     await promiseS3Upload(params);
-    log.info('Uploading to s3 is complete', s3uri);
+    log.info('Uploading to s3 is complete (http)', s3uri);
     return s3uri;
   }
 };
