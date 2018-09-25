@@ -160,6 +160,7 @@ describe('The Cumulus API', () => {
       const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
       logs.results.forEach((log) => {
         if ((!log.message.includes('END')) && (!log.message.includes('REPORT')) && (!log.message.includes('START'))) {
+          if (log.sender === undefined) console.log(`Log sender not set ${log}`);
           expect(log.sender).not.toBe(undefined);
         }
       });
