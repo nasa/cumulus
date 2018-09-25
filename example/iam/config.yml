@@ -169,5 +169,8 @@ jc:
 mhs:
   prefix: mhs
 
+mhs3:
+  prefix: mhs3
+
 jk:
   prefix: jk
