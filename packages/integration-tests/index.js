@@ -19,6 +19,7 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api');
 const cmr = require('./cmr.js');
+const granule = require('./granule.js');
 
 /**
  * Wait for the defined number of milliseconds
@@ -374,7 +375,6 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
   template.payload = payload || {};
   return template;
 }
-
 /**
  * build workflow message and execute the workflow
  *
@@ -463,5 +463,7 @@ module.exports = {
   rulesList,
   sleep,
   timeout: sleep,
-  getWorkflowArn
+  getWorkflowArn,
+  waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };
