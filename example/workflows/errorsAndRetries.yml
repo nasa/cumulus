@@ -1,7 +1,5 @@
-## Note: Example workflows are located in the workflows/ folder
-
-TestLambdaVersionWorkflow:
-  Comment: 'Tests Lambda update after redeploy'
+RetryPassWorkflow:
+  Comment: 'Tests Retry Configurations'
   StartAt: StartStatus
   States:
     StartStatus:
@@ -10,14 +8,55 @@ TestLambdaVersionWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: WaitForDeployment
-    WaitForDeployment:
+      Next: HelloWorld
+    HelloWorld:
+      CumulusConfig:
+        fail: true
+        passOnRetry: true
       Type: Task
-      Resource: ${WaitForDeploymentLambdaFunction.Arn}
-      Next: VersionUpTest
-    VersionUpTest:
+      Resource: ${HelloWorldLambdaFunction.Arn}
+      Next: StopStatus
+      Retry:
+          - ErrorEquals:
+              - States.ALL
+            IntervalSeconds: 2
+            MaxAttempts: 3
+    StopStatus:
       Type: Task
-      Resource: ${VersionUpTestLambdaFunction.Arn}
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
+
+HelloWorldFailWorkflow:
+  Comment: 'Failing Hello World Workflow'
+  StartAt: StartStatus
+  States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: HelloWorld
+    HelloWorld:
+      CumulusConfig:
+        fail: true
+      Type: Task
+      Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
     StopStatus:
       Type: Task
@@ -39,9 +78,8 @@ TestLambdaVersionWorkflow:
       Type: Fail
       Cause: 'Workflow failed'
 
-
-WaitForDeployWorkflow:
-  Comment: 'Tests redeployment during workflow run'
+RetryFailWorkflow:
+  Comment: 'Tests Retries and Fail'
   StartAt: StartStatus
   States:
     StartStatus:
@@ -53,16 +91,16 @@ WaitForDeployWorkflow:
       Next: HelloWorld
     HelloWorld:
       CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
+        fail: true
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
-      Next: WaitForDeployment
-    WaitForDeployment:
-      Type: Task
-      Resource: ${WaitForDeploymentLambdaFunction.Arn}
       Next: StopStatus
+      Retry:
+          - ErrorEquals:
+              - States.ALL
+            IntervalSeconds: 2
+            BackoffRate: 2
+            MaxAttempts: 3
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}

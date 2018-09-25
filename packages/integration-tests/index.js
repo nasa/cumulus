@@ -20,6 +20,7 @@ const sfnStep = require('./sfnStep');
 const api = require('./api');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
+const granule = require('./granule.js');
 
 /**
  * Wait for the defined number of milliseconds
@@ -375,7 +376,6 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
   template.payload = payload || {};
   return template;
 }
-
 /**
  * build workflow message and execute the workflow
  *
@@ -466,5 +466,7 @@ module.exports = {
   timeout: sleep,
   getWorkflowArn,
   getLambdaVersions: lambda.getLambdaVersions,
-  getLambdaAliases: lambda.getLambdaAliases
+  getLambdaAliases: lambda.getLambdaAliases,
+  waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };
