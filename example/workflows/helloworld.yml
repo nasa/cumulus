@@ -1,7 +1,5 @@
-## Note: Example workflows are located in the workflows/ folder
-
-TestLambdaVersionWorkflow:
-  Comment: 'Tests Lambda update after redeploy'
+HelloWorldWorkflow:
+  Comment: 'Returns Hello World'
   StartAt: StartStatus
   States:
     StartStatus:
@@ -10,14 +8,14 @@ TestLambdaVersionWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: WaitForDeployment
-    WaitForDeployment:
+      Next: HelloWorld
+    HelloWorld:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
       Type: Task
-      Resource: ${WaitForDeploymentLambdaFunction.Arn}
-      Next: VersionUpTest
-    VersionUpTest:
-      Type: Task
-      Resource: ${VersionUpTestLambdaFunction.Arn}
+      Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
     StopStatus:
       Type: Task
@@ -39,9 +37,8 @@ TestLambdaVersionWorkflow:
       Type: Fail
       Cause: 'Workflow failed'
 
-
-WaitForDeployWorkflow:
-  Comment: 'Tests redeployment during workflow run'
+EcsHelloWorldWorkflow:
+  Comment: 'Returns Hello World'
   StartAt: StartStatus
   States:
     StartStatus:
@@ -50,18 +47,19 @@ WaitForDeployWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: HelloWorld
-    HelloWorld:
+      Next: EcsTaskHelloWorld
+    EcsTaskHelloWorld:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
       Type: Task
-      Resource: ${HelloWorldLambdaFunction.Arn}
-      Next: WaitForDeployment
-    WaitForDeployment:
-      Type: Task
-      Resource: ${WaitForDeploymentLambdaFunction.Arn}
+      Resource: ${EcsTaskHelloWorldActivity}
+      TimeoutSeconds: 60
+      Retry:
+        - ErrorEquals:
+            - States.Timeout
+          MaxAttempts: 1
       Next: StopStatus
     StopStatus:
       Type: Task
