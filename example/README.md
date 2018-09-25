@@ -67,7 +67,9 @@ Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and 
 
 ### Adding a new test workflow
 
-The workflow should be configured as it would be for a normal Cumulus deployment in `workflows.yml`. It must be deployed to the current deployment if testing locally.
+The workflow should be configured as it would be for a normal Cumulus deployment in a workflows yaml file. It must be deployed to the current deployment if testing locally.
+
+The workflows yaml files are located in the `/workflows/` folder and are split up to make the workflows easier to find and understand. When adding a new file, make sure to update the `app/config.yml` `stepFunctions` field.
 
 A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
 
