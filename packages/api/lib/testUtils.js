@@ -81,6 +81,13 @@ function fakeGranuleFactory(status = 'completed') {
   };
 }
 
+function fakeGranuleFactoryV2(options = {}) {
+  return Object.assign(
+    fakeGranuleFactory(),
+    options
+  );
+}
+
 /**
  * creates fake rule record
  *
@@ -184,6 +191,7 @@ function fakeCollectionFactory() {
 module.exports = {
   testEndpoint,
   fakeGranuleFactory,
+  fakeGranuleFactoryV2,
   fakePdrFactory,
   fakeCollectionFactory,
   fakeExecutionFactory,

@@ -16,15 +16,37 @@ const bootstrap = require('../../lambdas/bootstrap');
 const granuleEndpoint = require('../../endpoints/granules');
 const indexer = require('../../es/indexer');
 const {
-  fakeGranuleFactory,
+  fakeGranuleFactoryV2,
   fakeUserFactory
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
 
+const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
+
+function createBuckets(buckets) {
+  return Promise.all(buckets.map(createBucket));
+}
+
+function deleteBuckets(buckets) {
+  return Promise.all(buckets.map(aws.recursivelyDeleteS3Bucket));
+}
+
+const putObject = (params) => aws.s3().putObject(params).promise();
+
+async function runTestUsingBuckets(buckets, testFunction) {
+  try {
+    await createBuckets(buckets);
+    await testFunction();
+  }
+  finally {
+    await deleteBuckets(buckets);
+  }
+}
+
 // create all the variables needed across this test
 let esClient;
 let esIndex;
-let g;
+let granuleModel;
 let authToken;
 let userModel;
 test.before(async () => {
@@ -34,8 +56,6 @@ test.before(async () => {
   process.env.stackName = randomString();
   process.env.internal = randomString();
 
-  g = new models.Granule();
-
   // create esClient
   esClient = await Search.es('fakehost');
 
@@ -43,10 +63,11 @@ test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
   // create a fake bucket
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+  await createBucket(process.env.internal);
 
   // create fake Granules table
-  await g.createTable();
+  granuleModel = new models.Granule();
+  await granuleModel.createTable();
 
   // create fake Users table
   userModel = new models.User();
@@ -61,21 +82,24 @@ test.beforeEach(async (t) => {
   };
 
   // create fake granule records
-  t.context.fakeGranules = ['completed', 'failed'].map(fakeGranuleFactory);
+  t.context.fakeGranules = [
+    fakeGranuleFactoryV2({ status: 'completed' }),
+    fakeGranuleFactoryV2({ status: 'failed' })
+  ];
 
   for (let i = 0; i < t.context.fakeGranules.length; i += 1) {
     const granule = t.context.fakeGranules[i];
-    const record = await g.create(granule); // eslint-disable-line no-await-in-loop
+    const record = await granuleModel.create(granule); // eslint-disable-line no-await-in-loop
     await indexer.indexGranule(esClient, record, esIndex); // eslint-disable-line no-await-in-loop
   }
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
-    g.create(granule)
+    granuleModel.create(granule)
       .then((record) => indexer.indexGranule(esClient, record, esIndex))));
 });
 
 test.after.always(async () => {
-  await g.deleteTable();
+  await granuleModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
@@ -101,15 +125,14 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
-test.serial(`When accessing any API endpoint with no session information, it returns an HTTP 401 status code
-           and no system information`, async (t) => {
+test.serial('When accessing any API endpoint with no session information, it returns an HTTP 401 status code and no system information', async (t) => {
   const event = { httpMethod: 'GET', headers: {} };
 
   const response = await granuleEndpoint(event);
   const responseBody = JSON.parse(response.body);
 
   t.is(response.statusCode, 401);
-  t.deepEqual(responseBody.message, 'Authorization header missing');
+  t.is(responseBody.message, 'Authorization header missing');
 });
 
 test.serial('GET returns an existing granule', async (t) => {
@@ -143,78 +166,94 @@ test.serial('GET fails if granule is not found', async (t) => {
   t.is(message, 'Granule not found');
 });
 
-test.serial('When performing POST, PUT, or DELETE on any API endpoint with no session information, it rejects the operation', async (t) => {
-  const buckets = {
-    protected: {
-      name: randomString(),
-      type: 'protected'
-    },
-    public: {
-      name: randomString(),
-      type: 'public'
-    }
-  };
-  const newGranule = fakeGranuleFactory('failed');
-  newGranule.published = false;
-  newGranule.files = [
+function buildFakeGranule(bucketsConfig) {
+  const fakeGranule = fakeGranuleFactoryV2({
+    published: false,
+    status: 'failed'
+  });
+
+  fakeGranule.files = [
     {
-      bucket: buckets.protected.name,
-      name: `${newGranule.granuleId}.hdf`,
-      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.hdf`
+      bucket: bucketsConfig.protected,
+      name: `${fakeGranule.granuleId}.hdf`,
+      filename: `s3://${bucketsConfig.protected}/${randomString()}/${fakeGranule.granuleId}.hdf`
     },
     {
-      bucket: buckets.protected.name,
-      name: `${newGranule.granuleId}.cmr.xml`,
-      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.cmr.xml`
+      bucket: bucketsConfig.protected,
+      name: `${fakeGranule.granuleId}.cmr.xml`,
+      filename: `s3://${bucketsConfig.protected}/${randomString()}/${fakeGranule.granuleId}.cmr.xml`
     },
     {
-      bucket: buckets.public.name,
-      name: `${newGranule.granuleId}.jpg`,
-      filename: `s3://${buckets.public.name}/${randomString()}/${newGranule.granuleId}.jpg`
+      bucket: bucketsConfig.public,
+      name: `${fakeGranule.granuleId}.jpg`,
+      filename: `s3://${bucketsConfig.public}/${randomString()}/${fakeGranule.granuleId}.jpg`
     }
   ];
 
-  await aws.s3().createBucket({ Bucket: buckets.protected.name }).promise();
-  await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
+  return fakeGranule;
+}
 
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    const parsed = aws.parseS3Uri(file.filename);
-    await aws.s3().putObject({ // eslint-disable-line no-await-in-loop
-      Bucket: parsed.Bucket,
-      Key: parsed.Key,
-      Body: `test data ${randomString()}`
-    }).promise();
+function stageFakeGranuleFilesToS3(files) {
+  const putObjectParams = files.map(
+    (file) =>
+      Object.assign(
+        aws.parseS3Uri(file.filename),
+        { Body: `test data ${randomString}` }
+      )
+  );
+
+  return Promise.all(putObjectParams.map(putObject));
+}
+
+async function buildAndStageFakeGranule(bucketsConfig) {
+  const fakeGranule = buildFakeGranule(bucketsConfig);
+
+  await stageFakeGranuleFilesToS3(fakeGranule.files);
+
+  await granuleModel.create(fakeGranule);
+
+  return fakeGranule;
+}
+
+async function verifyGranuleFilesExistInS3(t, granule) {
+  // Verify that the requested changes didn't happen
+  for (let i = 0; i < granule.files.length; i += 1) {
+    const { Bucket, Key } = aws.parseS3Uri(granule.files[i].filename);
+
+    t.true(await aws.s3ObjectExists({ Bucket, Key })); // eslint-disable-line no-await-in-loop
   }
+}
 
-  // create a new unpublished granule
-  await g.create(newGranule);
-
-  const event = {
-    httpMethod: 'PUT',
-    headers: {},
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    body: JSON.stringify({ action: 'reprocess' })
+test.serial('When performing POST, PUT, or DELETE on any API endpoint with no session information, it rejects the operation', async (t) => {
+  const bucketsConfig = {
+    protected: randomString(),
+    public: randomString()
   };
 
-  const response = await granuleEndpoint(event);
-  const expectedResponse = { message: 'Authorization header missing' };
+  await runTestUsingBuckets(
+    Object.values(bucketsConfig),
+    async () => {
+      const fakeGranule = await buildAndStageFakeGranule(bucketsConfig);
 
-  // Verify that the request was rejected
-  t.is(response.statusCode, 401);
-  t.deepEqual(JSON.parse(response.body), expectedResponse);
+      const response = await granuleEndpoint({
+        httpMethod: 'PUT',
+        headers: {},
+        pathParameters: {
+          granuleName: fakeGranule.granuleId
+        },
+        body: JSON.stringify({
+          action: 'reprocess'
+        })
+      });
 
-  // Verify that the requested changes didn't happen
-  for (let i = 0; i < newGranule.files.length; i += 1) {
-    const file = newGranule.files[i];
-    const parsed = aws.parseS3Uri(file.filename);
-    t.truthy(await aws.fileExists(parsed.Bucket, parsed.Key)); // eslint-disable-line no-await-in-loop
-  }
+      const responseBody = JSON.parse(response.body);
 
-  await aws.recursivelyDeleteS3Bucket(buckets.protected.name);
-  await aws.recursivelyDeleteS3Bucket(buckets.public.name);
+      t.is(response.statusCode, 401);
+      t.is(responseBody.message, 'Authorization header missing');
+
+      await verifyGranuleFilesExistInS3(t, fakeGranule);
+    }
+  );
 });
 
 test.serial('PUT fails if action is not supported', async (t) => {
@@ -275,7 +314,7 @@ test.serial('reingest a granule', async (t) => {
   process.env.bucket = process.env.internal;
   const message = JSON.parse(fakeSFResponse.execution.input);
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
+  await putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' });
 
   sinon.stub(
     StepFunction,
@@ -288,7 +327,7 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'reingest');
 
-  const updatedGranule = await g.get({ granuleId: t.context.fakeGranules[0].granuleId });
+  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
 
   StepFunction.getExecutionStatus.restore();
@@ -323,7 +362,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   process.env.bucket = process.env.internal;
   const message = JSON.parse(fakeSFResponse.execution.input);
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'fake in-place workflow' }).promise();
+  await putObject({ Bucket: process.env.bucket, Key: key, Body: 'fake in-place workflow' });
 
   // return fake previous execution
   sinon.stub(
@@ -345,7 +384,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedGranule = await g.get({ granuleId: t.context.fakeGranules[0].granuleId });
+  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
 
   StepFunction.getExecutionStatus.restore();
@@ -377,7 +416,7 @@ test.serial('remove a granule from CMR', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'removeFromCmr');
 
-  const updatedGranule = await g.get({ granuleId: t.context.fakeGranules[0].granuleId });
+  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.published, false);
   t.is(updatedGranule.cmrLink, null);
 
@@ -415,7 +454,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
       type: 'public'
     }
   };
-  const newGranule = fakeGranuleFactory('failed');
+  const newGranule = fakeGranuleFactoryV2({ status: 'failed' });
   newGranule.published = false;
   newGranule.files = [
     {
@@ -435,21 +474,23 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
     }
   ];
 
-  await aws.s3().createBucket({ Bucket: buckets.protected.name }).promise();
-  await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
+  await createBuckets([
+    buckets.protected.name,
+    buckets.public.name
+  ]);
 
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
     const parsed = aws.parseS3Uri(file.filename);
-    await aws.s3().putObject({ // eslint-disable-line no-await-in-loop
+    await putObject({ // eslint-disable-line no-await-in-loop
       Bucket: parsed.Bucket,
       Key: parsed.Key,
       Body: `test data ${randomString()}`
-    }).promise();
+    });
   }
 
   // create a new unpublished granule
-  await g.create(newGranule);
+  await granuleModel.create(newGranule);
 
   const event = {
     httpMethod: 'DELETE',
@@ -472,107 +513,110 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
     t.false(await aws.fileExists(parsed.Bucket, parsed.Key)); // eslint-disable-line no-await-in-loop
   }
 
-  await aws.recursivelyDeleteS3Bucket(buckets.protected.name);
-  await aws.recursivelyDeleteS3Bucket(buckets.public.name);
+  await deleteBuckets([
+    buckets.protected.name,
+    buckets.public.name
+  ]);
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.internal;
-  const [secondBucket, thirdBucket] = [randomString(), randomString()];
-  await aws.s3().createBucket({ Bucket: secondBucket }).promise();
-  await aws.s3().createBucket({ Bucket: thirdBucket }).promise();
+  const secondBucket = randomString();
+  const thirdBucket = randomString();
 
-  const newGranule = fakeGranuleFactory();
+  await runTestUsingBuckets(
+    [secondBucket, thirdBucket],
+    async () => {
+      const newGranule = fakeGranuleFactoryV2();
 
-  newGranule.files = [
-    {
-      bucket,
-      name: `${newGranule.granuleId}.txt`,
-      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
-      filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
-    },
-    {
-      bucket,
-      name: `${newGranule.granuleId}.md`,
-      filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.md`
-    },
-    {
-      bucket: secondBucket,
-      name: `${newGranule.granuleId}.jpg`,
-      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`,
-      filename: `s3://${secondBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`
+      newGranule.files = [
+        {
+          bucket,
+          name: `${newGranule.granuleId}.txt`,
+          filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
+          filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+        },
+        {
+          bucket,
+          name: `${newGranule.granuleId}.md`,
+          filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.md`
+        },
+        {
+          bucket: secondBucket,
+          name: `${newGranule.granuleId}.jpg`,
+          filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`,
+          filename: `s3://${secondBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`
+        }
+      ];
+
+      await granuleModel.create(newGranule);
+
+      await Promise.all(newGranule.files.map((file) => {
+        const filepath = file.filepath || aws.parseS3Uri(file.filename).Key;
+        putObject({ Bucket: file.bucket, Key: filepath, Body: 'test data' });
+      }));
+
+      const destinationFilepath = `${process.env.stackName}/granules_moved`;
+      const destinations = [
+        {
+          regex: '.*.txt$',
+          bucket,
+          filepath: destinationFilepath
+        },
+        {
+          regex: '.*.md$',
+          bucket: thirdBucket,
+          filepath: destinationFilepath
+        },
+        {
+          regex: '.*.jpg$',
+          bucket,
+          filepath: destinationFilepath
+        }
+      ];
+
+      const event = {
+        httpMethod: 'PUT',
+        pathParameters: {
+          granuleName: newGranule.granuleId
+        },
+        headers: t.context.authHeaders,
+        body: JSON.stringify({
+          action: 'move',
+          destinations
+        })
+      };
+
+      const response = await granuleEndpoint(event);
+
+      const body = JSON.parse(response.body);
+      t.is(body.status, 'SUCCESS');
+      t.is(body.action, 'move');
+
+      await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
+        t.is(list.Contents.length, 2);
+        list.Contents.forEach((item) => {
+          t.is(item.Key.indexOf(destinationFilepath), 0);
+        });
+      });
+
+      await aws.s3().listObjects({ Bucket: thirdBucket, Prefix: destinationFilepath }).promise().then((list) => {
+        t.is(list.Contents.length, 1);
+        list.Contents.forEach((item) => {
+          t.is(item.Key.indexOf(destinationFilepath), 0);
+        });
+      });
+
+      // check the granule in table is updated
+      const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
+      updatedGranule.files.forEach((file) => {
+        t.true(file.filepath.startsWith(destinationFilepath));
+        const destination = destinations.find((dest) => file.name.match(dest.regex));
+        t.is(destination.bucket, file.bucket);
+        t.true(file.filename.startsWith(aws.buildS3Uri(destination.bucket, destinationFilepath)));
+      });
     }
-  ];
-
-  await g.create(newGranule);
-
-  await Promise.all(newGranule.files.map(async (file) => {
-    const filepath = file.filepath || aws.parseS3Uri(file.filename).Key;
-    aws.s3().putObject({ Bucket: file.bucket, Key: filepath, Body: 'test data' }).promise();
-  }));
-
-  const destinationFilepath = `${process.env.stackName}/granules_moved`;
-  const destinations = [
-    {
-      regex: '.*.txt$',
-      bucket,
-      filepath: destinationFilepath
-    },
-    {
-      regex: '.*.md$',
-      bucket: thirdBucket,
-      filepath: destinationFilepath
-    },
-    {
-      regex: '.*.jpg$',
-      bucket,
-      filepath: destinationFilepath
-    }
-  ];
-
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: newGranule.granuleId
-    },
-    headers: t.context.authHeaders,
-    body: JSON.stringify({
-      action: 'move',
-      destinations
-    })
-  };
-
-  const response = await granuleEndpoint(event);
-
-  const body = JSON.parse(response.body);
-  t.is(body.status, 'SUCCESS');
-  t.is(body.action, 'move');
-
-  await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
-    t.is(list.Contents.length, 2);
-    list.Contents.forEach((item) => {
-      t.is(item.Key.indexOf(destinationFilepath), 0);
-    });
-  });
-
-  await aws.s3().listObjects({ Bucket: thirdBucket, Prefix: destinationFilepath }).promise().then((list) => {
-    t.is(list.Contents.length, 1);
-    list.Contents.forEach((item) => {
-      t.is(item.Key.indexOf(destinationFilepath), 0);
-    });
-  });
-
-  // check the granule in table is updated
-  const updatedGranule = await g.get({ granuleId: newGranule.granuleId });
-  updatedGranule.files.forEach((file) => {
-    t.true(file.filepath.startsWith(destinationFilepath));
-    const destination = destinations.find((dest) => file.name.match(dest.regex));
-    t.is(destination.bucket, file.bucket);
-    t.true(file.filename.startsWith(aws.buildS3Uri(destination.bucket, destinationFilepath)));
-  });
-
-  await aws.recursivelyDeleteS3Bucket(secondBucket);
-  await aws.recursivelyDeleteS3Bucket(thirdBucket);
+  );
 });
 
 test.serial('move a file and update metadata', async (t) => {
@@ -590,10 +634,14 @@ test.serial('move a file and update metadata', async (t) => {
   };
 
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
-  await aws.s3().putObject({ Bucket: bucket, Key: `${process.env.stackName}/workflows/buckets.json`, Body: JSON.stringify(buckets) }).promise();
+  await putObject({
+    Bucket: bucket,
+    Key: `${process.env.stackName}/workflows/buckets.json`,
+    Body: JSON.stringify(buckets)
+  });
 
-  await aws.s3().createBucket({ Bucket: buckets.public.name }).promise();
-  const newGranule = fakeGranuleFactory();
+  await createBucket(buckets.public.name);
+  const newGranule = fakeGranuleFactoryV2();
   const metadata = fs.createReadStream('tests/data/meta.xml');
 
   newGranule.files = [
@@ -611,13 +659,13 @@ test.serial('move a file and update metadata', async (t) => {
     }
   ];
 
-  await g.create(newGranule);
+  await granuleModel.create(newGranule);
 
   await Promise.all(newGranule.files.map((file) => {
     if (file.name === `${newGranule.granuleId}.txt`) {
-      return aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' }).promise();
+      return putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' });
     }
-    return aws.s3().putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata }).promise();
+    return putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata });
   }));
 
   const destinationFilepath = `${process.env.stackName}/moved_granules`;
