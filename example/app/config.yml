@@ -359,6 +359,11 @@ gitc:
 mvd:
   stackName: mvd
   stackNameNoDash: mvd
+  buckets:
+    internal:
+      name: '{{stackName}}-internal'
+      type: internal
+  bucket: '{{stackName}}-internal'
 
 jc:
   stackName: jc

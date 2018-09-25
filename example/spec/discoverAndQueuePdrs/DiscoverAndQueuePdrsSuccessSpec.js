@@ -1,4 +1,4 @@
-const { Execution } = require('@cumulus/api/models');
+const { Collection, Execution } = require('@cumulus/api/models');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
@@ -32,12 +32,14 @@ describe('The Discover And Queue PDRs workflow', () => {
   let queuePdrsOutput;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // populate test data
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    // update provider path
+    collectionModel.update(collection, { provider_path: testDataFolder });
 
-    await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
