@@ -27,24 +27,34 @@ const config = loadConfig();
 
 const promisedFileCopy = promisify(fs.copyFile);
 
-const timeout = 15 * 60 * 1000; // Timout for test setup/teardown in milliseconds
-
+const timeout = 30 * 60 * 1000; // Timout for test setup/teardown in milliseconds
+const deployTimeout = 15; // deployment timeout in minutes
 
 async function cleanUp() {
   // Restore workflows.yml to original and redeploy for next time tests are run
-  restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-
-  console.log('Starting redeploy() in afterAll'); // Debugging intermittent test failures
-  await redeploy(config);
-  console.log('Finished redeploy() in afterAll'); // Debugging intermittent test failures
+  let retries = 0;
+  try {
+    restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
+    console.log('Starting redeploy() in cleanup'); // Debugging intermittent test failures
+    await redeploy(config, deployTimeout);
+  }
+  catch (e) {
+    if (retries < 1) {
+      console.log('Test cleanup failed, retrying.....');
+      retries += 1;
+      cleanUp();
+    }
+    else {
+      console.log('*****Test cleanup failed, stack/repo may need cleansed up!******');
+      throw (e);
+    }
+  }
 }
 
 describe('When a workflow', () => {
   beforeAll(() => promisedFileCopy(workflowsYmlFile, workflowsYmlCopyFile));
 
-  afterAll(async () => {
-    cleanUp();
-  }, timeout);
+  afterAll(async () => cleanUp());
 
   describe('is updated and deployed during a workflow execution', () => {
     let workflowExecutionArn = null;
@@ -64,16 +74,18 @@ describe('When a workflow', () => {
 
           removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
 
+
           console.log('Starting redeploy() in beforeAll() A'); // Debugging intermittent test failures
-          await redeploy(config);
+          await redeploy(config, deployTimeout);
           console.log('Finished redeploy() in beforeAll() A'); // Debugging intermittent test failures
 
           console.log('Starting waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
+          console.log(`workflowExecutionArn is ${workflowExecutionArn}`);
           workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
           console.log('Finished waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
         }
         catch (e) {
-          cleanUp();
+          await cleanUp();
           throw (e);
         }
       },
@@ -129,11 +141,12 @@ describe('When a workflow', () => {
           removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
 
           console.log('Starting redeploy() in beforeAll() B'); // Debugging intermittent test failures
-          await redeploy(config);
+          await redeploy(config, deployTimeout);
           console.log('Finished redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
           // Wait for the execution to reach a non-RUNNING state
           console.log('Starting waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
+          console.log(`workflowExecutionArn is ${workflowExecutionArn}`);
           await waitForCompletedExecution(workflowExecutionArn);
           console.log('Finished waitForCompletedExecution() in beforeAll() B'); // Debugging intermittent test failures
 

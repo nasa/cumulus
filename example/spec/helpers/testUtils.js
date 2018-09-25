@@ -2,7 +2,7 @@ const fs = require('fs');
 const { S3 } = require('aws-sdk');
 const { Config } = require('kes');
 const lodash = require('lodash');
-const { exec } = require('child_process');
+const { exec } = require('child-process-promise');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -96,29 +96,46 @@ function getExecutionUrl(executionArn) {
  * Redeploy the current Cumulus deployment
  *
  * @param {Object} config - configuration object from loadConfig()
+ * @param {int} timeout - Timeout value in minutes
  * @returns {Promise}
  */
+
 function redeploy(config, timeout) {
   const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
   console.log(`Redeploying ${config.deployment}`);
 
-  const minutes = timeout;
-  let i = 0;
-  const timeoutPromise = new Promise((resolve, reject) => {
-    function printDots(rejectCallback) {
-      console.log('.');
-      if (i < minutes) {
-        i += 1;
-        setTimeout(printDots(rejectCallback(), 60000));
+  let timeoutObject;
+  function timeoutPromise() {
+    return new Promise((resolve, reject) => {
+      const minutes = timeout || 30;
+      let i = 0;
+      function printDots() {
+        console.log('.');
+        if (i < minutes) {
+          i += 1;
+          timeoutObject = setTimeout(() => printDots(), 60000);
+        }
+        else {
+          reject(new Error('Timeout Exceeded'));
+        }
       }
-      else {
-        rejectCallback(new Error('Timeout exceeded'));
-      }
-    }
-    printDots(reject);
-  });
-  return Promise.race(exec(deployCommand), timeoutPromise);
+      printDots();
+    });
+  }
+
+  function executionPromise() {
+    return exec(deployCommand).then((output) => {
+      console.log(output.stdout);
+    }).catch((e) => {
+      console.log(e.stdout);
+      console.log(e.stderr);
+      throw (e);
+    });
+  }
+
+  return Promise.race([executionPromise(), timeoutPromise()]).then(clearTimeout(timeoutObject));
 }
+
 
 module.exports = {
   loadConfig,
