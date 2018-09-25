@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
+- Added `onDuplicateFilename` field to config for `@cumulus/sync-granule` to allow specifying how duplicate filenames should be handled
 
 ### Fixed
 
