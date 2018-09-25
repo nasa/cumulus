@@ -29,6 +29,7 @@ SyncGranule:
         stack: '{$.meta.stack}'
         fileStagingDir: 'custom-staging-dir'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -64,100 +65,6 @@ SyncGranule:
       Type: Task
       Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
       Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    StopStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-      End: true
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
-
-SyncGranuleCatchDuplicates:
-  Comment: 'Catch DuplicateError for SyncGranule'
-  StartAt: Report
-  States:
-    Report:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Next: VpcOrNot
-    VpcOrNot:
-        Type: Choice
-        Choices:
-          - Variable: $.meta.provider.protocol
-            StringEquals: http
-            Next: SyncGranule
-          - Variable: $.meta.provider.protocol
-            StringEquals: https
-            Next: SyncGranule
-          - Variable: $.meta.provider.protocol
-            StringEquals: s3
-            Next: SyncGranuleNoVpc
-    SyncGranule:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        stack: '{$.meta.stack}'
-        fileStagingDir: 'custom-staging-dir'
-        downloadBucket: '{$.cumulus_meta.system_bucket}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
-            - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
-      Type: Task
-      Resource: ${SyncGranuleLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
-    SyncGranuleNoVpc:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        stack: '{$.meta.stack}'
-        fileStagingDir: 'custom-staging-dir'
-        downloadBucket: '{$.cumulus_meta.system_bucket}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
-            - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
-      Type: Task
-      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
-          - 'DuplicateFile'
-          Next: StopStatus
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
