@@ -106,10 +106,10 @@ test.serial(`When accessing any API endpoint with no session information, it ret
   const event = { httpMethod: 'GET', headers: {} };
 
   const response = await granuleEndpoint(event);
-  const expectedResponse = { message: 'Authorization header missing' };
+  const responseBody = JSON.parse(response.body);
 
   t.is(response.statusCode, 401);
-  t.deepEqual(JSON.parse(response.body), expectedResponse);
+  t.deepEqual(responseBody.message, 'Authorization header missing');
 });
 
 test.serial('GET returns an existing granule', async (t) => {
