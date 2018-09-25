@@ -38,7 +38,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     // populate test data
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
     // update provider path
-    collectionModel.update(collection, { provider_path: testDataFolder });
+    await collectionModel.update(collection, { provider_path: testDataFolder });
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -71,7 +71,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
 
     it('has expected path and name output', () => {
-      expect(lambdaOutput.payload.pdrs[0].path).toEqual('cumulus-test-data/pdrs');
+      expect(lambdaOutput.payload.pdrs[0].path).toEqual(testDataFolder);
       expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
     });
   });
