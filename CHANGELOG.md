@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
       - Updated Kes custom code on custom compilation template to add template configuration key `lambdaProcess` to skip running `Lambda.process` and instead run a custom function that populates lambda buckets/hashes/etc, but does not build/push lambda code.  This option requires `useWorkflowLambdaVersions` to be enabled, and is not intended to be user facing.
 
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
+
 - `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 
