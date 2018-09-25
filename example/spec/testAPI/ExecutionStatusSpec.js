@@ -18,7 +18,7 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const workflowConfigFile = './workflows.yml';
+const workflowConfigFile = './workflows/sips.yml';
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
