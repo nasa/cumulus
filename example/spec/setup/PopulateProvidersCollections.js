@@ -13,7 +13,7 @@ describe('Populating providers and collections to database', () => {
   let collections;
   let providers;
 
-  beforeAll(async () => {
+  it('providers, collections and rules are added successfully', async () => {
     try {
       collections = await addCollections(config.stackName, config.bucket, collectionsDirectory);
       providers = await addProviders(config.stackName, config.bucket, providersDirectory, config.bucket);
@@ -22,9 +22,6 @@ describe('Populating providers and collections to database', () => {
       console.log(JSON.stringify(e));
       throw e;
     }
-  });
-
-  it('providers, collections and rules are added successfully', async () => {
     expect(providers).toBeGreaterThanOrEqual(1, 'Number of providers incorrect.');
     expect(collections).toBeGreaterThanOrEqual(1, 'Number of collections incorrect.');
   });
