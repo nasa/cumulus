@@ -63,10 +63,6 @@ WaitForDeployWorkflow:
       Type: Task
       Resource: ${WaitForDeploymentLambdaFunction.Arn}
       Next: StopStatus
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
