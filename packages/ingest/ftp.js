@@ -173,7 +173,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
 
     const params = { Bucket: bucket, Key: key, Body: pass };
     await promiseS3Upload(params);
-    log.info('Uploading to s3 is complete', s3uri);
+    log.info('Uploading to s3 is complete(ftp)', s3uri);
 
     client.destroy();
 
