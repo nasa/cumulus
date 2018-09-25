@@ -1,4 +1,7 @@
-# EMS reporting
+---
+id: ems_reporting
+title: EMS Reporting
+---
 
 Cumulus reports usage statistics to the [ESDIS Metrics System (EMS)](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/esdis-metrics-system-ems).
 Two types of reports are generated: ingest and distribution.

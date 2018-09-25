@@ -1,4 +1,7 @@
-# SNS Notifications in Workflows
+---
+id: sns
+title: SNS Notification in Workflows
+---
 
 On deployment, an sftracker (Step function tracker) [SNS](https://aws.amazon.com/sns) topic is created and used for messages related to the workflow.
 

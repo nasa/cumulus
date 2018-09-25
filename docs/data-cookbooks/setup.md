@@ -1,4 +1,7 @@
-# Setup
+---
+id: setup
+title: Data Cookbooks Setup
+---
 
 ### Getting setup to work with data-cookboooks
 

@@ -1,4 +1,7 @@
-# Develop Lambda functions
+---
+id: lambda
+title: Develop Lambda Functions
+---
 
 ### Develop a new Lambda
 

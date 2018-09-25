@@ -1,0 +1,43 @@
+{
+  "docs": {
+    "About Cumulus": [
+      "README",
+      "architecture"
+    ],
+    "What are Cumulus Workflows?": [
+      "workflows/README",
+      "workflows/protocol",
+      "workflows/input_output",
+      "workflows/cumulus-task-message-flow",
+      "workflows/developing-workflow-tasks",
+      "workflows/lambda",
+      "workflows/docker",
+      "workflows/workflow-configuration-how-to",
+      "workflows/workflow-triggers"
+    ],
+    "Deployment": [
+      "deployment/README",
+      "deployment/create_bucket",
+      "deployment/iam_roles",
+      "deployment/troubleshoot_deployment"
+    ],
+    "Additional Features": [
+      "data_in_dynamodb",
+      "ems_reporting"
+    ]
+  },
+  "Data Cookbooks": {
+    "About Cookbooks": [
+      "data-cookbooks/about-cookbooks",
+      "data-cookbooks/setup"
+    ],
+    "Cookbooks": [
+      "data-cookbooks/hello-world",
+      "data-cookbooks/sns",
+      "data-cookbooks/sips-workflow",
+      "data-cookbooks/cnm-workflow",
+      "data-cookbooks/error-handling",
+      "data-cookbooks/choice-states"
+    ]
+  }
+}

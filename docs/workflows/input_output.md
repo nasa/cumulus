@@ -1,3 +1,8 @@
+---
+id: input_output
+title: Workflows Input & Output
+---
+
 # Ingest Inputs and Return Values
 
 ## General Structure

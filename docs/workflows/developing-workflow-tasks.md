@@ -1,4 +1,7 @@
-# Developing Workflow Tasks
+---
+id: developing-workflow-tasks
+title: Developing Worklflow Tasks
+---
 
 Workflow tasks can be either AWS Lambda Functions or ECS Activities.
 

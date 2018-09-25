@@ -1,4 +1,7 @@
-# HelloWorld Workflow
+---
+id: hello-world
+title: HelloWorld Workflow
+---
 
 Example task meant to be a sanity check/introduction to the Cumulus workflows.
 
@@ -86,7 +89,7 @@ Our goal here is to create a rule through the Cumulus dashboard that will define
 }
 ```
 
-![](../images/hello_world_workflow.png)
+![](../assets/hello_world_workflow.png)
 *Executed workflow as seen in AWS Console*
 
 ### Output/Results

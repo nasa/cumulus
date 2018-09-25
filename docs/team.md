@@ -1,4 +1,7 @@
-# Team
+---
+id: team
+title: Team
+---
 
 ### Cumulus Core Team
 
