@@ -11,7 +11,7 @@ Workflows can be configured to send SNS messages containing the Cumulus message 
 
 ### Workflow Configuration
 
-The [Hello World Workflow](./hello-world.md) is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in `workflows.yml`.
+The [Hello World Workflow](./hello-world.md) is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in `workflows/helloworld.yml`.
 
 ```yaml
 HelloWorldWorkflow:
@@ -56,7 +56,7 @@ HelloWorldWorkflow:
 
 #### Sending an SNS Message in an Error Case
 
-To send an SNS message for an error case, you can configure your workflow to catch errors and set the next workflow step on error to a step with the `SfSnsReportLambdaFunction` lambda function. This is configured in `workflows.yml`.
+To send an SNS message for an error case, you can configure your workflow to catch errors and set the next workflow step on error to a step with the `SfSnsReportLambdaFunction` lambda function. This is configured in `workflows/sips.yml`.
 
 ```yaml
 DiscoverPdrs:
@@ -77,7 +77,7 @@ DiscoverPdrs:
 
 #### Sending an SNS message to report status
 
-SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows.yml`.
+SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in `workflows/sips.yml`.
 
 ```yaml
 PdrStatusReport:

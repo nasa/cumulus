@@ -103,7 +103,7 @@ This workflow will (as the name might suggest) discover PDRs and queue them to b
 
 ![](../assets/sips-discover-and-queue-pdrs-execution.png)
 
-_Example configuration for this workflow can be found in the `DiscoverAndQueuePdrs` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows.yml)_
+_Example configuration for this workflow can be found in the `DiscoverAndQueuePdrs` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
 
 
 ## ParsePdr Workflow
@@ -116,7 +116,7 @@ The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates
 
 ![](../assets/sips-parse-pdr.png)
 
-_Example configuration for this workflow can be found in the `ParsePdr` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows.yml)_
+_Example configuration for this workflow can be found in the `ParsePdr` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
 
 
 ## IngestGranule Workflow
@@ -131,7 +131,7 @@ The IngestGranule workflow processes and ingests a granule and posts the granule
 
 ![](../assets/sips-ingest-granule.png)
 
-_Example configuration for this workflow can be found in the `IngestGranule` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows.yml)_
+_Example configuration for this workflow can be found in the `IngestGranule` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
 
 ## Summary
 
