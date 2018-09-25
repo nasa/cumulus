@@ -5,19 +5,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
-- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initated
-    - Updated Kes custom code to remove logic that used the CMA file key to determine template compliation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
-	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable feture.
-	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme.    This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
+- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
+    - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
+	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
+	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
     - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
-      - Updated Kes custom code to add `oldLambdaInjection` template configuration key to trigger addition of oldLambdas key to template config object.  This option requres `useWorkflowLambdaVersions` to be enabled, a `workflowLambdas` key to be configured in the template configuration, and is not intended to be user facing.
-      - Updated Kes custom code to add `injectWorkflowLambdaAliases` template configuration key to trigger substitiution of expected 'outputs' from the LambdaVersions nested stack.   This option requires `useWorkflowLambdaVersions` to be enabled, a `workflowLambdas` key to be configured in the template configuration, and is not intended to be user facing.
-      - Updated Kes custom code on custom compilation template to add template configuration key `lambdaProcess` to skip running `Lambda.process` and instead run a custom function that populates lambda buckets/hashes/etc, but does not build/push lambda code.  This option requires `useWorkflowLambdaVersions` to be enabled, and is not intended to be user facing.
+      - Updated Kes custom code to add `oldLambdaInjection` template configuration key to trigger addition of oldLambdas key to template config object.  This option requres `useWorkflowLambdaVersions` to be enabled, a `workflowLambdas` key to be configured in the template configuration, and is not intended to be user-facing.
+      - Updated Kes custom code to add `injectWorkflowLambdaAliases` template configuration key to trigger substitiution of expected 'outputs' from the LambdaVersions nested stack. This option requires `useWorkflowLambdaVersions` to be enabled, a `workflowLambdas` key to be configured in the template configuration, and is not intended to be user-facing.
+      - Updated Kes custom code on custom compilation template to add template configuration key `lambdaProcess` to skip running `Lambda.process` and instead run a custom function that populates lambda buckets/hashes/etc, but does not build/push lambda code.  This option requires `useWorkflowLambdaVersions` to be enabled, and is not intended to be user-facing.
 
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
 
-- `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+- `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 
 ### Fixed
