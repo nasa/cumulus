@@ -1,4 +1,7 @@
-# About
+---
+id: about-cookbooks
+title: About Cookbooks
+---
 
 ### What is a data cookbook?
 

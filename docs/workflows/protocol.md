@@ -1,6 +1,11 @@
+---
+id: protocol
+title: Workflow Protocol
+---
+
 # Configuration and Message Use Diagram
 
-<img src="/images/cumulus_configuration_and_message_schema_diagram.png">
+<img src="../assets/cumulus_configuration_and_message_schema_diagram.png">
 
 * **Configuration** - The Cumulus workflow configuration defines everything needed to describe an instance of Cumulus.
 * **Scheduler** - This starts ingest of a collection on configured intervals.

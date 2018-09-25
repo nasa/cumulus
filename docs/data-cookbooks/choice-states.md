@@ -1,4 +1,7 @@
-# Choice States
+---
+id: choice-states
+title: Choice States
+---
 
 Cumulus supports AWS Step Function [`Choice`](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html) states. A `Choice` state enables branching logic in Cumulus workflows.
 
@@ -40,7 +43,7 @@ Understanding the complete `ParsePdr` workflow is not necessary to understanding
 
 In the complete `ParsePdr` workflow definition, the state `QueueGranules` is followed by `CheckStatus`. From `CheckStatus` a loop starts: Given `CheckStatus` returns `payload.isFinished: false`, `CheckStatus` is followed by `CheckAgainChoice` is followed by `PdrStatusReport` is followed by `WaitForSomeTime`, which returns to `CheckStatus`. Once `CheckStatus` returns `payload.isFinished: true`, `CheckAgainChoice` proceeds to `StopStatus`.
 
-<div style="text-align:center"><img src ="../images/sips-parse-pdr.png" /></div>
+<div style="text-align:center"><img src ="../assets/sips-parse-pdr.png" /></div>
 
 ## Further documentation
 
