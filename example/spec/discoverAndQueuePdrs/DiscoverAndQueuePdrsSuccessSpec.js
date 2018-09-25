@@ -36,6 +36,11 @@ describe('The Discover And Queue PDRs workflow', () => {
   const collectionModel = new Collection();
 
   beforeAll(async () => {
+    // delete pdr from old tests
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename
+    });
     // populate test data
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
     // update provider path
@@ -58,6 +63,11 @@ describe('The Discover And Queue PDRs workflow', () => {
   afterAll(async () => {
     // clean up test data
     await deleteFolder(config.bucket, testDataFolder);
+    // delete ingested pdr
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename
+    });
   });
 
   it('executes successfully', () => {
