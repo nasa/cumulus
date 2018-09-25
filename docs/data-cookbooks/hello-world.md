@@ -9,7 +9,7 @@ Example task meant to be a sanity check/introduction to the Cumulus workflows.
 
 ### Workflow Configuration
 
-The [workflow definition](../workflows/README.md) can be found in `cumulus/example/workflows.yml` under `HelloWorldWorkflow:`
+The [workflow definition](../workflows/README.md) can be found in `cumulus/example/workflows/helloworld.yml` under `HelloWorldWorkflow:`
 
 ```yaml
 HelloWorldWorkflow:

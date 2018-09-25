@@ -158,7 +158,6 @@ cum-test:
     protected-2:
       name: '{{PREFIX}}-protected-2'
       type: protected
-
   system_bucket: '{{PREFIX}}-internal'
 
 mvd:
@@ -169,6 +168,9 @@ jc:
 
 mhs:
   prefix: mhs
+
+mhs3:
+  prefix: mhs3
 
 jk:
   prefix: jk
