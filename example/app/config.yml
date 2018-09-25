@@ -124,6 +124,13 @@ default:
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
 
+  stepFunctions: !!files [
+    'workflows/helloworld.yml',
+    'workflows/cnm.yml',
+    'workflows/errorsAndRetries.yml',
+    'workflows/sips.yml'
+  ]
+
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-ecs'
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
@@ -187,6 +194,10 @@ cumulus-from-source:
 cumulus-from-pr:
   stackName: test-pr-integration # used by the PR
   stackNameNoDash: TestPrIntegration
+
+cumulus-nightly:
+  stackName: nightly # used by the nightly cron job
+  stackNameNoDash: Nightly
 
 aj:
   stackName: aj-integration
@@ -355,6 +366,10 @@ jc:
 mhs:
   stackName: mhs
   stackNameNoDash: mhs
+
+mhs3:
+  stackName: mhs3
+  stackNameNoDash: mhs3
 
 jk:
   stackName: jk

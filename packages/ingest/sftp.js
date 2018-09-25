@@ -195,7 +195,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
 
     const params = { Bucket: bucket, Key: key, Body: pass };
     const result = await promiseS3Upload(params);
-    log.info('Uploading to s3 is complete', result);
+    log.info('Uploading to s3 is complete(sftp)', result);
     return s3uri;
   }
 };
