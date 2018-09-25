@@ -10,7 +10,6 @@
 
 function handler(event, context, callback) {
   const eventCopy = event;
-  console.log('foo bar');
   eventCopy.payload = { output: 'Current Version' };
   callback(null, event);
 }
