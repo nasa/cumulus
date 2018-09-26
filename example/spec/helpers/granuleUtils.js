@@ -69,15 +69,18 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId,
  * @param {string} file - file path
  * @param {string} oldGranuleId - old granule id
  * @param {string} newGranuleId - new granule id
+ * @param {string} oldPath - the old data path
+ * @param {string} newPath - the new data path
  * @returns {Promise<Object>} - file as a JS object
  */
-function loadFileWithUpdatedGranuleId(file, oldGranuleId, newGranuleId) {
+function loadFileWithUpdatedGranuleIdAndPath(file, oldGranuleId, newGranuleId, oldPath, newPath) {
   const fileContents = fs.readFileSync(file, 'utf8');
-  const updatedFileContents = globalReplace(fileContents, oldGranuleId, newGranuleId);
+  let updatedFileContents = globalReplace(fileContents, oldGranuleId, newGranuleId);
+  updatedFileContents = globalReplace(fileContents, oldPath, newPath);
   return JSON.parse(updatedFileContents);
 }
 
 module.exports = {
-  loadFileWithUpdatedGranuleId,
+  loadFileWithUpdatedGranuleIdAndPath,
   setupTestGranuleForIngest
 };
