@@ -5,7 +5,7 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
   addRules,
@@ -106,7 +106,8 @@ const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const maxWaitTime = 1000 * 60 * 4;
+  const maxWaitForSFExistSecs =  60 * 4;
+  const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
   let s3FileHead;
   let responseStreamShardIterator;
@@ -158,14 +159,14 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, record);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(recordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSf(recordIdentifier, maxWaitForSFExistSecs);
 
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
         // get shard iterator for the response stream so we can process any new records sent to it
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
+        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
     });
 
@@ -201,7 +202,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           Bucket: testConfig.buckets.private.name,
           Key: `${filePrefix}/${fileData.name}`
         }).promise();
-        expect(new Date() - s3FileHead.LastModified < maxWaitTime).toBeTruthy();
+        expect(new Date() - s3FileHead.LastModified < maxWaitForSFExistSecs * 1000).toBeTruthy();
       });
     });
 
@@ -255,10 +256,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
+        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
     });
 

@@ -203,19 +203,19 @@ async function putRecordOnStream(streamName, record) {
  * Wait for test stepfunction execution to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
- * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
+ * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
  * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
-  let timeWaited = 0;
+async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfSnsReport') {
+  let timeWaitedSecs = 0;
   let workflowExecution;
 
   /* eslint-disable no-await-in-loop */
-  while (timeWaited < maxWaitTime && workflowExecution === undefined) {
+  while (timeWaitedSecs < maxWaitTimeSecs && workflowExecution === undefined) {
     await timeout(waitPeriodMs);
-    timeWaited += waitPeriodMs;
+    timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions();
     // Search all recent executions for target recordIdentifier
     for (const execution of executions) {
@@ -227,7 +227,7 @@ async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsRe
     }
   }
   /* eslint-disable no-await-in-loop */
-  if (timeWaited < maxWaitTime) return workflowExecution;
+  if (timeWaitedSecs < maxWaitTimeSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }
 
