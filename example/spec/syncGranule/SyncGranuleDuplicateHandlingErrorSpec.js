@@ -1,45 +1,77 @@
 const fs = require('fs');
 const path = require('path');
 const { Collection } = require('@cumulus/api/models');
-const { constructCollectionId } = require('@cumulus/common');
-const { addCollections, buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const {
+  constructCollectionId,
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
+const {
+  addCollections,
+  buildAndExecuteWorkflow,
+  LambdaStep,
+  deleteCollections,
+  listCollections
+} = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  timestampedTestDataPrefix,
+  deleteFolder,
+  uploadTestDataToBucket
+} = require('../helpers/testUtils');
 const config = loadConfig();
-
 const lambdaStep = new LambdaStep();
 
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+];
+
 describe('The Sync Granules workflow is configured to handle duplicates as an error', () => {
-  const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
-  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleDuplicateHandlingError`);
+  const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandlingError.input.payload.json';
   const collection = { name: 'MOD09GQ_duplicateHandlingError', version: '006' };
   const provider = { id: 's3_provider' };
+  const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
+  const taskName = 'SyncGranule';
+  const collectionsDirectory = './data/collections/syncGranule';
+  const fileStagingDir = 'custom-staging-dir';
+  let destFileDir;
+  let existingFileKey;
+
+  const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+  // update test data filepaths
+  const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+  const inputPayload = JSON.parse(updatedInputPayloadJson);
+  const granuleFileName = inputPayload.granules[0].files[0].name;
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const c = new Collection();
 
-  const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
-  const taskName = 'SyncGranule';
-
-  const granuleFileName = inputPayload.granules[0].files[0].name;
-  let existingFileKey;
-
   beforeAll(async () => {
-    const collectionsDirectory = './data/collections/syncGranule';
+    // Create collection with "duplicateHandling" of "error"
     await addCollections(config.stackName, config.bucket, collectionsDirectory);
-    await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, catchTaskName, collection, provider, inputPayload
-    );
+    // Upload test data to be synced for this spec
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
     await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
     );
     const collectionInfo = await c.get(collection);
-    existingFileKey = path.join(
-      'custom-staging-dir',
+    destFileDir = path.join(
+      fileStagingDir,
       config.stackName,
-      constructCollectionId(collectionInfo.dataType, collectionInfo.version),
+      constructCollectionId(collectionInfo.dataType, collectionInfo.version)
+    );
+    existingFileKey = path.join(
+      destFileDir,
       granuleFileName
     );
+  });
+
+  afterAll(async () => {
+    const collections = await listCollections(config.stackName, config.bucket, collectionsDirectory);
+    await deleteCollections(config.stackName, config.bucket, collections);
+    await deleteFolder(config.bucket, testDataFolder);
+    await deleteFolder(config.bucket, destFileDir);
   });
 
   it('configured collection to handle duplicates as error', () => {
@@ -93,9 +125,5 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
     it('fails the workflow', () => {
       expect(failWorkflowExecution.status).toEqual('FAILED');
     });
-  });
-
-  afterAll(async () => {
-    await c.delete(collection);
   });
 });
