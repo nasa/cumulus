@@ -30,7 +30,7 @@ const templatedOutputPayloadFilename = templateFile({
   config: config.SyncGranule
 });
 
-describe('The Sync Granule workflowworkflow is configured keep both files when encountering duplicate filenames', () => {
+describe('When the Sync Granule workflow is configured keep both files when encountering duplicate filenames', () => {
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   let inputPayload;
   let expectedPayload;
