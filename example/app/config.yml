@@ -374,3 +374,7 @@ mhs3:
 jk:
   stackName: jk
   stackNameNoDash: jk
+
+jk2:
+  stackName: jk2
+  stackNameNoDash: jk2
