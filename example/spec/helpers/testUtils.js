@@ -93,7 +93,7 @@ function getExecutionUrl(executionArn) {
 
 
 /**
- * Redeploy the current Cumulus deployment
+ * Redeploy the current Cumulus deployment.
  *
  * @param {Object} config - configuration object from loadConfig()
  * @param {int} timeout - Timeout value in minutes
@@ -113,7 +113,7 @@ function redeploy(config, timeout) {
         console.log('.');
         if (i < minutes) {
           i += 1;
-          timeoutObject = setTimeout(() => printDots(), 60000);
+          timeoutObject = setTimeout(printDots, 60000);
         }
         else {
           reject(new Error('Timeout Exceeded'));
@@ -133,7 +133,7 @@ function redeploy(config, timeout) {
     });
   }
 
-  return Promise.race([executionPromise(), timeoutPromise()]).then(clearTimeout(timeoutObject));
+  return Promise.race([executionPromise(), timeoutPromise()]).then((_) => clearTimeout(timeoutObject));
 }
 
 

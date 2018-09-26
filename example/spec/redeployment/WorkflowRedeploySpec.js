@@ -24,28 +24,28 @@ const {
 const workflowsYmlFile = './workflows.yml';
 const workflowsYmlCopyFile = './workflowsCopy.yml';
 const config = loadConfig();
-
 const promisedFileCopy = promisify(fs.copyFile);
 
 const timeout = 30 * 60 * 1000; // Timout for test setup/teardown in milliseconds
 const deployTimeout = 15; // deployment timeout in minutes
+let cleanUpRetries = 0;
 
 async function cleanUp() {
   // Restore workflows.yml to original and redeploy for next time tests are run
-  let retries = 0;
+
   try {
     restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
     console.log('Starting redeploy() in cleanup'); // Debugging intermittent test failures
     await redeploy(config, deployTimeout);
   }
   catch (e) {
-    if (retries < 1) {
+    if (cleanUpRetries < 2) {
       console.log('Test cleanup failed, retrying.....');
-      retries += 1;
+      cleanUpRetries += 1;
       cleanUp();
     }
     else {
-      console.log('*****Test cleanup failed, stack/repo may need cleansed up!******');
+      console.log('*****Test cleanup failed, stack/repo may need cleaned up!******');
       throw (e);
     }
   }
@@ -85,6 +85,7 @@ describe('When a workflow', () => {
           console.log('Finished waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
         }
         catch (e) {
+          console.log('***Test setup failed, calling cleanup***');
           await cleanUp();
           throw (e);
         }
@@ -141,6 +142,7 @@ describe('When a workflow', () => {
           removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
 
           console.log('Starting redeploy() in beforeAll() B'); // Debugging intermittent test failures
+
           await redeploy(config, deployTimeout);
           console.log('Finished redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
@@ -158,6 +160,7 @@ describe('When a workflow', () => {
           console.log('Finished apiTestUtils.getExecution() in beforeAll() B'); // Debugging intermittent test failures
         }
         catch (e) {
+          console.log('***Test setup failed, calling cleanup***');
           await cleanUp();
           throw (e);
         }
