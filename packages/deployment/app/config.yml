@@ -84,6 +84,7 @@ default:
     sethvincent: true
     menno.vandiermen: true
     matthewsavoie: true
+    kovarik: true
 
   ecs:
     restartTasksOnDeploy: false
