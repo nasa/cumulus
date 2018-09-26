@@ -29,11 +29,12 @@ const {
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleId
+  loadFileWithUpdatedGranuleIdAndPath
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestGranule';
+const defaultTestPath = 'cumulus-test-data/pdrs';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
@@ -80,17 +81,13 @@ describe('The S3 Ingest Granules workflow', () => {
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultTestPath, testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     const granuleId = inputPayload.granules[0].granuleId;
-    const updatedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
-    // update test data filepaths
-    expectedSyncGranulePayload = JSON.parse(globalReplace(JSON.stringify(updatedSyncGranulePayload), 'cumulus-test-data/pdrs', testDataFolder));
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdAndPath(templatedSyncGranuleFilename, testDataGranuleId, granuleId, defaultTestPath, testDataFolder);
 
-    const updatedOutputPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
-    // update test data filepaths
-    expectedPayload = JSON.parse(globalReplace(JSON.stringify(updatedOutputPayload), 'cumulus-test-data/pdrs', testDataFolder));
+    expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, granuleId, defaultTestPath, testDataFolder);
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
