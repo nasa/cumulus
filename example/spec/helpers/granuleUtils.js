@@ -46,7 +46,7 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
 async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId, granuleRegex) {
   // granule id for the new files
   const newGranuleId = randomStringFromRegex(granuleRegex);
-  console.log(`granule id: ${newGranuleId}`);
+  console.log(`\ngranule id: ${newGranuleId}`);
 
   const baseInputPayload = JSON.parse(inputPayloadJson);
 
