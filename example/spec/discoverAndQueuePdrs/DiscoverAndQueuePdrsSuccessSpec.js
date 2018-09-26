@@ -103,6 +103,7 @@ describe('The Discover And Queue PDRs workflow', () => {
   describe('ParsePdr workflow', () => {
     let parsePdrWorkflowArn;
     let parsePdrExecutionStatus;
+    let parseLambdaOutput;
 
     beforeAll(async () => {
       parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
@@ -118,6 +119,10 @@ describe('The Discover And Queue PDRs workflow', () => {
       await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
         await waitForCompletedExecution(arn);
       }));
+      await apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: parseLambdaOutput.payload.granules[0].granuleId
+      });
     });
 
     it('executes successfully', () => {
@@ -126,11 +131,11 @@ describe('The Discover And Queue PDRs workflow', () => {
 
     describe('ParsePdr lambda function', () => {
       it('successfully parses a granule from the PDR', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(
+        parseLambdaOutput = await lambdaStep.getStepOutput(
           parsePdrWorkflowArn,
           'ParsePdr'
         );
-        expect(lambdaOutput.payload.granules.length).toEqual(1);
+        expect(parseLambdaOutput.payload.granules.length).toEqual(1);
       });
     });
   });
