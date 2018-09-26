@@ -100,7 +100,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = await getExecutionStatus(executionArn);
     }
     catch (err) {
-      if(!(err.code === 'ExecutionDoesNotExist') && iteration > 3) {
+      if (!(err.code === 'ExecutionDoesNotExist') && iteration > 3) {
         console.log(`waitForCompletedExecution failed: ${err.code}`);
         throw err;
       }
@@ -109,14 +109,16 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
     }
     if (executionStatus === 'RUNNING') {
       iteration += 1;
-      if(!(iteration % 12)) console.log('.'); // Output a 'heartbeat' every minute
+      if (!(iteration % 12)) console.log('.'); // Output a 'heartbeat' every minute
       await sleep(5000);
     }
   } while (executionStatus === 'RUNNING' && Date.now() < stopTime);
   /* eslint-enable no-await-in-loop */
 
   if (executionStatus === 'RUNNING') {
-    const executionHistory = await getExecutionHistory({executionArn: executionArn, maxResults: 100});
+    const executionHistory = await getExecutionHistory({
+      executionArn: executionArn, maxResults: 100
+    });
     console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
     console.log('Execution History:');
     console.log(executionHistory);
