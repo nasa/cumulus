@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
+- Added integration test for sync-granule when duplicateHandling is set to replace (CUMULUS-781)
 
 ### Changed
 
-- Updated sync-granule task to keep both old and new data when destination files with different checksum already exist and `duplicateHandling` is `version`
+- Updated sync-granule task to keep both old and new data when destination files with different checksum already exist and `duplicateHandling` is `version` (CUMULUS-782)
 
 ### Fixed
 
