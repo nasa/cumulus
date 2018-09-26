@@ -2,7 +2,7 @@
   "granules": [
     {
       "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-      "dataType": "MOD09GQ",
+      "dataType": "MOD09GQ_duplicateHandlingError",
       "version": "006",
       "files": [
         {

@@ -1,7 +1,7 @@
 {
   "name": "MOD09GQ_duplicateHandlingError",
   "version": "006",
-  "dataType": "MOD09GQ",
+  "dataType": "MOD09GQ_duplicateHandlingError",
   "process": "modis",
   "provider_path": "cumulus-test-data/pdrs",
   "duplicateHandling": "error",
