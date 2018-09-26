@@ -1,10 +1,16 @@
 const fs = require('fs');
-const { S3 } = require('aws-sdk');
+const {
+  aws: { s3 },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 const { Config } = require('kes');
 const lodash = require('lodash');
 const { exec } = require('child-process-promise');
+const path = require('path');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
+
+const timestampedTestDataPrefix = (prefix) => `${prefix}-${(new Date().getTime())}-test-data/pdrs`;
 
 /**
  * Loads and parses the configuration defined in `./app/config.yml`
@@ -48,13 +54,48 @@ function loadConfig() {
  * @returns {string} - File path and name of output file (json)
  */
 function templateFile({ inputTemplateFilename, config }) {
-  const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename));
+  const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename, 'utf8'));
   const templatedInput = lodash.merge(lodash.cloneDeep(inputTemplate), config);
   let jsonString = JSON.stringify(templatedInput, null, 2);
   jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);
   const templatedInputFilename = inputTemplateFilename.replace('.template', '');
   fs.writeFileSync(templatedInputFilename, jsonString);
   return templatedInputFilename;
+}
+
+/**
+ * Upload a file from the test-data package to the S3 test data
+ *
+ * @param {string} file - filename of data to upload
+ * @param {string} bucket - bucket to upload to
+ * @param {string} prefix - S3 folder prefix
+ * @param {boolean} replacePaths - whether to replace test paths in file contents
+ * @returns {Promise<Object>} - promise returned from S3 PUT
+ */
+function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', replacePaths = false) {
+  let data = fs.readFileSync(require.resolve(file), 'utf8');
+  if (replacePaths) {
+    data = globalReplace(data, 'cumulus-test-data/pdrs', prefix);
+  }
+  const key = path.basename(file);
+  return s3().putObject({
+    Bucket: bucket,
+    Key: `${prefix}/${key}`,
+    Body: data
+  }).promise();
+}
+
+/**
+ * For the given bucket, upload all the test data files to S3
+ *
+ * @param {string} bucket - S3 bucket
+ * @param {Array<string>} data - list of test data files
+ * @param {string} prefix - S3 folder prefix
+ * @param {boolean} replacePaths - whether to replace test paths in file contents
+ * @returns {Array<Promise>} - responses from S3 upload
+ */
+function uploadTestDataToBucket(bucket, data, prefix, replacePaths) {
+  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket, prefix, replacePaths)));
 }
 
 /**
@@ -65,15 +106,13 @@ function templateFile({ inputTemplateFilename, config }) {
  * @returns {Promise} undefined
  */
 async function deleteFolder(bucket, folder) {
-  const s3 = new S3();
-
-  const l = await s3.listObjectsV2({
+  const l = await s3().listObjectsV2({
     Bucket: bucket,
     Prefix: folder
   }).promise();
 
   await Promise.all(l.Contents.map((item) =>
-    s3.deleteObject({
+    s3().deleteObject({
       Bucket: bucket,
       Key: item.Key
     }).promise()));
@@ -111,8 +150,11 @@ async function redeploy(config) {
 }
 
 module.exports = {
+  timestampedTestDataPrefix,
   loadConfig,
   templateFile,
+  uploadTestDataToS3,
+  uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
   redeploy

@@ -2,28 +2,36 @@
 
 const fs = require('fs-extra');
 const {
-  aws: { s3 }
+  stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const {
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   conceptExists,
-  waitForConceptExistsOutcome
+  waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
-const { Search } = require('@cumulus/api/es/search');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
-
+const {
+  loadConfig,
+  timestampedTestDataPrefix,
+  uploadTestDataToBucket,
+  deleteFolder
+} = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
-const { loadConfig } = require('../helpers/testUtils');
-
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
 
 describe('The Cumulus API', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-APISuccess`);
   let workflowExecution = null;
-  let esClient; // eslint-disable-line no-unused-vars
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
@@ -34,10 +42,13 @@ describe('The Cumulus API', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    const host = config.esHost;
-    esClient = await Search.es(host);
+    // Upload test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    // Update input file paths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
     inputGranuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -47,12 +58,7 @@ describe('The Cumulus API', () => {
 
   afterAll(async () => {
     // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    await deleteFolder(config.bucket, testDataFolder);
   });
 
   it('completes execution with success status', () => {
@@ -77,6 +83,37 @@ describe('The Cumulus API', () => {
 
     it('has the granule with a CMR link', () => {
       expect(granule.cmrLink).not.toBeUndefined();
+    });
+
+    it('allows reingest and executes with success status', async () => {
+      granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      const oldUpdatedAt = granule.updatedAt;
+      const oldExecution = granule.execution;
+
+      // Reingest Granule and compare the updatedAt times
+      const response = await apiTestUtils.reingestGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(response.status).toEqual('SUCCESS');
+
+      const newUpdatedAt = (await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      })).updatedAt;
+      expect(newUpdatedAt).not.toEqual(oldUpdatedAt);
+
+      // Await reingest completion
+      await waitUntilGranuleStatusIs(config.stackName, inputGranuleId, 'completed');
+      const updatedGranule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(updatedGranule.status).toEqual('completed');
+      expect(updatedGranule.execution).not.toEqual(oldExecution);
     });
 
     it('removeFromCMR removes the ingested granule from CMR', async () => {
@@ -112,24 +149,25 @@ describe('The Cumulus API', () => {
       expect(doesExist).toEqual(true);
     });
 
-    it('allows reingest and executes with success status', async () => {
-      const initialUpdatedAt = (await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputGranuleId
-      })).updatedAt;
-
-      // Reingest Granule and compare the updatedAt times
-      const response = await apiTestUtils.reingestGranule({
+    it('can delete the ingested granule from the API', async () => {
+      // pre-delete: Remove the granule from CMR
+      await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
         granuleId: inputGranuleId
       });
-      expect(response.status).toEqual('SUCCESS');
 
-      const newUpdatedAt = (await apiTestUtils.getGranule({
+      // Delete the granule
+      await apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputGranuleId
-      })).updatedAt;
-      expect(newUpdatedAt).not.toEqual(initialUpdatedAt);
+      });
+
+      // Verify deletion
+      const resp = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(resp.message).toEqual('Granule not found');
     });
   });
 
