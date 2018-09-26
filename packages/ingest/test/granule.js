@@ -6,6 +6,7 @@ const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString } = require('@cumulus/common/test-utils');
 const { buildS3Uri, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const errors = require('@cumulus/common/errors');
 
 const {
   selector,
@@ -446,5 +447,6 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
   const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
   const destFileKey = path.join(fileStagingDir, file.name);
+  t.true(error instanceof errors.DuplicateFile);
   t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
 });
