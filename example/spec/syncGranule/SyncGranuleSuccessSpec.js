@@ -1,10 +1,19 @@
 const fs = require('fs');
 const path = require('path');
 const { Execution } = require('@cumulus/api/models');
-const { s3, s3ObjectExists } = require('@cumulus/common/aws');
+const {
+  aws: { s3, s3ObjectExists },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  templateFile,
+  uploadTestDataToBucket,
+  timestampedTestDataPrefix,
+  deleteFolder
+} = require('../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'SyncGranule';
@@ -14,12 +23,18 @@ const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
   config: config.SyncGranule
 });
-const expectedPayload = JSON.parse(fs.readFileSync(templatedOutputPayloadFilename));
 
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
 
 describe('The Sync Granules workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleSuccess`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
-  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
+  let inputPayload;
+  let expectedPayload;
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
@@ -28,10 +43,27 @@ describe('The Sync Granules workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
+    // upload test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    // update test data filepaths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = JSON.parse(updatedInputPayloadJson);
+
+    const expectedPayloadJson = fs.readFileSync(templatedOutputPayloadFilename, 'utf8');
+    const updatedExpectedPayloadJson = globalReplace(expectedPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    expectedPayload = JSON.parse(updatedExpectedPayloadJson);
+
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
     );
+  });
+
+  afterAll(async () => {
+    // Remove the granule files added for the test
+    await deleteFolder(config.bucket, testDataFolder);
   });
 
   it('completes execution with success status', () => {

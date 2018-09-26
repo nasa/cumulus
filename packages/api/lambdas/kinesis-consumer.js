@@ -52,6 +52,7 @@ async function queueMessageForRule(kinesisRule, eventObject) {
     workflow: kinesisRule.workflow,
     provider: kinesisRule.provider,
     collection: kinesisRule.collection,
+    meta: kinesisRule.meta,
     payload: eventObject
   };
 
