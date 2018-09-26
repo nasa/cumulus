@@ -61,6 +61,27 @@ async function getExecutions() {
   return (_.orderBy(data.executions, 'startDate', 'desc'));
 }
 
+/**
+ * Helper function that returns a stream name with timestamp
+ *
+ * @param {Object} config - stack configuration
+ * @param {string} streamSuffix - suffix, e.g. test name
+ * @returns {string} timestamped stream name
+ */
+function timeStampedStreamName(config, streamSuffix) {
+  return `${config.streamName}-${(new Date().getTime())}-${streamSuffix}`;
+}
+
+/**
+ * returns stream status from aws-sdk
+ *
+ * @param {string} StreamName - Stream name in AWS
+ * @returns {string} stream status
+ */
+async function getStreamStatus(StreamName) {
+  const stream = await kinesis.describeStream({ StreamName }).promise();
+  return stream.StreamDescription.StreamStatus;
+}
 
 /**
  * Wait for a number of periods for a kinesis stream to become active.
@@ -272,9 +293,11 @@ module.exports = {
   createOrUseTestStream,
   deleteTestStream,
   getShardIterator,
+  getStreamStatus,
   getRecords,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
+  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord,
