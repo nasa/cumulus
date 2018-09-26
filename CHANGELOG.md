@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Updated sync-granule task to keep both old and new data when destination files with different checksum already exist and `duplicateHandling` is `version`
+- Updated `@cumulus/sync-granule` task and `Granule.ingestFile` in `@cumulus/ingest` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version` (CUMULUS-782)
 
 ### Fixed
 

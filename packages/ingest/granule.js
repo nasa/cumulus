@@ -188,7 +188,9 @@ class Granule {
     this.checksumFiles = {};
 
     this.forceDownload = forceDownload;
-    this.fileStagingDir = fileStagingDir;
+
+    if (fileStagingDir && fileStagingDir[0] === '/') this.fileStagingDir = fileStagingDir.substr(1);
+    else this.fileStagingDir = fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
   }
@@ -479,13 +481,8 @@ class Granule {
    */
   async renameS3FileWithTimestamp(bucket, key) {
     const formatString = 'YYYYMMDDTHHmmssSSS';
-    let renamedKey = `${key}.v${moment.utc().format(formatString)}`;
-
-    // if the renamed file already exists, get a new name
-    // eslint-disable-next-line no-await-in-loop
-    while (await aws.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
-      renamedKey = `${key}.v${moment.utc().format(formatString)}`;
-    }
+    const timestamp = (await aws.headObject(bucket, key)).LastModified;
+    const renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
 
     log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
     return exports.moveGranuleFile(
@@ -521,12 +518,11 @@ class Granule {
    */
   async ingestFile(file, bucket, duplicateHandling) {
     // Check if the file exists
-    let destinationKey = path.join(this.fileStagingDir, file.name);
-    if (destinationKey[0] === '/') destinationKey = destinationKey.substr(1);
+    const destinationKey = path.join(this.fileStagingDir, file.name);
 
     const exists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, file.name)
+      Key: destinationKey
     });
 
     // Exit early if we can
@@ -562,7 +558,7 @@ class Granule {
       // if the checksum of the existing file is the same as the new one, keep the existing file,
       // else rename the existing file, and both files are part of the granule.
       if (existingFileSum === stagedFileSum) {
-        aws.deleteS3Object(bucket, stagedFileKey);
+        await aws.deleteS3Object(bucket, stagedFileKey);
       }
       else {
         await this.renameS3FileWithTimestamp(bucket, destinationKey);
