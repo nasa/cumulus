@@ -95,6 +95,9 @@ function getExecutionUrl(executionArn) {
 /**
  * Redeploy the current Cumulus deployment.
  *
+ * Prints '.' per minute while running.  Prints STDOUT from deployCommand
+ * and STDERR if an error occurs.
+ *
  * @param {Object} config - configuration object from loadConfig()
  * @param {int} timeout - Timeout value in minutes
  * @returns {Promise}
@@ -123,14 +126,17 @@ function redeploy(config, timeout) {
     });
   }
 
-  function executionPromise() {
-    return exec(deployCommand).then((output) => {
+  async function executionPromise() {
+    let output;
+    try {
+      output = await exec(deployCommand);
       console.log(output.stdout);
-    }).catch((e) => {
+    }
+    catch (e) {
       console.log(e.stdout);
       console.log(e.stderr);
       throw (e);
-    });
+    }
   }
 
   return Promise.race([executionPromise(), timeoutPromise()]).then((_) => clearTimeout(timeoutObject));

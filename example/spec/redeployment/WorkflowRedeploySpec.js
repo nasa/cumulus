@@ -30,6 +30,13 @@ const timeout = 30 * 60 * 1000; // Timout for test setup/teardown in millisecond
 const deployTimeout = 15; // deployment timeout in minutes
 let cleanUpRetries = 0;
 
+/**
+ * Function restores the modified workflows configuration yml and
+ * redeploys.  Will retry twice on failure.
+ *
+ * @throws {Error}
+ */
+
 async function cleanUp() {
   // Restore workflows.yml to original and redeploy for next time tests are run
 
