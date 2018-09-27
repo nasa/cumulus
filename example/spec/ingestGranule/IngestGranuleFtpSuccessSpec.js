@@ -32,7 +32,7 @@ describe('The FTP Ingest Granules workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, testPostfix)
+      await addProviders(config.stackName, config.bucket, providersDir, null, testPostfix)
     ]);
 
     console.log('\nStarting ingest test');

@@ -57,7 +57,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
     // populate collections, providers and test data
     await Promise.all([
       await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testPostfix),
-      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testPostfix)
+      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testPostfix)
     ]);
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
