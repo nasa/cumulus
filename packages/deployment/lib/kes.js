@@ -377,7 +377,6 @@ class UpdatedKes extends Kes {
     const oldLambdas = {};
 
     oldLambdaNames.forEach((name) => {
-      console.log(name);
       const matchObject = this.parseAliasName(name);
       if (matchObject.hash) {
         if (!oldLambdas[matchObject.name]) oldLambdas[matchObject.name] = { hashes: [] };
