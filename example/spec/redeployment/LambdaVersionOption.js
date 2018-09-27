@@ -13,6 +13,11 @@ const {
 
 const config = loadConfig();
 
+/**
+ * Removes 'test_app' redeployment directory and redeploys a clean stack
+ *
+ * @returns {void} returns nothing
+ */
 async function cleanUp() {
   console.log('Cleaning up deployment');
   await fs.remove('test_app');
