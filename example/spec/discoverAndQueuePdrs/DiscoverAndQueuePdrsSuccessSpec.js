@@ -8,7 +8,7 @@ const {
 
 const {
   loadConfig,
-  uploadTestDataToBucket,
+  updateAndUploadTestDataToBucket,
   deleteFolder,
   timestampedTestDataPrefix
 } = require('../helpers/testUtils');
@@ -42,7 +42,7 @@ describe('The Discover And Queue PDRs workflow', () => {
       pdr: pdrFilename
     });
     // populate test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    await updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }]);
     // update provider path
     await collectionModel.update(collection, { provider_path: testDataFolder });
 

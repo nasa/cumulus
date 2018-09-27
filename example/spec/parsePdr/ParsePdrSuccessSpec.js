@@ -13,6 +13,7 @@ const {
 
 const {
   loadConfig,
+  updateAndUploadTestDataToBucket,
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
@@ -21,11 +22,13 @@ const {
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-
 const taskName = 'ParsePdr';
+const defaultDataFolder = 'cumulus-test-data/pdrs';
 
+const s3pdr = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+];
 const s3data = [
-  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
@@ -49,13 +52,14 @@ describe('Parse PDR workflow', () => {
 
   beforeAll(async () => {
     // place pdr on S3
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     inputPayload = JSON.parse(updatedInputPayloadJson);
 
+    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }]);
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 

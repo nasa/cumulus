@@ -34,7 +34,7 @@ const {
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestGranule';
-const defaultTestPath = 'cumulus-test-data/pdrs';
+const defaultDataFolder = 'cumulus-test-data/pdrs';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
@@ -76,18 +76,18 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultTestPath, testDataFolder);
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     const granuleId = inputPayload.granules[0].granuleId;
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdAndPath(templatedSyncGranuleFilename, testDataGranuleId, granuleId, defaultTestPath, testDataFolder);
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdAndPath(templatedSyncGranuleFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);
 
-    expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, granuleId, defaultTestPath, testDataFolder);
+    expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
