@@ -28,10 +28,14 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
+// 'custom-staging-dir/mboyd-test/MOD09GQ_duplicateHandlingError___006/MOD09GQ.A5983912.oCB_bc.006.9951226283932.hdf already exists in cumulus-test-sandbox-internal bucket'
+// 'custom-staging-dir/mboyd-test/MOD09GQ_noDuplicateHandling___006/MOD09GQ.A5983912.oCB_bc.006.9951226283932.hdf already exists in cumulus-test-sandbox-internal bucket
+
 describe('The Sync Granules workflow is configured to handle duplicates as an error', () => {
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleNoDuplicateHandling`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
-  const collection = { name: 'MOD09GQ_noDuplicateHandling', version: '006' };
+  const duplicateHandlingSuffix = 'noDuplicateHandling';
+  const collection = { name: `MOD09GQ_${duplicateHandlingSuffix}`, version: '006' };
   const provider = { id: 's3_provider' };
   const collectionsDirectory = './data/collections/syncGranule';
   const fileStagingDir = 'custom-staging-dir';
@@ -46,7 +50,8 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
 
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+  let updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+  updatedInputPayloadJson = globalReplace(inputPayloadJson, '{{duplicateHandlingSuffix}}', duplicateHandlingSuffix);
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const c = new Collection();
@@ -103,7 +108,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
   //   expect(collectionInfo.duplicateHandling).toBeUndefined();
   // });
 
-  describe('and it is configured to catch the duplicate error', () => {
+  describe('and it is not configured to catch the duplicate error', () => {
     // let catchWorkflowExecution;
 
     beforeAll(async () => {
@@ -122,8 +127,8 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
       );
     });
 
-    it('completes execution with success status', async () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
+    it('fails the workflow execution', async () => {
+      expect(workflowExecution.status).toEqual('FAILED');
     });
   });
 });
