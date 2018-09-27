@@ -126,7 +126,7 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
-test.serial('A GET request without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {}
@@ -137,7 +137,7 @@ test.serial('A GET request without pathParameters and without an Authorization h
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('A GET request with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('GET with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {},
@@ -151,7 +151,7 @@ test.serial('A GET request with pathParameters.granuleName set and without an Au
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('A PUT request with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('PUT with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'PUT',
     headers: {},
@@ -165,7 +165,7 @@ test.serial('A PUT request with pathParameters.granuleName set and without an Au
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('A DELETE request with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('DELETE with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     headers: {},
