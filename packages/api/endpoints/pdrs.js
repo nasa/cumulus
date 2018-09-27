@@ -1,8 +1,6 @@
 'use strict';
 
-const _get = require('lodash.get');
 const aws = require('@cumulus/common/aws');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const models = require('../models');
@@ -29,11 +27,11 @@ function list(event, cb) {
  * @returns {undefined} undefined
  */
 function get(event, cb) {
-  const pdrName = _get(event.pathParameters, 'pdrName');
+  const pdrName = event.pathParameters.pdrName;
 
-  const p = new models.Pdr();
+  const pdrModel = new models.Pdr();
 
-  return p.get({ pdrName }).then((response) => {
+  return pdrModel.get({ pdrName }).then((response) => {
     cb(null, response);
   }).catch(cb);
 }
@@ -45,18 +43,18 @@ function get(event, cb) {
  * @returns {Promise<Object>} the response object
  */
 async function del(event) {
-  const pdrName = _get(event.pathParameters, 'pdrName');
+  const pdrName = event.pathParameters.pdrName;
 
-  const p = new models.Pdr();
+  const pdrModel = new models.Pdr();
 
   // get the record first to make sure it exists
-  await p.get({ pdrName });
+  await pdrModel.get({ pdrName });
 
   // remove file from s3
   const key = `${process.env.stackName}/pdrs/${pdrName}`;
   await aws.deleteS3Object(process.env.internal, key);
 
-  await p.delete({ pdrName });
+  await pdrModel.delete({ pdrName });
 
   return { detail: 'Record deleted' };
 }
@@ -69,7 +67,7 @@ async function del(event) {
  * @returns {undefined} undefined
  */
 function handler(event, context) {
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
+  return handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }

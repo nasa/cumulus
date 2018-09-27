@@ -249,12 +249,12 @@ function handle(event, context, authCheck, func) {
 
   const cb = resp.bind(null, context);
 
-  const requestHeaders = event.headers || {};
-  if (!requestHeaders.Authorization) {
-    return cb({ message: 'Authorization header missing' }, null, 401);
-  }
-
   if (authCheck) {
+    const requestHeaders = event.headers || {};
+    if (!requestHeaders.Authorization) {
+      return cb({ message: 'Authorization header missing' }, null, 401);
+    }
+
     const req = new proxy.Request(event);
 
     const token = getToken(req);

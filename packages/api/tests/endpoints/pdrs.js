@@ -7,18 +7,26 @@ const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const pdrEndpoint = require('../../endpoints/pdrs');
 const indexer = require('../../es/indexer');
-const { testEndpoint, fakePdrFactory } = require('../../lib/testUtils');
+const {
+  testEndpoint,
+  fakePdrFactory,
+  fakeUserFactory
+} = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
+const assertions = require('../../lib/assertions');
 
 // create all the variables needed across this test
 let esClient;
 let fakePdrs;
 const esIndex = randomString();
 process.env.PdrsTable = randomString();
+process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 
-let p;
+let authHeaders;
+let pdrModel;
+let userModel;
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
@@ -29,23 +37,74 @@ test.before(async () => {
   // create a fake bucket
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  p = new models.Pdr();
-  await p.createTable();
+  pdrModel = new models.Pdr();
+  await pdrModel.createTable();
+
+  userModel = new models.User();
+  await userModel.createTable();
+
+  const authToken = (await userModel.create(fakeUserFactory())).password;
+  authHeaders = {
+    Authorization: `Bearer ${authToken}`
+  };
 
   // create fake granule records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
-  await Promise.all(fakePdrs.map((pdr) => p.create(pdr).then((record) => indexer.indexPdr(esClient, record, esIndex))));
+  await Promise.all(fakePdrs.map((pdr) => pdrModel.create(pdr).then((record) => indexer.indexPdr(esClient, record, esIndex))));
 });
 
 test.after.always(async () => {
-  await p.deleteTable();
+  await pdrModel.deleteTable();
+  await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
 
+test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {}
+  };
+
+  return testEndpoint(pdrEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      pdrName: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(pdrEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      pdrName: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(pdrEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
 
 test('default returns list of pdrs', (t) => {
-  const listEvent = { httpMethod: 'list' };
+  const listEvent = {
+    httpMethod: 'list',
+    headers: authHeaders
+  };
+
   return testEndpoint(pdrEndpoint, listEvent, (response) => {
     const { meta, results } = JSON.parse(response.body);
     t.is(results.length, 2);
@@ -64,8 +123,10 @@ test('GET returns an existing pdr', (t) => {
     httpMethod: 'GET',
     pathParameters: {
       pdrName: fakePdrs[0].pdrName
-    }
+    },
+    headers: authHeaders
   };
+
   return testEndpoint(pdrEndpoint, getEvent, (response) => {
     const { pdrName } = JSON.parse(response.body);
     t.is(pdrName, fakePdrs[0].pdrName);
@@ -77,7 +138,8 @@ test('GET fails if pdr is not found', async (t) => {
     httpMethod: 'GET',
     pathParameters: {
       pdrName: 'unknownPdr'
-    }
+    },
+    headers: authHeaders
   };
 
   const response = await testEndpoint(pdrEndpoint, event, (r) => r);
@@ -89,13 +151,14 @@ test('GET fails if pdr is not found', async (t) => {
 test('DELETE a pdr', async (t) => {
   const newPdr = fakePdrFactory('completed');
   // create a new pdr
-  await p.create(newPdr);
+  await pdrModel.create(newPdr);
 
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
       pdrName: newPdr.pdrName
-    }
+    },
+    headers: authHeaders
   };
 
   const key = `${process.env.stackName}/pdrs/${newPdr.pdrName}`;
@@ -115,7 +178,8 @@ test('DELETE fails if pdr is not found', async (t) => {
     httpMethod: 'DELETE',
     pathParameters: {
       pdrName: 'unknownPdr'
-    }
+    },
+    headers: authHeaders
   };
 
   const response = await testEndpoint(pdrEndpoint, event, (r) => r);
