@@ -9,7 +9,8 @@ const pLimit = require('p-limit');
 const {
   aws: { s3, sfn },
   stepFunctions: {
-    describeExecution
+    describeExecution,
+    getExecutionHistory
   }
 } = require('@cumulus/common');
 const {
@@ -78,10 +79,6 @@ async function getExecutionStatus(executionArn, retryOptions) {
     return execution.status;
   }
   catch (err) {
-    // If the execution does not exist, we return that it's "RUNNING".  I'm
-    //   not sure this is the behavior that we want.
-    if (err.code === 'ExecutionDoesNotExist') return 'RUNNING';
-
     throw err;
   }
 }
@@ -96,20 +93,37 @@ async function getExecutionStatus(executionArn, retryOptions) {
  */
 async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
-
+  let iteration = 0;
   const stopTime = Date.now() + (timeout * 1000);
-
   /* eslint-disable no-await-in-loop */
   do {
-    executionStatus = await getExecutionStatus(executionArn);
-    if (executionStatus === 'RUNNING') await sleep(5000);
+    try {
+      executionStatus = await getExecutionStatus(executionArn);
+    }
+    catch (err) {
+      if (!(err.code === 'ExecutionDoesNotExist') || iteration > 12) {
+        console.log(`waitForCompletedExecution failed: ${err.code}`);
+        throw err;
+      }
+      console.log("Execution does not exist... assuming it's still starting up.");
+      executionStatus = 'RUNNING';
+    }
+    if (executionStatus === 'RUNNING') {
+      iteration += 1;
+      if (!(iteration % 12)) console.log('Execution running....'); // Output a 'heartbeat' every minute
+      await sleep(5000);
+    }
   } while (executionStatus === 'RUNNING' && Date.now() < stopTime);
   /* eslint-enable no-await-in-loop */
 
   if (executionStatus === 'RUNNING') {
+    const executionHistory = await getExecutionHistory({
+      executionArn: executionArn, maxResults: 100
+    });
     console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
+    console.log('Execution History:');
+    console.log(executionHistory);
   }
-
   return executionStatus;
 }
 
