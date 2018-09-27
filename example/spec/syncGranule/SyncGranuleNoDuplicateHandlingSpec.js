@@ -29,16 +29,15 @@ const s3data = [
 ];
 
 describe('The Sync Granules workflow is configured to handle duplicates as an error', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleDuplicateHandlingError`);
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleNoDuplicateHandling`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
-  const collection = { name: 'MOD09GQ_duplicateHandlingError', version: '006' };
+  const collection = { name: 'MOD09GQ_noDuplicateHandling', version: '006' };
   const provider = { id: 's3_provider' };
-  const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
-  const taskName = 'SyncGranule';
   const collectionsDirectory = './data/collections/syncGranule';
   const fileStagingDir = 'custom-staging-dir';
   const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
   const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+  const taskName = 'SyncGranuleNoDuplicateHandlingTest';
   let destFileDir;
   let existingFileKey;
   let inputPayload;
@@ -48,7 +47,6 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
   const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const c = new Collection();
@@ -98,22 +96,24 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  it('configured collection to handle duplicates as error', async () => {
-    const collectionInfo = await c.get(collection);
-    expect(collectionInfo.duplicateHandling).toEqual('error');
-  });
+  // Collection has a default value when created. Perhaps a better test is whether the syncGranule
+  // task receives any duplicateHandling config directly or on the collection.
+  // it('does not have collection configured to handle duplicates as error', async () => {
+  //   const collectionInfo = await c.get(collection);
+  //   expect(collectionInfo.duplicateHandling).toBeUndefined();
+  // });
 
   describe('and it is configured to catch the duplicate error', () => {
-    let catchWorkflowExecution;
+    // let catchWorkflowExecution;
 
     beforeAll(async () => {
-      catchWorkflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, catchTaskName, collection, provider, inputPayload
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, taskName, collection, provider, inputPayload
       );
     });
 
     it('fails the SyncGranule Lambda function', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(catchWorkflowExecution.executionArn, 'SyncGranuleNoVpc', 'failure');
+      const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranuleNoVpc', 'failure');
       const { error, cause } = lambdaOutput;
       const errorCause = JSON.parse(cause);
       expect(error).toEqual('DuplicateFile');
@@ -123,31 +123,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
     });
 
     it('completes execution with success status', async () => {
-      expect(catchWorkflowExecution.status).toEqual('SUCCEEDED');
-    });
-  });
-
-  describe('and it is not configured to catch the duplicate error', () => {
-    let failWorkflowExecution;
-
-    beforeAll(async () => {
-      failWorkflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, taskName, collection, provider, inputPayload
-      );
-    });
-
-    it('fails the SyncGranule Lambda function', async () => {
-      const lambdaOutput = await lambdaStep.getStepOutput(failWorkflowExecution.executionArn, 'SyncGranuleNoVpc', 'failure');
-      const { error, cause } = lambdaOutput;
-      const errorCause = JSON.parse(cause);
-      expect(error).toEqual('DuplicateFile');
-      expect(errorCause.errorMessage).toEqual(
-        `${existingFileKey} already exists in ${config.bucket} bucket`
-      );
-    });
-
-    it('fails the workflow', () => {
-      expect(failWorkflowExecution.status).toEqual('FAILED');
+      expect(workflowExecution.status).toEqual('SUCCEEDED');
     });
   });
 });
