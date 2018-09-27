@@ -8,39 +8,127 @@ const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const collectionsEndpoint = require('../../endpoints/collections');
 const EsCollection = require('../../es/collections');
-const { testEndpoint, fakeCollectionFactory } = require('../../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  fakeUserFactory,
+  testEndpoint
+} = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
+const assertions = require('../../lib/assertions');
 
 process.env.CollectionsTable = randomString();
+process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 
 const testCollection = fakeCollectionFactory();
 const esIndex = randomString();
 
-let collections;
+let authHeaders;
+let collectionModel;
+let userModel;
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
-  collections = new models.Collection({ tableName: process.env.CollectionsTable });
-  await collections.createTable();
-  await collections.create(testCollection);
+  collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
+  await collectionModel.createTable();
+  await collectionModel.create(testCollection);
+
+  // create fake Users table
+  userModel = new models.User();
+  await userModel.createTable();
+
+  const authToken = (await userModel.create(fakeUserFactory())).password;
+  authHeaders = {
+    Authorization: `Bearer ${authToken}`
+  };
 });
 
 test.after.always(async () => {
-  await collections.deleteTable();
+  await collectionModel.deleteTable();
+  await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 
   const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
+test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {}
+  };
+
+  return testEndpoint(collectionsEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      collectionName: 'asdf',
+      version: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(collectionsEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('POST without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'POST',
+    headers: {}
+  };
+
+  return testEndpoint(collectionsEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      collectionName: 'asdf',
+      version: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(collectionsEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      collectionName: 'asdf',
+      version: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(collectionsEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
 // TODO(aimee): Debug why this is _passing_ - we don't expect to already have a
 // collection in ES.
 test('default returns list of collections', (t) => {
-  const listEvent = { httpMethod: 'list' };
+  const listEvent = {
+    httpMethod: 'list',
+    headers: authHeaders
+  };
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
     t.is(results.length, 1);
@@ -50,6 +138,7 @@ test('default returns list of collections', (t) => {
 test('GET returns an existing collection', (t) => {
   const getEvent = {
     httpMethod: 'GET',
+    headers: authHeaders,
     pathParameters: {
       collectionName: testCollection.name,
       version: testCollection.version
@@ -65,6 +154,7 @@ test('POST creates a new collection', (t) => {
   const newCollection = fakeCollectionFactory();
   const postEvent = {
     httpMethod: 'POST',
+    headers: authHeaders,
     body: JSON.stringify(newCollection)
   };
   return testEndpoint(collectionsEndpoint, postEvent, (response) => {
@@ -86,8 +176,10 @@ test('PUT updates an existing collection', (t) => {
       collectionName: testCollection.name,
       version: testCollection.version
     },
-    httpMethod: 'PUT'
+    httpMethod: 'PUT',
+    headers: authHeaders
   };
+
   return testEndpoint(collectionsEndpoint, updateEvent, (response) => {
     const { provider_path } = JSON.parse(response.body); // eslint-disable-line camelcase
     t.is(provider_path, newPath);
@@ -100,7 +192,8 @@ test('DELETE deletes an existing collection', (t) => {
     pathParameters: {
       collectionName: testCollection.name,
       version: testCollection.version
-    }
+    },
+    headers: authHeaders
   };
   return testEndpoint(collectionsEndpoint, deleteEvent, (response) => {
     const { message } = JSON.parse(response.body);
