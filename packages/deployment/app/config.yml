@@ -76,6 +76,7 @@ default:
     scisco: true
     sethvincent: true
     menno.vandiermen: true
+    matthewsavoie: true
 
   ecs:
     restartTasksOnDeploy: false

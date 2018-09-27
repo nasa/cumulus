@@ -8,11 +8,8 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: {
-    getS3Object,
-    s3,
-    s3ObjectExists
-  }
+  aws: { s3, s3ObjectExists },
+  stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -22,7 +19,14 @@ const {
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
-const { loadConfig, templateFile, getExecutionUrl } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  templateFile,
+  uploadTestDataToBucket,
+  deleteFolder,
+  getExecutionUrl,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleId
@@ -44,7 +48,14 @@ const templatedOutputPayloadFilename = templateFile({
   config: config[workflowName].IngestGranuleOutput
 });
 
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
+
 describe('The S3 Ingest Granules workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleSuccess`);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
@@ -63,24 +74,43 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
+    // upload test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    // update test data filepaths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     const granuleId = inputPayload.granules[0].granuleId;
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
+    const updatedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
+    // update test data filepaths
+    expectedSyncGranulePayload = JSON.parse(globalReplace(JSON.stringify(updatedSyncGranulePayload), 'cumulus-test-data/pdrs', testDataFolder));
 
-    expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
+    const updatedOutputPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
+    // update test data filepaths
+    expectedPayload = JSON.parse(globalReplace(JSON.stringify(updatedOutputPayload), 'cumulus-test-data/pdrs', testDataFolder));
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      config.stackName,
+      config.bucket,
+      workflowName,
+      collection,
+      provider,
+      inputPayload
     );
 
     failingWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, workflowName, collection, provider, {}
+      config.stackName,
+      config.bucket,
+      workflowName,
+      collection,
+      provider,
+      {}
     );
     failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
     failedExecutionName = failedExecutionArn.pop();
@@ -91,12 +121,13 @@ describe('The S3 Ingest Granules workflow', () => {
     await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
 
     // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    await deleteFolder(config.bucket, testDataFolder);
+
+    // delete ingested granule
+    await apiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
   });
 
   it('completes execution with success status', () => {
@@ -113,14 +144,10 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the SyncGranules task', () => {
-    let lambdaOutput = null;
+    let lambdaOutput;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      if (lambdaOutput.replace) {
-        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
-        lambdaOutput = JSON.parse(msg.Body.toString());
-      }
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
@@ -139,10 +166,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
-      if (lambdaOutput.replace) {
-        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
-        lambdaOutput = JSON.parse(msg.Body.toString());
-      }
       files = lambdaOutput.payload.granules[0].files;
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
@@ -181,10 +204,6 @@ describe('The S3 Ingest Granules workflow', () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (lambdaOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
 
-      if (lambdaOutput.replace) {
-        const msg = await getS3Object(lambdaOutput.replace.Bucket, lambdaOutput.replace.Key);
-        lambdaOutput = JSON.parse(msg.Body.toString());
-      }
       files = lambdaOutput.payload.granules[0].files;
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);

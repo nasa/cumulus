@@ -9,14 +9,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
+- `@cumulus/integration-tests` new functionality:
+  - `listCollections` to list collections from a provided data directory
+  - `deleteCollection` to delete list of collections from a deployed stack
+  - `listProviders` to list providers from a provided data directory
+  - `deleteProviders` to delete list of providers from a deployed stack
+  - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
 
-- `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+- `@cumulus/api`:
+  - `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+  - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - Added integration test for sync-granule when duplicateHandling is set to replace (CUMULUS-781)
 
 ### Changed
 
-- Updated sync-granule task to keep both old and new data when destination files with different checksum already exist and `duplicateHandling` is `version` (CUMULUS-782)
+- Added `onDuplicateFilename` field to config for `@cumulus/sync-granule` to allow specifying how duplicate filenames should be handled
+- Updated `@cumulus/sync-granule` task and `Granule.ingestFile` in `@cumulus/ingest` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version` (CUMULUS-782)
 
 ### Fixed
 
