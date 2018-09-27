@@ -14,9 +14,13 @@ const {
   timestampedTestDataPrefix,
   deleteFolder
 } = require('../helpers/testUtils');
+const { setupTestGranuleForIngest, loadFileWithUpdatedGranuleIdAndPath } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'SyncGranule';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+const defaultDataFolder = 'cumulus-test-data/pdrs';
 
 const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json'; // eslint-disable-line max-len
 const templatedOutputPayloadFilename = templateFile({
@@ -48,12 +52,11 @@ describe('The Sync Granules workflow', () => {
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = JSON.parse(updatedInputPayloadJson);
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
+    inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    const newGranuleId = inputPayload.granules[0].granuleId;
 
-    const expectedPayloadJson = fs.readFileSync(templatedOutputPayloadFilename, 'utf8');
-    const updatedExpectedPayloadJson = globalReplace(expectedPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    expectedPayload = JSON.parse(updatedExpectedPayloadJson);
+    expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
