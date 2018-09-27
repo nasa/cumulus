@@ -100,7 +100,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = await getExecutionStatus(executionArn);
     }
     catch (err) {
-      if (!(err.code === 'ExecutionDoesNotExist') && iteration > 3) {
+      if (!(err.code === 'ExecutionDoesNotExist') || iteration > 12) {
         console.log(`waitForCompletedExecution failed: ${err.code}`);
         throw err;
       }
@@ -108,6 +108,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = 'RUNNING';
     }
     if (executionStatus === 'RUNNING') {
+      console.log("Execution started");
       iteration += 1;
       if (!(iteration % 12)) console.log('.'); // Output a 'heartbeat' every minute
       await sleep(5000);
