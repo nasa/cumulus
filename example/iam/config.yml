@@ -183,3 +183,7 @@ jk:
 mboyd-test:
   prefix: mboyd-test
   stackName: mboyd-test-iam
+
+mboyd-int:
+  prefix: mboyd-int
+  stackName: mboyd-int-iam

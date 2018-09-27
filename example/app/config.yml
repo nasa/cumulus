@@ -385,3 +385,7 @@ jk:
 mboyd-test:
   stackName: mboyd-test
   stackNameNoDash: mboydTest
+
+mboyd-int:
+  stackName: mboyd-int
+  stackNameNoDash: mboydInt
