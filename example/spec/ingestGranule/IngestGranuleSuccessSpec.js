@@ -15,6 +15,10 @@ const {
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   getOnlineResources
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
@@ -25,6 +29,7 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
+  timestampedTestPrefix,
   timestampedTestDataPrefix
 } = require('../helpers/testUtils');
 const {
@@ -56,10 +61,13 @@ const s3data = [
 ];
 
 describe('The S3 Ingest Granules workflow', () => {
+  const testPostfix = timestampedTestPrefix(`_${config.stackName}-IngestGranuleSuccess`);
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleSuccess`);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
+  const provider = { id: `s3_provider${testPostfix}` };
   let workflowExecution = null;
   let failingWorkflowExecution = null;
   let failedExecutionArn;
@@ -75,21 +83,25 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
-    // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    // populate collections, providers and test data
+    await Promise.all([
+      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await addProviders(config.stackName, config.bucket, providersDir, testPostfix)
+    ]);
 
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-
+    inputPayload.granules[0].dataType += testPostfix;
     const granuleId = inputPayload.granules[0].granuleId;
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdAndPath(templatedSyncGranuleFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);
 
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdAndPath(templatedSyncGranuleFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);
+    expectedSyncGranulePayload.granules[0].dataType += testPostfix;
     expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);
-    // delete the granule record from DynamoDB if exists
-    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+    expectedPayload.granules[0].dataType += testPostfix;
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
@@ -114,17 +126,18 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
-    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
-    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
-
-    // Remove the granule files added for the test
-    await deleteFolder(config.bucket, testDataFolder);
-
-    // delete ingested granule
-    await apiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
+    // clean up stack state added by test
+    await Promise.all([
+      await deleteFolder(config.bucket, testDataFolder),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix),
+      await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
+      await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
+      await apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
   });
 
   it('completes execution with success status', () => {

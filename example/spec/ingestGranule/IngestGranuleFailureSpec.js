@@ -3,14 +3,21 @@
 const fs = require('fs-extra');
 const { get } = require('lodash');
 const { models: { Granule } } = require('@cumulus/api');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
+const {
+  api: apiTestUtils,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
+  buildAndExecuteWorkflow
+} = require('@cumulus/integration-tests');
 const { stringUtils: { globalReplace } } = require('@cumulus/common');
 
 const {
   loadConfig,
   uploadTestDataToBucket,
   deleteFolder,
+  timestampedTestPrefix,
   timestampedTestDataPrefix
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
@@ -27,10 +34,13 @@ const s3data = [
 ];
 
 describe('The Ingest Granule failure workflow', () => {
+  const testPostfix = timestampedTestPrefix(`_${config.stackName}-IngestGranuleFailure`);
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleFailure`);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
+  const provider = { id: `s3_provider${testPostfix}` };
   let workflowExecution = null;
   let inputPayload;
 
@@ -38,8 +48,12 @@ describe('The Ingest Granule failure workflow', () => {
   const granuleModel = new Granule();
 
   beforeAll(async () => {
-    // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    // populate collections, providers and test data
+    await Promise.all([
+      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await addProviders(config.stackName, config.bucket, providersDir, testPostfix)
+    ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
@@ -64,14 +78,16 @@ describe('The Ingest Granule failure workflow', () => {
   });
 
   afterAll(async () => {
-    // delete failed granule
-    await apiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
-
-    // Remove the granule files added for the test
-    await deleteFolder(config.bucket, testDataFolder);
+    // clean up stack state added by test
+    await Promise.all([
+      await deleteFolder(config.bucket, testDataFolder),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix),
+      await apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
   });
 
   it('completes execution with failure status', () => {

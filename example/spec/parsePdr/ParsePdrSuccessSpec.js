@@ -5,6 +5,10 @@ const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
   LambdaStep,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 const {
@@ -17,6 +21,7 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
+  timestampedTestPrefix,
   timestampedTestDataPrefix
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest, loadFileWithUpdatedGranuleIdAndPath } = require('../helpers/granuleUtils');
@@ -27,6 +32,7 @@ const taskName = 'ParsePdr';
 const defaultDataFolder = 'cumulus-test-data/pdrs';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 const s3pdr = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
@@ -37,6 +43,7 @@ const s3data = [
 ];
 
 describe('Parse PDR workflow', () => {
+  const testPostfix = timestampedTestPrefix(`_${config.stackName}-ParsePdrSuccess`);
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-ParsePdrSuccess`);
   let workflowExecution;
   let queueGranulesOutput;
@@ -44,8 +51,11 @@ describe('Parse PDR workflow', () => {
   let expectedParsePdrOutput;
   const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
   const outputPayloadFilename = './spec/parsePdr/ParsePdr.output.json';
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
+  const provider = { id: `s3_provider${testPostfix}` };
 
   process.env.PdrsTable = `${config.stackName}-PdrsTable`;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -53,21 +63,27 @@ describe('Parse PDR workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
-    // place granule files on S3
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    // populate collections, providers and test data
+    await Promise.all([
+      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await addProviders(config.stackName, config.bucket, providersDir, testPostfix)
+    ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
     inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    inputPayload.granules[0].dataType += testPostfix;
     const newGranuleId = inputPayload.granules[0].granuleId;
 
     // place pdr on S3
-    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: testDataGranuleId, new: newGranuleId }]);
+    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: testDataGranuleId, new: newGranuleId }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testPostfix};` }]);
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 
     expectedParsePdrOutput = loadFileWithUpdatedGranuleIdAndPath(outputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
+    expectedParsePdrOutput.granules[0].dataType += testPostfix;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -88,10 +104,16 @@ describe('Parse PDR workflow', () => {
     // await execution completions
     await Promise.all(queueGranulesOutput.payload.running.map(async (arn) =>
       waitForCompletedExecution(arn)));
-    // delete the pdr record from DynamoDB if exists
-    await pdrModel.delete({ pdrName: inputPayload.pdr.name });
-    // delete test data from S3
-    await deleteFolder(config.bucket, testDataFolder);
+    // clean up stack state added by test
+    await Promise.all([
+      await deleteFolder(config.bucket, testDataFolder),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix),
+      await apiTestUtils.deletePdr({
+        prefix: config.stackName,
+        pdr: pdrFilename
+      })
+    ]);
   });
 
   it('executes successfully', () => {
