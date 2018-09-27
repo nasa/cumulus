@@ -53,7 +53,7 @@ describe('When the Sync Granule workflow is configured to keep both files when e
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, false);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 

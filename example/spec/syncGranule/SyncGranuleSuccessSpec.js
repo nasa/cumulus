@@ -59,7 +59,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, false);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
