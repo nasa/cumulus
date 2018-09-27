@@ -1,9 +1,18 @@
 const { Execution } = require('@cumulus/api/models');
-const { buildAndExecuteWorkflow, LambdaStep, waitForCompletedExecution } = require('@cumulus/integration-tests');
+const {
+  buildAndExecuteWorkflow,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
+  LambdaStep,
+  waitForCompletedExecution
+} = require('@cumulus/integration-tests');
 
-const { loadConfig } = require('../helpers/testUtils');
+const { loadConfig, timestampedTestPrefix } = require('../helpers/testUtils');
 
 const config = loadConfig();
+const testPostfix = timestampedTestPrefix(`_${config.stackName}-DiscoverGranules`);
 const lambdaStep = new LambdaStep();
 
 const workflowName = 'DiscoverGranules';
@@ -13,12 +22,19 @@ process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
 const executionModel = new Execution();
 
 describe('The Discover Granules workflow with http Protocol', () => {
+  const providersDir = './data/providers/http/';
+  const collectionsDir = './data/collections/http_testcollection_001/';
   let httpWorkflowExecution;
   let queueGranulesOutput;
 
   beforeAll(async () => {
-    const collection = { name: 'http_testcollection', version: '001' };
-    const provider = { id: 'http_provider' };
+    const collection = { name: `http_testcollection${testPostfix}`, version: '001' };
+    const provider = { id: `http_provider${testPostfix}` };
+    // populate collections and providers
+    await Promise.all([
+      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await addProviders(config.stackName, config.bucket, providersDir, null, testPostfix)
+    ]);
 
     httpWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -32,6 +48,14 @@ describe('The Discover Granules workflow with http Protocol', () => {
       httpWorkflowExecution.executionArn,
       'QueueGranules'
     );
+  });
+
+  afterAll(async () => {
+    // clean up stack state added by test
+    await Promise.all([
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix)
+    ]);
   });
 
   it('executes successfully', () => {
@@ -99,11 +123,18 @@ describe('The Discover Granules workflow with http Protocol', () => {
 });
 
 describe('The Discover Granules workflow with https Protocol', () => {
+  const providersDir = './data/providers/https/';
+  const collectionsDir = './data/collections/https_testcollection_001/';
   let httpsWorkflowExecution = null;
 
   beforeAll(async () => {
-    const collection = { name: 'https_testcollection', version: '001' };
-    const provider = { id: 'https_provider' };
+    const collection = { name: `https_testcollection${testPostfix}`, version: '001' };
+    const provider = { id: `https_provider${testPostfix}` };
+    // populate collections and providers
+    await Promise.all([
+      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await addProviders(config.stackName, config.bucket, providersDir, null, testPostfix)
+    ]);
 
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -112,6 +143,14 @@ describe('The Discover Granules workflow with https Protocol', () => {
       collection,
       provider
     );
+  });
+
+  afterAll(async () => {
+    // clean up stack state added by test
+    await Promise.all([
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix)
+    ]);
   });
 
   it('executes successfully', () => {
