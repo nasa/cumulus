@@ -13,7 +13,7 @@ const {
     randomString
   }
 } = require('@cumulus/common');
-const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { api: apiTestUtils, buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 const {
   loadConfig,
   templateFile,
@@ -58,7 +58,6 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
   const executionModel = new Execution();
 
   beforeAll(async () => {
-    
     // upload test data
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
 
