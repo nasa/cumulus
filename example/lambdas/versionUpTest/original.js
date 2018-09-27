@@ -9,8 +9,8 @@
  */
 
 function handler(event, context, callback) {
-  const eventCopy = event;
-  eventCopy.payload = { output: 'Current Version' };
+  const returnEvent = event;
+  returnEvent.payload = { output: 'Current Version' };
   callback(null, event);
 }
 
