@@ -60,6 +60,19 @@ test.afterEach.always('cleanup temp directory', async (t) => {
   await fs.remove(t.context.temp);
 });
 
+
+
+test.serial('addWorkflowLambdahashes: adds hash values to config.workflowLambdas from config.lambda', (t) => {
+  t.context.config.lambdas = { FirstLambda: { hash: 'abcdefg' }, SecondLambda: {} };
+  t.context.config.workflowLambdas = { FirstLambda: {}, ThirdLmabda: {} };
+  const testLambda = new Lambda(t.context.config);
+
+  testLambda.addWorkflowLambdaHashes();
+  const actual = testLambda.config.workflowLambdas;
+  const expected = { FirstLambda: { hash: 'abcdefg' }, ThirdLmabda: {} };
+  t.deepEqual(expected, actual);
+});
+
 test.serial('buildS3Path: utilizes uniqueIdentifier for hash', async(t) => {
   t.context.lambda.useMessageAdapter = false;
 
