@@ -4,6 +4,7 @@ const { difference, intersection } = require('lodash');
 const fs = require('fs-extra');
 const {
   loadConfig,
+  timestampedTestPrefix,
   timestampedTestDataPrefix,
   uploadTestDataToBucket,
   deleteFolder
@@ -11,12 +12,18 @@ const {
 const { getConfigObject } = require('../helpers/configUtils');
 const { stringUtils: { globalReplace } } = require('@cumulus/common');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
+const {
+  buildAndExecuteWorkflow,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
+  api: apiTestUtils
+} = require('@cumulus/integration-tests');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 const workflowConfigFile = './workflows/sips.yml';
 
@@ -30,10 +37,13 @@ const s3data = [
 let allStates;
 
 describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
+  const testPostfix = timestampedTestPrefix(`_${config.stackName}-ExecutionStatus`);
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-ExecutionStatus`);
   let workflowExecution = null;
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
+  const provider = { id: `s3_provider${testPostfix}` };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -41,8 +51,12 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    // populate collections, providers and test data
+    await Promise.all([
+      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await addProviders(config.stackName, config.bucket, providersDir, testPostfix)
+    ]);
 
     const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
     allStates = Object.keys(workflowConfig.States);
@@ -50,6 +64,7 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    inputPayload.granules[0].dataType += testPostfix;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -57,8 +72,12 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
   });
 
   afterAll(async () => {
-    // Remove the granule files added for the test
-    await deleteFolder(config.bucket, testDataFolder);
+    // clean up stack state added by test
+    await Promise.all([
+      await deleteFolder(config.bucket, testDataFolder),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix)
+    ]);
   });
 
   it('completes execution with success status', () => {

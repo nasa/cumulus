@@ -10,7 +10,9 @@ const path = require('path');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
-const timestampedTestDataPrefix = (prefix) => `${prefix}-${(new Date().getTime())}-test-data/pdrs`;
+const timestampedTestPrefix = (prefix) => `${prefix}-${(new Date().getTime())}`;
+const timestampedTestDataPrefix = (prefix) => `${timestampedTestPrefix(prefix)}-test-data/pdrs`;
+
 
 /**
  * Loads and parses the configuration defined in `./app/config.yml`
@@ -166,6 +168,7 @@ async function redeploy(config) {
 }
 
 module.exports = {
+  timestampedTestPrefix,
   timestampedTestDataPrefix,
   loadConfig,
   templateFile,
