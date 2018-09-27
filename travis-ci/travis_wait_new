@@ -19,6 +19,7 @@ cmd="$@"
 
 # running cmd at background
 ${cmd} &
+pid=$!
 
 # ping per minutes
 MINUTES=0
@@ -28,10 +29,14 @@ do
     echo -n -e " \b"  # never leave evidence
 
     if [ ${MINUTES} == ${LIMIT} ]; then
-        break;
+        exit 1;
     fi
 
     MINUTES=$((MINUTES + 1))
 
     sleep 60
 done
+
+# exit with the status code of cmd
+wait $pid
+exit $?

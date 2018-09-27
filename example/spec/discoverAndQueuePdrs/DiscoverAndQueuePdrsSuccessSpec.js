@@ -1,4 +1,4 @@
-const { Execution } = require('@cumulus/api/models');
+const { Collection, Execution } = require('@cumulus/api/models');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
@@ -6,7 +6,12 @@ const {
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, deleteFolder } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -15,16 +20,32 @@ const taskName = 'DiscoverAndQueuePdrs';
 
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
+const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+];
+
 describe('The Discover And Queue PDRs workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-DiscoverAndQueuePdrsSuccess`);
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
   let workflowExecution;
   let queuePdrsOutput;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const executionModel = new Execution();
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
-    await deleteFolder(config.bucket, `${config.stackName}/pdrs`);
+    // delete pdr from old tests
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename
+    });
+    // populate test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    // update provider path
+    await collectionModel.update(collection, { provider_path: testDataFolder });
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -39,6 +60,16 @@ describe('The Discover And Queue PDRs workflow', () => {
     );
   });
 
+  afterAll(async () => {
+    // clean up test data
+    await deleteFolder(config.bucket, testDataFolder);
+    // delete ingested pdr
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename
+    });
+  });
+
   it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
@@ -51,7 +82,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
 
     it('has expected path and name output', () => {
-      expect(lambdaOutput.payload.pdrs[0].path).toEqual('cumulus-test-data/pdrs');
+      expect(lambdaOutput.payload.pdrs[0].path).toEqual(testDataFolder);
       expect(lambdaOutput.payload.pdrs[0].name).toEqual(pdrFilename);
     });
   });
@@ -78,6 +109,17 @@ describe('The Discover And Queue PDRs workflow', () => {
       parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrWorkflowArn);
     });
 
+    afterAll(async () => {
+      // wait for child executions to complete
+      const queueGranulesOutput = await lambdaStep.getStepOutput(
+        parsePdrWorkflowArn,
+        'QueueGranules'
+      );
+      await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
+        await waitForCompletedExecution(arn);
+      }));
+    });
+
     it('executes successfully', () => {
       expect(parsePdrExecutionStatus).toEqual('SUCCEEDED');
     });
@@ -89,7 +131,6 @@ describe('The Discover And Queue PDRs workflow', () => {
           'ParsePdr'
         );
         expect(lambdaOutput.payload.granules.length).toEqual(1);
-        expect(lambdaOutput.payload.pdr).toEqual(lambdaOutput.payload.pdr);
       });
     });
   });
