@@ -67,7 +67,7 @@ describe('Parse PDR workflow', () => {
     await Promise.all([
       await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, testPostfix)
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testPostfix)
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');

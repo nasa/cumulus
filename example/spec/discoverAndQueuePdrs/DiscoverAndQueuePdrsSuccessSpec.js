@@ -51,7 +51,7 @@ describe('The Discover And Queue PDRs workflow', () => {
     await Promise.all([
       await updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testPostfix};` }]),
       await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, testPostfix)
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testPostfix)
     ]);
     // update provider path
     await collectionModel.update(collection, { provider_path: testDataFolder });

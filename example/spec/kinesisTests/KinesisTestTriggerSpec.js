@@ -137,7 +137,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     await Promise.all([
       await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
       await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testPostfix),
-      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testPostfix)
+      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testPostfix)
     ]);
     // create streams
     await tryCatchExit(async () => {
