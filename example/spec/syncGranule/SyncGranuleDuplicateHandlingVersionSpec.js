@@ -11,8 +11,7 @@ const {
     randomString
   }
 } = require('@cumulus/common');
-const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
+const { api: apiTestUtils, buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 const {
   deleteFolder,
   loadConfig,
@@ -43,7 +42,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-describe('When the Sync Granule workflow is configured keep both files when encountering duplicate filenames', () => {
+describe('When the Sync Granule workflow is configured to keep both files when encountering duplicate filenames', () => {
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleSuccess`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   let inputPayload;
@@ -54,7 +53,7 @@ describe('When the Sync Granule workflow is configured keep both files when enco
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, false);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
