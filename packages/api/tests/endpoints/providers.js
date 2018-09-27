@@ -6,10 +6,14 @@ const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../lambdas/bootstrap');
 const models = require('../../models');
 const providerEndpoint = require('../../endpoints/providers');
-const { testEndpoint } = require('../../lib/testUtils');
+const {
+  fakeUserFactory,
+  testEndpoint
+} = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
+const assertions = require('../../lib/assertions');
 
-
+process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
@@ -24,33 +28,104 @@ const testProvider = {
   port: 80
 };
 
-async function setup() {
+let authHeaders;
+let userModel;
+test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
   providers = new models.Provider();
   await providers.createTable();
 
   await providers.create(testProvider);
-}
 
-async function teardown() {
-  await providers.deleteTable();
+  userModel = new models.User();
+  await userModel.createTable();
 
-  const esClient = await Search.es('fakehost');
-  await esClient.indices.delete({ index: esIndex });
-}
-
-test.before(async () => {
-  await setup();
+  const authToken = (await userModel.create(fakeUserFactory())).password;
+  authHeaders = {
+    Authorization: `Bearer ${authToken}`
+  };
 });
 
 test.after.always(async () => {
-  await teardown();
+  await providers.deleteTable();
+  await userModel.deleteTable();
+
+  const esClient = await Search.es('fakehost');
+  await esClient.indices.delete({ index: esIndex });
+});
+
+test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {}
+  };
+
+  return testEndpoint(providerEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      id: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(providerEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('POST without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'POST',
+    headers: {}
+  };
+
+  return testEndpoint(providerEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      id: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(providerEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      id: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(providerEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
 });
 
 // TODO(aimee): Add a provider to ES. List uses ES and we don't have any providers in ES.
 test('default returns list of providers', (t) => {
-  const listEvent = { httpMethod: 'list' };
+  const listEvent = {
+    httpMethod: 'list',
+    headers: authHeaders
+  };
+
   return testEndpoint(providerEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
     t.is(results.length, 0);
@@ -60,8 +135,10 @@ test('default returns list of providers', (t) => {
 test('GET returns an existing provider', (t) => {
   const getEvent = {
     httpMethod: 'GET',
-    pathParameters: { id: testProvider.id }
+    pathParameters: { id: testProvider.id },
+    headers: authHeaders
   };
+
   return testEndpoint(providerEndpoint, getEvent, (response) => {
     t.is(JSON.parse(response.body).id, testProvider.id);
   });
@@ -70,10 +147,13 @@ test('GET returns an existing provider', (t) => {
 test('POST creates a new provider', (t) => {
   const newProviderId = 'AQUA';
   const newProvider = Object.assign({}, testProvider, { id: newProviderId });
+
   const postEvent = {
     httpMethod: 'POST',
-    body: JSON.stringify(newProvider)
+    body: JSON.stringify(newProvider),
+    headers: authHeaders
   };
+
   return testEndpoint(providerEndpoint, postEvent, (response) => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
@@ -83,11 +163,14 @@ test('POST creates a new provider', (t) => {
 
 test('PUT updates an existing provider', (t) => {
   const updatedLimit = 2;
+
   const putEvent = {
     httpMethod: 'PUT',
     pathParameters: { id: testProvider.id },
-    body: JSON.stringify({ globalConnectionLimit: updatedLimit })
+    body: JSON.stringify({ globalConnectionLimit: updatedLimit }),
+    headers: authHeaders
   };
+
   return testEndpoint(providerEndpoint, putEvent, (response) => {
     const { globalConnectionLimit } = JSON.parse(response.body);
     t.is(globalConnectionLimit, updatedLimit);
@@ -97,7 +180,8 @@ test('PUT updates an existing provider', (t) => {
 test('DELETE deletes an existing provider', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
-    pathParameters: { id: testProvider.id }
+    pathParameters: { id: testProvider.id },
+    headers: authHeaders
   };
   return testEndpoint(providerEndpoint, deleteEvent, (response) => {
     const { message } = JSON.parse(response.body);
