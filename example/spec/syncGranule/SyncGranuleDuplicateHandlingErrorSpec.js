@@ -83,7 +83,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
     // delete ingested granule
     await apiTestUtils.deleteGranule({
       prefix: config.stackName,
-      granuleID: inputPayload.granules[0].granuleId
+      granuleId: inputPayload.granules[0].granuleId
     });
     // delete test collection
     await deleteCollections(config.stackName, config.bucket, collections);
