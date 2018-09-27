@@ -167,7 +167,7 @@ class Granule {
     provider,
     fileStagingDir = 'file-staging',
     forceDownload = false,
-    duplicateHandling = 'replace'
+    duplicateHandling = 'error'
   ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
