@@ -27,11 +27,12 @@ const lambdaStep = new LambdaStep();
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
+const duplicateHandlingSuffix = 'duplicateHandlingError';
 
 describe('The Sync Granules workflow is configured to handle duplicates as an error', () => {
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleDuplicateHandlingError`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
-  const collection = { name: 'MOD09GQ_duplicateHandlingError', version: '006' };
+  const collection = { name: `MOD09GQ_${duplicateHandlingSuffix}`, version: '006' };
   const provider = { id: 's3_provider' };
   const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
   const taskName = 'SyncGranule';
@@ -47,8 +48,8 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
 
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-
+  let updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+  updatedInputPayloadJson = globalReplace(inputPayloadJson, '{{duplicateHandlingSuffix}}', duplicateHandlingSuffix);
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const c = new Collection();
