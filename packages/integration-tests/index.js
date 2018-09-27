@@ -108,9 +108,8 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = 'RUNNING';
     }
     if (executionStatus === 'RUNNING') {
-      console.log("Execution started");
       iteration += 1;
-      if (!(iteration % 12)) console.log('.'); // Output a 'heartbeat' every minute
+      if (!(iteration % 12)) console.log('Execution running....'); // Output a 'heartbeat' every minute
       await sleep(5000);
     }
   } while (executionStatus === 'RUNNING' && Date.now() < stopTime);
