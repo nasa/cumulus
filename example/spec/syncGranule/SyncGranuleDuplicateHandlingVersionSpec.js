@@ -11,8 +11,7 @@ const {
     randomString
   }
 } = require('@cumulus/common');
-const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
+const { api: apiTestUtils, buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 const {
   deleteFolder,
   loadConfig,
