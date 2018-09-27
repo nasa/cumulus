@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
-{{#each lambdas}}
+{{#each workflowLambdas}}
   {{@key}}LambdaFunction:
     Type: String
 {{/each}}
@@ -35,7 +35,7 @@ Resources:
 #################################################
 # 'Current' Lambda Version/Alias block BEGIN
 #################################################
-{{#each lambdas}}
+{{#each workflowLambdas}}
 {{#if this.hash}}
   {{@key}}LambdaAlias{{this.hash}}:
     Type: AWS::Lambda::Alias
@@ -60,7 +60,7 @@ Resources:
 # Outputs block BEGIN
 #################################################
 Outputs:
-{{#each lambdas}}
+{{#each workflowLambdas}}
 {{#if this.hash}}
   {{@key}}LambdaAliasOutput:
     Value: !Ref {{@key}}LambdaAlias{{this.hash}}
