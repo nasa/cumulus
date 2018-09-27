@@ -11,9 +11,10 @@ const { randomString } = require('@cumulus/common/test-utils');
 const xml2js = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
+const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
-const granuleEndpoint = require('../../endpoints/granules');
+const handleRequest = require('../../endpoints/granules');
 const indexer = require('../../es/indexer');
 const {
   fakeGranuleFactoryV2,
@@ -112,7 +113,7 @@ test.serial('default returns list of granules', async (t) => {
     headers: t.context.authHeaders
   };
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   const { meta, results } = JSON.parse(response.body);
   t.is(results.length, 2);
@@ -125,14 +126,57 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
-test.serial('When accessing any API endpoint with no session information, it returns an HTTP 401 status code and no system information', async (t) => {
-  const event = { httpMethod: 'GET', headers: {} };
+test.serial('A GET request without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {}
+  };
 
-  const response = await granuleEndpoint(event);
-  const responseBody = JSON.parse(response.body);
+  const response = await handleRequest(request);
 
-  t.is(response.statusCode, 401);
-  t.is(responseBody.message, 'Authorization header missing');
+  assertions.isAuthorizationMissingResponse(t, response);
+});
+
+test.serial('A GET request with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {},
+    pathParameters: {
+      granuleName: 'asdf'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isAuthorizationMissingResponse(t, response);
+});
+
+test.serial('A PUT request with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'PUT',
+    headers: {},
+    pathParameters: {
+      granuleName: 'asdf'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isAuthorizationMissingResponse(t, response);
+});
+
+test.serial('A DELETE request with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    headers: {},
+    pathParameters: {
+      granuleName: 'asdf'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test.serial('GET returns an existing granule', async (t) => {
@@ -144,7 +188,7 @@ test.serial('GET returns an existing granule', async (t) => {
     headers: t.context.authHeaders
   };
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   const { granuleId } = JSON.parse(response.body);
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
@@ -159,101 +203,11 @@ test.serial('GET fails if granule is not found', async (t) => {
     headers: t.context.authHeaders
   };
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   t.is(response.statusCode, 404);
   const { message } = JSON.parse(response.body);
   t.is(message, 'Granule not found');
-});
-
-function buildFakeGranule(bucketsConfig) {
-  const fakeGranule = fakeGranuleFactoryV2({
-    published: false,
-    status: 'failed'
-  });
-
-  fakeGranule.files = [
-    {
-      bucket: bucketsConfig.protected,
-      name: `${fakeGranule.granuleId}.hdf`,
-      filename: `s3://${bucketsConfig.protected}/${randomString()}/${fakeGranule.granuleId}.hdf`
-    },
-    {
-      bucket: bucketsConfig.protected,
-      name: `${fakeGranule.granuleId}.cmr.xml`,
-      filename: `s3://${bucketsConfig.protected}/${randomString()}/${fakeGranule.granuleId}.cmr.xml`
-    },
-    {
-      bucket: bucketsConfig.public,
-      name: `${fakeGranule.granuleId}.jpg`,
-      filename: `s3://${bucketsConfig.public}/${randomString()}/${fakeGranule.granuleId}.jpg`
-    }
-  ];
-
-  return fakeGranule;
-}
-
-function stageFakeGranuleFilesToS3(files) {
-  const putObjectParams = files.map(
-    (file) =>
-      Object.assign(
-        aws.parseS3Uri(file.filename),
-        { Body: `test data ${randomString}` }
-      )
-  );
-
-  return Promise.all(putObjectParams.map(putObject));
-}
-
-async function buildAndStageFakeGranule(bucketsConfig) {
-  const fakeGranule = buildFakeGranule(bucketsConfig);
-
-  await stageFakeGranuleFilesToS3(fakeGranule.files);
-
-  await granuleModel.create(fakeGranule);
-
-  return fakeGranule;
-}
-
-async function verifyGranuleFilesExistInS3(t, granule) {
-  // Verify that the requested changes didn't happen
-  for (let i = 0; i < granule.files.length; i += 1) {
-    const { Bucket, Key } = aws.parseS3Uri(granule.files[i].filename);
-
-    t.true(await aws.s3ObjectExists({ Bucket, Key })); // eslint-disable-line no-await-in-loop
-  }
-}
-
-test.serial('When performing POST, PUT, or DELETE on any API endpoint with no session information, it rejects the operation', async (t) => {
-  const bucketsConfig = {
-    protected: randomString(),
-    public: randomString()
-  };
-
-  await runTestUsingBuckets(
-    Object.values(bucketsConfig),
-    async () => {
-      const fakeGranule = await buildAndStageFakeGranule(bucketsConfig);
-
-      const response = await granuleEndpoint({
-        httpMethod: 'PUT',
-        headers: {},
-        pathParameters: {
-          granuleName: fakeGranule.granuleId
-        },
-        body: JSON.stringify({
-          action: 'reprocess'
-        })
-      });
-
-      const responseBody = JSON.parse(response.body);
-
-      t.is(response.statusCode, 401);
-      t.is(responseBody.message, 'Authorization header missing');
-
-      await verifyGranuleFilesExistInS3(t, fakeGranule);
-    }
-  );
 });
 
 test.serial('PUT fails if action is not supported', async (t) => {
@@ -266,7 +220,7 @@ test.serial('PUT fails if action is not supported', async (t) => {
     body: JSON.stringify({ action: 'reprocess' })
   };
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   t.is(response.statusCode, 400);
   const { message } = JSON.parse(response.body);
@@ -282,7 +236,7 @@ test.serial('PUT fails if action is not provided', async (t) => {
     headers: t.context.authHeaders
   };
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   t.is(response.statusCode, 400);
   const { message } = JSON.parse(response.body);
@@ -321,7 +275,7 @@ test.serial('reingest a granule', async (t) => {
     'getExecutionStatus'
   ).callsFake(() => Promise.resolve(fakeSFResponse));
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
@@ -379,7 +333,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     }
   }));
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
@@ -410,7 +364,7 @@ test.serial('remove a granule from CMR', async (t) => {
     'deleteGranule'
   ).callsFake(() => Promise.resolve());
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
@@ -433,7 +387,7 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
     headers: t.context.authHeaders
   };
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   t.is(response.statusCode, 400);
   const { message } = JSON.parse(response.body);
@@ -500,7 +454,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
     headers: t.context.authHeaders
   };
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   t.is(response.statusCode, 200);
   const { detail } = JSON.parse(response.body);
@@ -587,7 +541,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         })
       };
 
-      const response = await granuleEndpoint(event);
+      const response = await handleRequest(event);
 
       const body = JSON.parse(response.body);
       t.is(body.status, 'SUCCESS');
@@ -694,7 +648,7 @@ test.serial('move a file and update metadata', async (t) => {
     'ingestGranule'
   ).returns({ result: { 'concept-id': 'id204842' } });
 
-  const response = await granuleEndpoint(event);
+  const response = await handleRequest(event);
 
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
