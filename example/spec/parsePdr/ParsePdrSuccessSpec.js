@@ -19,11 +19,14 @@ const {
   getExecutionUrl,
   timestampedTestDataPrefix
 } = require('../helpers/testUtils');
+const { setupTestGranuleForIngest, loadFileWithUpdatedGranuleIdAndPath } = require('../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'ParsePdr';
 const defaultDataFolder = 'cumulus-test-data/pdrs';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const s3pdr = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
@@ -51,22 +54,21 @@ describe('Parse PDR workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
-    // place pdr on S3
+    // place granule files on S3
     await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = JSON.parse(updatedInputPayloadJson);
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
+    inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    const newGranuleId = inputPayload.granules[0].granuleId;
 
-    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }]);
+    // place pdr on S3
+    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: testDataGranuleId, new: newGranuleId }]);
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 
-    const expectedParsePdrOutputJson = fs.readFileSync(outputPayloadFilename, 'utf8');
-    // update expectedOutput file paths
-    const updatedExpectedParsePdrOutputJson = globalReplace(expectedParsePdrOutputJson, 'cumulus-test-data/pdrs', testDataFolder);
-    expectedParsePdrOutput = JSON.parse(updatedExpectedParsePdrOutputJson);
+    expectedParsePdrOutput = loadFileWithUpdatedGranuleIdAndPath(outputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
