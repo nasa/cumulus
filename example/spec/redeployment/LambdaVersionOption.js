@@ -43,7 +43,10 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
       await fs.writeFile('./test_app/config.yml', updatedConfig, 'utf-8');
 
       //Redeploy with custom configuration
-      await redeploy(config, 'test_app/', 'node_modules/@cumulus/deployment/app/kes.js');
+      await redeploy(config, {
+        template: 'test_app/',
+        kesClass: 'node_modules/@cumulus/deployment/app/kes.js'
+      });
       const workflows = jsyaml.load(await fs.readFile('workflows.yml'));
 
       // Get the definition for all workflows
