@@ -25,7 +25,7 @@ const {
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const workflowName = 'SyncGranuleDuplicateVersionTest';
+const workflowName = 'SyncGranuleDuplicateSkipTest';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
@@ -42,7 +42,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-describe('When the Sync Granule workflow is configured to keep both files when encountering duplicate filenames', () => {
+describe('When the Sync Granule workflow is configured to skip new data when encountering duplicate filenames', () => {
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleSuccess`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   let inputPayload;
@@ -88,45 +88,9 @@ describe('When the Sync Granule workflow is configured to keep both files when e
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('and it encounters data with a duplicated filename with duplicate checksum', () => {
+  describe('and it encounters data with a duplicated filename', () => {
     let lambdaOutput;
     let existingfiles;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      const files = lambdaOutput.payload.granules[0].files;
-      existingfiles = await Promise.all(files.map(async (f) => {
-        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-      }));
-
-      workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-      );
-    });
-
-    it('does not raise a workflow error', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
-    });
-
-    it('does not create a copy of the file', async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      const files = lambdaOutput.payload.granules[0].files;
-
-      const currentFiles = await Promise.all(files.map(async (f) => {
-        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-      }));
-
-      expect(currentFiles).toEqual(existingfiles);
-      expect(lambdaOutput.payload).toEqual(expectedPayload);
-    });
-  });
-
-  describe('and it encounters data with a duplicated filename with different checksum', () => {
-    let lambdaOutput;
-    let existingfiles;
-    let fileUpdated;
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
@@ -139,7 +103,6 @@ describe('When the Sync Granule workflow is configured to keep both files when e
       // update one of the input files, so that the file has different checksum
       const content = randomString();
       const file = inputPayload.granules[0].files[0];
-      fileUpdated = file.name;
       const updateParams = {
         Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
       };
@@ -156,69 +119,17 @@ describe('When the Sync Granule workflow is configured to keep both files when e
       expect(workflowExecution.status).toEqual('SUCCEEDED');
     });
 
-    it('moves the existing data to a file with a suffix to distinguish it from the new file', async () => {
+    it('does not overwrite existing file or create a copy of new file', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-      expect(files.length).toEqual(3);
 
-      const renamedFiles = files.filter((f) => f.name.startsWith(`${fileUpdated}.v`));
-      expect(renamedFiles.length).toEqual(1);
+      const currentFiles = await Promise.all(files.map(async (f) => {
+        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
+        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
+      }));
 
-      const expectedRenamedFileSize = existingfiles.filter((f) => f.filename.endsWith(fileUpdated))[0].fileSize;
-      expect(renamedFiles[0].fileSize).toEqual(expectedRenamedFileSize);
-    });
-
-    it('captures both files', async () => {
-      const granule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      });
-      expect(granule.files.length).toEqual(3);
-    });
-  });
-
-  describe('and it encounters data with a duplicated filename with different checksum and there is an existing versioned file', () => {
-    let lambdaOutput;
-    let updatedFileName;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-
-      // update one of the input files, so that the file has different checksum
-      const content = `${randomString()}`;
-      const file = inputPayload.granules[0].files[0];
-      updatedFileName = file.name;
-      const updateParams = {
-        Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
-      };
-
-      await s3().putObject(updateParams).promise();
-      inputPayload.granules[0].files[0].fileSize = content.length;
-
-      workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-      );
-    });
-
-    it('does not raise a workflow error', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
-    });
-
-    it('moves the existing data to a file with a suffix to distinguish it from the new file and existing versioned file', async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      const files = lambdaOutput.payload.granules[0].files;
-      expect(files.length).toEqual(4);
-
-      const renamedFiles = files.filter((f) => f.name.startsWith(`${updatedFileName}.v`));
-      expect(renamedFiles.length).toEqual(2);
-    });
-
-    it('captures all files', async () => {
-      const granule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      });
-      expect(granule.files.length).toEqual(4);
+      expect(currentFiles).toEqual(existingfiles);
+      expect(lambdaOutput.payload).toEqual(expectedPayload);
     });
   });
 });

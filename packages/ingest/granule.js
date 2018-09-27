@@ -525,8 +525,20 @@ class Granule {
       Key: destinationKey
     });
 
+    // the staged file expected
+    const stagedFile = Object.assign(file,
+      {
+        filename: aws.buildS3Uri(bucket, destinationKey),
+        fileStagingDir: this.fileStagingDir,
+        url_path: this.getUrlPath(file),
+        bucket
+      });
+
     // Exit early if we can
-    if (exists && duplicateHandling === 'skip') return file;
+    if (exists && duplicateHandling === 'skip') {
+      return Object.assign(stagedFile,
+        { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength });
+    }
 
     // Either the file does not exist yet, or it does but
     // we are replacing it with a more recent one or
@@ -574,15 +586,7 @@ class Granule {
     // return all files, the renamed files don't have the same properties(name, fileSize, checksum)
     // from input file
     return renamedFiles.concat({ Bucket: bucket, Key: destinationKey }).map((f) => {
-      if (f.Key === destinationKey) {
-        return Object.assign(file,
-          {
-            filename: aws.buildS3Uri(f.Bucket, f.Key),
-            fileStagingDir: this.fileStagingDir,
-            url_path: this.getUrlPath(file),
-            bucket
-          });
-      }
+      if (f.Key === destinationKey) return stagedFile;
       return {
         name: path.basename(f.Key),
         path: file.path,
