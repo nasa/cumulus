@@ -428,8 +428,6 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 });
 
 test.serial('when duplicateHandling is not specified, throw an error on duplicate', async (t) => {
-  // t.context.event.config.duplicateHandling = 'error';
-
   const granuleFilePath = randomString();
   const granuleFileName = payload.input.granules[0].files[0].name;
   const key = `${granuleFilePath}/${granuleFileName}`;
