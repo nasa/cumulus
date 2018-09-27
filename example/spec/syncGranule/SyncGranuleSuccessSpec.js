@@ -8,17 +8,24 @@ const {
     s3,
     s3ObjectExists
   },
+  stringUtils: { globalReplace },
   testUtils: {
     randomString
   }
 } = require('@cumulus/common');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
-
-const { loadConfig, templateFile } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  templateFile,
+  uploadTestDataToBucket,
+  timestampedTestDataPrefix,
+  deleteFolder
+} = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleId
 } = require('../helpers/granuleUtils');
+
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
@@ -32,7 +39,14 @@ const templatedOutputPayloadFilename = templateFile({
   config: config.SyncGranule
 });
 
-describe('The Sync Granules workflow is configured to overwrite data with duplicate filenames', () => {
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
+
+describe('When the Sync Granules workflow is configured to overwrite data with duplicate filenames', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleSuccess`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   let inputPayload;
   let expectedPayload;
@@ -44,15 +58,37 @@ describe('The Sync Granules workflow is configured to overwrite data with duplic
   const executionModel = new Execution();
 
   beforeAll(async () => {
+    
+    // upload test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+
+    // update test data filepaths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     const granuleId = inputPayload.granules[0].granuleId;
     expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
 
+    const updatedOutputPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
+    // update test data filepaths
+    expectedPayload = JSON.parse(globalReplace(JSON.stringify(updatedOutputPayload), 'cumulus-test-data/pdrs', testDataFolder));
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+  });
+
+  afterAll(async () => {
+    // Remove the granule files added for the test
+    await deleteFolder(config.bucket, testDataFolder);
+
+    // delete ingested granule
+    await apiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
   });
 
   it('completes execution with success status', () => {

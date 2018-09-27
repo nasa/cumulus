@@ -61,6 +61,27 @@ async function getExecutions() {
   return (_.orderBy(data.executions, 'startDate', 'desc'));
 }
 
+/**
+ * Helper function that returns a stream name with timestamp
+ *
+ * @param {Object} config - stack configuration
+ * @param {string} streamSuffix - suffix, e.g. test name
+ * @returns {string} timestamped stream name
+ */
+function timeStampedStreamName(config, streamSuffix) {
+  return `${config.streamName}-${(new Date().getTime())}-${streamSuffix}`;
+}
+
+/**
+ * returns stream status from aws-sdk
+ *
+ * @param {string} StreamName - Stream name in AWS
+ * @returns {string} stream status
+ */
+async function getStreamStatus(StreamName) {
+  const stream = await kinesis.describeStream({ StreamName }).promise();
+  return stream.StreamDescription.StreamStatus;
+}
 
 /**
  * Wait for a number of periods for a kinesis stream to become active.
@@ -182,19 +203,19 @@ async function putRecordOnStream(streamName, record) {
  * Wait for test stepfunction execution to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
- * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
+ * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
  * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
-  let timeWaited = 0;
+async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfSnsReport') {
+  let timeWaitedSecs = 0;
   let workflowExecution;
 
   /* eslint-disable no-await-in-loop */
-  while (timeWaited < maxWaitTime && workflowExecution === undefined) {
+  while (timeWaitedSecs < maxWaitTimeSecs && workflowExecution === undefined) {
     await timeout(waitPeriodMs);
-    timeWaited += waitPeriodMs;
+    timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions();
     // Search all recent executions for target recordIdentifier
     for (const execution of executions) {
@@ -206,7 +227,7 @@ async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsRe
     }
   }
   /* eslint-disable no-await-in-loop */
-  if (timeWaited < maxWaitTime) return workflowExecution;
+  if (timeWaitedSecs < maxWaitTimeSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }
 
@@ -272,9 +293,11 @@ module.exports = {
   createOrUseTestStream,
   deleteTestStream,
   getShardIterator,
+  getStreamStatus,
   getRecords,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
+  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord,

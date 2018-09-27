@@ -162,12 +162,20 @@ cum-test:
 
 mvd:
   prefix: mvd
+  buckets:
+    internal:
+      name: '{{prefix}}-internal'
+      type: internal
+  system_bucket: '{{prefix}}-internal'
 
 jc:
   prefix: jc
 
 mhs:
   prefix: mhs
+
+mhs3:
+  prefix: mhs3
 
 jk:
   prefix: jk

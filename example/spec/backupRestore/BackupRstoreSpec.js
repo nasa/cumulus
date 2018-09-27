@@ -62,7 +62,7 @@ describe('Backup and Restore', () => {
       const backupFile = path.join(tempFolder, `${process.env.GranulesTable}.json`);
 
       // open backup file and compare records
-      const content = fs.readFileSync(backupFile);
+      const content = fs.readFileSync(backupFile, 'utf8');
       const randomIndex = Math.floor(Math.random() * Math.floor(limit));
       const testGranuleId = granuleIds[randomIndex].granuleId;
       expect(content.includes(testGranuleId)).toEqual(true);

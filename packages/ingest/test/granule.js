@@ -24,15 +24,22 @@ const {
   getGranuleId
 } = require('../granule');
 
+const { baseProtocol } = require('../protocol');
+const { s3Mixin } = require('../s3');
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
-  await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
+  t.context.destBucket = `dest-bucket-${randomString().slice(0, 6)}`;
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.destBucket }).promise()
+  ]);
 });
 
 test.afterEach(async (t) => {
   await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.internalBucket)
+    recursivelyDeleteS3Bucket(t.context.internalBucket),
+    recursivelyDeleteS3Bucket(t.context.destBucket)
   ]);
 });
 /**
@@ -421,4 +428,47 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   renamedFiles.map((f) => t.true(f.Key.startsWith(`${key}.v`)));
   // one of the file is the existing renamed file
   t.true(renamedFiles.map((f) => f.Key).includes(existingRenamedKey));
+});
+
+class TestS3Granule extends s3Mixin(baseProtocol(Granule)) {}
+
+test('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+  const file = {
+    path: randomString(),
+    name: 'test.txt'
+  };
+  const key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key: key, Body: randomString() };
+  await s3().putObject(params).promise();
+  const collectionConfig = {
+    files: [
+      {
+        regex: '^[A-Z]|[a-z]+\.txt'
+      }
+    ]
+  };
+  const duplicateHandling = 'version';
+  // leading '/' should be trimmed
+  const fileStagingDir = '/file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(oldfiles.length, 1);
+
+  // update the source file with different content and ingest again
+  params.Body = randomString();
+  await s3().putObject(params).promise();
+  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(newfiles.length, 2);
 });
