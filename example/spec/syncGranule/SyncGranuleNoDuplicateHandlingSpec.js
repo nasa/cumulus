@@ -27,14 +27,11 @@ const lambdaStep = new LambdaStep();
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
-
-// 'custom-staging-dir/mboyd-test/MOD09GQ_duplicateHandlingError___006/MOD09GQ.A5983912.oCB_bc.006.9951226283932.hdf already exists in cumulus-test-sandbox-internal bucket'
-// 'custom-staging-dir/mboyd-test/MOD09GQ_noDuplicateHandling___006/MOD09GQ.A5983912.oCB_bc.006.9951226283932.hdf already exists in cumulus-test-sandbox-internal bucket
+const duplicateHandlingSuffix = 'noDuplicateHandling';
 
 describe('The Sync Granules workflow is configured to handle duplicates as an error', () => {
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleNoDuplicateHandling`);
   const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
-  const duplicateHandlingSuffix = 'noDuplicateHandling';
   const collection = { name: `MOD09GQ_${duplicateHandlingSuffix}`, version: '006' };
   const provider = { id: 's3_provider' };
   const collectionsDirectory = './data/collections/syncGranule';
@@ -109,15 +106,16 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
   // });
 
   describe('and it is not configured to catch the duplicate error', () => {
-    // let catchWorkflowExecution;
-
     beforeAll(async () => {
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, taskName, collection, provider, inputPayload
       );
     });
 
+    // add assertion for lambda input having no config for duplicateHandling
+
     it('fails the SyncGranule Lambda function', async () => {
+      const lambdaInput = await lambdaStep.getSetInput(workflowExecution.executionArn, 'SyncGranuleNoVpc');
       const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranuleNoVpc', 'failure');
       const { error, cause } = lambdaOutput;
       const errorCause = JSON.parse(cause);
