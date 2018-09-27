@@ -116,7 +116,7 @@ test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async 
   const kes = t.context.kes;
 
   // Mock out AWS calls
-  const versionUpAliases = aliasFixture.Aliases[0];
+  const versionUpAliases = aliasFixture.aliases[0];
 
   const listAliasesStub = sinon.stub().callsFake(() => Promise.reject());
 
@@ -151,11 +151,11 @@ test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async 
 test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t) => {
   const kes = t.context.kes;
 
-  kes.config.lambdas = aliasFixture.Lambdas;
+  kes.config.workflowLambdas = aliasFixture.workflowLambdas;
   kes.config.maxNumberOfRetainedLambdas = 2;
   const getAllLambdaAliasesStub = sinon.stub(kes, 'getAllLambdaAliases');
-  for (let i = 0; i < aliasFixture.Aliases.length; i += 1) {
-    getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.Aliases[i]);
+  for (let i = 0; i < aliasFixture.aliases.length; i += 1) {
+    getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.aliases[i]);
   }
 
   const expected = ['VersionUpTest-PreviousVersionHash', 'VersionUpTest-SecondPreviousVersionHash',
@@ -167,13 +167,14 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t)
 
 test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
             + 'on previous version redeployment', async (t) => {
+
   const kes = t.context.kes;
 
-  kes.config.lambdas = aliasFixture.Lambdas;
-  kes.config.lambdas.VersionUpTest.hash = 'PreviousVersionHash';
+  kes.config.workflowLambdas = aliasFixture.workflowLambdas;
+  kes.config.workflowLambdas.VersionUpTest.hash = 'PreviousVersionHash';
   const getAllLambdaAliasesStub = sinon.stub(kes, 'getAllLambdaAliases');
-  for (let i = 0; i < aliasFixture.Aliases.length; i += 1) {
-    getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.Aliases[i]);
+  for (let i = 0; i < aliasFixture.aliases.length; i += 1) {
+    getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.aliases[i]);
   }
 
   const expected = ['VersionUpTest-LatestVersionHash', 'VersionUpTest-SecondPreviousVersionHash',

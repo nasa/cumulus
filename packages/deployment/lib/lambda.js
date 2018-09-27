@@ -55,6 +55,21 @@ class UpdatedLambda extends Lambda {
     }
   }
 
+
+  /**
+   * Method adds hash value from each config.lambda to each
+   * defined workflow lambda in config.workflowLambdas
+   *
+   * @returns {void} returns nothing
+   */
+  addWorkflowLambdaHashes() {
+    Object.keys(this.config.lambdas).forEach((key) => {
+      if ((key in this.config.workflowLambdas) && ('hash' in this.config.lambdas[key])) {
+        this.config.workflowLambdas[key].hash = this.config.lambdas[key].hash;
+      }
+    });
+  }
+
   /**
    * Copies the source code of a given lambda function, zips it, calculates
    * the hash of the source code and updates the lambda object with
