@@ -8,7 +8,7 @@ const {
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
-test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {}
@@ -19,7 +19,7 @@ test('GET without pathParameters and without an Authorization header returns an 
   });
 });
 
-test('GET /stats/logs without an Authorization header returns an Authorization Missing response', async (t) => {
+test('GET /stats/logs without an Authorization header returns an Authorization Missing response', (t) => {
   const request = {
     httpMethod: 'GET',
     resource: '/stats/logs',
@@ -31,7 +31,7 @@ test('GET /stats/logs without an Authorization header returns an Authorization M
   });
 });
 
-test('GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test('GET with pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
