@@ -5,6 +5,9 @@
   },
   "name": "L2_HR_PIXC_kinesisRule",
   "provider": "PODAAC_SWOT",
+  "meta": {
+    "cnmResponseStream": "{{cnmResponseStream}}"
+  },
   "rule": {
     "type": "kinesis",
     "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"

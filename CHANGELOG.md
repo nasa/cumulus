@@ -15,7 +15,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
 
-- `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if execution output is stored in S3 due to size.
+- `@cumulus/integration-tests` new functionality:
+  - `listCollections` to list collections from a provided data directory
+  - `deleteCollection` to delete list of collections from a deployed stack
+  - `listProviders` to list providers from a provided data directory
+  - `deleteProviders` to delete list of providers from a deployed stack
+  - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
+
+- `@cumulus/api`:
+  - `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+  - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
+
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - Added `onDuplicateFilename` field to config for `@cumulus/sync-granule` to allow specifying how duplicate filenames should be handled
 
