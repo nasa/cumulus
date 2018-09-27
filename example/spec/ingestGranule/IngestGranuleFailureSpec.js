@@ -16,7 +16,7 @@ const {
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
-
+const defaultDataFolder = 'cumulus-test-data/pdrs';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
@@ -39,11 +39,11 @@ describe('The Ingest Granule failure workflow', () => {
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     // add a non-existent file to input payload to cause lambda error

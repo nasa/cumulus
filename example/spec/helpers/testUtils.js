@@ -65,17 +65,20 @@ function templateFile({ inputTemplateFilename, config }) {
 
 /**
  * Upload a file from the test-data package to the S3 test data
+ * and update contents with replacements
  *
  * @param {string} file - filename of data to upload
  * @param {string} bucket - bucket to upload to
  * @param {string} prefix - S3 folder prefix
- * @param {boolean} replacePaths - whether to replace test paths in file contents
+ * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', replacePaths = false) {
+function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements) {
   let data = fs.readFileSync(require.resolve(file), 'utf8');
-  if (replacePaths) {
-    data = globalReplace(data, 'cumulus-test-data/pdrs', prefix);
+  if (replacements) {
+    replacements.forEach((replace) => {
+      data = globalReplace(data, replace.old, replace.new);
+    });
   }
   const key = path.basename(file);
   return s3().putObject({
@@ -87,15 +90,28 @@ function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', rep
 
 /**
  * For the given bucket, upload all the test data files to S3
+ * and update contents with replacements
  *
  * @param {string} bucket - S3 bucket
  * @param {Array<string>} data - list of test data files
  * @param {string} prefix - S3 folder prefix
- * @param {boolean} replacePaths - whether to replace test paths in file contents
+ * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Array<Promise>} - responses from S3 upload
  */
-function uploadTestDataToBucket(bucket, data, prefix, replacePaths) {
-  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket, prefix, replacePaths)));
+function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
+  return Promise.all(data.map((file) => updateAndUploadTestFileToBucket(file, bucket, prefix, replacements)));
+}
+
+/**
+ * For the given bucket, upload all the test data files to S3
+ *
+ * @param {string} bucket - S3 bucket
+ * @param {Array<string>} data - list of test data files
+ * @param {string} prefix - S3 folder prefix
+ * @returns {Array<Promise>} - responses from S3 upload
+ */
+function uploadTestDataToBucket(bucket, data, prefix) {
+  return updateAndUploadTestDataToBucket(bucket, data, prefix);
 }
 
 /**
@@ -153,7 +169,7 @@ module.exports = {
   timestampedTestDataPrefix,
   loadConfig,
   templateFile,
-  uploadTestDataToS3,
+  updateAndUploadTestDataToBucket,
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
