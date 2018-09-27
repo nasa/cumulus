@@ -4,7 +4,7 @@ const { lambda } = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
 
 /**
- * Recursively gets all pages for an AWS lambda Aliases/Version object query
+ * Recursively gets all pages for an AWS Lambda Aliases/Version object query
  *
  * @param {Object} config - A AWS Lambda query configuration object
  * @param {string} key - Name of the object type being queried.  'Versions' or 'Aliases'
@@ -27,6 +27,8 @@ async function getAllPages(config, key, listFunction) {
 /**
  * Takes a lambda function name and returns all aliases for that function
  *
+ * See: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#listAliases-property
+ *
  * @param {string} lambdaFunctionName - The name of a lambda function
  * @returns {Promise.Object[]} returns the promise of a list of AWS Lambda Alias objects
  */
@@ -40,6 +42,8 @@ async function getLambdaAliases(lambdaFunctionName) {
 
 /**
  * Takes a lambda function name and returns all versions for that function
+ *
+ * See: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#listVersionsByFunction-property
  *
  * @param {string} lambdaFunctionName - The name of a lambda function
  * @returns {Promise.Object[]} returns the promise of a list of AWS Lambda Version objects
