@@ -59,7 +59,7 @@ SyncGranuleCatchDuplicateErrorTest:
       Cause: 'Workflow failed'
 
 SyncGranuleNoDuplicateHandlingTest:
-  Comment: 'Catch DuplicateError for SyncGranule'
+  Comment: 'No duplicateHandling config for SyncGranule'
   StartAt: Report
   States:
     Report:
