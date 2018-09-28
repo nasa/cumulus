@@ -38,7 +38,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   const collection = { name: `MOD09GQ_${duplicateHandlingSuffix}`, version: '006' };
   const provider = { id: 's3_provider' };
   const fileStagingDir = 'custom-staging-dir';
-  let taskName = 'SyncGranule';
+  const taskName = 'SyncGranule';
   let destFileDir;
   let existingFileKey;
   let inputPayload;
@@ -100,16 +100,16 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  it('configured collection to handle duplicates as error', async () => {
-    const collectionInfo = await c.get(collection);
-    expect(collectionInfo.duplicateHandling).toEqual('error');
-  });
-
   describe('and it is not configured to catch the duplicate error', () => {
     beforeAll(async () => {
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, taskName, collection, provider, inputPayload
       );
+    });
+
+    it('configured collection to handle duplicates as error', async () => {
+      const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranuleNoVpc');
+      expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
     });
 
     it('fails the SyncGranule Lambda function', async () => {
@@ -128,12 +128,17 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   });
 
   describe('and it is configured to catch the duplicate error', () => {
-    taskName = 'SyncGranuleCatchDuplicateErrorTest';
+    const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
 
     beforeAll(async () => {
       workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, taskName, collection, provider, inputPayload
+        config.stackName, config.bucket, catchTaskName, collection, provider, inputPayload
       );
+    });
+
+    it('configured collection to handle duplicates as error', async () => {
+      const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranuleNoVpc');
+      expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
     });
 
     it('fails the SyncGranule Lambda function', async () => {
