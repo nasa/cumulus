@@ -515,4 +515,3 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   t.true(error instanceof errors.DuplicateFile);
   t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
 });
-

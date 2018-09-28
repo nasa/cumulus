@@ -3,7 +3,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
-const path = require('path');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
@@ -24,7 +23,7 @@ const {
   validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const { syncGranule } = require('../index');
+const { syncGranule } = require('..');
 
 // Setup buckets and the test event
 test.beforeEach(async (t) => {
