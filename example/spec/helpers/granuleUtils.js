@@ -41,14 +41,16 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
  * @param {string} inputPayloadJson - input payload as a JSON string
  * @param {string} oldGranuleId - granule id of files to copy
  * @param {string} granuleRegex - regex to generate the new granule id
+ * @param {string} testSuffix - suffix for test-specific collection
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
-async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId, granuleRegex) {
+async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId, granuleRegex, testSuffix = '') {
   // granule id for the new files
   const newGranuleId = randomStringFromRegex(granuleRegex);
   console.log(`\ngranule id: ${newGranuleId}`);
 
   const baseInputPayload = JSON.parse(inputPayloadJson);
+  baseInputPayload.granules[0].dataType += testSuffix;
 
   await createGranuleFiles(
     baseInputPayload.granules[0].files,

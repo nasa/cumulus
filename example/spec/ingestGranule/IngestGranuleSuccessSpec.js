@@ -95,8 +95,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-    inputPayload.granules[0].dataType += testSuffix;
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
     const granuleId = inputPayload.granules[0].granuleId;
 
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdAndPath(templatedSyncGranuleFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);

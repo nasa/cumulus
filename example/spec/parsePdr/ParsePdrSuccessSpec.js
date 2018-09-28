@@ -74,8 +74,7 @@ describe('Parse PDR workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
-    inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-    inputPayload.granules[0].dataType += testSuffix;
+    inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
     // place pdr on S3

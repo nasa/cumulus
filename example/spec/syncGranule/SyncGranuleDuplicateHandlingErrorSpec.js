@@ -65,8 +65,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-    inputPayload.granules[0].dataType += testSuffix;
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
     granuleFileName = inputPayload.granules[0].files[0].name;
 
     await buildAndExecuteWorkflow(

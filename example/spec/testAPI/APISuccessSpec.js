@@ -61,8 +61,7 @@ describe('The Cumulus API', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // Update input file paths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-    inputPayload.granules[0].dataType += testSuffix;
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
     inputGranuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(

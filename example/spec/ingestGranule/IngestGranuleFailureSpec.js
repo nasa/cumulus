@@ -59,7 +59,7 @@ describe('The Ingest Granule failure workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
 
     // add a non-existent file to input payload to cause lambda error
     const nonexistentFile = { path: 'non-existent-path', name: 'non-existent-file' };
