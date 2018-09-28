@@ -23,8 +23,8 @@ function loadConfig() {
   // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
-      'You MUST set DEPLOYMENT environment variable with the name'
-      + ' of your deployment before running tests.'
+      'You MUST set DEPLOYMENT environment variable with the name' +
+      ' of your deployment before running tests.'
     );
   }
 
@@ -144,8 +144,8 @@ async function deleteFolder(bucket, folder) {
  */
 function getExecutionUrl(executionArn) {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}`
-         + `#/executions/details/${executionArn}`;
+  return `https://console.aws.amazon.com/states/home?region=${region}` +
+          `#/executions/details/${executionArn}`;
 }
 
 

@@ -3,6 +3,14 @@
 const { difference, intersection } = require('lodash');
 const fs = require('fs-extra');
 const {
+  buildAndExecuteWorkflow,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
+  api: apiTestUtils
+} = require('@cumulus/integration-tests');
+const {
   loadConfig,
   createTimestampedTestId,
   createTestDataPath,
@@ -11,14 +19,6 @@ const {
 } = require('../helpers/testUtils');
 const { getConfigObject } = require('../helpers/configUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
-const {
-  buildAndExecuteWorkflow,
-  addProviders,
-  cleanupProviders,
-  addCollections,
-  cleanupCollections,
-  api: apiTestUtils
-} = require('@cumulus/integration-tests');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';

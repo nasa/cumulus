@@ -121,8 +121,8 @@ describe('The Ingest Granule failure workflow', () => {
       for (let i = 0; i < events.length; i += 1) {
         const currentEvent = events[i];
 
-        if (currentEvent.type === 'TaskStateExited'
-        && get(currentEvent, 'name') === syncGranuleNoVpcTaskName) {
+        if (currentEvent.type === 'TaskStateExited' &&
+        get(currentEvent, 'name') === syncGranuleNoVpcTaskName) {
           syncGranStepOutput = get(currentEvent, 'output');
           expect(syncGranStepOutput.exception).toBeTruthy();
 
@@ -136,8 +136,8 @@ describe('The Ingest Granule failure workflow', () => {
           while (!nextTask && i < events.length - 1) {
             i += 1;
             const nextEvent = events[i];
-            if (nextEvent.type === 'TaskStateEntered'
-            && get(nextEvent, 'name')) {
+            if (nextEvent.type === 'TaskStateEntered' &&
+            get(nextEvent, 'name')) {
               nextTask = get(nextEvent, 'name');
             }
           }

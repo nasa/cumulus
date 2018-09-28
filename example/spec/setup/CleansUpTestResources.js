@@ -1,5 +1,5 @@
-const { loadConfig } = require('../helpers/testUtils');
 const { aws: { deleteS3Files, listS3ObjectsV2 } } = require('@cumulus/common');
+const { loadConfig } = require('../helpers/testUtils');
 const testConfig = loadConfig();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
