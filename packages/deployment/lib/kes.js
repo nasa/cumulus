@@ -237,6 +237,9 @@ class UpdatedKes extends Kes {
       }
     }
 
+    // Update workflowLambdas with generated hash values
+    lambda.addWorkflowLambdaHashes();
+
     // if there is a template parse CF there first
     if (this.config.template) {
       const mainCF = this.parseCF(this.config.template.cfFile);
