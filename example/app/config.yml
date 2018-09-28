@@ -9,6 +9,7 @@ default:
     ems_provider: CUMULUS
     esHost: '{{esHost}}'
     streamName: '{{stackName}}-testStream'
+    cnmResponseStream: '{{stackName}}-cnmResponseStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
     IngestGranule:
@@ -128,7 +129,8 @@ default:
     'workflows/helloworld.yml',
     'workflows/cnm.yml',
     'workflows/errorsAndRetries.yml',
-    'workflows/sips.yml'
+    'workflows/sips.yml',
+    'workflows/syncGranule.yml'
   ]
 
   iams:
@@ -358,6 +360,11 @@ gitc:
 mvd:
   stackName: mvd
   stackNameNoDash: mvd
+  buckets:
+    internal:
+      name: '{{stackName}}-internal'
+      type: internal
+  bucket: '{{stackName}}-internal'
 
 jc:
   stackName: jc
@@ -374,3 +381,11 @@ mhs3:
 jk:
   stackName: jk
   stackNameNoDash: jk
+
+mboyd-test:
+  stackName: mboyd-test
+  stackNameNoDash: mboydTest
+
+mboyd-int:
+  stackName: mboyd-int
+  stackNameNoDash: mboydInt
