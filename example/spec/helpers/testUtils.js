@@ -147,7 +147,7 @@ function getExecutionUrl(executionArn) {
  * @returns {Promise.undefined} none
  */
 
-async function redeploy(config, options) {
+async function redeploy(config, options = {}) {
   const templatePath = options.template || 'node_modules/@cumulus/deployment/app';
   let deployCommand = `./node_modules/.bin/kes cf deploy --kes-folder app --template ${templatePath} --deployment ${config.deployment} --region us-east-1`;
   if (options.kesClass) deployCommand += ` --kes-class ${options.kesClass}`;
