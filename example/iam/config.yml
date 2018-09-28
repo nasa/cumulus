@@ -162,6 +162,11 @@ cum-test:
 
 mvd:
   prefix: mvd
+  buckets:
+    internal:
+      name: '{{prefix}}-internal'
+      type: internal
+  system_bucket: '{{prefix}}-internal'
 
 jc:
   prefix: jc
@@ -174,3 +179,11 @@ mhs3:
 
 jk:
   prefix: jk
+
+mboyd-test:
+  prefix: mboyd-test
+  stackName: mboyd-test-iam
+
+mboyd-int:
+  prefix: mboyd-int
+  stackName: mboyd-int-iam

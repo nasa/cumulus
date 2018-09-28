@@ -9,13 +9,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
+- `@cumulus/integration-tests` new functionality:
+  - `listCollections` to list collections from a provided data directory
+  - `deleteCollection` to delete list of collections from a deployed stack
+  - `listProviders` to list providers from a provided data directory
+  - `deleteProviders` to delete list of providers from a deployed stack
+  - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
 
-- `@cumulus/api` `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+- `@cumulus/api`:
+  - `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+  - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
-- Added `onDuplicateFilename` field to config for `@cumulus/sync-granule` to allow specifying how duplicate filenames should be handled
+- **CUMULUS-779** - Added integration test for `@cumulus/sync-granule` when `duplicateHandling` is set to `error`
+
+### Changed
+
+- **CUMULUS-779** - Updated `@cumulus/sync-granule` to throw `DuplicateFile` error when destination files already exist and `duplicateHandling` is `error`
 
 ### Fixed
 
+- Updated config schema and documentation in `@cumulus/sync-granule` to include `duplicateHandling` parameter for specifying how duplicate filenames should be handled
 - Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
 - `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
 
