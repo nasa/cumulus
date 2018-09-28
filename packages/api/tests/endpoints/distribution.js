@@ -3,77 +3,207 @@
 const test = require('ava');
 const { URL } = require('url');
 const {
-  testUtils: { randomString },
-  FakeEarthdataLoginServer
+  aws: { s3 },
+  testUtils: { randomString }
 } = require('@cumulus/common');
+
 const distributionEndpoint = require('../../endpoints/distribution');
+const EarthdataLoginClient = require('../../lib/EarthdataLoginClient');
+const { ClientAuthenticationError } = require('../../lib/errors');
 
-test.beforeEach((t) => {
-  process.env.protected = randomString();
-
-  t.context.fakeEarthdataLoginServer = new FakeEarthdataLoginServer();
-});
-
-test.afterEach.always((t) => {
-  t.context.fakeEarthdataLoginServer.close();
-});
-
-test.serial.cb("The S3 redirect includes the user's Earthdata Login username", (t) => {
-  // Start the EarthdataLogin server and run the test
-  t.context.fakeEarthdataLoginServer.listen(() => {
-    process.env.EARTHDATA_BASE_URL = t.context.fakeEarthdataLoginServer.endpoint;
-
-    const myUsername = randomString();
-    const code = t.context.fakeEarthdataLoginServer.createAuthorizationCodeForUser(myUsername);
-
-    const event = {
-      pathParameters: {
-        granuleId: randomString()
-      },
-      queryStringParameters: {
-        code,
-        state: randomString()
-      }
+class TestEarthdataLoginClient extends EarthdataLoginClient {
+  constructor(params) {
+    const defaultParams = {
+      clientId: randomString(),
+      clientPassword: randomString(),
+      earthdataLoginUrl: `http://${randomString()}`,
+      redirectUri: `http://${randomString()}`
     };
 
-    // Call the distribution endpoint handler
-    distributionEndpoint.handler(event, {}, (err, handlerResponse) => {
-      if (err) throw t.end(err);
+    super(Object.assign(defaultParams, params));
+  }
+}
 
-      t.is(handlerResponse.statusCode, '302');
+class InvalidAuthorizationCodeEarthdataLoginClient extends TestEarthdataLoginClient {
+  async getAccessToken() {
+    throw new ClientAuthenticationError();
+  }
+}
 
-      const redirectLocation = new URL(handlerResponse.headers.Location);
-      t.is(redirectLocation.searchParams.get('x-EarthdataLoginUsername'), myUsername);
+class AcceptAnyAuthorizationCodeEarthdataLoginClient extends TestEarthdataLoginClient {
+  async getAccessToken() {
+    return {
+      accessToken: randomString(),
+      username: this.username || randomString(),
+      expirationTime: Date.now() + (60 * 60 * 1000)
+    };
+  }
+}
 
-      t.end();
-    });
+test.beforeEach((t) => {
+  t.context.clientId = randomString();
+  t.context.clientPassword = randomString();
+  t.context.earthdataLoginUrl = `http://${randomString()}`;
+  t.context.redirectUri = `http://${randomString()}/cb`;
+
+  t.context.earthdataLoginClient = new EarthdataLoginClient({
+    clientId: t.context.clientId,
+    clientPassword: t.context.clientPassword,
+    earthdataLoginUrl: t.context.earthdataLoginUrl,
+    redirectUri: t.context.redirectUri
   });
+
+  t.context.s3Client = s3();
 });
 
-test('bucket and key are extracted correctly', (t) => {
-  const objectParams = distributionEndpoint.getBucketAndKeyFromPathParams(
-    'bucket-name/folder/key.txt'
-  );
+test('GET without a code in the queryParameters returns a correct redirect', async (t) => {
+  const granuleId = randomString();
 
-  t.deepEqual(
-    objectParams,
-    { Bucket: 'bucket-name', Key: 'folder/key.txt' }
-  );
-});
-
-test('parsed signed URL generates', (t) => {
-  const tokenInfo = {
-    endpoint: '/api/users/cumulus-user'
+  const request = {
+    pathParameters: {
+      proxy: granuleId
+    },
+    queryParameters: {}
   };
 
-  const signedUrl = distributionEndpoint.generateParsedSignedUrl(
-    tokenInfo,
-    'bucket-name/folder/key.txt',
-    ''
+  const response = await distributionEndpoint.handleRequest(
+    request,
+    t.context.earthdataLoginClient,
+    t.context.s3Client
   );
 
-  t.regex(
-    signedUrl.href,
-    /http:\/\/.*\/bucket-name\/folder\/key\.txt\?AWSAccessKeyId=my-access-key-id&Expires=.*\&Signature=.*\&x-EarthdataLoginUsername=cumulus-user/
+  const locationUrl = new URL(response.headers.Location);
+
+  t.is(response.statusCode, 302);
+  t.is(response.headers['Strict-Transport-Security'], 'max-age=31536000');
+
+  t.is(locationUrl.origin, t.context.earthdataLoginUrl);
+
+  t.is(locationUrl.pathname, '/oauth/authorize');
+
+  t.is(locationUrl.searchParams.get('client_id'), t.context.clientId);
+  t.is(locationUrl.searchParams.get('redirect_uri'), t.context.redirectUri);
+  t.is(locationUrl.searchParams.get('response_type'), 'code');
+  t.is(locationUrl.searchParams.get('state'), granuleId);
+});
+
+test('GET without a code and with state set in pathParameters.proxy sets the correct state in the redirect URL', async (t) => {
+  const state = randomString();
+
+  const request = {
+    pathParameters: {
+      proxy: state
+    },
+    queryParameters: {}
+  };
+
+  const response = await distributionEndpoint.handleRequest(
+    request,
+    t.context.earthdataLoginClient,
+    t.context.s3Client
+  );
+
+  const locationUrl = new URL(response.headers.Location);
+
+  t.is(locationUrl.searchParams.get('state'), state);
+});
+
+test('GET without a code and with state set in queryParameters.state sets the correct state in the redirect URL', async (t) => {
+  const state = randomString();
+
+  const request = {
+    queryStringParameters: {
+      state
+    }
+  };
+
+  const response = await distributionEndpoint.handleRequest(
+    request,
+    t.context.earthdataLoginClient,
+    t.context.s3Client
+  );
+
+  const locationUrl = new URL(response.headers.Location);
+
+  t.is(locationUrl.searchParams.get('state'), state);
+});
+
+test('GET with an invalid code returns a 400 response', async (t) => {
+  const earthdataLoginClient = new InvalidAuthorizationCodeEarthdataLoginClient();
+
+  const request = {
+    queryStringParameters: {
+      code: randomString()
+    }
+  };
+
+  const response = await distributionEndpoint.handleRequest(
+    request,
+    earthdataLoginClient,
+    t.context.s3Client
+  );
+
+  t.is(response.statusCode, 400);
+});
+
+
+test("The S3 redirect includes the user's Earthdata Login username", async (t) => {
+  const earthdataLoginClient = new AcceptAnyAuthorizationCodeEarthdataLoginClient();
+
+  const myUsername = randomString();
+  earthdataLoginClient.username = myUsername;
+
+  const request = {
+    queryStringParameters: {
+      code: randomString(),
+      state: `${randomString()}/${randomString()}`
+    }
+  };
+
+  const response = await distributionEndpoint.handleRequest(
+    request,
+    earthdataLoginClient,
+    t.context.s3Client
+  );
+
+  t.is(response.statusCode, 302);
+
+  const redirectLocation = new URL(response.headers.Location);
+  t.is(redirectLocation.searchParams.get('x-EarthdataLoginUsername'), myUsername);
+});
+
+test('The correct signed URL is requested', async (t) => {
+  const earthdataLoginClient = new AcceptAnyAuthorizationCodeEarthdataLoginClient();
+
+  const granuleBucket = randomString();
+  const granuleKey = `${randomString()}/${randomString()}`;
+
+  const s3Client = {
+    getSignedUrl: (operation, params) => {
+      t.is(params.Bucket, granuleBucket);
+      t.is(params.Key, granuleKey);
+
+      return 'http://www.example.com';
+    }
+  };
+
+  const myUsername = randomString();
+  earthdataLoginClient.username = myUsername;
+
+  const request = {
+    queryStringParameters: {
+      code: randomString(),
+      state: `${granuleBucket}/${granuleKey}`
+    }
+  };
+
+  await distributionEndpoint.handleRequest(
+    request,
+    earthdataLoginClient,
+    s3Client
   );
 });
+
+test.todo('A correct error is returned if the granule bucket and key could not be extracted');
+
+test.todo('Handle the case where an access token is included in the request, instead of an authorization code');
