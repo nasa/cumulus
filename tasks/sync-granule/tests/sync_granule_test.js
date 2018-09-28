@@ -442,8 +442,8 @@ test.serial('when duplicateHandling is not specified, throw an error on duplicat
 
   t.context.event.config.fileStagingDir = randomString();
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   // Create the s3 bucket. If the bucket doesn't exist, we just get a
   // 'bucket doesn't exist' error
@@ -457,7 +457,7 @@ test.serial('when duplicateHandling is not specified, throw an error on duplicat
     }).promise();
 
     const output = await syncGranule(t.context.event);
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     await syncGranule(t.context.event);
     t.fail();
@@ -500,8 +500,8 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
 
   t.context.event.config.fileStagingDir = randomString();
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   // Create the s3 bucket. If the bucket doesn't exist, we just get a
   // 'bucket doesn't exist' error
@@ -515,7 +515,7 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
     }).promise();
 
     const output = await syncGranule(t.context.event);
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     await syncGranule(t.context.event);
     t.fail();
