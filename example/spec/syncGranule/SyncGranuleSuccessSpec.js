@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const { Execution } = require('@cumulus/api/models');
 const {
   aws: { s3, s3ObjectExists },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
+const { Execution } = require('@cumulus/api/models');
 const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
 
 const {

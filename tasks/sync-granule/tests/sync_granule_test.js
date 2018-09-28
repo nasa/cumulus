@@ -2,9 +2,11 @@
 
 const fs = require('fs-extra');
 const test = require('ava');
+const path = require('path');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
+const { constructCollectionId } = require('@cumulus/common');
 const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
@@ -418,6 +420,64 @@ test.serial('attempt to download file from non-existent path - throw error', asy
     t.throws(() => {
       validateOutput(t, output);
     }, 'output is not defined');
+  }
+  finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
+test.serial('when duplicateHandling is "error", throw an error on duplicate', async (t) => {
+  t.context.event.config.duplicateHandling = 'error';
+
+  const granuleFilePath = randomString();
+  const granuleFileName = payload.input.granules[0].files[0].name;
+  const key = `${granuleFilePath}/${granuleFileName}`;
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString()
+  };
+
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
+
+  t.context.event.config.fileStagingDir = randomString();
+
+  validateConfig(t, t.context.event.config);
+  validateInput(t, t.context.event.input);
+
+  // Create the s3 bucket. If the bucket doesn't exist, we just get a
+  // 'bucket doesn't exist' error
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+
+  try {
+    await s3().putObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: key,
+      Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
+    }).promise();
+
+    const output = await syncGranule(t.context.event);
+    validateOutput(t, output);
+
+    await syncGranule(t.context.event);
+    t.fail();
+  }
+  catch (err) {
+    const collection = payload.config.collection;
+    const collectionId = constructCollectionId(collection.name, collection.version);
+    const granuleFileKey = path.join(
+      t.context.event.config.fileStagingDir,
+      t.context.event.config.stack,
+      collectionId,
+      granuleFileName
+    );
+    t.true(err instanceof errors.DuplicateFile);
+    t.is(
+      err.message,
+      `${granuleFileKey} already exists in ${t.context.event.config.downloadBucket} bucket`
+    );
   }
   finally {
     // Clean up
