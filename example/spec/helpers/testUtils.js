@@ -23,8 +23,8 @@ function loadConfig() {
   // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
-      'You MUST set DEPLOYMENT environment variable with the name' +
-      ' of your deployment before running tests.'
+      'You MUST set DEPLOYMENT environment variable with the name'
+      + ' of your deployment before running tests.'
     );
   }
 
@@ -144,28 +144,61 @@ async function deleteFolder(bucket, folder) {
  */
 function getExecutionUrl(executionArn) {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}` +
-         `#/executions/details/${executionArn}`;
+  return `https://console.aws.amazon.com/states/home?region=${region}`
+         + `#/executions/details/${executionArn}`;
 }
 
+
 /**
- * Redeploy the current Cumulus deployment
+ * Redeploy the current Cumulus deployment.
+ *
+ * Prints '.' per minute while running.  Prints STDOUT from deployCommand
+ * and STDERR if an error occurs.
  *
  * @param {Object} config - configuration object from loadConfig()
- * @returns {undefined} none
+ * @param {int} timeout - Timeout value in minutes
+ * @returns {Promise}
  */
-async function redeploy(config) {
+
+function redeploy(config, timeout) {
   const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
   console.log(`Redeploying ${config.deployment}`);
-  await exec(deployCommand)
-    .then((result) => {
-      console.log(result.stdout);
-      if (result.error) {
-        console.log(`Deployment error: ${result.error}`);
+
+  let timeoutObject;
+  function timeoutPromise() {
+    return new Promise((resolve, reject) => {
+      const minutes = timeout || 30;
+      let i = 0;
+      function printDots() {
+        console.log('.');
+        if (i < minutes) {
+          i += 1;
+          timeoutObject = setTimeout(printDots, 60000);
+        }
+        else {
+          reject(new Error('Timeout Exceeded'));
+        }
       }
+      printDots();
     });
-  console.log(`Redeploy of ${config.deployment} complete`);
+  }
+
+  async function executionPromise() {
+    let output;
+    try {
+      output = await exec(deployCommand);
+      console.log(output.stdout);
+    }
+    catch (e) {
+      console.log(e.stdout);
+      console.log(e.stderr);
+      throw (e);
+    }
+  }
+
+  return Promise.race([executionPromise(), timeoutPromise()]).then((_) => clearTimeout(timeoutObject));
 }
+
 
 module.exports = {
   timestampedTestPrefix,
