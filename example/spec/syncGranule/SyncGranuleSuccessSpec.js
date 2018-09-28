@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { Execution } = require('@cumulus/api/models');
 const {
   aws: { s3, s3ObjectExists },
   stringUtils: { globalReplace }
@@ -13,6 +12,7 @@ const {
   cleanupCollections,
   LambdaStep
 } = require('@cumulus/integration-tests');
+const { Execution } = require('@cumulus/api/models');
 
 const {
   loadConfig,
