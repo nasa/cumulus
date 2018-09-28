@@ -11,17 +11,17 @@ const {
   cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
-const { loadConfig, timestampedTestPrefix } = require('../helpers/testUtils');
+const { loadConfig, createTimestampedTestId } = require('../helpers/testUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
 
 describe('The FTP Ingest Granules workflow', () => {
-  const testPostfix = timestampedTestPrefix(`_${config.stackName}-IngestGranuleFtpSuccess`);
+  const testSuffix = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
   const inputPayloadFilename = './spec/ingestGranule/IngestGranuleFtp.input.payload.json';
   const providersDir = './data/providers/ftp/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
-  const provider = { id: `ftp_provider${testPostfix}` };
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `ftp_provider${testSuffix}` };
   let workflowExecution = null;
   let inputPayload;
 
@@ -31,13 +31,13 @@ describe('The FTP Ingest Granules workflow', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, null, testPostfix)
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
     ]);
 
     console.log('\nStarting ingest test');
     inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
-    inputPayload.granules[0].dataType += testPostfix;
+    inputPayload.granules[0].dataType += testSuffix;
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
@@ -50,8 +50,8 @@ describe('The FTP Ingest Granules workflow', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix)
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 

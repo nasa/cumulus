@@ -4,8 +4,8 @@ const { difference, intersection } = require('lodash');
 const fs = require('fs-extra');
 const {
   loadConfig,
-  timestampedTestPrefix,
-  timestampedTestDataPrefix,
+  createTimestampedTestId,
+  createTestDataPath,
   uploadTestDataToBucket,
   deleteFolder
 } = require('../helpers/testUtils');
@@ -37,13 +37,14 @@ const s3data = [
 let allStates;
 
 describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
-  const testPostfix = timestampedTestPrefix(`_${config.stackName}-ExecutionStatus`);
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-ExecutionStatus`);
+  const testId = createTimestampedTestId(config.stackName, 'ExecutionStatus');
+  const testSuffix = `_${testId}`;
+  const testDataFolder = createTestDataPath(testId);
   let workflowExecution = null;
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
-  const provider = { id: `s3_provider${testPostfix}` };
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -54,8 +55,8 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testPostfix)
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
     const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
@@ -64,7 +65,7 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-    inputPayload.granules[0].dataType += testPostfix;
+    inputPayload.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -75,8 +76,8 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix)
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 

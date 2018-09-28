@@ -10,8 +10,8 @@ const path = require('path');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
-const timestampedTestPrefix = (prefix) => `${prefix}-${(new Date().getTime())}`;
-const timestampedTestDataPrefix = (prefix) => `${timestampedTestPrefix(prefix)}-test-data/pdrs`;
+const createTimestampedTestId = (stackName, testName) => `${stackName}-${testName}-${(new Date().getTime())}`;
+const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
 
 
 /**
@@ -201,8 +201,8 @@ function redeploy(config, timeout) {
 
 
 module.exports = {
-  timestampedTestPrefix,
-  timestampedTestDataPrefix,
+  createTimestampedTestId,
+  createTestDataPath,
   loadConfig,
   templateFile,
   updateAndUploadTestDataToBucket,

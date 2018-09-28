@@ -17,9 +17,9 @@ const {
 } = require('@cumulus/integration-tests');
 const {
   loadConfig,
-  timestampedTestPrefix,
-  timestampedTestDataPrefix,
   uploadTestDataToBucket,
+  createTimestampedTestId,
+  createTestDataPath,
   deleteFolder
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
@@ -35,13 +35,14 @@ const s3data = [
 ];
 
 describe('The Cumulus API', () => {
-  const testPostfix = timestampedTestPrefix(`_${config.stackName}-APISuccess`);
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-APISuccess`);
+  const testId = createTimestampedTestId(config.stackName, 'APISuccess');
+  const testSuffix = `_${testId}`;
+  const testDataFolder = createTestDataPath(testId);
   let workflowExecution = null;
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
-  const provider = { id: `s3_provider${testPostfix}` };
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
   let inputGranuleId;
@@ -53,15 +54,15 @@ describe('The Cumulus API', () => {
     // populate collections, providers and test data
     await Promise.all([
       await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testPostfix)
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // Update input file paths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-    inputPayload.granules[0].dataType += testPostfix;
+    inputPayload.granules[0].dataType += testSuffix;
     inputGranuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -73,8 +74,8 @@ describe('The Cumulus API', () => {
     // clean up stack state added by test
     await Promise.all([
       await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix)
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 

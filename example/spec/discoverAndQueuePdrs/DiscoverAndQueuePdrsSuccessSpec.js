@@ -14,8 +14,8 @@ const {
   loadConfig,
   updateAndUploadTestDataToBucket,
   deleteFolder,
-  timestampedTestPrefix,
-  timestampedTestDataPrefix
+  createTimestampedTestId,
+  createTestDataPath
 } = require('../helpers/testUtils');
 
 const config = loadConfig();
@@ -28,12 +28,13 @@ const s3data = [
 ];
 
 describe('The Discover And Queue PDRs workflow', () => {
-  const testPostfix = timestampedTestPrefix(`_${config.stackName}-DiscoverAndQueuePdrsSuccess`);
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-DiscoverAndQueuePdrsSuccess`);
+  const testId = createTimestampedTestId(config.stackName, 'DiscoverAndQueuePdrsSuccess');
+  const testSuffix = `_${testId}`;
+  const testDataFolder = createTestDataPath(testId);
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
-  const provider = { id: `s3_provider${testPostfix}` };
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution;
   let queuePdrsOutput;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -49,9 +50,9 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
     // populate collections, providers and test data
     await Promise.all([
-      await updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testPostfix};` }]),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testPostfix)
+      await updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]),
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
     // update provider path
     await collectionModel.update(collection, { provider_path: testDataFolder });
@@ -74,8 +75,8 @@ describe('The Discover And Queue PDRs workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       await apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename
