@@ -7,17 +7,19 @@ const {
 } = require('@cumulus/common');
 const {
   addCollections,
+  addProviders,
   buildAndExecuteWorkflow,
+  cleanupCollections,
+  cleanupProviders,
   LambdaStep,
-  deleteCollections,
-  listCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const {
   loadConfig,
-  timestampedTestDataPrefix,
+  createTimestampedTestId,
+  createTestDataPath,
   deleteFolder,
   uploadTestDataToBucket
 } = require('../helpers/testUtils');
@@ -29,13 +31,16 @@ const s3data = [
 ];
 
 describe('The Sync Granules workflow is configured to handle duplicates as an error', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleDuplicateHandlingError`);
+  const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandlingError');
+  const testSuffix = `_${testId}`;
+  const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandlingError.input.payload.json';
-  const collection = { name: 'MOD09GQ_duplicateHandlingError', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
   const taskName = 'SyncGranule';
-  const collectionsDirectory = './data/collections/syncGranule';
   const fileStagingDir = 'custom-staging-dir';
   const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
   const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
@@ -44,23 +49,25 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
   let inputPayload;
   let granuleFileName;
 
-  const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-  // update test data filepaths
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const c = new Collection();
 
   beforeAll(async () => {
-    // Upload test data to be synced for this spec
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await Promise.all([
+      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
+    // set collection duplicate handling to 'error'
+    await c.update(collection, { duplicateHandling: 'error' });
 
     // Create test granule
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    // update test data filepaths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    inputPayload.granules[0].dataType += testSuffix;
     granuleFileName = inputPayload.granules[0].files[0].name;
-
-    // Create collection with "duplicateHandling" of "error"
-    await addCollections(config.stackName, config.bucket, collectionsDirectory);
 
     await buildAndExecuteWorkflow(
       config.stackName, config.bucket, taskName, collection, provider, inputPayload
@@ -79,17 +86,17 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
   });
 
   afterAll(async () => {
-    const collections = await listCollections(config.stackName, config.bucket, collectionsDirectory);
-    // delete ingested granule
-    await apiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
-    // delete test collection
-    await deleteCollections(config.stackName, config.bucket, collections);
-    // cleanup folders used by test
-    await deleteFolder(config.bucket, testDataFolder);
-    await deleteFolder(config.bucket, destFileDir);
+    // cleanup stack state changes added by test
+    await Promise.all([
+      await deleteFolder(config.bucket, testDataFolder),
+      await deleteFolder(config.bucket, destFileDir),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      await apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
   });
 
   it('configured collection to handle duplicates as error', async () => {
