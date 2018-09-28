@@ -2,9 +2,6 @@
 
 const fs = require('fs-extra');
 const {
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
-const {
   api: apiTestUtils,
   addProviders,
   cleanupProviders,
@@ -60,8 +57,7 @@ describe('The Cumulus API', () => {
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // Update input file paths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
     inputGranuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(

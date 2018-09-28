@@ -1,10 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { Collection } = require('@cumulus/api/models');
-const {
-  constructCollectionId,
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/common');
 const {
   addCollections,
   addProviders,
@@ -64,8 +61,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
     // Create test granule
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
     granuleFileName = inputPayload.granules[0].files[0].name;
 
     await buildAndExecuteWorkflow(
