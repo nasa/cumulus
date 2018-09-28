@@ -51,9 +51,9 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
 
   beforeAll(async () => {
     await Promise.all([
-      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
     // set collection duplicate handling to 'error'
     await c.update(collection, { duplicateHandling: 'error' });
@@ -83,11 +83,11 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
   afterAll(async () => {
     // cleanup stack state changes added by test
     await Promise.all([
-      await deleteFolder(config.bucket, testDataFolder),
-      await deleteFolder(config.bucket, destFileDir),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      await apiTestUtils.deleteGranule({
+      deleteFolder(config.bucket, testDataFolder),
+      deleteFolder(config.bucket, destFileDir),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })

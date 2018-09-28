@@ -50,9 +50,9 @@ describe('The Discover And Queue PDRs workflow', () => {
     });
     // populate collections, providers and test data
     await Promise.all([
-      await updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
     // update provider path
     await collectionModel.update(collection, { provider_path: testDataFolder });
@@ -74,10 +74,10 @@ describe('The Discover And Queue PDRs workflow', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
-      await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      await apiTestUtils.deletePdr({
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename
       })

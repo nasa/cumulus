@@ -32,8 +32,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
     const provider = { id: `http_provider${testSuffix}` };
     // populate collections and providers
     await Promise.all([
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
     ]);
 
     httpWorkflowExecution = await buildAndExecuteWorkflow(
@@ -53,8 +53,8 @@ describe('The Discover Granules workflow with http Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 
@@ -132,8 +132,8 @@ describe('The Discover Granules workflow with https Protocol', () => {
     const provider = { id: `https_provider${testSuffix}` };
     // populate collections and providers
     await Promise.all([
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
     ]);
 
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
@@ -148,8 +148,8 @@ describe('The Discover Granules workflow with https Protocol', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 

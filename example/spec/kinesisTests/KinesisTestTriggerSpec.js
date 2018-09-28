@@ -135,17 +135,21 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
-      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+      uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
     ]);
     // create streams
     await tryCatchExit(async () => {
-      await createOrUseTestStream(streamName);
-      await createOrUseTestStream(cnmResponseStreamName);
+      await Promise.all([
+        createOrUseTestStream(streamName),
+        createOrUseTestStream(cnmResponseStreamName)
+      ]);
       console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
-      await waitForActiveStream(streamName);
-      await waitForActiveStream(cnmResponseStreamName);
+      await Promise.all([
+        waitForActiveStream(streamName),
+        waitForActiveStream(cnmResponseStreamName)
+      ]);
       console.log('\nSetting up kinesisRule');
       await addRules(testConfig, ruleDirectory, ruleOverride);
     });
@@ -156,18 +160,18 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
     // clean up stack state added by test
+    console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
     await Promise.all([
-      await deleteFolder(testConfig.bucket, testDataFolder),
-      await cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix)
+      deleteFolder(testConfig.bucket, testDataFolder),
+      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
+      deleteTestStream(streamName),
+      deleteTestStream(cnmResponseStreamName),
+      s3().deleteObject({
+        Bucket: testConfig.buckets.private.name,
+        Key: `${filePrefix}/${fileData.name}`
+      }).promise()
     ]);
-    // delete synced data
-    await s3().deleteObject({
-      Bucket: testConfig.buckets.private.name,
-      Key: `${filePrefix}/${fileData.name}`
-    }).promise();
-    console.log(`\nDeleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
-    await Promise.all([deleteTestStream(streamName), deleteTestStream(cnmResponseStreamName)]);
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {
