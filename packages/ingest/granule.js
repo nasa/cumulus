@@ -365,7 +365,7 @@ class Granule {
    * @param {string} bucket - s3 bucket name of the file
    * @param {string} key - s3 key of the file
    * @param {Object} [options={}] - options for the this._hash method
-   * @returns {Array} returns array where first item is the checksum algorithm,
+   * @returns {Array<string>} returns array where first item is the checksum algorithm,
    * and the second item is the value of the checksum.
    * Throws an error if the checksum is invalid.
    * @memberof Granule

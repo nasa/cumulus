@@ -485,8 +485,8 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
@@ -501,7 +501,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
     let output = await syncGranule(t.context.event);
 
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     // stage the file with different content
     await s3().putObject({
@@ -518,7 +518,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     );
 
     output = await syncGranule(t.context.event);
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 2);
     output.granules[0].files.forEach((f) => {

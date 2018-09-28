@@ -59,7 +59,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
 
   beforeAll(async () => {
     // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, false);
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
@@ -68,8 +68,6 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
 
     const granuleId = inputPayload.granules[0].granuleId;
-    expectedPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
-
     const updatedOutputPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
     // update test data filepaths
     expectedPayload = JSON.parse(globalReplace(JSON.stringify(updatedOutputPayload), 'cumulus-test-data/pdrs', testDataFolder));
