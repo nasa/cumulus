@@ -11,9 +11,6 @@ const {
   cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
-const {
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
 
 const {
   loadConfig,
@@ -73,8 +70,7 @@ describe('Parse PDR workflow', () => {
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
-    inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
+    inputPayload = setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
     // place pdr on S3

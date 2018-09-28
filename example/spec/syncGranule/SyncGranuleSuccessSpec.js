@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const {
   aws: { s3, s3ObjectExists },
-  stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -67,8 +66,7 @@ describe('The Sync Granules workflow', () => {
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
-    inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
+    inputPayload = setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
     expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);

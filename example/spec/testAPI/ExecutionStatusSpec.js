@@ -10,7 +10,6 @@ const {
   deleteFolder
 } = require('../helpers/testUtils');
 const { getConfigObject } = require('../helpers/configUtils');
-const { stringUtils: { globalReplace } } = require('@cumulus/common');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const {
   buildAndExecuteWorkflow,
@@ -63,8 +62,7 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
     allStates = Object.keys(workflowConfig.States);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex, testSuffix);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
