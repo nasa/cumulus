@@ -202,7 +202,7 @@ class SfnStep {
       stepOutput = this.getSuccessOutput(stepExecution, stepName);
     }
     else if (eventType === 'failure') {
-      stepOutput =  this.getFailureOutput(stepExecution, stepName);
+      stepOutput = this.getFailureOutput(stepExecution, stepName);
     }
 
     if (!stepOutput) {
