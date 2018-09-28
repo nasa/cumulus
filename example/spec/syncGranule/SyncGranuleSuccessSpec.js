@@ -59,9 +59,9 @@ describe('The Sync Granules workflow', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -81,9 +81,9 @@ describe('The Sync Granules workflow', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
-      await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 
@@ -108,8 +108,10 @@ describe('The Sync Granules workflow', () => {
     });
 
     afterAll(async () => {
-      await s3().deleteObject({ Bucket: files[0].bucket, Key: key1 }).promise();
-      await s3().deleteObject({ Bucket: files[1].bucket, Key: key2 }).promise();
+      await Promise.all([
+        s3().deleteObject({ Bucket: files[0].bucket, Key: key1 }).promise(),
+        s3().deleteObject({ Bucket: files[1].bucket, Key: key2 }).promise()
+      ]);
     });
 
     it('receives payload with file objects updated to include file staging location', () => {

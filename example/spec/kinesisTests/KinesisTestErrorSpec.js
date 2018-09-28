@@ -56,8 +56,8 @@ describe('The kinesisConsumer receives a bad record.', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
     ]);
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
@@ -83,8 +83,8 @@ describe('The kinesisConsumer receives a bad record.', () => {
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
     // clean up stack state added by test
     await Promise.all([
-      await cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix)
+      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix)
     ]);
     console.log(`\nDeleting testStream '${streamName}'`);
     await deleteTestStream(streamName);

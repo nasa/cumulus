@@ -49,9 +49,9 @@ describe('The Ingest Granule failure workflow', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -78,10 +78,10 @@ describe('The Ingest Granule failure workflow', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
-      await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      await apiTestUtils.deleteGranule({
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })

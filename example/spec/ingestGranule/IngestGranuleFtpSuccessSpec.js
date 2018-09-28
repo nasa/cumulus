@@ -31,8 +31,8 @@ describe('The FTP Ingest Granules workflow', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
     ]);
 
     console.log('\nStarting ingest test');
@@ -50,8 +50,8 @@ describe('The FTP Ingest Granules workflow', () => {
   afterAll(async () => {
     // clean up stack state added by test
     await Promise.all([
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 

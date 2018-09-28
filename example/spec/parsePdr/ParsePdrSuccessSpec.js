@@ -63,9 +63,9 @@ describe('Parse PDR workflow', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -102,10 +102,10 @@ describe('Parse PDR workflow', () => {
       waitForCompletedExecution(arn)));
     // clean up stack state added by test
     await Promise.all([
-      await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      await apiTestUtils.deletePdr({
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename
       })
