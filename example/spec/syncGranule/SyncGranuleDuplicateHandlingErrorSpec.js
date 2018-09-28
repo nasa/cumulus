@@ -28,6 +28,9 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 const duplicateHandlingSuffix = 'duplicateHandlingError';
+const collectionsDirectory = './data/collections/syncGranule';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 describe('The Sync Granules workflow is configured to handle duplicates as an error', () => {
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleDuplicateHandlingError`);
@@ -36,10 +39,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
   const provider = { id: 's3_provider' };
   const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
   const taskName = 'SyncGranule';
-  const collectionsDirectory = './data/collections/syncGranule';
   const fileStagingDir = 'custom-staging-dir';
-  const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-  const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
   let destFileDir;
   let existingFileKey;
   let inputPayload;
@@ -83,16 +83,18 @@ describe('The Sync Granules workflow is configured to handle duplicates as an er
 
   afterAll(async () => {
     const collections = await listCollections(config.stackName, config.bucket, collectionsDirectory);
-    // delete ingested granule
-    await apiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
-    // delete test collection
-    await deleteCollections(config.stackName, config.bucket, collections);
-    // cleanup folders used by test
-    await deleteFolder(config.bucket, testDataFolder);
-    await deleteFolder(config.bucket, destFileDir);
+    await Promise.all([
+      // delete ingested granule
+      apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      }),
+      // delete test collection
+      deleteCollections(config.stackName, config.bucket, collections),
+      // cleanup folders used by test
+      deleteFolder(config.bucket, testDataFolder),
+      deleteFolder(config.bucket, destFileDir)
+    ]);
   });
 
   it('completes the first execution with a success status', async () => {
