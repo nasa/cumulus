@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { Execution } = require('@cumulus/api/models');
 const {
   aws: {
     headObject,
@@ -14,6 +13,7 @@ const {
   }
 } = require('@cumulus/common');
 const { api: apiTestUtils, buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const { Execution } = require('@cumulus/api/models');
 const {
   loadConfig,
   templateFile,

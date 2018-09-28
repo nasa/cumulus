@@ -534,6 +534,13 @@ class Granule {
         bucket
       });
 
+    log.debug(`file ${destinationKey} exists in ${bucket}: ${exists}`);
+    // Have to throw DuplicateFile and not WorkflowError, because the latter
+    // is not treated as a failure by the message adapter.
+    if (exists && duplicateHandling === 'error') {
+      throw new errors.DuplicateFile(`${destinationKey} already exists in ${bucket} bucket`);
+    }
+
     // Exit early if we can
     if (exists && duplicateHandling === 'skip') {
       return Object.assign(stagedFile,
