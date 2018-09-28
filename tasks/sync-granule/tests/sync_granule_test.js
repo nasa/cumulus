@@ -94,7 +94,7 @@ test.serial('no error when collection info is not provided in the event', async 
   };
 
   const output = await syncGranule(t.context.event);
-  validateOutput(t, output);
+  await validateOutput(t, output);
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
 });
@@ -110,13 +110,13 @@ test.serial('download Granule from FTP endpoint', async (t) => {
 
   t.context.event.config.collection.url_path = 'example/';
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   try {
     const output = await syncGranule(t.context.event);
 
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
@@ -144,8 +144,8 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   // await fs.mkdir(localGranulePath);
   try {
@@ -153,7 +153,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
 
     const output = await syncGranule(t.context.event);
 
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
@@ -184,15 +184,15 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
 
   t.context.event.input.granules[0].files[0].path = '/granules';
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   try {
     const granuleFilename = t.context.event.input.granules[0].files[0].name;
 
     const output = await syncGranule(t.context.event);
 
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
@@ -230,8 +230,8 @@ test.serial('download granule from S3 provider', async (t) => {
 
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
@@ -245,7 +245,7 @@ test.serial('download granule from S3 provider', async (t) => {
 
     const output = await syncGranule(t.context.event);
 
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
@@ -294,8 +294,8 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   event.input.granules[0].files[0].path = '/granules';
   event.input.granules[0].files[1].path = '/granules';
 
-  validateConfig(t, event.config);
-  validateInput(t, event.input);
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
 
   try {
     // Stage the files to be downloaded
@@ -303,7 +303,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
 
     const output = await syncGranule(event);
 
-    validateOutput(t, output);
+    await validateOutput(t, output);
 
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
@@ -340,8 +340,8 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
     host: 'http://127.0.0.1:3030'
   };
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   // Stage the files to be downloaded
   const granuleFilename = t.context.event.input.granules[0].files[0].name;
@@ -367,14 +367,14 @@ test.serial('validate file properties', async (t) => {
   t.context.event.config.collection.files[0].url_path = 'file-example/';
   t.context.event.config.collection.url_path = 'collection-example/';
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   try {
     const granuleFilename = t.context.event.input.granules[0].files[0].name;
     const output = await syncGranule(t.context.event);
 
-    validateOutput(t, output);
+    await validateOutput(t, output);
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 2);
     const config = t.context.event.config;
@@ -406,8 +406,8 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
 
-  validateConfig(t, t.context.event.config);
-  validateInput(t, t.context.event.input);
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
 
   // Create the s3 bucket. If the bucket doesn't exist, we just get a
   // 'bucket doesn't exist' error
