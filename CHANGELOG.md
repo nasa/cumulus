@@ -21,10 +21,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - **CUMULUS-779** - Added integration test for `@cumulus/sync-granule` when `duplicateHandling` is set to `error`
+- **CUMULUS-780** - Added integration test for `@cumulus/sync-granule` to verify that `duplicateHandling` defaults to `error` when it is not specified
 
 ### Changed
 
 - **CUMULUS-779** - Updated `@cumulus/sync-granule` to throw `DuplicateFile` error when destination files already exist and `duplicateHandling` is `error`
+- **CUMULUS-780** - Updated `@cumulus/sync-granule` to use `error` as the default for `duplicateHandling` when it is not specified
 
 ### Fixed
 
