@@ -50,7 +50,7 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId,
   const newGranuleId = randomStringFromRegex(granuleRegex);
   console.log(`\ngranule id: ${newGranuleId}`);
 
-  if (testDataFolder) inputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+  if (testDataFolder) inputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder); //eslint-disable-line no-param-reassign
   const baseInputPayload = JSON.parse(inputPayloadJson);
   baseInputPayload.granules[0].dataType += testSuffix;
 
