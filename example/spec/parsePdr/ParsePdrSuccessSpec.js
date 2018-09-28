@@ -21,8 +21,8 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  timestampedTestPrefix,
-  timestampedTestDataPrefix
+  createTimestampedTestId,
+  createTestDataPath
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest, loadFileWithUpdatedGranuleIdAndPath } = require('../helpers/granuleUtils');
 
@@ -43,8 +43,9 @@ const s3data = [
 ];
 
 describe('Parse PDR workflow', () => {
-  const testPostfix = timestampedTestPrefix(`_${config.stackName}-ParsePdrSuccess`);
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-ParsePdrSuccess`);
+  const testId = createTimestampedTestId(config.stackName, 'ParsePdrSuccess');
+  const testSuffix = `_${testId}`;
+  const testDataFolder = createTestDataPath(testId);
   let workflowExecution;
   let queueGranulesOutput;
   let inputPayload;
@@ -54,8 +55,8 @@ describe('Parse PDR workflow', () => {
 
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
-  const provider = { id: `s3_provider${testPostfix}` };
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
 
   process.env.PdrsTable = `${config.stackName}-PdrsTable`;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -66,24 +67,24 @@ describe('Parse PDR workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testPostfix)
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
     const updatedInputPayloadJson = globalReplace(inputPayloadJson, defaultDataFolder, testDataFolder);
     inputPayload = setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-    inputPayload.granules[0].dataType += testPostfix;
+    inputPayload.granules[0].dataType += testSuffix;
     const newGranuleId = inputPayload.granules[0].granuleId;
 
     // place pdr on S3
-    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: testDataGranuleId, new: newGranuleId }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testPostfix};` }]);
+    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: testDataGranuleId, new: newGranuleId }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]);
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 
     expectedParsePdrOutput = loadFileWithUpdatedGranuleIdAndPath(outputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
-    expectedParsePdrOutput.granules[0].dataType += testPostfix;
+    expectedParsePdrOutput.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -107,8 +108,8 @@ describe('Parse PDR workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       await apiTestUtils.deletePdr({
         prefix: config.stackName,
         pdr: pdrFilename

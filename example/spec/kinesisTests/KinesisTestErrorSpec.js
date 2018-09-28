@@ -21,13 +21,12 @@ const {
   getStreamStatus,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
-  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord
 } = require('../helpers/kinesisHelpers');
 
-const { loadConfig, timestampedTestPrefix } = require('../helpers/testUtils');
+const { loadConfig, createTimestampedTestId } = require('../helpers/testUtils');
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
 
 const ruleDirectory = './spec/kinesisTests/data/rules';
@@ -43,21 +42,22 @@ describe('The kinesisConsumer receives a bad record.', () => {
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 
-  const testPostfix = timestampedTestPrefix(`_${testConfig.stackName}-KinesisTestError`);
+  const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
+  const testSuffix = `_${testId}`;
   const testRecordIdentifier = randomString();
   record.identifier = testRecordIdentifier;
   const badRecord = { ...record };
   delete badRecord.collection;
 
-  const streamName = timeStampedStreamName(testConfig, 'KinesisError');
+  const streamName = `${testId}-KinesisTestErrorStream`;
   testConfig.streamName = streamName;
   const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
 
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testPostfix),
-      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testPostfix)
+      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
     ]);
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
@@ -83,8 +83,8 @@ describe('The kinesisConsumer receives a bad record.', () => {
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
     // clean up stack state added by test
     await Promise.all([
-      await cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testPostfix)
+      await cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix)
     ]);
     console.log(`\nDeleting testStream '${streamName}'`);
     await deleteTestStream(streamName);

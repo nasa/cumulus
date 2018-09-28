@@ -24,8 +24,8 @@ const {
   loadConfig,
   uploadTestDataToBucket,
   deleteFolder,
-  timestampedTestPrefix,
-  timestampedTestDataPrefix
+  createTimestampedTestId,
+  createTestDataPath
 } = require('../helpers/testUtils');
 
 const {
@@ -35,20 +35,20 @@ const {
   getStreamStatus,
   getRecords,
   putRecordOnStream,
-  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForTestSf
 } = require('../helpers/kinesisHelpers');
 
 const testConfig = loadConfig();
-const testPostfix = timestampedTestPrefix(`_${testConfig.stackName}-KinesisTestTrigger`);
-const testDataFolder = timestampedTestDataPrefix(`${testConfig.stackName}-KinesisTestTrigger`);
+const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
+const testSuffix = `_${testId}`;
+const testDataFolder = createTestDataPath(testId);
 
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
 record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
-record.provider += testPostfix;
-record.collection += testPostfix;
+record.provider += testSuffix;
+record.collection += testSuffix;
 
 const granuleId = record.product.name;
 const recordIdentifier = randomString();
@@ -127,8 +127,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 
-  const streamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerStream');
-  const cnmResponseStreamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerCnmResponseStream');
+  const streamName = `${testId}-KinesisTestTriggerStream`;
+  const cnmResponseStreamName = `${testId}-KinesisTestTriggerCnmResponseStream`;
   testConfig.streamName = streamName;
   testConfig.cnmResponseStream = cnmResponseStreamName;
 
@@ -136,8 +136,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
-      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testPostfix),
-      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testPostfix)
+      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      await addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
     ]);
     // create streams
     await tryCatchExit(async () => {
@@ -158,8 +158,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       await deleteFolder(testConfig.bucket, testDataFolder),
-      await cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testPostfix)
+      await cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix)
     ]);
     // delete synced data
     await s3().deleteObject({

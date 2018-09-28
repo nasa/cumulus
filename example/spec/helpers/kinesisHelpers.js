@@ -62,17 +62,6 @@ async function getExecutions() {
 }
 
 /**
- * Helper function that returns a stream name with timestamp
- *
- * @param {Object} config - stack configuration
- * @param {string} streamSuffix - suffix, e.g. test name
- * @returns {string} timestamped stream name
- */
-function timeStampedStreamName(config, streamSuffix) {
-  return `${config.streamName}-${(new Date().getTime())}-${streamSuffix}`;
-}
-
-/**
  * returns stream status from aws-sdk
  *
  * @param {string} StreamName - Stream name in AWS
@@ -297,7 +286,6 @@ module.exports = {
   getRecords,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
-  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord,

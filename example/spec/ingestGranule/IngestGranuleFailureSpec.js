@@ -17,8 +17,8 @@ const {
   loadConfig,
   uploadTestDataToBucket,
   deleteFolder,
-  timestampedTestPrefix,
-  timestampedTestDataPrefix
+  createTimestampedTestId,
+  createTestDataPath
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
@@ -34,13 +34,14 @@ const s3data = [
 ];
 
 describe('The Ingest Granule failure workflow', () => {
-  const testPostfix = timestampedTestPrefix(`_${config.stackName}-IngestGranuleFailure`);
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleFailure`);
+  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');
+  const testSuffix = `_${testId}`;
+  const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
-  const collection = { name: `MOD09GQ${testPostfix}`, version: '006' };
-  const provider = { id: `s3_provider${testPostfix}` };
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution = null;
   let inputPayload;
 
@@ -51,8 +52,8 @@ describe('The Ingest Granule failure workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       await uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      await addCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testPostfix)
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -81,8 +82,8 @@ describe('The Ingest Granule failure workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       await deleteFolder(config.bucket, testDataFolder),
-      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testPostfix),
-      await cleanupProviders(config.stackName, config.bucket, providersDir, testPostfix),
+      await cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      await cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       await apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
