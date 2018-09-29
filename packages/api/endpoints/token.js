@@ -64,6 +64,13 @@ async function token(event) {
         });
     }
     catch (e) {
+      if (e.statusCode === 400) {
+        return buildAuthorizationFailureResponse({
+          error: 'authorization_failure',
+          message: 'Failed to get authorization token'
+        });
+      }
+
       log.error('Error caught when checking code:', e);
       return buildAuthorizationFailureResponse({ error: e, message: e.message });
     }
@@ -105,12 +112,12 @@ async function login(event) {
  * Main handler for the token endpoint.
  *
  * @function handler
- * @param  {Object}   event   - Lambda event payload
+ * @param  {Object}   request   - Lambda event payload
  * @returns {Object} - a Lambda Proxy response object
  */
-async function handler(event) {
-  if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
-    return login(event);
+async function handleRequest(request) {
+  if (request.httpMethod === 'GET' && request.resource.endsWith('/token')) {
+    return login(request);
   }
 
   return buildLambdaProxyResponse({
@@ -121,7 +128,7 @@ async function handler(event) {
 }
 
 module.exports = {
-  handler,
+  handleRequest,
   login,
   token
 };
