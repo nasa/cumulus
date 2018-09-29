@@ -214,6 +214,7 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
   const requestStartTime = Date.now();
   const {
     accessToken,
+    refreshToken,
     expirationTime,
     username
   } = await earthdataLoginClient.getAccessToken('authorization-code');
@@ -222,6 +223,7 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
   t.true(tokenRequest.isDone());
 
   t.is(accessToken, 'access-token');
+  t.is(refreshToken, 'refresh-token');
   t.true(expirationTime >= requestStartTime + (100 * 1000));
   t.true(expirationTime <= requestEndTime + (100 * 1000));
   t.is(username, 'sidney');

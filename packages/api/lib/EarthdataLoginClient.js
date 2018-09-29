@@ -64,6 +64,7 @@ class EarthdataLoginClient {
 
       return {
         accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
         expirationTime: Date.now() + (response.body.expires_in * 1000)
       };
