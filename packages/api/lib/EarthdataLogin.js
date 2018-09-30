@@ -9,6 +9,8 @@ const {
   OAuth2
 } = require('./OAuth2');
 
+const isBadRequestError = (err) => err.name === 'HTTPError' && err.statusCode === 400;
+
 class EarthdataLoginClient extends OAuth2 {
   constructor(params) {
     super();
@@ -47,26 +49,34 @@ class EarthdataLoginClient extends OAuth2 {
     return url.toString();
   }
 
-  async getAccessToken(authorizationCode) {
-    if (!authorizationCode) throw new TypeError('authorizationCode is required');
-
+  tokenEndpoint() {
     const url = new URL(this.earthdataLoginUrl);
     url.pathname = '/oauth/token';
 
+    return url.toString();
+  }
+
+  requestAccessToken(authorizationCode) {
+    return got.post(
+      this.tokenEndpoint(),
+      {
+        json: true,
+        form: true,
+        body: {
+          grant_type: 'authorization_code',
+          code: authorizationCode,
+          redirect_uri: this.redirectUri.toString()
+        },
+        auth: `${this.clientId}:${this.clientPassword}`
+      }
+    );
+  }
+
+  async getAccessToken(authorizationCode) {
+    if (!authorizationCode) throw new TypeError('authorizationCode is required');
+
     try {
-      const response = await got.post(
-        url.toString(),
-        {
-          json: true,
-          form: true,
-          body: {
-            grant_type: 'authorization_code',
-            code: authorizationCode,
-            redirect_uri: this.redirectUri.toString()
-          },
-          auth: `${this.clientId}:${this.clientPassword}`
-        }
-      );
+      const response = await this.requestAccessToken(authorizationCode);
 
       return {
         accessToken: response.body.access_token,
@@ -76,10 +86,7 @@ class EarthdataLoginClient extends OAuth2 {
       };
     }
     catch (err) {
-      if (
-        err.name === 'HTTPError'
-        && err.statusCode === 400
-      ) {
+      if (isBadRequestError(err)) {
         throw new OAuth2AuthenticationFailure();
       }
 
