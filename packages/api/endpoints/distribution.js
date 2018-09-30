@@ -5,8 +5,17 @@ const log = require('@cumulus/common/log');
 const { aws } = require('@cumulus/common');
 const { URL } = require('url');
 
-const EarthdataLoginClient = require('../lib/EarthdataLoginClient');
-const { ClientAuthenticationError } = require('../lib/errors');
+const EarthdataLoginClient = require('../lib/EarthdataLogin');
+const {
+  OAuth2AuthenticationFailure
+} = require('../lib/OAuth2');
+
+class UnparsableGranuleLocationError extends Error {
+  constructor(granuleLocation) {
+    super(`Granule location "${granuleLocation}" could not be parsed`);
+    this.name = this.constructor.name;
+  }
+}
 
 function buildRedirectResponse(url) {
   return {
@@ -38,6 +47,10 @@ function getBucketAndKeyFromPathParams(pathParams) {
 
   const Bucket = fields.shift();
   const Key = fields.join('/');
+
+  if (Bucket.length === 0 || Key.length === 0) {
+    throw new UnparsableGranuleLocationError(pathParams);
+  }
 
   return { Bucket, Key };
 }
@@ -87,7 +100,10 @@ async function handleRequest(request, earthdataLoginClient, s3Client) {
         authorizationCode
       );
 
-      const { Bucket, Key } = getBucketAndKeyFromPathParams(granuleLocation);
+      const {
+        Bucket,
+        Key
+      } = getBucketAndKeyFromPathParams(granuleLocation);
 
       log.info({
         username,
@@ -107,15 +123,19 @@ async function handleRequest(request, earthdataLoginClient, s3Client) {
       return buildRedirectResponse(s3RedirectUrl);
     }
     catch (err) {
-      if (err instanceof ClientAuthenticationError) {
+      if (err instanceof OAuth2AuthenticationFailure) {
         return buildClientErrorResponse('Failed to get EarthData token');
+      }
+
+      if (err instanceof UnparsableGranuleLocationError) {
+        return buildClientErrorResponse(err.message);
       }
 
       throw err;
     }
   }
 
-  const authorizationUrl = earthdataLoginClient.authorizationUrl(granuleLocation);
+  const authorizationUrl = earthdataLoginClient.getAuthorizationUrl(granuleLocation);
 
   return buildRedirectResponse(authorizationUrl);
 }
