@@ -3,31 +3,26 @@
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 
-const authHelpers = require('../lib/authHelpers');
 const { User } = require('../models');
 const {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse
 } = require('../lib/response');
 
-/**
- * AWS API Gateway function that handles callbacks from authentication, transforming
- * codes into tokens
- *
- * @param  {Object} event   - Lambda event object
- * @returns {Object}        - a Lambda Proxy response object
- */
-async function token(event) {
+async function token(event, oAuth2Provider) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
     try {
-      const responseObject = await authHelpers.getToken(code);
       const {
-        userName, accessToken, refresh, expires
-      } = responseObject;
+        accessToken,
+        refreshToken: refresh,
+        username: userName,
+        expirationTime: expires
+      } = await oAuth2Provider.getAccessToken(code);
+
       const u = new User();
 
       return u.get({ userName })
@@ -81,43 +76,29 @@ async function token(event) {
   return buildAuthorizationFailureResponse({ error: error, message: error.message });
 }
 
-/**
- * `login` is an AWS API Gateway function that redirects to the correct
- * authentication endpoint with the correct client ID to be used with the API
- *
- * @param  {Object} event   - Lambda event object
- * @returns {Object} - a Lambda Proxy response object
- */
-async function login(event) {
-  const code = get(event, 'queryStringParameters.code');
-  const state = get(event, 'queryStringParameters.state');
+async function login(request, oAuth2Provider) {
+  const code = get(request, 'queryStringParameters.code');
+  const state = get(request, 'queryStringParameters.state');
 
   if (code) {
-    return token(event);
+    return token(request, oAuth2Provider);
   }
 
-  const url = authHelpers.generateLoginUrl(state);
+  const authorizationUrl = oAuth2Provider.getAuthorizationUrl(state);
 
   return buildLambdaProxyResponse({
     json: false,
     statusCode: 301,
     body: 'Redirecting to login',
     headers: {
-      Location: url
+      Location: authorizationUrl
     }
   });
 }
 
-/**
- * Main handler for the token endpoint.
- *
- * @function handler
- * @param  {Object}   request   - Lambda event payload
- * @returns {Object} - a Lambda Proxy response object
- */
-async function handleRequest(request) {
+async function handleRequest(request, oAuth2Provider) {
   if (request.httpMethod === 'GET' && request.resource.endsWith('/token')) {
-    return login(request);
+    return login(request, oAuth2Provider);
   }
 
   return buildLambdaProxyResponse({
