@@ -3,11 +3,26 @@
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 
+const { google } = require('googleapis');
+
+const EarthdataLogin = require('../lib/EarthdataLogin');
+const GoogleOAuth2 = require('../lib/GoogleOAuth2');
+
 const { User } = require('../models');
 const {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse
 } = require('../lib/response');
+
+const buildPermanentRedirectResponse = (location) =>
+  buildLambdaProxyResponse({
+    json: false,
+    statusCode: 301,
+    body: 'Redirecting',
+    headers: {
+      Location: location
+    }
+  });
 
 async function token(event, oAuth2Provider) {
   const code = get(event, 'queryStringParameters.code');
@@ -30,15 +45,7 @@ async function token(event, oAuth2Provider) {
         .then(() => {
           if (state) {
             log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
-            return buildLambdaProxyResponse({
-              json: false,
-              statusCode: 301,
-              body: 'Redirecting to the specified state',
-              headers: {
-                'Content-Type': 'text/plain',
-                Location: `${decodeURIComponent(state)}?token=${accessToken}`
-              }
-            });
+            return buildPermanentRedirectResponse(`${decodeURIComponent(state)}?token=${accessToken}`);
           }
           log.info('Log info: No state specified, responding 200');
           return buildLambdaProxyResponse({
@@ -86,30 +93,61 @@ async function login(request, oAuth2Provider) {
 
   const authorizationUrl = oAuth2Provider.getAuthorizationUrl(state);
 
-  return buildLambdaProxyResponse({
-    json: false,
-    statusCode: 301,
-    body: 'Redirecting to login',
-    headers: {
-      Location: authorizationUrl
-    }
-  });
+  return buildPermanentRedirectResponse(authorizationUrl);
 }
 
+const isGetTokenRequest = (request) =>
+  request.httpMethod === 'GET'
+  && request.resource.endsWith('/token');
+
+const notFoundResponse = buildLambdaProxyResponse({
+  json: false,
+  statusCode: 404,
+  body: 'Not found'
+});
+
 async function handleRequest(request, oAuth2Provider) {
-  if (request.httpMethod === 'GET' && request.resource.endsWith('/token')) {
+  if (isGetTokenRequest(request)) {
     return login(request, oAuth2Provider);
   }
 
-  return buildLambdaProxyResponse({
-    json: false,
-    statusCode: 404,
-    body: 'Not found'
+  return notFoundResponse;
+}
+
+function buildGoogleOAuth2ProviderFromEnv() {
+  const googleOAuth2Client = new google.auth.OAuth2(
+    process.env.EARTHDATA_CLIENT_ID,
+    process.env.EARTHDATA_CLIENT_PASSWORD,
+    process.env.API_ENDPOINT
+  );
+
+  const googlePlusPeopleClient = google.plus('v1').people;
+
+  return new GoogleOAuth2(googleOAuth2Client, googlePlusPeopleClient);
+}
+
+function buildEarthdataLoginProviderFromEnv() {
+  return new EarthdataLogin({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    redirectUri: process.env.API_ENDPOINT
   });
+}
+
+function buildOAuth2ProviderFromEnv() {
+  return process.env.OAUTH_PROVIDER === 'google'
+    ? buildGoogleOAuth2ProviderFromEnv()
+    : buildEarthdataLoginProviderFromEnv();
+}
+
+async function handleApiGatewayRequest(request) {
+  const oAuth2Provider = buildOAuth2ProviderFromEnv();
+
+  return handleRequest(request, oAuth2Provider);
 }
 
 module.exports = {
   handleRequest,
-  login,
-  token
+  handleApiGatewayRequest
 };
