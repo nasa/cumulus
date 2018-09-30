@@ -21,11 +21,3 @@ const createErrorType = (name, ParentType = Error) => {
 
 module.exports.RecordDoesNotExist = createErrorType('RecordDoesNotExist');
 module.exports.ValidationError = createErrorType('ValidationError');
-
-class ClientAuthenticationError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = this.constructor.name;
-  }
-}
-module.exports.ClientAuthenticationError = ClientAuthenticationError;

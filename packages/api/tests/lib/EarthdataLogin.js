@@ -1,12 +1,14 @@
 'use strict';
 
-// TODO HTTP handling should be injected
-
 const nock = require('nock');
 const test = require('ava');
 const { URL, URLSearchParams } = require('url');
-const { ClientAuthenticationError } = require('../../lib/errors');
-const EarthdataLoginClient = require('../../lib/EarthdataLoginClient');
+
+const EarthdataLogin = require('../../lib/EarthdataLogin');
+const {
+  OAuth2AuthenticationError,
+  OAuth2AuthenticationFailure
+} = require('../../lib/OAuth2');
 
 test.beforeEach(() => {
   nock.cleanAll();
@@ -14,7 +16,7 @@ test.beforeEach(() => {
 
 test('The EarthdataLogin constructor throws a TypeError if clientId is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLoginClient({ // eslint-disable-line no-new
+    new EarthdataLogin({ // eslint-disable-line no-new
       clientPassword: 'client-password',
       earthdataLoginUrl: 'http://www.example.com',
       redirectUri: 'http://www.example.com/cb'
@@ -27,7 +29,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
 
 test('The EarthdataLogin constructor throws a TypeError if clientPassword is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLoginClient({ // eslint-disable-line no-new
+    new EarthdataLogin({ // eslint-disable-line no-new
       clientId: 'client-id',
       earthdataLoginUrl: 'http://www.example.com',
       redirectUri: 'http://www.example.com/cb'
@@ -40,7 +42,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLoginClient({ // eslint-disable-line no-new
+    new EarthdataLogin({ // eslint-disable-line no-new
       clientId: 'client-id',
       clientPassword: 'client-password',
       redirectUri: 'http://www.example.com/cb'
@@ -53,7 +55,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not a valid URL', (t) => {
   t.throws(() => {
-    new EarthdataLoginClient({ // eslint-disable-line no-new
+    new EarthdataLogin({ // eslint-disable-line no-new
       clientId: 'client-id',
       clientPassword: 'client-password',
       earthdataLoginUrl: 'asdf',
@@ -65,7 +67,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLoginClient({ // eslint-disable-line no-new
+    new EarthdataLogin({ // eslint-disable-line no-new
       clientId: 'client-id',
       clientPassword: 'client-password',
       earthdataLoginUrl: 'http://www.example.com'
@@ -78,7 +80,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
   t.throws(() => {
-    new EarthdataLoginClient({ // eslint-disable-line no-new
+    new EarthdataLogin({ // eslint-disable-line no-new
       clientId: 'client-id',
       clientPassword: 'client-password',
       earthdataLoginUrl: 'http://www.example.com',
@@ -88,15 +90,15 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a 
   TypeError);
 });
 
-test('EarthdataLogin.authorizationUrl() returns the correct URL when no state is specified', (t) => {
-  const earthdataLoginClient = new EarthdataLoginClient({
+test('EarthdataLogin.getAuthorizationUrl() returns the correct URL when no state is specified', (t) => {
+  const earthdataLogin = new EarthdataLogin({
     clientId: 'client-id',
     clientPassword: 'client-password',
     earthdataLoginUrl: 'http://www.example.com',
     redirectUri: 'http://www.example.com/cb'
   });
 
-  const authorizationUrl = earthdataLoginClient.authorizationUrl();
+  const authorizationUrl = earthdataLogin.getAuthorizationUrl();
   const parsedAuthorizationUrl = new URL(authorizationUrl);
 
   t.is(parsedAuthorizationUrl.origin, 'http://www.example.com');
@@ -107,15 +109,15 @@ test('EarthdataLogin.authorizationUrl() returns the correct URL when no state is
   t.false(parsedAuthorizationUrl.searchParams.has('state'));
 });
 
-test('EarthdataLogin.authorizationUrl() returns the correct URL when a state is specified', (t) => {
-  const earthdataLoginClient = new EarthdataLoginClient({
+test('EarthdataLogin.getAuthorizationUrl() returns the correct URL when a state is specified', (t) => {
+  const earthdataLogin = new EarthdataLogin({
     clientId: 'client-id',
     clientPassword: 'client-password',
     earthdataLoginUrl: 'http://www.example.com',
     redirectUri: 'http://www.example.com/cb'
   });
 
-  const authorizationUrl = earthdataLoginClient.authorizationUrl('the-state');
+  const authorizationUrl = earthdataLogin.getAuthorizationUrl('the-state');
   const parsedAuthorizationUrl = new URL(authorizationUrl);
 
   t.is(parsedAuthorizationUrl.origin, 'http://www.example.com');
@@ -127,7 +129,7 @@ test('EarthdataLogin.authorizationUrl() returns the correct URL when a state is 
 });
 
 test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is not set', async (t) => {
-  const earthdataLoginClient = new EarthdataLoginClient({
+  const earthdataLogin = new EarthdataLogin({
     clientId: 'client-id',
     clientPassword: 'client-password',
     earthdataLoginUrl: 'http://www.example.com',
@@ -135,7 +137,7 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
   });
 
   try {
-    await earthdataLoginClient.getAccessToken();
+    await earthdataLogin.getAccessToken();
     t.fail('Expected getAccessToken to throw an error');
   }
   catch (err) {
@@ -145,7 +147,7 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
 });
 
 test.serial('EarthdataLogin.getAccessToken() sends a correct request to the token endpoint', async (t) => {
-  const earthdataLoginClient = new EarthdataLoginClient({
+  const earthdataLogin = new EarthdataLogin({
     clientId: 'client-id',
     clientPassword: 'client-password',
     earthdataLoginUrl: 'http://www.example.com',
@@ -185,13 +187,13 @@ test.serial('EarthdataLogin.getAccessToken() sends a correct request to the toke
       }
     );
 
-  await earthdataLoginClient.getAccessToken('authorization-code');
+  await earthdataLogin.getAccessToken('authorization-code');
 
   t.true(tokenRequest.isDone());
 });
 
 test.serial('EarthdataLogin.getAccessToken() returns token information for a valid authorizationCode', async (t) => {
-  const earthdataLoginClient = new EarthdataLoginClient({
+  const earthdataLogin = new EarthdataLogin({
     clientId: 'client-id',
     clientPassword: 'client-password',
     earthdataLoginUrl: 'http://www.example.com',
@@ -217,7 +219,7 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
     refreshToken,
     expirationTime,
     username
-  } = await earthdataLoginClient.getAccessToken('authorization-code');
+  } = await earthdataLogin.getAccessToken('authorization-code');
   const requestEndTime = Date.now();
 
   t.true(tokenRequest.isDone());
@@ -229,8 +231,8 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
   t.is(username, 'sidney');
 });
 
-test.serial('EarthdataLogin.getAccessToken() throws a ClientAuthenticationError error for an invalid authorizationCode', async (t) => {
-  const earthdataLoginClient = new EarthdataLoginClient({
+test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailure error for an invalid authorizationCode', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
     clientId: 'client-id',
     clientPassword: 'client-password',
     earthdataLoginUrl: 'http://www.example.com',
@@ -239,14 +241,37 @@ test.serial('EarthdataLogin.getAccessToken() throws a ClientAuthenticationError 
 
   const tokenRequest = nock('http://www.example.com')
     .post('/oauth/token')
-    .reply(400, { error: 'invalid_grant' });
+    .reply(400);
 
   try {
-    await earthdataLoginClient.getAccessToken('authorization-code');
-    t.fail('Expected a ClientAuthenticationFailed error');
+    await earthdataLogin.getAccessToken('authorization-code');
+    t.fail('Expected a OAuth2AuthenticationFailure error');
   }
   catch (err) {
-    t.true(err instanceof ClientAuthenticationError);
+    t.true(err instanceof OAuth2AuthenticationFailure);
+  }
+
+  t.true(tokenRequest.isDone());
+});
+
+test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError error if there is a problem with the Earthdata Login service', async (t) => {
+  const earthdataLogin = new EarthdataLogin({
+    clientId: 'client-id',
+    clientPassword: 'client-password',
+    earthdataLoginUrl: 'http://www.example.com',
+    redirectUri: 'http://www.example.com/cb'
+  });
+
+  const tokenRequest = nock('http://www.example.com')
+    .post('/oauth/token')
+    .reply(500);
+
+  try {
+    await earthdataLogin.getAccessToken('authorization-code');
+    t.fail('Expected a OAuth2AuthenticationError error');
+  }
+  catch (err) {
+    t.true(err instanceof OAuth2AuthenticationError);
   }
 
   t.true(tokenRequest.isDone());
