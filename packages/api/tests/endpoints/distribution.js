@@ -8,37 +8,9 @@ const {
 } = require('@cumulus/common');
 
 const distributionEndpoint = require('../../endpoints/distribution');
-const EarthdataLoginClient = require('../../lib/EarthdataLoginClient');
-const { ClientAuthenticationError } = require('../../lib/errors');
+const EarthdataLoginClient = require('../../lib/EarthdataLogin');
+const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 
-class TestEarthdataLoginClient extends EarthdataLoginClient {
-  constructor(params) {
-    const defaultParams = {
-      clientId: randomString(),
-      clientPassword: randomString(),
-      earthdataLoginUrl: `http://${randomString()}`,
-      redirectUri: `http://${randomString()}`
-    };
-
-    super(Object.assign(defaultParams, params));
-  }
-}
-
-class InvalidAuthorizationCodeEarthdataLoginClient extends TestEarthdataLoginClient {
-  async getAccessToken() {
-    throw new ClientAuthenticationError();
-  }
-}
-
-class AcceptAnyAuthorizationCodeEarthdataLoginClient extends TestEarthdataLoginClient {
-  async getAccessToken() {
-    return {
-      accessToken: randomString(),
-      username: this.username || randomString(),
-      expirationTime: Date.now() + (60 * 60 * 1000)
-    };
-  }
-}
 
 test.beforeEach((t) => {
   t.context.clientId = randomString();
@@ -56,7 +28,7 @@ test.beforeEach((t) => {
   t.context.s3Client = s3();
 });
 
-test('GET without a code in the queryParameters returns a correct redirect', async (t) => {
+test('Using Earthdata Login, GET without a code in the queryParameters returns a correct redirect', async (t) => {
   const granuleId = randomString();
 
   const request = {
@@ -87,7 +59,7 @@ test('GET without a code in the queryParameters returns a correct redirect', asy
   t.is(locationUrl.searchParams.get('state'), granuleId);
 });
 
-test('GET without a code and with state set in pathParameters.proxy sets the correct state in the redirect URL', async (t) => {
+test('Using Earthdata Login, GET without a code and with state set in pathParameters.proxy sets the correct state in the redirect URL', async (t) => {
   const state = randomString();
 
   const request = {
@@ -108,7 +80,7 @@ test('GET without a code and with state set in pathParameters.proxy sets the cor
   t.is(locationUrl.searchParams.get('state'), state);
 });
 
-test('GET without a code and with state set in queryParameters.state sets the correct state in the redirect URL', async (t) => {
+test('Using Earthdata Login, GET without a code and with state set in queryParameters.state sets the correct state in the redirect URL', async (t) => {
   const state = randomString();
 
   const request = {
@@ -128,8 +100,12 @@ test('GET without a code and with state set in queryParameters.state sets the co
   t.is(locationUrl.searchParams.get('state'), state);
 });
 
-test('GET with an invalid code returns a 400 response', async (t) => {
-  const earthdataLoginClient = new InvalidAuthorizationCodeEarthdataLoginClient();
+test('Using Earthdata Login, GET with an invalid code returns a 400 response', async (t) => {
+  const earthdataLoginClient = {
+    getAccessToken: async () => {
+      throw new OAuth2AuthenticationFailure();
+    }
+  };
 
   const request = {
     queryStringParameters: {
@@ -148,10 +124,16 @@ test('GET with an invalid code returns a 400 response', async (t) => {
 
 
 test("The S3 redirect includes the user's Earthdata Login username", async (t) => {
-  const earthdataLoginClient = new AcceptAnyAuthorizationCodeEarthdataLoginClient();
-
   const myUsername = randomString();
-  earthdataLoginClient.username = myUsername;
+
+  const earthdataLoginClient = {
+    getAccessToken: async () => ({
+      accessToken: 'my-access-token',
+      refreshToken: 'my-refresh-token',
+      username: myUsername,
+      expirationTime: 12345
+    })
+  };
 
   const request = {
     queryStringParameters: {
@@ -173,7 +155,14 @@ test("The S3 redirect includes the user's Earthdata Login username", async (t) =
 });
 
 test('The correct signed URL is requested', async (t) => {
-  const earthdataLoginClient = new AcceptAnyAuthorizationCodeEarthdataLoginClient();
+  const earthdataLoginClient = {
+    getAccessToken: async () => ({
+      accessToken: 'my-access-token',
+      refreshToken: 'my-refresh-token',
+      username: 'sidney',
+      expirationTime: 12345
+    })
+  };
 
   const granuleBucket = randomString();
   const granuleKey = `${randomString()}/${randomString()}`;
@@ -186,9 +175,6 @@ test('The correct signed URL is requested', async (t) => {
       return 'http://www.example.com';
     }
   };
-
-  const myUsername = randomString();
-  earthdataLoginClient.username = myUsername;
 
   const request = {
     queryStringParameters: {
@@ -204,6 +190,32 @@ test('The correct signed URL is requested', async (t) => {
   );
 });
 
-test.todo('A correct error is returned if the granule bucket and key could not be extracted');
+test('A correct error is returned if the granule bucket and key could not be extracted', async (t) => {
+  const earthdataLoginClient = {
+    getAccessToken: async () => ({
+      accessToken: 'my-access-token',
+      refreshToken: 'my-refresh-token',
+      username: 'my-username',
+      expirationTime: 12345
+    })
+  };
 
-test.todo('Handle the case where an access token is included in the request, instead of an authorization code');
+  const request = {
+    queryStringParameters: {
+      code: randomString(),
+      state: 'invalid'
+    }
+  };
+
+  const response = await distributionEndpoint.handleRequest(
+    request,
+    earthdataLoginClient,
+    t.context.s3Client
+  );
+
+  t.is(response.statusCode, 400);
+
+  const parsedBody = JSON.parse(response.body);
+
+  t.is(parsedBody.error, 'Granule location "invalid" could not be parsed');
+});
