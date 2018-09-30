@@ -3,10 +3,16 @@
 const got = require('got');
 const { URL } = require('url');
 
-const { ClientAuthenticationError } = require('./errors');
+const {
+  OAuth2AuthenticationError,
+  OAuth2AuthenticationFailure,
+  OAuth2
+} = require('./OAuth2');
 
-class EarthdataLoginClient {
+class EarthdataLoginClient extends OAuth2 {
   constructor(params) {
+    super();
+
     const {
       clientId,
       clientPassword,
@@ -27,7 +33,7 @@ class EarthdataLoginClient {
     this.redirectUri = new URL(redirectUri);
   }
 
-  authorizationUrl(state) {
+  getAuthorizationUrl(state) {
     const url = new URL(this.earthdataLoginUrl);
     url.pathname = '/oauth/authorize';
     url.searchParams.set('client_id', this.clientId);
@@ -73,12 +79,11 @@ class EarthdataLoginClient {
       if (
         err.name === 'HTTPError'
         && err.statusCode === 400
-        && err.response.body.error === 'invalid_grant'
       ) {
-        throw new ClientAuthenticationError();
+        throw new OAuth2AuthenticationFailure();
       }
 
-      throw err;
+      throw new OAuth2AuthenticationError(err.message);
     }
   }
 }
