@@ -38,7 +38,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   const collection = { name: `MOD09GQ_${duplicateHandlingSuffix}`, version: '006' };
   const provider = { id: 's3_provider' };
   const fileStagingDir = 'custom-staging-dir';
-  const taskName = 'SyncGranule';
+  const workflowName = 'SyncGranule';
   let destFileDir;
   let existingFileKey;
   let inputPayload;
@@ -65,7 +65,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
     await addCollections(config.stackName, config.bucket, collectionsDirectory);
 
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
 
     const collectionInfo = await c.get(collection);
@@ -103,7 +103,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   describe('and it is not configured to catch the duplicate error', () => {
     beforeAll(async () => {
       workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, taskName, collection, provider, inputPayload
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
     });
 
@@ -128,11 +128,11 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   });
 
   describe('and it is configured to catch the duplicate error', () => {
-    const catchTaskName = 'SyncGranuleCatchDuplicateErrorTest';
+    const catchWorkflowName = 'SyncGranuleCatchDuplicateErrorTest';
 
     beforeAll(async () => {
       workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, catchTaskName, collection, provider, inputPayload
+        config.stackName, config.bucket, catchWorkflowName, collection, provider, inputPayload
       );
     });
 
