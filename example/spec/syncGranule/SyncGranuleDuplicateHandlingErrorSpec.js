@@ -48,7 +48,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
   // update test data filepaths
   let updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-  updatedInputPayloadJson = globalReplace(inputPayloadJson, '{{duplicateHandlingSuffix}}', duplicateHandlingSuffix);
+  updatedInputPayloadJson = globalReplace(updatedInputPayloadJson, '{{duplicateHandlingSuffix}}', duplicateHandlingSuffix);
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const c = new Collection();
