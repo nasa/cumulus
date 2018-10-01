@@ -533,6 +533,7 @@ class Granule {
         url_path: this.getUrlPath(file),
         bucket
       });
+    if (exists) stagedFile.duplicate_found = true;
 
     log.debug(`file ${destinationKey} exists in ${bucket}: ${exists}`);
     // Have to throw DuplicateFile and not WorkflowError, because the latter
