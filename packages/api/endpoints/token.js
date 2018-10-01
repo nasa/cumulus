@@ -45,7 +45,9 @@ async function token(event, oAuth2Provider) {
         .then(() => {
           if (state) {
             log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
-            return buildPermanentRedirectResponse(`${decodeURIComponent(state)}?token=${accessToken}`);
+            return buildPermanentRedirectResponse(
+              `${decodeURIComponent(state)}?token=${accessToken}`
+            );
           }
           log.info('Log info: No state specified, responding 200');
           return buildLambdaProxyResponse({
