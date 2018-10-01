@@ -157,7 +157,7 @@ test.after.always(async () => {
   await userModel.deleteTable();
 });
 
-test('GET without an Authorization header returns an Authorization Missing response', async (t) => {
+test('CUMULUS-911 GET without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -168,6 +168,22 @@ test('GET without an Authorization header returns an Authorization Missing respo
 
   return testEndpoint(executionStatusEndpoint, request, (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('CUMULUS-912 GET with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      arn: 'asdf'
+    },
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+
+  return testEndpoint(executionStatusEndpoint, request, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
   });
 });
 

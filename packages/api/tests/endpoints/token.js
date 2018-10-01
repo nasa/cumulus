@@ -12,6 +12,7 @@ const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 const { fakeUserFactory } = require('../../lib/testUtils');
 const { User } = require('../../models');
 const { handleRequest } = require('../../endpoints/token');
+const assertions = require('../../lib/assertions');
 
 let userModel;
 test.before(async () => {
@@ -95,7 +96,7 @@ test.serial('GET /token with an invalid code results in an authorization failure
   t.is(JSON.parse(response.body).message, 'Failed to get authorization token');
 });
 
-test.serial('GET /token with a code for an unauthorized user results in an authorization failure response', async (t) => {
+test.serial('CUMULUS-912 GET /token with a code for an unauthorized user results in an authorization failure response', async (t) => {
   const mockOAuth2Provider = {
     getAccessToken: async () => ({
       accessToken: 'my-access-token',
@@ -115,8 +116,7 @@ test.serial('GET /token with a code for an unauthorized user results in an autho
 
   const response = await handleRequest(request, mockOAuth2Provider);
 
-  t.is(response.statusCode, 401);
-  t.is(JSON.parse(response.body).message, 'User is not authorized to access this site');
+  assertions.isUnauthorizedUserResponse(t, response);
 });
 
 test.serial('GET /token with a code but no state returns the access token', async (t) => {
