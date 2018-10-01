@@ -38,7 +38,7 @@ describe('The Sync Granules workflow is not configured to handle duplicates', ()
   const collection = { name: `MOD09GQ_${duplicateHandlingSuffix}`, version: '006' };
   const provider = { id: 's3_provider' };
   const fileStagingDir = 'custom-staging-dir';
-  const taskName = 'SyncGranuleNoDuplicateHandlingTest';
+  const workflowName = 'SyncGranuleNoDuplicateHandlingTest';
   let destFileDir;
   let existingFileKey;
   let inputPayload;
@@ -65,7 +65,7 @@ describe('The Sync Granules workflow is not configured to handle duplicates', ()
     await addCollections(config.stackName, config.bucket, collectionsDirectory);
 
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
 
     const collectionInfo = await c.get(collection);
@@ -105,7 +105,7 @@ describe('The Sync Granules workflow is not configured to handle duplicates', ()
 
     beforeAll(async () => {
       workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, taskName, collection, provider, inputPayload
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
     });
 
