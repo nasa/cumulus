@@ -30,7 +30,7 @@ const workflowName = 'SyncGranuleDuplicateSkipTest';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
-const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
+const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranuleDuplicate.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
   config: config.SyncGranule
