@@ -3,6 +3,22 @@
 const { OAuth2 } = require('./OAuth2');
 
 class GoogleOAuth2 extends OAuth2 {
+  /**
+   * @param {Object} googleOAuth2Client - see example
+   * @param {Object} googlePlusPeopleClient - see example
+   *
+   * @example
+   *
+   * const googleOAuth2Client = new google.auth.OAuth2(
+   *   'my-client-id',
+   *   'my-client-password',
+   *   'http://my-api.com'
+   * );
+   *
+   * const googlePlusPeopleClient = google.plus('v1').people;
+   *
+   * const oAuth2Provider = new GoogleOAuth2(googleOAuth2Client, googlePlusPeopleClient);
+   */
   constructor(googleOAuth2Client, googlePlusPeopleClient) {
     super();
 
@@ -13,6 +29,12 @@ class GoogleOAuth2 extends OAuth2 {
     this.googlePlusPeopleClient = googlePlusPeopleClient;
   }
 
+  /**
+   * Get a URL of the Google OAuth2 authorization endpoint
+   *
+   * @param {string} [state] - an optional state to pass to Google
+   * @returns {string} the Google OAuth2 authorization URL
+   */
   getAuthorizationUrl(state) {
     return this.googleOAuth2Client.generateAuthUrl({
       access_type: 'offline',
@@ -21,6 +43,20 @@ class GoogleOAuth2 extends OAuth2 {
     });
   }
 
+  /**
+   * Given an authorization code, request an access token and associated
+   * information from the Google OAuth2 service.
+   *
+   * Returns an object with the following properties:
+   *
+   * - accessToken
+   * - refreshToken
+   * - username
+   * - expirationTime (in milliseconds)
+   *
+   * @param {string} authorizationCode - an OAuth2 authorization code
+   * @returns {Promise<Object>} access token information
+   */
   async getAccessToken(authorizationCode) {
     if (!authorizationCode) throw new TypeError('authorizationCode is required');
 
