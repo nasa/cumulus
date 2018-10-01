@@ -129,7 +129,8 @@ default:
     'workflows/helloworld.yml',
     'workflows/cnm.yml',
     'workflows/errorsAndRetries.yml',
-    'workflows/sips.yml'
+    'workflows/sips.yml',
+    'workflows/syncGranule.yml'
   ]
 
   iams:
@@ -384,3 +385,11 @@ jk:
 jk2:
   stackName: jk2
   stackNameNoDash: jk2
+
+mboyd-test:
+  stackName: mboyd-test
+  stackNameNoDash: mboydTest
+
+mboyd-int:
+  stackName: mboyd-int
+  stackNameNoDash: mboydInt

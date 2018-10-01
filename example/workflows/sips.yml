@@ -29,6 +29,7 @@ SyncGranule:
         stack: '{$.meta.stack}'
         fileStagingDir: 'custom-staging-dir'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'

@@ -6,6 +6,7 @@ const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString } = require('@cumulus/common/test-utils');
 const { buildS3Uri, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const errors = require('@cumulus/common/errors');
 
 const {
   selector,
@@ -22,16 +23,22 @@ const {
   moveGranuleFile,
   getGranuleId
 } = require('../granule');
-
+const { baseProtocol } = require('../protocol');
+const { s3Mixin } = require('../s3');
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
-  await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
+  t.context.destBucket = `dest-bucket-${randomString().slice(0, 6)}`;
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.destBucket }).promise()
+  ]);
 });
 
 test.afterEach(async (t) => {
   await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.internalBucket)
+    recursivelyDeleteS3Bucket(t.context.internalBucket),
+    recursivelyDeleteS3Bucket(t.context.destBucket)
   ]);
 });
 /**
@@ -397,4 +404,49 @@ test('getGranuleId fails', (t) => {
   const regex = '(.*).TXT';
   const error = t.throws(() => getGranuleId(uri, regex), Error);
   t.is(error.message, `Could not determine granule id of ${uri} using ${regex}`);
+});
+
+class TestS3Granule extends s3Mixin(baseProtocol(Granule)) {}
+
+test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+
+  const file = {
+    path: '',
+    name: 'test.txt'
+  };
+
+  const Key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key, Body: 'test' };
+  await s3().putObject(params).promise();
+
+  const collectionConfig = {
+    files: [
+      {
+        regex: '^[A-Z]|[a-z]+\.txt'
+      }
+    ]
+  };
+  const duplicateHandling = 'error';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  // This test needs to use a unique bucket for each test (or remove the object
+  // added to the destination bucket). Otherwise, it will throw an error on the
+  // first attempt to ingest the file.
+  await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
+  const destFileKey = path.join(fileStagingDir, file.name);
+  t.true(error instanceof errors.DuplicateFile);
+  t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
 });
