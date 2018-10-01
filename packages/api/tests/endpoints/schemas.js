@@ -1,12 +1,24 @@
 'use strict';
 
 const test = require('ava');
+const { randomString } = require('@cumulus/common/test-utils');
 
+const models = require('../../models');
 const schemasEndpoint = require('../../endpoints/schemas');
 const {
   testEndpoint
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
+
+let userModel;
+test.before(async () => {
+  process.env.UsersTable = randomString();
+
+  userModel = new models.User();
+  await userModel.createTable();
+});
+
+test.after.always(() => userModel.deleteTable());
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
   const request = {

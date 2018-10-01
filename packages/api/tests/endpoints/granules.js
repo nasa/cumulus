@@ -182,7 +182,9 @@ test.serial('CUMULUS-911 DELETE with pathParameters.granuleName set and without 
 test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
-    headers: {}
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
   };
 
   const response = await handleRequest(request);
