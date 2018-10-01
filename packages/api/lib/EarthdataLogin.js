@@ -11,7 +11,26 @@ const {
 
 const isBadRequestError = (err) => err.name === 'HTTPError' && err.statusCode === 400;
 
-class EarthdataLoginClient extends OAuth2 {
+/**
+ * This is an interface to the Earthdata Login service.
+ */
+class EarthdataLogin extends OAuth2 {
+  /**
+   * @param {Object} params - params
+   * @param {string} params.clientId - see example
+   * @param {string} params.clientPassword - see example
+   * @param {string} params.earthdataLoginUrl - see example
+   * @param {string} params.redirectUri - see example
+   *
+   * @example
+   *
+   * const oAuth2Provider = new EarthdataLogin({
+   *   clientId: 'my-client-id',
+   *   clientPassword: 'my-client-password',
+   *   earthdataLoginUrl: 'https://earthdata.login.nasa.gov',
+   *   redirectUri: 'http://my-api.com'
+   * });
+   */
   constructor(params) {
     super();
 
@@ -35,8 +54,15 @@ class EarthdataLoginClient extends OAuth2 {
     this.redirectUri = new URL(redirectUri);
   }
 
+  /**
+   * Get a URL of the Earthdata Login authorization endpoint
+   *
+   * @param {string} [state] - an optional state to pass to Earthdata Login
+   * @returns {string} the Earthdata Login authorization URL
+   */
   getAuthorizationUrl(state) {
     const url = new URL(this.earthdataLoginUrl);
+
     url.pathname = '/oauth/authorize';
     url.searchParams.set('client_id', this.clientId);
     url.searchParams.set('redirect_uri', this.redirectUri.toString());
@@ -72,6 +98,20 @@ class EarthdataLoginClient extends OAuth2 {
     );
   }
 
+  /**
+   * Given an authorization code, request an access token and associated
+   * information from the Earthdata Login service.
+   *
+   * Returns an object with the following properties:
+   *
+   * - accessToken
+   * - refreshToken
+   * - username
+   * - expirationTime (in milliseconds)
+   *
+   * @param {string} authorizationCode - an OAuth2 authorization code
+   * @returns {Promise<Object>} access token information
+   */
   async getAccessToken(authorizationCode) {
     if (!authorizationCode) throw new TypeError('authorizationCode is required');
 
@@ -94,4 +134,4 @@ class EarthdataLoginClient extends OAuth2 {
     }
   }
 }
-module.exports = EarthdataLoginClient;
+module.exports = EarthdataLogin;
