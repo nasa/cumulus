@@ -98,8 +98,8 @@ const lambdaFunctionEvent = {
 };
 
 const stepFunctionMock = {
-  getExecutionStatus: function (arn) {
-    return new Promise((resolve) => {
+  getExecutionStatus: (arn) =>
+    new Promise((resolve) => {
       let executionStatus;
       if (arn === 'stillRunning') {
         executionStatus = { ...executionStatusCommon };
@@ -119,20 +119,18 @@ const stepFunctionMock = {
         },
         stateMachine: {}
       });
-    });
-  }
+    })
 };
 
 const s3Mock = {
-  get: function (_, key) {
-    return new Promise((resolve) => {
+  get: (_, key) =>
+    new Promise((resolve) => {
       const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
       const s3Result = {
         Body: Buffer.from(JSON.stringify(fullMessage))
       };
       resolve(s3Result);
-    });
-  }
+    })
 };
 
 executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
