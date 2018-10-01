@@ -233,7 +233,7 @@ test('getAuthorizationFailureResponse returns an appropriate response when a tok
   const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
 
   t.truthy(response);
-  t.is(response.statusCode, 401);
+  t.is(response.statusCode, 403);
   t.is(response.headers['Content-Type'], 'application/json');
   t.true(response.headers['WWW-Authenticate'].includes('error="invalid_token"'));
   t.true(response.headers['WWW-Authenticate'].includes('error_description="Invalid Authorization token"'));

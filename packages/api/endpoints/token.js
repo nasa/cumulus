@@ -58,10 +58,9 @@ async function token(event, oAuth2Provider) {
         })
         .catch((e) => {
           if (e.message.includes('No record found for')) {
-            const errorMessage = 'User is not authorized to access this site';
             return buildAuthorizationFailureResponse({
-              error: new Error(errorMessage),
-              message: errorMessage
+              message: 'User not authorized',
+              statusCode: 403
             });
           }
           return buildAuthorizationFailureResponse({ error: e, message: e.message });
