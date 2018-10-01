@@ -175,7 +175,7 @@ describe('When a workflow', () => {
       timeout
     );
 
-    it('the workflow has executed successfully and is returned when querying the API', () => {
+    xit('the workflow has executed successfully and is returned when querying the API', () => {
       expect(workflowStatus).toBeTruthy();
       expect(workflowStatus.arn).toEqual(workflowExecutionArn);
       expect(workflowStatus.status).toEqual('completed');
