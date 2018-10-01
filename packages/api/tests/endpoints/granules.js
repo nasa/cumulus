@@ -126,7 +126,7 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
-test.serial('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {}
@@ -137,7 +137,7 @@ test.serial('GET without pathParameters and without an Authorization header retu
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('GET with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {},
@@ -151,7 +151,7 @@ test.serial('GET with pathParameters.granuleName set and without an Authorizatio
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('PUT with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 PUT with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'PUT',
     headers: {},
@@ -165,7 +165,7 @@ test.serial('PUT with pathParameters.granuleName set and without an Authorizatio
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('DELETE with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 DELETE with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     headers: {},
@@ -177,6 +177,65 @@ test.serial('DELETE with pathParameters.granuleName set and without an Authoriza
   const response = await handleRequest(request);
 
   assertions.isAuthorizationMissingResponse(t, response);
+});
+
+test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {}
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isUnauthorizedUserResponse(t, response);
+});
+
+test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    },
+    pathParameters: {
+      granuleName: 'asdf'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isUnauthorizedUserResponse(t, response);
+});
+
+test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'PUT',
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    },
+    pathParameters: {
+      granuleName: 'asdf'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isUnauthorizedUserResponse(t, response);
+});
+
+test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    },
+    pathParameters: {
+      granuleName: 'asdf'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isUnauthorizedUserResponse(t, response);
 });
 
 test.serial('GET returns an existing granule', async (t) => {
@@ -507,7 +566,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 
       await Promise.all(newGranule.files.map((file) => {
         const filepath = file.filepath || aws.parseS3Uri(file.filename).Key;
-        putObject({ Bucket: file.bucket, Key: filepath, Body: 'test data' });
+        return putObject({ Bucket: file.bucket, Key: filepath, Body: 'test data' });
       }));
 
       const destinationFilepath = `${process.env.stackName}/granules_moved`;

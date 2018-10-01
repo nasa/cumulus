@@ -8,7 +8,7 @@ const {
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
-test('GET with pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
+test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -19,5 +19,21 @@ test('GET with pathParameters and without an Authorization header returns an Aut
 
   return testEndpoint(schemasEndpoint, request, (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      schemaName: 'asdf'
+    },
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+
+  return testEndpoint(schemasEndpoint, request, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
   });
 });

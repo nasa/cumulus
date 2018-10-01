@@ -60,7 +60,7 @@ test.after.always(async () => {
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
 
-test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {}
@@ -71,7 +71,7 @@ test('GET without pathParameters and without an Authorization header returns an 
   });
 });
 
-test('GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -85,7 +85,7 @@ test('GET with pathParameters and without an Authorization header returns an Aut
   });
 });
 
-test('DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -96,6 +96,51 @@ test('DELETE with pathParameters and without an Authorization header returns an 
 
   return testEndpoint(pdrEndpoint, request, (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+
+  return testEndpoint(pdrEndpoint, request, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
+  });
+});
+
+test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      pdrName: 'asdf'
+    },
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+
+  return testEndpoint(pdrEndpoint, request, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
+  });
+});
+
+test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      pdrName: 'asdf'
+    },
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+
+  return testEndpoint(pdrEndpoint, request, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
   });
 });
 
