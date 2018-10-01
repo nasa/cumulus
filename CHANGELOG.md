@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Created a `@cumulus/api/lib/OAuth2` interface, which is implemented by the
+  `@cumulus/api/lib/EarthdataLogin` and `@cumulus/api/lib/GoogleOAuth2` classes.
+  Endpoints that need to handle authentication will determine which class to use
+  based on environment variables. This also greatly simplifies testing.
+- Added `@cumulus/api/lib/assertions`, containing more complex AVA test assertions
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
 - `@cumulus/integration-tests` new functionality:
   - `listCollections` to list collections from a provided data directory
@@ -21,6 +26,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - **CUMULUS-779** - Added integration test for `@cumulus/sync-granule` when `duplicateHandling` is set to `error`
+
+### Removed
+
+- Removed `@cumulus/common/fake-earthdata-login-server`. Tests can now create a
+  service stub based on `@cumulus/api/lib/OAuth2` if testing requires handling
+  authentication.
 
 ### Changed
 
