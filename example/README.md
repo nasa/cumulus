@@ -17,7 +17,7 @@ These tests run against AWS, so a Cumulus deployment is needed. Set up the deplo
 
 Your default AWS credentials should be the same credentials used for the deployment.
 
-You should deploy your own stack on AWS and use that for testing. To configure and deploy your stack, add a new deployment to `app/config.yml` and `iam/config.yml` files and deploy them.
+You should deploy your own stack on AWS and use that for testing. To configure and deploy your stack, add a new deployment to `app/config.yml` and `iam/config.yml` files and deploy them. You will also need to copy `app/.env.sample` to `app/.env` and provide your configuration.
 
 Use the name of your deployment to run the tests by setting the `DEPLOYMENT` environment variable. For example:
 
@@ -53,7 +53,7 @@ Test data comes from the @cumulus/test-data package and is uploaded to S3 during
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
-To run all of the tests, run `DEPLOYMENT=<name-of-your-deployment> npm test` in the top level of the repository.
+To run all of the tests, run `DEPLOYMENT=<name-of-your-deployment> npm test` in this directory.
 
 ### Run tests for an individual test file
 

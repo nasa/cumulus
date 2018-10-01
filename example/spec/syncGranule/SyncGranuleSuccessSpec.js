@@ -1,9 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const {
-  aws: { s3, s3ObjectExists },
-} = require('@cumulus/common');
-const {
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   addProviders,
   cleanupProviders,
@@ -12,7 +10,17 @@ const {
   LambdaStep
 } = require('@cumulus/integration-tests');
 const { Execution } = require('@cumulus/api/models');
-
+const {
+  aws: {
+    headObject,
+    parseS3Uri,
+    s3,
+    s3ObjectExists
+  },
+  testUtils: {
+    randomString
+  }
+} = require('@cumulus/common');
 const {
   loadConfig,
   templateFile,
@@ -21,15 +29,19 @@ const {
   createTestDataPath,
   deleteFolder
 } = require('../helpers/testUtils');
-const { setupTestGranuleForIngest, loadFileWithUpdatedGranuleIdAndPath } = require('../helpers/granuleUtils');
+const {
+  setupTestGranuleForIngest,
+  loadFileWithUpdatedGranuleIdAndPath
+} = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const taskName = 'SyncGranule';
+const workflowName = 'SyncGranuleDuplicateSkipTest';
+
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const defaultDataFolder = 'cumulus-test-data/pdrs';
 
-const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json'; // eslint-disable-line max-len
+const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
   config: config.SyncGranule
@@ -40,7 +52,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
-describe('The Sync Granules workflow', () => {
+describe('When the Sync Granules workflow is configured to overwrite data with duplicate filenames', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
   const testSuffix = `_${testId}`;
   const testDataFolder = createTestDataPath(testId);
@@ -51,7 +63,7 @@ describe('The Sync Granules workflow', () => {
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
   let inputPayload;
   let expectedPayload;
-  let workflowExecution = null;
+  let workflowExecution;
 
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
@@ -65,6 +77,7 @@ describe('The Sync Granules workflow', () => {
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+
     // update test data filepaths
     inputPayload = setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
@@ -72,9 +85,8 @@ describe('The Sync Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
     expectedPayload.granules[0].dataType += testSuffix;
 
-    // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
-      config.stackName, config.bucket, taskName, collection, provider, inputPayload
+      config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
   });
 
@@ -83,7 +95,11 @@ describe('The Sync Granules workflow', () => {
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
     ]);
   });
 
@@ -105,13 +121,6 @@ describe('The Sync Granules workflow', () => {
       key2 = path.join(files[1].fileStagingDir, files[1].name);
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: key1 });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: key2 });
-    });
-
-    afterAll(async () => {
-      await Promise.all([
-        s3().deleteObject({ Bucket: files[0].bucket, Key: key1 }).promise(),
-        s3().deleteObject({ Bucket: files[1].bucket, Key: key2 }).promise()
-      ]);
     });
 
     it('receives payload with file objects updated to include file staging location', () => {
@@ -140,6 +149,60 @@ describe('The Sync Granules workflow', () => {
     it('the execution record is added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
+    });
+  });
+
+  describe('and it encounters data with a duplicated filename', () => {
+    let lambdaOutput;
+    let existingfiles;
+    let fileUpdated;
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+      const files = lambdaOutput.payload.granules[0].files;
+      existingfiles = await Promise.all(files.map(async (f) => {
+        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
+        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
+      }));
+
+      // update one of the input files, so that the file has different checksum
+      const content = randomString();
+      const file = inputPayload.granules[0].files[0];
+      fileUpdated = file.name;
+      const updateParams = {
+        Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
+      };
+
+      await s3().putObject(updateParams).promise();
+      inputPayload.granules[0].files[0].fileSize = content.length;
+
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      );
+    });
+
+    it('does not raise a workflow error', () => {
+      expect(workflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('overwrites the existing file with the new data', async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+      const files = lambdaOutput.payload.granules[0].files;
+
+      const currentFiles = await Promise.all(files.map(async (f) => {
+        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
+        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
+      }));
+
+      expect(currentFiles.length).toBe(existingfiles.length);
+
+      currentFiles.forEach((cf) => {
+        const existingfile = existingfiles.filter((ef) => ef.filename === cf.filename);
+        expect(cf.LastModified).toBeGreaterThan(existingfile[0].LastModified);
+        if (cf.filename.endsWith(fileUpdated)) {
+          expect(cf.fileSize).toBe(inputPayload.granules[0].files[0].fileSize);
+        }
+      });
     });
   });
 });
