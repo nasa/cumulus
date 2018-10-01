@@ -477,10 +477,18 @@ class Granule {
    */
   async ingestFile(file, bucket, duplicateHandling) {
     // Check if the file exists
+    const Key = path.join(this.fileStagingDir, file.name);
     const exists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, file.name)
+      Key
     });
+
+    log.debug(`file ${Key} exists in ${bucket}: ${exists}`);
+    // Have to throw DuplicateFile and not WorkflowError, because the latter
+    // is not treated as a failure by the message adapter.
+    if (exists && duplicateHandling === 'error') {
+      throw new errors.DuplicateFile(`${Key} already exists in ${bucket} bucket`);
+    }
 
     // Exit early if we can
     if (exists && duplicateHandling === 'skip') return file;
