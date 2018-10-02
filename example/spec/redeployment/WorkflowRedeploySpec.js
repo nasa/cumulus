@@ -129,7 +129,8 @@ describe('When a workflow', () => {
     });
   });
 
-  describe('is removed and deployed during a workflow execution', () => {
+  // Disabled per CUMULUS-941
+  xdescribe('is removed and deployed during a workflow execution', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
@@ -175,7 +176,7 @@ describe('When a workflow', () => {
       timeout
     );
 
-    xit('the workflow has executed successfully and is returned when querying the API', () => {
+    it('the workflow has executed successfully and is returned when querying the API', () => {
       expect(workflowStatus).toBeTruthy();
       expect(workflowStatus.arn).toEqual(workflowExecutionArn);
       expect(workflowStatus.status).toEqual('completed');
