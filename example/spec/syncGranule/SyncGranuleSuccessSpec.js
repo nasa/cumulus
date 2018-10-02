@@ -56,11 +56,14 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
   const testSuffix = `_${testId}`;
   const testDataFolder = createTestDataPath(testId);
+
+  const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
+
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
-  const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
+
   let inputPayload;
   let expectedPayload;
   let workflowExecution;

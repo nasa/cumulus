@@ -34,7 +34,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   const testSuffix = `_${testId}`;
   const testDataFolder = createTestDataPath(testId);
 
-  const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandlingError.input.payload.json';
+  const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
 
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
@@ -63,7 +63,6 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
 
     // Create test granule
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
     granuleFileName = inputPayload.granules[0].files[0].name;
 
