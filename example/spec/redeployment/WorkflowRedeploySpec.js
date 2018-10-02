@@ -129,7 +129,8 @@ describe('When a workflow', () => {
     });
   });
 
-  describe('is removed and deployed during a workflow execution', () => {
+  // Disabled per CUMULUS-941
+  xdescribe('is removed and deployed during a workflow execution', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
