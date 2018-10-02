@@ -5,7 +5,8 @@
   "provider_path": "ignored-provider-path/test-data",
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
-  "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.h5",  
+  "duplicateHandling": "replace",
+  "sampleFileName": "L2_HR_PIXC_product_0001-of-4154.h5",
   "files": [
     {
       "bucket": "private",
