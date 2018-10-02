@@ -27,7 +27,6 @@ const lambdaStep = new LambdaStep();
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
-const collectionsDirectory = './data/collections/syncGranule/noDuplicateHandling';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
@@ -52,7 +51,7 @@ describe('The Sync Granules workflow is not configured to handle duplicates', ()
   let workflowExecution;
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const c = new Collection();
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // Upload test data to be synced for this spec
@@ -67,14 +66,11 @@ describe('The Sync Granules workflow is not configured to handle duplicates', ()
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
     granuleFileName = inputPayload.granules[0].files[0].name;
 
-    // Create test collection
-    await addCollections(config.stackName, config.bucket, collectionsDirectory);
-
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
 
-    const collectionInfo = await c.get(collection);
+    const collectionInfo = await collectionModel.get(collection);
     destFileDir = path.join(
       fileStagingDir,
       config.stackName,

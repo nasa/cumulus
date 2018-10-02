@@ -69,7 +69,7 @@ describe('When the Sync Granule workflow is configured to skip new data when enc
   let workflowExecution;
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const c = new Collection();
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     await Promise.all([
@@ -78,7 +78,7 @@ describe('When the Sync Granule workflow is configured to skip new data when enc
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
     // set collection duplicate handling to 'skip'
-    await c.update(collection, { duplicateHandling: 'skip' });
+    await collectionModel.update(collection, { duplicateHandling: 'skip' });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);

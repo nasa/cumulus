@@ -9,7 +9,7 @@ const {
   cleanupCollections,
   LambdaStep
 } = require('@cumulus/integration-tests');
-const { Execution } = require('@cumulus/api/models');
+const { Collection, Execution } = require('@cumulus/api/models');
 const {
   aws: {
     headObject,
@@ -70,6 +70,8 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
 
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -78,6 +80,8 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
+    await collectionModel.update(collection, { duplicateHandling: 'version' });
+
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
