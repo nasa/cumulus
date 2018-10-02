@@ -134,7 +134,6 @@ describe('When a workflow', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
-
     beforeAll(
       async () => {
         try {
