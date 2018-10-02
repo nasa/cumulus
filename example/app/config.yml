@@ -130,7 +130,8 @@ default:
     'workflows/cnm.yml',
     'workflows/errorsAndRetries.yml',
     'workflows/sips.yml',
-    'workflows/syncGranule.yml'
+    'workflows/syncGranule.yml',
+    'workflows/moveGranules.yml'
   ]
 
   iams:
