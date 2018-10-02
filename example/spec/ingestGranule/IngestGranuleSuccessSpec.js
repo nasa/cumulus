@@ -117,17 +117,17 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
-    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise();
-    await s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise();
-
-    // Remove the granule files added for the test
-    await deleteFolder(config.bucket, testDataFolder);
-
-    // delete ingested granule
-    await apiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
+    await Promise.all([
+      s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
+      s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
+      // Remove the granule files added for the test
+      deleteFolder(config.bucket, testDataFolder),
+      // delete ingested granule
+      apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
   });
 
   it('completes execution with success status', () => {
