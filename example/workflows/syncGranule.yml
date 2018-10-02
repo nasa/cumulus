@@ -57,7 +57,61 @@ SyncGranuleCatchDuplicateErrorTest:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
-    
+
+SyncGranuleNoDuplicateHandlingTest:
+  Comment: 'No duplicateHandling config for SyncGranule'
+  StartAt: Report
+  States:
+    Report:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: SyncGranuleNoVpc
+    SyncGranuleNoVpc:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        stack: '{$.meta.stack}'
+        fileStagingDir: 'custom-staging-dir'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
+      Type: Task
+      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
+
 SyncGranuleDuplicateVersionTest:
   Comment: 'Sync Granule duplicateHandling is version'
   StartAt: Report
