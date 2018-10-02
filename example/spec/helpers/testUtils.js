@@ -75,10 +75,12 @@ function templateFile({ inputTemplateFilename, config }) {
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
 function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', replacePaths = false) {
-  let data = fs.readFileSync(require.resolve(file), 'utf8');
+  let data;
   if (replacePaths) {
+    data = fs.readFileSync(require.resolve(file), 'utf8');
     data = globalReplace(data, 'cumulus-test-data/pdrs', prefix);
   }
+  else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
   return s3().putObject({
     Bucket: bucket,
