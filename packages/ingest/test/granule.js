@@ -1,4 +1,5 @@
 const fs = require('fs-extra');
+const moment = require('moment');
 const path = require('path');
 
 const test = require('ava');
@@ -406,7 +407,71 @@ test('getGranuleId fails', (t) => {
   t.is(error.message, `Could not determine granule id of ${uri} using ${regex}`);
 });
 
+test('renameS3FileWithTimestamp renames file', async (t) => {
+  const bucket = t.context.internalBucket;
+  const key = `${randomString()}/test.hdf`;
+  const params = { Bucket: bucket, Key: key, Body: randomString() };
+  await s3().putObject(params).promise();
+  // put an existing renamed file
+  const formatString = 'YYYYMMDDTHHmmssSSS';
+  const existingRenamedKey = `${key}.v${moment.utc().format(formatString)}`;
+  const existingRenamedParams = {
+    Bucket: bucket, Key: existingRenamedKey, Body: randomString()
+  };
+  await s3().putObject(existingRenamedParams).promise();
+  const testGranule = new TestGranule({}, {}, {});
+  await testGranule.renameS3FileWithTimestamp(bucket, key);
+  const renamedFiles = await testGranule.getRenamedS3File(bucket, key);
+
+  t.is(renamedFiles.length, 2);
+  // renamed files have the right prefix
+  renamedFiles.map((f) => t.true(f.Key.startsWith(`${key}.v`)));
+  // one of the file is the existing renamed file
+  t.true(renamedFiles.map((f) => f.Key).includes(existingRenamedKey));
+});
+
 class TestS3Granule extends s3Mixin(baseProtocol(Granule)) {}
+
+test('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+  const file = {
+    path: randomString(),
+    name: 'test.txt'
+  };
+  const key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key: key, Body: randomString() };
+  await s3().putObject(params).promise();
+  const collectionConfig = {
+    files: [
+      {
+        regex: '^[A-Z]|[a-z]+\.txt'
+      }
+    ]
+  };
+  const duplicateHandling = 'version';
+  // leading '/' should be trimmed
+  const fileStagingDir = '/file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(oldfiles.length, 1);
+
+  // update the source file with different content and ingest again
+  params.Body = randomString();
+  await s3().putObject(params).promise();
+  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(newfiles.length, 2);
+});
 
 test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
   const sourceBucket = t.context.internalBucket;
