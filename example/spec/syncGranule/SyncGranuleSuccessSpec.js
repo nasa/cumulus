@@ -2,8 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const {
   aws: {
-    headObject,
-    parseS3Uri,
     s3,
     s3ObjectExists
   },
