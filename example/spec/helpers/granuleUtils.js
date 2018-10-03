@@ -2,7 +2,7 @@
 
 const fs = require('fs-extra');
 const {
-  aws: { s3, headObject, parseS3Uri },
+  aws: { s3 },
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
@@ -77,22 +77,7 @@ function loadFileWithUpdatedGranuleId(file, oldGranuleId, newGranuleId) {
   return JSON.parse(updatedFileContents);
 }
 
-/**
- * Get file metadata for granule files.
- *
- * @param {Array<Object>} granuleFiles - array of granule file objects
- * @returns {Promise<Array>} - file detail responses
- */
-async function getGranuleFileDetails(granuleFiles) {
-  const getFileDetails = granuleFiles.map(async (f) => {
-    const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-    return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-  });
-  return Promise.all(getFileDetails);
-}
-
 module.exports = {
-  getGranuleFileDetails,
   loadFileWithUpdatedGranuleId,
   setupTestGranuleForIngest
 };
