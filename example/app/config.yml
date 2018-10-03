@@ -382,6 +382,10 @@ jk:
   stackName: jk
   stackNameNoDash: jk
 
+jk2:
+  stackName: jk2
+  stackNameNoDash: jk2
+
 mboyd-test:
   stackName: mboyd-test
   stackNameNoDash: mboydTest
