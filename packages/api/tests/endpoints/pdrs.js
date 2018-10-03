@@ -15,6 +15,18 @@ const {
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
 
+const pdrS3Key = (stackName, bucket, pdrName) => `${process.env.stackName}/pdrs/${pdrName}`;
+
+function uploadPdrToS3(stackName, bucket, pdrName, pdrBody) {
+  const key = pdrS3Key(stackName, bucket, pdrName);
+
+  return aws.s3().putObject({
+    Bucket: bucket,
+    Key: key,
+    Body: pdrBody
+  }).promise();
+}
+
 // create all the variables needed across this test
 let esClient;
 let fakePdrs;
@@ -218,17 +230,48 @@ test('DELETE a pdr', async (t) => {
   );
 });
 
-test('DELETE fails if pdr is not found', async (t) => {
+test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', async (t) => {
+  const pdrName = `${randomString()}.PDR`;
+
+  await uploadPdrToS3(
+    process.env.stackName,
+    process.env.internal,
+    pdrName,
+    'This is the PDR body'
+  );
+
   const event = {
     httpMethod: 'DELETE',
     pathParameters: {
-      pdrName: 'unknownPdr'
+      pdrName
     },
     headers: authHeaders
   };
 
   const response = await testEndpoint(pdrEndpoint, event, (r) => r);
-  t.is(response.statusCode, 400);
-  const { message } = JSON.parse(response.body);
-  t.true(message.includes('No record found for'));
+
+  t.is(response.statusCode, 200);
+
+  const parsedBody = JSON.parse(response.body);
+  t.is(parsedBody.detail, 'Record deleted');
+});
+
+test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', async (t) => {
+  const newPdr = fakePdrFactory('completed');
+  await pdrModel.create(newPdr);
+
+  const event = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      pdrName: newPdr.pdrName
+    },
+    headers: authHeaders
+  };
+
+  const response = await testEndpoint(pdrEndpoint, event, (r) => r);
+
+  t.is(response.statusCode, 200);
+
+  const parsedBody = JSON.parse(response.body);
+  t.is(parsedBody.detail, 'Record deleted');
 });
