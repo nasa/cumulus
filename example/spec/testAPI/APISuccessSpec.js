@@ -128,7 +128,7 @@ describe('The Cumulus API', () => {
       });
 
       // Check that the granule was removed
-      await waitForConceptExistsOutcome(cmrLink, false, 2);
+      await waitForConceptExistsOutcome(cmrLink, false, 3, 4000);
       const doesExist = await conceptExists(cmrLink);
       expect(doesExist).toEqual(false);
     });
