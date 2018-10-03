@@ -40,7 +40,9 @@ The default number of retained lambda versions is 1.
 
 This can be overridden by adding the following key to your configuration file:
 
-```maxNumberOfRetainedLambdas: X``` where X is the number of previous versions you wish to retain.
+`maxNumberOfRetainedLambdas: X`
+
+where X is the number of previous versions you wish to retain.
 
 This feature allows a variable number of retained lambdas, however due to CF and current implementation constraints, that number is fairly limited.
 
@@ -48,13 +50,13 @@ The ```WorkflowLambdaVersions``` sub-template is constrained to 200 total resour
 
 ```(200/3+2*RV)-2``` where RV = total number of retained versions.
 
-Given the available limits, the following are configuration limit values:
+Given the available limits, the following are the pratical limits on the number of lambdas that can be configured for a given number of retained lambdas:
 
-1: 38
+* 1: 38
 
-2: 26
+* 2: 26
 
-3: 20
+* 3: 20
 
 ### Disabling Lambda Versioning
 
