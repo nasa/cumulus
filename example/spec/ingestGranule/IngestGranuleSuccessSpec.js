@@ -8,7 +8,7 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists },
+  aws: { s3, s3ObjectExists }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
