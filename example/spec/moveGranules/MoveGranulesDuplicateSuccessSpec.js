@@ -1,0 +1,141 @@
+'use strict';
+
+const fs = require('fs-extra');
+const path = require('path');
+const {
+  models: { Granule }
+} = require('@cumulus/api');
+const {
+  aws: { s3 },
+  stringUtils: { globalReplace },
+  testUtils: { randomString }
+} = require('@cumulus/common');
+const {
+  buildAndExecuteWorkflow,
+  LambdaStep
+} = require('@cumulus/integration-tests');
+const { api: apiTestUtils } = require('@cumulus/integration-tests');
+
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
+const {
+  getGranuleFileDetails,
+  setupTestGranuleForIngest
+} = require('../helpers/granuleUtils');
+const config = loadConfig();
+const lambdaStep = new LambdaStep();
+
+const workflowName = 'MoveGranules';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
+];
+
+describe('The Move Granules workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-MoveGranulesDuplicateSuccess`);
+  const inputPayloadFilename = './spec/moveGranules/MoveGranules.input.payload.json';
+  const collection = { name: 'MOD09GQ', version: '006' };
+  const provider = { id: 's3_provider' };
+  let workflowExecution = null;
+  let inputPayload;
+
+  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  const granuleModel = new Granule();
+
+  beforeAll(async () => {
+    // upload test data
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    // update test data filepaths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+
+    // delete the granule record from DynamoDB if exists
+    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+
+    // eslint-disable-next-line function-paren-newline
+    workflowExecution = await buildAndExecuteWorkflow(
+      config.stackName,
+      config.bucket,
+      workflowName,
+      collection,
+      provider,
+      inputPayload
+    );
+  });
+
+  afterAll(async () => {
+    await Promise.all([
+      // Remove the granule files added for the test
+      deleteFolder(config.bucket, testDataFolder),
+      // delete ingested granule
+      apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
+  });
+
+  it('completes the first execution with success status', () => {
+    expect(workflowExecution.status).toEqual('SUCCEEDED');
+  });
+
+  describe('encounters duplicate filenames', () => {
+    let lambdaOutput;
+    let files;
+    let existingFiles;
+    let fileUpdated;
+
+    beforeAll(async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      files = lambdaOutput.payload.granules[0].files;
+      existingFiles = await getGranuleFileDetails(files);
+
+      // update one of the input files so we can assert that the file size changed
+      const content = randomString();
+      const file = inputPayload.granules[0].files[0];
+      fileUpdated = file.name;
+      const updateParams = {
+        Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
+      };
+
+      await s3().putObject(updateParams).promise();
+      inputPayload.granules[0].files[0].fileSize = content.length;
+
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      );
+    });
+
+    afterAll(async () => {
+      await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise();
+    });
+
+    it('does not raise a workflow error', () => {
+      expect(workflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('overwrites the existing file with the new data', async () => {
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      const outputFiles = lambdaOutput.payload.granules[0].files;
+      const currentFiles = await getGranuleFileDetails(outputFiles);
+
+      expect(currentFiles.length).toBe(existingFiles.length);
+
+      currentFiles.forEach((cf) => {
+        const existingfile = existingFiles.filter((ef) => ef.filename === cf.filename);
+        expect(cf.LastModified).toBeGreaterThan(existingfile[0].LastModified);
+        if (cf.filename.endsWith(fileUpdated)) {
+          expect(cf.fileSize).toBe(inputPayload.granules[0].files[0].fileSize);
+        }
+      });
+    });
+  });
+});
