@@ -1,6 +1,6 @@
 # Lambda Versioning
 
-Cumulus by default makes use of AWS's Lambda/Alias version objects to tag and retain references to recent copies of deployed workflow lambdas.
+Cumulus makes use of AWS's Lambda/Alias version objects to tag and retain references to recent copies of deployed workflow lambdas.
 
 Each Cumulus deployed lambda and configured s3Source lambda in lambdas.yml will have an alias/version resource created for them.
 
