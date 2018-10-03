@@ -26,7 +26,7 @@ const {
   waitForQueuedRecord
 } = require('../helpers/kinesisHelpers');
 
-const { loadConfig, createTimestampedTestId } = require('../helpers/testUtils');
+const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../helpers/testUtils');
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
 
 const ruleDirectory = './spec/kinesisTests/data/rules';
@@ -43,7 +43,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 
   const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testRecordIdentifier = randomString();
   record.identifier = testRecordIdentifier;
   const badRecord = { ...record };

@@ -25,7 +25,8 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   createTimestampedTestId,
-  createTestDataPath
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 
 const {
@@ -42,7 +43,7 @@ const {
 
 const testConfig = loadConfig();
 const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
-const testSuffix = `_${testId}`;
+const testSuffix = createTestSuffix(testId);
 const testDataFolder = createTestDataPath(testId);
 
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');

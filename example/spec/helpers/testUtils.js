@@ -12,6 +12,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
 const createTimestampedTestId = (stackName, testName) => `${stackName}-${testName}-${(new Date().getTime())}`;
 const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
+const createTestSuffix = (prefix) => `_test-${prefix}`;
 
 
 /**
@@ -203,6 +204,7 @@ function redeploy(config, timeout) {
 module.exports = {
   createTimestampedTestId,
   createTestDataPath,
+  createTestSuffix,
   loadConfig,
   templateFile,
   updateAndUploadTestDataToBucket,

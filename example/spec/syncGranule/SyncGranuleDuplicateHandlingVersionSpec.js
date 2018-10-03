@@ -26,6 +26,7 @@ const {
   templateFile,
   createTestDataPath,
   createTimestampedTestId,
+  createTestSuffix,
   uploadTestDataToBucket
 } = require('../helpers/testUtils');
 const {
@@ -54,7 +55,7 @@ const s3data = [
 
 describe('When the Sync Granule workflow is configured to keep both files when encountering duplicate filenames', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandlingVersion');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
 
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
