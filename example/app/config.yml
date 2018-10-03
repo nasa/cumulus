@@ -366,6 +366,15 @@ mvd:
       type: internal
   bucket: '{{stackName}}-internal'
 
+mvd-dev:
+  stackName: mvd-dev
+  stackNameNoDash: mvdDev
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  bucket: 'mvd-internal'
+
 jc:
   stackName: jc
   stackNameNoDash: jc
