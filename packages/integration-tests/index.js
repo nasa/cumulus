@@ -6,6 +6,7 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
+const _ = require('lodash');
 const {
   aws: { s3, sfn },
   stepFunctions: {
@@ -18,7 +19,8 @@ const {
 } = require('@cumulus/api');
 
 const sfnStep = require('./sfnStep');
-const api = require('./api');
+const api = require('./api/api');
+const rulesApi = require('./api/rules');
 const cmr = require('./cmr.js');
 const granule = require('./granule.js');
 
@@ -516,8 +518,27 @@ async function buildAndStartWorkflow(
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 
+/**
+ * returns the most recently executed workflows for the workflow type.
+ *
+ * @param {string} workflowName - name of the workflow to get executions for
+ * @param {string} stackName - stack name
+ * @param {string} bucket - S3 internal bucket name
+ * @param {Integer} maxExecutionResults - max results to return
+ * @returns {Array<Object>} array of state function executions.
+ */
+async function getExecutions(workflowName, stackName, bucket, maxExecutionResults = 10) {
+  const kinesisTriggerTestStpFnArn = await getWorkflowArn(stackName, bucket, workflowName);
+  const data = await sfn().listExecutions({
+    stateMachineArn: kinesisTriggerTestStpFnArn,
+    maxResults: maxExecutionResults
+  }).promise();
+  return (_.orderBy(data.executions, 'startDate', 'desc'));
+}
+
 module.exports = {
   api,
+  rulesApi,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
@@ -547,5 +568,6 @@ module.exports = {
   timeout: sleep,
   getWorkflowArn,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
+  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
+  getExecutions
 };
