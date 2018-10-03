@@ -3,10 +3,11 @@
 const fs = require('fs-extra');
 const path = require('path');
 const {
-  models: { Granule }
+  models: { Granule, Collection }
 } = require('@cumulus/api');
 const {
   aws: { s3 },
+  constructCollectionId,
   stringUtils: { globalReplace },
   testUtils: { randomString }
 } = require('@cumulus/common');
@@ -32,6 +33,7 @@ const lambdaStep = new LambdaStep();
 const workflowName = 'MoveGranules';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+const fileStagingDir = 'file-staging';
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
@@ -44,9 +46,12 @@ describe('The Move Granules workflow', () => {
   const provider = { id: 's3_provider' };
   let workflowExecution = null;
   let inputPayload;
+  let stagingFileDir;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // upload test data
@@ -59,6 +64,13 @@ describe('The Move Granules workflow', () => {
 
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+
+    const collectionInfo = await collectionModel.get(collection);
+    stagingFileDir = path.join(
+      fileStagingDir,
+      config.stackName,
+      constructCollectionId(collectionInfo.dataType, collectionInfo.version)
+    );
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
@@ -73,13 +85,14 @@ describe('The Move Granules workflow', () => {
 
   afterAll(async () => {
     await Promise.all([
-      // Remove the granule files added for the test
-      deleteFolder(config.bucket, testDataFolder),
       // delete ingested granule
       apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
-      })
+      }),
+      // Remove the granule files added for the test
+      deleteFolder(config.bucket, testDataFolder),
+      deleteFolder(config.bucket, stagingFileDir)
     ]);
   });
 
@@ -112,10 +125,6 @@ describe('The Move Granules workflow', () => {
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
-    });
-
-    afterAll(async () => {
-      await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise();
     });
 
     it('does not raise a workflow error', () => {
