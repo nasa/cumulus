@@ -33,6 +33,16 @@ MoveGranules:
           - States.ALL
           ResultPath: '$.exception'
           Next: StopStatus
+      Next: ProcessingStep
+    # Had to add this to transform payload into what MoveGranules task is expecting
+    ProcessingStep:
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        collection: '{$.meta.collection}'
+      Type: Task
+      Resource: ${FakeProcessingLambdaFunction.Arn}
+      Catch:
+        - <<: *ErrorEqualDefaults
       Next: MoveGranuleStep
     MoveGranuleStep:
       CumulusConfig:
