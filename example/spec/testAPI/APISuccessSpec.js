@@ -29,6 +29,13 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
+const isLambdaStatusLogEntry = (logEntry) =>
+  logEntry.message.includes('START')
+  || logEntry.message.includes('END')
+  || logEntry.message.includes('REPORT');
+
+const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
+
 describe('The Cumulus API', () => {
   const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-APISuccess`);
   let workflowExecution = null;
@@ -194,12 +201,17 @@ describe('The Cumulus API', () => {
       expect(logs.results.length).toEqual(10);
     });
 
-    it('returns logs with taskName included', async () => {
-      const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
-      logs.results.forEach((log) => {
-        if ((!log.message.includes('END')) && (!log.message.includes('REPORT')) && (!log.message.includes('START'))) {
-          expect(log.sender).not.toBe(undefined);
+    it('returns logs with sender set', async () => {
+      const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+
+      const logEntries = getLogsResponse.results;
+      const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
+
+      cumulusLogEntries.forEach((logEntry) => {
+        if (!logEntry.sender) {
+          console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
         }
+        expect(logEntry.sender).not.toBe(undefined);
       });
     });
 
