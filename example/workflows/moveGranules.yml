@@ -27,11 +27,6 @@ MoveGranules:
               destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
-      Retry:
-          - ErrorEquals:
-              - States.ALL
-            IntervalSeconds: 2
-            MaxAttempts: 3
       Catch:
         - &ErrorEqualDefaults
           ErrorEquals:
@@ -51,7 +46,7 @@ MoveGranules:
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:
         - <<: *ErrorEqualDefaults
-      Next: CmrStep
+      Next: StopStatus
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
