@@ -30,7 +30,7 @@ const workflowName = 'SyncGranuleDuplicateSkipTest';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
-const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranuleDuplicate.output.payload.template.json';
+const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
   config: config.SyncGranule
@@ -104,6 +104,10 @@ describe('When the Sync Granule workflow is configured to skip new data when enc
       const updateParams = {
         Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
       };
+      // expect reporting of duplicate
+      expectedPayload.granules[0].files[0].duplicate_found = true;
+      expectedPayload.granules[0].files[1].duplicate_found = true;
+
 
       await s3().putObject(updateParams).promise();
       inputPayload.granules[0].files[0].fileSize = content.length;
@@ -111,6 +115,12 @@ describe('When the Sync Granule workflow is configured to skip new data when enc
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+    });
+
+    afterAll(() => {
+      // delete reporting expectations
+      delete expectedPayload.granules[0].files[0].duplicate_found;
+      delete expectedPayload.granules[0].files[1].duplicate_found;
     });
 
     it('does not raise a workflow error', () => {

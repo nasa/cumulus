@@ -30,7 +30,7 @@ const workflowName = 'SyncGranuleDuplicateVersionTest';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
-const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranuleDuplicate.output.payload.template.json';
+const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
   config: config.SyncGranule
@@ -97,10 +97,19 @@ describe('When the Sync Granule workflow is configured to keep both files when e
         const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
         return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
       }));
+      // expect reporting of duplicates
+      expectedPayload.granules[0].files[0].duplicate_found = true;
+      expectedPayload.granules[0].files[1].duplicate_found = true;
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+    });
+
+    afterAll(() => {
+      // delete reporting expectations
+      delete expectedPayload.granules[0].files[0].duplicate_found;
+      delete expectedPayload.granules[0].files[1].duplicate_found;
     });
 
     it('does not raise a workflow error', () => {
