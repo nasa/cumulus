@@ -21,10 +21,10 @@ const {
   loadConfig,
   uploadTestDataToBucket,
   deleteFolder,
-  timestampedTestDataPrefix
+  timestampedTestDataPrefix,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
-  getGranuleFileDetails,
   setupTestGranuleForIngest
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
@@ -109,7 +109,7 @@ describe('The Move Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
-      existingFiles = await getGranuleFileDetails(files);
+      existingFiles = await getFilesMetadata(files);
 
       // update one of the input files so we can assert that the file size changed
       const content = randomString();
@@ -134,7 +134,7 @@ describe('The Move Granules workflow', () => {
     it('overwrites the existing file with the new data', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       const outputFiles = lambdaOutput.payload.granules[0].files;
-      const currentFiles = await getGranuleFileDetails(outputFiles);
+      const currentFiles = await getFilesMetadata(outputFiles);
 
       expect(currentFiles.length).toBe(existingFiles.length);
 

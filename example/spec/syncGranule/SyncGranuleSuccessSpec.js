@@ -17,10 +17,10 @@ const {
   templateFile,
   uploadTestDataToBucket,
   timestampedTestDataPrefix,
-  deleteFolder
+  deleteFolder,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
-  getGranuleFileDetails,
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleId
 } = require('../helpers/granuleUtils');
@@ -144,7 +144,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-      existingfiles = await getGranuleFileDetails(files);
+      existingfiles = await getFilesMetadata(files);
 
       // update one of the input files, so that the file has different checksum
       const content = randomString();
@@ -169,7 +169,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     it('overwrites the existing file with the new data', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-      const currentFiles = await getGranuleFileDetails(files);
+      const currentFiles = await getFilesMetadata(files);
 
       expect(currentFiles.length).toBe(existingfiles.length);
 
