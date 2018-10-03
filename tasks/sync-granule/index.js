@@ -68,6 +68,8 @@ exports.syncGranule = function syncGranule(event) {
     duplicateHandling = collection.duplicateHandling;
   }
 
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}`);
+
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
     (config.fileStagingDir || 'file-staging'),
