@@ -35,11 +35,24 @@ describe('The kinesisConsumer receives a bad record.', () => {
   const ruleDirectory = './spec/kinesisTests/data/rules';
   const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
 
+  async function cleanUp() {
+    if (this.ReceiptHandle) {
+      console.log('Delete the Record from the queue.');
+      await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
+    }
+    console.log('\nDeleting kinesisRule');
+    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
+    console.log(`\nDeleting testStream '${streamName}'`);
+    await deleteTestStream(streamName);
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+  }
+
   beforeAll(async () => {
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 15 * 60 * 1000;
     this.maxNumberElapsedPeriods = jasmine.DEFAULT_TIMEOUT_INTERVAL / 5000;
-    await tryCatchExit(async () => {
+    await tryCatchExit(cleanUp.bind(this), async () => {
       await createOrUseTestStream(streamName);
       console.log(`\nWaiting for active streams: '${streamName}'.`);
       await waitForActiveStream(streamName);
@@ -51,16 +64,12 @@ describe('The kinesisConsumer receives a bad record.', () => {
   });
 
   afterAll(async () => {
-    if (this.ReceiptHandle) {
-      console.log('Delete the Record from the queue.');
-      await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
+    try {
+      await cleanUp.bind(this)();
     }
-    console.log('\nDeleting kinesisRule');
-    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
-    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
-    console.log(`\nDeleting testStream '${streamName}'`);
-    await deleteTestStream(streamName);
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+    catch (e) {
+      console.log(`Cleanup Failed ${e}`)
+    }
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {

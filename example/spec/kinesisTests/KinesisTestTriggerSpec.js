@@ -117,22 +117,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   testConfig.streamName = streamName;
   testConfig.cnmResponseStream = cnmResponseStreamName;
 
-  beforeAll(async () => {
-    await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder);
-    // create streams
-    await tryCatchExit(async () => {
-      await createOrUseTestStream(streamName);
-      await createOrUseTestStream(cnmResponseStreamName);
-      console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
-      await waitForActiveStream(streamName);
-      await waitForActiveStream(cnmResponseStreamName);
-      console.log('\nSetting up kinesisRule');
-      await addRules(testConfig, ruleDirectory);
-    });
-  });
 
-  afterAll(async () => {
+  async function cleanUp() {
     // delete rule
+    debugger;
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
     // delete uploaded test data
@@ -144,6 +132,24 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     }).promise();
     console.log(`\nDeleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
     await Promise.all([deleteTestStream(streamName), deleteTestStream(cnmResponseStreamName)]);
+  }
+
+  beforeAll(async () => {
+    await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder);
+    // create streams
+    await tryCatchExit(cleanUp, async () => {
+      await createOrUseTestStream(streamName);
+      await createOrUseTestStream(cnmResponseStreamName);
+      console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
+      await waitForActiveStream(streamName);
+      await waitForActiveStream(cnmResponseStreamName);
+      console.log('\nSetting up kinesisRule');
+      await addRules(testConfig, ruleDirectory);
+    });
+  });
+
+  afterAll(async () => {
+    await cleanUp();
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {
@@ -154,7 +160,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     let workflowExecution;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
@@ -247,7 +253,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     delete badRecord.product;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
 
