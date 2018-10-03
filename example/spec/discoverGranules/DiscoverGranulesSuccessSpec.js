@@ -10,10 +10,11 @@ const {
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, createTimestampedTestId } = require('../helpers/testUtils');
+const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../helpers/testUtils');
 
 const config = loadConfig();
-const testSuffix = `_${createTimestampedTestId(config.stackName, 'DiscoverGranules')}`;
+const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
+const testSuffix = createTestSuffix(testId);
 const lambdaStep = new LambdaStep();
 
 const workflowName = 'DiscoverGranules';

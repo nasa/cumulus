@@ -19,7 +19,8 @@ const {
   deleteFolder,
   getExecutionUrl,
   createTimestampedTestId,
-  createTestDataPath
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest, loadFileWithUpdatedGranuleIdAndPath } = require('../helpers/granuleUtils');
 
@@ -41,7 +42,7 @@ const s3data = [
 
 describe('Parse PDR workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'ParsePdrSuccess');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
   let workflowExecution;
   let queueGranulesOutput;

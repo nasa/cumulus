@@ -14,6 +14,7 @@ const {
   loadConfig,
   createTimestampedTestId,
   createTestDataPath,
+  createTestSuffix,
   uploadTestDataToBucket,
   deleteFolder
 } = require('../helpers/testUtils');
@@ -37,7 +38,7 @@ let allStates;
 
 describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'ExecutionStatus');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
   let workflowExecution = null;
   const providersDir = './data/providers/s3/';

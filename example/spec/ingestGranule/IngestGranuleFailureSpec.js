@@ -17,7 +17,8 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   createTimestampedTestId,
-  createTestDataPath
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
@@ -33,7 +34,7 @@ const s3data = [
 
 describe('The Ingest Granule failure workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';

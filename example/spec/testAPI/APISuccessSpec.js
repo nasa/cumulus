@@ -17,6 +17,7 @@ const {
   uploadTestDataToBucket,
   createTimestampedTestId,
   createTestDataPath,
+  createTestSuffix,
   deleteFolder
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
@@ -33,7 +34,7 @@ const s3data = [
 
 describe('The Cumulus API', () => {
   const testId = createTimestampedTestId(config.stackName, 'APISuccess');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
   let workflowExecution = null;
   const providersDir = './data/providers/s3/';

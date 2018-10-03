@@ -18,6 +18,7 @@ const {
   loadConfig,
   createTimestampedTestId,
   createTestDataPath,
+  createTestSuffix,
   deleteFolder,
   uploadTestDataToBucket
 } = require('../helpers/testUtils');
@@ -32,7 +33,7 @@ const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 describe('The Sync Granules workflow is not configured to handle duplicates', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleNoDuplicateHandling');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
 
   const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
