@@ -314,16 +314,15 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
     t.fail();
   }
   finally {
-    s3().listObjects({ Bucket: t.context.destBucket }).promise().then((list) => {
-      t.is(list.Contents.length, 1);
+    const objects = await s3().listObjects({ Bucket: t.context.destBucket }).promise();
+    t.is(objects.Contents.length, 1);
 
-      const item = list.Contents[0];
-      t.is(item.Key, Key);
+    const item = objects.Contents[0];
+    t.is(item.Key, Key);
 
-      const existingModified = new Date(existingFile.LastModified).getTime();
-      const itemModified = new Date(item.LastModified).getTime();
-      t.true(itemModified > existingModified);
-    });
+    const existingModified = new Date(existingFile.LastModified).getTime();
+    const itemModified = new Date(item.LastModified).getTime();
+    t.true(itemModified > existingModified);
     await recursivelyDeleteS3Bucket(Bucket);
   }
 });
