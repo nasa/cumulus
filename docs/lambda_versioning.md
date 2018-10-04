@@ -61,7 +61,7 @@ Given the available limits, the following are the pratical limits on the number 
 
 ### Disabling Lambda Versioning
 
-This feature is enabled by default in the deployment package template, but can be disabled by adding the following key to your config.yml:
+This feature is enabled by default in the deployment package template, but can be disabled by adding the following key to your app/config.yml:
 
 ```
 useWorkflowLambdaVersions: false
