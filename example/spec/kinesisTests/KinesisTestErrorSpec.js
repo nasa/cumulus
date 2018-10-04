@@ -68,27 +68,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
   testConfig.streamName = streamName;
   const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
 
-  beforeAll(async () => {
-    // populate collections, providers and test data
-    await Promise.all([
-      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
-    ]);
-    this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
-    this.maxNumberElapsedPeriods = jasmine.DEFAULT_TIMEOUT_INTERVAL / 5000;
-    await tryCatchExit(async () => {
-      await createOrUseTestStream(streamName);
-      console.log(`\nWaiting for active streams: '${streamName}'.`);
-      await waitForActiveStream(streamName);
-      console.log('\nSetting up kinesisRule');
-      await addRules(testConfig, ruleDirectory, ruleOverride);
-      console.log(`\nDropping record onto  ${streamName}, testRecordIdentifier: ${testRecordIdentifier}.`);
-      await putRecordOnStream(streamName, badRecord);
-    });
-  });
-
-  afterAll(async () => {
+  async function cleanUp() {
     if (this.ReceiptHandle) {
       console.log('Delete the Record from the queue.');
       await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
@@ -104,6 +84,35 @@ describe('The kinesisConsumer receives a bad record.', () => {
     console.log(`\nDeleting testStream '${streamName}'`);
     await deleteTestStream(streamName);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+  }
+
+  beforeAll(async () => {
+    // populate collections, providers and test data
+    await Promise.all([
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+    ]);
+    this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
+    this.maxNumberElapsedPeriods = jasmine.DEFAULT_TIMEOUT_INTERVAL / 5000;
+    await tryCatchExit(cleanUp.bind(this), async () => {
+      await createOrUseTestStream(streamName);
+      console.log(`\nWaiting for active streams: '${streamName}'.`);
+      await waitForActiveStream(streamName);
+      console.log('\nSetting up kinesisRule');
+      await addRules(testConfig, ruleDirectory, ruleOverride);
+      console.log(`\nDropping record onto  ${streamName}, testRecordIdentifier: ${testRecordIdentifier}.`);
+      await putRecordOnStream(streamName, badRecord);
+    });
+  });
+
+  afterAll(async () => {
+    try {
+      await cleanUp.bind(this)();
+    }
+    catch (e) {
+      console.log(`Cleanup Failed ${e}`);
+    }
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {

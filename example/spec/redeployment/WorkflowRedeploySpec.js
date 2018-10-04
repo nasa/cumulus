@@ -43,7 +43,7 @@ async function cleanUp() {
   try {
     restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
     console.log('Starting redeploy() in cleanup'); // Debugging intermittent test failures
-    await redeploy(config, deployTimeout);
+    await redeploy(config, { timeout: deployTimeout });
   }
   catch (e) {
     if (cleanUpRetries < 2) {
@@ -83,7 +83,7 @@ describe('When a workflow', () => {
 
 
           console.log('Starting redeploy() in beforeAll() A'); // Debugging intermittent test failures
-          await redeploy(config, deployTimeout);
+          await redeploy(config, { timeout: deployTimeout });
           console.log('Finished redeploy() in beforeAll() A'); // Debugging intermittent test failures
 
           console.log('Starting waitForCompletedExecution() in beforeAll() A'); // Debugging intermittent test failures
@@ -129,7 +129,8 @@ describe('When a workflow', () => {
     });
   });
 
-  describe('is removed and deployed during a workflow execution', () => {
+  // Disabled per CUMULUS-941
+  xdescribe('is removed and deployed during a workflow execution', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
@@ -150,7 +151,7 @@ describe('When a workflow', () => {
 
           console.log('Starting redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
-          await redeploy(config, deployTimeout);
+          await redeploy(config, { timeout: deployTimeout });
           console.log('Finished redeploy() in beforeAll() B'); // Debugging intermittent test failures
 
           // Wait for the execution to reach a non-RUNNING state
@@ -175,7 +176,7 @@ describe('When a workflow', () => {
       timeout
     );
 
-    it('the workflow has executed successfully and is returned when querying the API', () => {
+    xit('the workflow has executed successfully and is returned when querying the API', () => {
       expect(workflowStatus).toBeTruthy();
       expect(workflowStatus.arn).toEqual(workflowExecutionArn);
       expect(workflowStatus.status).toEqual('completed');

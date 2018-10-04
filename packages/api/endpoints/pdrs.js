@@ -38,6 +38,8 @@ function get(event, cb) {
   }).catch(cb);
 }
 
+const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist');
+
 /**
  * delete a given PDR
  *
@@ -45,18 +47,20 @@ function get(event, cb) {
  * @returns {Promise<Object>} the response object
  */
 async function del(event) {
-  const pdrName = _get(event.pathParameters, 'pdrName');
+  const pdrName = event.pathParameters.pdrName;
 
-  const p = new models.Pdr();
+  const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
-  // get the record first to make sure it exists
-  await p.get({ pdrName });
+  await aws.deleteS3Object(process.env.internal, pdrS3Key);
 
-  // remove file from s3
-  const key = `${process.env.stackName}/pdrs/${pdrName}`;
-  await aws.deleteS3Object(process.env.internal, key);
+  const pdrModel = new models.Pdr();
 
-  await p.delete({ pdrName });
+  try {
+    await pdrModel.delete({ pdrName });
+  }
+  catch (err) {
+    if (!isRecordDoesNotExistError(err)) throw err;
+  }
 
   return { detail: 'Record deleted' };
 }
