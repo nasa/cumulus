@@ -8,7 +8,8 @@ const {
   models: { Execution, Granule }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists }
+  aws: { s3, s3ObjectExists },
+  constructCollectionId
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -34,15 +35,13 @@ const {
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdAndPath
+  loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestGranule';
-const defaultDataFolder = 'cumulus-test-data/pdrs';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const templatedSyncGranuleFilename = templateFile({
   inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
@@ -68,6 +67,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
   const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution = null;
   let failingWorkflowExecution = null;
@@ -94,12 +94,12 @@ describe('The S3 Ingest Granules workflow', () => {
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
 
-    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdAndPath(templatedSyncGranuleFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
-    expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, granuleId, defaultDataFolder, testDataFolder);
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
     // eslint-disable-next-line function-paren-newline
