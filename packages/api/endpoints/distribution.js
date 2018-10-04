@@ -17,6 +17,12 @@ class UnparsableGranuleLocationError extends Error {
   }
 }
 
+/**
+ * Build an API Gateway redirect response
+ *
+ * @param {string} url - the URL to redirect to
+ * @returns {Object} an API Gateway response object
+ */
 function buildRedirectResponse(url) {
   return {
     statusCode: 302,
@@ -28,6 +34,12 @@ function buildRedirectResponse(url) {
   };
 }
 
+/**
+ * Build an API Gateway client error response
+ *
+ * @param {string} errorMessage - the error message to be returned in the response
+ * @returns {Object} an API Gateway response object
+ */
 function buildClientErrorResponse(errorMessage) {
   return {
     statusCode: 400,
@@ -55,6 +67,15 @@ function getBucketAndKeyFromPathParams(pathParams) {
   return { Bucket, Key };
 }
 
+/**
+ * Return a signed URL to an S3 object
+ *
+ * @param {Object} s3Client - an AWS S3 Service Object
+ * @param {string} Bucket - the bucket of the requested object
+ * @param {string} Key - the key of the requested object
+ * @param {string} username - the username to add to the redirect url
+ * @returns {string} a URL
+ */
 function getSignedUrl(s3Client, Bucket, Key, username) {
   const signedUrl = s3Client.getSignedUrl('getObject', { Bucket, Key });
 
@@ -64,11 +85,25 @@ function getSignedUrl(s3Client, Bucket, Key, username) {
   return parsedSignedUrl.toString();
 }
 
+/**
+ * Given a an API Gateway request, return either the proxy path parameter or
+ *   the state query string parameter
+ *
+ * @param {Object} request - an API Gatway request object
+ * @returns {string|undefined} a granule location
+ */
 function getGranuleLocationFromRequest(request) {
   return get(request, 'pathParameters.proxy')
     || get(request, 'queryStringParameters.state');
 }
 
+/**
+ * Return the username associated with an OAuth2 authorization code
+ *
+ * @param {EarthdataLoginClient} earthdataLoginClient - an Earthdata Login Client
+ * @param {string} authorizationCode - the OAuth2 authorization code to use
+ * @returns {string} an Earthdata username
+ */
 async function getUsernameFromAuthorizationCode(earthdataLoginClient, authorizationCode) {
   const {
     username
