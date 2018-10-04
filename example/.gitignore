@@ -3,6 +3,7 @@ cloudformation.yml
 dist
 /app/.env
 /app/cloudformation.yml
+/app/WorkflowLambdaVersions.yml
 app/build
 app/dist
 node_modules
@@ -16,3 +17,4 @@ spec/config.override.yml
 spec/*/*.input.json
 spec/*/*.output.payload.json
 yarn-error.log
+test_app/

@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
+    - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
+	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
+	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
+    - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
 
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
+
 - `@cumulus/integration-tests` new functionality:
   - `listCollections` to list collections from a provided data directory
   - `deleteCollection` to delete list of collections from a deployed stack
@@ -19,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `@cumulus/api`:
   - `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
   - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
+
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - Added integration tests for `@cumulus/sync-granule` when `duplicateHandling` is set to `replace` or `skip` (CUMULUS-781)
 
