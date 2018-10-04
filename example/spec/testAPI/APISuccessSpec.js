@@ -24,7 +24,6 @@ const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -58,7 +57,7 @@ describe('The Cumulus API', () => {
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // Update input file paths
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     inputGranuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(
