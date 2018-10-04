@@ -206,6 +206,7 @@ IngestGranule:
         distribution_endpoint: '{$.meta.distribution_endpoint}'
         input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:
