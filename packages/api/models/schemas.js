@@ -42,8 +42,8 @@ module.exports.collection = {
       title: 'Duplicate Granule Handling',
       description: 'How to handle duplicate granules',
       type: 'string',
-      enum: ['skip', 'replace', 'version'],
-      default: 'replace'
+      enum: ['error', 'skip', 'replace', 'version'],
+      default: 'error'
     },
     granuleId: {
       title: 'GranuleId Validation Regex',

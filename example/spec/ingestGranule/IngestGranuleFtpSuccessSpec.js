@@ -42,5 +42,10 @@ describe('The FTP Ingest Granules workflow', () => {
     });
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
+    // clean up granule
+    await apiTestUtils.deleteGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
   });
 });

@@ -15,10 +15,12 @@ function determineIntegrationTestStackName(cb) {
   const stacks = {
     'Aimee Barciauskas': 'aimee-test',
     scisco: 'aj',
+    'Jenny Liu': 'jl',
     jennyhliu: 'jl',
     kkelly51: 'kk-uat-deployment',
     'Lauren Frederick': 'lf',
     laurenfrederick: 'lf',
+    'Mark Boyd': 'mboyd-int',
     yjpa7145: 'mth-2',
     'Matt Savoie': 'mhs',
     'Jonathan Kovarik': 'jk',
@@ -26,10 +28,10 @@ function determineIntegrationTestStackName(cb) {
     ifestus: 'jc'
   };
 
-  return git('.').log({ '--max-count': '1'}, (e, r) => {
+  return git('.').log({ '--max-count': '1' }, (e, r) => {
     const author = r.latest.author_name;
     if (author && stacks[author]) {
-      return cb(stacks[author])
+      return cb(stacks[author]);
     }
     return cb('cumulus-from-pr');
   });

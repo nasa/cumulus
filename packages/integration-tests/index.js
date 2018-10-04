@@ -9,7 +9,8 @@ const pLimit = require('p-limit');
 const {
   aws: { s3, sfn },
   stepFunctions: {
-    describeExecution
+    describeExecution,
+    getExecutionHistory
   }
 } = require('@cumulus/common');
 const {
@@ -19,12 +20,13 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api');
 const cmr = require('./cmr.js');
+const lambda = require('./lambda');
 const granule = require('./granule.js');
 
 /**
  * Wait for the defined number of milliseconds
  *
- * @param {integer} waitPeriod - number of milliseconds to wait
+ * @param {number} waitPeriod - number of milliseconds to wait
  * @returns {Promise.<undefined>} - promise resolves after a given time period
  */
 function sleep(waitPeriod) {
@@ -77,10 +79,6 @@ async function getExecutionStatus(executionArn, retryOptions) {
     return execution.status;
   }
   catch (err) {
-    // If the execution does not exist, we return that it's "RUNNING".  I'm
-    //   not sure this is the behavior that we want.
-    if (err.code === 'ExecutionDoesNotExist') return 'RUNNING';
-
     throw err;
   }
 }
@@ -95,20 +93,37 @@ async function getExecutionStatus(executionArn, retryOptions) {
  */
 async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
-
+  let iteration = 0;
   const stopTime = Date.now() + (timeout * 1000);
-
   /* eslint-disable no-await-in-loop */
   do {
-    executionStatus = await getExecutionStatus(executionArn);
-    if (executionStatus === 'RUNNING') await sleep(5000);
-  } while (executionStatus === 'RUNNING' && Date.now() < stopTime);
+    iteration += 1;
+    try {
+      executionStatus = await getExecutionStatus(executionArn);
+    }
+    catch (err) {
+      if (!(err.code === 'ExecutionDoesNotExist') || iteration > 12) {
+        console.log(`waitForCompletedExecution failed: ${err.code}`);
+        throw err;
+      }
+      console.log("Execution does not exist... assuming it's still starting up.");
+      executionStatus = 'STARTING';
+    }
+    if (executionStatus === 'RUNNING') {
+      if (!(iteration %12)) console.log('Execution running....'); // Output a 'heartbeat' every minute
+    }
+    await sleep(5000);
+  } while (['RUNNING', 'STARTING'].includes(executionStatus) && Date.now() < stopTime);
   /* eslint-enable no-await-in-loop */
 
   if (executionStatus === 'RUNNING') {
+    const executionHistory = await getExecutionHistory({
+      executionArn: executionArn, maxResults: 100
+    });
     console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
+    console.log('Execution History:');
+    console.log(executionHistory);
   }
-
   return executionStatus;
 }
 
@@ -248,7 +263,7 @@ async function setupSeedData(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of collection json files
- * @returns {Promise.<integer>} number of collections added
+ * @returns {Promise.<number>} number of collections added
  */
 async function addCollections(stackName, bucketName, dataDirectory) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
@@ -262,6 +277,38 @@ async function addCollections(stackName, bucketName, dataDirectory) {
 }
 
 /**
+ * Return a list of collections
+ *
+ * @param {string} stackName - CloudFormation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of collection json files
+ * @returns {Promise.<Array>} list of collections
+ */
+async function listCollections(stackName, bucketName, dataDirectory) {
+  return setupSeedData(stackName, bucketName, dataDirectory);
+}
+
+/**
+ * Delete collections from database
+ *
+ * @param {string} stackName - CloudFormation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {Array} collections - List of collections to delete
+ * @returns {Promise.<number>} number of deleted collections
+ */
+async function deleteCollections(stackName, bucketName, collections) {
+  setProcessEnvironment(stackName, bucketName);
+
+  const promises = collections.map((collection) => {
+    const c = new Collection();
+    console.log(`\nDeleting collection ${collection.name}__${collection.version}`);
+    return c.delete({ name: collection.name, version: collection.version });
+  });
+
+  return Promise.all(promises).then((cs) => cs.length);
+}
+
+/**
  * add providers to database.
  *
  * @param {string} stackName - Cloud formation stack name
@@ -270,7 +317,7 @@ async function addCollections(stackName, bucketName, dataDirectory) {
  * @param {string} s3Host - bucket name to be used as the provider host for
  * S3 providers. This will override the host from the seed data. Defaults to null,
  * meaning no override.
- * @returns {Promise.<integer>} number of providers added
+ * @returns {Promise.<number>} number of providers added
  */
 async function addProviders(stackName, bucketName, dataDirectory, s3Host = null) {
   const providers = await setupSeedData(stackName, bucketName, dataDirectory);
@@ -287,11 +334,43 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null)
 }
 
 /**
+ * Return a list of providers
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {string} dataDirectory - the directory of provider json files
+ * @returns {Promise.<Array>} list of providers
+ */
+async function listProviders(stackName, bucketName, dataDirectory) {
+  return setupSeedData(stackName, bucketName, dataDirectory);
+}
+
+/**
+ * Delete providers from database
+ *
+ * @param {string} stackName - CloudFormation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ * @param {Array} providers - List of providers to delete
+ * @returns {Promise.<number>} number of deleted providers
+ */
+async function deleteProviders(stackName, bucketName, providers) {
+  setProcessEnvironment(stackName, bucketName);
+
+  const promises = providers.map((provider) => {
+    const p = new Provider();
+    console.log(`\nDeleting provider ${provider.id}`);
+    return p.delete({ id: provider.id });
+  });
+
+  return Promise.all(promises).then((ps) => ps.length);
+}
+
+/**
  * add rules to database
  *
  * @param {string} config - Test config used to set environmenet variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
- * @returns {Promise.<integer>} number of rules added
+ * @returns {Promise.<number>} number of rules added
  */
 async function addRules(config, dataDirectory) {
   const { stackName, bucket } = config;
@@ -336,7 +415,7 @@ async function rulesList(stackName, bucketName, rulesDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} rules - List of rules objects to delete
- * @returns {Promise.<integer>} - Number of rules deleted
+ * @returns {Promise.<number>} - Number of rules deleted
  */
 async function deleteRules(stackName, bucketName, rules) {
   setProcessEnvironment(stackName, bucketName);
@@ -454,7 +533,11 @@ module.exports = {
    */
   getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
   addCollections,
+  listCollections,
+  deleteCollections,
   addProviders,
+  listProviders,
+  deleteProviders,
   conceptExists: cmr.conceptExists,
   getOnlineResources: cmr.getOnlineResources,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
@@ -464,6 +547,8 @@ module.exports = {
   sleep,
   timeout: sleep,
   getWorkflowArn,
+  getLambdaVersions: lambda.getLambdaVersions,
+  getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };
