@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
+const path = require('path');
 const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
@@ -9,7 +10,8 @@ const {
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists },
-  stringUtils: { globalReplace }
+  stringUtils: { globalReplace },
+  testUtils: { randomString }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -25,7 +27,8 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  timestampedTestDataPrefix
+  timestampedTestDataPrefix,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
@@ -66,6 +69,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let expectedSyncGranulePayload;
   let expectedPayload;
+  let existingFiles;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -167,6 +171,7 @@ describe('The S3 Ingest Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
+      existingFiles = await getFilesMetadata(files);
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
       existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });
@@ -274,6 +279,48 @@ describe('The S3 Ingest Granules workflow', () => {
     it('triggers the execution record being added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
+    });
+  });
+
+  describe('encounters duplicate filenames', () => {
+    let fileUpdated;
+    let secondWorkflowExecution;
+
+    beforeAll(async () => {
+      // update one of the input files so we can assert that the file size changed
+      const content = randomString();
+      const file = inputPayload.granules[0].files[0];
+      fileUpdated = file.name;
+      const updateParams = {
+        Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
+      };
+
+      await s3().putObject(updateParams).promise();
+      inputPayload.granules[0].files[0].fileSize = content.length;
+
+      secondWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      );
+    });
+
+    it('does not raise a workflow error', () => {
+      expect(secondWorkflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('overwrites the existing file with the new data', async () => {
+      const lambdaOutput = await lambdaStep.getStepOutput(secondWorkflowExecution.executionArn, 'MoveGranules');
+      const outputFiles = lambdaOutput.payload.granules[0].files;
+      const currentFiles = await getFilesMetadata(outputFiles);
+
+      expect(currentFiles.length).toBe(existingFiles.length);
+
+      currentFiles.forEach((cf) => {
+        const existingfile = existingFiles.filter((ef) => ef.filename === cf.filename);
+        expect(cf.LastModified).toBeGreaterThan(existingfile[0].LastModified);
+        if (cf.filename.endsWith(fileUpdated)) {
+          expect(cf.fileSize).toBe(inputPayload.granules[0].files[0].fileSize);
+        }
+      });
     });
   });
 });
