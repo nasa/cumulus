@@ -48,15 +48,15 @@ This feature allows a variable number of retained lambdas, however due to CF and
 
 The ```WorkflowLambdaVersions``` sub-template is constrained to 200 total resources, in addition to only being able to output 60 aliases back to the master template.   As such, the limit on the template is:
 
-```(200/3+2*RV)-2``` where RV = total number of retained versions.
+```(200/2+2*RV)-2``` where RV = total number of retained versions.
 
 Given the available limits, the following are the pratical limits on the number of lambdas that can be configured for a given number of retained lambdas:
 
-* 1: 38
+* 1: 48
 
-* 2: 26
+* 2: 31
 
-* 3: 20
+* 3: 23
 
 ### Disabling Lambda Versioning
 
