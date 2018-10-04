@@ -10,9 +10,10 @@ function count(event, cb) {
 
 function list(event, cb) {
   const search = new Search(event, 'logs');
-  return search.query().then((response) => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+
+  return search.query()
+    .then((response) => cb(null, response))
+    .catch(cb);
 }
 
 /**
