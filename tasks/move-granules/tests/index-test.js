@@ -161,6 +161,9 @@ test.serial('should update filenames with metadata fields', async (t) => {
 test.serial('should overwrite files', async (t) => {
   const newPayload = JSON.parse(JSON.stringify(payload));
   const filename = 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg';
+  const sourceKey = `file-staging/${filename}`;
+  const destKey = `jpg/example/${filename}`;
+
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal = {
     name: t.context.stagingBucket,
@@ -168,27 +171,32 @@ test.serial('should overwrite files', async (t) => {
   };
   newPayload.config.buckets.public.name = t.context.endBucket;
   newPayload.input = [
-    `s3://${t.context.stagingBucket}/file-staging/${filename}`
+    `s3://${t.context.stagingBucket}/${sourceKey}`
   ];
   newPayload.config.input_granules[0].files = [{
-    filename: `s3://${t.context.stagingBucket}/file-staging/${filename}`,
+    filename: `s3://${t.context.stagingBucket}/${sourceKey}`,
     name: filename
   }];
 
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
-    Key: `file-staging/${filename}`,
+    Key: sourceKey,
     Body: 'Something'
   });
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
 
+  const existingFile = await headObject(
+    t.context.endBucket,
+    destKey,
+  );
+
   // re-stage source file with different content
   const content = randomString();
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
-    Key: `file-staging/${filename}`,
+    Key: sourceKey,
     Body: content
   });
 
@@ -201,8 +209,18 @@ test.serial('should overwrite files', async (t) => {
   finally {
     const updatedFile = await headObject(
       t.context.endBucket,
-      `jpg/example/${filename}`
+      destKey,
     );
+    const objects = await s3().listObjects({ Bucket: t.context.endBucket }).promise();
+    t.is(objects.Contents.length, 1);
+
+    const item = objects.Contents[0];
+    t.is(item.Key, destKey);
+
+    const existingModified = new Date(existingFile.LastModified).getTime();
+    const itemModified = new Date(item.LastModified).getTime();
+    t.true(itemModified > existingModified);
+
     t.is(updatedFile.ContentLength, content.length);
   }
 });
