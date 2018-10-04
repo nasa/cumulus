@@ -2,7 +2,7 @@
 
 Cumulus makes use of AWS's Lambda/Alias version objects to tag and retain references to recent copies of deployed workflow lambdas.
 
-Each Cumulus deployed lambda and configured s3Source lambda in lambdas.yml will have an alias/version resource created for them.
+All Cumulus deployed lambdas in lambdas.yml will have an alias/version resource created. Lambdas with source coming from S3 must be expressly configured to take advantage of versioning.
 
 A reference to the most current lambda version alias will replace the unversioned lambda resource ARN in all workflows for each task that is either built via Cumulus, or defined via the uniqueIdentifier configuration key for s3 sourced lambdas.
 
