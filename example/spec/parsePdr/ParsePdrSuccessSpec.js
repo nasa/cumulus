@@ -1,6 +1,6 @@
-const fs = require('fs');
 const { get } = require('lodash');
 const { Pdr, Execution } = require('@cumulus/api/models');
+const { constructCollectionId } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
@@ -22,13 +22,12 @@ const {
   createTestDataPath,
   createTestSuffix
 } = require('../helpers/testUtils');
-const { setupTestGranuleForIngest, loadFileWithUpdatedGranuleIdAndPath } = require('../helpers/granuleUtils');
+const { loadFileWithUpdatedGranuleIdPathAndCollection } = require('../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'ParsePdr';
 const defaultDataFolder = 'cumulus-test-data/pdrs';
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
@@ -40,7 +39,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
-describe('Parse PDR workflow', () => {
+describe('Parse PDR workflow\n', () => {
   const testId = createTimestampedTestId(config.stackName, 'ParsePdrSuccess');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
@@ -55,6 +54,7 @@ describe('Parse PDR workflow', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
 
   process.env.PdrsTable = `${config.stackName}-PdrsTable`;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -69,17 +69,14 @@ describe('Parse PDR workflow', () => {
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
-    inputPayload = setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
-    const newGranuleId = inputPayload.granules[0].granuleId;
-
+    inputPayload = loadFileWithUpdatedGranuleIdPathAndCollection(inputPayloadFilename, '', testDataFolder, '');
     // place pdr on S3
-    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: testDataGranuleId, new: newGranuleId }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]);
+    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]);
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 
-    expectedParsePdrOutput = loadFileWithUpdatedGranuleIdAndPath(outputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
+    expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(outputPayloadFilename, testDataGranuleId, testDataFolder, newCollectionId);
     expectedParsePdrOutput.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
