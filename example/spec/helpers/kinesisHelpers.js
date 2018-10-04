@@ -28,22 +28,30 @@ const waitPeriodMs = 1000;
 
 /**
  * Helper to simplify common setup code.  wraps function in try catch block
- * that will exit tests if the initial setup conditions fail.
+ * that will run 'cleanupCallback', then exit tests if the initial setup conditions fail.
  *
- * @param {Function} fn - function to execute
+ * @param {function} cleanupCallback - Function to execute if passed in function fails
+ * @param {Function} wrappedFunction - async function to execute
  * @param {iterable} args - arguments to pass to the function.
- * @returns {null} - no return
+ * @returns {Promise} - returns Promise returned by wrappedFunction if no exceptions are thrown.
  */
-function tryCatchExit(fn, ...args) {
+async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
   try {
-    return fn.apply(this, args);
+    return await wrappedFunction.apply(this, args);
   }
   catch (error) {
-    console.log(error);
-    console.log('Tests conditions can\'t get met...exiting.');
+    console.log(`${error}`);
+    console.log("Tests conditions can't get met...exiting.");
+    try {
+      await cleanupCallback();
+    }
+    catch (e) {
+      console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
+    }
+    // We should find a better way to do this
     process.exit(1);
   }
-  return null;
+  return Promise.reject(new Error('tryCatchExit failed unexpectedly'));
 }
 
 

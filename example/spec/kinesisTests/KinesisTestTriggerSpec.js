@@ -136,30 +136,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   testConfig.streamName = streamName;
   testConfig.cnmResponseStream = cnmResponseStreamName;
 
-  beforeAll(async () => {
-    // populate collections, providers and test data
-    await Promise.all([
-      uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
-      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
-    ]);
-    // create streams
-    await tryCatchExit(async () => {
-      await Promise.all([
-        createOrUseTestStream(streamName),
-        createOrUseTestStream(cnmResponseStreamName)
-      ]);
-      console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
-      await Promise.all([
-        waitForActiveStream(streamName),
-        waitForActiveStream(cnmResponseStreamName)
-      ]);
-      console.log('\nSetting up kinesisRule');
-      await addRules(testConfig, ruleDirectory, ruleOverride);
-    });
-  });
 
-  afterAll(async () => {
+  async function cleanUp() {
     // delete rule
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     // clean up stack state added by test
@@ -176,6 +154,33 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         Key: `${filePrefix}/${fileData.name}`
       }).promise()
     ]);
+  }
+
+  beforeAll(async () => {
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+    ]);
+    // create streams
+    await tryCatchExit(cleanUp, async () => {
+      await Promise.all([
+        createOrUseTestStream(streamName),
+        createOrUseTestStream(cnmResponseStreamName)
+      ]);
+      console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
+      await Promise.all([
+        waitForActiveStream(streamName),
+        waitForActiveStream(cnmResponseStreamName)
+      ]);
+      console.log('\nSetting up kinesisRule');
+      await addRules(testConfig, ruleDirectory, ruleOverride);
+    });
+  });
+
+  afterAll(async () => {
+    await cleanUp();
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {
@@ -186,7 +191,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     let workflowExecution;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
@@ -208,7 +213,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
-
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
       });
@@ -279,7 +283,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     delete badRecord.product;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
 
