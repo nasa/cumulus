@@ -25,7 +25,7 @@ ECS activities require a docker image. The docker image is defined as part of th
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.2.1
+        image: cumuluss/cumulus-ecs-task:1.2.3
         cpu: 800
         memory: 1500
         count: 1
