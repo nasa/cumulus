@@ -84,6 +84,13 @@ async function token(event, oAuth2Provider) {
   return buildAuthorizationFailureResponse({ error: error, message: error.message });
 }
 
+/**
+ * Handle client authorization
+ *
+ * @param {Object} request - an API Gateway request
+ * @param {OAuth2} oAuth2Provider - an OAuth2 instance
+ * @returns {Object} an API Gateway response
+ */
 async function login(request, oAuth2Provider) {
   const code = get(request, 'queryStringParameters.code');
   const state = get(request, 'queryStringParameters.state');
