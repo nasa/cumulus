@@ -393,7 +393,10 @@ async function addRules(config, dataDirectory) {
  */
 async function _deleteOneRule(name) {
   const r = new Rule();
-  return r.get({ name: name }).then((item) => r.delete(item));
+  return r.get({ name: name }).then((item) => {
+    console.log(`\nDeleting rule ${name}`);
+    return r.delete(item);
+  });
 }
 
 
