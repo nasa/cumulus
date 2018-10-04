@@ -1,12 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const { Collection } = require('@cumulus/api');
+const { Collection } = require('@cumulus/api/models');
 const {
   aws: {
     headObject,
     parseS3Uri,
     s3
   },
+  constructCollectionId,
   testUtils: {
     randomString
   }
@@ -30,7 +31,7 @@ const {
   uploadTestDataToBucket
 } = require('../helpers/testUtils');
 const {
-  loadFileWithUpdatedGranuleIdAndPath,
+  loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
@@ -38,8 +39,6 @@ const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranuleDuplicateVersionTest';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
-const defaultDataFolder = 'cumulus-test-data/pdrs';
 
 const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
@@ -53,7 +52,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-describe('When the Sync Granule workflow is configured to keep both files when encountering duplicate filenames', () => {
+describe('When the Sync Granule workflow is configured to keep both files when encountering duplicate filenames\n', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandlingVersion');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
@@ -64,6 +63,7 @@ describe('When the Sync Granule workflow is configured to keep both files when e
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
 
   let inputPayload;
   let expectedPayload;
@@ -85,10 +85,10 @@ describe('When the Sync Granule workflow is configured to keep both files when e
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
     // update test data filepaths
-    inputPayload = setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
-    expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(

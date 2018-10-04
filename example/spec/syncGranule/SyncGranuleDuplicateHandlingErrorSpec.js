@@ -28,9 +28,8 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
-describe('The Sync Granules workflow is configured to handle duplicates as "error"', () => {
+describe('The Sync Granules workflow is configured to handle duplicates as "error"\n', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandlingError');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
@@ -64,7 +63,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
 
     // Create test granule
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     granuleFileName = inputPayload.granules[0].files[0].name;
 
     workflowExecution = await buildAndExecuteWorkflow(
