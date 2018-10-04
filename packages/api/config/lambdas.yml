@@ -49,18 +49,6 @@ log2elasticsearch:
   useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
 
-sf2snsStart:
-  handler: index.sfStart
-  timeout: 100
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
-
-sf2snsEnd:
-  handler: index.sfEnd
-  timeout: 100
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
-
 dbIndexer:
   handler: index.dbIndexer
   timeout: 300
