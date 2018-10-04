@@ -2,9 +2,15 @@
 
 const rewire = require('rewire');
 const test = require('ava');
+const { randomString } = require('@cumulus/common/test-utils');
 
+const models = require('../../models');
+const assertions = require('../../lib/assertions');
 const executionStatusEndpoint = rewire('../../endpoints/execution-status');
-const { testEndpoint } = require('../../lib/testUtils');
+const {
+  fakeUserFactory,
+  testEndpoint
+} = require('../../lib/testUtils');
 
 const executionStatusCommon = {
   executionArn: 'arn:aws:states:us-east-1:xxx:execution:discoverGranulesStateMachine:3ea094d8',
@@ -25,14 +31,12 @@ const cumulusMetaOutput = {
   }
 };
 
-const replaceObject = function (lambdaEvent = true) {
-  return {
-    replace: {
-      Bucket: 'test-sandbox-internal',
-      Key: lambdaEvent ? 'events/lambdaEventUUID' : 'events/executionEventUUID'
-    }
-  };
-};
+const replaceObject = (lambdaEvent = true) => ({
+  replace: {
+    Bucket: 'test-sandbox-internal',
+    Key: lambdaEvent ? 'events/lambdaEventUUID' : 'events/executionEventUUID'
+  }
+});
 
 const remoteExecutionOutput = {
   ...cumulusMetaOutput,
@@ -94,8 +98,8 @@ const lambdaFunctionEvent = {
 };
 
 const stepFunctionMock = {
-  getExecutionStatus: function (arn) {
-    return new Promise((resolve) => {
+  getExecutionStatus: (arn) =>
+    new Promise((resolve) => {
       let executionStatus;
       if (arn === 'stillRunning') {
         executionStatus = { ...executionStatusCommon };
@@ -115,27 +119,80 @@ const stepFunctionMock = {
         },
         stateMachine: {}
       });
-    });
-  }
+    })
 };
 
 const s3Mock = {
-  get: function (_, key) {
-    return new Promise((resolve) => {
+  get: (_, key) =>
+    new Promise((resolve) => {
       const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
       const s3Result = {
         Body: Buffer.from(JSON.stringify(fullMessage))
       };
       resolve(s3Result);
-    });
-  }
+    })
 };
 
 executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
 executionStatusEndpoint.__set__('S3', s3Mock);
 
+
+let authHeaders;
+let userModel;
+test.before(async () => {
+  process.env.UsersTable = randomString();
+
+  userModel = new models.User();
+  await userModel.createTable();
+
+  const authToken = (await userModel.create(fakeUserFactory())).password;
+  authHeaders = {
+    Authorization: `Bearer ${authToken}`
+  };
+});
+
+test.after.always(async () => {
+  await userModel.deleteTable();
+});
+
+test('CUMULUS-911 GET without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      arn: 'asdf'
+    },
+    headers: {}
+  };
+
+  return testEndpoint(executionStatusEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+  });
+});
+
+test('CUMULUS-912 GET with an unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      arn: 'asdf'
+    },
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+
+  return testEndpoint(executionStatusEndpoint, request, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
+  });
+});
+
 test('returns full message when it is already included in the output', (t) => {
-  const event = { pathParameters: { arn: 'hasFullMessage' } };
+  const event = {
+    pathParameters: {
+      arn: 'hasFullMessage'
+    },
+    headers: authHeaders
+  };
+
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
     t.deepEqual(fullMessageOutput, executionStatus.execution.output);
@@ -143,7 +200,13 @@ test('returns full message when it is already included in the output', (t) => {
 });
 
 test('fetches messages from S3 when remote message (for both SF execution history and executions)', (t) => {
-  const event = { pathParameters: { arn: 'hasRemoteMessage' } };
+  const event = {
+    pathParameters: {
+      arn: 'hasRemoteMessage'
+    },
+    headers: authHeaders
+  };
+
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
     const expectedResponse = {
@@ -163,7 +226,12 @@ test('fetches messages from S3 when remote message (for both SF execution histor
 });
 
 test('when execution is still running, still returns status and fetches SF execution history events from S3', (t) => {
-  const event = { pathParameters: { arn: 'stillRunning' } };
+  const event = {
+    pathParameters: {
+      arn: 'stillRunning'
+    },
+    headers: authHeaders
+  };
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
     const expectedResponse = {
