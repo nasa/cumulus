@@ -120,7 +120,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   async function cleanUp() {
     // delete rule
-    debugger;
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     await deleteRules(testConfig.stackName, testConfig.bucket, rules);
     // delete uploaded test data
@@ -182,7 +181,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
-
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
       });
