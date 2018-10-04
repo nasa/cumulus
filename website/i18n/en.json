@@ -59,6 +59,9 @@
       "ems_reporting": {
         "title": "EMS Reporting"
       },
+      "lambda_versioning": {
+        "title": "lambda_versioning"
+      },
       "README": {
         "title": "Cumulus Description"
       },
