@@ -45,7 +45,7 @@ This can be overridden by adding the following key to your configuration file:
 
 where X is the number of previous versions you wish to retain.
 
-This feature allows a variable number of retained lambdas, however due to CF and current implementation constraints, that number is fairly limited.
+This feature allows a variable number of retained lambdas, however due to CloudFormation limits and current implementation constraints, that number is fairly limited.
 
 The ```WorkflowLambdaVersions``` sub-template is constrained to 200 total resources, in addition to only being able to output 60 aliases back to the master template.   As such, the limit on the template is:
 
