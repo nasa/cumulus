@@ -8,20 +8,12 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
-  promiseS3Upload
+  promiseS3Upload,
+  headObject
 } = require('@cumulus/common/aws');
 const payload = require('./data/payload.json');
 const { moveGranules } = require('../index');
 const { randomString, validateOutput } = require('@cumulus/common/test-utils');
-
-// eslint-disable-next-line require-jsdoc
-// async function deleteBucket(bucket) {
-//   const response = await s3().listObjects({ Bucket: bucket }).promise();
-//   const keys = response.Contents.map((o) => o.Key);
-//   await Promise.all(keys.map(
-//     (key) => s3().deleteObject({ Bucket: bucket, Key: key }).promise()
-//   ));
-// }
 
 test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
@@ -164,4 +156,53 @@ test.serial('should update filenames with metadata fields', async (t) => {
   const output = await moveGranules(newPayload);
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
   t.deepEqual(expectedFilenames, outputFilenames);
+});
+
+test.serial('should overwrite files', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  const filename = 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg';
+  newPayload.config.bucket = t.context.stagingBucket;
+  newPayload.config.buckets.internal = {
+    name: t.context.stagingBucket,
+    type: 'internal'
+  };
+  newPayload.config.buckets.public.name = t.context.endBucket;
+  newPayload.input = [
+    `s3://${t.context.stagingBucket}/file-staging/${filename}`
+  ];
+  newPayload.config.input_granules[0].files = [{
+    filename: `s3://${t.context.stagingBucket}/file-staging/${filename}`,
+    name: filename
+  }];
+
+  await promiseS3Upload({
+    Bucket: t.context.stagingBucket,
+    Key: `file-staging/${filename}`,
+    Body: 'Something'
+  });
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  // re-stage source file with different content
+  const content = randomString();
+  await promiseS3Upload({
+    Bucket: t.context.stagingBucket,
+    Key: `file-staging/${filename}`,
+    Body: content
+  });
+
+  try {
+    await moveGranules(newPayload);
+  }
+  catch (err) {
+    t.fail();
+  }
+  finally {
+    const updatedFile = await headObject(
+      t.context.endBucket,
+      `jpg/example/${filename}`
+    );
+    t.is(updatedFile.ContentLength, content.length);
+  }
 });
