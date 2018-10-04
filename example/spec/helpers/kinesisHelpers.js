@@ -28,12 +28,12 @@ const waitPeriodMs = 1000;
 
 /**
  * Helper to simplify common setup code.  wraps function in try catch block
- * that will exit tests if the initial setup conditions fail.
+ * that will run 'cleanupCallback', then exit tests if the initial setup conditions fail.
  *
- * @param {functino} cleanupCallback - Function to execute if passed in function fails
- * @param {Function} wrappedFunction - function to execute
+ * @param {function} cleanupCallback - Function to execute if passed in function fails
+ * @param {Function} wrappedFunction - async function to execute
  * @param {iterable} args - arguments to pass to the function.
- * @returns {null} - no return
+ * @returns {Promise} - returns Promise returned by wrappedFunction if no exceptions are thrown.
  */
 async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
   try {
