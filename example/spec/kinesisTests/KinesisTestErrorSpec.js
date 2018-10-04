@@ -68,7 +68,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
       await cleanUp.bind(this)();
     }
     catch (e) {
-      console.log(`Cleanup Failed ${e}`)
+      console.log(`Cleanup Failed ${e}`);
     }
   });
 
