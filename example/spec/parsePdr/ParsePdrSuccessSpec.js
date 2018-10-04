@@ -7,21 +7,38 @@ const {
   LambdaStep,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
+const {
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 
-const { loadConfig, getExecutionUrl } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  getExecutionUrl,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
 const taskName = 'ParsePdr';
 
-const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/ParsePdr.output.json'));
+const s3data = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
 
 describe('Parse PDR workflow', () => {
+  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-ParsePdrSuccess`);
   let workflowExecution;
   let queueGranulesOutput;
+  let inputPayload;
+  let expectedParsePdrOutput;
   const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
-  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
+  const outputPayloadFilename = './spec/parsePdr/ParsePdr.output.json';
   const collection = { name: 'MOD09GQ', version: '006' };
   const provider = { id: 's3_provider' };
 
@@ -31,8 +48,21 @@ describe('Parse PDR workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
+    // place pdr on S3
+    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    // update input file paths
+    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
+    inputPayload = JSON.parse(updatedInputPayloadJson);
+
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
+
+    const expectedParsePdrOutputJson = fs.readFileSync(outputPayloadFilename, 'utf8');
+    // update expectedOutput file paths
+    const updatedExpectedParsePdrOutputJson = globalReplace(expectedParsePdrOutputJson, 'cumulus-test-data/pdrs', testDataFolder);
+    expectedParsePdrOutput = JSON.parse(updatedExpectedParsePdrOutputJson);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -47,6 +77,16 @@ describe('Parse PDR workflow', () => {
       workflowExecution.executionArn,
       'QueueGranules'
     );
+  });
+
+  afterAll(async () => {
+    // await execution completions
+    await Promise.all(queueGranulesOutput.payload.running.map(async (arn) =>
+      waitForCompletedExecution(arn)));
+    // delete the pdr record from DynamoDB if exists
+    await pdrModel.delete({ pdrName: inputPayload.pdr.name });
+    // delete test data from S3
+    await deleteFolder(config.bucket, testDataFolder);
   });
 
   it('executes successfully', () => {
@@ -113,8 +153,22 @@ describe('Parse PDR workflow', () => {
     let ingestGranuleExecutionStatus;
 
     beforeAll(async () => {
+      // wait for IngestGranule execution to complete
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+    });
+
+    afterAll(async () => {
+      // cleanup
+      const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'SfSnsReport');
+      // delete ingested granule(s)
+      await Promise.all(
+        finalOutput.payload.granules.map((g) =>
+          apiTestUtils.deleteGranule({
+            prefix: config.stackName,
+            granuleId: g.granuleId
+          }))
+      );
     });
 
     it('executes successfully', () => {
@@ -156,7 +210,6 @@ describe('Parse PDR workflow', () => {
       expect(parsePdrExecution.parentArn).toBeUndefined();
     });
   });
-
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the pdr record is added to DynamoDB', async () => {

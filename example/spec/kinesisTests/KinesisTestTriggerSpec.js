@@ -1,37 +1,54 @@
 'use strict';
 
-const { s3 } = require('@cumulus/common/aws');
+const {
+  aws: { s3 },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
+  addRules,
   LambdaStep,
-  waitForCompletedExecution
+  waitForCompletedExecution,
+  rulesList,
+  deleteRules
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { loadConfig } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  timestampedTestDataPrefix
+} = require('../helpers/testUtils');
+
 const {
   createOrUseTestStream,
+  deleteTestStream,
   getShardIterator,
+  getStreamStatus,
   getRecords,
   putRecordOnStream,
+  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForTestSf
 } = require('../helpers/kinesisHelpers');
 
-const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
+const testConfig = loadConfig();
+
+const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
+
+const testDataFolder = timestampedTestDataPrefix(`${testConfig.stackName}-KinesisTestTrigger`);
+
+record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
 
 const granuleId = record.product.name;
 const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
 
-const testConfig = loadConfig();
-const cnmResponseStreamName = `${testConfig.stackName}-cnmResponseStream`;
-
 const lambdaStep = new LambdaStep();
-const streamName = testConfig.streamName;
 
 const recordFile = record.product.files[0];
 const expectedTranslatePayload = {
@@ -47,7 +64,7 @@ const expectedTranslatePayload = {
       granuleId: record.product.name,
       files: [
         {
-          path: 'cumulus-test-data/pdrs',
+          path: testDataFolder,
           url_path: recordFile.uri,
           bucket: record.bucket,
           name: recordFile.name,
@@ -80,40 +97,69 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
+const ruleDirectory = './spec/kinesisTests/data/rules';
+
+const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
+
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const maxWaitForSFExistSecs =  60 * 4;
+  const maxWaitForSFExistSecs = 60 * 4;
   const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
   let s3FileHead;
   let responseStreamShardIterator;
 
-  afterAll(async () => {
+  const streamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerStream');
+  const cnmResponseStreamName = timeStampedStreamName(testConfig, 'KinesisTestTriggerCnmResponseStream');
+  testConfig.streamName = streamName;
+  testConfig.cnmResponseStream = cnmResponseStreamName;
+
+
+  async function cleanUp() {
+    // delete rule
+    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
+    // delete uploaded test data
+    await deleteFolder(testConfig.bucket, testDataFolder);
+    // delete synced data
     await s3().deleteObject({
       Bucket: testConfig.buckets.private.name,
       Key: `${filePrefix}/${fileData.name}`
     }).promise();
-  });
+    console.log(`\nDeleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
+    await Promise.all([deleteTestStream(streamName), deleteTestStream(cnmResponseStreamName)]);
+  }
 
   beforeAll(async () => {
-    await tryCatchExit(async () => {
+    await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder);
+    // create streams
+    await tryCatchExit(cleanUp, async () => {
       await createOrUseTestStream(streamName);
       await createOrUseTestStream(cnmResponseStreamName);
-
       console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
       await waitForActiveStream(streamName);
       await waitForActiveStream(cnmResponseStreamName);
+      console.log('\nSetting up kinesisRule');
+      await addRules(testConfig, ruleDirectory);
     });
+  });
+
+  afterAll(async () => {
+    await cleanUp();
+  });
+
+  it('Prepares a kinesis stream for integration tests.', async () => {
+    expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
   describe('Workflow executes successfully', () => {
     let workflowExecution;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
@@ -135,7 +181,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
-
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
       });
@@ -206,7 +251,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     delete badRecord.product;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
 

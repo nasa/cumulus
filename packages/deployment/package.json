@@ -46,6 +46,7 @@
     "kes": "~2.2.2",
     "lodash.get": "^4.4.2",
     "lodash.omit": "^4.5.0",
+    "lodash.zipobject": "^4.1.3",
     "node-forge": "^0.7.1",
     "p-limit": "^1.2.0",
     "request": "^2.83.0",
@@ -58,6 +59,7 @@
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
-    "nyc": "^11.6.0"
+    "nyc": "^11.6.0",
+    "sinon": "^4.5.0"
   }
 }

@@ -92,8 +92,8 @@ async function reingestGranule({ prefix, granuleId }) {
     functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/v1/granules/{granuleName}',
-      path: `/v1/granules/${granuleId}`,
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
       pathParameters: {
         granuleName: granuleId
       },
@@ -118,8 +118,8 @@ async function removeFromCMR({ prefix, granuleId }) {
     functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/v1/granules/{granuleName}',
-      path: `/v1/granules/${granuleId}`,
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
       pathParameters: {
         granuleName: granuleId
       },
@@ -150,8 +150,8 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
     functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/v1/granules/{granuleName}',
-      path: `/v1/granules/${granuleId}`,
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
       pathParameters: {
         granuleName: granuleId
       },
@@ -160,6 +160,56 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
   });
 
   return JSON.parse(payload.body);
+}
+
+/**
+ * Delete a granule from Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @returns {Promise<Object>} - the delete confirmation from the API
+ */
+async function deleteGranule({ prefix, granuleId }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiGranulesDefault',
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
+      pathParameters: {
+        granuleName: granuleId
+      }
+    }
+  });
+
+  return payload;
+}
+
+/**
+ * Delete a pdr from Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.pdr - a pdr name
+ * @returns {Promise<Object>} - the delete confirmation from the API
+ */
+async function deletePdr({ prefix, pdr }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiPdrsDefault',
+    payload: {
+      httpMethod: 'DELETE',
+      resource: '/pdrs/{pdrName}',
+      path: `/pdrs/${pdr}`,
+      pathParameters: {
+        pdrName: pdr
+      }
+    }
+  });
+
+  return payload;
 }
 
 /**
@@ -265,6 +315,8 @@ module.exports = {
   reingestGranule,
   removeFromCMR,
   applyWorkflow,
+  deleteGranule,
+  deletePdr,
   getExecution,
   getLogs,
   getExecutionLogs,
