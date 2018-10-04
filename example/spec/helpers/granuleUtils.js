@@ -61,7 +61,8 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId,
     newGranuleId
   );
 
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, oldGranuleId, newGranuleId);
+  const baseInputPayloadJson = JSON.stringify(baseInputPayload);
+  const updatedInputPayloadJson = globalReplace(baseInputPayloadJson, oldGranuleId, newGranuleId);
 
   return JSON.parse(updatedInputPayloadJson);
 }
