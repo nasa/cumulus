@@ -28,10 +28,10 @@ describe('Cleans up Test Resources', () => {
   it('cleans up providers and collections added for the test', async () => {
     const collections = await listCollections(testConfig.stackName, testConfig.bucket, collectionsDirectory);
     const deletedCollections = await deleteCollections(testConfig.stackName, testConfig.bucket, collections);
-    expect(deletedCollections).toEqual(3);
+    expect(deletedCollections).toEqual(4);
 
     const providers = await listProviders(testConfig.stackName, testConfig.bucket, providersDirectory);
     const deletedProviders = await deleteProviders(testConfig.stackName, testConfig.bucket, providers);
-    expect(deletedProviders).toEqual(4);
+    expect(deletedProviders).toEqual(5);
   });
 });

@@ -8,17 +8,11 @@ const {
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 12 * 60 * 1000;
 
 const {
-  LambdaStep,
-  addCollections,
-  addProviders,
   addRules,
-  deleteCollections,
-  deleteProviders,
-  deleteRules,
-  listCollections,
-  listProviders,
+  LambdaStep,
+  waitForCompletedExecution,
   rulesList,
-  waitForCompletedExecution
+  deleteRules
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -104,8 +98,6 @@ const expectedSyncGranulesPayload = {
 };
 
 const ruleDirectory = './spec/kinesisTests/data/rules';
-const providersDirectory = './spec/kinesisTests/data/provider';
-const collectionsDirectory = './spec/kinesisTests/data/collections';
 
 const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
 
@@ -114,7 +106,7 @@ const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
 describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const maxWaitForSFExistSecs = 60 * 4;
+  const maxWaitForSFExistSecs =  60 * 4;
   const maxWaitForExecutionSecs = 60 * 8;
   let executionStatus;
   let s3FileHead;
@@ -127,16 +119,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
 
   async function cleanUp() {
-    // delete collections, providers, and rules.
+    // delete rule
+    debugger;
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
-    const collections = await listCollections(testConfig.stackName, testConfig.bucket, collectionsDirectory);
-    const providers = await listProviders(testConfig.stackName, testConfig.bucket, providersDirectory);
-    await Promise.all([
-      deleteCollections(testConfig.stackName, testConfig.bucket, collections),
-      deleteProviders(testConfig.stackName, testConfig.bucket, providers),
-      deleteRules(testConfig.stackName, testConfig.bucket, rules)
-    ]);
-
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
     // delete uploaded test data
     await deleteFolder(testConfig.bucket, testDataFolder);
     // delete synced data
@@ -157,10 +143,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
       await waitForActiveStream(streamName);
       await waitForActiveStream(cnmResponseStreamName);
-
-      console.log('\nSetting up Kinesis test: providers, collections and rules');
-      await addCollections(testConfig.stackName, testConfig.bucket, collectionsDirectory);
-      await addProviders(testConfig.stackName, testConfig.bucket, providersDirectory, testConfig.bucket);
+      console.log('\nSetting up kinesisRule');
       await addRules(testConfig, ruleDirectory);
     });
   });
