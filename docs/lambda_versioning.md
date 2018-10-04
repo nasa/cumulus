@@ -8,7 +8,7 @@ A reference to the most current lambda version alias will replace the unversione
 
 A configurable number of previously deployed alias/version pairs will be retained to ensure that in-progress workflows are able to complete.
 
-This allows for workflows to automatically reference the specific version of a lambda function they were deployed with, prevents an updated deployment of an existing lambda from being utilized in an already in-progress workflow, and retains the executed version information in the AWS step function execution record and cloud watch logs.
+This allows for workflows to automatically reference the specific version of a lambda function they were deployed with, prevents an updated deployment of an existing lambda from being utilized in an already in-progress workflow, and retains the executed version information in the AWS step function execution record and CloudWatch logs.
 
 **Please note** that care must be exercised to not update lambda versions and redeploy frequently enough that an in-progress workflow refers to an aged-off version of a lambda, or workflows that reference such a lambda may fail.
 
