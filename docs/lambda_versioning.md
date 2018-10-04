@@ -19,6 +19,7 @@ This allows for workflows to automatically reference the specific version of a l
 This feature is enabled by default for all Cumulus built/deployed lambdas, as well as s3Source lambdas that are configured as described below.  s3Source Lambdas that are not configured will continue to utilize an unqualified reference and will not utilize lambda versioning.
 
 ### s3Source Lambda Version Configuration
+
 Lambdas with s3Source defined currently require additional configuration to make use of this feature in the form of a 'uniqueIdentifier' key:
 
 ```
