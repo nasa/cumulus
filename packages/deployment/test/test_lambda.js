@@ -60,6 +60,38 @@ test.afterEach.always('cleanup temp directory', async (t) => {
   await fs.remove(t.context.temp);
 });
 
+
+
+test.serial('addWorkflowLambdahashes: adds hash values to config.workflowLambdas from config.lambda', (t) => {
+  t.context.config.lambdas = { FirstLambda: { hash: 'abcdefg' }, SecondLambda: {} };
+  t.context.config.workflowLambdas = { FirstLambda: {}, ThirdLmabda: {} };
+  const testLambda = new Lambda(t.context.config);
+
+  testLambda.addWorkflowLambdaHashes();
+  const actual = testLambda.config.workflowLambdas;
+  const expected = { FirstLambda: { hash: 'abcdefg' }, ThirdLmabda: {} };
+  t.deepEqual(expected, actual);
+});
+
+test.serial('buildS3Path: utilizes uniqueIdentifier for hash', async(t) => {
+  t.context.lambda.useMessageAdapter = false;
+
+  t.context.lambda.s3Source = { bucket: 'testbucket', key: 'somelambda.zip', uniqueIdentifier: 'uniqueidentifiervalue' };
+  delete t.context.lambda.source;
+  const testLambda = new Lambda(t.context.config);
+  const actual = testLambda.buildS3Path(t.context.lambda).hash;
+  const expected = 'uniqueidentifiervalue';
+  t.is(expected, actual);
+});
+
+test.serial('buildS3Path: fails with bad uniqueIdentifier', async(t) => {
+  t.context.lambda.useMessageAdapter = false;
+  t.context.lambda.s3Source = { bucket: 'testbucket', key: 'somelambda.zip', uniqueIdentifier: 'BADVALUE!#&*!#&*#&' };
+  delete t.context.lambda.source;
+  const testLambda = new Lambda(t.context.config);
+  t.throws(() => testLambda.buildS3Path(t.context.lambda));
+});
+
 test.serial('zipLambda: works for lambda not using message adapter', async (t) => {
   t.context.lambda.useMessageAdapter = false;
   const lambdaLocalOrigin = t.context.lambda.local;
