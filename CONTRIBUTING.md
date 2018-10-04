@@ -24,6 +24,31 @@ If you want to submit your own contributions, follow these steps:
 
 We ask that you follow these guidelines with your contributions:
 
+### Documenation
+
+Anything exported by a module must be documented using [JSDoc](http://usejsdoc.org/).
+
+The following JSDoc rules are enforced by our [eslint](https://eslint.org/)
+configuration:
+
+- Use the `@param` tag instead of `@arg`
+- Use the `@returns` tag instead of `@return`
+- Preferred param types:
+  - "boolean" instead of "Boolean"
+  - "number" instead of "Number"
+  - "string" instead of "String"
+  - "Object" instead of "object"
+  - "Array" instead of "array"
+  - "Date" instead of "date"
+  - "RegExp" instead of "regex" or "Regexp"
+  - "Promise" instead of "promise"
+- `@param` tags should have a type and a name. Example:
+  `@param {string} username`
+- Functions that explicitly return should have a `@returns` tag that has a type.
+  Example: `@returns {string}`
+- Parameter names must match those in the function declaration
+- Tags must be valid [JSDoc 3 Block Tags](http://usejsdoc.org/#block-tags)
+
 ### Tests
 
 All of the automated tests for this project need to pass before your submission will be accepted. You can run `npm test` in the command line after making changes to verify that the tests pass. If you add new functionality, please consider adding tests for that functionality as well.
