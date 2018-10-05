@@ -573,6 +573,7 @@ async function buildAndStartWorkflow(
 
 module.exports = {
   api,
+  buildWorkflow,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
