@@ -135,6 +135,12 @@ test.serial('should overwrite files', async (t) => {
   const sourceKey = `file-staging/${filename}`;
   const destKey = `jpg/example/${filename}`;
 
+  newPayload.config.bucket = t.context.stagingBucket;
+  newPayload.config.buckets.internal = {
+    name: t.context.stagingBucket,
+    type: 'internal'
+  };
+  newPayload.config.buckets.public.name = t.context.endBucket;
   newPayload.input = [
     `s3://${t.context.stagingBucket}/${sourceKey}`
   ];
@@ -142,6 +148,8 @@ test.serial('should overwrite files', async (t) => {
     filename: `s3://${t.context.stagingBucket}/${sourceKey}`,
     name: filename
   }];
+
+  newPayload.config.duplicateHandling = 'replace';
 
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
@@ -151,7 +159,6 @@ test.serial('should overwrite files', async (t) => {
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
-
   const existingFile = await headObject(
     t.context.endBucket,
     destKey,
@@ -222,7 +229,7 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
     await validateOutput(t, output);
 
     expectedErrorMessages = output.granules[0].files.map((file) => {
-      const parsed = aws.parseS3Uri(file.filename);
+      const parsed = parseS3Uri(file.filename);
       return `${parsed.Key} already exists in ${parsed.Bucket} bucket`;
     });
 
