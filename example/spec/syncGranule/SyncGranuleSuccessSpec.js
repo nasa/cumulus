@@ -171,6 +171,8 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
       const files = lambdaOutput.payload.granules[0].files;
       const currentFiles = await getFilesMetadata(files);
 
+      expect(lambdaOutput.payload.granules[0].files[0].duplicate_found).toBe(true);
+
       expect(currentFiles.length).toBe(existingfiles.length);
 
       currentFiles.forEach((cf) => {
