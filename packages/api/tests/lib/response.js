@@ -233,13 +233,12 @@ test('getAuthorizationFailureResponse returns an appropriate response when a tok
   const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
 
   t.truthy(response);
-  t.is(response.statusCode, 401);
+  t.is(response.statusCode, 403);
+
   t.is(response.headers['Content-Type'], 'application/json');
-  t.true(response.headers['WWW-Authenticate'].includes('error="invalid_token"'));
-  t.true(response.headers['WWW-Authenticate'].includes('error_description="Invalid Authorization token"'));
 
   const parsedResponseBody = JSON.parse(response.body);
-  t.is(parsedResponseBody.message, 'Invalid Authorization token');
+  t.is(parsedResponseBody.message, 'User not authorized');
 });
 
 test('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
@@ -259,11 +258,10 @@ test('getAuthorizationFailureResponse returns an appropriate response when the t
   const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
 
   t.truthy(response);
-  t.is(response.statusCode, 401);
+  t.is(response.statusCode, 403);
+
   t.is(response.headers['Content-Type'], 'application/json');
-  t.true(response.headers['WWW-Authenticate'].includes('error="invalid_token"'));
-  t.true(response.headers['WWW-Authenticate'].includes('error_description="The access token expired"'));
 
   const parsedResponseBody = JSON.parse(response.body);
-  t.is(parsedResponseBody.message, 'The access token expired');
+  t.is(parsedResponseBody.message, 'Access token has expired');
 });
