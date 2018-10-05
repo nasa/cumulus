@@ -464,12 +464,14 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   );
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(oldfiles[0].duplicate_found, undefined);
   t.is(oldfiles.length, 1);
 
   // update the source file with different content and ingest again
   params.Body = randomString();
   await s3().putObject(params).promise();
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.true(oldfiles[0].duplicate_found);
   t.is(newfiles.length, 2);
 });
 
