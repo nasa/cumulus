@@ -1,6 +1,6 @@
 'use strict';
 
-exports.token = require('./endpoints/token').handler;
+exports.token = require('./endpoints/token').handleApiGatewayRequest;
 exports.collections = require('./endpoints/collections');
 exports.granules = require('./endpoints/granules');
 exports.logs = require('./endpoints/logs');
@@ -13,7 +13,7 @@ exports.executionStatus = require('./endpoints/execution-status');
 exports.schemas = require('./endpoints/schemas');
 exports.stats = require('./endpoints/stats');
 exports.version = require('./endpoints/version');
-exports.distribution = require('./endpoints/distribution').handler;
+exports.distribution = require('./endpoints/distribution').handleApiGatewayRequest;
 exports.dbIndexer = require('./lambdas/db-indexer');
 exports.reconciliationReports = require('./endpoints/reconciliation-reports');
 
