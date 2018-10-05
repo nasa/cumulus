@@ -194,6 +194,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     it('overwrites the existing file with the new data', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
+      expect(lambdaOutput.payload.granules[0].files[0].duplicate_found).toBe(true);
 
       const currentFiles = await Promise.all(files.map(async (f) => {
         const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);

@@ -128,6 +128,10 @@ describe('When the Sync Granule workflow is configured to skip new data when enc
       const updateParams = {
         Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
       };
+      // expect reporting of duplicate
+      expectedPayload.granules[0].files[0].duplicate_found = true;
+      expectedPayload.granules[0].files[1].duplicate_found = true;
+
 
       await s3().putObject(updateParams).promise();
       inputPayload.granules[0].files[0].fileSize = content.length;
@@ -135,6 +139,12 @@ describe('When the Sync Granule workflow is configured to skip new data when enc
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+    });
+
+    afterAll(() => {
+      // delete reporting expectations
+      delete expectedPayload.granules[0].files[0].duplicate_found;
+      delete expectedPayload.granules[0].files[1].duplicate_found;
     });
 
     it('does not raise a workflow error', () => {

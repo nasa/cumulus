@@ -128,7 +128,7 @@ class Discover {
     // going to ignore it.
     const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
-        .then((exists) => (exists ? null : discoveredFile)))))
+        .then((s3ObjAlreadyExists) => (s3ObjAlreadyExists ? null : discoveredFile)))))
       .filter(identity);
 
     // Group the files by granuleId
@@ -520,7 +520,7 @@ class Granule {
     // Check if the file exists
     const destinationKey = path.join(this.fileStagingDir, file.name);
 
-    const exists = await aws.s3ObjectExists({
+    const s3ObjAlreadyExists = await aws.s3ObjectExists({
       Bucket: bucket,
       Key: destinationKey
     });
@@ -533,16 +533,17 @@ class Granule {
         url_path: this.getUrlPath(file),
         bucket
       });
+    if (s3ObjAlreadyExists) stagedFile.duplicate_found = true;
 
-    log.debug(`file ${destinationKey} exists in ${bucket}: ${exists}`);
+    log.debug(`file ${destinationKey} exists in ${bucket}: ${s3ObjAlreadyExists}`);
     // Have to throw DuplicateFile and not WorkflowError, because the latter
     // is not treated as a failure by the message adapter.
-    if (exists && duplicateHandling === 'error') {
+    if (s3ObjAlreadyExists && duplicateHandling === 'error') {
       throw new errors.DuplicateFile(`${destinationKey} already exists in ${bucket} bucket`);
     }
 
     // Exit early if we can
-    if (exists && duplicateHandling === 'skip') {
+    if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
       return Object.assign(stagedFile,
         { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength });
     }
@@ -555,7 +556,7 @@ class Granule {
 
     // if the file already exists, and duplicateHandling is 'version',
     // we download file to a different name first
-    const stagedFileKey = (exists && duplicateHandling === 'version')
+    const stagedFileKey = (s3ObjAlreadyExists && duplicateHandling === 'version')
       ? `${destinationKey}.${uuidv4()}` : destinationKey;
 
     // stream the source file to s3
@@ -567,7 +568,7 @@ class Granule {
     const [checksumType, checksumValue] = await this.validateChecksum(file, bucket, stagedFileKey);
 
     // compare the checksum of the existing file and new file, and handle them accordingly
-    if (exists && duplicateHandling === 'version') {
+    if (s3ObjAlreadyExists && duplicateHandling === 'version') {
       const existingFileSum = await
       aws.checksumS3Objects(checksumType || 'CKSUM', bucket, destinationKey);
 
