@@ -121,7 +121,7 @@ const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-describe('The Cloud Notification Mechanism Kinesis workflow', () => {
+describe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
   const maxWaitForSFExistSecs = 60 * 4;
   const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
@@ -139,6 +139,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   async function cleanUp() {
     // delete rule
+    console.log(`\nDeleting ${ruleOverride.name}`);
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
@@ -174,7 +175,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         waitForActiveStream(streamName),
         waitForActiveStream(cnmResponseStreamName)
       ]);
-      console.log('\nSetting up kinesisRule');
       await addRules(testConfig, ruleDirectory, ruleOverride);
     });
   });
@@ -187,7 +187,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
-  describe('Workflow executes successfully', () => {
+  describe('Workflow executes successfully\n', () => {
     let workflowExecution;
 
     beforeAll(async () => {
