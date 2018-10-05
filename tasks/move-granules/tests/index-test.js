@@ -1,15 +1,16 @@
 'use strict';
 
-/* eslint-disable no-param-reassign */
-
 const fs = require('fs');
 const test = require('ava');
+const clonedeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
+const errors = require('@cumulus/common/errors');
+const {
+  randomString, validateConfig, validateInput, validateOutput
+} = require('@cumulus/common/test-utils');
 const payload = require('./data/payload.json');
-const { moveGranules } = require('../index');
-const { randomString, validateOutput } = require('@cumulus/common/test-utils');
+const { moveGranules } = require('..');
 
-// eslint-disable-next-line require-jsdoc
 async function deleteBucket(bucket) {
   const response = await aws.s3().listObjects({ Bucket: bucket }).promise();
   const keys = response.Contents.map((o) => o.Key);
@@ -18,9 +19,19 @@ async function deleteBucket(bucket) {
   ));
 }
 
+async function uploadFiles(files, bucket) {
+  await Promise.all(files.map((file) => aws.promiseS3Upload({
+    Bucket: bucket,
+    Key: aws.parseS3Uri(file).Key,
+    Body: file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : randomString()
+  })));
+}
+
 test.beforeEach(async (t) => {
+  /* eslint-disable no-param-reassign */
   t.context.stagingBucket = randomString();
   t.context.endBucket = randomString();
+  /* eslint-enable no-param-reassign */
   await aws.s3().createBucket({
     Bucket: t.context.endBucket
   }).promise();
@@ -47,22 +58,10 @@ test.serial('should move files to final location', async (t) => {
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
   ];
-  newPayload.config.input_granules[0].files[0].filename =
-  `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
-  newPayload.config.input_granules[0].files[1].filename =
-  `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`;
+  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
+  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
 
-  await aws.promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-    Body: 'Something'
-  });
-
-  await aws.promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-    Body: 'Something'
-  });
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -91,22 +90,10 @@ test.serial('should update filenames with specific url_path', async (t) => {
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
   ];
-  newPayload.config.input_granules[0].files[0].filename =
-  `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
-  newPayload.config.input_granules[0].files[1].filename =
-  `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`;
+  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
+  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
 
-  await aws.promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-    Body: 'Something'
-  });
-
-  await aws.promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-    Body: 'Something'
-  });
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   const files = output.granules[0].files;
@@ -129,34 +116,65 @@ test.serial('should update filenames with metadata fields', async (t) => {
     type: 'internal'
   };
   newPayload.config.buckets.public.name = t.context.endBucket;
-  newPayload.config.input_granules[0].files[0].filename =
-  `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
-  newPayload.config.input_granules[0].files[1].filename =
-  `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`;
+
+  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
+  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
+
   const expectedFilenames = [
     `s3://${t.context.endBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
     `s3://${t.context.endBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
     `s3://${t.context.endBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`];
 
-  await aws.promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
-    Body: 'Something'
-  });
-
-  await aws.promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
-    Body: 'Something'
-  });
-
-  await aws.promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: 'file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-    Body: fs.createReadStream('tests/data/meta.xml')
-  });
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
   t.deepEqual(expectedFilenames, outputFilenames);
+});
+
+// duplicateHandling has default value 'error' if it's not provided in task configuration and
+// collection configuration
+test.serial('when duplicateHandling is "error", throw an error on duplicate', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  newPayload.config.bucket = t.context.stagingBucket;
+  newPayload.config.buckets.internal = {
+    name: t.context.stagingBucket,
+    type: 'internal'
+  };
+  newPayload.config.buckets.public.name = t.context.endBucket;
+  const granuleId = 'MOD11A1.A2017200.h19v04.006.2017201090724';
+  newPayload.input = [
+    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_1.jpg`,
+    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_2.jpg`
+  ];
+  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
+  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  let expectedErrorMessages;
+  try {
+    await validateConfig(t, newPayload.config);
+    await validateInput(t, newPayload.input);
+
+    // payload could be modified
+    const newPayloadOrig = clonedeep(newPayload);
+
+    const output = await moveGranules(newPayload);
+    await validateOutput(t, output);
+
+    expectedErrorMessages = output.granules[0].files.map((file) => {
+      const parsed = aws.parseS3Uri(file.filename);
+      return `${parsed.Key} already exists in ${parsed.Bucket} bucket`;
+    });
+
+    await uploadFiles(newPayload.input, t.context.stagingBucket);
+    await moveGranules(newPayloadOrig);
+    t.fail();
+  }
+  catch (err) {
+    t.true(err instanceof errors.DuplicateFile);
+    t.true(expectedErrorMessages.includes(err.message));
+    t.pass();
+  }
 });
