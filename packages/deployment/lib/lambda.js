@@ -32,21 +32,22 @@ class UpdatedLambda extends Lambda {
   }
 
   /**
-   * Executes buildS3Path for all lambdas in the lambda's configuration object
+   * Executes buildS3Path for all lambdas in a lambda configuration object
    *
    * Utilizes buildS3Path to populate bucket/hash values
    * in the config object for a template that runs following a nested template
    * that has already run the superclass 'process' method.
    *
+   * @param {string) configKey - the configuration key with a lambda configuration object to be modified
    * @returns {void} returns nothing
    */
-  buildAllLambdaConfiguration() {
-    if (this.config.lambdas) {
-      let lambdas = this.config.lambdas;
+  buildAllLambdaConfiguration(configKey) {
+    if (this.config[configKey]) {
+      let lambdas = this.config[configKey];
       // if the lambdas is not an array but a object, convert it to a list
-      if (!Array.isArray(this.config.lambdas)) {
-        lambdas = Object.keys(this.config.lambdas).map((name) => {
-          const lambda = this.config.lambdas[name];
+      if (!Array.isArray(this.config[configKey])) {
+        lambdas = Object.keys(this.config[configKey]).map((name) => {
+          const lambda = this.config[configKey][name];
           lambda.name = name;
           return lambda;
         });
