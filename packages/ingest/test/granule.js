@@ -295,17 +295,17 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
 
   const name = 'test.txt';
   const Key = `origin/${name}`;
-  const params = { Bucket, Key, Body: 'test' };
+
+  // Pre-stage destination file
+  await s3().putObject({ Bucket: t.context.destBucket, Key, Body: 'test' }).promise();
+
+  // Stage source file
+  const updatedBody = randomString();
+  const params = { Bucket, Key, Body: updatedBody };
   await s3().putObject(params).promise();
 
   const source = { Bucket, Key };
   const target = { Bucket: t.context.destBucket, Key };
-
-  await moveGranuleFile(source, target);
-  const existingFile = await s3().headObject(target).promise();
-  // moveGranuleFile deletes the source object, so re-stage it for a
-  // second run
-  await s3().putObject(params).promise();
 
   try {
     await moveGranuleFile(source, target);
@@ -320,9 +320,8 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
     const item = objects.Contents[0];
     t.is(item.Key, Key);
 
-    const existingModified = new Date(existingFile.LastModified).getTime();
-    const itemModified = new Date(item.LastModified).getTime();
-    t.true(itemModified > existingModified);
+    t.is(item.Size, updatedBody.length);
+
     await recursivelyDeleteS3Bucket(Bucket);
   }
 });
