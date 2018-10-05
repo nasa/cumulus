@@ -1,8 +1,6 @@
 'use strict';
 
-const _get = require('lodash.get');
 const aws = require('@cumulus/common/aws');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const models = require('../models');
@@ -29,11 +27,11 @@ function list(event, cb) {
  * @returns {undefined} undefined
  */
 function get(event, cb) {
-  const pdrName = _get(event.pathParameters, 'pdrName');
+  const pdrName = event.pathParameters.pdrName;
 
-  const p = new models.Pdr();
+  const pdrModel = new models.Pdr();
 
-  return p.get({ pdrName }).then((response) => {
+  return pdrModel.get({ pdrName }).then((response) => {
     cb(null, response);
   }).catch(cb);
 }
@@ -73,7 +71,7 @@ async function del(event) {
  * @returns {undefined} undefined
  */
 function handler(event, context) {
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
+  return handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }
