@@ -61,7 +61,7 @@ function fakeFilesFactory(bucket) {
 }
 
 /**
- * creates fake granule records
+ * Returns a fake Granule record
  *
  * @param {string} status - granule status (default to completed)
  * @returns {Object} fake granule object
@@ -79,6 +79,19 @@ function fakeGranuleFactory(status = 'completed') {
     cmrLink: 'example.com',
     productVolume: 100
   };
+}
+
+/**
+ * Returns a fake Granule record
+ *
+ * @param {Object} options - properties to set on the granule
+ * @returns {Object} fake granule object
+ */
+function fakeGranuleFactoryV2(options = {}) {
+  return Object.assign(
+    fakeGranuleFactory(),
+    options
+  );
 }
 
 /**
@@ -137,7 +150,7 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 }
 
 /**
- * Add a user that can be authenticated against
+ * Build a user that can be authenticated against
  *
  * @param {Object} params - params
  * @param {string} params.userName - a username
@@ -184,6 +197,7 @@ function fakeCollectionFactory() {
 module.exports = {
   testEndpoint,
   fakeGranuleFactory,
+  fakeGranuleFactoryV2,
   fakePdrFactory,
   fakeCollectionFactory,
   fakeExecutionFactory,
