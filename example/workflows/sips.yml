@@ -123,6 +123,7 @@ IngestGranule:
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
@@ -152,6 +153,7 @@ IngestGranule:
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:

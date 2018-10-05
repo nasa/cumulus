@@ -1,6 +1,5 @@
 'use strict';
 
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { handle } = require('../lib/response');
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
@@ -123,7 +122,7 @@ async function del(event, cb) {
  * @returns {(error|string)} Success message or error
  */
 function handler(event, context) {
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
+  return handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }

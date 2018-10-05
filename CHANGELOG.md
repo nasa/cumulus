@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
     - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
 
+- Created a `@cumulus/api/lib/OAuth2` interface, which is implemented by the
+  `@cumulus/api/lib/EarthdataLogin` and `@cumulus/api/lib/GoogleOAuth2` classes.
+  Endpoints that need to handle authentication will determine which class to use
+  based on environment variables. This also greatly simplifies testing.
+- Added `@cumulus/api/lib/assertions`, containing more complex AVA test assertions
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
 
 - `@cumulus/integration-tests` new functionality:
@@ -26,6 +31,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - Added integration tests for `@cumulus/sync-granule` when `duplicateHandling` is set to `replace` or `skip` (CUMULUS-781)
 
+### Removed
+
+- Removed `@cumulus/common/fake-earthdata-login-server`. Tests can now create a
+  service stub based on `@cumulus/api/lib/OAuth2` if testing requires handling
+  authentication.
+
 ### Changed
 
 - **CUMULUS-782** - Updated `@cumulus/sync-granule` task and `Granule.ingestFile` in `@cumulus/ingest` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version`
@@ -35,6 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-780** - Updated `@cumulus/sync-granule` to use `error` as the default for `duplicateHandling` when it is not specified
 - **CUMULUS-780** - Updated `@cumulus/api` to use `error` as the default value for `duplicateHandling` in the `Collection` model
 - **CUMULUS-785** - Updated the config schema and documentation in `@cumulus/move-granules` to include `duplicateHandling` parameter for specifying how duplicate filenames should be handled
+- **CUMULUS-786** - Updated `@cumulus/move-granules` to throw `DuplicateFile` error when destination files already exist and `duplicateHandling` is `error
 
 ### Fixed
 
