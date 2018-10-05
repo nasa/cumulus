@@ -1,7 +1,5 @@
 'use strict';
 
-const _get = require('lodash.get');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { handle } = require('../lib/response');
 const models = require('../models');
 const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
@@ -29,13 +27,13 @@ function list(event, cb) {
  * @returns {Promise<Object>} a single provider object
  */
 function get(event, cb) {
-  const id = _get(event.pathParameters, 'id');
+  const id = event.pathParameters.id;
   if (!id) {
     return cb('provider id is missing');
   }
 
-  const p = new models.Provider();
-  return p.get({ id })
+  const providerModel = new models.Provider();
+  return providerModel.get({ id })
     .then((res) => {
       delete res.password;
       cb(null, res);
@@ -54,13 +52,13 @@ function post(event, cb) {
   const data = JSON.parse(event.body || {});
   const id = data.id;
 
-  const p = new models.Provider();
+  const providerModel = new models.Provider();
 
-  return p.get({ id })
+  return providerModel.get({ id })
     .then(() => cb({ message: `A record already exists for ${id}` }))
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
-        return p.create(data)
+        return providerModel.create(data)
           .then((record) => cb(null, { record, message: 'Record saved' }))
           .catch(cb);
       }
@@ -76,20 +74,21 @@ function post(event, cb) {
  * @returns {Promise<Object>} returns updated provider
  */
 function put(event, cb) {
-  const id = _get(event.pathParameters, 'id');
+  const id = event.pathParameters.id;
 
   if (!id) {
     return cb('provider id is missing');
   }
 
-  let data = _get(event, 'body', '{}');
-  data = JSON.parse(data);
+  const data = event.body
+    ? JSON.parse(event.body)
+    : {};
 
-  const p = new models.Provider();
+  const providerModel = new models.Provider();
 
   // get the record first
-  return p.get({ id })
-    .then(() => p.update({ id }, data))
+  return providerModel.get({ id })
+    .then(() => providerModel.update({ id }, data))
     .then((d) => cb(null, d))
     .catch((err) => {
       if (err instanceof RecordDoesNotExist) return cb({ message: 'Record does not exist' });
@@ -105,11 +104,11 @@ function put(event, cb) {
  * @returns {Promise<Object>} returns delete response
  */
 function del(event, cb) {
-  const id = _get(event.pathParameters, 'id');
-  const p = new models.Provider();
+  const id = event.pathParameters.id;
+  const providerModel = new models.Provider();
 
-  return p.get({ id })
-    .then(() => p.delete({ id }))
+  return providerModel.get({ id })
+    .then(() => providerModel.delete({ id }))
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(cb);
 }
@@ -122,7 +121,7 @@ function del(event, cb) {
  * @returns {undefined} undefined
  */
 function handler(event, context) {
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
+  return handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }

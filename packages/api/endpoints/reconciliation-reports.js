@@ -1,8 +1,6 @@
 'use strict';
 
-const _get = require('lodash.get');
 const path = require('path');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { aws, log } = require('@cumulus/common');
 const { invoke } = require('@cumulus/ingest/aws');
 const handle = require('../lib/response').handle;
@@ -42,7 +40,7 @@ function list(event, cb) {
  * @returns {Object} a granule reconciliation report
  */
 function get(event, cb) {
-  const name = _get(event.pathParameters, 'name');
+  const name = event.pathParameters.name;
   const key = `${process.env.stackName}/reconciliation-reports/${name}`;
 
   return aws.getS3Object(process.env.system_bucket, key)
@@ -58,7 +56,7 @@ function get(event, cb) {
  * @returns {Object} a granule reconciliation report
  */
 function del(event, cb) {
-  const name = _get(event.pathParameters, 'name');
+  const name = event.pathParameters.name;
   const key = `${process.env.stackName}/reconciliation-reports/${name}`;
 
   return aws.deleteS3Object(process.env.system_bucket, key)
@@ -88,7 +86,7 @@ function post(event, cb) {
  */
 function handler(event, context) {
   log.debug(event.httpMethod);
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
+  return handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }
