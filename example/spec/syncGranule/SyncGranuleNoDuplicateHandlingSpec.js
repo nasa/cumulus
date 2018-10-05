@@ -7,7 +7,8 @@ const {
 const {
   addCollections,
   addProviders,
-  buildAndExecuteWorkflow,
+  buildWorkflow,
+  executeWorkflow,
   LambdaStep,
   cleanupCollections,
   api: apiTestUtils
@@ -49,6 +50,7 @@ describe('The Sync Granules workflow is not configured to handle duplicates\n', 
   let inputPayload;
   let granuleFileName;
   let workflowExecution;
+  let workflowMessage;
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const collectionModel = new Collection();
@@ -66,8 +68,14 @@ describe('The Sync Granules workflow is not configured to handle duplicates\n', 
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     granuleFileName = inputPayload.granules[0].files[0].name;
 
-    workflowExecution = await buildAndExecuteWorkflow(
+    workflowMessage = await buildWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+    );
+    // update duplicateHandling to 'error' for the collection in the workflow
+    delete workflowMessage.meta.collection.duplicateHandling;
+
+    workflowExecution = await executeWorkflow(
+      config.stackName, config.bucket, workflowName, workflowMessage
     );
 
     const collectionInfo = await collectionModel.get(collection);
@@ -105,8 +113,8 @@ describe('The Sync Granules workflow is not configured to handle duplicates\n', 
     const stepName = 'SyncGranuleNoVpc';
 
     beforeAll(async () => {
-      workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      workflowExecution = await executeWorkflow(
+        config.stackName, config.bucket, workflowName, workflowMessage
       );
     });
 
