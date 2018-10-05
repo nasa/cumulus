@@ -1,18 +1,20 @@
 const { Execution } = require('@cumulus/api/models');
 const {
-  buildAndExecuteWorkflow,
-  addProviders,
-  cleanupProviders,
+  api: apiTestUtils,
   addCollections,
+  addProviders,
+  buildAndExecuteWorkflow,
   cleanupCollections,
+  cleanupProviders,
   LambdaStep,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, createTimestampedTestId } = require('../helpers/testUtils');
+const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../helpers/testUtils');
 
 const config = loadConfig();
-const testSuffix = `_${createTimestampedTestId(config.stackName, 'DiscoverGranules')}`;
+const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
+const testSuffix = createTestSuffix(testId);
 const lambdaStep = new LambdaStep();
 
 const workflowName = 'DiscoverGranules';
@@ -165,6 +167,15 @@ describe('The Discover Granules workflow with https Protocol', () => {
         httpsWorkflowExecution.executionArn,
         'DiscoverGranules'
       );
+    });
+
+    afterAll(async () => {
+      await Promise.all(lambdaOutput.payload.granules.map(
+        (granule) => apiTestUtils.deleteGranule({
+          prefix: config.stackName,
+          granuleId: granule.granuleId
+        })
+      ));
     });
 
     it('has expected granules output', () => {

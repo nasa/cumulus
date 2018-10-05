@@ -1,8 +1,9 @@
 'use strict';
 
 const {
+  aws: { deleteSQSMessage },
   testUtils: { randomString },
-  aws: { deleteSQSMessage }
+  stringUtils: { globalReplace }
 } = require('@cumulus/common');
 
 const {
@@ -26,24 +27,38 @@ const {
   waitForQueuedRecord
 } = require('../helpers/kinesisHelpers');
 
-const { loadConfig, createTimestampedTestId } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  createTimestampedTestId,
+  createTestSuffix,
+  createTestDataPath
+} = require('../helpers/testUtils');
+
+const testConfig = loadConfig();
+const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
+const testSuffix = createTestSuffix(testId);
+const testDataFolder = createTestDataPath(testId);
+const ruleSuffix = globalReplace(testSuffix, '-', '_');
+
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
+record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
+record.provider += testSuffix;
+record.collection += testSuffix;
 
 const ruleDirectory = './spec/kinesisTests/data/rules';
 const ruleOverride = {
+  name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
   collection: {
-    name: record.collection
+    name: record.collection,
+    version: '000'
   },
   provider: record.provider
 };
 
 describe('The kinesisConsumer receives a bad record.', () => {
-  const testConfig = loadConfig();
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 
-  const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
-  const testSuffix = `_${testId}`;
   const testRecordIdentifier = randomString();
   record.identifier = testRecordIdentifier;
   const badRecord = { ...record };
@@ -52,6 +67,24 @@ describe('The kinesisConsumer receives a bad record.', () => {
   const streamName = `${testId}-KinesisTestErrorStream`;
   testConfig.streamName = streamName;
   const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
+
+  async function cleanUp() {
+    if (this.ReceiptHandle) {
+      console.log('Delete the Record from the queue.');
+      await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
+    }
+    console.log(`\nDeleting ${ruleOverride.name}`);
+    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    // clean up stack state added by test
+    await Promise.all([
+      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
+      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix)
+    ]);
+    console.log(`\nDeleting testStream '${streamName}'`);
+    await deleteTestStream(streamName);
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+  }
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -62,7 +95,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
     this.maxNumberElapsedPeriods = jasmine.DEFAULT_TIMEOUT_INTERVAL / 5000;
-    await tryCatchExit(async () => {
+    await tryCatchExit(cleanUp.bind(this), async () => {
       await createOrUseTestStream(streamName);
       console.log(`\nWaiting for active streams: '${streamName}'.`);
       await waitForActiveStream(streamName);
@@ -74,21 +107,12 @@ describe('The kinesisConsumer receives a bad record.', () => {
   });
 
   afterAll(async () => {
-    if (this.ReceiptHandle) {
-      console.log('Delete the Record from the queue.');
-      await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
+    try {
+      await cleanUp.bind(this)();
     }
-    console.log('\nDeleting kinesisRule');
-    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
-    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
-    // clean up stack state added by test
-    await Promise.all([
-      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix)
-    ]);
-    console.log(`\nDeleting testStream '${streamName}'`);
-    await deleteTestStream(streamName);
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+    catch (e) {
+      console.log(`Cleanup Failed ${e}`);
+    }
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {

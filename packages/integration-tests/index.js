@@ -20,6 +20,7 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api');
 const cmr = require('./cmr.js');
+const lambda = require('./lambda');
 const granule = require('./granule.js');
 
 /**
@@ -462,11 +463,17 @@ async function rulesList(stackName, bucketName, rulesDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} rules - List of rules objects to delete
+ * @param {string} postfix - string that was appended to provider id
  * @returns {Promise.<number>} - Number of rules deleted
  */
-async function deleteRules(stackName, bucketName, rules) {
+async function deleteRules(stackName, bucketName, rules, postfix) {
   setProcessEnvironment(stackName, bucketName);
-  const promises = rules.map((rule) => limit(() => _deleteOneRule(rule.name)));
+  const promises = rules.map((rule) => {
+    if (postfix) {
+      rule.name += postfix;
+    }
+    return limit(() => _deleteOneRule(rule.name));
+  });
   return Promise.all(promises).then((rs) => rs.length);
 }
 
@@ -596,6 +603,8 @@ module.exports = {
   sleep,
   timeout: sleep,
   getWorkflowArn,
+  getLambdaVersions: lambda.getLambdaVersions,
+  getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };

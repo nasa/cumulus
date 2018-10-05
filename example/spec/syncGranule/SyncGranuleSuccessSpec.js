@@ -9,7 +9,7 @@ const {
   cleanupCollections,
   LambdaStep
 } = require('@cumulus/integration-tests');
-const { Execution } = require('@cumulus/api/models');
+const { Collection, Execution } = require('@cumulus/api/models');
 const {
   aws: {
     headObject,
@@ -17,6 +17,7 @@ const {
     s3,
     s3ObjectExists
   },
+  constructCollectionId,
   testUtils: {
     randomString
   }
@@ -27,19 +28,18 @@ const {
   uploadTestDataToBucket,
   createTimestampedTestId,
   createTestDataPath,
+  createTestSuffix,
   deleteFolder
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdAndPath
+  loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const workflowName = 'SyncGranuleDuplicateSkipTest';
+const workflowName = 'SyncGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
-const defaultDataFolder = 'cumulus-test-data/pdrs';
 
 const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
@@ -52,21 +52,27 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
-describe('When the Sync Granules workflow is configured to overwrite data with duplicate filenames', () => {
+describe('When the Sync Granules workflow is configured to overwrite data with duplicate filenames\n', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
+
+  const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
+
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
-  const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
+
   let inputPayload;
   let expectedPayload;
   let workflowExecution;
 
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -75,14 +81,14 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
+    await collectionModel.update(collection, { duplicateHandling: 'replace' });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-
     // update test data filepaths
-    inputPayload = setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
 
-    expectedPayload = loadFileWithUpdatedGranuleIdAndPath(templatedOutputPayloadFilename, testDataGranuleId, newGranuleId, defaultDataFolder, testDataFolder);
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -188,6 +194,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     it('overwrites the existing file with the new data', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
+      expect(lambdaOutput.payload.granules[0].files[0].duplicate_found).toBe(true);
 
       const currentFiles = await Promise.all(files.map(async (f) => {
         const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);

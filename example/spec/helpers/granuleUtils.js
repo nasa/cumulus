@@ -39,19 +39,19 @@ function createGranuleFiles(granuleFiles, bucket, oldGranuleId, newGranuleId) {
  *
  * @param {string} bucket - data bucket
  * @param {string} inputPayloadJson - input payload as a JSON string
- * @param {string} oldGranuleId - granule id of files to copy
  * @param {string} granuleRegex - regex to generate the new granule id
  * @param {string} testSuffix - suffix for test-specific collection
  * @param {string} testDataFolder - test data S3 path
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
-async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId, granuleRegex, testSuffix = '', testDataFolder = null) {
+async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex, testSuffix = '', testDataFolder = null) {
   // granule id for the new files
   const newGranuleId = randomStringFromRegex(granuleRegex);
   console.log(`\ngranule id: ${newGranuleId}`);
 
   if (testDataFolder) inputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder); //eslint-disable-line no-param-reassign
   const baseInputPayload = JSON.parse(inputPayloadJson);
+  const oldGranuleId = baseInputPayload.granules[0].granuleId;
   baseInputPayload.granules[0].dataType += testSuffix;
 
   await createGranuleFiles(
@@ -61,30 +61,31 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, oldGranuleId,
     newGranuleId
   );
 
-  const updatedInputPayloadJson = globalReplace(inputPayloadJson, oldGranuleId, newGranuleId);
+  const baseInputPayloadJson = JSON.stringify(baseInputPayload);
+  const updatedInputPayloadJson = globalReplace(baseInputPayloadJson, oldGranuleId, newGranuleId);
 
   return JSON.parse(updatedInputPayloadJson);
 }
 
 /**
- * Read the file, update it with the new granule id, and return
- * the file as a JS object.
+ * Read the file, update it with the new granule id, path and collectionId,
+ * and return the file as a JS object.
  *
  * @param {string} file - file path
- * @param {string} oldGranuleId - old granule id
  * @param {string} newGranuleId - new granule id
- * @param {string} oldPath - the old data path
  * @param {string} newPath - the new data path
+ * @param {string} newCollectionId - the new collection id
  * @returns {Promise<Object>} - file as a JS object
  */
-function loadFileWithUpdatedGranuleIdAndPath(file, oldGranuleId, newGranuleId, oldPath, newPath) {
+function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPath, newCollectionId) {
   const fileContents = fs.readFileSync(file, 'utf8');
-  let updatedFileContents = globalReplace(fileContents, oldGranuleId, newGranuleId);
-  updatedFileContents = globalReplace(fileContents, oldPath, newPath);
-  return JSON.parse(updatedFileContents);
+  const fileContentsWithId = globalReplace(fileContents, 'replace-me-granuleId', newGranuleId);
+  const fileContentsWithIdAndPath = globalReplace(fileContentsWithId, 'replace-me-path', newPath);
+  const fileContentsWithIdPathAndCollection = globalReplace(fileContentsWithIdAndPath, 'replace-me-collectionId', newCollectionId);
+  return JSON.parse(fileContentsWithIdPathAndCollection);
 }
 
 module.exports = {
-  loadFileWithUpdatedGranuleIdAndPath,
+  loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest
 };

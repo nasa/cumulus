@@ -71,7 +71,7 @@ jobs:
 
     - name: "Deploy Integration Test Stack"
       stage: deploy integration test stack
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -81,7 +81,7 @@ jobs:
 
     - name: "Run BackupRestore integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -90,7 +90,7 @@ jobs:
 
     - name: "Run Reconciliation integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -99,7 +99,7 @@ jobs:
 
     - name: "Run DiscoverPdrs integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -108,7 +108,7 @@ jobs:
 
     - name: "Run DiscoverGranules integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -117,7 +117,7 @@ jobs:
 
     - name: "Run EMSReport integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -126,7 +126,7 @@ jobs:
 
     - name: "Run HelloWorld ECS integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -135,7 +135,7 @@ jobs:
 
     - name: "Run HelloWorld integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -144,7 +144,7 @@ jobs:
 
     - name: "Run IngestGranuleFailure integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -153,7 +153,7 @@ jobs:
 
     - name: "Run IngestGranuleFtp integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -162,7 +162,7 @@ jobs:
     
     - name: "Run IngestGranuleSuccess integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -171,7 +171,7 @@ jobs:
     
     - name: "Run KinesisError integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -180,7 +180,7 @@ jobs:
 
     - name: "Run KinesisError integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -189,7 +189,7 @@ jobs:
 
     - name: "Run ParsePdr integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -198,7 +198,7 @@ jobs:
 
     - name: "Run RetryConfig integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -207,7 +207,7 @@ jobs:
 
     - name: "Run S3Access integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -216,7 +216,7 @@ jobs:
 
     - name: "Run SyncGranule DuplicateError integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -225,7 +225,7 @@ jobs:
 
     - name: "Run SyncGranule integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -234,7 +234,7 @@ jobs:
 
     - name: "Run API integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -243,7 +243,7 @@ jobs:
 
     - name: "Run ExecutionStatus integration tests"
       stage: parallel integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -252,7 +252,7 @@ jobs:
       
     - name: "Run Lambda Redeployment integration tests"
       stage: serial integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -261,7 +261,7 @@ jobs:
 
     - name: "Run Workflow Redeployment integration tests"
       stage: serial integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
             - ./travis-ci/fetch-cache.sh
             - npm install
@@ -271,7 +271,7 @@ jobs:
 
     - name: "Cleanup integration tests"
       stage: cleanup integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy to NPM"
@@ -288,7 +288,7 @@ jobs:
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install: true
       script: ./travis-ci/run-integration-tests.sh
       env:

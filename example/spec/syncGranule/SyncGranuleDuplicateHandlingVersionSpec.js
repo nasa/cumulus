@@ -1,26 +1,37 @@
 const fs = require('fs');
 const path = require('path');
+const { Collection } = require('@cumulus/api/models');
 const {
   aws: {
     headObject,
     parseS3Uri,
     s3
   },
-  stringUtils: { globalReplace },
+  constructCollectionId,
   testUtils: {
     randomString
   }
 } = require('@cumulus/common');
-const { api: apiTestUtils, buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
+const {
+  addCollections,
+  addProviders,
+  api: apiTestUtils,
+  buildAndExecuteWorkflow,
+  cleanupCollections,
+  cleanupProviders,
+  LambdaStep
+} = require('@cumulus/integration-tests');
 const {
   deleteFolder,
   loadConfig,
   templateFile,
-  timestampedTestDataPrefix,
+  createTestDataPath,
+  createTimestampedTestId,
+  createTestSuffix,
   uploadTestDataToBucket
 } = require('../helpers/testUtils');
 const {
-  loadFileWithUpdatedGranuleId,
+  loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
@@ -28,7 +39,6 @@ const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranuleDuplicateVersionTest';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
@@ -42,29 +52,44 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-describe('When the Sync Granule workflow is configured to keep both files when encountering duplicate filenames', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleDuplicateHandlingVersion`);
+describe('When the Sync Granule workflow is configured to keep both files when encountering duplicate filenames\n', () => {
+  const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandlingVersion');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
+
   const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
+
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
+
   let inputPayload;
   let expectedPayload;
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
   let workflowExecution;
 
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  const collectionModel = new Collection();
+
   beforeAll(async () => {
-    // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
+    // set collection duplicate handling to 'version'
+    await collectionModel.update(collection, { duplicateHandling: 'version' });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+    const newGranuleId = inputPayload.granules[0].granuleId;
 
-    const granuleId = inputPayload.granules[0].granuleId;
-    const updatedOutputPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
-    // update test data filepaths
-    expectedPayload = JSON.parse(globalReplace(JSON.stringify(updatedOutputPayload), 'cumulus-test-data/pdrs', testDataFolder));
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
+    expectedPayload.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -72,14 +97,16 @@ describe('When the Sync Granule workflow is configured to keep both files when e
   });
 
   afterAll(async () => {
-    // Remove the granule files added for the test
-    await deleteFolder(config.bucket, testDataFolder);
-
-    // delete ingested granule
-    await apiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
   });
 
   it('completes execution with success status', () => {
@@ -97,10 +124,19 @@ describe('When the Sync Granule workflow is configured to keep both files when e
         const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
         return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
       }));
+      // expect reporting of duplicates
+      expectedPayload.granules[0].files[0].duplicate_found = true;
+      expectedPayload.granules[0].files[1].duplicate_found = true;
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+    });
+
+    afterAll(() => {
+      // delete reporting expectations
+      delete expectedPayload.granules[0].files[0].duplicate_found;
+      delete expectedPayload.granules[0].files[1].duplicate_found;
     });
 
     it('does not raise a workflow error', () => {

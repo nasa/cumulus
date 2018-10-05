@@ -25,7 +25,8 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   createTimestampedTestId,
-  createTestDataPath
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 
 const {
@@ -42,8 +43,9 @@ const {
 
 const testConfig = loadConfig();
 const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
-const testSuffix = `_${testId}`;
+const testSuffix = createTestSuffix(testId);
 const testDataFolder = createTestDataPath(testId);
+const ruleSuffix = globalReplace(testSuffix, '-', '_');
 
 const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
 record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
@@ -82,7 +84,7 @@ const expectedTranslatePayload = {
 };
 
 const fileData = expectedTranslatePayload.granules[0].files[0];
-const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC___000`;
+const filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000`;
 
 const fileDataWithFilename = {
   ...fileData,
@@ -96,7 +98,7 @@ const expectedSyncGranulesPayload = {
   granules: [
     {
       granuleId: granuleId,
-      dataType: 'L2_HR_PIXC',
+      dataType: record.collection,
       version: '000',
       files: [fileDataWithFilename]
     }
@@ -105,8 +107,10 @@ const expectedSyncGranulesPayload = {
 
 const ruleDirectory = './spec/kinesisTests/data/rules';
 const ruleOverride = {
+  name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
   collection: {
-    name: record.collection
+    name: record.collection,
+    version: '000'
   },
   provider: record.provider
 };
@@ -132,6 +136,26 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   testConfig.streamName = streamName;
   testConfig.cnmResponseStream = cnmResponseStreamName;
 
+
+  async function cleanUp() {
+    // delete rule
+    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    // clean up stack state added by test
+    console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
+    await Promise.all([
+      deleteFolder(testConfig.bucket, testDataFolder),
+      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
+      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
+      deleteTestStream(streamName),
+      deleteTestStream(cnmResponseStreamName),
+      s3().deleteObject({
+        Bucket: testConfig.buckets.private.name,
+        Key: `${filePrefix}/${fileData.name}`
+      }).promise()
+    ]);
+  }
+
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
@@ -140,7 +164,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
     ]);
     // create streams
-    await tryCatchExit(async () => {
+    await tryCatchExit(cleanUp, async () => {
       await Promise.all([
         createOrUseTestStream(streamName),
         createOrUseTestStream(cnmResponseStreamName)
@@ -156,22 +180,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   afterAll(async () => {
-    // delete rule
-    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
-    await deleteRules(testConfig.stackName, testConfig.bucket, rules);
-    // clean up stack state added by test
-    console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
-    await Promise.all([
-      deleteFolder(testConfig.bucket, testDataFolder),
-      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
-      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
-      deleteTestStream(streamName),
-      deleteTestStream(cnmResponseStreamName),
-      s3().deleteObject({
-        Bucket: testConfig.buckets.private.name,
-        Key: `${filePrefix}/${fileData.name}`
-      }).promise()
-    ]);
+    await cleanUp();
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {
@@ -182,7 +191,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     let workflowExecution;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
@@ -204,7 +213,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
-
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
       });
@@ -275,7 +283,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     delete badRecord.product;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
 

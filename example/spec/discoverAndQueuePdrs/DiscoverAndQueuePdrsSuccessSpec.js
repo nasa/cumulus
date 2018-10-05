@@ -15,7 +15,8 @@ const {
   updateAndUploadTestDataToBucket,
   deleteFolder,
   createTimestampedTestId,
-  createTestDataPath
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 
 const config = loadConfig();
@@ -29,7 +30,7 @@ const s3data = [
 
 describe('The Discover And Queue PDRs workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'DiscoverAndQueuePdrsSuccess');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';

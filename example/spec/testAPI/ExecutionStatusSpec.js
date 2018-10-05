@@ -14,6 +14,7 @@ const {
   loadConfig,
   createTimestampedTestId,
   createTestDataPath,
+  createTestSuffix,
   uploadTestDataToBucket,
   deleteFolder
 } = require('../helpers/testUtils');
@@ -22,7 +23,6 @@ const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const workflowConfigFile = './workflows/sips.yml';
 
@@ -37,7 +37,7 @@ let allStates;
 
 describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'ExecutionStatus');
-  const testSuffix = `_${testId}`;
+  const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
   let workflowExecution = null;
   const providersDir = './data/providers/s3/';
@@ -62,7 +62,7 @@ describe('The Cumulus API ExecutionStatus tests. The Ingest workflow', () => {
     allStates = Object.keys(workflowConfig.States);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex, testSuffix, testDataFolder);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
