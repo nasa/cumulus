@@ -18,12 +18,11 @@ const config = loadConfig();
 
 const lambdaStep = new LambdaStep();
 
-const ruleName = timestampedName('HelloWorldIntegrationTestRule');
-
 const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
 
+const ruleName = timestampedName('HelloWorldIntegrationTestRule');
 const helloWorldRule = {
   name: ruleName,
   workflow: 'HelloWorldWorkflow',
@@ -31,10 +30,17 @@ const helloWorldRule = {
     type: 'onetime'
   },
   meta: {
-    triggerRule: ruleName
+    triggerRule: ruleName // used to detect that we're looking at the correct execution
   }
 };
 
+/**
+ * Remove params added to the rule when it is saved into dynamo
+ * and comes back from the db
+ *
+ * @param {Object} rule - dynamo rule object
+ * @returns {Object} - updated rule object that can be compared to the original
+ */
 function removeRuleAddedParams(rule) {
   const ruleCopy = cloneDeep(rule);
   delete ruleCopy.state;
@@ -45,6 +51,14 @@ function removeRuleAddedParams(rule) {
   return ruleCopy;
 }
 
+/**
+ * Wait for the execution kicked off by the rule to begin.
+ * We check that the execution input has the rule name in meta.triggerRule
+ * so that we know we are looking at the right execution of the workflow
+ * and not one that could have been triggered by something else
+ *
+ * @returns {undefined} - none
+ */
 async function waitForTestExecution() {
   let timeWaitedSecs = 0;
   let workflowExecution;
@@ -54,7 +68,7 @@ async function waitForTestExecution() {
     await timeout(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(helloWorldRule.workflow, config.stackName, config.bucket);
-    // Search all recent executions for target recordIdentifier
+
     for (const execution of executions) {
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
       if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === helloWorldRule.name) {
