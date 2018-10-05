@@ -75,6 +75,11 @@ class EarthdataLogin extends OAuth2 {
     return url.toString();
   }
 
+  /**
+   * Get the URL of the Earthdata Login token endpoint
+   *
+   * @returns {string} the URL of the Earthdata Login token endpoint
+   */
   tokenEndpoint() {
     const url = new URL(this.earthdataLoginUrl);
     url.pathname = '/oauth/token';

@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const {
   aws: { s3 },
@@ -142,18 +144,23 @@ function getExecutionUrl(executionArn) {
  * and STDERR if an error occurs.
  *
  * @param {Object} config - configuration object from loadConfig()
- * @param {int} timeout - Timeout value in minutes
- * @returns {Promise}
+ * @param {Object} [options] - configuration options with the following keys>
+ * @param {string} [options.template=template=node_modules/@cumulus/deployment/app] - optional template command line kes option
+ * @param {string} [options.kesClass] - optional kes-class command line kes option
+ * @param {int} [options.timeout=30] - Timeout value in minutes
+ * @returns {Promise.undefined} none
  */
 
-function redeploy(config, timeout) {
-  const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
+async function redeploy(config, options = {}) {
+  const templatePath = options.template || 'node_modules/@cumulus/deployment/app';
+  let deployCommand = `./node_modules/.bin/kes cf deploy --kes-folder app --template ${templatePath} --deployment ${config.deployment} --region us-east-1`;
+  if (options.kesClass) deployCommand += ` --kes-class ${options.kesClass}`;
   console.log(`Redeploying ${config.deployment}`);
 
   let timeoutObject;
   function timeoutPromise() {
     return new Promise((resolve, reject) => {
-      const minutes = timeout || 30;
+      const minutes = options.timeout || 30;
       let i = 0;
       function printDots() {
         console.log('.');
