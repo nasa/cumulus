@@ -35,6 +35,10 @@
                 "fileStagingDir": {
                   "description": "name of directory used for staging location",
                   "type": "string"
+                },
+                "duplicate_found": {
+                  "description": "whether a duplicate for this file was found",
+                  "type": "boolean"
                 }
               }
             }
