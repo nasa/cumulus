@@ -3,6 +3,7 @@
   "version": "006",
   "dataType": "MOD09GQ",
   "process": "modis",
+  "duplicateHandling": "replace",
   "provider_path": "cumulus-test-data/pdrs",
   "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
   "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
