@@ -97,10 +97,19 @@ describe('When the Sync Granule workflow is configured to keep both files when e
         const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
         return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
       }));
+      // expect reporting of duplicates
+      expectedPayload.granules[0].files[0].duplicate_found = true;
+      expectedPayload.granules[0].files[1].duplicate_found = true;
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
+    });
+
+    afterAll(() => {
+      // delete reporting expectations
+      delete expectedPayload.granules[0].files[0].duplicate_found;
+      delete expectedPayload.granules[0].files[1].duplicate_found;
     });
 
     it('does not raise a workflow error', () => {
