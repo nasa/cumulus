@@ -128,6 +128,13 @@ function del(event, cb) {
     .catch(cb);
 }
 
+/**
+ * Handle an API Gateway collections request
+ *
+ * @param {Object} event - an API Gateway Lambda request
+ * @param {Object} context - an API Gateway Lambda context
+ * @returns {Promise} a different promise depending on which action was invoked
+ */
 function handleRequest(event, context) {
   const httpMethod = event.httpMethod;
 
