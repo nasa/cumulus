@@ -11,6 +11,7 @@ const {
   testEndpoint
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
+const { indexProvider } = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
 
 process.env.UsersTable = randomString();
@@ -19,6 +20,7 @@ process.env.stackName = randomString();
 process.env.internal = randomString();
 let providers;
 const esIndex = randomString();
+let esClient;
 
 const testProvider = {
   id: 'orbiting-carbon-observatory-2',
@@ -45,13 +47,13 @@ test.before(async () => {
   authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  esClient = await Search.es('fakehost');
 });
 
 test.after.always(async () => {
   await providers.deleteTable();
   await userModel.deleteTable();
-
-  const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
@@ -232,6 +234,36 @@ test('POST creates a new provider', (t) => {
     const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
     t.is(record.id, newProviderId);
+  });
+});
+
+test.only('POST creates a new provider and returns it in listing', (t) => {
+  const newProviderId = 'AQUA';
+  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
+
+  const postEvent = {
+    httpMethod: 'POST',
+    body: JSON.stringify(newProvider),
+    headers: authHeaders
+  };
+
+  return testEndpoint(providerEndpoint, postEvent, async (response) => {
+    const { message, record } = JSON.parse(response.body);
+
+    t.is(message, 'Record saved');
+    t.is(record.id, newProviderId);
+
+    await indexProvider(esClient, record);
+
+    const listEvent = {
+      httpMethod: 'list',
+      headers: authHeaders
+    };
+
+    return testEndpoint(providerEndpoint, listEvent, (response) => {
+      const responseBody = JSON.parse(response.body);
+      t.is(responseBody.results[0].id, newProviderId);
+    });
   });
 });
 
