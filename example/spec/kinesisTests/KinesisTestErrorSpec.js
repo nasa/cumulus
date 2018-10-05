@@ -55,7 +55,7 @@ const ruleOverride = {
   provider: record.provider
 };
 
-describe('The kinesisConsumer receives a bad record.', () => {
+describe('The kinesisConsumer receives a bad record.\n', () => {
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 
@@ -76,13 +76,13 @@ describe('The kinesisConsumer receives a bad record.', () => {
     console.log(`\nDeleting ${ruleOverride.name}`);
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     // clean up stack state added by test
+    console.log(`\nDeleting testStream '${streamName}'`);
     await Promise.all([
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
-      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix)
+      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
+      deleteTestStream(streamName)
     ]);
-    console.log(`\nDeleting testStream '${streamName}'`);
-    await deleteTestStream(streamName);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
   }
 
@@ -99,7 +99,6 @@ describe('The kinesisConsumer receives a bad record.', () => {
       await createOrUseTestStream(streamName);
       console.log(`\nWaiting for active streams: '${streamName}'.`);
       await waitForActiveStream(streamName);
-      console.log('\nSetting up kinesisRule');
       await addRules(testConfig, ruleDirectory, ruleOverride);
       console.log(`\nDropping record onto  ${streamName}, testRecordIdentifier: ${testRecordIdentifier}.`);
       await putRecordOnStream(streamName, badRecord);
