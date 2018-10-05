@@ -540,6 +540,7 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
 module.exports = {
   api,
   rulesApi,
+  buildWorkflow,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
