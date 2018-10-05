@@ -3,31 +3,41 @@
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 
-const authHelpers = require('../lib/authHelpers');
+const { google } = require('googleapis');
+
+const EarthdataLogin = require('../lib/EarthdataLogin');
+const GoogleOAuth2 = require('../lib/GoogleOAuth2');
+
 const { User } = require('../models');
 const {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse
 } = require('../lib/response');
 
-/**
- * AWS API Gateway function that handles callbacks from authentication, transforming
- * codes into tokens
- *
- * @param  {Object} event   - Lambda event object
- * @returns {Object}        - a Lambda Proxy response object
- */
-async function token(event) {
+const buildPermanentRedirectResponse = (location) =>
+  buildLambdaProxyResponse({
+    json: false,
+    statusCode: 301,
+    body: 'Redirecting',
+    headers: {
+      Location: location
+    }
+  });
+
+async function token(event, oAuth2Provider) {
   const code = get(event, 'queryStringParameters.code');
   const state = get(event, 'queryStringParameters.state');
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
     try {
-      const responseObject = await authHelpers.getToken(code);
       const {
-        userName, accessToken, refresh, expires
-      } = responseObject;
+        accessToken,
+        refreshToken: refresh,
+        username: userName,
+        expirationTime: expires
+      } = await oAuth2Provider.getAccessToken(code);
+
       const u = new User();
 
       return u.get({ userName })
@@ -35,15 +45,9 @@ async function token(event) {
         .then(() => {
           if (state) {
             log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
-            return buildLambdaProxyResponse({
-              json: false,
-              statusCode: 301,
-              body: 'Redirecting to the specified state',
-              headers: {
-                'Content-Type': 'text/plain',
-                Location: `${decodeURIComponent(state)}?token=${accessToken}`
-              }
-            });
+            return buildPermanentRedirectResponse(
+              `${decodeURIComponent(state)}?token=${accessToken}`
+            );
           }
           log.info('Log info: No state specified, responding 200');
           return buildLambdaProxyResponse({
@@ -54,16 +58,22 @@ async function token(event) {
         })
         .catch((e) => {
           if (e.message.includes('No record found for')) {
-            const errorMessage = 'User is not authorized to access this site';
             return buildAuthorizationFailureResponse({
-              error: new Error(errorMessage),
-              message: errorMessage
+              message: 'User not authorized',
+              statusCode: 403
             });
           }
           return buildAuthorizationFailureResponse({ error: e, message: e.message });
         });
     }
     catch (e) {
+      if (e.statusCode === 400) {
+        return buildAuthorizationFailureResponse({
+          error: 'authorization_failure',
+          message: 'Failed to get authorization token'
+        });
+      }
+
       log.error('Error caught when checking code:', e);
       return buildAuthorizationFailureResponse({ error: e, message: e.message });
     }
@@ -75,53 +85,77 @@ async function token(event) {
 }
 
 /**
- * `login` is an AWS API Gateway function that redirects to the correct
- * authentication endpoint with the correct client ID to be used with the API
+ * Handle client authorization
  *
- * @param  {Object} event   - Lambda event object
- * @returns {Object} - a Lambda Proxy response object
+ * @param {Object} request - an API Gateway request
+ * @param {OAuth2} oAuth2Provider - an OAuth2 instance
+ * @returns {Object} an API Gateway response
  */
-async function login(event) {
-  const code = get(event, 'queryStringParameters.code');
-  const state = get(event, 'queryStringParameters.state');
+async function login(request, oAuth2Provider) {
+  const code = get(request, 'queryStringParameters.code');
+  const state = get(request, 'queryStringParameters.state');
 
   if (code) {
-    return token(event);
+    return token(request, oAuth2Provider);
   }
 
-  const url = authHelpers.generateLoginUrl(state);
+  const authorizationUrl = oAuth2Provider.getAuthorizationUrl(state);
 
-  return buildLambdaProxyResponse({
-    json: false,
-    statusCode: 301,
-    body: 'Redirecting to login',
-    headers: {
-      Location: url
-    }
+  return buildPermanentRedirectResponse(authorizationUrl);
+}
+
+const isGetTokenRequest = (request) =>
+  request.httpMethod === 'GET'
+  && request.resource.endsWith('/token');
+
+const notFoundResponse = buildLambdaProxyResponse({
+  json: false,
+  statusCode: 404,
+  body: 'Not found'
+});
+
+async function handleRequest(request, oAuth2Provider) {
+  if (isGetTokenRequest(request)) {
+    return login(request, oAuth2Provider);
+  }
+
+  return notFoundResponse;
+}
+
+function buildGoogleOAuth2ProviderFromEnv() {
+  const googleOAuth2Client = new google.auth.OAuth2(
+    process.env.EARTHDATA_CLIENT_ID,
+    process.env.EARTHDATA_CLIENT_PASSWORD,
+    process.env.API_ENDPOINT
+  );
+
+  const googlePlusPeopleClient = google.plus('v1').people;
+
+  return new GoogleOAuth2(googleOAuth2Client, googlePlusPeopleClient);
+}
+
+function buildEarthdataLoginProviderFromEnv() {
+  return new EarthdataLogin({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    redirectUri: process.env.API_ENDPOINT
   });
 }
 
-/**
- * Main handler for the token endpoint.
- *
- * @function handler
- * @param  {Object}   event   - Lambda event payload
- * @returns {Object} - a Lambda Proxy response object
- */
-async function handler(event) {
-  if (event.httpMethod === 'GET' && event.resource.endsWith('/token')) {
-    return login(event);
-  }
+function buildOAuth2ProviderFromEnv() {
+  return process.env.OAUTH_PROVIDER === 'google'
+    ? buildGoogleOAuth2ProviderFromEnv()
+    : buildEarthdataLoginProviderFromEnv();
+}
 
-  return buildLambdaProxyResponse({
-    json: false,
-    statusCode: 404,
-    body: 'Not found'
-  });
+async function handleApiGatewayRequest(request) {
+  const oAuth2Provider = buildOAuth2ProviderFromEnv();
+
+  return handleRequest(request, oAuth2Provider);
 }
 
 module.exports = {
-  handler,
-  login,
-  token
+  handleRequest,
+  handleApiGatewayRequest
 };

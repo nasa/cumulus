@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
     - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
 
+- Created a `@cumulus/api/lib/OAuth2` interface, which is implemented by the
+  `@cumulus/api/lib/EarthdataLogin` and `@cumulus/api/lib/GoogleOAuth2` classes.
+  Endpoints that need to handle authentication will determine which class to use
+  based on environment variables. This also greatly simplifies testing.
+- Added `@cumulus/api/lib/assertions`, containing more complex AVA test assertions
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
 
 - `@cumulus/integration-tests` new functionality:
@@ -21,13 +26,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `listProviders` to list providers from a provided data directory
   - `deleteProviders` to delete list of providers from a deployed stack
   - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
-
-- `@cumulus/api`:
-  - `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
-  - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
-
+- `@cumulus/ingest/granule.js`: `ingestFile` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3. 
+- `@cumulus/api`: `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - Added integration tests for `@cumulus/sync-granule` when `duplicateHandling` is set to `replace` or `skip` (CUMULUS-781)
+
+### Removed
+
+- Removed `@cumulus/common/fake-earthdata-login-server`. Tests can now create a
+  service stub based on `@cumulus/api/lib/OAuth2` if testing requires handling
+  authentication.
 
 ### Changed
 
@@ -42,6 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
+- Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
 
 ## [v1.10.1] - 2018-09-4
 
