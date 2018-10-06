@@ -50,7 +50,7 @@ describe('The kinesisConsumer receives a bad record.', () => {
 
   beforeAll(async () => {
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 15 * 60 * 1000;
     this.maxNumberElapsedPeriods = jasmine.DEFAULT_TIMEOUT_INTERVAL / 5000;
     await tryCatchExit(cleanUp.bind(this), async () => {
       await createOrUseTestStream(streamName);
