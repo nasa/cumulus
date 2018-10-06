@@ -78,13 +78,15 @@ function templateFile({ inputTemplateFilename, config }) {
  * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements) {
-  let data = fs.readFileSync(require.resolve(file), 'utf8');
-  if (replacements) {
+function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
+  let data;
+  if (replacements.length) {
+    data = fs.readFileSync(require.resolve(file), 'utf8');
     replacements.forEach((replace) => {
       data = globalReplace(data, replace.old, replace.new);
     });
   }
+  else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
   return s3().putObject({
     Bucket: bucket,
