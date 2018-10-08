@@ -95,8 +95,10 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
   let iteration = 0;
   const sleepPeriodMs = 5000;
-  const maxIterationsToStartExecution = 24; // 2 minutes
+  const maxMinutesWaitedForExecutionStart = 2.5;
   const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
+  const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
+
   const stopTime = Date.now() + (timeout * 1000);
 
   /* eslint-disable no-await-in-loop */
@@ -106,7 +108,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = await getExecutionStatus(executionArn);
     }
     catch (err) {
-      if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStartExecution) {
+      if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
         console.log(`waitForCompletedExecution failed: ${err.code}`);
         throw err;
       }
