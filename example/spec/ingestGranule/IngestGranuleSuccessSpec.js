@@ -104,9 +104,7 @@ describe('The S3 Ingest Granules workflow', () => {
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       apiTestUtils.addCollection({ prefix: config.stackName, collection: collectionData }),
-      // apiTestUtils.addProvider({ prefix: config.stackName, provider: providerData }),
-      // addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+      apiTestUtils.addProvider({ prefix: config.stackName, provider: providerData }),
     ]);
 
     console.log('Starting ingest test');
@@ -146,10 +144,8 @@ describe('The S3 Ingest Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      // cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       collectionModel.delete(collection),
-      // providerModel.delete(provider),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      providerModel.delete(provider),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
       apiTestUtils.deleteGranule({
