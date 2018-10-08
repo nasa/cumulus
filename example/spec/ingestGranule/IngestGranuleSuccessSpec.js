@@ -5,7 +5,7 @@ const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
 const {
-  models: { Execution, Granule }
+  models: { Execution, Granule, Collection }
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists },
@@ -17,8 +17,6 @@ const {
   conceptExists,
   addProviders,
   cleanupProviders,
-  addCollections,
-  cleanupCollections,
   getOnlineResources
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
@@ -81,13 +79,21 @@ describe('The S3 Ingest Granules workflow', () => {
   const granuleModel = new Granule();
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  const collectionModel = new Collection();
   let executionName;
 
   beforeAll(async () => {
+    const collectionsJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
+    const collectionData = Object.assign({}, collectionsJson, {
+      name: collection.name,
+      dataType: collectionsJson.dataType + testSuffix,
+    });
+
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      apiTestUtils.addCollection({ prefix: config.stackName, collection: collectionData }),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
@@ -101,10 +107,6 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
-
-    const collectionDataJson = fs.readFileSync('./data/collections/s3_test.json', 'utf8');
-    const updatedCollectionJson = globalReplace(collectionDataJson, 'MOD09GQ_TESTING', `MOD09GQ_TESTING_${new Date().getTime()}`);
-    await apiTestUtils.addCollection({ prefix: config.stackName, collection: updatedCollectionJson });
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
@@ -132,7 +134,8 @@ describe('The S3 Ingest Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      // cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      collectionModel.delete(collection),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
