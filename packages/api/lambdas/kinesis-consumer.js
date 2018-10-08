@@ -156,6 +156,7 @@ function processRecord(record, fromSNS) {
 
   try {
     eventObject = JSON.parse(dataString);
+    log.debug('processRecord eventObject', eventObject);
   }
   catch (err) {
     log.error('Caught error parsing JSON:');
