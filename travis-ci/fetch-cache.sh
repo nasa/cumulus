@@ -2,7 +2,9 @@
 
 set -ex
 
-if [ -z "$CACHE_AWS_SECRET_ACCESS_KEY" ]
+if [ -z "$CACHE_AWS_SECRET_ACCESS_KEY" ]; then
+    echo 'Skipping cache download'
+else
   # Determine what cache to use (based on all of the package.json files)
   MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
   CACHE_FILENAME="${MD5SUM}.tar.gz"
