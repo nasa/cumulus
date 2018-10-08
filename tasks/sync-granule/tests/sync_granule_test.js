@@ -636,6 +636,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 2);
+    t.true(output.granules[0].files[1].duplicate_found);
     output.granules[0].files.forEach((f) => {
       const filename = path.basename(parseS3Uri(f.filename).Key);
       t.true(filename === granuleFileName || filename.startsWith(`${granuleFileName}.v`));
