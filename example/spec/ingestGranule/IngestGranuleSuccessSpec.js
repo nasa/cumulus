@@ -5,7 +5,7 @@ const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
 const {
-  models: { Execution, Granule, Collection }
+  models: { Execution, Granule, Collection, Provider }
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists },
@@ -15,7 +15,9 @@ const {
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
+  addCollections,
   addProviders,
+  cleanupCollections,
   cleanupProviders,
   getOnlineResources
 } = require('@cumulus/integration-tests');
@@ -81,19 +83,29 @@ describe('The S3 Ingest Granules workflow', () => {
   const executionModel = new Execution();
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const collectionModel = new Collection();
+  process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
+  const providerModel = new Provider();
   let executionName;
 
   beforeAll(async () => {
-    const collectionsJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
-    const collectionData = Object.assign({}, collectionsJson, {
+    const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
+    const collectionData = Object.assign({}, collectionJson, {
       name: collection.name,
-      dataType: collectionsJson.dataType + testSuffix,
+      dataType: collectionJson.dataType + testSuffix,
+    });
+
+    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
+    const providerData = Object.assign({}, providerJson, {
+      id: provider.id,
+      host: config.bucket,
     });
 
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       apiTestUtils.addCollection({ prefix: config.stackName, collection: collectionData }),
+      // apiTestUtils.addProvider({ prefix: config.stackName, provider: providerData }),
+      // addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
@@ -136,6 +148,7 @@ describe('The S3 Ingest Granules workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       // cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       collectionModel.delete(collection),
+      // providerModel.delete(provider),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
