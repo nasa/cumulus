@@ -11,6 +11,7 @@ const {
   testEndpoint
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
+const { indexProvider } = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
 
 process.env.UsersTable = randomString();
@@ -19,6 +20,7 @@ process.env.stackName = randomString();
 process.env.internal = randomString();
 let providers;
 const esIndex = randomString();
+let esClient;
 
 const testProvider = {
   id: 'orbiting-carbon-observatory-2',
@@ -45,13 +47,14 @@ test.before(async () => {
   authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  esClient = await Search.es('fakehost');
+  // await esClient.indices.delete({ index: 'ecee9f8052b13a8477382d55c10a0d6654b1d1bc' });
 });
 
 test.after.always(async () => {
   await providers.deleteTable();
   await userModel.deleteTable();
-
-  const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
@@ -193,28 +196,20 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   });
 });
 
-// TODO(aimee): Add a provider to ES. List uses ES and we don't have any providers in ES.
-test('default returns list of providers', (t) => {
+test('default returns list of providers', async (t) => {
+  const newProviderId = randomString();
+  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
+
+  await indexProvider(esClient, newProvider, esIndex);
+
   const listEvent = {
     httpMethod: 'list',
     headers: authHeaders
   };
 
   return testEndpoint(providerEndpoint, listEvent, (response) => {
-    const { results } = JSON.parse(response.body);
-    t.is(results.length, 0);
-  });
-});
-
-test('GET returns an existing provider', (t) => {
-  const getEvent = {
-    httpMethod: 'GET',
-    pathParameters: { id: testProvider.id },
-    headers: authHeaders
-  };
-
-  return testEndpoint(providerEndpoint, getEvent, (response) => {
-    t.is(JSON.parse(response.body).id, testProvider.id);
+    const responseBody = JSON.parse(response.body);
+    t.is(responseBody.results[0].id, newProviderId);
   });
 });
 
@@ -235,7 +230,19 @@ test('POST creates a new provider', (t) => {
   });
 });
 
-test('PUT updates an existing provider', (t) => {
+test.serial('GET returns an existing provider', (t) => {
+  const getEvent = {
+    httpMethod: 'GET',
+    pathParameters: { id: testProvider.id },
+    headers: authHeaders
+  };
+
+  return testEndpoint(providerEndpoint, getEvent, (response) => {
+    t.is(JSON.parse(response.body).id, testProvider.id);
+  });
+});
+
+test.serial('PUT updates an existing provider', (t) => {
   const updatedLimit = 2;
 
   const putEvent = {
@@ -251,7 +258,7 @@ test('PUT updates an existing provider', (t) => {
   });
 });
 
-test('DELETE deletes an existing provider', (t) => {
+test.serial('DELETE deletes an existing provider', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: { id: testProvider.id },
