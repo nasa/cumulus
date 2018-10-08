@@ -1,18 +1,17 @@
 'use strict';
 
-const sinon = require('sinon');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const collectionsEndpoint = require('../../endpoints/collections');
-const EsCollection = require('../../es/collections');
 const {
   fakeCollectionFactory,
   fakeUserFactory,
   testEndpoint
 } = require('../../lib/testUtils');
+const { indexCollection } = require('../../es/indexer');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
 
@@ -23,13 +22,13 @@ process.env.internal = randomString();
 
 const testCollection = fakeCollectionFactory();
 const esIndex = randomString();
+let esClient;
 
 let authHeaders;
 let collectionModel;
 let userModel;
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
@@ -44,6 +43,8 @@ test.before(async () => {
   authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  esClient = await Search.es('fakehost');
 });
 
 test.after.always(async () => {
@@ -51,7 +52,7 @@ test.after.always(async () => {
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 
-  const esClient = await Search.es('fakehost');
+  // const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
@@ -199,16 +200,21 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   });
 });
 
-// TODO(aimee): Debug why this is _passing_ - we don't expect to already have a
-// collection in ES.
-test('default returns list of collections', (t) => {
+test('default returns list of collections', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
   const listEvent = {
     httpMethod: 'list',
     headers: authHeaders
   };
+
+  await indexCollection(esClient, newCollection, esIndex);
+
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
     t.is(results.length, 1);
+    const responseBody = JSON.parse(response.body);
+    t.is(responseBody.results[0].name, newCollection.name);
   });
 });
 
@@ -278,7 +284,6 @@ test('DELETE deletes an existing collection', (t) => {
   });
 });
 
-test.todo('GET returns existing collection');
 test.todo('POST without name and version returns error message');
 test.todo('PUT with invalid name and version returns error message');
 // Multiple tests
