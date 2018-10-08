@@ -102,6 +102,10 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
+    const collectionDataJson = fs.readFileSync('./data/collections/s3_test.json', 'utf8');
+    const updatedCollectionJson = globalReplace(collectionDataJson, 'MOD09GQ_TESTING', `MOD09GQ_TESTING_${new Date().getTime()}`);
+    await apiTestUtils.addCollection({ prefix: config.stackName, collection: updatedCollectionJson });
+
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
