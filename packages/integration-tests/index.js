@@ -407,8 +407,8 @@ async function deleteProviders(stackName, bucketName, providers, postfix) {
  * @returns {number} - number of deleted collections
  */
 async function cleanupProviders(stackName, bucket, providersDirectory, postfix) {
-  const collections = await listProviders(stackName, bucket, providersDirectory);
-  return deleteProviders(stackName, bucket, collections, postfix);
+  const providers = await listProviders(stackName, bucket, providersDirectory);
+  return deleteProviders(stackName, bucket, providers, postfix);
 }
 
 /**
