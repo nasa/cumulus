@@ -49,7 +49,6 @@ test.before(async () => {
   };
 
   esClient = await Search.es('fakehost');
-  // await esClient.indices.delete({ index: 'ecee9f8052b13a8477382d55c10a0d6654b1d1bc' });
 });
 
 test.after.always(async () => {
