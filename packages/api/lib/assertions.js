@@ -13,3 +13,12 @@ exports.isUnauthorizedUserResponse = (t, response) => {
   const responseBody = JSON.parse(response.body);
   t.is(responseBody.message, 'User not authorized');
 };
+
+// The error message when change once handle() changes from using
+// resp() to getAuthorizationFailureResponse()
+exports.isInvalidTokenResponse = (t, response) => {
+  t.is(response.statusCode, 400);
+
+  const responseBody = JSON.parse(response.body);
+  t.is(responseBody.message, '"Invalid Authorization token"');
+};
