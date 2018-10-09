@@ -309,6 +309,48 @@ async function getExecutionStatus({ prefix, arn }) {
   return JSON.parse(payload.body);
 }
 
+/**
+ * Add a collection to Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.collection - a collection object
+ * @returns {Promise<Object>} - the POST confirmation from the API
+ */
+async function addCollection({ prefix, collection }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiCollectionsDefault',
+    payload: {
+      httpMethod: 'POST',
+      resource: '/collections',
+      path: '/collections',
+      body: JSON.stringify(collection)
+    }
+  });
+}
+
+/**
+ * Add a provider to Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.provider - a provider object
+ * @returns {Promise<Object>} - the POST confirmation from the API
+ */
+async function addProvider({ prefix, provider }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiProvidersDefault',
+    payload: {
+      httpMethod: 'POST',
+      resource: '/providers',
+      path: '/providers',
+      body: JSON.stringify(provider)
+    }
+  });
+}
+
 module.exports = {
   callCumulusApi,
   getGranule,
@@ -320,5 +362,7 @@ module.exports = {
   getExecution,
   getLogs,
   getExecutionLogs,
-  getExecutionStatus
+  getExecutionStatus,
+  addCollection,
+  addProvider
 };
