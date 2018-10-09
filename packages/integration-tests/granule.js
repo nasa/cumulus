@@ -1,7 +1,7 @@
 'use strict';
 
 const pWaitFor = require('p-wait-for');
-const { getGranule } = require('./api.js');
+const { getGranule } = require('./api/api');
 
 /**
  * Wait until granule status is desired status
