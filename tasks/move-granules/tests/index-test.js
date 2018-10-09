@@ -11,6 +11,11 @@ const {
   parseS3Uri
 } = require('@cumulus/common/aws');
 const clonedeep = require('lodash.clonedeep');
+<<<<<<< HEAD
+=======
+const set = require('lodash.set');
+const aws = require('@cumulus/common/aws');
+>>>>>>> master
 const errors = require('@cumulus/common/errors');
 const {
   randomString, validateConfig, validateInput, validateOutput
@@ -27,10 +32,13 @@ async function uploadFiles(files, bucket) {
 }
 
 test.beforeEach(async (t) => {
-  /* eslint-disable no-param-reassign */
   t.context.stagingBucket = randomString();
   t.context.endBucket = randomString();
+<<<<<<< HEAD
   await s3().createBucket({
+=======
+  await aws.s3().createBucket({
+>>>>>>> master
     Bucket: t.context.endBucket
   }).promise();
   await s3().createBucket({
@@ -199,7 +207,7 @@ test.serial('should overwrite files', async (t) => {
 
 // duplicateHandling has default value 'error' if it's not provided in task configuration and
 // collection configuration
-test.serial('when duplicateHandling is "error", throw an error on duplicate', async (t) => {
+async function duplicateHandlingErrorTest(t) {
   const newPayload = JSON.parse(JSON.stringify(payload));
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal = {
@@ -242,4 +250,13 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
     t.true(expectedErrorMessages.includes(err.message));
     t.pass();
   }
+}
+
+test.serial('when duplicateHandling is not specified, throw an error on duplicate', async (t) => {
+  await duplicateHandlingErrorTest(t);
+});
+
+test.serial('when duplicateHandling is "error", throw an error on duplicate', async (t) => {
+  set(t, 'context.event.config.duplicateHandling', 'error');
+  await duplicateHandlingErrorTest(t);
 });
