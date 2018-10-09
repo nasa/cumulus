@@ -10,7 +10,8 @@ const {
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists },
-  constructCollectionId
+  constructCollectionId,
+  testUtils: { randomString }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -32,7 +33,8 @@ const {
   getExecutionUrl,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,

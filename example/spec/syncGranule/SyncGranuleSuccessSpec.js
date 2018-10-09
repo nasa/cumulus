@@ -27,7 +27,8 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  deleteFolder
+  deleteFolder,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
