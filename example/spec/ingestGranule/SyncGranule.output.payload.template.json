@@ -2,32 +2,32 @@
   "process": "modis",
   "granules": [
     {
-      "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+      "granuleId": "replace-me-granuleId",
       "dataType": "MOD09GQ",
       "version": "006",
       "files": [
         {
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "name": "replace-me-granuleId.hdf",
           "bucket": "",
           "filename": "",
           "fileSize": 17865615,
-          "path": "cumulus-test-data/pdrs",
+          "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
         },
         {
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "name": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "filename": "",
           "fileSize": 44118,
-          "path": "cumulus-test-data/pdrs",
+          "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         },
         {
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+          "name": "replace-me-granuleId_ndvi.jpg",
           "bucket": "",
           "filename": "",
           "fileSize": 44118,
-          "path": "cumulus-test-data/pdrs",
+          "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         }
       ]

@@ -10,13 +10,16 @@ const {
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists },
-  stringUtils: { globalReplace },
-  testUtils: { randomString }
+  constructCollectionId
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   getOnlineResources
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
@@ -27,19 +30,19 @@ const {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  timestampedTestDataPrefix,
-  getFilesMetadata
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleId
+  loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const templatedSyncGranuleFilename = templateFile({
   inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
@@ -58,10 +61,15 @@ const s3data = [
 ];
 
 describe('The S3 Ingest Granules workflow', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleSuccess`);
+  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
+  const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution = null;
   let failingWorkflowExecution = null;
   let failedExecutionArn;
@@ -78,25 +86,23 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
-    // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
 
     console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
-
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
-    const updatedSyncGranulePayload = loadFileWithUpdatedGranuleId(templatedSyncGranuleFilename, testDataGranuleId, granuleId);
-    // update test data filepaths
-    expectedSyncGranulePayload = JSON.parse(globalReplace(JSON.stringify(updatedSyncGranulePayload), 'cumulus-test-data/pdrs', testDataFolder));
 
-    const updatedOutputPayload = loadFileWithUpdatedGranuleId(templatedOutputPayloadFilename, testDataGranuleId, granuleId);
-    // update test data filepaths
-    expectedPayload = JSON.parse(globalReplace(JSON.stringify(updatedOutputPayload), 'cumulus-test-data/pdrs', testDataFolder));
-    // delete the granule record from DynamoDB if exists
-    await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
+    expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
+    expectedSyncGranulePayload.granules[0].dataType += testSuffix;
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
+    expectedPayload.granules[0].dataType += testSuffix;
 
     // pre-stage destination files for MoveGranules
     const preStageFiles = expectedPayload.granules[0].files.map(async (file) => {
@@ -133,12 +139,13 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
+    // clean up stack state added by test
     await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
-      // Remove the granule files added for the test
-      deleteFolder(config.bucket, testDataFolder),
-      // delete ingested granule
       apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId

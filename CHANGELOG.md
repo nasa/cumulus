@@ -23,10 +23,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `@cumulus/integration-tests` new functionality:
   - `listCollections` to list collections from a provided data directory
   - `deleteCollection` to delete list of collections from a deployed stack
+  - `cleanUpCollections` combines the above in one function.
   - `listProviders` to list providers from a provided data directory
   - `deleteProviders` to delete list of providers from a deployed stack
+  - `cleanUpProviders` combines the above in one function.
   - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
-- `@cumulus/ingest/granule.js`: `ingestFile` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3. 
+  - `rules` API functionality for posting and deleting a rule and listing all rules
+- `@cumulus/ingest/granule.js`: `ingestFile` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3.
 - `@cumulus/api`: `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - Added integration tests for `@cumulus/sync-granule` when `duplicateHandling` is set to `replace` or `skip` (CUMULUS-781)
