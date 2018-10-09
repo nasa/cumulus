@@ -225,7 +225,7 @@ test('POST with non-expiring operator credentials returns an invalid token respo
   return testEndpoint(providerEndpoint, request, (response) => {
     assertions.isInvalidTokenResponse(t, response);
   });
-})
+});
 
 test('default returns list of providers', async (t) => {
   const newProviderId = randomString();
