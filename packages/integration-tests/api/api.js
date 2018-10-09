@@ -309,35 +309,8 @@ async function getExecutionStatus({ prefix, arn }) {
   return JSON.parse(payload.body);
 }
 
-async function postRule({ prefix, rule }) {
-  console.log(`rule: ${JSON.stringify(rule)}`);
-
-  const payload = await callCumulusApi({
-    prefix,
-    functionName: 'ApiRulesDefault',
-    payload: {
-      httpMethod: 'GET',
-      resource: '/rules',
-      path: 'rules',
-      pathParameters: {}
-    //  body: JSON.stringify(rule)
-    }
-  });
-
-  console.log(`payload: ${payload}`);
-
-  try {
-    return JSON.parse(payload.body);
-  }
-  catch (error) {
-    console.log(`Error parsing JSON response posting rule: ${payload}`);
-    throw error;
-  }
-}
-
 module.exports = {
   callCumulusApi,
-  postRule,
   getGranule,
   reingestGranule,
   removeFromCMR,
