@@ -228,7 +228,7 @@ test('POST with non-expiring operator credentials returns an invalid token respo
   return testEndpoint(collectionsEndpoint, request, (response) => {
     assertions.isInvalidTokenResponse(t, response);
   });
-})
+});
 
 test('default returns list of collections', async (t) => {
   const newCollection = fakeCollectionFactory();
