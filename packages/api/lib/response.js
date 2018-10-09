@@ -281,9 +281,7 @@ function handle(event, context, authCheck, func) {
       if (!obj.expires) return cb('Invalid Authorization token');
       if (obj.expires < Date.now()) return cb('Session expired');
       return func(cb);
-    }).catch((e) => {
-      cb('Invalid Authorization token', e);
-    });
+    }).catch(cb);
   }
   return func(cb);
 }
