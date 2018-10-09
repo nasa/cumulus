@@ -36,7 +36,7 @@ const {
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const workflowName = 'SyncGranuleDuplicateSkipTest';
+const workflowName = 'SyncGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
