@@ -90,6 +90,7 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
 
   return testEndpoint(providerEndpoint, request, (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
+    t.is(JSON.parse(response.body).record, undefined);
   });
 });
 
@@ -160,6 +161,7 @@ test('CUMULUS-912 POST with an unauthorized user returns an unauthorized respons
 
   return testEndpoint(providerEndpoint, request, (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
+    t.is(JSON.parse(response.body).record, undefined);
   });
 });
 
