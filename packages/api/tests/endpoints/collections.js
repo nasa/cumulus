@@ -51,8 +51,6 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
-
-  // const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
