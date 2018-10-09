@@ -15,10 +15,6 @@ const {
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
-  addCollections,
-  addProviders,
-  cleanupCollections,
-  cleanupProviders,
   getOnlineResources
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
