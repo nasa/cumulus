@@ -1,46 +1,60 @@
-const fs = require('fs');
 const { get } = require('lodash');
 const { Pdr, Execution } = require('@cumulus/api/models');
+const { constructCollectionId } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
   LambdaStep,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
-const {
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
 
 const {
   loadConfig,
+  updateAndUploadTestDataToBucket,
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  timestampedTestDataPrefix
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
+const { loadFileWithUpdatedGranuleIdPathAndCollection } = require('../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-
 const taskName = 'ParsePdr';
+const defaultDataFolder = 'cumulus-test-data/pdrs';
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
+const s3pdr = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+];
 const s3data = [
-  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
-describe('Parse PDR workflow', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-ParsePdrSuccess`);
+describe('Parse PDR workflow\n', () => {
+  const testId = createTimestampedTestId(config.stackName, 'ParsePdrSuccess');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
   let workflowExecution;
   let queueGranulesOutput;
   let inputPayload;
   let expectedParsePdrOutput;
   const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
   const outputPayloadFilename = './spec/parsePdr/ParsePdr.output.json';
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
 
   process.env.PdrsTable = `${config.stackName}-PdrsTable`;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -48,21 +62,22 @@ describe('Parse PDR workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
-    // place pdr on S3
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
 
-    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update input file paths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = JSON.parse(updatedInputPayloadJson);
-
+    inputPayload = loadFileWithUpdatedGranuleIdPathAndCollection(inputPayloadFilename, '', testDataFolder, '');
+    // place pdr on S3
+    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]);
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
 
-    const expectedParsePdrOutputJson = fs.readFileSync(outputPayloadFilename, 'utf8');
-    // update expectedOutput file paths
-    const updatedExpectedParsePdrOutputJson = globalReplace(expectedParsePdrOutputJson, 'cumulus-test-data/pdrs', testDataFolder);
-    expectedParsePdrOutput = JSON.parse(updatedExpectedParsePdrOutputJson);
+    expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(outputPayloadFilename, testDataGranuleId, testDataFolder, newCollectionId);
+    expectedParsePdrOutput.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -83,10 +98,16 @@ describe('Parse PDR workflow', () => {
     // await execution completions
     await Promise.all(queueGranulesOutput.payload.running.map(async (arn) =>
       waitForCompletedExecution(arn)));
-    // delete the pdr record from DynamoDB if exists
-    await pdrModel.delete({ pdrName: inputPayload.pdr.name });
-    // delete test data from S3
-    await deleteFolder(config.bucket, testDataFolder);
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deletePdr({
+        prefix: config.stackName,
+        pdr: pdrFilename
+      })
+    ]);
   });
 
   it('executes successfully', () => {

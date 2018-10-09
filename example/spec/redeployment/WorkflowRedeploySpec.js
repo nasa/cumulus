@@ -121,8 +121,8 @@ describe('When a workflow', () => {
 
       it('the execution steps show the original workflow steps', () => {
         const helloWorldScheduledEvents = executionStatus.executionHistory.events.filter((event) =>
-          event.type === 'LambdaFunctionScheduled'
-            && event.resource.includes('HelloWorld'));
+          (event.type === 'LambdaFunctionScheduled' &&
+          event.resource.includes('HelloWorld')));
 
         expect(helloWorldScheduledEvents.length).toEqual(1);
       });

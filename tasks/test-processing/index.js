@@ -10,9 +10,14 @@ const { generateCmrFilesForGranules } = require('@cumulus/integration-tests');
  * @returns {Array<string>} - the list of s3 locations for granule files
  */
 async function fakeProcessing(event) {
+  const collection = event.config.collection;
+  if (collection.name.includes('_test')) {
+    const idx = collection.name.indexOf('_test');
+    collection.name = collection.name.substring(0, idx);
+  }
   return generateCmrFilesForGranules(
     event.input.granules,
-    event.config.collection,
+    collection,
     event.config.bucket
   );
 }
