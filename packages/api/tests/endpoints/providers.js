@@ -197,6 +197,36 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   });
 });
 
+test('POST with invalid authorization scheme returns an invalid token response', (t) => {
+  const request = {
+    httpMethod: 'POST',
+    headers: {
+      Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+
+  return testEndpoint(providerEndpoint, request, (response) => {
+    assertions.isInvalidTokenResponse(t, response);
+  });
+});
+
+test('POST with non-expiring operator credentials returns an invalid token response', async (t) => {
+  const fakeUser = fakeUserFactory();
+  const authToken = (await userModel.create(fakeUser)).password;
+  await userModel.update({ userName: fakeUser.userName }, {}, ['expires']);
+
+  const request = {
+    httpMethod: 'POST',
+    headers: {
+      Authorization: `Bearer ${authToken}`
+    }
+  };
+
+  return testEndpoint(providerEndpoint, request, (response) => {
+    assertions.isInvalidTokenResponse(t, response);
+  });
+})
+
 test('default returns list of providers', async (t) => {
   const newProviderId = randomString();
   const newProvider = Object.assign({}, testProvider, { id: newProviderId });
