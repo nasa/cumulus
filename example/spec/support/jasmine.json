@@ -1,7 +1,6 @@
 {
   "spec_dir": "spec",
   "spec_files": [
-    "setup/PopulateProvidersCollections.js",
     "**/*[sS]pec.js",
     "setup/CleansUpTestResources.js"
   ],
