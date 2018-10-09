@@ -220,7 +220,7 @@ class UpdatedKes extends Kes {
       this.config = await lambda.process();
     }
     else {
-      lambda.buildAllLambdaConfiguration();
+      lambda.buildAllLambdaConfiguration('lambdas');
     }
 
     let cf;
@@ -230,6 +230,7 @@ class UpdatedKes extends Kes {
     // to reference the generated alias values
     if (this.config.useWorkflowLambdaVersions === true) {
       if (this.config.oldLambdaInjection === true) {
+        lambda.buildAllLambdaConfiguration('workflowLambdas');
         await this.injectOldWorkflowLambdaAliases();
       }
       if (this.config.injectWorkflowLambdaAliases === true) {
