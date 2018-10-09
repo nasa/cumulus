@@ -96,7 +96,13 @@ async function getExecutionStatus(executionArn, retryOptions) {
 async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
   let iteration = 0;
+  const sleepPeriodMs = 5000;
+  const maxMinutesWaitedForExecutionStart = 2.5;
+  const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
+  const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
+
   const stopTime = Date.now() + (timeout * 1000);
+
   /* eslint-disable no-await-in-loop */
   do {
     iteration += 1;
@@ -104,7 +110,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = await getExecutionStatus(executionArn);
     }
     catch (err) {
-      if (!(err.code === 'ExecutionDoesNotExist') || iteration > 12) {
+      if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
         console.log(`waitForCompletedExecution failed: ${err.code}`);
         throw err;
       }
@@ -112,9 +118,10 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = 'STARTING';
     }
     if (executionStatus === 'RUNNING') {
-      if (!(iteration %12)) console.log('Execution running....'); // Output a 'heartbeat' every minute
+      // Output a 'heartbeat' every minute
+      if (!(iteration % iterationsPerMinute)) console.log('Execution running....');
     }
-    await sleep(5000);
+    await sleep(sleepPeriodMs);
   } while (['RUNNING', 'STARTING'].includes(executionStatus) && Date.now() < stopTime);
   /* eslint-enable no-await-in-loop */
 
