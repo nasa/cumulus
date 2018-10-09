@@ -17,34 +17,34 @@ default:
         granules:
           - files:
             - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
+              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf"
             - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
             - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
+              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
             - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
+              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml"
       SyncGranuleOutput:
         granules:
           - files:
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf'
+              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
+              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg'
+              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
     SyncGranule:
       granules:
         - files:
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/replace-me-collectionId'
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/replace-me-collectionId'
   # test configuration ends
 
   stackName: 'change-me'
@@ -366,6 +366,15 @@ mvd:
       name: '{{stackName}}-internal'
       type: internal
   bucket: '{{stackName}}-internal'
+
+mvd-dev:
+  stackName: mvd-dev
+  stackNameNoDash: mvdDev
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  bucket: 'mvd-internal'
 
 jc:
   stackName: jc
