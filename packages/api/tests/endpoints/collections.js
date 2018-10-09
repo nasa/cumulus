@@ -88,6 +88,7 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
 
   return testEndpoint(collectionsEndpoint, request, (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
+    t.is(JSON.parse(response.body).record, undefined);
   });
 });
 
@@ -161,6 +162,7 @@ test('CUMULUS-912 POST with an unauthorized user returns an unauthorized respons
 
   return testEndpoint(collectionsEndpoint, request, (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
+    t.is(JSON.parse(response.body).record, undefined);
   });
 });
 
@@ -216,21 +218,6 @@ test('default returns list of collections', async (t) => {
   });
 });
 
-test('GET returns an existing collection', (t) => {
-  const getEvent = {
-    httpMethod: 'GET',
-    headers: authHeaders,
-    pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
-    }
-  };
-  return testEndpoint(collectionsEndpoint, getEvent, (response) => {
-    const { name } = JSON.parse(response.body);
-    t.is(name, testCollection.name);
-  });
-});
-
 test('POST creates a new collection', (t) => {
   const newCollection = fakeCollectionFactory();
   const postEvent = {
@@ -245,7 +232,23 @@ test('POST creates a new collection', (t) => {
   });
 });
 
-test('PUT updates an existing collection', (t) => {
+
+test.serial('GET returns an existing collection', (t) => {
+  const getEvent = {
+    httpMethod: 'GET',
+    headers: authHeaders,
+    pathParameters: {
+      collectionName: testCollection.name,
+      version: testCollection.version
+    }
+  };
+  return testEndpoint(collectionsEndpoint, getEvent, (response) => {
+    const { name } = JSON.parse(response.body);
+    t.is(name, testCollection.name);
+  });
+});
+
+test.serial('PUT updates an existing collection', (t) => {
   const newPath = '/new_path';
   const updateEvent = {
     body: JSON.stringify({
@@ -267,7 +270,7 @@ test('PUT updates an existing collection', (t) => {
   });
 });
 
-test('DELETE deletes an existing collection', (t) => {
+test.serial('DELETE deletes an existing collection', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
