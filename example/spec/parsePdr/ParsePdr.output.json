@@ -3,7 +3,7 @@
   "totalSize": 17909733,
   "granulesCount": 1,
   "pdr": {
-    "path": "cumulus-test-data/pdrs",
+    "path": "replace-me-path",
     "size": 596,
     "name": "MOD09GQ_1granule_v3.PDR",
     "time": 1520873050000
@@ -11,22 +11,21 @@
   "granules": [
     {
       "dataType": "MOD09GQ",
-     
       "files": [
         {
-          "path": "cumulus-test-data/pdrs",
+          "path": "replace-me-path",
           "fileSize": 17865615,
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
+          "name": "replace-me-granuleId.hdf"
         },
         {
-          "path": "cumulus-test-data/pdrs",
+          "path": "replace-me-path",
           "fileSize": 44118,
-          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+          "name": "replace-me-granuleId.hdf.met"
         }
       ],
       "version": "006",
       "granuleSize": 17909733,
-      "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606"
+      "granuleId": "replace-me-granuleId"
     }
   ]
 }

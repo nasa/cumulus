@@ -2,22 +2,24 @@ const fs = require('fs');
 const path = require('path');
 const { Collection } = require('@cumulus/api/models');
 const {
-  constructCollectionId,
-  stringUtils: { globalReplace }
+  constructCollectionId
 } = require('@cumulus/common');
 const {
   addCollections,
-  buildAndExecuteWorkflow,
+  addProviders,
+  buildWorkflow,
+  executeWorkflow,
   LambdaStep,
-  deleteCollections,
-  listCollections,
+  cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const {
   loadConfig,
-  timestampedTestDataPrefix,
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix,
   deleteFolder,
   uploadTestDataToBucket
 } = require('../helpers/testUtils');
@@ -27,48 +29,56 @@ const lambdaStep = new LambdaStep();
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
-const collectionsDirectory = './data/collections/syncGranule/noDuplicateHandling';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
-const duplicateHandlingSuffix = 'noDuplicateHandling';
 
-describe('The Sync Granules workflow is not configured to handle duplicates', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-SyncGranuleNoDuplicateHandling`);
+describe('The Sync Granules workflow is not configured to handle duplicates\n', () => {
+  const testId = createTimestampedTestId(config.stackName, 'SyncGranuleNoDuplicateHandling');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
+
   const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
-  const collection = { name: `MOD09GQ_${duplicateHandlingSuffix}`, version: '006' };
-  const provider = { id: 's3_provider' };
+
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   const fileStagingDir = 'custom-staging-dir';
   const workflowName = 'SyncGranuleNoDuplicateHandlingTest';
+
   let destFileDir;
   let existingFileKey;
   let inputPayload;
   let granuleFileName;
   let workflowExecution;
-
-  const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-  // update test data filepaths
-  let updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-  updatedInputPayloadJson = globalReplace(updatedInputPayloadJson, '{{duplicateHandlingSuffix}}', duplicateHandlingSuffix);
+  let workflowMessage;
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const c = new Collection();
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // Upload test data to be synced for this spec
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
 
     // Create test granule
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     granuleFileName = inputPayload.granules[0].files[0].name;
 
-    // Create test collection
-    await addCollections(config.stackName, config.bucket, collectionsDirectory);
-
-    workflowExecution = await buildAndExecuteWorkflow(
+    workflowMessage = await buildWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
+    // update duplicateHandling to 'error' for the collection in the workflow
+    delete workflowMessage.meta.collection.duplicateHandling;
 
-    const collectionInfo = await c.get(collection);
+    workflowExecution = await executeWorkflow(
+      config.stackName, config.bucket, workflowName, workflowMessage
+    );
+
+    const collectionInfo = await collectionModel.get(collection);
     destFileDir = path.join(
       fileStagingDir,
       config.stackName,
@@ -81,18 +91,17 @@ describe('The Sync Granules workflow is not configured to handle duplicates', ()
   });
 
   afterAll(async () => {
-    const collections = await listCollections(config.stackName, config.bucket, collectionsDirectory);
     await Promise.all([
+      // delete test collection
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      // cleanup folders used by test
+      deleteFolder(config.bucket, testDataFolder),
+      deleteFolder(config.bucket, destFileDir),
       // delete ingested granule
       apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
-      }),
-      // delete test collection
-      deleteCollections(config.stackName, config.bucket, collections),
-      // cleanup folders used by test
-      deleteFolder(config.bucket, testDataFolder),
-      deleteFolder(config.bucket, destFileDir)
+      })
     ]);
   });
 
@@ -104,8 +113,8 @@ describe('The Sync Granules workflow is not configured to handle duplicates', ()
     const stepName = 'SyncGranuleNoVpc';
 
     beforeAll(async () => {
-      workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      workflowExecution = await executeWorkflow(
+        config.stackName, config.bucket, workflowName, workflowMessage
       );
     });
 
