@@ -136,6 +136,8 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling) {
 
   const exists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${exists}`);
+  /* eslint-disable-next-line no-param-reassign */
+  if (exists) file.duplicate_found = true;
 
   // Have to throw DuplicateFile and not WorkflowError, because the latter
   // is not treated as a failure by the message adapter.
