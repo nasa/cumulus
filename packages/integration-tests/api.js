@@ -318,7 +318,7 @@ async function getExecutionStatus({ prefix, arn }) {
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addCollection({ prefix, collection }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiCollectionsDefault',
     payload: {
@@ -328,8 +328,6 @@ async function addCollection({ prefix, collection }) {
       body: JSON.stringify(collection)
     }
   });
-
-  return payload;
 }
 
 /**
@@ -341,7 +339,7 @@ async function addCollection({ prefix, collection }) {
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addProvider({ prefix, provider }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiProvidersDefault',
     payload: {
@@ -351,8 +349,6 @@ async function addProvider({ prefix, provider }) {
       body: JSON.stringify(provider)
     }
   });
-
-  return payload;
 }
 
 module.exports = {
