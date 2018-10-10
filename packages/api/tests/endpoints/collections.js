@@ -234,6 +234,7 @@ test('default returns list of collections', async (t) => {
   const newCollection = fakeCollectionFactory();
 
   const listEvent = {
+    httpMethod: 'GET',
     headers: authHeaders
   };
 
