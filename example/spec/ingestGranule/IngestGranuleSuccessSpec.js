@@ -104,8 +104,8 @@ describe('The S3 Ingest Granules workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      apiTestUtils.addCollection({ prefix: config.stackName, collection: collectionData }),
-      apiTestUtils.addProvider({ prefix: config.stackName, provider: providerData })
+      apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData }),
+      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
 
     console.log('Starting ingest test');

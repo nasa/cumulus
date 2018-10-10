@@ -317,7 +317,7 @@ async function getExecutionStatus({ prefix, arn }) {
  * @param {string} params.collection - a collection object
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
-async function addCollection({ prefix, collection }) {
+async function addCollectionApi({ prefix, collection }) {
   return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiCollectionsDefault',
@@ -338,7 +338,7 @@ async function addCollection({ prefix, collection }) {
  * @param {string} params.provider - a provider object
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
-async function addProvider({ prefix, provider }) {
+async function addProviderApi({ prefix, provider }) {
   return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiProvidersDefault',
@@ -363,6 +363,6 @@ module.exports = {
   getLogs,
   getExecutionLogs,
   getExecutionStatus,
-  addCollection,
-  addProvider
+  addCollectionApi,
+  addProviderApi
 };
