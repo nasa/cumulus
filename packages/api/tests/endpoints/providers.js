@@ -234,7 +234,6 @@ test('default returns list of providers', async (t) => {
   await indexProvider(esClient, newProvider, esIndex);
 
   const listEvent = {
-    httpMethod: 'list',
     headers: authHeaders
   };
 
