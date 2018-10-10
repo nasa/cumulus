@@ -178,7 +178,7 @@ function fakeUserFactory(params = {}) {
 /**
  * creates fake collection records
  *
- * @returns {Object} fake pdr object
+ * @returns {Object} fake collection object
  */
 function fakeCollectionFactory() {
   return {
@@ -194,6 +194,21 @@ function fakeCollectionFactory() {
   };
 }
 
+/**
+ * creates fake provider records
+ *
+ * @returns {Object} fake provider object
+ */
+function fakeProviderFactory() {
+  return {
+    id: randomString(),
+    globalConnectionLimit: 1,
+    protocol: 'http',
+    host: randomString(),
+    port: 80
+  };
+}
+
 module.exports = {
   testEndpoint,
   fakeGranuleFactory,
@@ -204,5 +219,6 @@ module.exports = {
   fakeRuleFactory,
   fakeFilesFactory,
   fakeUserFactory,
+  fakeProviderFactory,
   deleteAliases
 };
