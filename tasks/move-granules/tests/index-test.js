@@ -47,6 +47,15 @@ function buildPayload(t) {
   return newPayload;
 }
 
+function getExpectedOuputFileNames(t) {
+  return [
+    `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
+    `s3://${t.context.publicBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
+    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
+    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
+  ];
+}
+
 test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
   t.context.publicBucket = randomString();
@@ -81,13 +90,7 @@ test.serial('should move files to final location', async (t) => {
 
 test.serial('should update filenames with metadata fields', async (t) => {
   const newPayload = buildPayload(t);
-
-  const expectedFilenames = [
-    `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
-    `s3://${t.context.publicBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
-  ];
+  const expectedFilenames = getExpectedOuputFileNames(t);
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
@@ -200,8 +203,6 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
   await duplicateHandlingErrorTest(t, 'error');
 });
 
-// duplicateHandling is 'skip'?
-
 test.serial('when duplicateHandling is "version", keep both data if different', async (t) => {
   let newPayload = buildPayload(t);
   newPayload.config.duplicateHandling = 'version';
@@ -209,12 +210,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   // payload could be modified
   const newPayloadOrig = clonedeep(newPayload);
 
-  const expectedFilenames = [
-    `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
-    `s3://${t.context.publicBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
-  ];
+  const expectedFilenames = getExpectedOuputFileNames(t);
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
@@ -232,7 +228,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   // When it encounters data with a dupliated filename with different checksum,
   // it moves the existing data to a file with a suffix to distinguish it from the new file
 
-  // run 'moveGranules' with one of the input files updated
+  // run 'moveGranules' again with one of the input files updated
   newPayload = clonedeep(newPayloadOrig);
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
@@ -264,4 +260,46 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   );
 
   t.is(newHdfFileInfo.ContentLength, randomString().length);
+});
+
+test.serial('when duplicateHandling is "skip", does not overwrite or create new', async (t) => {
+  let newPayload = buildPayload(t);
+  newPayload.config.duplicateHandling = 'skip';
+
+  // payload could be modified
+  const newPayloadOrig = clonedeep(newPayload);
+
+  const expectedFilenames = getExpectedOuputFileNames(t);
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  let output = await moveGranules(newPayload);
+  const existingFileNames = output.granules[0].files.map((f) => f.filename);
+  t.deepEqual(expectedFilenames, existingFileNames);
+
+  const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
+  const existingHdfFileInfo = await headObject(
+    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
+  );
+
+  // run 'moveGranules' again with one of the input files updated
+  newPayload = clonedeep(newPayloadOrig);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const params = {
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: randomString()
+  };
+  await s3().putObject(params).promise();
+
+  output = await moveGranules(newPayload);
+  const currentFileNames = output.granules[0].files.map((f) => f.filename);
+  t.deepEqual(expectedFilenames, currentFileNames);
+
+  // does not overwrite
+  const currentHdfFileInfo = await headObject(
+    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
+  );
+
+  t.is(existingHdfFileInfo.ContentLength, currentHdfFileInfo.ContentLength);
+  t.not(currentHdfFileInfo.ContentLength, randomString().length);
 });
