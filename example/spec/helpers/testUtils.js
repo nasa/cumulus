@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const {
-  aws: { s3 },
+  aws: { s3, headObject, parseS3Uri },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const { Config } = require('kes');
@@ -211,6 +211,19 @@ async function redeploy(config, options = {}) {
   return Promise.race([executionPromise(), timeoutPromise()]).then((_) => clearTimeout(timeoutObject));
 }
 
+/**
+ * Get file headers for a set of files.
+ *
+ * @param {Array<Object>} files - array of file objects
+ * @returns {Promise<Array>} - file detail responses
+ */
+async function getFilesMetadata(files) {
+  const getFileRequests = files.map(async (f) => {
+    const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
+    return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
+  });
+  return Promise.all(getFileRequests);
+}
 
 module.exports = {
   timestampedName,
@@ -223,5 +236,6 @@ module.exports = {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  redeploy
+  redeploy,
+  getFilesMetadata
 };
