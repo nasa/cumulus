@@ -11,11 +11,7 @@ const {
   parseS3Uri
 } = require('@cumulus/common/aws');
 const clonedeep = require('lodash.clonedeep');
-<<<<<<< HEAD
-=======
 const set = require('lodash.set');
-const aws = require('@cumulus/common/aws');
->>>>>>> master
 const errors = require('@cumulus/common/errors');
 const {
   randomString, validateConfig, validateInput, validateOutput
@@ -34,11 +30,7 @@ async function uploadFiles(files, bucket) {
 test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
   t.context.endBucket = randomString();
-<<<<<<< HEAD
   await s3().createBucket({
-=======
-  await aws.s3().createBucket({
->>>>>>> master
     Bucket: t.context.endBucket
   }).promise();
   await s3().createBucket({
