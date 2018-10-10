@@ -8,6 +8,7 @@ const models = require('../../models');
 const providerEndpoint = require('../../endpoints/providers');
 const {
   fakeUserFactory,
+  fakeProviderFactory,
   testEndpoint
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
@@ -22,13 +23,7 @@ let providers;
 const esIndex = randomString();
 let esClient;
 
-const testProvider = {
-  id: 'orbiting-carbon-observatory-2',
-  globalConnectionLimit: 1,
-  protocol: 'http',
-  host: 'https://oco.jpl.nasa.gov/',
-  port: 80
-};
+const testProvider = fakeProviderFactory();
 
 let authHeaders;
 let userModel;
