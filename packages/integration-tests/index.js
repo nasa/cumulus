@@ -97,7 +97,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
   let iteration = 0;
   const sleepPeriodMs = 5000;
-  const maxMinutesWaitedForExecutionStart = 2.5;
+  const maxMinutesWaitedForExecutionStart = 5;
   const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
   const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
 
@@ -111,7 +111,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
     }
     catch (err) {
       if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
-        console.log(`waitForCompletedExecution failed: ${err.code}`);
+        console.log(`waitForCompletedExecution failed: ${err.code}, arn: ${executionArn}`);
         throw err;
       }
       console.log("Execution does not exist... assuming it's still starting up.");
