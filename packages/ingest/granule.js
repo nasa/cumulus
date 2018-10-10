@@ -473,36 +473,6 @@ class Granule {
   }
 
   /**
-   * rename s3 file with timestamp
-   *
-   * @param {string} bucket - bucket of the file
-   * @param {string} key - s3 key of the file
-   * @returns {Promise} promise that resolves when file is renamed
-   */
-  async renameS3FileWithTimestamp(bucket, key) {
-    const formatString = 'YYYYMMDDTHHmmssSSS';
-    const timestamp = (await aws.headObject(bucket, key)).LastModified;
-    const renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
-
-    log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
-    return exports.moveGranuleFile(
-      { Bucket: bucket, Key: key }, { Bucket: bucket, Key: renamedKey }
-    );
-  }
-
-  /**
-   * get all renamed s3 files for a given bucket and key
-   *
-   * @param {string} bucket - bucket of the file
-   * @param {string} key - s3 key of the file
-   * @returns {Array<Object>} returns renamed files
-   */
-  async getRenamedS3File(bucket, key) {
-    const s3list = await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
-    return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, fileSize: c.Size }));
-  }
-
-  /**
    * Ingest individual files
    *
    * @private
@@ -581,7 +551,7 @@ class Granule {
         await aws.deleteS3Object(bucket, stagedFileKey);
       }
       else {
-        await this.renameS3FileWithTimestamp(bucket, destinationKey);
+        await exports.renameS3FileWithTimestamp(bucket, destinationKey);
         await exports.moveGranuleFile(
           { Bucket: bucket, Key: stagedFileKey }, { Bucket: bucket, Key: destinationKey }
         );
@@ -589,7 +559,7 @@ class Granule {
     }
 
     const renamedFiles = (duplicateHandling === 'version')
-      ? await this.getRenamedS3File(bucket, destinationKey) : [];
+      ? await exports.getRenamedS3File(bucket, destinationKey) : [];
 
     // return all files, the renamed files don't have the same properties(name, fileSize, checksum)
     // from input file
@@ -966,6 +936,37 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
   return Promise.resolve();
 }
 
+/**
+  * rename s3 file with timestamp
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Promise} promise that resolves when file is renamed
+  */
+async function renameS3FileWithTimestamp(bucket, key) {
+  const formatString = 'YYYYMMDDTHHmmssSSS';
+  const timestamp = (await aws.headObject(bucket, key)).LastModified;
+  const renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
+
+  log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
+  return exports.moveGranuleFile(
+    { Bucket: bucket, Key: key }, { Bucket: bucket, Key: renamedKey }
+  );
+}
+
+/**
+  * get all renamed s3 files for a given bucket and key
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Array<Object>} returns renamed files
+  */
+async function getRenamedS3File(bucket, key) {
+  const s3list = await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
+  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, fileSize: c.Size }));
+}
+
+
 module.exports.selector = selector;
 module.exports.Discover = Discover;
 module.exports.Granule = Granule;
@@ -980,6 +981,8 @@ module.exports.SftpGranule = SftpGranule;
 module.exports.getGranuleId = getGranuleId;
 module.exports.getCmrFiles = getCmrFiles;
 module.exports.getMetadata = getMetadata;
+module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
+module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
