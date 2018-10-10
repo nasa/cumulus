@@ -24,6 +24,7 @@ const esIndex = randomString();
 let esClient;
 
 const testProvider = fakeProviderFactory();
+const missingProvider = fakeProviderFactory();
 
 let authHeaders;
 let userModel;
@@ -84,18 +85,15 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
-  const newProviderId = randomString();
-  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
-
   const request = {
     httpMethod: 'POST',
     headers: {},
-    body: JSON.stringify(newProvider)
+    body: JSON.stringify(missingProvider)
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
-    await providerDoesNotExist(t, newProviderId);
+    await providerDoesNotExist(t, missingProvider.id);
   });
 });
 
@@ -157,20 +155,17 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
 });
 
 test('CUMULUS-912 POST with an unauthorized user returns an unauthorized response', async (t) => {
-  const newProviderId = randomString();
-  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
-
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'Bearer invalid-token'
     },
-    body: JSON.stringify(newProvider)
+    body: JSON.stringify(missingProvider)
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
-    await providerDoesNotExist(t, newProviderId);
+    await providerDoesNotExist(t, missingProvider.id);
   });
 });
 
@@ -207,27 +202,21 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
 });
 
 test('POST with invalid authorization scheme returns an invalid token response', (t) => {
-  const newProviderId = randomString();
-  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
-
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
     },
-    body: JSON.stringify(newProvider)
+    body: JSON.stringify(missingProvider)
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
     assertions.isInvalidTokenResponse(t, response);
-    await providerDoesNotExist(t, newProviderId);
+    await providerDoesNotExist(t, missingProvider.id);
   });
 });
 
 test('POST with non-expiring operator credentials returns an invalid token response', async (t) => {
-  const newProviderId = randomString();
-  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
-
   const fakeUser = fakeUserFactory();
   const authToken = (await userModel.create(fakeUser)).password;
   await userModel.update({ userName: fakeUser.userName }, {}, ['expires']);
@@ -237,12 +226,12 @@ test('POST with non-expiring operator credentials returns an invalid token respo
     headers: {
       Authorization: `Bearer ${authToken}`
     },
-    body: JSON.stringify(newProvider)
+    body: JSON.stringify(missingProvider)
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
     assertions.isInvalidTokenResponse(t, response);
-    await providerDoesNotExist(t, newProviderId);
+    await providerDoesNotExist(t, missingProvider.id);
   });
 });
 
