@@ -289,6 +289,43 @@ test('moveGranuleFile moves a single file between s3 locations', async (t) => {
   });
 });
 
+test('moveGranuleFile overwrites existing file by default', async (t) => {
+  const Bucket = randomString();
+  await s3().createBucket({ Bucket }).promise();
+
+  const name = 'test.txt';
+  const Key = `origin/${name}`;
+
+  // Pre-stage destination file
+  await s3().putObject({ Bucket: t.context.destBucket, Key, Body: 'test' }).promise();
+
+  // Stage source file
+  const updatedBody = randomString();
+  const params = { Bucket, Key, Body: updatedBody };
+  await s3().putObject(params).promise();
+
+  const source = { Bucket, Key };
+  const target = { Bucket: t.context.destBucket, Key };
+
+  try {
+    await moveGranuleFile(source, target);
+  }
+  catch (err) {
+    t.fail();
+  }
+  finally {
+    const objects = await s3().listObjects({ Bucket: t.context.destBucket }).promise();
+    t.is(objects.Contents.length, 1);
+
+    const item = objects.Contents[0];
+    t.is(item.Key, Key);
+
+    t.is(item.Size, updatedBody.length);
+
+    await recursivelyDeleteS3Bucket(Bucket);
+  }
+});
+
 test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   const bucket = randomString();
   const secondBucket = randomString();
