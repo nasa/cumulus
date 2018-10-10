@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
+const path = require('path');
 const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
@@ -9,7 +10,8 @@ const {
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists },
-  constructCollectionId
+  constructCollectionId,
+  testUtils: { randomString }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -27,7 +29,8 @@ const {
   getExecutionUrl,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
@@ -72,6 +75,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let expectedSyncGranulePayload;
   let expectedPayload;
+  let startTime;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -113,6 +117,18 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
+
+    // pre-stage destination files for MoveGranules
+    const preStageFiles = expectedPayload.granules[0].files.map(async (file) => {
+      const params = {
+        Bucket: file.bucket,
+        Key: file.filepath,
+        Body: randomString()
+      };
+      await s3().putObject(params).promise();
+    });
+    await Promise.all(preStageFiles);
+    startTime = new Date();
 
     // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
@@ -199,17 +215,30 @@ describe('The S3 Ingest Granules workflow', () => {
       await s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise();
     });
 
-    it('has a payload with correct buckets and filenames', () => {
+    it('has a payload with correct buckets and filenames and filesizes', () => {
       files.forEach((file) => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
+        if (file.fileSize) {
+          expect(file.fileSize).toEqual(expectedFile.fileSize);
+        }
       });
     });
 
     it('moves files to the bucket folder based on metadata', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
+      });
+    });
+
+    describe('encounters duplicate filenames', () => {
+      it('overwrites the existing file with the new data', async () => {
+        const currentFiles = await getFilesMetadata(files);
+
+        currentFiles.forEach((cf) => {
+          expect(cf.LastModified).toBeGreaterThan(startTime);
+        });
       });
     });
   });
