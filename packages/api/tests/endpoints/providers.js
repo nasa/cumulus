@@ -220,18 +220,20 @@ test('POST with invalid authorization scheme returns an invalid authorization re
   });
 });
 
-test.serial('default returns list of providerModel', async (t) => {
+test('default returns list of providerModel', (t) => {
   const listEvent = {
     httpMethod: 'GET',
     headers: authHeaders
   };
 
-  const stub = sinon.stub(Search.prototype, 'query').returns([t.context.testProvider]);
+  const stub = sinon.stub(Search.prototype, 'query').resolves({
+    results: [t.context.testProvider]
+  });
 
   return testEndpoint(providerEndpoint, listEvent, (response) => {
-    const responseBody = JSON.parse(response.body);
+    const { results } = JSON.parse(response.body);
     stub.restore();
-    t.is(responseBody.results[0].id, newProviderId);
+    t.is(results[0].id, t.context.testProvider.id);
   });
 });
 
@@ -252,17 +254,14 @@ test('POST creates a new provider', (t) => {
   });
 });
 
-test.serial('GET returns an existing provider', (t) => {
+test('GET returns an existing provider', (t) => {
   const getEvent = {
     httpMethod: 'GET',
     pathParameters: { id: t.context.testProvider.id },
     headers: authHeaders
   };
 
-  const stub = sinon.stub(Search.prototype, 'query').returns([t.context.testProvider]);
-
   return testEndpoint(providerEndpoint, getEvent, (response) => {
-    stub.restore();
     t.is(JSON.parse(response.body).id, t.context.testProvider.id);
   });
 });
