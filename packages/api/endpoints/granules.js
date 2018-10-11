@@ -8,6 +8,7 @@ const {
 } = require('../lib/response');
 const Search = require('../es/search').Search;
 const models = require('../models');
+const { InternalServerError } = require('../lib/responses');
 
 /**
  * List all granules for a given collection.
@@ -212,11 +213,7 @@ async function handleRequest(request) {
   }
   catch (err) {
     log.error(err);
-    return buildLambdaProxyResponse({
-      json: true,
-      statusCode: 500,
-      body: { message: 'Internal Server Error' }
-    });
+    return new InternalServerError();
   }
 }
 

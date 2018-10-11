@@ -14,6 +14,7 @@ const {
 const { Search } = require('../../es/search');
 const { indexProvider } = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
+const { RecordDoesNotExist } = require('../../lib/errors');
 
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
@@ -31,7 +32,7 @@ let userModel;
 
 const providerDoesNotExist = async (t, providerId) => {
   const error = await t.throws(providers.get({ id: providerId }));
-  t.is(error.message, `No record found for {"id":"${providerId}"} in ${process.env.ProvidersTable}`);
+  t.true(error instanceof RecordDoesNotExist);
 };
 
 test.before(async () => {
@@ -201,7 +202,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   });
 });
 
-test('POST with invalid authorization scheme returns an invalid token response', (t) => {
+test('POST with invalid authorization scheme returns an invalid authorization response', (t) => {
   const request = {
     httpMethod: 'POST',
     headers: {
@@ -211,26 +212,7 @@ test('POST with invalid authorization scheme returns an invalid token response',
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
-    assertions.isInvalidTokenResponse(t, response);
-    await providerDoesNotExist(t, missingProvider.id);
-  });
-});
-
-test('POST with non-expiring operator credentials returns an invalid token response', async (t) => {
-  const fakeUser = fakeUserFactory();
-  const authToken = (await userModel.create(fakeUser)).password;
-  await userModel.update({ userName: fakeUser.userName }, {}, ['expires']);
-
-  const request = {
-    httpMethod: 'POST',
-    headers: {
-      Authorization: `Bearer ${authToken}`
-    },
-    body: JSON.stringify(missingProvider)
-  };
-
-  return testEndpoint(providerEndpoint, request, async (response) => {
-    assertions.isInvalidTokenResponse(t, response);
+    assertions.isInvalidAuthorizationResponse(t, response);
     await providerDoesNotExist(t, missingProvider.id);
   });
 });
