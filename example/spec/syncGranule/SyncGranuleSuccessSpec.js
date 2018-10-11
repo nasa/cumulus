@@ -12,8 +12,6 @@ const {
 const { Collection, Execution } = require('@cumulus/api/models');
 const {
   aws: {
-    headObject,
-    parseS3Uri,
     s3,
     s3ObjectExists
   },
@@ -29,7 +27,8 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  deleteFolder
+  deleteFolder,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
@@ -166,10 +165,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-      existingfiles = await Promise.all(files.map(async (f) => {
-        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-      }));
+      existingfiles = await getFilesMetadata(files);
 
       // update one of the input files, so that the file has different checksum
       const content = randomString();
@@ -194,12 +190,9 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     it('overwrites the existing file with the new data', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-      expect(lambdaOutput.payload.granules[0].files[0].duplicate_found).toBe(true);
+      const currentFiles = await getFilesMetadata(files);
 
-      const currentFiles = await Promise.all(files.map(async (f) => {
-        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-      }));
+      expect(lambdaOutput.payload.granules[0].files[0].duplicate_found).toBe(true);
 
       expect(currentFiles.length).toBe(existingfiles.length);
 

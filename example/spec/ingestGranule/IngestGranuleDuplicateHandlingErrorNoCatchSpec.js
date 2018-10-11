@@ -1,16 +1,16 @@
 'use strict';
 
 const fs = require('fs-extra');
+const { Collection } = require('@cumulus/api/models');
 const {
   aws: { parseS3Uri }
 } = require('@cumulus/common');
 const {
   addCollections,
   addProviders,
-  buildWorkflow,
+  buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  executeWorkflow,
   LambdaStep
 } = require('@cumulus/integration-tests');
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
@@ -45,10 +45,11 @@ describe('When the Ingest Granules workflow is configured to handle duplicates a
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
-  let workflowMessage;
   let workflowExecution;
   let inputPayload;
   let granulesIngested;
+  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -58,18 +59,15 @@ describe('When the Ingest Granules workflow is configured to handle duplicates a
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
+    // set collection duplicate handling to 'error'
+    await collectionModel.update(collection, { duplicateHandling: 'error' });
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
 
-    workflowMessage = await buildWorkflow(
+    workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-    );
-    // update duplicateHandling to 'error' for the collection in the workflow
-    workflowMessage.meta.collection.duplicateHandling = 'error';
-
-    workflowExecution = await executeWorkflow(
-      config.stackName, config.bucket, workflowName, workflowMessage
     );
   });
 
@@ -94,8 +92,8 @@ describe('When the Ingest Granules workflow is configured to handle duplicates a
 
   describe('and it encounters data with a duplicated filename, and it is not configured to catch the duplicate error', () => {
     beforeAll(async () => {
-      workflowExecution = await executeWorkflow(
-        config.stackName, config.bucket, workflowName, workflowMessage
+      workflowExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
     });
 
