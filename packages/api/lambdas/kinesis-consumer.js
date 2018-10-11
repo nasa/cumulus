@@ -52,6 +52,7 @@ async function queueMessageForRule(kinesisRule, eventObject) {
     workflow: kinesisRule.workflow,
     provider: kinesisRule.provider,
     collection: kinesisRule.collection,
+    meta: kinesisRule.meta,
     payload: eventObject
   };
 
@@ -155,6 +156,7 @@ function processRecord(record, fromSNS) {
 
   try {
     eventObject = JSON.parse(dataString);
+    log.debug('processRecord eventObject', eventObject);
   }
   catch (err) {
     log.error('Caught error parsing JSON:');

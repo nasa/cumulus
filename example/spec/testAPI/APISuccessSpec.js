@@ -2,30 +2,51 @@
 
 const fs = require('fs-extra');
 const {
-  aws: { s3 }
-} = require('@cumulus/common');
-const {
+  api: apiTestUtils,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   buildAndExecuteWorkflow,
   conceptExists,
-  waitForConceptExistsOutcome
+  waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
-const { Search } = require('@cumulus/api/es/search');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
-
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix,
+  deleteFolder
+} = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
-const { loadConfig } = require('../helpers/testUtils');
-
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+];
+
+const isLambdaStatusLogEntry = (logEntry) =>
+  logEntry.message.includes('START')
+  || logEntry.message.includes('END')
+  || logEntry.message.includes('REPORT');
+
+const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
 describe('The Cumulus API', () => {
+  const testId = createTimestampedTestId(config.stackName, 'APISuccess');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
   let workflowExecution = null;
-  let esClient; // eslint-disable-line no-unused-vars
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
   let inputGranuleId;
@@ -34,10 +55,16 @@ describe('The Cumulus API', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    const host = config.esHost;
-    esClient = await Search.es(host);
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
+
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, testDataGranuleId, granuleRegex);
+    // Update input file paths
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     inputGranuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -46,13 +73,12 @@ describe('The Cumulus API', () => {
   });
 
   afterAll(async () => {
-    // Remove the granule files added for the test
-    await Promise.all(
-      inputPayload.granules[0].files.map((file) =>
-        s3().deleteObject({
-          Bucket: config.bucket, Key: `${file.path}/${file.name}`
-        }).promise())
-    );
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+    ]);
   });
 
   it('completes execution with success status', () => {
@@ -79,6 +105,37 @@ describe('The Cumulus API', () => {
       expect(granule.cmrLink).not.toBeUndefined();
     });
 
+    it('allows reingest and executes with success status', async () => {
+      granule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      const oldUpdatedAt = granule.updatedAt;
+      const oldExecution = granule.execution;
+
+      // Reingest Granule and compare the updatedAt times
+      const response = await apiTestUtils.reingestGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(response.status).toEqual('SUCCESS');
+
+      const newUpdatedAt = (await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      })).updatedAt;
+      expect(newUpdatedAt).not.toEqual(oldUpdatedAt);
+
+      // Await reingest completion
+      await waitUntilGranuleStatusIs(config.stackName, inputGranuleId, 'completed');
+      const updatedGranule = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(updatedGranule.status).toEqual('completed');
+      expect(updatedGranule.execution).not.toEqual(oldExecution);
+    });
+
     it('removeFromCMR removes the ingested granule from CMR', async () => {
       const existsInCMR = await conceptExists(cmrLink);
 
@@ -91,7 +148,7 @@ describe('The Cumulus API', () => {
       });
 
       // Check that the granule was removed
-      await waitForConceptExistsOutcome(cmrLink, false, 2);
+      await waitForConceptExistsOutcome(cmrLink, false, 10, 4000);
       const doesExist = await conceptExists(cmrLink);
       expect(doesExist).toEqual(false);
     });
@@ -112,24 +169,25 @@ describe('The Cumulus API', () => {
       expect(doesExist).toEqual(true);
     });
 
-    it('allows reingest and executes with success status', async () => {
-      const initialUpdatedAt = (await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputGranuleId
-      })).updatedAt;
-
-      // Reingest Granule and compare the updatedAt times
-      const response = await apiTestUtils.reingestGranule({
+    it('can delete the ingested granule from the API', async () => {
+      // pre-delete: Remove the granule from CMR
+      await apiTestUtils.removeFromCMR({
         prefix: config.stackName,
         granuleId: inputGranuleId
       });
-      expect(response.status).toEqual('SUCCESS');
 
-      const newUpdatedAt = (await apiTestUtils.getGranule({
+      // Delete the granule
+      await apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputGranuleId
-      })).updatedAt;
-      expect(newUpdatedAt).not.toEqual(initialUpdatedAt);
+      });
+
+      // Verify deletion
+      const resp = await apiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputGranuleId
+      });
+      expect(resp.message).toEqual('Granule not found');
     });
   });
 
@@ -156,12 +214,17 @@ describe('The Cumulus API', () => {
       expect(logs.results.length).toEqual(10);
     });
 
-    it('returns logs with taskName included', async () => {
-      const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
-      logs.results.forEach((log) => {
-        if ((!log.message.includes('END')) && (!log.message.includes('REPORT')) && (!log.message.includes('START'))) {
-          expect(log.sender).not.toBe(undefined);
+    it('returns logs with sender set', async () => {
+      const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+
+      const logEntries = getLogsResponse.results;
+      const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
+
+      cumulusLogEntries.forEach((logEntry) => {
+        if (!logEntry.sender) {
+          console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
         }
+        expect(logEntry.sender).not.toBe(undefined);
       });
     });
 
