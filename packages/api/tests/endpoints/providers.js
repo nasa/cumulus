@@ -1,18 +1,18 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../lambdas/bootstrap');
 const models = require('../../models');
-const providerEndpoint = require('../../endpoints/providerModel');
+const providerEndpoint = require('../../endpoints/providers');
 const {
   fakeUserFactory,
   fakeProviderFactory,
   testEndpoint
 } = require('../../lib/testUtils');
 const { Search } = require('../../es/search');
-const { indexProvider } = require('../../es/indexer');
 const assertions = require('../../lib/assertions');
 const { RecordDoesNotExist } = require('../../lib/errors');
 
@@ -50,8 +50,8 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  t.context.t.context.testProvider = fakeProviderFactory();
-  await providerModel.create(t.context.t.context.testProvider);
+  t.context.testProvider = fakeProviderFactory();
+  await providerModel.create(t.context.testProvider);
 });
 
 test.after.always(async () => {
@@ -86,15 +86,16 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
+  const newProvider = fakeProviderFactory();
   const request = {
     httpMethod: 'POST',
     headers: {},
-    body: JSON.stringify(missingProvider)
+    body: JSON.stringify(newProvider)
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
-    await providerDoesNotExist(t, missingProvider.id);
+    await providerDoesNotExist(t, newProvider.id);
   });
 });
 
@@ -156,17 +157,18 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
 });
 
 test('CUMULUS-912 POST with an unauthorized user returns an unauthorized response', async (t) => {
+  const newProvider = fakeProviderFactory();
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'Bearer invalid-token'
     },
-    body: JSON.stringify(missingProvider)
+    body: JSON.stringify(newProvider)
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
-    await providerDoesNotExist(t, missingProvider.id);
+    await providerDoesNotExist(t, newProvider.id);
   });
 });
 
@@ -203,33 +205,32 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
 });
 
 test('POST with invalid authorization scheme returns an invalid authorization response', (t) => {
+  const newProvider = fakeProviderFactory();
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
     },
-    body: JSON.stringify(missingProvider)
+    body: JSON.stringify(newProvider)
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
     assertions.isInvalidAuthorizationResponse(t, response);
-    await providerDoesNotExist(t, missingProvider.id);
+    await providerDoesNotExist(t, newProvider.id);
   });
 });
 
-test('default returns list of providerModel', async (t) => {
-  const newProviderId = randomString();
-  const newProvider = Object.assign({}, t.context.testProvider, { id: newProviderId });
-
-  await indexProvider(esClient, newProvider, esIndex);
-
+test.serial('default returns list of providerModel', async (t) => {
   const listEvent = {
     httpMethod: 'GET',
     headers: authHeaders
   };
 
+  const stub = sinon.stub(Search.prototype, 'query').returns([t.context.testProvider]);
+
   return testEndpoint(providerEndpoint, listEvent, (response) => {
     const responseBody = JSON.parse(response.body);
+    stub.restore();
     t.is(responseBody.results[0].id, newProviderId);
   });
 });
@@ -258,12 +259,15 @@ test.serial('GET returns an existing provider', (t) => {
     headers: authHeaders
   };
 
+  const stub = sinon.stub(Search.prototype, 'query').returns([t.context.testProvider]);
+
   return testEndpoint(providerEndpoint, getEvent, (response) => {
+    stub.restore();
     t.is(JSON.parse(response.body).id, t.context.testProvider.id);
   });
 });
 
-test.serial('PUT updates an existing provider', (t) => {
+test('PUT updates an existing provider', (t) => {
   const updatedLimit = 2;
 
   const putEvent = {
@@ -279,7 +283,7 @@ test.serial('PUT updates an existing provider', (t) => {
   });
 });
 
-test.serial('DELETE deletes an existing provider', (t) => {
+test('DELETE deletes an existing provider', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: { id: t.context.testProvider.id },
