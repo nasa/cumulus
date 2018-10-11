@@ -41,7 +41,7 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
-      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
+      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --concurrency 1
     - name: "API unit tests"
       stage: unit test
       services:
