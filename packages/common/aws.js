@@ -252,7 +252,7 @@ exports.fileExists = async (bucket, key) => {
   }
   catch (e) {
     // if file is not return false
-    if (e.stack.match(/(NotFound)/)) {
+    if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
       return false;
     }
     throw e;

@@ -29,6 +29,7 @@ SyncGranule:
         stack: '{$.meta.stack}'
         fileStagingDir: 'custom-staging-dir'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -122,6 +123,7 @@ IngestGranule:
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
@@ -151,6 +153,7 @@ IngestGranule:
         collection: '{$.meta.collection}'
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
@@ -205,6 +208,7 @@ IngestGranule:
         distribution_endpoint: '{$.meta.distribution_endpoint}'
         input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:
