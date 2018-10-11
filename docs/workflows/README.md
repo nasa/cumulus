@@ -108,7 +108,7 @@ For more details on Task Messages and Configuration, visit [Cumulus Configuratio
 
 ### Ingest Deploy
 
-To view deployment documentation, please see [Deployment of Cumulus Documentation](deployment.md).
+To view deployment documentation, please see [Deployment of Cumulus Documentation](deployment/README.md).
 
 ## Risks, Tradeoffs, and Benefits
 

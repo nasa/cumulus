@@ -153,7 +153,7 @@ If you don't want to set environment variables, [access keys can be stored local
 
 #### Create S3 Buckets:
 
-See [creating s3 buckets](./create_bucket.md) for more information on how to create a bucket.
+See [creating s3 buckets](deployment/create_bucket.md) for more information on how to create a bucket.
 
 The following s3 bucket should be created (replacing prefix with whatever you'd like, generally your organization/DAAC's name):
 

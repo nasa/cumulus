@@ -70,7 +70,7 @@ The following are steps that are required to set up your Cumulus instance to run
 
 In this example, we're going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.
 
-The following [workflow definition](../workflows/README.md) should be added to your deployment's `workflows.yml`.
+The following [workflow definition](workflows/README.md) should be added to your deployment's `workflows.yml`.
 
 Update the `CNMResponseStream` key in the `CnmResponse` task to match the name of the Kinesis response stream you configured in the prerequisites section.
 
@@ -239,7 +239,7 @@ Lastly, this entry also includes the tasks  `SfSnsReport`, `SyncGranule` from th
 
 Once the above configuration changes have been made, redeploy your stack.
 
-Please refer to `Updating Cumulus deployment` in the [deployment documentation](../deployment/README.md) if you are unfamiliar with redeployment.
+Please refer to `Updating Cumulus deployment` in the [deployment documentation](deployment/README.md) if you are unfamiliar with redeployment.
 
 ### Rule Configuration
 
@@ -352,7 +352,7 @@ The first task in the execution will report to Cumulus that the workflow has sta
 
 `TranslateMessage` (which corresponds to the `CNMToCMA` lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.
 
-*For more on the Message Adapter, please see [the Message Flow documentation](../workflows/cumulus-task-message-flow.md)*.
+*For more on the Message Adapter, please see [the Message Flow documentation](workflows/cumulus-task-message-flow.md)*.
 
 An example of what is happening in the `CNMToCMA` lambda is as follows:
 
