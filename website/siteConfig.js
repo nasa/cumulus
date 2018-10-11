@@ -31,7 +31,7 @@ const siteConfig = {
 
   // Used for publishing and more
   projectName: 'Cumulus',
-  organizationName: 'NASA',
+  organizationName: 'nasa',
   // For top-level user or org sites, the organization is still the same.
   // e.g., for the https://JoelMarcey.github.io site, it would be set like...
   //   organizationName: 'JoelMarcey'
@@ -43,18 +43,12 @@ const siteConfig = {
     { href: 'https://nasa.github.io/cumulus-api', label: 'API Docs' },
     { doc: 'team', label: 'Team' },
     { search: true },
-    //{ blog: false, label: 'Blog' },
   ],
-
-  // If you have users set above, you add it here:
-  //users,
 
   /* Colors for website */
   colors: {
     primaryColor: '#2276AC',
     secondaryColor: '#7AB5DA'
-    //primaryColor: '#2E8555',
-    //secondaryColor: '#205C3B',
   },
 
   /* Custom fonts for website */
@@ -86,10 +80,6 @@ const siteConfig = {
   onPageNav: 'separate',
   // No .html extensions for paths.
   cleanUrl: true,
-
-  // Open Graph and Twitter card images.
-  //ogImage: 'img/docusaurus.png',
-  //twitterImage: 'img/docusaurus.png',
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
