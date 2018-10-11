@@ -71,7 +71,7 @@ jobs:
 
     - name: "Deploy Integration Test Stack"
       stage: deploy integration test stack
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -81,7 +81,7 @@ jobs:
 
     - name: "Run integration tests"
       stage: integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -91,7 +91,7 @@ jobs:
 
     - name: "Cleanup integration tests"
       stage: cleanup integration tests
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy to NPM"
@@ -108,7 +108,7 @@ jobs:
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
-      if: commit_message !~ \[skip-integration-tests\]
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install: true
       script: ./travis-ci/run-integration-tests.sh
       env:

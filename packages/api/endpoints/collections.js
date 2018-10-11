@@ -1,7 +1,5 @@
 'use strict';
 
-const _get = require('lodash.get');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const { handle } = require('../lib/response');
 const models = require('../models');
 const Collection = require('../es/collections');
@@ -27,8 +25,8 @@ function list(event, cb) {
  * @returns {Promise<Object>} a collection record
  */
 function get(event, cb) {
-  const name = _get(event.pathParameters, 'collectionName');
-  const version = _get(event.pathParameters, 'version');
+  const name = event.pathParameters.collectionName;
+  const version = event.pathParameters.version;
 
   const c = new models.Collection();
   return c.get({ name, version })
@@ -48,13 +46,15 @@ function get(event, cb) {
  * @returns {Promise<Object>} a the posted collection record
  */
 function post(event, cb) {
-  let data = _get(event, 'body', '{}');
-  data = JSON.parse(data);
-  const name = _get(data, 'name');
-  const version = _get(data, 'version');
+  const data = event.body
+    ? JSON.parse(event.body)
+    : {};
+
+  const name = data.name;
+  const version = data.version;
 
   // make sure primary key is included
-  if (!data.name || !data.version) {
+  if (!name || !version) {
     return cb({ message: 'Field name and/or version is missing' });
   }
   const c = new models.Collection();
@@ -79,17 +79,18 @@ function post(event, cb) {
  * @returns {Promise<Object>} a the updated collection record
  */
 function put(event, cb) {
-  const pname = _get(event.pathParameters, 'collectionName');
-  const pversion = _get(event.pathParameters, 'version');
+  const pname = event.pathParameters.collectionName;
+  const pversion = event.pathParameters.version;
 
-  let data = _get(event, 'body', '{}');
-  data = JSON.parse(data);
+  let data = event.body
+    ? JSON.parse(event.body)
+    : {};
 
-  const name = _get(data, 'name');
-  const version = _get(data, 'version');
+  const name = data.name;
+  const version = data.version;
 
   if (pname !== name || pversion !== version) {
-    return cb({ message: 'name and version in path doesn\'t match the payload' });
+    return cb({ message: "name and version in path doesn't match the payload" });
   }
 
   const c = new models.Collection();
@@ -117,8 +118,8 @@ function put(event, cb) {
  * @returns {Promise<Object>} a message showing the record is deleted
  */
 function del(event, cb) {
-  const name = _get(event.pathParameters, 'collectionName');
-  const version = _get(event.pathParameters, 'version');
+  const name = event.pathParameters.collectionName;
+  const version = event.pathParameters.version;
   const c = new models.Collection();
 
   return c.get({ name, version })
@@ -127,28 +128,35 @@ function del(event, cb) {
     .catch(cb);
 }
 
-function handler(event, context) {
-  const httpMethod = _get(event, 'httpMethod');
+/**
+ * Handle an API Gateway collections request
+ *
+ * @param {Object} event - an API Gateway Lambda request
+ * @param {Object} context - an API Gateway Lambda context
+ * @returns {Promise} a different promise depending on which action was invoked
+ */
+function handleRequest(event, context) {
+  const httpMethod = event.httpMethod;
 
   if (!httpMethod) {
     return context.fail('HttpMethod is missing');
   }
 
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
-    if (event.httpMethod === 'GET' && event.pathParameters) {
+  return handle(event, context, true, (cb) => {
+    if (httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }
-    if (event.httpMethod === 'POST') {
+    if (httpMethod === 'POST') {
       return post(event, cb);
     }
-    if (event.httpMethod === 'PUT' && event.pathParameters) {
+    if (httpMethod === 'PUT' && event.pathParameters) {
       return put(event, cb);
     }
-    if (event.httpMethod === 'DELETE' && event.pathParameters) {
+    if (httpMethod === 'DELETE' && event.pathParameters) {
       return del(event, cb);
     }
     return list(event, cb);
   });
 }
 
-module.exports = handler;
+module.exports = handleRequest;

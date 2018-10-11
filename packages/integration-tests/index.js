@@ -20,6 +20,7 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api');
 const cmr = require('./cmr.js');
+const lambda = require('./lambda');
 const granule = require('./granule.js');
 
 /**
@@ -518,6 +519,7 @@ async function buildAndStartWorkflow(
 
 module.exports = {
   api,
+  buildWorkflow,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
@@ -546,6 +548,8 @@ module.exports = {
   sleep,
   timeout: sleep,
   getWorkflowArn,
+  getLambdaVersions: lambda.getLambdaVersions,
+  getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
 };
