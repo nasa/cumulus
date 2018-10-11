@@ -1,7 +1,10 @@
 ---
 id: hello-world
 title: HelloWorld Workflow
+hide_title: true
 ---
+
+# HelloWorld Workflow
 
 Example task meant to be a sanity check/introduction to the Cumulus workflows.
 

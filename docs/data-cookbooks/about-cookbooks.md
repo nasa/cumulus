@@ -1,7 +1,10 @@
 ---
 id: about-cookbooks
 title: About Cookbooks
+hide_title: true
 ---
+
+# About
 
 ### What is a data cookbook?
 

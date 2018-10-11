@@ -1,8 +1,10 @@
 ---
 id: cumulus-task-message-flow
 title: Cumulus Tasks: Message Flow
+hide_title: true
 ---
 
+# Cumulus Tasks: Message Flow
 Cumulus Tasks comprise Cumulus Workflows and are either AWS Lambda tasks or AWS Elastic Container Service (ECS) activities. Cumulus Tasks permit a payload as input to the main task application code. The task payload is additionally wrapped by the [Cumulus Message Adapter](https://github.com/nasa/cumulus-message-adapter). The Cumulus Message Adapter supplies additional information supporting message templating and metadata management of these workflows.
 
 <img src="../assets/cumulus-task-message-flow.png">

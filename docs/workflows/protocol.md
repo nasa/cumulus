@@ -1,6 +1,7 @@
 ---
 id: protocol
 title: Workflow Protocol
+hide_title: true
 ---
 
 # Configuration and Message Use Diagram

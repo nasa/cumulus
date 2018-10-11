@@ -1,3 +1,9 @@
+---
+id: doc_installation
+title: Cumulus Docs Installation
+hide_title: true
+---
+
 # Cumulus Docs
 
 # Local Setup

@@ -1,5 +1,10 @@
-# Contributing a task
+---
+id: adding-a-task
+title: Contributing a Task
+hide_title: true
+---
 
+# Contributing a task
 We're tracking reusable Cumulus tasks [in this list]() and, if you've got one you'd like to share with others, you can add it!
 
 Right now we're focused on tasks distributed via npm, but are open to including others. For now the script that pulls all the data for each package only supports npm.

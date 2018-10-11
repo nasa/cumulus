@@ -38,7 +38,7 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
-    { doc: 'README', label: 'Developer Docs' },
+    { doc: 'cumulus-docs-readme', label: 'Developer Docs' },
     { doc: 'data-cookbooks/about-cookbooks', label: 'Data-Cookbooks'},
     { href: 'https://nasa.github.io/cumulus-api', label: 'API Docs' },
     { doc: 'team', label: 'Team' },
