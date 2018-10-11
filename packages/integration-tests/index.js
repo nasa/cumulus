@@ -6,6 +6,7 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
+const _ = require('lodash');
 const {
   aws: { s3, sfn },
   stepFunctions: {
@@ -18,7 +19,8 @@ const {
 } = require('@cumulus/api');
 
 const sfnStep = require('./sfnStep');
-const api = require('./api');
+const api = require('./api/api');
+const rulesApi = require('./api/rules');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
@@ -94,7 +96,13 @@ async function getExecutionStatus(executionArn, retryOptions) {
 async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
   let iteration = 0;
+  const sleepPeriodMs = 5000;
+  const maxMinutesWaitedForExecutionStart = 5;
+  const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
+  const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
+
   const stopTime = Date.now() + (timeout * 1000);
+
   /* eslint-disable no-await-in-loop */
   do {
     iteration += 1;
@@ -102,17 +110,18 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = await getExecutionStatus(executionArn);
     }
     catch (err) {
-      if (!(err.code === 'ExecutionDoesNotExist') || iteration > 12) {
-        console.log(`waitForCompletedExecution failed: ${err.code}`);
+      if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
+        console.log(`waitForCompletedExecution failed: ${err.code}, arn: ${executionArn}`);
         throw err;
       }
       console.log("Execution does not exist... assuming it's still starting up.");
       executionStatus = 'STARTING';
     }
     if (executionStatus === 'RUNNING') {
-      if (!(iteration %12)) console.log('Execution running....'); // Output a 'heartbeat' every minute
+      // Output a 'heartbeat' every minute
+      if (!(iteration % iterationsPerMinute)) console.log('Execution running....');
     }
-    await sleep(5000);
+    await sleep(sleepPeriodMs);
   } while (['RUNNING', 'STARTING'].includes(executionStatus) && Date.now() < stopTime);
   /* eslint-enable no-await-in-loop */
 
@@ -571,8 +580,27 @@ async function buildAndStartWorkflow(
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 
+/**
+ * returns the most recently executed workflows for the workflow type.
+ *
+ * @param {string} workflowName - name of the workflow to get executions for
+ * @param {string} stackName - stack name
+ * @param {string} bucket - S3 internal bucket name
+ * @param {Integer} maxExecutionResults - max results to return
+ * @returns {Array<Object>} array of state function executions.
+ */
+async function getExecutions(workflowName, stackName, bucket, maxExecutionResults = 10) {
+  const kinesisTriggerTestStpFnArn = await getWorkflowArn(stackName, bucket, workflowName);
+  const data = await sfn().listExecutions({
+    stateMachineArn: kinesisTriggerTestStpFnArn,
+    maxResults: maxExecutionResults
+  }).promise();
+  return (_.orderBy(data.executions, 'startDate', 'desc'));
+}
+
 module.exports = {
   api,
+  rulesApi,
   buildWorkflow,
   testWorkflow,
   executeWorkflow,
@@ -607,5 +635,6 @@ module.exports = {
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
+  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
+  getExecutions
 };

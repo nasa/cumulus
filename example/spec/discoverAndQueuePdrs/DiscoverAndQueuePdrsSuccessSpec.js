@@ -122,6 +122,7 @@ describe('The Discover And Queue PDRs workflow', () => {
 
     beforeAll(async () => {
       parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
+      console.log(`Wait for execution ${parsePdrWorkflowArn}`);
       parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrWorkflowArn);
     });
 
