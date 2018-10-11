@@ -78,16 +78,16 @@
         "title": "Team"
       },
       "upgrade/1.6.0": {
-        "title": "upgrade/1.6.0"
+        "title": "Upgrading to Cumulus 1.6.0"
       },
       "upgrade/1.7.0": {
-        "title": "upgrade/1.7.0"
+        "title": "Upgrading to Cumulus 1.7.0"
       },
       "upgrade/1.9.0": {
-        "title": "upgrade/1.9.0"
+        "title": "Upgrading to Cumulus 1.9.0"
       },
-      "upgrade/README": {
-        "title": "upgrade/README"
+      "upgrade/upgrade-readme": {
+        "title": "Upgrading Cumulus"
       },
       "workflows/cumulus-task-message-flow": {
         "title": "Cumulus Tasks: Message Flow"
@@ -128,6 +128,8 @@
       "What are Cumulus Workflows?": "What are Cumulus Workflows?",
       "Deployment": "Deployment",
       "Additional Features": "Additional Features",
+      "Cumulus Versions": "Cumulus Versions",
+      "Operating and Contributing": "Operating and Contributing",
       "About Cookbooks": "About Cookbooks",
       "Cookbooks": "Cookbooks"
     }

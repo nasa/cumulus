@@ -26,10 +26,10 @@
       "ems_reporting"
     ],
     "Cumulus Versions": [
-      "upgrade-readme",
-      "1.6.0",
-      "1.7.0",
-      "1.8.0"
+      "upgrade/upgrade-readme",
+      "upgrade/1.6.0",
+      "upgrade/1.7.0",
+      "upgrade/1.9.0"
     ],
     "Operating and Contributing": [
       "system-documentation/system-documentation",

@@ -5,7 +5,7 @@ hide_title: true
 ---
 
 # Workflow Triggers
-For a workflow to run, it needs to be associated with a rule (see [rule configuration](../data-cookbooks/setup.md#rules). The rule configuration determines how and when a workflow execution is triggered. Rules can be triggered one time, on a schedule, or by new data written to a kinesis stream.
+For a workflow to run, it needs to be associated with a rule (see [rule configuration](data-cookbooks/setup.md#rules). The rule configuration determines how and when a workflow execution is triggered. Rules can be triggered one time, on a schedule, or by new data written to a kinesis stream.
 
 There are three lambda functions in the API package responsible for scheduling and starting workflows: `SF scheduler`, `kinesis consumer`, `and SF starter`. Each Cumulus instance comes with a Start SF [SQS queue](https://aws.amazon.com/sqs/).
 

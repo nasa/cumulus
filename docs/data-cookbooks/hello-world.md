@@ -12,7 +12,7 @@ Example task meant to be a sanity check/introduction to the Cumulus workflows.
 
 ### Workflow Configuration
 
-The [workflow definition](../workflows/README.md) can be found in `cumulus/example/workflows/helloworld.yml` under `HelloWorldWorkflow:`
+The [workflow definition](workflows/README.md) can be found in `cumulus/example/workflows/helloworld.yml` under `HelloWorldWorkflow:`
 
 ```yaml
 HelloWorldWorkflow:
@@ -59,7 +59,7 @@ Workflow **error-handling** can be configured as discussed in the [Error-Handlin
 
 ### Task Configuration
 
-The HelloWorld [task itself](../workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
+The HelloWorld [task itself](workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
 
 ```yaml
 HelloWorld:
