@@ -8,6 +8,15 @@
 const React = require('react');
 
 class Footer extends React.Component {
+  render() {
+    return null;
+  }
+}
+
+module.exports = Footer;
+
+/*
+class Footer extends React.Component {
   docUrl(doc, language) {
     const baseUrl = this.props.config.baseUrl;
     return `${baseUrl}docs/${language ? `${language}/` : ''}${doc}`;
@@ -97,5 +106,6 @@ class Footer extends React.Component {
     );
   }
 }
+*/
 
 module.exports = Footer;

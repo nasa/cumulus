@@ -1,6 +1,7 @@
 ---
 id: team
 title: Team
+hide_title: true
 ---
 
 ### Cumulus Core Team

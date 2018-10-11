@@ -1,8 +1,10 @@
 ---
-id: README
+id: workflows-readme
 title: Workflows
+hide_title: true
 ---
 
+# Workflows
 Workflows are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.
 
 Provider data ingest and GIBS have a set of common needs in getting data from a source system and into the cloud where they can be distributed to end users. These common needs are:

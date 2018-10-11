@@ -1,6 +1,7 @@
 ---
 id: input_output
 title: Workflows Input & Output
+hide_title: true
 ---
 
 # Ingest Inputs and Return Values

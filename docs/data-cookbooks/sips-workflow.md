@@ -1,6 +1,7 @@
 ---
 id: sips-workflow
 title: Science Investigator-led Processing Systems (SIPS)
+hide_title: true
 ---
 
 # Science Investigator-led Processing Systems (SIPS)

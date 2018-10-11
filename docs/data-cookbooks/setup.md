@@ -1,7 +1,10 @@
 ---
 id: setup
 title: Data Cookbooks Setup
+hide_title: true
 ---
+
+# Setup
 
 ### Getting setup to work with data-cookboooks
 

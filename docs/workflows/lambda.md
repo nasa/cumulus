@@ -1,7 +1,10 @@
 ---
 id: lambda
 title: Develop Lambda Functions
+hide_title: true
 ---
+
+# Develop Lambda Functions
 
 ### Develop a new Lambda
 

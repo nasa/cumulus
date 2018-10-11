@@ -1,7 +1,10 @@
 ---
 id: workflow-configuration-how-to
 title: Workflow Configuration How To's
+hide_title: true
 ---
+
+# Workflow Configuration How To's
 
 ## How to specify a bucket for granules
 

@@ -1,8 +1,10 @@
 ---
 id: architecture
 title: Cumulus Architecture
+hide_title: true
 ---
 
+# Cumulus Architecture
 Below, find a diagram with the components that comprise an instance of Cumulus.
 
 <img src="assets/cumulus-arch-diagram.png">

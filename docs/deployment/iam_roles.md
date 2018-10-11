@@ -1,6 +1,7 @@
 ---
 id: iam_roles
 title: Cumulus IAM Roles
+hide_title: true
 ---
 
 # Locating Cumulus IAM Role ARNs

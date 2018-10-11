@@ -1,11 +1,11 @@
 {
   "docs": {
     "About Cumulus": [
-      "README",
+      "cumulus-docs-readme",
       "architecture"
     ],
     "What are Cumulus Workflows?": [
-      "workflows/README",
+      "workflows/workflows-readme",
       "workflows/protocol",
       "workflows/input_output",
       "workflows/cumulus-task-message-flow",
@@ -16,7 +16,7 @@
       "workflows/workflow-triggers"
     ],
     "Deployment": [
-      "deployment/README",
+      "deployment/deployment-readme",
       "deployment/create_bucket",
       "deployment/iam_roles",
       "deployment/troubleshoot_deployment"
@@ -24,6 +24,17 @@
     "Additional Features": [
       "data_in_dynamodb",
       "ems_reporting"
+    ],
+    "Cumulus Versions": [
+      "upgrade-readme",
+      "1.6.0",
+      "1.7.0",
+      "1.8.0"
+    ],
+    "Operating and Contributing": [
+      "system-documentation/system-documentation",
+      "doc_installation",
+      "adding-a-task"
     ]
   },
   "Data Cookbooks": {

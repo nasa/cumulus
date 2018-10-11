@@ -1,8 +1,10 @@
 ---
 id: data_in_dynamodb
 title: Cumulus Metadata in DynamoDB
+hide_title: true
 ---
 
+# Cumulus Metadata in DynamoDB
 * [DynamoDB Backup and Restore](#backup-and-restore-with-aws)
 * [DynamoDB Auto Scaling](#dynamodb-auto-scaling)
 
