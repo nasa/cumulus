@@ -8,6 +8,7 @@ const {
 const { User } = require('../../models');
 const { fakeUserFactory } = require('../../lib/testUtils');
 const { getAuthorizationFailureResponse } = require('../../lib/response');
+const { InternalServerError } = require('../../lib/responses');
 
 let usersTableName;
 let userModel;
@@ -141,4 +142,29 @@ test('getAuthorizationFailureResponse returns an appropriate response when the t
   t.is(parsedResponseBody.message, 'Access token has expired');
 });
 
-test.todo('getAuthorizationFailureResponse returns an appropriate response if the user does not have an expiration');
+test('getAuthorizationFailureResponse returns an appropriate response if the user does not have an expiration', async (t) => {
+  const {
+    userName,
+    password
+  } = await userModel.create(fakeUserFactory());
+  await userModel.update({ userName }, {}, ['expires']);
+
+  t.context.usersToDelete.push(userName);
+
+  const request = {
+    headers: {
+      Authorization: `Bearer ${password}`
+    }
+  };
+
+  const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
+
+  t.truthy(response);
+  t.true(response instanceof InternalServerError);
+  t.is(response.statusCode, 500);
+
+  t.is(response.headers['Content-Type'], 'application/json');
+
+  const parsedResponseBody = JSON.parse(response.body);
+  t.is(parsedResponseBody.message, 'Internal Server Error');
+});
