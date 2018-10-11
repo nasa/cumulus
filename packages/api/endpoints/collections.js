@@ -139,7 +139,7 @@ function handleRequest(event, context) {
   const httpMethod = event.httpMethod;
 
   if (!httpMethod) {
-    return context.fail('HttpMethod is missing');
+    return context.fail('httpMethod is missing');
   }
 
   return handle(event, context, true, (cb) => {

@@ -20,7 +20,6 @@ process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 
-const testCollection = fakeCollectionFactory();
 const esIndex = randomString();
 let esClient;
 
@@ -33,7 +32,6 @@ test.before(async () => {
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
-  await collectionModel.create(testCollection);
 
   // create fake Users table
   userModel = new models.User();
@@ -45,6 +43,11 @@ test.before(async () => {
   };
 
   esClient = await Search.es('fakehost');
+});
+
+test.beforeEach(async (t) => {
+  t.context.testCollection = fakeCollectionFactory();
+  await collectionModel.create(t.context.testCollection);
 });
 
 test.after.always(async () => {
@@ -209,24 +212,7 @@ test('POST with invalid authorization scheme returns an invalid token response',
   };
 
   return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isInvalidTokenResponse(t, response);
-  });
-});
-
-test('POST with non-expiring operator credentials returns an invalid token response', async (t) => {
-  const fakeUser = fakeUserFactory();
-  const authToken = (await userModel.create(fakeUser)).password;
-  await userModel.update({ userName: fakeUser.userName }, {}, ['expires']);
-
-  const request = {
-    httpMethod: 'POST',
-    headers: {
-      Authorization: `Bearer ${authToken}`
-    }
-  };
-
-  return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isInvalidTokenResponse(t, response);
+    assertions.isInvalidAuthorizationResponse(t, response);
   });
 });
 
@@ -263,32 +249,32 @@ test('POST creates a new collection', (t) => {
 });
 
 
-test.serial('GET returns an existing collection', (t) => {
+test('GET returns an existing collection', (t) => {
   const getEvent = {
     httpMethod: 'GET',
     headers: authHeaders,
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     }
   };
   return testEndpoint(collectionsEndpoint, getEvent, (response) => {
     const { name } = JSON.parse(response.body);
-    t.is(name, testCollection.name);
+    t.is(name, t.context.testCollection.name);
   });
 });
 
-test.serial('PUT updates an existing collection', (t) => {
+test('PUT updates an existing collection', (t) => {
   const newPath = '/new_path';
   const updateEvent = {
     body: JSON.stringify({
-      name: testCollection.name,
-      version: testCollection.version,
+      name: t.context.testCollection.name,
+      version: t.context.testCollection.version,
       provider_path: newPath
     }),
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     },
     httpMethod: 'PUT',
     headers: authHeaders
@@ -300,12 +286,12 @@ test.serial('PUT updates an existing collection', (t) => {
   });
 });
 
-test.serial('DELETE deletes an existing collection', (t) => {
+test('DELETE deletes an existing collection', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     },
     headers: authHeaders
   };

@@ -371,7 +371,6 @@ async function handlePayload(event) {
  * @param  {Object} event - incoming message from CloudWatch
  * @param  {Object} context - aws lambda context object
  * @param  {function} cb - aws lambda callback function
- * @returns {Promise} undefined
  */
 function logHandler(event, context, cb) {
   log.debug(event);
