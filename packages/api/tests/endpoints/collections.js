@@ -36,7 +36,6 @@ const collectionDoesNotExist = async (t) => {
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
@@ -229,16 +228,19 @@ test('POST with invalid authorization scheme returns an invalid token response',
   });
 });
 
-test('default returns list of collections', async (t) => {
+test.serial('default returns list of collections', async (t) => {
   const listEvent = {
     httpMethod: 'GET',
     headers: authHeaders
   };
 
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
+
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
+    stub.restore();
     t.is(results.length, 1);
-    t.is(results[0].name, testCollection.name);
+    t.is(results[0].name, t.context.testCollection.name);
   });
 });
 
@@ -256,8 +258,7 @@ test('POST creates a new collection', (t) => {
   });
 });
 
-
-test('GET returns an existing collection', (t) => {
+test.serial('GET returns an existing collection', (t) => {
   const getEvent = {
     httpMethod: 'GET',
     headers: authHeaders,
@@ -266,8 +267,10 @@ test('GET returns an existing collection', (t) => {
       version: t.context.testCollection.version
     }
   };
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
   return testEndpoint(collectionsEndpoint, getEvent, (response) => {
     const { name } = JSON.parse(response.body);
+    stub.restore();
     t.is(name, t.context.testCollection.name);
   });
 });
