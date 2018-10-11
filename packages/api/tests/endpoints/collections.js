@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
@@ -11,9 +12,10 @@ const {
   fakeUserFactory,
   testEndpoint
 } = require('../../lib/testUtils');
-const { indexCollection } = require('../../es/indexer');
+const EsCollection = require('../../es/collections');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
+const { RecordDoesNotExist } = require('../../lib/errors');
 
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
@@ -26,8 +28,15 @@ let esClient;
 let authHeaders;
 let collectionModel;
 let userModel;
+
+const collectionDoesNotExist = async (t) => {
+  const error = await t.throws(collectionModel.get({ name: t.context.testCollection.name }));
+  t.true(error instanceof RecordDoesNotExist);
+};
+
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
@@ -83,15 +92,16 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   });
 });
 
-test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
+test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', (t) => {
   const request = {
     httpMethod: 'POST',
-    headers: {}
+    headers: {},
+    body: JSON.stringify(t.context.testCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
-    t.is(JSON.parse(response.body).record, undefined);
+    await collectionDoesNotExist(t);
   });
 });
 
@@ -160,12 +170,13 @@ test('CUMULUS-912 POST with an unauthorized user returns an unauthorized respons
     httpMethod: 'POST',
     headers: {
       Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
+    },
+    body: JSON.stringify(t.context.testCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
-    t.is(JSON.parse(response.body).record, undefined);
+    await collectionDoesNotExist(t);
   });
 });
 
@@ -208,29 +219,26 @@ test('POST with invalid authorization scheme returns an invalid token response',
     httpMethod: 'POST',
     headers: {
       Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
-    }
+    },
+    body: JSON.stringify(t.context.testCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isInvalidAuthorizationResponse(t, response);
+    await collectionDoesNotExist(t);
   });
 });
 
 test('default returns list of collections', async (t) => {
-  const newCollection = fakeCollectionFactory();
-
   const listEvent = {
     httpMethod: 'GET',
     headers: authHeaders
   };
 
-  await indexCollection(esClient, newCollection, esIndex);
-
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
     t.is(results.length, 1);
-    const responseBody = JSON.parse(response.body);
-    t.is(responseBody.results[0].name, newCollection.name);
+    t.is(results[0].name, testCollection.name);
   });
 });
 
