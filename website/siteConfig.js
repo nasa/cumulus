@@ -49,15 +49,12 @@ const siteConfig = {
   // If you have users set above, you add it here:
   //users,
 
-  /* path to images for header/footer */
-  headerIcon: 'img/docusaurus.svg',
-  footerIcon: 'img/docusaurus.svg',
-  favicon: 'img/favicon.png',
-
   /* Colors for website */
   colors: {
-    primaryColor: '#2E8555',
-    secondaryColor: '#205C3B',
+    primaryColor: '#2276AC',
+    secondaryColor: '#7AB5DA'
+    //primaryColor: '#2E8555',
+    //secondaryColor: '#205C3B',
   },
 
   /* Custom fonts for website */
