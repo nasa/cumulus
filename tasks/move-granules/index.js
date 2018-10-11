@@ -186,7 +186,7 @@ async function moveFileRequest(granule, file, sourceBucket, duplicateHandling) {
       bucket: file.bucket,
       name: path.basename(f.Key),
       filename: buildS3Uri(f.Bucket, f.Key),
-      filepath: f.key,
+      filepath: f.Key,
       fileSize: f.fileSize,
       url_path: file.url_path
     }));

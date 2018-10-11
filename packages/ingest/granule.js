@@ -16,7 +16,10 @@ const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
 const cksum = require('cksum');
 const xml2js = require('xml2js');
-const { aws, log } = require('@cumulus/common');
+const { promisify } = require('util');
+const {
+  aws, CollectionConfigStore, constructCollectionId, log
+} = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { sftpMixin } = require('./sftp');
@@ -25,9 +28,6 @@ const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
-const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
-const { promisify } = require('util');
-
 
 /**
 * The abstract Discover class
@@ -911,15 +911,17 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
       };
 
       log.debug('moveGranuleFiles', source, target);
-      return moveGranuleFile(source, target).then(() => { /* eslint-disable no-param-reassign */
+      return moveGranuleFile(source, target).then(() => {
         // update the granule file location in source file
+        /* eslint-disable no-param-reassign */
         file.bucket = target.Bucket;
         file.filepath = target.Key;
         file.filename = aws.buildS3Uri(file.bucket, file.filepath);
+        /* eslint-enable no-param-reassign */
       });
     }
     // else set filepath as well so it won't be null
-    file.filepath = parsed.Key;
+    file.filepath = parsed.Key; /* eslint-disable-line no-param-reassign */
     return Promise.resolve();
   });
 
@@ -930,7 +932,7 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
   if (xmlFile.length === 1) {
     return updateMetadata(granuleId, xmlFile[0], sourceFiles, distEndpoint, published);
   }
-  else if (xmlFile.length > 1) {
+  if (xmlFile.length > 1) {
     log.error('more than one .cmr.xml found');
   }
   return Promise.resolve();
@@ -946,7 +948,13 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
 async function renameS3FileWithTimestamp(bucket, key) {
   const formatString = 'YYYYMMDDTHHmmssSSS';
   const timestamp = (await aws.headObject(bucket, key)).LastModified;
-  const renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
+  let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
+
+  // if the renamed file already exists, get a new name
+  // eslint-disable-next-line no-await-in-loop
+  while (await aws.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
+    renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
+  }
 
   log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
   return exports.moveGranuleFile(

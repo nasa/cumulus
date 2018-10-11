@@ -243,7 +243,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   t.is(currentFileNames.length, 5);
 
   // the extra file is the renamed hdf file
-  const extraFiles = currentFileNames.filter((f) => !existingFileNames.includes(f));
+  let extraFiles = currentFileNames.filter((f) => !existingFileNames.includes(f));
   t.is(extraFiles.length, 1);
   t.true(extraFiles[0].startsWith(`${outputHdfFile}.v`));
 
@@ -260,6 +260,22 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   );
 
   t.is(newHdfFileInfo.ContentLength, randomString().length);
+
+  // run 'moveGranules' the third time with the same input file updated
+  newPayload = clonedeep(newPayloadOrig);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  params.Body = randomString();
+  await s3().putObject(params).promise();
+
+  output = await moveGranules(newPayload);
+  const lastFileNames = output.granules[0].files.map((f) => f.filename);
+  t.is(lastFileNames.length, 6);
+
+  // the extra files are the renamed hdf files
+  extraFiles = lastFileNames.filter((f) => !existingFileNames.includes(f));
+  t.is(extraFiles.length, 2);
+  t.true(extraFiles[0].startsWith(`${outputHdfFile}.v`));
 });
 
 test.serial('when duplicateHandling is "skip", does not overwrite or create new', async (t) => {
