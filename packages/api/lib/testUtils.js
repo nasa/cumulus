@@ -180,8 +180,8 @@ function fakeUserFactory(params = {}) {
  *
  * @returns {Object} fake collection object
  */
-function fakeCollectionFactory() {
-  return {
+function fakeCollectionFactory(options = {}) {
+  return Object.assign({
     name: randomString(),
     dataType: randomString(),
     version: '0.0.0',
@@ -191,7 +191,7 @@ function fakeCollectionFactory() {
     granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
     sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
     files: []
-  };
+  }, options);
 }
 
 /**
@@ -199,14 +199,14 @@ function fakeCollectionFactory() {
  *
  * @returns {Object} fake provider object
  */
-function fakeProviderFactory() {
-  return {
+function fakeProviderFactory(options = {}) {
+  return Object.assign({
     id: randomString(),
     globalConnectionLimit: 1,
     protocol: 'http',
     host: randomString(),
     port: 80
-  };
+  }, options);
 }
 
 module.exports = {
