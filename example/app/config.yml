@@ -12,7 +12,7 @@ default:
     cnmResponseStream: '{{stackName}}-cnmResponseStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
-    IngestGranule:
+    IngestAndPublishGranule:
       IngestGranuleOutput:
         granules:
           - files:

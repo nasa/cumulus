@@ -124,7 +124,7 @@ const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
 
 // marked
 console.log('Disabled pending resolution of CUMULUS-948');
-xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
+describe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
   const maxWaitForSFExistSecs = 60 * 4;
   const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
@@ -146,6 +146,7 @@ xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
+
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
@@ -162,6 +163,9 @@ xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
 
   beforeAll(async () => {
     // populate collections, providers and test data
+    console.log(testConfig.bucket);
+    await uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder).catch((err) => console.log(err));
+
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
