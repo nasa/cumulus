@@ -29,8 +29,11 @@ let authHeaders;
 let collectionModel;
 let userModel;
 
-const collectionDoesNotExist = async (t) => {
-  const error = await t.throws(collectionModel.get({ name: t.context.testCollection.name }));
+const collectionDoesNotExist = async (t, collection) => {
+  const error = await t.throws(collectionModel.get({
+    name: collection.name,
+    version: collection.version
+  }));
   t.true(error instanceof RecordDoesNotExist);
 };
 
@@ -92,15 +95,16 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
     headers: {},
-    body: JSON.stringify(t.context.testCollection)
+    body: JSON.stringify(newCollection)
   };
 
   return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
-    await collectionDoesNotExist(t);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
@@ -165,17 +169,18 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
 });
 
 test('CUMULUS-912 POST with an unauthorized user returns an unauthorized response', async (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
     },
-    body: JSON.stringify(t.context.testCollection)
+    body: JSON.stringify(newCollection)
   };
 
   return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
-    await collectionDoesNotExist(t);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
@@ -214,17 +219,18 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
 });
 
 test('POST with invalid authorization scheme returns an invalid token response', (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
     },
-    body: JSON.stringify(t.context.testCollection)
+    body: JSON.stringify(newCollection)
   };
 
   return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isInvalidAuthorizationResponse(t, response);
-    await collectionDoesNotExist(t);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
