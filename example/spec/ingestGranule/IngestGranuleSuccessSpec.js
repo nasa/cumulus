@@ -87,6 +87,7 @@ describe('The S3 Ingest Granules workflow', () => {
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
   let executionName;
+  let providerResponse;
 
   beforeAll(async () => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
@@ -105,7 +106,7 @@ describe('The S3 Ingest Granules workflow', () => {
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData }),
-      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
+      providerResponse = apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
 
     console.log('Starting ingest test');
@@ -171,6 +172,18 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
+  });
+
+  it('pulls a provider from the list of providers', async () => {
+    const providerList = await apiTestUtils.getProviders({ prefix: config.stackName });
+    console.log('response:', providerResponse);
+    const testId = `s3_provider${testSuffix}`;
+    console.log('Providers', providerList);
+    expect(providerList.results.length).toBeGreaterThan(0);
+
+    const foundProvider = providerList.results.find((r) => r.id === testId);
+    console.log('prov', foundProvider);
+    expect(foundProvider).not.toBeNull;
   });
 
   it('makes the granule available through the Cumulus API', async () => {
