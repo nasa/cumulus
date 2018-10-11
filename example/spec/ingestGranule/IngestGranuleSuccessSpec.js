@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const path = require('path');
 const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
@@ -118,7 +117,6 @@ describe('The S3 Ingest Granules workflow', () => {
     await Promise.all(preStageFiles);
     startTime = new Date();
 
-    // eslint-disable-next-line function-paren-newline
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
