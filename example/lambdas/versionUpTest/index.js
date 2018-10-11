@@ -9,9 +9,10 @@
  */
 
 function handler(event, context, callback) {
-  const eventCopy = event;
-  eventCopy.payload = { output: 'Current Version' };
+  const returnEvent = event;
+  returnEvent.payload = { output: 'Current Version' };
   callback(null, event);
 }
 
 exports.handler = handler;
+//Thu Oct 11 2018 10:24:57 GMT-0400 (EDT)

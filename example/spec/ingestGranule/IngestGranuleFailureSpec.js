@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { get } = require('lodash');
 const { models: { Granule } } = require('@cumulus/api');
 const {
   api: apiTestUtils,
@@ -122,8 +121,8 @@ describe('The Ingest Granule failure workflow', () => {
         const currentEvent = events[i];
 
         if (currentEvent.type === 'TaskStateExited' &&
-        get(currentEvent, 'name') === syncGranuleNoVpcTaskName) {
-          syncGranStepOutput = get(currentEvent, 'output');
+          currentEvent.name === syncGranuleNoVpcTaskName) {
+          syncGranStepOutput = currentEvent.output;
           expect(syncGranStepOutput.exception).toBeTruthy();
 
           // the previous step has the original error thrown from lambda
@@ -137,8 +136,8 @@ describe('The Ingest Granule failure workflow', () => {
             i += 1;
             const nextEvent = events[i];
             if (nextEvent.type === 'TaskStateEntered' &&
-            get(nextEvent, 'name')) {
-              nextTask = get(nextEvent, 'name');
+              nextEvent.name) {
+              nextTask = nextEvent.name;
             }
           }
 

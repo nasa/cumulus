@@ -1,6 +1,7 @@
 'use strict';
 
-const { difference, intersection } = require('lodash');
+const difference = require('lodash.difference');
+const intersection = require('lodash.intersection');
 const fs = require('fs-extra');
 const {
   buildAndExecuteWorkflow,
