@@ -5,7 +5,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../lambdas/bootstrap');
 const models = require('../../models');
-const providerEndpoint = require('../../endpoints/providers');
+const providerEndpoint = require('../../endpoints/providerModel');
 const {
   fakeUserFactory,
   fakeProviderFactory,
@@ -20,28 +20,23 @@ process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
-let providers;
+let providerModel;
 const esIndex = randomString();
 let esClient;
-
-const testProvider = fakeProviderFactory();
-const missingProvider = fakeProviderFactory();
 
 let authHeaders;
 let userModel;
 
 const providerDoesNotExist = async (t, providerId) => {
-  const error = await t.throws(providers.get({ id: providerId }));
+  const error = await t.throws(providerModel.get({ id: providerId }));
   t.true(error instanceof RecordDoesNotExist);
 };
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
-  providers = new models.Provider();
-  await providers.createTable();
-
-  await providers.create(testProvider);
+  providerModel = new models.Provider();
+  await providerModel.createTable();
 
   userModel = new models.User();
   await userModel.createTable();
@@ -54,8 +49,13 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 });
 
+test.beforeEach(async (t) => {
+  t.context.t.context.testProvider = fakeProviderFactory();
+  await providerModel.create(t.context.t.context.testProvider);
+});
+
 test.after.always(async () => {
-  await providers.deleteTable();
+  await providerModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
 });
@@ -217,9 +217,9 @@ test('POST with invalid authorization scheme returns an invalid authorization re
   });
 });
 
-test('default returns list of providers', async (t) => {
+test('default returns list of providerModel', async (t) => {
   const newProviderId = randomString();
-  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
+  const newProvider = Object.assign({}, t.context.testProvider, { id: newProviderId });
 
   await indexProvider(esClient, newProvider, esIndex);
 
@@ -236,7 +236,7 @@ test('default returns list of providers', async (t) => {
 
 test('POST creates a new provider', (t) => {
   const newProviderId = 'AQUA';
-  const newProvider = Object.assign({}, testProvider, { id: newProviderId });
+  const newProvider = Object.assign({}, t.context.testProvider, { id: newProviderId });
 
   const postEvent = {
     httpMethod: 'POST',
@@ -254,12 +254,12 @@ test('POST creates a new provider', (t) => {
 test.serial('GET returns an existing provider', (t) => {
   const getEvent = {
     httpMethod: 'GET',
-    pathParameters: { id: testProvider.id },
+    pathParameters: { id: t.context.testProvider.id },
     headers: authHeaders
   };
 
   return testEndpoint(providerEndpoint, getEvent, (response) => {
-    t.is(JSON.parse(response.body).id, testProvider.id);
+    t.is(JSON.parse(response.body).id, t.context.testProvider.id);
   });
 });
 
@@ -268,7 +268,7 @@ test.serial('PUT updates an existing provider', (t) => {
 
   const putEvent = {
     httpMethod: 'PUT',
-    pathParameters: { id: testProvider.id },
+    pathParameters: { id: t.context.testProvider.id },
     body: JSON.stringify({ globalConnectionLimit: updatedLimit }),
     headers: authHeaders
   };
@@ -282,7 +282,7 @@ test.serial('PUT updates an existing provider', (t) => {
 test.serial('DELETE deletes an existing provider', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
-    pathParameters: { id: testProvider.id },
+    pathParameters: { id: t.context.testProvider.id },
     headers: authHeaders
   };
   return testEndpoint(providerEndpoint, deleteEvent, (response) => {
