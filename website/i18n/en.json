@@ -93,7 +93,7 @@
         "title": "Cumulus Tasks: Message Flow"
       },
       "workflows/developing-workflow-tasks": {
-        "title": "Developing Worklflow Tasks"
+        "title": "Developing Workflow Tasks"
       },
       "workflows/docker": {
         "title": "Dockerizing Data Processing"
