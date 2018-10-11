@@ -15,6 +15,3 @@ The documentation is accessible at https://nasa.github.io/cumulus
 
 Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for information
 
-# Content
-
-{% include "./SUMMARY.md" %}
