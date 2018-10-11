@@ -183,10 +183,17 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the SyncGranules task', () => {
+    let lambdaInput;
     let lambdaOutput;
 
     beforeAll(async () => {
+      lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+    });
+
+    it('receives the correct collection and provider configuration', () => {
+      expect(lambdaInput.meta.collection.name).toEqual(collection.name);
+      expect(lambdaInput.meta.provider.id).toEqual(provider.id);
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
