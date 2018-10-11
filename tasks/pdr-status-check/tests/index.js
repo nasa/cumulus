@@ -1,6 +1,7 @@
 'use strict';
 
-const _ = require('lodash');
+const isEqual = require('lodash.isequal');
+const some = require('lodash.some');
 const test = require('ava');
 const sinon = require('sinon');
 const delay = require('delay');
@@ -127,16 +128,16 @@ test('returns the correct results in the nominal case', async (t) => {
     { arn: 'arn:4', reason: 'Workflow Aborted' }
   ];
   expectedFailed.forEach((expectedItem) => {
-    const matches = (o) => _.isEqual(expectedItem, o); // eslint-disable-line require-jsdoc
+    const matches = (o) => isEqual(expectedItem, o); // eslint-disable-line require-jsdoc
     t.true(
-      _.some(output.failed, matches),
+      some(output.failed, matches),
       `${JSON.stringify(expectedItem)} not found in ${JSON.stringify(output.failed)}`
     );
   });
 });
 
 test('test concurrency limit setting on sfn api calls', async (t) => {
-  _.set(process, 'env.CONCURRENCY', 20);
+  process.env.CONCURRENCY = 20;
   const stubSfnClient = {
     describeExecution: ({ executionArn }) => ({
       promise: () => delay(100)

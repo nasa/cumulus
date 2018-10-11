@@ -6,7 +6,8 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const { Config } = require('kes');
-const lodash = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
+const merge = require('lodash.merge');
 const { exec } = require('child-process-promise');
 const path = require('path');
 
@@ -62,7 +63,7 @@ function loadConfig() {
  */
 function templateFile({ inputTemplateFilename, config }) {
   const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename, 'utf8'));
-  const templatedInput = lodash.merge(lodash.cloneDeep(inputTemplate), config);
+  const templatedInput = merge(cloneDeep(inputTemplate), config);
   let jsonString = JSON.stringify(templatedInput, null, 2);
   jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);
   const templatedInputFilename = inputTemplateFilename.replace('.template', '');
@@ -82,7 +83,7 @@ function templateFile({ inputTemplateFilename, config }) {
  */
 function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
   let data;
-  if (replacements.length) {
+  if (replacements.length > 0) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
     replacements.forEach((replace) => {
       data = globalReplace(data, replace.old, replace.new);

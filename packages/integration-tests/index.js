@@ -2,11 +2,11 @@
 
 'use strict';
 
+const orderBy = require('lodash.orderBy');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
-const _ = require('lodash');
 const {
   aws: { s3, sfn },
   stepFunctions: {
@@ -595,7 +595,7 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
     stateMachineArn: kinesisTriggerTestStpFnArn,
     maxResults: maxExecutionResults
   }).promise();
-  return (_.orderBy(data.executions, 'startDate', 'desc'));
+  return (orderBy(data.executions, 'startDate', 'desc'));
 }
 
 module.exports = {
