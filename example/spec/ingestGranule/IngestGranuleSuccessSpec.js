@@ -12,6 +12,7 @@ const {
   constructCollectionId
 } = require('@cumulus/common');
 const {
+  api: apiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
@@ -19,9 +20,10 @@ const {
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  getOnlineResources
+  getOnlineResources,
+  waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
@@ -39,7 +41,7 @@ const {
 } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-const workflowName = 'IngestGranule';
+const workflowName = 'IngestAndPublishGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -58,6 +60,13 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
+
+const isLambdaStatusLogEntry = (logEntry) =>
+  logEntry.message.includes('START')
+  || logEntry.message.includes('END')
+  || logEntry.message.includes('REPORT');
+
+const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
 describe('The S3 Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
@@ -283,6 +292,163 @@ describe('The S3 Ingest Granules workflow', () => {
     it('triggers the execution record being added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
+    });
+  });
+
+  describe('The Cumulus API', () => {
+    describe('granule endpoint', () => {
+      let granule;
+      let cmrLink;
+
+      beforeAll(async () => {
+        granule = await apiTestUtils.getGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+        cmrLink = granule.cmrLink;
+      });
+
+      it('makes the granule available through the Cumulus API', async () => {
+        expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
+      });
+
+      it('has the granule with a CMR link', () => {
+        expect(granule.cmrLink).not.toBeUndefined();
+      });
+
+      it('allows reingest and executes with success status', async () => {
+        granule = await apiTestUtils.getGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+        const oldUpdatedAt = granule.updatedAt;
+        const oldExecution = granule.execution;
+
+        // Reingest Granule and compare the updatedAt times
+        const response = await apiTestUtils.reingestGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+        expect(response.status).toEqual('SUCCESS');
+
+        const newUpdatedAt = (await apiTestUtils.getGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        })).updatedAt;
+        expect(newUpdatedAt).not.toEqual(oldUpdatedAt);
+
+        // Await reingest completion
+        await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+        const updatedGranule = await apiTestUtils.getGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+        expect(updatedGranule.status).toEqual('completed');
+        expect(updatedGranule.execution).not.toEqual(oldExecution);
+      });
+
+      it('removeFromCMR removes the ingested granule from CMR', async () => {
+        const existsInCMR = await conceptExists(cmrLink);
+
+        expect(existsInCMR).toEqual(true);
+
+        // Remove the granule from CMR
+        await apiTestUtils.removeFromCMR({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+
+        // Check that the granule was removed
+        await waitForConceptExistsOutcome(cmrLink, false, 10, 4000);
+        const doesExist = await conceptExists(cmrLink);
+        expect(doesExist).toEqual(false);
+      });
+
+      it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
+        const existsInCMR = await conceptExists(cmrLink);
+        expect(existsInCMR).toEqual(false);
+
+        // Publish the granule to CMR
+        await apiTestUtils.applyWorkflow({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+          workflow: 'PublishGranule'
+        });
+
+        await waitForConceptExistsOutcome(cmrLink, true, 10, 30000);
+        const doesExist = await conceptExists(cmrLink);
+        expect(doesExist).toEqual(true);
+      });
+
+      it('can delete the ingested granule from the API', async () => {
+        // pre-delete: Remove the granule from CMR
+        await apiTestUtils.removeFromCMR({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+
+        // Delete the granule
+        await apiTestUtils.deleteGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+
+        // Verify deletion
+        const resp = await apiTestUtils.getGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+        expect(resp.message).toEqual('Granule not found');
+      });
+    });
+
+    describe('executions endpoint', () => {
+      it('returns tasks metadata with name and version', async () => {
+        const executionResponse = await apiTestUtils.getExecution({
+          prefix: config.stackName,
+          arn: workflowExecution.executionArn
+        });
+        expect(executionResponse.tasks).toBeDefined();
+        expect(executionResponse.tasks.length).not.toEqual(0);
+        Object.keys(executionResponse.tasks).forEach((step) => {
+          const task = executionResponse.tasks[step];
+          expect(task.name).toBeDefined();
+          expect(task.version).toBeDefined();
+        });
+      });
+    });
+
+    describe('logs endpoint', () => {
+      it('returns the execution logs', async () => {
+        const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
+        expect(logs).not.toBe(undefined);
+        expect(logs.results.length).toEqual(10);
+      });
+
+      it('returns logs with sender set', async () => {
+        const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+
+        const logEntries = getLogsResponse.results;
+        const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
+
+        cumulusLogEntries.forEach((logEntry) => {
+          if (!logEntry.sender) {
+            console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
+          }
+          expect(logEntry.sender).not.toBe(undefined);
+        });
+      });
+
+      it('returns logs with a specific execution name', async () => {
+        const executionARNTokens = workflowExecution.executionArn.split(':');
+        const executionName = executionARNTokens[executionARNTokens.length - 1];
+        const logs = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: executionName });
+        expect(logs.meta.count).not.toEqual(0);
+        logs.results.forEach((log) => {
+          expect(log.sender).not.toBe(undefined);
+          expect(log.executions).toEqual(executionName);
+        });
+      });
     });
   });
 });
