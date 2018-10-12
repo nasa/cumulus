@@ -120,7 +120,7 @@ test.serial('should overwrite files', async (t) => {
     Body: 'Something'
   });
 
-  const output = await moveGranules(newPayload);
+  let output = await moveGranules(newPayload);
   await validateOutput(t, output);
   const existingFile = await headObject(
     t.context.publicBucket,
@@ -136,7 +136,7 @@ test.serial('should overwrite files', async (t) => {
   });
 
   try {
-    await moveGranules(newPayload);
+    output = await moveGranules(newPayload);
   }
   catch (err) {
     t.fail();
@@ -157,6 +157,7 @@ test.serial('should overwrite files', async (t) => {
     t.true(itemModified > existingModified);
 
     t.is(updatedFile.ContentLength, content.length);
+    t.true(output.granules[0].files[0].duplicate_found);
   }
 });
 
@@ -275,7 +276,14 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   // the extra files are the renamed hdf files
   extraFiles = lastFileNames.filter((f) => !existingFileNames.includes(f));
   t.is(extraFiles.length, 2);
-  t.true(extraFiles[0].startsWith(`${outputHdfFile}.v`));
+  extraFiles.forEach((f) => t.true(f.startsWith(`${outputHdfFile}.v`)));
+
+  output.granules[0].files.forEach((f) => {
+    if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
+      t.falsy(f.duplicate_found);
+    }
+    else t.true(f.duplicate_found);
+  });
 });
 
 test.serial('when duplicateHandling is "skip", does not overwrite or create new', async (t) => {
@@ -318,44 +326,11 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
 
   t.is(existingHdfFileInfo.ContentLength, currentHdfFileInfo.ContentLength);
   t.not(currentHdfFileInfo.ContentLength, randomString().length);
-});
 
-test.serial('expect duplicates to be reported', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = {
-    name: t.context.stagingBucket,
-    type: 'internal'
-  };
-  newPayload.config.buckets.public.name = t.context.endBucket;
-  const granuleId = 'MOD11A1.A2017200.h19v04.006.2017201090724';
-  newPayload.input = [
-    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_1.jpg`,
-    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_2.jpg`
-  ];
-  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
-  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
-
-  newPayload.config.duplicateHandling = 'replace';
-
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
-
-  await validateConfig(t, newPayload.config);
-  await validateInput(t, newPayload.input);
-
-  // payload could be modified
-  const newPayloadOrig = clonedeep(newPayload);
-
-  let output = await moveGranules(newPayload);
-  await validateOutput(t, output);
-
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
-  output = await moveGranules(newPayloadOrig);
-  await validateOutput(t, output);
-
-  t.plan(3);
-  t.is(output.granules[0].files.length, 2);
   output.granules[0].files.forEach((f) => {
-    t.true(f.duplicate_found);
+    if (f.filename.endsWith('.cmr.xml')) {
+      t.falsy(f.duplicate_found);
+    }
+    else t.true(f.duplicate_found);
   });
 });
