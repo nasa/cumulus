@@ -143,6 +143,8 @@ async function moveFileRequest(granule, file, sourceBucket, duplicateHandling) {
 
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
+  
+  if (s3ObjAlreadyExists) file.duplicate_found = true;
 
   // Have to throw DuplicateFile and not WorkflowError, because the latter
   // is not treated as a failure by the message adapter.
