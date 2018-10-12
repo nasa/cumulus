@@ -71,6 +71,14 @@ class LambdaProxyResponse {
 
     return this._body;
   }
+
+  toJSON() {
+    return {
+      body: this.body,
+      headers: this.headers,
+      statusCode: this.statusCode,
+    };
+  }
 }
 exports.LambdaProxyResponse = LambdaProxyResponse;
 
