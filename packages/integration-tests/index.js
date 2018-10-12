@@ -2,7 +2,7 @@
 
 'use strict';
 
-const orderBy = require('lodash.orderBy');
+const orderBy = require('lodash.orderby');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
