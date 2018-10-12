@@ -168,6 +168,14 @@ mvd:
       type: internal
   system_bucket: '{{prefix}}-internal'
 
+mvd-dev:
+  prefix: mvd-dev
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  system_bucket: 'mvd-internal'
+
 jc:
   prefix: jc
 
@@ -179,6 +187,9 @@ mhs3:
 
 jk:
   prefix: jk
+
+jk2:
+  prefix: jk2
 
 mboyd-test:
   prefix: mboyd-test

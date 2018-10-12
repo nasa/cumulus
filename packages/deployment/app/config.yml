@@ -20,12 +20,18 @@ default:
     CumulusApiV1:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
       configFile: node_modules/@cumulus/deployment/app/cumulus_api_v1.config.yml
+    WorkflowLambdaVersions:
+      cfFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.template.yml
+      configFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.config.yml
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
 
   # if not specified the value of the apigateway dist url is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/
+
+  customCompilation: true
+  injectWorkflowLambdaAliases: true
 
   params:
     - name: CmrPassword
@@ -70,6 +76,7 @@ default:
     jnorton1: true
     kbaynes: true
     kkelly: true
+    kovarik: true
     lfrederick: true
     mhuffnagle2: true
     pquinn1: true
@@ -169,8 +176,17 @@ default:
       targets:
         - lambda: EmsDistributionReport
 
+  useWorkflowLambdaVersions: true
+
   stepFunctions: !!files ['workflows.yml']
 
   lambdas: !!files [
-    'lambdas.yml',
-    'node_modules/@cumulus/api/config/lambdas.yml']
+  'lambdas.yml',
+  'node_modules/@cumulus/api/config/lambdas.yml',
+  'node_modules/@cumulus/api/config/workflowLambdas.yml'
+  ]
+
+  workflowLambdas: !!files [
+  'lambdas.yml',
+  'node_modules/@cumulus/api/config/workflowLambdas.yml'
+  ]

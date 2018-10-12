@@ -8,7 +8,7 @@ const pckg = require('../package.json');
  * This is intended as public endpoint that requires no authentication
  *
  * @function handler
- * @returns {type} Http response in json format
+ * @returns {type} HTTP response in json format
  */
 function handler() {
   const response = {

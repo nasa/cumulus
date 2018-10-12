@@ -1,175 +1,200 @@
 'use strict';
 
 const get = require('lodash.get');
-const got = require('got');
-const querystring = require('querystring');
 const log = require('@cumulus/common/log');
 const { aws } = require('@cumulus/common');
 const { URL } = require('url');
 
+const EarthdataLoginClient = require('../lib/EarthdataLogin');
+const {
+  OAuth2AuthenticationFailure
+} = require('../lib/OAuth2');
+
+class UnparsableGranuleLocationError extends Error {
+  constructor(granuleLocation) {
+    super(`Granule location "${granuleLocation}" could not be parsed`);
+    this.name = this.constructor.name;
+  }
+}
+
 /**
- * Extract the S3 bucket name and key from the URL path
- * parameters
+ * Build an API Gateway redirect response
+ *
+ * @param {string} url - the URL to redirect to
+ * @returns {Object} an API Gateway response object
+ */
+function buildRedirectResponse(url) {
+  return {
+    statusCode: 302,
+    body: 'Redirect',
+    headers: {
+      Location: url,
+      'Strict-Transport-Security': 'max-age=31536000'
+    }
+  };
+}
+
+/**
+ * Build an API Gateway client error response
+ *
+ * @param {string} errorMessage - the error message to be returned in the response
+ * @returns {Object} an API Gateway response object
+ */
+function buildClientErrorResponse(errorMessage) {
+  return {
+    statusCode: 400,
+    body: JSON.stringify({ error: errorMessage })
+  };
+}
+
+/**
+ * Extract the S3 bucket and key from the URL path parameters
  *
  * @param {string} pathParams - path parameters from the URL
  * @returns {Object} - bucket/key in the form of
  * { Bucket: x, Key: y }
  */
 function getBucketAndKeyFromPathParams(pathParams) {
-  const bucketEndIndex = pathParams.indexOf('/');
-  return {
-    Bucket: pathParams.substring(0, bucketEndIndex),
-    Key: pathParams.substring(bucketEndIndex + 1)
-  };
+  const fields = pathParams.split('/');
+
+  const Bucket = fields.shift();
+  const Key = fields.join('/');
+
+  if (Bucket.length === 0 || Key.length === 0) {
+    throw new UnparsableGranuleLocationError(pathParams);
+  }
+
+  return { Bucket, Key };
 }
 
 /**
- * Generate the parsed signed URL
+ * Return a signed URL to an S3 object
  *
- * @param {Object} tokenInfo - response from Earthdata
- * @param {string} pathParams - path parameters from the URL
- * @param {string} sourceIp - source IP form event
- * @returns {string} - parsed, signed URL
+ * @param {Object} s3Client - an AWS S3 Service Object
+ * @param {string} Bucket - the bucket of the requested object
+ * @param {string} Key - the key of the requested object
+ * @param {string} username - the username to add to the redirect url
+ * @returns {string} a URL
  */
-function generateParsedSignedUrl(tokenInfo, pathParams, sourceIp) {
-  const user = tokenInfo.endpoint.replace('/api/users/', '');
+function getSignedUrl(s3Client, Bucket, Key, username) {
+  const signedUrl = s3Client.getSignedUrl('getObject', { Bucket, Key });
 
-  const objectParams = getBucketAndKeyFromPathParams(pathParams);
-
-  // otherwise we get the temp url and provide it to the user
-  const signedUrl = aws.s3().getSignedUrl('getObject', objectParams);
-
-  // Add earthdataLoginUsername to signed url
   const parsedSignedUrl = new URL(signedUrl);
-  const signedUrlParams = parsedSignedUrl.searchParams;
-  signedUrlParams.set('x-EarthdataLoginUsername', user);
-  parsedSignedUrl.search = signedUrlParams.toString();
+  parsedSignedUrl.searchParams.set('x-EarthdataLoginUsername', username);
 
-  // now that we have the URL we have to save user's info
-  log.info({
-    userName: user,
-    accessDate: Date.now(),
-    file: objectParams.Key,
-    bucket: objectParams.Bucket,
-    sourceIp
-  });
+  return parsedSignedUrl.toString();
+}
 
-  return parsedSignedUrl;
+/**
+ * Given a an API Gateway request, return either the proxy path parameter or
+ *   the state query string parameter
+ *
+ * @param {Object} request - an API Gatway request object
+ * @returns {string|undefined} a granule location
+ */
+function getGranuleLocationFromRequest(request) {
+  return get(request, 'pathParameters.proxy')
+    || get(request, 'queryStringParameters.state');
+}
+
+/**
+ * Return the username associated with an OAuth2 authorization code
+ *
+ * @param {EarthdataLoginClient} earthdataLoginClient - an Earthdata Login Client
+ * @param {string} authorizationCode - the OAuth2 authorization code to use
+ * @returns {string} an Earthdata username
+ */
+async function getUsernameFromAuthorizationCode(earthdataLoginClient, authorizationCode) {
+  const {
+    username
+  } = await earthdataLoginClient.getAccessToken(authorizationCode);
+
+  return username;
 }
 
 /**
  * An AWS API Gateway function that either requests authentication,
  * or if authentication is found then redirects to an S3 file for download
  *
- * There are three main conditionals that control the UX flow,
- * following the patterns laid out in the EarthData Login OAuth specs:
- * https://urs.earthdata.nasa.gov/sso_client_impl
- *
- * 1. If the user does not have a token in their cookies, nor a
- * code in their querystring, then redirect them to the EarthData
- * Login page, where they enter their credentials and are redirected
- * with a code in their querystring
- *
- * 2. If the user has a code, then check that it is valid by making
- * a request to the EarthData servers. If the check is successful,
- * this will yield a username and token, which are stored in cookies
- *
- * 3. If the user has a username and auth token in their cookies,
- * then authorize them to access the requested file from the S3 bucket
- *
- * @param {Object} event - the AWS lambda event
- * @param {Object} context - thw AWS context
- * @param {function} cb - callback function
- * @returns {?} - return value of the callback function
+ * @param {Object} request - an API Gateway request object
+ * @param {EarthdataLoginClient} earthdataLoginClient - an instance of an
+ *   EarthdataLoginClient that will be used when authorizing this request
+ * @param {AWS.S3} s3Client - an AWS S3 client that will be used when processing
+ *   this request
+ * @returns {Promise<Object>} an API Gateway response object
  */
-function handler(event, context, cb) {
-  const EARTHDATA_CLIENT_ID = process.env.EARTHDATA_CLIENT_ID;
-  const EARTHDATA_CLIENT_PASSWORD = process.env.EARTHDATA_CLIENT_PASSWORD;
-  const DEPLOYMENT_ENDPOINT = process.env.DEPLOYMENT_ENDPOINT;
+async function handleRequest(request, earthdataLoginClient, s3Client) {
+  const granuleLocation = getGranuleLocationFromRequest(request);
 
-  const EARTHDATA_BASE_URL = process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/';
-  const EARTHDATA_GET_CODE_URL = `${EARTHDATA_BASE_URL}oauth/authorize`;
-  const EARTHDATA_CHECK_CODE_URL = `${EARTHDATA_BASE_URL}oauth/token`;
+  const authorizationCode = get(request, 'queryStringParameters.code');
 
-  let granuleKey = null;
-  let query = {};
-
-  if (event.pathParameters) {
-    granuleKey = event.pathParameters.proxy;
-  }
-
-  if (event.queryStringParameters) {
-    query = event.queryStringParameters;
-    granuleKey = query.state;
-  }
-
-  // code means that this is a redirect back from
-  // earthData login
-  if (query.code) {
-    // we send the code to another endpoint to verify
-    return got.post(EARTHDATA_CHECK_CODE_URL, {
-      json: true,
-      form: true,
-      body: {
-        grant_type: 'authorization_code',
-        code: query.code,
-        redirect_uri: DEPLOYMENT_ENDPOINT
-      },
-      auth: `${EARTHDATA_CLIENT_ID}:${EARTHDATA_CLIENT_PASSWORD}`
-    }).then((r) => {
-      const tokenInfo = r.body;
-      const accessToken = tokenInfo.access_token;
-
-      // if no access token is given, then the code is wrong
-      if (typeof accessToken === 'undefined') {
-        return cb(null, {
-          statusCode: '400',
-          body: '{"error": "Failed to get EarthData token"}'
-        });
-      }
-
-      const parsedSignedUrl = generateParsedSignedUrl(
-        tokenInfo,
-        granuleKey,
-        get(event, 'requestContext.identity.sourceIp', '0.0.0.0')
+  if (authorizationCode) {
+    try {
+      const username = await getUsernameFromAuthorizationCode(
+        earthdataLoginClient,
+        authorizationCode
       );
 
-      return cb(null, {
-        statusCode: '302',
-        body: 'redirecting',
-        headers: {
-          Location: parsedSignedUrl.toString(),
-          'Strict-Transport-Security': 'max-age=31536000'
-        }
+      const {
+        Bucket,
+        Key
+      } = getBucketAndKeyFromPathParams(granuleLocation);
+
+      log.info({
+        username,
+        accessDate: Date.now(),
+        bucket: Bucket,
+        file: Key,
+        sourceIp: get(request, 'requestContext.identity.sourceIp')
       });
-    }).catch(cb);
+
+      const s3RedirectUrl = getSignedUrl(
+        s3Client,
+        Bucket,
+        Key,
+        username
+      );
+
+      return buildRedirectResponse(s3RedirectUrl);
+    }
+    catch (err) {
+      if (err instanceof OAuth2AuthenticationFailure) {
+        return buildClientErrorResponse('Failed to get EarthData token');
+      }
+
+      if (err instanceof UnparsableGranuleLocationError) {
+        return buildClientErrorResponse(err.message);
+      }
+
+      throw err;
+    }
   }
 
-  // ending up here means that user was not login
-  // with earthdata and has to login
-  const qs = {
-    response_type: 'code',
-    client_id: EARTHDATA_CLIENT_ID,
-    redirect_uri: DEPLOYMENT_ENDPOINT,
-    // For EarthData OAuth, we can use the `state` to remember which granule is being requested
-    state: granuleKey
-  };
-  const response = {
-    statusCode: '302',
-    body: 'Redirect',
-    headers: {
-      Location: `${EARTHDATA_GET_CODE_URL}?${querystring.stringify(qs)}`,
-      'Strict-Transport-Security': 'max-age=31536000'
-    }
-  };
+  const authorizationUrl = earthdataLoginClient.getAuthorizationUrl(granuleLocation);
 
-  return cb(null, response);
+  return buildRedirectResponse(authorizationUrl);
+}
+
+/**
+ * Handle a request from API Gateway
+ *
+ * @param {Object} event - an API Gateway request
+ * @returns {Promise<Object>} - an API Gateway response
+ */
+async function handleApiGatewayRequest(event) {
+  const earthdataLoginClient = new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    redirectUri: process.env.DEPLOYMENT_ENDPOINT
+  });
+
+  const s3Client = aws.s3();
+
+  return handleRequest(event, earthdataLoginClient, s3Client);
 }
 
 module.exports = {
-  handler,
-
-  // for testing
-  getBucketAndKeyFromPathParams,
-  generateParsedSignedUrl
+  handleRequest,
+  handleApiGatewayRequest
 };
