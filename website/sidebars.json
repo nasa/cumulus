@@ -2,7 +2,8 @@
   "docs": {
     "About Cumulus": [
       "cumulus-docs-readme",
-      "architecture"
+      "architecture",
+      "team"
     ],
     "What are Cumulus Workflows?": [
       "workflows/workflows-readme",
