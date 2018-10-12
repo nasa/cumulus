@@ -6,6 +6,7 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
+const _ = require('lodash');
 const {
   aws: { s3, sfn },
   stepFunctions: {
@@ -18,7 +19,8 @@ const {
 } = require('@cumulus/api');
 
 const sfnStep = require('./sfnStep');
-const api = require('./api');
+const api = require('./api/api');
+const rulesApi = require('./api/rules');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
@@ -94,7 +96,13 @@ async function getExecutionStatus(executionArn, retryOptions) {
 async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
   let iteration = 0;
+  const sleepPeriodMs = 5000;
+  const maxMinutesWaitedForExecutionStart = 5;
+  const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
+  const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
+
   const stopTime = Date.now() + (timeout * 1000);
+
   /* eslint-disable no-await-in-loop */
   do {
     iteration += 1;
@@ -102,17 +110,18 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
       executionStatus = await getExecutionStatus(executionArn);
     }
     catch (err) {
-      if (!(err.code === 'ExecutionDoesNotExist') || iteration > 12) {
-        console.log(`waitForCompletedExecution failed: ${err.code}`);
+      if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
+        console.log(`waitForCompletedExecution failed: ${err.code}, arn: ${executionArn}`);
         throw err;
       }
       console.log("Execution does not exist... assuming it's still starting up.");
       executionStatus = 'STARTING';
     }
     if (executionStatus === 'RUNNING') {
-      if (!(iteration %12)) console.log('Execution running....'); // Output a 'heartbeat' every minute
+      // Output a 'heartbeat' every minute
+      if (!(iteration % iterationsPerMinute)) console.log('Execution running....');
     }
-    await sleep(5000);
+    await sleep(sleepPeriodMs);
   } while (['RUNNING', 'STARTING'].includes(executionStatus) && Date.now() < stopTime);
   /* eslint-enable no-await-in-loop */
 
@@ -263,11 +272,16 @@ async function setupSeedData(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of collection json files
+ * @param {string} postfix - string to append to collection name
  * @returns {Promise.<number>} number of collections added
  */
-async function addCollections(stackName, bucketName, dataDirectory) {
+async function addCollections(stackName, bucketName, dataDirectory, postfix) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
   const promises = collections.map((collection) => limit(() => {
+    if (postfix) {
+      collection.name += postfix;
+      collection.dataType += postfix;
+    }
     const c = new Collection();
     console.log(`adding collection ${collection.name}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
@@ -294,18 +308,37 @@ async function listCollections(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - CloudFormation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} collections - List of collections to delete
+ * @param {string} postfix - string that was appended to collection name
  * @returns {Promise.<number>} number of deleted collections
  */
-async function deleteCollections(stackName, bucketName, collections) {
+async function deleteCollections(stackName, bucketName, collections, postfix) {
   setProcessEnvironment(stackName, bucketName);
 
   const promises = collections.map((collection) => {
+    if (postfix) {
+      collection.name += postfix;
+      collection.dataType += postfix;
+    }
     const c = new Collection();
     console.log(`\nDeleting collection ${collection.name}__${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version });
   });
 
   return Promise.all(promises).then((cs) => cs.length);
+}
+
+/**
+ * Delete all collections listed from a collections directory
+ *
+ * @param {string} stackName - CloudFormation stack name
+ * @param {string} bucket - S3 internal bucket name
+ * @param {string} collectionsDirectory - the directory of collection json files
+ * @param {string} postfix - string that was appended to collection name
+ * @returns {number} - number of deleted collections
+ */
+async function cleanupCollections(stackName, bucket, collectionsDirectory, postfix) {
+  const collections = await listCollections(stackName, bucket, collectionsDirectory);
+  return deleteCollections(stackName, bucket, collections, postfix);
 }
 
 /**
@@ -317,12 +350,16 @@ async function deleteCollections(stackName, bucketName, collections) {
  * @param {string} s3Host - bucket name to be used as the provider host for
  * S3 providers. This will override the host from the seed data. Defaults to null,
  * meaning no override.
+ * @param {string} postfix - string to append to provider id
  * @returns {Promise.<number>} number of providers added
  */
-async function addProviders(stackName, bucketName, dataDirectory, s3Host = null) {
+async function addProviders(stackName, bucketName, dataDirectory, s3Host = null, postfix) {
   const providers = await setupSeedData(stackName, bucketName, dataDirectory);
 
   const promises = providers.map((provider) => limit(() => {
+    if (postfix) {
+      provider.id += postfix;
+    }
     const p = new Provider();
     if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
@@ -351,12 +388,16 @@ async function listProviders(stackName, bucketName, dataDirectory) {
  * @param {string} stackName - CloudFormation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} providers - List of providers to delete
+ * @param {string} postfix - string that was appended to provider id
  * @returns {Promise.<number>} number of deleted providers
  */
-async function deleteProviders(stackName, bucketName, providers) {
+async function deleteProviders(stackName, bucketName, providers, postfix) {
   setProcessEnvironment(stackName, bucketName);
 
   const promises = providers.map((provider) => {
+    if (postfix) {
+      provider.id += postfix;
+    }
     const p = new Provider();
     console.log(`\nDeleting provider ${provider.id}`);
     return p.delete({ id: provider.id });
@@ -366,17 +407,33 @@ async function deleteProviders(stackName, bucketName, providers) {
 }
 
 /**
+ * Delete all collections listed from a collections directory
+ *
+ * @param {string} stackName - CloudFormation stack name
+ * @param {string} bucket - S3 internal bucket name
+ * @param {string} providersDirectory - the directory of collection json files
+ * @param {string} postfix - string that was appended to provider id
+ * @returns {number} - number of deleted collections
+ */
+async function cleanupProviders(stackName, bucket, providersDirectory, postfix) {
+  const providers = await listProviders(stackName, bucket, providersDirectory);
+  return deleteProviders(stackName, bucket, providers, postfix);
+}
+
+/**
  * add rules to database
  *
  * @param {string} config - Test config used to set environmenet variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
+ * @param {string} overrides - override rule fields
  * @returns {Promise.<number>} number of rules added
  */
-async function addRules(config, dataDirectory) {
+async function addRules(config, dataDirectory, overrides) {
   const { stackName, bucket } = config;
   const rules = await setupSeedData(stackName, bucket, dataDirectory);
 
   const promises = rules.map((rule) => limit(() => {
+    rule = Object.assign(rule, overrides);
     const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
     const templatedRule = JSON.parse(ruleTemplate(config));
     const r = new Rule();
@@ -415,11 +472,17 @@ async function rulesList(stackName, bucketName, rulesDirectory) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} rules - List of rules objects to delete
+ * @param {string} postfix - string that was appended to provider id
  * @returns {Promise.<number>} - Number of rules deleted
  */
-async function deleteRules(stackName, bucketName, rules) {
+async function deleteRules(stackName, bucketName, rules, postfix) {
   setProcessEnvironment(stackName, bucketName);
-  const promises = rules.map((rule) => limit(() => _deleteOneRule(rule.name)));
+  const promises = rules.map((rule) => {
+    if (postfix) {
+      rule.name += postfix;
+    }
+    return limit(() => _deleteOneRule(rule.name));
+  });
   return Promise.all(promises).then((rs) => rs.length);
 }
 
@@ -517,8 +580,28 @@ async function buildAndStartWorkflow(
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 
+/**
+ * returns the most recently executed workflows for the workflow type.
+ *
+ * @param {string} workflowName - name of the workflow to get executions for
+ * @param {string} stackName - stack name
+ * @param {string} bucket - S3 internal bucket name
+ * @param {Integer} maxExecutionResults - max results to return
+ * @returns {Array<Object>} array of state function executions.
+ */
+async function getExecutions(workflowName, stackName, bucket, maxExecutionResults = 10) {
+  const kinesisTriggerTestStpFnArn = await getWorkflowArn(stackName, bucket, workflowName);
+  const data = await sfn().listExecutions({
+    stateMachineArn: kinesisTriggerTestStpFnArn,
+    maxResults: maxExecutionResults
+  }).promise();
+  return (_.orderBy(data.executions, 'startDate', 'desc'));
+}
+
 module.exports = {
   api,
+  rulesApi,
+  buildWorkflow,
   testWorkflow,
   executeWorkflow,
   buildAndExecuteWorkflow,
@@ -535,9 +618,11 @@ module.exports = {
   addCollections,
   listCollections,
   deleteCollections,
+  cleanupCollections,
   addProviders,
   listProviders,
   deleteProviders,
+  cleanupProviders,
   conceptExists: cmr.conceptExists,
   getOnlineResources: cmr.getOnlineResources,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
@@ -550,5 +635,6 @@ module.exports = {
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs
+  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
+  getExecutions
 };

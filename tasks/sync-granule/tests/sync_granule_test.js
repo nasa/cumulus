@@ -429,7 +429,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
   }
 });
 
-test.serial('when duplicateHandling is not specified, throw an error on duplicate', async (t) => {
+async function duplicateHandlingErrorTest(t) {
   const granuleFilePath = randomString();
   const granuleFileName = payload.input.granules[0].files[0].name;
   const key = `${granuleFilePath}/${granuleFileName}`;
@@ -483,64 +483,15 @@ test.serial('when duplicateHandling is not specified, throw an error on duplicat
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
+}
+
+test.serial('when duplicateHandling is not specified, throw an error on duplicate', async (t) => {
+  await duplicateHandlingErrorTest(t);
 });
 
 test.serial('when duplicateHandling is "error", throw an error on duplicate', async (t) => {
   t.context.event.config.duplicateHandling = 'error';
-
-  const granuleFilePath = randomString();
-  const granuleFileName = payload.input.granules[0].files[0].name;
-  const key = `${granuleFilePath}/${granuleFileName}`;
-
-  t.context.event.config.provider = {
-    id: 'MODAPS',
-    protocol: 's3',
-    host: randomString()
-  };
-
-  t.context.event.input.granules[0].files[0].path = granuleFilePath;
-
-  t.context.event.config.fileStagingDir = randomString();
-
-  await validateConfig(t, t.context.event.config);
-  await validateInput(t, t.context.event.input);
-
-  // Create the s3 bucket. If the bucket doesn't exist, we just get a
-  // 'bucket doesn't exist' error
-  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
-
-  try {
-    await s3().putObject({
-      Bucket: t.context.event.config.provider.host,
-      Key: key,
-      Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
-    }).promise();
-
-    const output = await syncGranule(t.context.event);
-    await validateOutput(t, output);
-
-    await syncGranule(t.context.event);
-    t.fail();
-  }
-  catch (err) {
-    const collection = payload.config.collection;
-    const collectionId = constructCollectionId(collection.name, collection.version);
-    const granuleFileKey = path.join(
-      t.context.event.config.fileStagingDir,
-      t.context.event.config.stack,
-      collectionId,
-      granuleFileName
-    );
-    t.true(err instanceof errors.DuplicateFile);
-    t.is(
-      err.message,
-      `${granuleFileKey} already exists in ${t.context.event.config.downloadBucket} bucket`
-    );
-  }
-  finally {
-    // Clean up
-    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
-  }
+  await duplicateHandlingErrorTest(t);
 });
 
 // TODO Fix this test as part of https://bugs.earthdata.nasa.gov/browse/CUMULUS-272
@@ -636,6 +587,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 2);
+    t.true(output.granules[0].files[1].duplicate_found);
     output.granules[0].files.forEach((f) => {
       const filename = path.basename(parseS3Uri(f.filename).Key);
       t.true(filename === granuleFileName || filename.startsWith(`${granuleFileName}.v`));
