@@ -41,7 +41,7 @@
     "@cumulus/ingest": "^1.10.0",
     "@cumulus/test-data": "^1.9.1",
     "lodash.get": "^4.4.2",
-    "p-limit": "^1.2.0"
+    "p-map": "^2.0.0"
   },
   "devDependencies": {
     "ava": "^0.25.0",

@@ -252,3 +252,43 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
   set(t, 'context.event.config.duplicateHandling', 'error');
   await duplicateHandlingErrorTest(t);
 });
+
+test.serial('expect duplicates to be reported', async (t) => {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+  newPayload.config.bucket = t.context.stagingBucket;
+  newPayload.config.buckets.internal = {
+    name: t.context.stagingBucket,
+    type: 'internal'
+  };
+  newPayload.config.buckets.public.name = t.context.endBucket;
+  const granuleId = 'MOD11A1.A2017200.h19v04.006.2017201090724';
+  newPayload.input = [
+    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_1.jpg`,
+    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_2.jpg`
+  ];
+  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
+  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
+
+  newPayload.config.duplicateHandling = 'replace';
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  // payload could be modified
+  const newPayloadOrig = clonedeep(newPayload);
+
+  let output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  output = await moveGranules(newPayloadOrig);
+  await validateOutput(t, output);
+
+  t.plan(3);
+  t.is(output.granules[0].files.length, 2);
+  output.granules[0].files.forEach((f) => {
+    t.true(f.duplicate_found);
+  });
+});
