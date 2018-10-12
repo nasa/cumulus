@@ -14,16 +14,18 @@ jobs:
       - run:
           name: core installation
           command: |
-            if [ -z "CIRCLE_PR_REPONAME" ]; then
-              yarn
-            else
+            if [ -z "${CIRCLE_PR_REPONAME}" ]; then
               echo 'skipping the step because this is not a forked PR'
+            else
+              yarn
             fi
 
       - run:
           name: Installing Dependencies
           command: |
-            if [ -z "CIRCLE_PR_REPONAME" ]; then
+            if [ -z "${CIRCLE_PR_REPONAME}" ]; then
+              echo 'skipping the step because this is not a forked PR'
+            else
               # start ftp
               sudo rm -rf /home/vsftpd
               sudo ln -s /home/circleci/project/packages/test-data /home/vsftpd
@@ -39,8 +41,6 @@ jobs:
               sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
 
               yarn bootstrap-no-build
-            else
-              echo 'skipping the step because this is not a forked PR'
             fi
 
       - run:
@@ -48,9 +48,9 @@ jobs:
           environment:
             LOCALSTACK_HOST: localstack
           command: |
-            if [ -z "CIRCLE_PR_REPONAME" ]; then
+            if [ -z "${CIRCLE_PR_REPONAME}" ]; then
+              echo 'skipping the step because this is not a forked PR'
+            else
               yarn test
               yarn e2e
-            else
-              echo 'skipping the step because this is not a forked PR'
             fi
