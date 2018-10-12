@@ -52,7 +52,7 @@ function resp(context, err, bodyArg, statusArg = null, headers = {}) {
     };
   }
 
-  context.succeed(new LambdaProxyResponse({
+  return context.succeed(new LambdaProxyResponse({
     json: !isString(body),
     body,
     statusCode: status,
