@@ -11,7 +11,7 @@ test('returns expected response', (t) => {
     body: {
       response_version: 'v1',
       api_version: pckg.version
-    },
-  })
+    }
+  });
   t.deepEqual(actualResponse, expectedResponse);
 });
