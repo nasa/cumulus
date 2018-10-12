@@ -2,10 +2,11 @@
 
 const fs = require('fs-extra');
 const {
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
-const {
   api: apiTestUtils,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   buildAndExecuteWorkflow,
   conceptExists,
   waitForConceptExistsOutcome,
@@ -13,15 +14,16 @@ const {
 } = require('@cumulus/integration-tests');
 const {
   loadConfig,
-  timestampedTestDataPrefix,
   uploadTestDataToBucket,
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix,
   deleteFolder
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const taskName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -29,11 +31,22 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
+const isLambdaStatusLogEntry = (logEntry) =>
+  logEntry.message.includes('START')
+  || logEntry.message.includes('END')
+  || logEntry.message.includes('REPORT');
+
+const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
+
 describe('The Cumulus API', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-APISuccess`);
+  const testId = createTimestampedTestId(config.stackName, 'APISuccess');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
   let workflowExecution = null;
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   const inputPayloadFilename = './spec/testAPI/testAPI.input.payload.json';
   let inputPayload;
   let inputGranuleId;
@@ -42,13 +55,16 @@ describe('The Cumulus API', () => {
   process.env.UsersTable = `${config.stackName}-UsersTable`;
 
   beforeAll(async () => {
-    // Upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // Update input file paths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     inputGranuleId = inputPayload.granules[0].granuleId;
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -57,8 +73,12 @@ describe('The Cumulus API', () => {
   });
 
   afterAll(async () => {
-    // Remove the granule files added for the test
-    await deleteFolder(config.bucket, testDataFolder);
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+    ]);
   });
 
   it('completes execution with success status', () => {
@@ -128,7 +148,7 @@ describe('The Cumulus API', () => {
       });
 
       // Check that the granule was removed
-      await waitForConceptExistsOutcome(cmrLink, false, 2);
+      await waitForConceptExistsOutcome(cmrLink, false, 10, 4000);
       const doesExist = await conceptExists(cmrLink);
       expect(doesExist).toEqual(false);
     });
@@ -194,13 +214,17 @@ describe('The Cumulus API', () => {
       expect(logs.results.length).toEqual(10);
     });
 
-    it('returns logs with taskName included', async () => {
-      const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
-      logs.results.forEach((log) => {
-        if ((!log.message.includes('END')) && (!log.message.includes('REPORT')) && (!log.message.includes('START'))) {
-          if (log.sender === undefined) console.log(`Log sender not set ${log}`);
-          expect(log.sender).not.toBe(undefined);
+    it('returns logs with sender set', async () => {
+      const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+
+      const logEntries = getLogsResponse.results;
+      const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
+
+      cumulusLogEntries.forEach((logEntry) => {
+        if (!logEntry.sender) {
+          console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
         }
+        expect(logEntry.sender).not.toBe(undefined);
       });
     });
 

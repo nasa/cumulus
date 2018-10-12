@@ -1,6 +1,8 @@
+'use strict';
+
 const fs = require('fs');
 const {
-  aws: { s3 },
+  aws: { s3, headObject, parseS3Uri },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const { Config } = require('kes');
@@ -10,7 +12,12 @@ const path = require('path');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
-const timestampedTestDataPrefix = (prefix) => `${prefix}-${(new Date().getTime())}-test-data/pdrs`;
+const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
+
+const createTimestampedTestId = (stackName, testName) => `${stackName}-${testName}-${(new Date().getTime())}`;
+const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
+const createTestSuffix = (prefix) => `_test-${prefix}`;
+
 
 /**
  * Loads and parses the configuration defined in `./app/config.yml`
@@ -21,8 +28,8 @@ function loadConfig() {
   // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
-      'You MUST set DEPLOYMENT environment variable with the name'
-      + ' of your deployment before running tests.'
+      'You MUST set DEPLOYMENT environment variable with the name' +
+      ' of your deployment before running tests.'
     );
   }
 
@@ -65,18 +72,21 @@ function templateFile({ inputTemplateFilename, config }) {
 
 /**
  * Upload a file from the test-data package to the S3 test data
+ * and update contents with replacements
  *
  * @param {string} file - filename of data to upload
  * @param {string} bucket - bucket to upload to
  * @param {string} prefix - S3 folder prefix
- * @param {boolean} replacePaths - whether to replace test paths in file contents
+ * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', replacePaths = false) {
+function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
   let data;
-  if (replacePaths) {
+  if (replacements.length) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
-    data = globalReplace(data, 'cumulus-test-data/pdrs', prefix);
+    replacements.forEach((replace) => {
+      data = globalReplace(data, replace.old, replace.new);
+    });
   }
   else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
@@ -89,15 +99,28 @@ function uploadTestDataToS3(file, bucket, prefix = 'cumulus-test-data/pdrs', rep
 
 /**
  * For the given bucket, upload all the test data files to S3
+ * and update contents with replacements
  *
  * @param {string} bucket - S3 bucket
  * @param {Array<string>} data - list of test data files
  * @param {string} prefix - S3 folder prefix
- * @param {boolean} replacePaths - whether to replace test paths in file contents
+ * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Array<Promise>} - responses from S3 upload
  */
-function uploadTestDataToBucket(bucket, data, prefix, replacePaths) {
-  return Promise.all(data.map((file) => uploadTestDataToS3(file, bucket, prefix, replacePaths)));
+function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
+  return Promise.all(data.map((file) => updateAndUploadTestFileToBucket(file, bucket, prefix, replacements)));
+}
+
+/**
+ * For the given bucket, upload all the test data files to S3
+ *
+ * @param {string} bucket - S3 bucket
+ * @param {Array<string>} data - list of test data files
+ * @param {string} prefix - S3 folder prefix
+ * @returns {Array<Promise>} - responses from S3 upload
+ */
+function uploadTestDataToBucket(bucket, data, prefix) {
+  return updateAndUploadTestDataToBucket(bucket, data, prefix);
 }
 
 /**
@@ -128,8 +151,8 @@ async function deleteFolder(bucket, folder) {
  */
 function getExecutionUrl(executionArn) {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}`
-         + `#/executions/details/${executionArn}`;
+  return `https://console.aws.amazon.com/states/home?region=${region}` +
+          `#/executions/details/${executionArn}`;
 }
 
 
@@ -140,18 +163,23 @@ function getExecutionUrl(executionArn) {
  * and STDERR if an error occurs.
  *
  * @param {Object} config - configuration object from loadConfig()
- * @param {int} timeout - Timeout value in minutes
- * @returns {Promise}
+ * @param {Object} [options] - configuration options with the following keys>
+ * @param {string} [options.template=template=node_modules/@cumulus/deployment/app] - optional template command line kes option
+ * @param {string} [options.kesClass] - optional kes-class command line kes option
+ * @param {int} [options.timeout=30] - Timeout value in minutes
+ * @returns {Promise.undefined} none
  */
 
-function redeploy(config, timeout) {
-  const deployCommand = `./node_modules/.bin/kes  cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --deployment ${config.deployment} --region us-east-1`;
+async function redeploy(config, options = {}) {
+  const templatePath = options.template || 'node_modules/@cumulus/deployment/app';
+  let deployCommand = `./node_modules/.bin/kes cf deploy --kes-folder app --template ${templatePath} --deployment ${config.deployment} --region us-east-1`;
+  if (options.kesClass) deployCommand += ` --kes-class ${options.kesClass}`;
   console.log(`Redeploying ${config.deployment}`);
 
   let timeoutObject;
   function timeoutPromise() {
     return new Promise((resolve, reject) => {
-      const minutes = timeout || 30;
+      const minutes = options.timeout || 30;
       let i = 0;
       function printDots() {
         console.log('.');
@@ -183,14 +211,31 @@ function redeploy(config, timeout) {
   return Promise.race([executionPromise(), timeoutPromise()]).then((_) => clearTimeout(timeoutObject));
 }
 
+/**
+ * Get file headers for a set of files.
+ *
+ * @param {Array<Object>} files - array of file objects
+ * @returns {Promise<Array>} - file detail responses
+ */
+async function getFilesMetadata(files) {
+  const getFileRequests = files.map(async (f) => {
+    const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
+    return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
+  });
+  return Promise.all(getFileRequests);
+}
 
 module.exports = {
-  timestampedTestDataPrefix,
+  timestampedName,
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix,
   loadConfig,
   templateFile,
-  uploadTestDataToS3,
+  updateAndUploadTestDataToBucket,
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  redeploy
+  redeploy,
+  getFilesMetadata
 };

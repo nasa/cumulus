@@ -3,21 +3,25 @@ const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
   LambdaStep,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
-  uploadTestDataToBucket,
+  updateAndUploadTestDataToBucket,
   deleteFolder,
-  timestampedTestDataPrefix
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-
 const taskName = 'DiscoverAndQueuePdrs';
-
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 const s3data = [
@@ -25,9 +29,13 @@ const s3data = [
 ];
 
 describe('The Discover And Queue PDRs workflow', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-DiscoverAndQueuePdrsSuccess`);
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const testId = createTimestampedTestId(config.stackName, 'DiscoverAndQueuePdrsSuccess');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution;
   let queuePdrsOutput;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -41,8 +49,12 @@ describe('The Discover And Queue PDRs workflow', () => {
       prefix: config.stackName,
       pdr: pdrFilename
     });
-    // populate test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    // populate collections, providers and test data
+    await Promise.all([
+      updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
     // update provider path
     await collectionModel.update(collection, { provider_path: testDataFolder });
 
@@ -61,13 +73,16 @@ describe('The Discover And Queue PDRs workflow', () => {
   });
 
   afterAll(async () => {
-    // clean up test data
-    await deleteFolder(config.bucket, testDataFolder);
-    // delete ingested pdr
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename
-    });
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deletePdr({
+        prefix: config.stackName,
+        pdr: pdrFilename
+      })
+    ]);
   });
 
   it('executes successfully', () => {
@@ -103,9 +118,11 @@ describe('The Discover And Queue PDRs workflow', () => {
   describe('ParsePdr workflow', () => {
     let parsePdrWorkflowArn;
     let parsePdrExecutionStatus;
+    let parseLambdaOutput;
 
     beforeAll(async () => {
       parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
+      console.log(`Wait for execution ${parsePdrWorkflowArn}`);
       parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrWorkflowArn);
     });
 
@@ -118,6 +135,10 @@ describe('The Discover And Queue PDRs workflow', () => {
       await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
         await waitForCompletedExecution(arn);
       }));
+      await apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: parseLambdaOutput.payload.granules[0].granuleId
+      });
     });
 
     it('executes successfully', () => {
@@ -126,11 +147,11 @@ describe('The Discover And Queue PDRs workflow', () => {
 
     describe('ParsePdr lambda function', () => {
       it('successfully parses a granule from the PDR', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(
+        parseLambdaOutput = await lambdaStep.getStepOutput(
           parsePdrWorkflowArn,
           'ParsePdr'
         );
-        expect(lambdaOutput.payload.granules.length).toEqual(1);
+        expect(parseLambdaOutput.payload.granules.length).toEqual(1);
       });
     });
   });
