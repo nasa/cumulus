@@ -9,6 +9,8 @@ const { Config } = require('kes');
 const lodash = require('lodash');
 const { exec } = require('child-process-promise');
 const path = require('path');
+const { promisify } = require('util');
+const tempy = require('tempy');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -82,7 +84,7 @@ function templateFile({ inputTemplateFilename, config }) {
  */
 function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
   let data;
-  if (replacements.length) {
+  if (replacements.length > 0) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
     replacements.forEach((replace) => {
       data = globalReplace(data, replace.old, replace.new);
@@ -155,7 +157,6 @@ function getExecutionUrl(executionArn) {
           `#/executions/details/${executionArn}`;
 }
 
-
 /**
  * Redeploy the current Cumulus deployment.
  *
@@ -225,6 +226,29 @@ async function getFilesMetadata(files) {
   return Promise.all(getFileRequests);
 }
 
+const promisedCopyFile = promisify(fs.copyFile);
+const promisedUnlink = promisify(fs.unlink);
+
+/**
+ * Creates a backup of a file, executes the specified function, and makes sure
+ * that the file is restored from backup.
+ *
+ * @param {string} file - the file to backup
+ * @param {Function} fn - the function to execute
+ */
+async function protectFile(file, fn) {
+  const backupLocation = tempy.file();
+  await promisedCopyFile(file, backupLocation);
+
+  try {
+    return await Promise.resolve().then(fn);
+  }
+  finally {
+    await promisedCopyFile(backupLocation, file);
+    await promisedUnlink(backupLocation);
+  }
+}
+
 module.exports = {
   timestampedName,
   createTimestampedTestId,
@@ -237,5 +261,6 @@ module.exports = {
   deleteFolder,
   getExecutionUrl,
   redeploy,
-  getFilesMetadata
+  getFilesMetadata,
+  protectFile
 };
