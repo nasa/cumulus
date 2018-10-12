@@ -7,7 +7,6 @@ const clone = require('lodash.clonedeep');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
-const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common');
 
@@ -624,13 +623,9 @@ test.serial('delete a provider record', async (t) => {
   t.is(error.message, 'Not Found');
 });
 
+// This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
   const input = JSON.stringify(granuleSuccess);
-  const fakeSFResponse = {
-    execution: {
-      input
-    }
-  };
 
   const payload = JSON.parse(input);
   const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
@@ -640,14 +635,20 @@ test.serial('reingest a granule', async (t) => {
   const records = await indexer.granule(payload);
   const record = records[0];
 
-  sinon.stub(
-    StepFunction,
-    'getExecutionStatus'
-  ).callsFake(() => Promise.resolve(fakeSFResponse));
-
   t.is(record.status, 'completed');
 
-  await indexer.reingest(record);
+  const sfn = aws.sfn();
+
+  try {
+    sfn.describeExecution = () => ({
+      promise: () => Promise.resolve({ input })
+    });
+
+    await indexer.reingest(record);
+  }
+  finally {
+    delete sfn.describeExecution;
+  }
 
   const g = new models.Granule();
   const newRecord = await g.get({ granuleId: record.granuleId });
