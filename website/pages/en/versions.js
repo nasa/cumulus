@@ -21,47 +21,53 @@ function Versions() {
   const repoUrl = `https://github.com/${siteConfig.organizationName}/${
     siteConfig.projectName
   }`;
+  const homePageDocId = 'cumulus-docs-readme';
+  const unreleased = `${repoUrl}/blob/master/CHANGELOG.md#unreleased`;
+
+  const releaseUrl = (version) => {
+    return `${repoUrl}/releases/tag/${version}`;
+  };
+
+  const verUrl = (version, docId) => {
+    return version ? `docs/${version}/${docId}` : `docs/${docId}`;
+  };
+
   return (
     <div className="docMainWrapper wrapper">
       <Container className="mainContainer versionsContainer">
         <div className="post">
           <header className="postHeader">
-            <h1>{siteConfig.title} Versions</h1>
+            <h1>Cumulus Versions</h1>
           </header>
-          <p>New versions of this project are released every so often.</p>
+          <p>The versions on this page correspond directly to release versions in <a href="https://www.npmjs.com/org/cumulus">npm</a> and <a href="https://github.com/nasa/cumulus/releases">GitHub</a>.</p>
           <h3 id="latest">Current version (Stable)</h3>
           <table className="versions">
             <tbody>
               <tr>
                 <th>{latestVersion}</th>
                 <td>
-                  <a href="">Documentation</a>
+                  <a href={verUrl('', homePageDocId)}>Documentation</a>
                 </td>
                 <td>
-                  <a href="">Release Notes</a>
+                  <a href={releaseUrl(latestVersion)}>Release Notes</a>
                 </td>
               </tr>
             </tbody>
           </table>
-          <p>
-            This is the version that is configured automatically when you first
-            install this project.
-          </p>
           <h3 id="rc">Pre-release versions</h3>
           <table className="versions">
             <tbody>
               <tr>
                 <th>master</th>
                 <td>
-                  <a href="">Documentation</a>
+                  <a href={verUrl('next', homePageDocId)}>Documentation</a>
                 </td>
                 <td>
-                  <a href="">Release Notes</a>
+                  <a href={unreleased}>Release Notes</a>
                 </td>
               </tr>
             </tbody>
           </table>
-          <p>Other text describing this section.</p>
           <h3 id="archive">Past Versions</h3>
           <table className="versions">
             <tbody>
@@ -71,10 +77,10 @@ function Versions() {
                     <tr>
                       <th>{version}</th>
                       <td>
-                        <a href="">Documentation</a>
+                        <a href={verUrl(version, homePageDocId)}>Documentation</a>
                       </td>
                       <td>
-                        <a href="">Release Notes</a>
+                        <a href={releaseUrl(version)}>Release Notes</a>
                       </td>
                     </tr>
                   )
