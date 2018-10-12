@@ -159,12 +159,14 @@ function handle(event, context, authCheck, func) {
       usersTable: process.env.UsersTable
     })
       .then((failureReponse) => {
-        if (failureReponse) context.succeed(failureReponse);
-        else func(cb);
+        if (failureReponse) {
+          return context.succeed(failureReponse);
+        }
+        return func(cb);
       })
       .catch((err) => {
         log.error(err);
-        context.succeed(new InternalServerError());
+        return context.succeed(new InternalServerError());
       });
   }
 
