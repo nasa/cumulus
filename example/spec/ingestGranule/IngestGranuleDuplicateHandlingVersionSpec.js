@@ -4,7 +4,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const { Collection } = require('@cumulus/api/models');
 const {
-  aws: { s3 },
+  aws: { parseS3Uri, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
 const {
@@ -63,7 +63,7 @@ describe('When the Ingest Granules workflow is configured to keep both files whe
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
-    // set collection duplicate handling to 'error'
+    // set collection duplicate handling to 'version'
     await collectionModel.update(collection, { duplicateHandling: 'version' });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -92,45 +92,24 @@ describe('When the Ingest Granules workflow is configured to keep both files whe
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('and it encounters data with a duplicated filename with duplicate checksum', () => {
+  describe('and it encounters data with a duplicated filename', () => {
     let lambdaOutput;
-    let existingfiles;
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
-      existingfiles = await getFilesMetadata(lambdaOutput.payload.granules[0].files);
-      workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-      );
-    });
-
-    it('does not raise a workflow error', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
-    });
-
-    it('does not create a copy of the file', async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
-      const files = lambdaOutput.payload.granules[0].files;
-      const currentFiles = await getFilesMetadata(files);
-      // excludes the .cmr.xml file which is updated with online resources
-      expect(currentFiles.filter((f) => !f.filename.endsWith('.cmr.xml')))
-        .toEqual(existingfiles.filter((f) => !f.filename.endsWith('.cmr.xml')));
-    });
-  });
-
-  describe('and it encounters data with a duplicated filename with different checksum', () => {
-    let lambdaOutput;
-    let existingfiles;
+    let existingFiles;
     let fileUpdated;
+    let fileNotUpdated;
+    let currentFiles;
+
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
-      existingfiles = await getFilesMetadata(lambdaOutput.payload.granules[0].files);
+      existingFiles = await getFilesMetadata(lambdaOutput.payload.granules[0].files);
       // update one of the input files, so that the file has different checksum
       const content = randomString();
-      const file = inputPayload.granules[0].files[0];
-      fileUpdated = file.name;
+      const fileToUpdate = inputPayload.granules[0].files[0];
+      fileUpdated = fileToUpdate.name;
       const updateParams = {
-        Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
+        Bucket: config.bucket, Key: path.join(fileToUpdate.path, fileToUpdate.name), Body: content
       };
+      fileNotUpdated = inputPayload.granules[0].files[1].name;
 
       await s3().putObject(updateParams).promise();
       inputPayload.granules[0].files[0].fileSize = content.length;
@@ -144,24 +123,35 @@ describe('When the Ingest Granules workflow is configured to keep both files whe
       expect(workflowExecution.status).toEqual('SUCCEEDED');
     });
 
-    it('moves the existing data to a file with a suffix to distinguish it from the new file', async () => {
+    it('MoveGranules outputs', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
-      const files = lambdaOutput.payload.granules[0].files;
-      expect(files.length).toEqual(5);
-
-      const renamedFiles = files.filter((f) => f.name.startsWith(`${fileUpdated}.v`));
-      expect(renamedFiles.length).toEqual(1);
-
-      const expectedRenamedFileSize = existingfiles.filter((f) => f.filename.endsWith(fileUpdated))[0].fileSize;
-      expect(renamedFiles[0].fileSize).toEqual(expectedRenamedFileSize);
+      currentFiles = await getFilesMetadata(lambdaOutput.payload.granules[0].files);
+      expect(currentFiles.length).toEqual(5);
     });
 
-    it('captures both files', async () => {
-      const granule = await apiTestUtils.getGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
+    describe('encounters a duplicated filename with different checksum', () => {
+      it('moves the existing data to a file with a suffix to distinguish it from the new file', async () => {
+        const renamedFiles = currentFiles.filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${fileUpdated}.v`));
+        expect(renamedFiles.length).toEqual(1);
+
+        const expectedRenamedFileSize = existingFiles.filter((f) => f.filename.endsWith(fileUpdated))[0].fileSize;
+        expect(renamedFiles[0].fileSize).toEqual(expectedRenamedFileSize);
       });
-      expect(granule.files.length).toEqual(5);
+
+      it('captures both files', async () => {
+        const granule = await apiTestUtils.getGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        });
+        expect(granule.files.length).toEqual(5);
+      });
+    });
+
+    describe('encounters data with a duplicated filename with duplicate checksum', () => {
+      it('does not create a copy of the file', async () => {
+        expect(currentFiles.filter((f) => f.filename.endsWith(fileNotUpdated)))
+          .toEqual(existingFiles.filter((f) => f.filename.endsWith(fileNotUpdated)));
+      });
     });
   });
 
