@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint no-console: "off" */
 
 'use strict';
 
@@ -113,7 +113,8 @@ function testAwsClient(Service, options) {
   if (localstackSupportedService(Service)) {
     return localStackAwsClient(Service, options);
   }
-  return new Service(Object.assign(options, { endpoint: 'http://you-forgot-to-stub-an-aws-call' }));
+
+  return {};
 }
 exports.testAwsClient = testAwsClient;
 
