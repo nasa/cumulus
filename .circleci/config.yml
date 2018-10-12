@@ -26,6 +26,9 @@ jobs:
             if [ -z "${CIRCLE_PR_REPONAME}" ]; then
               echo 'skipping the step because this is not a forked PR'
             else
+              sudo mkdir -p /home/user/
+              sudo cp -r packages/test-data/keys /home/user/.ssh
+
               # start ftp
               sudo rm -rf /home/vsftpd
               sudo ln -s /home/circleci/project/packages/test-data /home/vsftpd
@@ -51,6 +54,9 @@ jobs:
             if [ -z "${CIRCLE_PR_REPONAME}" ]; then
               echo 'skipping the step because this is not a forked PR'
             else
-              yarn test
+              ./node_modules/.bin/lerna run test --ignore @cumulus/api --concurrency 1
+              cd packages/api
+              ./node_modules/.bin/ava --serial
+              cd ../..
               yarn e2e
             fi
