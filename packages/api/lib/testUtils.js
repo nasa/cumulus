@@ -178,6 +178,7 @@ function fakeUserFactory(params = {}) {
 /**
  * creates fake collection records
  *
+ * @param {Object} options - properties to set on the collection
  * @returns {Object} fake collection object
  */
 function fakeCollectionFactory(options = {}) {
@@ -197,6 +198,7 @@ function fakeCollectionFactory(options = {}) {
 /**
  * creates fake provider records
  *
+ * @param {Object} options - properties to set on the provider
  * @returns {Object} fake provider object
  */
 function fakeProviderFactory(options = {}) {
