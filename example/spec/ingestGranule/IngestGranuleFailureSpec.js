@@ -3,22 +3,27 @@
 const fs = require('fs-extra');
 const { get } = require('lodash');
 const { models: { Granule } } = require('@cumulus/api');
-const { buildAndExecuteWorkflow } = require('@cumulus/integration-tests');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
-const { stringUtils: { globalReplace } } = require('@cumulus/common');
+const {
+  api: apiTestUtils,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
+  buildAndExecuteWorkflow
+} = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
   uploadTestDataToBucket,
   deleteFolder,
-  timestampedTestDataPrefix
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix
 } = require('../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
-
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -27,10 +32,14 @@ const s3data = [
 ];
 
 describe('The Ingest Granule failure workflow', () => {
-  const testDataFolder = timestampedTestDataPrefix(`${config.stackName}-IngestGranuleFailure`);
+  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFailure');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution = null;
   let inputPayload;
 
@@ -38,13 +47,16 @@ describe('The Ingest Granule failure workflow', () => {
   const granuleModel = new Granule();
 
   beforeAll(async () => {
-    // upload test data
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder, true);
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
-    const updatedInputPayloadJson = globalReplace(inputPayloadJson, 'cumulus-test-data/pdrs', testDataFolder);
-    inputPayload = await setupTestGranuleForIngest(config.bucket, updatedInputPayloadJson, testDataGranuleId, granuleRegex);
+    inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
 
     // add a non-existent file to input payload to cause lambda error
     const nonexistentFile = { path: 'non-existent-path', name: 'non-existent-file' };
@@ -64,14 +76,16 @@ describe('The Ingest Granule failure workflow', () => {
   });
 
   afterAll(async () => {
-    // delete failed granule
-    await apiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
-
-    // Remove the granule files added for the test
-    await deleteFolder(config.bucket, testDataFolder);
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
   });
 
   it('completes execution with failure status', () => {
@@ -107,8 +121,8 @@ describe('The Ingest Granule failure workflow', () => {
       for (let i = 0; i < events.length; i += 1) {
         const currentEvent = events[i];
 
-        if (currentEvent.type === 'TaskStateExited'
-        && get(currentEvent, 'name') === syncGranuleNoVpcTaskName) {
+        if (currentEvent.type === 'TaskStateExited' &&
+        get(currentEvent, 'name') === syncGranuleNoVpcTaskName) {
           syncGranStepOutput = get(currentEvent, 'output');
           expect(syncGranStepOutput.exception).toBeTruthy();
 
@@ -122,8 +136,8 @@ describe('The Ingest Granule failure workflow', () => {
           while (!nextTask && i < events.length - 1) {
             i += 1;
             const nextEvent = events[i];
-            if (nextEvent.type === 'TaskStateEntered'
-            && get(nextEvent, 'name')) {
+            if (nextEvent.type === 'TaskStateEntered' &&
+            get(nextEvent, 'name')) {
               nextTask = get(nextEvent, 'name');
             }
           }

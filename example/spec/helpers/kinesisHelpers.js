@@ -1,18 +1,16 @@
 'use strict';
 
-const _ = require('lodash');
 const { Kinesis } = require('aws-sdk');
 const {
   aws: {
-    sfn,
     receiveSQSMessages
   }
 } = require('@cumulus/common');
 
 const {
   LambdaStep,
-  getWorkflowArn,
-  timeout
+  timeout,
+  getExecutions
 } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../helpers/testUtils');
@@ -52,32 +50,6 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
     process.exit(1);
   }
   return Promise.reject(new Error('tryCatchExit failed unexpectedly'));
-}
-
-
-/**
- * returns the most recently executed KinesisTriggerTest workflows.
- *
- * @returns {Array<Object>} array of state function executions.
- */
-async function getExecutions() {
-  const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
-  const data = await sfn().listExecutions({
-    stateMachineArn: kinesisTriggerTestStpFnArn,
-    maxResults: maxExecutionResults
-  }).promise();
-  return (_.orderBy(data.executions, 'startDate', 'desc'));
-}
-
-/**
- * Helper function that returns a stream name with timestamp
- *
- * @param {Object} config - stack configuration
- * @param {string} streamSuffix - suffix, e.g. test name
- * @returns {string} timestamped stream name
- */
-function timeStampedStreamName(config, streamSuffix) {
-  return `${config.streamName}-${(new Date().getTime())}-${streamSuffix}`;
 }
 
 /**
@@ -224,7 +196,7 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecution === undefined) {
     await timeout(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
-    const executions = await getExecutions();
+    const executions = await getExecutions('KinesisTriggerTest', testConfig.stackName, testConfig.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
     for (const execution of executions) {
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
@@ -305,7 +277,6 @@ module.exports = {
   getRecords,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
-  timeStampedStreamName,
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord,

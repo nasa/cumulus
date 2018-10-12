@@ -188,27 +188,27 @@ async function get(event) {
 /**
  * The main handler for the lambda function
  *
- * @param {Object} event - aws lambda event object.
+ * @param {Object} request - AWS lambda event object.
  * @returns {Promise<Object>} a Lambda Proxy response object
  */
-async function handler(event) {
+async function handleRequest(request) {
   // Determine what action to take
   let action;
-  if (event.httpMethod === 'GET' && event.pathParameters) action = get;
-  else if (event.httpMethod === 'PUT' && event.pathParameters) action = put;
-  else if (event.httpMethod === 'DELETE' && event.pathParameters) action = del;
+  if (request.httpMethod === 'GET' && request.pathParameters) action = get;
+  else if (request.httpMethod === 'PUT' && request.pathParameters) action = put;
+  else if (request.httpMethod === 'DELETE' && request.pathParameters) action = del;
   else action = list;
 
   try {
     // Verify the user's credentials
     const authorizationFailureResponse = await getAuthorizationFailureResponse({
-      request: event,
+      request: request,
       usersTable: process.env.UsersTable
     });
     if (authorizationFailureResponse) return authorizationFailureResponse;
 
     // Perform the requested action
-    return action(event);
+    return action(request);
   }
   catch (err) {
     log.error(err);
@@ -220,4 +220,4 @@ async function handler(event) {
   }
 }
 
-module.exports = handler;
+module.exports = handleRequest;
