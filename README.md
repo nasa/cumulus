@@ -113,7 +113,6 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
 
 If you are issuing a PR from a forked repository, please follow the steps described [here](docs/development/forked-pr.md).
 
-
 ## 🛒 Release
 
 To release a new version of cumulus [read this](docs/development/release.md).
