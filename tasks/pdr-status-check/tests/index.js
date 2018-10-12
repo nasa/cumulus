@@ -3,11 +3,10 @@
 const isEqual = require('lodash.isequal');
 const some = require('lodash.some');
 const test = require('ava');
-const sinon = require('sinon');
 const delay = require('delay');
 const moment = require('moment');
 const aws = require('@cumulus/common/aws');
-const { checkPdrStatuses } = require('../index');
+const { checkPdrStatuses } = require('..');
 const {
   randomString,
   validateInput,
@@ -38,17 +37,7 @@ test('valid output when no running executions', async (t) => {
   t.deepEqual(output, expectedOutput);
 });
 
-test('error thrown when limit exceeded', async (t) => {
-  const stubSfnClient = {
-    describeExecution: ({ executionArn }) => ({
-      promise: () => Promise.resolve({
-        status: 'RUNNING',
-        executionArn
-      })
-    })
-  };
-  const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
-
+test.serial('error thrown when limit exceeded', async (t) => {
   const event = {
     input: {
       running: ['arn:123'],
@@ -58,7 +47,15 @@ test('error thrown when limit exceeded', async (t) => {
     }
   };
 
+  const sfn = aws.sfn();
   try {
+    sfn.describeExecution = () => ({
+      promise: () => Promise.resolve({
+        status: 'RUNNING',
+        executionArn: 'arn:123'
+      })
+    });
+
     await checkPdrStatuses(event);
     t.fail();
   }
@@ -66,36 +63,11 @@ test('error thrown when limit exceeded', async (t) => {
     t.is(err.name, 'IncompleteWorkflowError');
   }
   finally {
-    stub.restore();
+    delete sfn.describeExecution;
   }
 });
 
-test('returns the correct results in the nominal case', async (t) => {
-  const executionStatuses = {
-    'arn:1': 'RUNNING',
-    'arn:2': 'SUCCEEDED',
-    'arn:3': 'FAILED',
-    'arn:4': 'ABORTED',
-    'arn:7': null
-  };
-
-  const stubSfnClient = {
-    describeExecution: ({ executionArn }) => ({
-      promise: () => {
-        if (!executionStatuses[executionArn]) {
-          const error = new Error(`Execution does not exist: ${executionArn}`);
-          error.code = 'ExecutionDoesNotExist';
-          return Promise.reject(error);
-        }
-        return Promise.resolve({
-          executionArn,
-          status: executionStatuses[executionArn]
-        });
-      }
-    })
-  };
-  const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
-
+test.serial('returns the correct results in the nominal case', async (t) => {
   const event = {
     input: {
       running: ['arn:1', 'arn:2', 'arn:3', 'arn:4', 'arn:7'],
@@ -109,9 +81,37 @@ test('returns the correct results in the nominal case', async (t) => {
 
   await validateInput(t, event.input);
 
-  const output = await checkPdrStatuses(event);
+  const executionStatuses = {
+    'arn:1': 'RUNNING',
+    'arn:2': 'SUCCEEDED',
+    'arn:3': 'FAILED',
+    'arn:4': 'ABORTED',
+    'arn:7': null
+  };
 
-  stub.restore();
+  const sfn = aws.sfn();
+
+  let output;
+  try {
+    sfn.describeExecution = ({ executionArn }) => ({
+      promise: () => {
+        if (!executionStatuses[executionArn]) {
+          const error = new Error(`Execution does not exist: ${executionArn}`);
+          error.code = 'ExecutionDoesNotExist';
+          return Promise.reject(error);
+        }
+        return Promise.resolve({
+          executionArn,
+          status: executionStatuses[executionArn]
+        });
+      }
+    });
+
+    output = await checkPdrStatuses(event);
+  }
+  finally {
+    delete sfn.describeExecution;
+  }
 
   await validateOutput(t, output);
   t.false(output.isFinished);
@@ -128,7 +128,7 @@ test('returns the correct results in the nominal case', async (t) => {
     { arn: 'arn:4', reason: 'Workflow Aborted' }
   ];
   expectedFailed.forEach((expectedItem) => {
-    const matches = (o) => isEqual(expectedItem, o); // eslint-disable-line require-jsdoc
+    const matches = (o) => isEqual(expectedItem, o);
     t.true(
       some(output.failed, matches),
       `${JSON.stringify(expectedItem)} not found in ${JSON.stringify(output.failed)}`
@@ -136,15 +136,8 @@ test('returns the correct results in the nominal case', async (t) => {
   });
 });
 
-test('test concurrency limit setting on sfn api calls', async (t) => {
+test.serial('test concurrency limit setting on sfn api calls', async (t) => {
   process.env.CONCURRENCY = 20;
-  const stubSfnClient = {
-    describeExecution: ({ executionArn }) => ({
-      promise: () => delay(100)
-        .then(() => Promise.resolve({ executionArn, status: 'SUCCEEDED' }))
-    })
-  };
-  const stub = sinon.stub(aws, 'sfn').returns(stubSfnClient);
 
   const running = [];
   const uuid = randomString();
@@ -159,10 +152,23 @@ test('test concurrency limit setting on sfn api calls', async (t) => {
 
   await validateInput(t, event.input);
 
-  const startTime = moment();
-  const output = await checkPdrStatuses(event);
+  const sfn = aws.sfn();
 
-  stub.restore();
+  let output;
+  let startTime;
+  try {
+    sfn.describeExecution = ({ executionArn }) => ({
+      promise: () =>
+        delay(100)
+          .then(() => ({ executionArn, status: 'SUCCEEDED' }))
+    });
+
+    startTime = moment();
+    output = await checkPdrStatuses(event);
+  }
+  finally {
+    delete sfn.describeExecution;
+  }
 
   await validateOutput(t, output);
   t.true(output.isFinished);
