@@ -303,6 +303,32 @@ test('PUT updates an existing collection', (t) => {
   });
 });
 
+test('PUT without an Authorization header does not update an existing collection', (t) => {
+  const newPath = '/new_path';
+  const updateEvent = {
+    body: JSON.stringify({
+      name: t.context.testCollection.name,
+      version: t.context.testCollection.version,
+      provider_path: newPath
+    }),
+    pathParameters: {
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
+    },
+    httpMethod: 'PUT',
+    headers: {}
+  };
+
+  return testEndpoint(collectionsEndpoint, updateEvent, async (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+    const collection = await collectionModel.get({
+      name: t.context.testCollection.name,
+      version: t.context.testCollection.version
+    })
+    t.is(collection.provider_path, t.context.testCollection.provider_path);
+  });
+});
+
 test('DELETE deletes an existing collection', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
