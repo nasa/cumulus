@@ -21,7 +21,6 @@ jobs:
       install: true
       script: ./travis-ci/build-cache.sh
 
-
     - name: "eslint"
       stage: unit test
       install:
@@ -29,6 +28,7 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./node_modules/.bin/eslint packages/api --ext .js
+
     - name: "Unit tests except API"
       stage: unit test
       services:
@@ -42,6 +42,7 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
+
     - name: "API unit tests"
       stage: unit test
       services:
@@ -55,6 +56,7 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./travis-ci/run-api-unit-tests.sh
+
     - name: "e2e tests"
       stage: unit test
       services:
@@ -101,6 +103,7 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
+
     - name: "Deploy to Github Pages"
       stage: deploy
       install: npm install
