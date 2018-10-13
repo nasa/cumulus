@@ -6,19 +6,6 @@ const yaml = require('js-yaml');
 const { assignIn } = require('lodash.assignin');
 
 /**
- * Copy a configuration file back from the backup location. Delete
- * the backup configuration file
- *
- * @returns {undefined} none
- * @param {string} configurationYmlFilepath - configuration file path
- * @param {string} configurationYmlBackupFilename - backup configuration file path
- */
-function restoreConfigYml(configurationYmlFilepath, configurationYmlBackupFilename) {
-  fs.copyFileSync(configurationYmlBackupFilename, configurationYmlFilepath);
-  fs.unlinkSync(configurationYmlBackupFilename);
-}
-
-/**
  * Load a configuration yml file
  *
  * @param {string} workflowConfigFile - workflow yml file,defaults to './workflows.yml'
@@ -70,7 +57,6 @@ function updateConfigObject(configFilePath, nodeName, configJson) {
 
 module.exports = {
   getConfigObject,
-  restoreConfigYml,
   loadYmlConfigFile,
   saveYmlConfigFile,
   updateConfigObject
