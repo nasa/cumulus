@@ -4,7 +4,7 @@ const test = require('ava');
 const path = require('path');
 const fs = require('fs-extra');
 const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
 
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');

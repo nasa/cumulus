@@ -8,3 +8,4 @@ exports.CollectionConfigStore = require('./collection-config-store').CollectionC
 exports.testUtils = require('./test-utils');
 exports.stepFunctions = require('./step-functions');
 exports.stringUtils = require('./string');
+exports.util = require('./util');
