@@ -1,6 +1,7 @@
 'use strict';
 
-const _ = require('lodash');
+const isEqual = require('lodash.isequal');
+const some = require('lodash.some');
 const test = require('ava');
 const delay = require('delay');
 const moment = require('moment');
@@ -127,9 +128,9 @@ test.serial('returns the correct results in the nominal case', async (t) => {
     { arn: 'arn:4', reason: 'Workflow Aborted' }
   ];
   expectedFailed.forEach((expectedItem) => {
-    const matches = (o) => _.isEqual(expectedItem, o);
+    const matches = (o) => isEqual(expectedItem, o);
     t.true(
-      _.some(output.failed, matches),
+      some(output.failed, matches),
       `${JSON.stringify(expectedItem)} not found in ${JSON.stringify(output.failed)}`
     );
   });
