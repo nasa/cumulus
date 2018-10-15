@@ -45,7 +45,6 @@
     "got": "^8.3.0",
     "jsftp": "^2.0.0",
     "json-loader": "~0.5.7",
-    "lodash": "^4.17.5",
     "lodash.clonedeep": "^4.5.0",
     "lodash.get": "^4.4.2",
     "lodash.groupby": "^4.6.0",

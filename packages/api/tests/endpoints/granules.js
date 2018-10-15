@@ -4,7 +4,6 @@ const fs = require('fs');
 const sinon = require('sinon');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
-const { StepFunction } = require('@cumulus/ingest/aws');
 const { CMR } = require('@cumulus/cmrjs');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -304,16 +303,15 @@ test.serial('PUT fails if action is not provided', async (t) => {
   t.is(message, 'Action is missing');
 });
 
+// This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  const fakeSFResponse = {
-    execution: {
-      input: JSON.stringify({
-        meta: {
-          workflow_name: 'IngestGranule'
-        },
-        payload: {}
-      })
-    }
+  const fakeDescribeExecutionResult = {
+    input: JSON.stringify({
+      meta: {
+        workflow_name: 'IngestGranule'
+      },
+      payload: {}
+    })
   };
 
   const event = {
@@ -327,16 +325,23 @@ test.serial('reingest a granule', async (t) => {
 
   // fake workflow
   process.env.bucket = process.env.internal;
-  const message = JSON.parse(fakeSFResponse.execution.input);
+  const message = JSON.parse(fakeDescribeExecutionResult.input);
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' });
 
-  sinon.stub(
-    StepFunction,
-    'getExecutionStatus'
-  ).callsFake(() => Promise.resolve(fakeSFResponse));
+  const sfn = aws.sfn();
 
-  const response = await handleRequest(event);
+  let response;
+  try {
+    sfn.describeExecution = () => ({
+      promise: () => Promise.resolve(fakeDescribeExecutionResult)
+    });
+
+    response = await handleRequest(event);
+  }
+  finally {
+    delete sfn.describeExecution;
+  }
 
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
@@ -344,10 +349,9 @@ test.serial('reingest a granule', async (t) => {
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
-
-  StepFunction.getExecutionStatus.restore();
 });
 
+// This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('apply an in-place workflow to an existing granule', async (t) => {
   const fakeSFResponse = {
     execution: {
@@ -379,30 +383,35 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await putObject({ Bucket: process.env.bucket, Key: key, Body: 'fake in-place workflow' });
 
-  // return fake previous execution
-  sinon.stub(
-    StepFunction,
-    'getExecutionStatus'
-  ).callsFake(() => Promise.resolve({
-    execution: {
-      output: JSON.stringify({
-        meta: {
-          workflow_name: 'IngestGranule'
-        },
-        payload: {}
-      })
-    }
-  }));
+  const fakeDescribeExecutionResult = {
+    output: JSON.stringify({
+      meta: {
+        workflow_name: 'IngestGranule'
+      },
+      payload: {}
+    })
+  };
 
-  const response = await handleRequest(event);
+  const sfn = aws.sfn();
+
+  let response;
+  try {
+    sfn.describeExecution = () => ({
+      promise: () => Promise.resolve(fakeDescribeExecutionResult)
+    });
+
+    response = await handleRequest(event);
+  }
+  finally {
+    delete sfn.describeExecution;
+  }
+
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
-
-  StepFunction.getExecutionStatus.restore();
 });
 
 test.serial('remove a granule from CMR', async (t) => {
