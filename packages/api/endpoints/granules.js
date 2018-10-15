@@ -8,7 +8,10 @@ const {
 } = require('../lib/response');
 const Search = require('../es/search').Search;
 const models = require('../models');
-const { InternalServerError } = require('../lib/responses');
+const {
+  InternalServerError,
+  NotFoundResponse
+} = require('../lib/responses');
 
 /**
  * List all granules for a given collection.
@@ -170,10 +173,9 @@ async function get(event) {
   }
   catch (err) {
     if (err.message.startsWith('No record found')) {
-      return buildLambdaProxyResponse({
+      return new NotFoundResponse({
         json: true,
-        statusCode: 404,
-        body: { message: 'Granule not found' }
+        body: { message: 'Granule not found'}
       });
     }
 

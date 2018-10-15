@@ -42,11 +42,11 @@ function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   }
 
   let body = bodyArg;
-  let status = statusArg;
+  let statusCode = statusArg;
 
   if (err) {
     log.error(err);
-    status = status || 400;
+    statusCode = statusCode || 400;
     body = {
       message: err.message || errorify(err),
       detail: err.detail
@@ -56,7 +56,7 @@ function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   return context.succeed(new LambdaProxyResponse({
     json: !isString(body),
     body,
-    statusCode: status,
+    statusCode,
     headers
   }));
 }
