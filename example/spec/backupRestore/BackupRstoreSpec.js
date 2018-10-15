@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const os = require('os');
 const path = require('path');
-const { chunk } = require('lodash');
+const chunk = require('lodash.chunk');
 const restore = require('@cumulus/api/bin/restore');
 const backup = require('@cumulus/api/bin/backup');
 const { Granule } = require('@cumulus/api/models');
@@ -62,7 +62,7 @@ describe('Backup and Restore', () => {
       const backupFile = path.join(tempFolder, `${process.env.GranulesTable}.json`);
 
       // open backup file and compare records
-      const content = fs.readFileSync(backupFile);
+      const content = fs.readFileSync(backupFile, 'utf8');
       const randomIndex = Math.floor(Math.random() * Math.floor(limit));
       const testGranuleId = granuleIds[randomIndex].granuleId;
       expect(content.includes(testGranuleId)).toEqual(true);

@@ -9,6 +9,8 @@
 
 'use strict';
 
+const isFunction = require('lodash.isfunction');
+const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const deprecate = require('depd')('@cumulus/api/lib/response');
 const { log } = require('@cumulus/common');
@@ -32,7 +34,7 @@ function findCaseInsensitiveKey(obj, keyArg) {
 const BEARER_REGEX = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9._~+/-]+=*) *$/;
 
 function getToken(req) {
-  if (!req.headers || typeof req.headers !== 'object') {
+  if (!req.headers || !isObject(req.headers)) {
     throw new TypeError('argument req is required to have headers property');
   }
 
@@ -50,7 +52,7 @@ function getToken(req) {
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,'); // eslint-disable-line max-len
 
-  if (typeof context.succeed !== 'function') {
+  if (!isFunction(context.succeed)) {
     throw new TypeError('context as object with succeed method not provided');
   }
 
@@ -154,13 +156,15 @@ function buildLambdaProxyResponse(params = {}) {
  * @param {Object} params - params
  * @param {string} params.error - an optional OAuth 2.0 error code
  * @param {string} params.message - an optional error message
+ * @param {integer} [params.statusCode=401] - the status code to return
  * @returns {Object} - a Lambda Proxy response object
  * @private
  */
 function buildAuthorizationFailureResponse(params) {
   const {
     error,
-    message
+    message,
+    statusCode = 401
   } = params;
 
   let wwwAuthenticateValue = 'Bearer';
@@ -169,8 +173,8 @@ function buildAuthorizationFailureResponse(params) {
   }
 
   return buildLambdaProxyResponse({
+    statusCode,
     json: true,
-    statusCode: 401,
     headers: { 'WWW-Authenticate': wwwAuthenticateValue },
     body: { message }
   });
@@ -230,16 +234,16 @@ async function getAuthorizationFailureResponse(params) {
   // Verify that the token exists in the DynamoDB Users table
   if (findUserResult.Count !== 1) {
     return buildAuthorizationFailureResponse({
-      error: 'invalid_token',
-      message: 'Invalid Authorization token'
+      message: 'User not authorized',
+      statusCode: 403
     });
   }
 
   // Verify that the token has not expired
   if (findUserResult.Items[0].expires < Date.now()) {
     return buildAuthorizationFailureResponse({
-      error: 'invalid_token',
-      message: 'The access token expired'
+      message: 'Access token has expired',
+      statusCode: 403
     });
   }
 
@@ -247,12 +251,18 @@ async function getAuthorizationFailureResponse(params) {
 }
 
 function handle(event, context, authCheck, func) {
-  if (typeof context.succeed !== 'function') {
+  if (!isFunction(context.succeed)) {
     throw new TypeError('context object with succeed method not provided');
   }
 
   const cb = resp.bind(null, context);
+
   if (authCheck) {
+    const requestHeaders = event.headers || {};
+    if (!requestHeaders.Authorization) {
+      return cb({ message: 'Authorization header missing' }, null, 401);
+    }
+
     const req = new proxy.Request(event);
 
     const token = getToken(req);
@@ -266,14 +276,20 @@ function handle(event, context, authCheck, func) {
       values: { ':token': token }
     }).then((results) => {
       if (results.Count < 1 || results.Count > 1) {
-        return cb('Invalid Authorization token');
+        return cb(
+          { message: 'User not authorized' },
+          null,
+          403
+        );
       }
       const obj = results.Items[0];
 
       if (!obj.expires) return cb('Invalid Authorization token');
       if (obj.expires < Date.now()) return cb('Session expired');
       return func(cb);
-    }).catch((e) => cb('Invalid Authorization token', e));
+    }).catch((e) => {
+      cb('Invalid Authorization token', e);
+    });
   }
   return func(cb);
 }
