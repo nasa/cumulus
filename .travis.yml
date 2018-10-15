@@ -87,7 +87,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/backupRestore/BackupRestoreSpec.js"
-
     - name: "Run Reconciliation integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -96,7 +95,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/createReconciliationReport/CreateReconciliationReportSpec.js"
-
     - name: "Run DiscoverPdrs integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -105,7 +103,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/discoverAndQueuePdrs/DiscoverAndQueuePdrsSuccessSpec.js"
-
     - name: "Run DiscoverGranules integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -114,7 +111,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/discoverGranules/DiscoverGranulesSuccessSpec.js"
-
     - name: "Run EMSReport integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -123,7 +119,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/emsReport/emsReportSpec.js"
-
     - name: "Run HelloWorld ECS integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -132,7 +127,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/helloWorld/HelloWorldEcsSpec.js"
-
     - name: "Run HelloWorld integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -141,7 +135,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/helloWorld/HelloWorldSuccessSpec.js"
-
     - name: "Run IngestGranuleFailure integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -150,7 +143,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/ingestGranule/IngestGranuleFailureSpec.js"
-
     - name: "Run IngestGranuleFtp integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -159,7 +151,22 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/ingestGranule/IngestGranuleFtpSuccessSpec.js"
-    
+    - name: "Run IngestGranuleDuplicateErrorCatch integration tests"
+      stage: parallel integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/ingestGranule/IngestGranuleDuplicateHandingErrorCatchSpec.js"
+    - name: "Run IngestGranuleDuplicateErrorNoCatch integration tests"
+      stage: parallel integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/ingestGranule/IngestGranuleDuplicateHandlingErrorNoCatchSpec.js"
     - name: "Run IngestGranuleSuccess integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -177,7 +184,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/kinesisTests/KinesisTestErrorSpec.js"
-
     - name: "Run KinesisError integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -186,7 +192,6 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/kinesisTests/KinesisTestSuccessSpec.js"
-
     - name: "Run ParsePdr integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -195,61 +200,79 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/parsePdr/ParsePdrSuccessSpec.js"
-
     - name: "Run RetryConfig integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-            - ./travis-ci/fetch-cache.sh
-            - npm install
-            - npm run bootstrap-no-build
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/retryConfiguration/retryConfigurationSpec.js"
-
     - name: "Run S3Access integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-            - ./travis-ci/fetch-cache.sh
-            - npm install
-            - npm run bootstrap-no-build
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/s3Access/s3AccessSpec.js"
-
     - name: "Run SyncGranule DuplicateError integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-            - ./travis-ci/fetch-cache.sh
-            - npm install
-            - npm run bootstrap-no-build
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/SyncGranule/SyncGranuleDuplicateHandlingErrorSpec.js"
-
+    - name: "Run SyncGranule DuplicateSkip integration tests"
+      stage: parallel integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/SyncGranule/SyncGranuleSuccessSpec.js"
+    - name: "Run SyncGranule DuplicateVersion integration tests"
+      stage: parallel integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/SyncGranule/SyncGranuleSuccessSpec.js"
     - name: "Run SyncGranule integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-            - ./travis-ci/fetch-cache.sh
-            - npm install
-            - npm run bootstrap-no-build
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/SyncGranule/SyncGranuleSuccessSpec.js"
-
     - name: "Run API integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-            - ./travis-ci/fetch-cache.sh
-            - npm install
-            - npm run bootstrap-no-build
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/testAPI/APISuccessSpec.js"
-
     - name: "Run ExecutionStatus integration tests"
       stage: parallel integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-            - ./travis-ci/fetch-cache.sh
-            - npm install
-            - npm run bootstrap-no-build
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/testAPI/ExecutionStatusSpec.js"
-      
+    - name: "Run oneTimeRule integration tests"
+      stage: parallel integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/testAPI/oneTimeRule.js"
+
     - name: "Run Lambda Redeployment integration tests"
       stage: serial integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -258,15 +281,24 @@ jobs:
             - npm install
             - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/redeployment/LambdaRedeploySpec.js"
-
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
     - name: "Run Workflow Redeployment integration tests"
       stage: serial integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-            - ./travis-ci/fetch-cache.sh
-            - npm install
-            - npm run bootstrap-no-build
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/redeployment/WorkflowRedeploySpec.js"
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "Run LambdaVersionOption integration tests"
+      stage: serial integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 "./travis-ci/run-integration-tests.sh ./spec/redeployment/LambdaVersionOption.js"
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Cleanup integration tests"
