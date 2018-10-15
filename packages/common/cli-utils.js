@@ -1,8 +1,8 @@
+/* eslint no-console: "off" */
+
 'use strict';
 
-/* eslint-disable no-console */
-
-const { kebabCase } = require('lodash');
+const kebabCase = require('lodash.kebabcase');
 
 /**
  * Find missing required parameters from cli commander command

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-705**
+  - Note: Make sure to update the IAM stack when deploying this update.
+  - Adds an AsyncOperations model and associated DynamoDB table to the
+    `@cumulus/api` package
+  - Adds an /asyncOperations endpoint to the `@cumulus/api` package, which can
+    be used to fetch the status of an AsyncOperation.
+  - Adds a /bulkDelete endpoint to the `@cumulus/api` package, which performs an
+    asynchronous bulk-delete operation. This is a stub right now which is only
+    intended to demonstration how AsyncOperations work.
+  - Adds an AsyncOperation ECS task to the `@cumulus/api` package, which will
+    fetch an Lambda function, run it in ECS, and then store the result to the
+    AsyncOperations table in DynamoDB.
 - **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
     - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
 	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
@@ -129,7 +141,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
-
 
 ## [v1.9.0] - 2018-08-06
 

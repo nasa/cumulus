@@ -1,5 +1,6 @@
 'use strict';
 
+exports.asyncOperations = require('./endpoints/async-operations');
 exports.token = require('./endpoints/token').handleApiGatewayRequest;
 exports.collections = require('./endpoints/collections');
 exports.granules = require('./endpoints/granules');
@@ -24,6 +25,9 @@ exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
 exports.kinesisConsumer = require('./lambdas/kinesis-consumer').handler;
 exports.inRegionS3Policy = require('./lambdas/in-region-s3-policy').handler;
+
+exports.bulkDeleteLambda = require('./lambdas/bulk-delete').handler;
+exports.bulkDeleteEndpoint = require('./endpoints/bulk-delete');
 
 exports.emsReport = require('./lambdas/ems-report').handler;
 exports.emsDistributionReport = require('./lambdas/ems-distribution-report').handler;

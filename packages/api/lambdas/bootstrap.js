@@ -20,7 +20,6 @@ const pLimit = require('p-limit');
 const { dynamodb } = require('@cumulus/common/aws');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { User } = require('../models');
 const { Search, defaultIndexAlias } = require('../es/search');
 const mappings = require('../models/mappings.json');
@@ -298,13 +297,3 @@ module.exports = {
   // for testing
   findMissingMappings
 };
-
-justLocalRun(() => {
-  //const a = {};
-  //handler(a, {}, (e, r) => console.log(e, r));
-  //bootstrapCmrProvider('testing').then(r => {
-  //console.log(r)
-  //return DefaultProvider.decrypt(r)
-  //}).then(r => console.log(r))
-  //.catch(e => console.log(e));
-});

@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const yaml = require('js-yaml');
 
-const { extend } = require('lodash');
+const { assignIn } = require('lodash.assignin');
 
 /**
  * Load a configuration yml file
@@ -51,7 +51,7 @@ function getConfigObject(configFilepath, nodeName) {
 
 function updateConfigObject(configFilePath, nodeName, configJson) {
   const config = loadYmlConfigFile(configFilePath);
-  extend(config[nodeName], configJson);
+  assignIn(config[nodeName], configJson);
   saveYmlConfigFile(config, configFilePath);
 }
 
