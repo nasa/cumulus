@@ -23,7 +23,7 @@ export DEPLOYMENT
     (cd .. && ./bin/prepare)
   fi
 
-  yarn test
+  yarn test $1
 )
 RESULT="$?"
 
