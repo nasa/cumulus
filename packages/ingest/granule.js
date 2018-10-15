@@ -514,8 +514,8 @@ class Granule {
 
     // Exit early if we can
     if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
-      return Object.assign(stagedFile,
-        { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength });
+      return [Object.assign(stagedFile,
+        { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength })];
     }
 
     // Either the file does not exist yet, or it does but

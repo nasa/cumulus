@@ -3,6 +3,8 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const get = require('lodash.get');
+const clonedeep = require('lodash.clonedeep');
+const flatten = require('lodash.flatten');
 const {
   getCmrFiles, getGranuleId, getRenamedS3File,
   moveGranuleFile, renameS3FileWithTimestamp
@@ -120,16 +122,15 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
 }
 
 /**
- * move file from source bucket to target location.
- * In case of 'version' duplicateHandling, also add the renamed files to the granule files.
+ * move file from source bucket to target location, and return the file moved.
+ * In case of 'version' duplicateHandling, also return the renamed files.
  *
- * @param {Object} granule - granule which file is belong to
  * @param {Object} file - granule file to be moved
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
- * @returns {Promise} promise resolves when granule file is removed
+ * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
-async function moveFileRequest(granule, file, sourceBucket, duplicateHandling) {
+async function moveFileRequest(file, sourceBucket, duplicateHandling) {
   const fileStagingDir = file.fileStagingDir || 'file-staging';
   const source = {
     Bucket: sourceBucket,
@@ -141,10 +142,14 @@ async function moveFileRequest(granule, file, sourceBucket, duplicateHandling) {
     Key: file.filepath
   };
 
+  // the file moved to destination
+  const fileMoved = clonedeep(file);
+  delete fileMoved.fileStagingDir;
+
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
-  
-  if (s3ObjAlreadyExists) file.duplicate_found = true;
+
+  if (s3ObjAlreadyExists) fileMoved.duplicate_found = true;
 
   // Have to throw DuplicateFile and not WorkflowError, because the latter
   // is not treated as a failure by the message adapter.
@@ -152,11 +157,7 @@ async function moveFileRequest(granule, file, sourceBucket, duplicateHandling) {
     throw new errors.DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
   }
 
-  delete file.fileStagingDir; /* eslint-disable-line no-param-reassign */
-
-  if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
-    return Promise.resolve();
-  }
+  if (s3ObjAlreadyExists && duplicateHandling === 'skip') return [fileMoved];
 
   const options = (file.bucket.type.match('public')) ? { ACL: 'public-read' } : null;
 
@@ -179,40 +180,44 @@ async function moveFileRequest(granule, file, sourceBucket, duplicateHandling) {
     await moveGranuleFile(source, target, options);
   }
 
-  // add renamed files to granule
   const renamedFiles = (duplicateHandling === 'version')
     ? await getRenamedS3File(target.Bucket, target.Key) : [];
 
-  return renamedFiles.map((f) =>
-    granule.files.push({
+  // return both file moved and renamed files
+  return [fileMoved]
+    .concat(renamedFiles.map((f) => ({
       bucket: file.bucket,
       name: path.basename(f.Key),
       filename: buildS3Uri(f.Bucket, f.Key),
       filepath: f.Key,
       fileSize: f.fileSize,
       url_path: file.url_path
-    }));
+    })));
 }
 
 /**
-* Move all files in a collection of granules from staging location fo final location
+* Move all files in a collection of granules from staging location fo final location,
+* and update granule files to include renamed files if any.
 *
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
 * @param {string} sourceBucket - source bucket location of files
 * @param {string} duplicateHandling - how to handle duplicate files
-* @returns {Promise} promise resolves when all files have been moved
+* @returns {Object} the object with updated granules
 **/
 async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling) {
-  const moveFileRequests = Object.keys(granulesObject).map((granuleKey) => {
+  const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
     const cmrFileFormat = /.*\.cmr\.xml$/;
-    const filesToMove = granule.files.filter((file) => !(file.name.match(cmrFileFormat)));
+    const filesToMove = granule.files.filter((file) => !file.name.match(cmrFileFormat));
+    const cmrFile = granule.files.filter((file) => file.name.match(cmrFileFormat));
 
-    return Promise.all(filesToMove.map((file) =>
-      moveFileRequest(granule, file, sourceBucket, duplicateHandling)));
+    const filesMoved = await Promise.all(filesToMove.map((file) =>
+      moveFileRequest(file, sourceBucket, duplicateHandling)));
+    granule.files = flatten(filesMoved).concat(cmrFile);
   });
 
-  return Promise.all(moveFileRequests);
+  await Promise.all(moveFileRequests);
+  return granulesObject;
 }
 
 /**
@@ -328,7 +333,7 @@ async function moveGranules(event) {
   // allows us to disable moving the files
   if (moveStagedFiles) {
     // move files from staging location to final location
-    await moveFilesForAllGranules(allGranules, bucket, duplicateHandling);
+    allGranules = await moveFilesForAllGranules(allGranules, bucket, duplicateHandling);
 
     // update cmr.xml files with correct online access urls
     await updateCmrFileAccessURLs(cmrFiles, allGranules, allFiles, distEndpoint);
