@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
@@ -11,29 +12,37 @@ const {
   fakeUserFactory,
   testEndpoint
 } = require('../../lib/testUtils');
-const { indexCollection } = require('../../es/indexer');
+const EsCollection = require('../../es/collections');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
+const { RecordDoesNotExist } = require('../../lib/errors');
 
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 
-const testCollection = fakeCollectionFactory();
 const esIndex = randomString();
 let esClient;
 
 let authHeaders;
 let collectionModel;
 let userModel;
+
+const collectionDoesNotExist = async (t, collection) => {
+  const error = await t.throws(collectionModel.get({
+    name: collection.name,
+    version: collection.version
+  }));
+  t.true(error instanceof RecordDoesNotExist);
+};
+
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
-  await collectionModel.create(testCollection);
 
   // create fake Users table
   userModel = new models.User();
@@ -45,6 +54,11 @@ test.before(async () => {
   };
 
   esClient = await Search.es('fakehost');
+});
+
+test.beforeEach(async (t) => {
+  t.context.testCollection = fakeCollectionFactory();
+  await collectionModel.create(t.context.testCollection);
 });
 
 test.after.always(async () => {
@@ -80,15 +94,17 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   });
 });
 
-test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
+test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
-    headers: {}
+    headers: {},
+    body: JSON.stringify(newCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
-    t.is(JSON.parse(response.body).record, undefined);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
@@ -153,16 +169,18 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
 });
 
 test('CUMULUS-912 POST with an unauthorized user returns an unauthorized response', async (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
+    },
+    body: JSON.stringify(newCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
-    t.is(JSON.parse(response.body).record, undefined);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
@@ -201,50 +219,34 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
 });
 
 test('POST with invalid authorization scheme returns an invalid token response', (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
-    }
+    },
+    body: JSON.stringify(newCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isInvalidTokenResponse(t, response);
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
+    assertions.isInvalidAuthorizationResponse(t, response);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
-test('POST with non-expiring operator credentials returns an invalid token response', async (t) => {
-  const fakeUser = fakeUserFactory();
-  const authToken = (await userModel.create(fakeUser)).password;
-  await userModel.update({ userName: fakeUser.userName }, {}, ['expires']);
-
-  const request = {
-    httpMethod: 'POST',
-    headers: {
-      Authorization: `Bearer ${authToken}`
-    }
-  };
-
-  return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isInvalidTokenResponse(t, response);
-  });
-});
-
-test('default returns list of collections', async (t) => {
-  const newCollection = fakeCollectionFactory();
-
+test.serial('default returns list of collections', async (t) => {
   const listEvent = {
     httpMethod: 'GET',
     headers: authHeaders
   };
 
-  await indexCollection(esClient, newCollection, esIndex);
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
 
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
+    stub.restore();
     t.is(results.length, 1);
-    const responseBody = JSON.parse(response.body);
-    t.is(responseBody.results[0].name, newCollection.name);
+    t.is(results[0].name, t.context.testCollection.name);
   });
 });
 
@@ -262,33 +264,34 @@ test('POST creates a new collection', (t) => {
   });
 });
 
-
 test.serial('GET returns an existing collection', (t) => {
   const getEvent = {
     httpMethod: 'GET',
     headers: authHeaders,
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     }
   };
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
   return testEndpoint(collectionsEndpoint, getEvent, (response) => {
     const { name } = JSON.parse(response.body);
-    t.is(name, testCollection.name);
+    stub.restore();
+    t.is(name, t.context.testCollection.name);
   });
 });
 
-test.serial('PUT updates an existing collection', (t) => {
+test('PUT updates an existing collection', (t) => {
   const newPath = '/new_path';
   const updateEvent = {
     body: JSON.stringify({
-      name: testCollection.name,
-      version: testCollection.version,
+      name: t.context.testCollection.name,
+      version: t.context.testCollection.version,
       provider_path: newPath
     }),
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     },
     httpMethod: 'PUT',
     headers: authHeaders
@@ -300,12 +303,12 @@ test.serial('PUT updates an existing collection', (t) => {
   });
 });
 
-test.serial('DELETE deletes an existing collection', (t) => {
+test('DELETE deletes an existing collection', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     },
     headers: authHeaders
   };
