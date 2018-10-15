@@ -306,8 +306,6 @@ test('PUT updates an existing collection', (t) => {
 test.serial('PUT updates an existing collection and returns it in listing', (t) => {
   const newPath = '/new_path';
   const updatedCollection = Object.assign(t.context.testCollection, {
-    name: t.context.testCollection.name,
-    version: t.context.testCollection.version,
     provider_path: newPath
   });
   const updateEvent = {
