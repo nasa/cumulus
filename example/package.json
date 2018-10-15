@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "Cumulus Integration Test Deployment",
   "main": "index.js",
+  "engines": {
+    "node": ">=8.10.0"
+  },
   "scripts": {
     "test": "jasmine",
     "deploy": "./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
     "deploy-iam": "./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE"
-  },
-  "engines": {
-    "node": ">=8.10.0"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -48,12 +48,12 @@
     "sleep-promise": "^8.0.1"
   },
   "devDependencies": {
-    "eslint": "^5.5.0",
     "eslint-plugin-jsdoc": "^3.7.1",
-    "fs-extra": "^7.0.0",
+    "eslint": "^5.5.0",
+    "fs-extra": "7.0.0",
     "got": "^8.3.0",
-    "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
+    "jasmine": "^3.1.0",
     "js-yaml": "^3.12.0",
     "kes": "^2.2.2",
     "lodash.assignin": "^4.2.0",
@@ -67,6 +67,7 @@
     "node-forge": "^0.7.5",
     "p-retry": "^2.0.0",
     "tempy": "^0.2.1",
-    "url-join": "^1.1.0"
+    "url-join": "^1.1.0",
+    "uuid": "^3.2.1"
   }
 }
