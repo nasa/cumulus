@@ -127,7 +127,15 @@ class SfnStep {
     if (!eventWasSuccessful) console.log('Schedule event failed');
 
     const subStepExecutionDetails = scheduleEvent.lambdaFunctionScheduledEventDetails;
-    return JSON.parse(subStepExecutionDetails.input);
+    let stepInput = JSON.parse(subStepExecutionDetails.input);
+
+    if (stepInput.replace) {
+      // Message was too large and output was written to S3
+      console.log(`Retrieving ${stepName} input from ${JSON.stringify(stepInput.replace)}`);
+      stepInput = await s3().getObject(stepInput.replace).promise()
+        .then((response) => JSON.parse(response.Body.toString()));
+    }
+    return stepInput;
   }
 
   /**

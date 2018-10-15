@@ -121,7 +121,8 @@ const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-describe('The Cloud Notification Mechanism Kinesis workflow', () => {
+console.log('Disabled pending resolution of CUMULUS-948');
+xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
   const maxWaitForSFExistSecs = 60 * 4;
   const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
@@ -139,6 +140,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   async function cleanUp() {
     // delete rule
+    console.log(`\nDeleting ${ruleOverride.name}`);
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
@@ -174,7 +176,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         waitForActiveStream(streamName),
         waitForActiveStream(cnmResponseStreamName)
       ]);
-      console.log('\nSetting up kinesisRule');
       await addRules(testConfig, ruleDirectory, ruleOverride);
     });
   });
@@ -187,7 +188,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
-  describe('Workflow executes successfully', () => {
+  describe('Workflow executes successfully\n', () => {
     let workflowExecution;
 
     beforeAll(async () => {
@@ -313,14 +314,19 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse', 'failure');
       expect(lambdaOutput.error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
       expect(lambdaOutput.cause).toMatch(/.+An error occurred in the Cumulus Message Adapter: .+/);
+      expect(lambdaOutput.cause).not.toMatch(/.+process hasn't exited.+/);
     });
 
     it('writes a failure message to the response stream', async () => {
       const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-      const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
-      // TODO(aimee): This should check the record identifier is equal to bad
-      // record identifier, but this requires a change to cnmresponse task
-      expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
+      if (newResponseStreamRecords.hasOwnProperty('Records') && newResponseStreamRecords.Records.length > 0) {
+        const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
+        // TODO(aimee): This should check the record identifier is equal to bad
+        // record identifier, but this requires a change to cnmresponse task
+        expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
+      } else {
+        fail(`unexpected error occurred and no messages found in ${cnmResponseStreamName}. Did the "ouputs the record" above fail?`);
+      }
     });
   });
 });

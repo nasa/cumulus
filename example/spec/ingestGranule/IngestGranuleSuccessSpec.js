@@ -9,7 +9,8 @@ const {
 } = require('@cumulus/api');
 const {
   aws: { s3, s3ObjectExists },
-  constructCollectionId
+  constructCollectionId,
+  testUtils: { randomString }
 } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
@@ -31,7 +32,8 @@ const {
   getExecutionUrl,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
+  getFilesMetadata
 } = require('../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
@@ -76,6 +78,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let expectedSyncGranulePayload;
   let expectedPayload;
+  let startTime;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -102,7 +105,25 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
-    // eslint-disable-next-line function-paren-newline
+    // pre-stage destination files for MoveGranules
+    const preStageFiles = expectedPayload.granules[0].files.map((file) => {
+      // CMR file will be skipped by MoveGranules, so no need to stage it
+      if (file.filename.slice(-8) === '.cmr.xml') {
+        return Promise.resolve();
+      }
+      const params = {
+        Bucket: file.bucket,
+        Key: file.filepath,
+        Body: randomString()
+      };
+      // expect duplicates to be reported
+      // eslint-disable-next-line no-param-reassign
+      file.duplicate_found = true;
+      return s3().putObject(params).promise();
+    });
+    await Promise.all(preStageFiles);
+    startTime = new Date();
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -182,22 +203,38 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     afterAll(async () => {
-      await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise();
-      await s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise();
-      await s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise();
+      await Promise.all([
+        s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise(),
+        s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise(),
+        s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise()
+      ]);
     });
 
-    it('has a payload with correct buckets and filenames', () => {
+    it('has a payload with correct buckets, filenames, filesizes, and duplicate reporting', () => {
       files.forEach((file) => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
+        expect(file.duplicate_found).toBe(expectedFile.duplicate_found);
+        if (file.fileSize) {
+          expect(file.fileSize).toEqual(expectedFile.fileSize);
+        }
       });
     });
 
     it('moves files to the bucket folder based on metadata', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
+      });
+    });
+
+    describe('encounters duplicate filenames', () => {
+      it('overwrites the existing file with the new data', async () => {
+        const currentFiles = await getFilesMetadata(files);
+
+        currentFiles.forEach((cf) => {
+          expect(cf.LastModified).toBeGreaterThan(startTime);
+        });
       });
     });
   });

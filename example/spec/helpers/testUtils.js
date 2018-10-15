@@ -2,15 +2,20 @@
 
 const fs = require('fs');
 const {
-  aws: { s3 },
+  aws: { s3, headObject, parseS3Uri },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const { Config } = require('kes');
-const lodash = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
+const merge = require('lodash.merge');
 const { exec } = require('child-process-promise');
 const path = require('path');
+const { promisify } = require('util');
+const tempy = require('tempy');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
+
+const timestampedName = (name) => `${name}_${(new Date().getTime())}`;
 
 const createTimestampedTestId = (stackName, testName) => `${stackName}-${testName}-${(new Date().getTime())}`;
 const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
@@ -60,7 +65,7 @@ function loadConfig() {
  */
 function templateFile({ inputTemplateFilename, config }) {
   const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename, 'utf8'));
-  const templatedInput = lodash.merge(lodash.cloneDeep(inputTemplate), config);
+  const templatedInput = merge(cloneDeep(inputTemplate), config);
   let jsonString = JSON.stringify(templatedInput, null, 2);
   jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);
   const templatedInputFilename = inputTemplateFilename.replace('.template', '');
@@ -78,13 +83,15 @@ function templateFile({ inputTemplateFilename, config }) {
  * @param {Array<Object>} [replacements] - array of replacements in file content e.g. [{old: 'test', new: 'newTest' }]
  * @returns {Promise<Object>} - promise returned from S3 PUT
  */
-function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements) {
-  let data = fs.readFileSync(require.resolve(file), 'utf8');
-  if (replacements) {
+function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
+  let data;
+  if (replacements.length > 0) {
+    data = fs.readFileSync(require.resolve(file), 'utf8');
     replacements.forEach((replace) => {
       data = globalReplace(data, replace.old, replace.new);
     });
   }
+  else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
   return s3().putObject({
     Bucket: bucket,
@@ -151,7 +158,6 @@ function getExecutionUrl(executionArn) {
           `#/executions/details/${executionArn}`;
 }
 
-
 /**
  * Redeploy the current Cumulus deployment.
  *
@@ -207,8 +213,45 @@ async function redeploy(config, options = {}) {
   return Promise.race([executionPromise(), timeoutPromise()]).then((_) => clearTimeout(timeoutObject));
 }
 
+/**
+ * Get file headers for a set of files.
+ *
+ * @param {Array<Object>} files - array of file objects
+ * @returns {Promise<Array>} - file detail responses
+ */
+async function getFilesMetadata(files) {
+  const getFileRequests = files.map(async (f) => {
+    const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
+    return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
+  });
+  return Promise.all(getFileRequests);
+}
+
+const promisedCopyFile = promisify(fs.copyFile);
+const promisedUnlink = promisify(fs.unlink);
+
+/**
+ * Creates a backup of a file, executes the specified function, and makes sure
+ * that the file is restored from backup.
+ *
+ * @param {string} file - the file to backup
+ * @param {Function} fn - the function to execute
+ */
+async function protectFile(file, fn) {
+  const backupLocation = tempy.file();
+  await promisedCopyFile(file, backupLocation);
+
+  try {
+    return await Promise.resolve().then(fn);
+  }
+  finally {
+    await promisedCopyFile(backupLocation, file);
+    await promisedUnlink(backupLocation);
+  }
+}
 
 module.exports = {
+  timestampedName,
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
@@ -218,5 +261,7 @@ module.exports = {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  redeploy
+  redeploy,
+  getFilesMetadata,
+  protectFile
 };

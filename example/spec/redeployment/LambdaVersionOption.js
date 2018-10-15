@@ -13,17 +13,6 @@ const {
 
 const config = loadConfig();
 
-/**
- * Removes 'test_app' redeployment directory and redeploys a clean stack
- *
- * @returns {void} returns nothing
- */
-async function cleanUp() {
-  console.log('Cleaning up deployment');
-  await fs.remove('test_app');
-  await redeploy(config);
-}
-
 describe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
   let workflowDefinitions;
   let stackList;
@@ -32,40 +21,39 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
   const startDate = new Date();
 
   beforeAll(async () => {
-    try {
-      // ensure we're working with a fresh deployment
-      await redeploy(config);
+    await redeploy(config);
 
-      //Flip the config value
+    // Redeploy with custom configuration
+    try {
       await fs.copy('node_modules/@cumulus/deployment/app', 'test_app');
       const configString = await fs.readFile('./test_app/config.yml', 'utf-8');
       const updatedConfig = configString.replace(/useWorkflowLambdaVersions: true/, 'useWorkflowLambdaVersions: false/');
       await fs.writeFile('./test_app/config.yml', updatedConfig, 'utf-8');
 
-      //Redeploy with custom configuration
       await redeploy(config, {
         template: 'test_app/',
         kesClass: 'node_modules/@cumulus/deployment/app/kes.js'
       });
-      const workflows = jsyaml.load(await fs.readFile('workflows.yml'));
-
-      // Get the definition for all workflows
-      const defPromises = Object.keys(workflows).map(async (workflow) => {
-        const workflowArn = await getWorkflowArn(config.stackName, config.bucket, workflow);
-        const stateMachine = await sfn().describeStateMachine({ stateMachineArn: workflowArn }).promise();
-        return stateMachine.definition;
-      });
-      workflowDefinitions = await Promise.all(defPromises);
-
-      //get a list of completed stacks
-      stackList = await cf().listStacks({ StackStatusFilter: deletedStatuses }).promise();
     }
-    catch (e) {
-      await cleanUp();
-      throw (e);
+    finally {
+      await fs.remove('test_app');
     }
-    await cleanUp();
+
+    const workflows = jsyaml.load(await fs.readFile('workflows.yml'));
+
+    // Get the definition for all workflows
+    const defPromises = Object.keys(workflows).map(async (workflow) => {
+      const workflowArn = await getWorkflowArn(config.stackName, config.bucket, workflow);
+      const stateMachine = await sfn().describeStateMachine({ stateMachineArn: workflowArn }).promise();
+      return stateMachine.definition;
+    });
+    workflowDefinitions = await Promise.all(defPromises);
+
+    //get a list of completed stacks
+    stackList = await cf().listStacks({ StackStatusFilter: deletedStatuses }).promise();
   });
+
+  afterAll(() => redeploy(config));
 
   it('has no alias references in any workflow', () => {
     const allStates = workflowDefinitions.map((def) => jsyaml.load(def).States);
