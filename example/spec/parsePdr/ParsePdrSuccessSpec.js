@@ -1,29 +1,59 @@
-const fs = require('fs');
-const { get } = require('lodash');
 const { Pdr, Execution } = require('@cumulus/api/models');
+const { constructCollectionId } = require('@cumulus/common');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
   LambdaStep,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, getExecutionUrl } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  updateAndUploadTestDataToBucket,
+  uploadTestDataToBucket,
+  deleteFolder,
+  getExecutionUrl,
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix
+} = require('../helpers/testUtils');
+const { loadFileWithUpdatedGranuleIdPathAndCollection } = require('../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
-
 const taskName = 'ParsePdr';
+const defaultDataFolder = 'cumulus-test-data/pdrs';
+const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
-const expectedParsePdrOutput = JSON.parse(fs.readFileSync('./spec/parsePdr/ParsePdr.output.json'));
+const s3pdr = [
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+];
+const s3data = [
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
+];
 
-describe('Parse PDR workflow', () => {
+describe('Parse PDR workflow\n', () => {
+  const testId = createTimestampedTestId(config.stackName, 'ParsePdrSuccess');
+  const testSuffix = createTestSuffix(testId);
+  const testDataFolder = createTestDataPath(testId);
   let workflowExecution;
   let queueGranulesOutput;
+  let inputPayload;
+  let expectedParsePdrOutput;
   const inputPayloadFilename = './spec/parsePdr/ParsePdr.input.payload.json';
-  const inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename));
-  const collection = { name: 'MOD09GQ', version: '006' };
-  const provider = { id: 's3_provider' };
+  const outputPayloadFilename = './spec/parsePdr/ParsePdr.output.json';
+
+  const providersDir = './data/providers/s3/';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
 
   process.env.PdrsTable = `${config.stackName}-PdrsTable`;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -31,8 +61,22 @@ describe('Parse PDR workflow', () => {
   const executionModel = new Execution();
 
   beforeAll(async () => {
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
+    ]);
+
+    // update input file paths
+    inputPayload = loadFileWithUpdatedGranuleIdPathAndCollection(inputPayloadFilename, '', testDataFolder, '');
+    // place pdr on S3
+    await updateAndUploadTestDataToBucket(config.bucket, s3pdr, testDataFolder, [{ old: defaultDataFolder, new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]);
     // delete the pdr record from DynamoDB if exists
     await pdrModel.delete({ pdrName: inputPayload.pdr.name });
+
+    expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(outputPayloadFilename, testDataGranuleId, testDataFolder, newCollectionId);
+    expectedParsePdrOutput.granules[0].dataType += testSuffix;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -47,6 +91,22 @@ describe('Parse PDR workflow', () => {
       workflowExecution.executionArn,
       'QueueGranules'
     );
+  });
+
+  afterAll(async () => {
+    // await execution completions
+    await Promise.all(queueGranulesOutput.payload.running.map(async (arn) =>
+      waitForCompletedExecution(arn)));
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      apiTestUtils.deletePdr({
+        prefix: config.stackName,
+        pdr: pdrFilename
+      })
+    ]);
   });
 
   it('executes successfully', () => {
@@ -113,8 +173,22 @@ describe('Parse PDR workflow', () => {
     let ingestGranuleExecutionStatus;
 
     beforeAll(async () => {
+      // wait for IngestGranule execution to complete
       ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
+    });
+
+    afterAll(async () => {
+      // cleanup
+      const finalOutput = await lambdaStep.getStepOutput(ingestGranuleWorkflowArn, 'SfSnsReport');
+      // delete ingested granule(s)
+      await Promise.all(
+        finalOutput.payload.granules.map((g) =>
+          apiTestUtils.deleteGranule({
+            prefix: config.stackName,
+            granuleId: g.granuleId
+          }))
+      );
     });
 
     it('executes successfully', () => {
@@ -157,7 +231,6 @@ describe('Parse PDR workflow', () => {
     });
   });
 
-
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the pdr record is added to DynamoDB', async () => {
       const record = await pdrModel.get({ pdrName: inputPayload.pdr.name });
@@ -195,8 +268,8 @@ describe('Parse PDR workflow', () => {
       for (let i = 0; i < events.length; i += 1) {
         const currentEvent = events[i];
         if (currentEvent.type === 'TaskStateExited' &&
-        get(currentEvent, 'name') === checkStatusTaskName) {
-          const output = get(currentEvent, 'output');
+          currentEvent.name === checkStatusTaskName) {
+          const output = currentEvent.output;
           const isFinished = output.payload.isFinished;
 
           // get the next task executed
@@ -205,8 +278,8 @@ describe('Parse PDR workflow', () => {
             i += 1;
             const nextEvent = events[i];
             if (nextEvent.type === 'TaskStateEntered' &&
-              get(nextEvent, 'name')) {
-              nextTask = get(nextEvent, 'name');
+              nextEvent.name) {
+              nextTask = nextEvent.name;
             }
           }
 

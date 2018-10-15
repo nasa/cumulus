@@ -7,6 +7,7 @@
 
 'use strict';
 
+const isNumber = require('lodash.isnumber');
 const omit = require('lodash.omit');
 
 const regexes = {
@@ -38,12 +39,7 @@ const build = {
       terms = terms.map((f) => f.name);
 
       // remove fields that are included in the termFields
-      fields = fields.filter((field) => {
-        if (terms.indexOf(field) === -1) {
-          return true;
-        }
-        return false;
-      });
+      fields = fields.filter((field) => !terms.includes(field));
 
       const results = fields.map((f) => ({
         prefix: {
@@ -65,9 +61,7 @@ const build = {
     }
 
     // check for boolean values
-    if (typeof i.value === 'number') {
-      i.value = Boolean(i.value);
-    }
+    if (isNumber(i.value)) i.value = Boolean(i.value);
 
     return {
       term: {
