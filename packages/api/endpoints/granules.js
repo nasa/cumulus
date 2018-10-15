@@ -175,7 +175,7 @@ async function get(event) {
     if (err.message.startsWith('No record found')) {
       return new NotFoundResponse({
         json: true,
-        body: { message: 'Granule not found'}
+        body: { message: 'Granule not found' }
       });
     }
 
