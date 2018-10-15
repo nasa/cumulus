@@ -11,6 +11,7 @@ const {
 const fs = require('fs-extra');
 const {
   loadConfig,
+  protectFile,
   redeploy
 } = require('../helpers/testUtils');
 
@@ -32,29 +33,30 @@ describe('When a workflow is running and a new version of a workflow lambda is d
   let startAliasVersionNumbers;
   let endAliasVersionNumbers;
 
-  const originalFile = './lambdas/versionUpTest/original.js';
-  const updateFile = './lambdas/versionUpTest/update.js';
-  const targetFile = './lambdas/versionUpTest/index.js';
+  const lambdaFile = './lambdas/versionUpTest/index.js';
 
   const lambdaName = `${config.stackName}-VersionUpTest`;
 
   beforeAll(async () => {
-    //Redeploy 'new' copy of initial lambda
-    fs.copySync(originalFile, targetFile);
-    await fs.appendFile(targetFile, `//${new Date()}`);
-    await redeploy(config);
+    await protectFile(lambdaFile, async () => {
+      await fs.appendFile(lambdaFile, `// ${new Date()}`);
+      await redeploy(config);
+    });
 
     startVersions = await getLambdaVersions(lambdaName);
     startAliases = await getLambdaAliases(lambdaName);
 
-    fs.copySync(updateFile, targetFile);
-    await fs.appendFile(targetFile, `//${new Date()}`);
     workflowExecutionArn = await buildAndStartWorkflow(
       config.stackName,
       config.bucket,
       'TestLambdaVersionWorkflow'
     );
-    await redeploy(config);
+
+    await protectFile(lambdaFile, async () => {
+      await fs.appendFile(lambdaFile, `// ${new Date()}`);
+      await redeploy(config);
+    });
+
     workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
     testVersionOutput = await lambdaStep.getStepOutput(
       workflowExecutionArn,
