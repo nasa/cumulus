@@ -2,7 +2,6 @@
 
 const _get = require('lodash.get');
 const { S3, StepFunction } = require('@cumulus/ingest/aws');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const handle = require('../lib/response').handle;
 
 /**
@@ -95,7 +94,7 @@ function get(event, cb) {
  * @returns {undefined} undefined
  */
 function handler(event, context) {
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => get(event, cb));
+  return handle(event, context, true, (cb) => get(event, cb));
 }
 
 module.exports = handler;
