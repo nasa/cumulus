@@ -76,7 +76,7 @@ class LambdaProxyResponse {
     return {
       body: this.body,
       headers: this.headers,
-      statusCode: this.statusCode,
+      statusCode: this.statusCode
     };
   }
 }
