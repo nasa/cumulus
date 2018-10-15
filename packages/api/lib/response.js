@@ -35,7 +35,7 @@ function findCaseInsensitiveKey(obj, keyArg) {
 }
 
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
-  deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,'); // eslint-disable-line max-len
+  deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,');
 
   if (!isFunction(context.succeed)) {
     throw new TypeError('context as object with succeed method not provided');
@@ -67,7 +67,7 @@ function buildLambdaProxyResponse(params = {}) {
 }
 
 function buildAuthorizationFailureResponse(params) {
-  deprecate('buildAuthorizationFailureResponse(), use `new AuthorizationFailureResponse()` instead,'); // eslint-disable-line max-len
+  deprecate('buildAuthorizationFailureResponse(), use `new AuthorizationFailureResponse()` instead,');
   return new AuthorizationFailureResponse(params);
 }
 
