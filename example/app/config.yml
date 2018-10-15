@@ -12,6 +12,8 @@ default:
     cnmResponseStream: '{{stackName}}-cnmResponseStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
+    AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
+    asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
     IngestGranule:
       IngestGranuleOutput:
         granules:
@@ -67,7 +69,7 @@ default:
       - '{{AWS_SUBNET}}'
 
   ecs:
-    instanceType: t2.small
+    instanceType: t2.medium
     desiredInstances: 1
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
@@ -255,8 +257,6 @@ mth-2:
     public:
       name: '{{stackName}}-public'
       type: public
-  # users:
-  #   - username: '{{EARTHDATA_LOGIN_USERNAME}}'
 
 jl:
   stackName: jl-test-integration
