@@ -76,7 +76,8 @@ module.exports = {
   // if a checksum doesn't match
   InvalidChecksum: createErrorType('InvalidChecksum'),
 
+  DuplicateFile: createErrorType('DuplicateFile'),
+
   // is raised if the PDR file doesn't match the collection
   MismatchPdrCollection: createErrorType('MismatchPdrCollection')
 };
-

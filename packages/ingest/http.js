@@ -112,7 +112,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
       Body: pass
     }).promise();
 
-    log.info('Uploading to s3 is complete', s3uri);
+    log.info('Uploading to s3 is complete (http)', s3uri);
     return s3uri;
   }
 };

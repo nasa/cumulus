@@ -1,8 +1,9 @@
 const moment = require('moment');
 const { Lambda } = require('aws-sdk');
-const { loadConfig } = require('../helpers/testUtils');
 const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
+const { loadConfig } = require('../helpers/testUtils');
+
 
 const config = loadConfig();
 
@@ -53,7 +54,7 @@ describe('The EMS report', () => {
       AWS.config.update({ region: region });
       const lambda = new Lambda();
       const response = await lambda.invoke({ FunctionName: emsReportLambda }).promise()
-        .catch( err => console.log('invoke err', err) );
+        .catch((err) => console.log('invoke err', err));
       lambdaOutput = JSON.parse(response.Payload);
     });
 
@@ -75,4 +76,3 @@ describe('The EMS report', () => {
     });
   });
 });
-

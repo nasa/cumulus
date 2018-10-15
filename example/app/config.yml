@@ -9,41 +9,44 @@ default:
     ems_provider: CUMULUS
     esHost: '{{esHost}}'
     streamName: '{{stackName}}-testStream'
+    cnmResponseStream: '{{stackName}}-cnmResponseStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
+    AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
+    asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
     IngestGranule:
       IngestGranuleOutput:
         granules:
           - files:
             - bucket: '{{buckets.protected.name}}'
-              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
+              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf"
             - bucket: '{{buckets.private.name}}'
-              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
             - bucket: '{{buckets.public.name}}'
-              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
+              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
             - bucket: '{{buckets.protected-2.name}}'
-              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml"
+              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml"
       SyncGranuleOutput:
         granules:
           - files:
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf'
+              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
+              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
-              fileStagingDir: 'file-staging/{{stackName}}/MOD09GQ___006'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg'
+              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
     SyncGranule:
       granules:
         - files:
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/replace-me-collectionId'
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/MOD09GQ___006'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
+            fileStagingDir: 'custom-staging-dir/{{stackName}}/replace-me-collectionId'
   # test configuration ends
 
   stackName: 'change-me'
@@ -66,7 +69,7 @@ default:
       - '{{AWS_SUBNET}}'
 
   ecs:
-    instanceType: t2.small
+    instanceType: t2.medium
     desiredInstances: 1
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
@@ -76,7 +79,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.1.2
+        image: cumuluss/cumulus-ecs-task:1.2.3
         cpu: 400
         memory: 700
         count: 1
@@ -123,6 +126,15 @@ default:
     provider: CUMULUS
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
+
+  stepFunctions: !!files [
+    'workflows/helloworld.yml',
+    'workflows/cnm.yml',
+    'workflows/errorsAndRetries.yml',
+    'workflows/sips.yml',
+    'workflows/ingestGranule.yml',
+    'workflows/syncGranule.yml'
+  ]
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-ecs'
@@ -188,6 +200,10 @@ cumulus-from-pr:
   stackName: test-pr-integration # used by the PR
   stackNameNoDash: TestPrIntegration
 
+cumulus-nightly:
+  stackName: nightly # used by the nightly cron job
+  stackNameNoDash: Nightly
+
 aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
@@ -241,8 +257,6 @@ mth-2:
     public:
       name: '{{stackName}}-public'
       type: public
-  # users:
-  #   - username: '{{EARTHDATA_LOGIN_USERNAME}}'
 
 jl:
   stackName: jl-test-integration
@@ -347,6 +361,20 @@ gitc:
 mvd:
   stackName: mvd
   stackNameNoDash: mvd
+  buckets:
+    internal:
+      name: '{{stackName}}-internal'
+      type: internal
+  bucket: '{{stackName}}-internal'
+
+mvd-dev:
+  stackName: mvd-dev
+  stackNameNoDash: mvdDev
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  bucket: 'mvd-internal'
 
 jc:
   stackName: jc
@@ -356,6 +384,22 @@ mhs:
   stackName: mhs
   stackNameNoDash: mhs
 
+mhs3:
+  stackName: mhs3
+  stackNameNoDash: mhs3
+
 jk:
   stackName: jk
   stackNameNoDash: jk
+
+jk2:
+  stackName: jk2
+  stackNameNoDash: jk2
+
+mboyd-test:
+  stackName: mboyd-test
+  stackNameNoDash: mboydTest
+
+mboyd-int:
+  stackName: mboyd-int
+  stackNameNoDash: mboydInt

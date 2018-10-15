@@ -1,6 +1,6 @@
 const { Lambda } = require('aws-sdk');
-const { loadConfig } = require('../helpers/testUtils');
 const { s3 } = require('@cumulus/common/aws');
+const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
 
