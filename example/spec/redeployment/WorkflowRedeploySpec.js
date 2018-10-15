@@ -1,5 +1,7 @@
 'use strict';
 
+const pRetry = require('p-retry');
+
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
@@ -8,13 +10,9 @@ const {
 
 const {
   loadConfig,
+  protectFile,
   redeploy
 } = require('../helpers/testUtils');
-
-const {
-  backupConfigYml,
-  restoreConfigYml
-} = require('../helpers/configUtils');
 
 const {
   removeWorkflow,
@@ -22,39 +20,47 @@ const {
 } = require('../helpers/workflowUtils');
 
 const workflowsYmlFile = './workflows.yml';
-const workflowsYmlCopyFile = './workflowsCopy.yml';
 const config = loadConfig();
 
 
-describe('When a workflow', () => {
-  beforeAll(async () => {
-    backupConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-  });
+const timeout = 30 * 60 * 1000; // Timout for test setup/teardown in milliseconds
+const deployTimeout = 15; // deployment timeout in minutes
 
-  afterAll(async () => {
-    // Restore workflows.yml to original and redeploy for next time tests are run
-    restoreConfigYml(workflowsYmlFile, workflowsYmlCopyFile);
-    await redeploy(config);
-  });
+function redeployWithRetries() {
+  return pRetry(
+    () => redeploy(config, { timeout: deployTimeout }),
+    {
+      retries: 2,
+      minTimeout: 0
+    }
+  );
+}
+
+describe('When a workflow', () => {
+  afterAll(redeployWithRetries);
 
   describe('is updated and deployed during a workflow execution', () => {
-    let workflowExecutionArn = null;
-    let workflowStatus = null;
+    let workflowExecutionArn;
+    let workflowStatus;
 
-    beforeAll(async () => {
-      // Kick off the workflow, don't wait for completion
-      workflowExecutionArn = await buildAndStartWorkflow(
-        config.stackName,
-        config.bucket,
-        'WaitForDeployWorkflow'
-      );
+    beforeAll(
+      async () => {
+        // Kick off the workflow, don't wait for completion
+        workflowExecutionArn = await buildAndStartWorkflow(
+          config.stackName,
+          config.bucket,
+          'WaitForDeployWorkflow'
+        );
 
-      removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
+        await protectFile(workflowsYmlFile, async () => {
+          removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
+          await redeploy(config, { timeout: deployTimeout });
+        });
 
-      await redeploy(config);
-
-      workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
-    });
+        workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
+      },
+      timeout
+    );
 
     it('the workflow executes successfully', () => {
       expect(workflowStatus).toEqual('SUCCEEDED');
@@ -77,43 +83,39 @@ describe('When a workflow', () => {
 
       it('the execution steps show the original workflow steps', () => {
         const helloWorldScheduledEvents = executionStatus.executionHistory.events.filter((event) =>
-          event.type === 'LambdaFunctionScheduled' &&
-          event.lambdaFunctionScheduledEventDetails.resource.includes('HelloWorld'));
+          (event.type === 'LambdaFunctionScheduled' &&
+          event.resource.includes('HelloWorld')));
 
         expect(helloWorldScheduledEvents.length).toEqual(1);
       });
     });
   });
 
-  describe('is removed and deployed during a workflow execution', () => {
+  // Disabled per CUMULUS-941
+  xdescribe('is removed and deployed during a workflow execution', () => {
     let workflowExecutionArn = null;
     let workflowStatus = null;
 
-    beforeAll(async () => {
-      // Kick off the workflow, don't wait for completion
-      workflowExecutionArn = await buildAndStartWorkflow(
-        config.stackName,
-        config.bucket,
-        'WaitForDeployWorkflow'
-      );
+    beforeAll(
+      async () => {
+        // Kick off the workflow, don't wait for completion
+        workflowExecutionArn = await buildAndStartWorkflow(
+          config.stackName,
+          config.bucket,
+          'WaitForDeployWorkflow'
+        );
 
-      removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
+        await protectFile(workflowsYmlFile, async () => {
+          removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
+          await redeploy(config, { timeout: deployTimeout });
+        });
 
-      await redeploy(config);
+        workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
+      },
+      timeout
+    );
 
-      // Debugging integration test sporadic failures
-      console.log(`Redeploy complete. Waiting for execution: ${workflowExecutionArn}`);
-
-      workflowStatus = await apiTestUtils.getExecution({
-        prefix: config.stackName,
-        arn: workflowExecutionArn
-      });
-
-      // This is for debugging integration test sporadic failures
-      console.log(`workflow status: ${JSON.stringify(workflowStatus)}`);
-    });
-
-    it('the workflow has executed successfully and is returned when querying the API', () => {
+    xit('the workflow has executed successfully and is returned when querying the API', () => {
       expect(workflowStatus).toBeTruthy();
       expect(workflowStatus.arn).toEqual(workflowExecutionArn);
       expect(workflowStatus.status).toEqual('completed');

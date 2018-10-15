@@ -6,6 +6,7 @@ CNMToCMA:
   s3Source:
     bucket: '{{buckets.shared.name}}'
     key: daacs/podaac/cnmToGranule-1532625517.zip
+    uniqueIdentifier: '1532625517'
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:
@@ -17,6 +18,7 @@ CnmResponse:
   s3Source:
     bucket: '{{buckets.shared.name}}'
     key: daacs/podaac/cnmResponse-1532633768.zip
+    uniqueIdentifier: '1532633768'
   launchInVpc: true
 DiscoverGranules:
   handler: index.handler
@@ -58,6 +60,7 @@ ModisProcessing:
   s3Source:
     bucket: '{{shared_data_bucket}}'
     key: deploy/cumulus-process/modis/0.5.2.zip
+    uniqueIdentifier: '0dot5dot2'
   runtime: python2.7
 MoveGranules:
   handler: index.handler
@@ -109,7 +112,6 @@ SyncGranule:
   launchInVpc: true
   envs:
     internal: '{{buckets.internal.name}}'
-
 SyncGranuleNoVpc:
   handler: index.handler
   timeout: 300
@@ -129,3 +131,9 @@ VersionUpTest:
   handler: index.handler
   memory: 128
   source: lambdas/versionUpTest
+AsyncOperationSuccess:
+  handler: lambdas.success
+  source: 'lambdas/asyncOperations/'
+AsyncOperationFail:
+  handler: lambdas.fail
+  source: 'lambdas/asyncOperations/'

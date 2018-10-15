@@ -1,7 +1,5 @@
 'use strict';
 
-const _get = require('lodash.get');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const models = require('../models');
@@ -28,7 +26,7 @@ function list(event, cb) {
  * @returns {undefined} undefined
  */
 function get(event, cb) {
-  const arn = _get(event.pathParameters, 'arn');
+  const arn = event.pathParameters.arn;
 
   const e = new models.Execution();
 
@@ -45,7 +43,7 @@ function get(event, cb) {
  * @returns {undefined} undefined
  */
 function handler(event, context) {
-  return handle(event, context, !inTestMode() /* authCheck */, (cb) => {
+  return handle(event, context, true, (cb) => {
     if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }

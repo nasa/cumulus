@@ -32,7 +32,10 @@
     "got": "^8.3.0",
     "handlebars": "^4.0.11",
     "lodash.clonedeep": "^4.5.0",
+    "lodash.orderby": "^4.6.0",
     "p-limit": "^1.2.0",
+    "p-retry": "^2.0.0",
+    "p-wait-for": "^2.0.0",
     "uuid": "^3.2.1",
     "xml2js": "^0.4.19"
   }

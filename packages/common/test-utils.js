@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint no-console: "off" */
 
 'use strict';
 
@@ -55,7 +55,7 @@ const localStackPorts = {
  */
 function localstackSupportedService(Service) {
   const serviceIdentifier = Service.serviceIdentifier;
-  return Object.keys(localStackPorts).indexOf(serviceIdentifier) !== -1;
+  return Object.keys(localStackPorts).includes(serviceIdentifier);
 }
 
 /**
@@ -113,7 +113,8 @@ function testAwsClient(Service, options) {
   if (localstackSupportedService(Service)) {
     return localStackAwsClient(Service, options);
   }
-  return new Service(Object.assign(options, { endpoint: 'http://you-forgot-to-stub-an-aws-call' }));
+
+  return {};
 }
 exports.testAwsClient = testAwsClient;
 
