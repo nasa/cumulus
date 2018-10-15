@@ -10,7 +10,6 @@ const url = require('url');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
-const promiseRetry = require('promise-retry');
 const pump = require('pump');
 
 /**

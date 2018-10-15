@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
+const isObject = require('lodash.isobject');
 
 /**
  * An asynchronous sleep/wait function
@@ -29,7 +30,7 @@ function parseException(exception) {
     return {};
   }
 
-  if (typeof exception !== 'object') {
+  if (!isObject(exception)) {
     const converted = JSON.stringify(exception);
     if (converted === 'undefined') {
       return {};
