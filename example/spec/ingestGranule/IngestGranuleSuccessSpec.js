@@ -180,21 +180,22 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  it('pulls a provider from the list of providers', async () => {
+  it('can retrieve the specific provider that was created', async () => {
     const providerList = await apiTestUtils.getProviders({ prefix: config.stackName });
-    const testId = `s3_provider${testSuffix}`;
     expect(providerList.results.length).toBeGreaterThan(0);
 
-    const foundProvider = providerList.results.find((r) => r.id === testId);
-    expect(foundProvider).not.toBeNull;
+    const providerResult = await apiTestUtils.retrieveProvider({ prefix: config.stackName, providerId: provider.id });
+    expect(providerResult).not.toBeNull;
   });
 
-  it('pulls a collection from the list of collections', async () => {
+  it('can retrieve the specific collection that was created', async () => {
     const collectionList = await apiTestUtils.getCollections({ prefix: config.stackName });
     expect(collectionList.results.length).toBeGreaterThan(0);
 
-    const foundCollection = collectionList.results.find((r) => r.name === collection.name);
-    expect(foundCollection).not.toBeNull;
+    const collectionResponse = await apiTestUtils.retrieveCollection(
+      { prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version }
+    );
+    expect(collectionResponse).not.toBeNull;
   });
 
   it('makes the granule available through the Cumulus API', async () => {
