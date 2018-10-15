@@ -22,6 +22,20 @@ Resources:
   #  BEGIN
   #################################################
 {{#each nested_templates}}
+{{#ifEquals @key "WorkflowLambdaVersions"}}
+{{#ifEquals ../useWorkflowLambdaVersions true}}
+  {{@key}}NestedStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+      {{#each ../workflowLambdas}}
+        {{@key}}LambdaFunction:
+          !Ref {{@key}}LambdaFunction
+      {{/each}}
+      TemplateURL: {{this.url}}
+{{/ifEquals}}
+{{/ifEquals}}
+{{#ifNotEquals @key "WorkflowLambdaVersions"}}
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
@@ -87,7 +101,7 @@ Resources:
             - GroupId
       {{/if}}
       TemplateURL: {{this.url}}
-
+{{/ifNotEquals}}
 {{/each}}
 
   #################################################
@@ -223,6 +237,7 @@ Resources:
   #################################################
 
   #################################################
+
   # SNS config BEGIN
   #################################################
 {{#each sns}}
@@ -307,9 +322,16 @@ Resources:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
+    {{#ifEquals ../useWorkflowLambdaVersions true}}
+        Fn::Sub:
+        - |
+            {{{ToJson this}}}
+        - { {{#each ../workflowLambdas}}{{@key}}LambdaAliasOutput: !GetAtt [WorkflowLambdaVersionsNestedStack, Outputs.{{@key}}LambdaAliasOutput],{{/each}} stackName: {{../stackName}} }
+    {{/ifEquals}}
+    {{#ifNotEquals ../useWorkflowLambdaVersions true}}
         Fn::Sub: |
           {{{ToJson this}}}
-
+    {{/ifNotEquals}}
       RoleArn: {{../iams.stepRoleArn}}
 
 {{/each}}
@@ -716,7 +738,6 @@ Resources:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
-
 {{/each}}
 
   log2elasticsearchLambdaPermissionLog:

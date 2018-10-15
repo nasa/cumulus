@@ -4,11 +4,12 @@ const { Client } = require('ssh2');
 const { PassThrough } = require('stream');
 const { join } = require('path');
 const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
+const get = require('lodash.get');
+const omit = require('lodash.omit');
+
+const { S3, KMS } = require('./aws');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-const { omit } = require('lodash');
-const get = require('lodash.get');
-const { S3, KMS } = require('./aws');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {
   constructor(...args) {
@@ -194,7 +195,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
 
     const params = { Bucket: bucket, Key: key, Body: pass };
     const result = await promiseS3Upload(params);
-    log.info('Uploading to s3 is complete', result);
+    log.info('Uploading to s3 is complete(sftp)', result);
     return s3uri;
   }
 };

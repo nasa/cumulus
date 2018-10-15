@@ -1,18 +1,16 @@
 'use strict';
 
-const _ = require('lodash');
 const { Kinesis } = require('aws-sdk');
 const {
   aws: {
-    sfn,
     receiveSQSMessages
   }
 } = require('@cumulus/common');
 
 const {
   LambdaStep,
-  getWorkflowArn,
-  timeout
+  timeout,
+  getExecutions
 } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../helpers/testUtils');
@@ -28,39 +26,42 @@ const waitPeriodMs = 1000;
 
 /**
  * Helper to simplify common setup code.  wraps function in try catch block
- * that will exit tests if the initial setup conditions fail.
+ * that will run 'cleanupCallback', then exit tests if the initial setup conditions fail.
  *
- * @param {Function} fn - function to execute
+ * @param {function} cleanupCallback - Function to execute if passed in function fails
+ * @param {Function} wrappedFunction - async function to execute
  * @param {iterable} args - arguments to pass to the function.
- * @returns {null} - no return
+ * @returns {Promise} - returns Promise returned by wrappedFunction if no exceptions are thrown.
  */
-function tryCatchExit(fn, ...args) {
+async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
   try {
-    return fn.apply(this, args);
+    return await wrappedFunction.apply(this, args);
   }
   catch (error) {
-    console.log(error);
-    console.log('Tests conditions can\'t get met...exiting.');
+    console.log(`${error}`);
+    console.log("Tests conditions can't get met...exiting.");
+    try {
+      await cleanupCallback();
+    }
+    catch (e) {
+      console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
+    }
+    // We should find a better way to do this
     process.exit(1);
   }
-  return null;
+  return Promise.reject(new Error('tryCatchExit failed unexpectedly'));
 }
-
 
 /**
- * returns the most recently executed KinesisTriggerTest workflows.
+ * returns stream status from aws-sdk
  *
- * @returns {Array<Object>} array of state function executions.
+ * @param {string} StreamName - Stream name in AWS
+ * @returns {string} stream status
  */
-async function getExecutions() {
-  const kinesisTriggerTestStpFnArn = await getWorkflowArn(testConfig.stackName, testConfig.bucket, 'KinesisTriggerTest');
-  const data = await sfn().listExecutions({
-    stateMachineArn: kinesisTriggerTestStpFnArn,
-    maxResults: maxExecutionResults
-  }).promise();
-  return (_.orderBy(data.executions, 'startDate', 'desc'));
+async function getStreamStatus(StreamName) {
+  const stream = await kinesis.describeStream({ StreamName }).promise();
+  return stream.StreamDescription.StreamStatus;
 }
-
 
 /**
  * Wait for a number of periods for a kinesis stream to become active.
@@ -182,20 +183,20 @@ async function putRecordOnStream(streamName, record) {
  * Wait for test stepfunction execution to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
- * @param {integer} maxWaitTime - maximum time to wait for the correct execution in milliseconds
+ * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
  * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsReport') {
-  let timeWaited = 0;
+async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfSnsReport') {
+  let timeWaitedSecs = 0;
   let workflowExecution;
 
   /* eslint-disable no-await-in-loop */
-  while (timeWaited < maxWaitTime && workflowExecution === undefined) {
+  while (timeWaitedSecs < maxWaitTimeSecs && workflowExecution === undefined) {
     await timeout(waitPeriodMs);
-    timeWaited += waitPeriodMs;
-    const executions = await getExecutions();
+    timeWaitedSecs += (waitPeriodMs / 1000);
+    const executions = await getExecutions('KinesisTriggerTest', testConfig.stackName, testConfig.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
     for (const execution of executions) {
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
@@ -206,7 +207,7 @@ async function waitForTestSf(recordIdentifier, maxWaitTime, firstStep = 'SfSnsRe
     }
   }
   /* eslint-disable no-await-in-loop */
-  if (timeWaited < maxWaitTime) return workflowExecution;
+  if (timeWaitedSecs < maxWaitTimeSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }
 
@@ -272,6 +273,7 @@ module.exports = {
   createOrUseTestStream,
   deleteTestStream,
   getShardIterator,
+  getStreamStatus,
   getRecords,
   kinesisEventFromSqsMessage,
   putRecordOnStream,
