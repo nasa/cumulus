@@ -2,6 +2,7 @@
 
 const AWS = require('aws-sdk');
 const get = require('lodash.get');
+const isObject = require('lodash.isobject');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { setGranuleStatus } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
@@ -14,7 +15,7 @@ const errors = require('@cumulus/common/errors');
  */
 function eventFailed(event) {
   if (event.exception) {
-    if (typeof event.exception === 'object') {
+    if (isObject(event.exception)) {
       // this is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
       if (Object.keys(event.exception).length > 0) {
         return true;

@@ -4,7 +4,10 @@ const test = require('ava');
 const drop = require('lodash.drop');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { constructCollectionId } = require('@cumulus/common');
+const {
+  constructCollectionId,
+  util: { noop }
+} = require('@cumulus/common');
 
 const models = require('../../models');
 const { Search } = require('../../es/search');
@@ -136,7 +139,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   let records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   const collectionIndex = new Search({}, 'collection');
   let indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
@@ -151,7 +154,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
   t.is(indexedRecord.dataType, 'testing');
@@ -163,7 +166,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   const response = await collectionIndex.get(constructCollectionId(c.name, c.version));
   t.is(response.detail, 'Record not found');
@@ -183,7 +186,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   let records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   const granuleIndex = new Search({}, 'granule');
   let indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
@@ -207,7 +210,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
   t.is(indexedRecord.status, 'failed');
@@ -227,7 +230,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
   t.is(indexedRecord.detail, 'Record not found');
@@ -253,7 +256,7 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   let records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   const recordIndex = new Search({}, 'execution');
   let indexedRecord = await recordIndex.get(fakeRecord.arn);
@@ -268,7 +271,7 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   indexedRecord = await recordIndex.get(fakeRecord.arn);
   t.is(indexedRecord.status, 'failed');
@@ -280,7 +283,7 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
 
   // fake the lambda trigger
-  await dbIndexer(records, {}, () => {});
+  await dbIndexer(records, {}, noop);
 
   indexedRecord = await recordIndex.get(fakeRecord.arn);
   t.is(indexedRecord.detail, 'Record not found');

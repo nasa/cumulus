@@ -9,6 +9,7 @@
 
 'use strict';
 
+const isFunction = require('lodash.isfunction');
 const isString = require('lodash.isstring');
 const deprecate = require('depd')('@cumulus/api/lib/response');
 const log = require('@cumulus/common/log');
@@ -36,7 +37,7 @@ function findCaseInsensitiveKey(obj, keyArg) {
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,'); // eslint-disable-line max-len
 
-  if (typeof context.succeed !== 'function') {
+  if (!isFunction(context.succeed)) {
     throw new TypeError('context as object with succeed method not provided');
   }
 
@@ -147,7 +148,7 @@ async function getAuthorizationFailureResponse(params) {
 }
 
 function handle(event, context, authCheck, func) {
-  if (typeof context.succeed !== 'function') {
+  if (!isFunction(context.succeed)) {
     throw new TypeError('context object with succeed method not provided');
   }
 

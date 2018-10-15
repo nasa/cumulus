@@ -16,7 +16,7 @@ const {
   promiseS3Upload
 } = require('@cumulus/common/aws');
 
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
 const {
   randomString,
   validateConfig,
