@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { Collection } = require('@cumulus/api/models');
 const {
   aws: { parseS3Uri }
 } = require('@cumulus/common');
@@ -11,9 +10,9 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  LambdaStep
+  LambdaStep,
+  api: apiTestUtils
 } = require('@cumulus/integration-tests');
-const { api: apiTestUtils } = require('@cumulus/integration-tests');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -48,8 +47,6 @@ describe('When the Ingest Granules workflow is configured to handle duplicates a
   let workflowExecution;
   let inputPayload;
   let granulesIngested;
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const collectionModel = new Collection();
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -60,7 +57,11 @@ describe('When the Ingest Granules workflow is configured to handle duplicates a
     ]);
 
     // set collection duplicate handling to 'error'
-    await collectionModel.update(collection, { duplicateHandling: 'error' });
+    await apiTestUtils.updateCollection({
+      prefix: config.stackName,
+      collection,
+      updateParams: { duplicateHandling: 'error' }
+    });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
