@@ -55,7 +55,7 @@ const localStackPorts = {
  */
 function localstackSupportedService(Service) {
   const serviceIdentifier = Service.serviceIdentifier;
-  return Object.keys(localStackPorts).indexOf(serviceIdentifier) !== -1;
+  return Object.keys(localStackPorts).includes(serviceIdentifier);
 }
 
 /**
