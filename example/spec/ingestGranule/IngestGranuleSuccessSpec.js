@@ -39,13 +39,19 @@ const {
   createTestSuffix,
   getFilesMetadata
 } = require('../helpers/testUtils');
+
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../helpers/granuleUtils');
+
+const { getConfigObject } = require('../helpers/configUtils');
+
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestAndPublishGranule';
+
+const workflowConfigFile = './workflows/sips.yml';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -459,6 +465,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('When accessing a workflow execution via the API', () => {
       let executionStatus;
+      let allStates;
 
       beforeAll(async () => {
         const executionArn = workflowExecution.executionArn;
@@ -466,6 +473,9 @@ describe('The S3 Ingest Granules workflow', () => {
           prefix: config.stackName,
           arn: executionArn
         });
+
+        const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
+        allStates = Object.keys(workflowConfig.States);
       });
 
       it('returns the inputs and outputs for the entire workflow', async () => {
