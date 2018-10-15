@@ -8,6 +8,10 @@
 
 Click [here](https://nasa.github.io/cumulus) for the full documentation.
 
+## More Information
+
+For more information about this project of more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
+
 ## Installing and deploying
 
 ### Prerequisites
