@@ -2,11 +2,11 @@
 
 'use strict';
 
+const orderBy = require('lodash.orderby');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
-const _ = require('lodash');
 const {
   aws: { s3, sfn },
   stepFunctions: {
@@ -97,7 +97,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
   let executionStatus;
   let iteration = 0;
   const sleepPeriodMs = 5000;
-  const maxMinutesWaitedForExecutionStart = 2.5;
+  const maxMinutesWaitedForExecutionStart = 5;
   const iterationsPerMinute = Math.floor(60000 / sleepPeriodMs);
   const maxIterationsToStart = Math.floor(maxMinutesWaitedForExecutionStart * iterationsPerMinute);
 
@@ -111,7 +111,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
     }
     catch (err) {
       if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
-        console.log(`waitForCompletedExecution failed: ${err.code}`);
+        console.log(`waitForCompletedExecution failed: ${err.code}, arn: ${executionArn}`);
         throw err;
       }
       console.log("Execution does not exist... assuming it's still starting up.");
@@ -595,7 +595,7 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
     stateMachineArn: kinesisTriggerTestStpFnArn,
     maxResults: maxExecutionResults
   }).promise();
-  return (_.orderBy(data.executions, 'startDate', 'desc'));
+  return (orderBy(data.executions, 'startDate', 'desc'));
 }
 
 module.exports = {

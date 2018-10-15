@@ -12,10 +12,10 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const isString = require('lodash.isstring');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { constructCollectionId } = require('@cumulus/common');
 
 const { Search, defaultIndexAlias } = require('./search');
@@ -56,7 +56,7 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
         record = JSON.parse(p.message);
       }
       // level is number in elasticsearch
-      if (typeof record.level === 'string') record.level = log.convertLogLevel(record.level);
+      if (isString(record.level)) record.level = log.convertLogLevel(record.level);
     }
     catch (e) {
       record = {
@@ -371,7 +371,6 @@ async function handlePayload(event) {
  * @param  {Object} event - incoming message from CloudWatch
  * @param  {Object} context - aws lambda context object
  * @param  {function} cb - aws lambda callback function
- * @returns {Promise} undefined
  */
 function logHandler(event, context, cb) {
   log.debug(event);
@@ -440,8 +439,3 @@ module.exports = {
   granule,
   pdr
 };
-
-justLocalRun(() => {
-  // const a = {};
-  // handler(a, {}, (e, r) => log.info(e, r));
-});

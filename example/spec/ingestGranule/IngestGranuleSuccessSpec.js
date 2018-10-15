@@ -120,13 +120,20 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload.granules[0].dataType += testSuffix;
 
     // pre-stage destination files for MoveGranules
-    const preStageFiles = expectedPayload.granules[0].files.map(async (file) => {
+    const preStageFiles = expectedPayload.granules[0].files.map((file) => {
+      // CMR file will be skipped by MoveGranules, so no need to stage it
+      if (file.filename.slice(-8) === '.cmr.xml') {
+        return Promise.resolve();
+      }
       const params = {
         Bucket: file.bucket,
         Key: file.filepath,
         Body: randomString()
       };
-      await s3().putObject(params).promise();
+      // expect duplicates to be reported
+      // eslint-disable-next-line no-param-reassign
+      file.duplicate_found = true;
+      return s3().putObject(params).promise();
     });
     await Promise.all(preStageFiles);
     startTime = new Date();
@@ -200,10 +207,17 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the SyncGranules task', () => {
+    let lambdaInput;
     let lambdaOutput;
 
     beforeAll(async () => {
+      lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+    });
+
+    it('receives the correct collection and provider configuration', () => {
+      expect(lambdaInput.meta.collection.name).toEqual(collection.name);
+      expect(lambdaInput.meta.provider.id).toEqual(provider.id);
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
@@ -229,16 +243,19 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     afterAll(async () => {
-      await s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise();
-      await s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise();
-      await s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise();
+      await Promise.all([
+        s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise(),
+        s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise(),
+        s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise()
+      ]);
     });
 
-    it('has a payload with correct buckets and filenames and filesizes', () => {
+    it('has a payload with correct buckets, filenames, filesizes, and duplicate reporting', () => {
       files.forEach((file) => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
+        expect(file.duplicate_found).toBe(expectedFile.duplicate_found);
         if (file.fileSize) {
           expect(file.fileSize).toEqual(expectedFile.fileSize);
         }

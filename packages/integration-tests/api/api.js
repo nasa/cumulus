@@ -131,7 +131,7 @@ async function removeFromCMR({ prefix, granuleId }) {
     return JSON.parse(payload.body);
   }
   catch (error) {
-    console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${payload}`);
+    console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
     throw error;
   }
 }
