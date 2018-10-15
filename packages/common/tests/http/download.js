@@ -4,16 +4,16 @@ const fs = require('fs');
 const nock = require('nock');
 const os = require('os');
 const path = require('path');
-const pify = require('pify');
 const test = require('ava');
+const { promisify } = require('util');
 
 const http = require('../../http');
 const { randomString } = require('../../test-utils');
 
-const readFile = pify(fs.readFile);
+const readFile = promisify(fs.readFile);
 
 const deleteFile = (file) => {
-  const pUnlink = pify(fs.unlink);
+  const pUnlink = promisify(fs.unlink);
   return pUnlink(file)
     .catch((err) => {
       if (err.code !== 'ENOENT') throw err;
