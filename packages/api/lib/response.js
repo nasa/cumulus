@@ -12,7 +12,7 @@
 const isFunction = require('lodash.isfunction');
 const isString = require('lodash.isstring');
 const deprecate = require('depd')('@cumulus/api/lib/response');
-const log = require('@cumulus/common/log');
+const { log } = require('@cumulus/common');
 const { User } = require('../models');
 const { errorify } = require('./utils');
 const {
@@ -174,10 +174,24 @@ function handle(event, context, authCheck, func) {
   return func(cb);
 }
 
+const notFoundResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 404,
+  body: { message: 'Not found' }
+});
+
+const internalServerErrorResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 500,
+  body: { message: 'Internal Server Error' }
+});
+
 module.exports = {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
   handle,
+  internalServerErrorResponse,
+  notFoundResponse,
   resp
 };
