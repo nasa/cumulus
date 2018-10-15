@@ -304,12 +304,11 @@ test('PUT updates an existing collection', (t) => {
 });
 
 test.serial('PUT updates an existing collection and returns it in listing', (t) => {
-  const newPath = '/new_path';
-  const updatedCollection = Object.assign(t.context.testCollection, {
-    provider_path: newPath
-  });
+  const newPath = `/${randomString()}`;
+  const updateParams = { provider_path: newPath };
+  const updatedCollection = Object.assign(t.context.testCollection, updateParams);
   const updateEvent = {
-    body: JSON.stringify(updatedCollection),
+    body: JSON.stringify(updateParams),
     pathParameters: {
       collectionName: t.context.testCollection.name,
       version: t.context.testCollection.version
@@ -330,13 +329,13 @@ test.serial('PUT updates an existing collection and returns it in listing', (t) 
       const { results } = JSON.parse(response.body);
       stub.restore();
       t.is(results.length, 1);
-      t.is(results[0].provider_path, newPath);
+      t.deepEqual(results[0], updatedCollection);
     });
   });
 });
 
 test('PUT without an Authorization header does not update an existing collection', (t) => {
-  const newPath = '/new_path';
+  const newPath = `/${randomString()}`;
   const updateEvent = {
     body: JSON.stringify({
       name: t.context.testCollection.name,

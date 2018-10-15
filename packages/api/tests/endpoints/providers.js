@@ -282,6 +282,55 @@ test('PUT updates an existing provider', (t) => {
   });
 });
 
+test.serial('PUT updates an existing collection and returns it in listing', (t) => {
+  const updateParams = {
+    globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
+  };
+  const updateEvent = {
+    pathParameters: { id: t.context.testProvider.id },
+    body: JSON.stringify(updateParams),
+    httpMethod: 'PUT',
+    headers: authHeaders
+  };
+  const updatedProvider = Object.assign(t.context.testProvider, updateParams);
+
+  t.plan(2);
+  return testEndpoint(providerEndpoint, updateEvent, (response) => {
+    const listEvent = {
+      httpMethod: 'GET',
+      headers: authHeaders
+    };
+
+    const stub = sinon.stub(Search.prototype, 'query').resolves({
+      results: [updatedProvider]
+    });
+    return testEndpoint(providerEndpoint, listEvent, (response) => {
+      const { results } = JSON.parse(response.body);
+      stub.restore();
+      t.is(results.length, 1);
+      t.deepEqual(results[0], updatedProvider);
+    });
+  });
+});
+
+test('PUT without an Authorization header does not update an existing collection', (t) => {
+  const updatedLimit = t.context.testProvider.globalConnectionLimit + 1;
+  const updateEvent = {
+    pathParameters: { id: t.context.testProvider.id },
+    body: JSON.stringify({ globalConnectionLimit: updatedLimit }),
+    httpMethod: 'PUT',
+    headers: {}
+  };
+
+  return testEndpoint(providerEndpoint, updateEvent, async (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+    const provider = await providerModel.get({
+      id: t.context.testProvider.id
+    });
+    t.is(provider.globalConnectionLimit, t.context.testProvider.globalConnectionLimit);
+  });
+});
+
 test('DELETE deletes an existing provider', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
