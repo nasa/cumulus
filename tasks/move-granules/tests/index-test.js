@@ -175,9 +175,6 @@ test.serial('should overwrite files', async (t) => {
   try {
     await moveGranules(newPayload);
   }
-  catch (err) {
-    t.fail();
-  }
   finally {
     const updatedFile = await headObject(
       t.context.endBucket,
