@@ -76,7 +76,7 @@ class LambdaProxyResponse {
     return {
       body: this.body,
       headers: this.headers,
-      statusCode: this.statusCode,
+      statusCode: this.statusCode
     };
   }
 }
@@ -106,8 +106,12 @@ class AuthorizationFailureResponse extends LambdaProxyResponse {
 exports.AuthorizationFailureResponse = AuthorizationFailureResponse;
 
 class NotFoundResponse extends LambdaProxyResponse {
-  constructor() {
-    super({ statusCode: 404 });
+  constructor({ json, body }) {
+    super({
+      json,
+      body,
+      statusCode: 404
+    });
   }
 }
 exports.NotFoundResponse = NotFoundResponse;
