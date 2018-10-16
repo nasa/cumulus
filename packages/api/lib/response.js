@@ -13,7 +13,7 @@ const isFunction = require('lodash.isfunction');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const deprecate = require('depd')('@cumulus/api/lib/response');
-const log = require('@cumulus/common/log');
+const { log } = require('@cumulus/common');
 const proxy = require('lambda-proxy-utils');
 const { User } = require('../models');
 const { errorify } = require('./utils');
@@ -116,11 +116,14 @@ function buildLambdaProxyResponse(params = {}) {
   let body = bodyArg;
 
   // Set required response headers
-  const requiredHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Strict-Transport-Security': 'max-age=31536000'
-  };
-  const headers = Object.assign({}, headersArg, requiredHeaders);
+  const headers = Object.assign(
+    {},
+    headersArg,
+    {
+      'Access-Control-Allow-Origin': '*',
+      'Strict-Transport-Security': 'max-age=31536000'
+    }
+  );
 
   if (json) {
     // Make sure that the body argument is an array or an object
@@ -291,10 +294,24 @@ function handle(event, context, authCheck, func) {
   return func(cb);
 }
 
+const notFoundResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 404,
+  body: { message: 'Not found' }
+});
+
+const internalServerErrorResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 500,
+  body: { message: 'Internal Server Error' }
+});
+
 module.exports = {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
   handle,
+  internalServerErrorResponse,
+  notFoundResponse,
   resp
 };
