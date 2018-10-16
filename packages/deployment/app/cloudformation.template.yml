@@ -70,6 +70,12 @@ Resources:
           Fn::GetAtt:
             - CreateReconciliationReportLambdaFunction
             - Arn
+        BulkDeleteLambdaFunction:
+          Fn::GetAtt:
+            - BulkDeleteLambdaFunction
+            - Arn
+        EcsCluster: !Ref CumulusECSCluster
+        AsyncOperationTaskDefinition: !Ref AsyncOperationTaskDefinition
       {{#each ../apis}}
         {{name}}RestApi:
           Ref: {{name}}RestApi
@@ -1047,6 +1053,103 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
+{{/each}}
+
+{{#each ecs.tasks}}
+  # adding TaskDefinition for Lambda/ECS tasks
+  {{@key}}TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+    {{# if this.volumes}}
+      Volumes:
+      {{# each this.volumes}}
+        - Name: {{name}}
+          Host:
+            SourcePath: {{path}}
+      {{/each}}
+    {{/if}}
+    {{# if this.networkMode}}
+      NetworkMode: {{this.networkMode}}
+    {{/if}}
+      ContainerDefinitions:
+      - Name: {{@key}}
+        Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}10{{/if}}
+        Essential: true
+      {{# if this.volumes}}
+        MountPoints:
+        {{# each this.volumes}}
+          - SourceVolume: {{name}}
+            ContainerPath: {{dst}}
+        {{/each}}
+
+      {{/if}}
+      {{# if this.privileged }}
+        Privileged: true
+      {{/if}}
+
+        Environment:
+    {{#each this.envs}}
+      {{# if this.function}}
+        {{#if this.array}}
+          - Name: {{@key}}
+            Value:
+              {{this.function}}:
+              {{#each this.array}}
+                - {{this}}
+              {{/each}}
+        {{/if}}
+        {{#if this.value}}
+          - Name: {{@key}}
+            Value:
+              {{this.function}}: {{this.value}}
+        {{/if}}
+      {{else}}
+          - Name: {{@key}}
+            Value: {{{this}}}
+      {{/if}}
+    {{/each}}
+      {{# if ../ecs.docker}}
+        Image: {{image}}
+      {{else}}
+        Image:
+          Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
+      {{/if}}
+        MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
+    {{# if this.commands }}
+        Command:
+      {{# each this.commands }}
+        {{# if this.function}}
+          - {{this.function}}: {{this.value}}
+        {{else}}
+          - {{{ @this }}}
+        {{/if}}
+      {{/each}}
+    {{/if}}
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group:
+              Ref: {{@key}}EcsLogs
+            awslogs-region:
+              Fn::Sub: ${AWS::Region}
+
+  {{@key}}EcsLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+
+  {{@key}}EcsLogSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}EcsLogs
+      - log2elasticsearchLambdaPermissionLog
+    Properties:
+      DestinationArn:
+        Fn::GetAtt:
+          - log2elasticsearchLambdaFunction
+          - Arn
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      FilterPattern: ""
 {{/each}}
 {{/if}}
   #################################################
