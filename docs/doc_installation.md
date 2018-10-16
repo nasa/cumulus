@@ -4,7 +4,7 @@ title: Cumulus Docs Installation
 hide_title: true
 ---
 
-# Cumulus Docs
+# Cumulus Docs Installation
 
 # Local Setup
 

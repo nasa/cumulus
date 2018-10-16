@@ -17,7 +17,7 @@ const users = [
     //image: '/img/docusaurus.svg',
     //infoLink: 'https://www.facebook.com',
     //pinned: true,
-  },
+  }
 ];
 
 const siteConfig = {
@@ -39,10 +39,10 @@ const siteConfig = {
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
     { doc: 'cumulus-docs-readme', label: 'Developer Docs' },
-    { doc: 'data-cookbooks/about-cookbooks', label: 'Data-Cookbooks'},
+    { doc: 'data-cookbooks/about-cookbooks', label: 'Data-Cookbooks' },
     { href: 'https://nasa.github.io/cumulus-api', label: 'API Docs' },
     { doc: 'team', label: 'Team' },
-    { search: true },
+    { search: true }
   ],
 
   /* Colors for website */
@@ -70,7 +70,7 @@ const siteConfig = {
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
-    theme: 'default',
+    theme: 'default'
   },
 
   // Add custom scripts here that would be placed in <script> tags.
@@ -79,7 +79,7 @@ const siteConfig = {
   // On page navigation for the current documentation page.
   onPageNav: 'separate',
   // No .html extensions for paths.
-  cleanUrl: true,
+  cleanUrl: true
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
