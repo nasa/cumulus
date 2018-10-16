@@ -13,6 +13,7 @@ const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { moveGranuleFiles } = require('@cumulus/ingest/granule');
 const { constructCollectionId } = require('@cumulus/common');
+const { describeExecution } = require('@cumulus/common/step-functions');
 
 const Manager = require('./base');
 
@@ -85,28 +86,29 @@ class Granule extends Manager {
   /**
    * start the re-ingest of a given granule object
    *
-   * @param {Object} g - the granule object
+   * @param {Object} granule - the granule object
    * @returns {Promise<undefined>} - undefined
    */
-  async reingest(g) {
-    const { name, version } = deconstructCollectionId(g.collectionId);
+  async reingest(granule) {
+    const executionArn = path.basename(granule.execution);
 
-    // get the payload of the original execution
-    const status = await aws.StepFunction.getExecutionStatus(path.basename(g.execution));
-    const originalMessage = JSON.parse(status.execution.input);
+    const executionDescription = await describeExecution(executionArn);
+    const originalMessage = JSON.parse(executionDescription.input);
+
+    const { name, version } = deconstructCollectionId(granule.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
       workflow: 'IngestGranule',
       meta: originalMessage.meta,
       payload: originalMessage.payload,
-      provider: g.provider,
+      provider: granule.provider,
       collection: {
         name,
         version
       }
     });
 
-    await this.updateStatus({ granuleId: g.granuleId }, 'running');
+    await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
     await aws.invoke(process.env.invoke, lambdaPayload);
   }

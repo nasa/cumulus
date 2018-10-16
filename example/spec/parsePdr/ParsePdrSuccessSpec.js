@@ -1,4 +1,3 @@
-const { get } = require('lodash');
 const { Pdr, Execution } = require('@cumulus/api/models');
 const { constructCollectionId } = require('@cumulus/common');
 const {
@@ -269,8 +268,8 @@ describe('Parse PDR workflow\n', () => {
       for (let i = 0; i < events.length; i += 1) {
         const currentEvent = events[i];
         if (currentEvent.type === 'TaskStateExited' &&
-        get(currentEvent, 'name') === checkStatusTaskName) {
-          const output = get(currentEvent, 'output');
+          currentEvent.name === checkStatusTaskName) {
+          const output = currentEvent.output;
           const isFinished = output.payload.isFinished;
 
           // get the next task executed
@@ -279,8 +278,8 @@ describe('Parse PDR workflow\n', () => {
             i += 1;
             const nextEvent = events[i];
             if (nextEvent.type === 'TaskStateEntered' &&
-              get(nextEvent, 'name')) {
-              nextTask = get(nextEvent, 'name');
+              nextEvent.name) {
+              nextTask = nextEvent.name;
             }
           }
 
