@@ -5,6 +5,7 @@ const pRetry = require('p-retry');
 const uuidv4 = require('uuid/v4');
 
 const {
+  isThrottlingException,
   sfn,
   toSfnExecutionName
 } = require('./aws');
@@ -41,8 +42,6 @@ exports.constructStepFunctionInput = (resources, provider, collection) => {
 const logSfnThrottlingException = (fn) => {
   log.debug(`ThrottlingException in stepfunctions.${fn}(), will retry`);
 };
-
-const isThrottlingException = (err) => err.code === 'ThrottlingException';
 
 const retryOnThrottlingException = (err) => {
   if (isThrottlingException(err)) throw err;
