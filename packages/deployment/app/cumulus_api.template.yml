@@ -29,6 +29,12 @@ Parameters:
   CreateReconciliationReportLambdaFunction:
     Type: String
     Description: 'CreateReconciliationReport lambda function arn'
+  BulkDeleteLambdaFunction:
+    Type: String
+  AsyncOperationTaskDefinition:
+    Type: String
+  EcsCluster:
+    Type: String
 {{#each parent.apis}}
   {{name}}RestApi:
     Type: String
@@ -190,7 +196,7 @@ Resources:
             {{this.function}}:
             {{#each this.array}}
               - {{this}}
-            {{/each}}          
+            {{/each}}
         {{/if}}
         {{#if this.value}}
           {{@key}}:
@@ -214,7 +220,7 @@ Resources:
       Tags:
         - Key: Project
           Value: {{../stackName}}
-      
+
   {{# if this.launchInVpc }}
     {{# if ../parent.vpc }}
       VpcConfig:
@@ -283,4 +289,4 @@ Resources:
   # DynamoDB Event Source Mapping END
   #################################################
 {{/if}}
-  
+

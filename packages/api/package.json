@@ -18,6 +18,7 @@
   },
   "ava": {
     "files": "tests/**/*.js",
+    "fail-fast": true,
     "serial": true
   },
   "nyc": {
@@ -59,17 +60,21 @@
     "lodash.drop": "^4.1.1",
     "lodash.get": "^4.4.2",
     "lodash.has": "^4.5.2",
+    "lodash.iserror": "^3.1.1",
     "lodash.isfunction": "^3.0.9",
     "lodash.isnumber": "^3.0.3",
     "lodash.isobject": "^3.0.2",
     "lodash.isstring": "^4.0.1",
     "lodash.merge": "^4.5.0",
     "lodash.omit": "^4.5.0",
+    "lodash.pick": "^4.4.0",
     "lodash.sortby": "^4.7.0",
     "lodash.uniqby": "^4.7.0",
     "moment": "^2.22.1",
     "node-forge": "^0.7.1",
     "p-limit": "^1.2.0",
+    "p-retry": "^2.0.0",
+    "querystring": "^0.2.0",
     "split2": "^2.2.0",
     "uuid": "^3.2.1"
   },
@@ -83,8 +88,8 @@
     "nyc": "^11.6.0",
     "rewire": "^4.0.1",
     "sinon": "^4.5.0",
-    "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14",
+    "webpack": "~4.5.0",
     "xml2js": "^0.4.19"
   }
 }
