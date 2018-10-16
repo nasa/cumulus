@@ -6,7 +6,7 @@ const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const {
-  getCmrFiles, getGranuleId, getRenamedS3File,
+  getCmrFiles, getGranuleId, getRenamedS3File, isFileRenamed,
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
 const urljoin = require('url-join');
@@ -84,7 +84,9 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
       collection.files.forEach((fileConfig) => {
-        const match = file.name.match(fileConfig.regex);
+        const filenameWORenameSuffix = isFileRenamed(file.name)
+          ? file.name.split('.').slice(0, -1).join('.') : file.name;
+        const match = filenameWORenameSuffix.match(fileConfig.regex);
 
         if (match) {
           if (!file.url_path) {

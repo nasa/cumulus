@@ -974,6 +974,17 @@ async function getRenamedS3File(bucket, key) {
   return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, fileSize: c.Size }));
 }
 
+/**
+ * check to see if the file has the suffix with timestamp '.vYYYYMMDDTHHmmssSSS'
+ *
+ * @param {string} filename - name of the file
+ * @returns {boolean} whether the file is renamed
+ */
+function isFileRenamed(filename) {
+  // eslint-disable-next-line max-len
+  const suffixRegex = '\\.v[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])T(2[0-3]|[01][0-9])[0-5][0-9][0-5][0-9][0-9]{3}$';
+  return (filename.match(suffixRegex) !== null);
+}
 
 module.exports.selector = selector;
 module.exports.Discover = Discover;
@@ -991,6 +1002,7 @@ module.exports.getCmrFiles = getCmrFiles;
 module.exports.getMetadata = getMetadata;
 module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
+module.exports.isFileRenamed = isFileRenamed;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
 module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
