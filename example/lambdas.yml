@@ -131,3 +131,9 @@ VersionUpTest:
   handler: index.handler
   memory: 128
   source: lambdas/versionUpTest
+AsyncOperationSuccess:
+  handler: lambdas.success
+  source: 'lambdas/asyncOperations/'
+AsyncOperationFail:
+  handler: lambdas.fail
+  source: 'lambdas/asyncOperations/'

@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const os = require('os');
 const path = require('path');
-const { chunk } = require('lodash');
+const chunk = require('lodash.chunk');
 const restore = require('@cumulus/api/bin/restore');
 const backup = require('@cumulus/api/bin/backup');
 const { Granule } = require('@cumulus/api/models');

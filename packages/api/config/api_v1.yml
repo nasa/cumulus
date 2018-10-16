@@ -430,3 +430,50 @@ ApiReconciliationReportV1:
       method: delete
       cors: true
       api: backend
+
+AsyncOperationsV1:
+  handler: index.asyncOperations
+  apiRole: true
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    stackName: '{{parent.stackName}}'
+    systemBucket: '{{parent.bucket}}'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    AsyncOperationsTable:
+      function: Ref
+      value: AsyncOperationsTableDynamoDB
+  apiGateway:
+    - api: backend
+      path: v1/asyncOperations/{id}
+      method: get
+      cors: true
+
+ApiBulkDeleteV1:
+  handler: index.bulkDeleteEndpoint
+  apiRole: true
+  source: 'node_modules/@cumulus/api/dist/'
+  apiGateway:
+    - api: backend
+      path: v1/bulkDelete
+      method: post
+      cors: true
+  envs:
+    EcsCluster:
+      function: Ref
+      value: EcsCluster
+    AsyncOperationsTable:
+      function: Ref
+      value: AsyncOperationsTableDynamoDB
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    BulkDeleteLambda:
+      function: Ref
+      value: BulkDeleteLambdaFunction
+    AsyncOperationTaskDefinition:
+      function: Ref
+      value: AsyncOperationTaskDefinition
+    stackName: '{{parent.stackName}}'
+    systemBucket: '{{parent.bucket}}'
