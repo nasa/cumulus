@@ -40,7 +40,8 @@ const testSuffix = createTestSuffix(testId);
 const testDataFolder = createTestDataPath(testId);
 const ruleSuffix = globalReplace(testSuffix, '-', '_');
 
-const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
+const recordTemplate = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
+const record = { ...recordTemplate };
 record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
 record.provider += testSuffix;
 record.collection += testSuffix;
