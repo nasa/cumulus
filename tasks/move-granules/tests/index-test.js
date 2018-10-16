@@ -88,6 +88,24 @@ test.serial('should move files to final location', async (t) => {
   t.true(check);
 });
 
+test.serial('should move renamed files in staging area to final location', async (t) => {
+  const newPayload = buildPayload(t);
+  // eslint-disable-next-line max-len
+  const renamedFile = `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
+  newPayload.input.push(renamedFile);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: 'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705'
+  });
+
+  t.true(check);
+});
+
 test.serial('should update filenames with metadata fields', async (t) => {
   const newPayload = buildPayload(t);
   const expectedFilenames = getExpectedOuputFileNames(t);
