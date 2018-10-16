@@ -422,6 +422,32 @@ async function updateCollection({ prefix, collection, updateParams }) {
   });
 }
 
+/**
+ * Update a provider in Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.collection - the provider object
+ * @param {string} params.collection.id - the provider id (required)
+ * @param {string} params.updateParams - key/value to update on the provider
+ * @returns {Promise<Object>} - the updated provider from the API
+ */
+async function updateProvider({ prefix, provider, updateParams }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiProvidersDefault',
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/providers',
+      path: '/providers',
+      body: JSON.stringify(Object.assign(provider, updateParams)),
+      pathParameters: {
+        id: provider.id
+      }
+    }
+  });
+}
+
 module.exports = {
   applyWorkflow,
   callCumulusApi,
@@ -438,5 +464,6 @@ module.exports = {
   postBulkDelete,
   reingestGranule,
   removeFromCMR,
-  updateCollection
+  updateCollection,
+  updateProvider
 };
