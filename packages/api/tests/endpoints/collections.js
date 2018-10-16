@@ -318,7 +318,7 @@ test.serial('PUT updates an existing collection and returns it in listing', (t) 
   };
 
   t.plan(2);
-  return testEndpoint(collectionsEndpoint, updateEvent, (response) => {
+  return testEndpoint(collectionsEndpoint, updateEvent, () => {
     const listEvent = {
       httpMethod: 'GET',
       headers: authHeaders
@@ -355,7 +355,7 @@ test('PUT without an Authorization header does not update an existing collection
     const collection = await collectionModel.get({
       name: t.context.testCollection.name,
       version: t.context.testCollection.version
-    })
+    });
     t.is(collection.provider_path, t.context.testCollection.provider_path);
   });
 });

@@ -295,7 +295,7 @@ test.serial('PUT updates an existing provider and returns it in listing', (t) =>
   const updatedProvider = Object.assign(t.context.testProvider, updateParams);
 
   t.plan(2);
-  return testEndpoint(providerEndpoint, updateEvent, (response) => {
+  return testEndpoint(providerEndpoint, updateEvent, () => {
     const listEvent = {
       httpMethod: 'GET',
       headers: authHeaders
