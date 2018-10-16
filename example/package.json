@@ -45,6 +45,7 @@
     "@cumulus/test-processing": "^1.10.1",
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
+    "p-retry": "^2.0.0",
     "sleep-promise": "^8.0.1"
   },
   "devDependencies": {
@@ -65,7 +66,6 @@
     "lodash.unset": "^4.5.2",
     "moment": "^2.22.2",
     "node-forge": "^0.7.5",
-    "p-retry": "^2.0.0",
     "tempy": "^0.2.1",
     "url-join": "^1.1.0",
     "uuid": "^3.2.1"

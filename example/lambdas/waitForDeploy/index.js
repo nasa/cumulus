@@ -1,50 +1,58 @@
 'use strict';
 
-const { promisify } = require('util');
-const { CloudFormation } = require('aws-sdk');
+const aws = require('@cumulus/common/aws');
+const CloudFormationGateway = require('@cumulus/common/CloudFormationGateway');
+const log = require('@cumulus/common/log');
+const pRetry = require('p-retry');
 
-const promisifiedSetTimeout = promisify(setTimeout);
-
-const retryMs = 3000;
 const maxRetries = 50;
+
+const isRunningStatus = (status) => status.endsWith('_IN_PROGRESS');
+
+/**
+ * Wait for a CloudFormation stack to finish deploying
+ *
+ * @param {CloudFormationGateway} cloudFormation - a CloudFormationGateway
+ *   instance
+ * @param {string} stackName - the name of the stack to wait for
+ */
+async function waitForDeployment(cloudFormation, stackName) {
+  let deploymentHasStarted = false;
+
+  await pRetry(
+    async () => {
+      const stackStatus = await cloudFormation.getStackStatus(stackName);
+
+      log.info(`Stack status: ${JSON.stringify(stackStatus)}`);
+
+      if (isRunningStatus(stackStatus)) {
+        deploymentHasStarted = true;
+      }
+
+      if (!deploymentHasStarted || isRunningStatus(stackStatus)) {
+        throw new Error('Waiting for deployment to finish');
+      }
+    },
+    {
+      retries: maxRetries,
+      maxTimeout: 5000
+    }
+  );
+}
+exports.waitForDeployment = waitForDeployment;
 
 /**
  * Waits for a stack deployment to occur. If no deployment
  * occurs, will time out and error.
  *
  * @param {Object} event - AWS event
- * @param {Object} context - an AWS Lambda context
- * @param {Function} callback - an AWS Lambda handler
- * @returns {undefined} - does not return a value
+ * @returns {Promise} - resolves when stack has reached terminal state
  */
-async function handler(event, context, callback) {
-  const cloudformation = new CloudFormation();
-  const stack = event.meta.stack;
-  let retries = 0;
-  let deployStarted = false;
+async function handler(event) {
+  const cloudFormation = new CloudFormationGateway(aws.cf());
 
-  /* eslint-disable no-await-in-loop */
-  while (retries < maxRetries) {
-    const stackDetails = await cloudformation.describeStacks({ StackName: stack })
-      .promise()
-      .catch((err) => callback(err));
+  await waitForDeployment(cloudFormation, event.meta.stack);
 
-    console.log(`stack status: ${JSON.stringify(stackDetails.Stacks[0].StackStatus)}`);
-
-    if (stackDetails.Stacks[0].StackStatus.includes('IN_PROGRESS')) {
-      deployStarted = true;
-    }
-    else if (deployStarted) { // state is not in progress and we know a deploy happened
-      callback(null, event);
-      return;
-    }
-
-    await promisifiedSetTimeout(retryMs);
-
-    retries += 1;
-  }
-
-  callback(new Error('Stack not in complete state'));
+  return event;
 }
-
 exports.handler = handler;
