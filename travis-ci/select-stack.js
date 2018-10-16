@@ -8,7 +8,7 @@ function determineIntegrationTestStackName(cb) {
   if (!branch) return cb('none');
 
   // Nightly cron job
-  if (process.env.TRAVIS_EVENT_TYPE == 'cron') return cb('cumulus-nightly');
+  if (process.env.TRAVIS_EVENT_TYPE === 'cron') return cb('cumulus-nightly');
 
   if (branch === 'master') return cb('cumulus-from-source');
 
@@ -21,7 +21,9 @@ function determineIntegrationTestStackName(cb) {
     'Lauren Frederick': 'lf',
     laurenfrederick: 'lf',
     'Mark Boyd': 'mboyd-int',
+    Marc: 'mth-2',
     yjpa7145: 'mth-2',
+    mhuffnagle: 'mth-2',
     'Matt Savoie': 'mhs',
     'Jonathan Kovarik': 'jk',
     'Menno Van Diermen': 'mvd',
@@ -37,4 +39,4 @@ function determineIntegrationTestStackName(cb) {
   });
 }
 
-determineIntegrationTestStackName((r) => console.log(r));
+determineIntegrationTestStackName(console.log); // eslint-disable-line no-console
