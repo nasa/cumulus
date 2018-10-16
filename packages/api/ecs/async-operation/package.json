@@ -1,0 +1,11 @@
+{
+  "engines": {
+    "node": ">=8.10.0"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.279.1",
+    "got": "^9.2.2",
+    "lodash.iserror": "^3.1.1",
+    "p-retry": "^2.0.0"
+  }
+}
