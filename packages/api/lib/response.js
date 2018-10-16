@@ -12,7 +12,7 @@
 const isFunction = require('lodash.isfunction');
 const isString = require('lodash.isstring');
 const deprecate = require('depd')('@cumulus/api/lib/response');
-const log = require('@cumulus/common/log');
+const { log } = require('@cumulus/common');
 const { User } = require('../models');
 const { errorify } = require('./utils');
 const {
@@ -35,18 +35,18 @@ function findCaseInsensitiveKey(obj, keyArg) {
 }
 
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
-  deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,'); // eslint-disable-line max-len
+  deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,');
 
   if (!isFunction(context.succeed)) {
     throw new TypeError('context as object with succeed method not provided');
   }
 
   let body = bodyArg;
-  let status = statusArg;
+  let statusCode = statusArg;
 
   if (err) {
     log.error(err);
-    status = status || 400;
+    statusCode = statusCode || 400;
     body = {
       message: err.message || errorify(err),
       detail: err.detail
@@ -56,7 +56,7 @@ function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   return context.succeed(new LambdaProxyResponse({
     json: !isString(body),
     body,
-    statusCode: status,
+    statusCode,
     headers
   }));
 }
@@ -67,7 +67,7 @@ function buildLambdaProxyResponse(params = {}) {
 }
 
 function buildAuthorizationFailureResponse(params) {
-  deprecate('buildAuthorizationFailureResponse(), use `new AuthorizationFailureResponse()` instead,'); // eslint-disable-line max-len
+  deprecate('buildAuthorizationFailureResponse(), use `new AuthorizationFailureResponse()` instead,');
   return new AuthorizationFailureResponse(params);
 }
 
@@ -174,10 +174,24 @@ function handle(event, context, authCheck, func) {
   return func(cb);
 }
 
+const notFoundResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 404,
+  body: { message: 'Not found' }
+});
+
+const internalServerErrorResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 500,
+  body: { message: 'Internal Server Error' }
+});
+
 module.exports = {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
   handle,
+  internalServerErrorResponse,
+  notFoundResponse,
   resp
 };
