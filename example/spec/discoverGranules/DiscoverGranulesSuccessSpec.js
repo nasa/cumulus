@@ -1,3 +1,4 @@
+const fs = require('fs-extra');
 const { Execution } = require('@cumulus/api/models');
 const {
   api: apiTestUtils,
@@ -132,11 +133,28 @@ describe('The Discover Granules workflow with https Protocol', () => {
   beforeAll(async () => {
     const collection = { name: `https_testcollection${testSuffix}`, version: '001' };
     const provider = { id: `https_provider${testSuffix}` };
+
+    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/https_provider.json`, 'utf8'));
+    // we actually want https for this test. we will later update provider to use https
+    const providerData = Object.assign(providerJson, provider, {
+      protocol: 'http'
+    });
+
     // populate collections and providers
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
+      apiTestUtils.addProviderApi({
+        prefix: config.stackName,
+        provider: providerData
+      })
     ]);
+
+    // update provider to use https
+    await apiTestUtils.updateProvider({
+      prefix: config.stackName,
+      provider,
+      updateParams: { protocol: 'https' }
+    });
 
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -160,9 +178,14 @@ describe('The Discover Granules workflow with https Protocol', () => {
   });
 
   describe('the DiscoverGranules Lambda', () => {
+    let lambdaInput = null;
     let lambdaOutput = null;
 
     beforeAll(async () => {
+      lambdaInput = await lambdaStep.getStepInput(
+        httpsWorkflowExecution.executionArn,
+        'DiscoverGranules'
+      );
       lambdaOutput = await lambdaStep.getStepOutput(
         httpsWorkflowExecution.executionArn,
         'DiscoverGranules'
@@ -176,6 +199,10 @@ describe('The Discover Granules workflow with https Protocol', () => {
           granuleId: granule.granuleId
         })
       ));
+    });
+
+    it('has correctly configured provider', () => {
+      expect(lambdaInput.meta.provider.protocol).toEqual('https');
     });
 
     it('has expected granules output', () => {
