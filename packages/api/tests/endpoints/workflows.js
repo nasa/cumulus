@@ -97,7 +97,7 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   });
 });
 
-test.serial('with an authorized user returns a list of workflows', async (t) => {
+test.serial('GET with no path parameters returns a list of workflows', async (t) => {
   const stackName = randomString();
   process.env.stackName = stackName;
 
@@ -121,3 +121,9 @@ test.serial('with an authorized user returns a list of workflows', async (t) => 
     t.deepEqual(parsedBody, workflowList);
   });
 });
+
+test.todo('GET /good-workflow returns a workflow that exists');
+
+test.todo('GET /bad-workflow returns a 404 for a workflow that does not exist');
+
+test.todo('GET /good-workflow returns a 500 if the workflows list cannot be fetched from S3');
