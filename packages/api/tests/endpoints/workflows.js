@@ -1,14 +1,12 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
-const workflowList = require('../data/workflow_list.json');
-const { 
+const {
   s3,
   promiseS3Upload,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws')
+} = require('@cumulus/common/aws');
 
 const models = require('../../models');
 const workflowsEndpoint = require('../../endpoints/workflows');
@@ -18,9 +16,12 @@ const {
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
+const workflowList = require('../data/workflow_list.json');
+
 let authHeaders;
 let userModel;
-test.before(async (t) => {
+let testBucketName;
+test.before(async () => {
   process.env.UsersTable = randomString();
 
   userModel = new models.User();
@@ -30,10 +31,16 @@ test.before(async (t) => {
   authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  testBucketName = randomString();
+  process.env.bucket = testBucketName;
+
+  await s3().createBucket({ Bucket: testBucketName }).promise();
 });
 
-test.after.always(async (t) => {
-  userModel.deleteTable();
+test.after.always(async () => {
+  await userModel.deleteTable();
+  await recursivelyDeleteS3Bucket(testBucketName);
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
@@ -90,16 +97,16 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   });
 });
 
-test('with an authorized user returns a list of workflows', async (t) => {
-  t.context.testBucketName = randomString();
-  process.env.bucket = t.context.testBucketName;
-  await s3().createBucket({ Bucket: t.context.testBucketName }).promise();
-  const key = `${process.env.stackName}/workflows/list.json`; // eslint-disable-line max-len
+test.serial('with an authorized user returns a list of workflows', async (t) => {
+  const stackName = randomString();
+  process.env.stackName = stackName;
+
+  const workflowsListKey = `${stackName}/workflows/list.json`;
+
   await promiseS3Upload({
-    Bucket: t.context.testBucketName,
-    Key: key,
-    Body: JSON.stringify(workflowList),
-    ACL: 'public-read'
+    Bucket: testBucketName,
+    Key: workflowsListKey,
+    Body: JSON.stringify(workflowList)
   });
 
   const request = {
@@ -107,16 +114,10 @@ test('with an authorized user returns a list of workflows', async (t) => {
     headers: authHeaders
   };
 
-  // const stub = sinon.stub(S3.prototype, 'get').resolves({
-  //   results: workflowsList
-  // });
-
   return testEndpoint(workflowsEndpoint, request, (response) => {
-    const { results } = JSON.parse(response.body);
-    // stub.restore();
-    console.log(results);
-    t.is(results.length, 1);
-  });
+    t.is(response.statusCode, 200);
 
-  await recursivelyDeleteS3Bucket({ Bucket: t.context.testBucketName });
+    const parsedBody = JSON.parse(response.body);
+    t.deepEqual(parsedBody, workflowList);
+  });
 });
