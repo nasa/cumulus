@@ -121,8 +121,7 @@ const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-console.log('Disabled pending resolution of CUMULUS-948');
-xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
+describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   const maxWaitForSFExistSecs = 60 * 4;
   const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
@@ -160,6 +159,7 @@ xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
 
   beforeAll(async () => {
     // populate collections, providers and test data
+    console.log('\n');
     await Promise.all([
       uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
       addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
@@ -188,22 +188,22 @@ xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
     expect(await getStreamStatus(streamName)).toBe('ACTIVE');
   });
 
-  describe('Workflow executes successfully\n', () => {
+  describe('Workflow executes successfully', () => {
     let workflowExecution;
 
     beforeAll(async () => {
       await tryCatchExit(cleanUp, async () => {
-        console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
+        console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}`);
         await putRecordOnStream(streamName, record);
 
         console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSf(recordIdentifier, maxWaitForSFExistSecs);
 
-        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
+        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'`);
         // get shard iterator for the response stream so we can process any new records sent to it
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
-        console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
+        console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
     });
