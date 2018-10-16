@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { Collection } = require('@cumulus/api/models');
 const {
   aws: {
     headObject,
@@ -68,9 +67,6 @@ describe('When the Sync Granule workflow is configured to keep both files when e
   let expectedPayload;
   let workflowExecution;
 
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const collectionModel = new Collection();
-
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
@@ -78,8 +74,13 @@ describe('When the Sync Granule workflow is configured to keep both files when e
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
+
     // set collection duplicate handling to 'version'
-    await collectionModel.update(collection, { duplicateHandling: 'version' });
+    await apiTestUtils.updateCollection({
+      prefix: config.stackName,
+      collection,
+      updateParams: { duplicateHandling: 'version' }
+    });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
