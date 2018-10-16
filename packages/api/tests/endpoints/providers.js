@@ -282,7 +282,7 @@ test('PUT updates an existing provider', (t) => {
   });
 });
 
-test.serial('PUT updates an existing collection and returns it in listing', (t) => {
+test.serial('PUT updates an existing provider and returns it in listing', (t) => {
   const updateParams = {
     globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
   };
@@ -313,7 +313,7 @@ test.serial('PUT updates an existing collection and returns it in listing', (t) 
   });
 });
 
-test('PUT without an Authorization header does not update an existing collection', (t) => {
+test('PUT without an Authorization header does not update an existing provider', (t) => {
   const updatedLimit = t.context.testProvider.globalConnectionLimit + 1;
   const updateEvent = {
     pathParameters: { id: t.context.testProvider.id },
