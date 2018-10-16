@@ -93,6 +93,16 @@ default:
     availabilityZone: 'us-east-1b'
     maxInstances: 1
     desiredInstances: 0
+    tasks:
+      AsyncOperation:
+        image: cumuluss/async-operation:23
+        cpu: 400
+        memory: 700
+        count: 1
+        envs:
+          AWS_REGION:
+            function: Fn::Sub
+            value: '${AWS::Region}'
     docker:
       storageDriver: overlay2
 
