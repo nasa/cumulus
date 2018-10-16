@@ -54,7 +54,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
 }
 
 /**
- * Fetch a granule from the Cumulus API
+ * GET /granules/{granuleName}
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
@@ -62,7 +62,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function getGranule({ prefix, granuleId }) {
-  const payload = await callCumulusApi({
+  const response = await callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
@@ -75,7 +75,50 @@ async function getGranule({ prefix, granuleId }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return JSON.parse(response.body);
+}
+
+/**
+ * GET /asyncOperations/{id}
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.id - an AsyncOperation id
+ * @returns {Promise<Object>} - the AsyncOperation fetched by the API
+ */
+function getAsyncOperation({ prefix, id }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiAsyncOperationsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/asyncOperations/{id}',
+      path: `/asyncOperations/${id}`,
+      pathParameters: { id }
+    }
+  });
+}
+
+/**
+ * POST /bulkDelete
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleIds - the granules to be deleted
+ * @returns {Promise<Object>} - the granule fetched by the API
+ */
+function postBulkDelete({ prefix, granuleIds }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiBulkDeleteDefault',
+    payload: {
+      httpMethod: 'POST',
+      resource: '/bulkDelete',
+      path: '/bulkDelete',
+      pathParameters: {},
+      body: JSON.stringify({ granuleIds })
+    }
+  });
 }
 
 /**
@@ -310,15 +353,17 @@ async function getExecutionStatus({ prefix, arn }) {
 }
 
 module.exports = {
-  callCumulusApi,
-  getGranule,
-  reingestGranule,
-  removeFromCMR,
   applyWorkflow,
+  callCumulusApi,
+  getAsyncOperation,
   deleteGranule,
   deletePdr,
   getExecution,
-  getLogs,
   getExecutionLogs,
-  getExecutionStatus
+  getExecutionStatus,
+  getGranule,
+  getLogs,
+  postBulkDelete,
+  reingestGranule,
+  removeFromCMR
 };
