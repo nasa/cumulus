@@ -188,6 +188,10 @@
     </TwoDCoordinateSystem>
     <OnlineAccessURLs>
         <OnlineAccessURL>
+            <URL>https://fvk4vim143.execute-api.us-east-1.amazonaws.com/dev/MOD11A1.A2017200.h19v04.006.2017201090724.hdf</URL>
+            <URLDescription>File to download</URLDescription>
+        </OnlineAccessURL>
+        <OnlineAccessURL>
             <URL>http://cumulus-devseed-public.s3.amazonaws.com/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg</URL>
             <URLDescription>File to download</URLDescription>
         </OnlineAccessURL>
