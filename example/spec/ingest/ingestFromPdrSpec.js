@@ -52,7 +52,9 @@ const taskName = 'DiscoverAndQueuePdrs';
 const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
 
 const s3data = [
-  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
 describe('Ingesting from PDR', () => {
@@ -331,7 +333,7 @@ describe('Ingesting from PDR', () => {
 
       describe('the sf-sns-report task has published a sns message and', () => {
         it('the pdr record is added to DynamoDB', async () => {
-          const record = await pdrModel.get({ pdrName: inputPayload.pdr.name });
+          const record = await pdrModel.get({ pdrName: pdrFilename });
           expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
           expect(record.status).toEqual('completed');
         });
