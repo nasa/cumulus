@@ -1,4 +1,5 @@
-/* eslint-disable no-console, no-param-reassign, no-template-curly-in-string, object-curly-spacing*/
+/* eslint-disable eslint-comments/disable-enable-pair */
+/* eslint-disable no-param-reassign, no-template-curly-in-string, object-curly-spacing*/
 
 'use strict';
 
@@ -86,12 +87,47 @@ test('injectWorkflowLambdaAliases updates the correct resources', (t) => {
 
 test('injectOldWorkflowLambdaAliases adds oldLambdas to configuration object', async (t) => {
   const kes = t.context.kes;
-  const nameArray = ['LambdaName-12345', 'LambdaName-abcde', 'SecondLambdaName-67890'];
-  kes.getRetainedLambdaAliasNames = () => (Promise.resolve(nameArray));
+  const nameArray = [
+    {
+      name: 'LambdaName-12345',
+      humanReadableIdentifier: 'id12345'
+    },
+    {
+      name: 'LambdaName-abcde',
+      humanReadableIdentifier: 'idabcde'
+    },
+    {
+      name: 'SecondLambdaName-67890',
+      humanReadableIdentifier: 'id67890'
+    }
+  ];
+
+  kes.getRetainedLambdaAliasMetadata = () => (Promise.resolve(nameArray));
 
   const expected = {
-    LambdaName: { hashes: ['12345', 'abcde'] },
-    SecondLambdaName: { hashes: ['67890'] }
+    LambdaName: {
+      lambdaRefs:
+      [
+        {
+          hash: '12345',
+          humanReadableIdentifier: 'id12345'
+        },
+        {
+          hash: 'abcde',
+          humanReadableIdentifier: 'idabcde'
+        }
+      ]
+    },
+    SecondLambdaName:
+    {
+      lambdaRefs:
+      [
+        {
+          hash: '67890',
+          humanReadableIdentifier: 'id67890'
+        }
+      ]
+    }
   };
 
   await kes.injectOldWorkflowLambdaAliases();
@@ -148,7 +184,7 @@ test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async 
     + `Actual:${JSON.stringify(actual)}`);
 });
 
-test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t) => {
+test.serial('getRetainedLambdaAliasMetadata returns filtered aliasNames', async (t) => {
   const kes = t.context.kes;
 
   kes.config.workflowLambdas = aliasFixture.workflowLambdas;
@@ -158,16 +194,27 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t)
     getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.aliases[i]);
   }
 
-  const expected = ['VersionUpTest-PreviousVersionHash', 'VersionUpTest-SecondPreviousVersionHash',
-    'HelloWorld-d49d272b8b1e8eb98a61affc34b1732c1032b1ca'];
+  const expected = [
+    {
+      name: 'VersionUpTest-PreviousVersionHash',
+      humanReadableIdentifier: 'humanReadableVersion13'
+    },
+    {
+      name: 'VersionUpTest-SecondPreviousVersionHash',
+      humanReadableIdentifier: 'humanReadableVersion12'
+    },
+    {
+      name: 'HelloWorld-d49d272b8b1e8eb98a61affc34b1732c1032b1ca',
+      humanReadableIdentifier: 'humanReadableVersion13'
+    }
+  ];
 
-  const actual = await kes.getRetainedLambdaAliasNames();
+  const actual = await kes.getRetainedLambdaAliasMetadata();
   t.deepEqual(expected, actual);
 });
 
-test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
-            + 'on previous version redeployment', async (t) => {
-
+test.serial('getRetainedLambdaAliasNames returns filtered aliasNames on'
+            + 'previous version redeployment', async (t) => {
   const kes = t.context.kes;
 
   kes.config.workflowLambdas = aliasFixture.workflowLambdas;
@@ -177,9 +224,34 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
     getAllLambdaAliasesStub.onCall(i).returns(aliasFixture.aliases[i]);
   }
 
-  const expected = ['VersionUpTest-LatestVersionHash', 'VersionUpTest-SecondPreviousVersionHash',
-    'HelloWorld-d49d272b8b1e8eb98a61affc34b1732c1032b1ca'];
-
-  const actual = await kes.getRetainedLambdaAliasNames();
+  const expected = [
+    {
+      name: 'VersionUpTest-LatestVersionHash',
+      humanReadableIdentifier: 'humanReadableVersion14'
+    },
+    {
+      name: 'VersionUpTest-SecondPreviousVersionHash',
+      humanReadableIdentifier: 'humanReadableVersion12'
+    },
+    {
+      name: 'HelloWorld-d49d272b8b1e8eb98a61affc34b1732c1032b1ca',
+      humanReadableIdentifier: 'humanReadableVersion13'
+    }
+  ];
+  const actual = await kes.getRetainedLambdaAliasMetadata();
   t.deepEqual(expected, actual);
+});
+
+test.serial('getHumanReadableIdentifier returns a packed ID from the descriptiohn string', (t) => {
+  const testString = 'Some Description Here|version';
+  const expected = 'version';
+  const actual = t.context.kes.getHumanReadableIdentifier(testString);
+  t.is(expected, actual);
+});
+
+test.serial("getHumanReadableIdentifier returns '' for a version string with no packed ID", (t) => {
+  const testString = 'Some Bogus Version String';
+  const expected = '';
+  const actual = t.context.kes.getHumanReadableIdentifier(testString);
+  t.is(expected, actual);
 });
