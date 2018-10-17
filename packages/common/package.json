@@ -65,6 +65,7 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "nyc": "^11.6.0"
+    "nyc": "^11.6.0",
+    "testdouble": "^3.8.2"
   }
 }

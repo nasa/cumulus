@@ -43,7 +43,7 @@ async function createReconciliationReportForBucket(Bucket, filesTableName) {
     }
     else if (nextS3Uri > nextDynamoDbUri) {
       // Found an item that is only in DynamoDB and not in S3
-      const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop
+      const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDynamoDb.push({
         uri: buildS3Uri(Bucket, dynamoDbItem.key.S),
         granuleId: dynamoDbItem.granuleId.S
