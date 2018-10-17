@@ -39,7 +39,10 @@ async function get(event, cb) {
     return cb(null, Body.toString());
   }
   catch (err) {
-    return cb(err);
+    if (err.name === 'NoSuchKey') {
+      return cb(err, null, 404);
+    }
+    return cb(err, null, 500);
   }
 }
 
