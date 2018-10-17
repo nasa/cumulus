@@ -87,22 +87,6 @@ IngestGranuleCatchDuplicateErrorTest:
           - States.ALL
           ResultPath: '$.exception'
           Next: StopStatus
-      Next: CmrStep
-    CmrStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        stack: '{$.meta.stack}'
-        cmr: '{$.meta.cmr}'
-        process: '{$.cumulus_meta.process}'
-        input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-      Type: Task
-      Resource: ${PostToCmrLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
       Next: StopStatus
     StopStatus:
       Type: Task
