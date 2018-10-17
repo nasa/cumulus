@@ -85,3 +85,34 @@ your stack name [here](../travis-ci/select-stack.js).
 There are tests for redeploying the Cumulus stack while a workflow is running (see `spec/redeployment`). This is acheived by backing up with the `workflows.yml` file, updating it, and redeploying the stack. When redeploy tests are complete, the original `workflows.yml` is restored, the backup file is deleted, and the stack is redeployed, restoring it to its original state.
 
 Please note that the stack will be redeployed multiple times when running tests and any errors during redeployment can result in errors in later tests. The deployment output is printed to the console.
+
+## Cumulus Documentation
+
+Our project documentation is hosted on [GitHub Pages](https://pages.github.com/). The resources published to this website are housed in `docs/` directory at the top of the Cumulus repository. Those resources primarily consist of markdown files and images.
+
+We use the open-source static website generator [Docusaurus](https://docusaurus.io/) to build html files from our markdown documentation, add some organization and navigation, and provide some other niceties in the final website (search, easy templating, etc.).
+
+### Deploying Docs Locally
+
+There have been scripts set up for local deployment and this should be relatively simple.
+
+1. Pull Cumulus repository and navigate to the top level.
+2. run `(cd website && yarn install)` to acquire dependencies required for building and serving docs.
+3. run `yarn docs-start` to start a local server that you can navigate through and test against.
+
+**Note:** `docs-build` will build the documents into `website/build/Cumulus`.
+
+### Adding Docs
+
+This should be as simple as writing some documentation in markdown, placing it under the correct directory in the `docs/` folder and adding some configuration values wrapped by `---` at the top of the file. There are many files that already have this header which can be used as reference.
+```
+---
+id: doc-unique-id    # unique id for this document. This must be unique accross ALL documents.
+title: Title Of Doc  # Whatever title you feel like adding. This will show up as the index to this page on the sidebar.
+hide_title: true     # So the title of the Doc doesn't show up at the top of the webpage (generally we already have the title written as h1 in the documentation).
+---
+```
+
+### Versioning Docs
+
+We lean heavily on Docusaurus for documentation versioning. They're suggestions and walkthrough can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions.
