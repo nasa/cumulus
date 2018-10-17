@@ -4,9 +4,9 @@ CNMToCMA:
   runtime: java8
   memory: 128
   s3Source:
-    bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmToGranule-1532625517.zip
-    uniqueIdentifier: '1532625517'
+    bucket: 'cumulus-sandbox-public'
+    key: daacs/podaac/CNMToCMANew.zip
+    uniqueIdentifier: '1539785293369'
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:
@@ -16,9 +16,9 @@ CnmResponse:
   runtime: java8
   memory: 256
   s3Source:
-    bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmResponse-1532633768.zip
-    uniqueIdentifier: '1532633768'
+    bucket: 'cumulus-sandbox-public'
+    key: daacs/podaac/CnmResponseNew.zip
+    uniqueIdentifier: '1539785293369'
   launchInVpc: true
 DiscoverGranules:
   handler: index.handler
