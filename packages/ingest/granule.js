@@ -16,7 +16,10 @@ const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
 const cksum = require('cksum');
 const xml2js = require('xml2js');
-const { aws, log } = require('@cumulus/common');
+const { promisify } = require('util');
+const {
+  aws, CollectionConfigStore, constructCollectionId, log
+} = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { sftpMixin } = require('./sftp');
@@ -25,9 +28,6 @@ const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
-const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
-const { promisify } = require('util');
-
 
 /**
 * The abstract Discover class
@@ -473,36 +473,6 @@ class Granule {
   }
 
   /**
-   * rename s3 file with timestamp
-   *
-   * @param {string} bucket - bucket of the file
-   * @param {string} key - s3 key of the file
-   * @returns {Promise} promise that resolves when file is renamed
-   */
-  async renameS3FileWithTimestamp(bucket, key) {
-    const formatString = 'YYYYMMDDTHHmmssSSS';
-    const timestamp = (await aws.headObject(bucket, key)).LastModified;
-    const renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
-
-    log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
-    return exports.moveGranuleFile(
-      { Bucket: bucket, Key: key }, { Bucket: bucket, Key: renamedKey }
-    );
-  }
-
-  /**
-   * get all renamed s3 files for a given bucket and key
-   *
-   * @param {string} bucket - bucket of the file
-   * @param {string} key - s3 key of the file
-   * @returns {Array<Object>} returns renamed files
-   */
-  async getRenamedS3File(bucket, key) {
-    const s3list = await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
-    return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, fileSize: c.Size }));
-  }
-
-  /**
    * Ingest individual files
    *
    * @private
@@ -544,8 +514,8 @@ class Granule {
 
     // Exit early if we can
     if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
-      return Object.assign(stagedFile,
-        { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength });
+      return [Object.assign(stagedFile,
+        { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength })];
     }
 
     // Either the file does not exist yet, or it does but
@@ -581,7 +551,7 @@ class Granule {
         await aws.deleteS3Object(bucket, stagedFileKey);
       }
       else {
-        await this.renameS3FileWithTimestamp(bucket, destinationKey);
+        await exports.renameS3FileWithTimestamp(bucket, destinationKey);
         await exports.moveGranuleFile(
           { Bucket: bucket, Key: stagedFileKey }, { Bucket: bucket, Key: destinationKey }
         );
@@ -589,7 +559,7 @@ class Granule {
     }
 
     const renamedFiles = (duplicateHandling === 'version')
-      ? await this.getRenamedS3File(bucket, destinationKey) : [];
+      ? await exports.getRenamedS3File(bucket, destinationKey) : [];
 
     // return all files, the renamed files don't have the same properties(name, fileSize, checksum)
     // from input file
@@ -941,15 +911,17 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
       };
 
       log.debug('moveGranuleFiles', source, target);
-      return moveGranuleFile(source, target).then(() => { /* eslint-disable no-param-reassign */
+      return moveGranuleFile(source, target).then(() => {
         // update the granule file location in source file
+        /* eslint-disable no-param-reassign */
         file.bucket = target.Bucket;
         file.filepath = target.Key;
         file.filename = aws.buildS3Uri(file.bucket, file.filepath);
+        /* eslint-enable no-param-reassign */
       });
     }
     // else set filepath as well so it won't be null
-    file.filepath = parsed.Key;
+    file.filepath = parsed.Key; /* eslint-disable-line no-param-reassign */
     return Promise.resolve();
   });
 
@@ -960,10 +932,58 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
   if (xmlFile.length === 1) {
     return updateMetadata(granuleId, xmlFile[0], sourceFiles, distEndpoint, published);
   }
-  else if (xmlFile.length > 1) {
+  if (xmlFile.length > 1) {
     log.error('more than one .cmr.xml found');
   }
   return Promise.resolve();
+}
+
+/**
+  * rename s3 file with timestamp
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Promise} promise that resolves when file is renamed
+  */
+async function renameS3FileWithTimestamp(bucket, key) {
+  const formatString = 'YYYYMMDDTHHmmssSSS';
+  const timestamp = (await aws.headObject(bucket, key)).LastModified;
+  let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
+
+  // if the renamed file already exists, get a new name
+  // eslint-disable-next-line no-await-in-loop
+  while (await aws.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
+    renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
+  }
+
+  log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
+  return exports.moveGranuleFile(
+    { Bucket: bucket, Key: key }, { Bucket: bucket, Key: renamedKey }
+  );
+}
+
+/**
+  * get all renamed s3 files for a given bucket and key
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Array<Object>} returns renamed files
+  */
+async function getRenamedS3File(bucket, key) {
+  const s3list = await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
+  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, fileSize: c.Size }));
+}
+
+/**
+ * check to see if the file has the suffix with timestamp '.vYYYYMMDDTHHmmssSSS'
+ *
+ * @param {string} filename - name of the file
+ * @returns {boolean} whether the file is renamed
+ */
+function isFileRenamed(filename) {
+  // eslint-disable-next-line max-len
+  const suffixRegex = '\\.v[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])T(2[0-3]|[01][0-9])[0-5][0-9][0-5][0-9][0-9]{3}$';
+  return (filename.match(suffixRegex) !== null);
 }
 
 module.exports.selector = selector;
@@ -980,6 +1000,9 @@ module.exports.SftpGranule = SftpGranule;
 module.exports.getGranuleId = getGranuleId;
 module.exports.getCmrFiles = getCmrFiles;
 module.exports.getMetadata = getMetadata;
+module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
+module.exports.isFileRenamed = isFileRenamed;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
+module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
