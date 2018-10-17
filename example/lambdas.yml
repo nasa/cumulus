@@ -17,8 +17,8 @@ CnmResponse:
   memory: 256
   s3Source:
     bucket: 'cumulus-sandbox-public'
-    key: daacs/podaac/jk-CnmResponse-048b63fb-63c7-48ff-8af7-e52ee455ed28.zip
-    uniqueIdentifier: '1539795593615'
+    key: daacs/podaac/CnmResponse-1539812129616.zip
+    uniqueIdentifier: '1539812129616'
   launchInVpc: true
 DiscoverGranules:
   handler: index.handler
