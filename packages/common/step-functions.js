@@ -5,10 +5,12 @@ const pRetry = require('p-retry');
 const uuidv4 = require('uuid/v4');
 
 const {
+  isThrottlingException,
   sfn,
   toSfnExecutionName
 } = require('./aws');
 
+const log = require('./log');
 
 /**
  * Constructs the input to pass to the step functions to kick off ingest. The execution name
@@ -37,6 +39,15 @@ exports.constructStepFunctionInput = (resources, provider, collection) => {
   };
 };
 
+const logSfnThrottlingException = (fn) => {
+  log.debug(`ThrottlingException in stepfunctions.${fn}(), will retry`);
+};
+
+const retryOnThrottlingException = (err) => {
+  if (isThrottlingException(err)) throw err;
+  throw new pRetry.AbortError(err);
+};
+
 /**
  * Describe a Step Function Execution
  *
@@ -47,20 +58,20 @@ exports.constructStepFunctionInput = (resources, provider, collection) => {
  * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
  * @returns {Promise<Object>} https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property
  */
-exports.describeExecution = (executionArn, retryOptions) =>
-  pRetry(
-    () => sfn().describeExecution({ executionArn }).promise()
-      .catch((err) => {
-        // If we get a throttling exception, we re-throw the error.  This will
-        //   trigger the "retry with exponential backoff" functionality.
-        if (err.code === 'ThrottlingException') throw err;
-
-        // If we get an error other than the previous two then something went
-        //   wrong.  We abort any other retry attempts and throw the error.
-        throw new pRetry.AbortError(err);
-      }),
+exports.describeExecution = (executionArn, retryOptions) => {
+  const fullRetryOptions = Object.assign(
+    {
+      onFailedAttempt: () => logSfnThrottlingException('describeExecution')
+    },
     retryOptions
   );
+
+  return pRetry(
+    () => sfn().describeExecution({ executionArn }).promise()
+      .catch(retryOnThrottlingException),
+    fullRetryOptions
+  );
+};
 
 /**
  * Test if a Step Function Execution exists

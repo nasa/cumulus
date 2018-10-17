@@ -1,9 +1,6 @@
 'use strict';
 
-const {
-  get,
-  unset
-} = require('lodash');
+const unset = require('lodash.unset');
 
 const { loadYmlConfigFile, saveYmlConfigFile } = require('./configUtils.js');
 
@@ -38,7 +35,7 @@ function removeTaskFromWorkflow(workflowName, taskName, workflowConfigFile) {
 
   unset(config, `${workflowName}.States.${taskName}`);
 
-  const workflowConfig = get(config, workflowName);
+  const workflowConfig = config[workflowName];
 
   const tasks = Object.keys(workflowConfig.States);
 

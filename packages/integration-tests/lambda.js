@@ -1,7 +1,6 @@
 'use strict';
 
 const { lambda } = require('@cumulus/common/aws');
-const AWS = require('aws-sdk');
 
 /**
  * Recursively gets all pages for an AWS Lambda Aliases/Version object query
@@ -37,7 +36,7 @@ async function getLambdaAliases(lambdaFunctionName) {
     MaxItems: 10000,
     FunctionName: lambdaFunctionName
   };
-  return getAllPages(config, 'Aliases', lambda().listAliases.bind(new AWS.Lambda()));
+  return getAllPages(config, 'Aliases', lambda().listAliases.bind(lambda()));
 }
 
 /**
@@ -51,7 +50,7 @@ async function getLambdaAliases(lambdaFunctionName) {
 async function getLambdaVersions(lambdaFunctionName) {
   const config = { FunctionName: lambdaFunctionName };
   return getAllPages(config, 'Versions',
-    lambda().listVersionsByFunction.bind(new AWS.Lambda()));
+    lambda().listVersionsByFunction.bind(lambda()));
 }
 
 

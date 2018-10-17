@@ -10,7 +10,6 @@ const url = require('url');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
-const promiseRetry = require('promise-retry');
 const pump = require('pump');
 
 /**
@@ -785,3 +784,11 @@ exports.setGranuleStatus = async (
   params.Metadata = { executionArn, status };
   await exports.s3().putObject(params).promise();
 };
+
+/**
+ * Test to see if a given exception is an AWS Throttling Exception
+ *
+ * @param {Error} err
+ * @returns {boolean}
+ */
+exports.isThrottlingException = (err) => err.code === 'ThrottlingException';

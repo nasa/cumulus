@@ -4,6 +4,7 @@
     "eslint-comments",
     "import",
     "jsdoc",
+    "lodash",
     "node",
     "unicorn"
   ],
@@ -12,6 +13,7 @@
     "plugin:eslint-comments/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
+    "plugin:lodash/recommended",
     "plugin:node/recommended",
     "plugin:unicorn/recommended"
   ],
@@ -99,7 +101,8 @@
       2,
       {
         "code": 100,
-        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)",
+        "ignoreStrings": true
       }
     ],
     "arrow-parens": ["error", "always"],
@@ -108,6 +111,10 @@
     "implicit-arrow-linebreak": "off",
 
     "eslint-comments/no-unused-disable": "warn",
+
+    "lodash/import-scope": ["error", "method-package"],
+    "lodash/prefer-constant": ["warn", false],
+    "lodash/prefer-lodash-method": "off",
 
     "unicorn/filename-case": "off",
     "unicorn/prefer-spread": "off"
