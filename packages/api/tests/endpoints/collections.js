@@ -1,40 +1,48 @@
 'use strict';
 
-const sinon = require('sinon');
 const test = require('ava');
+const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const bootstrap = require('../../lambdas/bootstrap');
 const collectionsEndpoint = require('../../endpoints/collections');
-const EsCollection = require('../../es/collections');
 const {
   fakeCollectionFactory,
   fakeUserFactory,
   testEndpoint
 } = require('../../lib/testUtils');
+const EsCollection = require('../../es/collections');
 const { Search } = require('../../es/search');
 const assertions = require('../../lib/assertions');
+const { RecordDoesNotExist } = require('../../lib/errors');
 
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 
-const testCollection = fakeCollectionFactory();
 const esIndex = randomString();
+let esClient;
 
 let authHeaders;
 let collectionModel;
 let userModel;
+
+const collectionDoesNotExist = async (t, collection) => {
+  const error = await t.throws(collectionModel.get({
+    name: collection.name,
+    version: collection.version
+  }));
+  t.true(error instanceof RecordDoesNotExist);
+};
+
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  sinon.stub(EsCollection.prototype, 'getStats').returns([testCollection]);
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
-  await collectionModel.create(testCollection);
 
   // create fake Users table
   userModel = new models.User();
@@ -44,14 +52,19 @@ test.before(async () => {
   authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  esClient = await Search.es('fakehost');
+});
+
+test.beforeEach(async (t) => {
+  t.context.testCollection = fakeCollectionFactory();
+  await collectionModel.create(t.context.testCollection);
 });
 
 test.after.always(async () => {
   await collectionModel.deleteTable();
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
-
-  const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
@@ -81,14 +94,17 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   });
 });
 
-test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
+test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
-    headers: {}
+    headers: {},
+    body: JSON.stringify(newCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
@@ -153,15 +169,18 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
 });
 
 test('CUMULUS-912 POST with an unauthorized user returns an unauthorized response', async (t) => {
+  const newCollection = fakeCollectionFactory();
   const request = {
     httpMethod: 'POST',
     headers: {
       Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
+    },
+    body: JSON.stringify(newCollection)
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
@@ -199,31 +218,35 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   });
 });
 
-// TODO(aimee): Debug why this is _passing_ - we don't expect to already have a
-// collection in ES.
-test('default returns list of collections', (t) => {
-  const listEvent = {
-    httpMethod: 'list',
-    headers: authHeaders
+test('POST with invalid authorization scheme returns an invalid token response', (t) => {
+  const newCollection = fakeCollectionFactory();
+  const request = {
+    httpMethod: 'POST',
+    headers: {
+      Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
+    },
+    body: JSON.stringify(newCollection)
   };
-  return testEndpoint(collectionsEndpoint, listEvent, (response) => {
-    const { results } = JSON.parse(response.body);
-    t.is(results.length, 1);
+
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
+    assertions.isInvalidAuthorizationResponse(t, response);
+    await collectionDoesNotExist(t, newCollection);
   });
 });
 
-test('GET returns an existing collection', (t) => {
-  const getEvent = {
+test.serial('default returns list of collections', async (t) => {
+  const listEvent = {
     httpMethod: 'GET',
-    headers: authHeaders,
-    pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
-    }
+    headers: authHeaders
   };
-  return testEndpoint(collectionsEndpoint, getEvent, (response) => {
-    const { name } = JSON.parse(response.body);
-    t.is(name, testCollection.name);
+
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
+
+  return testEndpoint(collectionsEndpoint, listEvent, (response) => {
+    const { results } = JSON.parse(response.body);
+    stub.restore();
+    t.is(results.length, 1);
+    t.is(results[0].name, t.context.testCollection.name);
   });
 });
 
@@ -241,17 +264,34 @@ test('POST creates a new collection', (t) => {
   });
 });
 
+test.serial('GET returns an existing collection', (t) => {
+  const getEvent = {
+    httpMethod: 'GET',
+    headers: authHeaders,
+    pathParameters: {
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
+    }
+  };
+  const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
+  return testEndpoint(collectionsEndpoint, getEvent, (response) => {
+    const { name } = JSON.parse(response.body);
+    stub.restore();
+    t.is(name, t.context.testCollection.name);
+  });
+});
+
 test('PUT updates an existing collection', (t) => {
   const newPath = '/new_path';
   const updateEvent = {
     body: JSON.stringify({
-      name: testCollection.name,
-      version: testCollection.version,
+      name: t.context.testCollection.name,
+      version: t.context.testCollection.version,
       provider_path: newPath
     }),
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     },
     httpMethod: 'PUT',
     headers: authHeaders
@@ -267,8 +307,8 @@ test('DELETE deletes an existing collection', (t) => {
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
-      collectionName: testCollection.name,
-      version: testCollection.version
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
     },
     headers: authHeaders
   };
@@ -278,7 +318,6 @@ test('DELETE deletes an existing collection', (t) => {
   });
 });
 
-test.todo('GET returns existing collection');
 test.todo('POST without name and version returns error message');
 test.todo('PUT with invalid name and version returns error message');
 // Multiple tests

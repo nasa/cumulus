@@ -21,7 +21,7 @@ class Collection extends Manager {
     const extraction = new RegExp(item.granuleIdExtraction);
     const match = item.sampleFileName.match(extraction);
 
-    if (!match) throw new Error('granuleIdExtraction regex returns null when applied to sampleFileName'); // eslint-disable-line max-len
+    if (!match) throw new Error('granuleIdExtraction regex returns null when applied to sampleFileName');
 
     checkRegex(item.granuleId, match[1]);
 
