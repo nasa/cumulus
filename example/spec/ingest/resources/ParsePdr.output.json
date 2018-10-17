@@ -1,0 +1,31 @@
+{
+  "filesCount": 2,
+  "totalSize": 17909733,
+  "granulesCount": 1,
+  "pdr": {
+    "path": "replace-me-path",
+    "size": 596,
+    "name": "MOD09GQ_1granule_v3.PDR",
+    "time": 1520873050000
+  },
+  "granules": [
+    {
+      "dataType": "MOD09GQ",
+      "files": [
+        {
+          "path": "replace-me-path",
+          "fileSize": 17865615,
+          "name": "replace-me-granuleId.hdf"
+        },
+        {
+          "path": "replace-me-path",
+          "fileSize": 44118,
+          "name": "replace-me-granuleId.hdf.met"
+        }
+      ],
+      "version": "006",
+      "granuleSize": 17909733,
+      "granuleId": "replace-me-granuleId"
+    }
+  ]
+}

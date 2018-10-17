@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * End to end
+ * End to end ingest from discovering a PDR
  *
  * Kick off discover and queue pdrs which:
  * Discovers 1 PDR
@@ -42,6 +42,10 @@ const {
   createTestSuffix
 } = require('../helpers/testUtils');
 
+const {
+  loadFileWithUpdatedGranuleIdPathAndCollection
+} = require('../helpers/granuleUtils');
+
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverAndQueuePdrs';
@@ -63,6 +67,7 @@ describe('Ingesting from PDR', () => {
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const executionModel = new Execution();
   const collectionModel = new Collection();
+  let parsePdrExecutionArn;
 
   beforeAll(async () => {
     // delete pdr from old tests
@@ -157,26 +162,39 @@ describe('Ingesting from PDR', () => {
      * running workflow, so use that to get the status.
      */
     describe('The ParsePdr workflow', () => {
-      let parsePdrWorkflowArn;
       let parsePdrExecutionStatus;
       let parseLambdaOutput;
       let queueGranulesOutput;
+      let expectedParsePdrOutput;
+
+      const outputPayloadFilename = './spec/ingest/resources/ParsePdr.output.json';
+      const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
+      const collectionId = 'MOD09GQ___006';
 
       beforeAll(async () => {
-        parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
-        console.log(`Wait for execution ${parsePdrWorkflowArn}`);
-        parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrWorkflowArn);
+        parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+        console.log(`Wait for execution ${parsePdrExecutionArn}`);
+
+        try {
+        expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(outputPayloadFilename, testDataGranuleId, testDataFolder, collectionId);
+        expectedParsePdrOutput.granules[0].dataType += testSuffix;
+
+        parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
 
         queueGranulesOutput = await lambdaStep.getStepOutput(
-          workflowExecution.executionArn,
+          parsePdrExecutionArn,
           'QueueGranules'
         );
+        }
+          catch(error) {
+            console.log(error);
+        }
       });
 
       afterAll(async () => {
         // wait for child executions to complete
         const queueGranulesOutput = await lambdaStep.getStepOutput(
-          parsePdrWorkflowArn,
+          parsePdrExecutionArn,
           'QueueGranules'
         );
         await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
@@ -195,7 +213,7 @@ describe('Ingesting from PDR', () => {
       describe('ParsePdr lambda function', () => {
         it('successfully parses a granule from the PDR', async () => {
           parseLambdaOutput = await lambdaStep.getStepOutput(
-            parsePdrWorkflowArn,
+            parsePdrExecutionArn,
             'ParsePdr'
           );
           expect(parseLambdaOutput.payload.granules.length).toEqual(1);
@@ -214,7 +232,7 @@ describe('Ingesting from PDR', () => {
 
         beforeAll(async () => {
           lambdaOutput = await lambdaStep.getStepOutput(
-            workflowExecution.executionArn,
+            parsePdrExecutionArn,
             'PdrStatusCheck'
           );
         });
@@ -229,12 +247,14 @@ describe('Ingesting from PDR', () => {
       describe('SfSnsReport lambda function', () => {
         let lambdaOutput;
         beforeAll(async () => {
-          lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
+          lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SfSnsReport');
         });
 
-        // SfSnsReport lambda is used in the workflow multiple times, appearantly, only the first output
+        // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
         // is retrieved which is the first step (StatusReport)
         it('has expected output message', () => {
+          console.log(`payload: ${JSON.stringify(lambdaOutput.payload)}`);
+
           expect(lambdaOutput.payload).toEqual(inputPayload);
         });
       });
@@ -252,6 +272,7 @@ describe('Ingesting from PDR', () => {
         beforeAll(async () => {
           // wait for IngestGranule execution to complete
           ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+          console.log(`Waiting for workflow to complete: ${ingestGranuleWorkflowArn}`);
           ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
         });
 
@@ -293,7 +314,7 @@ describe('Ingesting from PDR', () => {
             arn: ingestGranuleWorkflowArn
           });
 
-          expect(ingestGranuleExecution.parentArn).toEqual(workflowExecution.executionArn);
+          expect(ingestGranuleExecution.parentArn).toEqual(parsePdrExecutionArn);
         });
       });
 
@@ -311,12 +332,12 @@ describe('Ingesting from PDR', () => {
       describe('the sf-sns-report task has published a sns message and', () => {
         it('the pdr record is added to DynamoDB', async () => {
           const record = await pdrModel.get({ pdrName: inputPayload.pdr.name });
-          expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
+          expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
           expect(record.status).toEqual('completed');
         });
 
         it('the execution record is added to DynamoDB', async () => {
-          const record = await executionModel.get({ arn: workflowExecution.executionArn });
+          const record = await executionModel.get({ arn: parsePdrExecutionArn });
           expect(record.status).toEqual('completed');
         });
       });
@@ -325,10 +346,9 @@ describe('Ingesting from PDR', () => {
         let executionStatus;
 
         beforeAll(async () => {
-          const executionArn = workflowExecution.executionArn;
           executionStatus = await apiTestUtils.getExecutionStatus({
             prefix: config.stackName,
-            arn: executionArn
+            arn: parsePdrExecutionArn
           });
         });
 
@@ -345,8 +365,8 @@ describe('Ingesting from PDR', () => {
           for (let i = 0; i < events.length; i += 1) {
             const currentEvent = events[i];
             if (currentEvent.type === 'TaskStateExited' &&
-            get(currentEvent, 'name') === checkStatusTaskName) {
-              const output = get(currentEvent, 'output');
+              currentEvent.name === checkStatusTaskName) {
+              const output = currentEvent.output;
               const isFinished = output.payload.isFinished;
 
               // get the next task executed
@@ -355,8 +375,8 @@ describe('Ingesting from PDR', () => {
                 i += 1;
                 const nextEvent = events[i];
                 if (nextEvent.type === 'TaskStateEntered' &&
-                  get(nextEvent, 'name')) {
-                  nextTask = get(nextEvent, 'name');
+                  nextEvent.name) {
+                  nextTask = nextEvent.name;
                 }
               }
 
@@ -380,10 +400,10 @@ describe('Ingesting from PDR', () => {
     /** This test relies on the previous 'ParsePdr workflow' to complete */
     describe('When accessing an execution via the API that was triggered from a parent step function', () => {
       it('displays a link to the parent', async () => {
-        const parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
+        const parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
         const parsePdrExecution = await apiTestUtils.getExecution({
           prefix: config.stackName,
-          arn: parsePdrWorkflowArn
+          arn: parsePdrExecutionArn
         });
 
         expect(parsePdrExecution.parentArn).toEqual(workflowExecution.executionArn);
@@ -404,7 +424,7 @@ describe('Ingesting from PDR', () => {
 
     describe('the sf-sns-report task has published a sns message and', () => {
       it('the execution record is added to DynamoDB', async () => {
-        const record = await executionModel.get({ arn: workflowExecution.executionArn });
+        const record = await executionModel.get({ arn: parsePdrExecutionArn });
         expect(record.status).toEqual('completed');
       });
     });
