@@ -2,11 +2,11 @@
 
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
-const { 
+const {
   s3,
   promiseS3Upload,
   recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws')
+} = require('@cumulus/common/aws');
 
 const workflowList = require('../data/workflow_list.json');
 const models = require('../../models');
@@ -22,7 +22,7 @@ let userModel;
 let testBucketName;
 let stackName;
 
-test.before(async (t) => {
+test.before(async () => {
   process.env.UsersTable = randomString();
   testBucketName = randomString();
   stackName = randomString();
@@ -45,9 +45,14 @@ test.before(async (t) => {
   authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  testBucketName = randomString();
+  process.env.bucket = testBucketName;
+
+  await s3().createBucket({ Bucket: testBucketName }).promise();
 });
 
-test.after.always(async (t) => {
+test.after.always(async () => {
   await userModel.deleteTable();
   await recursivelyDeleteS3Bucket(testBucketName);
 });
@@ -106,7 +111,7 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   });
 });
 
-test.serial('with an authorized user returns a list of workflows', async (t) => {
+test.serial('GET with no path parameters and an authorized user returns a list of workflows', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: authHeaders
@@ -120,7 +125,7 @@ test.serial('with an authorized user returns a list of workflows', async (t) => 
   });
 });
 
-test.serial('with an authorized user return a specific workflow', async (t) => {
+test.serial('GET an existing workflow with an authorized user returns a specific workflow', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -137,3 +142,22 @@ test.serial('with an authorized user return a specific workflow', async (t) => {
     t.is(result.template, 's3://bucket/cumulus/workflows/HelloWorldWorkflow.json');
   });
 });
+
+test.only.serial('GET with path parameters returns a 400 for a nonexistent workflow', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      name: 'NonexistentWorkflow'
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(workflowsEndpoint, request, (response) => {
+    t.is(response.statusCode, 400);
+    const result = JSON.parse(response.body);
+
+    t.is(result.message, 'The specified key does not exist.');
+  });
+});
+
+test.todo('GET /good-workflow returns a 500 if the workflows list cannot be fetched from S3');

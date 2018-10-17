@@ -1,6 +1,7 @@
 'use strict';
 
 const _get = require('lodash.get');
+const aws = require('@cumulus/common/aws');
 const { S3 } = require('@cumulus/ingest/aws');
 const handle = require('../lib/response').handle;
 
@@ -11,12 +12,16 @@ const handle = require('../lib/response').handle;
  * @param {callback} cb - aws lambda callback function
  * @returns {undefined} undefined
  */
-function list(event, cb) {
-  const key = `${process.env.stackName}/workflows/list.json`;
-  S3.get(process.env.bucket, key).then((file) => {
-    const workflows = JSON.parse(file.Body.toString());
-    return cb(null, workflows);
-  }).catch((e) => cb(e));
+async function list(event, cb) {
+  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
+
+  try {
+    const { Body } = await aws.getS3Object(process.env.bucket, workflowsListKey);
+    return cb(null, Body.toString());
+  }
+  catch (err) {
+    return cb(err);
+  }
 }
 
 /**
