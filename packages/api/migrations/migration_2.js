@@ -59,7 +59,7 @@ async function run({ granulesTable, filesTable }) {
         }
       };
 
-      await dynamodb().batchWriteItem(batchWriteItemParams).promise(); // eslint-disable-line no-await-in-loop
+      await dynamodb().batchWriteItem(batchWriteItemParams).promise(); // eslint-disable-line no-await-in-loop, max-len
 
       filePutRequestBuffer = drop(filePutRequestBuffer, 25);
     }
@@ -76,7 +76,7 @@ async function run({ granulesTable, filesTable }) {
       }
     };
 
-    await dynamodb().batchWriteItem(batchWriteItemParams).promise(); // eslint-disable-line no-await-in-loop
+    await dynamodb().batchWriteItem(batchWriteItemParams).promise(); // eslint-disable-line no-await-in-loop, max-len
 
     filePutRequestBuffer = drop(filePutRequestBuffer, 25);
   }
