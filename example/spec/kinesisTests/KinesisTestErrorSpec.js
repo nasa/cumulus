@@ -1,6 +1,6 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
+const fs = require('fs');
 
 const {
   aws: { deleteSQSMessage },
@@ -42,8 +42,8 @@ const testSuffix = createTestSuffix(testId);
 const testDataFolder = createTestDataPath(testId);
 const ruleSuffix = globalReplace(testSuffix, '-', '_');
 
-const recordTemplate = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
-const record = cloneDeep(recordTemplate);
+
+const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
 record.provider += testSuffix;
 record.collection += testSuffix;
