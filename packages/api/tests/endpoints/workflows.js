@@ -9,6 +9,7 @@ const {
 } = require('@cumulus/common/aws');
 
 const workflowList = require('../data/workflow_list.json');
+const testWorkflow = require('../data/test_workflow.json');
 const models = require('../../models');
 const workflowsEndpoint = require('../../endpoints/workflows');
 const {
@@ -38,6 +39,13 @@ test.before(async () => {
     Body: JSON.stringify(workflowList)
   });
 
+  const testWorkflowKey = `${process.env.stackName}/workflows/${testWorkflow.name}.json`;
+  await promiseS3Upload({
+    Bucket: testBucketName,
+    Key: testWorkflowKey,
+    Body: JSON.stringify(testWorkflow)
+  });
+
   userModel = new models.User();
   await userModel.createTable();
 
@@ -45,9 +53,6 @@ test.before(async () => {
   authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
-
-  testBucketName = randomString();
-  process.env.bucket = testBucketName;
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
 });
@@ -143,7 +148,7 @@ test.serial('GET an existing workflow with an authorized user returns a specific
   });
 });
 
-test.only.serial('GET with path parameters returns a 400 for a nonexistent workflow', async (t) => {
+test.serial('GET with path parameters returns a 400 for a nonexistent workflow', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
