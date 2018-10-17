@@ -21,7 +21,7 @@
  * Does not post to CMR (that is in a separate test)
  */
 
-const { Collection, Execution } = require('@cumulus/api/models');
+const { Collection, Execution, Pdr } = require('@cumulus/api/models');
 const {
   buildAndExecuteWorkflow,
   waitForCompletedExecution,
@@ -39,7 +39,8 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
+  getExecutionUrl
 } = require('../helpers/testUtils');
 
 const {
@@ -67,8 +68,10 @@ describe('Ingesting from PDR', () => {
   const provider = { id: `s3_provider${testSuffix}` };
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
   const executionModel = new Execution();
   const collectionModel = new Collection();
+  const pdrModel = new Pdr();
   let parsePdrExecutionArn;
 
   beforeAll(async () => {
@@ -77,6 +80,7 @@ describe('Ingesting from PDR', () => {
       prefix: config.stackName,
       pdr: pdrFilename
     });
+
     // populate collections, providers and test data
     await Promise.all([
       updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]),
@@ -225,7 +229,11 @@ describe('Ingesting from PDR', () => {
       describe('QueueGranules lambda function', () => {
         it('has expected pdr and arns output', () => {
           expect(queueGranulesOutput.payload.running.length).toEqual(1);
-          expect(queueGranulesOutput.payload.pdr).toEqual(expectedParsePdrOutput.pdr);
+
+          const payloadPdr = queueGranulesOutput.payload.pdr;
+          delete payloadPdr.time;
+
+          expect(payloadPdr).toEqual(expectedParsePdrOutput.pdr);
         });
       });
 
@@ -242,6 +250,8 @@ describe('Ingesting from PDR', () => {
         it('has expected output', () => {
           const payload = lambdaOutput.payload;
           expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
+
+          delete payload.pdr.time;
           expect(payload.pdr).toEqual(expectedParsePdrOutput.pdr);
         });
       });
@@ -255,9 +265,9 @@ describe('Ingesting from PDR', () => {
         // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
         // is retrieved which is the first step (StatusReport)
         it('has expected output message', () => {
-          console.log(`payload: ${JSON.stringify(lambdaOutput.payload)}`);
+          delete lambdaOutput.payload.pdr.time;
 
-          expect(lambdaOutput.payload).toEqual(inputPayload);
+          expect(lambdaOutput.payload).toEqual({ pdr: expectedParsePdrOutput.pdr });
         });
       });
 
