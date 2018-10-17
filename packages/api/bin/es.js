@@ -51,8 +51,10 @@ async function completeReindex(
       ]
     }
   }).then(() => {
+    // eslint-disable-next-line max-len
     console.log(`Removed alias ${aliasName} from index ${sourceIndex} and added alias to ${destIndex}`);
   }, (err) => {
+    // eslint-disable-next-line max-len
     throw new Error(`Error removing alias ${aliasName} from index ${sourceIndex} and adding alias to ${destIndex}: ${err}`);
   });
 
@@ -99,6 +101,7 @@ async function reindex(
   });
 
   if (!aliasExists) {
+    // eslint-disable-next-line max-len
     throw new Error(`Alias ${aliasName} does not exist. Before re-indexing, re-deploy your instance of Cumulus.`);
   }
 
@@ -112,6 +115,7 @@ async function reindex(
   if (sourceIndex === null) {
     if (indices.length > 1) {
       // We don't know which index to use as the source, throw error
+      // eslint-disable-next-line max-len
       throw new Error(`Multiple indices found for alias ${aliasName}. Specify source index as one of [${indices.sort().join(', ')}].`);
     }
 
@@ -137,6 +141,7 @@ async function reindex(
   const destExists = await esClient.indices.exists({ index: destIndex });
 
   if (destExists) {
+    // eslint-disable-next-line max-len
     throw new Error(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
   }
   else {
