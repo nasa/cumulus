@@ -254,7 +254,7 @@ test.serial('GET returns an existing granule', async (t) => {
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
 });
 
-test.serial('GET fails if granule is not found', async (t) => {
+test.serial('GET returns a 404 response if the granule is not found', async (t) => {
   const event = {
     httpMethod: 'GET',
     pathParameters: {
