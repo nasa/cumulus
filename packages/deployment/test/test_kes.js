@@ -255,3 +255,32 @@ test.serial("getHumanReadableIdentifier returns '' for a version string with no 
   const actual = t.context.kes.getHumanReadableIdentifier(testString);
   t.is(expected, actual);
 });
+
+
+test.serial('setParentOverrideConfigValues merges defined parent configuration', (t) => {
+  const parentConfig = {overrideKey: true};
+  const kes = t.context.kes;
+  kes.config.overrideKey = false;
+  kes.config.override_with_parent = ['overrideKey'];
+  kes.config.parent = parentConfig;
+
+  kes.setParentConfigValues();
+  const expected = true;
+  const actual = kes.config.overrideKey;
+
+  t.is(expected, actual);
+});
+
+test.serial('setParentOverrideConfigValues ignores missing parent configuration', (t) => {
+  const parentConfig = {};
+  const kes = t.context.kes;
+  kes.config.overrideKey = false;
+  kes.config.override_with_parent = ['overrideKey'];
+  kes.config.parent = parentConfig;
+
+  kes.setParentConfigValues();
+  const expected = false;
+  const actual = kes.config.overrideKey;
+
+  t.is(expected, actual);
+});

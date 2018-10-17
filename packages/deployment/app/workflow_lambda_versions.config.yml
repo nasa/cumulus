@@ -1,8 +1,12 @@
 default:
+
+  override_with_parent:
+    - maxNumberOfRetainedLambdas
+    - useWorkflowLambdaVersions
+
   customCompilation: true
   oldLambdaInjection: true
   lambdaProcess: true
-  useWorkflowLambdaVersions: true
   maxNumberOfRetainedLambdas: 1
 
   lambdas: !!files [
