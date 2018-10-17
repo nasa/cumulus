@@ -126,7 +126,7 @@ SnsS3Test:
   source: lambdas/snsS3Test/
 WaitForDeployment:
   handler: index.handler
-  source: lambdas/waitForDeploy/
+  source: node_modules/@cumulus/wait-for-deploy/dist/
 VersionUpTest:
   handler: index.handler
   memory: 128
