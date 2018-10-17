@@ -33,10 +33,18 @@ async function list(event, cb) {
 async function get(event, cb) {
   const name = _get(event.pathParameters, 'name');
 
-  const workflowKey = `${process.env.stackName}/workflows/${name}.json`;
+  const workflowKey = `${process.env.stackName}/workflows/list.json`;
   try {
     const { Body } = await aws.getS3Object(process.env.bucket, workflowKey);
-    return cb(null, Body.toString());
+
+    const jsonResponse = JSON.parse(Body);
+
+    const matchingWorkflow = jsonResponse.find((workflow) => workflow.name === name);
+    if (matchingWorkflow) return cb(null, matchingWorkflow);
+
+    const e = new Error('The specified key does not exist.');
+    e.name = 'NoSuchKey';
+    throw e;
   }
   catch (err) {
     if (err.name === 'NoSuchKey') {
