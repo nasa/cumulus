@@ -13,3 +13,7 @@ exports.isUnauthorizedUserResponse = (t, response) => {
   const responseBody = JSON.parse(response.body);
   t.is(responseBody.message, 'User not authorized');
 };
+
+exports.isInvalidAuthorizationResponse = (t, response) => {
+  t.is(response.statusCode, 401);
+};
