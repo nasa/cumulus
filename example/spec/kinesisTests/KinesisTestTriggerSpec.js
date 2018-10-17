@@ -5,6 +5,8 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 
+const cloneDeep = require('lodash.clonedeep');
+
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
@@ -48,7 +50,7 @@ const testDataFolder = createTestDataPath(testId);
 const ruleSuffix = globalReplace(testSuffix, '-', '_');
 
 const recordTemplate = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
-const record = { ...recordTemplate };
+const record = cloneDeep(recordTemplate);
 
 record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
 record.provider += testSuffix;
