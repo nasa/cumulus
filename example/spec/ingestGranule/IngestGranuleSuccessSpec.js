@@ -23,8 +23,7 @@ const {
   conceptExists,
   getOnlineResources,
   waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs,
-  api: apiTestUtils
+  waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
 
 const {
