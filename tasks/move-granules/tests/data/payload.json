@@ -25,15 +25,9 @@
         "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
         "files": [
           {
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-            "fileStagingDir": "file-staging"
-          },
-          {
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-            "bucket": "cumulus-internal",
-            "filename": "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "filename": "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "fileStagingDir": "file-staging"
           }
         ]
@@ -74,7 +68,7 @@
           "url_path": "jpg/example/"
         }
       ],
-      "url_path": "example/",
+      "url_path": "example/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/",
       "name": "MOD11A1",
       "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
       "dataType": "MOD11A1",
@@ -87,7 +81,9 @@
     }
   },
   "input": [
+    "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
     "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-    "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg"
+    "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+    "s3://cumulus-internal/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
   ]
 }
