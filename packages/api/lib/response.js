@@ -9,8 +9,11 @@
 
 'use strict';
 
+const isFunction = require('lodash.isfunction');
+const isObject = require('lodash.isobject');
+const isString = require('lodash.isstring');
 const deprecate = require('depd')('@cumulus/api/lib/response');
-const log = require('@cumulus/common/log');
+const { log } = require('@cumulus/common');
 const proxy = require('lambda-proxy-utils');
 const { User } = require('../models');
 const { errorify } = require('./utils');
@@ -31,7 +34,7 @@ function findCaseInsensitiveKey(obj, keyArg) {
 const BEARER_REGEX = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9._~+/-]+=*) *$/;
 
 function getToken(req) {
-  if (!req.headers || typeof req.headers !== 'object') {
+  if (!req.headers || !isObject(req.headers)) {
     throw new TypeError('argument req is required to have headers property');
   }
 
@@ -49,7 +52,7 @@ function getToken(req) {
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,'); // eslint-disable-line max-len
 
-  if (typeof context.succeed !== 'function') {
+  if (!isFunction(context.succeed)) {
     throw new TypeError('context as object with succeed method not provided');
   }
 
@@ -113,15 +116,18 @@ function buildLambdaProxyResponse(params = {}) {
   let body = bodyArg;
 
   // Set required response headers
-  const requiredHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Strict-Transport-Security': 'max-age=31536000'
-  };
-  const headers = Object.assign({}, headersArg, requiredHeaders);
+  const headers = Object.assign(
+    {},
+    headersArg,
+    {
+      'Access-Control-Allow-Origin': '*',
+      'Strict-Transport-Security': 'max-age=31536000'
+    }
+  );
 
   if (json) {
     // Make sure that the body argument is an array or an object
-    if (!bodyArg || typeof bodyArg === 'string' || bodyArg instanceof String) {
+    if (!bodyArg || isString(bodyArg)) {
       throw new TypeError('body must be an object or array when json is true');
     }
 
@@ -245,7 +251,7 @@ async function getAuthorizationFailureResponse(params) {
 }
 
 function handle(event, context, authCheck, func) {
-  if (typeof context.succeed !== 'function') {
+  if (!isFunction(context.succeed)) {
     throw new TypeError('context object with succeed method not provided');
   }
 
@@ -288,10 +294,24 @@ function handle(event, context, authCheck, func) {
   return func(cb);
 }
 
+const notFoundResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 404,
+  body: { message: 'Not found' }
+});
+
+const internalServerErrorResponse = buildLambdaProxyResponse({
+  json: true,
+  statusCode: 500,
+  body: { message: 'Internal Server Error' }
+});
+
 module.exports = {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
   handle,
+  internalServerErrorResponse,
+  notFoundResponse,
   resp
 };

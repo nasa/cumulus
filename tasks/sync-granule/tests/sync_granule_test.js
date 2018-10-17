@@ -9,6 +9,7 @@ const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-sch
 const { constructCollectionId } = require('@cumulus/common');
 const {
   checksumS3Objects,
+  headObject,
   parseS3Uri,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
@@ -16,7 +17,7 @@ const {
   promiseS3Upload
 } = require('@cumulus/common/aws');
 
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
 const {
   randomString,
   validateConfig,
@@ -24,6 +25,34 @@ const {
   validateOutput
 } = require('@cumulus/common/test-utils');
 const { syncGranule } = require('..');
+
+// prepare the s3 event and data
+async function prepareS3DownloadEvent(t) {
+  const granuleFilePath = randomString();
+  const granuleFileName = payload.input.granules[0].files[0].name;
+
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 's3',
+    host: randomString()
+  };
+
+  t.context.event.input.granules[0].files[0].path = granuleFilePath;
+  t.context.event.config.fileStagingDir = randomString();
+
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
+
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+
+  // Stage the file that's going to be downloaded
+  const key = `${granuleFilePath}/${granuleFileName}`;
+  await s3().putObject({
+    Bucket: t.context.event.config.provider.host,
+    Key: key,
+    Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
+  }).promise();
+}
 
 // Setup buckets and the test event
 test.beforeEach(async (t) => {
@@ -430,34 +459,10 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 });
 
 async function duplicateHandlingErrorTest(t) {
-  const granuleFilePath = randomString();
+  await prepareS3DownloadEvent(t);
   const granuleFileName = payload.input.granules[0].files[0].name;
-  const key = `${granuleFilePath}/${granuleFileName}`;
-
-  t.context.event.config.provider = {
-    id: 'MODAPS',
-    protocol: 's3',
-    host: randomString()
-  };
-
-  t.context.event.input.granules[0].files[0].path = granuleFilePath;
-
-  t.context.event.config.fileStagingDir = randomString();
-
-  await validateConfig(t, t.context.event.config);
-  await validateInput(t, t.context.event.input);
-
-  // Create the s3 bucket. If the bucket doesn't exist, we just get a
-  // 'bucket doesn't exist' error
-  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
   try {
-    await s3().putObject({
-      Bucket: t.context.event.config.provider.host,
-      Key: key,
-      Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
-    }).promise();
-
     const output = await syncGranule(t.context.event);
     await validateOutput(t, output);
 
@@ -538,42 +543,31 @@ test.serial('when duplicateHandling is "error", throw an error on duplicate', as
 // });
 
 test.serial('when duplicateHandling is "version", keep both data if different', async (t) => {
+  await prepareS3DownloadEvent(t);
   // duplicateHandling is taken from task config or collection config
   t.context.event.config.duplicateHandling = 'version';
-  const granuleFilePath = randomString();
+
   const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFilePath = t.context.event.input.granules[0].files[0].path;
 
-  t.context.event.config.provider = {
-    id: 'MODAPS',
-    protocol: 's3',
-    host: randomString()
-  };
-
-  t.context.event.input.granules[0].files[0].path = granuleFilePath;
-
-  await validateConfig(t, t.context.event.config);
-  await validateInput(t, t.context.event.input);
-
-  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+  const key = `${granuleFilePath}/${granuleFileName}`;
 
   try {
-    // Stage the file that's going to be downloaded
-    const key = `${granuleFilePath}/${granuleFileName}`;
-    await s3().putObject({
-      Bucket: t.context.event.config.provider.host,
-      Key: key,
-      Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
-    }).promise();
-
+    // staging the granule
     let output = await syncGranule(t.context.event);
 
     await validateOutput(t, output);
+
+    const existingFile = output.granules[0].files[0].filename;
+    const existingFileInfo = await headObject(
+      parseS3Uri(existingFile).Bucket, parseS3Uri(existingFile).Key
+    );
 
     // stage the file with different content
     await s3().putObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
-      Body: granuleFileName
+      Body: randomString()
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
@@ -587,14 +581,155 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 2);
-    t.true(output.granules[0].files[1].duplicate_found);
-    output.granules[0].files.forEach((f) => {
-      const filename = path.basename(parseS3Uri(f.filename).Key);
-      t.true(filename === granuleFileName || filename.startsWith(`${granuleFileName}.v`));
-    });
+
+    let filesNotRenamed = output.granules[0].files
+      .filter((f) => path.basename(parseS3Uri(f.filename).Key) === granuleFileName);
+    t.is(filesNotRenamed.length, 1);
+    t.true(filesNotRenamed[0].duplicate_found);
+
+    let filesRenamed = output.granules[0].files
+      .filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${granuleFileName}.v`));
+    t.is(filesRenamed.length, 1);
+    t.falsy(filesRenamed[0].duplicate_found);
+
+    const renamedFileInfo = await headObject(
+      parseS3Uri(filesRenamed[0].filename).Bucket, parseS3Uri(filesRenamed[0].filename).Key
+    );
+    t.deepEqual(existingFileInfo, renamedFileInfo);
+
+    // stage the file again with different content
+    await s3().putObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: key,
+      Body: randomString()
+    }).promise();
+
+    t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
+    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
+      t.context.event.input.granules[0].files[0].checksumType,
+      t.context.event.config.provider.host,
+      key
+    );
+
+    output = await syncGranule(t.context.event);
+    await validateOutput(t, output);
+
+    t.is(output.granules[0].files.length, 3);
+
+    filesNotRenamed = output.granules[0].files
+      .filter((f) => path.basename(parseS3Uri(f.filename).Key) === granuleFileName);
+    t.is(filesNotRenamed.length, 1);
+
+    filesRenamed = output.granules[0].files
+      .filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${granuleFileName}.v`));
+    t.is(filesRenamed.length, 2);
   }
   finally {
-    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
+test.serial('when duplicateHandling is "skip", do not overwrite or create new', async (t) => {
+  await prepareS3DownloadEvent(t);
+  // duplicateHandling is taken from task config or collection config
+  t.context.event.config.duplicateHandling = 'skip';
+
+  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFilePath = t.context.event.input.granules[0].files[0].path;
+
+  const key = `${granuleFilePath}/${granuleFileName}`;
+
+  try {
+    // staging the granule
+    let output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+
+    const existingFile = output.granules[0].files[0].filename;
+    const existingFileInfo = await headObject(
+      parseS3Uri(existingFile).Bucket, parseS3Uri(existingFile).Key
+    );
+
+    // stage the file with different content
+    await s3().putObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: key,
+      Body: randomString()
+    }).promise();
+
+    t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
+    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
+      t.context.event.input.granules[0].files[0].checksumType,
+      t.context.event.config.provider.host,
+      key
+    );
+
+    output = await syncGranule(t.context.event);
+    await validateOutput(t, output);
+
+    t.is(output.granules[0].files.length, 1);
+    t.true(output.granules[0].files[0].duplicate_found);
+
+    const currentFile = output.granules[0].files[0].filename;
+    const currentFileInfo = await headObject(
+      parseS3Uri(currentFile).Bucket, parseS3Uri(currentFile).Key
+    );
+    t.deepEqual(existingFileInfo, currentFileInfo);
+  }
+  finally {
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
+test.serial('when duplicateHandling is "replace", do overwrite files', async (t) => {
+  await prepareS3DownloadEvent(t);
+  // duplicateHandling is taken from task config or collection config
+  t.context.event.config.duplicateHandling = 'replace';
+
+  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFilePath = t.context.event.input.granules[0].files[0].path;
+
+  const key = `${granuleFilePath}/${granuleFileName}`;
+
+  try {
+    // staging the granule
+    let output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+
+    const existingFile = output.granules[0].files[0].filename;
+    const existingFileInfo = await headObject(
+      parseS3Uri(existingFile).Bucket, parseS3Uri(existingFile).Key
+    );
+
+    // stage the file with different content
+    await s3().putObject({
+      Bucket: t.context.event.config.provider.host,
+      Key: key,
+      Body: randomString()
+    }).promise();
+
+    t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
+    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
+      t.context.event.input.granules[0].files[0].checksumType,
+      t.context.event.config.provider.host,
+      key
+    );
+
+    output = await syncGranule(t.context.event);
+    await validateOutput(t, output);
+
+    t.is(output.granules[0].files.length, 1);
+    t.true(output.granules[0].files[0].duplicate_found);
+
+    const currentFile = output.granules[0].files[0].filename;
+    const currentFileInfo = await headObject(
+      parseS3Uri(currentFile).Bucket, parseS3Uri(currentFile).Key
+    );
+    t.is(currentFileInfo.ContentLength, randomString().length);
+    t.true(currentFileInfo.LastModified >= existingFileInfo.LastModified);
+  }
+  finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 });

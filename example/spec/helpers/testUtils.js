@@ -6,9 +6,13 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 const { Config } = require('kes');
-const lodash = require('lodash');
-const { exec } = require('child-process-promise');
+const cloneDeep = require('lodash.clonedeep');
+const merge = require('lodash.merge');
 const path = require('path');
+const { promisify } = require('util');
+const tempy = require('tempy');
+const execa = require('execa');
+const pTimeout = require('p-timeout');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -18,6 +22,7 @@ const createTimestampedTestId = (stackName, testName) => `${stackName}-${testNam
 const createTestDataPath = (prefix) => `${prefix}-test-data/files`;
 const createTestSuffix = (prefix) => `_test-${prefix}`;
 
+const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
 
 /**
  * Loads and parses the configuration defined in `./app/config.yml`
@@ -62,7 +67,7 @@ function loadConfig() {
  */
 function templateFile({ inputTemplateFilename, config }) {
   const inputTemplate = JSON.parse(fs.readFileSync(inputTemplateFilename, 'utf8'));
-  const templatedInput = lodash.merge(lodash.cloneDeep(inputTemplate), config);
+  const templatedInput = merge(cloneDeep(inputTemplate), config);
   let jsonString = JSON.stringify(templatedInput, null, 2);
   jsonString = jsonString.replace('{{AWS_ACCOUNT_ID}}', config.AWS_ACCOUNT_ID);
   const templatedInputFilename = inputTemplateFilename.replace('.template', '');
@@ -82,7 +87,7 @@ function templateFile({ inputTemplateFilename, config }) {
  */
 function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-data/pdrs', replacements = []) {
   let data;
-  if (replacements.length) {
+  if (replacements.length > 0) {
     data = fs.readFileSync(require.resolve(file), 'utf8');
     replacements.forEach((replace) => {
       data = globalReplace(data, replace.old, replace.new);
@@ -155,60 +160,40 @@ function getExecutionUrl(executionArn) {
           `#/executions/details/${executionArn}`;
 }
 
-
 /**
  * Redeploy the current Cumulus deployment.
- *
- * Prints '.' per minute while running.  Prints STDOUT from deployCommand
- * and STDERR if an error occurs.
  *
  * @param {Object} config - configuration object from loadConfig()
  * @param {Object} [options] - configuration options with the following keys>
  * @param {string} [options.template=template=node_modules/@cumulus/deployment/app] - optional template command line kes option
  * @param {string} [options.kesClass] - optional kes-class command line kes option
- * @param {int} [options.timeout=30] - Timeout value in minutes
- * @returns {Promise.undefined} none
+ * @param {integer} [options.timeout=30] - Timeout value in minutes
+ * @returns {Promise<undefined>}
  */
-
 async function redeploy(config, options = {}) {
-  const templatePath = options.template || 'node_modules/@cumulus/deployment/app';
-  let deployCommand = `./node_modules/.bin/kes cf deploy --kes-folder app --template ${templatePath} --deployment ${config.deployment} --region us-east-1`;
-  if (options.kesClass) deployCommand += ` --kes-class ${options.kesClass}`;
-  console.log(`Redeploying ${config.deployment}`);
+  const timeoutInMinutes = options.timeout || 30;
 
-  let timeoutObject;
-  function timeoutPromise() {
-    return new Promise((resolve, reject) => {
-      const minutes = options.timeout || 30;
-      let i = 0;
-      function printDots() {
-        console.log('.');
-        if (i < minutes) {
-          i += 1;
-          timeoutObject = setTimeout(printDots, 60000);
-        }
-        else {
-          reject(new Error('Timeout Exceeded'));
-        }
-      }
-      printDots();
-    });
-  }
+  const deploymentCommand = './node_modules/.bin/kes';
 
-  async function executionPromise() {
-    let output;
-    try {
-      output = await exec(deployCommand);
-      console.log(output.stdout);
-    }
-    catch (e) {
-      console.log(e.stdout);
-      console.log(e.stderr);
-      throw (e);
-    }
-  }
+  const deploymentOptions = [
+    'cf', 'deploy',
+    '--kes-folder', 'app',
+    '--template', options.template || 'node_modules/@cumulus/deployment/app',
+    '--deployment', config.deployment,
+    '--region', 'us-east-1'
+  ];
 
-  return Promise.race([executionPromise(), timeoutPromise()]).then((_) => clearTimeout(timeoutObject));
+  if (options.kesClass) deploymentOptions.push('--kes-class', options.kesClass);
+
+  const deploymentProcess = execa(deploymentCommand, deploymentOptions);
+
+  deploymentProcess.stdout.pipe(process.stdout);
+  deploymentProcess.stderr.pipe(process.stderr);
+
+  await pTimeout(
+    deploymentProcess,
+    timeoutInMinutes * MILLISECONDS_IN_A_MINUTE
+  );
 }
 
 /**
@@ -225,6 +210,29 @@ async function getFilesMetadata(files) {
   return Promise.all(getFileRequests);
 }
 
+const promisedCopyFile = promisify(fs.copyFile);
+const promisedUnlink = promisify(fs.unlink);
+
+/**
+ * Creates a backup of a file, executes the specified function, and makes sure
+ * that the file is restored from backup.
+ *
+ * @param {string} file - the file to backup
+ * @param {Function} fn - the function to execute
+ */
+async function protectFile(file, fn) {
+  const backupLocation = tempy.file();
+  await promisedCopyFile(file, backupLocation);
+
+  try {
+    return await Promise.resolve().then(fn);
+  }
+  finally {
+    await promisedCopyFile(backupLocation, file);
+    await promisedUnlink(backupLocation);
+  }
+}
+
 module.exports = {
   timestampedName,
   createTimestampedTestId,
@@ -237,5 +245,6 @@ module.exports = {
   deleteFolder,
   getExecutionUrl,
   redeploy,
-  getFilesMetadata
+  getFilesMetadata,
+  protectFile
 };

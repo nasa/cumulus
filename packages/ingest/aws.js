@@ -1,6 +1,5 @@
 'use strict';
 
-const _get = require('lodash.get');
 const url = require('url');
 const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
@@ -8,6 +7,7 @@ const moment = require('moment');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { describeExecution } = require('@cumulus/common/step-functions');
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -485,24 +485,22 @@ class KMS {
 
 class StepFunction {
   static async getExecution(arn, ignoreMissingExecutions = false) {
-    const stepfunctions = new AWS.StepFunctions();
-
-    const params = {
-      executionArn: arn
-    };
+    // eslint-disable-next-line max-len
+    log.debug('@cumulus/ingest/aws/StepFunction.getExecution is deprecated.  Use @cumulus/common/step-functions/describeExecution instead.');
 
     try {
-      const r = await stepfunctions.describeExecution(params).promise();
-      return r;
+      return await describeExecution(arn);
     }
-    catch (e) {
-      if (ignoreMissingExecutions && e.message && e.message.includes('Execution Does Not Exist')) {
+    catch (err) {
+      if (ignoreMissingExecutions
+        && err.message
+        && err.message.includes('Execution Does Not Exist')) {
         return {
           executionArn: arn,
           status: 'NOT_FOUND'
         };
       }
-      throw e;
+      throw err;
     }
   }
 
