@@ -158,11 +158,27 @@ test.serial('GET with path parameters returns a 400 for a nonexistent workflow',
   };
 
   return testEndpoint(workflowsEndpoint, request, (response) => {
-    t.is(response.statusCode, 400);
-    const result = JSON.parse(response.body);
+    t.is(response.statusCode, 404);
 
+    const result = JSON.parse(response.body);
     t.is(result.message, 'The specified key does not exist.');
   });
 });
 
-test.todo('GET /good-workflow returns a 500 if the workflows list cannot be fetched from S3');
+test.serial('GET /good-workflow returns a 500 if the workflows list cannot be fetched from S3', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    pathParameters: {
+      name: 'HelloWorldWorkflow'
+    },
+    headers: authHeaders
+  };
+
+  const realBucket = process.env.bucket;
+  process.env.bucket = 'bucket-does-not-exist';
+
+  return testEndpoint(workflowsEndpoint, request, (response) => {
+    process.env.bucket = realBucket;
+    t.is(response.statusCode, 500);
+  });
+});
