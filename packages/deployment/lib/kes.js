@@ -313,8 +313,7 @@ class UpdatedKes extends Kes {
     const configLambdas = this.config.workflowLambdas;
     const numberOfRetainedLambdas = this.config.maxNumberOfRetainedLambdas;
 
-    let oldAliasMeatadataObjects = [];
-    let oldAliasMetadataObjects = [];
+    let aliasMetadataObjects = [];
 
     const lambdaNames = Object.keys(configLambdas);
     const aliasListsPromises = lambdaNames.map(async (lambdaName) => {
@@ -341,7 +340,7 @@ class UpdatedKes extends Kes {
       const oldAliases = cumulusAliases.filter(
         (alias) => this.parseAliasName(alias.Name).hash !== configLambdas[lambdaName].hash
       );
-      oldAliasMetadataObjects = oldAliases.map((alias) => (
+      const oldAliasMetadataObjects = oldAliases.map((alias) => (
         {
           name: alias.Name,
           humanReadableIdentifier: this.getHumanReadableIdentifier(alias.Description)
@@ -354,9 +353,9 @@ class UpdatedKes extends Kes {
           `${JSON.stringify(oldAliasMetadataObjects.map((obj) => obj.name))}`
         );
       }
-      oldAliasMeatadataObjects = oldAliasMeatadataObjects.concat(oldAliasMetadataObjects);
+      aliasMetadataObjects = aliasMetadataObjects.concat(oldAliasMetadataObjects);
     });
-    return oldAliasMeatadataObjects;
+    return aliasMetadataObjects;
   }
 
 
