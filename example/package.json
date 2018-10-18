@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "jasmine",
+    "redeploy-test": "jasmine spec/redeployment/*.js",
     "deploy": "./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
     "deploy-iam": "./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE"
   },
@@ -51,13 +52,13 @@
     "sleep-promise": "^8.0.1"
   },
   "devDependencies": {
-    "eslint-plugin-jsdoc": "^3.7.1",
     "eslint": "^5.5.0",
+    "eslint-plugin-jsdoc": "^3.7.1",
     "execa": "^1.0.0",
     "fs-extra": "7.0.0",
     "got": "^8.3.0",
-    "jasmine-console-reporter": "^2.0.1",
     "jasmine": "^3.1.0",
+    "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.12.0",
     "kes": "^2.2.4",
     "lodash.assignin": "^4.2.0",
