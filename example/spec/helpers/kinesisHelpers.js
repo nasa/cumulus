@@ -159,7 +159,7 @@ async function getShardIterator(streamName) {
  *
  * @param  {string} shardIterator - Kinesis stream shard iterator.
  *                                  Shard iterators must be generated using getShardIterator.
- * @returns {Promise}              - kinesis GetRecords promise
+ * @returns {Array}               - Array of records from kinesis stream.
  */
 async function getRecords(shardIterator, records = []) {
   const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
