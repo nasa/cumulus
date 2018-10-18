@@ -132,6 +132,24 @@ class Manager {
   }
 
   /**
+   * Check if a item exists
+   *
+   * @param {Object} Key - the key to check for
+   * @returns {boolean}
+   */
+  async exists(Key) {
+    try {
+      await this.get(Key);
+      return true;
+    }
+    catch (err) {
+      if (err instanceof RecordDoesNotExist) return false;
+
+      throw err;
+    }
+  }
+
+  /**
    * Gets the item if found. If the record does not exist
    * the function throws RecordDoesNotExist error
    *
