@@ -1,4 +1,4 @@
-/* eslint-disable no-console, no-param-reassign, no-template-curly-in-string, object-curly-spacing*/
+/* eslint no-template-curly-in-string: "off" */
 
 'use strict';
 
@@ -14,7 +14,7 @@ test.beforeEach((t) => {
 });
 
 function setupKesForLookupLambdaReference(kes, functionName, hashValue) {
-  kes.config.lambdas = { [functionName]: { hash: hashValue }};
+  kes.config.lambdas = { [functionName]: { hash: hashValue } };
   return kes;
 }
 
@@ -54,7 +54,7 @@ test('injectWorkflowLambdaAliases updates the correct resources', (t) => {
       States: {
         1: { Type: 'Task', Resource: '${TestLambdaLambdaFunction.Arn}' },
         2: { Type: 'Task', Resource: '${TestUnversionedLambdaLambdaFunction.Arn}' },
-        3: { Type: 'Task', Resource: '${SomethingElse.Arn}'}
+        3: { Type: 'Task', Resource: '${SomethingElse.Arn}' }
       }
     },
     TestStepFunction2: {
@@ -69,7 +69,7 @@ test('injectWorkflowLambdaAliases updates the correct resources', (t) => {
       States: {
         1: { Type: 'Task', Resource: '${TestLambdaLambdaAliasOutput}' },
         2: { Type: 'Task', Resource: '${TestUnversionedLambdaLambdaFunction.Arn}' },
-        3: { Type: 'Task', Resource: '${SomethingElse.Arn}'}
+        3: { Type: 'Task', Resource: '${SomethingElse.Arn}' }
       }
     },
     TestStepFunction2: {
@@ -167,7 +167,6 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames', async (t)
 
 test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
             + 'on previous version redeployment', async (t) => {
-
   const kes = t.context.kes;
 
   kes.config.workflowLambdas = aliasFixture.workflowLambdas;
