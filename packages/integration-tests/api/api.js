@@ -357,7 +357,7 @@ async function getExecutionStatus({ prefix, arn }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.collection - a collection object
+ * @param {Object} params.collection - a collection object
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addCollectionApi({ prefix, collection }) {
@@ -378,7 +378,7 @@ async function addCollectionApi({ prefix, collection }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.provider - a provider object
+ * @param {Object} params.provider - a provider object
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addProviderApi({ prefix, provider }) {
@@ -399,10 +399,10 @@ async function addProviderApi({ prefix, provider }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.collection - the collection object
+ * @param {Object} params.collection - the collection object
  * @param {string} params.collection.name - the collection name (required)
  * @param {string} params.collection.version - the collection version (required)
- * @param {string} params.updateParams - key/value to update on the collection
+ * @param {Object} params.updateParams - key/value to update on the collection
  * @returns {Promise<Object>} - the updated collection from the API
  */
 async function updateCollection({ prefix, collection, updateParams }) {
@@ -427,9 +427,9 @@ async function updateCollection({ prefix, collection, updateParams }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.collection - the provider object
+ * @param {Object} params.collection - the provider object
  * @param {string} params.collection.id - the provider id (required)
- * @param {string} params.updateParams - key/value to update on the provider
+ * @param {Object} params.updateParams - key/value to update on the provider
  * @returns {Promise<Object>} - the updated provider from the API
  */
 async function updateProvider({ prefix, provider, updateParams }) {
