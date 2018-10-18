@@ -57,22 +57,30 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test('Attempting to delete a collection without an Authorization header returns an Authorization Missing response', (t) => {
+  const { testCollection } = t.context;
+
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
-      collectionName: 'asdf',
-      version: 'asdf'
+      collectionName: testCollection.name,
+      version: testCollection.version
     },
     headers: {}
   };
 
-  return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
+  return testEndpoint(collectionsEndpoint, request, async (response) => {
+    t.is(response.statusCode, 401);
+    t.true(
+      await collectionModel.exists(
+        collectionModel.name,
+        collectionModel.version
+      )
+    );
   });
 });
 
-test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('Attempting to delete a collection with an unauthorized user returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -89,17 +97,31 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   });
 });
 
-test('DELETE deletes an existing collection', (t) => {
+test('Deleting a collection removes it', async (t) => {
+  const collection = fakeCollectionFactory();
+  await collectionModel.create(collection);
+
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
-      collectionName: t.context.testCollection.name,
-      version: t.context.testCollection.version
+      collectionName: collection.name,
+      version: collection.version
     },
     headers: authHeaders
   };
-  return testEndpoint(collectionsEndpoint, deleteEvent, (response) => {
-    const { message } = JSON.parse(response.body);
-    t.is(message, 'Record deleted');
+
+  return testEndpoint(collectionsEndpoint, deleteEvent, () => {
+    const getCollectionRequest = {
+      httpMethod: 'GET',
+      pathParameters: {
+        collectionName: collection.name,
+        version: collection.version
+      },
+      headers: authHeaders
+    };
+
+    return testEndpoint(collectionsEndpoint, getCollectionRequest, (response) => {
+      t.is(response.statusCode, 404);
+    });
   });
 });
