@@ -264,7 +264,7 @@ test.serial('setParentOverrideConfigValues merges defined parent configuration',
   kes.config.override_with_parent = ['overrideKey'];
   kes.config.parent = parentConfig;
 
-  kes.setParentConfigValues();
+  kes.setParentOverrideConfigValues();
   const expected = true;
   const actual = kes.config.overrideKey;
 
@@ -278,7 +278,7 @@ test.serial('setParentOverrideConfigValues ignores missing parent configuration'
   kes.config.override_with_parent = ['overrideKey'];
   kes.config.parent = parentConfig;
 
-  kes.setParentConfigValues();
+  kes.setParentOverrideConfigValues();
   const expected = false;
   const actual = kes.config.overrideKey;
 
