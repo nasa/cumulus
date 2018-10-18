@@ -8,7 +8,7 @@ const { getIp, getHost } = require('../utils');
 
 let stub;
 
-test.afterEach(t => {
+test.afterEach(() => {
   if (stub !== undefined) stub.restore();
 });
 
