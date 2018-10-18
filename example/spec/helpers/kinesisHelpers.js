@@ -141,10 +141,12 @@ async function getShardIterator(streamName) {
 
   const streamDetails = await kinesis.describeStream(describeStreamParams).promise();
   const shardId = streamDetails.StreamDescription.Shards[0].ShardId;
+  const startingSequenceNumber = streamDetails.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber;
 
   const shardIteratorParams = {
     ShardId: shardId, /* required */
-    ShardIteratorType: 'LATEST',
+    ShardIteratorType: 'AT_SEQUENCE_NUMBER',
+    StartingSequenceNumber: startingSequenceNumber,
     StreamName: streamName
   };
 
@@ -159,8 +161,15 @@ async function getShardIterator(streamName) {
  *                                  Shard iterators must be generated using getShardIterator.
  * @returns {Promise}              - kinesis GetRecords promise
  */
-async function getRecords(shardIterator) {
-  return kinesis.getRecords({ ShardIterator: shardIterator }).promise();
+async function getRecords(shardIterator, records = []) {
+  const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
+  records.push(...data.Records);
+  if ((data.NextShardIterator !== null) &&
+      (data.Records.length === 0 || data.MillisBehindLatest > 0)) {
+    await timeout(waitPeriodMs);
+    return getRecords(data.NextShardIterator, records);
+  }
+  return records;
 }
 
 /**
