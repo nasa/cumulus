@@ -136,13 +136,9 @@ function del(event, cb) {
  * @returns {Promise} a different promise depending on which action was invoked
  */
 function handleRequest(event, context) {
-  const httpMethod = event.httpMethod;
-
-  if (!httpMethod) {
-    return context.fail('HttpMethod is missing');
-  }
-
   return handle(event, context, true, (cb) => {
+    const httpMethod = event.httpMethod;
+
     if (httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }
