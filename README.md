@@ -221,13 +221,26 @@ release.
 
 Update example/package.json to point to the new Cumulus packages.
 
-#### 5. Create a pull request against the master branch
+
+#### 5. Cut new version of Cumulus Documentation
+
+```shell
+cd website
+yarn run version ${release_version}
+git add .
+```
+
+Where `${release_version}` corresponds to the version tag. `v1.2.3`, for example.
+
+**Note:** More information on versioning can be found in the [Docusaurus documentation](https://docusaurus.io/docs/en/versioning)
+
+#### 6. Create a pull request against the master branch
 
 Create a PR against the `master` branch. Verify that the Travis CI build for the
 PR succeeds and then merge to master. Once merged, the release branch can be
 deleted.
 
-#### 6. Create a git tag for the release
+#### 7. Create a git tag for the release
 
 Publishing of new releases is handled by Travis CI and is triggered when the
 release tag is pushed to Github. This tag should be in the format `v1.2.3`,
