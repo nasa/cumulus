@@ -1,5 +1,7 @@
 'use strict';
 
+const isObject = require('lodash.isobject');
+const isString = require('lodash.isstring');
 const url = require('url');
 const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
@@ -63,8 +65,8 @@ function getExecutionArn(stateMachineArn, executionName) {
  */
 function getExecutionUrl(executionArn) {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}` +
-         `#/executions/details/${executionArn}`;
+  return `https://console.aws.amazon.com/states/home?region=${region}`
+         + `#/executions/details/${executionArn}`;
 }
 
 async function invoke(name, payload, type = 'Event') {
@@ -301,14 +303,14 @@ class SQS {
 
   static async sendMessage(queueUrl, message) {
     let messageBody;
-    if (typeof message === 'string') {
+    if (isString(message)) {
       messageBody = message;
     }
-    else if (typeof message === 'object') {
+    else if (isObject(message)) {
       messageBody = JSON.stringify(message);
     }
     else {
-      throw new Error('body type is not accepted');
+      throw new TypeError('body type is not accepted');
     }
 
     const params = {
@@ -485,7 +487,6 @@ class KMS {
 
 class StepFunction {
   static async getExecution(arn, ignoreMissingExecutions = false) {
-    // eslint-disable-next-line max-len
     log.debug('@cumulus/ingest/aws/StepFunction.getExecution is deprecated.  Use @cumulus/common/step-functions/describeExecution instead.');
 
     try {
