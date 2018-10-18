@@ -20,9 +20,11 @@ const {
   HttpDiscoverGranules,
   SftpDiscoverGranules,
   S3DiscoverGranules,
+  getGranuleId,
+  getRenamedS3File,
   moveGranuleFiles,
   moveGranuleFile,
-  getGranuleId
+  renameS3FileWithTimestamp
 } = require('../granule');
 const { baseProtocol } = require('../protocol');
 const { s3Mixin } = require('../s3');
@@ -456,9 +458,8 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
     Bucket: bucket, Key: existingRenamedKey, Body: randomString()
   };
   await s3().putObject(existingRenamedParams).promise();
-  const testGranule = new TestGranule({}, {}, {});
-  await testGranule.renameS3FileWithTimestamp(bucket, key);
-  const renamedFiles = await testGranule.getRenamedS3File(bucket, key);
+  await renameS3FileWithTimestamp(bucket, key);
+  const renamedFiles = await getRenamedS3File(bucket, key);
 
   t.is(renamedFiles.length, 2);
   // renamed files have the right prefix

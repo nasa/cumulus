@@ -687,7 +687,6 @@ module.exports = {
   sleep,
   timeout: sleep,
   waitForAsyncOperationStatus,
-  getWorkflowArn,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,

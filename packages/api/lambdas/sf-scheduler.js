@@ -13,7 +13,6 @@ const { Provider, Collection } = require('../models');
  * @param   {Object} event   - lambda input message
  * @param   {Object} context - lambda context
  * @param   {function} cb    - lambda callback
- * @returns {function} Calls callback with result of SQS.sendMessage or error
  */
 function schedule(event, context, cb) {
   const template = get(event, 'template');
