@@ -117,6 +117,44 @@ exports.syncGranule = function syncGranule(event) {
     });
 };
 
+const provider = {
+  protocol: 'http-auth',
+  host: 'https://daac.ornl.gov/'
+}
+
+const input = {
+  granules: [{
+    files: [{
+      name: 'lope_cross_pol_backscatter.tif',
+      path: 'daacdata/afrisar/Polarimetric_CT/data/',
+      regex: '.+'
+    }]
+  }]
+}
+
+const collection = {
+  dataType: 'polsar',
+  files: [{
+    regex: '.+'
+  }]
+}
+
+const config = {
+  provider,
+  collection,
+  stack: 'nasa-map',
+  buckets: {
+    internal: {
+      name: 'cumulus-map-internal',
+      type: 'internal'
+    }
+  },
+  downloadBucket: 'cumulus-map-internal'
+}
+
+const event = { config, input };
+exports.syncGranule(event).then(console.log).catch(console.log)
+
 /**
  * Lambda handler
  *
