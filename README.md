@@ -107,11 +107,7 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ##  Contribution
 
-Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for information
-
-### Issuing PR From Fork
-
-If you are issuing a PR from a forked repository, please follow the steps described [here](docs/development/forked-pr.md).
+Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for more information.
 
 ## 🛒 Release
 
