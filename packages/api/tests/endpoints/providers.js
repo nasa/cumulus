@@ -99,20 +99,6 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
   });
 });
 
-test('CUMULUS-911 PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      id: 'asdf'
-    },
-    headers: {}
-  };
-
-  return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
-});
-
 test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
@@ -313,7 +299,7 @@ test.serial('PUT updates an existing provider and returns it in listing', (t) =>
   });
 });
 
-test('PUT without an Authorization header does not update an existing provider', (t) => {
+test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', (t) => {
   const updatedLimit = t.context.testProvider.globalConnectionLimit + 1;
   const updateEvent = {
     pathParameters: { id: t.context.testProvider.id },
