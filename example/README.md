@@ -115,4 +115,4 @@ hide_title: true     # So the title of the Doc doesn't show up at the top of the
 
 ### Versioning Docs
 
-We lean heavily on Docusaurus for documentation versioning. They're suggestions and walkthrough can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions.
+We lean heavily on Docusaurus for documentation versioning. Their suggestions and walkthrough can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions.
