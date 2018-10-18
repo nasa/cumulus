@@ -5,8 +5,8 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: 'cumulus-sandbox-public'
-    key: daacs/podaac/CNMToCMANew.zip
-    uniqueIdentifier: '1539785293369'
+    key: daacs/podaac/CNMToCMA-1539697831000.zip
+    uniqueIdentifier: '1539697831000'
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:
