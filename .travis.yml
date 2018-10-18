@@ -28,7 +28,7 @@ jobs:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-      script: ./node_modules/.bin/eslint packages/api --ext .js
+      script: ./node_modules/.bin/eslint packages/api packages/cmrjs
     - name: "Unit tests except API"
       stage: unit test
       services:
