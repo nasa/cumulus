@@ -1,8 +1,9 @@
 'use strict';
 
 const { CMR, getUrl } = require('@cumulus/cmrjs');
-const { DefaultProvider } = require('./crypto');
 const log = require('@cumulus/common/log');
+
+const { DefaultProvider } = require('./crypto');
 
 /**
  * function for posting cmr xml files from S3 to CMR

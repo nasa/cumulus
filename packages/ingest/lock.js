@@ -21,16 +21,17 @@ function delay(t) {
 async function checkOldLocks(bucket, list) {
   if (list) {
     let count = list.length;
-    let item;
-    for (item in list) {
+
+    list.forEach((item) => {
       const date = list[item].LastModified;
       const diff = new Date() - date;
       const fiveMinutes = 300000; // 5 * 60 seconds * 1000 milliseconds
       if (diff > fiveMinutes) {
         aws.S3.delete(bucket, list[item].Key);
-        count--;
+        count -= 1;
       }
-    }
+    });
+
     return count;
   }
   return 0;

@@ -20,7 +20,7 @@ const errors = require('@cumulus/common/errors');
  * @returns {Promise} undefined
  */
 async function downloadToDisk(url, filepath) {
-  const transport = url.indexOf('https://') === 0 ? https : http;
+  const transport = url.startsWith('https://') ? https : http;
   return new Promise((resolve, reject) => {
     transport.get(url, (res) => {
       if (res.statusCode !== 200) {
@@ -42,7 +42,6 @@ async function downloadToDisk(url, filepath) {
 }
 
 module.exports.httpMixin = (superclass) => class extends superclass {
-
   /**
    * List all PDR files from a given endpoint
    *
@@ -63,7 +62,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     return new Promise((resolve, reject) => {
       c.on('fetchcomplete', (queueItem, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
-        for (const line of lines) {
+        lines.forEach((line) => {
           const split = line.trim().split(pattern);
           if (split.length === 3) {
           // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
@@ -75,7 +74,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
               });
             }
           }
-        }
+        });
 
         return resolve(files);
       });
@@ -130,7 +129,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise} readable stream of the remote file
    */
   async _getReadableStream(url) {
-    const transport = url.indexOf('https://') === 0 ? https : http;
+    const transport = url.startsWith('https://') ? https : http;
     return new Promise((resolve, reject) => {
       transport.get(url, (res) => {
         if (res.statusCode !== 200) {
