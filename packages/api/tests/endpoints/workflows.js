@@ -108,7 +108,7 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   });
 });
 
-test.serial('GET with no path parameters and an authorized user returns a list of workflows', async (t) => {
+test('GET with no path parameters and an authorized user returns a list of workflows', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: authHeaders
@@ -122,7 +122,7 @@ test.serial('GET with no path parameters and an authorized user returns a list o
   });
 });
 
-test.serial('GET an existing workflow with an authorized user returns a specific workflow', async (t) => {
+test('GET an existing workflow with an authorized user returns a specific workflow', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -140,7 +140,7 @@ test.serial('GET an existing workflow with an authorized user returns a specific
   });
 });
 
-test.serial('GET with path parameters returns a 404 for a nonexistent workflow', async (t) => {
+test('GET with path parameters returns a 404 for a nonexistent workflow', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
