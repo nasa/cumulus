@@ -230,10 +230,8 @@ describe('Ingesting from PDR', () => {
         it('has expected pdr and arns output', () => {
           expect(queueGranulesOutput.payload.running.length).toEqual(1);
 
-          const payloadPdr = queueGranulesOutput.payload.pdr;
-          delete payloadPdr.time;
-
-          expect(payloadPdr).toEqual(expectedParsePdrOutput.pdr);
+          expect(queueGranulesOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
+          expect(queueGranulesOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
         });
       });
 
@@ -251,8 +249,8 @@ describe('Ingesting from PDR', () => {
           const payload = lambdaOutput.payload;
           expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
 
-          delete payload.pdr.time;
-          expect(payload.pdr).toEqual(expectedParsePdrOutput.pdr);
+          expect(payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
+          expect(payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
         });
       });
 
@@ -265,9 +263,8 @@ describe('Ingesting from PDR', () => {
         // SfSnsReport lambda is used in the workflow multiple times, apparantly, only the first output
         // is retrieved which is the first step (StatusReport)
         it('has expected output message', () => {
-          delete lambdaOutput.payload.pdr.time;
-
-          expect(lambdaOutput.payload).toEqual({ pdr: expectedParsePdrOutput.pdr });
+          expect(lambdaOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
+          expect(lambdaOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
         });
       });
 
