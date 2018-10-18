@@ -10,13 +10,36 @@ hide_title: true
 
 ```sh
 git clone git@github.com:nasa/cumulus
-cd cumulus 
-yarn
+cd cumulus
+(cd website && yarn)
 yarn docs-serve
 ```
 
-## Add a new page
-Add a `.md` file to `docs` folder and then a new item to `SUMMARY.md`.
+Note: `docs-build` will build the documents into `website/build/Cumulus`.
+
+## Cumulus Documentation
+
+Our project documentation is hosted on [GitHub Pages](https://pages.github.com/). The resources published to this website are housed in `docs/` directory at the top of the Cumulus repository. Those resources primarily consist of markdown files and images.
+
+We use the open-source static website generator [Docusaurus](https://docusaurus.io) to build html files from our markdown documentation, add some organization and navigation, and provide some other niceties in the final website (search, easy templating, etc.).
+
+### Add a New Page
+
+This should be as simple as writing some documentation in markdown, placing it under the correct directory in the `docs/` folder and adding some configuration values wrapped by `---` at the top of the file. There are many files that already have this header which can be used as reference.
+
+```
+---
+id: doc-unique-id    # unique id for this document. This must be unique accross ALL documentation under docs/
+title: Title Of Doc  # Whatever title you feel like adding. This will show up as the index to this page on the sidebar.
+hide_title: true     # So the title of the Doc doesn't show up at the top of the webpage (generally we already have the title written as h1 in the documentation).
+---
+```
+
+**Note:** To have the new page show up in a sidebar the designated `id` must be added to a sidebar in the `website/sidebars.js` file.
+
+### Versioning Docs
+
+We lean heavily on Docusaurus for versioning. Their suggestions and walkthrough can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions. This version naming/cutting is explained in the Cumulus repo's top level [README.md](https://github.com/nasa/cumulus/blob/master/README.md#versioning).
 
 ## Add a new task
 The tasks list in docs/tasks.md is generated from the list of task package in the task folder. Do not edit the docs/tasks.md file directly.
