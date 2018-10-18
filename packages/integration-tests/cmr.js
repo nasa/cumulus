@@ -91,19 +91,27 @@ async function conceptExists(cmrLink) {
  *
  * @param {string} cmrLink - url for granule in CMR
  * @param {boolean} expectation - whether concept should exist (true) or not (false)
- * @param {string} retries - number of remaining tries
- * @param {number} interval - time (in ms) to wait between tries
- * @returns {undefined} - undefined
+ * @param {string} [retries=3] - number of remaining tries
+ * @param {number} [interval=2000] - time (in ms) to wait between tries
+ * @returns {Promise<undefined>}
  * @throws {TimeoutError} - throws error when timeout is reached
  */
 async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, interval = 2000) {
-  await pWaitFor(
-    async () => (await conceptExists(cmrLink)) === expectation,
-    {
-      interval,
-      timeout: interval * retries
-    }
-  );
+  try {
+    await pWaitFor(
+      async () => (await conceptExists(cmrLink)) === expectation,
+      {
+        interval,
+        timeout: interval * retries
+      }
+    );
+
+    console.log(`waitForConceptExistsOutcome() succeeded. conceptExists('${cmrLink}') === ${expectation}`);
+  }
+  catch (err) {
+    console.log('waitForConceptExistsOutcome() failed:', err.message);
+    throw err;
+  }
 }
 
 /**

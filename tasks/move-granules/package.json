@@ -43,13 +43,14 @@
     "@cumulus/cumulus-message-adapter-js": "^1.0.4",
     "@cumulus/ingest": "^1.10.0",
     "@cumulus/test-data": "^1.9.1",
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
     "url-join": "^1.0.0",
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "lodash.clonedeep": "^4.5.0",
     "lodash.set": "^4.3.2",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",

@@ -3,6 +3,7 @@
 const fs = require('fs');
 const test = require('ava');
 const {
+  buildS3Uri,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
@@ -11,7 +12,6 @@ const {
   parseS3Uri
 } = require('@cumulus/common/aws');
 const clonedeep = require('lodash.clonedeep');
-const set = require('lodash.set');
 const errors = require('@cumulus/common/errors');
 const {
   randomString, validateConfig, validateInput, validateOutput
@@ -23,104 +23,91 @@ async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
     Bucket: bucket,
     Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.xml') ? fs.createReadStream('tests/data/meta.xml') : randomString()
+    Body: file.endsWith('.cmr.xml')
+      ? fs.createReadStream('tests/data/meta.xml') : parseS3Uri(file).Key
   })));
+}
+
+function buildPayload(t) {
+  const newPayload = JSON.parse(JSON.stringify(payload));
+
+  newPayload.config.bucket = t.context.stagingBucket;
+  newPayload.config.buckets.internal.name = t.context.stagingBucket;
+  newPayload.config.buckets.public.name = t.context.publicBucket;
+  newPayload.config.buckets.protected.name = t.context.protectedBucket;
+
+  newPayload.input = newPayload.input.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+  newPayload.config.input_granules.forEach((gran) => {
+    gran.files.forEach((file) => {
+      file.bucket = t.context.stagingBucket;
+      file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
+    });
+  });
+  return newPayload;
+}
+
+function getExpectedOuputFileNames(t) {
+  return [
+    `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
+    `s3://${t.context.publicBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
+    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
+    `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
+  ];
 }
 
 test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
-  t.context.endBucket = randomString();
-  await s3().createBucket({
-    Bucket: t.context.endBucket
-  }).promise();
-  await s3().createBucket({
-    Bucket: t.context.stagingBucket
-  }).promise();
+  t.context.publicBucket = randomString();
+  t.context.protectedBucket = randomString();
+  await Promise.all([
+    s3().createBucket({ Bucket: t.context.stagingBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.protectedBucket }).promise()
+  ]);
 });
 
 test.afterEach.always(async (t) => {
-  await recursivelyDeleteS3Bucket(t.context.endBucket);
+  await recursivelyDeleteS3Bucket(t.context.publicBucket);
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  await recursivelyDeleteS3Bucket(t.context.protectedBucket);
 });
 
 test.serial('should move files to final location', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = {
-    name: t.context.stagingBucket,
-    type: 'internal'
-  };
-  newPayload.config.buckets.public.name = t.context.endBucket;
-  newPayload.input = [
-    `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-    `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
-  ];
-  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
-  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
-
+  const newPayload = buildPayload(t);
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
 
   const check = await s3ObjectExists({
-    Bucket: t.context.endBucket,
+    Bucket: t.context.publicBucket,
     Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
   });
 
   t.true(check);
 });
 
-test.serial('should update filenames with specific url_path', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
-  const newFilename1 =
-    `s3://${t.context.endBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`;
-  const newFilename2 =
-    `s3://${t.context.endBucket}/example/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`;
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = {
-    name: t.context.stagingBucket,
-    type: 'internal'
-  };
-  newPayload.config.buckets.public.name = t.context.endBucket;
-  newPayload.input = [
-    `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-    `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`
-  ];
-  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
-  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
-
+test.serial('should move renamed files in staging area to final location', async (t) => {
+  const newPayload = buildPayload(t);
+  const renamedFile = `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
+  newPayload.input.push(renamedFile);
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
-  const files = output.granules[0].files;
-  t.is(files[0].filename, newFilename1);
-  t.is(files[1].filename, newFilename2);
+  await validateOutput(t, output);
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: 'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705'
+  });
+
+  t.true(check);
 });
 
 test.serial('should update filenames with metadata fields', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.config.collection.url_path =
-    'example/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/';
-  newPayload.input = [
-    `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-    `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-    `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
-  ];
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = {
-    name: t.context.stagingBucket,
-    type: 'internal'
-  };
-  newPayload.config.buckets.public.name = t.context.endBucket;
-
-  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
-  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
-
-  const expectedFilenames = [
-    `s3://${t.context.endBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
-    `s3://${t.context.endBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg`,
-    `s3://${t.context.endBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`];
+  const newPayload = buildPayload(t);
+  const expectedFilenames = getExpectedOuputFileNames(t);
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
@@ -130,17 +117,12 @@ test.serial('should update filenames with metadata fields', async (t) => {
 });
 
 test.serial('should overwrite files', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
   const filename = 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg';
   const sourceKey = `file-staging/${filename}`;
   const destKey = `jpg/example/${filename}`;
 
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = {
-    name: t.context.stagingBucket,
-    type: 'internal'
-  };
-  newPayload.config.buckets.public.name = t.context.endBucket;
+  const newPayload = buildPayload(t);
+  newPayload.config.duplicateHandling = 'replace';
   newPayload.input = [
     `s3://${t.context.stagingBucket}/${sourceKey}`
   ];
@@ -149,22 +131,20 @@ test.serial('should overwrite files', async (t) => {
     name: filename
   }];
 
-  newPayload.config.duplicateHandling = 'replace';
-
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
     Body: 'Something'
   });
 
-  const output = await moveGranules(newPayload);
+  let output = await moveGranules(newPayload);
   await validateOutput(t, output);
   const existingFile = await headObject(
-    t.context.endBucket,
-    destKey,
+    t.context.publicBucket,
+    destKey
   );
 
-  // re-stage source file with different content
+  // re-stage source jpg file with different content
   const content = randomString();
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
@@ -172,45 +152,30 @@ test.serial('should overwrite files', async (t) => {
     Body: content
   });
 
-  try {
-    await moveGranules(newPayload);
-  }
-  finally {
-    const updatedFile = await headObject(
-      t.context.endBucket,
-      destKey,
-    );
-    const objects = await s3().listObjects({ Bucket: t.context.endBucket }).promise();
-    t.is(objects.Contents.length, 1);
+  output = await moveGranules(newPayload);
+  const updatedFile = await headObject(
+    t.context.publicBucket,
+    destKey
+  );
+  const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
+  t.is(objects.Contents.length, 1);
 
-    const item = objects.Contents[0];
-    t.is(item.Key, destKey);
+  const item = objects.Contents[0];
+  t.is(item.Key, destKey);
 
-    const existingModified = new Date(existingFile.LastModified).getTime();
-    const itemModified = new Date(item.LastModified).getTime();
-    t.true(itemModified > existingModified);
+  const existingModified = new Date(existingFile.LastModified).getTime();
+  const itemModified = new Date(item.LastModified).getTime();
+  t.true(itemModified > existingModified);
 
-    t.is(updatedFile.ContentLength, content.length);
-  }
+  t.is(updatedFile.ContentLength, content.length);
+  t.true(output.granules[0].files[0].duplicate_found);
 });
 
 // duplicateHandling has default value 'error' if it's not provided in task configuration and
 // collection configuration
-async function duplicateHandlingErrorTest(t) {
-  const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = {
-    name: t.context.stagingBucket,
-    type: 'internal'
-  };
-  newPayload.config.buckets.public.name = t.context.endBucket;
-  const granuleId = 'MOD11A1.A2017200.h19v04.006.2017201090724';
-  newPayload.input = [
-    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_1.jpg`,
-    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_2.jpg`
-  ];
-  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
-  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
+async function duplicateHandlingErrorTest(t, duplicateHandling) {
+  const newPayload = buildPayload(t);
+  if (duplicateHandling) newPayload.config.duplicateHandling = duplicateHandling;
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
@@ -232,12 +197,11 @@ async function duplicateHandlingErrorTest(t) {
 
     await uploadFiles(newPayload.input, t.context.stagingBucket);
     await moveGranules(newPayloadOrig);
-    t.fail();
+    t.fail('Expected a DuplicateFile error to be thrown');
   }
   catch (err) {
     t.true(err instanceof errors.DuplicateFile);
     t.true(expectedErrorMessages.includes(err.message));
-    t.pass();
   }
 }
 
@@ -246,46 +210,136 @@ test.serial('when duplicateHandling is not specified, throw an error on duplicat
 });
 
 test.serial('when duplicateHandling is "error", throw an error on duplicate', async (t) => {
-  set(t, 'context.event.config.duplicateHandling', 'error');
-  await duplicateHandlingErrorTest(t);
+  await duplicateHandlingErrorTest(t, 'error');
 });
 
-test.serial('expect duplicates to be reported', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal = {
-    name: t.context.stagingBucket,
-    type: 'internal'
-  };
-  newPayload.config.buckets.public.name = t.context.endBucket;
-  const granuleId = 'MOD11A1.A2017200.h19v04.006.2017201090724';
-  newPayload.input = [
-    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_1.jpg`,
-    `s3://${t.context.stagingBucket}/file-staging/${granuleId}_2.jpg`
-  ];
-  newPayload.config.input_granules[0].files[0].filename = newPayload.input[0];
-  newPayload.config.input_granules[0].files[1].filename = newPayload.input[1];
-
-  newPayload.config.duplicateHandling = 'replace';
-
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
-
-  await validateConfig(t, newPayload.config);
-  await validateInput(t, newPayload.input);
+test.serial('when duplicateHandling is "version", keep both data if different', async (t) => {
+  let newPayload = buildPayload(t);
+  newPayload.config.duplicateHandling = 'version';
 
   // payload could be modified
   const newPayloadOrig = clonedeep(newPayload);
 
-  let output = await moveGranules(newPayload);
-  await validateOutput(t, output);
+  const expectedFilenames = getExpectedOuputFileNames(t);
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
-  output = await moveGranules(newPayloadOrig);
-  await validateOutput(t, output);
+  let output = await moveGranules(newPayload);
+  const existingFileNames = output.granules[0].files.map((f) => f.filename);
+  t.deepEqual(expectedFilenames, existingFileNames);
 
-  t.plan(3);
-  t.is(output.granules[0].files.length, 2);
+  const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
+  const existingHdfFileInfo = await headObject(
+    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
+  );
+
+  // When it encounters data with a duplicated filename with duplicate checksum,
+  // it does not create a copy of the file.
+
+  // When it encounters data with a dupliated filename with different checksum,
+  // it moves the existing data to a file with a suffix to distinguish it from the new file
+
+  // run 'moveGranules' again with one of the input files updated
+  newPayload = clonedeep(newPayloadOrig);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const params = {
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: randomString()
+  };
+  await s3().putObject(params).promise();
+
+  output = await moveGranules(newPayload);
+  const currentFileNames = output.granules[0].files.map((f) => f.filename);
+  t.is(currentFileNames.length, 5);
+
+  // the extra file is the renamed hdf file
+  let extraFiles = currentFileNames.filter((f) => !existingFileNames.includes(f));
+  t.is(extraFiles.length, 1);
+  t.true(extraFiles[0].startsWith(`${outputHdfFile}.v`));
+
+  // the existing hdf file gets renamed
+  const renamedFile = extraFiles[0];
+  const renamedHdfFileInfo = await headObject(
+    parseS3Uri(renamedFile).Bucket, parseS3Uri(renamedFile).Key
+  );
+  t.deepEqual(existingHdfFileInfo, renamedHdfFileInfo);
+
+  // new hdf file is moved to destination
+  const newHdfFileInfo = await headObject(
+    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
+  );
+
+  t.is(newHdfFileInfo.ContentLength, randomString().length);
+
+  // run 'moveGranules' the third time with the same input file updated
+  newPayload = clonedeep(newPayloadOrig);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  params.Body = randomString();
+  await s3().putObject(params).promise();
+
+  output = await moveGranules(newPayload);
+  const lastFileNames = output.granules[0].files.map((f) => f.filename);
+  t.is(lastFileNames.length, 6);
+
+  // the extra files are the renamed hdf files
+  extraFiles = lastFileNames.filter((f) => !existingFileNames.includes(f));
+  t.is(extraFiles.length, 2);
+  extraFiles.forEach((f) => t.true(f.startsWith(`${outputHdfFile}.v`)));
+
   output.granules[0].files.forEach((f) => {
-    t.true(f.duplicate_found);
+    if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
+      t.falsy(f.duplicate_found);
+    }
+    else t.true(f.duplicate_found);
+  });
+});
+
+test.serial('when duplicateHandling is "skip", does not overwrite or create new', async (t) => {
+  let newPayload = buildPayload(t);
+  newPayload.config.duplicateHandling = 'skip';
+
+  // payload could be modified
+  const newPayloadOrig = clonedeep(newPayload);
+
+  const expectedFilenames = getExpectedOuputFileNames(t);
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  let output = await moveGranules(newPayload);
+  const existingFileNames = output.granules[0].files.map((f) => f.filename);
+  t.deepEqual(expectedFilenames, existingFileNames);
+
+  const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
+  const existingHdfFileInfo = await headObject(
+    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
+  );
+
+  // run 'moveGranules' again with one of the input files updated
+  newPayload = clonedeep(newPayloadOrig);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const params = {
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: randomString()
+  };
+  await s3().putObject(params).promise();
+
+  output = await moveGranules(newPayload);
+  const currentFileNames = output.granules[0].files.map((f) => f.filename);
+  t.deepEqual(expectedFilenames, currentFileNames);
+
+  // does not overwrite
+  const currentHdfFileInfo = await headObject(
+    parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
+  );
+
+  t.is(existingHdfFileInfo.ContentLength, currentHdfFileInfo.ContentLength);
+  t.not(currentHdfFileInfo.ContentLength, randomString().length);
+
+  output.granules[0].files.forEach((f) => {
+    if (f.filename.endsWith('.cmr.xml')) {
+      t.falsy(f.duplicate_found);
+    }
+    else t.true(f.duplicate_found);
   });
 });
