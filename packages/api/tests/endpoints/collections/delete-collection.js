@@ -71,10 +71,11 @@ test('Attempting to delete a collection without an Authorization header returns 
 
   return testEndpoint(collectionsEndpoint, request, async (response) => {
     t.is(response.statusCode, 401);
+
     t.true(
       await collectionModel.exists(
-        collectionModel.name,
-        collectionModel.version
+        testCollection.name,
+        testCollection.version
       )
     );
   });
