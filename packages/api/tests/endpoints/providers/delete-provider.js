@@ -53,21 +53,22 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test('Attempting to delete a provider without an Authorization header returns an Authorization Missing response', (t) => {
+  const { testProvider } = t.context;
+
   const request = {
     httpMethod: 'DELETE',
-    pathParameters: {
-      id: 'asdf'
-    },
+    pathParameters: { id: testProvider.id },
     headers: {}
   };
 
-  return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
+  return testEndpoint(providerEndpoint, request, async (response) => {
+    t.is(response.statusCode, 401);
+    t.true(await providerModel.exists(testProvider.id));
   });
 });
 
-test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('Attempting to delete a provider with an unauthorized user returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -83,14 +84,16 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   });
 });
 
-test('DELETE deletes an existing provider', (t) => {
-  const deleteEvent = {
+test('Deleting a provider removes the provider', (t) => {
+  const { testProvider } = t.context;
+
+  const deleteRequest = {
     httpMethod: 'DELETE',
-    pathParameters: { id: t.context.testProvider.id },
+    pathParameters: { id: testProvider.id },
     headers: authHeaders
   };
-  return testEndpoint(providerEndpoint, deleteEvent, (response) => {
-    const { message } = JSON.parse(response.body);
-    t.is(message, 'Record deleted');
+
+  return testEndpoint(providerEndpoint, deleteRequest, async () => {
+    t.false(await providerModel.exists(testProvider.id));
   });
 });
