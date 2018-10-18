@@ -14,7 +14,7 @@ default:
     awsRegion: us-east-1
     AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
     asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
-    IngestGranule:
+    IngestAndPublishGranule:
       IngestGranuleOutput:
         granules:
           - files:

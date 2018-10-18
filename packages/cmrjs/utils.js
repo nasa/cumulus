@@ -6,7 +6,6 @@ const xml2js = require('xml2js');
  * Overrides the Error class
  *
  * @param {string} message - the error message
- * @returns {Error} the error class
  */
 function E(message) {
   Error.captureStackTrace(this, this.constructor);
@@ -159,11 +158,11 @@ async function getIp() {
     .catch((err) => {
       if (err.message === 'Query timed out') {
         return process.env.USER_IP_ADDRESS || '10.0.0.0';
-      } else {
-        throw err;
       }
+
+      throw err;
     });
-};
+}
 
 /**
  * Returns a valid a CMR token
@@ -203,35 +202,6 @@ async function updateToken(cmrProvider, clientId, username, password) {
   return response.body.token.id;
 }
 
-/**
- * Checks whether the a given token is still valid
- *
- * @param {string} token - the cmr token
- * @returns {Promise.<boolean>} indicates whether the token is valid or not
- */
-async function tokenIsValid(token) {
-  // Use a fake collection ID and fake PUT data to see if the token is still valid
-  const resp = await got.put(
-    `${getUrl('ingest')}collections/CMRJS_TOKEN_TEST`,
-    {
-      body: null,
-      headers: {
-        'Echo-Token': token,
-        'Content-type': 'application/echo10+xml'
-      }
-    }
-  );
-
-  const body = resp.body;
-  if (body.toLowerCase().includes('token') ||
-      body.toLowerCase().includes('expired') ||
-      body.toLowerCase().includes('permission')) {
-    return false;
-  }
-
-  return true;
-}
-
 module.exports = {
   validate,
   ValidationError,
@@ -240,4 +210,4 @@ module.exports = {
   xmlParseOptions,
   getIp,
   getHost
-}
+};
