@@ -1,5 +1,3 @@
-/* eslint-disable no-console, no-param-reassign */
-
 'use strict';
 
 const fs = require('fs-extra');
@@ -65,9 +63,9 @@ function extractZipFile(filename, dst) {
  * @returns {Promise.<string>} Promise resolution is string of latest github release, e.g. 'v0.0.1'
  */
 function fetchLatestMessageAdapterRelease(gitPath) {
-  const url = process.env.GITHUB_TOKEN ?
-    `https://api.github.com/repos/${gitPath}/releases/latest?access_token=${process.env.GITHUB_TOKEN}` :
-    `https://api.github.com/repos/${gitPath}/releases/latest`;
+  const url = process.env.GITHUB_TOKEN
+    ? `https://api.github.com/repos/${gitPath}/releases/latest?access_token=${process.env.GITHUB_TOKEN}`
+    : `https://api.github.com/repos/${gitPath}/releases/latest`;
 
   const options = {
     url,
@@ -109,9 +107,9 @@ function messageAdapterVersion(version, gitPath) {
  */
 function messageAdapterUrl(version, gitPath, filename) {
   return messageAdapterVersion(version, gitPath)
-    .then((ver) => (process.env.GITHUB_TOKEN ?
-      `https://github.com/${gitPath}/releases/download/${ver}/${filename}?access_token=${process.env.GITHUB_TOKEN}` :
-      `https://github.com/${gitPath}/releases/download/${ver}/${filename}`));
+    .then((ver) => (process.env.GITHUB_TOKEN
+      ? `https://github.com/${gitPath}/releases/download/${ver}/${filename}?access_token=${process.env.GITHUB_TOKEN}`
+      : `https://github.com/${gitPath}/releases/download/${ver}/${filename}`));
 }
 
 /**
