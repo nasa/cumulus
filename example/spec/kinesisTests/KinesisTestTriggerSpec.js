@@ -51,7 +51,6 @@ const ruleSuffix = globalReplace(testSuffix, '-', '_');
 
 
 const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
-console.log(`${record}`);
 
 record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
 record.provider += testSuffix;
@@ -273,7 +272,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
       it('writes a message to the response stream', async () => {
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-        const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
+        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
         const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
         expect(responseRecord.identifier).toEqual(recordIdentifier);
         expect(responseRecord.response.status).toEqual('SUCCESS');
@@ -324,8 +323,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     it('writes a failure message to the response stream', async () => {
       const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-      if (newResponseStreamRecords.hasOwnProperty('Records') && newResponseStreamRecords.Records.length > 0) {
-        const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
+      if (newResponseStreamRecords.length > 0) {
+        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
         // TODO(aimee): This should check the record identifier is equal to bad
         // record identifier, but this requires a change to cnmresponse task
         expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
