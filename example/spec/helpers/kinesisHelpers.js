@@ -164,8 +164,7 @@ async function getShardIterator(streamName) {
 async function getRecords(shardIterator, records = []) {
   const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
   records.push(...data.Records);
-  if ((data.NextShardIterator !== null) &&
-      (data.Records.length === 0 || data.MillisBehindLatest > 0)) {
+  if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
     await timeout(waitPeriodMs);
     return getRecords(data.NextShardIterator, records);
   }
