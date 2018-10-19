@@ -78,15 +78,12 @@ const sampleGranule = {
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
 async function conceptExists(cmrLink) {
-  const response = await got.get(cmrLink);
+  const response = await got.get(cmrLink, { json: true });
 
-  if (response.statusCode !== 200) {
-    return false;
-  }
+  console.log(`conceptExists('${cmrLink}'): statusCode = ${response.statusCode}, body.feed.entry.length = ${response.body.feed.entry.length}`);
 
-  const body = JSON.parse(response.body);
-
-  return body.feed.entry.length > 0;
+  return response.statusCode === 200
+    && response.body.feed.entry.length > 0;
 }
 
 /**
@@ -109,8 +106,6 @@ async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, in
         timeout: interval * retries
       }
     );
-
-    console.log(`waitForConceptExistsOutcome() succeeded. conceptExists('${cmrLink}') === ${expectation}`);
   }
   catch (err) {
     console.log('waitForConceptExistsOutcome() failed:', err.message);
