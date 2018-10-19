@@ -75,7 +75,7 @@ async function getGranule({ prefix, granuleId }) {
     }
   });
 
-  return JSON.parse(response.body);
+  return response;
 }
 
 /**
@@ -144,7 +144,7 @@ async function reingestGranule({ prefix, granuleId }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -171,7 +171,7 @@ async function removeFromCMR({ prefix, granuleId }) {
   });
 
   try {
-    return JSON.parse(payload.body);
+    return payload;
   }
   catch (error) {
     console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
@@ -202,7 +202,7 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -277,7 +277,7 @@ async function getExecution({ prefix, arn }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -299,7 +299,7 @@ async function getLogs({ prefix }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -324,7 +324,7 @@ async function getExecutionLogs({ prefix, executionName }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -349,7 +349,7 @@ async function getExecutionStatus({ prefix, arn }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -412,7 +412,7 @@ async function getProviders({ prefix }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -423,7 +423,7 @@ async function getProviders({ prefix }) {
  * @param {string} params.providerId - the ID of the provider to fetch
  * @returns {Promise<Object>} - the provider fetched by the API
  */
-async function retrieveProvider({ prefix, providerId }) {
+async function getProvider({ prefix, providerId }) {
   const payload = await callCumulusApi({
     prefix: prefix,
     functionName: 'ApiProvidersDefault',
@@ -437,7 +437,7 @@ async function retrieveProvider({ prefix, providerId }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -458,7 +458,7 @@ async function getCollections({ prefix }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -469,7 +469,7 @@ async function getCollections({ prefix }) {
  * @param {string} params.collectionId - the ID of the collection to fetch
  * @returns {Promise<Object>} - the collection fetched by the API
  */
-async function retrieveCollection({ prefix, collectionName, collectionVersion }) {
+async function getCollection({ prefix, collectionName, collectionVersion }) {
   const payload = await callCumulusApi({
     prefix: prefix,
     functionName: 'ApiCollectionsDefault',
@@ -484,7 +484,7 @@ async function retrieveCollection({ prefix, collectionName, collectionVersion })
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 /**
@@ -505,7 +505,7 @@ async function getWorkflows({ prefix }) {
     }
   });
 
-  return JSON.parse(payload.body);
+  return payload;
 }
 
 module.exports = {
@@ -522,8 +522,8 @@ module.exports = {
   getProviders,
   getCollections,
   getWorkflows,
-  retrieveProvider,
-  retrieveCollection,
+  getProvider,
+  getCollection,
   getGranule,
   getLogs,
   postBulkDelete,
