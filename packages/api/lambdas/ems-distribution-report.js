@@ -247,7 +247,7 @@ async function determineReportKey(params) {
     stackName
   } = params;
 
-  let reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`; // eslint-disable-line max-len
+  let reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
 
   const revisionNumber = (await aws.listS3ObjectsV2({
     Bucket: reportsBucket,

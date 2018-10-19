@@ -99,7 +99,6 @@ class Manager {
    *   properties, which specify the sort key of the DynamoDB table.
    * @param {Object} params.schema - the JSON schema to validate the records
    *   against.  Defaults to {}.
-   * @returns {Object} an instance of a Manager object
    */
   constructor(params) {
     // Make sure all required parameters are present
@@ -146,11 +145,11 @@ class Manager {
     };
 
     try {
-      const r = await this.dynamodbDocClient.get(params).promise();
-      if (!r.Item) {
+      const getResponse = await this.dynamodbDocClient.get(params).promise();
+      if (!getResponse.Item) {
         throw new RecordDoesNotExist();
       }
-      return r.Item;
+      return getResponse.Item;
     }
     catch (e) {
       throw new RecordDoesNotExist(
