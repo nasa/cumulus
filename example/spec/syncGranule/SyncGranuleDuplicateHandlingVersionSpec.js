@@ -1,12 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const { Collection } = require('@cumulus/api/models');
 const {
-  aws: {
-    headObject,
-    parseS3Uri,
-    s3
-  },
+  aws: { s3 },
   constructCollectionId,
   testUtils: {
     randomString
@@ -28,6 +23,7 @@ const {
   createTestDataPath,
   createTimestampedTestId,
   createTestSuffix,
+  getFilesMetadata,
   uploadTestDataToBucket
 } = require('../helpers/testUtils');
 const {
@@ -68,9 +64,6 @@ describe('When the Sync Granule workflow is configured to keep both files when e
   let expectedPayload;
   let workflowExecution;
 
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  const collectionModel = new Collection();
-
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
@@ -78,8 +71,13 @@ describe('When the Sync Granule workflow is configured to keep both files when e
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
+
     // set collection duplicate handling to 'version'
-    await collectionModel.update(collection, { duplicateHandling: 'version' });
+    await apiTestUtils.updateCollection({
+      prefix: config.stackName,
+      collection,
+      updateParams: { duplicateHandling: 'version' }
+    });
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
@@ -119,10 +117,7 @@ describe('When the Sync Granule workflow is configured to keep both files when e
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-      existingfiles = await Promise.all(files.map(async (f) => {
-        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-      }));
+      existingfiles = await getFilesMetadata(files);
       // expect reporting of duplicates
       expectedPayload.granules[0].files[0].duplicate_found = true;
       expectedPayload.granules[0].files[1].duplicate_found = true;
@@ -145,11 +140,7 @@ describe('When the Sync Granule workflow is configured to keep both files when e
     it('does not create a copy of the file', async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-
-      const currentFiles = await Promise.all(files.map(async (f) => {
-        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-      }));
+      const currentFiles = await getFilesMetadata(files);
 
       expect(currentFiles).toEqual(existingfiles);
       expect(lambdaOutput.payload).toEqual(expectedPayload);
@@ -164,10 +155,7 @@ describe('When the Sync Granule workflow is configured to keep both files when e
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       const files = lambdaOutput.payload.granules[0].files;
-      existingfiles = await Promise.all(files.map(async (f) => {
-        const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-        return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-      }));
+      existingfiles = await getFilesMetadata(files);
 
       // update one of the input files, so that the file has different checksum
       const content = randomString();
@@ -218,7 +206,7 @@ describe('When the Sync Granule workflow is configured to keep both files when e
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
 
       // update one of the input files, so that the file has different checksum
-      const content = `${randomString()}`;
+      const content = randomString();
       const file = inputPayload.granules[0].files[0];
       updatedFileName = file.name;
       const updateParams = {

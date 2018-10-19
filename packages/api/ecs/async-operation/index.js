@@ -225,7 +225,7 @@ async function runTask() {
   let result;
   try {
     // Load the lambda function
-    const task = require(`/home/task/lambda-function/${lambdaInfo.moduleFileName}`); //eslint-disable-line global-require, import/no-dynamic-require, max-len
+    const task = require(`/home/task/lambda-function/${lambdaInfo.moduleFileName}`); //eslint-disable-line global-require, import/no-dynamic-require
 
     // Run the lambda function
     result = await task[lambdaInfo.moduleFunctionName](payload);
