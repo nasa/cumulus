@@ -4,10 +4,10 @@ const sinon = require('sinon');
 const test = require('ava');
 const got = require('got');
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteConcept, getMetadata } = require('../index');
+const { deleteConcept, getMetadata } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
-// eslint-disable-next-line max-len
+
 const alreadyDeleted = `Concept with native-id [${granuleId}] and concept-id [G1222482315-CUMULUS] is already deleted.`;
 
 // cmr responses for different status
@@ -15,7 +15,6 @@ const gotResponses = {
   200: {
     statusCode: 200,
     statusMessage: 'OK',
-    // eslint-disable-next-line max-len
     body: '<result><concept-id>G1222482316-CUMULUS</concept-id><revision-id>9</revision-id></result>'
   },
   404: {
