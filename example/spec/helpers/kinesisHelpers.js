@@ -284,7 +284,7 @@ function isTargetMessage(message, recordIdentifier) {
  *
  * @param {string} recordIdentifier - random string to match found kinesis messages against.
  * @param {string} queueUrl - kinesisFailure SQS url
- * @param {number} maxRetries - number of retried
+ * @param {number} maxRetries - number of retries
  * @returns {Object} - matched Message from SQS.
  */
 async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 20) {
