@@ -1,8 +1,23 @@
 'use strict';
 
-const _get = require('lodash.get');
 const aws = require('@cumulus/common/aws');
 const handle = require('../lib/response').handle;
+
+/**
+ * Get S3 object
+ *
+ * @returns {undefined} undefined
+ */
+async function getWorkflowList() {
+  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
+  try {
+    const { Body } = await aws.getS3Object(process.env.bucket, workflowsListKey);
+    return Body;
+  }
+  catch (err) {
+    return err;
+  }
+}
 
 /**
  * List all providers.
@@ -12,11 +27,9 @@ const handle = require('../lib/response').handle;
  * @returns {undefined} undefined
  */
 async function list(event, cb) {
-  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
-
   try {
-    const { Body } = await aws.getS3Object(process.env.bucket, workflowsListKey);
-    return cb(null, Body.toString());
+    const body = await getWorkflowList();
+    return cb(null, body.toString());
   }
   catch (err) {
     return cb(err);
@@ -31,20 +44,17 @@ async function list(event, cb) {
  * @returns {undefined} undefined
  */
 async function get(event, cb) {
-  const name = _get(event.pathParameters, 'name');
-
-  const workflowKey = `${process.env.stackName}/workflows/list.json`;
+  const name = event.pathParameters.name;
   try {
-    const { Body } = await aws.getS3Object(process.env.bucket, workflowKey);
+    const body = await getWorkflowList();
 
-    const jsonResponse = JSON.parse(Body);
+    const jsonResponse = JSON.parse(body);
 
     const matchingWorkflow = jsonResponse.find((workflow) => workflow.name === name);
     if (matchingWorkflow) return cb(null, matchingWorkflow);
 
-    const e = new Error('The specified key does not exist.');
-    e.name = 'NoSuchKey';
-    throw e;
+    const e = new Error('The specified workflow does not exist.');
+    return cb(e, null, 404);
   }
   catch (err) {
     if (err.name === 'NoSuchKey') {

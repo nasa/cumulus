@@ -153,7 +153,7 @@ test('GET with path parameters returns a 404 for a nonexistent workflow', async 
     t.is(response.statusCode, 404);
 
     const result = JSON.parse(response.body);
-    t.is(result.message, 'The specified key does not exist.');
+    t.is(result.message, 'The specified workflow does not exist.');
   });
 });
 
