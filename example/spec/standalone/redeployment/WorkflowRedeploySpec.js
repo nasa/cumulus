@@ -36,7 +36,7 @@ function redeployWithRetries() {
   );
 }
 
-xdescribe('When a workflow', () => {
+describe('When a workflow', () => {
   afterAll(redeployWithRetries);
 
   describe('is updated and deployed during a workflow execution', () => {
