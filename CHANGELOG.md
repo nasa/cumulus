@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-965** - Added a `@cumulus/logger` package
 - **CUMULUS-705**
   - Note: Make sure to update the IAM stack when deploying this update.
   - Adds an AsyncOperations model and associated DynamoDB table to the
@@ -19,7 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Adds an AsyncOperation ECS task to the `@cumulus/api` package, which will
     fetch an Lambda function, run it in ECS, and then store the result to the
     AsyncOperations table in DynamoDB.
-- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
+- **CUMULUS-851** - Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
     - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
 	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
 	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
