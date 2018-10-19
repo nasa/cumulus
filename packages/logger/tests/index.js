@@ -2,6 +2,8 @@
 
 const { Console } = require('console');
 const { Writable } = require('stream');
+const isArray = require('lodash.isarray');
+const isString = require('lodash.isstring');
 const moment = require('moment');
 const test = require('ava');
 
@@ -83,7 +85,7 @@ test('Logger.info() creates the expected log entry', (t) => {
 test('Logger.info() accepts placeholder arguments', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.info('%s %s', 'hello', 'world');
 
@@ -96,8 +98,7 @@ test('Logger.info() logs executions if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    executions: 'my-executions',
-    sender: 'my-sender'
+    executions: 'my-executions'
   });
 
   logger.info('hello');
@@ -111,8 +112,7 @@ test('Logger.info() logs version if specified', (t) => {
 
   const logger = new Logger({
     console: testConsole,
-    version: 'my-version',
-    sender: 'my-sender'
+    version: 'my-version'
   });
 
   logger.info('hello');
@@ -124,7 +124,7 @@ test('Logger.info() logs version if specified', (t) => {
 test('Logger.error() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.error('hello');
 
@@ -132,10 +132,83 @@ test('Logger.error() creates the expected log entry', (t) => {
   t.is(testConsole.stderrLogEntries[0].level, 'error');
 });
 
+test('Logger.error() supports templates when an Error object is not passed', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({ console: testConsole });
+
+  logger.error('%s %s', 'hello', 'world');
+
+  t.is(testConsole.stderrLogEntries.length, 1);
+  t.is(testConsole.stderrLogEntries[0].message, 'hello world');
+});
+
+test('Logger.error() supports templates when an Error object is passed', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({ console: testConsole });
+
+  try {
+    throw new Error('so wrong');
+  }
+  catch (err) {
+    logger.error('%s %s', 'hello', 'world', err);
+  }
+
+  t.is(testConsole.stderrLogEntries.length, 1);
+  t.is(testConsole.stderrLogEntries[0].message, 'hello world');
+});
+
+test('Logger.error() logs info about an Error', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({ console: testConsole });
+
+  try {
+    throw new Error('test123');
+  }
+  catch (err) {
+    logger.error('something bad', err);
+  }
+
+  const logEntry = testConsole.stderrLogEntries[0];
+
+  t.is(testConsole.stderrLogEntries.length, 1);
+  t.is(logEntry.message, 'something bad');
+
+  t.is(logEntry.error.name, 'Error');
+  t.is(logEntry.error.message, 'test123');
+  t.true(isArray(logEntry.error.stack));
+  t.true(isString(logEntry.error.stack[0]));
+});
+
+test('Logger.error() can handle just an Error', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({ console: testConsole });
+
+  try {
+    throw new Error('test123');
+  }
+  catch (err) {
+    logger.error(err);
+  }
+
+  const logEntry = testConsole.stderrLogEntries[0];
+
+  t.is(testConsole.stderrLogEntries.length, 1);
+  t.is(logEntry.message, 'test123');
+
+  t.is(logEntry.error.name, 'Error');
+  t.is(logEntry.error.message, 'test123');
+  t.true(isArray(logEntry.error.stack));
+  t.true(isString(logEntry.error.stack[0]));
+});
+
 test('Logger.debug() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.debug('hello');
 
@@ -146,7 +219,7 @@ test('Logger.debug() creates the expected log entry', (t) => {
 test('Logger.warn() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.warn('hello');
 
@@ -157,7 +230,7 @@ test('Logger.warn() creates the expected log entry', (t) => {
 test('Logger.fatal() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.fatal('hello');
 
@@ -168,7 +241,7 @@ test('Logger.fatal() creates the expected log entry', (t) => {
 test('Logger.trace() creates the expected log entry', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.trace('hello');
 
@@ -179,7 +252,7 @@ test('Logger.trace() creates the expected log entry', (t) => {
 test('Logger.infoWithAdditionalKeys() logs the specified keys', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.infoWithAdditionalKeys(
     {
@@ -198,7 +271,7 @@ test('Logger.infoWithAdditionalKeys() logs the specified keys', (t) => {
 test('Logger.infoWithAdditionalKeys() does not overwrite the standard keys', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.infoWithAdditionalKeys(
     { level: 'another' },
@@ -212,7 +285,7 @@ test('Logger.infoWithAdditionalKeys() does not overwrite the standard keys', (t)
 test('Logger.info() allows an empty message to be logged', (t) => {
   const { testConsole } = t.context;
 
-  const logger = new Logger({ console: testConsole, sender: 'my-sender' });
+  const logger = new Logger({ console: testConsole });
 
   logger.info();
 
