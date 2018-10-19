@@ -108,21 +108,6 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
   });
 });
 
-test('CUMULUS-911 PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      collectionName: 'asdf',
-      version: 'asdf'
-    },
-    headers: {}
-  };
-
-  return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
-});
-
 test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
@@ -300,6 +285,63 @@ test('PUT updates an existing collection', (t) => {
   return testEndpoint(collectionsEndpoint, updateEvent, (response) => {
     const { provider_path } = JSON.parse(response.body); // eslint-disable-line camelcase
     t.is(provider_path, newPath);
+  });
+});
+
+test.serial('PUT updates an existing collection and returns it in listing', (t) => {
+  const newPath = `/${randomString()}`;
+  const updateParams = { provider_path: newPath };
+  const updatedCollection = Object.assign(t.context.testCollection, updateParams);
+  const updateEvent = {
+    body: JSON.stringify(updateParams),
+    pathParameters: {
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
+    },
+    httpMethod: 'PUT',
+    headers: authHeaders
+  };
+
+  t.plan(2);
+  return testEndpoint(collectionsEndpoint, updateEvent, () => {
+    const listEvent = {
+      httpMethod: 'GET',
+      headers: authHeaders
+    };
+
+    const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([updatedCollection]);
+    return testEndpoint(collectionsEndpoint, listEvent, (response) => {
+      const { results } = JSON.parse(response.body);
+      stub.restore();
+      t.is(results.length, 1);
+      t.deepEqual(results[0], updatedCollection);
+    });
+  });
+});
+
+test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing collection', (t) => {
+  const newPath = `/${randomString()}`;
+  const updateEvent = {
+    body: JSON.stringify({
+      name: t.context.testCollection.name,
+      version: t.context.testCollection.version,
+      provider_path: newPath
+    }),
+    pathParameters: {
+      collectionName: t.context.testCollection.name,
+      version: t.context.testCollection.version
+    },
+    httpMethod: 'PUT',
+    headers: {}
+  };
+
+  return testEndpoint(collectionsEndpoint, updateEvent, async (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+    const collection = await collectionModel.get({
+      name: t.context.testCollection.name,
+      version: t.context.testCollection.version
+    });
+    t.is(collection.provider_path, t.context.testCollection.provider_path);
   });
 });
 

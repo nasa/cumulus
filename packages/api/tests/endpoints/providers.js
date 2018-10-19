@@ -99,20 +99,6 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
   });
 });
 
-test('CUMULUS-911 PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      id: 'asdf'
-    },
-    headers: {}
-  };
-
-  return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
-});
-
 test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
@@ -279,6 +265,55 @@ test('PUT updates an existing provider', (t) => {
   return testEndpoint(providerEndpoint, putEvent, (response) => {
     const { globalConnectionLimit } = JSON.parse(response.body);
     t.is(globalConnectionLimit, updatedLimit);
+  });
+});
+
+test.serial('PUT updates an existing provider and returns it in listing', (t) => {
+  const updateParams = {
+    globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
+  };
+  const updateEvent = {
+    pathParameters: { id: t.context.testProvider.id },
+    body: JSON.stringify(updateParams),
+    httpMethod: 'PUT',
+    headers: authHeaders
+  };
+  const updatedProvider = Object.assign(t.context.testProvider, updateParams);
+
+  t.plan(2);
+  return testEndpoint(providerEndpoint, updateEvent, () => {
+    const listEvent = {
+      httpMethod: 'GET',
+      headers: authHeaders
+    };
+
+    const stub = sinon.stub(Search.prototype, 'query').resolves({
+      results: [updatedProvider]
+    });
+    return testEndpoint(providerEndpoint, listEvent, (response) => {
+      const { results } = JSON.parse(response.body);
+      stub.restore();
+      t.is(results.length, 1);
+      t.deepEqual(results[0], updatedProvider);
+    });
+  });
+});
+
+test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', (t) => {
+  const updatedLimit = t.context.testProvider.globalConnectionLimit + 1;
+  const updateEvent = {
+    pathParameters: { id: t.context.testProvider.id },
+    body: JSON.stringify({ globalConnectionLimit: updatedLimit }),
+    httpMethod: 'PUT',
+    headers: {}
+  };
+
+  return testEndpoint(providerEndpoint, updateEvent, async (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
+    const provider = await providerModel.get({
+      id: t.context.testProvider.id
+    });
+    t.is(provider.globalConnectionLimit, t.context.testProvider.globalConnectionLimit);
   });
 });
 
