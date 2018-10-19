@@ -9,21 +9,19 @@ const privates = new WeakMap();
 class Logger {
   /**
    * @param {Object} options - options object
-   * @param {string} options.sender - the sender of the log message
+   * @param {string} [options.sender="unknown"] - the sender of the log message
    * @param {string} [options.executions]
    * @param {Console} [options.console=global.console] - the console to write
    *   log events to
    * @param {string} [options.version]
    */
   constructor(options) {
-    if (!options.sender) throw new TypeError('sender is required');
-
     privates.set(
       this,
       {
         executions: options.executions,
         thisConsole: options.console || global.console,
-        sender: options.sender,
+        sender: options.sender || 'unknown',
         version: options.version
       }
     );

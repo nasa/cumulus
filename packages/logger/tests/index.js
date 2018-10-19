@@ -52,14 +52,15 @@ test.beforeEach(async (t) => {
   t.context.testConsole = new TestConsole();
 });
 
-test('Creating a logger without a sender throws a TypeError', (t) => {
-  try {
-    new Logger(); // eslint-disable-line no-new
-    t.fail('Expected a TypeError');
-  }
-  catch (err) {
-    t.true(err instanceof TypeError);
-  }
+test('sender defaults to "unknown"', (t) => {
+  const { testConsole } = t.context;
+
+  const logger = new Logger({ console: testConsole });
+
+  logger.info('hello');
+
+  t.is(testConsole.stdoutLogEntries.length, 1);
+  t.is(testConsole.stdoutLogEntries[0].sender, 'unknown');
 });
 
 test('Logger.info() creates the expected log entry', (t) => {
