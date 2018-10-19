@@ -10,6 +10,9 @@ const isError = require('lodash.iserror');
 const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const url = require('url');
+const Logger = require('@cumulus/logger');
+
+const logger = new Logger({ sender: 'ecs/async-operation' });
 
 /**
  * Return a list of environment variables that should be set but aren't
@@ -125,7 +128,7 @@ async function fetchLambdaFunction(codeUrl) {
         const message = (err.attemptsLeft > 0)
           ? `Failed to download lambda function (will retry): ${err}`
           : `Failed to download lambda function (will not retry): ${err}`;
-        console.log(message);
+        logger.error(message);
       }
     }
   );
@@ -199,8 +202,7 @@ async function runTask() {
     await fetchLambdaFunction(lambdaInfo.codeUrl);
   }
   catch (err) {
-    console.log('Failed to fetch lambda function:', err);
-    console.log(err.stack);
+    logger.error('Failed to fetch lambda function:', err);
     await updateAsyncOperation('RUNNER_FAILED', err);
     return;
   }
@@ -210,8 +212,7 @@ async function runTask() {
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
   }
   catch (err) {
-    console.log('Failed to fetch payload:', err);
-    console.log(err.stack);
+    logger.error('Failed to fetch payload:', err);
     if (err.name === 'JSONParsingError') {
       await updateAsyncOperation('TASK_FAILED', err);
     }
@@ -231,8 +232,7 @@ async function runTask() {
     result = await task[lambdaInfo.moduleFunctionName](payload);
   }
   catch (err) {
-    console.log('Failed to execute the lambda function:', err);
-    console.log(err.stack);
+    logger.error('Failed to execute the lambda function:', err);
     await updateAsyncOperation('TASK_FAILED', err);
     return;
   }
@@ -246,4 +246,4 @@ async function runTask() {
 // Make sure that all of the required environment variables are set
 const missingVars = missingEnvironmentVariables();
 if (missingVars.length === 0) runTask();
-else console.error('Missing environment variables:', missingVars.join(', '));
+else logger.error('Missing environment variables:', missingVars.join(', '));
