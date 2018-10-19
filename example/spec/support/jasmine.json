@@ -2,7 +2,10 @@
   "spec_dir": "spec",
   "spec_files": [
     "**/*[sS]pec.js",
-    "setup/CleansUpTestResources.js"
+    "setup/CleansUpTestResources.js",
+    "!**/KinesisTestErrorSpec.js",
+    "!**/IngestGranuleSuccessSpec.js",
+    "!**/bulkDeleteSpec.js"
   ],
   "helpers": [
     "helpers/**/*.js"
