@@ -357,7 +357,7 @@ async function getExecutionStatus({ prefix, arn }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.collection - a collection object
+ * @param {Object} params.collection - a collection object
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addCollectionApi({ prefix, collection }) {
@@ -378,7 +378,7 @@ async function addCollectionApi({ prefix, collection }) {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.provider - a provider object
+ * @param {Object} params.provider - a provider object
  * @returns {Promise<Object>} - the POST confirmation from the API
  */
 async function addProviderApi({ prefix, provider }) {
@@ -509,6 +509,60 @@ async function getWorkflows({ prefix }) {
   return payload;
 }
 
+/**
+ * Update a collection in Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params.collection - the collection object
+ * @param {string} params.collection.name - the collection name (required)
+ * @param {string} params.collection.version - the collection version (required)
+ * @param {Object} params.updateParams - key/value to update on the collection
+ * @returns {Promise<Object>} - the updated collection from the API
+ */
+async function updateCollection({ prefix, collection, updateParams }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiCollectionsDefault',
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/collections',
+      path: '/collections',
+      body: JSON.stringify(Object.assign(collection, updateParams)),
+      pathParameters: {
+        collectionName: collection.name,
+        version: collection.version
+      }
+    }
+  });
+}
+
+/**
+ * Update a provider in Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params.collection - the provider object
+ * @param {string} params.collection.id - the provider id (required)
+ * @param {Object} params.updateParams - key/value to update on the provider
+ * @returns {Promise<Object>} - the updated provider from the API
+ */
+async function updateProvider({ prefix, provider, updateParams }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiProvidersDefault',
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/providers',
+      path: '/providers',
+      body: JSON.stringify(Object.assign(provider, updateParams)),
+      pathParameters: {
+        id: provider.id
+      }
+    }
+  });
+}
+
 module.exports = {
   applyWorkflow,
   callCumulusApi,
@@ -529,5 +583,7 @@ module.exports = {
   getLogs,
   postBulkDelete,
   reingestGranule,
-  removeFromCMR
+  removeFromCMR,
+  updateCollection,
+  updateProvider
 };
