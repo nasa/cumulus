@@ -15,7 +15,8 @@ const {
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  rulesList
+  rulesList,
+  sleep
 } = require('@cumulus/integration-tests');
 
 const {
@@ -122,7 +123,8 @@ describe('The kinesisConsumer receives a bad record.\n', () => {
   });
 
   it('Eventually puts the bad record on the failure queue.', async () => {
-    console.log('\nWait for minimum duration of failure process ~3min');
+    console.log('\nWait for minimum duration of failure process ~3.5 min');
+    await sleep(3.5 * 60 * 1000);
     console.log('\nWait for record on:', failureSqsUrl);
     const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl, this.maxNumberElapsedPeriods);
     this.ReceiptHandle = queuedRecord.ReceiptHandle;

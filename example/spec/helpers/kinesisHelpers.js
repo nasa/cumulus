@@ -280,28 +280,30 @@ function isTargetMessage(message, recordIdentifier) {
 }
 
 /**
- * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 10 minutes.
+ * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.
  *
- * @param {string} recordIdentifier - random string to match found messages against.
+ * @param {string} recordIdentifier - random string to match found kinesis messages against.
  * @param {string} queueUrl - kinesisFailure SQS url
- * @param {number} maxNumberElapsedPeriods - number of timeout intervals (5 seconds) to wait.
+ * @param {number} maxRetries - number of retried
  * @returns {Object} - matched Message from SQS.
  */
-async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 120) {
-  const timeoutInterval = 5000;
-  let queuedRecord;
-  let elapsedPeriods = 0;
-
-  while (!queuedRecord && elapsedPeriods < maxNumberElapsedPeriods) {
-    const messages = await receiveSQSMessages(queueUrl);
-    if (messages.length > 0) {
-      const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
-      if (targetMessage) return targetMessage;
+async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 20) {
+  return pRetry(
+    async () => {
+      const messages = await receiveSQSMessages(queueUrl, 3);
+      if (messages.length > 0) {
+        const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
+        if (targetMessage) return targetMessage;
+      }
+      throw new Error('Trigger retry');
+    },
+    {
+      minTimeout: 1 * 1000,
+      maxTimeout: 40 * 1000,
+      retries: maxRetries,
+      onFailedAttempt: () => console.log(`Did not find QueuedRecord, will retry. ${new Date().toString()}`)
     }
-    await timeout(timeoutInterval);
-    elapsedPeriods += 1;
-  }
-  return { waitForQueuedRecord: 'never found record on queue' };
+  );
 }
 
 module.exports = {
