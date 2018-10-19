@@ -1,19 +1,39 @@
 'use strict';
 
-const { s3 } = require('@cumulus/common/aws');
+const {
+  aws: { s3 },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 550000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
+  addRules,
   LambdaStep,
-  waitForCompletedExecution
+  waitForCompletedExecution,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
+  rulesList,
+  deleteRules
 } = require('@cumulus/integration-tests');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { loadConfig } = require('../helpers/testUtils');
+const {
+  loadConfig,
+  uploadTestDataToBucket,
+  deleteFolder,
+  createTimestampedTestId,
+  createTestDataPath,
+  createTestSuffix
+} = require('../helpers/testUtils');
+
 const {
   createOrUseTestStream,
+  deleteTestStream,
   getShardIterator,
+  getStreamStatus,
   getRecords,
   putRecordOnStream,
   tryCatchExit,
@@ -21,17 +41,22 @@ const {
   waitForTestSf
 } = require('../helpers/kinesisHelpers');
 
-const record = require('../../data/records/L2_HR_PIXC_product_0001-of-4154.json');
+const testConfig = loadConfig();
+const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
+const testSuffix = createTestSuffix(testId);
+const testDataFolder = createTestDataPath(testId);
+const ruleSuffix = globalReplace(testSuffix, '-', '_');
+
+const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
+record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
+record.provider += testSuffix;
+record.collection += testSuffix;
 
 const granuleId = record.product.name;
 const recordIdentifier = randomString();
 record.identifier = recordIdentifier;
 
-const testConfig = loadConfig();
-const cnmResponseStreamName = `${testConfig.stackName}-cnmResponseStream`;
-
 const lambdaStep = new LambdaStep();
-const streamName = testConfig.streamName;
 
 const recordFile = record.product.files[0];
 const expectedTranslatePayload = {
@@ -47,7 +72,7 @@ const expectedTranslatePayload = {
       granuleId: record.product.name,
       files: [
         {
-          path: 'cumulus-test-data/pdrs',
+          path: testDataFolder,
           url_path: recordFile.uri,
           bucket: record.bucket,
           name: recordFile.name,
@@ -59,7 +84,7 @@ const expectedTranslatePayload = {
 };
 
 const fileData = expectedTranslatePayload.granules[0].files[0];
-const filePrefix = `file-staging/${testConfig.stackName}/L2_HR_PIXC___000`;
+const filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000`;
 
 const fileDataWithFilename = {
   ...fileData,
@@ -73,58 +98,113 @@ const expectedSyncGranulesPayload = {
   granules: [
     {
       granuleId: granuleId,
-      dataType: 'L2_HR_PIXC',
+      dataType: record.collection,
       version: '000',
       files: [fileDataWithFilename]
     }
   ]
 };
 
+const ruleDirectory = './spec/kinesisTests/data/rules';
+const ruleOverride = {
+  name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
+  collection: {
+    name: record.collection,
+    version: '000'
+  },
+  provider: record.provider
+};
+
+const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
+
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
 // triggers workflows associated with the kinesis-type rules.
-describe('The Cloud Notification Mechanism Kinesis workflow', () => {
-  const maxWaitTime = 1000 * 60 * 4;
+console.log('Disabled pending resolution of CUMULUS-948');
+xdescribe('The Cloud Notification Mechanism Kinesis workflow\n', () => {
+  const maxWaitForSFExistSecs = 60 * 4;
+  const maxWaitForExecutionSecs = 60 * 5;
   let executionStatus;
   let s3FileHead;
   let responseStreamShardIterator;
 
-  afterAll(async () => {
-    await s3().deleteObject({
-      Bucket: testConfig.buckets.private.name,
-      Key: `${filePrefix}/${fileData.name}`
-    }).promise();
-  });
+  const providersDir = './data/providers/PODAAC_SWOT/';
+  const collectionsDir = './data/collections/L2_HR_PIXC-000/';
+
+  const streamName = `${testId}-KinesisTestTriggerStream`;
+  const cnmResponseStreamName = `${testId}-KinesisTestTriggerCnmResponseStream`;
+  testConfig.streamName = streamName;
+  testConfig.cnmResponseStream = cnmResponseStreamName;
+
+
+  async function cleanUp() {
+    // delete rule
+    console.log(`\nDeleting ${ruleOverride.name}`);
+    const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
+    // clean up stack state added by test
+    console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
+    await Promise.all([
+      deleteFolder(testConfig.bucket, testDataFolder),
+      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
+      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
+      deleteTestStream(streamName),
+      deleteTestStream(cnmResponseStreamName),
+      s3().deleteObject({
+        Bucket: testConfig.buckets.private.name,
+        Key: `${filePrefix}/${fileData.name}`
+      }).promise()
+    ]);
+  }
 
   beforeAll(async () => {
-    await tryCatchExit(async () => {
-      await createOrUseTestStream(streamName);
-      await createOrUseTestStream(cnmResponseStreamName);
-
+    // populate collections, providers and test data
+    await Promise.all([
+      uploadTestDataToBucket(testConfig.bucket, s3data, testDataFolder),
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix)
+    ]);
+    // create streams
+    await tryCatchExit(cleanUp, async () => {
+      await Promise.all([
+        createOrUseTestStream(streamName),
+        createOrUseTestStream(cnmResponseStreamName)
+      ]);
       console.log(`\nWaiting for active streams: '${streamName}' and '${cnmResponseStreamName}'.`);
-      await waitForActiveStream(streamName);
-      await waitForActiveStream(cnmResponseStreamName);
+      await Promise.all([
+        waitForActiveStream(streamName),
+        waitForActiveStream(cnmResponseStreamName)
+      ]);
+      await addRules(testConfig, ruleDirectory, ruleOverride);
     });
   });
 
-  describe('Workflow executes successfully', () => {
+  afterAll(async () => {
+    await cleanUp();
+  });
+
+  it('Prepares a kinesis stream for integration tests.', async () => {
+    expect(await getStreamStatus(streamName)).toBe('ACTIVE');
+  });
+
+  describe('Workflow executes successfully\n', () => {
     let workflowExecution;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}.`);
         await putRecordOnStream(streamName, record);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(recordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSf(recordIdentifier, maxWaitForSFExistSecs);
 
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
         // get shard iterator for the response stream so we can process any new records sent to it
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
+        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
     });
 
@@ -134,7 +214,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
-
       beforeAll(async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CNMToCMA');
       });
@@ -160,7 +239,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           Bucket: testConfig.buckets.private.name,
           Key: `${filePrefix}/${fileData.name}`
         }).promise();
-        expect(new Date() - s3FileHead.LastModified < maxWaitTime).toBeTruthy();
+        expect(new Date() - s3FileHead.LastModified < maxWaitForSFExistSecs * 1000).toBeTruthy();
       });
     });
 
@@ -205,7 +284,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     delete badRecord.product;
 
     beforeAll(async () => {
-      await tryCatchExit(async () => {
+      await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
 
@@ -214,10 +293,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitTime);
+        workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
-        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn);
+        executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
     });
 
@@ -235,14 +314,19 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse', 'failure');
       expect(lambdaOutput.error).toEqual('cumulus_message_adapter.message_parser.MessageAdapterException');
       expect(lambdaOutput.cause).toMatch(/.+An error occurred in the Cumulus Message Adapter: .+/);
+      expect(lambdaOutput.cause).not.toMatch(/.+process hasn't exited.+/);
     });
 
     it('writes a failure message to the response stream', async () => {
       const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-      const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
-      // TODO(aimee): This should check the record identifier is equal to bad
-      // record identifier, but this requires a change to cnmresponse task
-      expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
+      if (newResponseStreamRecords.hasOwnProperty('Records') && newResponseStreamRecords.Records.length > 0) {
+        const parsedRecords = newResponseStreamRecords.Records.map((r) => JSON.parse(r.Data.toString()));
+        // TODO(aimee): This should check the record identifier is equal to bad
+        // record identifier, but this requires a change to cnmresponse task
+        expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
+      } else {
+        fail(`unexpected error occurred and no messages found in ${cnmResponseStreamName}. Did the "ouputs the record" above fail?`);
+      }
     });
   });
 });

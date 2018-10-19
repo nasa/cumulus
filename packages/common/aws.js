@@ -258,7 +258,7 @@ exports.fileExists = async (bucket, key) => {
   }
   catch (e) {
     // if file is not return false
-    if (e.stack.match(/(NotFound)/)) {
+    if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
       return false;
     }
     throw e;
@@ -790,3 +790,11 @@ exports.setGranuleStatus = async (
   params.Metadata = { executionArn, status };
   await exports.s3().putObject(params).promise();
 };
+
+/**
+ * Test to see if a given exception is an AWS Throttling Exception
+ *
+ * @param {Error} err
+ * @returns {boolean}
+ */
+exports.isThrottlingException = (err) => err.code === 'ThrottlingException';

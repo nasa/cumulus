@@ -7,9 +7,68 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-705**
+  - Note: Make sure to update the IAM stack when deploying this update.
+  - Adds an AsyncOperations model and associated DynamoDB table to the
+    `@cumulus/api` package
+  - Adds an /asyncOperations endpoint to the `@cumulus/api` package, which can
+    be used to fetch the status of an AsyncOperation.
+  - Adds a /bulkDelete endpoint to the `@cumulus/api` package, which performs an
+    asynchronous bulk-delete operation. This is a stub right now which is only
+    intended to demonstration how AsyncOperations work.
+  - Adds an AsyncOperation ECS task to the `@cumulus/api` package, which will
+    fetch an Lambda function, run it in ECS, and then store the result to the
+    AsyncOperations table in DynamoDB.
+- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
+    - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
+	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
+	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
+    - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
 
+- Created a `@cumulus/api/lib/OAuth2` interface, which is implemented by the
+  `@cumulus/api/lib/EarthdataLogin` and `@cumulus/api/lib/GoogleOAuth2` classes.
+  Endpoints that need to handle authentication will determine which class to use
+  based on environment variables. This also greatly simplifies testing.
+- Added `@cumulus/api/lib/assertions`, containing more complex AVA test assertions
 - Added PublishGranule workflow to publish a granule to CMR without full reingest. (ingest-in-place capability)
 
+- `@cumulus/integration-tests` new functionality:
+  - `listCollections` to list collections from a provided data directory
+  - `deleteCollection` to delete list of collections from a deployed stack
+  - `cleanUpCollections` combines the above in one function.
+  - `listProviders` to list providers from a provided data directory
+  - `deleteProviders` to delete list of providers from a deployed stack
+  - `cleanUpProviders` combines the above in one function.
+  - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
+  - `rules` API functionality for posting and deleting a rule and listing all rules
+- `@cumulus/ingest/granule.js`: `ingestFile` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3.
+- `@cumulus/api`: `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
+- Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
+- **CUMULUS-781** - Added integration tests for `@cumulus/sync-granule` when `duplicateHandling` is set to `replace` or `skip`
+- **CUMULUS-791** - `@cumulus/move-granules`: `moveFileRequest` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3. Updated output schema to document new `duplicate_found` field.
+
+### Removed
+
+- Removed `@cumulus/common/fake-earthdata-login-server`. Tests can now create a
+  service stub based on `@cumulus/api/lib/OAuth2` if testing requires handling
+  authentication.
+
+### Changed
+
+- **CUMULUS-782** - Updated `@cumulus/sync-granule` task and `Granule.ingestFile` in `@cumulus/ingest` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version`
+- Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
+- **CUMULUS-778** - Updated config schema and documentation in `@cumulus/sync-granule` to include `duplicateHandling` parameter for specifying how duplicate filenames should be handled
+- **CUMULUS-779** - Updated `@cumulus/sync-granule` to throw `DuplicateFile` error when destination files already exist and `duplicateHandling` is `error`
+- **CUMULUS-780** - Updated `@cumulus/sync-granule` to use `error` as the default for `duplicateHandling` when it is not specified
+- **CUMULUS-780** - Updated `@cumulus/api` to use `error` as the default value for `duplicateHandling` in the `Collection` model
+- **CUMULUS-785** - Updated the config schema and documentation in `@cumulus/move-granules` to include `duplicateHandling` parameter for specifying how duplicate filenames should be handled
+- **CUMULUS-786, CUMULUS-787** - Updated `@cumulus/move-granules` to throw `DuplicateFile` error when destination files already exist and `duplicateHandling` is `error` or not specified
+- **CUMULUS-789** - Updated `@cumulus/move-granules` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version`
+
+### Fixed
+
+- `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
+- Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
 
 ## [v1.10.1] - 2018-09-4
 
@@ -82,7 +141,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - In `@cumulus/deployment`, changed the example app config.yml to have additional IAM roles
-
 
 ## [v1.9.0] - 2018-08-06
 

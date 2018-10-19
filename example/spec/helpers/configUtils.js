@@ -3,31 +3,7 @@
 const fs = require('fs-extra');
 const yaml = require('js-yaml');
 
-const { extend } = require('lodash');
-
-/**
- * Copy a configuration file to a backup location
- *
- * @param {string} configurationYmlFilepath - configuration file path
- * @param {string} configurationYmlBackupFilepath - backup configuration file path
- * @returns {undefined} none
- */
-function backupConfigYml(configurationYmlFilepath, configurationYmlBackupFilepath) {
-  fs.copyFileSync(configurationYmlFilepath, configurationYmlBackupFilepath);
-}
-
-/**
- * Copy a configuration file back from the backup location. Delete
- * the backup configuration file
- *
- * @returns {undefined} none
- * @param {string} configurationYmlFilepath - configuration file path
- * @param {string} configurationYmlBackupFilename - backup configuration file path
- */
-function restoreConfigYml(configurationYmlFilepath, configurationYmlBackupFilename) {
-  fs.copyFileSync(configurationYmlBackupFilename, configurationYmlFilepath);
-  fs.unlinkSync(configurationYmlBackupFilename);
-}
+const { assignIn } = require('lodash.assignin');
 
 /**
  * Load a configuration yml file
@@ -75,14 +51,12 @@ function getConfigObject(configFilepath, nodeName) {
 
 function updateConfigObject(configFilePath, nodeName, configJson) {
   const config = loadYmlConfigFile(configFilePath);
-  extend(config[nodeName], configJson);
+  assignIn(config[nodeName], configJson);
   saveYmlConfigFile(config, configFilePath);
 }
 
 module.exports = {
   getConfigObject,
-  backupConfigYml,
-  restoreConfigYml,
   loadYmlConfigFile,
   saveYmlConfigFile,
   updateConfigObject

@@ -8,6 +8,10 @@ const {
 } = require('../lib/response');
 const Search = require('../es/search').Search;
 const models = require('../models');
+const {
+  InternalServerError,
+  NotFoundResponse
+} = require('../lib/responses');
 
 /**
  * List all granules for a given collection.
@@ -105,7 +109,7 @@ async function put(event) {
   return buildLambdaProxyResponse({
     json: true,
     statusCode: 400,
-    body: { message: 'Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"' } // eslint-disable-line max-len
+    body: { message: 'Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"' }
   });
 }
 
@@ -134,12 +138,13 @@ async function del(event) {
     return buildLambdaProxyResponse({
       json: true,
       statusCode: 400,
-      body: { message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first' } // eslint-disable-line max-len
+      body: { message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first' }
     });
   }
 
   // remove files from s3
   await Promise.all(granule.files.map((file) => {
+    if (!file.filename) return {};
     const parsed = aws.parseS3Uri(file.filename);
     if (aws.fileExists(parsed.Bucket, parsed.Key)) {
       return aws.deleteS3Object(parsed.Bucket, parsed.Key);
@@ -168,9 +173,8 @@ async function get(event) {
   }
   catch (err) {
     if (err.message.startsWith('No record found')) {
-      return buildLambdaProxyResponse({
+      return new NotFoundResponse({
         json: true,
-        statusCode: 404,
         body: { message: 'Granule not found' }
       });
     }
@@ -187,36 +191,32 @@ async function get(event) {
 /**
  * The main handler for the lambda function
  *
- * @param {Object} event - aws lambda event object.
+ * @param {Object} request - AWS lambda event object.
  * @returns {Promise<Object>} a Lambda Proxy response object
  */
-async function handler(event) {
+async function handleRequest(request) {
   // Determine what action to take
   let action;
-  if (event.httpMethod === 'GET' && event.pathParameters) action = get;
-  else if (event.httpMethod === 'PUT' && event.pathParameters) action = put;
-  else if (event.httpMethod === 'DELETE' && event.pathParameters) action = del;
+  if (request.httpMethod === 'GET' && request.pathParameters) action = get;
+  else if (request.httpMethod === 'PUT' && request.pathParameters) action = put;
+  else if (request.httpMethod === 'DELETE' && request.pathParameters) action = del;
   else action = list;
 
   try {
     // Verify the user's credentials
     const authorizationFailureResponse = await getAuthorizationFailureResponse({
-      request: event,
+      request: request,
       usersTable: process.env.UsersTable
     });
     if (authorizationFailureResponse) return authorizationFailureResponse;
 
     // Perform the requested action
-    return action(event);
+    return action(request);
   }
   catch (err) {
     log.error(err);
-    return buildLambdaProxyResponse({
-      json: true,
-      statusCode: 500,
-      body: { message: 'Internal Server Error' }
-    });
+    return new InternalServerError();
   }
 }
 
-module.exports = handler;
+module.exports = handleRequest;

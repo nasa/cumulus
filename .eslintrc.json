@@ -4,6 +4,7 @@
     "eslint-comments",
     "import",
     "jsdoc",
+    "lodash",
     "node",
     "unicorn"
   ],
@@ -12,6 +13,7 @@
     "plugin:eslint-comments/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
+    "plugin:lodash/recommended",
     "plugin:node/recommended",
     "plugin:unicorn/recommended"
   ],
@@ -23,8 +25,9 @@
   },
   "rules": {
     "indent": [ "error", 2 ],
+
     "require-jsdoc": "off",
-    "valid-jsdoc": [ "error", {
+    "valid-jsdoc": [ "warn", {
       "prefer": {
         "arg": "param",
         "return": "returns"
@@ -40,21 +43,26 @@
         "Regexp": "RegExp",
         "promise": "Promise"
       },
-      "requireReturn": true
+      "requireParamDescription": false,
+      "requireParamType": true,
+      "requireReturn": false,
+      "requireReturnDescription": false,
+      "requireReturnType": true
     }],
-    "jsdoc/check-param-names": "error",
-    "jsdoc/check-tag-names": "error",
+    "jsdoc/check-param-names": "warn",
+    "jsdoc/check-tag-names": "warn",
     "jsdoc/check-types": "off",
-    "jsdoc/newline-after-description": "error",
+    "jsdoc/newline-after-description": "off",
     "jsdoc/require-description-complete-sentence": "off",
     "jsdoc/require-example": "off",
-    "jsdoc/require-hyphen-before-param-description": "error",
-    "jsdoc/require-param": "error",
-    "jsdoc/require-param-description": "error",
-    "jsdoc/require-param-name": "error",
-    "jsdoc/require-param-type": "error",
-    "jsdoc/require-returns-description": "error",
-    "jsdoc/require-returns-type": "error",
+    "jsdoc/require-hyphen-before-param-description": "off",
+    "jsdoc/require-param": "off",
+    "jsdoc/require-param-description": "off",
+    "jsdoc/require-param-name": "warn",
+    "jsdoc/require-param-type": "off",
+    "jsdoc/require-returns-description": "off",
+    "jsdoc/require-returns-type": "off",
+
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",
     "import/newline-after-import": "off",
@@ -93,7 +101,9 @@
       2,
       {
         "code": 100,
-        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)",
+        "ignoreStrings": true,
+        "ignoreTemplateLiterals": true
       }
     ],
     "arrow-parens": ["error", "always"],
@@ -102,6 +112,10 @@
     "implicit-arrow-linebreak": "off",
 
     "eslint-comments/no-unused-disable": "warn",
+
+    "lodash/import-scope": ["error", "method-package"],
+    "lodash/prefer-constant": ["warn", false],
+    "lodash/prefer-lodash-method": "off",
 
     "unicorn/filename-case": "off",
     "unicorn/prefer-spread": "off"

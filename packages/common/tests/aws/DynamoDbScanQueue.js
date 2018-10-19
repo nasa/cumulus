@@ -1,7 +1,8 @@
 'use strict';
 
 const test = require('ava');
-const { range } = require('lodash');
+const range = require('lodash.range');
+
 const {
   dynamodb,
   DynamoDbScanQueue

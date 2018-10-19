@@ -10,19 +10,36 @@ If you have any questions or ideas, or notice any problems or bugs, first [searc
 
 ## Pull Requests
 
-If you want to submit your own contributions, follow these steps:
-
-* Fork the Cumulus repo
-* Create a new branch from the branch you'd like to contribute to
-* If an issue does't already exist, submit one (see above)
-* [Create a pull request](https://help.github.com/articles/creating-a-pull-request/) from your fork into the target branch of the nasa/cumulus repo
-* Be sure to [mention the corresponding issue number](https://help.github.com/articles/closing-issues-using-keywords/) in the PR description, i.e. "Fixes Issue #10"
-* Upon submission of a pull request, the Cumulus development team will review the code
-* The request will then either be merged, declined, or an adjustment to the code will be requested
+If you want to submit your own contributions, follow these steps described [here](docs/development/forked-pr.md).
 
 ## Guidelines
 
 We ask that you follow these guidelines with your contributions:
+
+### Documentation
+
+Anything exported by a module must be documented using [JSDoc](http://usejsdoc.org/).
+
+The following JSDoc rules are enforced by our [eslint](https://eslint.org/)
+configuration:
+
+- Use the `@param` tag instead of `@arg`
+- Use the `@returns` tag instead of `@return`
+- Preferred param types:
+  - "boolean" instead of "Boolean"
+  - "number" instead of "Number"
+  - "string" instead of "String"
+  - "Object" instead of "object"
+  - "Array" instead of "array"
+  - "Date" instead of "date"
+  - "RegExp" instead of "regex" or "Regexp"
+  - "Promise" instead of "promise"
+- `@param` tags should have a type and a name. Example:
+  `@param {string} username`
+- Functions that explicitly return should have a `@returns` tag that has a type.
+  Example: `@returns {string}`
+- Parameter names must match those in the function declaration
+- Tags must be valid [JSDoc 3 Block Tags](http://usejsdoc.org/#block-tags)
 
 ### Tests
 
