@@ -232,7 +232,7 @@ git add .
 
 Where `${release_version}` corresponds to the version tag. `v1.2.3`, for example.
 
-**Note:** More information on versioning can be found in the [Docusaurus documentation](https://docusaurus.io/docs/en/versioning)
+**Note:** More information on versioning can be found in the [Docusaurus documentation](https://docusaurus.io/docs/en/versioning) and in [Cumulus Docs: How To's](docs/docs-how-to.md).
 
 #### 6. Create a pull request against the master branch
 
