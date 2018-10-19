@@ -12,9 +12,9 @@ $JASMINE spec/kinesisTests/KinesisTestErrorSpec.js |\
    tee KinesisTestErrorSpec.log &
 KinesisTestErrorSpec_PID="$!"
 
-$JASMINE spec/ingestGranule/IngestGranuleSuccessSpec.js |\
-  tee IngestGranuleSuccessSpec.log &
-IngestGranuleSuccessSpec_PID="$!"
+# $JASMINE spec/ingestGranule/IngestGranuleSuccessSpec.js |\
+#   tee IngestGranuleSuccessSpec.log &
+# IngestGranuleSuccessSpec_PID="$!"
 
 $JASMINE spec/bulkDelete/bulkDeleteSpec.js |\
   tee bulkDeleteSpec.log &
@@ -27,12 +27,12 @@ if [ "$?" -ne "0" ]; then
   KinesisTestErrorSpec_FAILED="TRUE"
 fi
 
-echo "Waiting for spec/ingestGranule/IngestGranuleSuccessSpec.js"
-wait "$IngestGranuleSuccessSpec_PID"
-if [ "$?" -ne "0" ]; then
-  TESTS_FAILED="TRUE"
-  IngestGranuleSuccessSpec_FAILED="TRUE"
-fi
+# echo "Waiting for spec/ingestGranule/IngestGranuleSuccessSpec.js"
+# wait "$IngestGranuleSuccessSpec_PID"
+# if [ "$?" -ne "0" ]; then
+#   TESTS_FAILED="TRUE"
+#   IngestGranuleSuccessSpec_FAILED="TRUE"
+# fi
 
 echo "Waiting for spec/bulkDelete/bulkDeleteSpec.js"
 wait "$bulkDeleteSpec_PID"
