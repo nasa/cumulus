@@ -168,12 +168,10 @@ async function getShardIterator(streamName) {
 
   const streamDetails = await kinesis.describeStream(describeStreamParams).promise();
   const shardId = streamDetails.StreamDescription.Shards[0].ShardId;
-  const startingSequenceNumber = streamDetails.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber;
 
   const shardIteratorParams = {
     ShardId: shardId, /* required */
-    ShardIteratorType: 'AT_SEQUENCE_NUMBER',
-    StartingSequenceNumber: startingSequenceNumber,
+    ShardIteratorType: 'LATEST',
     StreamName: streamName
   };
 
