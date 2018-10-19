@@ -467,6 +467,7 @@ async function getCollections({ prefix }) {
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.collectionId - the ID of the collection to fetch
+ * @param {string} params.collectionVersion - the version of the collection to fetch
  * @returns {Promise<Object>} - the collection fetched by the API
  */
 async function getCollection({ prefix, collectionName, collectionVersion }) {
