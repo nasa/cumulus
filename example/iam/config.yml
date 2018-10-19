@@ -115,9 +115,23 @@ jl:
       name: rvl-internal
       type: shared
 
-kk-deploy-uat:
+kk-uat-deployment:
   prefix: kk-test-uat
   stackName: kk-test-uat-iam
+  system_bucket: '{{prefix}}-internal'
+  buckets:
+    internal:
+      name: '{{prefix}}-internal'
+      type: internal
+    private:
+      name: '{{prefix}}-private'
+      type: private
+    protected:
+      name: '{{prefix}}-protected'
+      type: protected
+    public:
+      name: '{{prefix}}-public'
+      type: public
 
 mth-2:
   prefix: mth-2
