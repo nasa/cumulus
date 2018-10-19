@@ -1,6 +1,6 @@
 ---
-id: doc_installation
-title: Cumulus Docs Installation
+id: docs-how-to
+title: Cumulus Documentation: How To's
 hide_title: true
 ---
 
