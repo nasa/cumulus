@@ -1,5 +1,7 @@
 'use strict';
 
+const pRetry = require('p-retry');
+
 const { Kinesis } = require('aws-sdk');
 const {
   aws: {
@@ -100,6 +102,30 @@ async function deleteTestStream(streamName) {
   return kinesis.deleteStream({ StreamName: streamName }).promise();
 }
 
+
+/**
+ * patiently create a kinesis stream
+ *
+ * @param {string} streamName - name of kinesis stream to create
+ * @returns {Promise<Object>} - kinesis create stream promise if stream to be created.
+ */
+async function createKinesisStream(streamName) {
+  return pRetry(
+    async () => {
+      try {
+        return kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+      }
+      catch (error) {
+        if (error.code === 'LimitExceededException') throw new Error('Trigger retry');
+        throw new pRetry.AbortError(error);
+      }
+    },
+    {
+      onFailedAttempt: () => console.log('LimitExceededException when calling kinesis.createStream(), will retry.')
+    }
+  );
+}
+
 /**
  *  returns a active kinesis stream, creating it if necessary.
  *
@@ -116,9 +142,10 @@ async function createOrUseTestStream(streamName) {
   catch (err) {
     if (err.code === 'ResourceNotFoundException') {
       console.log('Creating a new stream:', streamName);
-      stream = await kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+      stream = await createKinesisStream(streamName);
     }
     else {
+      console.log(`describeStream error ${err}`);
       throw err;
     }
   }
