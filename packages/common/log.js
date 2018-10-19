@@ -1,32 +1,12 @@
 'use strict';
 
-const util = require('util');
+const Logger = require('@cumulus/logger');
 
-/**
- * Constructs JSON to log and logs it
- *
- * @param {string} level - type of log (info, error, debug, warn)
- * @param {string} args - Message to log
- * @param {JSON} additionalKeys - Any additional keys to log, can be null
- * @returns {undefined} - log is printed to stdout, nothing is returned
- */
-function log(level, args, additionalKeys) {
-  const time = new Date();
-  let output = {
-    level,
-    executions: process.env.EXECUTIONS,
-    timestamp: time.toISOString(),
-    sender: process.env.SENDER,
-    version: process.env.TASKVERSION
-  };
-
-  output.message = util.format.apply(null, args);
-
-  if (additionalKeys) output = Object.assign({}, additionalKeys, output);
-
-  if (level === 'error') console.error(JSON.stringify(output));
-  else console.log(JSON.stringify(output));
-}
+const logger = new Logger({
+  executions: process.env.EXECUTIONS,
+  sender: process.env.SENDER,
+  version: process.env.TASKVERSION
+});
 
 /**
  * Constructs JSON to log
@@ -36,66 +16,60 @@ function log(level, args, additionalKeys) {
  * @returns {undefined} - log is printed to stdout, nothing is returned
  */
 function logAdditionalKeys(additionalKeys, ...args) {
-  log('info', args, additionalKeys);
+  logger.infoWithAdditionalKeys(additionalKeys, ...args);
 }
 
 /**
  * Logs the message
  *
  * @param {string} args - Includes message and any other information to log
- * @returns {undefined} - the JSON to be logged
  */
 function info(...args) {
-  return log('info', args);
+  logger.info(...args);
 }
 
 /**
  * Logs the error
  *
  * @param {Object} args - Includes error and any other information to log
- * @returns {undefined} - the JSON to be logged
  */
 function error(...args) {
-  log('error', args);
+  logger.error(...args);
 }
 
 /**
  * Logs the debugger messsages
  *
  * @param {Object} args - Includes debugger message and any other information to log
- * @returns {undefined} - the JSON to be logged
  */
 function debug(...args) {
-  log('debug', args);
+  logger.debug(...args);
 }
 
 /**
  * Logs the Warning messsage
  *
  * @param {Object} args - Includes Warn message and any other information to log
- * @returns {undefined} - the JSON to be logged
  */
 function warn(...args) {
-  log('warn', args);
+  logger.warn(...args);
 }
 
 /**
  * Logs the Fatal messsage
  *
  * @param {Object} args - Includes Fatal message and any other information to log
- * @returns {undefined} - the JSON to be logged
  */
 function fatal(...args) {
-  log('fatal', args);
+  logger.fatal(...args);
 }
 /**
  * Logs the Trace messsage
  *
  * @param {Object} args - Includes Trace message and any other information to log
- * @returns {undefined} - the JSON to be logged
  */
 function trace(...args) {
-  log('trace', args);
+  logger.trace(...args);
 }
 
 /**
