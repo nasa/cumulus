@@ -68,7 +68,7 @@ Type: `string`
 
 An optional version.
 
-### log.debug([...args])
+### log.debug([...messageArgs])
 
 Writes a log event to stdout with level set to "debug".
 
@@ -78,7 +78,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.error([...args])
+### log.error([...messageArgs])
 
 Writes a log event to stderr with level set to "error".
 
@@ -88,7 +88,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.fatal([...args])
+### log.fatal([...messageArgs])
 
 Writes a log event to stdout with level set to "fatal".
 
@@ -98,7 +98,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.info([...args])
+### log.info([...messageArgs])
 
 Writes a log event to stdout with level set to "info".
 
@@ -127,7 +127,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.trace([...args])
+### log.trace([...messageArgs])
 
 Writes a log event to stdout with level set to "trace".
 
@@ -137,7 +137,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.warn([...args])
+### log.warn([...messageArgs])
 
 Writes a log event to stdout with level set to "debug".
 
