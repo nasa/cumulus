@@ -97,8 +97,7 @@ jobs:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-        - cd example
-      script: npm run redeploy-test
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Cleanup integration tests"
