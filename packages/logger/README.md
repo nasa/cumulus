@@ -79,7 +79,7 @@ Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
 
-### log.error([...messageArgs])
+### log.error([...messageArgs][, error])
 
 Writes a log event to stderr with level set to "error".
 
@@ -88,6 +88,17 @@ Writes a log event to stderr with level set to "error".
 Type: `...any`
 
 See [console.log()](https://nodejs.org/dist/latest-v8.x/docs/api/console.html#console_console_log_data_args).
+
+#### error
+
+Type: `Error`
+
+If the last argument is an Error then the following additional properties will be set on the log event:
+
+* **error** (Object)
+  * **name** (string)
+  * **message** (string)
+  * **stack** (Array\<string\>) - the lines of the stack trace
 
 ### log.fatal([...messageArgs])
 
