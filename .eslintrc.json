@@ -101,7 +101,9 @@
       2,
       {
         "code": 100,
-        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
+        "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)",
+        "ignoreStrings": true,
+        "ignoreTemplateLiterals": true
       }
     ],
     "arrow-parens": ["error", "always"],

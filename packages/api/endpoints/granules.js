@@ -8,6 +8,10 @@ const {
 } = require('../lib/response');
 const Search = require('../es/search').Search;
 const models = require('../models');
+const {
+  InternalServerError,
+  NotFoundResponse
+} = require('../lib/responses');
 
 /**
  * List all granules for a given collection.
@@ -105,7 +109,7 @@ async function put(event) {
   return buildLambdaProxyResponse({
     json: true,
     statusCode: 400,
-    body: { message: 'Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"' } // eslint-disable-line max-len
+    body: { message: 'Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"' }
   });
 }
 
@@ -134,7 +138,7 @@ async function del(event) {
     return buildLambdaProxyResponse({
       json: true,
       statusCode: 400,
-      body: { message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first' } // eslint-disable-line max-len
+      body: { message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first' }
     });
   }
 
@@ -169,9 +173,8 @@ async function get(event) {
   }
   catch (err) {
     if (err.message.startsWith('No record found')) {
-      return buildLambdaProxyResponse({
+      return new NotFoundResponse({
         json: true,
-        statusCode: 404,
         body: { message: 'Granule not found' }
       });
     }
@@ -212,11 +215,7 @@ async function handleRequest(request) {
   }
   catch (err) {
     log.error(err);
-    return buildLambdaProxyResponse({
-      json: true,
-      statusCode: 500,
-      body: { message: 'Internal Server Error' }
-    });
+    return new InternalServerError();
   }
 }
 
