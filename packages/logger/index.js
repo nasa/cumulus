@@ -2,6 +2,7 @@
 
 'use strict';
 
+const isError = require('lodash.iserror');
 const { format } = require('util');
 
 const privates = new WeakMap();
@@ -20,6 +21,7 @@ class Logger {
       this,
       {
         executions: options.executions,
+        pretty: options.pretty || false,
         thisConsole: options.console || global.console,
         sender: options.sender || 'unknown',
         version: options.version
@@ -28,52 +30,12 @@ class Logger {
   }
 
   /**
-   * Log an info message
-   *
-   * @param {string} messageArgs - the message to log
-   */
-  info(...messageArgs) {
-    this.writeLogEvent('info', messageArgs);
-  }
-
-  infoWithAdditionalKeys(additionalKeys, ...messageArgs) {
-    this.writeLogEvent('info', messageArgs, additionalKeys);
-  }
-
-  /**
    * Log a debug message
    *
    * @param {string} messageArgs - the message to log
    */
   debug(...messageArgs) {
-    this.writeLogEvent('debug', messageArgs);
-  }
-
-  /**
-   * Log a warning message
-   *
-   * @param {string} messageArgs - the message to log
-   */
-  warn(...messageArgs) {
-    this.writeLogEvent('warn', messageArgs);
-  }
-
-  /**
-   * Log a trace message
-   *
-   * @param {string} messageArgs - the message to log
-   */
-  trace(...messageArgs) {
-    this.writeLogEvent('trace', messageArgs);
-  }
-
-  /**
-   * Log a fatal message
-   *
-   * @param {string} messageArgs - the message to log
-   */
-  fatal(...messageArgs) {
-    this.writeLogEvent('fatal', messageArgs);
+    this._writeLogEvent('debug', messageArgs);
   }
 
   /**
@@ -82,12 +44,81 @@ class Logger {
    * @param {string} messageArgs - the message to log
    */
   error(...messageArgs) {
-    this.writeLogEvent('error', messageArgs);
+    const lastMessageArg = messageArgs[messageArgs.length - 1];
+
+    if (isError(lastMessageArg)) {
+      const error = lastMessageArg;
+
+      let actualMessageArgs = messageArgs.slice(0, messageArgs.length - 1);
+      if (actualMessageArgs.length === 0) actualMessageArgs = [error.message];
+
+      this._writeLogEvent(
+        'error',
+        actualMessageArgs,
+        {
+          error: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack.split('\n')
+          }
+        }
+      );
+    }
+    else {
+      this._writeLogEvent('error', messageArgs);
+    }
   }
 
-  writeLogEvent(level, messageArgs, additionalKeys = {}) {
+  /**
+   * Log a fatal message
+   *
+   * @param {string} messageArgs - the message to log
+   */
+  fatal(...messageArgs) {
+    this._writeLogEvent('fatal', messageArgs);
+  }
+
+  /**
+   * Log an info message
+   *
+   * @param {string} messageArgs - the message to log
+   */
+  info(...messageArgs) {
+    this._writeLogEvent('info', messageArgs);
+  }
+
+  /**
+   * Log an event with additional properties
+   *
+   * @param {Object} additionalKeys
+   * @param {...any} messageArgs
+   */
+  infoWithAdditionalKeys(additionalKeys, ...messageArgs) {
+    this._writeLogEvent('info', messageArgs, additionalKeys);
+  }
+
+  /**
+   * Log a trace message
+   *
+   * @param {string} messageArgs - the message to log
+   */
+  trace(...messageArgs) {
+    this._writeLogEvent('trace', messageArgs);
+  }
+
+  /**
+   * Log a warning message
+   *
+   * @param {string} messageArgs - the message to log
+   */
+  warn(...messageArgs) {
+    this._writeLogEvent('warn', messageArgs);
+  }
+
+  _writeLogEvent(level, messageArgs, additionalKeys = {}) {
     const {
       executions,
+      pretty,
       sender,
       thisConsole,
       version
@@ -108,7 +139,9 @@ class Logger {
       standardLogEvent
     );
 
-    const logEventString = JSON.stringify(logEvent);
+    const logEventString = pretty
+      ? JSON.stringify(logEvent, null, 2)
+      : JSON.stringify(logEvent);
 
     if (level === 'error') thisConsole.error(logEventString);
     else thisConsole.log(logEventString);
