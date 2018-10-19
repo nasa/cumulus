@@ -48,13 +48,14 @@ log.info('hello, world');
 
 ## API
 
-### new Logger({ sender, [executions], [version] })
+### new Logger({ [sender], [executions], [version] })
 
 #### sender
 
 Type: `string`
 
 The sender of the log event.  Typically a Lambda Function Name or ECS Task Name.
+Defaults to "unknown".
 
 #### executions
 
