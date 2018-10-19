@@ -200,6 +200,19 @@ class UpdatedKes extends Kes {
     });
   }
 
+
+  /**
+   * setParentConfigvalues - Overrides nested stack template with parent values
+   * defined in the override_with_parent config key
+   */
+  setParentOverrideConfigValues() {
+    if (!this.config.parent) return;
+    const parent = this.config.parent;
+    this.config.override_with_parent.map((value) => {
+      this.config[value] = (parent[value] == null) ? this.config[value] : parent[value];
+    });
+  }
+
   /**
    * Modified version of Kes superclass compileCF method
    *
@@ -215,6 +228,7 @@ class UpdatedKes extends Kes {
    * @returns {Promise} returns the promise of an AWS response object
    */
   async superCompileCF() {
+    this.setParentOverrideConfigValues();
     const lambda = new this.Lambda(this.config);
     if (this.config.lambdaProcess) {
       this.config = await lambda.process();
@@ -228,6 +242,7 @@ class UpdatedKes extends Kes {
     // Inject Lambda Alias values into configuration,
     // then update configured workflow lambda references
     // to reference the generated alias values
+
     if (this.config.useWorkflowLambdaVersions === true) {
       if (this.config.oldLambdaInjection === true) {
         lambda.buildAllLambdaConfiguration('workflowLambdas');
