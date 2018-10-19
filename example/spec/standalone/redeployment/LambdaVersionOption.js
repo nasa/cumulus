@@ -14,7 +14,7 @@ const {
 const config = loadConfig();
 
 
-xdescribe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
+describe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
   let workflowDefinitions;
   let stackList;
   const deletedStatuses = ['DELETE_COMPLETE'];
