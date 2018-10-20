@@ -692,13 +692,16 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @param {string} queueUrl - url of the SQS queue
  * @param {integer} numOfMessages - number of messages to read from the queue
  * @param {integer} timeout - number of seconds it takes for a message to timeout
+ * @param {integer} waitTimeSeconds - number of seconds to poll SQS queue for long polling.
  * @returns {Promise.<Array>} an array of messages
  */
-exports.receiveSQSMessages = async (queueUrl, numOfMessages = 1, timeout = 30) => {
+exports.receiveSQSMessages = async (queueUrl, numOfMessages = 1,
+                                    timeout = 30, waitTimeSeconds = 0) => {
   const params = {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
     VisibilityTimeout: timeout,
+    WaitTimeSeconds: waitTimeSeconds,
     MaxNumberOfMessages: numOfMessages
   };
 
