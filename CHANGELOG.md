@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-885**
+  - Added 'human readable' version identifiers to Lambda Versioning lambda aliases
 - **CUMULUS-705**
   - Note: Make sure to update the IAM stack when deploying this update.
   - Adds an AsyncOperations model and associated DynamoDB table to the
