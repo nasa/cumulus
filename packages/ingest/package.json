@@ -6,7 +6,7 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava test/http-auth.js",
+    "test": "ava",
     "test-coverage": "nyc ava",
     "build": "echo 'do nothing'"
   },
