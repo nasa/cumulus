@@ -532,9 +532,7 @@ class Granule {
 
     // stream the source file to s3
     log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
-    //await this.sync(fileRemotePath, bucket, stagedFileKey);
-    console.log(`fileRemotePath ${this.provider.host}/${fileRemotePath}`);
-    await this.download(`${this.provider.host}/${fileRemotePath}`);
+    await this.sync(fileRemotePath, bucket, stagedFileKey);
 
     // Validate the checksum
     log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
@@ -618,9 +616,9 @@ class SftpGranule extends sftpMixin(baseProtocol(Granule)) {}
 class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
 
 /**
- * Ingest Granule from an HTTP endpoint usingn basic authentication.
+ * Ingest Granule from an HTTP endpoint using basic authentication.
  */
-class HttpAuthGranule extends httpAuthMixin(baseProtocol(HttpGranule)) {}
+class HttpAuthGranule extends httpAuthMixin(HttpGranule) {}
 
 /**
  * Ingest Granule from an s3 endpoint.
