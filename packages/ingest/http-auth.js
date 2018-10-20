@@ -34,7 +34,9 @@ async function followRedirects({ currentRedirect, numRedirects, uriOptions }) {
       if (res.headers['set-cookie'] !== undefined) {
         cookies += `${res.headers['set-cookie'].join('; ')}; `;
       }
-      updatedOptions = genUriOptions(res.headers.location, { cookie: cookies });
+      updatedOptions.headers.cookie = cookies;
+
+      updatedOptions = genUriOptions(res.headers.location, updatedOptions.headers);
       updatedOptions = await followRedirects({
         currentRedirect: currentRedirect + 1,
         numRedirects,
@@ -60,7 +62,7 @@ module.exports.httpAuthMixin = (superclass) => class extends superclass {
     });
     const numRedirects = parseInt(process.env.NUM_AUTH_REDIRECTS, 10) || 2;
     const finalUriOptions = await followRedirects({ uriOptions, numRedirects, currentRedirect: 0 });
-    const transport = finalUriOptions.uri.startsWith('https://') ? https : http;
+    const transport = url.startsWith('https://') ? https : http;
     const parsedUrl = parse(url);
     const options = {
       host: parsedUrl.hostname,
