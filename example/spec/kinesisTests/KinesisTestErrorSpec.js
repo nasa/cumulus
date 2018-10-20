@@ -126,7 +126,7 @@ describe('The kinesisConsumer receives a bad record.\n', () => {
     console.log('\nWait for minimum duration of failure process ~3.5 min');
     await sleep(3.5 * 60 * 1000);
     console.log('\nWait for record on:', failureSqsUrl);
-    const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl, this.maxNumberElapsedPeriods);
+    const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl);
     this.ReceiptHandle = queuedRecord.ReceiptHandle;
     const queuedKinesisEvent = kinesisEventFromSqsMessage(queuedRecord);
     expect(queuedKinesisEvent).toEqual(badRecord);

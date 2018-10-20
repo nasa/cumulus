@@ -280,6 +280,33 @@ function isTargetMessage(message, recordIdentifier) {
 }
 
 /**
+ * Scan the queue as fast as possible to get all of the records that are
+ * available and see if any contain the recordIdentifier.  Do this scan faster
+ * than the visibilityTimeout of the messages you read to ensure reading all
+ * messages in the queue.
+ *
+ * We are working across purposes at this point, a queue is not designed to be
+ * searched, so we need to find the message that contains the record identifier
+ * before the timeout of the messages.
+ * @param {string} queueUrl - SQS Queue url
+ * @param {string} recordIdentifier - identifier in the original kinesis message to match.
+ */
+async function scanQueueForMessage(queueUrl, recordIdentifier) {
+
+  // So, change this to fast poll (to get all items in queue) until you get no
+  // messages.  If you get no messages, then trigger backoff retry.
+
+  const messages = await receiveSQSMessages(queueUrl, 10, 40, 2);
+  if (messages.length > 0) {
+    console.log(`retrieved ${messages.length} messages`);
+    const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
+    if (targetMessage) return targetMessage;
+    return scanQueueForMessage(queueUrl, recordIdentifier);
+  }
+  throw new Error('Message Not Found');
+}
+
+/**
  * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.
  *
  * @param {string} recordIdentifier - random string to match found kinesis messages against.
@@ -290,18 +317,19 @@ function isTargetMessage(message, recordIdentifier) {
 async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 20) {
   return pRetry(
     async () => {
-      const messages = await receiveSQSMessages(queueUrl, 3);
-      if (messages.length > 0) {
-        const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
-        if (targetMessage) return targetMessage;
+      try {
+        return await scanQueueForMessage(queueUrl, recordIdentifier);
       }
-      throw new Error('Trigger retry');
+      catch (error) {
+        console.log(`got error: ${JSON.stringify(error)}`);
+        throw new Error('Trigger Retry');
+      }
     },
     {
       minTimeout: 1 * 1000,
-      maxTimeout: 40 * 1000,
+      maxTimeout: 60 * 1000,
       retries: maxRetries,
-      onFailedAttempt: () => console.log(`Did not find QueuedRecord, will retry. ${new Date().toString()}`)
+      onFailedAttempt: () => console.log(`Did not find targetMessage on Queued, will retry. ${new Date().toLocaleString()}`)
     }
   );
 }
