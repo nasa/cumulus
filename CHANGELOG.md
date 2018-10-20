@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
 - **CUMULUS-781** - Added integration tests for `@cumulus/sync-granule` when `duplicateHandling` is set to `replace` or `skip`
 - **CUMULUS-791** - `@cumulus/move-granules`: `moveFileRequest` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3. Updated output schema to document new `duplicate_found` field.
+- **MAAP-Project** - Add an `http-auth` protocol option to `@cumulus/ingest`. When ingesting granules, users can specify a provider protocol `http-auth` and username and password via `EARTHDATA_USER` and `EARTHDATA_PASSWORD` environment variables. These values, along with a configurable number of redirects, enable syncing files behind login.
 
 ### Removed
 
