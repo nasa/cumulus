@@ -57,7 +57,7 @@ test('sync', async (t) => {
   const response = await myTestHttpAuthSyncClass._getReadableStream('https://yolo.com');
   sinon.assert.calledWith(httpsSpy, {
     headers: {
-      cookie: `${cookieString}; `.repeat(3)
+      cookie: `${cookieString}; `.repeat(2)
     },
     host: 'yolo.com',
     path: '/'
