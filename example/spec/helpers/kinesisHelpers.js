@@ -292,9 +292,10 @@ function isTargetMessage(message, recordIdentifier) {
  * @param {string} recordIdentifier - identifier in the original kinesis message to match.
  */
 async function scanQueueForMessage(queueUrl, recordIdentifier) {
-  const messages = await receiveSQSMessages(queueUrl, 10, 40, 2);
+  const sqsOptions = { numOfMessages: 10, timeout: 40, waitTimeSeconds: 2 };
+  const messages = await receiveSQSMessages(queueUrl, sqsOptions);
   if (messages.length > 0) {
-    console.log(`retrieved ${messages.length} messages`);
+    console.log(`messages retrieved: ${messages.length}`);
     const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
     if (targetMessage) return targetMessage;
     return scanQueueForMessage(queueUrl, recordIdentifier);
