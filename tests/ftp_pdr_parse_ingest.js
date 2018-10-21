@@ -114,7 +114,7 @@ test.serial('Parse Pdrs from the previous step', async (t) => {
   // copy cumulus-message-adapter
   await copyCMAToTasks(workflow, context.dest, cmaFolder);
 
-  const messages = await receiveSQSMessages(context.queueUrl, 4);
+  const messages = await receiveSQSMessages(context.queueUrl, { numOfMessages: 4 });
 
   await Promise.all( // eslint-disable-line function-paren-newline
     messages.map(async (input) => {
