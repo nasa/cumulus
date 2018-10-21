@@ -292,10 +292,6 @@ function isTargetMessage(message, recordIdentifier) {
  * @param {string} recordIdentifier - identifier in the original kinesis message to match.
  */
 async function scanQueueForMessage(queueUrl, recordIdentifier) {
-
-  // So, change this to fast poll (to get all items in queue) until you get no
-  // messages.  If you get no messages, then trigger backoff retry.
-
   const messages = await receiveSQSMessages(queueUrl, 10, 40, 2);
   if (messages.length > 0) {
     console.log(`retrieved ${messages.length} messages`);
@@ -314,14 +310,13 @@ async function scanQueueForMessage(queueUrl, recordIdentifier) {
  * @param {number} maxRetries - number of retries
  * @returns {Object} - matched Message from SQS.
  */
-async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 20) {
+async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) {
   return pRetry(
     async () => {
       try {
         return await scanQueueForMessage(queueUrl, recordIdentifier);
       }
       catch (error) {
-        console.log(`got error: ${JSON.stringify(error)}`);
         throw new Error('Trigger Retry');
       }
     },
@@ -329,7 +324,9 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 20) 
       minTimeout: 1 * 1000,
       maxTimeout: 60 * 1000,
       retries: maxRetries,
-      onFailedAttempt: () => console.log(`Did not find targetMessage on Queued, will retry. ${new Date().toLocaleString()}`)
+      onFailedAttempt: (error) => {
+        console.log(`No message on Queue, retrying. ${error.attemptsLeft} attempts remain. ${new Date().toLocaleString()}`);
+      }
     }
   );
 }
