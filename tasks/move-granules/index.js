@@ -269,18 +269,20 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     cmrFile.metadata = xml;
     /* eslint-enable no-param-reassign */
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
+    // S3 upload only accepts tag query strings, so reduce tags to query string.
+    const tagsQueryString = cmrFile.s3Tags.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
+    const params = {
+      Bucket: updatedCmrFile.bucket.name,
+      Key: updatedCmrFile.filepath,
+      Body: xml,
+      Tagging: tagsQueryString
+    };
     if (updatedCmrFile.bucket.type.match('public')) {
-      await promiseS3Upload({
-        Bucket: updatedCmrFile.bucket.name,
-        Key: updatedCmrFile.filepath,
-        Body: xml,
-        ACL: 'public-read'
-      });
+      params.ACL = 'public-read';
+      await promiseS3Upload(params);
     }
     else {
-      await promiseS3Upload(
-        { Bucket: updatedCmrFile.bucket.name, Key: updatedCmrFile.filepath, Body: xml }
-      );
+      await promiseS3Upload(params);
     }
   }));
 }
