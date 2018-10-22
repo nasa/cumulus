@@ -701,7 +701,7 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @param {Object} options - options object
  * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
  * @param {integer} [options.timeout=30] - seconds it takes for a message to timeout
- * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling).
+ * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
 exports.receiveSQSMessages = async (queueUrl, options) => {
