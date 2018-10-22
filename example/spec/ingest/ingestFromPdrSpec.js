@@ -62,16 +62,20 @@ describe('Ingesting from PDR', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
+
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
+
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+
   const executionModel = new Execution();
   const collectionModel = new Collection();
   const pdrModel = new Pdr();
+
   let parsePdrExecutionArn;
 
   beforeAll(async () => {
@@ -109,20 +113,6 @@ describe('Ingesting from PDR', () => {
     let queuePdrsOutput;
 
     beforeAll(async () => {
-      // delete pdr from old tests
-      await apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename
-      });
-      // populate collections, providers and test data
-      await Promise.all([
-        updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]),
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
-      ]);
-      // update provider path
-      await collectionModel.update(collection, { provider_path: testDataFolder });
-
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
@@ -182,24 +172,24 @@ describe('Ingesting from PDR', () => {
         console.log(`Wait for execution ${parsePdrExecutionArn}`);
 
         try {
-        expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(outputPayloadFilename, testDataGranuleId, testDataFolder, collectionId);
-        expectedParsePdrOutput.granules[0].dataType += testSuffix;
+          expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(outputPayloadFilename, testDataGranuleId, testDataFolder, collectionId);
+          expectedParsePdrOutput.granules[0].dataType += testSuffix;
 
-        parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
+          parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
 
-        queueGranulesOutput = await lambdaStep.getStepOutput(
-          parsePdrExecutionArn,
-          'QueueGranules'
-        );
+          queueGranulesOutput = await lambdaStep.getStepOutput(
+            parsePdrExecutionArn,
+            'QueueGranules'
+          );
         }
-          catch(error) {
-            console.log(error);
+        catch (error) {
+          console.log(error);
         }
       });
 
       afterAll(async () => {
         // wait for child executions to complete
-        const queueGranulesOutput = await lambdaStep.getStepOutput(
+        queueGranulesOutput = await lambdaStep.getStepOutput(
           parsePdrExecutionArn,
           'QueueGranules'
         );
@@ -409,7 +399,7 @@ describe('Ingesting from PDR', () => {
     /** This test relies on the previous 'ParsePdr workflow' to complete */
     describe('When accessing an execution via the API that was triggered from a parent step function', () => {
       it('displays a link to the parent', async () => {
-        const parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+        parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
         const parsePdrExecution = await apiTestUtils.getExecution({
           prefix: config.stackName,
           arn: parsePdrExecutionArn
