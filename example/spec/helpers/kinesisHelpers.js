@@ -47,9 +47,8 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
       console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
     }
     // We should find a better way to do this
-    process.exit(1);
+    process.exit(1); // eslint-disable-line no-process-exit
   }
-  return Promise.reject(new Error('tryCatchExit failed unexpectedly'));
 }
 
 /**
@@ -198,7 +197,8 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions('KinesisTriggerTest', testConfig.stackName, testConfig.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
-    for (const execution of executions) {
+    for (let ctr = 0; ctr < executions.length; ctr += 1) {
+      const execution = executions[ctr];
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
       if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
         workflowExecution = execution;
@@ -206,7 +206,8 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
       }
     }
   }
-  /* eslint-disable no-await-in-loop */
+  /* eslint-enable no-await-in-loop */
+
   if (timeWaitedSecs < maxWaitTimeSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }
@@ -257,6 +258,7 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedP
   let queuedRecord;
   let elapsedPeriods = 0;
 
+  /* eslint-disable no-await-in-loop */
   while (!queuedRecord && elapsedPeriods < maxNumberElapsedPeriods) {
     const messages = await receiveSQSMessages(queueUrl);
     if (messages.length > 0) {
@@ -266,6 +268,8 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedP
     await timeout(timeoutInterval);
     elapsedPeriods += 1;
   }
+  /* eslint-enable no-await-in-loop */
+
   return { waitForQueuedRecord: 'never found record on queue' };
 }
 
