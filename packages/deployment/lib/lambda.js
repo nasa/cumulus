@@ -112,6 +112,27 @@ class UpdatedLambda extends Lambda {
     return lambda;
   }
 
+  getLambdaVersionFromPackageFile(sourceDir) {
+    let packageJson = '{}';
+    const JsonFilePath = `${sourceDir}/../package.json`;
+
+    try {
+      if (fs.existsSync(JsonFilePath)) {
+        packageJson = fs.readFileSync(`${JsonFilePath}`);
+      }
+    }
+    catch (e) {
+      console.log(`Error reading package.json from ${JsonFilePath}`);
+      throw (e);
+    }
+    const packageData = JSON.parse(packageJson);
+
+    if (!packageData || !packageData.version) {
+      return null;
+    }
+    return packageData.version;
+  }
+
   /**
    * Overrides the default method to allow returning
    * the lambda function after s3 paths were built
@@ -133,6 +154,11 @@ class UpdatedLambda extends Lambda {
         throw new Error(`Invalid uniqueIdentifier ${uniqueIdentifier} provided for lambda`);
       }
       lambda.hash = uniqueIdentifier;
+      lambda.humanReadableIdentifier = uniqueIdentifier;
+    }
+    else {
+      const lambdaVersion = this.getLambdaVersionFromPackageFile(lambda.source);
+      lambda.humanReadableIdentifier = lambdaVersion || lambda.hash;
     }
 
     // adding the hash of the message adapter zip file as part of lambda zip file

@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const os = require('os');
 const path = require('path');
+const sinon = require('sinon');
 const test = require('ava');
 
 const Lambda = require('../lib/lambda');
@@ -57,7 +58,6 @@ test.afterEach.always('cleanup temp directory', async (t) => {
   await fs.remove(t.context.temp);
 });
 
-
 test.serial('addWorkflowLambdahashes: adds hash values to config.workflowLambdas from config.lambda', (t) => {
   t.context.config.lambdas = { FirstLambda: { hash: 'abcdefg' }, SecondLambda: {} };
   t.context.config.workflowLambdas = { FirstLambda: {}, ThirdLmabda: {} };
@@ -71,8 +71,11 @@ test.serial('addWorkflowLambdahashes: adds hash values to config.workflowLambdas
 
 test.serial('buildS3Path: utilizes uniqueIdentifier for hash', async (t) => {
   t.context.lambda.useMessageAdapter = false;
-
-  t.context.lambda.s3Source = { bucket: 'testbucket', key: 'somelambda.zip', uniqueIdentifier: 'uniqueidentifiervalue' };
+  t.context.lambda.s3Source = {
+    bucket: 'testbucket',
+    key: 'somelambda.zip',
+    uniqueIdentifier: 'uniqueidentifiervalue'
+  };
   delete t.context.lambda.source;
   const testLambda = new Lambda(t.context.config);
   const actual = testLambda.buildS3Path(t.context.lambda).hash;
@@ -80,12 +83,75 @@ test.serial('buildS3Path: utilizes uniqueIdentifier for hash', async (t) => {
   t.is(expected, actual);
 });
 
-test.serial('buildS3Path: fails with bad uniqueIdentifier', async (t) => {
+test.serial('buildS3Path: fails with bad s3source uniqueIdentifier', async (t) => {
   t.context.lambda.useMessageAdapter = false;
-  t.context.lambda.s3Source = { bucket: 'testbucket', key: 'somelambda.zip', uniqueIdentifier: 'BADVALUE!#&*!#&*#&' };
+  t.context.lambda.s3Source = {
+    bucket: 'testbucket',
+    key: 'somelambda.zip',
+    uniqueIdentifier: 'BADVALUE!#&*!#&*#&'
+  };
   delete t.context.lambda.source;
   const testLambda = new Lambda(t.context.config);
   t.throws(() => testLambda.buildS3Path(t.context.lambda));
+});
+
+test.serial('buildS3Path: adds humanReadableIdentifier', async (t) => {
+  const testLambda = new Lambda(t.context.config);
+  const getVersionStub = sinon.stub(testLambda, 'getLambdaVersionFromPackageFile');
+  getVersionStub.returns('someVersion');
+  testLambda.buildS3Path(t.context.lambda);
+
+  const actual = t.context.lambda.humanReadableIdentifier;
+  const expected = 'someVersion';
+
+  t.is(expected, actual);
+});
+
+test.serial('buildS3Path: adds default humanReadableIdentifier', async (t) => {
+  const testLambda = new Lambda(t.context.config);
+  const getVersionStub = sinon.stub(testLambda, 'getLambdaVersionFromPackageFile');
+  getVersionStub.returns(null);
+  testLambda.buildS3Path(t.context.lambda);
+
+  const actual = t.context.lambda.humanReadableIdentifier;
+  const expected = 'b0174f8ae0abc4ef3f9735deeb5e0b05233dfdfc';
+
+  t.is(expected, actual);
+});
+
+test.serial('getLambdaVersionFromPackageFile: returns the expected version', async (t) => {
+  const testLambda = new Lambda(t.context.config);
+  sinon.stub(fs, 'readFileSync').returns('{"version": "1.1.1"}');
+  sinon.stub(fs, 'existsSync').returns(true);
+
+  const actual = testLambda.getLambdaVersionFromPackageFile('./irrelevant_dir', 'logname');
+  const expected = '1.1.1';
+  fs.existsSync.restore();
+  fs.readFileSync.restore();
+  t.is(expected, actual);
+});
+
+test.serial('getLambdaVersionFromPackageFile: returns null if file has no version id', async (t) => {
+  const testLambda = new Lambda(t.context.config);
+  sinon.stub(fs, 'readFileSync').returns('{"notreallyajsonpackagefile": "foobar"}');
+  sinon.stub(fs, 'existsSync').returns(true);
+
+  const actual = testLambda.getLambdaVersionFromPackageFile('./irrelevant_dir', 'logname');
+  const expected = null;
+  fs.existsSync.restore();
+  fs.readFileSync.restore();
+  t.is(expected, actual);
+});
+
+
+test.serial('getLambdaVersionFromPackageFile: returns null if no file', async (t) => {
+  const testLambda = new Lambda(t.context.config);
+  sinon.stub(fs, 'existsSync').returns(false);
+  const actual = testLambda.getLambdaVersionFromPackageFile('./irrelevant_dir', 'logname');
+  const expected = null;
+  fs.existsSync.restore();
+
+  t.is(expected, actual);
 });
 
 test.serial('zipLambda: works for lambda not using message adapter', async (t) => {
