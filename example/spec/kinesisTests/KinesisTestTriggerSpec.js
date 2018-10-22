@@ -203,10 +203,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSf(recordIdentifier, maxWaitForSFExistSecs);
 
-        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'`);
-        // get shard iterator for the response stream so we can process any new records sent to it
-        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
-
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
       });
@@ -271,6 +267,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('writes a message to the response stream', async () => {
+        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'`);
+        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
         const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
         const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
@@ -291,10 +289,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping bad record onto ${streamName}, recordIdentifier: ${badRecordIdentifier}.`);
         await putRecordOnStream(streamName, badRecord);
-
-        console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
-        // get shard iterator for the response stream so we can process any new records sent to it
-        responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
 
         console.log('Waiting for step function to start...');
         workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitForSFExistSecs);
@@ -322,6 +316,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     });
 
     it('writes a failure message to the response stream', async () => {
+      console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'.`);
+      responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
       const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
       if (newResponseStreamRecords.length > 0) {
         const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(r.Data.toString()));
