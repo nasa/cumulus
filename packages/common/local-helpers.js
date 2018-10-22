@@ -1,6 +1,6 @@
 const fs = require('fs');
-const configUtil = require('./config');
 const path = require('path');
+const configUtil = require('./config');
 const log = require('./log');
 
 const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
@@ -35,6 +35,8 @@ const fileRoot = () => path.join(__dirname, rootPath);
 
 /**
  * Helper for changing the root path for local testing.
+ *
+ * @param {*} newPath
  */
 const changeRootPath = (newPath) => {
   rootPath = newPath;
@@ -44,9 +46,9 @@ exports.fileRoot = fileRoot;
 exports.changeRootPath = changeRootPath;
 
 const findById = (arr, id) => {
-  for (const item of arr) {
-    if (item.id === id) return item;
-  }
+  const item = arr.find((i) => i.id === id);
+  if (item) return item;
+
   throw new Error(`id not found: ${id}`);
 };
 
@@ -60,8 +62,7 @@ const findById = (arr, id) => {
 exports.parseWorkflows = (id, configFile = null) => {
   const configPath = configFile || `${fileRoot()}/packages/common/test/config/test-collections.yml`;
   log.info(`CONFIG PATH: ${configPath}`);
-  const configStr =
-    fs.readFileSync(configPath).toString();
+  const configStr = fs.readFileSync(configPath).toString();
   const config = configUtil.parseConfig(configStr, (resource) => resource);
   return config.workflows;
 };
@@ -80,21 +81,20 @@ exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile =
   if (!isLocal && !isMocha && !isJupyter && !isAva) return null;
   const configPath = configFile || `${fileRoot()}/packages/common/test/config/test-collections.yml`;
   log.info(`CONFIG PATH: ${configPath}`);
-  const configStr =
-    fs.readFileSync(configPath).toString();
+  const configStr = fs.readFileSync(configPath).toString();
   const config = configUtil.parseConfig(configStr, (resource) => resource);
 
   const collection = findById(config.collections, id);
 
   const taskConfig = {};
-  for (const key of Object.keys(collection.workflow_config_template)) {
+  Object.keys(collection.workflow_config_template).forEach((key) => {
     const localTaskConfig = Object.assign({}, collection.workflow_config_template[key]);
     if (localTaskConfig.connections) {
       log.info(`Removing connection limit for local run of ${key}`);
       delete localTaskConfig.connections;
     }
     taskConfig[key] = localTaskConfig;
-  }
+  });
 
   const input = {
     workflow_config_template: taskConfig,
