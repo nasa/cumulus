@@ -7,7 +7,7 @@ const { parse } = require('url');
 
 /**
  * genUriOptions - default options for calling the `request` module, making HTTP[|S] requests
- * @param  {string} uri     Uri to request
+ * @param  {String} uri     Uri to request
  * @param  {Object} headers Object of key-value pairs representing headers
  *                          sent to the `request` module
  * @returns {Object}        Options to send to the `request` module
