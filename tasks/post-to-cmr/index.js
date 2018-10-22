@@ -1,5 +1,6 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
@@ -15,15 +16,17 @@ const log = require('@cumulus/common/log');
  * @returns {Array} an updated array of granules
  */
 function buildOutput(results, granulesObject) {
+  const output = cloneDeep(granulesObject);
+
   // add results to corresponding granules
-  results.forEach((r) => {
-    if (granulesObject[r.granuleId]) {
-      granulesObject[r.granuleId].cmrLink = r.link;
-      granulesObject[r.granuleId].published = true;
+  results.forEach((result) => {
+    if (output[result.granuleId]) {
+      output[result.granuleId].cmrLink = result.link;
+      output[result.granuleId].published = true;
     }
   });
 
-  return Object.keys(granulesObject).map((k) => granulesObject[k]);
+  return output;
 }
 
 /**
@@ -104,6 +107,6 @@ exports.handler = handler;
 
 // use node index.js local to invoke this
 justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/post-to-cmr.json'); // eslint-disable-line global-require, max-len
+  const payload = require('@cumulus/test-data/cumulus_messages/post-to-cmr.json'); // eslint-disable-line global-require
   handler(payload, {}, (e, r) => log.info(e, r));
 });

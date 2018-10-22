@@ -14,7 +14,7 @@ const {
   validateOutput
 } = require('@cumulus/common/test-utils');
 
-const { parsePdr } = require('../index');
+const { parsePdr } = require('..');
 
 test.beforeEach(async (t) => {
   t.context.payload = {
@@ -324,7 +324,6 @@ test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => 
 
   await s3().createBucket({ Bucket: t.context.payload.config.provider.host }).promise();
 
-  let output;
   try {
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
@@ -334,13 +333,13 @@ test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => 
 
     await t.throws(parsePdr(t.context.payload), "Failed to parse value ('') of FILE_ID", 'Value corresponding to FILE_ID key in the PDR is empty');
   }
-  catch(err) {
+  catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
     }
     else t.fail(err);
   }
-})
+});
 
 test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
   t.context.payload.config.provider = {
@@ -355,23 +354,22 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
 
   await s3().createBucket({ Bucket: t.context.payload.config.provider.host }).promise();
 
-  let output;
   try {
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-	  Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ-without-file-id.PDR')
+      Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ-without-file-id.PDR')
     }).promise();
 
     await t.throws(parsePdr(t.context.payload), 'FILE_ID', 'FILE_ID Key is not present in the supplied PDR');
   }
-  catch(err) {
+  catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
     }
     else t.fail(err);
   }
-})
+});
 
 test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
   // Create the collections contained in this PDR

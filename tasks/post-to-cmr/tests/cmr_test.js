@@ -8,13 +8,12 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const cmrjs = require('@cumulus/cmrjs');
 const payload = require('./data/payload.json');
-const { postToCMR } = require('../index');
+const { postToCMR } = require('..');
 
 const result = {
   'concept-id': 'testingtesging'
 };
 
-// eslint-disable-next-line require-jsdoc
 async function deleteBucket(bucket) {
   const response = await aws.s3().listObjects({ Bucket: bucket }).promise();
   const keys = response.Contents.map((o) => o.Key);
@@ -29,8 +28,7 @@ test.beforeEach((t) => {
   //update cmr file path
   const match = /^s3\:\/\/(.*)\/(.*)$/;
   const cmrFile = payload.input.granules[0].files[3].filename;
-  payload.input.granules[0].files[3].filename =
-    `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
+  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
 
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();

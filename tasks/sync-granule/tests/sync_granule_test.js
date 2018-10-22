@@ -5,7 +5,7 @@ const path = require('path');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
 const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
-const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json'); // eslint-disable-line max-len
+const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json');
 const { constructCollectionId } = require('@cumulus/common');
 const {
   checksumS3Objects,
@@ -68,7 +68,7 @@ test.beforeEach(async (t) => {
 
   const collection = payload.config.collection;
   // save collection in internal/stackName/collections/collectionId
-  const key = `${process.env.stackName}/collections/${collection.dataType}___${parseInt(collection.version, 10)}.json`; // eslint-disable-line max-len
+  const key = `${process.env.stackName}/collections/${collection.dataType}___${parseInt(collection.version, 10)}.json`;
   await promiseS3Upload({
     Bucket: t.context.internalBucketName,
     Key: key,
@@ -152,10 +152,10 @@ test.serial('download Granule from FTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;// eslint-disable-line max-len
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf` // eslint-disable-line max-len
+      `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
     );
     t.truthy(output.granules[0].files[0].url_path);
   }
@@ -189,7 +189,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;// eslint-disable-line max-len
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -228,7 +228,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;// eslint-disable-line max-len
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -281,10 +281,10 @@ test.serial('download granule from S3 provider', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;// eslint-disable-line max-len
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
     t.is(
       output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}` // eslint-disable-line max-len
+      `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
     );
     t.is(
       true,
@@ -339,7 +339,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;// eslint-disable-line max-len
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -377,7 +377,7 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   // Stage the files to be downloaded
   const granuleFilename = t.context.event.input.granules[0].files[0].name;
   const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
-  const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;// eslint-disable-line max-len
+  const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;
 
   await t.throws(syncGranule(t.context.event), errorMessage);
 });
@@ -409,7 +409,7 @@ test.serial('validate file properties', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 2);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;// eslint-disable-line max-len
+    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
     t.is(
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
@@ -446,11 +446,6 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 
   try {
     await t.throws(syncGranule(t.context.event), null, 'Source file not found');
-
-    // validateOutput will throw because it doesn't believe in error messages
-    t.throws(() => {
-      validateOutput(t, output);
-    }, 'output is not defined');
   }
   finally {
     // Clean up

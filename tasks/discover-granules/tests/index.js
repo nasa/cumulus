@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const mur = require('./fixtures/mur.json');
 const cloneDeep = require('lodash.clonedeep');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
@@ -9,7 +8,8 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const { discoverGranules } = require('../index');
+const mur = require('./fixtures/mur.json');
+const { discoverGranules } = require('..');
 
 test('discover granules sets the correct dataType for granules', async (t) => {
   const event = cloneDeep(mur);

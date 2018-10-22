@@ -42,6 +42,7 @@
     "@cumulus/cumulus-message-adapter-js": "^1.0.4",
     "@cumulus/ingest": "^1.10.0",
     "@cumulus/test-data": "^1.9.1",
+    "lodash.clonedeep": "~4.5.0",
     "lodash.get": "^4.4.2",
     "xml2js": "^0.4.19"
   },

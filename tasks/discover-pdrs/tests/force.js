@@ -7,8 +7,7 @@ const fs = require('fs-extra');
 const { RemoteResourceError } = require('@cumulus/common/errors');
 const cloneDeep = require('lodash.clonedeep');
 
-const { discoverPdrs } = require('../index');
-const input = require('./fixtures/input.json');
+const { discoverPdrs } = require('..');
 
 const { recursivelyDeleteS3Bucket, s3, uploadS3Files } = require('@cumulus/common/aws');
 const {
@@ -16,6 +15,7 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
+const input = require('./fixtures/input.json');
 
 test('test pdr discovery with force=false', async (t) => {
   const event = cloneDeep(input);

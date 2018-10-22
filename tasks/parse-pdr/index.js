@@ -89,7 +89,7 @@ exports.handler = handler;
 
 // use node index.js local to invoke this
 justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require, max-len
+  const payload = require('@cumulus/test-data/cumulus_messages/parse-pdr.json'); // eslint-disable-line global-require
   handler(payload, {}, (e, r) => {
     console.log(JSON.stringify(r, null, '\t')); // eslint-disable-line no-console
   });
