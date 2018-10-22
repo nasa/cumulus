@@ -424,3 +424,7 @@ mboyd-test:
 mboyd-int:
   stackName: mboyd-int
   stackNameNoDash: mboydInt
+
+pq:
+  stackName: pq
+  stackNameNoDash: pq
