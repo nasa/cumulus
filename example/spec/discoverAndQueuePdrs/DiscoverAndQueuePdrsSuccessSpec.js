@@ -160,11 +160,12 @@ describe('The Discover And Queue PDRs workflow', () => {
   describe('When accessing an execution via the API that was triggered from a parent step function', () => {
     it('displays a link to the parent', async () => {
       const parsePdrWorkflowArn = queuePdrsOutput.payload.running[0];
-      const parsePdrExecution = await apiTestUtils.getExecution({
+      const parsePdrExecutionResponse = await apiTestUtils.getExecution({
         prefix: config.stackName,
         arn: parsePdrWorkflowArn
       });
 
+      const parsePdrExecution = JSON.parse(parsePdrExecutionResponse.body);
       expect(parsePdrExecution.parentArn).toEqual(workflowExecution.executionArn);
     });
   });

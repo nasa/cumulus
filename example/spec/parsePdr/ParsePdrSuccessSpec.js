@@ -211,10 +211,11 @@ describe('Parse PDR workflow\n', () => {
   describe('When accessing an execution via the API that was triggered from a parent step function', () => {
     it('displays a link to the parent', async () => {
       const ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
-      const ingestGranuleExecution = await apiTestUtils.getExecution({
+      const ingestGranuleExecutionResponse = await apiTestUtils.getExecution({
         prefix: config.stackName,
         arn: ingestGranuleWorkflowArn
       });
+      const ingestGranuleExecution = JSON.parse(ingestGranuleExecutionResponse.body);
 
       expect(ingestGranuleExecution.parentArn).toEqual(workflowExecution.executionArn);
     });
@@ -222,10 +223,11 @@ describe('Parse PDR workflow\n', () => {
 
   describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
     it('does not display a parent link', async () => {
-      const parsePdrExecution = await apiTestUtils.getExecution({
+      const parsePdrExecutionResponse = await apiTestUtils.getExecution({
         prefix: config.stackName,
         arn: workflowExecution.executionArn
       });
+      const parsePdrExecution = JSON.parse(parsePdrExecutionResponse.body);
 
       expect(parsePdrExecution.parentArn).toBeUndefined();
     });
@@ -249,10 +251,11 @@ describe('Parse PDR workflow\n', () => {
 
     beforeAll(async () => {
       const executionArn = workflowExecution.executionArn;
-      executionStatus = await apiTestUtils.getExecutionStatus({
+      const executionStatusResponse = await apiTestUtils.getExecutionStatus({
         prefix: config.stackName,
         arn: executionArn
       });
+      executionStatus = JSON.parse(executionStatusResponse.body);
     });
 
     it('branches according to the CMA output', async () => {

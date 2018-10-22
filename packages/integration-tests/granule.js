@@ -4,6 +4,18 @@ const pWaitFor = require('p-wait-for');
 const { getGranule } = require('./api/api');
 
 /**
+ * Run getGranule and return expected format
+ *
+ * @param {*} prefix - the stack name
+ * @param {*} granuleId - the Cumulus granule id
+ * @returns {undefinted} - undefined
+ */
+async function getGranuleResponse(prefix, granuleId) {
+  const granuleResponse = await getGranule({ prefix, granuleId });
+  return JSON.parse(granuleResponse.body);
+}
+
+/**
  * Wait until granule status is desired status
  *
  * @param {string} prefix - the stack name
@@ -17,10 +29,10 @@ async function waitUntilGranuleStatusIs(prefix, granuleId, status, timeout = (5 
   const interval = 15 * 1000;
 
   await pWaitFor(
-    async () => (await getGranule({
+    async () => (await getGranuleResponse(
       prefix,
       granuleId
-    })).status === status,
+    )).status === status,
     {
       interval,
       timeout
