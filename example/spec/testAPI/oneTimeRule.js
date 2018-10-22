@@ -144,4 +144,15 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       expect(ruleCopy).toEqual(helloWorldRule);
     });
   });
+
+  it('the rule can be updated', async () => {
+    const updatingRuleResponse = await rulesApiTestUtils.updateRule({
+      prefix: config.stackName,
+      rule: helloWorldRule,
+      updateParams: { newParam: true }
+    });
+
+    expect(updatingRuleResponse).not.toBeNull;
+    expect(updatingRuleResponse.newParam).toEqual(true);
+  });
 });
