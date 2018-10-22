@@ -70,9 +70,9 @@ const s3data = [
 ];
 
 const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START')
-  || logEntry.message.includes('END')
-  || logEntry.message.includes('REPORT');
+  logEntry.message.includes('START') ||
+  logEntry.message.includes('END') ||
+  logEntry.message.includes('REPORT');
 
 const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
@@ -569,12 +569,12 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecution.executionArn.split(':');
-        const executionName = executionARNTokens[executionARNTokens.length - 1];
-        const logs = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: executionName });
+        const thisExecutionName = executionARNTokens[executionARNTokens.length - 1];
+        const logs = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: thisExecutionName });
         expect(logs.meta.count).not.toEqual(0);
         logs.results.forEach((log) => {
           expect(log.sender).not.toBe(undefined);
-          expect(log.executions).toEqual(executionName);
+          expect(log.executions).toEqual(thisExecutionName);
         });
       });
     });

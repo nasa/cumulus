@@ -6,7 +6,7 @@ const {
   rulesApi: rulesApiTestUtils,
   getExecutions,
   timeout,
-  LambdaStep,
+  LambdaStep
 } = require('@cumulus/integration-tests');
 
 const {
@@ -69,7 +69,8 @@ async function waitForTestExecution() {
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(helloWorldRule.workflow, config.stackName, config.bucket);
 
-    for (const execution of executions) {
+    for (let ctr = 0; ctr < executions.length; ctr += 1) {
+      const execution = executions[ctr];
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
       if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === helloWorldRule.name) {
         workflowExecution = execution;
@@ -77,7 +78,8 @@ async function waitForTestExecution() {
       }
     }
   }
-  /* eslint-disable no-await-in-loop */
+  /* eslint-enable no-await-in-loop */
+
   if (timeWaitedSecs < maxWaitForStartedExecutionSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }

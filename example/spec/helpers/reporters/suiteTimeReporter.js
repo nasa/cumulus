@@ -1,4 +1,4 @@
-const SuiteTimeReporter = function () {
+const SuiteTimeReporter = () => {
   const suiteTimers = {};
   return {
     suiteStarted: (result) => {
