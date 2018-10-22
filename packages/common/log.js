@@ -1,6 +1,8 @@
 'use strict';
 
 const Logger = require('@cumulus/logger');
+const isNumber = require('lodash.isnumber');
+const isString = require('lodash.isstring');
 
 const logger = new Logger({
   executions: process.env.EXECUTIONS,
@@ -87,8 +89,8 @@ function convertLogLevel(level) {
     debug: 20,
     trace: 10
   };
-  if (typeof level === 'string') return mapping[level];
-  if (typeof level === 'number') return Object.keys(mapping).find((key) => mapping[key] === level);
+  if (isString(level)) return mapping[level];
+  if (isNumber(level)) return Object.keys(mapping).find((key) => mapping[key] === level);
   return undefined;
 }
 
