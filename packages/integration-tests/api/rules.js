@@ -49,6 +49,29 @@ async function postRule({ prefix, rule }) {
 }
 
 /**
+ * Update a rule in the rules API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params.rule - the rule to update
+ * @param {Object} params.updateParams - key/value to update on the rule
+ * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ */
+async function updateRule({ prefix, rule, updateParams }) {
+  const payload = {
+    httpMethod: 'PUT',
+    resource: '/rules/{name}',
+    path: `rules/${rule.name}`,
+    pathParameters: {
+      name: rule.name
+    },
+    body: JSON.stringify(Object.assign(rule, updateParams)),
+  };
+
+  return callRuleApiFunction(prefix, payload);
+}
+
+/**
  * Get a list of rules from the API
  *
  * @param {Object} params - params
@@ -85,6 +108,7 @@ async function deleteRule({ prefix, ruleName }) {
 
 module.exports = {
   postRule,
+  updateRule,
   deleteRule,
   listRules
 };
