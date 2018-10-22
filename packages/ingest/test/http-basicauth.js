@@ -2,12 +2,12 @@
 
 const rewire = require('rewire');
 const test = require('ava');
-const httpAuth = rewire('../http-auth');
-const TestHttpAuthMixin = httpAuth.httpAuthMixin;
+const httpBasicAuth = rewire('../http-basicauth');
+const TestHttpBasicAuthMixin = httpBasicAuth.httpBasicAuthMixin;
 const sinon = require('sinon');
 
 const cookieString = 'snickerdoodle';
-httpAuth.__set__('request', (uriOptions, cb) => {
+httpBasicAuth.__set__('request', (uriOptions, cb) => {
   const updatedUriOptions = {
     headers: {
       'set-cookie': [ cookieString ],
@@ -25,13 +25,13 @@ const testHttps = {
     cb(mockResponse);
   }
 };
-httpAuth.__set__('https', testHttps);
+httpBasicAuth.__set__('https', testHttps);
 class MyTestSyncClass {}
-class MyTestHttpAuthSyncClass extends TestHttpAuthMixin(MyTestSyncClass) {}
-const myTestHttpAuthSyncClass = new MyTestHttpAuthSyncClass();
+class MyTestHttpBasicAuthSyncClass extends TestHttpBasicAuthMixin(MyTestSyncClass) {}
+const myTestHttpBasicAuthSyncClass = new MyTestHttpBasicAuthSyncClass();
 
 test('Follow redirects', async (t) => {
-  const result = await httpAuth.followRedirects({
+  const result = await httpBasicAuth.followRedirects({
     currentRedirect: 0,
     numRedirects: 5,
     uriOptions: {
@@ -52,9 +52,9 @@ test('Follow redirects', async (t) => {
 });
 
 test('sync', async (t) => {
-  sinon.stub(httpAuth, 'followRedirects').resolves({});
+  sinon.stub(httpBasicAuth, 'followRedirects').resolves({});
   const httpsSpy = sinon.spy(testHttps, 'get');
-  const response = await myTestHttpAuthSyncClass._getReadableStream('https://yolo.com');
+  const response = await myTestHttpBasicAuthSyncClass._getReadableStream('https://yolo.com');
   sinon.assert.calledWith(httpsSpy, {
     headers: {
       cookie: `${cookieString}; `.repeat(2)

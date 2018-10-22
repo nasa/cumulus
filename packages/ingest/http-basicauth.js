@@ -49,7 +49,7 @@ async function followRedirects({ currentRedirect, numRedirects, uriOptions }) {
 
 module.exports.followRedirects = followRedirects;
 
-module.exports.httpAuthMixin = (superclass) => class extends superclass {
+module.exports.httpBasicAuthMixin = (superclass) => class extends superclass {
   /**
    * get readable stream of the remote file
    *

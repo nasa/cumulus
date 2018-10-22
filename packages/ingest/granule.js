@@ -25,7 +25,7 @@ const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
-const { httpAuthMixin } = require('./http-auth');
+const { httpBasicAuthMixin } = require('./http-basicauth');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
@@ -618,7 +618,7 @@ class HttpGranule extends httpMixin(baseProtocol(Granule)) {}
 /**
  * Ingest Granule from an HTTP endpoint using basic authentication.
  */
-class HttpAuthGranule extends httpAuthMixin(HttpGranule) {}
+class HttpBasicAuthGranule extends httpBasicAuthMixin(HttpGranule) {}
 
 /**
  * Ingest Granule from an s3 endpoint.
@@ -659,7 +659,7 @@ function selector(type, protocol) {
     case 'https':
       return HttpGranule;
     case 'http-auth':
-      return HttpAuthGranule;
+      return HttpBasicAuthGranule;
     case 's3':
       return S3Granule;
     default:
@@ -1002,7 +1002,7 @@ module.exports.FtpDiscoverGranules = FtpDiscoverGranules;
 module.exports.FtpGranule = FtpGranule;
 module.exports.HttpDiscoverGranules = HttpDiscoverGranules;
 module.exports.HttpGranule = HttpGranule;
-module.exports.HttpAuthGranule = HttpAuthGranule;
+module.exports.HttpBasicAuthGranule = HttpBasicAuthGranule;
 module.exports.S3Granule = S3Granule;
 module.exports.S3DiscoverGranules = S3DiscoverGranules;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
