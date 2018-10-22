@@ -27,10 +27,9 @@ function genUriOptions(uri, headers) {
  *
  * @returns {string} Basic auth string
  */
-function authString() {
+function authString(provider) {
   return Buffer.from(
-    `${process.env.INGEST_USERNAME}:${
-      process.env.INGEST_PASSWORD}`
+    `${provider.username}:${provider.password}`
   ).toString('base64');
 }
 
@@ -83,7 +82,7 @@ module.exports.httpBasicAuthMixin = (superclass) => class extends superclass {
    */
   async _getReadableStream(url) {
     const uriOptions = genUriOptions(url, {
-      authorization: `Basic ${authString()}`
+      authorization: `Basic ${authString(this.provider)}`
     });
     const numRedirects = parseInt(process.env.NUM_AUTH_REDIRECTS, 10) || 2;
     const finalUriOptions = await followRedirects({ uriOptions, numRedirects, currentRedirect: 0 });
