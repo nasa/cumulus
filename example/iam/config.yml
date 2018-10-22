@@ -219,3 +219,6 @@ mboyd-test:
 mboyd-int:
   prefix: mboyd-int
   stackName: mboyd-int-iam
+
+pq:
+  prefix: pq

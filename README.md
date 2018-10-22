@@ -90,10 +90,7 @@ integration tests for a given commit, include `[skip-integration-tests]` in the
 commit message.
 
 Travis CI determines what stack to run the tests against based on the name of
-the branch. It expects that the branch name will be suffixed with a dash
-followed by the name of the stack to test against. For instance, to run against
-the "test-123" stack, a branch should be called "something-test-123". If the
-stack cannot be determined from the branch name then the "cumulus-from-pr" stack
+the commiter. If the stack cannot be determined from the branch name then the "cumulus-from-pr" stack
 will be used.
 
 If you create a new stack and want to be able to run integration tests against
@@ -110,6 +107,9 @@ your tests seem to be hung waiting for that lock file, check to see if the job
 that created the lock file is still running or has crashed. If it has crashed
 then the lock file should be deleted. You should also figure out why the lock
 file was not cleaned up and fix that for next time.
+
+Tests involving stack redeployment are run only on master and release builds. To include these tests in your Travis CI build include `[run-redeploy-tests]` in the
+commit message.
 
 ### Code Coverage
 
