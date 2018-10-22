@@ -237,19 +237,19 @@ kk-uat-deployment:
   stackName: kk-test-uat
   stackNameNoDash: KkTestUat
   esHost: https://search-kk-test-uat-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
-  system_bucket: '{{prefix}}-internal'
+  system_bucket: '{{stackName}}-internal'
   buckets:
     internal:
-      name: '{{prefix}}-internal'
+      name: '{{stackName}}-internal'
       type: internal
     private:
-      name: '{{prefix}}-private'
+      name: '{{stackName}}-private'
       type: private
     protected:
-      name: '{{prefix}}-protected'
+      name: '{{stackName}}-protected'
       type: protected
     public:
-      name: '{{prefix}}-public'
+      name: '{{stackName}}-public'
       type: public
 
 mth-2:
