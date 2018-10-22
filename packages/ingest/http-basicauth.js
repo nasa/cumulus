@@ -16,8 +16,8 @@ function genUriOptions(uri, headers) {
 
 function authString() {
   return Buffer.from(
-    `${process.env.USERNAME}:${
-      process.env.PASSWORD}`
+    `${process.env.INGEST_USERNAME}:${
+      process.env.INGEST_PASSWORD}`
   ).toString('base64');
 }
 
