@@ -15,6 +15,11 @@ const log = require('./log');
 /**
  * Constructs the input to pass to the step functions to kick off ingest. The execution name
  * that should be used is returned in ingest_meta.execution_name.
+ *
+ * @param {*} resources
+ * @param {*} provider
+ * @param {*} collection
+ * @returns {Object} a step function input
  */
 exports.constructStepFunctionInput = (resources, provider, collection) => {
   const stateMachine = collection.workflow;

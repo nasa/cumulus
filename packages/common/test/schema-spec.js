@@ -1,14 +1,14 @@
 'use strict';
+
 /**
  * Tests validations with the schema
  */
 
 const validMessage = require('@cumulus/test-data/schemas/example-data/example-message-envelope.json');
 const validCollection = require('@cumulus/test-data/schemas/example-data/example-collection.json');
-const local = require('../local-helpers');
+const expect = require('expect.js');
 
 const schema = require('../schema');
-const expect = require('expect.js');
 
 describe('schema', () => {
   describe('validateCollectionsConfiguration', () => {
