@@ -133,7 +133,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const granuleId = inputPayload.granules[0].granuleId;
     expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, TagSet: expectedS3TagSet }).promise()));
+      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
@@ -213,12 +213,20 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
-    let syncedTagSets;
+    let existCheck;
+    let syncedTaggings = [];
 
     beforeAll(async () => {
       lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      syncedTagSets = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => s3().getObjectTagging(parseS3Uri(file.filename)).promise()));
+      existCheck = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => s3ObjectExists(parseS3Uri(file.filename))));
+      /*syncedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map(
+        (file) => s3().getObjectTagging(parseS3Uri(file.filename)).promise()
+      ));*/
+    });
+
+    it('syncs files to S3', () => {
+      existCheck.forEach((check) => expect(check).toBe(true));
     });
 
     it('receives the correct collection and provider configuration', () => {
@@ -235,8 +243,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('preserves tags on synced files', () => {
-      syncedTagSets.forEach((tagset) => {
-        expect(tagset).toEqual(expectedS3TagSet);
+      syncedTaggings.forEach((tagging) => {
+        expect(tagging.TagSet).toEqual(expectedS3TagSet);
       });
     });
   });
@@ -244,13 +252,16 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('the MoveGranules task', () => {
     let lambdaOutput;
     let files;
-    let movedTagSets;
+    let movedTaggings;
     const existCheck = [];
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
-      movedTagSets = await Promise.all(lambdaOutput.payload.granules[0].files.map(async (file) => s3().getObjectTagging(parseS3Uri(file.filename))));
+      movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.reduce((arr, file) => {
+        if (file.filename.slice(-8) === '.cmr.xml') return arr; // skip xml because it is generated and won't have a tag
+        return arr.push(s3().getObjectTagging(parseS3Uri(file.filename)).promise());
+      }, []));
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
       existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });
@@ -283,8 +294,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('preserves tags on moved files', () => {
-      movedTagSets.forEach((tagset) => {
-        expect(tagset).toEqual(expectedS3TagSet);
+      movedTaggings.forEach((tagging) => {
+        expect(tagging.TagSet).toEqual(expectedS3TagSet);
       });
     });
 
