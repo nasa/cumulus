@@ -15,7 +15,7 @@ async function getWorkflowList() {
     return Body.toString();
   }
   catch (err) {
-    return cb(err);
+    throw err;
   }
 }
 
