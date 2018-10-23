@@ -197,11 +197,34 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
+  it('can retrieve the specific provider that was created', async () => {
+    const providerListResponse = await apiTestUtils.getProviders({ prefix: config.stackName });
+    const providerList = JSON.parse(providerListResponse.body);
+    expect(providerList.results.length).toBeGreaterThan(0);
+
+    const providerResultResponse = await apiTestUtils.getProvider({ prefix: config.stackName, providerId: provider.id });
+    const providerResult = JSON.parse(providerResultResponse.body);
+    expect(providerResult).not.toBeNull();
+  });
+
+  it('can retrieve the specific collection that was created', async () => {
+    const collectionListResponse = await apiTestUtils.getCollections({ prefix: config.stackName });
+    const collectionList = JSON.parse(collectionListResponse.body);
+    expect(collectionList.results.length).toBeGreaterThan(0);
+
+    const collectionResponse = await apiTestUtils.getCollection(
+      { prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version }
+    );
+    const collectionResult = JSON.parse(collectionResponse.body);
+    expect(collectionResult).not.toBeNull();
+  });
+
   it('makes the granule available through the Cumulus API', async () => {
-    const granule = await apiTestUtils.getGranule({
+    const granuleResponse = await apiTestUtils.getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
+    const granule = JSON.parse(granuleResponse.body);
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
   });
@@ -364,15 +387,21 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('The Cumulus API', () => {
+    let workflowConfig;
+    beforeAll(() => {
+      workflowConfig = getConfigObject(workflowConfigFile, workflowName);
+    });
+
     describe('granule endpoint', () => {
       let granule;
       let cmrLink;
 
       beforeAll(async () => {
-        granule = await apiTestUtils.getGranule({
+        const granuleResponse = await apiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
+        granule = JSON.parse(granuleResponse.body);
         cmrLink = granule.cmrLink;
       });
 
@@ -385,32 +414,31 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('allows reingest and executes with success status', async () => {
-        granule = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
         const oldUpdatedAt = granule.updatedAt;
         const oldExecution = granule.execution;
 
         // Reingest Granule and compare the updatedAt times
-        const response = await apiTestUtils.reingestGranule({
+        const reingestGranuleResponse = await apiTestUtils.reingestGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
-        expect(response.status).toEqual('SUCCESS');
+        const reingestResponse = JSON.parse(reingestGranuleResponse.body);
+        expect(reingestResponse.status).toEqual('SUCCESS');
 
-        const newUpdatedAt = (await apiTestUtils.getGranule({
+        const secondGranuleResponse = await apiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
-        })).updatedAt;
-        expect(newUpdatedAt).not.toEqual(oldUpdatedAt);
+        });
+        const secondGranule = JSON.parse(secondGranuleResponse.body);
+        expect(secondGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
 
         // Await reingest completion
         await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
-        const updatedGranule = await apiTestUtils.getGranule({
+        const updatedGranuleResponse = await apiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
+        const updatedGranule = JSON.parse(updatedGranuleResponse.body);
         expect(updatedGranule.status).toEqual('completed');
         expect(updatedGranule.execution).not.toEqual(oldExecution);
       });
@@ -462,20 +490,22 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         // Verify deletion
-        const resp = await apiTestUtils.getGranule({
+        const granuleResponse = await apiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
+        const resp = JSON.parse(granuleResponse.body);
         expect(resp.message).toEqual('Granule not found');
       });
     });
 
     describe('executions endpoint', () => {
       it('returns tasks metadata with name and version', async () => {
-        const executionResponse = await apiTestUtils.getExecution({
+        const executionApiResponse = await apiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
         });
+        const executionResponse = JSON.parse(executionApiResponse.body);
         expect(executionResponse.tasks).toBeDefined();
         expect(executionResponse.tasks.length).not.toEqual(0);
         Object.keys(executionResponse.tasks).forEach((step) => {
@@ -492,12 +522,12 @@ describe('The S3 Ingest Granules workflow', () => {
 
       beforeAll(async () => {
         const executionArn = workflowExecution.executionArn;
-        executionStatus = await apiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await apiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: executionArn
         });
+        executionStatus = JSON.parse(executionStatusResponse.body);
 
-        const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
         allStates = Object.keys(workflowConfig.States);
       });
 
@@ -548,15 +578,16 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('logs endpoint', () => {
       it('returns the execution logs', async () => {
-        const logs = await apiTestUtils.getLogs({ prefix: config.stackName });
+        const logsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+        const logs = JSON.parse(logsResponse.body);
         expect(logs).not.toBe(undefined);
         expect(logs.results.length).toEqual(10);
       });
 
       it('returns logs with sender set', async () => {
         const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
-
-        const logEntries = getLogsResponse.results;
+        const logs = JSON.parse(getLogsResponse.body);
+        const logEntries = logs.results;
         const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
 
         cumulusLogEntries.forEach((logEntry) => {
@@ -569,13 +600,36 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecution.executionArn.split(':');
-        const executionName = executionARNTokens[executionARNTokens.length - 1];
-        const logs = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: executionName });
+        const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
+        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
+        const logs = JSON.parse(logsResponse.body);
         expect(logs.meta.count).not.toEqual(0);
         logs.results.forEach((log) => {
           expect(log.sender).not.toBe(undefined);
-          expect(log.executions).toEqual(executionName);
+          expect(log.executions).toEqual(logsExecutionName);
         });
+      });
+    });
+
+    describe('workflows endpoint', () => {
+      it('returns a list of workflows', async () => {
+        const workflowsResponse = await apiTestUtils.getWorkflows({ prefix: config.stackName });
+
+        const workflows = JSON.parse(workflowsResponse.body);
+        expect(workflows).not.toBe(undefined);
+        expect(workflows.length).toBeGreaterThan(0);
+      });
+
+      it('returns the expected workflow', async () => {
+        const workflowResponse = await apiTestUtils.getWorkflow({
+          prefix: config.stackName,
+          workflowName: workflowName
+        });
+        const foundWorkflow = JSON.parse(workflowResponse.body);
+        const foundKeys = Object.keys(foundWorkflow.definition.States);
+        const configKeys = Object.keys(workflowConfig.States);
+        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
+        expect(foundKeys).toEqual(configKeys);
       });
     });
   });
