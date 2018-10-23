@@ -213,20 +213,10 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
-    let existCheck;
-    let syncedTaggings = [];
 
     beforeAll(async () => {
       lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      existCheck = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => s3ObjectExists(parseS3Uri(file.filename))));
-      /*syncedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map(
-        (file) => s3().getObjectTagging(parseS3Uri(file.filename)).promise()
-      ));*/
-    });
-
-    it('syncs files to S3', () => {
-      existCheck.forEach((check) => expect(check).toBe(true));
     });
 
     it('receives the correct collection and provider configuration', () => {
@@ -241,12 +231,6 @@ describe('The S3 Ingest Granules workflow', () => {
     it('updates the meta object with input_granules', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedSyncGranulePayload.granules);
     });
-
-    it('preserves tags on synced files', () => {
-      syncedTaggings.forEach((tagging) => {
-        expect(tagging.TagSet).toEqual(expectedS3TagSet);
-      });
-    });
   });
 
   describe('the MoveGranules task', () => {
@@ -258,10 +242,7 @@ describe('The S3 Ingest Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
-      movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.reduce((arr, file) => {
-        if (file.filename.slice(-8) === '.cmr.xml') return arr; // skip xml because it is generated and won't have a tag
-        return arr.push(s3().getObjectTagging(parseS3Uri(file.filename)).promise());
-      }, []));
+      movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => s3().getObjectTagging(parseS3Uri(file.filename)).promise()));
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
       existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });
