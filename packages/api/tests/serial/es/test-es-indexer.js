@@ -13,15 +13,15 @@ const {
   util: { noop }
 } = require('@cumulus/common');
 
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
-const models = require('../../models');
-const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../lib/testUtils');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
-const granuleSuccess = require('../data/granule_success.json');
-const granuleFailure = require('../data/granule_failed.json');
-const pdrFailure = require('../data/pdr_failure.json');
-const pdrSuccess = require('../data/pdr_success.json');
+const indexer = require('../../../es/indexer');
+const { Search } = require('../../../es/search');
+const models = require('../../../models');
+const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
+const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
+const granuleSuccess = require('../../data/granule_success.json');
+const granuleFailure = require('../../data/granule_failed.json');
+const pdrFailure = require('../../data/pdr_failure.json');
+const pdrSuccess = require('../../data/pdr_success.json');
 
 const esIndex = randomString();
 process.env.bucket = randomString();
@@ -662,7 +662,7 @@ test.serial('reingest a granule', async (t) => {
 test.serial('pass a sns message to main handler', async (t) => {
   const txt = fs.readFileSync(path.join(
     __dirname,
-    '../data/sns_message_granule.txt'
+    '../../data/sns_message_granule.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
@@ -693,7 +693,7 @@ test.serial('pass a sns message to main handler', async (t) => {
 test.serial('pass a sns message to main handler with parse info', async (t) => {
   const txt = fs.readFileSync(path.join(
     __dirname,
-    '../data/sns_message_parse_pdr.txt'
+    '../../data/sns_message_parse_pdr.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
@@ -721,7 +721,7 @@ test.serial('pass a sns message to main handler with parse info', async (t) => {
 
 test.serial('pass a sns message to main handler with discoverpdr info', async (t) => {
   const txt = fs.readFileSync(path.join(
-    __dirname, '../data/sns_message_discover_pdr.txt'
+    __dirname, '../../data/sns_message_discover_pdr.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));

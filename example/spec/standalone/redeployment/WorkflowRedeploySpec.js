@@ -12,12 +12,12 @@ const {
   loadConfig,
   protectFile,
   redeploy
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const {
   removeWorkflow,
   removeTaskFromWorkflow
-} = require('../helpers/workflowUtils');
+} = require('../../helpers/workflowUtils');
 
 const workflowsYmlFile = './workflows.yml';
 const config = loadConfig();
@@ -70,10 +70,11 @@ describe('When a workflow', () => {
       let executionStatus;
 
       beforeAll(async () => {
-        executionStatus = await apiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await apiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: workflowExecutionArn
         });
+        executionStatus = JSON.parse(executionStatusResponse.body);
       });
 
       it('the execution is returned', () => {
