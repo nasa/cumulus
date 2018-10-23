@@ -40,10 +40,11 @@ const toPromise = (fn, ...args) =>
 /**
  * Returns a promise that resolves to the result of calling the given function if
  * condition returns false or null if condition is true. Useful for chaining.
+ *
  * @param {function} condition - A function which determines whether fn is called.
  * @param {function} fn - The function to call if condition returns true
  * @param {*} args - Arguments to pass to calls to both condition and fn
- * @return - A promise that resolves to either null or the result of fn
+ * @returns {Promise<*>} - A promise that resolves to either null or the result of fn
 */
 const unless = (condition, fn, ...args) =>
   Promise.resolve((condition(...args) ? null : fn(...args)));
@@ -61,7 +62,7 @@ const promiseUrl = (urlstr) =>
     };
     return client.get(options, (response) => {
       if (response.statusCode >= 300) {
-        reject(`HTTP Error ${response.statusCode}`);
+        reject(new Error(`HTTP Error ${response.statusCode}`));
       }
       else {
         resolve(response);
