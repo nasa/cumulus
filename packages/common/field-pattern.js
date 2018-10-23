@@ -1,5 +1,8 @@
 'use strict';
 
+const isString = require('lodash.isstring');
+const isObject = require('lodash.isobject');
+
 const log = require('./log');
 
 /**
@@ -7,17 +10,17 @@ const log = require('./log');
  */
 module.exports = class FieldPattern {
   static formatAll(obj, fields) {
-    if (typeof obj === 'string') {
+    if (isString(obj)) {
       return new FieldPattern(obj).format(fields);
     }
-    else if (Array.isArray(obj)) {
+    if (Array.isArray(obj)) {
       return obj.map((c) => this.formatAll(c, fields));
     }
-    else if (obj && typeof obj === 'object') {
+    if (isObject(obj)) {
       const result = {};
-      for (const key of Object.keys(obj)) {
+      Object.keys(obj).forEach((key) => {
         result[key] = this.formatAll(obj[key], fields);
-      }
+      });
       return result;
     }
     return obj;
@@ -36,7 +39,7 @@ module.exports = class FieldPattern {
   }
 
   set pattern(patternVal) {
-    if (typeof patternVal === 'string') {
+    if (isString(patternVal)) {
       this.type = 'string';
       this.patternStr = patternVal;
     }
@@ -64,7 +67,7 @@ module.exports = class FieldPattern {
     if (!match) return null;
     const result = {};
     match.shift();
-    for (let i = 0; i < this.fields.length; i++) {
+    for (let i = 0; i < this.fields.length; i += 1) {
       result[this.fields[i]] = match[i];
     }
     return result;
@@ -72,7 +75,7 @@ module.exports = class FieldPattern {
 
   format(values) {
     let result = this.patternStr;
-    for (const field of this.fields) {
+    this.fields.forEach((field) => {
       const keypath = field.split('.');
       let nestedValue = values;
       while (keypath.length > 0 && nestedValue) {
@@ -81,7 +84,7 @@ module.exports = class FieldPattern {
       if (nestedValue) {
         result = result.replace(`{${field}}`, nestedValue);
       }
-    }
+    });
     return this.stringToValue(result);
   }
 
@@ -93,7 +96,7 @@ module.exports = class FieldPattern {
     if (!str || this.type === 'string' || !this.isComplete(str)) {
       return str;
     }
-    else if (this.type === 'date') {
+    if (this.type === 'date') {
       return this.parseDate(str);
     }
     return str;
