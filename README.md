@@ -7,7 +7,7 @@
 ## 📖 Documentation:
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
-- Documentation for the [unreleased work](https://nasa.github.io/cumulus/unreleased). 
+- Documentation for the [unreleased work](https://nasa.github.io/cumulus/unreleased).
 
 # 🔨 Development
 
@@ -87,7 +87,7 @@ Run end to end tests with
 
 For more information please [read this](docs/development/integration-tests.md).
 
-## 🔦 Code Coverage and Quality 
+## 🔦 Code Coverage and Quality
 
 For more information please [read this](docs/development/quality-and-coverage.md).
 

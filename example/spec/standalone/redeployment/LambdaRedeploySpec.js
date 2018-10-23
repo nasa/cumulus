@@ -13,7 +13,7 @@ const {
   loadConfig,
   protectFile,
   redeploy
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const config = loadConfig();
 
