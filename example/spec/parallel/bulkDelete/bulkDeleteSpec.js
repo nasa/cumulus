@@ -5,7 +5,7 @@ const {
   api: apiTestUtils,
   getClusterArn
 } = require('@cumulus/integration-tests');
-const { loadConfig } = require('../helpers/testUtils');
+const { loadConfig } = require('../../helpers/testUtils');
 
 describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let postBulkDeleteResponse;

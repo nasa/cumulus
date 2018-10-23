@@ -10,7 +10,7 @@ const {
   waitForAsyncOperationStatus
 } = require('@cumulus/integration-tests');
 const { AsyncOperation } = require('@cumulus/api/models');
-const { loadConfig } = require('../helpers/testUtils');
+const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The AsyncOperation task runner', () => {
   let asyncOperationModel;
