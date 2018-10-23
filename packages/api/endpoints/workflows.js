@@ -1,24 +1,38 @@
 'use strict';
 
-const _get = require('lodash.get');
-const { getS3Object } = require('@cumulus/common/aws');
-const handle = require('../lib/response').handle;
+const aws = require('@cumulus/common/aws');
+const { handle } = require('../lib/response');
+
+/**
+ * Get S3 object
+ *
+ * @returns {Object} object fetched from S3 bucket
+ */
+async function getWorkflowList() {
+  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
+  try {
+    const { Body } = await aws.getS3Object(process.env.bucket, workflowsListKey);
+    return Body.toString();
+  }
+  catch (err) {
+    throw err;
+  }
+}
 
 /**
  * List all providers.
  *
- * @param {Object} event - aws lambda event object.
  * @param {callback} cb - aws lambda callback function
  * @returns {undefined} undefined
  */
-function list(event, cb) {
-  const key = `${process.env.stackName}/workflows/list.json`;
-  getS3Object(process.env.bucket, key)
-    .then((file) => {
-      const workflows = JSON.parse(file.Body.toString());
-      return cb(null, workflows);
-    })
-    .catch((e) => cb(e));
+async function list(cb) {
+  try {
+    const body = await getWorkflowList();
+    return cb(null, body);
+  }
+  catch (err) {
+    return cb(err);
+  }
 }
 
 /**
@@ -28,20 +42,25 @@ function list(event, cb) {
  * @param {callback} cb - aws lambda callback function
  * @returns {undefined} undefined
  */
-function get(event, cb) {
-  const name = _get(event.pathParameters, 'name');
+async function get(event, cb) {
+  const name = event.pathParameters.name;
+  try {
+    const body = await getWorkflowList();
 
-  const key = `${process.env.stackName}/workflows/list.json`;
-  getS3Object(process.env.bucket, key)
-    .then((file) => {
-      const workflows = JSON.parse(file.Body.toString());
+    const workflows = JSON.parse(body);
 
-      const matchingWorkflow = workflows.find((workflow) => workflow.name === name);
-      if (matchingWorkflow) return cb(null, matchingWorkflow);
+    const matchingWorkflow = workflows.find((workflow) => workflow.name === name);
+    if (matchingWorkflow) return cb(null, matchingWorkflow);
 
-      return cb({ message: `A record already exists for ${name}` });
-    })
-    .catch(cb);
+    const e = new Error('The specified workflow does not exist.');
+    return cb(e, null, 404);
+  }
+  catch (err) {
+    if (err.name === 'NoSuchKey') {
+      return cb(err, null, 404);
+    }
+    return cb(err, null, 500);
+  }
 }
 
 /**
@@ -57,7 +76,7 @@ function handler(event, context) {
       get(event, cb);
     }
     else {
-      list(event, cb);
+      list(cb);
     }
   });
 }

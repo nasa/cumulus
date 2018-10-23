@@ -99,14 +99,16 @@ describe('The Ingest Granule failure workflow', () => {
 
     beforeAll(async () => {
       const executionArn = workflowExecution.executionArn;
-      execution = await apiTestUtils.getExecution({
+      const executionResponse = await apiTestUtils.getExecution({
         prefix: config.stackName,
         arn: executionArn
       });
-      executionStatus = await apiTestUtils.getExecutionStatus({
+      execution = JSON.parse(executionResponse.body);
+      const executionStatusResponse = await apiTestUtils.getExecutionStatus({
         prefix: config.stackName,
         arn: executionArn
       });
+      executionStatus = JSON.parse(executionStatusResponse.body);
     });
 
     it('branches appropriately according to the CMA output', async () => {
@@ -163,10 +165,11 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     it('fails the granule with the error message', async () => {
-      const granule = await apiTestUtils.getGranule({
+      const granuleResponse = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
+      const granule = JSON.parse(granuleResponse.body);
 
       expect(granule.status).toBe('failed');
       expect(granule.error.Error).toBe(syncGranFailedDetail.error);
