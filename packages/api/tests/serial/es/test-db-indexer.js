@@ -110,10 +110,18 @@ test.before(async () => {
   fileModel = new models.FileClass();
   executionModel = new models.Execution();
 
-  await collectionModel.createTable();
-  await granuleModel.createTable();
-  await fileModel.createTable();
-  await executionModel.createTable();
+  await Promise.all([
+    collectionModel.createTable(),
+    executionModel.createTable(),
+    fileModel.createTable(),
+    granuleModel.createTable()
+  ]);
+
+  await Promise.all([
+    collectionModel.enableStream(),
+    executionModel.enableStream(),
+    granuleModel.enableStream()
+  ]);
 
   // bootstrap the esIndex
   esClient = await Search.es();
