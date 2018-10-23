@@ -4,18 +4,18 @@ const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const collectionsEndpoint = require('../../endpoints/collections');
+const models = require('../../../models');
+const bootstrap = require('../../../lambdas/bootstrap');
+const collectionsEndpoint = require('../../../endpoints/collections');
 const {
   fakeCollectionFactory,
   fakeUserFactory,
   testEndpoint
-} = require('../../lib/testUtils');
-const EsCollection = require('../../es/collections');
-const { Search } = require('../../es/search');
-const assertions = require('../../lib/assertions');
-const { RecordDoesNotExist } = require('../../lib/errors');
+} = require('../../../lib/testUtils');
+const EsCollection = require('../../../es/collections');
+const { Search } = require('../../../es/search');
+const assertions = require('../../../lib/assertions');
+const { RecordDoesNotExist } = require('../../../lib/errors');
 
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
