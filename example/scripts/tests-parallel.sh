@@ -1,13 +1,6 @@
 #!/bin/sh
 
-set -e
-
-DEPLOYMENT=lf
-export DEPLOYMENT
-
 set +e
-
-#cd ../example
 
 TESTS=$(find spec/parallel/ingestGranule -type f -name '*spec.js' -or -name '*Spec.js')
 
@@ -21,8 +14,6 @@ mkdir -p $testOutputDir
 result=$?
 
 echo tests exited $result
-
-#parallel jasmine ::: "spec/helloWorld/HelloWorldEcsSpec.js" "spec/helloWorld/HelloWorldSuccessSpec.js"
 
 for testFile in $(find $testOutputDir -type f); do
   cat $testFile

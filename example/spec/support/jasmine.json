@@ -2,7 +2,6 @@
   "spec_dir": "spec",
   "spec_files": [
     "*/*[sS]pec.js",
-    "parallel/*/*[sS]pec.js",
     "setup/CleansUpTestResources.js"
   ],
   "helpers": [
