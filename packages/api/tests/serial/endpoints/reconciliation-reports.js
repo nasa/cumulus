@@ -3,13 +3,13 @@
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const reconciliationReportEndpoint = require('../../endpoints/reconciliation-reports');
+const reconciliationReportEndpoint = require('../../../endpoints/reconciliation-reports');
 const {
   fakeUserFactory,
   testEndpoint
-} = require('../../lib/testUtils');
-const assertions = require('../../lib/assertions');
-const models = require('../../models');
+} = require('../../../lib/testUtils');
+const assertions = require('../../../lib/assertions');
+const models = require('../../../models');
 
 process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';

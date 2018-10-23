@@ -9,17 +9,17 @@ const {
   util: { noop }
 } = require('@cumulus/common');
 
-const models = require('../../models');
-const { Search } = require('../../es/search');
-const bootstrap = require('../../lambdas/bootstrap');
-const dbIndexer = require('../../lambdas/db-indexer');
+const models = require('../../../models');
+const { Search } = require('../../../es/search');
+const bootstrap = require('../../../lambdas/bootstrap');
+const dbIndexer = require('../../../lambdas/db-indexer');
 const {
   fakeCollectionFactory,
   fakeGranuleFactory,
   fakeExecutionFactory,
   fakeFilesFactory,
   deleteAliases
-} = require('../../lib/testUtils');
+} = require('../../../lib/testUtils');
 
 let esClient;
 const seq = new Set(); // to keep track of processed records in the stream
@@ -110,10 +110,18 @@ test.before(async () => {
   fileModel = new models.FileClass();
   executionModel = new models.Execution();
 
-  await collectionModel.createTable();
-  await granuleModel.createTable();
-  await fileModel.createTable();
-  await executionModel.createTable();
+  await Promise.all([
+    collectionModel.createTable(),
+    executionModel.createTable(),
+    fileModel.createTable(),
+    granuleModel.createTable()
+  ]);
+
+  await Promise.all([
+    collectionModel.enableStream(),
+    executionModel.enableStream(),
+    granuleModel.enableStream()
+  ]);
 
   // bootstrap the esIndex
   esClient = await Search.es();
