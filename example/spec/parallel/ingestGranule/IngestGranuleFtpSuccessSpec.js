@@ -61,10 +61,11 @@ describe('The FTP Ingest Granules workflow', () => {
   });
 
   it('makes the granule available through the Cumulus API', async () => {
-    const granule = await apiTestUtils.getGranule({
+    const granuleResponse = await apiTestUtils.getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
+    const granule = JSON.parse(granuleResponse.body);
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     // clean up granule
