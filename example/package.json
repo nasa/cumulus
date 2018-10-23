@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "jasmine",
+    "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
     "deploy": "./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
     "deploy-iam": "./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE"
   },

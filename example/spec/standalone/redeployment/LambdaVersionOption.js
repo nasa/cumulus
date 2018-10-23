@@ -9,9 +9,10 @@ const { getWorkflowArn } = require('@cumulus/integration-tests');
 const {
   loadConfig,
   redeploy
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const config = loadConfig();
+
 
 describe('When the useWorkflowLambdaVersions option is set to false the deployment', () => {
   let workflowDefinitions;
