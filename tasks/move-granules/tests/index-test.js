@@ -131,33 +131,71 @@ test.serial('should overwrite files', async (t) => {
     name: filename
   }];
 
+  const uploadParams = {
+    Bucket: t.context.stagingBucket,
+    Key: sourceKey,
+    Body: 'Something'
+  };
+
+  console.log(`start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
     Body: 'Something'
   });
 
+  console.log(`start move granules. params: ${JSON.stringify(newPayload)}`);
+
   let output = await moveGranules(newPayload);
+
+  console.log('move granules complete');
+
   await validateOutput(t, output);
+
+  console.log('head object');
+
   const existingFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
+  console.log('headobject complete');
+
   // re-stage source jpg file with different content
   const content = randomString();
+
+  const uploadParams2 = {
+    Bucket: t.context.stagingBucket,
+    Key: sourceKey,
+    Body: content
+  };
+
+  console.log(`start s3 upload. params: ${JSON.stringify(uploadParams2)}`);
+
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
     Body: content
   });
 
+  console.log(`start move granules. params: ${JSON.stringify(newPayload)}`);
+
   output = await moveGranules(newPayload);
+
+  console.log('move granules complete');
+
   const updatedFile = await headObject(
     t.context.publicBucket,
     destKey
   );
+
+  console.log(`start list. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
+
   const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
+
+  console.log('list objects complete');
+
   t.is(objects.Contents.length, 1);
 
   const item = objects.Contents[0];
