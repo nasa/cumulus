@@ -12,12 +12,12 @@ const {
   loadConfig,
   protectFile,
   redeploy
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const {
   removeWorkflow,
   removeTaskFromWorkflow
-} = require('../helpers/workflowUtils');
+} = require('../../helpers/workflowUtils');
 
 const workflowsYmlFile = './workflows.yml';
 const config = loadConfig();
