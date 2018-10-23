@@ -36,14 +36,14 @@ const {
   createTestDataPath,
   createTestSuffix,
   getFilesMetadata
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
-} = require('../helpers/granuleUtils');
+} = require('../../helpers/granuleUtils');
 
-const { getConfigObject } = require('../helpers/configUtils');
+const { getConfigObject } = require('../../helpers/configUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -54,12 +54,12 @@ const workflowConfigFile = './workflows/sips.yml';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const templatedSyncGranuleFilename = templateFile({
-  inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
+  inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
   config: config[workflowName].SyncGranuleOutput
 });
 
 const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/ingestGranule/IngestGranule.output.payload.template.json',
+  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
   config: config[workflowName].IngestGranuleOutput
 });
 
@@ -70,9 +70,9 @@ const s3data = [
 ];
 
 const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START')
-  || logEntry.message.includes('END')
-  || logEntry.message.includes('REPORT');
+  logEntry.message.includes('START') ||
+  logEntry.message.includes('END') ||
+  logEntry.message.includes('REPORT');
 
 const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
@@ -80,7 +80,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
-  const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
@@ -569,7 +569,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecution.executionArn.split(':');
-        const executionName = executionARNTokens[executionARNTokens.length - 1];
+        executionName = executionARNTokens[executionARNTokens.length - 1];
         const logs = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: executionName });
         expect(logs.meta.count).not.toEqual(0);
         logs.results.forEach((log) => {
