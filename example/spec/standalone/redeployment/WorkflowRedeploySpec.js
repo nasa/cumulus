@@ -70,10 +70,11 @@ describe('When a workflow', () => {
       let executionStatus;
 
       beforeAll(async () => {
-        executionStatus = await apiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await apiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: workflowExecutionArn
         });
+        executionStatus = JSON.parse(executionStatusResponse.body);
       });
 
       it('the execution is returned', () => {
