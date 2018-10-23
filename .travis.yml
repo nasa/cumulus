@@ -8,6 +8,8 @@ stages:
   - name: unit test
   - name: deploy integration test stack
   - name: integration tests
+  - name: redeployment integration tests
+    if: branch = master OR commit_message =~ \[run-redeploy-tests\] OR type != pull_request AND tag =~ ^v\d+
   - name: cleanup integration tests
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
@@ -21,14 +23,13 @@ jobs:
       install: true
       script: ./travis-ci/build-cache.sh
 
-
     - name: "eslint"
       stage: unit test
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-      script: ./node_modules/.bin/eslint packages/api packages/cmrjs
+      script: ./node_modules/.bin/eslint packages/api packages/cmrjs packages/common
     - name: "Unit tests except API"
       stage: unit test
       services:
@@ -87,6 +88,16 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+
+    - name: "Run redeployment integration tests"
+      stage: redeployment integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Cleanup integration tests"
