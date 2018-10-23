@@ -14,7 +14,7 @@ function determineIntegrationTestStackName(cb) {
 
   const stacks = {
     'Aimee Barciauskas': 'aimee-test',
-    scisco: 'aj',
+    Alireza: 'aj',
     'Jenny Liu': 'jl',
     jennyhliu: 'jl',
     kkelly51: 'kk-uat-deployment',
