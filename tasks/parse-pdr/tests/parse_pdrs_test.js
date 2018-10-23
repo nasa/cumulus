@@ -291,24 +291,16 @@ test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => 
   await validateInput(t, t.context.payload.input);
   await validateConfig(t, t.context.payload.config);
 
-  let output;
-  try {
-    output = await parsePdr(t.context.payload);
+  const output = await parsePdr(t.context.payload);
 
-    await validateOutput(t, output);
+  await validateOutput(t, output);
 
-    t.deepEqual(output.pdr, t.context.payload.input.pdr);
-    t.is(output.granules.length, 2);
-    t.is(output.granulesCount, 2);
-    t.is(output.filesCount, 2);
-    t.is(output.totalSize, 3952643);
-  }
-  catch (err) {
-    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
-      t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
-  }
+  t.deepEqual(output.pdr, t.context.payload.input.pdr);
+  t.is(output.granules.length, 2);
+  t.is(output.granulesCount, 2);
+  t.is(output.filesCount, 2);
+  t.is(output.totalSize, 3952643);
+
 });
 
 test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => {
