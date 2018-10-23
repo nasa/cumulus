@@ -12,6 +12,7 @@ const {
 const { Collection, Execution } = require('@cumulus/api/models');
 const {
   aws: {
+    getS3ObjectTagging,
     s3,
     s3ObjectExists,
     parseS3Uri
@@ -132,7 +133,10 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
       key2 = path.join(files[1].fileStagingDir, files[1].name);
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: key1 });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: key2 });
-      syncedTaggings = await Promise.all(files.map((file) => s3().getObjectTagging(parseS3Uri(file.filename)).promise()));
+      syncedTaggings = await Promise.all(files.map((file) => {
+        const { Bucket, Key } = parseS3Uri(file.filename);
+        return getS3ObjectTagging(Bucket, Key);
+      }));
     });
 
     it('receives payload with file objects updated to include file staging location', () => {

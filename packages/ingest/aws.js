@@ -153,7 +153,7 @@ class Events {
 class S3 {
   static parseS3Uri(uri) {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.parseUri is deprecated.  Use @cumulus/common/aws/parseS3Uri instead.');
+    log.warn('@cumulus/ingest/aws/S3.parseUri is deprecated.  Use @cumulus/common/aws.parseS3Uri instead.');
     const parsed = url.parse(uri);
     if (parsed.protocol !== 's3:') {
       throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
@@ -168,7 +168,7 @@ class S3 {
   static async copy(source, dstBucket, dstKey, isPublic = false) {
     const s3 = new AWS.S3();
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.copy is deprecated.  Use @cumulus/common/aws/s3().copyObject().promise() instead.');
+    log.warn('@cumulus/ingest/aws/S3.copy is deprecated.  Use @cumulus/common/aws.copyS3Object instead.');
 
     const params = {
       Bucket: dstBucket,
@@ -183,7 +183,7 @@ class S3 {
   static async list(bucket, prefix) {
     const s3 = new AWS.S3();
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.list is deprecated.  Use @cumulus/common/aws/s3().listObjectsV2().promise() instead.');
+    log.warn('@cumulus/ingest/aws/S3.list is deprecated.  Use @cumulus/common/aws.listS3ObjectsV2 instead.');
 
     const params = {
       Bucket: bucket,
@@ -195,7 +195,7 @@ class S3 {
 
   static async delete(bucket, key) {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.delete is deprecated.  Use @cumulus/common/aws/s3().deleteObject().promise() instead.');
+    log.warn('@cumulus/ingest/aws/S3.delete is deprecated.  Use @cumulus/common/aws.deleteS3Object instead.');
     const s3 = new AWS.S3();
 
     const params = {
@@ -208,7 +208,7 @@ class S3 {
 
   static async put(bucket, key, body, acl = 'private', meta = null) {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.put is deprecated.  Use @cumulus/common/aws/s3().putObject().promise() instead.');
+    log.warn('@cumulus/ingest/aws/S3.put is deprecated.  Use @cumulus/common/aws.putS3Object instead.');
     const params = {
       Bucket: bucket,
       Key: key,
@@ -225,7 +225,7 @@ class S3 {
 
   static async get(bucket, key) {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.get is deprecated.  Use @cumulus/common/aws/getS3Object() instead.');
+    log.warn('@cumulus/ingest/aws/S3.get is deprecated.  Use @cumulus/common/aws.getS3Object instead.');
     const params = {
       Bucket: bucket,
       Key: key
@@ -236,7 +236,7 @@ class S3 {
 
   static async upload(bucket, key, body, acl = 'private') {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.upload is deprecated.  Use @cumulus/common/aws/s3().upload().promise() instead.');
+    log.warn('@cumulus/ingest/aws/S3.upload is deprecated.  Use @cumulus/common/aws.promiseS3Upload instead.');
     const s3 = new AWS.S3();
 
     const params = {
