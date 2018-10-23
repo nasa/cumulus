@@ -8,7 +8,7 @@
     "docs-serve": "npm run docs-build && (cd docs && gitbook serve)",
     "docs-start": "npm run docs-build && (cd docs && gitbook serve)",
     "e2e": "ava tests/*.js --serial",
-    "lint": "eslint packages/api --ext .js",
+    "lint": "eslint packages/api packages/cmrjs packages/common",
     "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap --npm-client=npm --hoist",
     "ybootstrap": "lerna bootstrap",
