@@ -4,9 +4,8 @@
   "granulesCount": 1,
   "pdr": {
     "path": "replace-me-path",
-    "size": 596,
-    "name": "MOD09GQ_1granule_v3.PDR",
-    "time": 1520873050000
+    "size": 708,
+    "name": "MOD09GQ_1granule_v3.PDR"
   },
   "granules": [
     {
