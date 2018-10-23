@@ -1,11 +1,12 @@
 const { Execution } = require('@cumulus/api/models');
-const { buildAndExecuteWorkflow, LambdaStep } = require('@cumulus/integration-tests');
-const { loadConfig } = require('../helpers/testUtils');
+const { buildAndExecuteWorkflow, ActivityStep } = require('@cumulus/integration-tests');
+const { loadConfig } = require('../../helpers/testUtils');
 
 const awsConfig = loadConfig();
-const lambdaStep = new LambdaStep();
+const activityStep = new ActivityStep();
 
-describe('The Hello World workflow', () => {
+
+describe('The Hello World workflow using ECS', () => {
   let workflowExecution = null;
   process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
@@ -14,7 +15,7 @@ describe('The Hello World workflow', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
-      'HelloWorldWorkflow'
+      'EcsHelloWorldWorkflow'
     );
   });
 
@@ -22,15 +23,18 @@ describe('The Hello World workflow', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
-  describe('the HelloWorld Lambda', () => {
-    let lambdaOutput = null;
+  describe('the HelloWorld ECS', () => {
+    let activityOutput = null;
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'HelloWorld');
+      activityOutput = await activityStep.getStepOutput(
+        workflowExecution.executionArn,
+        'EcsTaskHelloWorld'
+      );
     });
 
     it('output is Hello World', () => {
-      expect(lambdaOutput.payload).toEqual({ hello: 'Hello World' });
+      expect(activityOutput.payload).toEqual({ hello: 'Hello World' });
     });
   });
 

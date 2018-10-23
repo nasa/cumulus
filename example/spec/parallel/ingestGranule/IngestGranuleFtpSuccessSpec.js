@@ -11,14 +11,14 @@ const {
   cleanupCollections,
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
-const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../helpers/testUtils');
+const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
 
 describe('The FTP Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
   const testSuffix = createTestSuffix(testId);
-  const inputPayloadFilename = './spec/ingestGranule/IngestGranuleFtp.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranuleFtp.input.payload.json';
   const providersDir = './data/providers/ftp/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
