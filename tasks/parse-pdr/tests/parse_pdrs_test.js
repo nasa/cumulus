@@ -403,22 +403,13 @@ test.serial('Parse a PDR with a granuleIdFilter in the config', async (t) => {
   await validateInput(t, t.context.payload.input);
   await validateConfig(t, t.context.payload.config);
 
-  let output;
-  try {
-    output = await parsePdr(t.context.payload);
+  const output = await parsePdr(t.context.payload);
 
-    await validateOutput(t, output);
+  await validateOutput(t, output);
 
-    t.deepEqual(output.pdr, t.context.payload.input.pdr);
-    t.is(output.granules.length, 1);
-    t.is(output.granulesCount, 1);
-    t.is(output.filesCount, 1);
-    t.is(output.totalSize, 1503297);
-  }
-  catch (err) {
-    if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
-      t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
-  }
+  t.deepEqual(output.pdr, t.context.payload.input.pdr);
+  t.is(output.granules.length, 1);
+  t.is(output.granulesCount, 1);
+  t.is(output.filesCount, 1);
+  t.is(output.totalSize, 1503297);
 });
