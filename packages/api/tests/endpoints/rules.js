@@ -282,8 +282,10 @@ test('403 error when calling the API endpoint to delete an existing rule without
   };
 
   await testEndpoint(rulesEndpoint, postEvent, (response) => {
-    const { message } = JSON.parse(response.body);
+    const { message, record } = JSON.parse(response.body);
     t.is(message, 'Record saved');
+    newRule.createdAt = record.createdAt;
+    newRule.updatedAt = record.updatedAt;
   });
 
   const deleteEvent = {
@@ -308,8 +310,6 @@ test('403 error when calling the API endpoint to delete an existing rule without
 
   return testEndpoint(rulesEndpoint, getEvent, (response) => {
     const record = JSON.parse(response.body);
-    newRule.createdAt = record.createdAt;
-    newRule.updatedAt = record.updatedAt;
     t.deepEqual(newRule, record);
   });
 });
