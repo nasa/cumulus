@@ -62,7 +62,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function getGranule({ prefix, granuleId }) {
-  const response = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
@@ -74,8 +74,6 @@ async function getGranule({ prefix, granuleId }) {
       }
     }
   });
-
-  return response;
 }
 
 /**
@@ -130,7 +128,7 @@ function postBulkDelete({ prefix, granuleIds }) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function reingestGranule({ prefix, granuleId }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
@@ -143,8 +141,6 @@ async function reingestGranule({ prefix, granuleId }) {
       body: JSON.stringify({ action: 'reingest' })
     }
   });
-
-  return payload;
 }
 
 /**
@@ -188,7 +184,7 @@ async function removeFromCMR({ prefix, granuleId }) {
  * @returns {Promise<Object>} - the granule fetched by the API
  */
 async function applyWorkflow({ prefix, granuleId, workflow }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
@@ -201,8 +197,6 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
       body: JSON.stringify({ action: 'applyWorkflow', workflow })
     }
   });
-
-  return payload;
 }
 
 /**
@@ -214,7 +208,7 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
 async function deleteGranule({ prefix, granuleId }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiGranulesDefault',
     payload: {
@@ -226,8 +220,6 @@ async function deleteGranule({ prefix, granuleId }) {
       }
     }
   });
-
-  return payload;
 }
 
 /**
@@ -239,7 +231,7 @@ async function deleteGranule({ prefix, granuleId }) {
  * @returns {Promise<Object>} - the delete confirmation from the API
  */
 async function deletePdr({ prefix, pdr }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiPdrsDefault',
     payload: {
@@ -251,8 +243,6 @@ async function deletePdr({ prefix, pdr }) {
       }
     }
   });
-
-  return payload;
 }
 
 /**
@@ -264,7 +254,7 @@ async function deletePdr({ prefix, pdr }) {
  * @returns {Promise<Object>} - the execution fetched by the API
  */
 async function getExecution({ prefix, arn }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiExecutionsDefault',
     payload: {
@@ -276,8 +266,6 @@ async function getExecution({ prefix, arn }) {
       }
     }
   });
-
-  return payload;
 }
 
 /**
@@ -288,7 +276,7 @@ async function getExecution({ prefix, arn }) {
  * @returns {Promise<Object>} - the logs fetched by the API
  */
 async function getLogs({ prefix }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiLogsDefault',
     payload: {
@@ -298,8 +286,6 @@ async function getLogs({ prefix }) {
       pathParameters: {}
     }
   });
-
-  return payload;
 }
 
 /**
@@ -311,7 +297,7 @@ async function getLogs({ prefix }) {
  * @returns {Promise<Object>} - the logs fetched by the API
  */
 async function getExecutionLogs({ prefix, executionName }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiLogsDefault',
     payload: {
@@ -323,8 +309,6 @@ async function getExecutionLogs({ prefix, executionName }) {
       }
     }
   });
-
-  return payload;
 }
 
 /**
@@ -336,7 +320,7 @@ async function getExecutionLogs({ prefix, executionName }) {
  * @returns {Promise<Object>} - the execution status fetched by the API
  */
 async function getExecutionStatus({ prefix, arn }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiExecutionStatusDefault',
     payload: {
@@ -348,8 +332,6 @@ async function getExecutionStatus({ prefix, arn }) {
       }
     }
   });
-
-  return payload;
 }
 
 /**
@@ -402,7 +384,7 @@ async function addProviderApi({ prefix, provider }) {
  * @returns {Promise<Object>} - the list of providers fetched by the API
  */
 async function getProviders({ prefix }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiProvidersDefault',
     payload: {
@@ -411,8 +393,6 @@ async function getProviders({ prefix }) {
       path: '/providers'
     }
   });
-
-  return payload;
 }
 
 /**
@@ -424,7 +404,7 @@ async function getProviders({ prefix }) {
  * @returns {Promise<Object>} - the provider fetched by the API
  */
 async function getProvider({ prefix, providerId }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiProvidersDefault',
     payload: {
@@ -436,8 +416,6 @@ async function getProvider({ prefix, providerId }) {
       }
     }
   });
-
-  return payload;
 }
 
 /**
@@ -448,7 +426,7 @@ async function getProvider({ prefix, providerId }) {
  * @returns {Promise<Object>} - the list of collections fetched by the API
  */
 async function getCollections({ prefix }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiCollectionsDefault',
     payload: {
@@ -457,8 +435,6 @@ async function getCollections({ prefix }) {
       path: '/collections'
     }
   });
-
-  return payload;
 }
 
 /**
@@ -471,7 +447,7 @@ async function getCollections({ prefix }) {
  * @returns {Promise<Object>} - the collection fetched by the API
  */
 async function getCollection({ prefix, collectionName, collectionVersion }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiCollectionsDefault',
     payload: {
@@ -484,8 +460,6 @@ async function getCollection({ prefix, collectionName, collectionVersion }) {
       }
     }
   });
-
-  return payload;
 }
 
 /**
@@ -496,7 +470,7 @@ async function getCollection({ prefix, collectionName, collectionVersion }) {
  * @returns {Promise<Object>} - the list of workflows fetched by the API
  */
 async function getWorkflows({ prefix }) {
-  const payload = await callCumulusApi({
+  return callCumulusApi({
     prefix: prefix,
     functionName: 'ApiWorkflowsDefault',
     payload: {
@@ -505,8 +479,29 @@ async function getWorkflows({ prefix }) {
       path: '/workflows'
     }
   });
+}
 
-  return payload;
+/**
+ * Fetch a  workflow from the Cumulus API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.workflowName - name of the workflow to be fetched
+ * @returns {Promise<Object>} - the workflow fetched by the API
+ */
+async function getWorkflow({ prefix, workflowName }) {
+  return callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiWorkflowsDefault',
+    payload: {
+      httpMethod: 'GET',
+      resource: '/workflows/name',
+      path: `/workflows/${workflowName}`,
+      pathParameters: {
+        name: workflowName
+      }
+    }
+  });
 }
 
 /**
@@ -577,6 +572,7 @@ module.exports = {
   getProviders,
   getCollections,
   getWorkflows,
+  getWorkflow,
   getProvider,
   getCollection,
   getGranule,
