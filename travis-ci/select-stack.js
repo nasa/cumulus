@@ -35,7 +35,7 @@ function determineIntegrationTestStackName(cb) {
   return git('.').log({ '--max-count': '1' }, (e, r) => {
     const author = r.latest.author_name;
 
-    console.error('Selecting build stack based on author name:', author);
+    console.error(`Selecting build stack based on author name: "${author}"`);
 
     if (author && stacks[author]) {
       return cb(stacks[author]);
