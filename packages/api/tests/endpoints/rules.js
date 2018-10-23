@@ -246,7 +246,7 @@ test('GET gets a rule', (t) => {
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
-  const newRule = Object.assign(cloneDeep(testRule), { name: 'make_waffles' });
+  const newRule = Object.assign({}, testRule, { name: 'pop_culture_reference' });
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newRule),
@@ -261,7 +261,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
   const deleteEvent = {
     httpMethod: 'DELETE',
     pathParameters: {
-      name: testRule.name
+      name: newRule.name
     },
     headers: authHeaders
   };
@@ -274,7 +274,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without operator credentials', async (t) => {
-  const newRule = Object.assign(cloneDeep(testRule), { name: 'make_waffles' });
+  const newRule = Object.assign({}, testRule, { name: 'side_step_left' });
   const postEvent = {
     httpMethod: 'POST',
     body: JSON.stringify(newRule),
@@ -350,6 +350,7 @@ test('POST returns a record exists when one exists', (t) => {
 
 test('PUT updates a rule', (t) => {
   const newRule = Object.assign({}, testRule, { state: 'ENABLED' });
+  console.log(`NewRule: ${JSON.stringify(newRule)}`);
 
   const updateEvent = {
     body: JSON.stringify({ state: 'ENABLED' }),
@@ -362,6 +363,8 @@ test('PUT updates a rule', (t) => {
 
   return testEndpoint(rulesEndpoint, updateEvent, (response) => {
     const record = JSON.parse(response.body);
+    console.log(`NewRule: ${JSON.stringify(newRule)}`);
+    console.log(`Response ${JSON.stringify(response)}`);
     newRule.createdAt = record.createdAt;
     newRule.updatedAt = record.updatedAt;
 
