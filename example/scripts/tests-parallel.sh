@@ -4,7 +4,10 @@ set +e
 
 echo Running parallel integration tests
 
-TESTS=$(find spec/parallel/ingestGranule -type f -name '*spec.js' -or -name '*Spec.js')
+(while true; do sleep 60; echo .; done) &
+DOT_PID="$!"
+
+TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js')
 
 testOutputDir=scripts/test_output
 
@@ -15,7 +18,7 @@ mkdir -p $testOutputDir
 
 result=$?
 
-echo tests exited $result
+echo parallel tests exited $result
 
 for testFile in $(find $testOutputDir -type f); do
   cat $testFile
@@ -23,5 +26,5 @@ done
 
 rm -rf $testOutputDir
 
-echo $result
+kill "$DOT_PID"
 exit $result
