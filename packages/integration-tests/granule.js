@@ -8,7 +8,7 @@ const { getGranule } = require('./api/api');
  *
  * @param {*} prefix - the stack name
  * @param {*} granuleId - the Cumulus granule id
- * @returns {undefinted} - undefined
+ * @returns {Object} - response from getGranule
  */
 async function getGranuleResponse(prefix, granuleId) {
   const granuleResponse = await getGranule({ prefix, granuleId });
