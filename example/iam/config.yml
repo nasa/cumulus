@@ -96,6 +96,27 @@ lf:
       name: lf-protected-2
       type: protected
 
+lf-int-test:
+  prefix: lf-int-test
+  stackName: lf-int-test-iam
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
 jl:
   prefix: jl-test-integration
   buckets:
@@ -212,3 +233,6 @@ mboyd-test:
 mboyd-int:
   prefix: mboyd-int
   stackName: mboyd-int-iam
+
+pq:
+  prefix: pq

@@ -31,7 +31,7 @@ test.before(async () => {
   process.env.bucket = testBucketName;
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
-  const workflowsListKey = `${process.env.stackName}/workflows/list.json`; // eslint-disable-line max-len
+  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
   await promiseS3Upload({
     Bucket: testBucketName,
     Key: workflowsListKey,
@@ -133,10 +133,9 @@ test('GET an existing workflow with an authorized user returns a specific workfl
 
   return testEndpoint(workflowsEndpoint, request, (response) => {
     t.is(response.statusCode, 200);
-    const result = JSON.parse(response.body);
 
+    const result = JSON.parse(response.body);
     t.deepEqual(result, workflowList[0]);
-    t.is(result.template, 's3://bucket/cumulus/workflows/HelloWorldWorkflow.json');
   });
 });
 

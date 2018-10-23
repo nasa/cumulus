@@ -78,15 +78,11 @@ const sampleGranule = {
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
 async function conceptExists(cmrLink) {
-  const response = await got.get(cmrLink);
+  const response = await got.get(cmrLink, { json: true });
 
-  if (response.statusCode !== 200) {
-    return false;
-  }
+  if (response.statusCode !== 200) return false;
 
-  const body = JSON.parse(response.body);
-
-  return body.feed.entry.length > 0;
+  return response.body.feed.entry.length > 0;
 }
 
 /**

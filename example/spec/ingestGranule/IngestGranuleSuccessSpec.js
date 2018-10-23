@@ -204,7 +204,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     const providerResultResponse = await apiTestUtils.getProvider({ prefix: config.stackName, providerId: provider.id });
     const providerResult = JSON.parse(providerResultResponse.body);
-    expect(providerResult).not.toBeNull;
+    expect(providerResult).not.toBeNull();
   });
 
   it('can retrieve the specific collection that was created', async () => {
@@ -216,7 +216,7 @@ describe('The S3 Ingest Granules workflow', () => {
       { prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version }
     );
     const collectionResult = JSON.parse(collectionResponse.body);
-    expect(collectionResult).not.toBeNull;
+    expect(collectionResult).not.toBeNull();
   });
 
   it('makes the granule available through the Cumulus API', async () => {
@@ -387,6 +387,11 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('The Cumulus API', () => {
+    let workflowConfig;
+    beforeAll(() => {
+      workflowConfig = getConfigObject(workflowConfigFile, workflowName);
+    });
+
     describe('granule endpoint', () => {
       let granule;
       let cmrLink;
@@ -409,11 +414,6 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('allows reingest and executes with success status', async () => {
-        const firstGranuleResponse = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
-        granule = JSON.parse(firstGranuleResponse.body);
         const oldUpdatedAt = granule.updatedAt;
         const oldExecution = granule.execution;
 
@@ -422,15 +422,15 @@ describe('The S3 Ingest Granules workflow', () => {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
-        const response = JSON.parse(reingestGranuleResponse.body);
-        expect(response.status).toEqual('SUCCESS');
+        const reingestResponse = JSON.parse(reingestGranuleResponse.body);
+        expect(reingestResponse.status).toEqual('SUCCESS');
 
         const secondGranuleResponse = await apiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
         const secondGranule = JSON.parse(secondGranuleResponse.body);
-        expect(secondGranule.updatedAt).not.toEqual(oldUpdatedAt);
+        expect(secondGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
 
         // Await reingest completion
         await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
@@ -528,7 +528,6 @@ describe('The S3 Ingest Granules workflow', () => {
         });
         executionStatus = JSON.parse(executionStatusResponse.body);
 
-        const workflowConfig = getConfigObject(workflowConfigFile, workflowName);
         allStates = Object.keys(workflowConfig.States);
       });
 
@@ -601,13 +600,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecution.executionArn.split(':');
-        const executionName = executionARNTokens[executionARNTokens.length - 1];
-        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: executionName });
+        const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
+        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
         const logs = JSON.parse(logsResponse.body);
         expect(logs.meta.count).not.toEqual(0);
         logs.results.forEach((log) => {
           expect(log.sender).not.toBe(undefined);
-          expect(log.executions).toEqual(executionName);
+          expect(log.executions).toEqual(logsExecutionName);
         });
       });
     });
@@ -619,7 +618,19 @@ describe('The S3 Ingest Granules workflow', () => {
         const workflows = JSON.parse(workflowsResponse.body);
         expect(workflows).not.toBe(undefined);
         expect(workflows.length).toBeGreaterThan(0);
-      })
+      });
+
+      it('returns the expected workflow', async () => {
+        const workflowResponse = await apiTestUtils.getWorkflow({
+          prefix: config.stackName,
+          workflowName: workflowName
+        });
+        const foundWorkflow = JSON.parse(workflowResponse.body);
+        const foundKeys = Object.keys(foundWorkflow.definition.States);
+        const configKeys = Object.keys(workflowConfig.States);
+        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
+        expect(foundKeys).toEqual(configKeys);
+      });
     });
   });
 });

@@ -7,7 +7,7 @@ const log = require('./log');
  * Builds a YAML schema for resolving GitcResource directives
  *
  * @param {function} resourceResolver - A function to use to resolve GitcResource directives
- * @returns - The schema
+ * @returns {*} The schema
  */
 const buildSchema = (resourceResolver) => {
   const resourceType = new yaml.Type('!GitcResource', {
@@ -27,9 +27,8 @@ const buildSchema = (resourceResolver) => {
  */
 const resourceToArn = (resource) => {
   const physicalId = resource.PhysicalResourceId;
-  if (physicalId.indexOf('arn:') === 0) {
-    return physicalId;
-  }
+  if (physicalId.startsWith('arn:')) return physicalId;
+
   const typesToArnFns = {
     'AWS::Lambda::Function': (cfResource, region, account) =>
       `arn:aws:lambda:${region}:${account}:function:${cfResource.PhysicalResourceId}`,
@@ -64,7 +63,7 @@ exports.resolveResource = (cfResourcesById, prefix) =>
     const [name, fn] = key.split('.');
     const resource = cfResourcesById[name] || cfResourcesById[prefix + name];
     if (!resource) throw new Error(`Resource not found: ${key}`);
-    if (fn && ['Arn'].indexOf(fn) === -1) throw new Error(`Function not supported: ${key}`);
+    if (fn && !['Arn'].includes(fn)) throw new Error(`Function not supported: ${key}`);
     const result = fn === 'Arn' ? resourceToArn(resource) : resource.PhysicalResourceId;
     log.info(`Resolved Resource: ${key} -> ${result}`);
     return result;

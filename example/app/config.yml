@@ -233,6 +233,27 @@ lf:
       name: lf-protected-2
       type: protected
 
+lf-int-test:
+  stackName: lf-int-test
+  stackNameNoDash: lfIntTest
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
 kk-uat-deployment:
   stackName: kk-test-uat
   stackNameNoDash: KkTestUat
@@ -417,3 +438,7 @@ mboyd-test:
 mboyd-int:
   stackName: mboyd-int
   stackNameNoDash: mboydInt
+
+pq:
+  stackName: pq
+  stackNameNoDash: pq
