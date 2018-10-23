@@ -7,7 +7,7 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "jasmine",
+    "test": "jasmine && npm run parallel-tests",
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
     "all-tests": "npm run parallel-tests && jasmine && npm run redeploy-test",

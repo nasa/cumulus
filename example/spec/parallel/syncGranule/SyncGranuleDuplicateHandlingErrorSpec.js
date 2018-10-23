@@ -53,7 +53,6 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   const c = new Collection();
 
   beforeAll(async () => {
-    try {
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
@@ -81,8 +80,6 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
       destFileDir,
       granuleFileName
     );
-    }
-    catch(e) { console.log(e); }
   });
 
   afterAll(async () => {
