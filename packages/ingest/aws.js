@@ -225,7 +225,7 @@ class S3 {
 
   static async get(bucket, key) {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.get is deprecated.  Use @cumulus/common/aws/s3().getObject().promise() instead.');
+    log.warn('@cumulus/ingest/aws/S3.get is deprecated.  Use @cumulus/common/aws/getS3Object() instead.');
     const params = {
       Bucket: bucket,
       Key: key
@@ -260,7 +260,7 @@ class S3 {
 
   static async fileExists(bucket, key) {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.fileExists is deprecated.  Use @cumulus/common/aws/fileExists instead.');
+    log.warn('@cumulus/ingest/aws/S3.fileExists is deprecated.  Use @cumulus/common/aws/fileExists() instead.');
     const s3 = new AWS.S3();
     try {
       const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();

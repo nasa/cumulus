@@ -3,7 +3,7 @@
 const get = require('lodash.get');
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
-const { s3, parseS3Uri } = require('@cumulus/common/aws');
+const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
 const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
@@ -24,7 +24,7 @@ function schedule(event, context, cb) {
   let message;
 
   const parsed = parseS3Uri(template);
-  s3().getObject({ Bucket: parsed.Bucket, Key: parsed.Key }).promise()
+  getS3Object(parsed.Bucket, parsed.Key)
     .then((data) => {
       message = JSON.parse(data.Body);
       message.meta.provider = {};
