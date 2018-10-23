@@ -114,7 +114,7 @@
     "eslint-comments/no-unused-disable": "warn",
 
     "lodash/import-scope": ["error", "method-package"],
-    "lodash/prefer-constant": ["warn", false],
+    "lodash/prefer-constant": "off",
     "lodash/prefer-lodash-method": "off",
 
     "unicorn/filename-case": "off",

@@ -1,35 +1,34 @@
 'use strict';
 
 const aws = require('@cumulus/common/aws');
-const handle = require('../lib/response').handle;
+const { handle } = require('../lib/response');
 
 /**
  * Get S3 object
  *
- * @returns {undefined} undefined
+ * @returns {Object} object fetched from S3 bucket
  */
 async function getWorkflowList() {
   const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
   try {
     const { Body } = await aws.getS3Object(process.env.bucket, workflowsListKey);
-    return Body;
+    return Body.toString();
   }
   catch (err) {
-    return err;
+    throw err;
   }
 }
 
 /**
  * List all providers.
  *
- * @param {Object} event - aws lambda event object.
  * @param {callback} cb - aws lambda callback function
  * @returns {undefined} undefined
  */
-async function list(event, cb) {
+async function list(cb) {
   try {
     const body = await getWorkflowList();
-    return cb(null, body.toString());
+    return cb(null, body);
   }
   catch (err) {
     return cb(err);
@@ -48,9 +47,9 @@ async function get(event, cb) {
   try {
     const body = await getWorkflowList();
 
-    const jsonResponse = JSON.parse(body);
+    const workflows = JSON.parse(body);
 
-    const matchingWorkflow = jsonResponse.find((workflow) => workflow.name === name);
+    const matchingWorkflow = workflows.find((workflow) => workflow.name === name);
     if (matchingWorkflow) return cb(null, matchingWorkflow);
 
     const e = new Error('The specified workflow does not exist.');
@@ -77,7 +76,7 @@ function handler(event, context) {
       get(event, cb);
     }
     else {
-      list(event, cb);
+      list(cb);
     }
   });
 }
